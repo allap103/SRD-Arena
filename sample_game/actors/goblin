@@ -1,0 +1,21 @@
+{
+    "id": "goblin",
+    "name":"Goblin",
+    "description":"A green goblin",
+    "attributes": {
+        "base_health": 6,
+        "level": 1,
+        "strength": 8,
+        "dexterity": 14,
+        "constitution": 10,
+        "wisdom": 8,
+        "intelligence": 8,
+        "charisma": 6,
+        "base_armor_class": 10
+    },
+    "inventory": [
+        "dagger",
+        "rag_armor",
+        "key"
+    ]
+}

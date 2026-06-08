@@ -1,0 +1,9 @@
+{   
+    "id": "scene_7",
+    "text": "This is scene 7.",
+    "choices": {
+        "Move to scene 6.": "scene_6",
+        "Win.": "victory",
+        "Lose.": "game_over"
+    }  
+}

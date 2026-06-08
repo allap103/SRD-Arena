@@ -1,0 +1,12 @@
+{
+    "id": "dagger",
+    "name":"Dagger",
+    "description":"A small, sharp dagger that can be used for close combat.",
+    "category":"weapon",
+    "weapon_stat": {
+        "slot": ["left_hand", "right_hand"],
+        "damage": "1d4",
+        "damage_type": "piercing",
+        "properties": ["finesse", "light", "thrown"]
+    }
+}

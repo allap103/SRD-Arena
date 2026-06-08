@@ -1,0 +1,42 @@
+{
+    "id": "scene_1",
+    "type": "basic",
+    "text": "This is scene 1.",
+    "choices": {
+        "Open the chest": {
+            "message": "You try to open the chest.",
+            "next_scene": null,
+            "requirements": {
+                "items": [
+                    {
+                        "id": "key",
+                        "quantity": 1,
+                        "missing_message": "You need a key to open the chest.",
+                        "consume": false
+                    }
+                ]
+            },
+            "test": {
+                "skill": "dexterity",
+                "difficulty": 10
+            },
+            "repeatable": false,
+            "effects": {
+                "on_success": {
+                    "message": "You successfully open the chest and find a sword inside!",
+                    "gain_item": "treasure"
+                },
+                "on_failure": {
+                    "message": "You fail to open the chest and lose your key.",
+                    "lose_item": "key"
+                }
+            }
+        },
+        "Move on": {
+            "next_scene": "scene_2"
+        },
+        "Lose.": {
+            "next_scene": "game_over"
+        }
+    }  
+}

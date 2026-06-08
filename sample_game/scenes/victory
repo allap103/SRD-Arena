@@ -1,0 +1,7 @@
+{
+    "id": "victory",
+    "text": "You have won the game!",
+    "choices": {
+        "Play again.": "scene_1"
+    }  
+}

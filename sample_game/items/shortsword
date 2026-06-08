@@ -1,0 +1,12 @@
+{
+    "id": "shortsword",
+    "name":"Shortsword",
+    "description":"A versatile weapon that can be used for both slashing and thrusting attacks.",
+    "category":"weapon",
+    "weapon_stat": {
+        "slot": ["left_hand", "right_hand"],
+        "damage": "1d6",
+        "damage_type": "piercing",
+        "properties": ["finesse", "light"]
+    }
+}

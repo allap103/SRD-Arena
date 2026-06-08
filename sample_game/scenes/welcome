@@ -1,0 +1,6 @@
+{   "id": "welcome",
+    "text": "Welcome!",
+    "choices": {
+        "Move to scene 1.": "scene_1"
+    }  
+}

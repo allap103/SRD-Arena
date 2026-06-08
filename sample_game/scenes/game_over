@@ -1,0 +1,7 @@
+{
+    "id": "game_over",
+    "text": "Game Over!",
+    "choices": {
+        "Start over": "welcome"
+    }  
+}

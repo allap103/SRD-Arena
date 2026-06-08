@@ -1,0 +1,20 @@
+{
+    "id": "player",
+    "name":"Player",
+    "description":"A true hero",
+    "attributes": {
+        "base_health": 10,
+        "level": 1,
+        "strength": 16,
+        "dexterity": 12,
+        "constitution": 14,
+        "wisdom": 8,
+        "intelligence": 12,
+        "charisma": 10,
+        "base_armor_class": 10
+    },
+    "inventory": [
+        "potion",
+        "dagger"
+    ]
+}
