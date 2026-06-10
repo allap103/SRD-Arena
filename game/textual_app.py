@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container
-from textual.widgets import Button, Label, Static
+from textual.widgets import Button, Static
 
 from .engine import GAME_DIR, Game
 from .session import GameSession
