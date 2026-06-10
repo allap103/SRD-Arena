@@ -44,6 +44,8 @@ def _build_effects(effects) -> Effects | None:
             message=outcome.message,
             gain_item=outcome.gain_item,
             lose_item=outcome.lose_item,
+            damage=outcome.damage,
+            healing=outcome.healing,
         )
 
     return Effects(

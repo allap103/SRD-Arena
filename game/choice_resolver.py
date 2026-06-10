@@ -128,3 +128,19 @@ class ChoiceResolver:
         if outcome.lose_item:
             actor.remove_item(outcome.lose_item)
             messages.append(("system", f"You lost '{outcome.lose_item}'."))
+        if outcome.damage:
+            damage_taken = actor.take_damage(outcome.damage)
+            messages.append(
+                (
+                    "system",
+                    f"You take {damage_taken} damage and now have {actor.get_health()} health.",
+                )
+            )
+        if outcome.healing:
+            health_restored = actor.heal(outcome.healing)
+            messages.append(
+                (
+                    "system",
+                    f"You recover {health_restored} health and now have {actor.get_health()} health.",
+                )
+            )
