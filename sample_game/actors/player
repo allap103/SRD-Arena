@@ -16,5 +16,9 @@
     "inventory": [
         "potion",
         "dagger"
-    ]
+    ],
+    "equipment": {
+        "right_hand": "dagger",
+        "body": "chainmail"
+    }
 }

@@ -1,7 +1,10 @@
 {
     "id": "game_over",
-    "text": "Game Over!",
+    "type": "basic",
+    "text": "Your little burglary ends without treasure this time.",
     "choices": {
-        "Start over": "welcome"
+        "Try again.": {
+            "next_scene": "welcome"
+        }
     }  
 }

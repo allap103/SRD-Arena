@@ -1,6 +1,11 @@
-{   "id": "welcome",
-    "text": "Welcome!",
+{
+    "id": "welcome",
+    "type": "basic",
+    "text": "At the edge of the woods, you find a crooked little house with warm light spilling through the shutters.",
     "choices": {
-        "Move to scene 1.": "scene_1"
-    }  
+        "Approach the house.": {
+            "message": "You creep toward the front door, careful not to step on the loose gravel.",
+            "next_scene": "scene_1_house"
+        }
+    }
 }

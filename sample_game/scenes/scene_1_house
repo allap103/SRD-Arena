@@ -1,0 +1,33 @@
+{
+    "id": "scene_1_house",
+    "type": "basic",
+    "text": "Inside the house, a goblin snores in a chair beside a locked wooden chest. A small brass key hangs from its belt.",
+    "choices": {
+        "Steal the key from the sleeping goblin.": {
+            "message": "You reach toward the goblin's belt, trying not to wake it.",
+            "next_scene": "scene_1_house_key",
+            "test": {
+                "skill": "dexterity",
+                "difficulty": 1,
+                "repeatable": false,
+                "effects": {
+                    "on_success": {
+                        "message": "With a careful tug, you slip the key free. The goblin snorts once, then settles back into sleep.",
+                        "gain_item": "key"
+                    },
+                    "on_failure": {
+                        "message": "The goblin jerks awake and glares at you. You dive back before it can catch you, but the chance is gone."
+                    }
+                }
+            }
+        },
+        "Back away and leave the house.": {
+            "message": "You decide not to risk the goblin and slip back into the night.",
+            "next_scene": "game_over"
+        },
+        "Watch the goblin for a moment longer.": {
+            "message": "The goblin snores loudly, still clutching a half-eaten mushroom in one hand.",
+            "next_scene": "scene_1_house"
+        }
+    }  
+}

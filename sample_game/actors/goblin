@@ -14,8 +14,10 @@
         "base_armor_class": 10
     },
     "inventory": [
-        "dagger",
-        "rag_armor",
         "key"
-    ]
+    ],
+    "equipment": {
+        "right_hand": "dagger",
+        "body": "rag_armor"
+    }
 }

@@ -1,7 +1,10 @@
 {
     "id": "victory",
-    "text": "You have won the game!",
+    "type": "basic",
+    "text": "With the shortsword in hand, you vanish into the woods before the goblin ever knows what happened.",
     "choices": {
-        "Play again.": "scene_1"
+        "Play again.": {
+            "next_scene": "welcome"
+        }
     }  
 }
