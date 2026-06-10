@@ -1,25 +1,23 @@
-from ..models.item import Item
+from dataclasses import dataclass, field
 
+from ..game_logging import CHANNEL_SYSTEM, get_game_logger
 
+LOGGER = get_game_logger(CHANNEL_SYSTEM)
+
+@dataclass
 class Equipment:
-    head: Item
-    body: Item
-    legs: Item
-    feet: Item
-    hands: Item
-    right_hand: Item
-    left_hand: Item
-    accessory: Item
-
-    def __init__(self, head: Item = None, body: Item = None, legs: Item = None, feet: Item = None, hands: Item = None, right_hand: Item = None, left_hand: Item = None, accessory: Item = None):
-        self.head = head
-        self.body = body
-        self.legs = legs
-        self.feet = feet
-        self.hands = hands
-        self.right_hand = right_hand
-        self.left_hand = left_hand
-        self.accessory = accessory
+    equipped_items: dict[str, str | None] = field(
+        default_factory=lambda: {
+            "head": None,
+            "body": None,
+            "legs": None,
+            "feet": None,
+            "hands": None,
+            "right_hand": None,
+            "left_hand": None,
+            "accessory": None,
+        }
+    )
 
     def equip(self, item: str, slot: str):
         """
@@ -28,27 +26,33 @@ class Equipment:
          - slot: The equipment slot to equip the item in (e.g., 'head', 'body', 'right_hand').
         """
         if slot not in self.equipped_items:
-            print(f"Invalid equipment slot '{slot}'.")
+            LOGGER.info(f"Invalid equipment slot '{slot}'.")
             return
         elif self.equipped_items[slot] is not None:
             self.unequip(slot)
         self.equipped_items[slot] = item
-        print(f"Equipped '{item}' in slot '{slot}'.")
+        LOGGER.info(f"Equipped '{item}' in slot '{slot}'.")
 
     def unequip(self, slot: str):
         if slot not in self.equipped_items:
-            print(f"Invalid equipment slot '{slot}'.")
-            return
+            LOGGER.info(f"Invalid equipment slot '{slot}'.")
+            return None
         if self.equipped_items[slot] is not None:
-            removed_item = self.equipped_items.pop(slot)
-            print(f"Unequipped '{removed_item}' from slot '{slot}'.")
+            removed_item = self.equipped_items[slot]
+            self.equipped_items[slot] = None
+            LOGGER.info(f"Unequipped '{removed_item}' from slot '{slot}'.")
+            return removed_item
         else:
-            print(f"No item equipped in slot '{slot}' to unequip.")
+            LOGGER.info(f"No item equipped in slot '{slot}' to unequip.")
+            return None
 
     def show(self):
-        print("Equipped items:")
+        LOGGER.info("Equipped items:")
         for slot, item in self.equipped_items.items():
             if item is not None:
-                print(f"{slot.capitalize()}: {item}")
+                LOGGER.info(f"{slot.capitalize()}: {item}")
             else:
-                print(f"{slot.capitalize()}: Empty")
+                LOGGER.info(f"{slot.capitalize()}: Empty")
+
+    def is_equipped(self, item: str) -> bool:
+        return item in self.equipped_items.values()

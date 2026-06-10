@@ -28,13 +28,16 @@ class Item:
 
     @classmethod
     def from_dict(cls, data: dict):
+        from ..content_schema import ItemSchema
+
+        schema = ItemSchema.model_validate(data)
         return cls(
-            id=data.get("id", ""),
-            name=data.get("name", ""),
-            description=data.get("description", ""),
-            category=data.get("category", ""),
-            weapon_stat=WeaponStat(**data.get("weapon_stat", {})) if data.get("weapon_stat") else None,
-            armor_stat=ArmorStat(**data.get("armor_stat", {})) if data.get("armor_stat") else None,
+            id=schema.id,
+            name=schema.name,
+            description=schema.description,
+            category=schema.category,
+            weapon_stat=WeaponStat(**schema.weapon_stat.model_dump()) if schema.weapon_stat else None,
+            armor_stat=ArmorStat(**schema.armor_stat.model_dump()) if schema.armor_stat else None,
         )
 
     @classmethod

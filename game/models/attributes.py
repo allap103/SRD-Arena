@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -13,19 +13,9 @@ class Attributes:
     charisma: int
     base_armor_class: int
     proficiency_bonus: int = 2
-    proficiencies: dict = None
+    proficiencies: dict = field(default_factory=dict)
 
-    def __init__(self, base_health: int, level: int, strength: int, dexterity: int, constitution: int, wisdom: int, intelligence: int, charisma: int, base_armor_class: int):
-        self.base_health = base_health
-        self.level = level
-        self.strength = strength
-        self.dexterity = dexterity
-        self.constitution = constitution
-        self.wisdom = wisdom
-        self.intelligence = intelligence
-        self.charisma = charisma
-        self.base_armor_class = base_armor_class
-        self.proficiencies = {}
+    def __post_init__(self):
         self.proficiency_bonus = round(self.level / 4) + 1
 
     def __str__(self):

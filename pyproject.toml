@@ -3,4 +3,6 @@ name = "cyoa"
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
+    "pydantic>=2.8,<3",
+    "textual>=0.79,<1",
 ]
