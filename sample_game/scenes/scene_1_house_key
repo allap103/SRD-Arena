@@ -17,8 +17,8 @@
                 ]
             },
             "test": {
-                "skill": "dexterity",
-                "difficulty": 1,
+                "skill": "constitution",
+                "difficulty": 5,
                 "repeatable": false,
                 "effects": {
                     "on_success": {
@@ -26,7 +26,7 @@
                         "gain_item": "shortsword"
                     },
                     "on_failure": {
-                        "message": "The lock clicks too loudly. You panic, let the lid fall shut, and the goblin stirs in its sleep."
+                        "message": "The lock clicks loudly. You startle, let the lid fall shut, and the goblin stirs in its sleep."
                     }
                 }
             }

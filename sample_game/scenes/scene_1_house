@@ -8,7 +8,7 @@
             "next_scene": "scene_1_house_key",
             "test": {
                 "skill": "dexterity",
-                "difficulty": 1,
+                "difficulty": 12,
                 "repeatable": false,
                 "effects": {
                     "on_success": {
@@ -16,7 +16,8 @@
                         "gain_item": "key"
                     },
                     "on_failure": {
-                        "message": "The goblin jerks awake and glares at you. You dive back before it can catch you, but the chance is gone."
+                        "message": "The goblin jerks awake and smacks you with the back of its hand before you dive away.",
+                        "damage": 2
                     }
                 }
             }
