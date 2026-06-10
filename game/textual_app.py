@@ -1,9 +1,9 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container
-from textual.widgets import Button, Static
+from textual.widgets import Button, RichLog, Static
 
 from .engine import GAME_DIR, Game
-from .session import GameSession
+from .session import GameSession, TurnResult
 
 
 class CyoaTextualApp(App[None]):
@@ -16,6 +16,7 @@ class CyoaTextualApp(App[None]):
     def compose(self) -> ComposeResult:
         yield Static("", id="scene-text")
         yield Container(id="choice-list")
+        yield RichLog(id="message-log", wrap=True, highlight=True, markup=False)
 
     def on_mount(self) -> None:
         self.refresh_scene()
@@ -36,14 +37,23 @@ class CyoaTextualApp(App[None]):
                 )
             )
 
+    def write_messages(self, messages: list[tuple[str, str]]) -> None:
+        log = self.query_one("#message-log", RichLog)
+        for channel, message in messages:
+            log.write(f"[{channel.upper()}] {message}")
+
+    def apply_turn_result(self, result: TurnResult) -> None:
+        self.write_messages(result.messages)
+        self.refresh_scene()
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id or ""
         if not button_id.startswith("choice-"):
             return
 
         choice_index = int(button_id.rsplit("-", maxsplit=1)[1])
-        self.session.choose(choice_index)
-        self.refresh_scene()
+        result = self.session.choose(choice_index)
+        self.apply_turn_result(result)
 
 
 def run_textual_app() -> None:
