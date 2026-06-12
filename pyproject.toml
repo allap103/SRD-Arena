@@ -3,9 +3,15 @@ name = "cyoa"
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
+    "matplotlib>=3.9,<4",
+    "networkx>=3.4,<4",
     "pydantic>=2.8,<3",
     "textual>=0.79,<1",
+    "scipy"
 ]
+
+[project.scripts]
+render-scene-graph = "visualization.scene_graph:main"
 
 [dependency-groups]
 dev = [
