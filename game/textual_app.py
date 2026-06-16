@@ -59,6 +59,6 @@ class CyoaTextualApp(App[None]):
         self.apply_turn_result(result)
 
 
-def run_textual_app() -> None:
-    app = CyoaTextualApp()
+def run_textual_app(game: Game | None = None) -> None:
+    app = CyoaTextualApp(game=game)
     app.run()

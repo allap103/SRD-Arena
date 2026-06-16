@@ -1,0 +1,3 @@
+[console_scripts]
+cyoa = game.launcher:main
+render-scene-graph = visualization.scene_graph:main
