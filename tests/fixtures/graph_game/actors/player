@@ -1,0 +1,22 @@
+{
+    "id": "player",
+    "name": "Fixture Player",
+    "description": "A player for save/load tests.",
+    "attributes": {
+        "base_health": 10,
+        "level": 1,
+        "strength": 10,
+        "dexterity": 12,
+        "constitution": 14,
+        "wisdom": 10,
+        "intelligence": 10,
+        "charisma": 10,
+        "base_armor_class": 10
+    },
+    "inventory": [
+        "starter_item"
+    ],
+    "equipment": {
+        "right_hand": "starter_item"
+    }
+}
