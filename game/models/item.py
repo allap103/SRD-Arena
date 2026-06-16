@@ -1,12 +1,14 @@
 from dataclasses import dataclass
 
+from ..content_schema.actor import EquipmentSlot
+
 
 @dataclass
 class WeaponStat:
-    slot: list
+    slot: list[EquipmentSlot]
     damage: str
     damage_type: str
-    properties: list
+    properties: list[str]
 
 
 @dataclass
@@ -23,11 +25,11 @@ class Item:
     name: str
     description: str
     category: str
-    weapon_stat: WeaponStat = None
-    armor_stat: ArmorStat = None
+    weapon_stat: WeaponStat | None = None
+    armor_stat: ArmorStat | None = None
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict[str, object]) -> "Item":
         from ..content_schema import ItemSchema
 
         schema = ItemSchema.model_validate(data)
@@ -45,7 +47,7 @@ class Item:
         )
 
     @classmethod
-    def from_file(cls, path: str):
+    def from_file(cls, path: str) -> "Item":
         import json
 
         with open(path, "r") as f:

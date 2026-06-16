@@ -17,7 +17,7 @@ class Game:
     actors: list[Actor]
     items: list[Item]
 
-    def __init__(self, directory: str = GAME_DIR, start_scene: str = "welcome"):
+    def __init__(self, directory: str | Path = GAME_DIR, start_scene: str = "welcome"):
         self.directory = Path(directory)
         self.scenes = self.load_scenes_from_directory(self.directory / "scenes")
         self.actors = self.load_actors_from_directory(self.directory / "actors")
@@ -25,13 +25,13 @@ class Game:
         self.start_scene = start_scene
         self.scene_runner = SceneRunner()
 
-    def load_actors_from_directory(self, directory: str) -> list[Actor]:
+    def load_actors_from_directory(self, directory: str | Path) -> list[Actor]:
         return [load_actor(path) for path in Path(directory).glob("*")]
 
-    def load_items_from_directory(self, directory: str) -> list[Item]:
+    def load_items_from_directory(self, directory: str | Path) -> list[Item]:
         return [load_item(path) for path in Path(directory).glob("*")]
 
-    def load_scenes_from_directory(self, directory: str) -> dict[str, Scene]:
+    def load_scenes_from_directory(self, directory: str | Path) -> dict[str, Scene]:
         return {
             scene.id: scene
             for scene in (load_scene(path) for path in Path(directory).glob("*"))
