@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -18,7 +19,9 @@ from .systems.equipment import Equipment
 from .systems.inventory import Inventory
 
 SAVE_VERSION = 1
-SAVEGAME_EXAMPLE = {
+JsonScalar: TypeAlias = str | int | float | bool | None
+JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
+SAVEGAME_EXAMPLE: dict[str, JsonValue] = {
     "version": 1,
     "current_scene_id": "welcome",
     "start_scene_id": "welcome",
@@ -254,7 +257,7 @@ def _restore_encounter_state(
     )
 
 
-def _write_json_atomically(path: Path, data: dict) -> None:
+def _write_json_atomically(path: Path, data: dict[str, JsonValue]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile(
         "w",

@@ -2,7 +2,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .choice_resolver import ChoiceResolution, ChoiceResolver
+from .choice_resolver import ChoiceResolver
 from .encounter import EncounterAction, EncounterSnapshot, EncounterState
 from .models.actor import Actor
 from .models.scene import Scene
@@ -183,6 +183,9 @@ class GameSession:
             raise IndexError(
                 f"Choice index {choice_index} is out of range for encounter scene '{self.current_scene.id}'."
             )
+
+        if self.encounter_state is None:
+            raise RuntimeError("Encounter action requested without an active encounter.")
 
         action = self._encounter_actions[choice_index]
         messages, transition = self.encounter_state.apply_action(self.player, action)

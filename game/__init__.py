@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from .choice_resolver import ChoiceResolver
 from .engine import Game
 from .save import (
@@ -12,10 +14,13 @@ from .save import (
 from .scene_runner import SceneRunner
 from .session import GameSession, SceneView, TurnResult
 
+if TYPE_CHECKING:
+    from .textual_app import CyoaTextualApp
+
 try:
     from .textual_app import CyoaTextualApp
 except ModuleNotFoundError:
-    CyoaTextualApp = None
+    pass
 
 __all__ = [
     "ChoiceResolver",
