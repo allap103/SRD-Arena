@@ -18,9 +18,10 @@ class Game:
     items: list[Item]
 
     def __init__(self, directory: str = GAME_DIR, start_scene: str = "welcome"):
-        self.scenes = self.load_scenes_from_directory(Path(directory) / "scenes")
-        self.actors = self.load_actors_from_directory(Path(directory) / "actors")
-        self.items = self.load_items_from_directory(Path(directory) / "items")
+        self.directory = Path(directory)
+        self.scenes = self.load_scenes_from_directory(self.directory / "scenes")
+        self.actors = self.load_actors_from_directory(self.directory / "actors")
+        self.items = self.load_items_from_directory(self.directory / "items")
         self.start_scene = start_scene
         self.scene_runner = SceneRunner()
 
@@ -47,12 +48,14 @@ class Game:
             scenes=self.scenes,
             player=self.get_actor(player_actor_id),
             start_scene_id=self.start_scene,
+            game_dir=self.directory,
         )
 
     def run(self):
         session = self.create_session()
         try:
             while True:
-                self.scene_runner.run(session)
-        except KeyboardInterrupt, EOFError:
+                if not self.scene_runner.run(session):
+                    break
+        except (KeyboardInterrupt, EOFError):
             LOGGER.info("You set the story aside for now. Thanks for playing.")

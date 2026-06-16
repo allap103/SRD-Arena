@@ -15,6 +15,7 @@ from game.save import (
     save_to_file,
     save_to_slot,
 )
+from game.session import EXIT_CHOICE_TEXT, LOAD_CHOICE_TEXT, SAVE_CHOICE_TEXT
 
 FIXTURE_GAME_DIR = Path(__file__).parent / "fixtures" / "graph_game"
 
@@ -82,6 +83,82 @@ def test_slot_helpers_use_separate_save_files(tmp_path: Path) -> None:
     assert slot_path == get_slot_path(tmp_path, 2)
     assert slot_path.name == "slot_2.json"
     assert loaded.current_scene_id == "start"
+
+
+def test_scene_view_includes_system_options(tmp_path: Path) -> None:
+    session = Game(str(FIXTURE_GAME_DIR), start_scene="start").create_session()
+    session.save_dir = tmp_path
+
+    scene_view = session.get_scene_view()
+
+    assert scene_view.choices[-3:] == [
+        SAVE_CHOICE_TEXT,
+        LOAD_CHOICE_TEXT,
+        EXIT_CHOICE_TEXT,
+    ]
+
+
+def test_session_save_choice_writes_default_slot(tmp_path: Path) -> None:
+    session = Game(str(FIXTURE_GAME_DIR), start_scene="start").create_session()
+    session.save_dir = tmp_path
+
+    scene_view = session.get_scene_view()
+    result = session.choose(len(scene_view.choices) - 3)
+    slot_path = get_slot_path(tmp_path, 1)
+
+    assert slot_path.exists()
+    assert result.selected_choice_text == SAVE_CHOICE_TEXT
+    assert result.next_scene_id == "start"
+    assert result.scene_changed is False
+
+
+def test_session_load_choice_restores_saved_state_from_default_slot(tmp_path: Path) -> None:
+    session = Game(str(FIXTURE_GAME_DIR), start_scene="start").create_session()
+    session.save_dir = tmp_path
+    session.current_scene_id = "shared_target"
+    session.player.take_damage(4)
+    session.player.inventory.add_item("map")
+    session.choice_resolver.completed_tests.add(("start", "Take the quiet path."))
+    save_to_slot(session, tmp_path, 1)
+
+    fresh_session = Game(str(FIXTURE_GAME_DIR), start_scene="start").create_session()
+    fresh_session.save_dir = tmp_path
+    load_choice_index = len(fresh_session.current_scene.choices) + 1
+
+    result = fresh_session.choose(load_choice_index)
+
+    assert result.selected_choice_text == LOAD_CHOICE_TEXT
+    assert fresh_session.current_scene_id == "shared_target"
+    assert fresh_session.player.get_health() == 8
+    assert fresh_session.player.inventory.items == ["starter_item", "map"]
+    assert fresh_session.choice_resolver.completed_tests == {
+        ("start", "Take the quiet path.")
+    }
+
+
+def test_session_load_choice_reports_missing_default_slot(tmp_path: Path) -> None:
+    session = Game(str(FIXTURE_GAME_DIR), start_scene="start").create_session()
+    session.save_dir = tmp_path
+    load_choice_index = len(session.current_scene.choices) + 1
+
+    result = session.choose(load_choice_index)
+
+    assert result.selected_choice_text == LOAD_CHOICE_TEXT
+    assert result.messages == [("system", "No save file found in slot 1.")]
+    assert session.current_scene_id == "start"
+
+
+def test_session_exit_choice_requests_shutdown(tmp_path: Path) -> None:
+    session = Game(str(FIXTURE_GAME_DIR), start_scene="start").create_session()
+    session.save_dir = tmp_path
+    exit_choice_index = len(session.current_scene.choices) + 2
+
+    result = session.choose(exit_choice_index)
+
+    assert result.selected_choice_text == EXIT_CHOICE_TEXT
+    assert result.messages == [("system", "Exiting game.")]
+    assert result.should_exit is True
+    assert session.current_scene_id == "start"
 
 
 def test_save_validation_rejects_unknown_fields() -> None:

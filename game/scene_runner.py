@@ -22,14 +22,14 @@ class SceneRunner:
             else:
                 SYSTEM_LOGGER.info(message)
 
-    def run(self, session: GameSession) -> str | None:
+    def run(self, session: GameSession) -> bool:
         self.display(session)
         choice = input("Input a number: ")
         CHOICE_LOGGER.info(f"You chose: {choice}")
         try:
             result = session.choose(int(choice) - 1)
             self.render_turn_result(result)
-            return result.next_scene_id
+            return not result.should_exit
         except IndexError:
             CHOICE_LOGGER.info("Invalid choice. Please try again.")
             return self.run(session)

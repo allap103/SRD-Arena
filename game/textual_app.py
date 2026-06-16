@@ -44,6 +44,9 @@ class CyoaTextualApp(App[None]):
 
     def apply_turn_result(self, result: TurnResult) -> None:
         self.write_messages(result.messages)
+        if result.should_exit:
+            self.exit()
+            return
         self.refresh_scene()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
