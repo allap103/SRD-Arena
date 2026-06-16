@@ -78,8 +78,8 @@ class ChoiceResolver:
             raise ValueError("An actor is required to resolve skill tests.")
 
         test = choice.test
-        if test is None:
-            raise ValueError("Skill test resolution requires choice.test to be set.")
+        assert test is not None
+        choice_key = (scene.id, choice.choice_text)
         if not test.repeatable and choice_key in self.completed_tests:
             messages.append(("choice", "You cannot repeat that test."))
             return ChoiceResolution(next_scene_id=scene.id, messages=messages)
