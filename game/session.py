@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .choice_resolver import ChoiceResolution, ChoiceResolver
+from .encounter import EncounterAction, EncounterSnapshot, EncounterState
 from .models.actor import Actor
 from .models.scene import Scene
 
@@ -34,6 +35,7 @@ class GameSession:
         self,
         scenes: dict[str, Scene],
         player: Actor,
+        actor_templates: dict[str, Actor] | None = None,
         choice_resolver: ChoiceResolver | None = None,
         start_scene_id: str = "welcome",
         game_dir: str | Path = "sample_game",
@@ -41,36 +43,51 @@ class GameSession:
     ):
         self.scenes = scenes
         self.player = player
+        self.actor_templates = actor_templates or {player.id: player}
         self.choice_resolver = choice_resolver or ChoiceResolver()
         self.current_scene_id = start_scene_id
         self.start_scene_id = start_scene_id
         self._initial_player = deepcopy(player)
         self.game_dir = Path(game_dir)
         self.save_dir = Path(save_dir)
+        self.encounter_state: EncounterState | None = None
+        self._encounter_actions: list[EncounterAction] = []
 
     @property
     def current_scene(self) -> Scene:
         return self.scenes[self.current_scene_id]
 
     def get_scene_view(self) -> SceneView:
+        self._ensure_encounter_state()
         scene = self.current_scene
+        scene_text = scene.text
+        choices = [choice.choice_text for choice in scene.choices]
+        if self.encounter_state is not None:
+            scene_text = "\n\n".join(
+                part
+                for part in [scene.text, self.encounter_state.render(self.player)]
+                if part
+            )
+            self._encounter_actions = self.encounter_state.available_actions()
+            choices = [action.label for action in self._encounter_actions]
         return SceneView(
             scene_id=scene.id,
-            scene_text=scene.text,
-            choices=[
-                choice.choice_text for choice in scene.choices
-            ]
-            + [SAVE_CHOICE_TEXT, LOAD_CHOICE_TEXT, EXIT_CHOICE_TEXT],
+            scene_text=scene_text,
+            choices=choices + [SAVE_CHOICE_TEXT, LOAD_CHOICE_TEXT, EXIT_CHOICE_TEXT],
         )
 
     def choose(self, choice_index: int) -> TurnResult:
+        self._ensure_encounter_state()
         scene = self.current_scene
-        if choice_index == len(scene.choices):
+        action_count = len(self._encounter_actions) if self.encounter_state is not None else len(scene.choices)
+        if choice_index == action_count:
             return self._save_game()
-        if choice_index == len(scene.choices) + 1:
+        if choice_index == action_count + 1:
             return self._load_game()
-        if choice_index == len(scene.choices) + 2:
+        if choice_index == action_count + 2:
             return self._exit_game()
+        if self.encounter_state is not None:
+            return self._choose_encounter(choice_index)
 
         if not 0 <= choice_index < len(scene.choices):
             raise IndexError(
@@ -87,6 +104,7 @@ class GameSession:
             scene_changed = True
         else:
             self.current_scene_id = next_scene_id
+            self._clear_encounter_if_scene_changed(scene.id, next_scene_id)
 
         return TurnResult(
             scene=self.get_scene_view(),
@@ -108,7 +126,7 @@ class GameSession:
         save_path = save_to_slot(self, self.save_dir, 1)
         return TurnResult(
             scene=self.get_scene_view(),
-            selected_index=len(self.current_scene.choices),
+            selected_index=len(self.get_scene_view().choices) - 3,
             selected_choice_text=SAVE_CHOICE_TEXT,
             messages=[("system", f"Game saved to {save_path}.")],
             next_scene_id=self.current_scene_id,
@@ -123,7 +141,7 @@ class GameSession:
         except FileNotFoundError:
             return TurnResult(
                 scene=self.get_scene_view(),
-                selected_index=len(self.current_scene.choices) + 1,
+                selected_index=len(self.get_scene_view().choices) - 2,
                 selected_choice_text=LOAD_CHOICE_TEXT,
                 messages=[("system", "No save file found in slot 1.")],
                 next_scene_id=self.current_scene_id,
@@ -135,10 +153,14 @@ class GameSession:
         self.current_scene_id = loaded.current_scene_id
         self.start_scene_id = loaded.start_scene_id
         self._initial_player = deepcopy(loaded._initial_player)
+        self.actor_templates = loaded.actor_templates
+        self.encounter_state = loaded.encounter_state
+        self._encounter_actions = []
+        self._ensure_encounter_state()
 
         return TurnResult(
             scene=self.get_scene_view(),
-            selected_index=len(self.current_scene.choices) + 1,
+            selected_index=len(self.get_scene_view().choices) - 2,
             selected_choice_text=LOAD_CHOICE_TEXT,
             messages=[("system", "Game loaded from saves/slot_1.json.")],
             next_scene_id=self.current_scene_id,
@@ -148,10 +170,78 @@ class GameSession:
     def _exit_game(self) -> TurnResult:
         return TurnResult(
             scene=self.get_scene_view(),
-            selected_index=len(self.current_scene.choices) + 2,
+            selected_index=len(self.get_scene_view().choices) - 1,
             selected_choice_text=EXIT_CHOICE_TEXT,
             messages=[("system", "Exiting game.")],
             next_scene_id=self.current_scene_id,
             scene_changed=False,
             should_exit=True,
+        )
+
+    def _choose_encounter(self, choice_index: int) -> TurnResult:
+        if not 0 <= choice_index < len(self._encounter_actions):
+            raise IndexError(
+                f"Choice index {choice_index} is out of range for encounter scene '{self.current_scene.id}'."
+            )
+
+        action = self._encounter_actions[choice_index]
+        messages, transition = self.encounter_state.apply_action(self.player, action)
+        if self.player.get_health() <= 0 and self.current_scene.encounter and self.current_scene.encounter.defeat:
+            transition = self.current_scene.encounter.defeat.next_scene
+
+        scene_changed = False
+        if transition is not None:
+            previous_scene_id = self.current_scene_id
+            self.current_scene_id = transition
+            self.encounter_state = None
+            self._encounter_actions = []
+            scene_changed = previous_scene_id != transition
+
+        return TurnResult(
+            scene=self.get_scene_view(),
+            selected_index=choice_index,
+            selected_choice_text=action.label,
+            messages=messages,
+            next_scene_id=self.current_scene_id,
+            scene_changed=scene_changed,
+        )
+
+    def _ensure_encounter_state(self) -> None:
+        scene = self.current_scene
+        if scene.encounter is None:
+            self.encounter_state = None
+            self._encounter_actions = []
+            return
+        if self.encounter_state is not None and self.encounter_state.scene_id == scene.id:
+            return
+        self.encounter_state = EncounterState.from_definition(
+            scene.id,
+            scene.encounter,
+            self.actor_templates,
+        )
+        self._encounter_actions = []
+
+    def _clear_encounter_if_scene_changed(self, previous_scene_id: str, next_scene_id: str) -> None:
+        if previous_scene_id != next_scene_id:
+            self.encounter_state = None
+            self._encounter_actions = []
+
+    def get_encounter_snapshot(self) -> EncounterSnapshot | None:
+        self._ensure_encounter_state()
+        if self.encounter_state is None:
+            return None
+        return self.encounter_state.snapshot()
+
+    def restore_encounter_snapshot(self, snapshot: EncounterSnapshot | None) -> None:
+        self.encounter_state = None
+        self._encounter_actions = []
+        if snapshot is None:
+            return
+        scene = self.scenes.get(snapshot.scene_id)
+        if scene is None or scene.encounter is None:
+            raise ValueError(f"Encounter scene '{snapshot.scene_id}' does not exist.")
+        self.encounter_state = EncounterState.from_snapshot(
+            scene.encounter,
+            snapshot,
+            self.actor_templates,
         )

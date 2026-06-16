@@ -6,6 +6,10 @@
         "Approach the house.": {
             "message": "You creep toward the front door, careful not to step on the loose gravel.",
             "next_scene": "scene_1_house"
+        },
+        "Follow the old watchtower road.": {
+            "message": "You leave the house behind and follow a cracked stone road toward a ruined watchtower.",
+            "next_scene": "test_encounter_intro"
         }
     }
 }

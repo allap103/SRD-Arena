@@ -58,10 +58,63 @@ class SceneChoiceSchema(BaseModel):
         return value
 
 
+class PositionSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    x: int
+    y: int
+
+
+class GridSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    width: int
+    height: int
+
+
+class BehaviorSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: str
+    anchor: PositionSchema | None = None
+    radius: int | None = None
+    path: list[PositionSchema] = Field(default_factory=list)
+
+
+class EncounterEnemySchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str
+    start: PositionSchema
+    behavior: BehaviorSchema
+
+
+class EncounterResolutionSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    next_scene: str
+
+
+class FleeSchema(EncounterResolutionSchema):
+    allowed: bool = False
+
+
+class EncounterSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    grid: GridSchema
+    player_start: PositionSchema
+    enemies: list[EncounterEnemySchema] = Field(default_factory=list)
+    victory: EncounterResolutionSchema
+    defeat: EncounterResolutionSchema
+    flee: FleeSchema | None = None
+
+
 class SceneSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str
     type: str = "basic"
     text: str
+    encounter: EncounterSchema | None = None
     choices: dict[str, SceneChoiceSchema]

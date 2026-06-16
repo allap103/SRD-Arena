@@ -47,6 +47,7 @@ class Game:
         return GameSession(
             scenes=self.scenes,
             player=self.get_actor(player_actor_id),
+            actor_templates={actor.id: actor for actor in self.actors},
             start_scene_id=self.start_scene,
             game_dir=self.directory,
         )

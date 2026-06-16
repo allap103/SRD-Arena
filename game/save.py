@@ -8,9 +8,11 @@ from tempfile import NamedTemporaryFile
 from pydantic import BaseModel, ConfigDict, Field
 
 from .choice_resolver import ChoiceResolver
+from .encounter import EncounterSnapshot, EncounterSnapshotEnemy
 from .engine import Game
 from .models.actor import Actor
 from .models.attributes import Attributes
+from .models.scene import Position
 from .session import GameSession
 from .systems.equipment import Equipment
 from .systems.inventory import Inventory
@@ -49,6 +51,30 @@ class CompletedTestState(BaseModel):
     choice_text: str
 
 
+class PositionState(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    x: int
+    y: int
+
+
+class EncounterEnemyStateModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    actor_id: str
+    current_health: int
+    position: PositionState
+    patrol_index: int = 0
+
+
+class EncounterStateModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    scene_id: str
+    player_position: PositionState
+    enemies: list[EncounterEnemyStateModel] = Field(default_factory=list)
+
+
 class SaveGame(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -57,6 +83,7 @@ class SaveGame(BaseModel):
     start_scene_id: str = "welcome"
     player: PlayerState
     completed_tests: list[CompletedTestState] = Field(default_factory=list)
+    encounter: EncounterStateModel | None = None
 
 
 def create_save(session: GameSession) -> SaveGame:
@@ -68,6 +95,7 @@ def create_save(session: GameSession) -> SaveGame:
             CompletedTestState(scene_id=scene_id, choice_text=choice_text)
             for scene_id, choice_text in sorted(session.choice_resolver.completed_tests)
         ],
+        encounter=_create_encounter_state(session.get_encounter_snapshot()),
     )
 
 
@@ -88,6 +116,7 @@ def restore_save(save: SaveGame, game_dir: str | Path) -> GameSession:
         }
     )
     session.current_scene_id = save.current_scene_id
+    session.restore_encounter_snapshot(_restore_encounter_state(save.encounter))
     return session
 
 
@@ -150,6 +179,49 @@ def _restore_player_state(player_template: Actor, state: PlayerState) -> Actor:
         attributes=Attributes(**state.attributes.model_dump()),
         equipment=Equipment(equipped_items=dict(state.equipment)),
         current_health=state.current_health,
+    )
+
+
+def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStateModel | None:
+    if snapshot is None:
+        return None
+
+    return EncounterStateModel(
+        scene_id=snapshot.scene_id,
+        player_position=PositionState(
+            x=snapshot.player_position.x,
+            y=snapshot.player_position.y,
+        ),
+        enemies=[
+            EncounterEnemyStateModel(
+                actor_id=enemy.actor_id,
+                current_health=enemy.current_health,
+                position=PositionState(x=enemy.position.x, y=enemy.position.y),
+                patrol_index=enemy.patrol_index,
+            )
+            for enemy in snapshot.enemies
+        ],
+    )
+
+
+def _restore_encounter_state(
+    state: EncounterStateModel | None,
+) -> EncounterSnapshot | None:
+    if state is None:
+        return None
+
+    return EncounterSnapshot(
+        scene_id=state.scene_id,
+        player_position=Position(x=state.player_position.x, y=state.player_position.y),
+        enemies=[
+            EncounterSnapshotEnemy(
+                actor_id=enemy.actor_id,
+                current_health=enemy.current_health,
+                position=Position(x=enemy.position.x, y=enemy.position.y),
+                patrol_index=enemy.patrol_index,
+            )
+            for enemy in state.enemies
+        ],
     )
 
 

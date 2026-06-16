@@ -1,0 +1,82 @@
+{
+    "id": "test_encounter",
+    "type": "encounter",
+    "text": "Two goblins rush out from behind a collapsed wagon while a third keeps watch near the tower stairs. This scene is prepared for the future encounter system.",
+    "encounter": {
+        "grid": {
+            "width": 8,
+            "height": 8
+        },
+        "player_start": {
+            "x": 1,
+            "y": 6
+        },
+        "enemies": [
+            {
+                "actor_id": "goblin",
+                "start": {
+                    "x": 5,
+                    "y": 2
+                },
+                "behavior": {
+                    "type": "chase"
+                }
+            },
+            {
+                "actor_id": "goblin",
+                "start": {
+                    "x": 6,
+                    "y": 2
+                },
+                "behavior": {
+                    "type": "guard",
+                    "anchor": {
+                        "x": 6,
+                        "y": 2
+                    },
+                    "radius": 2
+                }
+            },
+            {
+                "actor_id": "goblin",
+                "start": {
+                    "x": 4,
+                    "y": 1
+                },
+                "behavior": {
+                    "type": "patrol",
+                    "path": [
+                        {
+                            "x": 4,
+                            "y": 1
+                        },
+                        {
+                            "x": 5,
+                            "y": 1
+                        },
+                        {
+                            "x": 5,
+                            "y": 2
+                        }
+                    ]
+                }
+            }
+        ],
+        "victory": {
+            "next_scene": "test_encounter_victory"
+        },
+        "defeat": {
+            "next_scene": "test_encounter_defeat"
+        },
+        "flee": {
+            "allowed": true,
+            "next_scene": "test_encounter_intro"
+        }
+    },
+    "choices": {
+        "Retreat until the encounter system is ready.": {
+            "message": "You decide to fall back before the skirmish fully begins.",
+            "next_scene": "test_encounter_intro"
+        }
+    }
+}

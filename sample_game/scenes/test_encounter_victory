@@ -1,0 +1,11 @@
+{
+    "id": "test_encounter_victory",
+    "type": "basic",
+    "text": "The courtyard falls quiet. With the goblins defeated, the ruined watchtower is yours to search.",
+    "choices": {
+        "Return to the forest path.": {
+            "message": "You leave the tower behind and make your way back toward the woods.",
+            "next_scene": "welcome"
+        }
+    }
+}
