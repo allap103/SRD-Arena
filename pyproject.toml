@@ -16,8 +16,10 @@ render-scene-graph = "visualization.scene_graph:main"
 [dependency-groups]
 dev = [
     "hypothesis>=6.0,<7",
+    "mypy>=2.1.0",
     "pytest>=7.4,<9",
     "pytest-cov>=7.1.0",
+    "ruff>=0.15.17",
 ]
 
 [tool.pytest.ini_options]
