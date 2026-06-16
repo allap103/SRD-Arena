@@ -4,6 +4,7 @@ from ..game_logging import CHANNEL_SYSTEM, get_game_logger
 
 LOGGER = get_game_logger(CHANNEL_SYSTEM)
 
+
 @dataclass
 class Equipment:
     equipped_items: dict[str, str | None] = field(

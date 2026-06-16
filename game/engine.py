@@ -54,5 +54,5 @@ class Game:
         try:
             while True:
                 self.scene_runner.run(session)
-        except (KeyboardInterrupt, EOFError):
+        except KeyboardInterrupt, EOFError:
             LOGGER.info("You set the story aside for now. Thanks for playing.")

@@ -39,6 +39,8 @@ class ItemSchema(BaseModel):
             raise ValueError("weapon items require a weapon_stat block")
         if self.category == "armor" and self.armor_stat is None:
             raise ValueError("armor items require an armor_stat block")
-        if self.category == "other" and (self.weapon_stat is not None or self.armor_stat is not None):
+        if self.category == "other" and (
+            self.weapon_stat is not None or self.armor_stat is not None
+        ):
             raise ValueError("other items cannot define weapon_stat or armor_stat")
         return self

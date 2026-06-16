@@ -4,7 +4,14 @@ from pathlib import Path
 from .content_schema import ActorSchema, ItemSchema, SceneSchema
 from .models.actor import Actor
 from .models.attributes import Attributes
-from .models.choice import Choice, Effects, ItemRequirement, Outcome, Requirements, SkillTest
+from .models.choice import (
+    Choice,
+    Effects,
+    ItemRequirement,
+    Outcome,
+    Requirements,
+    SkillTest,
+)
 from .models.item import ArmorStat, Item, WeaponStat
 from .models.scene import Scene
 from .systems.equipment import Equipment
@@ -92,8 +99,12 @@ def load_item(path: str | Path) -> Item:
         name=schema.name,
         description=schema.description,
         category=schema.category,
-        weapon_stat=WeaponStat(**schema.weapon_stat.model_dump()) if schema.weapon_stat else None,
-        armor_stat=ArmorStat(**schema.armor_stat.model_dump()) if schema.armor_stat else None,
+        weapon_stat=WeaponStat(**schema.weapon_stat.model_dump())
+        if schema.weapon_stat
+        else None,
+        armor_stat=ArmorStat(**schema.armor_stat.model_dump())
+        if schema.armor_stat
+        else None,
     )
 
 

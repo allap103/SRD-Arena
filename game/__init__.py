@@ -8,4 +8,12 @@ try:
 except ModuleNotFoundError:
     CyoaTextualApp = None
 
-__all__ = ["ChoiceResolver", "CyoaTextualApp", "Game", "GameSession", "SceneRunner", "SceneView", "TurnResult"]
+__all__ = [
+    "ChoiceResolver",
+    "CyoaTextualApp",
+    "Game",
+    "GameSession",
+    "SceneRunner",
+    "SceneView",
+    "TurnResult",
+]

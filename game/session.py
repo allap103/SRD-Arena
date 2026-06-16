@@ -53,7 +53,9 @@ class GameSession:
     def choose(self, choice_index: int) -> TurnResult:
         scene = self.current_scene
         if not 0 <= choice_index < len(scene.choices):
-            raise IndexError(f"Choice index {choice_index} is out of range for scene '{scene.id}'.")
+            raise IndexError(
+                f"Choice index {choice_index} is out of range for scene '{scene.id}'."
+            )
 
         choice = scene.choices[choice_index]
         resolution = self.choice_resolver.resolve(scene, choice, actor=self.player)

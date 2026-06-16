@@ -24,8 +24,7 @@ def resolve_scenes_dir(game_dir: str | Path) -> Path:
 def load_scenes_from_game_dir(game_dir: str | Path) -> dict[str, Scene]:
     scenes_dir = resolve_scenes_dir(game_dir)
     return {
-        scene.id: scene
-        for scene in (load_scene(path) for path in scenes_dir.glob("*"))
+        scene.id: scene for scene in (load_scene(path) for path in scenes_dir.glob("*"))
     }
 
 
@@ -47,7 +46,10 @@ def build_scene_graph(scenes: dict[str, Scene]):
             if choice.next_scene is None:
                 continue
 
-            if choice.next_scene not in known_scene_ids and choice.next_scene not in graph:
+            if (
+                choice.next_scene not in known_scene_ids
+                and choice.next_scene not in graph
+            ):
                 graph.add_node(
                     choice.next_scene,
                     text=None,
@@ -179,8 +181,12 @@ def render_scene_graph(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Render a game scene graph to an image file.")
-    parser.add_argument("game_dir", help="Path to the game directory containing a scenes folder.")
+    parser = argparse.ArgumentParser(
+        description="Render a game scene graph to an image file."
+    )
+    parser.add_argument(
+        "game_dir", help="Path to the game directory containing a scenes folder."
+    )
     parser.add_argument(
         "-o",
         "--output",

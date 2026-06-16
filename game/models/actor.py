@@ -55,7 +55,10 @@ class Actor:
         return (attribute_value - 10) // 2
 
     def get_max_health(self) -> int:
-        return self.attributes.base_health + self.get_modifier(self.attributes.constitution) * self.attributes.level
+        return (
+            self.attributes.base_health
+            + self.get_modifier(self.attributes.constitution) * self.attributes.level
+        )
 
     def get_health(self) -> int:
         return self.current_health or 0
@@ -72,4 +75,6 @@ class Actor:
         return applied_healing
 
     def get_armor_class(self) -> int:
-        return self.attributes.base_armor_class + self.get_modifier(self.attributes.dexterity)
+        return self.attributes.base_armor_class + self.get_modifier(
+            self.attributes.dexterity
+        )

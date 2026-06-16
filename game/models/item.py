@@ -36,8 +36,12 @@ class Item:
             name=schema.name,
             description=schema.description,
             category=schema.category,
-            weapon_stat=WeaponStat(**schema.weapon_stat.model_dump()) if schema.weapon_stat else None,
-            armor_stat=ArmorStat(**schema.armor_stat.model_dump()) if schema.armor_stat else None,
+            weapon_stat=WeaponStat(**schema.weapon_stat.model_dump())
+            if schema.weapon_stat
+            else None,
+            armor_stat=ArmorStat(**schema.armor_stat.model_dump())
+            if schema.armor_stat
+            else None,
         )
 
     @classmethod

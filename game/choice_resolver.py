@@ -16,7 +16,9 @@ class ChoiceResolution:
 class ChoiceResolver:
     completed_tests: set[tuple[str, str]] = field(default_factory=set)
 
-    def resolve(self, scene: Scene, choice: Choice, actor: Actor | None = None) -> ChoiceResolution:
+    def resolve(
+        self, scene: Scene, choice: Choice, actor: Actor | None = None
+    ) -> ChoiceResolution:
         messages: list[tuple[str, str]] = []
         if choice.message:
             messages.append(("scene", choice.message))
@@ -27,7 +29,9 @@ class ChoiceResolver:
         self._consume_required_items(choice, actor)
 
         if choice.test is None:
-            return ChoiceResolution(next_scene_id=choice.next_scene or scene.id, messages=messages)
+            return ChoiceResolution(
+                next_scene_id=choice.next_scene or scene.id, messages=messages
+            )
 
         return self._resolve_test(scene, choice, actor, messages)
 
@@ -92,8 +96,12 @@ class ChoiceResolver:
 
         if total >= test.difficulty:
             self.completed_tests.add(choice_key)
-            self._apply_effects(test.effects, success=True, actor=actor, messages=messages)
-            return ChoiceResolution(next_scene_id=choice.next_scene or scene.id, messages=messages)
+            self._apply_effects(
+                test.effects, success=True, actor=actor, messages=messages
+            )
+            return ChoiceResolution(
+                next_scene_id=choice.next_scene or scene.id, messages=messages
+            )
 
         self._apply_effects(test.effects, success=False, actor=actor, messages=messages)
         return ChoiceResolution(next_scene_id=scene.id, messages=messages)
