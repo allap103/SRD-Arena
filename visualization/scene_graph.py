@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import tomllib
+from typing import Any
 
 from game.loaders import load_scene
 from game.models.scene import Scene
@@ -28,8 +29,8 @@ def load_scenes_from_game_dir(game_dir: str | Path) -> dict[str, Scene]:
     }
 
 
-def build_scene_graph(scenes: dict[str, Scene]):
-    import networkx as nx
+def build_scene_graph(scenes: dict[str, Scene]) -> Any:
+    import networkx as nx  # type: ignore[import-untyped]
 
     graph = nx.MultiDiGraph()
     known_scene_ids = set(scenes)
@@ -80,7 +81,7 @@ def render_scene_graph(
     matplotlib.use("Agg")
 
     import matplotlib.pyplot as plt
-    import networkx as nx
+    import networkx as nx  # type: ignore[import-untyped]
 
     scenes = load_scenes_from_game_dir(game_dir)
     graph = build_scene_graph(scenes)
@@ -88,7 +89,11 @@ def render_scene_graph(
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    positions = nx.kamada_kawai_layout(graph) if graph.number_of_nodes() > 1 else None
+    positions: Any = (
+        nx.kamada_kawai_layout(graph)
+        if graph.number_of_nodes() > 1
+        else {node_id: (0.0, 0.0) for node_id in graph.nodes}
+    )
 
     fig_width = max(8, graph.number_of_nodes() * 1.2)
     fig_height = max(6, graph.number_of_nodes() * 0.9)

@@ -57,7 +57,10 @@ class EncounterState:
     definition: Encounter
     player_position: Position
     enemies: list[EncounterEnemyState]
-    _behaviors: list[Generator] = field(default_factory=list, repr=False)
+    _behaviors: list[Generator[EncounterAction | None, BehaviorContext, None]] = field(
+        default_factory=list,
+        repr=False,
+    )
 
     @classmethod
     def from_definition(
@@ -227,10 +230,13 @@ class EncounterState:
             )
             messages.append(("system", f"You move {direction}."))
         elif action.kind == "attack":
-            enemy = self.enemies[int(action.value)]
-            messages.extend(_resolve_attack(player, enemy.actor, f"Enemy {int(action.value) + 1}"))
+            if not isinstance(action.value, int):
+                raise ValueError(f"Encounter attack action requires an integer target, got {action.value!r}.")
+            enemy_index = action.value
+            enemy = self.enemies[enemy_index]
+            messages.extend(_resolve_attack(player, enemy.actor, f"Enemy {enemy_index + 1}"))
             if not enemy.is_alive:
-                messages.append(("system", f"Enemy {int(action.value) + 1} falls."))
+                messages.append(("system", f"Enemy {enemy_index + 1} falls."))
         elif action.kind == "wait":
             messages.append(("system", "You hold your ground."))
         elif action.kind == "flee":
@@ -260,6 +266,8 @@ class EncounterState:
                     can_attack=_distance(self.player_position, enemy.position) == 1,
                 )
             )
+            if command is None:
+                continue
 
             if command.kind == "move":
                 direction = str(command.value)

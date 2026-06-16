@@ -11,6 +11,7 @@ def test_encounter_scene_generates_runtime_actions_and_grid() -> None:
     session.current_scene_id = "test_encounter"
 
     scene_view = session.get_scene_view()
+    assert scene_view.scene_text is not None
 
     assert "P" in scene_view.scene_text
     assert "E" in scene_view.scene_text
@@ -64,6 +65,7 @@ def test_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:
     )
     result = session.choose(attack_index)
 
+    assert result.selected_choice_text is not None
     assert result.selected_choice_text.startswith("Attack enemy 1")
     assert session.current_scene_id == "test_encounter_victory"
     assert result.scene_changed is True

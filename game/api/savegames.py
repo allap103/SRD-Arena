@@ -79,7 +79,7 @@ class SavegameApi:
         def load_game(
             save: SaveGame = Body(
                 ...,
-                examples={
+                openapi_examples={
                     "sample_game_save": {
                         "summary": "Working savegame for the bundled sample adventure",
                         "value": SAVEGAME_EXAMPLE,

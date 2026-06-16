@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import cast
 
 from .content_schema import ActorSchema, ItemSchema, SceneSchema
 from .models.actor import Actor
@@ -127,7 +128,7 @@ def load_actor(path: str | Path) -> Actor:
     equipment = Equipment(
         equipped_items={
             **Equipment().equipped_items,
-            **schema.equipment,
+            **cast(dict[str, str | None], dict(schema.equipment)),
         }
     )
 
