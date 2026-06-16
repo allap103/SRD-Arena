@@ -1,0 +1,19 @@
+{
+    "id": "start",
+    "type": "basic",
+    "text": "A test scene with several graph edges.",
+    "choices": {
+        "Take the bright path.": {
+            "message": "You follow the bright path.",
+            "next_scene": "shared_target"
+        },
+        "Take the quiet path.": {
+            "message": "You follow the quiet path.",
+            "next_scene": "shared_target"
+        },
+        "Open the missing door.": {
+            "message": "The door points at a scene fixture that does not exist.",
+            "next_scene": "missing_target"
+        }
+    }
+}
