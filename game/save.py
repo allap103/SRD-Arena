@@ -18,6 +18,32 @@ from .systems.equipment import Equipment
 from .systems.inventory import Inventory
 
 SAVE_VERSION = 1
+SAVEGAME_EXAMPLE = {
+    "version": 1,
+    "current_scene_id": "welcome",
+    "start_scene_id": "welcome",
+    "player": {
+        "actor_id": "player",
+        "current_health": 12,
+        "inventory": ["potion", "dagger"],
+        "equipment": {
+            "body": "chainmail",
+            "right_hand": "dagger",
+        },
+        "attributes": {
+            "base_health": 10,
+            "level": 1,
+            "strength": 16,
+            "dexterity": 12,
+            "constitution": 14,
+            "wisdom": 8,
+            "intelligence": 12,
+            "charisma": 10,
+            "base_armor_class": 10,
+        },
+    },
+    "completed_tests": [],
+}
 
 
 class AttributeState(BaseModel):
@@ -76,7 +102,10 @@ class EncounterStateModel(BaseModel):
 
 
 class SaveGame(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={"example": SAVEGAME_EXAMPLE},
+    )
 
     version: int = SAVE_VERSION
     current_scene_id: str

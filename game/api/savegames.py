@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Body, FastAPI, HTTPException
 import uvicorn
 
 from game.engine import GAME_DIR, Game
-from game.save import SaveGame, create_save, restore_save
+from game.save import SAVEGAME_EXAMPLE, SaveGame, create_save, restore_save
 from game.session import GameSession
 
 
@@ -35,6 +35,39 @@ class SavegameApi:
             "has_active_encounter": self.session.get_encounter_snapshot() is not None,
         }
 
+    def get_options_payload(self) -> dict:
+        scene_view = self.session.get_scene_view()
+        return {
+            "current_scene_id": scene_view.scene_id,
+            "actions": [
+                {"index": index, "label": choice}
+                for index, choice in enumerate(scene_view.choices)
+            ],
+        }
+
+    def choose_action_payload(self, action_index: int) -> dict:
+        try:
+            result = self.session.choose(action_index)
+        except IndexError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        return {
+            "current_scene_id": self.session.current_scene_id,
+            "selected_index": result.selected_index,
+            "selected_action": result.selected_choice_text,
+            "messages": [
+                {"channel": channel, "message": message}
+                for channel, message in result.messages
+            ],
+            "scene_changed": result.scene_changed,
+            "should_exit": result.should_exit,
+            "scene_text": result.scene.scene_text,
+            "actions": [
+                {"index": index, "label": choice}
+                for index, choice in enumerate(result.scene.choices)
+            ],
+        }
+
     def create_app(self) -> FastAPI:
         app = FastAPI(title="CYOA Savegame API")
 
@@ -43,12 +76,30 @@ class SavegameApi:
             return self.get_save_payload()
 
         @app.post("/load")
-        def load_game(save: SaveGame) -> dict:
+        def load_game(
+            save: SaveGame = Body(
+                ...,
+                examples={
+                    "sample_game_save": {
+                        "summary": "Working savegame for the bundled sample adventure",
+                        "value": SAVEGAME_EXAMPLE,
+                    }
+                },
+            )
+        ) -> dict:
             return self.load_save_payload(save)
 
         @app.get("/stats")
         def get_stats() -> dict:
             return self.get_stats_payload()
+
+        @app.get("/actions")
+        def get_actions() -> dict:
+            return self.get_options_payload()
+
+        @app.post("/actions/{action_index}")
+        def choose_action(action_index: int) -> dict:
+            return self.choose_action_payload(action_index)
 
         return app
 
