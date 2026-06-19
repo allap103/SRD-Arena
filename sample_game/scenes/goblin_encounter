@@ -1,11 +1,11 @@
 {
-    "id": "test_encounter",
+    "id": "goblin_encounter",
     "type": "encounter",
-    "text": "Two goblins rush out from behind a collapsed wagon while a third keeps watch near the tower stairs. This scene is prepared for the future encounter system.",
+    "text": "As you charge towards the goblins, they quickly ready their weapons and prepare to fight. The goblin with the bow takes aim at you, while the other two reach for their primitive swords. The battle begins!",
     "encounter": {
         "grid": {
-            "width": 8,
-            "height": 8
+            "width": 13,
+            "height": 13
         },
         "player_start": {
             "x": 1,
@@ -29,7 +29,7 @@
                     "y": 2
                 },
                 "behavior": {
-                    "type": "guard",
+                    "type": "chase",
                     "anchor": {
                         "x": 6,
                         "y": 2
@@ -63,20 +63,16 @@
             }
         ],
         "victory": {
-            "next_scene": "test_encounter_victory"
+            "next_scene": "goblin_encounter_victory"
         },
         "defeat": {
-            "next_scene": "test_encounter_defeat"
+            "next_scene": "goblin_encounter_defeat"
         },
         "flee": {
             "allowed": true,
-            "next_scene": "test_encounter_intro"
+            "next_scene": "welcome"
         }
     },
     "choices": {
-        "Retreat until the encounter system is ready.": {
-            "message": "You decide to fall back before the skirmish fully begins.",
-            "next_scene": "test_encounter_intro"
-        }
     }
 }

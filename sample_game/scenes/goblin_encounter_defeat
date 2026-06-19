@@ -1,10 +1,10 @@
 {
-    "id": "game_over",
+    "id": "goblin_encounter_defeat",
     "type": "basic",
-    "text": "Your little burglary ends without treasure this time.",
+    "text": "The goblins overwhelm you. Your adventure ends here.",
     "choices": {
         "Try again.": {
             "next_scene": "welcome"
         }
-    }  
+    }
 }

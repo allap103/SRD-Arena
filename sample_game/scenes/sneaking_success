@@ -1,0 +1,10 @@
+{
+    "id": "sneaking_success",
+    "type": "basic",
+    "text": "You are back in the forest. Circling around the clearing, you continue your journey.",
+    "choices": {
+        "Return to the clearing.": {
+            "next_scene": "welcome"
+        }
+    }
+}

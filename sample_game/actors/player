@@ -1,10 +1,14 @@
 {
     "id": "player",
     "name":"Player",
-    "description":"A true hero",
+    "description":"A traveler",
     "attributes": {
         "base_health": 10,
         "level": 1,
+        "movement": {
+            "speed_feet": 30,
+            "feet_per_square": 5
+        },
         "strength": 16,
         "dexterity": 12,
         "constitution": 14,
