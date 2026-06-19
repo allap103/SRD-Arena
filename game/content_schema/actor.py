@@ -29,6 +29,7 @@ class AttributesSchema(BaseModel):
 
     base_health: int = 10
     level: int = 1
+    movement: "MovementSchema" = Field(default_factory=lambda: MovementSchema())
     strength: int = 10
     dexterity: int = 10
     constitution: int = 10
@@ -36,6 +37,13 @@ class AttributesSchema(BaseModel):
     intelligence: int = 10
     charisma: int = 10
     base_armor_class: int = 10
+
+
+class MovementSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    speed_feet: int = 30
+    feet_per_square: int = 5
 
 
 class ActorSchema(BaseModel):

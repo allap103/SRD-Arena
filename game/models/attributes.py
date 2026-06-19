@@ -2,6 +2,16 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class Movement:
+    speed_feet: int = 30
+    feet_per_square: int = 5
+
+    @property
+    def squares_per_turn(self) -> int:
+        return self.speed_feet // self.feet_per_square
+
+
+@dataclass
 class Attributes:
     base_health: int
     level: int
@@ -12,6 +22,7 @@ class Attributes:
     intelligence: int
     charisma: int
     base_armor_class: int
+    movement: Movement = field(default_factory=Movement)
     proficiency_bonus: int = 2
     proficiencies: dict = field(default_factory=dict)
 

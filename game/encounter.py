@@ -48,6 +48,8 @@ class EncounterSnapshotEnemy:
 class EncounterSnapshot:
     scene_id: str
     player_position: Position
+    turn_index: int = 0
+    round_number: int = 1
     enemies: list[EncounterSnapshotEnemy] = field(default_factory=list)
 
 
@@ -57,6 +59,8 @@ class EncounterState:
     definition: Encounter
     player_position: Position
     enemies: list[EncounterEnemyState]
+    turn_index: int = 0
+    round_number: int = 1
     _behaviors: list[Generator[EncounterAction | None, BehaviorContext, None]] = field(
         default_factory=list,
         repr=False,
@@ -116,14 +120,19 @@ class EncounterState:
             definition=definition,
             player_position=Position(snapshot.player_position.x, snapshot.player_position.y),
             enemies=enemies,
+            turn_index=snapshot.turn_index,
+            round_number=snapshot.round_number,
         )
         state._initialize_behaviors()
+        state._normalize_turn()
         return state
 
     def snapshot(self) -> EncounterSnapshot:
         return EncounterSnapshot(
             scene_id=self.scene_id,
             player_position=Position(self.player_position.x, self.player_position.y),
+            turn_index=self.turn_index,
+            round_number=self.round_number,
             enemies=[
                 EncounterSnapshotEnemy(
                     actor_id=enemy.actor_id,
@@ -173,13 +182,31 @@ class EncounterState:
             [
                 *rows,
                 "",
+                f"Round {self.round_number} - Turn: {self.current_turn_label()}",
                 f"Player HP: {player.get_health()}/{player.get_max_health()} at ({self.player_position.x}, {self.player_position.y})",
                 "Enemies:",
                 *enemy_lines,
             ]
         )
 
+    def current_turn_label(self) -> str:
+        actor_type, enemy_index = self.active_actor()
+        if actor_type == "player":
+            return "Player"
+        assert enemy_index is not None
+        enemy = self.enemies[enemy_index]
+        return f"Enemy {enemy_index + 1} ({enemy.actor.name})"
+
+    def active_actor(self) -> tuple[str, int | None]:
+        self._normalize_turn()
+        if self.turn_index == 0:
+            return ("player", None)
+        return ("enemy", self.turn_index - 1)
+
     def available_actions(self) -> list[EncounterAction]:
+        if self.active_actor()[0] != "player":
+            return []
+
         actions = []
         for direction, dx, dy in (
             ("up", 0, -1),
@@ -212,7 +239,14 @@ class EncounterState:
 
         return actions
 
-    def apply_action(self, player: Actor, action: EncounterAction) -> tuple[list[tuple[str, str]], str | None]:
+    def apply_action(
+        self,
+        player: Actor,
+        action: EncounterAction,
+    ) -> tuple[list[tuple[str, str]], str | None]:
+        if self.active_actor()[0] != "player":
+            raise RuntimeError("Player action requested while it is not the player's turn.")
+
         messages: list[tuple[str, str]] = []
         transition: str | None = None
 
@@ -247,56 +281,102 @@ class EncounterState:
         if transition is not None:
             return messages, transition
 
-        messages.extend(self.advance_enemies(player))
+        self._advance_turn()
+        messages.extend(self.advance_non_player_turns(player))
         transition = self._check_transition()
         return messages, transition
 
-    def advance_enemies(self, player: Actor) -> list[tuple[str, str]]:
+    def advance_non_player_turns(self, player: Actor) -> list[tuple[str, str]]:
         messages: list[tuple[str, str]] = []
-        for enemy, behavior in zip(self.enemies, self._behaviors, strict=False):
-            if not enemy.is_alive:
-                continue
+        while self.active_actor()[0] == "enemy":
             if player.get_health() <= 0:
                 break
 
-            command = behavior.send(
-                BehaviorContext(
-                    player_position=Position(self.player_position.x, self.player_position.y),
-                    enemy_position=Position(enemy.position.x, enemy.position.y),
-                    can_attack=_distance(self.player_position, enemy.position) == 1,
-                )
+            enemy_index = self.active_actor()[1]
+            assert enemy_index is not None
+            messages.extend(
+                self._advance_enemy_turn(player, enemy_index)
             )
-            if command is None:
-                continue
+            self._advance_turn()
 
-            if command.kind == "move":
-                direction = str(command.value)
-                dx, dy = {
-                    "up": (0, -1),
-                    "down": (0, 1),
-                    "left": (-1, 0),
-                    "right": (1, 0),
-                }[direction]
-                target_x = enemy.position.x + dx
-                target_y = enemy.position.y + dy
-                if self._is_free_for_enemy(target_x, target_y):
-                    enemy.position = Position(target_x, target_y)
-                    messages.append(
-                        (
-                            "system",
-                            f"{enemy.actor.name} moves {direction} to ({target_x}, {target_y}).",
-                        )
+            if self._check_transition() is not None:
+                break
+        return messages
+
+    def _advance_enemy_turn(
+        self,
+        player: Actor,
+        enemy_index: int,
+    ) -> list[tuple[str, str]]:
+        enemy = self.enemies[enemy_index]
+        if not enemy.is_alive:
+            return []
+
+        behavior = self._behaviors[enemy_index]
+        command = behavior.send(
+            BehaviorContext(
+                player_position=Position(self.player_position.x, self.player_position.y),
+                enemy_position=Position(enemy.position.x, enemy.position.y),
+                can_attack=_distance(self.player_position, enemy.position) == 1,
+            )
+        )
+        if command is None:
+            return []
+
+        messages: list[tuple[str, str]] = []
+        if command.kind == "move":
+            direction = str(command.value)
+            dx, dy = {
+                "up": (0, -1),
+                "down": (0, 1),
+                "left": (-1, 0),
+                "right": (1, 0),
+            }[direction]
+            target_x = enemy.position.x + dx
+            target_y = enemy.position.y + dy
+            if self._is_free_for_enemy(target_x, target_y):
+                enemy.position = Position(target_x, target_y)
+                messages.append(
+                    (
+                        "system",
+                        f"{enemy.actor.name} moves {direction} to ({target_x}, {target_y}).",
                     )
-            elif command.kind == "attack":
-                messages.extend(_resolve_attack(enemy.actor, player, enemy.actor.name))
-            else:
-                messages.append(("system", f"{enemy.actor.name} waits."))
+                )
+        elif command.kind == "attack":
+            messages.extend(_resolve_attack(enemy.actor, player, enemy.actor.name))
+        else:
+            messages.append(("system", f"{enemy.actor.name} waits."))
         return messages
 
     def _check_transition(self) -> str | None:
         if all(not enemy.is_alive for enemy in self.enemies):
             return self.definition.victory.next_scene if self.definition.victory else None
         return None
+
+    def _advance_turn(self) -> None:
+        self.turn_index += 1
+        if self.turn_index >= self._turn_count():
+            self.turn_index = 0
+            self.round_number += 1
+        self._normalize_turn()
+
+    def _normalize_turn(self) -> None:
+        if self.turn_index >= self._turn_count():
+            self.turn_index = 0
+
+        for _ in range(self._turn_count()):
+            if self.turn_index == 0:
+                return
+            enemy = self.enemies[self.turn_index - 1]
+            if enemy.is_alive:
+                return
+            self.turn_index += 1
+            if self.turn_index >= self._turn_count():
+                self.turn_index = 0
+                self.round_number += 1
+
+    def _turn_count(self) -> int:
+        return len(self.enemies) + 1
 
     def _live_enemy_at(self, x: int, y: int) -> EncounterEnemyState | None:
         return next(

@@ -60,3 +60,80 @@ def test_resolve_game_directory_rejects_missing_structure(tmp_path: Path) -> Non
 
     with pytest.raises(FileNotFoundError):
         launcher.resolve_game_directory(str(invalid_game))
+
+
+def test_launch_in_new_terminal_starts_textual_in_windows_console(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    game_dir = _make_game_dir(tmp_path / "game")
+    calls = []
+
+    monkeypatch.setattr(launcher.os, "name", "nt")
+    monkeypatch.setattr(launcher.subprocess, "CREATE_NEW_CONSOLE", 16, raising=False)
+    monkeypatch.setattr(launcher.sys, "executable", "python.exe")
+
+    def fake_popen(command, **kwargs):
+        calls.append((command, kwargs))
+
+    monkeypatch.setattr(launcher.subprocess, "Popen", fake_popen)
+
+    launcher.launch_in_new_terminal("textual", game_dir)
+
+    assert calls == [
+        (
+            [
+                "python.exe",
+                "-m",
+                "game.launcher",
+                "--no-popup",
+                "textual",
+                str(game_dir),
+            ],
+            {
+                "cwd": launcher.REPO_ROOT,
+                "creationflags": 16,
+            },
+        )
+    ]
+
+
+def test_launch_in_new_terminal_rejects_non_textual_frontend(tmp_path: Path) -> None:
+    game_dir = _make_game_dir(tmp_path / "game")
+
+    with pytest.raises(ValueError):
+        launcher.launch_in_new_terminal("api", game_dir)
+
+
+def test_main_launches_textual_in_popup_by_default_on_windows(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    game_dir = _make_game_dir(tmp_path / "game")
+    launched = []
+
+    monkeypatch.setattr(launcher.os, "name", "nt")
+    monkeypatch.setattr(
+        launcher,
+        "launch_in_new_terminal",
+        lambda *args: launched.append(args),
+    )
+
+    launcher.main(["textual", str(game_dir)])
+
+    assert launched == [("textual", game_dir.resolve())]
+
+
+def test_main_no_popup_runs_textual_in_current_terminal(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    game_dir = _make_game_dir(tmp_path / "game")
+    launched = []
+
+    monkeypatch.setattr(launcher.os, "name", "nt")
+    monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(args))
+
+    launcher.main(["--no-popup", "textual", str(game_dir)])
+
+    assert launched == [("textual", game_dir.resolve())]

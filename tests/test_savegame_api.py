@@ -83,13 +83,13 @@ def test_get_actions_returns_available_choices_for_current_scene() -> None:
 
 def test_get_actions_returns_encounter_actions_for_encounter_scene() -> None:
     api = SavegameApi(Game("sample_game"))
-    api.session.current_scene_id = "test_encounter"
+    api.session.current_scene_id = "goblin_encounter"
     client = TestClient(api.create_app())
 
     response = client.get("/actions")
 
     assert response.status_code == 200
-    assert response.json()["current_scene_id"] == "test_encounter"
+    assert response.json()["current_scene_id"] == "goblin_encounter"
     labels = [option["label"] for option in response.json()["actions"]]
     assert "Move up" in labels
     assert "Wait" in labels

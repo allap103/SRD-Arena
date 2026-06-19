@@ -12,7 +12,7 @@ from .choice_resolver import ChoiceResolver
 from .encounter import EncounterSnapshot, EncounterSnapshotEnemy
 from .engine import Game
 from .models.actor import Actor
-from .models.attributes import Attributes
+from .models.attributes import Attributes, Movement
 from .models.scene import Position
 from .session import GameSession
 from .systems.equipment import Equipment
@@ -54,6 +54,7 @@ class AttributeState(BaseModel):
 
     base_health: int
     level: int
+    movement: "MovementState" = Field(default_factory=lambda: MovementState())
     strength: int
     dexterity: int
     constitution: int
@@ -61,6 +62,13 @@ class AttributeState(BaseModel):
     intelligence: int
     charisma: int
     base_armor_class: int
+
+
+class MovementState(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    speed_feet: int = 30
+    feet_per_square: int = 5
 
 
 class PlayerState(BaseModel):
@@ -101,6 +109,8 @@ class EncounterStateModel(BaseModel):
 
     scene_id: str
     player_position: PositionState
+    turn_index: int = 0
+    round_number: int = 1
     enemies: list[EncounterEnemyStateModel] = Field(default_factory=list)
 
 
@@ -191,6 +201,10 @@ def _create_player_state(player: Actor) -> PlayerState:
         attributes=AttributeState(
             base_health=player.attributes.base_health,
             level=player.attributes.level,
+            movement=MovementState(
+                speed_feet=player.attributes.movement.speed_feet,
+                feet_per_square=player.attributes.movement.feet_per_square,
+            ),
             strength=player.attributes.strength,
             dexterity=player.attributes.dexterity,
             constitution=player.attributes.constitution,
@@ -208,7 +222,10 @@ def _restore_player_state(player_template: Actor, state: PlayerState) -> Actor:
         name=player_template.name,
         description=player_template.description,
         inventory=Inventory(items=list(state.inventory)),
-        attributes=Attributes(**state.attributes.model_dump()),
+        attributes=Attributes(
+            **state.attributes.model_dump(exclude={"movement"}),
+            movement=Movement(**state.attributes.movement.model_dump()),
+        ),
         equipment=Equipment(equipped_items=dict(state.equipment)),
         current_health=state.current_health,
     )
@@ -224,6 +241,8 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
             x=snapshot.player_position.x,
             y=snapshot.player_position.y,
         ),
+        turn_index=snapshot.turn_index,
+        round_number=snapshot.round_number,
         enemies=[
             EncounterEnemyStateModel(
                 actor_id=enemy.actor_id,
@@ -245,6 +264,8 @@ def _restore_encounter_state(
     return EncounterSnapshot(
         scene_id=state.scene_id,
         player_position=Position(x=state.player_position.x, y=state.player_position.y),
+        turn_index=state.turn_index,
+        round_number=state.round_number,
         enemies=[
             EncounterSnapshotEnemy(
                 actor_id=enemy.actor_id,

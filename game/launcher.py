@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
+import subprocess
+import sys
 
 from .api.savegames import run_savegame_api
 from .engine import GAME_DIR, Game
@@ -41,6 +44,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=8000,
         help="Port to bind the API frontend to.",
     )
+    parser.add_argument(
+        "--no-popup",
+        action="store_true",
+        help="Run the Textual frontend in the current terminal instead of a popup.",
+    )
     return parser
 
 
@@ -66,7 +74,12 @@ def resolve_game_directory(game: str | None) -> Path:
     )
 
 
-def launch(frontend: str, game_dir: Path, host: str = "127.0.0.1", port: int = 8000) -> None:
+def launch(
+    frontend: str,
+    game_dir: Path,
+    host: str = "127.0.0.1",
+    port: int = 8000,
+) -> None:
     if frontend == "textual":
         run_textual_app(Game(str(game_dir)))
         return
@@ -78,10 +91,33 @@ def launch(frontend: str, game_dir: Path, host: str = "127.0.0.1", port: int = 8
     Game(str(game_dir)).run()
 
 
+def launch_in_new_terminal(frontend: str, game_dir: Path) -> None:
+    if frontend != "textual":
+        raise ValueError("Popup launch is only supported for the Textual frontend.")
+    if os.name != "nt":
+        raise OSError("Popup launch is currently only supported on Windows.")
+
+    subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "game.launcher",
+            "--no-popup",
+            "textual",
+            str(game_dir),
+        ],
+        cwd=REPO_ROOT,
+        creationflags=subprocess.CREATE_NEW_CONSOLE,
+    )
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
     game_dir = resolve_game_directory(args.game)
+    if args.frontend == "textual" and not args.no_popup and os.name == "nt":
+        launch_in_new_terminal(args.frontend, game_dir)
+        return
     launch(args.frontend, game_dir, host=args.host, port=args.port)
 
 

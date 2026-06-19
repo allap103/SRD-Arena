@@ -4,7 +4,7 @@ from typing import cast
 
 from .content_schema import ActorSchema, ItemSchema, SceneSchema
 from .models.actor import Actor
-from .models.attributes import Attributes
+from .models.attributes import Attributes, Movement
 from .models.choice import (
     Choice,
     Effects,
@@ -59,6 +59,7 @@ def _build_effects(effects) -> Effects | None:
             return None
         return Outcome(
             message=outcome.message,
+            next_scene=outcome.next_scene,
             gain_item=outcome.gain_item,
             lose_item=outcome.lose_item,
             damage=outcome.damage,
@@ -137,7 +138,10 @@ def load_actor(path: str | Path) -> Actor:
         name=schema.name,
         description=schema.description,
         inventory=Inventory(items=list(schema.inventory)),
-        attributes=Attributes(**schema.attributes.model_dump()),
+        attributes=Attributes(
+            **schema.attributes.model_dump(exclude={"movement"}),
+            movement=Movement(**schema.attributes.movement.model_dump()),
+        ),
         equipment=equipment,
     )
 

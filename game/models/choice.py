@@ -17,6 +17,7 @@ class Requirements:
 @dataclass
 class Outcome:
     message: str | None = None
+    next_scene: str | None = None
     gain_item: str | None = None
     lose_item: str | None = None
     damage: int = 0

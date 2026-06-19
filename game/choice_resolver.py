@@ -97,15 +97,18 @@ class ChoiceResolver:
 
         if total >= test.difficulty:
             self.completed_tests.add(choice_key)
-            self._apply_effects(
+            next_scene = self._apply_effects(
                 test.effects, success=True, actor=actor, messages=messages
             )
             return ChoiceResolution(
-                next_scene_id=choice.next_scene or scene.id, messages=messages
+                next_scene_id=next_scene or choice.next_scene or scene.id,
+                messages=messages,
             )
 
-        self._apply_effects(test.effects, success=False, actor=actor, messages=messages)
-        return ChoiceResolution(next_scene_id=scene.id, messages=messages)
+        next_scene = self._apply_effects(
+            test.effects, success=False, actor=actor, messages=messages
+        )
+        return ChoiceResolution(next_scene_id=next_scene or scene.id, messages=messages)
 
     def _apply_effects(
         self,
@@ -113,22 +116,22 @@ class ChoiceResolver:
         success: bool,
         actor: Actor,
         messages: list[tuple[str, str]],
-    ) -> None:
+    ) -> str | None:
         if effects is None:
-            return
+            return None
 
         outcome = effects.on_success if success else effects.on_failure
         if outcome is None:
-            return
+            return None
 
-        self._apply_outcome(outcome, actor, messages)
+        return self._apply_outcome(outcome, actor, messages)
 
     def _apply_outcome(
         self,
         outcome: Outcome,
         actor: Actor,
         messages: list[tuple[str, str]],
-    ) -> None:
+    ) -> str | None:
         if outcome.message:
             messages.append(("scene", outcome.message))
         if outcome.gain_item:
@@ -145,6 +148,7 @@ class ChoiceResolver:
                     f"You take {damage_taken} damage and now have {actor.get_health()} health.",
                 )
             )
+        return outcome.next_scene
         if outcome.healing:
             health_restored = actor.heal(outcome.healing)
             messages.append(
