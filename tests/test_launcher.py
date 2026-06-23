@@ -98,6 +98,40 @@ def test_launch_in_new_terminal_starts_textual_in_windows_console(
     ]
 
 
+def test_launch_in_new_terminal_starts_textual_in_macos_terminal(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    game_dir = _make_game_dir(tmp_path / "game")
+    calls = []
+
+    monkeypatch.setattr(launcher.os, "name", "posix")
+    monkeypatch.setattr(launcher.sys, "platform", "darwin")
+    monkeypatch.setattr(launcher.sys, "executable", "/usr/local/bin/python3")
+
+    def fake_popen(command, **kwargs):
+        calls.append((command, kwargs))
+
+    monkeypatch.setattr(launcher.subprocess, "Popen", fake_popen)
+
+    launcher.launch_in_new_terminal("textual", game_dir)
+
+    expected_script = (
+        'tell application "Terminal"\n'
+        "activate\n"
+        f'do script "cd {launcher.REPO_ROOT} && /usr/local/bin/python3 -m game.launcher --no-popup textual {game_dir}"\n'
+        "end tell"
+    )
+    assert calls == [
+        (
+            ["osascript", "-e", expected_script],
+            {
+                "cwd": launcher.REPO_ROOT,
+            },
+        )
+    ]
+
+
 def test_launch_in_new_terminal_rejects_non_textual_frontend(tmp_path: Path) -> None:
     game_dir = _make_game_dir(tmp_path / "game")
 
@@ -113,6 +147,36 @@ def test_main_launches_textual_in_popup_by_default_on_windows(
     launched = []
 
     monkeypatch.setattr(launcher.os, "name", "nt")
+    monkeypatch.setattr(
+        launcher,
+        "resolve_game_directory",
+        lambda game: game_dir.resolve(),
+    )
+    monkeypatch.setattr(
+        launcher,
+        "launch_in_new_terminal",
+        lambda *args: launched.append(args),
+    )
+
+    launcher.main(["textual", str(game_dir)])
+
+    assert launched == [("textual", game_dir.resolve())]
+
+
+def test_main_launches_textual_in_popup_by_default_on_macos(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    game_dir = _make_game_dir(tmp_path / "game")
+    launched = []
+
+    monkeypatch.setattr(launcher.os, "name", "posix")
+    monkeypatch.setattr(launcher.sys, "platform", "darwin")
+    monkeypatch.setattr(
+        launcher,
+        "resolve_game_directory",
+        lambda game: game_dir.resolve(),
+    )
     monkeypatch.setattr(
         launcher,
         "launch_in_new_terminal",
@@ -132,6 +196,11 @@ def test_main_no_popup_runs_textual_in_current_terminal(
     launched = []
 
     monkeypatch.setattr(launcher.os, "name", "nt")
+    monkeypatch.setattr(
+        launcher,
+        "resolve_game_directory",
+        lambda game: game_dir.resolve(),
+    )
     monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(args))
 
     launcher.main(["--no-popup", "textual", str(game_dir)])

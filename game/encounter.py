@@ -28,6 +28,12 @@ class EncounterAction:
 
 
 @dataclass
+class EncounterProgress:
+    messages: list[tuple[str, str]] = field(default_factory=list)
+    transition: str | None = None
+
+
+@dataclass
 class BehaviorContext:
     player_position: Position
     enemy_position: Position
@@ -256,12 +262,11 @@ class EncounterState:
         self,
         player: Actor,
         action: EncounterAction,
-    ) -> tuple[list[tuple[str, str]], str | None]:
+    ) -> EncounterProgress:
         if self.active_actor()[0] != "player":
             raise RuntimeError("Player action requested while it is not the player's turn.")
 
-        messages: list[tuple[str, str]] = []
-        transition: str | None = None
+        progress = EncounterProgress()
         action_ends_turn = True
 
         if action.kind == "move":
@@ -273,7 +278,7 @@ class EncounterState:
             )
             self.player_movement_remaining = self._player_movement_remaining(player) - 1
             action_ends_turn = self.player_movement_remaining <= 0
-            messages.append(
+            progress.messages.append(
                 (
                     "system",
                     f"You move {direction}. Movement remaining: {self.player_movement_remaining}.",
@@ -284,43 +289,48 @@ class EncounterState:
                 raise ValueError(f"Encounter attack action requires an integer target, got {action.value!r}.")
             enemy_index = action.value
             enemy = self.enemies[enemy_index]
-            messages.extend(_resolve_attack(player, enemy.actor, f"Enemy {enemy_index + 1}"))
+            progress.messages.extend(
+                _resolve_attack(player, enemy.actor, f"Enemy {enemy_index + 1}")
+            )
             if not enemy.is_alive:
-                messages.append(("system", f"Enemy {enemy_index + 1} falls."))
+                progress.messages.append(("system", f"Enemy {enemy_index + 1} falls."))
         elif action.kind == "wait":
-            messages.append(("system", "You hold your ground."))
+            progress.messages.append(("system", "You hold your ground."))
         elif action.kind == "flee":
-            messages.append(("system", "You flee the encounter."))
-            return messages, self.definition.flee.next_scene if self.definition.flee else None
+            progress.messages.append(("system", "You flee the encounter."))
+            progress.transition = (
+                self.definition.flee.next_scene if self.definition.flee else None
+            )
+            return progress
 
-        transition = self._check_transition()
-        if transition is not None:
-            return messages, transition
+        progress.transition = self._check_transition()
+        if progress.transition is not None:
+            return progress
 
         if not action_ends_turn:
-            return messages, None
+            return progress
 
         self._advance_turn()
-        messages.extend(self.advance_non_player_turns(player))
-        transition = self._check_transition()
-        return messages, transition
+        follow_up = self.advance_until_next_decision(player)
+        progress.messages.extend(follow_up.messages)
+        progress.transition = follow_up.transition
+        return progress
 
-    def advance_non_player_turns(self, player: Actor) -> list[tuple[str, str]]:
-        messages: list[tuple[str, str]] = []
-        while self.active_actor()[0] == "enemy":
+    def advance_until_next_decision(self, player: Actor) -> EncounterProgress:
+        progress = EncounterProgress()
+        while self.active_actor()[0] != "player":
             if player.get_health() <= 0:
                 break
 
             enemy_index = self.active_actor()[1]
             assert enemy_index is not None
-            messages.extend(
-                self._advance_enemy_turn(player, enemy_index)
-            )
+            progress.messages.extend(self._advance_enemy_turn(player, enemy_index))
             self._advance_turn()
 
-            if self._check_transition() is not None:
+            progress.transition = self._check_transition()
+            if progress.transition is not None:
                 break
-        return messages
+        return progress
 
     def _advance_enemy_turn(
         self,

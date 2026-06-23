@@ -188,7 +188,9 @@ class GameSession:
             raise RuntimeError("Encounter action requested without an active encounter.")
 
         action = self._encounter_actions[choice_index]
-        messages, transition = self.encounter_state.apply_action(self.player, action)
+        progress = self.encounter_state.apply_action(self.player, action)
+        messages = progress.messages
+        transition = progress.transition
         if self.player.get_health() <= 0 and self.current_scene.encounter and self.current_scene.encounter.defeat:
             transition = self.current_scene.encounter.defeat.next_scene
 

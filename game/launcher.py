@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 
@@ -94,28 +95,51 @@ def launch(
 def launch_in_new_terminal(frontend: str, game_dir: Path) -> None:
     if frontend != "textual":
         raise ValueError("Popup launch is only supported for the Textual frontend.")
-    if os.name != "nt":
-        raise OSError("Popup launch is currently only supported on Windows.")
 
-    subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "game.launcher",
-            "--no-popup",
-            "textual",
-            str(game_dir),
-        ],
-        cwd=REPO_ROOT,
-        creationflags=subprocess.CREATE_NEW_CONSOLE,
-    )
+    command = [
+        sys.executable,
+        "-m",
+        "game.launcher",
+        "--no-popup",
+        "textual",
+        str(game_dir),
+    ]
+
+    if os.name == "nt":
+        subprocess.Popen(
+            command,
+            cwd=REPO_ROOT,
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
+        )
+        return
+
+    if sys.platform == "darwin":
+        shell_command = "cd {} && {}".format(
+            shlex.quote(str(REPO_ROOT)),
+            shlex.join(command),
+        )
+        apple_script_command = shell_command.replace("\\", "\\\\").replace('"', '\\"')
+        applescript = (
+            'tell application "Terminal"\n'
+            "activate\n"
+            f'do script "{apple_script_command}"\n'
+            "end tell"
+        )
+        subprocess.Popen(["osascript", "-e", applescript], cwd=REPO_ROOT)
+        return
+
+    raise OSError("Popup launch is currently only supported on Windows and macOS.")
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
     game_dir = resolve_game_directory(args.game)
-    if args.frontend == "textual" and not args.no_popup and os.name == "nt":
+    if (
+        args.frontend == "textual"
+        and not args.no_popup
+        and (os.name == "nt" or sys.platform == "darwin")
+    ):
         launch_in_new_terminal(args.frontend, game_dir)
         return
     launch(args.frontend, game_dir, host=args.host, port=args.port)

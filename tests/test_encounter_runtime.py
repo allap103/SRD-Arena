@@ -82,6 +82,22 @@ def test_goblin_encounter_wait_advances_enemy_turns() -> None:
     assert session.encounter_state.round_number == 2
 
 
+def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> None:
+    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.encounter_state.turn_index = 1
+
+    progress = session.encounter_state.advance_until_next_decision(session.player)
+
+    assert progress.transition is None
+    assert ("system", "Goblin moves down-left to (4, 3).") in progress.messages
+    assert session.encounter_state.active_actor() == ("player", None)
+    assert session.encounter_state.round_number == 2
+
+
 def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:
     session = Game(str(SAMPLE_GAME_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
