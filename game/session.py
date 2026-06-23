@@ -27,6 +27,7 @@ class ActionView:
     label: str
     kind: str
     actor_ref: str
+    value: str | int | None = None
     cost: dict[str, int] = field(default_factory=dict)
     source_trigger_id: str | None = None
 
@@ -79,13 +80,14 @@ class GameSession:
         scene_text = scene.text
         choices = [choice.choice_text for choice in scene.choices]
         action_details = [
-            ActionView(
-                index=index,
-                id=f"scene-choice-{index}",
-                label=choice.choice_text,
-                kind="scene_choice",
-                actor_ref="player",
-            )
+                ActionView(
+                    index=index,
+                    id=f"scene-choice-{index}",
+                    label=choice.choice_text,
+                    kind="scene_choice",
+                    actor_ref="player",
+                    value=None,
+                )
             for index, choice in enumerate(scene.choices)
         ]
         if self.encounter_state is not None:
@@ -103,6 +105,7 @@ class GameSession:
                     label=action.label,
                     kind=action.kind,
                     actor_ref=action.actor_ref,
+                    value=action.value,
                     cost={
                         "movement": action.cost.movement,
                         "action": action.cost.action,
@@ -322,6 +325,7 @@ class GameSession:
                 label=SAVE_CHOICE_TEXT,
                 kind="system_save",
                 actor_ref="player",
+                value=None,
             ),
             ActionView(
                 index=start_index + 1,
@@ -329,6 +333,7 @@ class GameSession:
                 label=LOAD_CHOICE_TEXT,
                 kind="system_load",
                 actor_ref="player",
+                value=None,
             ),
             ActionView(
                 index=start_index + 2,
@@ -336,5 +341,6 @@ class GameSession:
                 label=EXIT_CHOICE_TEXT,
                 kind="system_exit",
                 actor_ref="player",
+                value=None,
             ),
         ]
