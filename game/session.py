@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .choice_resolver import ChoiceResolver
-from .encounter import EncounterAction, EncounterSnapshot, EncounterState
+from .encounter import CombatEvent, EncounterAction, EncounterSnapshot, EncounterState
 from .models.actor import Actor
 from .models.scene import Scene
 
@@ -17,6 +17,18 @@ class SceneView:
     scene_id: str
     scene_text: str | None
     choices: list[str] = field(default_factory=list)
+    action_details: list["ActionView"] = field(default_factory=list)
+
+
+@dataclass
+class ActionView:
+    index: int
+    id: str
+    label: str
+    kind: str
+    actor_ref: str
+    cost: dict[str, int] = field(default_factory=dict)
+    source_trigger_id: str | None = None
 
 
 @dataclass
@@ -24,10 +36,14 @@ class TurnResult:
     scene: SceneView
     selected_index: int | None = None
     selected_choice_text: str | None = None
+    selected_action_id: str | None = None
     messages: list[tuple[str, str]] = field(default_factory=list)
     next_scene_id: str | None = None
     scene_changed: bool = False
     should_exit: bool = False
+    events: list[CombatEvent] = field(default_factory=list)
+    decision: dict[str, object] | None = None
+    combat_state: dict[str, object] | None = None
 
 
 class GameSession:
@@ -62,6 +78,16 @@ class GameSession:
         scene = self.current_scene
         scene_text = scene.text
         choices = [choice.choice_text for choice in scene.choices]
+        action_details = [
+            ActionView(
+                index=index,
+                id=f"scene-choice-{index}",
+                label=choice.choice_text,
+                kind="scene_choice",
+                actor_ref="player",
+            )
+            for index, choice in enumerate(scene.choices)
+        ]
         if self.encounter_state is not None:
             scene_text = "\n\n".join(
                 part
@@ -70,10 +96,28 @@ class GameSession:
             )
             self._encounter_actions = self.encounter_state.available_actions(self.player)
             choices = [action.label for action in self._encounter_actions]
+            action_details = [
+                ActionView(
+                    index=index,
+                    id=action.id,
+                    label=action.label,
+                    kind=action.kind,
+                    actor_ref=action.actor_ref,
+                    cost={
+                        "movement": action.cost.movement,
+                        "action": action.cost.action,
+                        "reaction": action.cost.reaction,
+                    },
+                    source_trigger_id=action.source_trigger_id,
+                )
+                for index, action in enumerate(self._encounter_actions)
+            ]
+        system_action_details = self._system_action_details(len(choices))
         return SceneView(
             scene_id=scene.id,
             scene_text=scene_text,
             choices=choices + [SAVE_CHOICE_TEXT, LOAD_CHOICE_TEXT, EXIT_CHOICE_TEXT],
+            action_details=action_details + system_action_details,
         )
 
     def choose(self, choice_index: int) -> TurnResult:
@@ -110,6 +154,7 @@ class GameSession:
             scene=self.get_scene_view(),
             selected_index=choice_index,
             selected_choice_text=choice.choice_text,
+            selected_action_id=f"scene-choice-{choice_index}",
             messages=resolution.messages,
             next_scene_id=next_scene_id,
             scene_changed=scene_changed,
@@ -128,6 +173,7 @@ class GameSession:
             scene=self.get_scene_view(),
             selected_index=len(self.get_scene_view().choices) - 3,
             selected_choice_text=SAVE_CHOICE_TEXT,
+            selected_action_id="system-save",
             messages=[("system", f"Game saved to {save_path}.")],
             next_scene_id=self.current_scene_id,
             scene_changed=False,
@@ -143,6 +189,7 @@ class GameSession:
                 scene=self.get_scene_view(),
                 selected_index=len(self.get_scene_view().choices) - 2,
                 selected_choice_text=LOAD_CHOICE_TEXT,
+                selected_action_id="system-load",
                 messages=[("system", "No save file found in slot 1.")],
                 next_scene_id=self.current_scene_id,
                 scene_changed=False,
@@ -162,6 +209,7 @@ class GameSession:
             scene=self.get_scene_view(),
             selected_index=len(self.get_scene_view().choices) - 2,
             selected_choice_text=LOAD_CHOICE_TEXT,
+            selected_action_id="system-load",
             messages=[("system", "Game loaded from saves/slot_1.json.")],
             next_scene_id=self.current_scene_id,
             scene_changed=False,
@@ -172,6 +220,7 @@ class GameSession:
             scene=self.get_scene_view(),
             selected_index=len(self.get_scene_view().choices) - 1,
             selected_choice_text=EXIT_CHOICE_TEXT,
+            selected_action_id="system-exit",
             messages=[("system", "Exiting game.")],
             next_scene_id=self.current_scene_id,
             scene_changed=False,
@@ -202,13 +251,27 @@ class GameSession:
             self._encounter_actions = []
             scene_changed = previous_scene_id != transition
 
+        combat_state = (
+            self.encounter_state.export_state(self.player)
+            if self.encounter_state is not None
+            else None
+        )
+        decision = (
+            self.encounter_state.export_decision()
+            if self.encounter_state is not None
+            else None
+        )
         return TurnResult(
             scene=self.get_scene_view(),
             selected_index=choice_index,
             selected_choice_text=action.label,
+            selected_action_id=action.id,
             messages=messages,
             next_scene_id=self.current_scene_id,
             scene_changed=scene_changed,
+            events=progress.events,
+            decision=decision,
+            combat_state=combat_state,
         )
 
     def _ensure_encounter_state(self) -> None:
@@ -250,3 +313,28 @@ class GameSession:
             snapshot,
             self.actor_templates,
         )
+
+    def _system_action_details(self, start_index: int) -> list[ActionView]:
+        return [
+            ActionView(
+                index=start_index,
+                id="system-save",
+                label=SAVE_CHOICE_TEXT,
+                kind="system_save",
+                actor_ref="player",
+            ),
+            ActionView(
+                index=start_index + 1,
+                id="system-load",
+                label=LOAD_CHOICE_TEXT,
+                kind="system_load",
+                actor_ref="player",
+            ),
+            ActionView(
+                index=start_index + 2,
+                id="system-exit",
+                label=EXIT_CHOICE_TEXT,
+                kind="system_exit",
+                actor_ref="player",
+            ),
+        ]

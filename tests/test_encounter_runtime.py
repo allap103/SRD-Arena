@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from game.encounter import EncounterAction
 from game.engine import Game
 from game.save import load_from_file, save_to_file
 
@@ -61,6 +62,22 @@ def test_goblin_encounter_allows_diagonal_movement() -> None:
     assert session.encounter_state.player_position.y == 5
 
 
+def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
+    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+
+    for _ in range(6):
+        scene_view = session.get_scene_view()
+        move_right_index = scene_view.choices.index("Move right")
+        result = session.choose(move_right_index)
+
+    assert ("system", "You move right. Movement remaining: 0.") in result.messages
+    assert session.encounter_state is not None
+    assert session.encounter_state.turn_index == 0
+    assert session.encounter_state.round_number == 1
+    assert session.get_scene_view().choices.count("Wait") == 1
+
+
 def test_goblin_encounter_wait_advances_enemy_turns() -> None:
     session = Game(str(SAMPLE_GAME_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -96,6 +113,47 @@ def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> Non
     assert ("system", "Goblin moves down-left to (4, 3).") in progress.messages
     assert session.encounter_state.active_actor() == ("player", None)
     assert session.encounter_state.round_number == 2
+
+
+def test_enemy_movement_can_pause_for_player_opportunity_attack(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.encounter_state.player_position.x = 2
+    session.encounter_state.player_position.y = 2
+    session.encounter_state.enemies[0].position.x = 3
+    session.encounter_state.enemies[0].position.y = 2
+    session.encounter_state.turn_index = 1
+
+    def scripted_behavior():
+        context = yield None
+        while True:
+            context = yield EncounterAction("Move", "move", "right")
+
+    behavior = scripted_behavior()
+    next(behavior)
+    session.encounter_state._behaviors[0] = behavior
+
+    progress = session.encounter_state.advance_until_next_decision(session.player)
+
+    assert progress.paused_for_decision is True
+    assert session.encounter_state.current_decision().kind == "reaction"
+    labels = [action.label for action in session.encounter_state.available_actions(session.player)]
+    assert labels == ["Opportunity attack Goblin", "Pass reaction"]
+
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 20)
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+
+    reaction = session.encounter_state.available_actions(session.player)[0]
+    reaction_progress = session.encounter_state.apply_action(session.player, reaction)
+
+    assert any("Opportunity attack hits" in message for _, message in reaction_progress.messages)
+    assert session.encounter_state.enemies[0].position.x > 3
+    assert session.encounter_state.enemies[0].position.y == 2
+    assert session.encounter_state.pending_action is None
+    assert session.encounter_state.current_decision().actor_ref == "player"
 
 
 def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:
@@ -173,3 +231,35 @@ def test_save_and_load_preserve_encounter_progress(tmp_path: Path) -> None:
     assert loaded.encounter_state.turn_index == 0
     assert loaded.encounter_state.round_number == 1
     assert loaded.encounter_state.player_movement_remaining == 5
+
+
+def test_save_and_load_preserve_pending_reaction_state(tmp_path: Path) -> None:
+    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.encounter_state.player_position.x = 2
+    session.encounter_state.player_position.y = 2
+    session.encounter_state.enemies[0].position.x = 3
+    session.encounter_state.enemies[0].position.y = 2
+    session.encounter_state.turn_index = 1
+
+    def scripted_behavior():
+        context = yield None
+        while True:
+            context = yield EncounterAction("Move", "move", "right")
+
+    behavior = scripted_behavior()
+    next(behavior)
+    session.encounter_state._behaviors[0] = behavior
+    session.encounter_state.advance_until_next_decision(session.player)
+    save_path = tmp_path / "reaction_save.json"
+
+    save_to_file(session, save_path)
+    loaded = load_from_file(save_path, SAMPLE_GAME_DIR)
+
+    assert loaded.encounter_state is not None
+    assert loaded.encounter_state.current_decision().kind == "reaction"
+    assert loaded.encounter_state.pending_action is not None
+    assert loaded.encounter_state.pending_action.actor_ref == "enemy:0"

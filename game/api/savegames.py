@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from dataclasses import asdict
 
 from fastapi import Body, FastAPI, HTTPException
 import uvicorn
@@ -39,10 +40,17 @@ class SavegameApi:
         scene_view = self.session.get_scene_view()
         return {
             "current_scene_id": scene_view.scene_id,
-            "actions": [
-                {"index": index, "label": choice}
-                for index, choice in enumerate(scene_view.choices)
-            ],
+            "actions": [asdict(action) for action in scene_view.action_details],
+            "decision": (
+                self.session.encounter_state.export_decision()
+                if self.session.encounter_state is not None
+                else None
+            ),
+            "combat_state": (
+                self.session.encounter_state.export_state(self.session.player)
+                if self.session.encounter_state is not None
+                else None
+            ),
         }
 
     def choose_action_payload(self, action_index: int) -> dict:
@@ -55,17 +63,18 @@ class SavegameApi:
             "current_scene_id": self.session.current_scene_id,
             "selected_index": result.selected_index,
             "selected_action": result.selected_choice_text,
+            "selected_action_id": result.selected_action_id,
             "messages": [
                 {"channel": channel, "message": message}
                 for channel, message in result.messages
             ],
+            "events": [asdict(event) for event in result.events],
+            "decision": result.decision,
+            "combat_state": result.combat_state,
             "scene_changed": result.scene_changed,
             "should_exit": result.should_exit,
             "scene_text": result.scene.scene_text,
-            "actions": [
-                {"index": index, "label": choice}
-                for index, choice in enumerate(result.scene.choices)
-            ],
+            "actions": [asdict(action) for action in result.scene.action_details],
         }
 
     def create_app(self) -> FastAPI:

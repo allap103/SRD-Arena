@@ -9,7 +9,12 @@ from typing import TypeAlias
 from pydantic import BaseModel, ConfigDict, Field
 
 from .choice_resolver import ChoiceResolver
-from .encounter import EncounterSnapshot, EncounterSnapshotEnemy
+from .encounter import (
+    DecisionFrameSnapshot,
+    EncounterSnapshot,
+    EncounterSnapshotEnemy,
+    PendingActionSnapshot,
+)
 from .engine import Game
 from .models.actor import Actor
 from .models.attributes import Attributes, Movement
@@ -18,11 +23,11 @@ from .session import GameSession
 from .systems.equipment import Equipment
 from .systems.inventory import Inventory
 
-SAVE_VERSION = 1
+SAVE_VERSION = 2
 JsonScalar: TypeAlias = str | int | float | bool | None
 JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
 SAVEGAME_EXAMPLE: dict[str, JsonValue] = {
-    "version": 1,
+    "version": 2,
     "current_scene_id": "welcome",
     "start_scene_id": "welcome",
     "player": {
@@ -102,6 +107,33 @@ class EncounterEnemyStateModel(BaseModel):
     current_health: int
     position: PositionState
     patrol_index: int = 0
+    reaction_available: bool = True
+
+
+class DecisionFrameStateModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    actor_ref: str
+    kind: str
+    reason: str
+    parent_frame_id: str | None = None
+    parent_action_id: str | None = None
+    can_pass: bool = False
+
+
+class PendingActionStateModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    kind: str
+    actor_ref: str
+    direction: str
+    from_position: PositionState
+    to_position: PositionState
+    resume_enemy_index: int | None = None
+    remaining_movement_after: int | None = None
+    trigger_id: str | None = None
 
 
 class EncounterStateModel(BaseModel):
@@ -112,6 +144,12 @@ class EncounterStateModel(BaseModel):
     turn_index: int = 0
     round_number: int = 1
     player_movement_remaining: int | None = None
+    player_reaction_available: bool = True
+    action_sequence: int = 1
+    frame_sequence: int = 1
+    event_sequence: int = 1
+    decision_stack: list[DecisionFrameStateModel] = Field(default_factory=list)
+    pending_action: PendingActionStateModel | None = None
     enemies: list[EncounterEnemyStateModel] = Field(default_factory=list)
 
 
@@ -245,12 +283,50 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
         turn_index=snapshot.turn_index,
         round_number=snapshot.round_number,
         player_movement_remaining=snapshot.player_movement_remaining,
+        player_reaction_available=snapshot.player_reaction_available,
+        action_sequence=snapshot.action_sequence,
+        frame_sequence=snapshot.frame_sequence,
+        event_sequence=snapshot.event_sequence,
+        decision_stack=[
+            DecisionFrameStateModel(
+                id=frame.id,
+                actor_ref=frame.actor_ref,
+                kind=frame.kind,
+                reason=frame.reason,
+                parent_frame_id=frame.parent_frame_id,
+                parent_action_id=frame.parent_action_id,
+                can_pass=frame.can_pass,
+            )
+            for frame in snapshot.decision_stack
+        ],
+        pending_action=(
+            PendingActionStateModel(
+                id=snapshot.pending_action.id,
+                kind=snapshot.pending_action.kind,
+                actor_ref=snapshot.pending_action.actor_ref,
+                direction=snapshot.pending_action.direction,
+                from_position=PositionState(
+                    x=snapshot.pending_action.from_position.x,
+                    y=snapshot.pending_action.from_position.y,
+                ),
+                to_position=PositionState(
+                    x=snapshot.pending_action.to_position.x,
+                    y=snapshot.pending_action.to_position.y,
+                ),
+                resume_enemy_index=snapshot.pending_action.resume_enemy_index,
+                remaining_movement_after=snapshot.pending_action.remaining_movement_after,
+                trigger_id=snapshot.pending_action.trigger_id,
+            )
+            if snapshot.pending_action is not None
+            else None
+        ),
         enemies=[
             EncounterEnemyStateModel(
                 actor_id=enemy.actor_id,
                 current_health=enemy.current_health,
                 position=PositionState(x=enemy.position.x, y=enemy.position.y),
                 patrol_index=enemy.patrol_index,
+                reaction_available=enemy.reaction_available,
             )
             for enemy in snapshot.enemies
         ],
@@ -269,12 +345,50 @@ def _restore_encounter_state(
         turn_index=state.turn_index,
         round_number=state.round_number,
         player_movement_remaining=state.player_movement_remaining,
+        player_reaction_available=state.player_reaction_available,
+        action_sequence=state.action_sequence,
+        frame_sequence=state.frame_sequence,
+        event_sequence=state.event_sequence,
+        decision_stack=[
+            DecisionFrameSnapshot(
+                id=frame.id,
+                actor_ref=frame.actor_ref,
+                kind=frame.kind,
+                reason=frame.reason,
+                parent_frame_id=frame.parent_frame_id,
+                parent_action_id=frame.parent_action_id,
+                can_pass=frame.can_pass,
+            )
+            for frame in state.decision_stack
+        ],
+        pending_action=(
+            PendingActionSnapshot(
+                id=state.pending_action.id,
+                kind=state.pending_action.kind,
+                actor_ref=state.pending_action.actor_ref,
+                direction=state.pending_action.direction,
+                from_position=Position(
+                    x=state.pending_action.from_position.x,
+                    y=state.pending_action.from_position.y,
+                ),
+                to_position=Position(
+                    x=state.pending_action.to_position.x,
+                    y=state.pending_action.to_position.y,
+                ),
+                resume_enemy_index=state.pending_action.resume_enemy_index,
+                remaining_movement_after=state.pending_action.remaining_movement_after,
+                trigger_id=state.pending_action.trigger_id,
+            )
+            if state.pending_action is not None
+            else None
+        ),
         enemies=[
             EncounterSnapshotEnemy(
                 actor_id=enemy.actor_id,
                 current_health=enemy.current_health,
                 position=Position(x=enemy.position.x, y=enemy.position.y),
                 patrol_index=enemy.patrol_index,
+                reaction_available=enemy.reaction_available,
             )
             for enemy in state.enemies
         ],

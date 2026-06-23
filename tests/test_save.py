@@ -30,7 +30,7 @@ def test_create_save_captures_mutable_session_state() -> None:
 
     save = create_save(session)
 
-    assert save.version == 1
+    assert save.version == 2
     assert save.current_scene_id == "shared_target"
     assert save.start_scene_id == "start"
     assert save.player.actor_id == "player"
@@ -70,7 +70,7 @@ def test_save_to_file_writes_versioned_json_and_loads_session(tmp_path: Path) ->
     loaded = load_from_file(save_path, FIXTURE_GAME_DIR)
 
     assert written_path == save_path
-    assert json.loads(save_path.read_text(encoding="utf-8"))["version"] == 1
+    assert json.loads(save_path.read_text(encoding="utf-8"))["version"] == 2
     assert loaded.current_scene_id == "shared_target"
 
 

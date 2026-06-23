@@ -71,13 +71,63 @@ def test_get_actions_returns_available_choices_for_current_scene() -> None:
 
     assert response.status_code == 200
     assert response.json()["current_scene_id"] == "start"
+    assert response.json()["decision"] is None
+    assert response.json()["combat_state"] is None
     assert response.json()["actions"] == [
-        {"index": 0, "label": "Take the bright path."},
-        {"index": 1, "label": "Take the quiet path."},
-        {"index": 2, "label": "Open the missing door."},
-        {"index": 3, "label": "Save game"},
-        {"index": 4, "label": "Load game"},
-        {"index": 5, "label": "Exit game"},
+        {
+            "index": 0,
+            "id": "scene-choice-0",
+            "label": "Take the bright path.",
+            "kind": "scene_choice",
+            "actor_ref": "player",
+            "cost": {},
+            "source_trigger_id": None,
+        },
+        {
+            "index": 1,
+            "id": "scene-choice-1",
+            "label": "Take the quiet path.",
+            "kind": "scene_choice",
+            "actor_ref": "player",
+            "cost": {},
+            "source_trigger_id": None,
+        },
+        {
+            "index": 2,
+            "id": "scene-choice-2",
+            "label": "Open the missing door.",
+            "kind": "scene_choice",
+            "actor_ref": "player",
+            "cost": {},
+            "source_trigger_id": None,
+        },
+        {
+            "index": 3,
+            "id": "system-save",
+            "label": "Save game",
+            "kind": "system_save",
+            "actor_ref": "player",
+            "cost": {},
+            "source_trigger_id": None,
+        },
+        {
+            "index": 4,
+            "id": "system-load",
+            "label": "Load game",
+            "kind": "system_load",
+            "actor_ref": "player",
+            "cost": {},
+            "source_trigger_id": None,
+        },
+        {
+            "index": 5,
+            "id": "system-exit",
+            "label": "Exit game",
+            "kind": "system_exit",
+            "actor_ref": "player",
+            "cost": {},
+            "source_trigger_id": None,
+        },
     ]
 
 
@@ -90,6 +140,8 @@ def test_get_actions_returns_encounter_actions_for_encounter_scene() -> None:
 
     assert response.status_code == 200
     assert response.json()["current_scene_id"] == "goblin_encounter"
+    assert response.json()["decision"]["actor_ref"] == "player"
+    assert response.json()["combat_state"]["player"]["reaction_available"] is True
     labels = [option["label"] for option in response.json()["actions"]]
     assert "Move up" in labels
     assert "Wait" in labels
@@ -106,8 +158,10 @@ def test_post_action_advances_game_state() -> None:
     assert response.status_code == 200
     assert response.json()["selected_index"] == 0
     assert response.json()["selected_action"] == "Take the bright path."
+    assert response.json()["selected_action_id"] == "scene-choice-0"
     assert response.json()["current_scene_id"] == "shared_target"
     assert response.json()["scene_changed"] is True
+    assert response.json()["events"] == []
     assert api.session.current_scene_id == "shared_target"
 
 
