@@ -22,7 +22,7 @@
         "dagger"
     ],
     "equipment": {
-        "right_hand": "dagger",
+        "right_hand": "shortsword",
         "body": "chainmail"
     }
 }

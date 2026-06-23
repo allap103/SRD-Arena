@@ -8,6 +8,17 @@ from .models.actor import Actor
 from .models.scene import Behavior, Encounter, Position
 from .systems.roll import roll_dice, roll_die
 
+DIRECTION_DELTAS = {
+    "up": (0, -1),
+    "down": (0, 1),
+    "left": (-1, 0),
+    "right": (1, 0),
+    "up-left": (-1, -1),
+    "up-right": (1, -1),
+    "down-left": (-1, 1),
+    "down-right": (1, 1),
+}
+
 
 @dataclass
 class EncounterAction:
@@ -50,6 +61,7 @@ class EncounterSnapshot:
     player_position: Position
     turn_index: int = 0
     round_number: int = 1
+    player_movement_remaining: int | None = None
     enemies: list[EncounterSnapshotEnemy] = field(default_factory=list)
 
 
@@ -61,6 +73,7 @@ class EncounterState:
     enemies: list[EncounterEnemyState]
     turn_index: int = 0
     round_number: int = 1
+    player_movement_remaining: int | None = None
     _behaviors: list[Generator[EncounterAction | None, BehaviorContext, None]] = field(
         default_factory=list,
         repr=False,
@@ -122,6 +135,7 @@ class EncounterState:
             enemies=enemies,
             turn_index=snapshot.turn_index,
             round_number=snapshot.round_number,
+            player_movement_remaining=snapshot.player_movement_remaining,
         )
         state._initialize_behaviors()
         state._normalize_turn()
@@ -133,6 +147,7 @@ class EncounterState:
             player_position=Position(self.player_position.x, self.player_position.y),
             turn_index=self.turn_index,
             round_number=self.round_number,
+            player_movement_remaining=self.player_movement_remaining,
             enemies=[
                 EncounterSnapshotEnemy(
                     actor_id=enemy.actor_id,
@@ -152,6 +167,7 @@ class EncounterState:
             self._behaviors.append(behavior)
 
     def render(self, player: Actor) -> str:
+        player_movement_remaining = self._player_movement_remaining(player)
         rows = []
         for y in range(self.definition.grid.height):
             row = []
@@ -183,6 +199,7 @@ class EncounterState:
                 *rows,
                 "",
                 f"Round {self.round_number} - Turn: {self.current_turn_label()}",
+                f"Movement remaining: {player_movement_remaining}/{_movement_squares(player)} squares",
                 f"Player HP: {player.get_health()}/{player.get_max_health()} at ({self.player_position.x}, {self.player_position.y})",
                 "Enemies:",
                 *enemy_lines,
@@ -203,27 +220,23 @@ class EncounterState:
             return ("player", None)
         return ("enemy", self.turn_index - 1)
 
-    def available_actions(self) -> list[EncounterAction]:
+    def available_actions(self, player: Actor) -> list[EncounterAction]:
         if self.active_actor()[0] != "player":
             return []
 
         actions = []
-        for direction, dx, dy in (
-            ("up", 0, -1),
-            ("down", 0, 1),
-            ("left", -1, 0),
-            ("right", 1, 0),
-        ):
-            target_x = self.player_position.x + dx
-            target_y = self.player_position.y + dy
-            if not self._is_within_bounds(target_x, target_y):
-                continue
-            if self._live_enemy_at(target_x, target_y) is not None:
-                continue
-            actions.append(EncounterAction(f"Move {direction}", "move", direction))
+        if self._player_movement_remaining(player) > 0:
+            for direction, (dx, dy) in DIRECTION_DELTAS.items():
+                target_x = self.player_position.x + dx
+                target_y = self.player_position.y + dy
+                if not self._is_within_bounds(target_x, target_y):
+                    continue
+                if self._live_enemy_at(target_x, target_y) is not None:
+                    continue
+                actions.append(EncounterAction(f"Move {direction}", "move", direction))
 
         for index, enemy in enumerate(self.enemies):
-            if enemy.is_alive and _distance(self.player_position, enemy.position) == 1:
+            if enemy.is_alive and _is_adjacent(self.player_position, enemy.position):
                 actions.append(
                     EncounterAction(
                         f"Attack enemy {index + 1} ({enemy.actor.name})",
@@ -249,20 +262,23 @@ class EncounterState:
 
         messages: list[tuple[str, str]] = []
         transition: str | None = None
+        action_ends_turn = True
 
         if action.kind == "move":
             direction = str(action.value)
-            dx, dy = {
-                "up": (0, -1),
-                "down": (0, 1),
-                "left": (-1, 0),
-                "right": (1, 0),
-            }[direction]
+            dx, dy = DIRECTION_DELTAS[direction]
             self.player_position = Position(
                 self.player_position.x + dx,
                 self.player_position.y + dy,
             )
-            messages.append(("system", f"You move {direction}."))
+            self.player_movement_remaining = self._player_movement_remaining(player) - 1
+            action_ends_turn = self.player_movement_remaining <= 0
+            messages.append(
+                (
+                    "system",
+                    f"You move {direction}. Movement remaining: {self.player_movement_remaining}.",
+                )
+            )
         elif action.kind == "attack":
             if not isinstance(action.value, int):
                 raise ValueError(f"Encounter attack action requires an integer target, got {action.value!r}.")
@@ -280,6 +296,9 @@ class EncounterState:
         transition = self._check_transition()
         if transition is not None:
             return messages, transition
+
+        if not action_ends_turn:
+            return messages, None
 
         self._advance_turn()
         messages.extend(self.advance_non_player_turns(player))
@@ -312,40 +331,49 @@ class EncounterState:
         if not enemy.is_alive:
             return []
 
-        behavior = self._behaviors[enemy_index]
-        command = behavior.send(
-            BehaviorContext(
-                player_position=Position(self.player_position.x, self.player_position.y),
-                enemy_position=Position(enemy.position.x, enemy.position.y),
-                can_attack=_distance(self.player_position, enemy.position) == 1,
-            )
-        )
-        if command is None:
-            return []
-
         messages: list[tuple[str, str]] = []
-        if command.kind == "move":
-            direction = str(command.value)
-            dx, dy = {
-                "up": (0, -1),
-                "down": (0, 1),
-                "left": (-1, 0),
-                "right": (1, 0),
-            }[direction]
-            target_x = enemy.position.x + dx
-            target_y = enemy.position.y + dy
-            if self._is_free_for_enemy(target_x, target_y):
+        behavior = self._behaviors[enemy_index]
+        movement_remaining = _movement_squares(enemy.actor)
+
+        while enemy.is_alive and player.get_health() > 0:
+            command = behavior.send(
+                BehaviorContext(
+                    player_position=Position(
+                        self.player_position.x,
+                        self.player_position.y,
+                    ),
+                    enemy_position=Position(enemy.position.x, enemy.position.y),
+                    can_attack=_is_adjacent(self.player_position, enemy.position),
+                )
+            )
+            if command is None:
+                break
+
+            if command.kind == "move":
+                if movement_remaining <= 0:
+                    break
+                direction = str(command.value)
+                dx, dy = DIRECTION_DELTAS[direction]
+                target_x = enemy.position.x + dx
+                target_y = enemy.position.y + dy
+                if not self._is_free_for_enemy(target_x, target_y):
+                    break
                 enemy.position = Position(target_x, target_y)
+                movement_remaining -= 1
                 messages.append(
                     (
                         "system",
                         f"{enemy.actor.name} moves {direction} to ({target_x}, {target_y}).",
                     )
                 )
-        elif command.kind == "attack":
-            messages.extend(_resolve_attack(enemy.actor, player, enemy.actor.name))
-        else:
+                continue
+
+            if command.kind == "attack":
+                messages.extend(_resolve_attack(enemy.actor, player, enemy.actor.name))
+                break
+
             messages.append(("system", f"{enemy.actor.name} waits."))
+            break
         return messages
 
     def _check_transition(self) -> str | None:
@@ -359,6 +387,8 @@ class EncounterState:
             self.turn_index = 0
             self.round_number += 1
         self._normalize_turn()
+        if self.turn_index == 0:
+            self.player_movement_remaining = None
 
     def _normalize_turn(self) -> None:
         if self.turn_index >= self._turn_count():
@@ -374,6 +404,11 @@ class EncounterState:
             if self.turn_index >= self._turn_count():
                 self.turn_index = 0
                 self.round_number += 1
+
+    def _player_movement_remaining(self, player: Actor) -> int:
+        if self.player_movement_remaining is None:
+            self.player_movement_remaining = _movement_squares(player)
+        return self.player_movement_remaining
 
     def _turn_count(self) -> int:
         return len(self.enemies) + 1
@@ -478,23 +513,36 @@ def _patrol_behavior(enemy: EncounterEnemyState) -> Generator[EncounterAction | 
 def _step_toward(start: Position, target: Position) -> str | None:
     dx = target.x - start.x
     dy = target.y - start.y
-    if dx > 0:
-        return "right"
-    if dx < 0:
-        return "left"
-    if dy > 0:
-        return "down"
-    if dy < 0:
-        return "up"
+    step_x = _sign(dx)
+    step_y = _sign(dy)
+    for direction, delta in DIRECTION_DELTAS.items():
+        if delta == (step_x, step_y):
+            return direction
     return None
 
 
-def _distance(a: Position, b: Position) -> int:
-    return _manhattan_distance(a, b)
+def _sign(value: int) -> int:
+    if value > 0:
+        return 1
+    if value < 0:
+        return -1
+    return 0
+
+
+def _is_adjacent(a: Position, b: Position) -> bool:
+    return _chebyshev_distance(a, b) == 1
+
+
+def _chebyshev_distance(a: Position, b: Position) -> int:
+    return max(abs(a.x - b.x), abs(a.y - b.y))
 
 
 def _manhattan_distance(a: Position, b: Position) -> int:
     return abs(a.x - b.x) + abs(a.y - b.y)
+
+
+def _movement_squares(actor: Actor) -> int:
+    return actor.attributes.movement.squares_per_turn
 
 
 def _resolve_attack(attacker: Actor, defender: Actor, attacker_name: str) -> list[tuple[str, str]]:

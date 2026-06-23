@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.containers import Container
+from textual.containers import Container, VerticalScroll
 from textual.widgets import Button, Static
 
 from .engine import GAME_DIR, Game
@@ -157,8 +157,8 @@ class CyoaTextualApp(App[None]):
         panel.border_title = "Scene"
         return panel
 
-    def _compose_choices_panel(self) -> Container:
-        choices_panel = Container(id="choice-list", classes="panel")
+    def _compose_choices_panel(self) -> VerticalScroll:
+        choices_panel = VerticalScroll(id="choice-list", classes="panel")
         choices_panel.border_title = "Choices"
         return choices_panel
 
@@ -175,7 +175,7 @@ class CyoaTextualApp(App[None]):
         story_choices = scene_view.choices[:-SYSTEM_CHOICE_COUNT]
         self._system_choice_start = len(story_choices)
 
-        choice_list = self.query_one("#choice-list", Container)
+        choice_list = self.query_one("#choice-list", VerticalScroll)
         choice_list.remove_children()
         for index, choice_text in enumerate(story_choices):
             choice_list.mount(

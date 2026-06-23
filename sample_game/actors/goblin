@@ -5,6 +5,10 @@
     "attributes": {
         "base_health": 6,
         "level": 1,
+        "movement": {
+            "speed_feet": 30,
+            "feet_per_square": 5
+        },
         "strength": 8,
         "dexterity": 14,
         "constitution": 10,

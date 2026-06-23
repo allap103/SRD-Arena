@@ -111,6 +111,7 @@ class EncounterStateModel(BaseModel):
     player_position: PositionState
     turn_index: int = 0
     round_number: int = 1
+    player_movement_remaining: int | None = None
     enemies: list[EncounterEnemyStateModel] = Field(default_factory=list)
 
 
@@ -243,6 +244,7 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
         ),
         turn_index=snapshot.turn_index,
         round_number=snapshot.round_number,
+        player_movement_remaining=snapshot.player_movement_remaining,
         enemies=[
             EncounterEnemyStateModel(
                 actor_id=enemy.actor_id,
@@ -266,6 +268,7 @@ def _restore_encounter_state(
         player_position=Position(x=state.player_position.x, y=state.player_position.y),
         turn_index=state.turn_index,
         round_number=state.round_number,
+        player_movement_remaining=state.player_movement_remaining,
         enemies=[
             EncounterSnapshotEnemy(
                 actor_id=enemy.actor_id,

@@ -68,7 +68,7 @@ class GameSession:
                 for part in [scene.text, self.encounter_state.render(self.player)]
                 if part
             )
-            self._encounter_actions = self.encounter_state.available_actions()
+            self._encounter_actions = self.encounter_state.available_actions(self.player)
             choices = [action.label for action in self._encounter_actions]
         return SceneView(
             scene_id=scene.id,
