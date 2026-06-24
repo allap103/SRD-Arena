@@ -16,22 +16,15 @@ from .session import GameSession, SceneView, TurnResult
 
 if TYPE_CHECKING:
     from .pyside6_app import CyoaPySide6Window
-    from .textual_app import CyoaTextualApp
 
 try:
     from .pyside6_app import CyoaPySide6Window
 except ModuleNotFoundError:
     pass
 
-try:
-    from .textual_app import CyoaTextualApp
-except ModuleNotFoundError:
-    pass
-
 __all__ = [
     "CyoaPySide6Window",
     "ChoiceResolver",
-    "CyoaTextualApp",
     "Game",
     "GameSession",
     "SceneRunner",

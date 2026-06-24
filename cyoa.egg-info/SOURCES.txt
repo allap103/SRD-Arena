@@ -17,7 +17,6 @@ game/pyside6_app.py
 game/save.py
 game/scene_runner.py
 game/session.py
-game/textual_app.py
 tests/test_actor_health.py
 tests/test_choice_resolver.py
 tests/test_encounter_content.py

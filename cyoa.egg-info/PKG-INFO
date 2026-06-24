@@ -8,5 +8,4 @@ Requires-Dist: networkx<4,>=3.4
 Requires-Dist: pydantic<3,>=2.8
 Requires-Dist: PySide6<7,>=6.8
 Requires-Dist: uvicorn<1,>=0.35
-Requires-Dist: textual<1,>=0.79
 Requires-Dist: scipy

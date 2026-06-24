@@ -1,11 +1,7 @@
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
-import shlex
-import subprocess
-import sys
 
 from .api.savegames import run_savegame_api
 from .engine import GAME_DIR, Game
@@ -28,14 +24,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--frontend",
-        choices=("textual", "pyside6", "api", "cli"),
+        choices=("pyside6", "api", "cli"),
         default="pyside6",
         help="Which frontend to launch. Defaults to pyside6.",
-    )
-    parser.add_argument(
-        "--textual",
-        action="store_true",
-        help="Launch the Textual frontend instead of the default PySide6 frontend.",
     )
     parser.add_argument(
         "--host",
@@ -47,11 +38,6 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=8000,
         help="Port to bind the API frontend to.",
-    )
-    parser.add_argument(
-        "--no-popup",
-        action="store_true",
-        help="Run the Textual frontend in the current terminal instead of a popup.",
     )
     return parser
 
@@ -84,11 +70,6 @@ def launch(
     host: str = "127.0.0.1",
     port: int = 8000,
 ) -> None:
-    if frontend == "textual":
-        from .textual_app import run_textual_app
-
-        run_textual_app(Game(str(game_dir)))
-        return
     if frontend == "pyside6":
         from .pyside6_app import run_pyside6_app
 
@@ -102,58 +83,11 @@ def launch(
     Game(str(game_dir)).run()
 
 
-def launch_in_new_terminal(frontend: str, game_dir: Path) -> None:
-    if frontend != "textual":
-        raise ValueError("Popup launch is only supported for the Textual frontend.")
-
-    command = [
-        sys.executable,
-        "-m",
-        "game.launcher",
-        "--no-popup",
-        "textual",
-        str(game_dir),
-    ]
-
-    if os.name == "nt":
-        subprocess.Popen(
-            command,
-            cwd=REPO_ROOT,
-            creationflags=subprocess.CREATE_NEW_CONSOLE,
-        )
-        return
-
-    if sys.platform == "darwin":
-        shell_command = "cd {} && {}".format(
-            shlex.quote(str(REPO_ROOT)),
-            shlex.join(command),
-        )
-        apple_script_command = shell_command.replace("\\", "\\\\").replace('"', '\\"')
-        applescript = (
-            'tell application "Terminal"\n'
-            "activate\n"
-            f'do script "{apple_script_command}"\n'
-            "end tell"
-        )
-        subprocess.Popen(["osascript", "-e", applescript], cwd=REPO_ROOT)
-        return
-
-    raise OSError("Popup launch is currently only supported on Windows and macOS.")
-
-
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
-    frontend = "textual" if args.textual else args.frontend
     game_dir = resolve_game_directory(args.game)
-    if (
-        frontend == "textual"
-        and not args.no_popup
-        and (os.name == "nt" or sys.platform == "darwin")
-    ):
-        launch_in_new_terminal(frontend, game_dir)
-        return
-    launch(frontend, game_dir, host=args.host, port=args.port)
+    launch(args.frontend, game_dir, host=args.host, port=args.port)
 
 
 def _validate_game_directory(path: Path) -> Path:
