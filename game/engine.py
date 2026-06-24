@@ -1,7 +1,16 @@
 from pathlib import Path
 
 from .game_logging import CHANNEL_ENGINE, get_game_logger
-from .loaders import load_actor, load_item, load_scene
+from .loaders import (
+    load_actor,
+    load_bestiary_stat_blocks,
+    load_class_blocks,
+    load_custom_stat_blocks,
+    load_item,
+    load_scene,
+    load_system_item_catalog,
+    load_system_items,
+)
 from .models.actor import Actor
 from .models.item import Item
 from .models.scene import Scene
@@ -9,6 +18,7 @@ from .scene_runner import SceneRunner
 from .session import GameSession
 
 GAME_DIR = Path("sample_game")
+GAME_SYSTEM_DIR = Path("game_system")
 LOGGER = get_game_logger(CHANNEL_ENGINE)
 
 
@@ -17,19 +27,41 @@ class Game:
     actors: list[Actor]
     items: list[Item]
 
-    def __init__(self, directory: str | Path = GAME_DIR, start_scene: str = "welcome"):
+    def __init__(
+        self,
+        directory: str | Path = GAME_DIR,
+        start_scene: str = "welcome",
+        system_directory: str | Path = GAME_SYSTEM_DIR,
+    ):
         self.directory = Path(directory)
+        self.system_directory = Path(system_directory)
+        self.stat_blocks = load_bestiary_stat_blocks(self.system_directory)
+        self.class_blocks = load_class_blocks(self.system_directory)
+        self.custom_stat_blocks = load_custom_stat_blocks(self.directory / "custom_stat_blocks")
+        self.system_item_catalog = load_system_item_catalog(self.system_directory)
         self.scenes = self.load_scenes_from_directory(self.directory / "scenes")
-        self.actors = self.load_actors_from_directory(self.directory / "actors")
-        self.items = self.load_items_from_directory(self.directory / "items")
+        self.actors = self.load_actors_from_directory(self.directory)
+        self.items = self._merge_items(
+            load_system_items(self.system_directory),
+            self.load_items_from_directory(self.directory / "items"),
+        )
         self.start_scene = start_scene
         self.scene_runner = SceneRunner()
 
     def load_actors_from_directory(self, directory: str | Path) -> list[Actor]:
-        return [load_actor(path) for path in Path(directory).glob("*")]
+        actor_dir = Path(directory) / "actors"
+        return [
+            load_actor(path, self.stat_blocks, self.class_blocks, self.custom_stat_blocks)
+            for path in actor_dir.glob("*")
+        ]
 
     def load_items_from_directory(self, directory: str | Path) -> list[Item]:
-        return [load_item(path) for path in Path(directory).glob("*")]
+        return [load_item(path, self.system_item_catalog) for path in Path(directory).glob("*")]
+
+    def _merge_items(self, system_items: list[Item], local_items: list[Item]) -> list[Item]:
+        items_by_id = {item.id: item for item in system_items}
+        items_by_id.update({item.id: item for item in local_items})
+        return list(items_by_id.values())
 
     def load_scenes_from_directory(self, directory: str | Path) -> dict[str, Scene]:
         return {
@@ -48,6 +80,7 @@ class Game:
             scenes=self.scenes,
             player=self.get_actor(player_actor_id),
             actor_templates={actor.id: actor for actor in self.actors},
+            item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
             game_dir=self.directory,
         )

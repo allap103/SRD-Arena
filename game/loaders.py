@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import cast
 
 from .content_schema import ActorSchema, ItemSchema, SceneSchema
+from .content_schema.actor import ActorItemReferenceSchema
 from .models.actor import Actor
 from .models.attributes import Attributes, Movement
 from .models.choice import (
@@ -26,6 +27,18 @@ from .models.scene import (
 )
 from .systems.equipment import Equipment
 from .systems.inventory import Inventory
+
+
+StatBlockCatalog = dict[tuple[str, str | None], dict]
+ClassCatalog = dict[tuple[str, str | None], dict]
+CustomStatBlockCatalog = dict[str, ActorSchema]
+SystemItemCatalog = dict[tuple[str, str | None], dict]
+SOURCE_PRIORITY = {
+    "XPHB": 30,
+    "XDMG": 30,
+    "PHB": 20,
+    "DMG": 20,
+}
 
 
 def _load_json(path: str | Path) -> dict:
@@ -124,30 +137,406 @@ def _build_encounter(encounter) -> Encounter | None:
     )
 
 
-def load_actor(path: str | Path) -> Actor:
-    schema = ActorSchema.model_validate(_load_json(path))
+def load_actor(
+    path: str | Path,
+    stat_blocks: StatBlockCatalog | None = None,
+    class_blocks: ClassCatalog | None = None,
+    custom_stat_blocks: CustomStatBlockCatalog | None = None,
+) -> Actor:
+    schema = _resolve_actor_schema(
+        ActorSchema.model_validate(_load_json(path)),
+        custom_stat_blocks,
+    )
+    stat_block = (
+        _find_stat_block(schema.stat_block.name, schema.stat_block.source, stat_blocks)
+        if schema.stat_block
+        else None
+    )
+    class_block = (
+        _find_class_block(schema.class_ref.name, schema.class_ref.source, class_blocks)
+        if schema.class_ref
+        else None
+    )
     equipment = Equipment(
         equipped_items={
             **Equipment().equipped_items,
-            **cast(dict[str, str | None], dict(schema.equipment)),
+            **{
+                slot: _actor_item_id(item)
+                for slot, item in cast(dict[str, object], dict(schema.equipment)).items()
+            },
         }
     )
 
     return Actor(
         id=schema.id,
-        name=schema.name,
+        name=schema.name or _stat_block_name(stat_block),
         description=schema.description,
-        inventory=Inventory(items=list(schema.inventory)),
-        attributes=Attributes(
-            **schema.attributes.model_dump(exclude={"movement"}),
-            movement=Movement(**schema.attributes.movement.model_dump()),
-        ),
+        inventory=Inventory(items=[_actor_item_id(item) for item in schema.inventory]),
+        attributes=_build_actor_attributes(schema, stat_block, class_block),
         equipment=equipment,
     )
 
 
-def load_item(path: str | Path) -> Item:
+def load_custom_stat_blocks(directory: str | Path) -> CustomStatBlockCatalog:
+    custom_dir = Path(directory)
+    if not custom_dir.is_dir():
+        return {}
+    return {
+        schema.id: schema
+        for schema in (ActorSchema.model_validate(_load_json(path)) for path in custom_dir.glob("*"))
+    }
+
+
+def _resolve_actor_schema(
+    instance: ActorSchema,
+    custom_stat_blocks: CustomStatBlockCatalog | None,
+) -> ActorSchema:
+    if instance.custom_stat_block is None:
+        return instance
+    if custom_stat_blocks is None:
+        raise ValueError(
+            f"Actor '{instance.id}' references custom stat block "
+            f"'{instance.custom_stat_block}', but no custom stat block catalog was loaded."
+        )
+    template = custom_stat_blocks.get(instance.custom_stat_block)
+    if template is None:
+        raise KeyError(f"Custom stat block '{instance.custom_stat_block}' not found.")
+
+    template_data = template.model_dump(exclude={"id", "custom_stat_block"})
+    instance_data = instance.model_dump(
+        exclude_unset=True,
+        exclude={
+            "attributes",
+            "custom_stat_block",
+            "equipment",
+            "inventory",
+            "metadata",
+        },
+    )
+    if "attributes" in instance.model_fields_set:
+        instance_data["attributes"] = instance.attributes.model_dump()
+    merged = {
+        **template_data,
+        **instance_data,
+        "inventory": [
+            *template.inventory,
+            *instance.inventory,
+        ],
+        "equipment": {
+            **template.equipment,
+            **instance.equipment,
+        },
+        "metadata": {
+            **template.metadata,
+            **instance.metadata,
+        },
+    }
+    return ActorSchema.model_validate(merged)
+
+
+def _actor_item_id(item: str | ActorItemReferenceSchema | object) -> str:
+    if isinstance(item, str):
+        return item
+    if isinstance(item, ActorItemReferenceSchema):
+        return _slug(item.name)
+    if isinstance(item, dict):
+        name = item.get("name")
+        if isinstance(name, str):
+            return _slug(name)
+    raise TypeError(f"Unsupported actor item reference: {item!r}")
+
+
+def load_bestiary_stat_blocks(directory: str | Path) -> StatBlockCatalog:
+    catalog: StatBlockCatalog = {}
+    bestiary_dir = Path(directory) / "bestiary"
+    if not bestiary_dir.is_dir():
+        return catalog
+
+    for path in bestiary_dir.glob("bestiary-*.json"):
+        data = _load_json(path)
+        for monster in data.get("monster", []):
+            if not isinstance(monster, dict) or not isinstance(monster.get("name"), str):
+                continue
+            source = monster.get("source")
+            source_key = source if isinstance(source, str) else None
+            catalog[(monster["name"].casefold(), source_key)] = monster
+            catalog.setdefault((monster["name"].casefold(), None), monster)
+    return catalog
+
+
+def load_class_blocks(directory: str | Path) -> ClassCatalog:
+    catalog: ClassCatalog = {}
+    class_dir = Path(directory) / "class"
+    if not class_dir.is_dir():
+        return catalog
+
+    for path in class_dir.glob("class-*.json"):
+        data = _load_json(path)
+        for class_block in data.get("class", []):
+            if not isinstance(class_block, dict) or not isinstance(class_block.get("name"), str):
+                continue
+            source = class_block.get("source")
+            source_key = source if isinstance(source, str) else None
+            catalog[(class_block["name"].casefold(), source_key)] = class_block
+            catalog.setdefault((class_block["name"].casefold(), None), class_block)
+    return catalog
+
+
+def load_system_items(directory: str | Path) -> list[Item]:
+    catalog = load_system_item_catalog(directory)
+    items_by_id: dict[str, tuple[int, Item]] = {}
+    for raw_item in catalog.values():
+        item = _build_system_item(raw_item)
+        priority = SOURCE_PRIORITY.get(str(raw_item.get("source", "")), 0)
+        current = items_by_id.get(item.id)
+        if current is None or priority >= current[0]:
+            items_by_id[item.id] = (priority, item)
+    return [item for _, item in items_by_id.values()]
+
+
+def load_system_item_catalog(directory: str | Path) -> SystemItemCatalog:
+    system_dir = Path(directory)
+    catalog: SystemItemCatalog = {}
+    for path, key in ((system_dir / "items-base.json", "baseitem"), (system_dir / "items.json", "item")):
+        if not path.is_file():
+            continue
+        data = _load_json(path)
+        for raw_item in data.get(key, []):
+            if not isinstance(raw_item, dict) or not isinstance(raw_item.get("name"), str):
+                continue
+            source = raw_item.get("source")
+            source_key = source if isinstance(source, str) else None
+            catalog[(raw_item["name"].casefold(), source_key)] = raw_item
+            fallback_key = (raw_item["name"].casefold(), None)
+            current = catalog.get(fallback_key)
+            if current is None or SOURCE_PRIORITY.get(str(source), 0) >= SOURCE_PRIORITY.get(str(current.get("source", "")), 0):
+                catalog[fallback_key] = raw_item
+    return catalog
+
+
+def _find_stat_block(
+    name: str,
+    source: str | None,
+    stat_blocks: StatBlockCatalog | None,
+) -> dict:
+    if stat_blocks is None:
+        raise ValueError(f"Actor references stat block '{name}', but no stat block catalog was loaded.")
+    key = (name.casefold(), source)
+    if key in stat_blocks:
+        return stat_blocks[key]
+    if source is not None:
+        source_key = (name.casefold(), source.upper())
+        if source_key in stat_blocks:
+            return stat_blocks[source_key]
+    fallback_key = (name.casefold(), None)
+    if source is None and fallback_key in stat_blocks:
+        return stat_blocks[fallback_key]
+    source_text = f"|{source}" if source else ""
+    raise KeyError(f"Stat block '{name}{source_text}' not found.")
+
+
+def _find_class_block(
+    name: str,
+    source: str | None,
+    class_blocks: ClassCatalog | None,
+) -> dict:
+    if class_blocks is None:
+        raise ValueError(f"Actor references class '{name}', but no class catalog was loaded.")
+    key = (name.casefold(), source)
+    if key in class_blocks:
+        return class_blocks[key]
+    if source is not None:
+        source_key = (name.casefold(), source.upper())
+        if source_key in class_blocks:
+            return class_blocks[source_key]
+    fallback_key = (name.casefold(), None)
+    if source is None and fallback_key in class_blocks:
+        return class_blocks[fallback_key]
+    source_text = f"|{source}" if source else ""
+    raise KeyError(f"Class '{name}{source_text}' not found.")
+
+
+def _build_actor_attributes(
+    schema: ActorSchema,
+    stat_block: dict | None,
+    class_block: dict | None,
+) -> Attributes:
+    if stat_block is None:
+        attributes = schema.attributes.model_dump(exclude={"movement"})
+        attributes["proficiencies"] = _merge_proficiencies(
+            schema.attributes.proficiencies,
+            _class_proficiencies(class_block),
+        )
+        return Attributes(
+            **attributes,
+            movement=Movement(**schema.attributes.movement.model_dump()),
+        )
+
+    proficiencies = _merge_proficiencies(
+        schema.attributes.proficiencies,
+        _class_proficiencies(class_block),
+    )
+    return Attributes(
+        base_health=int(stat_block.get("hp", {}).get("average", schema.attributes.base_health)),
+        level=schema.attributes.level,
+        movement=Movement(
+            speed_feet=int(stat_block.get("speed", {}).get("walk", schema.attributes.movement.speed_feet)),
+            feet_per_square=schema.attributes.movement.feet_per_square,
+        ),
+        strength=int(stat_block.get("str", schema.attributes.strength)),
+        dexterity=int(stat_block.get("dex", schema.attributes.dexterity)),
+        constitution=int(stat_block.get("con", schema.attributes.constitution)),
+        wisdom=int(stat_block.get("wis", schema.attributes.wisdom)),
+        intelligence=int(stat_block.get("int", schema.attributes.intelligence)),
+        charisma=int(stat_block.get("cha", schema.attributes.charisma)),
+        base_armor_class=_stat_block_base_ac(stat_block, schema.attributes.base_armor_class),
+        proficiencies=proficiencies,
+    )
+
+
+def _merge_proficiencies(*sources: dict[str, object]) -> dict[str, object]:
+    merged: dict[str, object] = {}
+    for source in sources:
+        for key, value in source.items():
+            if isinstance(value, list):
+                existing = merged.setdefault(key, [])
+                if isinstance(existing, list):
+                    existing.extend(item for item in value if item not in existing)
+                continue
+            merged[key] = value
+    return merged
+
+
+def _class_proficiencies(class_block: dict | None) -> dict[str, object]:
+    if class_block is None:
+        return {}
+    starting = class_block.get("startingProficiencies", {})
+    weapons = starting.get("weapons", []) if isinstance(starting, dict) else []
+    return {"weapons": list(weapons)} if isinstance(weapons, list) else {}
+
+
+def _stat_block_name(stat_block: dict | None) -> str:
+    if stat_block is None:
+        raise ValueError("Actor must define either 'name' or 'stat_block'.")
+    return str(stat_block["name"])
+
+
+def _stat_block_base_ac(stat_block: dict, default: int) -> int:
+    armor_class = _stat_block_ac(stat_block, default)
+    dexterity = int(stat_block.get("dex", 10))
+    return armor_class - ((dexterity - 10) // 2)
+
+
+def _stat_block_ac(stat_block: dict, default: int) -> int:
+    ac = stat_block.get("ac")
+    if not isinstance(ac, list) or not ac:
+        return default
+    first = ac[0]
+    if isinstance(first, int):
+        return first
+    if isinstance(first, dict) and isinstance(first.get("ac"), int):
+        return first["ac"]
+    return default
+
+
+def _build_system_item(raw_item: dict) -> Item:
+    item_id = _slug(str(raw_item["name"]))
+    item_type = str(raw_item.get("type", ""))
+    if raw_item.get("weapon") or raw_item.get("dmg1"):
+        return Item(
+            id=item_id,
+            name=str(raw_item["name"]),
+            description=_system_item_description(raw_item),
+            category="weapon",
+            weapon_stat=WeaponStat(
+                slot=["left_hand", "right_hand"],
+                damage=str(raw_item.get("dmg1", "1d4")),
+                damage_type=_damage_type(str(raw_item.get("dmgType", ""))),
+                properties=[_property_name(str(prop)) for prop in raw_item.get("property", [])],
+                weapon_category=str(raw_item.get("weaponCategory", "")),
+            ),
+            item_type=item_type,
+            misc_tags=_misc_tags(raw_item),
+        )
+    if raw_item.get("armor") or isinstance(raw_item.get("ac"), int):
+        return Item(
+            id=item_id,
+            name=str(raw_item["name"]),
+            description=_system_item_description(raw_item),
+            category="armor",
+            armor_stat=ArmorStat(
+                slot="body",
+                type=_armor_type(item_type),
+                armor_class=int(raw_item.get("ac", 10)),
+                modifier_cap=0 if item_type.startswith("HA") else 2 if item_type.startswith("MA") else 99,
+            ),
+            item_type=item_type,
+            misc_tags=_misc_tags(raw_item),
+        )
+    return Item(
+        id=item_id,
+        name=str(raw_item["name"]),
+        description=_system_item_description(raw_item),
+        category="other",
+        item_type=item_type,
+        misc_tags=_misc_tags(raw_item),
+    )
+
+
+def _system_item_description(raw_item: dict) -> str:
+    entries = raw_item.get("entries", [])
+    if entries and isinstance(entries[0], str):
+        return entries[0]
+    return ""
+
+
+def _slug(value: str) -> str:
+    return value.lower().replace("'", "").replace(",", "").replace(" ", "_")
+
+
+def _armor_type(item_type: str) -> str:
+    if item_type.startswith("HA"):
+        return "heavy"
+    if item_type.startswith("MA"):
+        return "medium"
+    if item_type.startswith("LA"):
+        return "light"
+    return "armor"
+
+
+def _damage_type(value: str) -> str:
+    return {
+        "B": "bludgeoning",
+        "P": "piercing",
+        "S": "slashing",
+    }.get(value, value.lower() or "damage")
+
+
+def _property_name(value: str) -> str:
+    return {
+        "V": "versatile",
+        "F": "finesse",
+        "L": "light",
+        "T": "thrown",
+    }.get(value.split("|", 1)[0], value.lower())
+
+
+def load_item(path: str | Path, system_items: SystemItemCatalog | None = None) -> Item:
     schema = ItemSchema.model_validate(_load_json(path))
+    if schema.item_ref is not None:
+        if system_items is None:
+            raise ValueError(f"Item '{schema.id}' references a system item, but no system item catalog was loaded.")
+        raw_item = _find_system_item(schema.item_ref.name, schema.item_ref.source, system_items)
+        item = _build_system_item(raw_item)
+        item.id = schema.id
+        if schema.name is not None:
+            item.name = schema.name
+        if schema.description:
+            item.description = schema.description
+        return item
+
+    assert schema.name is not None
+    assert schema.category is not None
     return Item(
         id=schema.id,
         name=schema.name,
@@ -159,7 +548,35 @@ def load_item(path: str | Path) -> Item:
         armor_stat=ArmorStat(**schema.armor_stat.model_dump())
         if schema.armor_stat
         else None,
+        item_type=schema.item_type,
+        misc_tags=list(schema.misc_tags),
     )
+
+
+def _misc_tags(raw_item: dict) -> list[str]:
+    tags = raw_item.get("miscTags", [])
+    if not isinstance(tags, list):
+        return []
+    return [str(tag) for tag in tags]
+
+
+def _find_system_item(
+    name: str,
+    source: str | None,
+    system_items: SystemItemCatalog,
+) -> dict:
+    key = (name.casefold(), source)
+    if key in system_items:
+        return system_items[key]
+    if source is not None:
+        source_key = (name.casefold(), source.upper())
+        if source_key in system_items:
+            return system_items[source_key]
+    fallback_key = (name.casefold(), None)
+    if source is None and fallback_key in system_items:
+        return system_items[fallback_key]
+    source_text = f"|{source}" if source else ""
+    raise KeyError(f"System item '{name}{source_text}' not found.")
 
 
 def load_scene(path: str | Path) -> Scene:

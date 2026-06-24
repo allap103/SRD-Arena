@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass, field
+import re
 from typing import Generator
 
 from .models.actor import Actor
+from .models.item import Item
 from .models.scene import Behavior, Encounter, Position
 from .systems.roll import roll_dice, roll_die
 
@@ -26,6 +28,7 @@ DIRECTION_DELTAS = {
 class ActionCost:
     movement: int = 0
     action: int = 0
+    bonus_action: int = 0
     reaction: int = 0
 
 
@@ -143,6 +146,7 @@ class EncounterSnapshot:
     turn_index: int = 0
     round_number: int = 1
     player_movement_remaining: int | None = None
+    player_bonus_action_available: bool = True
     player_reaction_available: bool = True
     action_sequence: int = 1
     frame_sequence: int = 1
@@ -159,6 +163,8 @@ class AttackOutcome:
     attack_roll: int
     damage: int
     defender_defeated: bool
+    attack_roll_detail: dict[str, int]
+    damage_roll_detail: dict[str, object] | None = None
 
 
 @dataclass
@@ -170,12 +176,14 @@ class EncounterState:
     turn_index: int = 0
     round_number: int = 1
     player_movement_remaining: int | None = None
+    player_bonus_action_available: bool = True
     player_reaction_available: bool = True
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
     decision_stack: list[DecisionFrame] = field(default_factory=list)
     pending_action: PendingAction | None = None
+    item_templates: dict[str, Item] = field(default_factory=dict)
     _behaviors: list[Generator[EncounterAction | None, BehaviorContext, None]] = field(
         default_factory=list,
         repr=False,
@@ -187,6 +195,7 @@ class EncounterState:
         scene_id: str,
         definition: Encounter,
         actor_templates: dict[str, Actor],
+        item_templates: dict[str, Item] | None = None,
     ) -> EncounterState:
         enemies = [
             EncounterEnemyState(
@@ -205,6 +214,7 @@ class EncounterState:
                 definition.player_start.y,
             ),
             enemies=enemies,
+            item_templates=item_templates or {},
         )
         state._initialize_behaviors()
         return state
@@ -215,6 +225,7 @@ class EncounterState:
         definition: Encounter,
         snapshot: EncounterSnapshot,
         actor_templates: dict[str, Actor],
+        item_templates: dict[str, Item] | None = None,
     ) -> EncounterState:
         behavior_by_index = {index: enemy.behavior for index, enemy in enumerate(definition.enemies)}
         enemies = []
@@ -239,6 +250,7 @@ class EncounterState:
             turn_index=snapshot.turn_index,
             round_number=snapshot.round_number,
             player_movement_remaining=snapshot.player_movement_remaining,
+            player_bonus_action_available=snapshot.player_bonus_action_available,
             player_reaction_available=snapshot.player_reaction_available,
             action_sequence=snapshot.action_sequence,
             frame_sequence=snapshot.frame_sequence,
@@ -276,6 +288,7 @@ class EncounterState:
                 if snapshot.pending_action is not None
                 else None
             ),
+            item_templates=item_templates or {},
         )
         state._initialize_behaviors()
         state._normalize_turn()
@@ -288,6 +301,7 @@ class EncounterState:
             turn_index=self.turn_index,
             round_number=self.round_number,
             player_movement_remaining=self.player_movement_remaining,
+            player_bonus_action_available=self.player_bonus_action_available,
             player_reaction_available=self.player_reaction_available,
             action_sequence=self.action_sequence,
             frame_sequence=self.frame_sequence,
@@ -440,6 +454,7 @@ class EncounterState:
                 "health": player.get_health(),
                 "max_health": player.get_max_health(),
                 "movement_remaining": self._player_movement_remaining(player),
+                "bonus_action_available": self.player_bonus_action_available,
                 "reaction_available": self.player_reaction_available,
             },
             "enemies": [
@@ -501,6 +516,19 @@ class EncounterState:
                         id=f"player-attack-{index}",
                         actor_ref="player",
                         cost=ActionCost(action=1),
+                    )
+                )
+
+        if self.player_bonus_action_available:
+            for item in _healing_potions_in_inventory(player, self.item_templates):
+                actions.append(
+                    EncounterAction(
+                        f"Drink {item.name}",
+                        "utilize",
+                        item.id,
+                        id=f"player-utilize-drink-{item.id}",
+                        actor_ref="player",
+                        cost=ActionCost(bonus_action=1),
                     )
                 )
 
@@ -572,7 +600,14 @@ class EncounterState:
                 )
             enemy_index = action.value
             enemy = self.enemies[enemy_index]
-            attack = _resolve_attack(player, enemy.actor, f"Enemy {enemy_index + 1}")
+            target_label = f"Enemy {enemy_index + 1} ({enemy.actor.name})"
+            attack = _resolve_attack(
+                player,
+                enemy.actor,
+                attacker_label=player.name,
+                target_label=target_label,
+                items_by_id=self.item_templates,
+            )
             progress.messages.extend(attack.messages)
             progress.events.append(
                 self._event(
@@ -580,15 +615,18 @@ class EncounterState:
                     actor_ref="player",
                     action_id=resolved_action_id,
                     data={
+                        "attacker_label": player.name,
                         "target_ref": _enemy_ref(enemy_index),
+                        "target_label": target_label,
                         "attack_roll": attack.attack_roll,
+                        "attack_roll_detail": attack.attack_roll_detail,
                         "hit": attack.hit,
                         "damage": attack.damage,
+                        "damage_roll_detail": attack.damage_roll_detail,
                     },
                 )
             )
             if not enemy.is_alive:
-                progress.messages.append(("system", f"Enemy {enemy_index + 1} falls."))
                 progress.events.append(
                     self._event(
                         "actor_defeated",
@@ -596,6 +634,13 @@ class EncounterState:
                         action_id=resolved_action_id,
                     )
                 )
+        elif action.kind == "utilize":
+            if not isinstance(action.value, str):
+                raise ValueError(
+                    f"Encounter utilize action requires an item id, got {action.value!r}."
+                )
+            self._resolve_utilize_action(player, action.value, progress, resolved_action_id)
+            action_ends_turn = False
         elif action.kind == "wait":
             progress.messages.append(("system", "You hold your ground."))
             progress.events.append(
@@ -735,7 +780,13 @@ class EncounterState:
                 continue
 
             if command.kind == "attack":
-                attack = _resolve_attack(enemy.actor, player, enemy.actor.name)
+                attack = _resolve_attack(
+                    enemy.actor,
+                    player,
+                    attacker_label=f"Enemy {enemy_index + 1} ({enemy.actor.name})",
+                    target_label=player.name,
+                    items_by_id=self.item_templates,
+                )
                 progress.messages.extend(attack.messages)
                 progress.events.append(
                     self._event(
@@ -743,10 +794,14 @@ class EncounterState:
                         actor_ref=_enemy_ref(enemy_index),
                         action_id=action_id,
                         data={
+                            "attacker_label": f"Enemy {enemy_index + 1} ({enemy.actor.name})",
                             "target_ref": "player",
+                            "target_label": player.name,
                             "attack_roll": attack.attack_roll,
+                            "attack_roll_detail": attack.attack_roll_detail,
                             "hit": attack.hit,
                             "damage": attack.damage,
+                            "damage_roll_detail": attack.damage_roll_detail,
                         },
                     )
                 )
@@ -790,7 +845,15 @@ class EncounterState:
             self.player_reaction_available = False
             target_index = _enemy_index(pending_action.actor_ref)
             target = self.enemies[target_index]
-            attack = _resolve_attack(player, target.actor, "Opportunity attack")
+            target_label = f"Enemy {target_index + 1} ({target.actor.name})"
+            attack = _resolve_attack(
+                player,
+                target.actor,
+                attacker_label=player.name,
+                target_label=target_label,
+                action_label="Opportunity attack",
+                items_by_id=self.item_templates,
+            )
             progress.messages.extend(attack.messages)
             progress.events.append(
                 self._event(
@@ -799,10 +862,14 @@ class EncounterState:
                     frame_id=decision.id,
                     action_id=resolved_action_id,
                     data={
+                        "attacker_label": player.name,
                         "target_ref": pending_action.actor_ref,
+                        "target_label": target_label,
                         "attack_roll": attack.attack_roll,
+                        "attack_roll_detail": attack.attack_roll_detail,
                         "hit": attack.hit,
                         "damage": attack.damage,
+                        "damage_roll_detail": attack.damage_roll_detail,
                         "reaction": True,
                     },
                 )
@@ -924,7 +991,14 @@ class EncounterState:
                     data={"kind": "opportunity_attack", "trigger_id": trigger_id},
                 )
             )
-            attack = _resolve_attack(enemy.actor, player, f"{enemy.actor.name} opportunity attack")
+            attack = _resolve_attack(
+                enemy.actor,
+                player,
+                attacker_label=f"Enemy {index + 1} ({enemy.actor.name})",
+                target_label=player.name,
+                action_label="Opportunity attack",
+                items_by_id=self.item_templates,
+            )
             messages.extend(attack.messages)
             progress.events.append(
                 self._event(
@@ -932,10 +1006,14 @@ class EncounterState:
                     actor_ref=_enemy_ref(index),
                     action_id=action_id,
                     data={
+                        "attacker_label": f"Enemy {index + 1} ({enemy.actor.name})",
                         "target_ref": "player",
+                        "target_label": player.name,
                         "attack_roll": attack.attack_roll,
+                        "attack_roll_detail": attack.attack_roll_detail,
                         "hit": attack.hit,
                         "damage": attack.damage,
+                        "damage_roll_detail": attack.damage_roll_detail,
                         "reaction": True,
                     },
                 )
@@ -943,6 +1021,110 @@ class EncounterState:
             if player.get_health() <= 0:
                 break
         return messages
+
+    def _resolve_utilize_action(
+        self,
+        player: Actor,
+        item_id: str,
+        progress: EncounterProgress,
+        action_id: str,
+    ) -> None:
+        item = self.item_templates.get(item_id)
+        if item is None or not player.inventory.has_item(item_id):
+            progress.messages.append(("system", "You do not have that item."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "utilize", "item_id": item_id, "success": False},
+                )
+            )
+            return
+
+        if not self.player_bonus_action_available:
+            progress.messages.append(("system", "You have already used your Bonus Action."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={
+                        "kind": "utilize",
+                        "item_id": item.id,
+                        "item_name": item.name,
+                        "success": False,
+                    },
+                )
+            )
+            return
+
+        healing_dice = _healing_potion_dice(item)
+        if healing_dice is None:
+            progress.messages.append(("system", f"{item.name} cannot be used that way yet."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={
+                        "kind": "utilize",
+                        "item_id": item.id,
+                        "item_name": item.name,
+                        "success": False,
+                    },
+                )
+            )
+            return
+
+        dice_count, dice_sides, modifier = healing_dice
+        dice_total = roll_dice(dice_count, dice_sides)
+        healing_total = dice_total + modifier
+        applied_healing = player.heal(healing_total)
+        consumed = item.has_misc_tag("CNS")
+        if consumed:
+            player.inventory.remove_item(item.id)
+        self.player_bonus_action_available = False
+
+        modifier_text = f" + {modifier}" if modifier else ""
+        progress.messages.extend(
+            [
+                ("system", f"{player.name} drinks {item.name}."),
+                (
+                    "system",
+                    f"Healing: {dice_count}d{dice_sides}={dice_total}{modifier_text} "
+                    f"= {healing_total}; applied {applied_healing}.",
+                ),
+            ]
+        )
+        if consumed:
+            progress.messages.append(("system", f"{item.name} is consumed."))
+        progress.events.append(
+            self._event(
+                "item_used",
+                actor_ref="player",
+                action_id=action_id,
+                data={
+                    "kind": "utilize",
+                    "mode": "drink",
+                    "item_id": item.id,
+                    "item_name": item.name,
+                    "target_ref": "player",
+                    "target_label": player.name,
+                    "success": True,
+                    "consumed": consumed,
+                    "effect": "healing",
+                    "healing": applied_healing,
+                    "healing_roll_detail": {
+                        "dice": f"{dice_count}d{dice_sides}",
+                        "dice_total": dice_total,
+                        "modifier": modifier,
+                        "total": healing_total,
+                        "applied_healing": applied_healing,
+                    },
+                },
+            )
+        )
 
     def _apply_player_move(
         self,
@@ -1087,6 +1269,7 @@ class EncounterState:
         self._normalize_turn()
         if self.turn_index == 0:
             self.player_movement_remaining = None
+            self.player_bonus_action_available = True
 
     def _maybe_reset_reactions(self) -> None:
         if self.turn_index != 0:
@@ -1298,30 +1481,152 @@ def _movement_squares(actor: Actor) -> int:
     return actor.attributes.movement.squares_per_turn
 
 
-def _resolve_attack(attacker: Actor, defender: Actor, attacker_name: str) -> AttackOutcome:
-    attack_roll = roll_die(20) + attacker.get_modifier(attacker.attributes.strength)
-    if attack_roll < defender.get_armor_class():
+def _healing_potions_in_inventory(actor: Actor, items_by_id: dict[str, Item]) -> list[Item]:
+    seen: set[str] = set()
+    potions: list[Item] = []
+    for item_id in actor.inventory.items:
+        if item_id in seen:
+            continue
+        seen.add(item_id)
+        item = items_by_id.get(item_id)
+        if item is not None and _healing_potion_dice(item) is not None:
+            potions.append(item)
+    return potions
+
+
+def _healing_potion_dice(item: Item) -> tuple[int, int, int] | None:
+    if not item.item_type.startswith("P"):
+        return None
+    if not item.has_misc_tag("CNS"):
+        return None
+    match = re.search(r"\{@dice\s+(\d+)d(\d+)(?:\s*\+\s*(\d+))?\}", item.description)
+    if match is None:
+        return None
+    return (
+        int(match.group(1)),
+        int(match.group(2)),
+        int(match.group(3) or 0),
+    )
+
+
+def _resolve_attack(
+    attacker: Actor,
+    defender: Actor,
+    attacker_label: str,
+    target_label: str,
+    action_label: str = "Attack",
+    items_by_id: dict[str, Item] | None = None,
+) -> AttackOutcome:
+    weapon = _equipped_weapon(attacker, items_by_id or {})
+    ability_modifier = attacker.get_modifier(attacker.attributes.strength)
+    proficiency_bonus = _weapon_proficiency_bonus(attacker, weapon)
+    attack_modifier = ability_modifier + proficiency_bonus
+    attack_die = roll_die(20)
+    attack_roll = attack_die + attack_modifier
+    target_ac = defender.get_armor_class()
+    attack_roll_detail = {
+        "die": attack_die,
+        "ability_modifier": ability_modifier,
+        "proficiency_bonus": proficiency_bonus,
+        "modifier": attack_modifier,
+        "total": attack_roll,
+        "target_ac": target_ac,
+    }
+    if weapon is not None:
+        attack_roll_detail["weapon_id"] = weapon.id
+        attack_roll_detail["weapon_name"] = weapon.name
+    action_prefix = action_label if action_label != "Attack" else "Attack"
+    proficiency_text = (
+        f" + proficiency {proficiency_bonus}" if proficiency_bonus else ""
+    )
+    attack_detail_message = (
+        f"{action_prefix}: {attacker_label} attacks {target_label}. "
+        f"Roll d20={attack_die} + STR mod {ability_modifier}{proficiency_text} "
+        f"= {attack_roll} vs {target_label} AC {target_ac}."
+    )
+    if attack_roll < target_ac:
         return AttackOutcome(
-            messages=[("system", f"{attacker_name} misses.")],
+            messages=[
+                ("system", attack_detail_message),
+                ("system", f"{attacker_label} misses {target_label}."),
+            ],
             hit=False,
             attack_roll=attack_roll,
             damage=0,
             defender_defeated=False,
+            attack_roll_detail=attack_roll_detail,
         )
 
-    damage = max(1, roll_dice(1, 4) + attacker.get_modifier(attacker.attributes.strength))
+    damage_dice = weapon.weapon_stat.damage if weapon and weapon.weapon_stat else "1d4"
+    damage_die_count, damage_die_sides = _parse_damage_dice(damage_dice)
+    damage_die_total = roll_dice(damage_die_count, damage_die_sides)
+    damage_total = damage_die_total + ability_modifier
+    damage = max(1, damage_total)
     applied_damage = defender.take_damage(damage)
-    messages = [("system", f"{attacker_name} hits for {applied_damage} damage.")]
+    damage_roll_detail = {
+        "dice": damage_dice,
+        "dice_total": damage_die_total,
+        "modifier": ability_modifier,
+        "total": damage_total,
+        "minimum_applied_total": damage,
+        "applied_damage": applied_damage,
+    }
+    if weapon is not None:
+        damage_roll_detail["weapon_id"] = weapon.id
+        damage_roll_detail["weapon_name"] = weapon.name
+    messages = [
+        ("system", attack_detail_message),
+        (
+            "system",
+            f"Damage to {target_label}: {damage_dice}={damage_die_total} "
+            f"+ STR mod {ability_modifier} = {damage_total}; "
+            f"final damage {damage}, applied {applied_damage}.",
+        ),
+        ("system", f"{attacker_label} hits {target_label} for {applied_damage} damage."),
+    ]
     defeated = defender.get_health() <= 0
     if defeated:
-        messages.append(("system", f"{defender.name} is defeated."))
+        messages.append(("system", f"{target_label} is defeated."))
     return AttackOutcome(
         messages=messages,
         hit=True,
         attack_roll=attack_roll,
         damage=applied_damage,
         defender_defeated=defeated,
+        attack_roll_detail=attack_roll_detail,
+        damage_roll_detail=damage_roll_detail,
     )
+
+
+def _equipped_weapon(attacker: Actor, items_by_id: dict[str, Item]) -> Item | None:
+    for slot in ("right_hand", "left_hand"):
+        item_id = attacker.equipment.equipped_items.get(slot)
+        if item_id is None:
+            continue
+        item = items_by_id.get(item_id)
+        if item is not None and item.weapon_stat is not None:
+            return item
+    return None
+
+
+def _weapon_proficiency_bonus(attacker: Actor, weapon: Item | None) -> int:
+    if weapon is None or weapon.weapon_stat is None:
+        return 0
+    weapon_proficiencies = attacker.attributes.proficiencies.get("weapons", [])
+    if not isinstance(weapon_proficiencies, list):
+        return 0
+    category = weapon.weapon_stat.weapon_category
+    is_proficient = (
+        weapon.id in weapon_proficiencies
+        or weapon.name.casefold() in {str(item).casefold() for item in weapon_proficiencies}
+        or category in weapon_proficiencies
+    )
+    return attacker.attributes.proficiency_bonus if is_proficient else 0
+
+
+def _parse_damage_dice(damage: str) -> tuple[int, int]:
+    count_text, sides_text = damage.lower().split("d", 1)
+    return int(count_text), int(sides_text)
 
 
 def _enemy_ref(enemy_index: int) -> str:

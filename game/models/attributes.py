@@ -27,7 +27,7 @@ class Attributes:
     proficiencies: dict = field(default_factory=dict)
 
     def __post_init__(self):
-        self.proficiency_bonus = round(self.level / 4) + 1
+        self.proficiency_bonus = 2 + max(0, self.level - 1) // 4
 
     def __str__(self):
         return f"Base Health: {self.base_health}, Level: {self.level}, Strength: {self.strength}, Dexterity: {self.dexterity}, Constitution: {self.constitution}, Wisdom: {self.wisdom}, Intelligence: {self.intelligence}, Charisma: {self.charisma}, Base Armor Class: {self.base_armor_class}"

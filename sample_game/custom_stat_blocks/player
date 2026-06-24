@@ -1,0 +1,40 @@
+{
+    "id": "player",
+    "name":"Traveler",
+    "description":"A traveler",
+    "class_ref": {
+        "name": "Fighter",
+        "source": "XPHB"
+    },
+    "attributes": {
+        "base_health": 16,
+        "level": 2,
+        "movement": {
+            "speed_feet": 30,
+            "feet_per_square": 5
+        },
+        "strength": 16,
+        "dexterity": 12,
+        "constitution": 14,
+        "wisdom": 8,
+        "intelligence": 12,
+        "charisma": 10,
+        "base_armor_class": 15
+    },
+    "inventory": [
+        {
+            "name": "Potion of Healing",
+            "source": "XDMG"
+        }
+    ],
+    "equipment": {
+        "right_hand": {
+            "name": "Longsword",
+            "source": "XPHB"
+        },
+        "body": {
+            "name": "Chain Mail",
+            "source": "XPHB"
+        }
+    }
+}

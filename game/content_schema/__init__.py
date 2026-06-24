@@ -1,5 +1,11 @@
-from .actor import ActorSchema, AttributesSchema, EQUIPMENT_SLOTS
-from .item import ArmorStatSchema, ItemSchema, WeaponStatSchema
+from .actor import (
+    ActorItemReferenceSchema,
+    ActorSchema,
+    AttributesSchema,
+    EQUIPMENT_SLOTS,
+    StatBlockReferenceSchema,
+)
+from .item import ArmorStatSchema, ItemReferenceSchema, ItemSchema, WeaponStatSchema
 from .scene import (
     BehaviorSchema,
     EncounterEnemySchema,
@@ -14,6 +20,7 @@ from .scene import (
 
 __all__ = [
     "ActorSchema",
+    "ActorItemReferenceSchema",
     "ArmorStatSchema",
     "AttributesSchema",
     "BehaviorSchema",
@@ -24,8 +31,10 @@ __all__ = [
     "FleeSchema",
     "GridSchema",
     "ItemSchema",
+    "ItemReferenceSchema",
     "PositionSchema",
     "SceneChoiceSchema",
     "SceneSchema",
+    "StatBlockReferenceSchema",
     "WeaponStatSchema",
 ]

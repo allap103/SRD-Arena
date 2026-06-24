@@ -13,7 +13,7 @@
         },
         "enemies": [
             {
-                "actor_id": "goblin",
+                "actor_id": "goblin_1",
                 "start": {
                     "x": 5,
                     "y": 2
@@ -23,7 +23,7 @@
                 }
             },
             {
-                "actor_id": "goblin",
+                "actor_id": "goblin_2",
                 "start": {
                     "x": 6,
                     "y": 2
@@ -38,7 +38,7 @@
                 }
             },
             {
-                "actor_id": "goblin",
+                "actor_id": "goblin_3",
                 "start": {
                     "x": 4,
                     "y": 1

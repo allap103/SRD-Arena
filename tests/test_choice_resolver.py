@@ -104,7 +104,7 @@ def test_goblin_failure_deals_damage(monkeypatch) -> None:
     choice_index = session.get_scene_view().choices.index("Try to sneak away.")
     result = session.choose(choice_index)
 
-    assert session.player.get_health() == 10
+    assert session.player.get_health() == session.player.get_max_health() - 2
     assert any("You take 2 damage" in message for _, message in result.messages)
     assert result.next_scene_id == "goblin_encounter"
 

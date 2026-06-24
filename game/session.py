@@ -5,6 +5,7 @@ from pathlib import Path
 from .choice_resolver import ChoiceResolver
 from .encounter import CombatEvent, EncounterAction, EncounterSnapshot, EncounterState
 from .models.actor import Actor
+from .models.item import Item
 from .models.scene import Scene
 
 SAVE_CHOICE_TEXT = "Save game"
@@ -53,6 +54,7 @@ class GameSession:
         scenes: dict[str, Scene],
         player: Actor,
         actor_templates: dict[str, Actor] | None = None,
+        item_templates: dict[str, Item] | None = None,
         choice_resolver: ChoiceResolver | None = None,
         start_scene_id: str = "welcome",
         game_dir: str | Path = "sample_game",
@@ -61,6 +63,7 @@ class GameSession:
         self.scenes = scenes
         self.player = player
         self.actor_templates = actor_templates or {player.id: player}
+        self.item_templates = item_templates or {}
         self.choice_resolver = choice_resolver or ChoiceResolver()
         self.current_scene_id = start_scene_id
         self.start_scene_id = start_scene_id
@@ -109,6 +112,7 @@ class GameSession:
                     cost={
                         "movement": action.cost.movement,
                         "action": action.cost.action,
+                        "bonus_action": action.cost.bonus_action,
                         "reaction": action.cost.reaction,
                     },
                     source_trigger_id=action.source_trigger_id,
@@ -204,6 +208,7 @@ class GameSession:
         self.start_scene_id = loaded.start_scene_id
         self._initial_player = deepcopy(loaded._initial_player)
         self.actor_templates = loaded.actor_templates
+        self.item_templates = loaded.item_templates
         self.encounter_state = loaded.encounter_state
         self._encounter_actions = []
         self._ensure_encounter_state()
@@ -289,6 +294,7 @@ class GameSession:
             scene.id,
             scene.encounter,
             self.actor_templates,
+            self.item_templates,
         )
         self._encounter_actions = []
 
@@ -315,6 +321,7 @@ class GameSession:
             scene.encounter,
             snapshot,
             self.actor_templates,
+            self.item_templates,
         )
 
     def _system_action_details(self, start_index: int) -> list[ActionView]:

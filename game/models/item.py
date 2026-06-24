@@ -9,6 +9,7 @@ class WeaponStat:
     damage: str
     damage_type: str
     properties: list[str]
+    weapon_category: str = ""
 
 
 @dataclass
@@ -27,6 +28,8 @@ class Item:
     category: str
     weapon_stat: WeaponStat | None = None
     armor_stat: ArmorStat | None = None
+    item_type: str = ""
+    misc_tags: list[str] | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, object]) -> "Item":
@@ -44,7 +47,12 @@ class Item:
             armor_stat=ArmorStat(**schema.armor_stat.model_dump())
             if schema.armor_stat
             else None,
+            item_type=schema.item_type,
+            misc_tags=list(schema.misc_tags),
         )
+
+    def has_misc_tag(self, tag: str) -> bool:
+        return tag in (self.misc_tags or [])
 
     @classmethod
     def from_file(cls, path: str) -> "Item":

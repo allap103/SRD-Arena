@@ -24,6 +24,16 @@ EquipmentSlot = Literal[
 ]
 
 
+class ActorItemReferenceSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    source: str | None = None
+
+
+ItemIdOrReference = str | ActorItemReferenceSchema
+
+
 class AttributesSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -37,6 +47,7 @@ class AttributesSchema(BaseModel):
     intelligence: int = 10
     charisma: int = 10
     base_armor_class: int = 10
+    proficiencies: dict[str, object] = Field(default_factory=dict)
 
 
 class MovementSchema(BaseModel):
@@ -50,9 +61,19 @@ class ActorSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str
-    name: str
+    name: str | None = None
     description: str = ""
     attributes: AttributesSchema = Field(default_factory=AttributesSchema)
-    inventory: list[str] = Field(default_factory=list)
-    equipment: dict[EquipmentSlot, str] = Field(default_factory=dict)
+    inventory: list[ItemIdOrReference] = Field(default_factory=list)
+    equipment: dict[EquipmentSlot, ItemIdOrReference] = Field(default_factory=dict)
     metadata: dict[str, object] = Field(default_factory=dict)
+    class_ref: "StatBlockReferenceSchema | None" = None
+    custom_stat_block: str | None = None
+    stat_block: "StatBlockReferenceSchema | None" = None
+
+
+class StatBlockReferenceSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    source: str | None = None

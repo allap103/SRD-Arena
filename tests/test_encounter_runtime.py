@@ -149,7 +149,10 @@ def test_enemy_movement_can_pause_for_player_opportunity_attack(monkeypatch) -> 
     reaction = session.encounter_state.available_actions(session.player)[0]
     reaction_progress = session.encounter_state.apply_action(session.player, reaction)
 
-    assert any("Opportunity attack hits" in message for _, message in reaction_progress.messages)
+    assert any(
+        "Traveler hits Enemy 1 (Goblin)" in message
+        for _, message in reaction_progress.messages
+    )
     assert session.encounter_state.enemies[0].position.x > 3
     assert session.encounter_state.enemies[0].position.y == 2
     assert session.encounter_state.pending_action is None
@@ -180,7 +183,55 @@ def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:
 
     assert result.selected_choice_text is not None
     assert result.selected_choice_text.startswith("Attack enemy 1")
-    assert any("Enemy 1 hits" in message for _, message in result.messages)
+    assert any(
+        "Attack: Traveler attacks Enemy 1 (Goblin). Roll d20=20 + STR mod 3 + proficiency 2 = 25"
+        in message
+        for _, message in result.messages
+    )
+    assert any(
+        "Damage to Enemy 1 (Goblin): 1d8=4 + STR mod 3 = 7; final damage 7, applied 7."
+        in message
+        for _, message in result.messages
+    )
+    assert any(
+        "Traveler hits Enemy 1 (Goblin)" in message
+        for _, message in result.messages
+    )
+    attack_event = next(event for event in result.events if event.type == "attack_resolved")
+    assert attack_event.data["attacker_label"] == "Traveler"
+    assert attack_event.data["target_label"] == "Enemy 1 (Goblin)"
+    assert attack_event.data["attack_roll"] == 25
+    assert attack_event.data["attack_roll_detail"]["proficiency_bonus"] == 2
+    assert attack_event.data["damage_roll_detail"]["dice"] == "1d8"
+    assert attack_event.data["damage_roll_detail"]["weapon_name"] == "Longsword"
+
+
+def test_goblin_encounter_can_utilize_healing_potion(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.player.current_health = 10
+
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 5)
+
+    scene_view = session.get_scene_view()
+    potion_index = scene_view.choices.index("Drink Potion of Healing")
+    result = session.choose(potion_index)
+
+    assert ("system", "Traveler drinks Potion of Healing.") in result.messages
+    assert ("system", "Healing: 2d4=5 + 2 = 7; applied 7.") in result.messages
+    assert ("system", "Potion of Healing is consumed.") in result.messages
+    assert session.player.get_health() == 17
+    assert not session.player.inventory.has_item("potion_of_healing")
+    assert session.encounter_state is not None
+    assert session.encounter_state.player_bonus_action_available is False
+    assert session.encounter_state.turn_index == 0
+    event = next(event for event in result.events if event.type == "item_used")
+    assert event.data["kind"] == "utilize"
+    assert event.data["mode"] == "drink"
+    assert event.data["item_name"] == "Potion of Healing"
+    assert event.data["consumed"] is True
+    assert event.data["healing_roll_detail"]["dice"] == "2d4"
+    assert event.data["healing_roll_detail"]["applied_healing"] == 7
 
 
 def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:

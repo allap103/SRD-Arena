@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from game.loaders import load_scene
+from game.engine import Game
+from game.loaders import load_actor, load_bestiary_stat_blocks, load_scene
 
 
 def test_load_scene_parses_optional_encounter_block() -> None:
@@ -16,6 +17,11 @@ def test_load_scene_parses_optional_encounter_block() -> None:
     assert scene.encounter.player_start.x == 1
     assert scene.encounter.player_start.y == 6
     assert len(scene.encounter.enemies) == 3
+    assert [enemy.actor_id for enemy in scene.encounter.enemies] == [
+        "goblin_1",
+        "goblin_2",
+        "goblin_3",
+    ]
     assert scene.encounter.enemies[0].behavior.type == "chase"
     assert scene.encounter.enemies[1].behavior.anchor is not None
     assert scene.encounter.enemies[1].behavior.radius == 2
@@ -27,3 +33,49 @@ def test_load_scene_parses_optional_encounter_block() -> None:
     assert scene.encounter.flee is not None
     assert scene.encounter.flee.allowed is True
     assert scene.encounter.flee.next_scene == "welcome"
+
+
+def test_load_actor_can_reference_system_stat_block() -> None:
+    stat_blocks = load_bestiary_stat_blocks("game_system")
+
+    actor = load_actor("sample_game/actors/goblin_1", stat_blocks)
+
+    assert actor.id == "goblin_1"
+    assert actor.name == "Goblin"
+    assert actor.get_max_health() == 7
+    assert actor.get_armor_class() == 15
+    assert actor.attributes.strength == 8
+    assert actor.attributes.dexterity == 14
+    assert actor.attributes.movement.speed_feet == 30
+
+
+def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
+    game = Game()
+
+    actor_ids = {actor.id for actor in game.actors}
+    player = game.get_actor("player")
+    items_by_id = {item.id: item for item in game.items}
+
+    assert "player" in actor_ids
+    assert len([actor for actor in game.actors if actor.id == "player"]) == 1
+    assert {"goblin_1", "goblin_2", "goblin_3"}.issubset(actor_ids)
+    assert player.name == "Traveler"
+    assert player.attributes.level == 2
+    assert player.attributes.proficiency_bonus == 2
+    assert player.attributes.proficiencies["weapons"] == ["simple", "martial"]
+    assert player.get_max_health() == 20
+    assert player.get_armor_class() == 16
+    assert player.inventory.items == ["potion_of_healing"]
+    assert player.equipment.equipped_items["right_hand"] == "longsword"
+    assert player.equipment.equipped_items["body"] == "chain_mail"
+    assert items_by_id["longsword"].name == "Longsword"
+    assert items_by_id["longsword"].weapon_stat is not None
+    assert items_by_id["longsword"].weapon_stat.weapon_category == "martial"
+    assert items_by_id["chain_mail"].name == "Chain Mail"
+    assert items_by_id["potion_of_healing"].name == "Potion of Healing"
+    assert items_by_id["dagger"].weapon_stat is not None
+    assert items_by_id["dagger"].weapon_stat.damage == "1d4"
+    assert items_by_id["shortsword"].weapon_stat is not None
+    assert items_by_id["shortsword"].weapon_stat.damage == "1d6"
+    assert items_by_id["chain_mail"].armor_stat is not None
+    assert items_by_id["chain_mail"].armor_stat.armor_class == 16

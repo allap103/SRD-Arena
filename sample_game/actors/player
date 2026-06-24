@@ -1,28 +1,4 @@
 {
     "id": "player",
-    "name":"Traveler",
-    "description":"A traveler",
-    "attributes": {
-        "base_health": 10,
-        "level": 1,
-        "movement": {
-            "speed_feet": 30,
-            "feet_per_square": 5
-        },
-        "strength": 16,
-        "dexterity": 12,
-        "constitution": 14,
-        "wisdom": 8,
-        "intelligence": 12,
-        "charisma": 10,
-        "base_armor_class": 10
-    },
-    "inventory": [
-        "potion",
-        "dagger"
-    ],
-    "equipment": {
-        "right_hand": "shortsword",
-        "body": "chainmail"
-    }
+    "custom_stat_block": "player"
 }
