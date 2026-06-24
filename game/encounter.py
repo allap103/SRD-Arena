@@ -434,6 +434,8 @@ class EncounterState:
             "round_number": self.round_number,
             "turn_index": self.turn_index,
             "player": {
+                "actor_id": player.id,
+                "name": player.name,
                 "position": {"x": self.player_position.x, "y": self.player_position.y},
                 "health": player.get_health(),
                 "max_health": player.get_max_health(),
@@ -443,6 +445,7 @@ class EncounterState:
             "enemies": [
                 {
                     "actor_ref": _enemy_ref(index),
+                    "actor_id": enemy.actor_id,
                     "name": enemy.actor.name,
                     "position": {"x": enemy.position.x, "y": enemy.position.y},
                     "health": enemy.actor.get_health(),

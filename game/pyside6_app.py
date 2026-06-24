@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 from .engine import GAME_DIR, Game
 from .presentation import BattlefieldView, MOVE_DIRECTIONS, SessionPresentation, build_session_presentation
@@ -14,8 +15,8 @@ from .session import (
 )
 
 try:
-    from PySide6.QtCore import Qt, Signal
-    from PySide6.QtGui import QColor, QFont, QPainter, QPen
+    from PySide6.QtCore import QSize, Qt, Signal
+    from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap
     from PySide6.QtWidgets import (
         QApplication,
         QFrame,
@@ -33,13 +34,17 @@ try:
         QWidget,
     )
 except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
+    def Signal(*args, **kwargs):  # type: ignore[no-untyped-def]
+        return None
+
     QApplication = None  # type: ignore[assignment]
+    QSize = object  # type: ignore[assignment]
     Qt = object  # type: ignore[assignment]
-    Signal = lambda *args, **kwargs: None  # type: ignore[assignment]
     QColor = object  # type: ignore[assignment]
     QFont = object  # type: ignore[assignment]
     QPainter = object  # type: ignore[assignment]
     QPen = object  # type: ignore[assignment]
+    QPixmap = object  # type: ignore[assignment]
     QFrame = object  # type: ignore[assignment]
     QGridLayout = object  # type: ignore[assignment]
     QGroupBox = object  # type: ignore[assignment]
@@ -94,15 +99,27 @@ class TargetSelectionMode:
 
 class BattlefieldWidget(QWidget):
     actor_clicked = Signal(str)
+    BASE_CELL_SIZE = 72
+    MINIMUM_HEIGHT = 320
 
-    def __init__(self):
+    def __init__(self, game_dir: str | Path = GAME_DIR):
         super().__init__()
         self._battlefield: BattlefieldView | None = None
         self._actor_positions: dict[str, tuple[float, float, float]] = {}
         self._targetable_actor_refs: set[str] = set()
         self._selected_actor_ref: str | None = None
-        self.setMinimumHeight(320)
+        self._sprites_dir = Path(game_dir) / "sprites"
+        self._sprite_cache: dict[str, QPixmap | None] = {}
+        self.setMinimumHeight(self.MINIMUM_HEIGHT)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    def sizeHint(self) -> QSize:
+        if self._battlefield is None:
+            return QSize(600, 420)
+        return QSize(
+            self._battlefield.width * self.BASE_CELL_SIZE + 24,
+            self._battlefield.height * self.BASE_CELL_SIZE + 24,
+        )
 
     def set_battlefield(self, battlefield: BattlefieldView) -> None:
         self._battlefield = battlefield
@@ -150,7 +167,7 @@ class BattlefieldWidget(QWidget):
         for actor in self._battlefield.actors:
             center_x = origin_x + (actor.position.x + 0.5) * cell_size
             center_y = origin_y + (actor.position.y + 0.5) * cell_size
-            radius = max(10, int(cell_size * 0.32))
+            radius = max(14, int(cell_size * 0.38))
             fill = QColor("#2e6f95") if actor.is_player else QColor("#b34a3c")
             border = QColor("#17364a") if actor.is_player else QColor("#5a1f18")
             self._actor_positions[actor.actor_ref] = (center_x, center_y, radius)
@@ -188,30 +205,59 @@ class BattlefieldWidget(QWidget):
                     selected_radius * 2,
                 )
 
-            painter.setBrush(fill)
-            painter.setPen(QPen(border, 2))
-            painter.drawEllipse(
-                int(center_x - radius),
-                int(center_y - radius),
-                radius * 2,
-                radius * 2,
-            )
+            sprite = self._sprite_for_actor(actor.actor_id, actor.label)
+            if sprite is not None:
+                sprite_size = int(cell_size * 0.82)
+                painter.drawPixmap(
+                    int(center_x - sprite_size / 2),
+                    int(center_y - sprite_size / 2),
+                    sprite_size,
+                    sprite_size,
+                    sprite,
+                )
+            else:
+                painter.setBrush(fill)
+                painter.setPen(QPen(border, 2))
+                painter.drawEllipse(
+                    int(center_x - radius),
+                    int(center_y - radius),
+                    radius * 2,
+                    radius * 2,
+                )
 
-            painter.setPen(QColor("white"))
-            font = QFont()
-            font.setBold(True)
-            font.setPointSize(max(8, int(cell_size * 0.18)))
-            painter.setFont(font)
-            painter.drawText(
-                int(center_x - radius),
-                int(center_y - radius),
-                radius * 2,
-                radius * 2,
-                Qt.AlignmentFlag.AlignCenter,
-                "P" if actor.is_player else actor.label.split()[-1],
-            )
+                painter.setPen(QColor("white"))
+                font = QFont()
+                font.setBold(True)
+                font.setPointSize(max(8, int(cell_size * 0.18)))
+                painter.setFont(font)
+                painter.drawText(
+                    int(center_x - radius),
+                    int(center_y - radius),
+                    radius * 2,
+                    radius * 2,
+                    Qt.AlignmentFlag.AlignCenter,
+                    actor.label[:1].upper(),
+                )
 
         painter.end()
+
+    def _sprite_for_actor(self, actor_id: str, label: str) -> QPixmap | None:
+        for name in self._sprite_names(actor_id, label):
+            if name not in self._sprite_cache:
+                path = self._sprites_dir / name
+                pixmap = QPixmap(str(path)) if path.exists() else None
+                self._sprite_cache[name] = pixmap if pixmap is not None and not pixmap.isNull() else None
+            if self._sprite_cache[name] is not None:
+                return self._sprite_cache[name]
+        return None
+
+    def _sprite_names(self, actor_id: str, label: str) -> list[str]:
+        names = [f"{actor_id}.png"]
+        label_name = label.split("(")[-1].rstrip(")") if "(" in label else label
+        slug = label_name.strip().lower().replace(" ", "_")
+        if slug:
+            names.append(f"{slug}.png")
+        return names
 
     def mousePressEvent(self, event) -> None:  # pragma: no cover - GUI interaction
         for actor_ref, (center_x, center_y, radius) in self._actor_positions.items():
@@ -276,10 +322,10 @@ class CyoaPySide6Window(QMainWindow):
         encounter_layout.addWidget(self.encounter_economy_group)
 
         self.battlefield_group = self._build_group("Battlefield")
-        self.battlefield_widget = BattlefieldWidget()
+        self.battlefield_widget = BattlefieldWidget(self.game.directory)
         self.battlefield_widget.actor_clicked.connect(self._handle_battlefield_actor_clicked)
         self.battlefield_group.layout().addWidget(self.battlefield_widget)
-        encounter_layout.addWidget(self.battlefield_group)
+        encounter_layout.addWidget(self.battlefield_group, stretch=3)
 
         encounter_controls = QWidget()
         encounter_controls_layout = QHBoxLayout(encounter_controls)
@@ -342,7 +388,7 @@ class CyoaPySide6Window(QMainWindow):
         layout.addWidget(self.last_action_group)
         layout.addWidget(self.scene_group, stretch=1)
         layout.addWidget(self.story_choices_group, stretch=1)
-        layout.addWidget(self.encounter_group, stretch=1)
+        layout.addWidget(self.encounter_group, stretch=2)
         return container
 
     def _build_sidebar(self) -> QWidget:

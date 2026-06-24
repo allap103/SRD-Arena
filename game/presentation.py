@@ -47,6 +47,7 @@ class GridPositionView:
 @dataclass
 class BattlefieldActorView:
     actor_ref: str
+    actor_id: str
     label: str
     position: GridPositionView
     health: int
@@ -153,7 +154,8 @@ def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
     actors = [
         BattlefieldActorView(
             actor_ref="player",
-            label="Player",
+            actor_id=combat_state["player"]["actor_id"],
+            label=combat_state["player"]["name"],
             position=GridPositionView(
                 x=combat_state["player"]["position"]["x"],
                 y=combat_state["player"]["position"]["y"],
@@ -166,7 +168,8 @@ def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
     actors.extend(
         BattlefieldActorView(
             actor_ref=enemy["actor_ref"],
-            label=f"Enemy {index + 1}",
+            actor_id=enemy["actor_id"],
+            label=f"Enemy {index + 1} ({enemy['name']})",
             position=GridPositionView(
                 x=enemy["position"]["x"],
                 y=enemy["position"]["y"],

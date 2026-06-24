@@ -1,6 +1,6 @@
 {
     "id": "player",
-    "name":"Player",
+    "name":"Traveler",
     "description":"A traveler",
     "attributes": {
         "base_health": 10,
