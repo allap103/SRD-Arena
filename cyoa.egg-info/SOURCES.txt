@@ -12,6 +12,8 @@ game/engine.py
 game/game_logging.py
 game/launcher.py
 game/loaders.py
+game/presentation.py
+game/pyside6_app.py
 game/save.py
 game/scene_runner.py
 game/session.py

@@ -1,4 +1,6 @@
 from pathlib import Path
+import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -139,7 +141,41 @@ def test_launch_in_new_terminal_rejects_non_textual_frontend(tmp_path: Path) -> 
         launcher.launch_in_new_terminal("api", game_dir)
 
 
-def test_main_launches_textual_in_popup_by_default_on_windows(
+def test_launch_runs_pyside6_frontend(monkeypatch, tmp_path: Path) -> None:
+    game_dir = _make_game_dir(tmp_path / "game")
+    launched = []
+
+    monkeypatch.setitem(
+        sys.modules,
+        "game.pyside6_app",
+        SimpleNamespace(run_pyside6_app=lambda game: launched.append(game.directory)),
+    )
+
+    launcher.launch("pyside6", game_dir)
+
+    assert launched == [game_dir]
+
+
+def test_main_launches_pyside6_by_default(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    game_dir = _make_game_dir(tmp_path / "game")
+    launched = []
+
+    monkeypatch.setattr(
+        launcher,
+        "resolve_game_directory",
+        lambda game: game_dir.resolve(),
+    )
+    monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(args))
+
+    launcher.main([str(game_dir)])
+
+    assert launched == [("pyside6", game_dir.resolve())]
+
+
+def test_main_launches_textual_in_popup_on_windows_when_requested(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
@@ -158,12 +194,12 @@ def test_main_launches_textual_in_popup_by_default_on_windows(
         lambda *args: launched.append(args),
     )
 
-    launcher.main(["textual", str(game_dir)])
+    launcher.main(["--textual", str(game_dir)])
 
     assert launched == [("textual", game_dir.resolve())]
 
 
-def test_main_launches_textual_in_popup_by_default_on_macos(
+def test_main_launches_textual_in_popup_on_macos_when_requested(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
@@ -183,7 +219,7 @@ def test_main_launches_textual_in_popup_by_default_on_macos(
         lambda *args: launched.append(args),
     )
 
-    launcher.main(["textual", str(game_dir)])
+    launcher.main(["--textual", str(game_dir)])
 
     assert launched == [("textual", game_dir.resolve())]
 
@@ -203,6 +239,6 @@ def test_main_no_popup_runs_textual_in_current_terminal(
     )
     monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(args))
 
-    launcher.main(["--no-popup", "textual", str(game_dir)])
+    launcher.main(["--textual", "--no-popup", str(game_dir)])
 
     assert launched == [("textual", game_dir.resolve())]

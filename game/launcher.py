@@ -10,7 +10,6 @@ import sys
 from .api.savegames import run_savegame_api
 from .engine import GAME_DIR, Game
 from .game_logging import configure_game_logging
-from .textual_app import run_textual_app
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ADVENTURES_DIR = REPO_ROOT / "adventures"
@@ -20,19 +19,23 @@ VALID_GAME_SUBDIRS = ("actors", "items", "scenes")
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Launch the CYOA project.")
     parser.add_argument(
-        "frontend",
-        nargs="?",
-        choices=("textual", "api", "cli"),
-        default="textual",
-        help="Which frontend to launch. Defaults to textual.",
-    )
-    parser.add_argument(
         "game",
         nargs="?",
         help=(
             "Game directory as a relative path, an absolute path, or the name of "
             "a subfolder in adventures/."
         ),
+    )
+    parser.add_argument(
+        "--frontend",
+        choices=("textual", "pyside6", "api", "cli"),
+        default="pyside6",
+        help="Which frontend to launch. Defaults to pyside6.",
+    )
+    parser.add_argument(
+        "--textual",
+        action="store_true",
+        help="Launch the Textual frontend instead of the default PySide6 frontend.",
     )
     parser.add_argument(
         "--host",
@@ -82,7 +85,14 @@ def launch(
     port: int = 8000,
 ) -> None:
     if frontend == "textual":
+        from .textual_app import run_textual_app
+
         run_textual_app(Game(str(game_dir)))
+        return
+    if frontend == "pyside6":
+        from .pyside6_app import run_pyside6_app
+
+        run_pyside6_app(Game(str(game_dir)))
         return
     if frontend == "api":
         run_savegame_api(host=host, port=port, game_dir=game_dir)
@@ -134,15 +144,16 @@ def launch_in_new_terminal(frontend: str, game_dir: Path) -> None:
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
+    frontend = "textual" if args.textual else args.frontend
     game_dir = resolve_game_directory(args.game)
     if (
-        args.frontend == "textual"
+        frontend == "textual"
         and not args.no_popup
         and (os.name == "nt" or sys.platform == "darwin")
     ):
-        launch_in_new_terminal(args.frontend, game_dir)
+        launch_in_new_terminal(frontend, game_dir)
         return
-    launch(args.frontend, game_dir, host=args.host, port=args.port)
+    launch(frontend, game_dir, host=args.host, port=args.port)
 
 
 def _validate_game_directory(path: Path) -> Path:

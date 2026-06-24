@@ -427,6 +427,10 @@ class EncounterState:
     def export_state(self, player: Actor) -> dict[str, object]:
         return {
             "scene_id": self.scene_id,
+            "grid": {
+                "width": self.definition.grid.width,
+                "height": self.definition.grid.height,
+            },
             "round_number": self.round_number,
             "turn_index": self.turn_index,
             "player": {

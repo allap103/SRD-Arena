@@ -3,6 +3,7 @@ from textual.containers import Container, Grid, VerticalScroll
 from textual.widgets import Button, Static
 
 from .engine import GAME_DIR, Game
+from .presentation import build_session_presentation
 from .session import (
     ActionView,
     EXIT_CHOICE_TEXT,
@@ -314,10 +315,11 @@ class CyoaTextualApp(App[None]):
     def refresh_scene(self) -> None:
         self._choice_list_version += 1
         scene_view = self.session.get_scene_view()
+        presentation = build_session_presentation(self.session, scene_view)
 
-        story_choices = scene_view.choices[:-SYSTEM_CHOICE_COUNT]
-        self._system_choice_start = len(story_choices)
-        self._encounter_action_details = scene_view.action_details[:-SYSTEM_CHOICE_COUNT]
+        story_actions = presentation.story_actions
+        self._system_choice_start = len(story_actions)
+        self._encounter_action_details = story_actions
 
         choice_list = self.query_one("#choice-list", VerticalScroll)
         encounter_panel = self.query_one("#encounter-panel", Container)
@@ -325,8 +327,8 @@ class CyoaTextualApp(App[None]):
         scene_panel = self.query_one("#scene-panel", Container)
         last_action_panel = self.query_one("#last-action-panel", Container)
 
-        if self.session.encounter_state is None:
-            self.query_one("#scene-text", Static).update(scene_view.scene_text or "")
+        if presentation.encounter is None:
+            self.query_one("#scene-text", Static).update(presentation.story_text or "")
             encounter_panel.display = False
             battlefield_panel.display = False
             scene_panel.display = True
@@ -335,11 +337,11 @@ class CyoaTextualApp(App[None]):
             choice_list.display = True
             choice_list.border_title = "Choices"
             choice_list.remove_children()
-            for index, choice_text in enumerate(story_choices):
+            for action in story_actions:
                 choice_list.mount(
                     Button(
-                        choice_text,
-                        id=f"choice-{self._choice_list_version}-{index}",
+                        action.label,
+                        id=f"choice-{self._choice_list_version}-{action.index}",
                         classes="choice-button",
                     )
                 )
@@ -350,7 +352,7 @@ class CyoaTextualApp(App[None]):
         choice_list.display = False
         encounter_panel.display = True
         battlefield_panel.display = True
-        self._refresh_encounter_controls()
+        self._refresh_encounter_controls(presentation)
 
     def write_messages(self, messages: list[tuple[str, str]]) -> None:
         last_action_panel = self.query_one("#last-action-panel", Container)
@@ -471,20 +473,15 @@ class CyoaTextualApp(App[None]):
         self.query_one("#attributes-detail", Static).update(attributes_text)
         self.show_sidebar_view("attributes-menu")
 
-    def _refresh_encounter_controls(self) -> None:
+    def _refresh_encounter_controls(self, presentation) -> None:
         self._encounter_list_version += 1
-        combat_state = self.session.encounter_state.export_state(self.session.player)
-        economy_text = self._format_action_economy(combat_state)
-        self.query_one("#encounter-economy-text", Static).update(economy_text)
-        self.query_one("#battlefield-text", Static).update(
-            self.session.encounter_state.render(self.session.player)
+        encounter = presentation.encounter
+        assert encounter is not None
+        self.query_one("#encounter-economy-text", Static).update(
+            encounter.resources.as_text()
         )
+        self.query_one("#battlefield-text", Static).update(encounter.battlefield_text)
 
-        movement_actions = {
-            action.kind == "move" and str(action.value) or "": action
-            for action in self._encounter_action_details
-            if action.kind == "move"
-        }
         arrow_labels = {
             "up-left": "↖",
             "up": "↑",
@@ -497,18 +494,13 @@ class CyoaTextualApp(App[None]):
         }
         for direction, arrow in arrow_labels.items():
             button = self.query_one(f"#move-{direction}", Button)
-            action = movement_actions.get(direction)
+            action = encounter.movement_actions.get(direction)
             button.label = arrow
             button.disabled = action is None
 
         action_list = self.query_one("#encounter-action-list", VerticalScroll)
         action_list.remove_children()
-        non_movement_actions = [
-            action
-            for action in self._encounter_action_details
-            if action.kind not in {"move", "wait", "pass"}
-        ]
-        for action in non_movement_actions:
+        for action in encounter.non_movement_actions:
             action_list.mount(
                 Button(
                     action.label,
@@ -517,7 +509,7 @@ class CyoaTextualApp(App[None]):
                 )
             )
 
-        corner_action = self._find_encounter_action("wait") or self._find_encounter_action("pass")
+        corner_action = encounter.end_turn_action
         end_turn_button = self.query_one("#end-turn-button", Button)
         if corner_action is None:
             end_turn_button.label = "End Turn"
@@ -526,24 +518,8 @@ class CyoaTextualApp(App[None]):
             end_turn_button.label = "Pass Reaction" if corner_action.kind == "pass" else "End Turn"
             end_turn_button.disabled = False
 
-        title = "Reactions" if combat_state["decision"]["kind"] == "reaction" else "Actions"
-        self.query_one("#encounter-actions-title", Static).update(title)
-
-    def _format_action_economy(self, combat_state: dict[str, object]) -> str:
-        player_state = combat_state["player"]
-        decision = combat_state["decision"]
-        movement_remaining = player_state["movement_remaining"]
-        normal_turn = decision["actor_ref"] == "player" and decision["kind"] == "turn"
-        action_status = "Ready" if normal_turn else "Waiting"
-        bonus_status = "Not implemented"
-        reaction_status = "Ready" if player_state["reaction_available"] else "Spent"
-        return "\n".join(
-            [
-                f"Action: {action_status}",
-                f"Bonus Action: {bonus_status}",
-                f"Reaction: {reaction_status}",
-                f"Movement: {movement_remaining} squares",
-            ]
+        self.query_one("#encounter-actions-title", Static).update(
+            encounter.action_pane_title
         )
 
     def _find_encounter_move_index(self, direction: str) -> int | None:

@@ -1,0 +1,669 @@
+from __future__ import annotations
+
+import sys
+from dataclasses import dataclass
+
+from .engine import GAME_DIR, Game
+from .presentation import BattlefieldView, MOVE_DIRECTIONS, SessionPresentation, build_session_presentation
+from .session import (
+    ActionView,
+    EXIT_CHOICE_TEXT,
+    LOAD_CHOICE_TEXT,
+    SAVE_CHOICE_TEXT,
+    GameSession,
+)
+
+try:
+    from PySide6.QtCore import Qt, Signal
+    from PySide6.QtGui import QColor, QFont, QPainter, QPen
+    from PySide6.QtWidgets import (
+        QApplication,
+        QFrame,
+        QGridLayout,
+        QGroupBox,
+        QHBoxLayout,
+        QLabel,
+        QMainWindow,
+        QPushButton,
+        QScrollArea,
+        QSizePolicy,
+        QStackedWidget,
+        QTextEdit,
+        QVBoxLayout,
+        QWidget,
+    )
+except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
+    QApplication = None  # type: ignore[assignment]
+    Qt = object  # type: ignore[assignment]
+    Signal = lambda *args, **kwargs: None  # type: ignore[assignment]
+    QColor = object  # type: ignore[assignment]
+    QFont = object  # type: ignore[assignment]
+    QPainter = object  # type: ignore[assignment]
+    QPen = object  # type: ignore[assignment]
+    QFrame = object  # type: ignore[assignment]
+    QGridLayout = object  # type: ignore[assignment]
+    QGroupBox = object  # type: ignore[assignment]
+    QHBoxLayout = object  # type: ignore[assignment]
+    QLabel = object  # type: ignore[assignment]
+    QMainWindow = object  # type: ignore[assignment]
+    QPushButton = object  # type: ignore[assignment]
+    QScrollArea = object  # type: ignore[assignment]
+    QSizePolicy = object  # type: ignore[assignment]
+    QStackedWidget = object  # type: ignore[assignment]
+    QTextEdit = object  # type: ignore[assignment]
+    QVBoxLayout = object  # type: ignore[assignment]
+    QWidget = object  # type: ignore[assignment]
+
+
+SIDEBAR_WIDTH = 220
+ARROW_LABELS = {
+    "up-left": "↖",
+    "up": "↑",
+    "up-right": "↗",
+    "left": "←",
+    "right": "→",
+    "down-left": "↙",
+    "down": "↓",
+    "down-right": "↘",
+}
+
+
+def _require_pyside6() -> None:
+    if QApplication is None:
+        raise RuntimeError(
+            "PySide6 is not installed. Install project dependencies including PySide6 to use this frontend."
+        )
+
+
+def _clear_layout(layout) -> None:
+    while layout.count():
+        item = layout.takeAt(0)
+        widget = item.widget()
+        child_layout = item.layout()
+        if widget is not None:
+            widget.deleteLater()
+        elif child_layout is not None:
+            _clear_layout(child_layout)
+
+
+@dataclass(frozen=True)
+class TargetSelectionMode:
+    kind: str
+    source_trigger_id: str | None = None
+
+
+class BattlefieldWidget(QWidget):
+    actor_clicked = Signal(str)
+
+    def __init__(self):
+        super().__init__()
+        self._battlefield: BattlefieldView | None = None
+        self._actor_positions: dict[str, tuple[float, float, float]] = {}
+        self._targetable_actor_refs: set[str] = set()
+        self._selected_actor_ref: str | None = None
+        self.setMinimumHeight(320)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+    def set_battlefield(self, battlefield: BattlefieldView) -> None:
+        self._battlefield = battlefield
+        self._actor_positions = {}
+        self.update()
+
+    def set_targeting_state(
+        self,
+        targetable_actor_refs: set[str],
+        selected_actor_ref: str | None = None,
+    ) -> None:
+        self._targetable_actor_refs = set(targetable_actor_refs)
+        self._selected_actor_ref = selected_actor_ref
+        self.update()
+
+    def paintEvent(self, event) -> None:  # pragma: no cover - GUI painting
+        if self._battlefield is None:
+            return
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        rect = self.rect().adjusted(12, 12, -12, -12)
+        cols = max(1, self._battlefield.width)
+        rows = max(1, self._battlefield.height)
+        cell_size = min(rect.width() / cols, rect.height() / rows)
+        board_width = cell_size * cols
+        board_height = cell_size * rows
+        origin_x = rect.x() + (rect.width() - board_width) / 2
+        origin_y = rect.y() + (rect.height() - board_height) / 2
+
+        grid_pen = QPen(QColor("#c8b68c"))
+        grid_pen.setWidth(1)
+        painter.setPen(grid_pen)
+
+        for y in range(rows):
+            for x in range(cols):
+                fill = QColor("#f4ecd8") if (x + y) % 2 == 0 else QColor("#eadfbe")
+                cell_x = origin_x + x * cell_size
+                cell_y = origin_y + y * cell_size
+                painter.fillRect(int(cell_x), int(cell_y), int(cell_size), int(cell_size), fill)
+                painter.drawRect(int(cell_x), int(cell_y), int(cell_size), int(cell_size))
+
+        self._actor_positions = {}
+        for actor in self._battlefield.actors:
+            center_x = origin_x + (actor.position.x + 0.5) * cell_size
+            center_y = origin_y + (actor.position.y + 0.5) * cell_size
+            radius = max(10, int(cell_size * 0.32))
+            fill = QColor("#2e6f95") if actor.is_player else QColor("#b34a3c")
+            border = QColor("#17364a") if actor.is_player else QColor("#5a1f18")
+            self._actor_positions[actor.actor_ref] = (center_x, center_y, radius)
+
+            if actor.is_active:
+                painter.setBrush(QColor(255, 215, 0, 70))
+                painter.setPen(Qt.PenStyle.NoPen)
+                highlight_radius = int(radius * 1.6)
+                painter.drawEllipse(
+                    int(center_x - highlight_radius),
+                    int(center_y - highlight_radius),
+                    highlight_radius * 2,
+                    highlight_radius * 2,
+                )
+
+            if actor.actor_ref in self._targetable_actor_refs:
+                painter.setBrush(QColor(84, 196, 110, 70))
+                painter.setPen(QPen(QColor("#2d7a3d"), 2))
+                target_radius = int(radius * 1.3)
+                painter.drawEllipse(
+                    int(center_x - target_radius),
+                    int(center_y - target_radius),
+                    target_radius * 2,
+                    target_radius * 2,
+                )
+
+            if actor.actor_ref == self._selected_actor_ref:
+                painter.setBrush(QColor(255, 255, 255, 0))
+                painter.setPen(QPen(QColor("#1b1b1b"), 3))
+                selected_radius = int(radius * 1.45)
+                painter.drawEllipse(
+                    int(center_x - selected_radius),
+                    int(center_y - selected_radius),
+                    selected_radius * 2,
+                    selected_radius * 2,
+                )
+
+            painter.setBrush(fill)
+            painter.setPen(QPen(border, 2))
+            painter.drawEllipse(
+                int(center_x - radius),
+                int(center_y - radius),
+                radius * 2,
+                radius * 2,
+            )
+
+            painter.setPen(QColor("white"))
+            font = QFont()
+            font.setBold(True)
+            font.setPointSize(max(8, int(cell_size * 0.18)))
+            painter.setFont(font)
+            painter.drawText(
+                int(center_x - radius),
+                int(center_y - radius),
+                radius * 2,
+                radius * 2,
+                Qt.AlignmentFlag.AlignCenter,
+                "P" if actor.is_player else actor.label.split()[-1],
+            )
+
+        painter.end()
+
+    def mousePressEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+        for actor_ref, (center_x, center_y, radius) in self._actor_positions.items():
+            dx = event.position().x() - center_x
+            dy = event.position().y() - center_y
+            if dx * dx + dy * dy <= radius * radius:
+                self.actor_clicked.emit(actor_ref)
+                break
+        super().mousePressEvent(event)
+
+
+class CyoaPySide6Window(QMainWindow):
+    def __init__(self, game: Game | None = None):
+        _require_pyside6()
+        super().__init__()
+        self.game = game or Game(GAME_DIR)
+        self.session: GameSession = self.game.create_session()
+        self._items_by_id = {item.id: item for item in self.game.items}
+        self._presentation: SessionPresentation | None = None
+        self._pending_target_mode: TargetSelectionMode | None = None
+
+        self.setWindowTitle("CYOA")
+        self.resize(1400, 900)
+
+        central = QWidget()
+        self.setCentralWidget(central)
+        root_layout = QHBoxLayout(central)
+        root_layout.setContentsMargins(12, 12, 12, 12)
+        root_layout.setSpacing(12)
+
+        root_layout.addWidget(self._build_main_content(), stretch=1)
+        root_layout.addWidget(self._build_sidebar())
+
+        self.refresh_view()
+
+    def _build_main_content(self) -> QWidget:
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+
+        self.last_action_group = self._build_group("Last Action")
+        self.last_action_text = self._build_readonly_text(minimum_height=90, maximum_height=140)
+        self.last_action_group.layout().addWidget(self.last_action_text)
+
+        self.scene_group = self._build_group("Scene")
+        self.scene_text = self._build_readonly_text(minimum_height=180)
+        self.scene_group.layout().addWidget(self.scene_text)
+
+        self.story_choices_group = self._build_group("Choices")
+        self.story_choices_layout = QVBoxLayout()
+        self.story_choices_layout.setSpacing(8)
+        story_scroll = self._wrap_in_scroll(self.story_choices_layout)
+        self.story_choices_group.layout().addWidget(story_scroll)
+
+        self.encounter_group = self._build_group("Encounter")
+        encounter_layout = self.encounter_group.layout()
+
+        self.encounter_economy_group = self._build_group("Resources")
+        self.encounter_economy_text = self._build_readonly_text(minimum_height=110, maximum_height=140)
+        self.encounter_economy_group.layout().addWidget(self.encounter_economy_text)
+        encounter_layout.addWidget(self.encounter_economy_group)
+
+        self.battlefield_group = self._build_group("Battlefield")
+        self.battlefield_widget = BattlefieldWidget()
+        self.battlefield_widget.actor_clicked.connect(self._handle_battlefield_actor_clicked)
+        self.battlefield_group.layout().addWidget(self.battlefield_widget)
+        encounter_layout.addWidget(self.battlefield_group)
+
+        encounter_controls = QWidget()
+        encounter_controls_layout = QHBoxLayout(encounter_controls)
+        encounter_controls_layout.setContentsMargins(0, 0, 0, 0)
+        encounter_controls_layout.setSpacing(10)
+
+        self.movement_group = self._build_group("Movement")
+        self.movement_buttons: dict[str, QPushButton] = {}
+        movement_grid = QGridLayout()
+        movement_grid.setSpacing(6)
+        positions = {
+            "up-left": (0, 0),
+            "up": (0, 1),
+            "up-right": (0, 2),
+            "left": (1, 0),
+            "right": (1, 2),
+            "down-left": (2, 0),
+            "down": (2, 1),
+            "down-right": (2, 2),
+        }
+        for direction in MOVE_DIRECTIONS:
+            button = QPushButton(ARROW_LABELS[direction])
+            button.setMinimumHeight(46)
+            button.clicked.connect(
+                lambda _checked=False, move_direction=direction: self._trigger_move(move_direction)
+            )
+            self.movement_buttons[direction] = button
+            row, col = positions[direction]
+            movement_grid.addWidget(button, row, col)
+        movement_center = QLabel("Move")
+        movement_center.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        movement_grid.addWidget(movement_center, 1, 1)
+        self.movement_group.layout().addLayout(movement_grid)
+        self.movement_group.setFixedWidth(210)
+        encounter_controls_layout.addWidget(self.movement_group)
+
+        self.encounter_actions_group = self._build_group("Actions")
+        actions_header = QWidget()
+        actions_header_layout = QHBoxLayout(actions_header)
+        actions_header_layout.setContentsMargins(0, 0, 0, 0)
+        actions_header_layout.setSpacing(8)
+        self.encounter_actions_title = QLabel("Actions")
+        actions_header_layout.addWidget(self.encounter_actions_title, stretch=1)
+        self.end_turn_button = QPushButton("End Turn")
+        self.end_turn_button.clicked.connect(self._end_turn)
+        actions_header_layout.addWidget(self.end_turn_button)
+        self.encounter_actions_group.layout().addWidget(actions_header)
+        self.encounter_targeting_label = QLabel("")
+        self.encounter_targeting_label.setWordWrap(True)
+        self.encounter_actions_group.layout().addWidget(self.encounter_targeting_label)
+        self.encounter_actions_layout = QVBoxLayout()
+        self.encounter_actions_layout.setSpacing(8)
+        self.encounter_actions_group.layout().addWidget(
+            self._wrap_in_scroll(self.encounter_actions_layout)
+        )
+        encounter_controls_layout.addWidget(self.encounter_actions_group, stretch=1)
+
+        encounter_layout.addWidget(encounter_controls)
+
+        layout.addWidget(self.last_action_group)
+        layout.addWidget(self.scene_group, stretch=1)
+        layout.addWidget(self.story_choices_group, stretch=1)
+        layout.addWidget(self.encounter_group, stretch=1)
+        return container
+
+    def _build_sidebar(self) -> QWidget:
+        sidebar = self._framed_panel("Menu")
+        sidebar.setFixedWidth(SIDEBAR_WIDTH)
+        layout = sidebar.layout()
+
+        self.sidebar_stack = QStackedWidget()
+        self.sidebar_stack.addWidget(self._build_sidebar_root())
+        self.sidebar_stack.addWidget(self._build_inventory_page())
+        self.sidebar_stack.addWidget(self._build_attributes_page())
+        self.sidebar_stack.addWidget(self._build_system_page())
+        layout.addWidget(self.sidebar_stack)
+        return sidebar
+
+    def _build_sidebar_root(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.addWidget(self._sidebar_button("Attributes", self.show_attributes))
+        layout.addWidget(self._sidebar_button("Inventory", self.show_inventory))
+        layout.addWidget(self._sidebar_button("System", self.show_system_menu))
+        layout.addStretch(1)
+        return page
+
+    def _build_inventory_page(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.addWidget(self._sidebar_button("Back", self.show_menu_root))
+        self.inventory_text = self._build_readonly_text(minimum_height=400)
+        layout.addWidget(self.inventory_text, stretch=1)
+        return page
+
+    def _build_attributes_page(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.addWidget(self._sidebar_button("Back", self.show_menu_root))
+        self.attributes_text = self._build_readonly_text(minimum_height=400)
+        layout.addWidget(self.attributes_text, stretch=1)
+        return page
+
+    def _build_system_page(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.addWidget(self._sidebar_button("Back", self.show_menu_root))
+        layout.addWidget(self._sidebar_button(SAVE_CHOICE_TEXT, self._system_save))
+        layout.addWidget(self._sidebar_button(LOAD_CHOICE_TEXT, self._system_load))
+        layout.addWidget(self._sidebar_button(EXIT_CHOICE_TEXT, self.close))
+        layout.addStretch(1)
+        return page
+
+    def _build_group(self, title: str) -> QGroupBox:
+        group = QGroupBox(title)
+        layout = QVBoxLayout(group)
+        layout.setContentsMargins(10, 14, 10, 10)
+        layout.setSpacing(8)
+        return group
+
+    def _framed_panel(self, title: str) -> QGroupBox:
+        panel = self._build_group(title)
+        panel.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        return panel
+
+    def _wrap_in_scroll(self, content_layout: QVBoxLayout) -> QScrollArea:
+        container = QWidget()
+        container.setLayout(content_layout)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidget(container)
+        return scroll
+
+    def _build_readonly_text(
+        self,
+        minimum_height: int = 100,
+        maximum_height: int | None = None,
+    ) -> QTextEdit:
+        text = QTextEdit()
+        text.setReadOnly(True)
+        text.setMinimumHeight(minimum_height)
+        if maximum_height is not None:
+            text.setMaximumHeight(maximum_height)
+        return text
+
+    def _sidebar_button(self, label: str, callback) -> QPushButton:
+        button = QPushButton(label)
+        button.clicked.connect(callback)
+        return button
+
+    def refresh_view(self) -> None:
+        presentation = build_session_presentation(self.session)
+        self._presentation = presentation
+        if presentation.encounter is None:
+            self._pending_target_mode = None
+
+        self.last_action_group.setVisible(not self.last_action_text.toPlainText() == "")
+        self.scene_text.setPlainText(presentation.story_text or "")
+
+        if presentation.encounter is None:
+            self.scene_group.show()
+            self.story_choices_group.show()
+            self.encounter_group.hide()
+            self._render_story_actions(presentation.story_actions)
+        else:
+            self.scene_group.hide()
+            self.story_choices_group.hide()
+            self.encounter_group.show()
+            self._render_encounter(presentation)
+
+    def _render_story_actions(self, actions: list[ActionView]) -> None:
+        _clear_layout(self.story_choices_layout)
+        for action in actions:
+            button = QPushButton(action.label)
+            button.clicked.connect(
+                lambda _checked=False, action_index=action.index: self._select_action(action_index)
+            )
+            self.story_choices_layout.addWidget(button)
+        self.story_choices_layout.addStretch(1)
+
+    def _render_encounter(self, presentation: SessionPresentation) -> None:
+        encounter = presentation.encounter
+        assert encounter is not None
+        self.encounter_economy_text.setPlainText(encounter.resources.as_text())
+        self.battlefield_widget.set_battlefield(encounter.battlefield)
+        self.encounter_actions_title.setText(encounter.action_pane_title)
+
+        target_modes = self._target_selection_modes(encounter.non_movement_actions)
+        if self._pending_target_mode not in target_modes:
+            self._pending_target_mode = None
+        selected_targetable_actions = (
+            target_modes.get(self._pending_target_mode, {}) if self._pending_target_mode is not None else {}
+        )
+        targetable_refs = {
+            target_ref
+            for action in selected_targetable_actions.values()
+            if (target_ref := self._target_actor_ref(action)) is not None
+        }
+        self.battlefield_widget.set_targeting_state(targetable_refs)
+
+        for direction, button in self.movement_buttons.items():
+            action = encounter.movement_actions.get(direction)
+            button.setEnabled(action is not None)
+
+        _clear_layout(self.encounter_actions_layout)
+        rendered_target_modes: set[TargetSelectionMode] = set()
+        for action in encounter.non_movement_actions:
+            target_mode = self._target_mode_for_action(action)
+            if target_mode is not None:
+                if target_mode in rendered_target_modes:
+                    continue
+                rendered_target_modes.add(target_mode)
+                button = QPushButton(self._target_mode_label(target_mode))
+                button.setCheckable(True)
+                button.setChecked(target_mode == self._pending_target_mode)
+                button.clicked.connect(
+                    lambda _checked=False, mode=target_mode: self._toggle_target_action(mode)
+                )
+            else:
+                button = QPushButton(action.label)
+                button.clicked.connect(
+                    lambda _checked=False, action_index=action.index: self._select_action(action_index)
+                )
+            self.encounter_actions_layout.addWidget(button)
+        self.encounter_actions_layout.addStretch(1)
+
+        if self._pending_target_mode is None and target_modes:
+            self.encounter_targeting_label.setText("Select an attack, then click an enemy on the battlefield.")
+        elif self._pending_target_mode is None:
+            self.encounter_targeting_label.setText("")
+        else:
+            self.encounter_targeting_label.setText(
+                f"{self._target_mode_label(self._pending_target_mode)} selected. Click a highlighted enemy on the battlefield."
+            )
+
+        if encounter.end_turn_action is None:
+            self.end_turn_button.setEnabled(False)
+            self.end_turn_button.setText("End Turn")
+        else:
+            self.end_turn_button.setEnabled(True)
+            self.end_turn_button.setText(
+                "Pass Reaction" if encounter.end_turn_action.kind == "pass" else "End Turn"
+            )
+
+    def _trigger_move(self, direction: str) -> None:
+        if self._presentation is None or self._presentation.encounter is None:
+            return
+        self._pending_target_mode = None
+        action = self._presentation.encounter.movement_actions.get(direction)
+        if action is not None:
+            self._select_action(action.index)
+
+    def _end_turn(self) -> None:
+        if self._presentation is None or self._presentation.encounter is None:
+            return
+        self._pending_target_mode = None
+        action = self._presentation.encounter.end_turn_action
+        if action is not None:
+            self._select_action(action.index)
+
+    def _system_save(self) -> None:
+        if self._presentation is None:
+            return
+        self._select_action(self._presentation.system_actions[0].index)
+
+    def _system_load(self) -> None:
+        if self._presentation is None:
+            return
+        self._select_action(self._presentation.system_actions[1].index)
+
+    def _select_action(self, index: int) -> None:
+        self._pending_target_mode = None
+        result = self.session.choose(index)
+        self._apply_turn_result(result)
+
+    def _toggle_target_action(self, mode: TargetSelectionMode) -> None:
+        self._pending_target_mode = None if self._pending_target_mode == mode else mode
+        self.refresh_view()
+
+    def _handle_battlefield_actor_clicked(self, actor_ref: str) -> None:
+        if self._presentation is None or self._presentation.encounter is None:
+            return
+        if self._pending_target_mode is None:
+            return
+        action = self._target_selection_modes(self._presentation.encounter.non_movement_actions).get(
+            self._pending_target_mode,
+            {},
+        ).get(
+            actor_ref
+        )
+        if action is None:
+            return
+        self._select_action(action.index)
+
+    def _target_selection_modes(
+        self,
+        actions: list[ActionView],
+    ) -> dict[TargetSelectionMode, dict[str, ActionView]]:
+        modes: dict[TargetSelectionMode, dict[str, ActionView]] = {}
+        for action in actions:
+            target_mode = self._target_mode_for_action(action)
+            target_actor_ref = self._target_actor_ref(action)
+            if target_mode is None or target_actor_ref is None:
+                continue
+            modes.setdefault(target_mode, {})[target_actor_ref] = action
+        return modes
+
+    def _target_mode_for_action(self, action: ActionView) -> TargetSelectionMode | None:
+        if self._target_actor_ref(action) is None:
+            return None
+        return TargetSelectionMode(
+            kind=action.kind,
+            source_trigger_id=action.source_trigger_id,
+        )
+
+    def _target_mode_label(self, mode: TargetSelectionMode) -> str:
+        return "Opportunity attack" if mode.kind == "opportunity_attack" else "Attack"
+
+    def _target_actor_ref(self, action: ActionView | None) -> str | None:
+        if action is None or action.kind not in {"attack", "opportunity_attack"}:
+            return None
+        if not isinstance(action.value, int):
+            return None
+        return f"enemy:{action.value}"
+
+    def _apply_turn_result(self, result) -> None:
+        if result.messages:
+            self.last_action_text.setPlainText("\n".join(message for _, message in result.messages))
+            self.last_action_group.show()
+        else:
+            self.last_action_text.clear()
+            self.last_action_group.hide()
+
+        if result.should_exit:
+            self.close()
+            return
+        self.refresh_view()
+
+    def show_menu_root(self) -> None:
+        self.sidebar_stack.setCurrentIndex(0)
+
+    def show_inventory(self) -> None:
+        items = self.session.player.inventory.items
+        inventory_text = (
+            "Inventory is empty."
+            if not items
+            else "\n".join(self.display_item_name(item_id) for item_id in items)
+        )
+        self.inventory_text.setPlainText(inventory_text)
+        self.sidebar_stack.setCurrentIndex(1)
+
+    def show_attributes(self) -> None:
+        player = self.session.player
+        attributes = player.attributes
+        attributes_text = "\n".join(
+            [
+                f"Name: {player.name}",
+                f"HP: {player.get_health()}/{player.get_max_health()}",
+                f"AC: {player.get_armor_class()}",
+                f"Level: {attributes.level}",
+                f"STR: {attributes.strength}",
+                f"DEX: {attributes.dexterity}",
+                f"CON: {attributes.constitution}",
+                f"WIS: {attributes.wisdom}",
+                f"INT: {attributes.intelligence}",
+                f"CHA: {attributes.charisma}",
+                f"PB: +{attributes.proficiency_bonus}",
+            ]
+        )
+        self.attributes_text.setPlainText(attributes_text)
+        self.sidebar_stack.setCurrentIndex(2)
+
+    def show_system_menu(self) -> None:
+        self.sidebar_stack.setCurrentIndex(3)
+
+    def display_item_name(self, item_id: str) -> str:
+        item = self._items_by_id.get(item_id)
+        return item.name if item else item_id
+
+
+def run_pyside6_app(game: Game | None = None) -> None:
+    _require_pyside6()
+    app = QApplication.instance() or QApplication(sys.argv)
+    window = CyoaPySide6Window(game=game)
+    window.show()
+    app.exec()
