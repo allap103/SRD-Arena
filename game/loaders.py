@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import re
 from typing import cast
 
 from .content_schema import ActorSchema, ItemSchema, SceneSchema
@@ -288,9 +289,14 @@ def load_class_blocks(directory: str | Path) -> ClassCatalog:
 
     for path in class_dir.glob("class-*.json"):
         data = _load_json(path)
+        feature_entries = data.get("classFeature", [])
         for class_block in data.get("class", []):
             if not isinstance(class_block, dict) or not isinstance(class_block.get("name"), str):
                 continue
+            class_block = {
+                **class_block,
+                "__classFeatureEntries": feature_entries if isinstance(feature_entries, list) else [],
+            }
             source = class_block.get("source")
             source_key = source if isinstance(source, str) else None
             catalog[(class_block["name"].casefold(), source_key)] = class_block
@@ -500,8 +506,7 @@ def _normalize_feature_grant(
             level=feature_level,
             data={
                 "uses": _second_wind_uses(class_block, actor_level),
-                "healing_die_count": 1,
-                "healing_die_sides": 10,
+                **_second_wind_healing_dice(class_block, feature_name, feature_level),
             },
         )
     return FeatureGrant(
@@ -570,6 +575,70 @@ def _second_wind_uses(class_block: dict | None, feature_level: int) -> int:
         return int(table_value)
     except ValueError:
         return 2
+
+
+def _second_wind_healing_dice(
+    class_block: dict | None,
+    feature_name: str,
+    feature_level: int,
+) -> dict[str, int]:
+    feature_entry = _class_feature_entry(class_block, feature_name, feature_level)
+    dice = _first_dice_expression(feature_entry)
+    if dice is None:
+        return {
+            "healing_die_count": 1,
+            "healing_die_sides": 10,
+        }
+    dice_count, dice_sides = dice
+    return {
+        "healing_die_count": dice_count,
+        "healing_die_sides": dice_sides,
+    }
+
+
+def _class_feature_entry(
+    class_block: dict | None,
+    feature_name: str,
+    feature_level: int,
+) -> dict | None:
+    if class_block is None:
+        return None
+    class_name = class_block.get("name")
+    class_source = class_block.get("source")
+    entries = class_block.get("__classFeatureEntries", [])
+    if not isinstance(entries, list):
+        return None
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("name") != feature_name or entry.get("level") != feature_level:
+            continue
+        if entry.get("className") != class_name:
+            continue
+        if entry.get("classSource") != class_source:
+            continue
+        return entry
+    return None
+
+
+def _first_dice_expression(value: object) -> tuple[int, int] | None:
+    if isinstance(value, str):
+        match = re.search(r"\{@dice\s+(\d+)d(\d+)", value)
+        if match is None:
+            return None
+        return int(match.group(1)), int(match.group(2))
+    if isinstance(value, dict):
+        for nested_value in value.values():
+            dice = _first_dice_expression(nested_value)
+            if dice is not None:
+                return dice
+        return None
+    if isinstance(value, list):
+        for item in value:
+            dice = _first_dice_expression(item)
+            if dice is not None:
+                return dice
+    return None
 
 
 def _class_table_value(

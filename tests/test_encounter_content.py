@@ -71,6 +71,9 @@ def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
     assert player.attributes.proficiencies["weapons"] == ["simple", "martial"]
     assert player.combat_profile.attacks_per_attack_action == 1
     assert "second_wind" in {grant.id for grant in player.feature_grants}
+    second_wind = next(grant for grant in player.feature_grants if grant.id == "second_wind")
+    assert second_wind.data["healing_die_count"] == 1
+    assert second_wind.data["healing_die_sides"] == 10
     assert "second_wind" in player.combat_profile.bonus_action_options
     assert player.combat_profile.feature_uses_max["second_wind"] == 2
     assert player.combat_profile.feature_recharge["second_wind"]["short_rest"] == 1

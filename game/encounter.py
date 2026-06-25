@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 import re
 from typing import Generator
 
+from .feature_actions import resolve_feature_action
 from .models.actor import Actor
 from .models.item import Item
 from .models.scene import Behavior, Encounter, Position
@@ -1211,7 +1212,8 @@ class EncounterState:
         progress: EncounterProgress,
         action_id: str,
     ) -> None:
-        if feature_id != "second_wind":
+        feature_action = player.combat_profile.feature_actions.get(feature_id)
+        if feature_action is None:
             progress.messages.append(("system", f"{feature_id} is not implemented yet."))
             progress.events.append(
                 self._event(
@@ -1223,8 +1225,30 @@ class EncounterState:
             )
             return
 
-        if not self.player_bonus_action_available:
+        if feature_action.economy == "bonus_action" and not self.player_bonus_action_available:
             progress.messages.append(("system", "You have already used your Bonus Action."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "feature", "feature_id": feature_id, "success": False},
+                )
+            )
+            return
+        if feature_action.economy == "action" and not self.player_action_available:
+            progress.messages.append(("system", "You have already used your Action."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "feature", "feature_id": feature_id, "success": False},
+                )
+            )
+            return
+        if feature_action.economy == "reaction" and not self.player_reaction_available:
+            progress.messages.append(("system", "You have already used your Reaction."))
             progress.events.append(
                 self._event(
                     "action_resolved",
@@ -1237,7 +1261,9 @@ class EncounterState:
 
         uses_remaining = player.feature_uses_remaining.get(feature_id, 0)
         if uses_remaining <= 0:
-            progress.messages.append(("system", "You have no uses of Second Wind remaining."))
+            progress.messages.append(
+                ("system", f"You have no uses of {feature_action.label} remaining.")
+            )
             progress.events.append(
                 self._event(
                     "action_resolved",
@@ -1248,21 +1274,27 @@ class EncounterState:
             )
             return
 
-        healing_total, healing_detail = _roll_second_wind_healing(player)
-        applied_healing = player.heal(healing_total)
-        player.feature_uses_remaining[feature_id] = uses_remaining - 1
-        self.player_bonus_action_available = False
+        result = resolve_feature_action(player, feature_id, roll_dice)
+        if result is None:
+            progress.messages.append(("system", f"{feature_action.label} is not implemented yet."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "feature", "feature_id": feature_id, "success": False},
+                )
+            )
+            return
 
-        progress.messages.extend(
-            [
-                ("system", f"{player.name} uses Second Wind."),
-                (
-                    "system",
-                    f"Healing: 1d10={healing_detail['dice_total']} + level {player.attributes.level} "
-                    f"= {healing_total}; applied {applied_healing}.",
-                ),
-            ]
-        )
+        if feature_action.economy == "bonus_action":
+            self.player_bonus_action_available = False
+        elif feature_action.economy == "action":
+            self.player_action_available = False
+        elif feature_action.economy == "reaction":
+            self.player_reaction_available = False
+
+        progress.messages.extend(result.messages)
         progress.events.append(
             self._event(
                 "feature_used",
@@ -1270,17 +1302,14 @@ class EncounterState:
                 action_id=action_id,
                 data={
                     "kind": "feature",
-                    "feature_id": feature_id,
-                    "feature_name": "Second Wind",
-                    "target_ref": "player",
-                    "target_label": player.name,
+                    "feature_id": result.feature_id,
+                    "feature_name": result.feature_name,
+                    "target_ref": result.target_ref,
+                    "target_label": result.target_label,
                     "success": True,
-                    "healing": applied_healing,
-                    "healing_roll_detail": {
-                        **healing_detail,
-                        "applied_healing": applied_healing,
-                    },
-                    "uses_remaining": player.feature_uses_remaining[feature_id],
+                    "healing": result.healing,
+                    "healing_roll_detail": result.roll_detail,
+                    "uses_remaining": result.uses_remaining,
                 },
             )
         )
@@ -1668,17 +1697,6 @@ def _healing_potion_dice(item: Item) -> tuple[int, int, int] | None:
         int(match.group(2)),
         int(match.group(3) or 0),
     )
-
-
-def _roll_second_wind_healing(actor: Actor) -> tuple[int, dict[str, int | str]]:
-    dice_total = roll_dice(1, 10)
-    total = dice_total + actor.attributes.level
-    return total, {
-        "dice": "1d10",
-        "dice_total": dice_total,
-        "modifier": actor.attributes.level,
-        "total": total,
-    }
 
 
 def _resolve_attack(
