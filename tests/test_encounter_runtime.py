@@ -2,6 +2,7 @@ from pathlib import Path
 
 from game.encounter import EncounterAction
 from game.engine import Game
+from game.presentation import build_session_presentation
 from game.save import load_from_file, save_to_file
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
@@ -314,6 +315,25 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
     assert event.data["uses_remaining"] == 1
     assert event.data["healing_roll_detail"]["dice"] == "1d10"
     assert event.data["healing_roll_detail"]["applied_healing"] == 7
+
+
+def test_second_wind_stays_visible_in_feature_column_when_unavailable(monkeypatch) -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.player.current_health = 10
+
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 5)
+
+    second_wind_index = session.get_scene_view().choices.index("Second Wind")
+    session.choose(second_wind_index)
+
+    presentation = build_session_presentation(session)
+
+    assert presentation.encounter is not None
+    assert "Second Wind" not in session.get_scene_view().choices
+    assert [action.label for action in presentation.encounter.feature_actions] == ["Second Wind"]
+    assert presentation.encounter.feature_actions[0].index == -1
+    assert presentation.encounter.feature_actions[0].cost["bonus_action"] == 1
 
 
 def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:

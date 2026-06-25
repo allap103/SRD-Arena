@@ -583,6 +583,7 @@ class CyoaPySide6Window(QMainWindow):
                 bucket_actions=action_groups["action"],
                 available=encounter.resources.action_status == "Ready",
                 rendered_target_modes=rendered_target_modes,
+                indicator_color="#2f6f9d",
             )
             self._render_action_economy_column(
                 title="Bonus Actions",
@@ -590,6 +591,7 @@ class CyoaPySide6Window(QMainWindow):
                 bucket_actions=action_groups["bonus_action"],
                 available=encounter.resources.bonus_action_status == "Ready",
                 rendered_target_modes=rendered_target_modes,
+                indicator_color="#c9a227",
             )
             self._render_feature_column(encounter.feature_actions, rendered_target_modes)
             self._render_status_column(encounter.resources)
@@ -618,6 +620,7 @@ class CyoaPySide6Window(QMainWindow):
         bucket_actions: dict[str, list[ActionView]],
         available: bool,
         rendered_target_modes: set[TargetSelectionMode],
+        indicator_color: str,
     ) -> None:
         if self._action_menu_scope is not None and self._action_menu_scope.economy == economy:
             self._render_action_detail_column(
@@ -627,7 +630,7 @@ class CyoaPySide6Window(QMainWindow):
                 scope=self._action_menu_scope,
             )
             return
-        self._render_action_menu_column(title, economy, bucket_actions, available)
+        self._render_action_menu_column(title, economy, bucket_actions, available, indicator_color)
 
     def _render_action_menu_column(
         self,
@@ -635,12 +638,13 @@ class CyoaPySide6Window(QMainWindow):
         economy: str,
         bucket_actions: dict[str, list[ActionView]],
         available: bool,
+        indicator_color: str,
     ) -> None:
         column = QWidget()
         column_layout = QVBoxLayout(column)
         column_layout.setContentsMargins(0, 0, 0, 0)
         column_layout.setSpacing(8)
-        column_layout.addWidget(self._build_action_header(title, available))
+        column_layout.addWidget(self._build_action_header(title, available, indicator_color))
 
         for bucket_key, bucket_title in self._action_buckets():
             actions = bucket_actions[bucket_key]
@@ -710,9 +714,9 @@ class CyoaPySide6Window(QMainWindow):
             column_layout.addWidget(empty)
         else:
             for action in feature_actions:
-                button = self._build_encounter_action_button(action, rendered_target_modes)
-                if button is not None:
-                    column_layout.addWidget(button)
+                widget = self._build_feature_action_widget(action, rendered_target_modes)
+                if widget is not None:
+                    column_layout.addWidget(widget)
 
         column_layout.addStretch(1)
         self.encounter_actions_layout.addWidget(column, stretch=1)
@@ -749,7 +753,7 @@ class CyoaPySide6Window(QMainWindow):
         column_layout.addStretch(1)
         self.encounter_actions_layout.addWidget(column, stretch=1)
 
-    def _build_action_header(self, title: str, available: bool) -> QWidget:
+    def _build_action_header(self, title: str, available: bool, indicator_color: str) -> QWidget:
         container = QWidget()
         layout = QHBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -759,7 +763,7 @@ class CyoaPySide6Window(QMainWindow):
         indicator.setFixedSize(10, 10)
         if available:
             indicator.setStyleSheet(
-                "QFrame { background: #2d7a3d; border: 1px solid #1f5c2d; border-radius: 5px; }"
+                f"QFrame {{ background: {indicator_color}; border: 1px solid {indicator_color}; border-radius: 5px; }}"
             )
         else:
             indicator.setStyleSheet(
@@ -832,16 +836,48 @@ class CyoaPySide6Window(QMainWindow):
             button = QPushButton(self._target_mode_label(target_mode))
             button.setCheckable(True)
             button.setChecked(target_mode == self._pending_target_mode)
+            if action.index < 0:
+                button.setEnabled(False)
+                return button
             button.clicked.connect(
                 lambda _checked=False, mode=target_mode: self._toggle_target_action(mode)
             )
             return button
 
         button = QPushButton(action.label)
+        if action.index < 0:
+            button.setEnabled(False)
+            return button
         button.clicked.connect(
             lambda _checked=False, action_index=action.index: self._select_action(action_index)
         )
         return button
+
+    def _build_feature_action_widget(
+        self,
+        action: ActionView,
+        rendered_target_modes: set[TargetSelectionMode],
+    ) -> QWidget | None:
+        button = self._build_encounter_action_button(action, rendered_target_modes)
+        if button is None:
+            return None
+        container = QWidget()
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        indicator = QFrame()
+        indicator.setFixedSize(10, 10)
+        if action.cost.get("bonus_action", 0) > 0:
+            indicator.setStyleSheet(
+                "QFrame { background: #c9a227; border: 1px solid #c9a227; border-radius: 5px; }"
+            )
+        else:
+            indicator.setStyleSheet(
+                "QFrame { background: #9c8b68; border: 1px solid #9c8b68; border-radius: 5px; }"
+            )
+        layout.addWidget(indicator)
+        layout.addWidget(button, stretch=1)
+        return container
 
     def _action_groups(
         self,
@@ -859,6 +895,7 @@ class CyoaPySide6Window(QMainWindow):
         return (
             ("attack", "Attack"),
             ("magic", "Magic"),
+            ("class", "Class"),
             ("utilize", "Utilize"),
             ("other", "Other"),
         )
@@ -892,6 +929,8 @@ class CyoaPySide6Window(QMainWindow):
             return "attack"
         if action.kind == "magic":
             return "magic"
+        if action.kind == "feature":
+            return "class"
         if action.kind == "utilize":
             return "utilize"
         return "other"

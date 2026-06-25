@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .models.class_features import FeatureActionDefinition
 from .session import ActionView, GameSession, SceneView
 
 SYSTEM_ACTION_COUNT = 3
@@ -113,13 +114,9 @@ def build_session_presentation(
     non_movement_actions = [
         action
         for action in story_actions
-        if action.kind not in {"move", "wait", "pass", "feature"}
+        if action.kind not in {"move", "wait", "pass"}
     ]
-    feature_actions = [
-        action
-        for action in story_actions
-        if action.kind == "feature"
-    ]
+    feature_actions = _build_feature_actions(session, story_actions)
     end_turn_action = next(
         (action for action in story_actions if action.kind in {"wait", "pass"}),
         None,
@@ -142,6 +139,38 @@ def build_session_presentation(
             end_turn_action=end_turn_action,
             action_pane_title=action_pane_title,
         ),
+    )
+
+
+def _build_feature_actions(
+    session: GameSession,
+    story_actions: list[ActionView],
+) -> list[ActionView]:
+    available_feature_actions = {
+        str(action.value): action
+        for action in story_actions
+        if action.kind == "feature" and isinstance(action.value, str)
+    }
+    feature_actions: list[ActionView] = []
+    for feature_id, definition in session.player.combat_profile.feature_actions.items():
+        available_action = available_feature_actions.get(feature_id)
+        if available_action is not None:
+            feature_actions.append(available_action)
+            continue
+        feature_actions.append(_build_unavailable_feature_action(definition))
+    return feature_actions
+
+
+def _build_unavailable_feature_action(definition: FeatureActionDefinition) -> ActionView:
+    cost = {definition.economy: 1} if definition.economy else {}
+    return ActionView(
+        index=-1,
+        id=f"unavailable-feature-{definition.feature_id}",
+        label=definition.label,
+        kind="feature",
+        actor_ref="player",
+        value=definition.feature_id,
+        cost=cost,
     )
 
 
