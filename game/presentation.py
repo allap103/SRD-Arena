@@ -145,7 +145,13 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
     return ResourceSummaryView(
         current_health=player_state["health"],
         max_health=player_state["max_health"],
-        action_status="Ready" if normal_turn else "Waiting",
+        action_status=(
+            "Ready"
+            if normal_turn and player_state["action_available"]
+            else "Spent"
+            if normal_turn
+            else "Waiting"
+        ),
         bonus_action_status=(
             "Ready"
             if normal_turn and player_state["bonus_action_available"]
