@@ -148,6 +148,10 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
         action_status=(
             "Ready"
             if normal_turn and player_state["action_available"]
+            else f"{player_state['attacks_remaining']} attack left"
+            if normal_turn and player_state["attacks_remaining"] == 1
+            else f"{player_state['attacks_remaining']} attacks left"
+            if normal_turn and player_state["attacks_remaining"] > 1
             else "Spent"
             if normal_turn
             else "Waiting"

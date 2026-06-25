@@ -1,9 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ..game_logging import CHANNEL_SYSTEM, get_game_logger
 from ..systems.equipment import Equipment
 from ..systems.inventory import Inventory
 from .attributes import Attributes
+from .class_features import ClassRef, CombatProfile, FeatureGrant
 
 LOGGER = get_game_logger(CHANNEL_SYSTEM)
 
@@ -17,6 +18,10 @@ class Actor:
     attributes: Attributes
     equipment: Equipment
     current_health: int | None = None
+    class_ref: ClassRef | None = None
+    feature_grants: list[FeatureGrant] = field(default_factory=list)
+    combat_profile: CombatProfile = field(default_factory=CombatProfile)
+    feature_uses_remaining: dict[str, int] = field(default_factory=dict)
 
     def __post_init__(self):
         if self.current_health is None:

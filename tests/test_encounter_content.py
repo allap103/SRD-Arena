@@ -1,11 +1,14 @@
+import json
 from pathlib import Path
 
 from game.engine import Game
 from game.loaders import load_actor, load_bestiary_stat_blocks, load_scene
 
+FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
+
 
 def test_load_scene_parses_optional_encounter_block() -> None:
-    scene_path = Path("sample_game/scenes/goblin_encounter")
+    scene_path = FIXTURE_ENCOUNTER_DIR / "scenes" / "goblin_encounter"
 
     scene = load_scene(scene_path)
 
@@ -38,7 +41,7 @@ def test_load_scene_parses_optional_encounter_block() -> None:
 def test_load_actor_can_reference_system_stat_block() -> None:
     stat_blocks = load_bestiary_stat_blocks("game_system")
 
-    actor = load_actor("sample_game/actors/goblin_1", stat_blocks)
+    actor = load_actor(FIXTURE_ENCOUNTER_DIR / "actors" / "goblin_1", stat_blocks)
 
     assert actor.id == "goblin_1"
     assert actor.name == "Goblin"
@@ -50,7 +53,7 @@ def test_load_actor_can_reference_system_stat_block() -> None:
 
 
 def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
-    game = Game()
+    game = Game(str(FIXTURE_ENCOUNTER_DIR))
 
     actor_ids = {actor.id for actor in game.actors}
     player = game.get_actor("player")
@@ -60,9 +63,13 @@ def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
     assert len([actor for actor in game.actors if actor.id == "player"]) == 1
     assert {"goblin_1", "goblin_2", "goblin_3"}.issubset(actor_ids)
     assert player.name == "Traveler"
+    assert player.class_ref is not None
+    assert player.class_ref.name == "Fighter"
+    assert player.class_ref.source == "XPHB"
     assert player.attributes.level == 2
     assert player.attributes.proficiency_bonus == 2
     assert player.attributes.proficiencies["weapons"] == ["simple", "martial"]
+    assert player.combat_profile.attacks_per_attack_action == 1
     assert player.get_max_health() == 20
     assert player.get_armor_class() == 16
     assert player.inventory.items == ["potion_of_healing"]
@@ -79,3 +86,38 @@ def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
     assert items_by_id["shortsword"].weapon_stat.damage == "1d6"
     assert items_by_id["chain_mail"].armor_stat is not None
     assert items_by_id["chain_mail"].armor_stat.armor_class == 16
+
+
+def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
+    game = Game(str(FIXTURE_ENCOUNTER_DIR))
+    actor_path = tmp_path / "fighter_level_five.json"
+    actor_path.write_text(
+        json.dumps(
+            {
+                "id": "fighter_level_five",
+                "name": "Veteran",
+                "class_ref": {"name": "Fighter", "source": "XPHB"},
+                "attributes": {
+                    "level": 5,
+                    "strength": 16,
+                    "dexterity": 12,
+                    "constitution": 14,
+                    "wisdom": 8,
+                    "intelligence": 12,
+                    "charisma": 10,
+                    "base_health": 16,
+                    "base_armor_class": 15,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    upgraded = load_actor(
+        actor_path,
+        game.stat_blocks,
+        game.class_blocks,
+        game.custom_stat_blocks,
+    )
+
+    assert any(grant.id == "extra_attack" for grant in upgraded.feature_grants)
+    assert upgraded.combat_profile.attacks_per_attack_action == 2

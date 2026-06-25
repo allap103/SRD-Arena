@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from copy import deepcopy
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import TypeAlias
@@ -145,6 +146,7 @@ class EncounterStateModel(BaseModel):
     round_number: int = 1
     player_movement_remaining: int | None = None
     player_action_available: bool = True
+    player_attacks_remaining: int = 0
     player_bonus_action_available: bool = True
     player_reaction_available: bool = True
     action_sequence: int = 1
@@ -269,6 +271,10 @@ def _restore_player_state(player_template: Actor, state: PlayerState) -> Actor:
         ),
         equipment=Equipment(equipped_items=dict(state.equipment)),
         current_health=state.current_health,
+        class_ref=deepcopy(player_template.class_ref),
+        feature_grants=deepcopy(player_template.feature_grants),
+        combat_profile=deepcopy(player_template.combat_profile),
+        feature_uses_remaining=dict(player_template.feature_uses_remaining),
     )
 
 
@@ -286,6 +292,7 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
         round_number=snapshot.round_number,
         player_movement_remaining=snapshot.player_movement_remaining,
         player_action_available=snapshot.player_action_available,
+        player_attacks_remaining=snapshot.player_attacks_remaining,
         player_bonus_action_available=snapshot.player_bonus_action_available,
         player_reaction_available=snapshot.player_reaction_available,
         action_sequence=snapshot.action_sequence,
@@ -350,6 +357,7 @@ def _restore_encounter_state(
         round_number=state.round_number,
         player_movement_remaining=state.player_movement_remaining,
         player_action_available=state.player_action_available,
+        player_attacks_remaining=state.player_attacks_remaining,
         player_bonus_action_available=state.player_bonus_action_available,
         player_reaction_available=state.player_reaction_available,
         action_sequence=state.action_sequence,

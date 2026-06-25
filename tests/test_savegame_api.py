@@ -7,6 +7,7 @@ from game.engine import Game
 from game.save import SAVEGAME_EXAMPLE, create_save
 
 FIXTURE_GAME_DIR = Path(__file__).parent / "fixtures" / "graph_game"
+FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 
 
 def test_get_save_returns_current_session_state() -> None:
@@ -39,7 +40,7 @@ def test_post_load_restores_session_from_payload() -> None:
 
 
 def test_openapi_exposes_working_load_example() -> None:
-    api = SavegameApi(Game("sample_game"))
+    api = SavegameApi(Game(str(FIXTURE_ENCOUNTER_DIR)))
     client = TestClient(api.create_app())
 
     response = client.get("/openapi.json")
@@ -138,7 +139,7 @@ def test_get_actions_returns_available_choices_for_current_scene() -> None:
 
 
 def test_get_actions_returns_encounter_actions_for_encounter_scene() -> None:
-    api = SavegameApi(Game("sample_game"))
+    api = SavegameApi(Game(str(FIXTURE_ENCOUNTER_DIR)))
     api.session.current_scene_id = "goblin_encounter"
     client = TestClient(api.create_app())
 

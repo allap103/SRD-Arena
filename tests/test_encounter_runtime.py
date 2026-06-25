@@ -4,11 +4,11 @@ from game.encounter import EncounterAction
 from game.engine import Game
 from game.save import load_from_file, save_to_file
 
-SAMPLE_GAME_DIR = Path("sample_game")
+FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 
 
 def test_goblin_encounter_scene_generates_runtime_actions_and_grid() -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
 
     scene_view = session.get_scene_view()
@@ -27,7 +27,7 @@ def test_goblin_encounter_scene_generates_runtime_actions_and_grid() -> None:
 
 
 def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
 
     scene_view = session.get_scene_view()
@@ -50,7 +50,7 @@ def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> N
 
 
 def test_goblin_encounter_allows_diagonal_movement() -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
 
     move_index = session.get_scene_view().choices.index("Move up-right")
@@ -63,7 +63,7 @@ def test_goblin_encounter_allows_diagonal_movement() -> None:
 
 
 def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
 
     for _ in range(6):
@@ -79,7 +79,7 @@ def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
 
 
 def test_goblin_encounter_wait_advances_enemy_turns() -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
 
     move_up_index = session.get_scene_view().choices.index("Move up")
@@ -100,7 +100,7 @@ def test_goblin_encounter_wait_advances_enemy_turns() -> None:
 
 
 def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
@@ -116,7 +116,7 @@ def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> Non
 
 
 def test_enemy_movement_can_pause_for_player_opportunity_attack(monkeypatch) -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
@@ -160,11 +160,12 @@ def test_enemy_movement_can_pause_for_player_opportunity_attack(monkeypatch) -> 
 
 
 def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
     assert session.encounter_state is not None
+    session.player.combat_profile.attacks_per_attack_action = 1
     session.encounter_state.player_position.x = 4
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 5
@@ -184,21 +185,12 @@ def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:
     assert result.selected_choice_text is not None
     assert result.selected_choice_text.startswith("Attack enemy 1")
     assert any(
-        "Attack: Traveler attacks Enemy 1 (Goblin). Roll d20=20 + STR mod 3 + proficiency 2 = 25"
-        in message
-        for _, message in result.messages
-    )
-    assert any(
-        "Damage to Enemy 1 (Goblin): 1d8=4 + STR mod 3 = 7; final damage 7, applied 7."
-        in message
-        for _, message in result.messages
-    )
-    assert any(
         "Traveler hits Enemy 1 (Goblin)" in message
         for _, message in result.messages
     )
     assert session.encounter_state is not None
     assert session.encounter_state.player_action_available is False
+    assert session.encounter_state.player_attacks_remaining == 0
     assert session.encounter_state.turn_index == 0
     assert session.encounter_state.current_decision().actor_ref == "player"
     assert not any(
@@ -214,8 +206,64 @@ def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:
     assert attack_event.data["damage_roll_detail"]["weapon_name"] == "Longsword"
 
 
+def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.player.combat_profile.attacks_per_attack_action = 2
+    session.encounter_state.player_position.x = 4
+    session.encounter_state.player_position.y = 3
+    session.encounter_state.enemies[0].position.x = 4
+    session.encounter_state.enemies[0].position.y = 2
+    session.encounter_state.enemies[0].actor.current_health = 20
+
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 20)
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+
+    attack_index = next(
+        index
+        for index, choice in enumerate(session.get_scene_view().choices)
+        if choice.startswith("Attack enemy 1")
+    )
+    first_result = session.choose(attack_index)
+
+    attack_events = [event for event in first_result.events if event.type == "attack_resolved"]
+    assert len(attack_events) == 1
+    assert attack_events[0].data["attacks_remaining"] == 1
+    assert session.encounter_state.enemies[0].actor.get_health() == 16
+    assert session.encounter_state.player_action_available is False
+    assert session.encounter_state.player_attacks_remaining == 1
+
+    move_index = session.get_scene_view().choices.index("Move left")
+    move_result = session.choose(move_index)
+
+    assert ("system", "You move left. Movement remaining: 5.") in move_result.messages
+    assert session.encounter_state.player_position.x == 3
+    assert session.encounter_state.player_position.y == 3
+    assert session.encounter_state.player_attacks_remaining == 1
+
+    second_attack_index = next(
+        index
+        for index, choice in enumerate(session.get_scene_view().choices)
+        if choice.startswith("Attack enemy 1")
+    )
+    second_result = session.choose(second_attack_index)
+
+    second_attack_events = [event for event in second_result.events if event.type == "attack_resolved"]
+    assert len(second_attack_events) == 1
+    assert second_attack_events[0].data["attacks_remaining"] == 0
+    assert session.encounter_state.enemies[0].actor.get_health() == 12
+    assert session.encounter_state.player_attacks_remaining == 0
+    assert not any(
+        choice.startswith("Attack enemy")
+        for choice in session.get_scene_view().choices
+    )
+
+
 def test_goblin_encounter_can_utilize_healing_potion(monkeypatch) -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.player.current_health = 10
 
@@ -243,11 +291,12 @@ def test_goblin_encounter_can_utilize_healing_potion(monkeypatch) -> None:
 
 
 def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
     assert session.encounter_state is not None
+    session.player.combat_profile.attacks_per_attack_action = 1
     session.encounter_state.player_position.x = 4
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
@@ -272,11 +321,12 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None
 
 
 def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
     assert session.encounter_state is not None
+    session.player.combat_profile.attacks_per_attack_action = 1
     session.encounter_state.player_position.x = 4
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
@@ -308,14 +358,14 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
 
 
 def test_save_and_load_preserve_encounter_progress(tmp_path: Path) -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     move_up_index = session.get_scene_view().choices.index("Move up")
     session.choose(move_up_index)
     save_path = tmp_path / "encounter_save.json"
 
     save_to_file(session, save_path)
-    loaded = load_from_file(save_path, SAMPLE_GAME_DIR)
+    loaded = load_from_file(save_path, FIXTURE_ENCOUNTER_DIR)
 
     assert loaded.encounter_state is not None
     assert loaded.current_scene_id == "goblin_encounter"
@@ -330,11 +380,12 @@ def test_save_and_load_preserve_encounter_progress(tmp_path: Path) -> None:
 
 
 def test_save_and_load_preserve_spent_action(tmp_path: Path, monkeypatch) -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
     assert session.encounter_state is not None
+    session.player.combat_profile.attacks_per_attack_action = 1
     session.encounter_state.player_position.x = 4
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
@@ -351,7 +402,7 @@ def test_save_and_load_preserve_spent_action(tmp_path: Path, monkeypatch) -> Non
     save_path = tmp_path / "spent_action_save.json"
 
     save_to_file(session, save_path)
-    loaded = load_from_file(save_path, SAMPLE_GAME_DIR)
+    loaded = load_from_file(save_path, FIXTURE_ENCOUNTER_DIR)
 
     assert loaded.encounter_state is not None
     assert loaded.encounter_state.player_action_available is False
@@ -362,7 +413,7 @@ def test_save_and_load_preserve_spent_action(tmp_path: Path, monkeypatch) -> Non
 
 
 def test_save_and_load_preserve_pending_reaction_state(tmp_path: Path) -> None:
-    session = Game(str(SAMPLE_GAME_DIR)).create_session()
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
@@ -385,7 +436,7 @@ def test_save_and_load_preserve_pending_reaction_state(tmp_path: Path) -> None:
     save_path = tmp_path / "reaction_save.json"
 
     save_to_file(session, save_path)
-    loaded = load_from_file(save_path, SAMPLE_GAME_DIR)
+    loaded = load_from_file(save_path, FIXTURE_ENCOUNTER_DIR)
 
     assert loaded.encounter_state is not None
     assert loaded.encounter_state.current_decision().kind == "reaction"

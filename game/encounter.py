@@ -147,6 +147,7 @@ class EncounterSnapshot:
     round_number: int = 1
     player_movement_remaining: int | None = None
     player_action_available: bool = True
+    player_attacks_remaining: int = 0
     player_bonus_action_available: bool = True
     player_reaction_available: bool = True
     action_sequence: int = 1
@@ -178,6 +179,7 @@ class EncounterState:
     round_number: int = 1
     player_movement_remaining: int | None = None
     player_action_available: bool = True
+    player_attacks_remaining: int = 0
     player_bonus_action_available: bool = True
     player_reaction_available: bool = True
     action_sequence: int = 1
@@ -253,6 +255,7 @@ class EncounterState:
             round_number=snapshot.round_number,
             player_movement_remaining=snapshot.player_movement_remaining,
             player_action_available=snapshot.player_action_available,
+            player_attacks_remaining=snapshot.player_attacks_remaining,
             player_bonus_action_available=snapshot.player_bonus_action_available,
             player_reaction_available=snapshot.player_reaction_available,
             action_sequence=snapshot.action_sequence,
@@ -305,6 +308,7 @@ class EncounterState:
             round_number=self.round_number,
             player_movement_remaining=self.player_movement_remaining,
             player_action_available=self.player_action_available,
+            player_attacks_remaining=self.player_attacks_remaining,
             player_bonus_action_available=self.player_bonus_action_available,
             player_reaction_available=self.player_reaction_available,
             action_sequence=self.action_sequence,
@@ -397,6 +401,7 @@ class EncounterState:
                     f"at ({self.player_position.x}, {self.player_position.y})"
                 ),
                 f"Action available: {'yes' if self.player_action_available else 'no'}",
+                f"Attacks remaining in action: {self.player_attacks_remaining}",
                 f"Reaction available: {'yes' if self.player_reaction_available else 'no'}",
                 "Enemies:",
                 *enemy_lines,
@@ -466,6 +471,7 @@ class EncounterState:
                 ),
                 "movement_total_feet": player.attributes.movement.speed_feet,
                 "action_available": self.player_action_available,
+                "attacks_remaining": self.player_attacks_remaining,
                 "bonus_action_available": self.player_bonus_action_available,
                 "reaction_available": self.player_reaction_available,
             },
@@ -518,12 +524,9 @@ class EncounterState:
                     )
                 )
 
+        can_attack = self.player_action_available or self.player_attacks_remaining > 0
         for index, enemy in enumerate(self.enemies):
-            if (
-                self.player_action_available
-                and enemy.is_alive
-                and _is_adjacent(self.player_position, enemy.position)
-            ):
+            if can_attack and enemy.is_alive and _is_adjacent(self.player_position, enemy.position):
                 actions.append(
                     EncounterAction(
                         f"Attack enemy {index + 1} ({enemy.actor.name})",
@@ -531,7 +534,7 @@ class EncounterState:
                         index,
                         id=f"player-attack-{index}",
                         actor_ref="player",
-                        cost=ActionCost(action=1),
+                        cost=ActionCost(action=1 if self.player_action_available else 0),
                     )
                 )
 
@@ -609,7 +612,7 @@ class EncounterState:
             if player.get_health() > 0:
                 self._apply_player_move(player, direction, progress, resolved_action_id)
         elif action.kind == "attack":
-            if not self.player_action_available:
+            if not self.player_action_available and self.player_attacks_remaining <= 0:
                 progress.messages.append(("system", "You have already used your Action."))
                 progress.events.append(
                     self._event(
@@ -627,6 +630,15 @@ class EncounterState:
             enemy_index = action.value
             enemy = self.enemies[enemy_index]
             target_label = f"Enemy {enemy_index + 1} ({enemy.actor.name})"
+            if self.player_action_available:
+                self.player_action_available = False
+                self.player_attacks_remaining = max(
+                    0,
+                    player.combat_profile.attacks_per_attack_action - 1,
+                )
+            elif self.player_attacks_remaining > 0:
+                self.player_attacks_remaining -= 1
+
             attack = _resolve_attack(
                 player,
                 enemy.actor,
@@ -635,7 +647,6 @@ class EncounterState:
                 items_by_id=self.item_templates,
             )
             progress.messages.extend(attack.messages)
-            self.player_action_available = False
             progress.events.append(
                 self._event(
                     "attack_resolved",
@@ -645,6 +656,7 @@ class EncounterState:
                         "attacker_label": player.name,
                         "target_ref": _enemy_ref(enemy_index),
                         "target_label": target_label,
+                        "attacks_remaining": self.player_attacks_remaining,
                         "attack_roll": attack.attack_roll,
                         "attack_roll_detail": attack.attack_roll_detail,
                         "hit": attack.hit,
@@ -1297,6 +1309,7 @@ class EncounterState:
         if self.turn_index == 0:
             self.player_movement_remaining = None
             self.player_action_available = True
+            self.player_attacks_remaining = 0
             self.player_bonus_action_available = True
 
     def _maybe_reset_reactions(self) -> None:

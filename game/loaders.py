@@ -6,6 +6,7 @@ from .content_schema import ActorSchema, ItemSchema, SceneSchema
 from .content_schema.actor import ActorItemReferenceSchema
 from .models.actor import Actor
 from .models.attributes import Attributes, Movement
+from .models.class_features import ClassRef, CombatProfile, FeatureGrant
 from .models.choice import (
     Choice,
     Effects,
@@ -166,6 +167,8 @@ def load_actor(
             },
         }
     )
+    feature_grants = _resolve_class_feature_grants(class_block, schema.attributes.level)
+    combat_profile = _build_combat_profile(feature_grants)
 
     return Actor(
         id=schema.id,
@@ -174,6 +177,14 @@ def load_actor(
         inventory=Inventory(items=[_actor_item_id(item) for item in schema.inventory]),
         attributes=_build_actor_attributes(schema, stat_block, class_block),
         equipment=equipment,
+        class_ref=(
+            ClassRef(name=schema.class_ref.name, source=schema.class_ref.source)
+            if schema.class_ref
+            else None
+        ),
+        feature_grants=feature_grants,
+        combat_profile=combat_profile,
+        feature_uses_remaining=_build_feature_uses_remaining(combat_profile),
     )
 
 
@@ -413,6 +424,86 @@ def _class_proficiencies(class_block: dict | None) -> dict[str, object]:
     starting = class_block.get("startingProficiencies", {})
     weapons = starting.get("weapons", []) if isinstance(starting, dict) else []
     return {"weapons": list(weapons)} if isinstance(weapons, list) else {}
+
+
+def _resolve_class_feature_grants(
+    class_block: dict | None,
+    level: int,
+) -> list[FeatureGrant]:
+    if class_block is None:
+        return []
+
+    class_name = str(class_block.get("name", ""))
+    features = class_block.get("classFeatures", [])
+    grants: list[FeatureGrant] = []
+    if not isinstance(features, list):
+        return grants
+
+    for feature_ref in features:
+        parsed = _parse_class_feature_reference(feature_ref)
+        if parsed is None:
+            continue
+        feature_name, feature_level = parsed
+        if feature_level > level:
+            continue
+        grant = _normalize_feature_grant(class_name, feature_name, feature_level)
+        if grant is not None:
+            grants.append(grant)
+    return grants
+
+
+def _parse_class_feature_reference(feature_ref: str | dict[str, object]) -> tuple[str, int] | None:
+    raw_ref = feature_ref if isinstance(feature_ref, str) else feature_ref.get("classFeature")
+    if not isinstance(raw_ref, str):
+        return None
+    parts = raw_ref.split("|")
+    if not parts:
+        return None
+    for part in reversed(parts):
+        if part.isdigit():
+            return (parts[0], int(part))
+    return None
+
+
+def _normalize_feature_grant(
+    class_name: str,
+    feature_name: str,
+    feature_level: int,
+) -> FeatureGrant | None:
+    extra_attack_counts = {
+        "Extra Attack": 2,
+        "Extra Attack (2)": 3,
+        "Extra Attack (3)": 4,
+        "Extra Attack Improvement": 2,
+    }
+    attacks = extra_attack_counts.get(feature_name)
+    if attacks is None:
+        return None
+    return FeatureGrant(
+        id="extra_attack",
+        name=feature_name,
+        source_class=class_name,
+        level=feature_level,
+        data={"attacks": attacks},
+    )
+
+
+def _build_combat_profile(feature_grants: list[FeatureGrant]) -> CombatProfile:
+    profile = CombatProfile()
+    for grant in feature_grants:
+        if grant.id != "extra_attack":
+            continue
+        attacks = grant.data.get("attacks")
+        if isinstance(attacks, int):
+            profile.attacks_per_attack_action = max(
+                profile.attacks_per_attack_action,
+                attacks,
+            )
+    return profile
+
+
+def _build_feature_uses_remaining(combat_profile: CombatProfile) -> dict[str, int]:
+    return dict(combat_profile.feature_uses_max)
 
 
 def _stat_block_name(stat_block: dict | None) -> str:
