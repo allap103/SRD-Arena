@@ -197,6 +197,9 @@ def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:
         "Traveler hits Enemy 1 (Goblin)" in message
         for _, message in result.messages
     )
+    assert session.encounter_state is not None
+    assert session.encounter_state.turn_index == 0
+    assert session.encounter_state.current_decision().actor_ref == "player"
     attack_event = next(event for event in result.events if event.type == "attack_resolved")
     assert attack_event.data["attacker_label"] == "Traveler"
     assert attack_event.data["target_label"] == "Enemy 1 (Goblin)"

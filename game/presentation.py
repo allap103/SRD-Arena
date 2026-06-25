@@ -25,6 +25,9 @@ class ResourceSummaryView:
     bonus_action_status: str
     reaction_status: str
     movement_remaining: int
+    movement_total: int
+    movement_remaining_feet: int
+    movement_total_feet: int
 
     def as_text(self) -> str:
         return "\n".join(
@@ -33,7 +36,7 @@ class ResourceSummaryView:
                 f"Action: {self.action_status}",
                 f"Bonus Action: {self.bonus_action_status}",
                 f"Reaction: {self.reaction_status}",
-                f"Movement: {self.movement_remaining} squares",
+                f"Movement: {self.movement_remaining_feet}/{self.movement_total_feet} ft",
             ]
         )
 
@@ -152,6 +155,9 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
         ),
         reaction_status="Ready" if player_state["reaction_available"] else "Spent",
         movement_remaining=player_state["movement_remaining"],
+        movement_total=player_state["movement_total"],
+        movement_remaining_feet=player_state["movement_remaining_feet"],
+        movement_total_feet=player_state["movement_total_feet"],
     )
 
 

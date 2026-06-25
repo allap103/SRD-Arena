@@ -454,6 +454,12 @@ class EncounterState:
                 "health": player.get_health(),
                 "max_health": player.get_max_health(),
                 "movement_remaining": self._player_movement_remaining(player),
+                "movement_total": _movement_squares(player),
+                "movement_remaining_feet": (
+                    self._player_movement_remaining(player)
+                    * player.attributes.movement.feet_per_square
+                ),
+                "movement_total_feet": player.attributes.movement.speed_feet,
                 "bonus_action_available": self.player_bonus_action_available,
                 "reaction_available": self.player_reaction_available,
             },
@@ -578,7 +584,7 @@ class EncounterState:
                 },
             )
         )
-        action_ends_turn = True
+        action_ends_turn = False
 
         if action.kind == "move":
             direction = str(action.value)
@@ -592,7 +598,6 @@ class EncounterState:
             )
             if player.get_health() > 0:
                 self._apply_player_move(player, direction, progress, resolved_action_id)
-                action_ends_turn = False
         elif action.kind == "attack":
             if not isinstance(action.value, int):
                 raise ValueError(
@@ -640,8 +645,8 @@ class EncounterState:
                     f"Encounter utilize action requires an item id, got {action.value!r}."
                 )
             self._resolve_utilize_action(player, action.value, progress, resolved_action_id)
-            action_ends_turn = False
         elif action.kind == "wait":
+            action_ends_turn = True
             progress.messages.append(("system", "You hold your ground."))
             progress.events.append(
                 self._event(

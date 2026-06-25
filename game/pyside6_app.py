@@ -21,7 +21,6 @@ try:
         QApplication,
         QFrame,
         QGridLayout,
-        QGroupBox,
         QHBoxLayout,
         QLabel,
         QMainWindow,
@@ -47,7 +46,6 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QPixmap = object  # type: ignore[assignment]
     QFrame = object  # type: ignore[assignment]
     QGridLayout = object  # type: ignore[assignment]
-    QGroupBox = object  # type: ignore[assignment]
     QHBoxLayout = object  # type: ignore[assignment]
     QLabel = object  # type: ignore[assignment]
     QMainWindow = object  # type: ignore[assignment]
@@ -95,6 +93,12 @@ def _clear_layout(layout) -> None:
 class TargetSelectionMode:
     kind: str
     source_trigger_id: str | None = None
+
+
+@dataclass(frozen=True)
+class ActionMenuScope:
+    economy: str
+    bucket: str
 
 
 class BattlefieldWidget(QWidget):
@@ -278,6 +282,7 @@ class CyoaPySide6Window(QMainWindow):
         self._items_by_id = {item.id: item for item in self.game.items}
         self._presentation: SessionPresentation | None = None
         self._pending_target_mode: TargetSelectionMode | None = None
+        self._action_menu_scope: ActionMenuScope | None = None
 
         self.setWindowTitle("CYOA")
         self.resize(1400, 900)
@@ -313,21 +318,18 @@ class CyoaPySide6Window(QMainWindow):
         story_scroll = self._wrap_in_scroll(self.story_choices_layout)
         self.story_choices_group.layout().addWidget(story_scroll)
 
-        self.encounter_group = self._build_group("Encounter")
-        encounter_layout = self.encounter_group.layout()
+        self.encounter_panel = QWidget()
+        encounter_layout = QVBoxLayout(self.encounter_panel)
+        encounter_layout.setContentsMargins(0, 0, 0, 0)
+        encounter_layout.setSpacing(10)
 
-        self.encounter_economy_group = self._build_group("Resources")
-        self.encounter_economy_text = self._build_readonly_text(minimum_height=110, maximum_height=140)
-        self.encounter_economy_group.layout().addWidget(self.encounter_economy_text)
-        encounter_layout.addWidget(self.encounter_economy_group)
-
-        self.battlefield_group = self._build_group("Battlefield")
         self.battlefield_widget = BattlefieldWidget(self.game.directory)
         self.battlefield_widget.actor_clicked.connect(self._handle_battlefield_actor_clicked)
-        self.battlefield_group.layout().addWidget(self.battlefield_widget)
-        encounter_layout.addWidget(self.battlefield_group, stretch=3)
+        encounter_layout.addWidget(self.battlefield_widget, stretch=1)
 
         encounter_controls = QWidget()
+        encounter_controls.setFixedHeight(280)
+        encounter_controls.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         encounter_controls_layout = QHBoxLayout(encounter_controls)
         encounter_controls_layout.setContentsMargins(0, 0, 0, 0)
         encounter_controls_layout.setSpacing(10)
@@ -362,25 +364,23 @@ class CyoaPySide6Window(QMainWindow):
         self.movement_group.setFixedWidth(210)
         encounter_controls_layout.addWidget(self.movement_group)
 
-        self.encounter_actions_group = self._build_group("Actions")
-        actions_header = QWidget()
-        actions_header_layout = QHBoxLayout(actions_header)
-        actions_header_layout.setContentsMargins(0, 0, 0, 0)
-        actions_header_layout.setSpacing(8)
-        self.encounter_actions_title = QLabel("Actions")
-        actions_header_layout.addWidget(self.encounter_actions_title, stretch=1)
-        self.end_turn_button = QPushButton("End Turn")
-        self.end_turn_button.clicked.connect(self._end_turn)
-        actions_header_layout.addWidget(self.end_turn_button)
-        self.encounter_actions_group.layout().addWidget(actions_header)
+        self.encounter_actions_group = self._build_untitled_panel()
         self.encounter_targeting_label = QLabel("")
         self.encounter_targeting_label.setWordWrap(True)
         self.encounter_actions_group.layout().addWidget(self.encounter_targeting_label)
-        self.encounter_actions_layout = QVBoxLayout()
-        self.encounter_actions_layout.setSpacing(8)
+        self.encounter_actions_layout = QHBoxLayout()
+        self.encounter_actions_layout.setSpacing(12)
         self.encounter_actions_group.layout().addWidget(
             self._wrap_in_scroll(self.encounter_actions_layout)
         )
+        actions_footer = QWidget()
+        actions_footer_layout = QHBoxLayout(actions_footer)
+        actions_footer_layout.setContentsMargins(0, 0, 0, 0)
+        actions_footer_layout.addStretch(1)
+        self.end_turn_button = QPushButton("End Turn")
+        self.end_turn_button.clicked.connect(self._end_turn)
+        actions_footer_layout.addWidget(self.end_turn_button)
+        self.encounter_actions_group.layout().addWidget(actions_footer)
         encounter_controls_layout.addWidget(self.encounter_actions_group, stretch=1)
 
         encounter_layout.addWidget(encounter_controls)
@@ -388,7 +388,7 @@ class CyoaPySide6Window(QMainWindow):
         layout.addWidget(self.last_action_group)
         layout.addWidget(self.scene_group, stretch=1)
         layout.addWidget(self.story_choices_group, stretch=1)
-        layout.addWidget(self.encounter_group, stretch=2)
+        layout.addWidget(self.encounter_panel, stretch=2)
         return container
 
     def _build_sidebar(self) -> QWidget:
@@ -439,16 +439,26 @@ class CyoaPySide6Window(QMainWindow):
         layout.addStretch(1)
         return page
 
-    def _build_group(self, title: str) -> QGroupBox:
-        group = QGroupBox(title)
+    def _build_group(self, title: str) -> QFrame:
+        group = QFrame()
+        group.setFrameShape(QFrame.Shape.StyledPanel)
         layout = QVBoxLayout(group)
-        layout.setContentsMargins(10, 14, 10, 10)
+        layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(8)
         return group
 
-    def _framed_panel(self, title: str) -> QGroupBox:
+    def _framed_panel(self, title: str) -> QFrame:
         panel = self._build_group(title)
         panel.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        return panel
+
+    def _build_untitled_panel(self) -> QFrame:
+        panel = QFrame()
+        panel.setFrameShape(QFrame.Shape.StyledPanel)
+        panel.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(6)
         return panel
 
     def _wrap_in_scroll(self, content_layout: QVBoxLayout) -> QScrollArea:
@@ -482,6 +492,7 @@ class CyoaPySide6Window(QMainWindow):
         self._presentation = presentation
         if presentation.encounter is None:
             self._pending_target_mode = None
+            self._action_menu_scope = None
 
         self.last_action_group.setVisible(not self.last_action_text.toPlainText() == "")
         self.scene_text.setPlainText(presentation.story_text or "")
@@ -489,12 +500,12 @@ class CyoaPySide6Window(QMainWindow):
         if presentation.encounter is None:
             self.scene_group.show()
             self.story_choices_group.show()
-            self.encounter_group.hide()
+            self.encounter_panel.hide()
             self._render_story_actions(presentation.story_actions)
         else:
             self.scene_group.hide()
             self.story_choices_group.hide()
-            self.encounter_group.show()
+            self.encounter_panel.show()
             self._render_encounter(presentation)
 
     def _render_story_actions(self, actions: list[ActionView]) -> None:
@@ -510,9 +521,7 @@ class CyoaPySide6Window(QMainWindow):
     def _render_encounter(self, presentation: SessionPresentation) -> None:
         encounter = presentation.encounter
         assert encounter is not None
-        self.encounter_economy_text.setPlainText(encounter.resources.as_text())
         self.battlefield_widget.set_battlefield(encounter.battlefield)
-        self.encounter_actions_title.setText(encounter.action_pane_title)
 
         target_modes = self._target_selection_modes(encounter.non_movement_actions)
         if self._pending_target_mode not in target_modes:
@@ -531,36 +540,51 @@ class CyoaPySide6Window(QMainWindow):
             action = encounter.movement_actions.get(direction)
             button.setEnabled(action is not None)
 
+        action_groups = self._action_groups(encounter.non_movement_actions)
+        if self._action_menu_scope is not None and encounter.action_pane_title == "Reactions":
+            self._action_menu_scope = None
+        if (
+            self._action_menu_scope is not None
+            and not action_groups.get(self._action_menu_scope.economy, {}).get(
+                self._action_menu_scope.bucket,
+            )
+        ):
+            self._action_menu_scope = None
+
         _clear_layout(self.encounter_actions_layout)
         rendered_target_modes: set[TargetSelectionMode] = set()
-        for action in encounter.non_movement_actions:
-            target_mode = self._target_mode_for_action(action)
-            if target_mode is not None:
-                if target_mode in rendered_target_modes:
-                    continue
-                rendered_target_modes.add(target_mode)
-                button = QPushButton(self._target_mode_label(target_mode))
-                button.setCheckable(True)
-                button.setChecked(target_mode == self._pending_target_mode)
-                button.clicked.connect(
-                    lambda _checked=False, mode=target_mode: self._toggle_target_action(mode)
-                )
-            else:
-                button = QPushButton(action.label)
-                button.clicked.connect(
-                    lambda _checked=False, action_index=action.index: self._select_action(action_index)
-                )
-            self.encounter_actions_layout.addWidget(button)
-        self.encounter_actions_layout.addStretch(1)
+        if encounter.action_pane_title == "Reactions":
+            self._render_action_detail_column(
+                "Reaction",
+                encounter.non_movement_actions,
+                rendered_target_modes,
+                scope=None,
+            )
+            self.encounter_actions_layout.addStretch(1)
+        else:
+            self._render_action_economy_column(
+                title="Actions",
+                economy="action",
+                bucket_actions=action_groups["action"],
+                available=encounter.resources.action_status == "Ready",
+                rendered_target_modes=rendered_target_modes,
+            )
+            self._render_action_economy_column(
+                title="Bonus Actions",
+                economy="bonus_action",
+                bucket_actions=action_groups["bonus_action"],
+                available=encounter.resources.bonus_action_status == "Ready",
+                rendered_target_modes=rendered_target_modes,
+            )
+            self._render_status_column(encounter.resources)
 
-        if self._pending_target_mode is None and target_modes:
-            self.encounter_targeting_label.setText("Select an attack, then click an enemy on the battlefield.")
-        elif self._pending_target_mode is None:
+        if self._pending_target_mode is None:
             self.encounter_targeting_label.setText("")
         else:
             self.encounter_targeting_label.setText(
                 f"{self._target_mode_label(self._pending_target_mode)} selected. Click a highlighted enemy on the battlefield."
             )
+        self.encounter_targeting_label.setVisible(self.encounter_targeting_label.text() != "")
 
         if encounter.end_turn_action is None:
             self.end_turn_button.setEnabled(False)
@@ -571,10 +595,267 @@ class CyoaPySide6Window(QMainWindow):
                 "Pass Reaction" if encounter.end_turn_action.kind == "pass" else "End Turn"
             )
 
+    def _render_action_economy_column(
+        self,
+        title: str,
+        economy: str,
+        bucket_actions: dict[str, list[ActionView]],
+        available: bool,
+        rendered_target_modes: set[TargetSelectionMode],
+    ) -> None:
+        if self._action_menu_scope is not None and self._action_menu_scope.economy == economy:
+            self._render_action_detail_column(
+                self._action_scope_title(self._action_menu_scope),
+                bucket_actions[self._action_menu_scope.bucket],
+                rendered_target_modes,
+                scope=self._action_menu_scope,
+            )
+            return
+        self._render_action_menu_column(title, economy, bucket_actions, available)
+
+    def _render_action_menu_column(
+        self,
+        title: str,
+        economy: str,
+        bucket_actions: dict[str, list[ActionView]],
+        available: bool,
+    ) -> None:
+        column = QWidget()
+        column_layout = QVBoxLayout(column)
+        column_layout.setContentsMargins(0, 0, 0, 0)
+        column_layout.setSpacing(8)
+        column_layout.addWidget(self._build_action_header(title, available))
+
+        for bucket_key, bucket_title in self._action_buckets():
+            actions = bucket_actions[bucket_key]
+            button = QPushButton(bucket_title)
+            button.setEnabled(bool(actions))
+            button.clicked.connect(
+                lambda _checked=False, selected_economy=economy, selected_bucket=bucket_key: (
+                    self._open_action_menu(selected_economy, selected_bucket)
+                )
+            )
+            column_layout.addWidget(button)
+
+        column_layout.addStretch(1)
+        self.encounter_actions_layout.addWidget(column, stretch=1)
+
+    def _render_action_detail_column(
+        self,
+        title: str,
+        actions: list[ActionView],
+        rendered_target_modes: set[TargetSelectionMode],
+        scope: ActionMenuScope | None,
+    ) -> None:
+        column = QWidget()
+        column_layout = QVBoxLayout(column)
+        column_layout.setContentsMargins(0, 0, 0, 0)
+        column_layout.setSpacing(8)
+        header = QLabel(title)
+        header_font = QFont()
+        header_font.setBold(True)
+        header.setFont(header_font)
+        column_layout.addWidget(header)
+
+        if not actions:
+            empty = QLabel("None")
+            empty.setEnabled(False)
+            column_layout.addWidget(empty)
+        for action in actions:
+            button = self._build_encounter_action_button(action, rendered_target_modes)
+            if button is not None:
+                column_layout.addWidget(button)
+        column_layout.addStretch(1)
+        if scope is not None:
+            back = QPushButton("Back")
+            back.clicked.connect(lambda _checked=False, selected_scope=scope: self._close_action_menu(selected_scope))
+            column_layout.addWidget(back)
+        self.encounter_actions_layout.addWidget(column, stretch=1)
+
+    def _render_status_column(self, resources) -> None:
+        column = QWidget()
+        column_layout = QVBoxLayout(column)
+        column_layout.setContentsMargins(0, 0, 0, 0)
+        column_layout.setSpacing(8)
+
+        header = QLabel("Status")
+        header_font = QFont()
+        header_font.setBold(True)
+        header.setFont(header_font)
+        column_layout.addWidget(header)
+        column_layout.addWidget(
+            self._build_resource_bar(
+                "Health",
+                resources.current_health,
+                resources.max_health,
+                "#9d2f2f",
+                f"{resources.current_health}/{resources.max_health}",
+            )
+        )
+        column_layout.addWidget(
+            self._build_resource_bar(
+                "Movement",
+                resources.movement_remaining_feet,
+                resources.movement_total_feet,
+                "#2f6f9d",
+                f"{resources.movement_remaining_feet}/{resources.movement_total_feet} ft",
+            )
+        )
+        column_layout.addStretch(1)
+        self.encounter_actions_layout.addWidget(column, stretch=1)
+
+    def _build_action_header(self, title: str, available: bool) -> QWidget:
+        container = QWidget()
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+
+        indicator = QFrame()
+        indicator.setFixedSize(10, 10)
+        if available:
+            indicator.setStyleSheet(
+                "QFrame { background: #2d7a3d; border: 1px solid #1f5c2d; border-radius: 5px; }"
+            )
+        else:
+            indicator.setStyleSheet(
+                "QFrame { background: transparent; border: 1px solid #8a806a; border-radius: 5px; }"
+            )
+        layout.addWidget(indicator)
+
+        header = QLabel(title)
+        header_font = QFont()
+        header_font.setBold(True)
+        header.setFont(header_font)
+        layout.addWidget(header)
+        layout.addStretch(1)
+        return container
+
+    def _build_resource_bar(
+        self,
+        label: str,
+        current: int,
+        maximum: int,
+        color: str,
+        value_text: str,
+    ) -> QWidget:
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        title = QLabel(label)
+        layout.addWidget(title)
+
+        bar = QFrame()
+        bar.setMinimumHeight(24)
+        bar.setStyleSheet(
+            "QFrame {"
+            "border: 1px solid #9c8b68;"
+            "background: #efe4c8;"
+            "border-radius: 4px;"
+            "}"
+        )
+        bar_layout = QGridLayout(bar)
+        bar_layout.setContentsMargins(0, 0, 0, 0)
+        bar_layout.setSpacing(0)
+        filled = QFrame()
+        filled.setStyleSheet(f"QFrame {{ background: {color}; border-radius: 3px; }}")
+        empty = QFrame()
+        empty.setStyleSheet("QFrame { background: transparent; }")
+        filled_units = max(0, min(current, maximum))
+        empty_units = max(0, maximum - filled_units)
+        bar_layout.addWidget(filled, 0, 0)
+        bar_layout.addWidget(empty, 0, 1)
+        bar_layout.setColumnStretch(0, max(filled_units, 1 if maximum == 0 else 0))
+        bar_layout.setColumnStretch(1, max(empty_units, 1 if maximum == 0 else 0))
+        value = QLabel(value_text, bar)
+        value.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        value.setStyleSheet("QLabel { color: white; font-weight: bold; background: transparent; }")
+        bar_layout.addWidget(value, 0, 0, 1, 2)
+        layout.addWidget(bar)
+        return container
+
+    def _build_encounter_action_button(
+        self,
+        action: ActionView,
+        rendered_target_modes: set[TargetSelectionMode],
+    ) -> QPushButton | None:
+        target_mode = self._target_mode_for_action(action)
+        if target_mode is not None:
+            if target_mode in rendered_target_modes:
+                return None
+            rendered_target_modes.add(target_mode)
+            button = QPushButton(self._target_mode_label(target_mode))
+            button.setCheckable(True)
+            button.setChecked(target_mode == self._pending_target_mode)
+            button.clicked.connect(
+                lambda _checked=False, mode=target_mode: self._toggle_target_action(mode)
+            )
+            return button
+
+        button = QPushButton(action.label)
+        button.clicked.connect(
+            lambda _checked=False, action_index=action.index: self._select_action(action_index)
+        )
+        return button
+
+    def _action_groups(
+        self,
+        actions: list[ActionView],
+    ) -> dict[str, dict[str, list[ActionView]]]:
+        groups = {
+            economy: {bucket: [] for bucket, _ in self._action_buckets()}
+            for economy in ("action", "bonus_action", "reaction")
+        }
+        for action in actions:
+            groups[self._action_economy_key(action)][self._action_bucket_key(action)].append(action)
+        return groups
+
+    def _action_buckets(self) -> tuple[tuple[str, str], ...]:
+        return (
+            ("attack", "Attack"),
+            ("magic", "Magic"),
+            ("utilize", "Utilize"),
+            ("other", "Other"),
+        )
+
+    def _open_action_menu(self, economy: str, bucket: str) -> None:
+        self._pending_target_mode = None
+        self._action_menu_scope = ActionMenuScope(economy=economy, bucket=bucket)
+        self.refresh_view()
+
+    def _close_action_menu(self, scope: ActionMenuScope | None = None) -> None:
+        self._pending_target_mode = None
+        if scope is not None and self._action_menu_scope != scope:
+            return
+        self._action_menu_scope = None
+        self.refresh_view()
+
+    def _action_scope_title(self, scope: ActionMenuScope) -> str:
+        economy_title = "Bonus Actions" if scope.economy == "bonus_action" else "Actions"
+        bucket_title = dict(self._action_buckets())[scope.bucket]
+        return f"{economy_title} / {bucket_title}"
+
+    def _action_economy_key(self, action: ActionView) -> str:
+        if action.cost.get("bonus_action", 0) > 0:
+            return "bonus_action"
+        if action.cost.get("reaction", 0) > 0 or action.kind in {"opportunity_attack", "pass"}:
+            return "reaction"
+        return "action"
+
+    def _action_bucket_key(self, action: ActionView) -> str:
+        if action.kind in {"attack", "opportunity_attack"}:
+            return "attack"
+        if action.kind == "magic":
+            return "magic"
+        if action.kind == "utilize":
+            return "utilize"
+        return "other"
+
     def _trigger_move(self, direction: str) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
         self._pending_target_mode = None
+        self._action_menu_scope = None
         action = self._presentation.encounter.movement_actions.get(direction)
         if action is not None:
             self._select_action(action.index)
@@ -583,6 +864,7 @@ class CyoaPySide6Window(QMainWindow):
         if self._presentation is None or self._presentation.encounter is None:
             return
         self._pending_target_mode = None
+        self._action_menu_scope = None
         action = self._presentation.encounter.end_turn_action
         if action is not None:
             self._select_action(action.index)
@@ -599,6 +881,7 @@ class CyoaPySide6Window(QMainWindow):
 
     def _select_action(self, index: int) -> None:
         self._pending_target_mode = None
+        self._action_menu_scope = None
         result = self.session.choose(index)
         self._apply_turn_result(result)
 
