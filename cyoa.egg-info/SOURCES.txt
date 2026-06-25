@@ -14,6 +14,7 @@ game/launcher.py
 game/loaders.py
 game/presentation.py
 game/pyside6_app.py
+game/rest.py
 game/save.py
 game/scene_runner.py
 game/session.py

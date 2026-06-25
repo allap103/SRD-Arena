@@ -7,7 +7,10 @@ from .encounter import CombatEvent, EncounterAction, EncounterSnapshot, Encounte
 from .models.actor import Actor
 from .models.item import Item
 from .models.scene import Scene
+from .rest import apply_rest
 
+SHORT_REST_CHOICE_TEXT = "Short Rest"
+LONG_REST_CHOICE_TEXT = "Long Rest"
 SAVE_CHOICE_TEXT = "Save game"
 LOAD_CHOICE_TEXT = "Load game"
 EXIT_CHOICE_TEXT = "Exit game"
@@ -81,18 +84,8 @@ class GameSession:
         self._ensure_encounter_state()
         scene = self.current_scene
         scene_text = scene.text
-        choices = [choice.choice_text for choice in scene.choices]
-        action_details = [
-                ActionView(
-                    index=index,
-                    id=f"scene-choice-{index}",
-                    label=choice.choice_text,
-                    kind="scene_choice",
-                    actor_ref="player",
-                    value=None,
-                )
-            for index, choice in enumerate(scene.choices)
-        ]
+        action_details = self._non_encounter_action_details()
+        choices = [action.label for action in action_details]
         if self.encounter_state is not None:
             scene_text = "\n\n".join(
                 part
@@ -130,7 +123,11 @@ class GameSession:
     def choose(self, choice_index: int) -> TurnResult:
         self._ensure_encounter_state()
         scene = self.current_scene
-        action_count = len(self._encounter_actions) if self.encounter_state is not None else len(scene.choices)
+        action_count = (
+            len(self._encounter_actions)
+            if self.encounter_state is not None
+            else len(self._non_encounter_action_details())
+        )
         if choice_index == action_count:
             return self._save_game()
         if choice_index == action_count + 1:
@@ -140,10 +137,15 @@ class GameSession:
         if self.encounter_state is not None:
             return self._choose_encounter(choice_index)
 
-        if not 0 <= choice_index < len(scene.choices):
+        if not 0 <= choice_index < action_count:
             raise IndexError(
                 f"Choice index {choice_index} is out of range for scene '{scene.id}'."
             )
+
+        if choice_index == len(scene.choices):
+            return self._take_rest("short_rest")
+        if choice_index == len(scene.choices) + 1:
+            return self._take_rest("long_rest")
 
         choice = scene.choices[choice_index]
         resolution = self.choice_resolver.resolve(scene, choice, actor=self.player)
@@ -171,6 +173,40 @@ class GameSession:
         self.player = deepcopy(self._initial_player)
         self.choice_resolver = ChoiceResolver()
         self.current_scene_id = self.start_scene_id
+
+    def _take_rest(self, rest_type: str) -> TurnResult:
+        outcome = apply_rest(self.player, rest_type)
+        if rest_type == "short_rest":
+            selected_choice_text = SHORT_REST_CHOICE_TEXT
+            selected_action_id = "system-short-rest"
+            messages = [("system", "You take a short rest.")]
+            if outcome["restored_resources"]:
+                messages.append(
+                    ("system", f"Recovered {outcome['restored_resources']} feature use(s).")
+                )
+            else:
+                messages.append(("system", "No resources are recovered yet."))
+            selected_index = len(self.current_scene.choices)
+        else:
+            selected_choice_text = LONG_REST_CHOICE_TEXT
+            selected_action_id = "system-long-rest"
+            messages = [("system", "You take a long rest.")]
+            messages.append(("system", f"You recover {outcome['healed']} hit point(s)."))
+            if outcome["restored_resources"]:
+                messages.append(
+                    ("system", f"Recovered {outcome['restored_resources']} feature use(s).")
+                )
+            selected_index = len(self.current_scene.choices) + 1
+
+        return TurnResult(
+            scene=self.get_scene_view(),
+            selected_index=selected_index,
+            selected_choice_text=selected_choice_text,
+            selected_action_id=selected_action_id,
+            messages=messages,
+            next_scene_id=self.current_scene_id,
+            scene_changed=False,
+        )
 
     def _save_game(self) -> TurnResult:
         from .save import save_to_slot
@@ -323,6 +359,37 @@ class GameSession:
             self.actor_templates,
             self.item_templates,
         )
+
+    def _non_encounter_action_details(self) -> list[ActionView]:
+        scene_actions = [
+            ActionView(
+                index=index,
+                id=f"scene-choice-{index}",
+                label=choice.choice_text,
+                kind="scene_choice",
+                actor_ref="player",
+                value=None,
+            )
+            for index, choice in enumerate(self.current_scene.choices)
+        ]
+        return scene_actions + [
+            ActionView(
+                index=len(scene_actions),
+                id="system-short-rest",
+                label=SHORT_REST_CHOICE_TEXT,
+                kind="system_short_rest",
+                actor_ref="player",
+                value=None,
+            ),
+            ActionView(
+                index=len(scene_actions) + 1,
+                id="system-long-rest",
+                label=LONG_REST_CHOICE_TEXT,
+                kind="system_long_rest",
+                actor_ref="player",
+                value=None,
+            ),
+        ]
 
     def _system_action_details(self, start_index: int) -> list[ActionView]:
         return [

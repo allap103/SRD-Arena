@@ -15,7 +15,13 @@ from game.save import (
     save_to_file,
     save_to_slot,
 )
-from game.session import EXIT_CHOICE_TEXT, LOAD_CHOICE_TEXT, SAVE_CHOICE_TEXT
+from game.session import (
+    EXIT_CHOICE_TEXT,
+    LOAD_CHOICE_TEXT,
+    LONG_REST_CHOICE_TEXT,
+    SAVE_CHOICE_TEXT,
+    SHORT_REST_CHOICE_TEXT,
+)
 
 FIXTURE_GAME_DIR = Path(__file__).parent / "fixtures" / "graph_game"
 
@@ -91,11 +97,27 @@ def test_scene_view_includes_system_options(tmp_path: Path) -> None:
 
     scene_view = session.get_scene_view()
 
+    assert SHORT_REST_CHOICE_TEXT in scene_view.choices
+    assert LONG_REST_CHOICE_TEXT in scene_view.choices
     assert scene_view.choices[-3:] == [
         SAVE_CHOICE_TEXT,
         LOAD_CHOICE_TEXT,
         EXIT_CHOICE_TEXT,
     ]
+
+
+def test_long_rest_button_restores_health_outside_combat() -> None:
+    session = Game(str(FIXTURE_GAME_DIR), start_scene="start").create_session()
+    session.player.take_damage(4)
+
+    scene_view = session.get_scene_view()
+    long_rest_index = scene_view.choices.index(LONG_REST_CHOICE_TEXT)
+    result = session.choose(long_rest_index)
+
+    assert result.selected_choice_text == LONG_REST_CHOICE_TEXT
+    assert ("system", "You take a long rest.") in result.messages
+    assert ("system", "You recover 4 hit point(s).") in result.messages
+    assert session.player.get_health() == session.player.get_max_health()
 
 
 def test_session_save_choice_writes_default_slot(tmp_path: Path) -> None:
@@ -123,7 +145,7 @@ def test_session_load_choice_restores_saved_state_from_default_slot(tmp_path: Pa
 
     fresh_session = Game(str(FIXTURE_GAME_DIR), start_scene="start").create_session()
     fresh_session.save_dir = tmp_path
-    load_choice_index = len(fresh_session.current_scene.choices) + 1
+    load_choice_index = fresh_session.get_scene_view().choices.index(LOAD_CHOICE_TEXT)
 
     result = fresh_session.choose(load_choice_index)
 
@@ -139,7 +161,7 @@ def test_session_load_choice_restores_saved_state_from_default_slot(tmp_path: Pa
 def test_session_load_choice_reports_missing_default_slot(tmp_path: Path) -> None:
     session = Game(str(FIXTURE_GAME_DIR), start_scene="start").create_session()
     session.save_dir = tmp_path
-    load_choice_index = len(session.current_scene.choices) + 1
+    load_choice_index = session.get_scene_view().choices.index(LOAD_CHOICE_TEXT)
 
     result = session.choose(load_choice_index)
 
@@ -151,7 +173,7 @@ def test_session_load_choice_reports_missing_default_slot(tmp_path: Path) -> Non
 def test_session_exit_choice_requests_shutdown(tmp_path: Path) -> None:
     session = Game(str(FIXTURE_GAME_DIR), start_scene="start").create_session()
     session.save_dir = tmp_path
-    exit_choice_index = len(session.current_scene.choices) + 2
+    exit_choice_index = session.get_scene_view().choices.index(EXIT_CHOICE_TEXT)
 
     result = session.choose(exit_choice_index)
 

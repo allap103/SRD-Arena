@@ -10,7 +10,9 @@ from .session import (
     ActionView,
     EXIT_CHOICE_TEXT,
     LOAD_CHOICE_TEXT,
+    LONG_REST_CHOICE_TEXT,
     SAVE_CHOICE_TEXT,
+    SHORT_REST_CHOICE_TEXT,
     GameSession,
 )
 
@@ -411,6 +413,16 @@ class CyoaPySide6Window(QMainWindow):
         layout.addWidget(self._sidebar_button("Inventory", self.show_inventory))
         layout.addWidget(self._sidebar_button("System", self.show_system_menu))
         layout.addStretch(1)
+        self.short_rest_button = self._sidebar_button(
+            SHORT_REST_CHOICE_TEXT,
+            lambda: self._trigger_rest("system_short_rest"),
+        )
+        self.long_rest_button = self._sidebar_button(
+            LONG_REST_CHOICE_TEXT,
+            lambda: self._trigger_rest("system_long_rest"),
+        )
+        layout.addWidget(self.short_rest_button)
+        layout.addWidget(self.long_rest_button)
         return page
 
     def _build_inventory_page(self) -> QWidget:
@@ -496,6 +508,7 @@ class CyoaPySide6Window(QMainWindow):
 
         self.last_action_group.setVisible(not self.last_action_text.toPlainText() == "")
         self.scene_text.setPlainText(presentation.story_text or "")
+        self._sync_rest_buttons(presentation)
 
         if presentation.encounter is None:
             self.scene_group.show()
@@ -511,6 +524,8 @@ class CyoaPySide6Window(QMainWindow):
     def _render_story_actions(self, actions: list[ActionView]) -> None:
         _clear_layout(self.story_choices_layout)
         for action in actions:
+            if action.kind in {"system_short_rest", "system_long_rest"}:
+                continue
             button = QPushButton(action.label)
             button.clicked.connect(
                 lambda _checked=False, action_index=action.index: self._select_action(action_index)
@@ -878,6 +893,31 @@ class CyoaPySide6Window(QMainWindow):
         if self._presentation is None:
             return
         self._select_action(self._presentation.system_actions[1].index)
+
+    def _trigger_rest(self, kind: str) -> None:
+        if self._presentation is None or self._presentation.encounter is not None:
+            return
+        action = next(
+            (action for action in self._presentation.story_actions if action.kind == kind),
+            None,
+        )
+        if action is not None:
+            self._select_action(action.index)
+
+    def _sync_rest_buttons(self, presentation: SessionPresentation) -> None:
+        if not hasattr(self, "short_rest_button"):
+            return
+        if presentation.encounter is not None:
+            self.short_rest_button.hide()
+            self.long_rest_button.hide()
+            return
+        rest_actions = {action.kind: action for action in presentation.story_actions}
+        short_rest_action = rest_actions.get("system_short_rest")
+        long_rest_action = rest_actions.get("system_long_rest")
+        self.short_rest_button.setVisible(short_rest_action is not None)
+        self.long_rest_button.setVisible(long_rest_action is not None)
+        self.short_rest_button.setEnabled(short_rest_action is not None)
+        self.long_rest_button.setEnabled(long_rest_action is not None)
 
     def _select_action(self, index: int) -> None:
         self._pending_target_mode = None
