@@ -73,6 +73,7 @@ class EncounterView:
     resources: ResourceSummaryView
     movement_actions: dict[str, ActionView]
     non_movement_actions: list[ActionView]
+    feature_actions: list[ActionView]
     end_turn_action: ActionView | None
     action_pane_title: str
 
@@ -112,7 +113,12 @@ def build_session_presentation(
     non_movement_actions = [
         action
         for action in story_actions
-        if action.kind not in {"move", "wait", "pass"}
+        if action.kind not in {"move", "wait", "pass", "feature"}
+    ]
+    feature_actions = [
+        action
+        for action in story_actions
+        if action.kind == "feature"
     ]
     end_turn_action = next(
         (action for action in story_actions if action.kind in {"wait", "pass"}),
@@ -132,6 +138,7 @@ def build_session_presentation(
             resources=resources,
             movement_actions=movement_actions,
             non_movement_actions=non_movement_actions,
+            feature_actions=feature_actions,
             end_turn_action=end_turn_action,
             action_pane_title=action_pane_title,
         ),

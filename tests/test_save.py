@@ -24,6 +24,7 @@ from game.session import (
 )
 
 FIXTURE_GAME_DIR = Path(__file__).parent / "fixtures" / "graph_game"
+FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 
 
 def test_create_save_captures_mutable_session_state() -> None:
@@ -118,6 +119,31 @@ def test_long_rest_button_restores_health_outside_combat() -> None:
     assert ("system", "You take a long rest.") in result.messages
     assert ("system", "You recover 4 hit point(s).") in result.messages
     assert session.player.get_health() == session.player.get_max_health()
+
+
+def test_short_rest_restores_one_second_wind_use() -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.player.feature_uses_remaining["second_wind"] = 0
+
+    scene_view = session.get_scene_view()
+    short_rest_index = scene_view.choices.index(SHORT_REST_CHOICE_TEXT)
+    result = session.choose(short_rest_index)
+
+    assert result.selected_choice_text == SHORT_REST_CHOICE_TEXT
+    assert ("system", "You take a short rest.") in result.messages
+    assert ("system", "Recovered 1 feature use(s).") in result.messages
+    assert session.player.feature_uses_remaining["second_wind"] == 1
+
+
+def test_save_and_load_preserve_feature_uses(tmp_path: Path) -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.player.feature_uses_remaining["second_wind"] = 1
+    save_path = tmp_path / "feature_uses_save.json"
+
+    save_to_file(session, save_path)
+    loaded = load_from_file(save_path, FIXTURE_ENCOUNTER_DIR)
+
+    assert loaded.player.feature_uses_remaining["second_wind"] == 1
 
 
 def test_session_save_choice_writes_default_slot(tmp_path: Path) -> None:

@@ -85,6 +85,7 @@ class PlayerState(BaseModel):
     inventory: list[str] = Field(default_factory=list)
     equipment: dict[str, str | None] = Field(default_factory=dict)
     attributes: AttributeState
+    feature_uses_remaining: dict[str, int] = Field(default_factory=dict)
 
 
 class CompletedTestState(BaseModel):
@@ -256,6 +257,7 @@ def _create_player_state(player: Actor) -> PlayerState:
             charisma=player.attributes.charisma,
             base_armor_class=player.attributes.base_armor_class,
         ),
+        feature_uses_remaining=dict(player.feature_uses_remaining),
     )
 
 
@@ -274,7 +276,7 @@ def _restore_player_state(player_template: Actor, state: PlayerState) -> Actor:
         class_ref=deepcopy(player_template.class_ref),
         feature_grants=deepcopy(player_template.feature_grants),
         combat_profile=deepcopy(player_template.combat_profile),
-        feature_uses_remaining=dict(player_template.feature_uses_remaining),
+        feature_uses_remaining=dict(state.feature_uses_remaining),
     )
 
 

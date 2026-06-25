@@ -591,6 +591,7 @@ class CyoaPySide6Window(QMainWindow):
                 available=encounter.resources.bonus_action_status == "Ready",
                 rendered_target_modes=rendered_target_modes,
             )
+            self._render_feature_column(encounter.feature_actions, rendered_target_modes)
             self._render_status_column(encounter.resources)
 
         if self._pending_target_mode is None:
@@ -685,6 +686,35 @@ class CyoaPySide6Window(QMainWindow):
             back = QPushButton("Back")
             back.clicked.connect(lambda _checked=False, selected_scope=scope: self._close_action_menu(selected_scope))
             column_layout.addWidget(back)
+        self.encounter_actions_layout.addWidget(column, stretch=1)
+
+    def _render_feature_column(
+        self,
+        feature_actions: list[ActionView],
+        rendered_target_modes: set[TargetSelectionMode],
+    ) -> None:
+        column = QWidget()
+        column_layout = QVBoxLayout(column)
+        column_layout.setContentsMargins(0, 0, 0, 0)
+        column_layout.setSpacing(8)
+
+        header = QLabel("Class Features")
+        header_font = QFont()
+        header_font.setBold(True)
+        header.setFont(header_font)
+        column_layout.addWidget(header)
+
+        if not feature_actions:
+            empty = QLabel("None")
+            empty.setEnabled(False)
+            column_layout.addWidget(empty)
+        else:
+            for action in feature_actions:
+                button = self._build_encounter_action_button(action, rendered_target_modes)
+                if button is not None:
+                    column_layout.addWidget(button)
+
+        column_layout.addStretch(1)
         self.encounter_actions_layout.addWidget(column, stretch=1)
 
     def _render_status_column(self, resources) -> None:

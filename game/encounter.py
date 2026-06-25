@@ -538,6 +538,8 @@ class EncounterState:
                     )
                 )
 
+        actions.extend(self._available_feature_actions(player))
+
         if self.player_bonus_action_available:
             for item in _healing_potions_in_inventory(player, self.item_templates):
                 actions.append(
@@ -571,6 +573,37 @@ class EncounterState:
             )
 
         return actions
+
+    def _available_feature_actions(self, player: Actor) -> list[EncounterAction]:
+        actions: list[EncounterAction] = []
+        for feature_id, definition in player.combat_profile.feature_actions.items():
+            if not self._feature_action_available(player, definition):
+                continue
+            action_cost = ActionCost(
+                bonus_action=1 if definition.economy == "bonus_action" else 0,
+                action=1 if definition.economy == "action" else 0,
+                reaction=1 if definition.economy == "reaction" else 0,
+            )
+            actions.append(
+                EncounterAction(
+                    definition.label,
+                    "feature",
+                    feature_id,
+                    id=f"player-feature-{feature_id.replace('_', '-')}",
+                    actor_ref="player",
+                    cost=action_cost,
+                )
+            )
+        return actions
+
+    def _feature_action_available(self, player: Actor, definition) -> bool:
+        if definition.economy == "bonus_action" and not self.player_bonus_action_available:
+            return False
+        if definition.economy == "action" and not self.player_action_available:
+            return False
+        if definition.economy == "reaction" and not self.player_reaction_available:
+            return False
+        return player.feature_uses_remaining.get(definition.feature_id, 0) > 0
 
     def apply_action(
         self,
@@ -679,6 +712,12 @@ class EncounterState:
                     f"Encounter utilize action requires an item id, got {action.value!r}."
                 )
             self._resolve_utilize_action(player, action.value, progress, resolved_action_id)
+        elif action.kind == "feature":
+            if not isinstance(action.value, str):
+                raise ValueError(
+                    f"Encounter feature action requires a feature id, got {action.value!r}."
+                )
+            self._resolve_feature_action(player, action.value, progress, resolved_action_id)
         elif action.kind == "wait":
             action_ends_turn = True
             progress.messages.append(("system", "You hold your ground."))
@@ -1165,6 +1204,87 @@ class EncounterState:
             )
         )
 
+    def _resolve_feature_action(
+        self,
+        player: Actor,
+        feature_id: str,
+        progress: EncounterProgress,
+        action_id: str,
+    ) -> None:
+        if feature_id != "second_wind":
+            progress.messages.append(("system", f"{feature_id} is not implemented yet."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "feature", "feature_id": feature_id, "success": False},
+                )
+            )
+            return
+
+        if not self.player_bonus_action_available:
+            progress.messages.append(("system", "You have already used your Bonus Action."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "feature", "feature_id": feature_id, "success": False},
+                )
+            )
+            return
+
+        uses_remaining = player.feature_uses_remaining.get(feature_id, 0)
+        if uses_remaining <= 0:
+            progress.messages.append(("system", "You have no uses of Second Wind remaining."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "feature", "feature_id": feature_id, "success": False},
+                )
+            )
+            return
+
+        healing_total, healing_detail = _roll_second_wind_healing(player)
+        applied_healing = player.heal(healing_total)
+        player.feature_uses_remaining[feature_id] = uses_remaining - 1
+        self.player_bonus_action_available = False
+
+        progress.messages.extend(
+            [
+                ("system", f"{player.name} uses Second Wind."),
+                (
+                    "system",
+                    f"Healing: 1d10={healing_detail['dice_total']} + level {player.attributes.level} "
+                    f"= {healing_total}; applied {applied_healing}.",
+                ),
+            ]
+        )
+        progress.events.append(
+            self._event(
+                "feature_used",
+                actor_ref="player",
+                action_id=action_id,
+                data={
+                    "kind": "feature",
+                    "feature_id": feature_id,
+                    "feature_name": "Second Wind",
+                    "target_ref": "player",
+                    "target_label": player.name,
+                    "success": True,
+                    "healing": applied_healing,
+                    "healing_roll_detail": {
+                        **healing_detail,
+                        "applied_healing": applied_healing,
+                    },
+                    "uses_remaining": player.feature_uses_remaining[feature_id],
+                },
+            )
+        )
+
     def _apply_player_move(
         self,
         player: Actor,
@@ -1548,6 +1668,17 @@ def _healing_potion_dice(item: Item) -> tuple[int, int, int] | None:
         int(match.group(2)),
         int(match.group(3) or 0),
     )
+
+
+def _roll_second_wind_healing(actor: Actor) -> tuple[int, dict[str, int | str]]:
+    dice_total = roll_dice(1, 10)
+    total = dice_total + actor.attributes.level
+    return total, {
+        "dice": "1d10",
+        "dice_total": dice_total,
+        "modifier": actor.attributes.level,
+        "total": total,
+    }
 
 
 def _resolve_attack(

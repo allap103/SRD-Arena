@@ -6,7 +6,12 @@ from .content_schema import ActorSchema, ItemSchema, SceneSchema
 from .content_schema.actor import ActorItemReferenceSchema
 from .models.actor import Actor
 from .models.attributes import Attributes, Movement
-from .models.class_features import ClassRef, CombatProfile, FeatureGrant
+from .models.class_features import (
+    ClassRef,
+    CombatProfile,
+    FeatureActionDefinition,
+    FeatureGrant,
+)
 from .models.choice import (
     Choice,
     Effects,
@@ -446,7 +451,13 @@ def _resolve_class_feature_grants(
         feature_name, feature_level = parsed
         if feature_level > level:
             continue
-        grant = _normalize_feature_grant(class_name, feature_name, feature_level)
+        grant = _normalize_feature_grant(
+            class_name,
+            feature_name,
+            feature_level,
+            class_block,
+            level,
+        )
         if grant is not None:
             grants.append(grant)
     return grants
@@ -469,6 +480,8 @@ def _normalize_feature_grant(
     class_name: str,
     feature_name: str,
     feature_level: int,
+    class_block: dict | None = None,
+    actor_level: int = 1,
 ) -> FeatureGrant | None:
     extra_attack_counts = {
         "Extra Attack": 2,
@@ -478,7 +491,19 @@ def _normalize_feature_grant(
     }
     attacks = extra_attack_counts.get(feature_name)
     if attacks is None:
-        return None
+        if feature_name != "Second Wind":
+            return None
+        return FeatureGrant(
+            id="second_wind",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+            data={
+                "uses": _second_wind_uses(class_block, actor_level),
+                "healing_die_count": 1,
+                "healing_die_sides": 10,
+            },
+        )
     return FeatureGrant(
         id="extra_attack",
         name=feature_name,
@@ -491,19 +516,90 @@ def _normalize_feature_grant(
 def _build_combat_profile(feature_grants: list[FeatureGrant]) -> CombatProfile:
     profile = CombatProfile()
     for grant in feature_grants:
-        if grant.id != "extra_attack":
+        if grant.id == "extra_attack":
+            attacks = grant.data.get("attacks")
+            if isinstance(attacks, int):
+                profile.attacks_per_attack_action = max(
+                    profile.attacks_per_attack_action,
+                    attacks,
+                )
             continue
-        attacks = grant.data.get("attacks")
-        if isinstance(attacks, int):
-            profile.attacks_per_attack_action = max(
-                profile.attacks_per_attack_action,
-                attacks,
+        if grant.id == "second_wind":
+            profile.bonus_action_options.add("second_wind")
+            profile.feature_actions["second_wind"] = FeatureActionDefinition(
+                feature_id="second_wind",
+                label="Second Wind",
+                economy="bonus_action",
+                target="self",
+                resolver="second_wind",
             )
+            uses = grant.data.get("uses")
+            if isinstance(uses, int):
+                profile.feature_uses_max["second_wind"] = max(
+                    profile.feature_uses_max.get("second_wind", 0),
+                    uses,
+                )
+            if grant.source_class == "Fighter" and grant.name == "Second Wind":
+                if uses == 1:
+                    profile.feature_recharge["second_wind"] = {
+                        "short_rest": "all",
+                        "long_rest": "all",
+                    }
+                else:
+                    profile.feature_recharge["second_wind"] = {
+                        "short_rest": 1,
+                        "long_rest": "all",
+                    }
     return profile
 
 
 def _build_feature_uses_remaining(combat_profile: CombatProfile) -> dict[str, int]:
     return dict(combat_profile.feature_uses_max)
+
+
+def _second_wind_uses(class_block: dict | None, feature_level: int) -> int:
+    if class_block is None:
+        return 1
+    source = class_block.get("source")
+    if source != "XPHB":
+        return 1
+    table_value = _class_table_value(class_block, "Second Wind", feature_level)
+    if table_value is None:
+        return 2
+    try:
+        return int(table_value)
+    except ValueError:
+        return 2
+
+
+def _class_table_value(
+    class_block: dict,
+    column_label: str,
+    level: int,
+) -> str | None:
+    groups = class_block.get("classTableGroups", [])
+    if not isinstance(groups, list):
+        return None
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        labels = group.get("colLabels", [])
+        rows = group.get("rows", [])
+        if not isinstance(labels, list) or not isinstance(rows, list):
+            continue
+        try:
+            column_index = labels.index(column_label)
+        except ValueError:
+            continue
+        row_index = level - 1
+        if row_index < 0 or row_index >= len(rows):
+            continue
+        row = rows[row_index]
+        if not isinstance(row, list) or column_index >= len(row):
+            continue
+        value = row[column_index]
+        return str(value)
+    return None
 
 
 def _stat_block_name(stat_block: dict | None) -> str:

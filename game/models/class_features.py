@@ -18,10 +18,21 @@ class FeatureGrant:
     data: dict[str, object] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class FeatureActionDefinition:
+    feature_id: str
+    label: str
+    economy: str
+    target: str
+    resolver: str
+    combat_only: bool = True
+
+
 @dataclass
 class CombatProfile:
     attacks_per_attack_action: int = 1
     bonus_action_options: set[str] = field(default_factory=set)
     reaction_options: set[str] = field(default_factory=set)
+    feature_actions: dict[str, FeatureActionDefinition] = field(default_factory=dict)
     feature_uses_max: dict[str, int] = field(default_factory=dict)
-    feature_recharge: dict[str, str] = field(default_factory=dict)
+    feature_recharge: dict[str, dict[str, int | str]] = field(default_factory=dict)

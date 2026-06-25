@@ -290,6 +290,32 @@ def test_goblin_encounter_can_utilize_healing_potion(monkeypatch) -> None:
     assert event.data["healing_roll_detail"]["applied_healing"] == 7
 
 
+def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.player.current_health = 10
+
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 5)
+
+    scene_view = session.get_scene_view()
+    second_wind_index = scene_view.choices.index("Second Wind")
+    result = session.choose(second_wind_index)
+
+    assert ("system", "Traveler uses Second Wind.") in result.messages
+    assert ("system", "Healing: 1d10=5 + level 2 = 7; applied 7.") in result.messages
+    assert session.player.get_health() == 17
+    assert session.encounter_state is not None
+    assert session.encounter_state.player_bonus_action_available is False
+    assert session.player.feature_uses_remaining["second_wind"] == 1
+    assert "Second Wind" not in session.get_scene_view().choices
+    event = next(event for event in result.events if event.type == "feature_used")
+    assert event.data["feature_id"] == "second_wind"
+    assert event.data["feature_name"] == "Second Wind"
+    assert event.data["uses_remaining"] == 1
+    assert event.data["healing_roll_detail"]["dice"] == "1d10"
+    assert event.data["healing_roll_detail"]["applied_healing"] == 7
+
+
 def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:
     session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
