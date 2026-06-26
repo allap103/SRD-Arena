@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 from ..models.actor import Actor
-from .types import DiceRoller, FeatureActionResult
+from .types import CapabilityActionResult, DiceRoller, EffectResult
 
 
 def resolve_fighter_feature(
     actor: Actor,
     feature_id: str,
     roll_dice: DiceRoller,
-) -> FeatureActionResult | None:
+) -> CapabilityActionResult | None:
     if feature_id == "second_wind":
         return _resolve_second_wind(actor, roll_dice)
     return None
 
 
-def _resolve_second_wind(actor: Actor, roll_dice: DiceRoller) -> FeatureActionResult:
+def _resolve_second_wind(actor: Actor, roll_dice: DiceRoller) -> CapabilityActionResult:
     dice_count, dice_sides = _feature_healing_dice(actor, "second_wind")
     dice_total = roll_dice(dice_count, dice_sides)
     healing_total = dice_total + actor.attributes.level
@@ -30,13 +30,9 @@ def _resolve_second_wind(actor: Actor, roll_dice: DiceRoller) -> FeatureActionRe
         "total": healing_total,
         "applied_healing": applied_healing,
     }
-    return FeatureActionResult(
-        feature_id="second_wind",
-        feature_name="Second Wind",
-        target_label=actor.name,
-        healing=applied_healing,
-        roll_detail=roll_detail,
-        uses_remaining=actor.feature_uses_remaining["second_wind"],
+    return CapabilityActionResult(
+        capability_id="second_wind",
+        capability_name="Second Wind",
         messages=[
             ("system", f"{actor.name} uses Second Wind."),
             (
@@ -45,6 +41,18 @@ def _resolve_second_wind(actor: Actor, roll_dice: DiceRoller) -> FeatureActionRe
                 f"= {healing_total}; applied {applied_healing}.",
             ),
         ],
+        effects=[
+            EffectResult(
+                kind="healing",
+                target_ref="player",
+                data={
+                    "amount": applied_healing,
+                    "target_label": actor.name,
+                    "roll": roll_detail,
+                },
+            )
+        ],
+        resource_updates={"second_wind": actor.feature_uses_remaining["second_wind"]},
     )
 
 

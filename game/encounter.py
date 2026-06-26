@@ -1295,6 +1295,15 @@ class EncounterState:
             self.player_reaction_available = False
 
         progress.messages.extend(result.messages)
+        healing_effect = next(
+            (effect for effect in result.effects if effect.kind == "healing"),
+            None,
+        )
+        healing_data = healing_effect.data if healing_effect is not None else {}
+        healing_roll_detail = healing_data.get("roll", {})
+        target_ref = healing_effect.target_ref if healing_effect is not None else "player"
+        target_label = healing_data.get("target_label", player.name)
+        healing = healing_data.get("amount", 0)
         progress.events.append(
             self._event(
                 "feature_used",
@@ -1302,14 +1311,23 @@ class EncounterState:
                 action_id=action_id,
                 data={
                     "kind": "feature",
-                    "feature_id": result.feature_id,
-                    "feature_name": result.feature_name,
-                    "target_ref": result.target_ref,
-                    "target_label": result.target_label,
+                    "feature_id": result.capability_id,
+                    "feature_name": result.capability_name,
+                    "target_ref": target_ref,
+                    "target_label": target_label,
                     "success": True,
-                    "healing": result.healing,
-                    "healing_roll_detail": result.roll_detail,
-                    "uses_remaining": result.uses_remaining,
+                    "healing": healing,
+                    "healing_roll_detail": healing_roll_detail,
+                    "uses_remaining": result.resource_updates.get(feature_id),
+                    "effects": [
+                        {
+                            "kind": effect.kind,
+                            "target_ref": effect.target_ref,
+                            "success": effect.success,
+                            "data": effect.data,
+                        }
+                        for effect in result.effects
+                    ],
                 },
             )
         )

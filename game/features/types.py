@@ -7,12 +7,20 @@ DiceRoller = Callable[[int, int], int]
 
 
 @dataclass(frozen=True)
-class FeatureActionResult:
-    feature_id: str
-    feature_name: str
+class EffectResult:
+    kind: str
+    target_ref: str
+    success: bool = True
+    data: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class CapabilityActionResult:
+    capability_id: str
+    capability_name: str
     messages: list[tuple[str, str]]
-    target_ref: str = "player"
-    target_label: str = ""
-    healing: int = 0
-    roll_detail: dict[str, int | str] = field(default_factory=dict)
-    uses_remaining: int = 0
+    effects: list[EffectResult]
+    resource_updates: dict[str, int] = field(default_factory=dict)
+
+
+FeatureActionResult = CapabilityActionResult
