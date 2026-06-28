@@ -13,6 +13,8 @@ from .models.class_features import (
     FeatureActionDefinition,
     FeatureGrant,
 )
+from .rules.normalization import normalize_optional_feature_rules
+from .rules.types import RuleGrant
 from .models.choice import (
     Choice,
     Effects,
@@ -38,6 +40,7 @@ from .systems.inventory import Inventory
 
 StatBlockCatalog = dict[tuple[str, str | None], dict]
 ClassCatalog = dict[tuple[str, str | None], dict]
+OptionalFeatureCatalog = dict[tuple[str, str | None], dict]
 CustomStatBlockCatalog = dict[str, ActorSchema]
 SystemItemCatalog = dict[tuple[str, str | None], dict]
 SOURCE_PRIORITY = {
@@ -149,6 +152,7 @@ def load_actor(
     stat_blocks: StatBlockCatalog | None = None,
     class_blocks: ClassCatalog | None = None,
     custom_stat_blocks: CustomStatBlockCatalog | None = None,
+    optional_features: OptionalFeatureCatalog | None = None,
 ) -> Actor:
     schema = _resolve_actor_schema(
         ActorSchema.model_validate(_load_json(path)),
@@ -174,6 +178,7 @@ def load_actor(
         }
     )
     feature_grants = _resolve_class_feature_grants(class_block, schema.attributes.level)
+    rule_grants = _resolve_optional_feature_rules(schema, optional_features)
     combat_profile = _build_combat_profile(feature_grants)
 
     return Actor(
@@ -189,6 +194,7 @@ def load_actor(
             else None
         ),
         feature_grants=feature_grants,
+        rule_grants=rule_grants,
         combat_profile=combat_profile,
         feature_uses_remaining=_build_feature_uses_remaining(combat_profile),
     )
@@ -202,6 +208,21 @@ def load_custom_stat_blocks(directory: str | Path) -> CustomStatBlockCatalog:
         schema.id: schema
         for schema in (ActorSchema.model_validate(_load_json(path)) for path in custom_dir.glob("*"))
     }
+
+
+def load_optional_feature_blocks(directory: str | Path) -> OptionalFeatureCatalog:
+    path = Path(directory) / "optionalfeatures.json"
+    if not path.is_file():
+        return {}
+    catalog: OptionalFeatureCatalog = {}
+    for feature in _load_json(path).get("optionalfeature", []):
+        if not isinstance(feature, dict) or not isinstance(feature.get("name"), str):
+            continue
+        source = feature.get("source")
+        source_key = source if isinstance(source, str) else None
+        catalog[(feature["name"].casefold(), source_key)] = feature
+        catalog.setdefault((feature["name"].casefold(), None), feature)
+    return catalog
 
 
 def _resolve_actor_schema(
@@ -228,6 +249,7 @@ def _resolve_actor_schema(
             "equipment",
             "inventory",
             "metadata",
+            "optional_features",
         },
     )
     if "attributes" in instance.model_fields_set:
@@ -247,8 +269,44 @@ def _resolve_actor_schema(
             **template.metadata,
             **instance.metadata,
         },
+        "optional_features": [
+            *template.optional_features,
+            *instance.optional_features,
+        ],
     }
     return ActorSchema.model_validate(merged)
+
+
+def _resolve_optional_feature_rules(
+    schema: ActorSchema,
+    catalog: OptionalFeatureCatalog | None,
+) -> list[RuleGrant]:
+    rules: list[RuleGrant] = []
+    for reference in schema.optional_features:
+        if catalog is None:
+            raise ValueError(
+                f"Actor references optional feature '{reference.name}', "
+                "but no optional feature catalog was loaded."
+            )
+        feature = _find_optional_feature(reference.name, reference.source, catalog)
+        rules.extend(normalize_optional_feature_rules(feature))
+    return rules
+
+
+def _find_optional_feature(
+    name: str,
+    source: str | None,
+    catalog: OptionalFeatureCatalog,
+) -> dict:
+    for key in (
+        (name.casefold(), source),
+        (name.casefold(), source.upper() if source is not None else None),
+        (name.casefold(), None),
+    ):
+        if key in catalog:
+            return catalog[key]
+    source_text = f"|{source}" if source else ""
+    raise KeyError(f"Optional feature '{name}{source_text}' not found.")
 
 
 def _actor_item_id(item: str | ActorItemReferenceSchema | object) -> str:
@@ -790,8 +848,10 @@ def _property_name(value: str) -> str:
     return {
         "V": "versatile",
         "F": "finesse",
+        "H": "heavy",
         "L": "light",
         "T": "thrown",
+        "2H": "two-handed",
     }.get(value.split("|", 1)[0], value.lower())
 
 

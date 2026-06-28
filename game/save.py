@@ -14,6 +14,7 @@ from .encounter import (
     DecisionFrameSnapshot,
     EncounterSnapshot,
     EncounterSnapshotEnemy,
+    PendingAttackSnapshot,
     PendingActionSnapshot,
 )
 from .engine import Game
@@ -138,6 +139,34 @@ class PendingActionStateModel(BaseModel):
     trigger_id: str | None = None
 
 
+class PendingAttackStateModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    action_id: str
+    attacker_ref: str
+    target_ref: str
+    target_index: int
+    attacker_label: str
+    target_label: str
+    attacks_remaining: int
+    attack_roll: int
+    attack_roll_detail: dict[str, object]
+    damage_dice: str
+    damage_die_rolls: list[list[int]]
+    damage_die_sides: list[int]
+    damage_modifier: int
+    damage_type: str
+    weapon_id: str | None = None
+    weapon_name: str | None = None
+    rule_id: str
+    rule_source_type: str
+    rule_source_id: str
+    rule_trigger: str
+    rule_operation: str
+    rule_conditions: dict[str, object]
+    rule_parameters: dict[str, object]
+
+
 class EncounterStateModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -155,6 +184,7 @@ class EncounterStateModel(BaseModel):
     event_sequence: int = 1
     decision_stack: list[DecisionFrameStateModel] = Field(default_factory=list)
     pending_action: PendingActionStateModel | None = None
+    pending_attack: PendingAttackStateModel | None = None
     enemies: list[EncounterEnemyStateModel] = Field(default_factory=list)
 
 
@@ -275,6 +305,7 @@ def _restore_player_state(player_template: Actor, state: PlayerState) -> Actor:
         current_health=state.current_health,
         class_ref=deepcopy(player_template.class_ref),
         feature_grants=deepcopy(player_template.feature_grants),
+        rule_grants=deepcopy(player_template.rule_grants),
         combat_profile=deepcopy(player_template.combat_profile),
         feature_uses_remaining=dict(state.feature_uses_remaining),
     )
@@ -331,6 +362,35 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
                 trigger_id=snapshot.pending_action.trigger_id,
             )
             if snapshot.pending_action is not None
+            else None
+        ),
+        pending_attack=(
+            PendingAttackStateModel(
+                action_id=snapshot.pending_attack.action_id,
+                attacker_ref=snapshot.pending_attack.attacker_ref,
+                target_ref=snapshot.pending_attack.target_ref,
+                target_index=snapshot.pending_attack.target_index,
+                attacker_label=snapshot.pending_attack.attacker_label,
+                target_label=snapshot.pending_attack.target_label,
+                attacks_remaining=snapshot.pending_attack.attacks_remaining,
+                attack_roll=snapshot.pending_attack.attack_roll,
+                attack_roll_detail=snapshot.pending_attack.attack_roll_detail,
+                damage_dice=snapshot.pending_attack.damage_dice,
+                damage_die_rolls=snapshot.pending_attack.damage_die_rolls,
+                damage_die_sides=snapshot.pending_attack.damage_die_sides,
+                damage_modifier=snapshot.pending_attack.damage_modifier,
+                damage_type=snapshot.pending_attack.damage_type,
+                weapon_id=snapshot.pending_attack.weapon_id,
+                weapon_name=snapshot.pending_attack.weapon_name,
+                rule_id=snapshot.pending_attack.rule_id,
+                rule_source_type=snapshot.pending_attack.rule_source_type,
+                rule_source_id=snapshot.pending_attack.rule_source_id,
+                rule_trigger=snapshot.pending_attack.rule_trigger,
+                rule_operation=snapshot.pending_attack.rule_operation,
+                rule_conditions=snapshot.pending_attack.rule_conditions,
+                rule_parameters=snapshot.pending_attack.rule_parameters,
+            )
+            if snapshot.pending_attack is not None
             else None
         ),
         enemies=[
@@ -396,6 +456,35 @@ def _restore_encounter_state(
                 trigger_id=state.pending_action.trigger_id,
             )
             if state.pending_action is not None
+            else None
+        ),
+        pending_attack=(
+            PendingAttackSnapshot(
+                action_id=state.pending_attack.action_id,
+                attacker_ref=state.pending_attack.attacker_ref,
+                target_ref=state.pending_attack.target_ref,
+                target_index=state.pending_attack.target_index,
+                attacker_label=state.pending_attack.attacker_label,
+                target_label=state.pending_attack.target_label,
+                attacks_remaining=state.pending_attack.attacks_remaining,
+                attack_roll=state.pending_attack.attack_roll,
+                attack_roll_detail=dict(state.pending_attack.attack_roll_detail),
+                damage_dice=state.pending_attack.damage_dice,
+                damage_die_rolls=[list(rolls) for rolls in state.pending_attack.damage_die_rolls],
+                damage_die_sides=list(state.pending_attack.damage_die_sides),
+                damage_modifier=state.pending_attack.damage_modifier,
+                damage_type=state.pending_attack.damage_type,
+                weapon_id=state.pending_attack.weapon_id,
+                weapon_name=state.pending_attack.weapon_name,
+                rule_id=state.pending_attack.rule_id,
+                rule_source_type=state.pending_attack.rule_source_type,
+                rule_source_id=state.pending_attack.rule_source_id,
+                rule_trigger=state.pending_attack.rule_trigger,
+                rule_operation=state.pending_attack.rule_operation,
+                rule_conditions=dict(state.pending_attack.rule_conditions),
+                rule_parameters=dict(state.pending_attack.rule_parameters),
+            )
+            if state.pending_attack is not None
             else None
         ),
         enemies=[

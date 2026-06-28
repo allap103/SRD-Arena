@@ -68,6 +68,7 @@ class ActorSchema(BaseModel):
     equipment: dict[EquipmentSlot, ItemIdOrReference] = Field(default_factory=dict)
     metadata: dict[str, object] = Field(default_factory=dict)
     class_ref: "StatBlockReferenceSchema | None" = None
+    optional_features: list["StatBlockReferenceSchema"] = Field(default_factory=list)
     custom_stat_block: str | None = None
     stat_block: "StatBlockReferenceSchema | None" = None
 

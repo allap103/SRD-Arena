@@ -60,6 +60,45 @@ def test_build_roll_views_extracts_feature_healing():
     assert healing.total == 9
 
 
+def test_build_roll_views_exposes_individual_rerollable_damage_dice():
+    event = CombatEvent(
+        seq=1,
+        type="attack_pending",
+        data={
+            "hit": True,
+            "roll_id": "action-1:damage",
+            "reroll_action_ids": {
+                "0": "action-1-reroll-damage-0",
+                "1": "action-1-reroll-damage-1",
+            },
+            "attack_roll_detail": {
+                "die": 18,
+                "modifier": 5,
+                "total": 23,
+                "target_ac": 15,
+            },
+            "damage_roll_detail": {
+                "dice": "2d6",
+                "dice_values": [1, 2],
+                "die_rolls": [[1], [2]],
+                "dice_total": 3,
+                "modifier": 4,
+                "total": 7,
+            },
+        },
+    )
+
+    _, damage = build_roll_views([event])
+
+    assert damage.roll_id == "action-1:damage"
+    assert [die.expression for die in damage.dice] == ["d6", "d6"]
+    assert [die.value for die in damage.dice] == [1, 2]
+    assert [die.action_id for die in damage.dice] == [
+        "action-1-reroll-damage-0",
+        "action-1-reroll-damage-1",
+    ]
+
+
 def test_without_roll_details_keeps_outcomes_and_removes_formula_messages():
     messages = [
         ("system", "Traveler attacks Goblin. Roll d20=17 + STR mod 3 = 20."),

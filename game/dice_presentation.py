@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 
 from .encounter import CombatEvent
 
@@ -11,6 +12,7 @@ class DieView:
     value: int
     selected: bool = True
     history: tuple[int, ...] = ()
+    action_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -21,18 +23,43 @@ class RollView:
     total: int
     target: int | None = None
     success: bool | None = None
+    roll_id: str | None = None
 
 
 def build_roll_views(events: list[CombatEvent]) -> list[RollView]:
     views: list[RollView] = []
+    resolved_roll_ids = {
+        event.data.get("roll_id")
+        for event in events
+        if event.type == "attack_resolved" and isinstance(event.data.get("roll_id"), str)
+    }
     for event in events:
-        if event.type == "attack_resolved":
-            attack = _attack_roll_view(event)
-            if attack is not None:
-                views.append(attack)
+        if event.type in {"attack_resolved", "attack_pending"}:
+            if event.type == "attack_pending" or not isinstance(
+                event.data.get("roll_id"),
+                str,
+            ):
+                attack = _attack_roll_view(event)
+                if attack is not None:
+                    views.append(attack)
             damage = _pool_roll_view(
                 event.data.get("damage_roll_detail"),
                 label="Damage",
+                roll_id=event.data.get("roll_id"),
+                reroll_action_ids=event.data.get("reroll_action_ids"),
+            )
+            if damage is not None:
+                views.append(damage)
+            continue
+
+        if event.type == "damage_rerolled":
+            if event.data.get("roll_id") in resolved_roll_ids:
+                continue
+            damage = _pool_roll_view(
+                event.data.get("damage_roll_detail"),
+                label="Damage reroll",
+                roll_id=event.data.get("roll_id"),
+                reroll_action_ids=event.data.get("reroll_action_ids"),
             )
             if damage is not None:
                 views.append(damage)
@@ -88,7 +115,13 @@ def _attack_roll_view(event: CombatEvent) -> RollView | None:
     )
 
 
-def _pool_roll_view(detail: object, *, label: str) -> RollView | None:
+def _pool_roll_view(
+    detail: object,
+    *,
+    label: str,
+    roll_id: object = None,
+    reroll_action_ids: object = None,
+) -> RollView | None:
     if not isinstance(detail, dict):
         return None
     expression = detail.get("dice")
@@ -102,9 +135,51 @@ def _pool_roll_view(detail: object, *, label: str) -> RollView | None:
         and isinstance(total, int)
     ):
         return None
+    dice = _individual_dice_views(
+        expression,
+        detail.get("dice_values"),
+        detail.get("die_rolls"),
+        reroll_action_ids,
+    )
     return RollView(
         label=label,
-        dice=(DieView(expression=expression, value=dice_total),),
+        dice=dice or (DieView(expression=expression, value=dice_total),),
         modifier=modifier,
         total=total,
+        roll_id=roll_id if isinstance(roll_id, str) else None,
+    )
+
+
+def _individual_dice_views(
+    expression: str,
+    values: object,
+    histories: object,
+    reroll_action_ids: object,
+) -> tuple[DieView, ...]:
+    match = re.fullmatch(r"(\d+)d(\d+)", expression)
+    if match is None or not isinstance(values, list):
+        return ()
+    count, sides = (int(part) for part in match.groups())
+    if len(values) != count or not all(isinstance(value, int) for value in values):
+        return ()
+    history_values = histories if isinstance(histories, list) else []
+    action_ids = reroll_action_ids if isinstance(reroll_action_ids, dict) else {}
+    return tuple(
+        DieView(
+            expression=f"d{sides}",
+            value=value,
+            history=(
+                tuple(history_values[index])
+                if index < len(history_values)
+                and isinstance(history_values[index], list)
+                and all(isinstance(item, int) for item in history_values[index])
+                else ()
+            ),
+            action_id=(
+                action_ids.get(str(index))
+                if isinstance(action_ids.get(str(index)), str)
+                else None
+            ),
+        )
+        for index, value in enumerate(values)
     )

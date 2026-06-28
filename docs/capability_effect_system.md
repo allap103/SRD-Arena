@@ -19,6 +19,7 @@ The runtime should not need a bespoke top-level event field or one-off resolver 
 
 - Represent player, NPC, monster, and item abilities through a shared runtime model.
 - Allow one action to produce multiple ordered effects.
+- Represent passive rule changes without hardcoding feature names into combat.
 - Keep source-specific parsing separate from runtime resolution.
 - Make common mechanics data-driven where reasonable.
 - Preserve custom resolvers for genuinely unique abilities.
@@ -33,9 +34,18 @@ The runtime should not need a bespoke top-level event field or one-off resolver 
 
 ## Core Concepts
 
+Content sources normalize into grants. There are two primary kinds:
+
+- **Capability grants** provide active, triggered, or special actions that resolve into effects.
+- **Rule grants** modify an existing resolution pipeline at a defined hook.
+
+A single source can grant both. For example, a magic item can grant an activated capability
+and a passive rule that modifies saving throws while the item is equipped.
+
 ### Capability
 
-A capability is anything an actor or item grants that can affect play. It may be active, passive, triggered, or usable as a special attack.
+A capability is an action-like ability granted by an actor or item. It may be active,
+triggered, or usable as a special attack.
 
 ```python
 @dataclass
@@ -44,7 +54,7 @@ class Capability:
     name: str
     source_type: str  # class, feat, background, species, item, monster
     source_id: str
-    action_type: str  # action, bonus_action, reaction, passive, triggered, special_attack
+    action_type: str  # action, bonus_action, reaction, triggered, special_attack
     resolver: str
     data: dict[str, object]
     cost: dict[str, int] = field(default_factory=dict)
@@ -53,6 +63,78 @@ class Capability:
 ```
 
 At runtime, encounter logic should mostly care about `action_type`, `cost`, `uses`, `targeting`, and `resolver`. The source tells us where the capability came from, but not necessarily how it resolves.
+
+### Rule Grant
+
+A rule grant changes how another capability or core mechanic resolves. It does not produce
+an effect by itself and should not require feature-specific branches in attack, damage, or
+saving-throw code.
+
+```python
+@dataclass
+class RuleGrant:
+    id: str
+    source_type: str
+    source_id: str
+    trigger: str
+    operation: str
+    conditions: dict[str, object] = field(default_factory=dict)
+    parameters: dict[str, object] = field(default_factory=dict)
+```
+
+Great Weapon Fighting can normalize into:
+
+```python
+RuleGrant(
+    id="great_weapon_fighting",
+    source_type="fighting_style",
+    source_id="great_weapon_fighting|phb",
+    trigger="weapon_damage_rolled",
+    operation="reroll_matching_dice",
+    conditions={
+        "attack_type": "melee",
+        "wielded_with": "two_hands",
+        "weapon_properties_any": ["two-handed", "versatile"],
+    },
+    parameters={
+        "values": [1, 2],
+        "maximum_per_die": 1,
+        "must_use_replacement": True,
+        "optional": True,
+    },
+)
+```
+
+The damage pipeline queries applicable rules by trigger and context. A character without
+this rule uses the original damage roll. A character with it receives reroll choices for
+qualifying dice. The runtime understands `reroll_matching_dice`; it does not contain a
+branch for Great Weapon Fighting.
+
+Initial resolution hooks should include:
+
+- `attack_roll_created`
+- `attack_roll_resolved`
+- `weapon_damage_rolled`
+- `damage_resolved`
+- `ability_check_created`
+- `ability_check_resolved`
+- `saving_throw_created`
+- `saving_throw_resolved`
+
+The operation vocabulary should remain small and reusable. Likely early operations include:
+
+- `reroll_matching_dice`
+- `reroll_selected_dice`
+- `reroll_entire_pool`
+- `add_dice`
+- `modify_roll`
+- `grant_advantage`
+- `grant_disadvantage`
+- `modify_damage`
+
+Rules may create a decision rather than immediately changing a roll. The engine determines
+eligible dice, selection limits, replacement rules, and costs. Human and RL clients receive
+the same legal actions and submit selections through the encounter decision system.
 
 ### Effect Result
 
@@ -139,9 +221,46 @@ CapabilityActionResult(
 )
 ```
 
+### Status
+
+A status is persistent or temporary state that can contribute rule grants. Buffs, debuffs,
+and named conditions should use the same status model rather than separate execution paths.
+
+```python
+@dataclass
+class Status:
+    id: str
+    source_ref: str
+    target_ref: str
+    duration: DurationDefinition
+    rules: list[RuleGrant] = field(default_factory=list)
+    tags: set[str] = field(default_factory=set)
+```
+
+Applying or removing a status is an effect. The status itself is not an effect:
+
+```python
+EffectResult(
+    kind="apply_status",
+    target_ref="enemy:0",
+    data={"status": frightened_status},
+)
+```
+
+This distinction gives the runtime a consistent flow:
+
+```text
+source -> capability or rule grant
+capability -> ordered effects
+rule -> modifies capability resolution
+effect -> changes game state or applies a status
+status -> contributes temporary rules
+```
+
 ## Source Normalization
 
-Different content sources should normalize into capabilities before combat runtime sees them.
+Different content sources should normalize into capability and rule grants before combat
+runtime sees them.
 
 Suggested source modules:
 
@@ -149,6 +268,9 @@ Suggested source modules:
 game/capabilities/
   types.py
   registry.py
+  rules/
+    registry.py
+    operations.py
   resolvers/
     healing.py
     damage.py
@@ -165,9 +287,11 @@ game/capabilities/
     monsters.py
 ```
 
-Source modules answer: "What capabilities does this content grant?"
+Source modules answer: "What capabilities and rules does this content grant?"
 
 Resolvers answer: "What happens when this capability is used?"
+
+Rule operations answer: "How does this grant modify the current resolution?"
 
 For example, Fighter data can normalize Second Wind into:
 
@@ -189,6 +313,18 @@ Capability(
 
 The same `healing.self` resolver could also support potions, species traits, and magic items.
 
+Source data can provide identity, source, ownership requirements, option lists, and structured
+values such as dice expressions. Much of the mechanical behavior is currently prose. That
+prose should not be interpreted as executable rules at runtime. Curated normalization data
+can map canonical source IDs to generic rules:
+
+```text
+game data -> source loader -> normalization catalog -> runtime grants
+```
+
+The normalization catalog should preferably be structured data. Custom Python adapters remain
+appropriate when source data requires edition-aware interpretation or complex normalization.
+
 ## Resolver Strategy
 
 Prefer generic resolvers for common mechanics:
@@ -206,6 +342,11 @@ Prefer generic resolvers for common mechanics:
 Use custom resolvers when a feature has unusual control flow or highly specific rules.
 
 Custom resolvers should still return `CapabilityActionResult` with structured `EffectResult` entries. That keeps the rest of the engine and UI consistent.
+
+Generic rule operations should follow the same principle. Features with equivalent mechanics
+should normalize into the same operation with different conditions and parameters. For
+example, Great Weapon Fighting, Empowered Spell, and a species trait may all use selective
+die replacement without sharing feature-specific runtime code.
 
 ## Event Shape
 
@@ -251,13 +392,17 @@ The current rest code already has the right general idea: restore resources base
 5. Normalize healing potions into capabilities, or at least make potion use return the same effect result shape.
 6. Add support for monster special attacks using the capability model.
 7. Move combat event payloads to `effects` as the primary representation.
-8. Rename or replace `FeatureGrant` with a more general capability/resource model once the compatibility layer is thin.
+8. Introduce `RuleGrant`, a rule registry, and explicit resolution hooks.
+9. Normalize Great Weapon Fighting into `reroll_matching_dice` as the first passive rule.
+10. Route rule-created choices through the encounter decision system.
+11. Add first-class statuses whose modifiers are represented by temporary rule grants.
+12. Rename or replace `FeatureGrant` with a general grant/resource model once the compatibility layer is thin.
 
 ## Open Questions
 
-- Should passive traits be represented as capabilities, modifiers, or both?
 - How should targeting definitions express areas, saving throws, and multi-target effects?
-- Should conditions be first-class model objects before complex debuffs land?
 - How much of monster stat block text should be parsed automatically versus normalized by curated adapters?
 - Should item-granted capabilities live on the actor only while equipped, or should inventory items expose them dynamically?
+- How should conflicting rules be ordered when several grants modify the same resolution hook?
+- Which status durations must be persisted in encounter snapshots?
 

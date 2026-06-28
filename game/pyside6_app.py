@@ -108,20 +108,35 @@ class ActionMenuScope:
 
 
 class DieSvgWidget(QWidget):
+    clicked = Signal(str)
     SIZE = 58
 
-    def __init__(self, sides: int, value: int, *, selected: bool = True):
+    def __init__(
+        self,
+        sides: int,
+        value: int,
+        *,
+        selected: bool = True,
+        action_id: str | None = None,
+    ):
         super().__init__()
         self._value = value
         self._selected = selected
+        self._action_id = action_id
         svg_path = Path(__file__).parent / "assets" / "dice" / f"d{sides}.svg"
         self._renderer = QSvgRenderer(str(svg_path))
         self.setFixedSize(self.SIZE, self.SIZE)
+        if action_id is not None:
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     def paintEvent(self, event) -> None:
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        if self._action_id is not None and self.isEnabled():
+            painter.setBrush(QColor("#fff3c4"))
+            painter.setPen(QPen(QColor("#c9a227"), 2))
+            painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 6, 6)
         if not self._selected:
             painter.setOpacity(0.45)
         self._renderer.render(painter, self.rect().adjusted(5, 2, -5, -2))
@@ -134,10 +149,17 @@ class DieSvgWidget(QWidget):
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, str(self._value))
         painter.end()
 
+    def mousePressEvent(self, event) -> None:
+        if self.isEnabled() and self._action_id is not None:
+            self.clicked.emit(self._action_id)
+        super().mousePressEvent(event)
+
 
 class DiceRollPanel(QWidget):
-    def __init__(self):
+    def __init__(self, action_callback=None):
         super().__init__()
+        self._action_callback = action_callback
+        self._roll_action_widgets: dict[str, list[QWidget]] = {}
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(8)
@@ -148,6 +170,7 @@ class DiceRollPanel(QWidget):
         _clear_layout(self._layout)
         self._layout.addStretch(1)
         self._has_content = False
+        self._roll_action_widgets.clear()
 
     def start_round(self, round_number: int) -> None:
         if self._has_content:
@@ -177,12 +200,30 @@ class DiceRollPanel(QWidget):
             message_label.setWordWrap(True)
             entry_layout.addWidget(message_label)
         for roll in rolls:
+            self._disable_roll_actions(roll.roll_id)
             entry_layout.addWidget(self._build_roll_row(roll))
         self._insert_widget(entry)
         self._has_content = True
 
     def _insert_widget(self, widget: QWidget) -> None:
         self._layout.insertWidget(self._layout.count() - 1, widget)
+
+    def _disable_roll_actions(self, roll_id: str | None) -> None:
+        if roll_id is None:
+            return
+        for widget in self._roll_action_widgets.get(roll_id, []):
+            widget.setEnabled(False)
+            widget.update()
+        self._roll_action_widgets[roll_id] = []
+
+    def _register_roll_action_widget(
+        self,
+        roll: RollView,
+        widget: QWidget,
+    ) -> None:
+        if roll.roll_id is None:
+            return
+        self._roll_action_widgets.setdefault(roll.roll_id, []).append(widget)
 
     def _build_roll_row(self, roll: RollView) -> QWidget:
         row = QWidget()
@@ -200,12 +241,22 @@ class DiceRollPanel(QWidget):
         for die in roll.dice:
             die_sides = _single_die_sides(die.expression)
             if die_sides is not None:
-                die_widget = DieSvgWidget(die_sides, die.value, selected=die.selected)
+                die_widget = DieSvgWidget(
+                    die_sides,
+                    die.value,
+                    selected=die.selected,
+                    action_id=die.action_id,
+                )
                 die_widget.setToolTip(
-                    " -> ".join(str(value) for value in die.history)
+                    "Click to reroll"
+                    if die.action_id is not None
+                    else " -> ".join(str(value) for value in die.history)
                     if die.history
                     else f"Rolled {die.value}"
                 )
+                if die.action_id is not None and self._action_callback is not None:
+                    die_widget.clicked.connect(self._action_callback)
+                    self._register_roll_action_widget(roll, die_widget)
                 dice_layout.addWidget(die_widget)
                 continue
             die_label = QLabel(f"{die.expression}\n{die.value}")
@@ -493,7 +544,7 @@ class CyoaPySide6Window(QMainWindow):
         roll_title.setStyleSheet("QLabel { font-weight: 700; }")
         roll_rail_layout.addWidget(roll_title)
 
-        self.dice_roll_panel = DiceRollPanel()
+        self.dice_roll_panel = DiceRollPanel(self._select_action_by_id)
         self.roll_scroll = QScrollArea()
         self.roll_scroll.setWidgetResizable(True)
         self.roll_scroll.setFrameShape(QFrame.Shape.NoFrame)
@@ -726,7 +777,7 @@ class CyoaPySide6Window(QMainWindow):
             button.setEnabled(action is not None)
 
         action_groups = self._action_groups(encounter.non_movement_actions)
-        if self._action_menu_scope is not None and encounter.action_pane_title == "Reactions":
+        if self._action_menu_scope is not None and encounter.action_pane_title != "Actions":
             self._action_menu_scope = None
         if (
             self._action_menu_scope is not None
@@ -738,9 +789,9 @@ class CyoaPySide6Window(QMainWindow):
 
         _clear_layout(self.encounter_actions_layout)
         rendered_target_modes: set[TargetSelectionMode] = set()
-        if encounter.action_pane_title == "Reactions":
+        if encounter.action_pane_title != "Actions":
             self._render_action_detail_column(
-                "Reaction",
+                encounter.action_pane_title,
                 encounter.non_movement_actions,
                 rendered_target_modes,
                 scope=None,
@@ -1155,6 +1206,20 @@ class CyoaPySide6Window(QMainWindow):
         self._action_menu_scope = None
         result = self.session.choose(index)
         self._apply_turn_result(result)
+
+    def _select_action_by_id(self, action_id: str) -> None:
+        if self._presentation is None or self._presentation.encounter is None:
+            return
+        action = next(
+            (
+                action
+                for action in self._presentation.encounter.non_movement_actions
+                if action.id == action_id
+            ),
+            None,
+        )
+        if action is not None:
+            self._select_action(action.index)
 
     def _toggle_target_action(self, mode: TargetSelectionMode) -> None:
         self._pending_target_mode = None if self._pending_target_mode == mode else mode

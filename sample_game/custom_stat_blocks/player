@@ -6,6 +6,12 @@
         "name": "Fighter",
         "source": "XPHB"
     },
+    "optional_features": [
+        {
+            "name": "Great Weapon Fighting",
+            "source": "PHB"
+        }
+    ],
     "attributes": {
         "base_health": 32,
         "level": 5,
@@ -29,7 +35,7 @@
     ],
     "equipment": {
         "right_hand": {
-            "name": "Longsword",
+            "name": "Greatsword",
             "source": "XPHB"
         },
         "body": {

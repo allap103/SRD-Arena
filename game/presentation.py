@@ -121,8 +121,13 @@ def build_session_presentation(
         (action for action in story_actions if action.kind in {"wait", "pass"}),
         None,
     )
+    decision_kind = combat_state["decision"]["kind"]
     action_pane_title = (
-        "Reactions" if combat_state["decision"]["kind"] == "reaction" else "Actions"
+        "Reactions"
+        if decision_kind == "reaction"
+        else "Reroll Damage"
+        if decision_kind == "reroll_dice"
+        else "Actions"
     )
     return SessionPresentation(
         scene_id=view.scene_id,

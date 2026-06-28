@@ -9,7 +9,20 @@ from .feature_actions import resolve_feature_action
 from .models.actor import Actor
 from .models.item import Item
 from .models.scene import Behavior, Encounter, Position
-from .systems.roll import roll_dice, roll_die
+from .rules.registry import matching_rules, reroll_eligible_indices
+from .rules.types import RuleGrant
+from .systems.roll import (
+    CheckResult,
+    DicePoolResult,
+    DieReplacement,
+    DieRollResult,
+    reroll_dice,
+    resolve_check,
+    resolve_d20,
+    resolve_dice,
+    roll_dice,
+    roll_die,
+)
 
 ActorRef = str
 
@@ -141,6 +154,33 @@ class PendingActionSnapshot:
 
 
 @dataclass
+class PendingAttackSnapshot:
+    action_id: str
+    attacker_ref: ActorRef
+    target_ref: ActorRef
+    target_index: int
+    attacker_label: str
+    target_label: str
+    attacks_remaining: int
+    attack_roll: int
+    attack_roll_detail: dict[str, object]
+    damage_dice: str
+    damage_die_rolls: list[list[int]]
+    damage_die_sides: list[int]
+    damage_modifier: int
+    damage_type: str
+    weapon_id: str | None
+    weapon_name: str | None
+    rule_id: str
+    rule_source_type: str
+    rule_source_id: str
+    rule_trigger: str
+    rule_operation: str
+    rule_conditions: dict[str, object]
+    rule_parameters: dict[str, object]
+
+
+@dataclass
 class EncounterSnapshot:
     scene_id: str
     player_position: Position
@@ -156,6 +196,7 @@ class EncounterSnapshot:
     event_sequence: int = 1
     decision_stack: list[DecisionFrameSnapshot] = field(default_factory=list)
     pending_action: PendingActionSnapshot | None = None
+    pending_attack: PendingAttackSnapshot | None = None
     enemies: list[EncounterSnapshotEnemy] = field(default_factory=list)
 
 
@@ -166,8 +207,29 @@ class AttackOutcome:
     attack_roll: int
     damage: int
     defender_defeated: bool
-    attack_roll_detail: dict[str, int]
+    attack_roll_detail: dict[str, object]
     damage_roll_detail: dict[str, object] | None = None
+    attack_check: CheckResult | None = None
+    damage_roll: DicePoolResult | None = None
+    damage_dice: str | None = None
+    damage_modifier: int = 0
+    damage_type: str = "damage"
+    weapon_id: str | None = None
+    weapon_name: str | None = None
+    weapon_properties: tuple[str, ...] = ()
+
+
+@dataclass
+class PendingAttack:
+    action_id: str
+    attacker_ref: ActorRef
+    target_ref: ActorRef
+    target_index: int
+    attacker_label: str
+    target_label: str
+    attacks_remaining: int
+    attack: AttackOutcome
+    rule: RuleGrant
 
 
 @dataclass
@@ -188,6 +250,7 @@ class EncounterState:
     event_sequence: int = 1
     decision_stack: list[DecisionFrame] = field(default_factory=list)
     pending_action: PendingAction | None = None
+    pending_attack: PendingAttack | None = None
     item_templates: dict[str, Item] = field(default_factory=dict)
     _behaviors: list[Generator[EncounterAction | None, BehaviorContext, None]] = field(
         default_factory=list,
@@ -295,6 +358,7 @@ class EncounterState:
                 if snapshot.pending_action is not None
                 else None
             ),
+            pending_attack=_restore_pending_attack(snapshot.pending_attack),
             item_templates=item_templates or {},
         )
         state._initialize_behaviors()
@@ -348,6 +412,7 @@ class EncounterState:
                 if self.pending_action is not None
                 else None
             ),
+            pending_attack=_snapshot_pending_attack(self.pending_attack),
             enemies=[
                 EncounterSnapshotEnemy(
                     actor_id=enemy.actor_id,
@@ -502,6 +567,8 @@ class EncounterState:
         decision = self.current_decision()
         if decision.actor_ref != "player":
             return []
+        if decision.kind == "reroll_dice":
+            return self._reroll_damage_actions()
         if decision.kind == "reaction":
             return self._reaction_actions()
 
@@ -614,6 +681,8 @@ class EncounterState:
         decision = self.current_decision()
         if decision.actor_ref != "player":
             raise RuntimeError("Player action requested while it is not the player's turn.")
+        if decision.kind == "reroll_dice":
+            return self._apply_damage_reroll_action(player, action, decision)
         if decision.kind == "reaction":
             return self._apply_reaction_action(player, action, decision)
 
@@ -679,6 +748,24 @@ class EncounterState:
                 attacker_label=player.name,
                 target_label=target_label,
                 items_by_id=self.item_templates,
+            )
+            reroll_rule = _matching_damage_reroll_rule(player, attack)
+            if attack.hit and reroll_rule is not None:
+                self._open_damage_reroll_decision(
+                    attack=attack,
+                    rule=reroll_rule,
+                    target_index=enemy_index,
+                    attacker_label=player.name,
+                    target_label=target_label,
+                    action_id=resolved_action_id,
+                    progress=progress,
+                )
+                return progress
+            _apply_attack_damage(
+                attack,
+                enemy.actor,
+                attacker_label=player.name,
+                target_label=target_label,
             )
             progress.messages.extend(attack.messages)
             progress.events.append(
@@ -755,6 +842,231 @@ class EncounterState:
         follow_up = self.advance_until_next_decision(player)
         self._merge_progress(progress, follow_up)
         return progress
+
+    def _open_damage_reroll_decision(
+        self,
+        *,
+        attack: AttackOutcome,
+        rule: RuleGrant,
+        target_index: int,
+        attacker_label: str,
+        target_label: str,
+        action_id: str,
+        progress: EncounterProgress,
+    ) -> None:
+        frame_id = self._next_frame_id()
+        current_frame = self.current_decision()
+        self.pending_attack = PendingAttack(
+            action_id=action_id,
+            attacker_ref="player",
+            target_ref=_enemy_ref(target_index),
+            target_index=target_index,
+            attacker_label=attacker_label,
+            target_label=target_label,
+            attacks_remaining=self.player_attacks_remaining,
+            attack=attack,
+            rule=rule,
+        )
+        self.decision_stack.append(
+            DecisionFrame(
+                id=frame_id,
+                actor_ref="player",
+                kind="reroll_dice",
+                reason=rule.id,
+                parent_frame_id=current_frame.id,
+                parent_action_id=action_id,
+                can_pass=True,
+            )
+        )
+        progress.messages.extend(attack.messages)
+        attack.messages = []
+        progress.messages.append(
+            (
+                "system",
+                f"{rule.id.replace('_', ' ').title()} can reroll qualifying damage dice.",
+            )
+        )
+        progress.events.append(
+            self._event(
+                "attack_pending",
+                actor_ref="player",
+                frame_id=frame_id,
+                action_id=action_id,
+                data=self._pending_attack_event_data(),
+            )
+        )
+        progress.paused_for_decision = True
+
+    def _reroll_damage_actions(self) -> list[EncounterAction]:
+        pending = self.pending_attack
+        if pending is None or pending.attack.damage_roll is None:
+            return []
+        actions = [
+            EncounterAction(
+                f"Reroll damage die {index + 1} ({pending.attack.damage_roll.dice[index].result})",
+                "reroll_die",
+                index,
+                id=_reroll_die_action_id(pending.action_id, index),
+                actor_ref="player",
+            )
+            for index in reroll_eligible_indices(
+                pending.rule,
+                pending.attack.damage_roll,
+            )
+        ]
+        actions.append(
+            EncounterAction(
+                "Use current damage",
+                "accept_roll",
+                id=f"{pending.action_id}-accept-damage",
+                actor_ref="player",
+            )
+        )
+        return actions
+
+    def _apply_damage_reroll_action(
+        self,
+        player: Actor,
+        action: EncounterAction,
+        decision: DecisionFrame,
+    ) -> EncounterProgress:
+        pending = self.pending_attack
+        if pending is None or pending.attack.damage_roll is None:
+            raise RuntimeError("Damage reroll requested without a pending attack.")
+        progress = EncounterProgress()
+        progress.events.append(
+            self._event(
+                "action_declared",
+                actor_ref="player",
+                frame_id=decision.id,
+                action_id=pending.action_id,
+                data={"kind": action.kind, "selected_action_id": action.id},
+            )
+        )
+
+        if action.kind == "reroll_die":
+            if not isinstance(action.value, int):
+                raise ValueError("Reroll die action requires an integer die index.")
+            eligible = reroll_eligible_indices(
+                pending.rule,
+                pending.attack.damage_roll,
+            )
+            if action.value not in eligible:
+                raise ValueError(f"Damage die {action.value} is not eligible for reroll.")
+            previous = pending.attack.damage_roll.dice[action.value].result
+            pending.attack.damage_roll = reroll_dice(
+                pending.attack.damage_roll,
+                [action.value],
+                roller=lambda sides: roll_dice(1, sides),
+            )
+            replacement = pending.attack.damage_roll.dice[action.value].result
+            pending.attack.damage_roll_detail = _damage_roll_detail(pending.attack)
+            progress.messages.append(
+                (
+                    "system",
+                    f"Damage die {action.value + 1} rerolled: {previous} -> {replacement}.",
+                )
+            )
+            progress.events.append(
+                self._event(
+                    "damage_rerolled",
+                    actor_ref="player",
+                    frame_id=decision.id,
+                    action_id=pending.action_id,
+                    data=self._pending_attack_event_data(),
+                )
+            )
+            if reroll_eligible_indices(pending.rule, pending.attack.damage_roll):
+                progress.paused_for_decision = True
+                return progress
+        elif action.kind != "accept_roll":
+            raise ValueError(f"Unsupported damage reroll action: {action.kind}")
+
+        self._finalize_pending_attack(player, progress, decision)
+        return progress
+
+    def _finalize_pending_attack(
+        self,
+        player: Actor,
+        progress: EncounterProgress,
+        decision: DecisionFrame,
+    ) -> None:
+        pending = self.pending_attack
+        if pending is None:
+            raise RuntimeError("Cannot finalize an attack that is not pending.")
+        target = self.enemies[pending.target_index]
+        _apply_attack_damage(
+            pending.attack,
+            target.actor,
+            attacker_label=player.name,
+            target_label=pending.target_label,
+        )
+        progress.messages.extend(pending.attack.messages)
+        progress.events.append(
+            self._event(
+                "attack_resolved",
+                actor_ref="player",
+                frame_id=decision.id,
+                action_id=pending.action_id,
+                data={
+                    **self._pending_attack_event_data(),
+                    "hit": True,
+                    "damage": pending.attack.damage,
+                    "damage_roll_detail": pending.attack.damage_roll_detail,
+                    "eligible_die_indices": [],
+                    "reroll_action_ids": {},
+                    "accept_action_id": None,
+                },
+            )
+        )
+        if not target.is_alive:
+            progress.events.append(
+                self._event(
+                    "actor_defeated",
+                    actor_ref=pending.target_ref,
+                    frame_id=decision.id,
+                    action_id=pending.action_id,
+                )
+            )
+        self.pending_attack = None
+        self.decision_stack.pop()
+        progress.events.append(
+            self._event(
+                "decision_closed",
+                actor_ref="player",
+                frame_id=decision.id,
+                action_id=pending.action_id,
+            )
+        )
+        progress.transition = self._check_transition()
+
+    def _pending_attack_event_data(self) -> dict[str, object]:
+        pending = self.pending_attack
+        if pending is None or pending.attack.damage_roll is None:
+            return {}
+        eligible = reroll_eligible_indices(
+            pending.rule,
+            pending.attack.damage_roll,
+        )
+        return {
+            "attacker_label": pending.attacker_label,
+            "target_ref": pending.target_ref,
+            "target_label": pending.target_label,
+            "attacks_remaining": pending.attacks_remaining,
+            "attack_roll": pending.attack.attack_roll,
+            "attack_roll_detail": pending.attack.attack_roll_detail,
+            "hit": True,
+            "damage": 0,
+            "damage_roll_detail": _damage_roll_detail(pending.attack),
+            "roll_id": f"{pending.action_id}:damage",
+            "rule_id": pending.rule.id,
+            "eligible_die_indices": list(eligible),
+            "reroll_action_ids": {
+                str(index): _reroll_die_action_id(pending.action_id, index)
+                for index in eligible
+            },
+            "accept_action_id": f"{pending.action_id}-accept-damage",
+        }
 
     def advance_until_next_decision(self, player: Actor) -> EncounterProgress:
         progress = EncounterProgress()
@@ -866,6 +1178,12 @@ class EncounterState:
                     target_label=player.name,
                     items_by_id=self.item_templates,
                 )
+                _apply_attack_damage(
+                    attack,
+                    player,
+                    attacker_label=f"Enemy {enemy_index + 1} ({enemy.actor.name})",
+                    target_label=player.name,
+                )
                 progress.messages.extend(attack.messages)
                 progress.events.append(
                     self._event(
@@ -932,6 +1250,12 @@ class EncounterState:
                 target_label=target_label,
                 action_label="Opportunity attack",
                 items_by_id=self.item_templates,
+            )
+            _apply_attack_damage(
+                attack,
+                target.actor,
+                attacker_label=player.name,
+                target_label=target_label,
             )
             progress.messages.extend(attack.messages)
             progress.events.append(
@@ -1077,6 +1401,12 @@ class EncounterState:
                 target_label=player.name,
                 action_label="Opportunity attack",
                 items_by_id=self.item_templates,
+            )
+            _apply_attack_damage(
+                attack,
+                player,
+                attacker_label=f"Enemy {index + 1} ({enemy.actor.name})",
+                target_label=player.name,
             )
             messages.extend(attack.messages)
             progress.events.append(
@@ -1729,15 +2059,18 @@ def _resolve_attack(
     ability_modifier = attacker.get_modifier(attacker.attributes.strength)
     proficiency_bonus = _weapon_proficiency_bonus(attacker, weapon)
     attack_modifier = ability_modifier + proficiency_bonus
-    attack_die = roll_die(20)
-    attack_roll = attack_die + attack_modifier
+    attack_result = resolve_d20(modifier=attack_modifier, roller=roll_die)
     target_ac = defender.get_armor_class()
+    attack_check = resolve_check(attack_result, target_ac)
     attack_roll_detail = {
-        "die": attack_die,
+        "die": attack_result.selected,
+        "dice": list(attack_result.dice),
+        "selected_index": attack_result.selected_index,
+        "mode": attack_result.mode,
         "ability_modifier": ability_modifier,
         "proficiency_bonus": proficiency_bonus,
         "modifier": attack_modifier,
-        "total": attack_roll,
+        "total": attack_result.total,
         "target_ac": target_ac,
     }
     if weapon is not None:
@@ -1749,60 +2082,225 @@ def _resolve_attack(
     )
     attack_detail_message = (
         f"{action_prefix}: {attacker_label} attacks {target_label}. "
-        f"Roll d20={attack_die} + STR mod {ability_modifier}{proficiency_text} "
-        f"= {attack_roll} vs {target_label} AC {target_ac}."
+        f"Roll d20={attack_result.selected} + STR mod {ability_modifier}{proficiency_text} "
+        f"= {attack_result.total} vs {target_label} AC {target_ac}."
     )
-    if attack_roll < target_ac:
+    if not attack_check.success:
         return AttackOutcome(
             messages=[
                 ("system", attack_detail_message),
                 ("system", f"{attacker_label} misses {target_label}."),
             ],
             hit=False,
-            attack_roll=attack_roll,
+            attack_roll=attack_result.total,
             damage=0,
             defender_defeated=False,
             attack_roll_detail=attack_roll_detail,
+            attack_check=attack_check,
         )
 
     damage_dice = weapon.weapon_stat.damage if weapon and weapon.weapon_stat else "1d4"
     damage_die_count, damage_die_sides = _parse_damage_dice(damage_dice)
-    damage_die_total = roll_dice(damage_die_count, damage_die_sides)
-    damage_total = damage_die_total + ability_modifier
-    damage = max(1, damage_total)
-    applied_damage = defender.take_damage(damage)
+    damage_roll = resolve_dice(
+        damage_die_count,
+        damage_die_sides,
+        modifier=ability_modifier,
+        roller=lambda sides: roll_dice(1, sides),
+    )
+    damage_die_total = damage_roll.subtotal
+    damage_total = damage_roll.total
     damage_roll_detail = {
         "dice": damage_dice,
+        "dice_values": [die.result for die in damage_roll.dice],
+        "die_rolls": [list(die.rolls) for die in damage_roll.dice],
         "dice_total": damage_die_total,
         "modifier": ability_modifier,
         "total": damage_total,
-        "minimum_applied_total": damage,
-        "applied_damage": applied_damage,
     }
     if weapon is not None:
         damage_roll_detail["weapon_id"] = weapon.id
         damage_roll_detail["weapon_name"] = weapon.name
-    messages = [
-        ("system", attack_detail_message),
-        (
-            "system",
-            f"Damage to {target_label}: {damage_dice}={damage_die_total} "
-            f"+ STR mod {ability_modifier} = {damage_total}; "
-            f"final damage {damage}, applied {applied_damage}.",
-        ),
-        ("system", f"{attacker_label} hits {target_label} for {applied_damage} damage."),
-    ]
-    defeated = defender.get_health() <= 0
-    if defeated:
-        messages.append(("system", f"{target_label} is defeated."))
     return AttackOutcome(
-        messages=messages,
+        messages=[("system", attack_detail_message)],
         hit=True,
-        attack_roll=attack_roll,
-        damage=applied_damage,
-        defender_defeated=defeated,
+        attack_roll=attack_result.total,
+        damage=max(1, damage_total),
+        defender_defeated=False,
         attack_roll_detail=attack_roll_detail,
         damage_roll_detail=damage_roll_detail,
+        attack_check=attack_check,
+        damage_roll=damage_roll,
+        damage_dice=damage_dice,
+        damage_modifier=ability_modifier,
+        damage_type=(
+            weapon.weapon_stat.damage_type
+            if weapon is not None and weapon.weapon_stat is not None
+            else "damage"
+        ),
+        weapon_id=weapon.id if weapon is not None else None,
+        weapon_name=weapon.name if weapon is not None else None,
+        weapon_properties=(
+            tuple(weapon.weapon_stat.properties)
+            if weapon is not None and weapon.weapon_stat is not None
+            else ()
+        ),
+    )
+
+
+def _apply_attack_damage(
+    attack: AttackOutcome,
+    defender: Actor,
+    *,
+    attacker_label: str,
+    target_label: str,
+) -> None:
+    if not attack.hit or attack.damage_roll is None or attack.damage_dice is None:
+        return
+    damage_total = attack.damage_roll.total
+    damage = max(1, damage_total)
+    applied_damage = defender.take_damage(damage)
+    attack.damage = applied_damage
+    attack.defender_defeated = defender.get_health() <= 0
+    attack.damage_roll_detail = _damage_roll_detail(attack, applied_damage)
+    attack.messages.extend(
+        [
+            (
+                "system",
+                f"Damage to {target_label}: {attack.damage_dice}="
+                f"{attack.damage_roll.subtotal} + STR mod {attack.damage_modifier} "
+                f"= {damage_total}; final damage {damage}, applied {applied_damage}.",
+            ),
+            (
+                "system",
+                f"{attacker_label} hits {target_label} for {applied_damage} damage.",
+            ),
+        ]
+    )
+    if attack.defender_defeated:
+        attack.messages.append(("system", f"{target_label} is defeated."))
+
+
+def _damage_roll_detail(
+    attack: AttackOutcome,
+    applied_damage: int | None = None,
+) -> dict[str, object]:
+    assert attack.damage_roll is not None
+    detail: dict[str, object] = {
+        "dice": attack.damage_dice,
+        "dice_values": [die.result for die in attack.damage_roll.dice],
+        "die_rolls": [list(die.rolls) for die in attack.damage_roll.dice],
+        "dice_total": attack.damage_roll.subtotal,
+        "modifier": attack.damage_modifier,
+        "total": attack.damage_roll.total,
+    }
+    if applied_damage is not None:
+        detail["minimum_applied_total"] = max(1, attack.damage_roll.total)
+        detail["applied_damage"] = applied_damage
+    if attack.weapon_id is not None:
+        detail["weapon_id"] = attack.weapon_id
+    if attack.weapon_name is not None:
+        detail["weapon_name"] = attack.weapon_name
+    return detail
+
+
+def _snapshot_pending_attack(
+    pending: PendingAttack | None,
+) -> PendingAttackSnapshot | None:
+    if pending is None:
+        return None
+    attack = pending.attack
+    assert attack.damage_roll is not None
+    assert attack.damage_dice is not None
+    return PendingAttackSnapshot(
+        action_id=pending.action_id,
+        attacker_ref=pending.attacker_ref,
+        target_ref=pending.target_ref,
+        target_index=pending.target_index,
+        attacker_label=pending.attacker_label,
+        target_label=pending.target_label,
+        attacks_remaining=pending.attacks_remaining,
+        attack_roll=attack.attack_roll,
+        attack_roll_detail=dict(attack.attack_roll_detail),
+        damage_dice=attack.damage_dice,
+        damage_die_rolls=[list(die.rolls) for die in attack.damage_roll.dice],
+        damage_die_sides=[die.sides for die in attack.damage_roll.dice],
+        damage_modifier=attack.damage_modifier,
+        damage_type=attack.damage_type,
+        weapon_id=attack.weapon_id,
+        weapon_name=attack.weapon_name,
+        rule_id=pending.rule.id,
+        rule_source_type=pending.rule.source_type,
+        rule_source_id=pending.rule.source_id,
+        rule_trigger=pending.rule.trigger,
+        rule_operation=pending.rule.operation,
+        rule_conditions=dict(pending.rule.conditions),
+        rule_parameters=dict(pending.rule.parameters),
+    )
+
+
+def _restore_pending_attack(
+    snapshot: PendingAttackSnapshot | None,
+) -> PendingAttack | None:
+    if snapshot is None:
+        return None
+    dice = tuple(
+        DieRollResult(sides=sides, rolls=tuple(rolls))
+        for sides, rolls in zip(
+            snapshot.damage_die_sides,
+            snapshot.damage_die_rolls,
+            strict=True,
+        )
+    )
+    replacements = tuple(
+        DieReplacement(
+            die_index=index,
+            previous=rolls[roll_index - 1],
+            replacement=rolls[roll_index],
+        )
+        for index, rolls in enumerate(snapshot.damage_die_rolls)
+        for roll_index in range(1, len(rolls))
+    )
+    subtotal = sum(die.result for die in dice)
+    damage_roll = DicePoolResult(
+        dice=dice,
+        modifier=snapshot.damage_modifier,
+        subtotal=subtotal,
+        total=subtotal + snapshot.damage_modifier,
+        replacements=replacements,
+    )
+    attack = AttackOutcome(
+        messages=[],
+        hit=True,
+        attack_roll=snapshot.attack_roll,
+        damage=max(1, damage_roll.total),
+        defender_defeated=False,
+        attack_roll_detail=dict(snapshot.attack_roll_detail),
+        damage_roll=damage_roll,
+        damage_dice=snapshot.damage_dice,
+        damage_modifier=snapshot.damage_modifier,
+        damage_type=snapshot.damage_type,
+        weapon_id=snapshot.weapon_id,
+        weapon_name=snapshot.weapon_name,
+    )
+    attack.damage_roll_detail = _damage_roll_detail(attack)
+    return PendingAttack(
+        action_id=snapshot.action_id,
+        attacker_ref=snapshot.attacker_ref,
+        target_ref=snapshot.target_ref,
+        target_index=snapshot.target_index,
+        attacker_label=snapshot.attacker_label,
+        target_label=snapshot.target_label,
+        attacks_remaining=snapshot.attacks_remaining,
+        attack=attack,
+        rule=RuleGrant(
+            id=snapshot.rule_id,
+            source_type=snapshot.rule_source_type,
+            source_id=snapshot.rule_source_id,
+            trigger=snapshot.rule_trigger,
+            operation=snapshot.rule_operation,
+            conditions=dict(snapshot.rule_conditions),
+            parameters=dict(snapshot.rule_parameters),
+        ),
     )
 
 
@@ -1815,6 +2313,40 @@ def _equipped_weapon(attacker: Actor, items_by_id: dict[str, Item]) -> Item | No
         if item is not None and item.weapon_stat is not None:
             return item
     return None
+
+
+def _matching_damage_reroll_rule(
+    attacker: Actor,
+    attack: AttackOutcome,
+) -> RuleGrant | None:
+    if attack.damage_roll is None:
+        return None
+    wielded_with = (
+        "two_hands"
+        if "two-handed" in attack.weapon_properties
+        else "one_hand"
+    )
+    context = {
+        "attack_type": "melee",
+        "wielded_with": wielded_with,
+        "weapon_properties": list(attack.weapon_properties),
+    }
+    return next(
+        (
+            rule
+            for rule in matching_rules(
+                attacker.rule_grants,
+                "weapon_damage_rolled",
+                context,
+            )
+            if reroll_eligible_indices(rule, attack.damage_roll)
+        ),
+        None,
+    )
+
+
+def _reroll_die_action_id(action_id: str, die_index: int) -> str:
+    return f"{action_id}-reroll-damage-{die_index}"
 
 
 def _weapon_proficiency_bonus(attacker: Actor, weapon: Item | None) -> int:

@@ -7,6 +7,7 @@ from .loaders import (
     load_class_blocks,
     load_custom_stat_blocks,
     load_item,
+    load_optional_feature_blocks,
     load_scene,
     load_system_item_catalog,
     load_system_items,
@@ -37,6 +38,7 @@ class Game:
         self.system_directory = Path(system_directory)
         self.stat_blocks = load_bestiary_stat_blocks(self.system_directory)
         self.class_blocks = load_class_blocks(self.system_directory)
+        self.optional_feature_blocks = load_optional_feature_blocks(self.system_directory)
         self.custom_stat_blocks = load_custom_stat_blocks(self.directory / "custom_stat_blocks")
         self.system_item_catalog = load_system_item_catalog(self.system_directory)
         self.scenes = self.load_scenes_from_directory(self.directory / "scenes")
@@ -51,7 +53,13 @@ class Game:
     def load_actors_from_directory(self, directory: str | Path) -> list[Actor]:
         actor_dir = Path(directory) / "actors"
         return [
-            load_actor(path, self.stat_blocks, self.class_blocks, self.custom_stat_blocks)
+            load_actor(
+                path,
+                self.stat_blocks,
+                self.class_blocks,
+                self.custom_stat_blocks,
+                self.optional_feature_blocks,
+            )
             for path in actor_dir.glob("*")
         ]
 
