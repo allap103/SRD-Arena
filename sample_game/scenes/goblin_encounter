@@ -33,7 +33,7 @@
                     "y": 2
                 },
                 "behavior": {
-                    "type": "archer"
+                    "type": "chase"
                 }
             },
             {
@@ -58,21 +58,7 @@
                     "y": 1
                 },
                 "behavior": {
-                    "type": "patrol",
-                    "path": [
-                        {
-                            "x": 4,
-                            "y": 1
-                        },
-                        {
-                            "x": 5,
-                            "y": 1
-                        },
-                        {
-                            "x": 5,
-                            "y": 2
-                        }
-                    ]
+                    "type": "archer"
                 }
             }
         ],

@@ -95,6 +95,8 @@ def _attack_roll_view(event: CombatEvent) -> RollView | None:
     if not isinstance(detail, dict):
         return None
     die = detail.get("die")
+    dice = detail.get("dice")
+    selected_index = detail.get("selected_index")
     modifier = detail.get("modifier")
     total = detail.get("total")
     target = detail.get("target_ac")
@@ -105,14 +107,43 @@ def _attack_roll_view(event: CombatEvent) -> RollView | None:
     label = "Attack"
     if isinstance(attacker, str) and isinstance(target_label, str):
         label = f"{attacker} attacks {target_label}"
+    rendered_dice = _attack_dice_views(
+        die=die,
+        dice=dice,
+        selected_index=selected_index,
+    )
     return RollView(
         label=label,
-        dice=(DieView(expression="d20", value=die),),
+        dice=rendered_dice,
         modifier=modifier,
         total=total,
         target=target if isinstance(target, int) else None,
         success=event.data.get("hit") if isinstance(event.data.get("hit"), bool) else None,
     )
+
+
+def _attack_dice_views(
+    *,
+    die: int,
+    dice: object,
+    selected_index: object,
+) -> tuple[DieView, ...]:
+    if (
+        isinstance(dice, list)
+        and len(dice) >= 1
+        and all(isinstance(value, int) for value in dice)
+        and isinstance(selected_index, int)
+        and 0 <= selected_index < len(dice)
+    ):
+        return tuple(
+            DieView(
+                expression="d20",
+                value=value,
+                selected=index == selected_index,
+            )
+            for index, value in enumerate(dice)
+        )
+    return (DieView(expression="d20", value=die),)
 
 
 def _pool_roll_view(

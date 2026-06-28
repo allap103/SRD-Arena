@@ -39,6 +39,58 @@ def test_build_roll_views_extracts_attack_and_damage():
     assert damage.total == 12
 
 
+def test_build_roll_views_shows_both_d20s_for_advantage_or_disadvantage():
+    event = CombatEvent(
+        seq=1,
+        type="attack_resolved",
+        data={
+            "attacker_label": "Goblin",
+            "target_label": "Traveler",
+            "hit": False,
+            "attack_roll_detail": {
+                "die": 5,
+                "dice": [17, 5],
+                "selected_index": 1,
+                "mode": "disadvantage",
+                "modifier": 4,
+                "total": 9,
+                "target_ac": 16,
+            },
+        },
+    )
+
+    [attack] = build_roll_views([event])
+
+    assert [die.value for die in attack.dice] == [17, 5]
+    assert [die.selected for die in attack.dice] == [False, True]
+
+
+def test_build_roll_views_shows_full_attack_pool_for_three_d20s():
+    event = CombatEvent(
+        seq=1,
+        type="attack_resolved",
+        data={
+            "attacker_label": "Elf",
+            "target_label": "Goblin",
+            "hit": True,
+            "attack_roll_detail": {
+                "die": 19,
+                "dice": [12, 19, 7],
+                "selected_index": 1,
+                "mode": "advantage",
+                "modifier": 7,
+                "total": 26,
+                "target_ac": 15,
+            },
+        },
+    )
+
+    [attack] = build_roll_views([event])
+
+    assert [die.value for die in attack.dice] == [12, 19, 7]
+    assert [die.selected for die in attack.dice] == [False, True, False]
+
+
 def test_build_roll_views_extracts_feature_healing():
     event = CombatEvent(
         seq=1,
