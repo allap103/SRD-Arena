@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="270 164 125 130">
+  <g transform="matrix(0.18846000730991364, 0, 0, 0.18846000730991364, 175.41543579101562, 130.63023376464844)">
+    <path d="m531.52 523.73 19.011-70.352 277.45-258.73h9.4784l282.8 263.72 23.945 90.327-310.5 292.66-8.8497-0.47531-301.66-290.1z"
+          style="stroke:#167c80;stroke-width:16;fill:#e8f4f3"/>
+    <path d="m519.04 547.65 111.3-61.37 199.64-291.63 198.72 300.99-200.72 95.89-199.72-107.33"
+          style="stroke:#167c80;stroke-width:6;fill:none"/>
+    <path d="m1028.7 493.56 114.42 54.092"
+          style="stroke:#167c80;stroke-width:6;fill:none"/>
+    <path d="m828.72 591.66-0.73554 250.68"
+          style="stroke:#167c80;stroke-width:5.6871;fill:none"/>
+  </g>
+</svg>

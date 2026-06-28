@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .engine import GAME_DIR, Game
+from .dice_presentation import RollView, build_roll_views, without_roll_details
 from .presentation import BattlefieldView, MOVE_DIRECTIONS, SessionPresentation, build_session_presentation
 from .session import (
     ActionView,
@@ -17,8 +18,9 @@ from .session import (
 )
 
 try:
-    from PySide6.QtCore import QSize, Qt, Signal
+    from PySide6.QtCore import QSize, Qt, QTimer, Signal
     from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap
+    from PySide6.QtSvg import QSvgRenderer
     from PySide6.QtWidgets import (
         QApplication,
         QFrame,
@@ -41,11 +43,13 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QApplication = None  # type: ignore[assignment]
     QSize = object  # type: ignore[assignment]
     Qt = object  # type: ignore[assignment]
+    QTimer = object  # type: ignore[assignment]
     QColor = object  # type: ignore[assignment]
     QFont = object  # type: ignore[assignment]
     QPainter = object  # type: ignore[assignment]
     QPen = object  # type: ignore[assignment]
     QPixmap = object  # type: ignore[assignment]
+    QSvgRenderer = object  # type: ignore[assignment]
     QFrame = object  # type: ignore[assignment]
     QGridLayout = object  # type: ignore[assignment]
     QHBoxLayout = object  # type: ignore[assignment]
@@ -101,6 +105,153 @@ class TargetSelectionMode:
 class ActionMenuScope:
     economy: str
     bucket: str
+
+
+class DieSvgWidget(QWidget):
+    SIZE = 58
+
+    def __init__(self, sides: int, value: int, *, selected: bool = True):
+        super().__init__()
+        self._value = value
+        self._selected = selected
+        svg_path = Path(__file__).parent / "assets" / "dice" / f"d{sides}.svg"
+        self._renderer = QSvgRenderer(str(svg_path))
+        self.setFixedSize(self.SIZE, self.SIZE)
+
+    def paintEvent(self, event) -> None:
+        super().paintEvent(event)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        if not self._selected:
+            painter.setOpacity(0.45)
+        self._renderer.render(painter, self.rect().adjusted(5, 2, -5, -2))
+        painter.setOpacity(1.0)
+        font = QFont(painter.font())
+        font.setBold(True)
+        font.setPointSize(12)
+        painter.setFont(font)
+        painter.setPen(QColor("#153638" if self._selected else "#687176"))
+        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, str(self._value))
+        painter.end()
+
+
+class DiceRollPanel(QWidget):
+    def __init__(self):
+        super().__init__()
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(8)
+        self._layout.addStretch(1)
+        self._has_content = False
+
+    def clear_log(self) -> None:
+        _clear_layout(self._layout)
+        self._layout.addStretch(1)
+        self._has_content = False
+
+    def start_round(self, round_number: int) -> None:
+        if self._has_content:
+            separator = QFrame()
+            separator.setFrameShape(QFrame.Shape.HLine)
+            separator.setFrameShadow(QFrame.Shadow.Sunken)
+            self._insert_widget(separator)
+        announcement = QLabel(f"Round {round_number}")
+        announcement.setStyleSheet("QLabel { font-size: 15px; font-weight: 700; }")
+        self._insert_widget(announcement)
+        self._has_content = True
+
+    def append_entry(
+        self,
+        messages: list[tuple[str, str]],
+        rolls: list[RollView],
+    ) -> None:
+        if not messages and not rolls:
+            return
+
+        entry = QWidget()
+        entry_layout = QVBoxLayout(entry)
+        entry_layout.setContentsMargins(0, 0, 0, 0)
+        entry_layout.setSpacing(6)
+        if messages:
+            message_label = QLabel("\n".join(message for _, message in messages))
+            message_label.setWordWrap(True)
+            entry_layout.addWidget(message_label)
+        for roll in rolls:
+            entry_layout.addWidget(self._build_roll_row(roll))
+        self._insert_widget(entry)
+        self._has_content = True
+
+    def _insert_widget(self, widget: QWidget) -> None:
+        self._layout.insertWidget(self._layout.count() - 1, widget)
+
+    def _build_roll_row(self, roll: RollView) -> QWidget:
+        row = QWidget()
+        layout = QVBoxLayout(row)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        title = QLabel(roll.label)
+        title.setWordWrap(True)
+        layout.addWidget(title)
+
+        dice_layout = QHBoxLayout()
+        dice_layout.setContentsMargins(0, 0, 0, 0)
+        dice_layout.setSpacing(8)
+        for die in roll.dice:
+            die_sides = _single_die_sides(die.expression)
+            if die_sides is not None:
+                die_widget = DieSvgWidget(die_sides, die.value, selected=die.selected)
+                die_widget.setToolTip(
+                    " -> ".join(str(value) for value in die.history)
+                    if die.history
+                    else f"Rolled {die.value}"
+                )
+                dice_layout.addWidget(die_widget)
+                continue
+            die_label = QLabel(f"{die.expression}\n{die.value}")
+            die_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            die_label.setFixedSize(58, 52)
+            die_label.setToolTip(
+                " -> ".join(str(value) for value in die.history)
+                if die.history
+                else f"Rolled {die.value}"
+            )
+            border = "#167c80" if die.selected else "#8a9299"
+            background = "#e8f4f3" if die.selected else "#eceff1"
+            die_label.setStyleSheet(
+                "QLabel {"
+                f"background: {background}; border: 2px solid {border};"
+                "border-radius: 6px; font-weight: 700;"
+                "}"
+            )
+            dice_layout.addWidget(die_label)
+        dice_layout.addStretch(1)
+        layout.addLayout(dice_layout)
+
+        modifier_text = f"{roll.modifier:+d}" if roll.modifier else "+0"
+        summary = f"{modifier_text}  =  {roll.total}"
+        if roll.target is not None:
+            summary += f"  vs  {roll.target}"
+        if roll.success is not None:
+            summary += "   SUCCESS" if roll.success else "   FAILURE"
+        summary_label = QLabel(summary)
+        summary_label.setWordWrap(True)
+        summary_label.setStyleSheet("QLabel { font-weight: 600; }")
+        layout.addWidget(summary_label)
+        return row
+
+
+def _single_die_sides(expression: str) -> int | None:
+    normalized = expression.casefold()
+    if normalized.startswith("1d"):
+        normalized = normalized[1:]
+    if not normalized.startswith("d"):
+        return None
+    try:
+        sides = int(normalized[1:])
+    except ValueError:
+        return None
+    return sides if sides in {4, 6, 8, 10, 12, 20} else None
 
 
 class BattlefieldWidget(QWidget):
@@ -285,6 +436,8 @@ class CyoaPySide6Window(QMainWindow):
         self._presentation: SessionPresentation | None = None
         self._pending_target_mode: TargetSelectionMode | None = None
         self._action_menu_scope: ActionMenuScope | None = None
+        self._combat_log_scene_id: str | None = None
+        self._logged_round_number: int | None = None
 
         self.setWindowTitle("CYOA")
         self.resize(1400, 900)
@@ -306,10 +459,6 @@ class CyoaPySide6Window(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
 
-        self.last_action_group = self._build_group("Last Action")
-        self.last_action_text = self._build_readonly_text(minimum_height=90, maximum_height=140)
-        self.last_action_group.layout().addWidget(self.last_action_text)
-
         self.scene_group = self._build_group("Scene")
         self.scene_text = self._build_readonly_text(minimum_height=180)
         self.scene_group.layout().addWidget(self.scene_text)
@@ -325,9 +474,34 @@ class CyoaPySide6Window(QMainWindow):
         encounter_layout.setContentsMargins(0, 0, 0, 0)
         encounter_layout.setSpacing(10)
 
+        battlefield_area = QWidget()
+        battlefield_layout = QHBoxLayout(battlefield_area)
+        battlefield_layout.setContentsMargins(0, 0, 0, 0)
+        battlefield_layout.setSpacing(10)
+
         self.battlefield_widget = BattlefieldWidget(self.game.directory)
         self.battlefield_widget.actor_clicked.connect(self._handle_battlefield_actor_clicked)
-        encounter_layout.addWidget(self.battlefield_widget, stretch=1)
+        battlefield_layout.addWidget(self.battlefield_widget, stretch=1)
+
+        roll_rail = QFrame()
+        roll_rail.setFrameShape(QFrame.Shape.StyledPanel)
+        roll_rail.setFixedWidth(310)
+        roll_rail_layout = QVBoxLayout(roll_rail)
+        roll_rail_layout.setContentsMargins(10, 10, 10, 10)
+        roll_rail_layout.setSpacing(8)
+        roll_title = QLabel("Combat Log")
+        roll_title.setStyleSheet("QLabel { font-weight: 700; }")
+        roll_rail_layout.addWidget(roll_title)
+
+        self.dice_roll_panel = DiceRollPanel()
+        self.roll_scroll = QScrollArea()
+        self.roll_scroll.setWidgetResizable(True)
+        self.roll_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.roll_scroll.setWidget(self.dice_roll_panel)
+        roll_rail_layout.addWidget(self.roll_scroll, stretch=1)
+        battlefield_layout.addWidget(roll_rail)
+
+        encounter_layout.addWidget(battlefield_area, stretch=1)
 
         encounter_controls = QWidget()
         encounter_controls.setFixedHeight(280)
@@ -367,9 +541,6 @@ class CyoaPySide6Window(QMainWindow):
         encounter_controls_layout.addWidget(self.movement_group)
 
         self.encounter_actions_group = self._build_untitled_panel()
-        self.encounter_targeting_label = QLabel("")
-        self.encounter_targeting_label.setWordWrap(True)
-        self.encounter_actions_group.layout().addWidget(self.encounter_targeting_label)
         self.encounter_actions_layout = QHBoxLayout()
         self.encounter_actions_layout.setSpacing(12)
         self.encounter_actions_group.layout().addWidget(
@@ -387,7 +558,6 @@ class CyoaPySide6Window(QMainWindow):
 
         encounter_layout.addWidget(encounter_controls)
 
-        layout.addWidget(self.last_action_group)
         layout.addWidget(self.scene_group, stretch=1)
         layout.addWidget(self.story_choices_group, stretch=1)
         layout.addWidget(self.encounter_panel, stretch=2)
@@ -506,7 +676,6 @@ class CyoaPySide6Window(QMainWindow):
             self._pending_target_mode = None
             self._action_menu_scope = None
 
-        self.last_action_group.setVisible(not self.last_action_text.toPlainText() == "")
         self.scene_text.setPlainText(presentation.story_text or "")
         self._sync_rest_buttons(presentation)
 
@@ -519,6 +688,7 @@ class CyoaPySide6Window(QMainWindow):
             self.scene_group.hide()
             self.story_choices_group.hide()
             self.encounter_panel.show()
+            self._sync_combat_log_round(presentation.scene_id)
             self._render_encounter(presentation)
 
     def _render_story_actions(self, actions: list[ActionView]) -> None:
@@ -595,14 +765,6 @@ class CyoaPySide6Window(QMainWindow):
             )
             self._render_feature_column(encounter.feature_actions, rendered_target_modes)
             self._render_status_column(encounter.resources)
-
-        if self._pending_target_mode is None:
-            self.encounter_targeting_label.setText("")
-        else:
-            self.encounter_targeting_label.setText(
-                f"{self._target_mode_label(self._pending_target_mode)} selected. Click a highlighted enemy on the battlefield."
-            )
-        self.encounter_targeting_label.setVisible(self.encounter_targeting_label.text() != "")
 
         if encounter.end_turn_action is None:
             self.end_turn_button.setEnabled(False)
@@ -1045,17 +1207,45 @@ class CyoaPySide6Window(QMainWindow):
         return f"enemy:{action.value}"
 
     def _apply_turn_result(self, result) -> None:
-        if result.messages:
-            self.last_action_text.setPlainText("\n".join(message for _, message in result.messages))
-            self.last_action_group.show()
-        else:
-            self.last_action_text.clear()
-            self.last_action_group.hide()
+        encounter_state = self.session.encounter_state
+        was_in_encounter = (
+            self._presentation is not None and self._presentation.encounter is not None
+        )
+        is_combat_result = was_in_encounter or encounter_state is not None
+        if (
+            encounter_state is not None
+            and self._combat_log_scene_id != encounter_state.scene_id
+        ):
+            self._sync_combat_log_round(encounter_state.scene_id)
+        if is_combat_result:
+            roll_views = build_roll_views(result.events)
+            messages = without_roll_details(result.messages)
+            self.dice_roll_panel.append_entry(messages, roll_views)
+            if messages or roll_views:
+                QTimer.singleShot(20, self._scroll_roll_log_to_bottom)
 
         if result.should_exit:
             self.close()
             return
         self.refresh_view()
+
+    def _sync_combat_log_round(self, scene_id: str) -> None:
+        encounter_state = self.session.encounter_state
+        if encounter_state is None:
+            return
+        if self._combat_log_scene_id != scene_id:
+            self.dice_roll_panel.clear_log()
+            self._combat_log_scene_id = scene_id
+            self._logged_round_number = None
+        if self._logged_round_number == encounter_state.round_number:
+            return
+        self.dice_roll_panel.start_round(encounter_state.round_number)
+        self._logged_round_number = encounter_state.round_number
+        QTimer.singleShot(20, self._scroll_roll_log_to_bottom)
+
+    def _scroll_roll_log_to_bottom(self) -> None:
+        scrollbar = self.roll_scroll.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
 
     def show_menu_root(self) -> None:
         self.sidebar_stack.setCurrentIndex(0)
