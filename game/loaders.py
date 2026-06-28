@@ -29,6 +29,7 @@ from .models.scene import (
     Encounter,
     EncounterEnemy,
     EncounterResolution,
+    EncounterTeam,
     FleeResolution,
     Grid,
     Position,
@@ -115,6 +116,33 @@ def _build_encounter(encounter) -> Encounter | None:
     if encounter is None:
         return None
 
+    enemy_ids = [enemy.actor_id for enemy in encounter.enemies]
+    teams = (
+        [
+            EncounterTeam(
+                id=team.id,
+                name=team.name,
+                members=list(team.members),
+                controller=team.controller,
+            )
+            for team in encounter.teams
+        ]
+        if encounter.teams
+        else [
+            EncounterTeam(
+                id="player",
+                name="Player",
+                members=["player"],
+                controller="user",
+            ),
+            EncounterTeam(
+                id="enemies",
+                name="Enemies",
+                members=enemy_ids,
+                controller="ai",
+            ),
+        ]
+    )
     return Encounter(
         grid=Grid(width=encounter.grid.width, height=encounter.grid.height),
         player_start=_build_position(encounter.player_start),
@@ -136,6 +164,7 @@ def _build_encounter(encounter) -> Encounter | None:
             )
             for enemy in encounter.enemies
         ],
+        teams=teams,
         victory=EncounterResolution(next_scene=encounter.victory.next_scene),
         defeat=EncounterResolution(next_scene=encounter.defeat.next_scene),
         flee=FleeResolution(

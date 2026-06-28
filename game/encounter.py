@@ -114,6 +114,7 @@ class EncounterEnemyState:
     behavior: Behavior
     patrol_index: int = 0
     reaction_available: bool = True
+    movement_remaining: int | None = None
 
     @property
     def is_alive(self) -> bool:
@@ -127,6 +128,7 @@ class EncounterSnapshotEnemy:
     position: Position
     patrol_index: int = 0
     reaction_available: bool = True
+    movement_remaining: int | None = None
 
 
 @dataclass
@@ -186,6 +188,7 @@ class PendingAttackSnapshot:
 class EncounterSnapshot:
     scene_id: str
     player_position: Position
+    control_mode: str = "default"
     turn_index: int = 0
     round_number: int = 1
     player_movement_remaining: int | None = None
@@ -242,6 +245,7 @@ class EncounterState:
     definition: Encounter
     player_position: Position
     enemies: list[EncounterEnemyState]
+    control_mode: str = "default"
     turn_index: int = 0
     round_number: int = 1
     player_movement_remaining: int | None = None
@@ -268,6 +272,7 @@ class EncounterState:
         definition: Encounter,
         actor_templates: dict[str, Actor],
         item_templates: dict[str, Item] | None = None,
+        control_mode: str = "default",
     ) -> EncounterState:
         enemies = [
             EncounterEnemyState(
@@ -286,6 +291,7 @@ class EncounterState:
                 definition.player_start.y,
             ),
             enemies=enemies,
+            control_mode=control_mode,
             item_templates=item_templates or {},
         )
         state._initialize_behaviors()
@@ -312,6 +318,7 @@ class EncounterState:
                     behavior=deepcopy(behavior_by_index[index]),
                     patrol_index=saved_enemy.patrol_index,
                     reaction_available=saved_enemy.reaction_available,
+                    movement_remaining=saved_enemy.movement_remaining,
                 )
             )
         state = cls(
@@ -319,6 +326,7 @@ class EncounterState:
             definition=definition,
             player_position=Position(snapshot.player_position.x, snapshot.player_position.y),
             enemies=enemies,
+            control_mode=snapshot.control_mode,
             turn_index=snapshot.turn_index,
             round_number=snapshot.round_number,
             player_movement_remaining=snapshot.player_movement_remaining,
@@ -373,6 +381,7 @@ class EncounterState:
         return EncounterSnapshot(
             scene_id=self.scene_id,
             player_position=Position(self.player_position.x, self.player_position.y),
+            control_mode=self.control_mode,
             turn_index=self.turn_index,
             round_number=self.round_number,
             player_movement_remaining=self.player_movement_remaining,
@@ -424,6 +433,7 @@ class EncounterState:
                     position=Position(enemy.position.x, enemy.position.y),
                     patrol_index=enemy.patrol_index,
                     reaction_available=enemy.reaction_available,
+                    movement_remaining=enemy.movement_remaining,
                 )
                 for enemy in self.enemies
             ],
@@ -519,6 +529,7 @@ class EncounterState:
         return payload
 
     def export_state(self, player: Actor) -> dict[str, object]:
+        active_actor_ref = self.current_decision().actor_ref
         return {
             "scene_id": self.scene_id,
             "grid": {
@@ -527,6 +538,9 @@ class EncounterState:
             },
             "round_number": self.round_number,
             "turn_index": self.turn_index,
+            "control_mode": self.control_mode,
+            "active_actor_ref": active_actor_ref,
+            "active_controller": self._actor_controller(active_actor_ref),
             "player": {
                 "actor_id": player.id,
                 "name": player.name,
@@ -544,6 +558,8 @@ class EncounterState:
                 "attacks_remaining": self.player_attacks_remaining,
                 "bonus_action_available": self.player_bonus_action_available,
                 "reaction_available": self.player_reaction_available,
+                "team_id": self._actor_team_id("player"),
+                "controller": self._actor_controller("player"),
             },
             "enemies": [
                 {
@@ -553,6 +569,24 @@ class EncounterState:
                     "position": {"x": enemy.position.x, "y": enemy.position.y},
                     "health": enemy.actor.get_health(),
                     "reaction_available": enemy.reaction_available,
+                    "movement_remaining": (
+                        enemy.movement_remaining
+                        if enemy.movement_remaining is not None
+                        else _movement_squares(enemy.actor)
+                    ),
+                    "movement_total": _movement_squares(enemy.actor),
+                    "movement_remaining_feet": (
+                        (
+                            enemy.movement_remaining
+                            if enemy.movement_remaining is not None
+                            else _movement_squares(enemy.actor)
+                        )
+                        * enemy.actor.attributes.movement.feet_per_square
+                    ),
+                    "movement_total_feet": enemy.actor.attributes.movement.speed_feet,
+                    "max_health": enemy.actor.get_max_health(),
+                    "team_id": self._actor_team_id(_enemy_ref(index)),
+                    "controller": self._actor_controller(_enemy_ref(index)),
                     "is_alive": enemy.is_alive,
                 }
                 for index, enemy in enumerate(self.enemies)
@@ -569,8 +603,10 @@ class EncounterState:
 
     def available_actions(self, player: Actor) -> list[EncounterAction]:
         decision = self.current_decision()
-        if decision.actor_ref != "player":
+        if self._actor_controller(decision.actor_ref) != "user":
             return []
+        if decision.actor_ref != "player":
+            return self._user_controlled_enemy_actions(player, decision.actor_ref)
         if decision.kind == "reroll_dice":
             return self._reroll_damage_actions()
         if decision.kind == "reaction":
@@ -598,7 +634,12 @@ class EncounterState:
 
         can_attack = self.player_action_available or self.player_attacks_remaining > 0
         for index, enemy in enumerate(self.enemies):
-            if can_attack and enemy.is_alive and _is_adjacent(self.player_position, enemy.position):
+            if (
+                can_attack
+                and enemy.is_alive
+                and self._actors_are_opponents("player", _enemy_ref(index))
+                and _is_adjacent(self.player_position, enemy.position)
+            ):
                 actions.append(
                     EncounterAction(
                         f"Attack enemy {index + 1} ({enemy.actor.name})",
@@ -683,8 +724,10 @@ class EncounterState:
         action: EncounterAction,
     ) -> EncounterProgress:
         decision = self.current_decision()
+        if self._actor_controller(decision.actor_ref) != "user":
+            raise RuntimeError("User action requested for an AI-controlled actor.")
         if decision.actor_ref != "player":
-            raise RuntimeError("Player action requested while it is not the player's turn.")
+            return self._apply_user_controlled_enemy_action(player, action, decision)
         if decision.kind == "reroll_dice":
             return self._apply_damage_reroll_action(player, action, decision)
         if decision.kind == "reaction":
@@ -841,6 +884,194 @@ class EncounterState:
         if not action_ends_turn:
             return progress
 
+        self._advance_turn()
+        self._maybe_reset_reactions()
+        follow_up = self.advance_until_next_decision(player)
+        self._merge_progress(progress, follow_up)
+        return progress
+
+    def _user_controlled_enemy_actions(
+        self,
+        player: Actor,
+        actor_ref: ActorRef,
+    ) -> list[EncounterAction]:
+        enemy_index = _enemy_index(actor_ref)
+        enemy = self.enemies[enemy_index]
+        if enemy.movement_remaining is None:
+            enemy.movement_remaining = _movement_squares(enemy.actor)
+        actions: list[EncounterAction] = []
+        if enemy.movement_remaining > 0:
+            for direction, (dx, dy) in DIRECTION_DELTAS.items():
+                target_x = enemy.position.x + dx
+                target_y = enemy.position.y + dy
+                if not self._is_free_for_enemy(target_x, target_y):
+                    continue
+                actions.append(
+                    EncounterAction(
+                        f"Move {direction}",
+                        "move",
+                        direction,
+                        id=f"{actor_ref}-move-{direction}",
+                        actor_ref=actor_ref,
+                        cost=ActionCost(movement=1),
+                    )
+                )
+        for target_ref in self._living_actor_refs(player):
+            if target_ref == actor_ref or not self._actors_are_opponents(
+                actor_ref,
+                target_ref,
+            ):
+                continue
+            if not _is_adjacent(enemy.position, self._actor_position(target_ref)):
+                continue
+            actions.append(
+                EncounterAction(
+                    f"Attack {self._actor_label(target_ref)}",
+                    "attack",
+                    target_ref,
+                    id=f"{actor_ref}-attack-{target_ref.replace(':', '-')}",
+                    actor_ref=actor_ref,
+                    cost=ActionCost(action=1),
+                )
+            )
+        actions.append(
+            EncounterAction(
+                "Wait",
+                "wait",
+                id=f"{actor_ref}-wait",
+                actor_ref=actor_ref,
+            )
+        )
+        return actions
+
+    def _apply_user_controlled_enemy_action(
+        self,
+        player: Actor,
+        action: EncounterAction,
+        decision: DecisionFrame,
+    ) -> EncounterProgress:
+        enemy_index = _enemy_index(decision.actor_ref)
+        enemy = self.enemies[enemy_index]
+        progress = EncounterProgress()
+        action_id = self._next_action_id()
+        progress.events.append(
+            self._event(
+                "action_declared",
+                actor_ref=decision.actor_ref,
+                action_id=action_id,
+                data={
+                    "kind": action.kind,
+                    "value": action.value,
+                    "selected_action_id": action.id,
+                },
+            )
+        )
+        action_ends_turn = action.kind in {"attack", "wait"}
+
+        if action.kind == "move":
+            direction = str(action.value)
+            dx, dy = DIRECTION_DELTAS[direction]
+            destination = Position(enemy.position.x + dx, enemy.position.y + dy)
+            remaining = max(0, (enemy.movement_remaining or 0) - 1)
+            if self._queue_player_opportunity_attack(
+                enemy_index,
+                action_id,
+                direction,
+                Position(enemy.position.x, enemy.position.y),
+                destination,
+                remaining,
+                progress,
+            ):
+                progress.paused_for_decision = True
+                return progress
+            enemy.position = destination
+            enemy.movement_remaining = remaining
+            progress.messages.append(
+                (
+                    "system",
+                    f"{enemy.actor.name} moves {direction} to "
+                    f"({destination.x}, {destination.y}).",
+                )
+            )
+            progress.events.append(
+                self._event(
+                    "movement_resolved",
+                    actor_ref=decision.actor_ref,
+                    action_id=action_id,
+                    data={
+                        "direction": direction,
+                        "to": {"x": destination.x, "y": destination.y},
+                    },
+                )
+            )
+        elif action.kind == "attack":
+            if not isinstance(action.value, str):
+                raise ValueError("Attack action requires an actor reference.")
+            target_ref = action.value
+            if not self._actors_are_opponents(decision.actor_ref, target_ref):
+                raise ValueError("Attack target must belong to an opposing team.")
+            defender = self._actor_for_ref(player, target_ref)
+            target_label = self._actor_label(target_ref)
+            attacker_label = self._actor_label(decision.actor_ref)
+            attack = _resolve_attack(
+                enemy.actor,
+                defender,
+                attacker_label=attacker_label,
+                target_label=target_label,
+                items_by_id=self.item_templates,
+            )
+            _apply_attack_damage(
+                attack,
+                defender,
+                attacker_label=attacker_label,
+                target_label=target_label,
+            )
+            progress.messages.extend(attack.messages)
+            progress.events.append(
+                self._event(
+                    "attack_resolved",
+                    actor_ref=decision.actor_ref,
+                    action_id=action_id,
+                    data={
+                        "attacker_label": attacker_label,
+                        "target_ref": target_ref,
+                        "target_label": target_label,
+                        "attack_roll": attack.attack_roll,
+                        "attack_roll_detail": attack.attack_roll_detail,
+                        "hit": attack.hit,
+                        "damage": attack.damage,
+                        "damage_roll_detail": attack.damage_roll_detail,
+                    },
+                )
+            )
+            if defender.get_health() <= 0:
+                progress.events.append(
+                    self._event(
+                        "actor_defeated",
+                        actor_ref=target_ref,
+                        action_id=action_id,
+                    )
+                )
+        elif action.kind == "wait":
+            progress.messages.append(("system", f"{enemy.actor.name} waits."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref=decision.actor_ref,
+                    action_id=action_id,
+                    data={"kind": "wait"},
+                )
+            )
+        else:
+            raise ValueError(f"Unsupported user-controlled enemy action: {action.kind}")
+
+        progress.transition = self._check_transition()
+        if (
+            progress.transition is not None
+            or player.get_health() <= 0
+            or not action_ends_turn
+        ):
+            return progress
         self._advance_turn()
         self._maybe_reset_reactions()
         follow_up = self.advance_until_next_decision(player)
@@ -1116,10 +1347,20 @@ class EncounterState:
         while True:
             if player.get_health() <= 0:
                 break
-            if self.decision_stack and self.current_decision().actor_ref == "player":
+            if self.decision_stack and self._actor_controller(
+                self.current_decision().actor_ref
+            ) == "user":
                 progress.paused_for_decision = True
                 break
             actor_type, enemy_index = self._active_turn_actor()
+            actor_ref = (
+                "player"
+                if actor_type == "player"
+                else _enemy_ref(enemy_index if enemy_index is not None else 0)
+            )
+            if self._actor_controller(actor_ref) == "user":
+                progress.paused_for_decision = True
+                break
             if actor_type == "player":
                 break
             assert enemy_index is not None
@@ -1156,7 +1397,13 @@ class EncounterState:
                 BehaviorContext(
                     player_position=Position(self.player_position.x, self.player_position.y),
                     enemy_position=Position(enemy.position.x, enemy.position.y),
-                    can_attack=_is_adjacent(self.player_position, enemy.position),
+                    can_attack=(
+                        _is_adjacent(self.player_position, enemy.position)
+                        and self._actors_are_opponents(
+                            _enemy_ref(enemy_index),
+                            "player",
+                        )
+                    ),
                 )
             )
             if command is None:
@@ -1411,6 +1658,9 @@ class EncounterState:
 
         if pending_action.resume_enemy_index is None:
             return
+        if self._actor_controller(pending_action.actor_ref) == "user":
+            enemy.movement_remaining = pending_action.remaining_movement_after
+            return
         completed_turn, resumed = self._run_enemy_turn(
             player,
             pending_action.resume_enemy_index,
@@ -1436,6 +1686,7 @@ class EncounterState:
             (index, enemy)
             for index, enemy in enumerate(self.enemies)
             if enemy.is_alive
+            and self._actors_are_opponents(_enemy_ref(index), "player")
             and enemy.reaction_available
             and _is_adjacent(origin, enemy.position)
             and not _is_adjacent(destination, enemy.position)
@@ -1757,6 +2008,8 @@ class EncounterState:
         remaining_movement_after: int,
         progress: EncounterProgress,
     ) -> bool:
+        if not self._actors_are_opponents("player", _enemy_ref(enemy_index)):
+            return False
         if not self.player_reaction_available:
             return False
         if not _is_adjacent(from_position, self.player_position):
@@ -1849,8 +2102,46 @@ class EncounterState:
             return ("player", None)
         return ("enemy", self.turn_index - 1)
 
+    def _actor_controller(self, actor_ref: ActorRef) -> str:
+        if self.control_mode == "all-user":
+            return "user"
+        team_id = self._actor_team_id(actor_ref)
+        team = next(
+            (team for team in self.definition.teams if team.id == team_id),
+            None,
+        )
+        return team.controller if team is not None else (
+            "user" if actor_ref == "player" else "ai"
+        )
+
+    def _actor_team_id(self, actor_ref: ActorRef) -> str:
+        actor_id = (
+            "player"
+            if actor_ref == "player"
+            else self.enemies[_enemy_index(actor_ref)].actor_id
+        )
+        team = next(
+            (team for team in self.definition.teams if actor_id in team.members),
+            None,
+        )
+        return team.id if team is not None else actor_id
+
+    def _actors_are_opponents(
+        self,
+        first_actor_ref: ActorRef,
+        second_actor_ref: ActorRef,
+    ) -> bool:
+        return self._actor_team_id(first_actor_ref) != self._actor_team_id(
+            second_actor_ref
+        )
+
     def _check_transition(self) -> str | None:
-        if all(not enemy.is_alive for enemy in self.enemies):
+        opponents = [
+            enemy
+            for index, enemy in enumerate(self.enemies)
+            if self._actors_are_opponents("player", _enemy_ref(index))
+        ]
+        if opponents and all(not enemy.is_alive for enemy in opponents):
             return self.definition.victory.next_scene if self.definition.victory else None
         return None
 
@@ -1865,6 +2156,8 @@ class EncounterState:
             self.player_action_available = True
             self.player_attacks_remaining = 0
             self.player_bonus_action_available = True
+        else:
+            self.enemies[self.turn_index - 1].movement_remaining = None
 
     def _maybe_reset_reactions(self) -> None:
         if self.turn_index != 0:
@@ -1979,6 +2272,27 @@ class EncounterState:
         enemy_index = _enemy_index(actor_ref)
         enemy = self.enemies[enemy_index]
         return f"Enemy {enemy_index + 1} ({enemy.actor.name})"
+
+    def _living_actor_refs(self, player: Actor) -> list[ActorRef]:
+        refs: list[ActorRef] = []
+        if player.get_health() > 0:
+            refs.append("player")
+        refs.extend(
+            _enemy_ref(index)
+            for index, enemy in enumerate(self.enemies)
+            if enemy.is_alive
+        )
+        return refs
+
+    def _actor_position(self, actor_ref: ActorRef) -> Position:
+        if actor_ref == "player":
+            return self.player_position
+        return self.enemies[_enemy_index(actor_ref)].position
+
+    def _actor_for_ref(self, player: Actor, actor_ref: ActorRef) -> Actor:
+        if actor_ref == "player":
+            return player
+        return self.enemies[_enemy_index(actor_ref)].actor
 
 
 def _build_behavior(enemy: EncounterEnemyState) -> Generator[EncounterAction | None, BehaviorContext, None]:

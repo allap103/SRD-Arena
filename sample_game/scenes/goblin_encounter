@@ -11,6 +11,20 @@
             "x": 1,
             "y": 6
         },
+        "teams": [
+            {
+                "id": "heroes",
+                "name": "Heroes",
+                "members": ["player"],
+                "controller": "user"
+            },
+            {
+                "id": "goblins",
+                "name": "Goblins",
+                "members": ["goblin_1", "goblin_2", "goblin_3"],
+                "controller": "ai"
+            }
+        ],
         "enemies": [
             {
                 "actor_id": "goblin_1",

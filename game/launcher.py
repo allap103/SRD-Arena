@@ -39,6 +39,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=8000,
         help="Port to bind the API frontend to.",
     )
+    parser.add_argument(
+        "--control-mode",
+        choices=("default", "all-user"),
+        default="default",
+        help="Who controls encounter teams. Defaults to content-defined controllers.",
+    )
     return parser
 
 
@@ -69,25 +75,37 @@ def launch(
     game_dir: Path,
     host: str = "127.0.0.1",
     port: int = 8000,
+    control_mode: str = "default",
 ) -> None:
     if frontend == "pyside6":
         from .pyside6_app import run_pyside6_app
 
-        run_pyside6_app(Game(str(game_dir)))
+        run_pyside6_app(Game(str(game_dir), control_mode=control_mode))
         return
     if frontend == "api":
-        run_savegame_api(host=host, port=port, game_dir=game_dir)
+        run_savegame_api(
+            host=host,
+            port=port,
+            game_dir=game_dir,
+            control_mode=control_mode,
+        )
         return
 
     configure_game_logging()
-    Game(str(game_dir)).run()
+    Game(str(game_dir), control_mode=control_mode).run()
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
     game_dir = resolve_game_directory(args.game)
-    launch(args.frontend, game_dir, host=args.host, port=args.port)
+    launch(
+        args.frontend,
+        game_dir,
+        host=args.host,
+        port=args.port,
+        control_mode=args.control_mode,
+    )
 
 
 def _validate_game_directory(path: Path) -> Path:

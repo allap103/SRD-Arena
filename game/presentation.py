@@ -151,6 +151,11 @@ def _build_feature_actions(
     session: GameSession,
     story_actions: list[ActionView],
 ) -> list[ActionView]:
+    if (
+        session.encounter_state is not None
+        and session.encounter_state.current_decision().actor_ref != "player"
+    ):
+        return []
     available_feature_actions = {
         str(action.value): action
         for action in story_actions
@@ -182,13 +187,27 @@ def _build_unavailable_feature_action(definition: FeatureActionDefinition) -> Ac
 def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryView:
     player_state = combat_state["player"]
     decision = combat_state["decision"]
-    normal_turn = decision["actor_ref"] == "player" and decision["kind"] == "turn"
+    actor_ref = decision["actor_ref"]
+    actor_state = (
+        player_state
+        if actor_ref == "player"
+        else next(
+            enemy
+            for enemy in combat_state["enemies"]
+            if enemy["actor_ref"] == actor_ref
+        )
+    )
+    normal_turn = decision["kind"] == "turn"
     return ResourceSummaryView(
-        current_health=player_state["health"],
-        max_health=player_state["max_health"],
+        current_health=actor_state["health"],
+        max_health=actor_state["max_health"],
         action_status=(
             "Ready"
-            if normal_turn and player_state["action_available"]
+            if normal_turn
+            and (
+                actor_ref != "player"
+                or player_state["action_available"]
+            )
             else f"{player_state['attacks_remaining']} attack left"
             if normal_turn and player_state["attacks_remaining"] == 1
             else f"{player_state['attacks_remaining']} attacks left"
@@ -199,16 +218,18 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
         ),
         bonus_action_status=(
             "Ready"
-            if normal_turn and player_state["bonus_action_available"]
+            if normal_turn
+            and actor_ref == "player"
+            and player_state["bonus_action_available"]
             else "Spent"
             if normal_turn
             else "Waiting"
         ),
-        reaction_status="Ready" if player_state["reaction_available"] else "Spent",
-        movement_remaining=player_state["movement_remaining"],
-        movement_total=player_state["movement_total"],
-        movement_remaining_feet=player_state["movement_remaining_feet"],
-        movement_total_feet=player_state["movement_total_feet"],
+        reaction_status="Ready" if actor_state["reaction_available"] else "Spent",
+        movement_remaining=actor_state["movement_remaining"],
+        movement_total=actor_state["movement_total"],
+        movement_remaining_feet=actor_state["movement_remaining_feet"],
+        movement_total_feet=actor_state["movement_total_feet"],
     )
 
 

@@ -111,6 +111,7 @@ class EncounterEnemyStateModel(BaseModel):
     position: PositionState
     patrol_index: int = 0
     reaction_available: bool = True
+    movement_remaining: int | None = None
 
 
 class DecisionFrameStateModel(BaseModel):
@@ -174,6 +175,7 @@ class EncounterStateModel(BaseModel):
 
     scene_id: str
     player_position: PositionState
+    control_mode: str = "default"
     turn_index: int = 0
     round_number: int = 1
     player_movement_remaining: int | None = None
@@ -199,6 +201,7 @@ class SaveGame(BaseModel):
     version: int = SAVE_VERSION
     current_scene_id: str
     start_scene_id: str = "welcome"
+    control_mode: str = "default"
     player: PlayerState
     completed_tests: list[CompletedTestState] = Field(default_factory=list)
     encounter: EncounterStateModel | None = None
@@ -208,6 +211,7 @@ def create_save(session: GameSession) -> SaveGame:
     return SaveGame(
         current_scene_id=session.current_scene_id,
         start_scene_id=session.start_scene_id,
+        control_mode=session.control_mode,
         player=_create_player_state(session.player),
         completed_tests=[
             CompletedTestState(scene_id=scene_id, choice_text=choice_text)
@@ -221,8 +225,15 @@ def restore_save(save: SaveGame, game_dir: str | Path) -> GameSession:
     if save.version != SAVE_VERSION:
         raise ValueError(f"Unsupported save version: {save.version}")
 
-    game = Game(str(game_dir), start_scene=save.start_scene_id)
-    session = game.create_session(player_actor_id=save.player.actor_id)
+    game = Game(
+        str(game_dir),
+        start_scene=save.start_scene_id,
+        control_mode=save.control_mode,
+    )
+    session = game.create_session(
+        player_actor_id=save.player.actor_id,
+        control_mode=save.control_mode,
+    )
 
     if save.current_scene_id not in session.scenes:
         raise ValueError(f"Saved scene '{save.current_scene_id}' does not exist.")
@@ -323,6 +334,7 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
             x=snapshot.player_position.x,
             y=snapshot.player_position.y,
         ),
+        control_mode=snapshot.control_mode,
         turn_index=snapshot.turn_index,
         round_number=snapshot.round_number,
         player_movement_remaining=snapshot.player_movement_remaining,
@@ -404,6 +416,7 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
                 position=PositionState(x=enemy.position.x, y=enemy.position.y),
                 patrol_index=enemy.patrol_index,
                 reaction_available=enemy.reaction_available,
+                movement_remaining=enemy.movement_remaining,
             )
             for enemy in snapshot.enemies
         ],
@@ -419,6 +432,7 @@ def _restore_encounter_state(
     return EncounterSnapshot(
         scene_id=state.scene_id,
         player_position=Position(x=state.player_position.x, y=state.player_position.y),
+        control_mode=state.control_mode,
         turn_index=state.turn_index,
         round_number=state.round_number,
         player_movement_remaining=state.player_movement_remaining,
@@ -500,6 +514,7 @@ def _restore_encounter_state(
                 position=Position(x=enemy.position.x, y=enemy.position.y),
                 patrol_index=enemy.patrol_index,
                 reaction_available=enemy.reaction_available,
+                movement_remaining=enemy.movement_remaining,
             )
             for enemy in state.enemies
         ],

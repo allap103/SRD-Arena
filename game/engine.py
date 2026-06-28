@@ -33,6 +33,7 @@ class Game:
         directory: str | Path = GAME_DIR,
         start_scene: str = "welcome",
         system_directory: str | Path = GAME_SYSTEM_DIR,
+        control_mode: str = "default",
     ):
         self.directory = Path(directory)
         self.system_directory = Path(system_directory)
@@ -48,6 +49,7 @@ class Game:
             self.load_items_from_directory(self.directory / "items"),
         )
         self.start_scene = start_scene
+        self.control_mode = control_mode
         self.scene_runner = SceneRunner()
 
     def load_actors_from_directory(self, directory: str | Path) -> list[Actor]:
@@ -83,7 +85,11 @@ class Game:
                 return actor
         raise KeyError(f"Actor '{actor_id}' not found.")
 
-    def create_session(self, player_actor_id: str = "player") -> GameSession:
+    def create_session(
+        self,
+        player_actor_id: str = "player",
+        control_mode: str | None = None,
+    ) -> GameSession:
         return GameSession(
             scenes=self.scenes,
             player=self.get_actor(player_actor_id),
@@ -91,6 +97,7 @@ class Game:
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
             game_dir=self.directory,
+            control_mode=control_mode or self.control_mode,
         )
 
     def run(self):

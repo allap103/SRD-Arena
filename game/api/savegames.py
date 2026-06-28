@@ -117,6 +117,7 @@ def run_savegame_api(
     host: str = "127.0.0.1",
     port: int = 8000,
     game_dir: str | Path = GAME_DIR,
+    control_mode: str = "default",
 ) -> None:
-    api = SavegameApi(Game(str(game_dir)))
+    api = SavegameApi(Game(str(game_dir), control_mode=control_mode))
     uvicorn.run(api.create_app(), host=host, port=port)

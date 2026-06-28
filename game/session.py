@@ -62,6 +62,7 @@ class GameSession:
         start_scene_id: str = "welcome",
         game_dir: str | Path = "sample_game",
         save_dir: str | Path = "saves",
+        control_mode: str = "default",
     ):
         self.scenes = scenes
         self.player = player
@@ -73,6 +74,7 @@ class GameSession:
         self._initial_player = deepcopy(player)
         self.game_dir = Path(game_dir)
         self.save_dir = Path(save_dir)
+        self.control_mode = control_mode
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
 
@@ -331,6 +333,7 @@ class GameSession:
             scene.encounter,
             self.actor_templates,
             self.item_templates,
+            self.control_mode,
         )
         self._encounter_actions = []
 

@@ -1267,6 +1267,8 @@ class CyoaPySide6Window(QMainWindow):
     def _target_actor_ref(self, action: ActionView | None) -> str | None:
         if action is None or action.kind not in {"attack", "opportunity_attack"}:
             return None
+        if isinstance(action.value, str):
+            return action.value
         if not isinstance(action.value, int):
             return None
         return f"enemy:{action.value}"

@@ -31,6 +31,14 @@ class EncounterEnemy:
 
 
 @dataclass
+class EncounterTeam:
+    id: str
+    name: str
+    members: list[str]
+    controller: str
+
+
+@dataclass
 class EncounterResolution:
     next_scene: str
 
@@ -45,6 +53,7 @@ class Encounter:
     grid: Grid
     player_start: Position
     enemies: list[EncounterEnemy] = field(default_factory=list)
+    teams: list[EncounterTeam] = field(default_factory=list)
     victory: EncounterResolution | None = None
     defeat: EncounterResolution | None = None
     flee: FleeResolution | None = None

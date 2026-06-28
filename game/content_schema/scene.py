@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
@@ -90,6 +92,15 @@ class EncounterEnemySchema(BaseModel):
     behavior: BehaviorSchema
 
 
+class EncounterTeamSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    name: str
+    members: list[str]
+    controller: Literal["user", "ai"]
+
+
 class EncounterResolutionSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -106,6 +117,7 @@ class EncounterSchema(BaseModel):
     grid: GridSchema
     player_start: PositionSchema
     enemies: list[EncounterEnemySchema] = Field(default_factory=list)
+    teams: list[EncounterTeamSchema] = Field(default_factory=list)
     victory: EncounterResolutionSchema
     defeat: EncounterResolutionSchema
     flee: FleeSchema | None = None
