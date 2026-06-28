@@ -6,6 +6,7 @@ from ..systems.inventory import Inventory
 from .attributes import Attributes
 from .class_features import ClassRef, CombatProfile, FeatureGrant
 from ..rules.types import RuleGrant
+from .monster_attack import MonsterAttack
 
 LOGGER = get_game_logger(CHANNEL_SYSTEM)
 
@@ -24,6 +25,7 @@ class Actor:
     rule_grants: list[RuleGrant] = field(default_factory=list)
     combat_profile: CombatProfile = field(default_factory=CombatProfile)
     feature_uses_remaining: dict[str, int] = field(default_factory=dict)
+    monster_attacks: list[MonsterAttack] = field(default_factory=list)
 
     def __post_init__(self):
         if self.current_health is None:

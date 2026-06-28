@@ -3,11 +3,5 @@
     "stat_block": {
         "name": "Goblin Warrior",
         "source": "XMM"
-    },
-    "equipment": {
-        "right_hand": {
-            "name": "Shortbow",
-            "source": "XPHB"
-        }
     }
 }

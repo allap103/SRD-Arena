@@ -156,6 +156,8 @@ class PendingAttackStateModel(BaseModel):
     damage_die_rolls: list[list[int]]
     damage_die_sides: list[int]
     damage_modifier: int
+    damage_modifier_label: str = "STR mod"
+    attack_type: str = "melee"
     damage_type: str
     weapon_id: str | None = None
     weapon_name: str | None = None
@@ -393,6 +395,8 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
                 damage_die_rolls=snapshot.pending_attack.damage_die_rolls,
                 damage_die_sides=snapshot.pending_attack.damage_die_sides,
                 damage_modifier=snapshot.pending_attack.damage_modifier,
+                damage_modifier_label=snapshot.pending_attack.damage_modifier_label,
+                attack_type=snapshot.pending_attack.attack_type,
                 damage_type=snapshot.pending_attack.damage_type,
                 weapon_id=snapshot.pending_attack.weapon_id,
                 weapon_name=snapshot.pending_attack.weapon_name,
@@ -491,6 +495,8 @@ def _restore_encounter_state(
                 damage_die_rolls=[list(rolls) for rolls in state.pending_attack.damage_die_rolls],
                 damage_die_sides=list(state.pending_attack.damage_die_sides),
                 damage_modifier=state.pending_attack.damage_modifier,
+                damage_modifier_label=state.pending_attack.damage_modifier_label,
+                attack_type=state.pending_attack.attack_type,
                 damage_type=state.pending_attack.damage_type,
                 weapon_id=state.pending_attack.weapon_id,
                 weapon_name=state.pending_attack.weapon_name,

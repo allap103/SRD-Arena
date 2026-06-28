@@ -171,6 +171,7 @@ class PendingAttackSnapshot:
     damage_die_rolls: list[list[int]]
     damage_die_sides: list[int]
     damage_modifier: int
+    damage_modifier_label: str
     attack_type: str
     damage_type: str
     weapon_id: str | None
@@ -220,6 +221,7 @@ class AttackOutcome:
     damage_roll: DicePoolResult | None = None
     damage_dice: str | None = None
     damage_modifier: int = 0
+    damage_modifier_label: str = "STR mod"
     attack_type: str = "melee"
     damage_type: str = "damage"
     weapon_id: str | None = None
@@ -240,6 +242,25 @@ class PendingAttack:
     rule: RuleGrant
     continuation: str = "return_to_turn"
     reaction: bool = False
+
+
+@dataclass(frozen=True)
+class AttackSource:
+    name: str
+    damage_dice: str
+    damage_bonus: int
+    damage_bonus_label: str
+    damage_type: str
+    attack_bonus: int
+    attack_bonus_label: str
+    attack_modes: tuple[str, ...]
+    ability_modifier: int = 0
+    proficiency_bonus: int = 0
+    range_normal: int | None = None
+    range_long: int | None = None
+    weapon_id: str | None = None
+    weapon_name: str | None = None
+    weapon_properties: tuple[str, ...] = ()
 
 
 @dataclass
@@ -1498,6 +1519,11 @@ class EncounterState:
                 continue
 
             if command.kind == "attack":
+                preferred_attack_type = (
+                    str(command.value)
+                    if isinstance(command.value, str) and command.value in {"melee", "ranged"}
+                    else None
+                )
                 attack = _resolve_attack(
                     enemy.actor,
                     player,
@@ -1506,6 +1532,7 @@ class EncounterState:
                     items_by_id=self.item_templates,
                     attacker_position=enemy.position,
                     nearby_opponent_positions=(self.player_position,),
+                    preferred_attack_type=preferred_attack_type,
                 )
                 _apply_attack_damage(
                     attack,
@@ -1583,6 +1610,7 @@ class EncounterState:
                 items_by_id=self.item_templates,
                 attacker_position=self.player_position,
                 nearby_opponent_positions=(target.position,),
+                preferred_attack_type="melee",
             )
             reroll_rule = _matching_damage_reroll_rule(player, attack)
             if attack.hit and reroll_rule is not None:
@@ -1757,6 +1785,7 @@ class EncounterState:
                 items_by_id=self.item_templates,
                 attacker_position=enemy.position,
                 nearby_opponent_positions=(self.player_position,),
+                preferred_attack_type="melee",
             )
             _apply_attack_damage(
                 attack,
@@ -2364,7 +2393,7 @@ def _chase_behavior(enemy: EncounterEnemyState) -> Generator[EncounterAction | N
     context = yield None
     while True:
         if context.can_attack:
-            context = yield EncounterAction("Attack", "attack")
+            context = yield EncounterAction("Attack", "attack", "melee")
             continue
 
         direction = _step_toward(context.enemy_position, context.player_position)
@@ -2383,7 +2412,7 @@ def _archer_behavior(
             context.enemy_position,
             context.player_position,
         ) <= range_squares:
-            context = yield EncounterAction("Attack", "attack")
+            context = yield EncounterAction("Attack", "attack", "ranged")
             continue
         direction = _step_toward(context.enemy_position, context.player_position)
         command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
@@ -2399,7 +2428,7 @@ def _guard_behavior(enemy: EncounterEnemyState) -> Generator[EncounterAction | N
             and _manhattan_distance(context.player_position, anchor) <= enemy.behavior.radius
         )
         if context.can_attack:
-            context = yield EncounterAction("Attack", "attack")
+            context = yield EncounterAction("Attack", "attack", "melee")
             continue
         if within_radius:
             direction = _step_toward(context.enemy_position, context.player_position)
@@ -2418,7 +2447,7 @@ def _patrol_behavior(enemy: EncounterEnemyState) -> Generator[EncounterAction | 
     context = yield None
     while True:
         if context.can_attack:
-            context = yield EncounterAction("Attack", "attack")
+            context = yield EncounterAction("Attack", "attack", "melee")
             continue
         if not enemy.behavior.path:
             context = yield EncounterAction("Wait", "wait")
@@ -2502,12 +2531,17 @@ def _resolve_attack(
     items_by_id: dict[str, Item] | None = None,
     attacker_position: Position | None = None,
     nearby_opponent_positions: tuple[Position, ...] = (),
+    preferred_attack_type: str | None = None,
 ) -> AttackOutcome:
-    weapon = _equipped_weapon(attacker, items_by_id or {})
-    attack_type = _weapon_attack_type(weapon)
-    ability_modifier = _attack_ability_modifier(attacker, weapon)
-    proficiency_bonus = _weapon_proficiency_bonus(attacker, weapon)
-    attack_modifier = ability_modifier + proficiency_bonus
+    attack_source = _select_attack_source(
+        attacker,
+        items_by_id or {},
+        preferred_attack_type=preferred_attack_type,
+    )
+    if attack_source is None:
+        attack_source = _unarmed_attack_source(attacker)
+    attack_type = attack_source.attack_modes[0]
+    attack_modifier = attack_source.attack_bonus
     attack_roll_mode = _attack_roll_mode(
         attack_type,
         attacker_position,
@@ -2526,23 +2560,20 @@ def _resolve_attack(
         "selected_index": attack_result.selected_index,
         "mode": attack_result.mode,
         "attack_type": attack_type,
-        "ability_modifier": ability_modifier,
-        "proficiency_bonus": proficiency_bonus,
+        "ability_modifier": attack_source.ability_modifier,
+        "proficiency_bonus": attack_source.proficiency_bonus,
         "modifier": attack_modifier,
         "total": attack_result.total,
         "target_ac": target_ac,
     }
-    if weapon is not None:
-        attack_roll_detail["weapon_id"] = weapon.id
-        attack_roll_detail["weapon_name"] = weapon.name
+    if attack_source.weapon_id is not None:
+        attack_roll_detail["weapon_id"] = attack_source.weapon_id
+    if attack_source.weapon_name is not None:
+        attack_roll_detail["weapon_name"] = attack_source.weapon_name
     action_prefix = action_label if action_label != "Attack" else "Attack"
-    proficiency_text = (
-        f" + proficiency {proficiency_bonus}" if proficiency_bonus else ""
-    )
-    ability_label = "DEX" if attack_type == "ranged" else "STR"
     attack_detail_message = (
         f"{action_prefix}: {attacker_label} attacks {target_label}. "
-        f"Roll d20={attack_result.selected} + {ability_label} mod {ability_modifier}{proficiency_text} "
+        f"Roll d20={attack_result.selected} + {attack_source.attack_bonus_label} {attack_modifier} "
         f"= {attack_result.total} vs {target_label} AC {target_ac}."
     )
     if not attack_check.success:
@@ -2560,12 +2591,12 @@ def _resolve_attack(
             attack_type=attack_type,
         )
 
-    damage_dice = weapon.weapon_stat.damage if weapon and weapon.weapon_stat else "1d4"
+    damage_dice = attack_source.damage_dice
     damage_die_count, damage_die_sides = _parse_damage_dice(damage_dice)
     damage_roll = resolve_dice(
         damage_die_count,
         damage_die_sides,
-        modifier=ability_modifier,
+        modifier=attack_source.damage_bonus,
         roller=lambda sides: roll_dice(1, sides),
     )
     damage_die_total = damage_roll.subtotal
@@ -2575,12 +2606,13 @@ def _resolve_attack(
         "dice_values": [die.result for die in damage_roll.dice],
         "die_rolls": [list(die.rolls) for die in damage_roll.dice],
         "dice_total": damage_die_total,
-        "modifier": ability_modifier,
+        "modifier": attack_source.damage_bonus,
         "total": damage_total,
     }
-    if weapon is not None:
-        damage_roll_detail["weapon_id"] = weapon.id
-        damage_roll_detail["weapon_name"] = weapon.name
+    if attack_source.weapon_id is not None:
+        damage_roll_detail["weapon_id"] = attack_source.weapon_id
+    if attack_source.weapon_name is not None:
+        damage_roll_detail["weapon_name"] = attack_source.weapon_name
     return AttackOutcome(
         messages=[("system", attack_detail_message)],
         hit=True,
@@ -2592,20 +2624,13 @@ def _resolve_attack(
         attack_check=attack_check,
         damage_roll=damage_roll,
         damage_dice=damage_dice,
-        damage_modifier=ability_modifier,
+        damage_modifier=attack_source.damage_bonus,
+        damage_modifier_label=attack_source.damage_bonus_label,
         attack_type=attack_type,
-        damage_type=(
-            weapon.weapon_stat.damage_type
-            if weapon is not None and weapon.weapon_stat is not None
-            else "damage"
-        ),
-        weapon_id=weapon.id if weapon is not None else None,
-        weapon_name=weapon.name if weapon is not None else None,
-        weapon_properties=(
-            tuple(weapon.weapon_stat.properties)
-            if weapon is not None and weapon.weapon_stat is not None
-            else ()
-        ),
+        damage_type=attack_source.damage_type,
+        weapon_id=attack_source.weapon_id,
+        weapon_name=attack_source.weapon_name,
+        weapon_properties=attack_source.weapon_properties,
     )
 
 
@@ -2629,7 +2654,7 @@ def _apply_attack_damage(
             (
                 "system",
                 f"Damage to {target_label}: {attack.damage_dice}="
-                f"{attack.damage_roll.subtotal} + STR mod {attack.damage_modifier} "
+                f"{attack.damage_roll.subtotal} + {attack.damage_modifier_label} {attack.damage_modifier} "
                 f"= {damage_total}; final damage {damage}, applied {applied_damage}.",
             ),
             (
@@ -2687,6 +2712,7 @@ def _snapshot_pending_attack(
         damage_die_rolls=[list(die.rolls) for die in attack.damage_roll.dice],
         damage_die_sides=[die.sides for die in attack.damage_roll.dice],
         damage_modifier=attack.damage_modifier,
+        damage_modifier_label=attack.damage_modifier_label,
         attack_type=attack.attack_type,
         damage_type=attack.damage_type,
         weapon_id=attack.weapon_id,
@@ -2743,6 +2769,7 @@ def _restore_pending_attack(
         damage_roll=damage_roll,
         damage_dice=snapshot.damage_dice,
         damage_modifier=snapshot.damage_modifier,
+        damage_modifier_label=snapshot.damage_modifier_label,
         attack_type=snapshot.attack_type,
         damage_type=snapshot.damage_type,
         weapon_id=snapshot.weapon_id,
@@ -2783,16 +2810,119 @@ def _equipped_weapon(attacker: Actor, items_by_id: dict[str, Item]) -> Item | No
     return None
 
 
-def _weapon_attack_type(weapon: Item | None) -> str:
-    if weapon is None or weapon.weapon_stat is None:
-        return "melee"
-    return weapon.weapon_stat.attack_type or "melee"
+def _unarmed_attack_source(attacker: Actor) -> AttackSource:
+    strength_modifier = attacker.get_modifier(attacker.attributes.strength)
+    return AttackSource(
+        name="Unarmed Strike",
+        damage_dice="1d4",
+        damage_bonus=strength_modifier,
+        damage_bonus_label="STR mod",
+        damage_type="damage",
+        attack_bonus=strength_modifier,
+        attack_bonus_label="STR mod",
+        ability_modifier=strength_modifier,
+        attack_modes=("melee",),
+    )
 
 
-def _attack_ability_modifier(attacker: Actor, weapon: Item | None) -> int:
-    if _weapon_attack_type(weapon) == "ranged":
-        return attacker.get_modifier(attacker.attributes.dexterity)
-    return attacker.get_modifier(attacker.attributes.strength)
+def _weapon_attack_source(attacker: Actor, weapon: Item) -> AttackSource:
+    assert weapon.weapon_stat is not None
+    attack_type = weapon.weapon_stat.attack_type or "melee"
+    ability_modifier = (
+        attacker.get_modifier(attacker.attributes.dexterity)
+        if attack_type == "ranged"
+        else attacker.get_modifier(attacker.attributes.strength)
+    )
+    proficiency_bonus = _weapon_proficiency_bonus(attacker, weapon)
+    ability_label = "DEX mod" if attack_type == "ranged" else "STR mod"
+    return AttackSource(
+        name=weapon.name,
+        damage_dice=weapon.weapon_stat.damage,
+        damage_bonus=ability_modifier,
+        damage_bonus_label=ability_label,
+        damage_type=weapon.weapon_stat.damage_type,
+        attack_bonus=ability_modifier + proficiency_bonus,
+        attack_bonus_label=(
+            f"{ability_label} + proficiency {proficiency_bonus}"
+            if proficiency_bonus
+            else ability_label
+        ),
+        ability_modifier=ability_modifier,
+        proficiency_bonus=proficiency_bonus,
+        attack_modes=(attack_type,),
+        range_normal=weapon.weapon_stat.range_normal,
+        range_long=weapon.weapon_stat.range_long,
+        weapon_id=weapon.id,
+        weapon_name=weapon.name,
+        weapon_properties=tuple(weapon.weapon_stat.properties),
+    )
+
+
+def _monster_attack_source(attack) -> AttackSource:
+    return AttackSource(
+        name=attack.name,
+        damage_dice=attack.damage_dice,
+        damage_bonus=attack.damage_bonus,
+        damage_bonus_label="bonus",
+        damage_type=attack.damage_type,
+        attack_bonus=attack.attack_bonus,
+        attack_bonus_label="attack bonus",
+        attack_modes=attack.attack_modes,
+        range_normal=attack.range_normal,
+        range_long=attack.range_long,
+        weapon_name=attack.name,
+    )
+
+
+def _select_attack_source(
+    attacker: Actor,
+    items_by_id: dict[str, Item],
+    *,
+    preferred_attack_type: str | None = None,
+) -> AttackSource | None:
+    sources = _attack_sources(attacker, items_by_id)
+    if not sources:
+        return None
+    if preferred_attack_type is not None:
+        for source in sources:
+            if preferred_attack_type not in source.attack_modes:
+                continue
+            return _source_for_mode(source, preferred_attack_type)
+        return None
+
+    for attack_type in ("melee", "ranged"):
+        for source in sources:
+            if attack_type not in source.attack_modes:
+                continue
+            return _source_for_mode(source, attack_type)
+    return None
+
+
+def _attack_sources(attacker: Actor, items_by_id: dict[str, Item]) -> list[AttackSource]:
+    weapon = _equipped_weapon(attacker, items_by_id)
+    if weapon is not None:
+        return [_weapon_attack_source(attacker, weapon)]
+    return [_monster_attack_source(attack) for attack in attacker.monster_attacks]
+
+
+def _source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
+    return AttackSource(
+        name=source.name,
+        damage_dice=source.damage_dice,
+        damage_bonus=source.damage_bonus,
+        damage_bonus_label=source.damage_bonus_label,
+        damage_type=source.damage_type,
+        attack_bonus=source.attack_bonus,
+        attack_bonus_label=source.attack_bonus_label,
+        ability_modifier=source.ability_modifier,
+        proficiency_bonus=source.proficiency_bonus,
+        attack_modes=(attack_type,),
+        range_normal=source.range_normal,
+        range_long=source.range_long,
+        weapon_id=source.weapon_id,
+        weapon_name=source.weapon_name,
+        weapon_properties=source.weapon_properties,
+    )
 
 
 def _attack_roll_mode(
@@ -2811,19 +2941,18 @@ def _can_make_opportunity_attack(
     attacker: Actor,
     items_by_id: dict[str, Item],
 ) -> bool:
-    return _weapon_attack_type(_equipped_weapon(attacker, items_by_id)) != "ranged"
+    attack_source = _select_attack_source(attacker, items_by_id, preferred_attack_type="melee")
+    return attack_source is not None and "melee" in attack_source.attack_modes
 
 
 def _weapon_normal_range_squares(
     attacker: Actor,
     items_by_id: dict[str, Item],
 ) -> int | None:
-    weapon = _equipped_weapon(attacker, items_by_id)
-    if weapon is None or weapon.weapon_stat is None:
+    attack_source = _select_attack_source(attacker, items_by_id, preferred_attack_type="ranged")
+    if attack_source is None or attack_source.range_normal is None:
         return None
-    if weapon.weapon_stat.range_normal is None:
-        return None
-    return max(1, weapon.weapon_stat.range_normal // attacker.attributes.movement.feet_per_square)
+    return max(1, attack_source.range_normal // attacker.attributes.movement.feet_per_square)
 
 
 def _matching_damage_reroll_rule(

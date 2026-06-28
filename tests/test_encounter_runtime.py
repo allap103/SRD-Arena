@@ -203,7 +203,9 @@ def test_ranged_weapon_attacks_have_disadvantage_when_target_is_adjacent(monkeyp
 
     assert session.encounter_state is not None
     enemy = session.encounter_state.enemies[0]
+    enemy.behavior.type = "archer"
     enemy.actor.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longbow")
+    session.encounter_state._initialize_behaviors()
     enemy.position.x = 2
     enemy.position.y = 2
     session.encounter_state.enemies[1].actor.current_health = 0
@@ -238,7 +240,6 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch
     assert session.encounter_state is not None
     enemy = session.encounter_state.enemies[0]
     enemy.behavior.type = "archer"
-    enemy.actor.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Shortbow")
     session.encounter_state._initialize_behaviors()
     session.encounter_state.enemies[1].actor.current_health = 0
     session.encounter_state.enemies[2].actor.current_health = 0

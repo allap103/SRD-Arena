@@ -50,6 +50,10 @@ def test_load_actor_can_reference_system_stat_block() -> None:
     assert actor.attributes.strength == 8
     assert actor.attributes.dexterity == 14
     assert actor.attributes.movement.speed_feet == 30
+    assert [attack.name for attack in actor.monster_attacks] == ["Scimitar", "Shortbow"]
+    assert actor.monster_attacks[0].attack_modes == ("melee",)
+    assert actor.monster_attacks[1].attack_modes == ("ranged",)
+    assert actor.monster_attacks[1].range_normal == 80
 
 
 def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
