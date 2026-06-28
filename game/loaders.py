@@ -814,6 +814,9 @@ def _build_system_item(raw_item: dict) -> Item:
                 damage=str(raw_item.get("dmg1", "1d4")),
                 damage_type=_damage_type(str(raw_item.get("dmgType", ""))),
                 properties=[_property_name(str(prop)) for prop in raw_item.get("property", [])],
+                attack_type=_attack_type(item_type),
+                range_normal=_weapon_range(raw_item)[0],
+                range_long=_weapon_range(raw_item)[1],
                 weapon_category=str(raw_item.get("weaponCategory", "")),
             ),
             item_type=item_type,
@@ -863,6 +866,32 @@ def _armor_type(item_type: str) -> str:
     if item_type.startswith("LA"):
         return "light"
     return "armor"
+
+
+def _attack_type(item_type: str) -> str:
+    base_type = item_type.split("|", 1)[0]
+    if base_type == "R":
+        return "ranged"
+    if base_type == "M":
+        return "melee"
+    return ""
+
+
+def _weapon_range(raw_item: dict) -> tuple[int | None, int | None]:
+    raw_range = raw_item.get("range")
+    if not isinstance(raw_range, str):
+        return None, None
+    parts = raw_range.split("/", 1)
+    try:
+        normal = int(parts[0])
+    except ValueError:
+        return None, None
+    if len(parts) == 1:
+        return normal, None
+    try:
+        return normal, int(parts[1])
+    except ValueError:
+        return normal, None
 
 
 def _damage_type(value: str) -> str:

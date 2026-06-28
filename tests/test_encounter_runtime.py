@@ -8,6 +8,10 @@ from game.save import load_from_file, save_to_file
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 
 
+def _item_id_by_name(session, name: str) -> str:
+    return next(item_id for item_id, item in session.item_templates.items() if item.name == name)
+
+
 def test_goblin_encounter_scene_generates_runtime_actions_and_grid() -> None:
     session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -158,6 +162,122 @@ def test_enemy_movement_can_pause_for_player_opportunity_attack(monkeypatch) -> 
     assert session.encounter_state.enemies[0].position.y == 2
     assert session.encounter_state.pending_action is None
     assert session.encounter_state.current_decision().actor_ref == "player"
+
+
+def test_ranged_weapons_do_not_enable_opportunity_attacks() -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.player.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longbow")
+    session.encounter_state.player_position.x = 2
+    session.encounter_state.player_position.y = 2
+    session.encounter_state.enemies[0].position.x = 3
+    session.encounter_state.enemies[0].position.y = 2
+    session.encounter_state.enemies[1].actor.current_health = 0
+    session.encounter_state.enemies[2].actor.current_health = 0
+    session.encounter_state.turn_index = 1
+
+    def scripted_behavior():
+        context = yield None
+        while True:
+            context = yield EncounterAction("Move", "move", "right")
+
+    behavior = scripted_behavior()
+    next(behavior)
+    session.encounter_state._behaviors[0] = behavior
+
+    progress = session.encounter_state.advance_until_next_decision(session.player)
+
+    assert session.encounter_state.current_decision().kind == "turn"
+    assert session.encounter_state.enemies[0].position.x > 3
+    assert session.encounter_state.pending_action is None
+    assert session.encounter_state.current_decision().actor_ref == "player"
+
+
+def test_ranged_weapon_attacks_have_disadvantage_when_target_is_adjacent(monkeypatch) -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    enemy = session.encounter_state.enemies[0]
+    enemy.actor.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longbow")
+    enemy.position.x = 2
+    enemy.position.y = 2
+    session.encounter_state.enemies[1].actor.current_health = 0
+    session.encounter_state.enemies[2].actor.current_health = 0
+    session.encounter_state.player_position.x = 1
+    session.encounter_state.player_position.y = 2
+    session.encounter_state.turn_index = 1
+
+    rolls = iter([17, 5, 4])
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: next(rolls))
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: next(rolls))
+
+    progress = session.encounter_state.advance_until_next_decision(session.player)
+
+    attack_event = next(
+        event
+        for event in progress.events
+        if event.type == "attack_resolved" and event.actor_ref == "enemy:0"
+    )
+    assert attack_event.data["attack_roll_detail"]["attack_type"] == "ranged"
+    assert attack_event.data["attack_roll_detail"]["mode"] == "disadvantage"
+    assert attack_event.data["attack_roll_detail"]["dice"] == [17, 5]
+    assert attack_event.data["attack_roll_detail"]["weapon_name"] == "Longbow"
+    assert attack_event.data["hit"] is False
+
+
+def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch) -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    enemy = session.encounter_state.enemies[0]
+    enemy.behavior.type = "archer"
+    enemy.actor.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Shortbow")
+    session.encounter_state._initialize_behaviors()
+    session.encounter_state.enemies[1].actor.current_health = 0
+    session.encounter_state.enemies[2].actor.current_health = 0
+    enemy.position.x = 5
+    enemy.position.y = 2
+    session.encounter_state.player_position.x = 1
+    session.encounter_state.player_position.y = 6
+    session.encounter_state.turn_index = 1
+
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 20)
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 4)
+
+    progress = session.encounter_state.advance_until_next_decision(session.player)
+
+    attack_event = next(
+        event
+        for event in progress.events
+        if event.type == "attack_resolved" and event.actor_ref == "enemy:0"
+    )
+    assert enemy.position.x == 5
+    assert enemy.position.y == 2
+    assert attack_event.data["attack_roll_detail"]["attack_type"] == "ranged"
+    assert attack_event.data["attack_roll_detail"]["weapon_name"] == "Shortbow"
+
+
+def test_weapon_runtime_model_tracks_attack_type() -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+
+    longsword_id = _item_id_by_name(session, "Longsword")
+    longbow_id = _item_id_by_name(session, "Longbow")
+    shortbow_id = _item_id_by_name(session, "Shortbow")
+
+    assert session.item_templates[longsword_id].weapon_stat is not None
+    assert session.item_templates[longsword_id].weapon_stat.attack_type == "melee"
+    assert session.item_templates[longbow_id].weapon_stat is not None
+    assert session.item_templates[longbow_id].weapon_stat.attack_type == "ranged"
+    assert session.item_templates[shortbow_id].weapon_stat is not None
+    assert session.item_templates[shortbow_id].weapon_stat.range_normal == 80
+    assert session.item_templates[shortbow_id].weapon_stat.range_long == 320
 
 
 def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:

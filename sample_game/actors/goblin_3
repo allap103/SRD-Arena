@@ -1,7 +1,7 @@
 {
     "id": "goblin_3",
     "stat_block": {
-        "name": "Goblin",
-        "source": "MM"
+        "name": "Goblin Warrior",
+        "source": "XMM"
     }
 }

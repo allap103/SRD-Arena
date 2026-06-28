@@ -171,6 +171,7 @@ class PendingAttackSnapshot:
     damage_die_rolls: list[list[int]]
     damage_die_sides: list[int]
     damage_modifier: int
+    attack_type: str
     damage_type: str
     weapon_id: str | None
     weapon_name: str | None
@@ -219,6 +220,7 @@ class AttackOutcome:
     damage_roll: DicePoolResult | None = None
     damage_dice: str | None = None
     damage_modifier: int = 0
+    attack_type: str = "melee"
     damage_type: str = "damage"
     weapon_id: str | None = None
     weapon_name: str | None = None
@@ -444,7 +446,7 @@ class EncounterState:
     def _initialize_behaviors(self) -> None:
         self._behaviors = []
         for enemy in self.enemies:
-            behavior = _build_behavior(enemy)
+            behavior = _build_behavior(enemy, self.item_templates)
             next(behavior)
             self._behaviors.append(behavior)
 
@@ -800,6 +802,12 @@ class EncounterState:
                 attacker_label=player.name,
                 target_label=target_label,
                 items_by_id=self.item_templates,
+                attacker_position=self.player_position,
+                nearby_opponent_positions=tuple(
+                    other_enemy.position
+                    for other_enemy in self.enemies
+                    if other_enemy.is_alive
+                ),
             )
             reroll_rule = _matching_damage_reroll_rule(player, attack)
             if attack.hit and reroll_rule is not None:
@@ -979,6 +987,7 @@ class EncounterState:
             destination = Position(enemy.position.x + dx, enemy.position.y + dy)
             remaining = max(0, (enemy.movement_remaining or 0) - 1)
             if self._queue_player_opportunity_attack(
+                player,
                 enemy_index,
                 action_id,
                 direction,
@@ -1024,6 +1033,8 @@ class EncounterState:
                 attacker_label=attacker_label,
                 target_label=target_label,
                 items_by_id=self.item_templates,
+                attacker_position=enemy.position,
+                nearby_opponent_positions=(self.player_position,),
             )
             _apply_attack_damage(
                 attack,
@@ -1451,6 +1462,7 @@ class EncounterState:
                 if not self._is_free_for_enemy(target_x, target_y):
                     break
                 if self._queue_player_opportunity_attack(
+                    player,
                     enemy_index,
                     action_id,
                     direction,
@@ -1492,6 +1504,8 @@ class EncounterState:
                     attacker_label=f"Enemy {enemy_index + 1} ({enemy.actor.name})",
                     target_label=player.name,
                     items_by_id=self.item_templates,
+                    attacker_position=enemy.position,
+                    nearby_opponent_positions=(self.player_position,),
                 )
                 _apply_attack_damage(
                     attack,
@@ -1567,6 +1581,8 @@ class EncounterState:
                 target_label=target_label,
                 action_label="Opportunity attack",
                 items_by_id=self.item_templates,
+                attacker_position=self.player_position,
+                nearby_opponent_positions=(target.position,),
             )
             reroll_rule = _matching_damage_reroll_rule(player, attack)
             if attack.hit and reroll_rule is not None:
@@ -1717,6 +1733,7 @@ class EncounterState:
             if enemy.is_alive
             and self._actors_are_opponents(_enemy_ref(index), "player")
             and enemy.reaction_available
+            and _can_make_opportunity_attack(enemy.actor, self.item_templates)
             and _is_adjacent(origin, enemy.position)
             and not _is_adjacent(destination, enemy.position)
         ]
@@ -1738,6 +1755,8 @@ class EncounterState:
                 target_label=player.name,
                 action_label="Opportunity attack",
                 items_by_id=self.item_templates,
+                attacker_position=enemy.position,
+                nearby_opponent_positions=(self.player_position,),
             )
             _apply_attack_damage(
                 attack,
@@ -2029,6 +2048,7 @@ class EncounterState:
 
     def _queue_player_opportunity_attack(
         self,
+        player: Actor,
         enemy_index: int,
         action_id: str,
         direction: str,
@@ -2040,6 +2060,8 @@ class EncounterState:
         if not self._actors_are_opponents("player", _enemy_ref(enemy_index)):
             return False
         if not self.player_reaction_available:
+            return False
+        if not _can_make_opportunity_attack(player, self.item_templates):
             return False
         if not _is_adjacent(from_position, self.player_position):
             return False
@@ -2325,7 +2347,12 @@ class EncounterState:
         return self.enemies[_enemy_index(actor_ref)].actor
 
 
-def _build_behavior(enemy: EncounterEnemyState) -> Generator[EncounterAction | None, BehaviorContext, None]:
+def _build_behavior(
+    enemy: EncounterEnemyState,
+    items_by_id: dict[str, Item],
+) -> Generator[EncounterAction | None, BehaviorContext, None]:
+    if enemy.behavior.type == "archer":
+        return _archer_behavior(enemy, items_by_id)
     if enemy.behavior.type == "guard":
         return _guard_behavior(enemy)
     if enemy.behavior.type == "patrol":
@@ -2340,6 +2367,24 @@ def _chase_behavior(enemy: EncounterEnemyState) -> Generator[EncounterAction | N
             context = yield EncounterAction("Attack", "attack")
             continue
 
+        direction = _step_toward(context.enemy_position, context.player_position)
+        command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+        context = yield command
+
+
+def _archer_behavior(
+    enemy: EncounterEnemyState,
+    items_by_id: dict[str, Item],
+) -> Generator[EncounterAction | None, BehaviorContext, None]:
+    context = yield None
+    while True:
+        range_squares = _weapon_normal_range_squares(enemy.actor, items_by_id)
+        if range_squares is not None and _chebyshev_distance(
+            context.enemy_position,
+            context.player_position,
+        ) <= range_squares:
+            context = yield EncounterAction("Attack", "attack")
+            continue
         direction = _step_toward(context.enemy_position, context.player_position)
         command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
         context = yield command
@@ -2455,12 +2500,24 @@ def _resolve_attack(
     target_label: str,
     action_label: str = "Attack",
     items_by_id: dict[str, Item] | None = None,
+    attacker_position: Position | None = None,
+    nearby_opponent_positions: tuple[Position, ...] = (),
 ) -> AttackOutcome:
     weapon = _equipped_weapon(attacker, items_by_id or {})
-    ability_modifier = attacker.get_modifier(attacker.attributes.strength)
+    attack_type = _weapon_attack_type(weapon)
+    ability_modifier = _attack_ability_modifier(attacker, weapon)
     proficiency_bonus = _weapon_proficiency_bonus(attacker, weapon)
     attack_modifier = ability_modifier + proficiency_bonus
-    attack_result = resolve_d20(modifier=attack_modifier, roller=roll_die)
+    attack_roll_mode = _attack_roll_mode(
+        attack_type,
+        attacker_position,
+        nearby_opponent_positions,
+    )
+    attack_result = resolve_d20(
+        modifier=attack_modifier,
+        mode=attack_roll_mode,
+        roller=roll_die,
+    )
     target_ac = defender.get_armor_class()
     attack_check = resolve_check(attack_result, target_ac)
     attack_roll_detail = {
@@ -2468,6 +2525,7 @@ def _resolve_attack(
         "dice": list(attack_result.dice),
         "selected_index": attack_result.selected_index,
         "mode": attack_result.mode,
+        "attack_type": attack_type,
         "ability_modifier": ability_modifier,
         "proficiency_bonus": proficiency_bonus,
         "modifier": attack_modifier,
@@ -2481,9 +2539,10 @@ def _resolve_attack(
     proficiency_text = (
         f" + proficiency {proficiency_bonus}" if proficiency_bonus else ""
     )
+    ability_label = "DEX" if attack_type == "ranged" else "STR"
     attack_detail_message = (
         f"{action_prefix}: {attacker_label} attacks {target_label}. "
-        f"Roll d20={attack_result.selected} + STR mod {ability_modifier}{proficiency_text} "
+        f"Roll d20={attack_result.selected} + {ability_label} mod {ability_modifier}{proficiency_text} "
         f"= {attack_result.total} vs {target_label} AC {target_ac}."
     )
     if not attack_check.success:
@@ -2498,6 +2557,7 @@ def _resolve_attack(
             defender_defeated=False,
             attack_roll_detail=attack_roll_detail,
             attack_check=attack_check,
+            attack_type=attack_type,
         )
 
     damage_dice = weapon.weapon_stat.damage if weapon and weapon.weapon_stat else "1d4"
@@ -2533,6 +2593,7 @@ def _resolve_attack(
         damage_roll=damage_roll,
         damage_dice=damage_dice,
         damage_modifier=ability_modifier,
+        attack_type=attack_type,
         damage_type=(
             weapon.weapon_stat.damage_type
             if weapon is not None and weapon.weapon_stat is not None
@@ -2626,6 +2687,7 @@ def _snapshot_pending_attack(
         damage_die_rolls=[list(die.rolls) for die in attack.damage_roll.dice],
         damage_die_sides=[die.sides for die in attack.damage_roll.dice],
         damage_modifier=attack.damage_modifier,
+        attack_type=attack.attack_type,
         damage_type=attack.damage_type,
         weapon_id=attack.weapon_id,
         weapon_name=attack.weapon_name,
@@ -2681,6 +2743,7 @@ def _restore_pending_attack(
         damage_roll=damage_roll,
         damage_dice=snapshot.damage_dice,
         damage_modifier=snapshot.damage_modifier,
+        attack_type=snapshot.attack_type,
         damage_type=snapshot.damage_type,
         weapon_id=snapshot.weapon_id,
         weapon_name=snapshot.weapon_name,
@@ -2720,6 +2783,49 @@ def _equipped_weapon(attacker: Actor, items_by_id: dict[str, Item]) -> Item | No
     return None
 
 
+def _weapon_attack_type(weapon: Item | None) -> str:
+    if weapon is None or weapon.weapon_stat is None:
+        return "melee"
+    return weapon.weapon_stat.attack_type or "melee"
+
+
+def _attack_ability_modifier(attacker: Actor, weapon: Item | None) -> int:
+    if _weapon_attack_type(weapon) == "ranged":
+        return attacker.get_modifier(attacker.attributes.dexterity)
+    return attacker.get_modifier(attacker.attributes.strength)
+
+
+def _attack_roll_mode(
+    attack_type: str,
+    attacker_position: Position | None,
+    nearby_opponent_positions: tuple[Position, ...],
+) -> str:
+    if attack_type != "ranged" or attacker_position is None:
+        return "normal"
+    if any(_is_adjacent(attacker_position, position) for position in nearby_opponent_positions):
+        return "disadvantage"
+    return "normal"
+
+
+def _can_make_opportunity_attack(
+    attacker: Actor,
+    items_by_id: dict[str, Item],
+) -> bool:
+    return _weapon_attack_type(_equipped_weapon(attacker, items_by_id)) != "ranged"
+
+
+def _weapon_normal_range_squares(
+    attacker: Actor,
+    items_by_id: dict[str, Item],
+) -> int | None:
+    weapon = _equipped_weapon(attacker, items_by_id)
+    if weapon is None or weapon.weapon_stat is None:
+        return None
+    if weapon.weapon_stat.range_normal is None:
+        return None
+    return max(1, weapon.weapon_stat.range_normal // attacker.attributes.movement.feet_per_square)
+
+
 def _matching_damage_reroll_rule(
     attacker: Actor,
     attack: AttackOutcome,
@@ -2732,7 +2838,7 @@ def _matching_damage_reroll_rule(
         else "one_hand"
     )
     context = {
-        "attack_type": "melee",
+        "attack_type": attack.attack_type,
         "wielded_with": wielded_with,
         "weapon_properties": list(attack.weapon_properties),
     }
