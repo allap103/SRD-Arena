@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from game.engine import Game
+from game.encounter import EncounterAction
 from game.rules import RuleGrant, matching_rules, reroll_eligible_indices
 from game.save import load_from_file, save_to_file
 from game.systems.roll import reroll_dice, resolve_dice
@@ -197,6 +198,85 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
     assert not any(event.type == "attack_pending" for event in result.events)
 
 
+def test_opportunity_attack_reroll_resumes_interrupted_movement(monkeypatch):
+    session = _sample_opportunity_attack()
+    damage_rolls = iter([1, 2, 6, 5])
+    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 20)
+    monkeypatch.setattr(
+        "game.encounter.roll_dice",
+        lambda _count, _sides: next(damage_rolls),
+    )
+
+    opportunity = session.choose(
+        session.get_scene_view().choices.index("Opportunity attack Goblin")
+    )
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    assert [frame.kind for frame in state.decision_stack] == [
+        "reaction",
+        "reroll_dice",
+    ]
+    assert state.enemies[0].position.x == 3
+    assert state.enemies[0].actor.get_health() == 30
+    assert next(event for event in opportunity.events if event.type == "attack_pending").data[
+        "reaction"
+    ] is True
+
+    session.choose(session.get_scene_view().choices.index("Reroll damage die 1 (1)"))
+    final = session.choose(
+        session.get_scene_view().choices.index("Reroll damage die 2 (2)")
+    )
+
+    assert state.pending_attack is None
+    assert state.pending_action is None
+    assert state.decision_stack == []
+    assert state.enemies[0].actor.get_health() == 15
+    assert state.enemies[0].position.x > 3
+    resolved = next(event for event in final.events if event.type == "attack_resolved")
+    assert resolved.data["reaction"] is True
+    assert len(
+        [event for event in final.events if event.type == "decision_closed"]
+    ) >= 2
+
+
+def test_nested_opportunity_reroll_survives_save_and_load(tmp_path, monkeypatch):
+    session = _sample_opportunity_attack()
+    damage_rolls = iter([1, 5])
+    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 20)
+    monkeypatch.setattr(
+        "game.encounter.roll_dice",
+        lambda _count, _sides: next(damage_rolls),
+    )
+    session.choose(
+        session.get_scene_view().choices.index("Opportunity attack Goblin")
+    )
+
+    save_path = tmp_path / "nested-reroll.json"
+    save_to_file(session, save_path)
+    restored = load_from_file(save_path, SAMPLE_GAME_DIR)
+
+    assert restored.encounter_state is not None
+    state = restored.encounter_state
+    assert [frame.kind for frame in state.decision_stack] == [
+        "reaction",
+        "reroll_dice",
+    ]
+    assert state.pending_action is not None
+    assert state.pending_attack is not None
+    assert state.pending_attack.continuation == "complete_reaction"
+    assert state.pending_attack.reaction is True
+
+    monkeypatch.setattr("game.encounter.roll_dice", lambda _count, _sides: 6)
+    restored.choose(
+        restored.get_scene_view().choices.index("Reroll damage die 1 (1)")
+    )
+
+    assert state.pending_attack is None
+    assert state.pending_action is None
+    assert state.decision_stack == []
+
+
 def _adjacent_sample_encounter():
     session = Game(SAMPLE_GAME_DIR, start_scene="goblin_encounter").create_session()
     session.get_scene_view()
@@ -205,4 +285,31 @@ def _adjacent_sample_encounter():
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
+    return session
+
+
+def _sample_opportunity_attack():
+    session = Game(SAMPLE_GAME_DIR, start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 2
+    state.player_position.y = 2
+    state.enemies[0].position.x = 3
+    state.enemies[0].position.y = 2
+    state.enemies[0].actor.current_health = 30
+    state.turn_index = 1
+
+    def scripted_behavior():
+        _ = yield None
+        while True:
+            _ = yield EncounterAction("Move", "move", "right")
+
+    behavior = scripted_behavior()
+    next(behavior)
+    state._behaviors[0] = behavior
+    progress = state.advance_until_next_decision(session.player)
+    assert progress.paused_for_decision is True
+    assert state.current_decision().kind == "reaction"
+    session.get_scene_view()
     return session

@@ -158,6 +158,8 @@ class PendingAttackStateModel(BaseModel):
     damage_type: str
     weapon_id: str | None = None
     weapon_name: str | None = None
+    continuation: str = "return_to_turn"
+    reaction: bool = False
     rule_id: str
     rule_source_type: str
     rule_source_id: str
@@ -382,6 +384,8 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
                 damage_type=snapshot.pending_attack.damage_type,
                 weapon_id=snapshot.pending_attack.weapon_id,
                 weapon_name=snapshot.pending_attack.weapon_name,
+                continuation=snapshot.pending_attack.continuation,
+                reaction=snapshot.pending_attack.reaction,
                 rule_id=snapshot.pending_attack.rule_id,
                 rule_source_type=snapshot.pending_attack.rule_source_type,
                 rule_source_id=snapshot.pending_attack.rule_source_id,
@@ -476,6 +480,8 @@ def _restore_encounter_state(
                 damage_type=state.pending_attack.damage_type,
                 weapon_id=state.pending_attack.weapon_id,
                 weapon_name=state.pending_attack.weapon_name,
+                continuation=state.pending_attack.continuation,
+                reaction=state.pending_attack.reaction,
                 rule_id=state.pending_attack.rule_id,
                 rule_source_type=state.pending_attack.rule_source_type,
                 rule_source_id=state.pending_attack.rule_source_id,

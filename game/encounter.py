@@ -171,6 +171,8 @@ class PendingAttackSnapshot:
     damage_type: str
     weapon_id: str | None
     weapon_name: str | None
+    continuation: str
+    reaction: bool
     rule_id: str
     rule_source_type: str
     rule_source_id: str
@@ -230,6 +232,8 @@ class PendingAttack:
     attacks_remaining: int
     attack: AttackOutcome
     rule: RuleGrant
+    continuation: str = "return_to_turn"
+    reaction: bool = False
 
 
 @dataclass
@@ -853,6 +857,8 @@ class EncounterState:
         target_label: str,
         action_id: str,
         progress: EncounterProgress,
+        continuation: str = "return_to_turn",
+        reaction: bool = False,
     ) -> None:
         frame_id = self._next_frame_id()
         current_frame = self.current_decision()
@@ -866,6 +872,8 @@ class EncounterState:
             attacks_remaining=self.player_attacks_remaining,
             attack=attack,
             rule=rule,
+            continuation=continuation,
+            reaction=reaction,
         )
         self.decision_stack.append(
             DecisionFrame(
@@ -1039,6 +1047,40 @@ class EncounterState:
             )
         )
         progress.transition = self._check_transition()
+        if (
+            pending.continuation == "complete_reaction"
+            and progress.transition is None
+            and player.get_health() > 0
+        ):
+            self._complete_parent_reaction(player, progress, pending.action_id)
+
+    def _complete_parent_reaction(
+        self,
+        player: Actor,
+        progress: EncounterProgress,
+        action_id: str,
+    ) -> None:
+        reaction = self.current_decision()
+        if reaction.kind != "reaction":
+            raise RuntimeError(
+                "Pending attack expected to resume a reaction, "
+                f"but current decision is '{reaction.kind}'."
+            )
+        self.decision_stack.pop()
+        progress.events.append(
+            self._event(
+                "decision_closed",
+                actor_ref="player",
+                frame_id=reaction.id,
+                action_id=action_id,
+            )
+        )
+        self._resume_pending_action(player, progress)
+        progress.transition = self._check_transition()
+        if progress.transition is not None or player.get_health() <= 0:
+            return
+        follow_up = self.advance_until_next_decision(player)
+        self._merge_progress(progress, follow_up)
 
     def _pending_attack_event_data(self) -> dict[str, object]:
         pending = self.pending_attack
@@ -1066,6 +1108,7 @@ class EncounterState:
                 for index in eligible
             },
             "accept_action_id": f"{pending.action_id}-accept-damage",
+            "reaction": pending.reaction,
         }
 
     def advance_until_next_decision(self, player: Actor) -> EncounterProgress:
@@ -1251,6 +1294,20 @@ class EncounterState:
                 action_label="Opportunity attack",
                 items_by_id=self.item_templates,
             )
+            reroll_rule = _matching_damage_reroll_rule(player, attack)
+            if attack.hit and reroll_rule is not None:
+                self._open_damage_reroll_decision(
+                    attack=attack,
+                    rule=reroll_rule,
+                    target_index=target_index,
+                    attacker_label=player.name,
+                    target_label=target_label,
+                    action_id=resolved_action_id,
+                    progress=progress,
+                    continuation="complete_reaction",
+                    reaction=True,
+                )
+                return progress
             _apply_attack_damage(
                 attack,
                 target.actor,
@@ -2228,6 +2285,8 @@ def _snapshot_pending_attack(
         damage_type=attack.damage_type,
         weapon_id=attack.weapon_id,
         weapon_name=attack.weapon_name,
+        continuation=pending.continuation,
+        reaction=pending.reaction,
         rule_id=pending.rule.id,
         rule_source_type=pending.rule.source_type,
         rule_source_id=pending.rule.source_id,
@@ -2301,6 +2360,8 @@ def _restore_pending_attack(
             conditions=dict(snapshot.rule_conditions),
             parameters=dict(snapshot.rule_parameters),
         ),
+        continuation=snapshot.continuation,
+        reaction=snapshot.reaction,
     )
 
 
