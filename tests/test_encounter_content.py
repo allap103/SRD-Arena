@@ -69,6 +69,10 @@ def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
     assert player.attributes.level == 2
     assert player.attributes.proficiency_bonus == 2
     assert player.attributes.proficiencies["weapons"] == ["simple", "martial"]
+    assert player.attributes.proficiencies["saving_throws"] == [
+        "strength",
+        "constitution",
+    ]
     assert player.combat_profile.attacks_per_attack_action == 1
     assert "second_wind" in {grant.id for grant in player.feature_grants}
     second_wind = next(grant for grant in player.feature_grants if grant.id == "second_wind")

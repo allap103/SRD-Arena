@@ -21,6 +21,12 @@ from .roll import (
     roll_dice,
     roll_die,
 )
+from .saving_throw import (
+    SavingThrowModifiers,
+    SavingThrowResult,
+    reroll_saving_throw,
+    resolve_saving_throw,
+)
 
 __all__ = [
     "CheckResult",
@@ -33,14 +39,18 @@ __all__ = [
     "Equipment",
     "Inventory",
     "RollResolution",
+    "SavingThrowModifiers",
+    "SavingThrowResult",
     "extend_d20_pool",
     "reroll_dice",
     "reroll_dice_pool",
+    "reroll_saving_throw",
     "roll_d20_pool",
     "resolve_check",
     "resolve_d20",
     "resolve_dice",
     "resolve_roll_attempts",
+    "resolve_saving_throw",
     "select_d20",
     "roll_dice",
     "roll_die",

@@ -434,7 +434,25 @@ def _class_proficiencies(class_block: dict | None) -> dict[str, object]:
         return {}
     starting = class_block.get("startingProficiencies", {})
     weapons = starting.get("weapons", []) if isinstance(starting, dict) else []
-    return {"weapons": list(weapons)} if isinstance(weapons, list) else {}
+    proficiencies: dict[str, object] = {}
+    if isinstance(weapons, list):
+        proficiencies["weapons"] = list(weapons)
+
+    saving_throws = class_block.get("proficiency", [])
+    if isinstance(saving_throws, list):
+        ability_names = {
+            "str": "strength",
+            "dex": "dexterity",
+            "con": "constitution",
+            "int": "intelligence",
+            "wis": "wisdom",
+            "cha": "charisma",
+        }
+        proficiencies["saving_throws"] = [
+            ability_names.get(str(ability).casefold(), str(ability).casefold())
+            for ability in saving_throws
+        ]
+    return proficiencies
 
 
 def _resolve_class_feature_grants(
