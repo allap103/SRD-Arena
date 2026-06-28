@@ -84,6 +84,7 @@ class EncounterProgress:
     transition: str | None = None
     events: list[CombatEvent] = field(default_factory=list)
     paused_for_decision: bool = False
+    paused_for_ai: bool = False
 
 
 @dataclass
@@ -246,6 +247,7 @@ class EncounterState:
     player_position: Position
     enemies: list[EncounterEnemyState]
     control_mode: str = "default"
+    ai_action_limit: int | None = None
     turn_index: int = 0
     round_number: int = 1
     player_movement_remaining: int | None = None
@@ -600,6 +602,9 @@ class EncounterState:
         if actor_ref == "player":
             return ("player", None)
         return ("enemy", _enemy_index(actor_ref))
+
+    def needs_ai_advance(self) -> bool:
+        return self._actor_controller(self.current_decision().actor_ref) == "ai"
 
     def available_actions(self, player: Actor) -> list[EncounterAction]:
         decision = self.current_decision()
@@ -1344,6 +1349,7 @@ class EncounterState:
 
     def advance_until_next_decision(self, player: Actor) -> EncounterProgress:
         progress = EncounterProgress()
+        ai_actions_resolved = 0
         while True:
             if player.get_health() <= 0:
                 break
@@ -1364,11 +1370,17 @@ class EncounterState:
             if actor_type == "player":
                 break
             assert enemy_index is not None
-            completed_turn, enemy_progress = self._run_enemy_turn(
+            remaining_limit = (
+                None
+                if self.ai_action_limit is None
+                else self.ai_action_limit - ai_actions_resolved
+            )
+            completed_turn, enemy_progress, actions_resolved = self._run_enemy_turn(
                 player,
                 enemy_index,
-                _movement_squares(self.enemies[enemy_index].actor),
+                action_limit=remaining_limit,
             )
+            ai_actions_resolved += actions_resolved
             self._merge_progress(progress, enemy_progress)
             if progress.transition is not None or progress.paused_for_decision:
                 break
@@ -1378,20 +1390,30 @@ class EncounterState:
                 progress.transition = self._check_transition()
                 if progress.transition is not None:
                     break
+            if (
+                self.ai_action_limit is not None
+                and ai_actions_resolved >= self.ai_action_limit
+            ):
+                progress.paused_for_ai = True
+                break
         return progress
 
     def _run_enemy_turn(
         self,
         player: Actor,
         enemy_index: int,
-        movement_remaining: int,
-    ) -> tuple[bool, EncounterProgress]:
+        *,
+        action_limit: int | None = None,
+    ) -> tuple[bool, EncounterProgress, int]:
         enemy = self.enemies[enemy_index]
         progress = EncounterProgress()
         if not enemy.is_alive:
-            return True, progress
+            return True, progress, 0
+        if enemy.movement_remaining is None:
+            enemy.movement_remaining = _movement_squares(enemy.actor)
 
         behavior = self._behaviors[enemy_index]
+        actions_resolved = 0
         while enemy.is_alive and player.get_health() > 0:
             command = behavior.send(
                 BehaviorContext(
@@ -1420,7 +1442,7 @@ class EncounterState:
             )
 
             if command.kind == "move":
-                if movement_remaining <= 0:
+                if enemy.movement_remaining <= 0:
                     break
                 direction = str(command.value)
                 dx, dy = DIRECTION_DELTAS[direction]
@@ -1434,13 +1456,14 @@ class EncounterState:
                     direction,
                     Position(enemy.position.x, enemy.position.y),
                     Position(target_x, target_y),
-                    movement_remaining - 1,
+                    enemy.movement_remaining - 1,
                     progress,
                 ):
                     progress.paused_for_decision = True
-                    return False, progress
+                    return False, progress, actions_resolved
                 enemy.position = Position(target_x, target_y)
-                movement_remaining -= 1
+                enemy.movement_remaining -= 1
+                actions_resolved += 1
                 progress.messages.append(
                     (
                         "system",
@@ -1458,6 +1481,8 @@ class EncounterState:
                         },
                     )
                 )
+                if action_limit is not None and actions_resolved >= action_limit:
+                    return False, progress, actions_resolved
                 continue
 
             if command.kind == "attack":
@@ -1492,7 +1517,8 @@ class EncounterState:
                         },
                     )
                 )
-                break
+                actions_resolved += 1
+                return True, progress, actions_resolved
 
             progress.messages.append(("system", f"{enemy.actor.name} waits."))
             progress.events.append(
@@ -1503,8 +1529,9 @@ class EncounterState:
                     data={"kind": "wait"},
                 )
             )
-            break
-        return True, progress
+            actions_resolved += 1
+            return True, progress, actions_resolved
+        return True, progress, actions_resolved
 
     def _apply_reaction_action(
         self,
@@ -1661,10 +1688,12 @@ class EncounterState:
         if self._actor_controller(pending_action.actor_ref) == "user":
             enemy.movement_remaining = pending_action.remaining_movement_after
             return
-        completed_turn, resumed = self._run_enemy_turn(
+        enemy.movement_remaining = pending_action.remaining_movement_after
+        if self.ai_action_limit is not None:
+            return
+        completed_turn, resumed, _ = self._run_enemy_turn(
             player,
             pending_action.resume_enemy_index,
-            pending_action.remaining_movement_after or 0,
         )
         self._merge_progress(progress, resumed)
         if completed_turn and not progress.paused_for_decision:
@@ -2244,6 +2273,7 @@ class EncounterState:
         if source.transition is not None:
             target.transition = source.transition
         target.paused_for_decision = target.paused_for_decision or source.paused_for_decision
+        target.paused_for_ai = target.paused_for_ai or source.paused_for_ai
 
     def _export_pending_action(self) -> dict[str, object] | None:
         if self.pending_action is None:

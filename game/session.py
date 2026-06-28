@@ -63,6 +63,7 @@ class GameSession:
         game_dir: str | Path = "sample_game",
         save_dir: str | Path = "saves",
         control_mode: str = "default",
+        ai_action_limit: int | None = None,
     ):
         self.scenes = scenes
         self.player = player
@@ -75,6 +76,7 @@ class GameSession:
         self.game_dir = Path(game_dir)
         self.save_dir = Path(save_dir)
         self.control_mode = control_mode
+        self.ai_action_limit = ai_action_limit
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
 
@@ -248,6 +250,9 @@ class GameSession:
         self.actor_templates = loaded.actor_templates
         self.item_templates = loaded.item_templates
         self.encounter_state = loaded.encounter_state
+        self.control_mode = loaded.control_mode
+        if self.encounter_state is not None:
+            self.encounter_state.ai_action_limit = self.ai_action_limit
         self._encounter_actions = []
         self._ensure_encounter_state()
 
@@ -320,6 +325,50 @@ class GameSession:
             combat_state=combat_state,
         )
 
+    def advance_ai(self) -> TurnResult:
+        self._ensure_encounter_state()
+        if self.encounter_state is None:
+            raise RuntimeError("AI advancement requested without an active encounter.")
+        if not self.encounter_state.needs_ai_advance():
+            raise RuntimeError("AI advancement requested while no AI actor is active.")
+
+        progress = self.encounter_state.advance_until_next_decision(self.player)
+        transition = progress.transition
+        if (
+            self.player.get_health() <= 0
+            and self.current_scene.encounter
+            and self.current_scene.encounter.defeat
+        ):
+            transition = self.current_scene.encounter.defeat.next_scene
+
+        scene_changed = False
+        if transition is not None:
+            previous_scene_id = self.current_scene_id
+            self.current_scene_id = transition
+            self.encounter_state = None
+            self._encounter_actions = []
+            scene_changed = previous_scene_id != transition
+
+        combat_state = (
+            self.encounter_state.export_state(self.player)
+            if self.encounter_state is not None
+            else None
+        )
+        decision = (
+            self.encounter_state.export_decision()
+            if self.encounter_state is not None
+            else None
+        )
+        return TurnResult(
+            scene=self.get_scene_view(),
+            messages=progress.messages,
+            next_scene_id=self.current_scene_id,
+            scene_changed=scene_changed,
+            events=progress.events,
+            decision=decision,
+            combat_state=combat_state,
+        )
+
     def _ensure_encounter_state(self) -> None:
         scene = self.current_scene
         if scene.encounter is None:
@@ -335,6 +384,7 @@ class GameSession:
             self.item_templates,
             self.control_mode,
         )
+        self.encounter_state.ai_action_limit = self.ai_action_limit
         self._encounter_actions = []
 
     def _clear_encounter_if_scene_changed(self, previous_scene_id: str, next_scene_id: str) -> None:
@@ -362,6 +412,7 @@ class GameSession:
             self.actor_templates,
             self.item_templates,
         )
+        self.encounter_state.ai_action_limit = self.ai_action_limit
 
     def _non_encounter_action_details(self) -> list[ActionView]:
         scene_actions = [

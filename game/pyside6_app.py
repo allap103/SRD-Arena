@@ -483,12 +483,14 @@ class CyoaPySide6Window(QMainWindow):
         super().__init__()
         self.game = game or Game(GAME_DIR)
         self.session: GameSession = self.game.create_session()
+        self.session.ai_action_limit = 1
         self._items_by_id = {item.id: item for item in self.game.items}
         self._presentation: SessionPresentation | None = None
         self._pending_target_mode: TargetSelectionMode | None = None
         self._action_menu_scope: ActionMenuScope | None = None
         self._combat_log_scene_id: str | None = None
         self._logged_round_number: int | None = None
+        self._ai_step_scheduled = False
 
         self.setWindowTitle("CYOA")
         self.resize(1400, 900)
@@ -741,6 +743,7 @@ class CyoaPySide6Window(QMainWindow):
             self.encounter_panel.show()
             self._sync_combat_log_round(presentation.scene_id)
             self._render_encounter(presentation)
+        self._schedule_ai_step_if_needed()
 
     def _render_story_actions(self, actions: list[ActionView]) -> None:
         _clear_layout(self.story_choices_layout)
@@ -1313,6 +1316,24 @@ class CyoaPySide6Window(QMainWindow):
     def _scroll_roll_log_to_bottom(self) -> None:
         scrollbar = self.roll_scroll.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
+
+    def _schedule_ai_step_if_needed(self) -> None:
+        state = self.session.encounter_state
+        if (
+            self._ai_step_scheduled
+            or state is None
+            or not state.needs_ai_advance()
+        ):
+            return
+        self._ai_step_scheduled = True
+        QTimer.singleShot(500, self._advance_ai_step)
+
+    def _advance_ai_step(self) -> None:
+        self._ai_step_scheduled = False
+        state = self.session.encounter_state
+        if state is None or not state.needs_ai_advance():
+            return
+        self._apply_turn_result(self.session.advance_ai())
 
     def show_menu_root(self) -> None:
         self.sidebar_stack.setCurrentIndex(0)

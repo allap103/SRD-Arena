@@ -189,3 +189,45 @@ def test_all_user_mode_is_preserved_in_save_games():
     assert restored.control_mode == "all-user"
     assert restored.encounter_state is not None
     assert restored.encounter_state.control_mode == "all-user"
+
+
+def test_paced_ai_resolves_one_visible_action_per_step():
+    session = Game(
+        SAMPLE_GAME_DIR,
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.ai_action_limit = 1
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+
+    first = session.choose(session.get_scene_view().choices.index("Wait"))
+
+    assert state.current_decision().actor_ref == "enemy:0"
+    assert len(
+        [event for event in first.events if event.type == "movement_resolved"]
+    ) == 1
+    assert state.needs_ai_advance() is True
+
+    second = session.advance_ai()
+
+    assert len(
+        [event for event in second.events if event.type == "movement_resolved"]
+    ) == 1
+    assert state.current_decision().actor_ref == "enemy:0"
+
+
+def test_default_ai_still_resolves_until_the_next_user_decision():
+    session = Game(
+        SAMPLE_GAME_DIR,
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+
+    result = session.choose(session.get_scene_view().choices.index("Wait"))
+
+    assert session.encounter_state is not None
+    assert session.encounter_state.current_decision().actor_ref == "player"
+    assert len(
+        [event for event in result.events if event.type == "movement_resolved"]
+    ) > 1
