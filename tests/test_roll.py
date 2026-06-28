@@ -2,7 +2,17 @@ from collections.abc import Iterator
 
 import pytest
 
-from game.systems.roll import resolve_check, resolve_d20, resolve_dice
+from game.systems.roll import (
+    extend_d20_pool,
+    reroll_dice,
+    reroll_dice_pool,
+    roll_d20_pool,
+    resolve_check,
+    resolve_d20,
+    resolve_dice,
+    resolve_roll_attempts,
+    select_d20,
+)
 
 
 def _roller(results: list[int]) -> tuple[Iterator[int], object]:
@@ -26,6 +36,36 @@ def test_resolve_d20_selects_die_for_mode(mode, expected_selected, expected_tota
 
     assert result.selected == expected_selected
     assert result.total == expected_total
+
+
+def test_extended_d20_pool_can_select_highest_of_three():
+    _, roller = _roller([7, 16, 19])
+    pool = roll_d20_pool(2, roller=roller)
+    extended_pool = extend_d20_pool(pool, roller=roller)
+
+    result = select_d20(
+        extended_pool,
+        selected_index=2,
+        modifier=3,
+        mode="advantage",
+    )
+
+    assert pool.dice == (7, 16)
+    assert extended_pool.dice == (7, 16, 19)
+    assert result.selected == 19
+    assert result.total == 22
+
+
+def test_extended_d20_pool_leaves_selection_to_caller():
+    _, roller = _roller([18, 4])
+    pool = roll_d20_pool(roller=roller)
+    extended_pool = extend_d20_pool(pool, roller=roller)
+
+    original = select_d20(extended_pool, selected_index=0)
+    added = select_d20(extended_pool, selected_index=1)
+
+    assert original.selected == 18
+    assert added.selected == 4
 
 
 @pytest.mark.parametrize(
@@ -55,8 +95,54 @@ def test_resolve_dice_records_replaced_roll_and_uses_new_result():
     )
 
     assert [die.rolls for die in result.dice] == [(1, 4), (2,), (1, 1), (6,)]
+    assert [
+        (replacement.die_index, replacement.previous, replacement.replacement)
+        for replacement in result.replacements
+    ] == [(0, 1, 4), (2, 1, 1)]
     assert result.subtotal == 13
     assert result.total == 15
+
+
+def test_reroll_dice_replaces_only_selected_dice():
+    _, initial_roller = _roller([2, 5, 1, 6])
+    pool = resolve_dice(4, 6, roller=initial_roller)
+    _, replacement_roller = _roller([4, 3])
+
+    result = reroll_dice(pool, [0, 2], roller=replacement_roller)
+
+    assert [die.result for die in result.dice] == [4, 5, 3, 6]
+    assert [die.rolls for die in result.dice] == [(2, 4), (5,), (1, 3), (6,)]
+    assert result.subtotal == 18
+
+
+def test_reroll_dice_pool_creates_independent_attempt():
+    _, initial_roller = _roller([2, 5])
+    original = resolve_dice(2, 6, modifier=1, roller=initial_roller)
+    _, replacement_roller = _roller([6, 4])
+
+    replacement = reroll_dice_pool(original, roller=replacement_roller)
+
+    assert [die.result for die in original.dice] == [2, 5]
+    assert [die.result for die in replacement.dice] == [6, 4]
+    assert replacement.modifier == 1
+    assert replacement.total == 11
+    assert replacement.replacements == ()
+
+
+def test_resolve_roll_attempts_records_selected_complete_roll():
+    _, roller = _roller([2, 5, 6, 4])
+    original = resolve_dice(2, 6, roller=roller)
+    replacement = reroll_dice_pool(original, roller=roller)
+
+    resolution = resolve_roll_attempts(
+        [original, replacement],
+        selected_attempt=1,
+        reason="choose_better_pool",
+    )
+
+    assert resolution.attempts == (original, replacement)
+    assert resolution.selected is replacement
+    assert resolution.reason == "choose_better_pool"
 
 
 @pytest.mark.parametrize(
