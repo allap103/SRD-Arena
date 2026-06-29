@@ -2562,8 +2562,9 @@ def _resolve_attack(
     )
     target_ac = defender.get_armor_class()
     attack_check = resolve_check(attack_result, target_ac)
+    critical_miss = attack_result.selected == 1
     critical_hit = attack_result.selected == 20
-    hit = critical_hit or attack_check.success
+    hit = not critical_miss and (critical_hit or attack_check.success)
     attack_roll_detail = {
         "die": attack_result.selected,
         "dice": list(attack_result.dice),
@@ -2575,6 +2576,7 @@ def _resolve_attack(
         "modifier": attack_modifier,
         "total": attack_result.total,
         "target_ac": target_ac,
+        "critical_miss": critical_miss,
         "critical_hit": critical_hit,
     }
     if attack_source.weapon_id is not None:

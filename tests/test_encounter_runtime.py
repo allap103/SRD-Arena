@@ -367,6 +367,38 @@ def test_natural_twenty_is_a_critical_hit_and_auto_hits(monkeypatch) -> None:
     assert attack_event.data["damage_roll_detail"]["critical_hit"] is True
 
 
+def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.encounter_state.player_position.x = 4
+    session.encounter_state.player_position.y = 3
+    session.encounter_state.enemies[0].position.x = 4
+    session.encounter_state.enemies[0].position.y = 2
+    session.encounter_state.enemies[0].actor.attributes.base_armor_class = 0
+    starting_health = session.encounter_state.enemies[0].actor.get_health()
+
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 1)
+
+    attack_index = next(
+        index
+        for index, choice in enumerate(session.get_scene_view().choices)
+        if choice.startswith("Attack enemy 1")
+    )
+    result = session.choose(attack_index)
+
+    assert ("system", "Traveler misses Enemy 1 (Goblin).") in result.messages
+    attack_event = next(event for event in result.events if event.type == "attack_resolved")
+    assert attack_event.data["hit"] is False
+    assert attack_event.data["critical_hit"] is False
+    assert attack_event.data["damage"] == 0
+    assert attack_event.data["damage_roll_detail"] is None
+    assert attack_event.data["attack_roll_detail"]["critical_miss"] is True
+    assert session.encounter_state.enemies[0].actor.get_health() == starting_health
+
+
 def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
