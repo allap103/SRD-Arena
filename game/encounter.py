@@ -174,6 +174,7 @@ class PendingAttackSnapshot:
     damage_modifier_label: str
     attack_type: str
     damage_type: str
+    critical_hit: bool
     weapon_id: str | None
     weapon_name: str | None
     continuation: str
@@ -224,6 +225,7 @@ class AttackOutcome:
     damage_modifier_label: str = "STR mod"
     attack_type: str = "melee"
     damage_type: str = "damage"
+    critical_hit: bool = False
     weapon_id: str | None = None
     weapon_name: str | None = None
     weapon_properties: tuple[str, ...] = ()
@@ -862,6 +864,7 @@ class EncounterState:
                         "attack_roll": attack.attack_roll,
                         "attack_roll_detail": attack.attack_roll_detail,
                         "hit": attack.hit,
+                        "critical_hit": attack.critical_hit,
                         "damage": attack.damage,
                         "damage_roll_detail": attack.damage_roll_detail,
                     },
@@ -1076,6 +1079,7 @@ class EncounterState:
                         "attack_roll": attack.attack_roll,
                         "attack_roll_detail": attack.attack_roll_detail,
                         "hit": attack.hit,
+                        "critical_hit": attack.critical_hit,
                         "damage": attack.damage,
                         "damage_roll_detail": attack.damage_roll_detail,
                     },
@@ -1366,6 +1370,7 @@ class EncounterState:
             "attack_roll": pending.attack.attack_roll,
             "attack_roll_detail": pending.attack.attack_roll_detail,
             "hit": True,
+            "critical_hit": pending.attack.critical_hit,
             "damage": 0,
             "damage_roll_detail": _damage_roll_detail(pending.attack),
             "roll_id": f"{pending.action_id}:damage",
@@ -1553,6 +1558,7 @@ class EncounterState:
                             "attack_roll": attack.attack_roll,
                             "attack_roll_detail": attack.attack_roll_detail,
                             "hit": attack.hit,
+                            "critical_hit": attack.critical_hit,
                             "damage": attack.damage,
                             "damage_roll_detail": attack.damage_roll_detail,
                         },
@@ -1646,6 +1652,7 @@ class EncounterState:
                         "attack_roll": attack.attack_roll,
                         "attack_roll_detail": attack.attack_roll_detail,
                         "hit": attack.hit,
+                        "critical_hit": attack.critical_hit,
                         "damage": attack.damage,
                         "damage_roll_detail": attack.damage_roll_detail,
                         "reaction": True,
@@ -1806,6 +1813,7 @@ class EncounterState:
                         "attack_roll": attack.attack_roll,
                         "attack_roll_detail": attack.attack_roll_detail,
                         "hit": attack.hit,
+                        "critical_hit": attack.critical_hit,
                         "damage": attack.damage,
                         "damage_roll_detail": attack.damage_roll_detail,
                         "reaction": True,
@@ -2554,6 +2562,8 @@ def _resolve_attack(
     )
     target_ac = defender.get_armor_class()
     attack_check = resolve_check(attack_result, target_ac)
+    critical_hit = attack_result.selected == 20
+    hit = critical_hit or attack_check.success
     attack_roll_detail = {
         "die": attack_result.selected,
         "dice": list(attack_result.dice),
@@ -2565,6 +2575,7 @@ def _resolve_attack(
         "modifier": attack_modifier,
         "total": attack_result.total,
         "target_ac": target_ac,
+        "critical_hit": critical_hit,
     }
     if attack_source.weapon_id is not None:
         attack_roll_detail["weapon_id"] = attack_source.weapon_id
@@ -2576,7 +2587,7 @@ def _resolve_attack(
         f"Roll d20={attack_result.selected} + {attack_source.attack_bonus_label} {attack_modifier} "
         f"= {attack_result.total} vs {target_label} AC {target_ac}."
     )
-    if not attack_check.success:
+    if not hit:
         return AttackOutcome(
             messages=[
                 ("system", attack_detail_message),
@@ -2589,10 +2600,14 @@ def _resolve_attack(
             attack_roll_detail=attack_roll_detail,
             attack_check=attack_check,
             attack_type=attack_type,
+            critical_hit=critical_hit,
         )
 
     damage_dice = attack_source.damage_dice
     damage_die_count, damage_die_sides = _parse_damage_dice(damage_dice)
+    if critical_hit:
+        damage_die_count *= 2
+        damage_dice = f"{damage_die_count}d{damage_die_sides}"
     damage_roll = resolve_dice(
         damage_die_count,
         damage_die_sides,
@@ -2608,13 +2623,17 @@ def _resolve_attack(
         "dice_total": damage_die_total,
         "modifier": attack_source.damage_bonus,
         "total": damage_total,
+        "critical_hit": critical_hit,
     }
     if attack_source.weapon_id is not None:
         damage_roll_detail["weapon_id"] = attack_source.weapon_id
     if attack_source.weapon_name is not None:
         damage_roll_detail["weapon_name"] = attack_source.weapon_name
+    messages = [("system", attack_detail_message)]
+    if critical_hit:
+        messages.append(("system", f"Critical hit by {attacker_label}!"))
     return AttackOutcome(
-        messages=[("system", attack_detail_message)],
+        messages=messages,
         hit=True,
         attack_roll=attack_result.total,
         damage=max(1, damage_total),
@@ -2628,6 +2647,7 @@ def _resolve_attack(
         damage_modifier_label=attack_source.damage_bonus_label,
         attack_type=attack_type,
         damage_type=attack_source.damage_type,
+        critical_hit=critical_hit,
         weapon_id=attack_source.weapon_id,
         weapon_name=attack_source.weapon_name,
         weapon_properties=attack_source.weapon_properties,
@@ -2679,6 +2699,7 @@ def _damage_roll_detail(
         "dice_total": attack.damage_roll.subtotal,
         "modifier": attack.damage_modifier,
         "total": attack.damage_roll.total,
+        "critical_hit": attack.critical_hit,
     }
     if applied_damage is not None:
         detail["minimum_applied_total"] = max(1, attack.damage_roll.total)
@@ -2715,6 +2736,7 @@ def _snapshot_pending_attack(
         damage_modifier_label=attack.damage_modifier_label,
         attack_type=attack.attack_type,
         damage_type=attack.damage_type,
+        critical_hit=attack.critical_hit,
         weapon_id=attack.weapon_id,
         weapon_name=attack.weapon_name,
         continuation=pending.continuation,
@@ -2772,6 +2794,7 @@ def _restore_pending_attack(
         damage_modifier_label=snapshot.damage_modifier_label,
         attack_type=snapshot.attack_type,
         damage_type=snapshot.damage_type,
+        critical_hit=snapshot.critical_hit,
         weapon_id=snapshot.weapon_id,
         weapon_name=snapshot.weapon_name,
     )

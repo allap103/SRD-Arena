@@ -324,8 +324,47 @@ def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:
     assert attack_event.data["target_label"] == "Enemy 1 (Goblin)"
     assert attack_event.data["attack_roll"] == 25
     assert attack_event.data["attack_roll_detail"]["proficiency_bonus"] == 2
-    assert attack_event.data["damage_roll_detail"]["dice"] == "1d8"
+    assert attack_event.data["critical_hit"] is True
+    assert attack_event.data["damage_roll_detail"]["dice"] == "2d8"
     assert attack_event.data["damage_roll_detail"]["weapon_name"] == "Longsword"
+
+
+def test_natural_twenty_is_a_critical_hit_and_auto_hits(monkeypatch) -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.player.combat_profile.attacks_per_attack_action = 1
+    session.encounter_state.player_position.x = 4
+    session.encounter_state.player_position.y = 3
+    session.encounter_state.enemies[0].position.x = 4
+    session.encounter_state.enemies[0].position.y = 2
+    session.encounter_state.enemies[0].actor.attributes.base_armor_class = 30
+    session.encounter_state.enemies[0].actor.current_health = 30
+    damage_rolls = iter([4, 7])
+
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 20)
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: next(damage_rolls))
+
+    attack_index = next(
+        index
+        for index, choice in enumerate(session.get_scene_view().choices)
+        if choice.startswith("Attack enemy 1")
+    )
+    result = session.choose(attack_index)
+
+    assert ("system", "Critical hit by Traveler!") in result.messages
+    attack_event = next(event for event in result.events if event.type == "attack_resolved")
+    assert attack_event.data["hit"] is True
+    assert attack_event.data["critical_hit"] is True
+    assert attack_event.data["attack_roll"] == 25
+    assert attack_event.data["attack_roll_detail"]["critical_hit"] is True
+    assert attack_event.data["damage"] == 14
+    assert attack_event.data["damage_roll_detail"]["dice"] == "2d8"
+    assert attack_event.data["damage_roll_detail"]["dice_values"] == [4, 7]
+    assert attack_event.data["damage_roll_detail"]["modifier"] == 3
+    assert attack_event.data["damage_roll_detail"]["critical_hit"] is True
 
 
 def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
@@ -354,7 +393,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     attack_events = [event for event in first_result.events if event.type == "attack_resolved"]
     assert len(attack_events) == 1
     assert attack_events[0].data["attacks_remaining"] == 1
-    assert session.encounter_state.enemies[0].actor.get_health() == 16
+    assert session.encounter_state.enemies[0].actor.get_health() == 15
     assert session.encounter_state.player_action_available is False
     assert session.encounter_state.player_attacks_remaining == 1
 
@@ -376,7 +415,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     second_attack_events = [event for event in second_result.events if event.type == "attack_resolved"]
     assert len(second_attack_events) == 1
     assert second_attack_events[0].data["attacks_remaining"] == 0
-    assert session.encounter_state.enemies[0].actor.get_health() == 12
+    assert session.encounter_state.enemies[0].actor.get_health() == 10
     assert session.encounter_state.player_attacks_remaining == 0
     assert not any(
         choice.startswith("Attack enemy")
