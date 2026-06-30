@@ -3,6 +3,7 @@ from pathlib import Path
 
 from game.engine import Game
 from game.loaders import load_actor, load_bestiary_stat_blocks, load_scene
+from game.save import load_from_file, save_to_file
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 
@@ -138,3 +139,89 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
 
     assert any(grant.id == "extra_attack" for grant in upgraded.feature_grants)
     assert upgraded.combat_profile.attacks_per_attack_action == 2
+
+
+def test_actor_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path) -> None:
+    game = Game(str(FIXTURE_ENCOUNTER_DIR))
+    actor_path = tmp_path / "eldritch_knight.json"
+    actor_path.write_text(
+        json.dumps(
+            {
+                "id": "eldritch_knight",
+                "name": "Arcane Veteran",
+                "class_ref": {"name": "Fighter", "source": "XPHB"},
+                "subclass_ref": {
+                    "name": "Eldritch Knight",
+                    "source": "XPHB",
+                    "class_name": "Fighter",
+                    "class_source": "XPHB",
+                },
+                "spells_known": [
+                    {"name": "Color Spray", "source": "XPHB"},
+                    {"name": "Lesser Restoration", "source": "XPHB"},
+                ],
+                "attributes": {
+                    "level": 5,
+                    "strength": 16,
+                    "dexterity": 12,
+                    "constitution": 14,
+                    "wisdom": 8,
+                    "intelligence": 12,
+                    "charisma": 10,
+                    "base_health": 16,
+                    "base_armor_class": 15,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    actor = load_actor(
+        actor_path,
+        game.stat_blocks,
+        game.class_blocks,
+        game.custom_stat_blocks,
+        game.optional_feature_blocks,
+        game.subclass_blocks,
+        game.spell_catalog,
+    )
+
+    assert actor.subclass_ref is not None
+    assert actor.subclass_ref.name == "Eldritch Knight"
+    assert actor.spellcasting is not None
+    assert actor.spellcasting.ability == "int"
+    assert actor.spellcasting.ability_modifier == 1
+    assert actor.spellcasting.save_dc == 12
+    assert actor.spellcasting.attack_bonus == 4
+    assert actor.spellcasting.preparation_mode == "fixed"
+    assert actor.spellcasting.cantrips_known == 2
+    assert actor.spellcasting.spell_count == 4
+    assert actor.spellcasting.spell_slots_max == {1: 3}
+    assert actor.spellcasting.spell_slots_remaining == {1: 3}
+    assert [spell.name for spell in actor.spellcasting.learned_spells] == [
+        "Color Spray",
+        "Lesser Restoration",
+    ]
+    assert actor.spellcasting.learned_spells[0].level == 1
+    assert actor.spellcasting.learned_spells[0].condition_inflict == ("blinded",)
+    assert actor.spellcasting.learned_spells[1].level == 2
+    assert actor.spellcasting.learned_spells[1].removable_conditions == (
+        "blinded",
+        "deafened",
+        "paralyzed",
+        "poisoned",
+    )
+
+
+def test_save_and_load_preserve_spell_slots(tmp_path: Path) -> None:
+    session = Game("sample_game").create_session()
+
+    assert session.player.spellcasting is not None
+    session.player.spellcasting.spell_slots_remaining[1] = 1
+    save_path = tmp_path / "spell_slots_save.json"
+
+    save_to_file(session, save_path)
+    loaded = load_from_file(save_path, "sample_game")
+
+    assert loaded.player.spellcasting is not None
+    assert loaded.player.spellcasting.spell_slots_max == {1: 3}
+    assert loaded.player.spellcasting.spell_slots_remaining == {1: 1}

@@ -2,14 +2,26 @@ from pathlib import Path
 
 from game.encounter import EncounterAction
 from game.engine import Game
+from game.pyside6_app import CyoaPySide6Window
+from game.features import EffectResult
 from game.presentation import build_session_presentation
 from game.save import load_from_file, save_to_file
+from game.session import ActionView
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
+SAMPLE_GAME_DIR = Path(__file__).parents[1] / "sample_game"
 
 
 def _item_id_by_name(session, name: str) -> str:
     return next(item_id for item_id, item in session.item_templates.items() if item.name == name)
+
+
+def _action_index_by_prefix(session, prefix: str) -> int:
+    return next(
+        index
+        for index, choice in enumerate(session.get_scene_view().choices)
+        if choice.startswith(prefix)
+    )
 
 
 def test_goblin_encounter_scene_generates_runtime_actions_and_grid() -> None:
@@ -102,6 +114,346 @@ def test_goblin_encounter_wait_advances_enemy_turns() -> None:
     assert session.encounter_state.enemies[2].position.y == 1
     assert session.encounter_state.turn_index == 0
     assert session.encounter_state.round_number == 2
+
+
+def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.encounter_state.player_position.x = 4
+    session.encounter_state.player_position.y = 3
+    session.encounter_state.enemies[0].position.x = 4
+    session.encounter_state.enemies[0].position.y = 2
+
+    assert "Cast Color Spray on enemy 1 (Goblin)" in session.get_scene_view().choices
+
+
+def test_lesser_restoration_appears_when_player_has_removable_condition() -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.encounter_state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_status",
+                target_ref="player",
+                data={
+                    "condition": "blinded",
+                    "source_ref": "enemy:0",
+                    "source_label": "Goblin",
+                },
+            )
+        ]
+    )
+
+    assert "Cast Lesser Restoration" in session.get_scene_view().choices
+
+
+def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    assert session.player.spellcasting is not None
+    session.encounter_state.player_position.x = 4
+    session.encounter_state.player_position.y = 3
+    session.encounter_state.enemies[0].position.x = 4
+    session.encounter_state.enemies[0].position.y = 2
+
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+
+    result = session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+
+    assert ("system", "Traveler casts Color Spray on Enemy 1 (Goblin).") in result.messages
+    assert any("is blinded until the end of your next turn" in message for _, message in result.messages)
+    assert session.encounter_state.player_action_available is False
+    assert session.player.spellcasting.spell_slots_remaining[1] == 2
+    assert session.encounter_state.has_condition("enemy:0", "blinded") is True
+    spell_event = next(event for event in result.events if event.type == "spell_cast")
+    assert spell_event.data["spell_name"] == "Color Spray"
+    assert spell_event.data["save_detail"]["ability"] == "constitution"
+    assert spell_event.data["save_detail"]["success"] is False
+    assert spell_event.data["effects"][0]["data"]["condition"] == "blinded"
+
+
+def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    assert session.player.spellcasting is not None
+    state = session.encounter_state
+    state.player_position.x = 2
+    state.player_position.y = 2
+    state.enemies[0].position.x = 3
+    state.enemies[0].position.y = 2
+    state.enemies[1].actor.current_health = 0
+    state.enemies[2].actor.current_health = 0
+    rolls = iter([5, 17, 4, 1])
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: next(rolls, 3))
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+
+    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    result = session.choose(session.get_scene_view().choices.index("Wait"))
+
+    attack_event = next(
+        event
+        for event in result.events
+        if event.type == "attack_resolved" and event.actor_ref == "enemy:0"
+    )
+    assert attack_event.data["attack_roll_detail"]["mode"] == "disadvantage"
+    assert attack_event.data["attack_roll_detail"]["dice"] == [17, 4]
+
+
+def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 2
+    state.player_position.y = 2
+    state.enemies[0].position.x = 3
+    state.enemies[0].position.y = 2
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+
+    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+
+    attack_mode = state._attack_roll_mode_for(
+        "player",
+        "enemy:0",
+        "melee",
+        state.player_position,
+        (state.enemies[0].position,),
+    )
+
+    assert attack_mode == "advantage"
+
+
+def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 2
+    state.player_position.y = 2
+    state.enemies[0].position.x = 3
+    state.enemies[0].position.y = 2
+    state.enemies[1].actor.current_health = 0
+    state.enemies[2].actor.current_health = 0
+    rolls = iter([5, 3, 3])
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: next(rolls, 3))
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+
+    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    session.choose(session.get_scene_view().choices.index("Wait"))
+
+    assert state.has_condition("enemy:0", "blinded") is True
+
+    session.choose(session.get_scene_view().choices.index("Wait"))
+
+    assert state.has_condition("enemy:0", "blinded") is False
+
+
+def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 1
+    state.player_position.y = 1
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 1
+    state.enemies[1].actor.current_health = 0
+    state.enemies[2].actor.current_health = 0
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+
+    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+
+    assert state.has_condition("enemy:0", "blinded") is True
+    assert len(state.conditions_for("enemy:0")) == 1
+
+    session.choose(session.get_scene_view().choices.index("Wait"))
+    assert state.has_condition("enemy:0", "blinded") is True
+
+    session.choose(session.get_scene_view().choices.index("Wait"))
+    assert state.has_condition("enemy:0", "blinded") is False
+
+
+def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 2
+    state.player_position.y = 2
+    state.enemies[0].position.x = 3
+    state.enemies[0].position.y = 2
+
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_status",
+                target_ref="enemy:0",
+                data={
+                    "condition": "blinded",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                },
+            )
+        ]
+    )
+    assert state.has_condition("enemy:0", "blinded") is True
+    assert state._attack_roll_mode_for(
+        "player",
+        "enemy:0",
+        "melee",
+        state.player_position,
+        (state.enemies[0].position,),
+    ) == "advantage"
+
+    messages = state._apply_effects(
+        [
+            EffectResult(
+                kind="message",
+                target_ref="player",
+                data={"channel": "system", "text": "Status removed."},
+            ),
+            EffectResult(
+                kind="remove_status",
+                target_ref="enemy:0",
+                data={"condition": "blinded"},
+            ),
+        ]
+    )
+
+    assert messages == [("system", "Status removed.")]
+    assert state.has_condition("enemy:0", "blinded") is False
+    assert state._attack_roll_mode_for(
+        "player",
+        "enemy:0",
+        "melee",
+        state.player_position,
+        (state.enemies[0].position,),
+    ) == "normal"
+
+
+def test_save_and_load_preserve_color_spray_condition_and_slots(tmp_path: Path, monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    assert session.player.spellcasting is not None
+    session.encounter_state.player_position.x = 4
+    session.encounter_state.player_position.y = 3
+    session.encounter_state.enemies[0].position.x = 4
+    session.encounter_state.enemies[0].position.y = 2
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+
+    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    save_path = tmp_path / "color_spray_save.json"
+
+    save_to_file(session, save_path)
+    loaded = load_from_file(save_path, SAMPLE_GAME_DIR)
+
+    assert loaded.encounter_state is not None
+    assert loaded.player.spellcasting is not None
+    assert loaded.player.spellcasting.spell_slots_remaining[1] == 2
+    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
+
+
+def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    assert session.player.spellcasting is not None
+    state = session.encounter_state
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_status",
+                target_ref="player",
+                data={
+                    "condition": "blinded",
+                    "source_ref": "enemy:0",
+                    "source_label": "Goblin",
+                },
+            )
+        ]
+    )
+
+    result = session.choose(_action_index_by_prefix(session, "Cast Lesser Restoration"))
+
+    assert ("system", "Traveler casts Lesser Restoration on Traveler.") in result.messages
+    assert ("system", "Traveler is no longer blinded.") in result.messages
+    assert state.has_condition("player", "blinded") is False
+    assert state.player_bonus_action_available is False
+    assert state.player_action_available is True
+    assert session.player.spellcasting.spell_slots_remaining[2] == 1
+    spell_event = next(event for event in result.events if event.type == "spell_cast")
+    assert spell_event.data["spell_name"] == "Lesser Restoration"
+    assert spell_event.data["target_ref"] == "player"
+    assert spell_event.data["success"] is True
+    assert spell_event.data["effects"][0]["kind"] == "remove_status"
+
+
+def test_lesser_restoration_uses_magic_menu_bucket() -> None:
+    bucket = CyoaPySide6Window._action_bucket_key(
+        None,
+        ActionView(
+            index=0,
+            id="player-spell-lesser-restoration-player",
+            label="Cast Lesser Restoration",
+            kind="spell",
+            actor_ref="player",
+            value="lesser_restoration:player",
+            cost={"bonus_action": 1},
+        ),
+    )
+
+    assert bucket == "magic"
+
+
+def test_save_and_load_preserve_refreshed_blinded_duration(tmp_path: Path, monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 1
+    state.player_position.y = 1
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 1
+    state.enemies[1].actor.current_health = 0
+    state.enemies[2].actor.current_health = 0
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+
+    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    save_path = tmp_path / "refreshed_blind_save.json"
+
+    save_to_file(session, save_path)
+    loaded = load_from_file(save_path, SAMPLE_GAME_DIR)
+
+    assert loaded.encounter_state is not None
+    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
+
+    loaded.choose(loaded.get_scene_view().choices.index("Wait"))
+    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
+
+    loaded.choose(loaded.get_scene_view().choices.index("Wait"))
+    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is False
 
 
 def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> None:
@@ -526,6 +878,47 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable(monkeypatc
     assert [action.label for action in presentation.encounter.feature_actions] == ["Second Wind"]
     assert presentation.encounter.feature_actions[0].index == -1
     assert presentation.encounter.feature_actions[0].cost["bonus_action"] == 1
+
+
+def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 3
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 2
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+
+    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    presentation = build_session_presentation(session)
+
+    assert presentation.encounter is not None
+    assert "Blinded" in presentation.encounter.battlefield.summary_text
+    assert presentation.encounter.resources.conditions == ()
+    assert any(
+        actor.actor_ref == "enemy:0" and actor.conditions == ("blinded",)
+        for actor in presentation.encounter.battlefield.actors
+    )
+
+
+def test_spell_actions_map_to_magic_menu_bucket() -> None:
+    bucket = CyoaPySide6Window._action_bucket_key(
+        None,
+        ActionView(
+            index=0,
+            id="player-spell-color-spray-0",
+            label="Cast Color Spray on enemy 1 (Goblin)",
+            kind="spell",
+            actor_ref="player",
+            value="color_spray:0",
+            cost={"action": 1},
+        ),
+    )
+
+    assert bucket == "magic"
 
 
 def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:

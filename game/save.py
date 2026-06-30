@@ -20,16 +20,18 @@ from .encounter import (
 from .engine import Game
 from .models.actor import Actor
 from .models.attributes import Attributes, Movement
+from .models.status import StatusSnapshot
+from .models.spellcasting import Spellcasting
 from .models.scene import Position
 from .session import GameSession
 from .systems.equipment import Equipment
 from .systems.inventory import Inventory
 
-SAVE_VERSION = 2
+SAVE_VERSION = 4
 JsonScalar: TypeAlias = str | int | float | bool | None
 JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
 SAVEGAME_EXAMPLE: dict[str, JsonValue] = {
-    "version": 2,
+    "version": 4,
     "current_scene_id": "welcome",
     "start_scene_id": "welcome",
     "player": {
@@ -87,6 +89,7 @@ class PlayerState(BaseModel):
     equipment: dict[str, str | None] = Field(default_factory=dict)
     attributes: AttributeState
     feature_uses_remaining: dict[str, int] = Field(default_factory=dict)
+    spell_slots_remaining: dict[int, int] = Field(default_factory=dict)
 
 
 class CompletedTestState(BaseModel):
@@ -159,6 +162,7 @@ class PendingAttackStateModel(BaseModel):
     damage_modifier_label: str = "STR mod"
     attack_type: str = "melee"
     damage_type: str
+    critical_hit: bool = False
     weapon_id: str | None = None
     weapon_name: str | None = None
     continuation: str = "return_to_turn"
@@ -191,7 +195,19 @@ class EncounterStateModel(BaseModel):
     decision_stack: list[DecisionFrameStateModel] = Field(default_factory=list)
     pending_action: PendingActionStateModel | None = None
     pending_attack: PendingAttackStateModel | None = None
+    conditions: list["ConditionStateModel"] = Field(default_factory=list)
     enemies: list[EncounterEnemyStateModel] = Field(default_factory=list)
+
+
+class ConditionStateModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    condition: str
+    source_ref: str
+    source_label: str
+    target_ref: str
+    expires_on_actor_ref: str | None = None
+    expires_on_round: int | None = None
 
 
 class SaveGame(BaseModel):
@@ -303,6 +319,11 @@ def _create_player_state(player: Actor) -> PlayerState:
             base_armor_class=player.attributes.base_armor_class,
         ),
         feature_uses_remaining=dict(player.feature_uses_remaining),
+        spell_slots_remaining=(
+            dict(player.spellcasting.spell_slots_remaining)
+            if player.spellcasting is not None
+            else {}
+        ),
     )
 
 
@@ -319,11 +340,25 @@ def _restore_player_state(player_template: Actor, state: PlayerState) -> Actor:
         equipment=Equipment(equipped_items=dict(state.equipment)),
         current_health=state.current_health,
         class_ref=deepcopy(player_template.class_ref),
+        subclass_ref=deepcopy(player_template.subclass_ref),
         feature_grants=deepcopy(player_template.feature_grants),
         rule_grants=deepcopy(player_template.rule_grants),
         combat_profile=deepcopy(player_template.combat_profile),
         feature_uses_remaining=dict(state.feature_uses_remaining),
+        monster_attacks=deepcopy(player_template.monster_attacks),
+        spellcasting=_restore_spellcasting(player_template.spellcasting, state.spell_slots_remaining),
     )
+
+
+def _restore_spellcasting(
+    spellcasting: Spellcasting | None,
+    spell_slots_remaining: dict[int, int],
+) -> Spellcasting | None:
+    if spellcasting is None:
+        return None
+    restored = deepcopy(spellcasting)
+    restored.spell_slots_remaining = dict(spell_slots_remaining)
+    return restored
 
 
 def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStateModel | None:
@@ -398,6 +433,7 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
                 damage_modifier_label=snapshot.pending_attack.damage_modifier_label,
                 attack_type=snapshot.pending_attack.attack_type,
                 damage_type=snapshot.pending_attack.damage_type,
+                critical_hit=snapshot.pending_attack.critical_hit,
                 weapon_id=snapshot.pending_attack.weapon_id,
                 weapon_name=snapshot.pending_attack.weapon_name,
                 continuation=snapshot.pending_attack.continuation,
@@ -413,6 +449,17 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
             if snapshot.pending_attack is not None
             else None
         ),
+        conditions=[
+            ConditionStateModel(
+                condition=condition.name,
+                source_ref=condition.source_ref,
+                source_label=condition.source_label,
+                target_ref=condition.target_ref,
+                expires_on_actor_ref=condition.expires_on_actor_ref,
+                expires_on_round=condition.expires_on_round,
+            )
+            for condition in snapshot.conditions
+        ],
         enemies=[
             EncounterEnemyStateModel(
                 actor_id=enemy.actor_id,
@@ -498,6 +545,7 @@ def _restore_encounter_state(
                 damage_modifier_label=state.pending_attack.damage_modifier_label,
                 attack_type=state.pending_attack.attack_type,
                 damage_type=state.pending_attack.damage_type,
+                critical_hit=state.pending_attack.critical_hit,
                 weapon_id=state.pending_attack.weapon_id,
                 weapon_name=state.pending_attack.weapon_name,
                 continuation=state.pending_attack.continuation,
@@ -513,6 +561,18 @@ def _restore_encounter_state(
             if state.pending_attack is not None
             else None
         ),
+        conditions=[
+            StatusSnapshot(
+                id=f"{condition.condition}:{condition.target_ref}",
+                name=condition.condition,
+                source_ref=condition.source_ref,
+                source_label=condition.source_label,
+                target_ref=condition.target_ref,
+                expires_on_actor_ref=condition.expires_on_actor_ref,
+                expires_on_round=condition.expires_on_round,
+            )
+            for condition in state.conditions
+        ],
         enemies=[
             EncounterSnapshotEnemy(
                 actor_id=enemy.actor_id,

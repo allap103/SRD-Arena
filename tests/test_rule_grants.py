@@ -77,10 +77,10 @@ def test_great_weapon_fighting_pauses_damage_and_rerolls_each_die_once(
 ):
     session = _adjacent_sample_encounter()
     damage_rolls = iter([1, 2, 6, 1])
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 20)
+    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr(
         "game.encounter.roll_dice",
-        lambda _count, _sides: next(damage_rolls),
+        lambda _count, _sides: next(damage_rolls, 1),
     )
 
     attack_index = next(
@@ -127,10 +127,10 @@ def test_great_weapon_fighting_pauses_damage_and_rerolls_each_die_once(
 def test_pending_damage_reroll_survives_save_and_load(tmp_path, monkeypatch):
     session = _adjacent_sample_encounter()
     damage_rolls = iter([1, 5])
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 20)
+    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr(
         "game.encounter.roll_dice",
-        lambda _count, _sides: next(damage_rolls),
+        lambda _count, _sides: next(damage_rolls, 1),
     )
     attack_index = next(
         index
@@ -157,10 +157,10 @@ def test_pending_damage_reroll_survives_save_and_load(tmp_path, monkeypatch):
 def test_great_weapon_fighting_can_decline_rerolls(monkeypatch):
     session = _adjacent_sample_encounter()
     damage_rolls = iter([1, 5])
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 20)
+    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr(
         "game.encounter.roll_dice",
-        lambda _count, _sides: next(damage_rolls),
+        lambda _count, _sides: next(damage_rolls, 1),
     )
     attack_index = next(
         index
@@ -182,7 +182,7 @@ def test_great_weapon_fighting_can_decline_rerolls(monkeypatch):
 def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatch):
     session = _adjacent_sample_encounter()
     session.player.equipment.equipped_items["right_hand"] = "longsword"
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 20)
+    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr("game.encounter.roll_dice", lambda _count, _sides: 1)
     attack_index = next(
         index
@@ -201,10 +201,10 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
 def test_opportunity_attack_reroll_resumes_interrupted_movement(monkeypatch):
     session = _sample_opportunity_attack()
     damage_rolls = iter([1, 2, 6, 5])
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 20)
+    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr(
         "game.encounter.roll_dice",
-        lambda _count, _sides: next(damage_rolls),
+        lambda _count, _sides: next(damage_rolls, 1),
     )
 
     opportunity = session.choose(
@@ -243,10 +243,10 @@ def test_opportunity_attack_reroll_resumes_interrupted_movement(monkeypatch):
 def test_nested_opportunity_reroll_survives_save_and_load(tmp_path, monkeypatch):
     session = _sample_opportunity_attack()
     damage_rolls = iter([1, 5])
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 20)
+    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr(
         "game.encounter.roll_dice",
-        lambda _count, _sides: next(damage_rolls),
+        lambda _count, _sides: next(damage_rolls, 1),
     )
     session.choose(
         session.get_scene_view().choices.index("Opportunity attack Goblin")

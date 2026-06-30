@@ -9,10 +9,13 @@ from .feature_actions import resolve_feature_action
 from .models.actor import Actor
 from .models.item import Item
 from .models.scene import Behavior, Encounter, Position
+from .models.status import Status, StatusSnapshot, build_named_status
 from .rules.registry import matching_rules, reroll_eligible_indices
 from .rules.types import RuleGrant
+from .spell_actions import resolve_spell_action
 from .systems.roll import (
     CheckResult,
+    D20RollMode,
     DicePoolResult,
     DieReplacement,
     DieRollResult,
@@ -206,6 +209,7 @@ class EncounterSnapshot:
     decision_stack: list[DecisionFrameSnapshot] = field(default_factory=list)
     pending_action: PendingActionSnapshot | None = None
     pending_attack: PendingAttackSnapshot | None = None
+    conditions: list[StatusSnapshot] = field(default_factory=list)
     enemies: list[EncounterSnapshotEnemy] = field(default_factory=list)
 
 
@@ -286,6 +290,7 @@ class EncounterState:
     decision_stack: list[DecisionFrame] = field(default_factory=list)
     pending_action: PendingAction | None = None
     pending_attack: PendingAttack | None = None
+    conditions: list[Status] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)
     _behaviors: list[Generator[EncounterAction | None, BehaviorContext, None]] = field(
         default_factory=list,
@@ -398,6 +403,18 @@ class EncounterState:
                 else None
             ),
             pending_attack=_restore_pending_attack(snapshot.pending_attack),
+            conditions=[
+                Status(
+                    id=condition.id,
+                    name=condition.name,
+                    source_ref=condition.source_ref,
+                    source_label=condition.source_label,
+                    target_ref=condition.target_ref,
+                    expires_on_actor_ref=condition.expires_on_actor_ref,
+                    expires_on_round=condition.expires_on_round,
+                )
+                for condition in snapshot.conditions
+            ],
             item_templates=item_templates or {},
         )
         state._initialize_behaviors()
@@ -453,6 +470,18 @@ class EncounterState:
                 else None
             ),
             pending_attack=_snapshot_pending_attack(self.pending_attack),
+            conditions=[
+                StatusSnapshot(
+                    id=condition.id,
+                    name=condition.name,
+                    source_ref=condition.source_ref,
+                    source_label=condition.source_label,
+                    target_ref=condition.target_ref,
+                    expires_on_actor_ref=condition.expires_on_actor_ref,
+                    expires_on_round=condition.expires_on_round,
+                )
+                for condition in self.conditions
+            ],
             enemies=[
                 EncounterSnapshotEnemy(
                     actor_id=enemy.actor_id,
@@ -490,6 +519,7 @@ class EncounterState:
             (
                 f"- Enemy {index + 1} ({enemy.actor.name}): "
                 f"{enemy.actor.get_health()} HP at ({enemy.position.x}, {enemy.position.y})"
+                f"{_condition_suffix(self.conditions_for(_enemy_ref(index)))}"
             )
             for index, enemy in enumerate(self.enemies)
             if enemy.is_alive
@@ -506,6 +536,7 @@ class EncounterState:
                 (
                     f"Player HP: {player.get_health()}/{player.get_max_health()} "
                     f"at ({self.player_position.x}, {self.player_position.y})"
+                    f"{_condition_suffix(self.conditions_for('player'))}"
                 ),
                 f"Action available: {'yes' if self.player_action_available else 'no'}",
                 f"Attacks remaining in action: {self.player_attacks_remaining}",
@@ -539,6 +570,54 @@ class EncounterState:
             kind="turn",
             reason="normal_turn",
         )
+
+    def conditions_for(self, actor_ref: ActorRef) -> tuple[Status, ...]:
+        return tuple(condition for condition in self.conditions if condition.target_ref == actor_ref)
+
+    def has_condition(self, actor_ref: ActorRef, condition_name: str) -> bool:
+        return any(
+            condition.name == condition_name
+            for condition in self.conditions_for(actor_ref)
+        )
+
+    def _attack_roll_mode_for(
+        self,
+        attacker_ref: ActorRef,
+        target_ref: ActorRef,
+        attack_type: str,
+        attacker_position: Position | None,
+        nearby_opponent_positions: tuple[Position, ...],
+    ) -> D20RollMode:
+        modes: list[D20RollMode] = []
+        base_mode = _attack_roll_mode(
+            attack_type,
+            attacker_position,
+            nearby_opponent_positions,
+        )
+        if base_mode != "normal":
+            modes.append(base_mode)
+        context = {
+            "attacker_ref": attacker_ref,
+            "target_ref": target_ref,
+            "attack_type": attack_type,
+        }
+        for rule in matching_rules(
+            self._active_status_rules(),
+            "attack_roll_created",
+            context,
+        ):
+            if rule.operation == "grant_advantage":
+                modes.append("advantage")
+            elif rule.operation == "grant_disadvantage":
+                modes.append("disadvantage")
+        return _combine_roll_modes(modes)
+
+    def _active_status_rules(self) -> list[RuleGrant]:
+        return [
+            rule
+            for status in self.conditions
+            for rule in status.rules
+        ]
 
     def export_decision(self) -> dict[str, object]:
         decision = self.current_decision()
@@ -585,6 +664,9 @@ class EncounterState:
                 "attacks_remaining": self.player_attacks_remaining,
                 "bonus_action_available": self.player_bonus_action_available,
                 "reaction_available": self.player_reaction_available,
+                "conditions": [
+                    condition.name for condition in self.conditions_for("player")
+                ],
                 "team_id": self._actor_team_id("player"),
                 "controller": self._actor_controller("player"),
             },
@@ -596,6 +678,10 @@ class EncounterState:
                     "position": {"x": enemy.position.x, "y": enemy.position.y},
                     "health": enemy.actor.get_health(),
                     "reaction_available": enemy.reaction_available,
+                    "conditions": [
+                        condition.name
+                        for condition in self.conditions_for(_enemy_ref(index))
+                    ],
                     "movement_remaining": (
                         enemy.movement_remaining
                         if enemy.movement_remaining is not None
@@ -682,6 +768,7 @@ class EncounterState:
                 )
 
         actions.extend(self._available_feature_actions(player))
+        actions.extend(self._available_spell_actions(player))
 
         if self.player_bonus_action_available:
             for item in _healing_potions_in_inventory(player, self.item_templates):
@@ -737,6 +824,55 @@ class EncounterState:
                     cost=action_cost,
                 )
             )
+        return actions
+
+    def _available_spell_actions(self, player: Actor) -> list[EncounterAction]:
+        spellcasting = player.spellcasting
+        if spellcasting is None:
+            return []
+        actions: list[EncounterAction] = []
+        for spell in spellcasting.learned_spells:
+            if spell.level > 0 and spellcasting.spell_slots_remaining.get(spell.level, 0) <= 0:
+                continue
+            cost = _spell_action_cost(spell)
+            if cost.action > 0 and not self.player_action_available:
+                continue
+            if cost.bonus_action > 0 and not self.player_bonus_action_available:
+                continue
+            if _spell_targets_self_only(spell):
+                if any(
+                    condition.name in spell.removable_conditions
+                    for condition in self.conditions_for("player")
+                ):
+                    actions.append(
+                        EncounterAction(
+                            f"Cast {spell.name}",
+                            "spell",
+                            _spell_action_value(spell.id, "player"),
+                            id=f"player-spell-{spell.id}-player",
+                            actor_ref="player",
+                            cost=cost,
+                        )
+                    )
+                continue
+            if not _spell_uses_action(spell):
+                continue
+            max_range = _spell_range_squares(spell, player)
+            for index, enemy in enumerate(self.enemies):
+                if not enemy.is_alive or not self._actors_are_opponents("player", _enemy_ref(index)):
+                    continue
+                if max_range is not None and _chebyshev_distance(self.player_position, enemy.position) > max_range:
+                    continue
+                actions.append(
+                    EncounterAction(
+                        f"Cast {spell.name} on enemy {index + 1} ({enemy.actor.name})",
+                        "spell",
+                        _spell_action_value(spell.id, _enemy_ref(index)),
+                        id=f"player-spell-{spell.id}-{index}",
+                        actor_ref="player",
+                        cost=cost,
+                    )
+                )
         return actions
 
     def _feature_action_available(self, player: Actor, definition) -> bool:
@@ -831,6 +967,17 @@ class EncounterState:
                     for other_enemy in self.enemies
                     if other_enemy.is_alive
                 ),
+                attack_roll_mode_override=self._attack_roll_mode_for(
+                    "player",
+                    _enemy_ref(enemy_index),
+                    _selected_attack_type(player, self.item_templates),
+                    self.player_position,
+                    tuple(
+                        other_enemy.position
+                        for other_enemy in self.enemies
+                        if other_enemy.is_alive
+                    ),
+                ),
             )
             reroll_rule = _matching_damage_reroll_rule(player, attack)
             if attack.hit and reroll_rule is not None:
@@ -890,6 +1037,12 @@ class EncounterState:
                     f"Encounter feature action requires a feature id, got {action.value!r}."
                 )
             self._resolve_feature_action(player, action.value, progress, resolved_action_id)
+        elif action.kind == "spell":
+            if not isinstance(action.value, str):
+                raise ValueError(
+                    f"Encounter spell action requires a spell payload, got {action.value!r}."
+                )
+            self._resolve_spell_action(player, action.value, progress, resolved_action_id)
         elif action.kind == "wait":
             action_ends_turn = True
             progress.messages.append(("system", "You hold your ground."))
@@ -1059,6 +1212,13 @@ class EncounterState:
                 items_by_id=self.item_templates,
                 attacker_position=enemy.position,
                 nearby_opponent_positions=(self.player_position,),
+                attack_roll_mode_override=self._attack_roll_mode_for(
+                    decision.actor_ref,
+                    target_ref,
+                    _selected_attack_type(enemy.actor, self.item_templates),
+                    enemy.position,
+                    (self.player_position,),
+                ),
             )
             _apply_attack_damage(
                 attack,
@@ -1538,6 +1698,17 @@ class EncounterState:
                     attacker_position=enemy.position,
                     nearby_opponent_positions=(self.player_position,),
                     preferred_attack_type=preferred_attack_type,
+                    attack_roll_mode_override=self._attack_roll_mode_for(
+                        _enemy_ref(enemy_index),
+                        "player",
+                        _selected_attack_type(
+                            enemy.actor,
+                            self.item_templates,
+                            preferred_attack_type=preferred_attack_type,
+                        ),
+                        enemy.position,
+                        (self.player_position,),
+                    ),
                 )
                 _apply_attack_damage(
                     attack,
@@ -1617,6 +1788,13 @@ class EncounterState:
                 attacker_position=self.player_position,
                 nearby_opponent_positions=(target.position,),
                 preferred_attack_type="melee",
+                attack_roll_mode_override=self._attack_roll_mode_for(
+                    "player",
+                    pending_action.actor_ref,
+                    "melee",
+                    self.player_position,
+                    (target.position,),
+                ),
             )
             reroll_rule = _matching_damage_reroll_rule(player, attack)
             if attack.hit and reroll_rule is not None:
@@ -1793,6 +1971,13 @@ class EncounterState:
                 attacker_position=enemy.position,
                 nearby_opponent_positions=(self.player_position,),
                 preferred_attack_type="melee",
+                attack_roll_mode_override=self._attack_roll_mode_for(
+                    _enemy_ref(index),
+                    "player",
+                    "melee",
+                    enemy.position,
+                    (self.player_position,),
+                ),
             )
             _apply_attack_damage(
                 attack,
@@ -2055,6 +2240,242 @@ class EncounterState:
             )
         )
 
+    def _resolve_spell_action(
+        self,
+        player: Actor,
+        spell_value: str,
+        progress: EncounterProgress,
+        action_id: str,
+    ) -> None:
+        spellcasting = player.spellcasting
+        if spellcasting is None:
+            progress.messages.append(("system", "You cannot cast spells."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "spell", "success": False},
+                )
+            )
+            return
+        spell_id, target_ref = _parse_spell_action_value(spell_value)
+        spell = next((candidate for candidate in spellcasting.learned_spells if candidate.id == spell_id), None)
+        if spell is None:
+            progress.messages.append(("system", "That spell is not available."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "spell", "spell_id": spell_id, "success": False},
+                )
+            )
+            return
+        cost = _spell_action_cost(spell)
+        if cost.action > 0 and not self.player_action_available:
+            progress.messages.append(("system", "You have already used your Action."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "spell", "spell_id": spell_id, "success": False},
+                )
+            )
+            return
+        if cost.bonus_action > 0 and not self.player_bonus_action_available:
+            progress.messages.append(("system", "You have already used your Bonus Action."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "spell", "spell_id": spell_id, "success": False},
+                )
+            )
+            return
+        if spell.level > 0 and spellcasting.spell_slots_remaining.get(spell.level, 0) <= 0:
+            progress.messages.append(("system", f"You have no level {spell.level} spell slots remaining."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "spell", "spell_id": spell.id, "success": False},
+                )
+            )
+            return
+        target_actor, target_label, target_conditions = self._spell_target_state(
+            player,
+            target_ref,
+        )
+        if target_actor is None:
+            progress.messages.append(("system", "That target is not available."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "spell", "spell_id": spell.id, "success": False},
+                )
+            )
+            return
+        result = resolve_spell_action(
+            player,
+            spell,
+            target_actor,
+            target_ref=target_ref,
+            target_label=target_label,
+            target_conditions=target_conditions,
+            current_round=self.round_number,
+            source_ref="player",
+            roller=roll_die,
+        )
+        if result is None:
+            progress.messages.append(("system", f"{spell.name} is not implemented yet."))
+            progress.events.append(
+                self._event(
+                    "action_resolved",
+                    actor_ref="player",
+                    action_id=action_id,
+                    data={"kind": "spell", "spell_id": spell.id, "success": False},
+                )
+            )
+            return
+
+        if cost.action > 0:
+            self.player_action_available = False
+            self.player_attacks_remaining = 0
+        if cost.bonus_action > 0:
+            self.player_bonus_action_available = False
+        if spell.level > 0:
+            spellcasting.spell_slots_remaining[spell.level] -= 1
+
+        progress.messages.extend(result.messages)
+        progress.messages.extend(self._apply_effects(result.effects))
+        progress.events.append(
+            self._event(
+                "spell_cast",
+                actor_ref="player",
+                action_id=action_id,
+                data={
+                    "kind": "spell",
+                    "spell_id": result.capability_id,
+                    "spell_name": result.capability_name,
+                    "spell_level": result.details.get("spell_level", spell.level),
+                    "target_ref": result.details.get("target_ref", target_ref),
+                    "target_label": result.details.get("target_label", target_label),
+                    "slot_level": result.details.get("slot_level", spell.level),
+                    "spell_slots_remaining": (
+                        spellcasting.spell_slots_remaining.get(spell.level, 0)
+                        if spell.level > 0
+                        else None
+                    ),
+                    "save_detail": result.details.get("save_detail"),
+                    "effects": _serialize_effects(result.effects),
+                    "success": result.details.get("success", False),
+                },
+            )
+        )
+        return
+
+    def _spell_target_state(
+        self,
+        player: Actor,
+        target_ref: str,
+    ) -> tuple[Actor | None, str, tuple[str, ...]]:
+        if target_ref == "player":
+            return (
+                player,
+                player.name,
+                tuple(condition.name for condition in self.conditions_for("player")),
+            )
+        enemy_index = _enemy_index(target_ref)
+        if enemy_index < 0 or enemy_index >= len(self.enemies):
+            return None, "", ()
+        enemy = self.enemies[enemy_index]
+        if not enemy.is_alive:
+            return None, "", ()
+        return (
+            enemy.actor,
+            f"Enemy {enemy_index + 1} ({enemy.actor.name})",
+            tuple(condition.name for condition in self.conditions_for(target_ref)),
+        )
+
+    def _apply_effects(self, effects) -> list[tuple[str, str]]:
+        messages: list[tuple[str, str]] = []
+        for effect in effects:
+            if effect.kind == "apply_status":
+                self._apply_status_effect(effect)
+            elif effect.kind == "remove_status":
+                self._remove_status_effect(effect)
+            elif effect.kind == "message":
+                messages.extend(self._message_effects(effect))
+            else:
+                raise ValueError(f"Unsupported effect kind: {effect.kind}")
+        return messages
+
+    def _apply_status_effect(self, effect) -> None:
+        status_name = _effect_status_name(effect.data)
+        source_ref = effect.data.get("source_ref")
+        source_label = effect.data.get("source_label")
+        if not isinstance(status_name, str):
+            raise ValueError("apply_status effect requires a status_name.")
+        if not isinstance(source_ref, str) or not isinstance(source_label, str):
+            raise ValueError("apply_status effect requires source identity.")
+        status = build_named_status(
+            name=status_name,
+            source_ref=source_ref,
+            source_label=source_label,
+            target_ref=effect.target_ref,
+            expires_on_actor_ref=(
+                effect.data.get("expires_on_actor_ref")
+                if isinstance(effect.data.get("expires_on_actor_ref"), str)
+                else None
+            ),
+            expires_on_round=(
+                effect.data.get("expires_on_round")
+                if isinstance(effect.data.get("expires_on_round"), int)
+                else None
+            ),
+        )
+        self._apply_status(status)
+
+    def _remove_status_effect(self, effect) -> None:
+        status_name = _effect_status_name(effect.data)
+        if not isinstance(status_name, str):
+            raise ValueError("remove_status effect requires a status_name.")
+        self._remove_status(effect.target_ref, status_name)
+
+    def _message_effects(self, effect) -> list[tuple[str, str]]:
+        channel = effect.data.get("channel", "system")
+        text = effect.data.get("text")
+        if not isinstance(channel, str) or not isinstance(text, str):
+            raise ValueError("message effect requires string channel and text.")
+        return [(channel, text)]
+
+    def _apply_status(self, status: Status) -> None:
+        self.conditions = [
+            existing
+            for existing in self.conditions
+            if not (
+                existing.target_ref == status.target_ref
+                and existing.name == status.name
+            )
+        ]
+        self.conditions.append(status)
+
+    def _remove_status(self, target_ref: ActorRef, status_name: str) -> None:
+        self.conditions = [
+            existing
+            for existing in self.conditions
+            if not (
+                existing.target_ref == target_ref
+                and existing.name == status_name
+            )
+        ]
+
     def _apply_player_move(
         self,
         player: Actor,
@@ -2234,6 +2655,9 @@ class EncounterState:
         return None
 
     def _advance_turn(self) -> None:
+        ending_actor_ref = self.current_decision().actor_ref
+        ending_round = self.round_number
+        self._expire_conditions_for_turn_end(ending_actor_ref, ending_round)
         self.turn_index += 1
         if self.turn_index >= self._turn_count():
             self.turn_index = 0
@@ -2246,6 +2670,20 @@ class EncounterState:
             self.player_bonus_action_available = True
         else:
             self.enemies[self.turn_index - 1].movement_remaining = None
+
+    def _expire_conditions_for_turn_end(
+        self,
+        actor_ref: ActorRef,
+        round_number: int,
+    ) -> None:
+        self.conditions = [
+            condition
+            for condition in self.conditions
+            if not (
+                condition.expires_on_actor_ref == actor_ref
+                and condition.expires_on_round == round_number
+            )
+        ]
 
     def _maybe_reset_reactions(self) -> None:
         if self.turn_index != 0:
@@ -2540,6 +2978,7 @@ def _resolve_attack(
     attacker_position: Position | None = None,
     nearby_opponent_positions: tuple[Position, ...] = (),
     preferred_attack_type: str | None = None,
+    attack_roll_mode_override: D20RollMode | None = None,
 ) -> AttackOutcome:
     attack_source = _select_attack_source(
         attacker,
@@ -2550,7 +2989,7 @@ def _resolve_attack(
         attack_source = _unarmed_attack_source(attacker)
     attack_type = attack_source.attack_modes[0]
     attack_modifier = attack_source.attack_bonus
-    attack_roll_mode = _attack_roll_mode(
+    attack_roll_mode = attack_roll_mode_override or _attack_roll_mode(
         attack_type,
         attacker_position,
         nearby_opponent_positions,
@@ -2954,12 +3393,109 @@ def _attack_roll_mode(
     attack_type: str,
     attacker_position: Position | None,
     nearby_opponent_positions: tuple[Position, ...],
-) -> str:
+) -> D20RollMode:
     if attack_type != "ranged" or attacker_position is None:
         return "normal"
     if any(_is_adjacent(attacker_position, position) for position in nearby_opponent_positions):
         return "disadvantage"
     return "normal"
+
+
+def _combine_roll_modes(modes: list[D20RollMode]) -> D20RollMode:
+    advantages = sum(1 for mode in modes if mode == "advantage")
+    disadvantages = sum(1 for mode in modes if mode == "disadvantage")
+    if advantages and disadvantages:
+        return "normal"
+    if advantages:
+        return "advantage"
+    if disadvantages:
+        return "disadvantage"
+    return "normal"
+
+
+def _selected_attack_type(
+    attacker: Actor,
+    items_by_id: dict[str, Item],
+    *,
+    preferred_attack_type: str | None = None,
+) -> str:
+    attack_source = _select_attack_source(
+        attacker,
+        items_by_id,
+        preferred_attack_type=preferred_attack_type,
+    )
+    if attack_source is None:
+        return preferred_attack_type or "melee"
+    return attack_source.attack_modes[0]
+
+
+def _spell_action_cost(spell) -> ActionCost:
+    units = {
+        entry.get("unit")
+        for entry in spell.casting_time
+        if isinstance(entry, dict)
+    }
+    return ActionCost(
+        action=1 if "action" in units else 0,
+        bonus_action=1 if "bonus" in units else 0,
+        reaction=1 if "reaction" in units else 0,
+    )
+
+
+def _spell_uses_action(spell) -> bool:
+    return _spell_action_cost(spell).action > 0
+
+
+def _spell_range_squares(spell, actor: Actor) -> int | None:
+    distance = spell.range_data.get("distance", {})
+    if not isinstance(distance, dict):
+        return None
+    amount = distance.get("amount")
+    if not isinstance(amount, int):
+        return None
+    return max(1, amount // actor.attributes.movement.feet_per_square)
+
+
+def _spell_targets_self_only(spell) -> bool:
+    return bool(spell.removable_conditions) and spell.range_data.get("type") == "point"
+
+
+def _spell_action_value(spell_id: str, target_ref: str) -> str:
+    return f"{spell_id}:{target_ref}"
+
+
+def _parse_spell_action_value(value: str) -> tuple[str, str]:
+    spell_id, _, target_index = value.partition(":")
+    if not spell_id or not target_index:
+        raise ValueError(f"Unsupported spell action payload: {value!r}.")
+    return spell_id, target_index
+
+
+def _effect_status_name(data: dict[str, object]) -> str | None:
+    for key in ("status_name", "condition", "name"):
+        value = data.get(key)
+        if isinstance(value, str):
+            return value
+    return None
+
+
+def _condition_suffix(conditions: tuple[Status, ...]) -> str:
+    if not conditions:
+        return ""
+    labels = ", ".join(condition.name.capitalize() for condition in conditions)
+    return f" [{labels}]"
+
+
+def _serialize_effects(effects) -> list[dict[str, object]]:
+    return [
+        {
+            "kind": effect.kind,
+            "target_ref": effect.target_ref,
+            "success": effect.success,
+            "data": dict(effect.data),
+        }
+        for effect in effects
+    ]
 
 
 def _can_make_opportunity_attack(

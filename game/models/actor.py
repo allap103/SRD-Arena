@@ -4,9 +4,10 @@ from ..game_logging import CHANNEL_SYSTEM, get_game_logger
 from ..systems.equipment import Equipment
 from ..systems.inventory import Inventory
 from .attributes import Attributes
-from .class_features import ClassRef, CombatProfile, FeatureGrant
+from .class_features import ClassRef, CombatProfile, FeatureGrant, SubclassRef
 from ..rules.types import RuleGrant
 from .monster_attack import MonsterAttack
+from .spellcasting import Spellcasting
 
 LOGGER = get_game_logger(CHANNEL_SYSTEM)
 
@@ -21,11 +22,13 @@ class Actor:
     equipment: Equipment
     current_health: int | None = None
     class_ref: ClassRef | None = None
+    subclass_ref: SubclassRef | None = None
     feature_grants: list[FeatureGrant] = field(default_factory=list)
     rule_grants: list[RuleGrant] = field(default_factory=list)
     combat_profile: CombatProfile = field(default_factory=CombatProfile)
     feature_uses_remaining: dict[str, int] = field(default_factory=dict)
     monster_attacks: list[MonsterAttack] = field(default_factory=list)
+    spellcasting: Spellcasting | None = None
 
     def __post_init__(self):
         if self.current_health is None:

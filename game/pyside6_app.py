@@ -332,6 +332,15 @@ class BattlefieldWidget(QWidget):
     def set_battlefield(self, battlefield: BattlefieldView) -> None:
         self._battlefield = battlefield
         self._actor_positions = {}
+        tooltip_lines = []
+        for actor in battlefield.actors:
+            conditions = (
+                ", ".join(condition.capitalize() for condition in actor.conditions)
+                if actor.conditions
+                else "None"
+            )
+            tooltip_lines.append(f"{actor.label}: {conditions}")
+        self.setToolTip("\n".join(tooltip_lines))
         self.update()
 
     def set_targeting_state(
@@ -966,6 +975,9 @@ class CyoaPySide6Window(QMainWindow):
                 f"{resources.movement_remaining_feet}/{resources.movement_total_feet} ft",
             )
         )
+        conditions = QLabel(f"Conditions: {', '.join(condition.capitalize() for condition in resources.conditions) if resources.conditions else 'None'}")
+        conditions.setWordWrap(True)
+        column_layout.addWidget(conditions)
         column_layout.addStretch(1)
         self.encounter_actions_layout.addWidget(column, stretch=1)
 
@@ -1143,7 +1155,7 @@ class CyoaPySide6Window(QMainWindow):
     def _action_bucket_key(self, action: ActionView) -> str:
         if action.kind in {"attack", "opportunity_attack"}:
             return "attack"
-        if action.kind == "magic":
+        if action.kind in {"magic", "spell"}:
             return "magic"
         if action.kind == "feature":
             return "class"

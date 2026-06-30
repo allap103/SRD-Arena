@@ -25,6 +25,7 @@ class ResourceSummaryView:
     action_status: str
     bonus_action_status: str
     reaction_status: str
+    conditions: tuple[str, ...]
     movement_remaining: int
     movement_total: int
     movement_remaining_feet: int
@@ -37,6 +38,7 @@ class ResourceSummaryView:
                 f"Action: {self.action_status}",
                 f"Bonus Action: {self.bonus_action_status}",
                 f"Reaction: {self.reaction_status}",
+                f"Conditions: {_condition_text(self.conditions)}",
                 f"Movement: {self.movement_remaining_feet}/{self.movement_total_feet} ft",
             ]
         )
@@ -55,6 +57,7 @@ class BattlefieldActorView:
     label: str
     position: GridPositionView
     health: int
+    conditions: tuple[str, ...] = ()
     is_player: bool = False
     is_active: bool = False
 
@@ -226,6 +229,11 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
             else "Waiting"
         ),
         reaction_status="Ready" if actor_state["reaction_available"] else "Spent",
+        conditions=tuple(
+            condition
+            for condition in actor_state.get("conditions", [])
+            if isinstance(condition, str)
+        ),
         movement_remaining=actor_state["movement_remaining"],
         movement_total=actor_state["movement_total"],
         movement_remaining_feet=actor_state["movement_remaining_feet"],
@@ -245,6 +253,11 @@ def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
                 y=combat_state["player"]["position"]["y"],
             ),
             health=combat_state["player"]["health"],
+            conditions=tuple(
+                condition
+                for condition in combat_state["player"].get("conditions", [])
+                if isinstance(condition, str)
+            ),
             is_player=True,
             is_active=decision["actor_ref"] == "player",
         )
@@ -259,6 +272,11 @@ def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
                 y=enemy["position"]["y"],
             ),
             health=enemy["health"],
+            conditions=tuple(
+                condition
+                for condition in enemy.get("conditions", [])
+                if isinstance(condition, str)
+            ),
             is_active=decision["actor_ref"] == enemy["actor_ref"],
         )
         for index, enemy in enumerate(combat_state["enemies"])
@@ -301,6 +319,7 @@ def _render_battlefield_text(combat_state: dict[str, object]) -> str:
         (
             f"- Enemy {index + 1} ({enemy['name']}): {enemy['health']} HP at "
             f"({enemy['position']['x']}, {enemy['position']['y']})"
+            f"{_condition_suffix(enemy.get('conditions', []))}"
         )
         for index, enemy in enumerate(combat_state["enemies"])
         if enemy["is_alive"]
@@ -317,6 +336,7 @@ def _render_battlefield_text(combat_state: dict[str, object]) -> str:
             (
                 f"Player HP: {player_state['health']}/{player_state['max_health']} "
                 f"at ({player_position['x']}, {player_position['y']})"
+                f"{_condition_suffix(player_state.get('conditions', []))}"
             ),
             "Enemies:",
             *enemy_lines,
@@ -335,3 +355,18 @@ def _turn_label(combat_state: dict[str, object]) -> str:
     if decision["kind"] == "reaction":
         return f"{label} (Reaction)"
     return label
+
+
+def _condition_text(conditions: tuple[str, ...]) -> str:
+    if not conditions:
+        return "None"
+    return ", ".join(condition.capitalize() for condition in conditions)
+
+
+def _condition_suffix(conditions: object) -> str:
+    if not isinstance(conditions, (list, tuple)):
+        return ""
+    labels = [condition.capitalize() for condition in conditions if isinstance(condition, str)]
+    if not labels:
+        return ""
+    return f" [{', '.join(labels)}]"

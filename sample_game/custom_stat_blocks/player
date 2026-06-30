@@ -6,6 +6,22 @@
         "name": "Fighter",
         "source": "XPHB"
     },
+    "subclass_ref": {
+        "name": "Eldritch Knight",
+        "source": "XPHB",
+        "class_name": "Fighter",
+        "class_source": "XPHB"
+    },
+    "spells_known": [
+        {
+            "name": "Color Spray",
+            "source": "XPHB"
+        },
+        {
+            "name": "Lesser Restoration",
+            "source": "XPHB"
+        }
+    ],
     "optional_features": [
         {
             "name": "Great Weapon Fighting",

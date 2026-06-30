@@ -1,9 +1,11 @@
 from .actor import Actor
 from .attributes import Attributes
-from .class_features import ClassRef, CombatProfile, FeatureGrant
+from .class_features import ClassRef, CombatProfile, FeatureGrant, SubclassRef
 from .choice import Choice
 from .item import ArmorStat, Item, WeaponStat
 from .scene import Scene
+from .spellcasting import Spell, SpellRef, Spellcasting
+from .status import Status, StatusSnapshot
 
 __all__ = [
     "Actor",
@@ -15,5 +17,11 @@ __all__ = [
     "FeatureGrant",
     "Item",
     "Scene",
+    "Spell",
+    "SpellRef",
+    "Spellcasting",
+    "Status",
+    "StatusSnapshot",
+    "SubclassRef",
     "WeaponStat",
 ]

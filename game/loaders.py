@@ -12,6 +12,7 @@ from .models.class_features import (
     CombatProfile,
     FeatureActionDefinition,
     FeatureGrant,
+    SubclassRef,
 )
 from .rules.normalization import normalize_optional_feature_rules
 from .rules.types import RuleGrant
@@ -25,6 +26,7 @@ from .models.choice import (
 )
 from .models.item import ArmorStat, Item, WeaponStat
 from .models.monster_attack import MonsterAttack
+from .models.spellcasting import Spell, Spellcasting
 from .models.scene import (
     Behavior,
     Encounter,
@@ -42,9 +44,11 @@ from .systems.inventory import Inventory
 
 StatBlockCatalog = dict[tuple[str, str | None], dict]
 ClassCatalog = dict[tuple[str, str | None], dict]
+SubclassCatalog = dict[tuple[str, str | None, str | None, str | None], dict]
 OptionalFeatureCatalog = dict[tuple[str, str | None], dict]
 CustomStatBlockCatalog = dict[str, ActorSchema]
 SystemItemCatalog = dict[tuple[str, str | None], dict]
+SpellCatalog = dict[tuple[str, str | None], dict]
 SOURCE_PRIORITY = {
     "XPHB": 30,
     "XDMG": 30,
@@ -183,6 +187,8 @@ def load_actor(
     class_blocks: ClassCatalog | None = None,
     custom_stat_blocks: CustomStatBlockCatalog | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
+    subclass_blocks: SubclassCatalog | None = None,
+    spell_catalog: SpellCatalog | None = None,
 ) -> Actor:
     schema = _resolve_actor_schema(
         ActorSchema.model_validate(_load_json(path)),
@@ -198,6 +204,11 @@ def load_actor(
         if schema.class_ref
         else None
     )
+    subclass_block = (
+        _find_subclass_block(schema.subclass_ref, subclass_blocks, class_block)
+        if schema.subclass_ref
+        else None
+    )
     equipment = Equipment(
         equipped_items={
             **Equipment().equipped_items,
@@ -207,20 +218,45 @@ def load_actor(
             },
         }
     )
+    attributes = _build_actor_attributes(schema, stat_block, class_block)
     feature_grants = _resolve_class_feature_grants(class_block, schema.attributes.level)
+    feature_grants.extend(
+        _resolve_subclass_feature_grants(
+            subclass_block,
+            schema.attributes.level,
+            class_name=schema.class_ref.name if schema.class_ref else None,
+        )
+    )
     rule_grants = _resolve_optional_feature_rules(schema, optional_features)
     combat_profile = _build_combat_profile(feature_grants)
+    spellcasting = _build_spellcasting(
+        schema,
+        attributes,
+        class_block,
+        subclass_block,
+        spell_catalog,
+    )
 
     return Actor(
         id=schema.id,
         name=schema.name or _stat_block_name(stat_block),
         description=schema.description,
         inventory=Inventory(items=[_actor_item_id(item) for item in schema.inventory]),
-        attributes=_build_actor_attributes(schema, stat_block, class_block),
+        attributes=attributes,
         equipment=equipment,
         class_ref=(
             ClassRef(name=schema.class_ref.name, source=schema.class_ref.source)
             if schema.class_ref
+            else None
+        ),
+        subclass_ref=(
+            SubclassRef(
+                name=schema.subclass_ref.name,
+                source=schema.subclass_ref.source,
+                class_name=schema.subclass_ref.class_name,
+                class_source=schema.subclass_ref.class_source,
+            )
+            if schema.subclass_ref
             else None
         ),
         feature_grants=feature_grants,
@@ -228,6 +264,7 @@ def load_actor(
         combat_profile=combat_profile,
         feature_uses_remaining=_build_feature_uses_remaining(combat_profile),
         monster_attacks=_build_monster_attacks(stat_block),
+        spellcasting=spellcasting,
     )
 
 
@@ -281,6 +318,7 @@ def _resolve_actor_schema(
             "inventory",
             "metadata",
             "optional_features",
+            "spells_known",
         },
     )
     if "attributes" in instance.model_fields_set:
@@ -303,6 +341,10 @@ def _resolve_actor_schema(
         "optional_features": [
             *template.optional_features,
             *instance.optional_features,
+        ],
+        "spells_known": [
+            *template.spells_known,
+            *instance.spells_known,
         ],
     }
     return ActorSchema.model_validate(merged)
@@ -393,6 +435,70 @@ def load_class_blocks(directory: str | Path) -> ClassCatalog:
     return catalog
 
 
+def load_subclass_blocks(directory: str | Path) -> SubclassCatalog:
+    catalog: SubclassCatalog = {}
+    class_dir = Path(directory) / "class"
+    if not class_dir.is_dir():
+        return catalog
+
+    for path in class_dir.glob("class-*.json"):
+        data = _load_json(path)
+        feature_entries = data.get("subclassFeature", [])
+        for subclass_block in data.get("subclass", []):
+            if not isinstance(subclass_block, dict) or not isinstance(subclass_block.get("name"), str):
+                continue
+            subclass_block = {
+                **subclass_block,
+                "__subclassFeatureEntries": feature_entries if isinstance(feature_entries, list) else [],
+            }
+            source = subclass_block.get("source")
+            source_key = source if isinstance(source, str) else None
+            class_name = subclass_block.get("className")
+            class_source = subclass_block.get("classSource")
+            class_name_key = class_name.casefold() if isinstance(class_name, str) else None
+            class_source_key = class_source if isinstance(class_source, str) else None
+            key = (
+                subclass_block["name"].casefold(),
+                source_key,
+                class_name_key,
+                class_source_key,
+            )
+            catalog[key] = subclass_block
+            catalog.setdefault(
+                (subclass_block["name"].casefold(), source_key, class_name_key, None),
+                subclass_block,
+            )
+            catalog.setdefault(
+                (subclass_block["name"].casefold(), None, class_name_key, None),
+                subclass_block,
+            )
+    return catalog
+
+
+def load_spell_catalog(directory: str | Path) -> SpellCatalog:
+    spells_dir = Path(directory) / "spells"
+    catalog: SpellCatalog = {}
+    if not spells_dir.is_dir():
+        return catalog
+
+    for path in spells_dir.glob("spells-*.json"):
+        data = _load_json(path)
+        for spell in data.get("spell", []):
+            if not isinstance(spell, dict) or not isinstance(spell.get("name"), str):
+                continue
+            source = spell.get("source")
+            source_key = source if isinstance(source, str) else None
+            catalog[(spell["name"].casefold(), source_key)] = spell
+            fallback_key = (spell["name"].casefold(), None)
+            current = catalog.get(fallback_key)
+            if current is None or SOURCE_PRIORITY.get(str(source), 0) >= SOURCE_PRIORITY.get(
+                str(current.get("source", "")),
+                0,
+            ):
+                catalog[fallback_key] = spell
+    return catalog
+
+
 def load_system_items(directory: str | Path) -> list[Item]:
     catalog = load_system_item_catalog(directory)
     items_by_id: dict[str, tuple[int, Item]] = {}
@@ -465,6 +571,54 @@ def _find_class_block(
         return class_blocks[fallback_key]
     source_text = f"|{source}" if source else ""
     raise KeyError(f"Class '{name}{source_text}' not found.")
+
+
+def _find_subclass_block(
+    reference,
+    subclass_blocks: SubclassCatalog | None,
+    class_block: dict | None,
+) -> dict:
+    if subclass_blocks is None:
+        raise ValueError(
+            f"Actor references subclass '{reference.name}', but no subclass catalog was loaded."
+        )
+    class_name = (
+        reference.class_name
+        or (str(class_block.get("name")) if class_block is not None else None)
+    )
+    class_source = (
+        reference.class_source
+        or (
+            class_block.get("source")
+            if isinstance(class_block, dict)
+            and isinstance(class_block.get("source"), str)
+            else None
+        )
+    )
+    for key in (
+        (
+            reference.name.casefold(),
+            reference.source,
+            class_name.casefold() if isinstance(class_name, str) else None,
+            class_source,
+        ),
+        (
+            reference.name.casefold(),
+            reference.source.upper() if isinstance(reference.source, str) else None,
+            class_name.casefold() if isinstance(class_name, str) else None,
+            class_source.upper() if isinstance(class_source, str) else None,
+        ),
+        (
+            reference.name.casefold(),
+            None,
+            class_name.casefold() if isinstance(class_name, str) else None,
+            None,
+        ),
+    ):
+        if key in subclass_blocks:
+            return subclass_blocks[key]
+    source_text = f"|{reference.source}" if reference.source else ""
+    raise KeyError(f"Subclass '{reference.name}{source_text}' not found.")
 
 
 def _build_actor_attributes(
@@ -576,6 +730,39 @@ def _resolve_class_feature_grants(
     return grants
 
 
+def _resolve_subclass_feature_grants(
+    subclass_block: dict | None,
+    level: int,
+    *,
+    class_name: str | None,
+) -> list[FeatureGrant]:
+    if subclass_block is None:
+        return []
+
+    subclass_name = str(subclass_block.get("name", ""))
+    features = subclass_block.get("subclassFeatures", [])
+    grants: list[FeatureGrant] = []
+    if not isinstance(features, list):
+        return grants
+
+    for feature_ref in features:
+        parsed = _parse_class_feature_reference(feature_ref)
+        if parsed is None:
+            continue
+        feature_name, feature_level = parsed
+        if feature_level > level:
+            continue
+        grant = _normalize_feature_grant(
+            class_name or str(subclass_block.get("className", "")),
+            feature_name,
+            feature_level,
+            source_subclass=subclass_name,
+        )
+        if grant is not None:
+            grants.append(grant)
+    return grants
+
+
 def _parse_class_feature_reference(feature_ref: str | dict[str, object]) -> tuple[str, int] | None:
     raw_ref = feature_ref if isinstance(feature_ref, str) else feature_ref.get("classFeature")
     if not isinstance(raw_ref, str):
@@ -595,6 +782,7 @@ def _normalize_feature_grant(
     feature_level: int,
     class_block: dict | None = None,
     actor_level: int = 1,
+    source_subclass: str | None = None,
 ) -> FeatureGrant | None:
     extra_attack_counts = {
         "Extra Attack": 2,
@@ -611,6 +799,7 @@ def _normalize_feature_grant(
             name=feature_name,
             source_class=class_name,
             level=feature_level,
+            source_subclass=source_subclass,
             data={
                 "uses": _second_wind_uses(class_block, actor_level),
                 **_second_wind_healing_dice(class_block, feature_name, feature_level),
@@ -621,6 +810,7 @@ def _normalize_feature_grant(
         name=feature_name,
         source_class=class_name,
         level=feature_level,
+        source_subclass=source_subclass,
         data={"attacks": attacks},
     )
 
@@ -667,6 +857,241 @@ def _build_combat_profile(feature_grants: list[FeatureGrant]) -> CombatProfile:
 
 def _build_feature_uses_remaining(combat_profile: CombatProfile) -> dict[str, int]:
     return dict(combat_profile.feature_uses_max)
+
+
+def _build_spellcasting(
+    schema: ActorSchema,
+    attributes: Attributes,
+    class_block: dict | None,
+    subclass_block: dict | None,
+    spell_catalog: SpellCatalog | None,
+) -> Spellcasting | None:
+    source_block = _spellcasting_source_block(class_block, subclass_block)
+    if source_block is None:
+        return None
+
+    ability = source_block.get("spellcastingAbility")
+    caster_progression = source_block.get("casterProgression")
+    if not isinstance(ability, str) or not isinstance(caster_progression, str):
+        return None
+
+    level = attributes.level
+    ability_score = _spellcasting_ability_score(attributes, ability)
+    ability_modifier = (ability_score - 10) // 2
+    spell_slots_max = _spell_slots_progression(source_block, level)
+    learned_spells = [
+        _build_spell(reference.name, reference.source, spell_catalog)
+        for reference in schema.spells_known
+    ]
+
+    return Spellcasting(
+        ability=ability,
+        ability_modifier=ability_modifier,
+        save_dc=8 + attributes.proficiency_bonus + ability_modifier,
+        attack_bonus=attributes.proficiency_bonus + ability_modifier,
+        caster_progression=caster_progression,
+        preparation_mode=_spell_preparation_mode(source_block),
+        cantrips_known=_progression_value(source_block.get("cantripProgression"), level) or 0,
+        spell_count=_spell_count_progression(source_block, level),
+        spell_slots_max=spell_slots_max,
+        spell_slots_remaining=dict(spell_slots_max),
+        learned_spells=learned_spells,
+    )
+
+
+def _spellcasting_source_block(
+    class_block: dict | None,
+    subclass_block: dict | None,
+) -> dict | None:
+    for block in (subclass_block, class_block):
+        if not isinstance(block, dict):
+            continue
+        if isinstance(block.get("spellcastingAbility"), str) and isinstance(
+            block.get("casterProgression"),
+            str,
+        ):
+            return block
+    return None
+
+
+def _spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
+    ability_map = {
+        "str": attributes.strength,
+        "dex": attributes.dexterity,
+        "con": attributes.constitution,
+        "int": attributes.intelligence,
+        "wis": attributes.wisdom,
+        "cha": attributes.charisma,
+    }
+    return ability_map.get(ability.casefold(), 10)
+
+
+def _spell_preparation_mode(block: dict) -> str:
+    groups = block.get("subclassTableGroups") or block.get("classTableGroups") or []
+    if not isinstance(groups, list):
+        return "fixed"
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        labels = group.get("colLabels")
+        if not isinstance(labels, list):
+            continue
+        if any(isinstance(label, str) and "Spells Prepared" in label for label in labels):
+            return "fixed"
+        if any(isinstance(label, str) and "Spells Known" in label for label in labels):
+            return "fixed"
+    return "fixed"
+
+
+def _progression_value(progression: object, level: int) -> int | None:
+    if not isinstance(progression, list):
+        return None
+    row_index = level - 1
+    if row_index < 0 or row_index >= len(progression):
+        return None
+    value = progression[row_index]
+    return int(value) if isinstance(value, int) else None
+
+
+def _spell_slots_progression(block: dict, level: int) -> dict[int, int]:
+    groups = block.get("subclassTableGroups") or block.get("classTableGroups") or []
+    if not isinstance(groups, list):
+        return {}
+    row_index = level - 1
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        rows = group.get("rowsSpellProgression")
+        if not isinstance(rows, list) or row_index < 0 or row_index >= len(rows):
+            continue
+        row = rows[row_index]
+        if not isinstance(row, list):
+            continue
+        return {
+            spell_level: slots
+            for spell_level, slots in enumerate(row, start=1)
+            if isinstance(slots, int) and slots > 0
+        }
+    return {}
+
+
+def _spell_count_progression(block: dict, level: int) -> int | None:
+    direct = _progression_value(block.get("spellsKnownProgression"), level)
+    if direct is not None:
+        return direct
+
+    groups = block.get("subclassTableGroups") or block.get("classTableGroups") or []
+    if not isinstance(groups, list):
+        return None
+    row_index = level - 1
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        labels = group.get("colLabels")
+        rows = group.get("rows")
+        if not isinstance(labels, list) or not isinstance(rows, list):
+            continue
+        if not any(
+            isinstance(label, str)
+            and ("Spells Known" in label or "Spells Prepared" in label)
+            for label in labels
+        ):
+            continue
+        if row_index < 0 or row_index >= len(rows):
+            continue
+        row = rows[row_index]
+        if not isinstance(row, list) or not row:
+            continue
+        value = row[0]
+        return int(value) if isinstance(value, int) else None
+    return None
+
+
+def _build_spell(
+    name: str,
+    source: str | None,
+    spell_catalog: SpellCatalog | None,
+) -> Spell:
+    raw = _find_spell(name, source, spell_catalog)
+    return Spell(
+        id=_slug(name),
+        name=name,
+        source=source,
+        level=int(raw.get("level", 0)),
+        school=raw.get("school") if isinstance(raw.get("school"), str) else None,
+        casting_time=tuple(
+            entry for entry in raw.get("time", []) if isinstance(entry, dict)
+        ),
+        range_data=dict(raw.get("range", {})) if isinstance(raw.get("range"), dict) else {},
+        duration_data=tuple(
+            entry for entry in raw.get("duration", []) if isinstance(entry, dict)
+        ),
+        components=(
+            dict(raw.get("components", {}))
+            if isinstance(raw.get("components"), dict)
+            else {}
+        ),
+        saving_throw_abilities=tuple(
+            _normalize_save_ability(value)
+            for value in raw.get("savingThrow", [])
+            if _normalize_save_ability(value) is not None
+        ),
+        condition_inflict=tuple(
+            value for value in raw.get("conditionInflict", []) if isinstance(value, str)
+        ),
+        removable_conditions=_spell_removable_conditions(raw),
+    )
+
+
+def _find_spell(
+    name: str,
+    source: str | None,
+    spell_catalog: SpellCatalog | None,
+) -> dict:
+    if spell_catalog is None:
+        raise ValueError(
+            f"Actor references spell '{name}', but no spell catalog was loaded."
+        )
+    for key in (
+        (name.casefold(), source),
+        (name.casefold(), source.upper() if isinstance(source, str) else None),
+        (name.casefold(), None),
+    ):
+        if key in spell_catalog:
+            return spell_catalog[key]
+    source_text = f"|{source}" if source else ""
+    raise KeyError(f"Spell '{name}{source_text}' not found.")
+
+
+def _normalize_save_ability(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    aliases = {
+        "str": "strength",
+        "dex": "dexterity",
+        "con": "constitution",
+        "int": "intelligence",
+        "wis": "wisdom",
+        "cha": "charisma",
+    }
+    normalized = value.casefold()
+    return aliases.get(normalized, normalized)
+
+
+def _spell_removable_conditions(raw: dict) -> tuple[str, ...]:
+    entries = raw.get("entries", [])
+    if not isinstance(entries, list):
+        return ()
+    text_parts = [entry for entry in entries if isinstance(entry, str)]
+    if not text_parts:
+        return ()
+    text = " ".join(text_parts)
+    if "end one condition on it:" not in text.casefold():
+        return ()
+    return tuple(
+        match.casefold()
+        for match in re.findall(r"\{@condition ([^|}]+)", text)
+    )
 
 
 def _second_wind_uses(class_block: dict | None, feature_level: int) -> int:
