@@ -5,3 +5,7 @@ ___
 .pycache
 saves/
 game_system/
+dist
+build
+*.egg-info
+.DS_Store
