@@ -2554,6 +2554,8 @@ class EncounterState:
                     ),
                     "save_detail": result.details.get("save_detail"),
                     "save_details": result.details.get("save_details"),
+                    "damage_roll_detail": result.details.get("damage_roll_detail"),
+                    "damage_roll_details": result.details.get("damage_roll_details"),
                     "effects": serialize_effects(result.effects),
                     "success": result.details.get("success", False),
                 },

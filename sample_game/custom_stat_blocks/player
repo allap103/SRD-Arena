@@ -20,6 +20,10 @@
         {
             "name": "Lesser Restoration",
             "source": "XPHB"
+        },
+        {
+            "name": "Burning Hands",
+            "source": "XPHB"
         }
     ],
     "optional_features": [

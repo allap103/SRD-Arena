@@ -1040,6 +1040,10 @@ def _build_spell(
             value for value in raw.get("conditionInflict", []) if isinstance(value, str)
         ),
         removable_conditions=_spell_removable_conditions(raw),
+        damage_dice=_spell_damage_dice(raw),
+        damage_inflict=tuple(
+            value for value in raw.get("damageInflict", []) if isinstance(value, str)
+        ),
         area_tags=tuple(
             value for value in raw.get("areaTags", []) if isinstance(value, str)
         ),
@@ -1080,6 +1084,19 @@ def _normalize_save_ability(value: object) -> str | None:
     }
     normalized = value.casefold()
     return aliases.get(normalized, normalized)
+
+
+def _spell_damage_dice(raw: dict[str, object]) -> str | None:
+    entries = raw.get("entries", [])
+    if not isinstance(entries, list):
+        return None
+    for entry in entries:
+        if not isinstance(entry, str):
+            continue
+        match = re.search(r"\{@damage ([^}]+)\}", entry)
+        if match is not None:
+            return match.group(1)
+    return None
 
 
 def _spell_removable_conditions(raw: dict) -> tuple[str, ...]:

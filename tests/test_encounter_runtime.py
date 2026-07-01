@@ -153,6 +153,19 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
     assert "Cast Color Spray" in session.get_scene_view().choices
 
 
+def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.encounter_state.player_position.x = 4
+    session.encounter_state.player_position.y = 3
+    session.encounter_state.enemies[0].position.x = 4
+    session.encounter_state.enemies[0].position.y = 2
+
+    assert "Cast Burning Hands" in session.get_scene_view().choices
+
+
 def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypatch) -> None:
     session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
@@ -285,6 +298,38 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
         "x": 0.9486832980505138,
         "y": -0.31622776601683794,
     }
+
+
+def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 4
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 3
+    state.enemies[1].position.x = 4
+    state.enemies[1].position.y = 2
+    state.enemies[2].actor.current_health = 0
+
+    rolls = iter([5, 1, 2, 3, 16, 4, 5, 6])
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: next(rolls))
+
+    result = _choose_directional_spell(session, "Cast Burning Hands", (4, 3))
+
+    spell_event = next(event for event in result.events if event.type == "spell_cast")
+    assert spell_event.data["spell_name"] == "Burning Hands"
+    assert spell_event.data["save_details"][0]["ability"] == "dexterity"
+    assert spell_event.data["damage_roll_details"][0]["dice"] == "3d6"
+    assert spell_event.data["damage_roll_details"][0]["applied_damage"] == 6
+    assert spell_event.data["damage_roll_details"][1]["applied_damage"] == 7
+    assert state.enemies[0].actor.get_health() == 1
+    assert state.enemies[1].actor.get_health() == 0
+    assert any("takes 6 fire damage." in message for _, message in result.messages)
+    assert any("takes 7 fire damage on a successful save." in message for _, message in result.messages)
+    assert any("Enemy 2 (Goblin) is defeated." == message for _, message in result.messages)
 
 
 def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:

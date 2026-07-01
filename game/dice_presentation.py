@@ -76,6 +76,7 @@ def build_roll_views(events: list[CombatEvent]) -> list[RollView]:
 
         if event.type == "spell_cast":
             views.extend(_saving_throw_roll_views(event))
+            views.extend(_spell_damage_roll_views(event))
     return views
 
 
@@ -176,6 +177,28 @@ def _saving_throw_roll_view(
         target=target if isinstance(target, int) else None,
         success=success if isinstance(success, bool) else None,
     )
+
+
+def _spell_damage_roll_views(event: CombatEvent) -> list[RollView]:
+    details = event.data.get("damage_roll_details")
+    if not isinstance(details, list):
+        detail = event.data.get("damage_roll_detail")
+        details = [detail] if isinstance(detail, dict) else []
+    views: list[RollView] = []
+    spell_name = event.data.get("spell_name")
+    for detail in details:
+        if not isinstance(detail, dict):
+            continue
+        label = "Spell Damage"
+        target_label = detail.get("target_label")
+        if isinstance(target_label, str):
+            label = f"{target_label} takes damage"
+            if isinstance(spell_name, str):
+                label = f"{label} from {spell_name}"
+        damage = _pool_roll_view(detail, label=label)
+        if damage is not None:
+            views.append(damage)
+    return views
 
 
 def _attack_dice_views(

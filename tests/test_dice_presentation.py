@@ -145,6 +145,35 @@ def test_build_roll_views_extracts_spell_save_dice():
     assert save.success is False
 
 
+def test_build_roll_views_extracts_spell_damage_dice():
+    event = CombatEvent(
+        seq=1,
+        type="spell_cast",
+        data={
+            "spell_name": "Burning Hands",
+            "damage_roll_details": [
+                {
+                    "target_label": "Goblin",
+                    "dice": "3d6",
+                    "dice_values": [2, 5, 6],
+                    "die_rolls": [[2], [5], [6]],
+                    "dice_total": 13,
+                    "modifier": 0,
+                    "total": 13,
+                }
+            ],
+        },
+    )
+
+    [damage] = build_roll_views([event])
+
+    assert damage.label == "Goblin takes damage from Burning Hands"
+    assert [die.expression for die in damage.dice] == ["d6", "d6", "d6"]
+    assert [die.value for die in damage.dice] == [2, 5, 6]
+    assert damage.modifier == 0
+    assert damage.total == 13
+
+
 def test_build_roll_views_exposes_individual_rerollable_damage_dice():
     event = CombatEvent(
         seq=1,

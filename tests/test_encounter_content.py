@@ -267,6 +267,9 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
 
     assert spells["Burning Hands"].geometry_mode == "directional_area"
     assert spells["Burning Hands"].area_tags == ("N",)
+    assert spells["Burning Hands"].saving_throw_abilities == ("dexterity",)
+    assert spells["Burning Hands"].damage_dice == "3d6"
+    assert spells["Burning Hands"].damage_inflict == ("fire",)
     assert spells["Thunderwave"].geometry_mode == "directional_area"
     assert spells["Thunderwave"].area_tags == ("C",)
     assert spells["Lightning Bolt"].geometry_mode == "directional_area"
