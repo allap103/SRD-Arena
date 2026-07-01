@@ -71,8 +71,57 @@ def build_cone_area(
     return AreaOfEffect(shape="cone", origin=origin, cells=cells)
 
 
+def build_line_area(
+    origin: Position,
+    direction: str,
+    length_squares: int,
+    grid: Grid,
+) -> AreaOfEffect:
+    if direction not in DIRECTION_VECTORS:
+        raise ValueError(f"Unsupported line direction: {direction!r}.")
+    dx, dy = DIRECTION_VECTORS[direction]
+    cells = _sorted_positions(
+        Position(origin.x + (dx * step), origin.y + (dy * step))
+        for step in range(1, length_squares + 1)
+        if _is_within_grid(
+            origin.x + (dx * step),
+            origin.y + (dy * step),
+            grid,
+        )
+    )
+    return AreaOfEffect(shape="line", origin=origin, cells=cells)
+
+
+def build_cube_area(
+    origin: Position,
+    direction: str,
+    size_squares: int,
+    grid: Grid,
+) -> AreaOfEffect:
+    if direction not in DIRECTION_VECTORS:
+        raise ValueError(f"Unsupported cube direction: {direction!r}.")
+    dx, dy = DIRECTION_VECTORS[direction]
+    cells = _sorted_positions(
+        Position(x, y)
+        for y in range(grid.height)
+        for x in range(grid.width)
+        if _is_in_cube(
+            target=Position(x, y),
+            origin=origin,
+            direction_x=dx,
+            direction_y=dy,
+            size_squares=size_squares,
+        )
+    )
+    return AreaOfEffect(shape="cube", origin=origin, cells=cells)
+
+
 def _sorted_positions(positions) -> tuple[Position, ...]:
     return tuple(sorted(positions, key=lambda position: (position.y, position.x)))
+
+
+def _is_within_grid(x: int, y: int, grid: Grid) -> bool:
+    return 0 <= x < grid.width and 0 <= y < grid.height
 
 
 def _is_in_cone(
@@ -103,3 +152,31 @@ def _is_in_cone(
         lateral = abs(aligned_x - aligned_y)
 
     return 1 <= forward <= length_squares and lateral <= forward - 1
+
+
+def _is_in_cube(
+    *,
+    target: Position,
+    origin: Position,
+    direction_x: int,
+    direction_y: int,
+    size_squares: int,
+) -> bool:
+    offset_x = target.x - origin.x
+    offset_y = target.y - origin.y
+    if offset_x == 0 and offset_y == 0:
+        return False
+
+    min_x, max_x = _axis_range(offset_x, direction_x, size_squares)
+    min_y, max_y = _axis_range(offset_y, direction_y, size_squares)
+    return min_x <= offset_x <= max_x and min_y <= offset_y <= max_y
+
+
+def _axis_range(offset: int, direction: int, size_squares: int) -> tuple[int, int]:
+    if direction > 0:
+        return 1, size_squares
+    if direction < 0:
+        return -size_squares, -1
+
+    half_span = size_squares // 2
+    return -half_span, half_span

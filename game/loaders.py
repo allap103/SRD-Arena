@@ -1040,6 +1040,10 @@ def _build_spell(
             value for value in raw.get("conditionInflict", []) if isinstance(value, str)
         ),
         removable_conditions=_spell_removable_conditions(raw),
+        area_tags=tuple(
+            value for value in raw.get("areaTags", []) if isinstance(value, str)
+        ),
+        geometry_mode=_spell_geometry_mode(raw),
     )
 
 
@@ -1092,6 +1096,29 @@ def _spell_removable_conditions(raw: dict) -> tuple[str, ...]:
         match.casefold()
         for match in re.findall(r"\{@condition ([^|}]+)", text)
     )
+
+
+def _spell_geometry_mode(raw: dict) -> str:
+    range_data = raw.get("range", {})
+    range_type = (
+        range_data.get("type")
+        if isinstance(range_data, dict) and isinstance(range_data.get("type"), str)
+        else None
+    )
+    removable_conditions = _spell_removable_conditions(raw)
+    area_tags = tuple(
+        value for value in raw.get("areaTags", []) if isinstance(value, str)
+    )
+
+    if removable_conditions and range_type == "point":
+        return "self_only"
+    if range_type in {"cone", "line", "cube"}:
+        return "directional_area"
+    if range_type in {"radius", "sphere", "cylinder", "emanation"}:
+        return "non_directional_area"
+    if range_type == "point" and area_tags:
+        return "point_area"
+    return "point_target"
 
 
 def _second_wind_uses(class_block: dict | None, feature_level: int) -> int:

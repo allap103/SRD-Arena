@@ -203,6 +203,8 @@ def test_actor_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path)
     ]
     assert actor.spellcasting.learned_spells[0].level == 1
     assert actor.spellcasting.learned_spells[0].condition_inflict == ("blinded",)
+    assert actor.spellcasting.learned_spells[0].area_tags == ("N",)
+    assert actor.spellcasting.learned_spells[0].geometry_mode == "directional_area"
     assert actor.spellcasting.learned_spells[1].level == 2
     assert actor.spellcasting.learned_spells[1].removable_conditions == (
         "blinded",
@@ -210,6 +212,59 @@ def test_actor_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path)
         "paralyzed",
         "poisoned",
     )
+    assert actor.spellcasting.learned_spells[1].geometry_mode == "self_only"
+
+
+def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) -> None:
+    game = Game(str(FIXTURE_ENCOUNTER_DIR))
+    actor_path = tmp_path / "geometry_spells.json"
+    actor_path.write_text(
+        json.dumps(
+            {
+                "id": "geometry_spells",
+                "name": "Arcane Tester",
+                "class_ref": {"name": "Wizard", "source": "XPHB"},
+                "spells_known": [
+                    {"name": "Burning Hands", "source": "XPHB"},
+                    {"name": "Thunderwave", "source": "XPHB"},
+                    {"name": "Lightning Bolt", "source": "XPHB"},
+                    {"name": "Fireball", "source": "XPHB"},
+                ],
+                "attributes": {
+                    "level": 5,
+                    "strength": 8,
+                    "dexterity": 14,
+                    "constitution": 12,
+                    "wisdom": 10,
+                    "intelligence": 16,
+                    "charisma": 10,
+                    "base_health": 12,
+                    "base_armor_class": 12,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    actor = load_actor(
+        actor_path,
+        game.stat_blocks,
+        game.class_blocks,
+        game.custom_stat_blocks,
+        game.optional_feature_blocks,
+        game.subclass_blocks,
+        game.spell_catalog,
+    )
+
+    assert actor.spellcasting is not None
+    spells = {spell.name: spell for spell in actor.spellcasting.learned_spells}
+
+    assert spells["Burning Hands"].geometry_mode == "directional_area"
+    assert spells["Burning Hands"].area_tags == ("N",)
+    assert spells["Thunderwave"].geometry_mode == "directional_area"
+    assert spells["Thunderwave"].area_tags == ("C",)
+    assert spells["Lightning Bolt"].geometry_mode == "directional_area"
+    assert spells["Lightning Bolt"].area_tags == ("L",)
+    assert spells["Fireball"].geometry_mode == "point_area"
 
 
 def test_save_and_load_preserve_spell_slots(tmp_path: Path) -> None:

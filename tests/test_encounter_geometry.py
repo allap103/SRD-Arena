@@ -1,4 +1,9 @@
-from game.encounter_geometry import build_cone_area, build_radius_area
+from game.encounter_geometry import (
+    build_cone_area,
+    build_cube_area,
+    build_line_area,
+    build_radius_area,
+)
 from game.models.scene import Grid, Position
 
 
@@ -64,5 +69,59 @@ def test_cone_area_supports_diagonal_direction() -> None:
         (4, 1),
         (5, 1),
         (5, 2),
+        (5, 3),
+    }
+
+
+def test_line_area_follows_cardinal_direction() -> None:
+    area = build_line_area(Position(2, 4), "up", 3, Grid(width=7, height=7))
+
+    assert area.shape == "line"
+    assert _coords(area) == {
+        (2, 3),
+        (2, 2),
+        (2, 1),
+    }
+
+
+def test_line_area_supports_diagonal_direction() -> None:
+    area = build_line_area(Position(2, 4), "up-right", 3, Grid(width=7, height=7))
+
+    assert _coords(area) == {
+        (3, 3),
+        (4, 2),
+        (5, 1),
+    }
+
+
+def test_cube_area_extends_away_from_origin_for_cardinal_direction() -> None:
+    area = build_cube_area(Position(3, 4), "up", 3, Grid(width=7, height=7))
+
+    assert area.shape == "cube"
+    assert _coords(area) == {
+        (2, 1),
+        (3, 1),
+        (4, 1),
+        (2, 2),
+        (3, 2),
+        (4, 2),
+        (2, 3),
+        (3, 3),
+        (4, 3),
+    }
+
+
+def test_cube_area_supports_diagonal_direction() -> None:
+    area = build_cube_area(Position(2, 4), "up-right", 3, Grid(width=7, height=7))
+
+    assert _coords(area) == {
+        (3, 1),
+        (4, 1),
+        (5, 1),
+        (3, 2),
+        (4, 2),
+        (5, 2),
+        (3, 3),
+        (4, 3),
         (5, 3),
     }

@@ -23,6 +23,8 @@ class Spell:
     saving_throw_abilities: tuple[str, ...] = ()
     condition_inflict: tuple[str, ...] = ()
     removable_conditions: tuple[str, ...] = ()
+    area_tags: tuple[str, ...] = ()
+    geometry_mode: str = "point_target"
 
 
 @dataclass

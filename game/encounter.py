@@ -7,7 +7,13 @@ from typing import Generator
 
 from .feature_actions import resolve_feature_action
 from .encounter_effects import apply_effects, serialize_effects
-from .encounter_geometry import AreaOfEffect, DIRECTION_VECTORS, build_cone_area
+from .encounter_geometry import (
+    AreaOfEffect,
+    DIRECTION_VECTORS,
+    build_cone_area,
+    build_cube_area,
+    build_line_area,
+)
 from .encounter_spells import (
     parse_spell_action_value,
     spell_action_economy,
@@ -914,7 +920,7 @@ class EncounterState:
         )
 
     def _spell_targets_self_only(self, spell: Spell) -> bool:
-        return spell_targets_self_only(spell)
+        return spell.geometry_mode == "self_only" or spell_targets_self_only(spell)
 
     def _spell_range_squares(self, spell: Spell, actor: Actor) -> int | None:
         return spell_range_squares(spell, actor)
@@ -979,6 +985,8 @@ class EncounterState:
         spell: Spell,
         target_ref: str,
     ) -> AreaOfEffect | None:
+        if spell.geometry_mode != "directional_area":
+            return None
         if spell.range_data.get("type") != "cone":
             return None
         target = self._spell_target_context(player, target_ref)
@@ -990,7 +998,14 @@ class EncounterState:
         length = self._spell_range_squares(spell, player)
         if length is None:
             return None
-        return build_cone_area(self.player_position, direction, length, self.definition.grid)
+        shape = spell.range_data.get("type")
+        if shape == "cone":
+            return build_cone_area(self.player_position, direction, length, self.definition.grid)
+        if shape == "line":
+            return build_line_area(self.player_position, direction, length, self.definition.grid)
+        if shape == "cube":
+            return build_cube_area(self.player_position, direction, length, self.definition.grid)
+        return None
 
     def _targets_in_area(
         self,

@@ -50,6 +50,24 @@ The main internal representation should be:
 
 This keeps geometry, cover filtering, and target selection separated.
 
+## Scope Constraint
+
+### Project decision
+
+The encounter geometry system is strictly two-dimensional.
+
+That means:
+
+- the battlefield is treated as flat
+- AoE origin, direction, and affected cells are resolved only in `x` and `y`
+- elevation and vertical placement are out of scope for this system
+
+### Project note
+
+Tabletop D&D can involve vertical positioning and three-dimensional placement. We are
+intentionally not modeling that here. If we ever add a `z` axis later, it should be treated
+as a separate expansion of the geometry model rather than something implicitly supported now.
+
 ## SRD-Compatible Foundations
 
 ### SRD rule
@@ -135,6 +153,40 @@ apply it consistently across cones, lines, and other partial-cell shapes.
 
 ## Shape-Specific Notes
 
+## Directional Split
+
+### Project decision
+
+For implementation purposes, AoE shapes should be divided into two broad groups:
+
+- non-directional shapes
+- directional shapes
+
+### Non-directional shapes
+
+These do not require a chosen direction once the point of origin is known.
+
+Current examples:
+
+- sphere / radius
+- cylinder
+- emanation
+
+### Directional shapes
+
+These require a chosen direction in addition to the point of origin.
+
+Current examples:
+
+- cone
+- line
+- cube
+
+### Project note
+
+This is an implementation split, not a claim that all of these shapes behave identically.
+It is meant to define whether the targeting flow must ask for direction or not.
+
 ### Cone
 
 ### SRD-compatible intent
@@ -163,6 +215,29 @@ and length.
 Lines should share the same continuous-direction and rasterization framework as cones rather
 than introducing a separate ad hoc grid rule.
 
+### Current temporary simplification
+
+The current implementation treats a line as a 1-cell-wide ray along one of 8 grid-facing
+directions. This is only a stepping stone until continuous-direction rasterization is added.
+
+### Cube
+
+### SRD-compatible intent
+
+A cube has a point of origin on one of its faces and extends outward from that origin with
+its full side length.
+
+### Project decision
+
+Cubes belong to the directional-shape family because the face placement depends on chosen
+direction, even though the resulting footprint is not line-like.
+
+### Current temporary simplification
+
+The current implementation treats a cube as a square block of cells offset away from the
+origin in one of 8 grid-facing directions. Cardinal facings center the cube on the
+perpendicular axis; diagonal facings place it into the corresponding quadrant.
+
 ### Sphere / radius
 
 ### SRD-compatible intent
@@ -173,6 +248,18 @@ A point is chosen, then a circular or spherical area is formed around it.
 
 On a square grid, this will also ultimately depend on the same rasterization policy, even if
 an early implementation uses a simpler square-distance approximation.
+
+### Cylinder
+
+### SRD-compatible intent
+
+A point is chosen, then a circular area is formed around that point. In a full 3D rules
+context the shape also has height, but this project currently ignores height.
+
+### Project decision
+
+Within our 2D-only system, cylinders are treated like non-directional circular areas for
+targeting and rasterization purposes.
 
 ### Cube
 
@@ -185,6 +272,11 @@ volume or area in space.
 
 Cube placement rules should use the same geometry-first approach rather than directly
 building grid templates.
+
+### Project decision
+
+Within our system, cubes are treated as directional shapes because their placement depends on
+an oriented origin rather than only a center point.
 
 ### Emanation
 
@@ -228,6 +320,10 @@ The project currently has:
 - an 8-direction approximation for cone facing
 
 This is a valid intermediate state, but not the final geometry model.
+
+The current 8-direction approach is especially temporary for directional shapes. The
+long-term model should allow arbitrary continuous direction while still keeping the system
+strictly two-dimensional.
 
 ## Next Steps
 
