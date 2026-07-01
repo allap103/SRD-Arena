@@ -9,10 +9,11 @@ from .feature_actions import resolve_feature_action
 from .models.actor import Actor
 from .models.item import Item
 from .models.scene import Behavior, Encounter, Position
+from .models.spellcasting import Spell, Spellcasting
 from .models.status import Status, StatusSnapshot, build_named_status
 from .rules.registry import matching_rules, reroll_eligible_indices
 from .rules.types import RuleGrant
-from .spell_actions import resolve_spell_action
+from .spell_actions import SpellActionContext, SpellTargetContext, resolve_spell_action
 from .systems.roll import (
     CheckResult,
     D20RollMode,
@@ -848,43 +849,16 @@ class EncounterState:
             return []
         actions: list[EncounterAction] = []
         for spell in spellcasting.learned_spells:
-            if spell.level > 0 and spellcasting.spell_slots_remaining.get(spell.level, 0) <= 0:
+            cost = self._spell_action_cost(spell)
+            if self._spell_cast_block_reason(spellcasting, spell, cost) is not None:
                 continue
-            cost = _spell_action_cost(spell)
-            if cost.action > 0 and not self.player_action_available:
-                continue
-            if cost.bonus_action > 0 and not self.player_bonus_action_available:
-                continue
-            if _spell_targets_self_only(spell):
-                if any(
-                    condition.name in spell.removable_conditions
-                    for condition in self.conditions_for("player")
-                ):
-                    actions.append(
-                        EncounterAction(
-                            f"Cast {spell.name}",
-                            "spell",
-                            _spell_action_value(spell.id, "player"),
-                            id=f"player-spell-{spell.id}-player",
-                            actor_ref="player",
-                            cost=cost,
-                        )
-                    )
-                continue
-            if not _spell_uses_action(spell):
-                continue
-            max_range = _spell_range_squares(spell, player)
-            for index, enemy in enumerate(self.enemies):
-                if not enemy.is_alive or not self._actors_are_opponents("player", _enemy_ref(index)):
-                    continue
-                if max_range is not None and _chebyshev_distance(self.player_position, enemy.position) > max_range:
-                    continue
+            for target in self._spell_action_targets(player, spell):
                 actions.append(
                     EncounterAction(
-                        f"Cast {spell.name} on enemy {index + 1} ({enemy.actor.name})",
+                        self._spell_action_label(spell, target),
                         "spell",
-                        _spell_action_value(spell.id, _enemy_ref(index)),
-                        id=f"player-spell-{spell.id}-{index}",
+                        _spell_action_value(spell.id, target.target_ref),
+                        id=self._spell_action_id(spell, target.target_ref),
                         actor_ref="player",
                         cost=cost,
                     )
@@ -899,6 +873,98 @@ class EncounterState:
         if definition.economy == "reaction" and not self.player_reaction_available:
             return False
         return player.feature_uses_remaining.get(definition.feature_id, 0) > 0
+
+    def _spell_action_cost(self, spell: Spell) -> ActionCost:
+        units = {
+            entry.get("unit")
+            for entry in spell.casting_time
+            if isinstance(entry, dict)
+        }
+        return ActionCost(
+            action=1 if "action" in units else 0,
+            bonus_action=1 if "bonus" in units else 0,
+            reaction=1 if "reaction" in units else 0,
+        )
+
+    def _spell_cast_block_reason(
+        self,
+        spellcasting: Spellcasting,
+        spell: Spell,
+        cost: ActionCost,
+    ) -> str | None:
+        if cost.action > 0 and not self.player_action_available:
+            return "You have already used your Action."
+        if cost.bonus_action > 0 and not self.player_bonus_action_available:
+            return "You have already used your Bonus Action."
+        if cost.reaction > 0 and not self.player_reaction_available:
+            return "You have already used your Reaction."
+        if spell.level > 0 and spellcasting.spell_slots_remaining.get(spell.level, 0) <= 0:
+            return f"You have no level {spell.level} spell slots remaining."
+        return None
+
+    def _spell_targets_self_only(self, spell: Spell) -> bool:
+        return bool(spell.removable_conditions) and spell.range_data.get("type") == "point"
+
+    def _spell_range_squares(self, spell: Spell, actor: Actor) -> int | None:
+        distance = spell.range_data.get("distance", {})
+        if not isinstance(distance, dict):
+            return None
+        amount = distance.get("amount")
+        if not isinstance(amount, int):
+            return None
+        return max(1, amount // actor.attributes.movement.feet_per_square)
+
+    def _spell_action_targets(
+        self,
+        player: Actor,
+        spell: Spell,
+    ) -> list[SpellTargetContext]:
+        if self._spell_targets_self_only(spell):
+            target = self._spell_target_context(player, "player")
+            if target is None:
+                return []
+            if any(condition in spell.removable_conditions for condition in target.target_conditions):
+                return [target]
+            return []
+
+        max_range = self._spell_range_squares(spell, player)
+        targets: list[SpellTargetContext] = []
+        for index, enemy in enumerate(self.enemies):
+            target_ref = _enemy_ref(index)
+            if not enemy.is_alive or not self._actors_are_opponents("player", target_ref):
+                continue
+            if max_range is not None and _chebyshev_distance(self.player_position, enemy.position) > max_range:
+                continue
+            target = self._spell_target_context(player, target_ref)
+            if target is not None:
+                targets.append(target)
+        return targets
+
+    def _spell_action_label(self, spell: Spell, target: SpellTargetContext) -> str:
+        if target.target_ref == "player":
+            return f"Cast {spell.name}"
+        return f"Cast {spell.name} on {target.target_label[:1].lower()}{target.target_label[1:]}"
+
+    def _spell_action_id(self, spell: Spell, target_ref: str) -> str:
+        if target_ref == "player":
+            return f"player-spell-{spell.id}-player"
+        return f"player-spell-{spell.id}-{_enemy_index(target_ref)}"
+
+    def _spend_spell_resources(
+        self,
+        spellcasting: Spellcasting,
+        spell: Spell,
+        cost: ActionCost,
+    ) -> None:
+        if cost.action > 0:
+            self.player_action_available = False
+            self.player_attacks_remaining = 0
+        if cost.bonus_action > 0:
+            self.player_bonus_action_available = False
+        if cost.reaction > 0:
+            self.player_reaction_available = False
+        if spell.level > 0:
+            spellcasting.spell_slots_remaining[spell.level] -= 1
 
     def apply_action(
         self,
@@ -2288,31 +2354,10 @@ class EncounterState:
                 )
             )
             return
-        cost = _spell_action_cost(spell)
-        if cost.action > 0 and not self.player_action_available:
-            progress.messages.append(("system", "You have already used your Action."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "spell", "spell_id": spell_id, "success": False},
-                )
-            )
-            return
-        if cost.bonus_action > 0 and not self.player_bonus_action_available:
-            progress.messages.append(("system", "You have already used your Bonus Action."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "spell", "spell_id": spell_id, "success": False},
-                )
-            )
-            return
-        if spell.level > 0 and spellcasting.spell_slots_remaining.get(spell.level, 0) <= 0:
-            progress.messages.append(("system", f"You have no level {spell.level} spell slots remaining."))
+        cost = self._spell_action_cost(spell)
+        block_reason = self._spell_cast_block_reason(spellcasting, spell, cost)
+        if block_reason is not None:
+            progress.messages.append(("system", block_reason))
             progress.events.append(
                 self._event(
                     "action_resolved",
@@ -2322,11 +2367,8 @@ class EncounterState:
                 )
             )
             return
-        target_actor, target_label, target_conditions = self._spell_target_state(
-            player,
-            target_ref,
-        )
-        if target_actor is None:
+        target = self._spell_target_context(player, target_ref)
+        if target is None:
             progress.messages.append(("system", "That target is not available."))
             progress.events.append(
                 self._event(
@@ -2338,15 +2380,14 @@ class EncounterState:
             )
             return
         result = resolve_spell_action(
-            player,
-            spell,
-            target_actor,
-            target_ref=target_ref,
-            target_label=target_label,
-            target_conditions=target_conditions,
-            current_round=self.round_number,
-            source_ref="player",
-            roller=roll_die,
+            SpellActionContext(
+                actor=player,
+                spell=spell,
+                target=target,
+                current_round=self.round_number,
+                source_ref="player",
+                roller=roll_die,
+            )
         )
         if result is None:
             progress.messages.append(("system", f"{spell.name} is not implemented yet."))
@@ -2360,13 +2401,7 @@ class EncounterState:
             )
             return
 
-        if cost.action > 0:
-            self.player_action_available = False
-            self.player_attacks_remaining = 0
-        if cost.bonus_action > 0:
-            self.player_bonus_action_available = False
-        if spell.level > 0:
-            spellcasting.spell_slots_remaining[spell.level] -= 1
+        self._spend_spell_resources(spellcasting, spell, cost)
 
         progress.messages.extend(result.messages)
         progress.messages.extend(self._apply_effects(result.effects))
@@ -2381,7 +2416,7 @@ class EncounterState:
                     "spell_name": result.capability_name,
                     "spell_level": result.details.get("spell_level", spell.level),
                     "target_ref": result.details.get("target_ref", target_ref),
-                    "target_label": result.details.get("target_label", target_label),
+                    "target_label": result.details.get("target_label", target.target_label),
                     "slot_level": result.details.get("slot_level", spell.level),
                     "spell_slots_remaining": (
                         spellcasting.spell_slots_remaining.get(spell.level, 0)
@@ -2396,27 +2431,33 @@ class EncounterState:
         )
         return
 
-    def _spell_target_state(
+    def _spell_target_context(
         self,
         player: Actor,
         target_ref: str,
-    ) -> tuple[Actor | None, str, tuple[str, ...]]:
+    ) -> SpellTargetContext | None:
         if target_ref == "player":
-            return (
-                player,
-                player.name,
-                tuple(condition.name for condition in self.conditions_for("player")),
+            return SpellTargetContext(
+                actor=player,
+                target_ref="player",
+                target_label=player.name,
+                target_conditions=tuple(
+                    condition.name for condition in self.conditions_for("player")
+                ),
             )
         enemy_index = _enemy_index(target_ref)
         if enemy_index < 0 or enemy_index >= len(self.enemies):
-            return None, "", ()
+            return None
         enemy = self.enemies[enemy_index]
         if not enemy.is_alive:
-            return None, "", ()
-        return (
-            enemy.actor,
-            f"Enemy {enemy_index + 1} ({enemy.actor.name})",
-            tuple(condition.name for condition in self.conditions_for(target_ref)),
+            return None
+        return SpellTargetContext(
+            actor=enemy.actor,
+            target_ref=target_ref,
+            target_label=f"Enemy {enemy_index + 1} ({enemy.actor.name})",
+            target_conditions=tuple(
+                condition.name for condition in self.conditions_for(target_ref)
+            ),
         )
 
     def _apply_effects(self, effects) -> list[tuple[str, str]]:
@@ -3443,37 +3484,6 @@ def _selected_attack_type(
     if attack_source is None:
         return preferred_attack_type or "melee"
     return attack_source.attack_modes[0]
-
-
-def _spell_action_cost(spell) -> ActionCost:
-    units = {
-        entry.get("unit")
-        for entry in spell.casting_time
-        if isinstance(entry, dict)
-    }
-    return ActionCost(
-        action=1 if "action" in units else 0,
-        bonus_action=1 if "bonus" in units else 0,
-        reaction=1 if "reaction" in units else 0,
-    )
-
-
-def _spell_uses_action(spell) -> bool:
-    return _spell_action_cost(spell).action > 0
-
-
-def _spell_range_squares(spell, actor: Actor) -> int | None:
-    distance = spell.range_data.get("distance", {})
-    if not isinstance(distance, dict):
-        return None
-    amount = distance.get("amount")
-    if not isinstance(amount, int):
-        return None
-    return max(1, amount // actor.attributes.movement.feet_per_square)
-
-
-def _spell_targets_self_only(spell) -> bool:
-    return bool(spell.removable_conditions) and spell.range_data.get("type") == "point"
 
 
 def _spell_action_value(spell_id: str, target_ref: str) -> str:

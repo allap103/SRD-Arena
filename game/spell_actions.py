@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from .features.types import CapabilityActionResult, EffectResult
 from .models.actor import Actor
@@ -10,55 +11,43 @@ from .systems.saving_throw import resolve_saving_throw
 DieRoller = Callable[[int], int]
 
 
+@dataclass(frozen=True)
+class SpellTargetContext:
+    actor: Actor
+    target_ref: str
+    target_label: str
+    target_conditions: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class SpellActionContext:
+    actor: Actor
+    spell: Spell
+    target: SpellTargetContext
+    current_round: int
+    source_ref: str = "player"
+    roller: DieRoller | None = None
+
+
 def resolve_spell_action(
-    actor: Actor,
-    spell: Spell,
-    target: Actor,
-    *,
-    target_ref: str,
-    target_label: str,
-    target_conditions: tuple[str, ...] = (),
-    current_round: int,
-    source_ref: str = "player",
-    roller: DieRoller,
+    context: SpellActionContext,
 ) -> CapabilityActionResult | None:
+    spell = context.spell
     if spell.id == "color_spray":
-        return _resolve_color_spray(
-            actor,
-            spell,
-            target,
-            target_ref=target_ref,
-            target_label=target_label,
-            target_conditions=target_conditions,
-            current_round=current_round,
-            source_ref=source_ref,
-            roller=roller,
-        )
+        return _resolve_color_spray(context)
     if spell.id == "lesser_restoration":
-        return _resolve_lesser_restoration(
-            actor,
-            spell,
-            target,
-            target_ref=target_ref,
-            target_label=target_label,
-            target_conditions=target_conditions,
-        )
+        return _resolve_lesser_restoration(context)
     return None
 
 
-def _resolve_color_spray(
-    actor: Actor,
-    spell: Spell,
-    target: Actor,
-    *,
-    target_ref: str,
-    target_label: str,
-    target_conditions: tuple[str, ...] = (),
-    current_round: int,
-    source_ref: str,
-    roller: DieRoller,
-) -> CapabilityActionResult:
+def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
+    actor = context.actor
+    spell = context.spell
+    target = context.target.actor
+    target_ref = context.target.target_ref
+    target_label = context.target.target_label
     assert actor.spellcasting is not None
+    assert context.roller is not None
     ability = (
         spell.saving_throw_abilities[0]
         if spell.saving_throw_abilities
@@ -68,7 +57,7 @@ def _resolve_color_spray(
         target,
         ability,
         actor.spellcasting.save_dc,
-        roller=roller,
+        roller=context.roller,
     )
     save_detail = {
         "ability": ability,
@@ -108,10 +97,10 @@ def _resolve_color_spray(
                 data={
                     "status_name": "blinded",
                     "condition": "blinded",
-                    "source_ref": source_ref,
+                    "source_ref": context.source_ref,
                     "source_label": actor.name,
-                    "expires_on_actor_ref": source_ref,
-                    "expires_on_round": current_round + 1,
+                    "expires_on_actor_ref": context.source_ref,
+                    "expires_on_round": context.current_round + 1,
                     "target_label": target_label,
                     "save_detail": save_detail,
                 },
@@ -134,18 +123,18 @@ def _resolve_color_spray(
     )
 
 
-def _resolve_lesser_restoration(
-    actor: Actor,
-    spell: Spell,
-    target: Actor,
-    *,
-    target_ref: str,
-    target_label: str,
-    target_conditions: tuple[str, ...],
-) -> CapabilityActionResult:
+def _resolve_lesser_restoration(context: SpellActionContext) -> CapabilityActionResult:
+    actor = context.actor
+    spell = context.spell
+    target_ref = context.target.target_ref
+    target_label = context.target.target_label
     removable = spell.removable_conditions
     removed_condition = next(
-        (condition for condition in target_conditions if condition in removable),
+        (
+            condition
+            for condition in context.target.target_conditions
+            if condition in removable
+        ),
         None,
     )
     messages = [("system", f"{actor.name} casts {spell.name} on {target_label}.")]
