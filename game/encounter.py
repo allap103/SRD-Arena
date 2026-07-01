@@ -6,11 +6,22 @@ import re
 from typing import Generator
 
 from .feature_actions import resolve_feature_action
+from .encounter_effects import apply_effects, serialize_effects
+from .encounter_spells import (
+    parse_spell_action_value,
+    spell_action_economy,
+    spell_action_id,
+    spell_action_label,
+    spell_action_value,
+    spell_cast_block_reason,
+    spell_range_squares,
+    spell_targets_self_only,
+)
 from .models.actor import Actor
 from .models.item import Item
 from .models.scene import Behavior, Encounter, Position
 from .models.spellcasting import Spell, Spellcasting
-from .models.status import Status, StatusSnapshot, build_named_status
+from .models.status import Status, StatusSnapshot
 from .rules.registry import matching_rules, reroll_eligible_indices
 from .rules.types import RuleGrant
 from .spell_actions import SpellActionContext, SpellTargetContext, resolve_spell_action
@@ -855,10 +866,14 @@ class EncounterState:
             for target in self._spell_action_targets(player, spell):
                 actions.append(
                     EncounterAction(
-                        self._spell_action_label(spell, target),
+                        spell_action_label(
+                            spell,
+                            target_ref=target.target_ref,
+                            target_label=target.target_label,
+                        ),
                         "spell",
-                        _spell_action_value(spell.id, target.target_ref),
-                        id=self._spell_action_id(spell, target.target_ref),
+                        spell_action_value(spell.id, target.target_ref),
+                        id=spell_action_id(spell, target_ref=target.target_ref),
                         actor_ref="player",
                         cost=cost,
                     )
@@ -875,15 +890,11 @@ class EncounterState:
         return player.feature_uses_remaining.get(definition.feature_id, 0) > 0
 
     def _spell_action_cost(self, spell: Spell) -> ActionCost:
-        units = {
-            entry.get("unit")
-            for entry in spell.casting_time
-            if isinstance(entry, dict)
-        }
+        economy = spell_action_economy(spell)
         return ActionCost(
-            action=1 if "action" in units else 0,
-            bonus_action=1 if "bonus" in units else 0,
-            reaction=1 if "reaction" in units else 0,
+            action=economy.action,
+            bonus_action=economy.bonus_action,
+            reaction=economy.reaction,
         )
 
     def _spell_cast_block_reason(
@@ -892,27 +903,20 @@ class EncounterState:
         spell: Spell,
         cost: ActionCost,
     ) -> str | None:
-        if cost.action > 0 and not self.player_action_available:
-            return "You have already used your Action."
-        if cost.bonus_action > 0 and not self.player_bonus_action_available:
-            return "You have already used your Bonus Action."
-        if cost.reaction > 0 and not self.player_reaction_available:
-            return "You have already used your Reaction."
-        if spell.level > 0 and spellcasting.spell_slots_remaining.get(spell.level, 0) <= 0:
-            return f"You have no level {spell.level} spell slots remaining."
-        return None
+        return spell_cast_block_reason(
+            spellcasting,
+            spell,
+            spell_action_economy(spell),
+            action_available=self.player_action_available,
+            bonus_action_available=self.player_bonus_action_available,
+            reaction_available=self.player_reaction_available,
+        )
 
     def _spell_targets_self_only(self, spell: Spell) -> bool:
-        return bool(spell.removable_conditions) and spell.range_data.get("type") == "point"
+        return spell_targets_self_only(spell)
 
     def _spell_range_squares(self, spell: Spell, actor: Actor) -> int | None:
-        distance = spell.range_data.get("distance", {})
-        if not isinstance(distance, dict):
-            return None
-        amount = distance.get("amount")
-        if not isinstance(amount, int):
-            return None
-        return max(1, amount // actor.attributes.movement.feet_per_square)
+        return spell_range_squares(spell, actor)
 
     def _spell_action_targets(
         self,
@@ -939,16 +943,6 @@ class EncounterState:
             if target is not None:
                 targets.append(target)
         return targets
-
-    def _spell_action_label(self, spell: Spell, target: SpellTargetContext) -> str:
-        if target.target_ref == "player":
-            return f"Cast {spell.name}"
-        return f"Cast {spell.name} on {target.target_label[:1].lower()}{target.target_label[1:]}"
-
-    def _spell_action_id(self, spell: Spell, target_ref: str) -> str:
-        if target_ref == "player":
-            return f"player-spell-{spell.id}-player"
-        return f"player-spell-{spell.id}-{_enemy_index(target_ref)}"
 
     def _spend_spell_resources(
         self,
@@ -2341,7 +2335,7 @@ class EncounterState:
                 )
             )
             return
-        spell_id, target_ref = _parse_spell_action_value(spell_value)
+        spell_id, target_ref = parse_spell_action_value(spell_value)
         spell = next((candidate for candidate in spellcasting.learned_spells if candidate.id == spell_id), None)
         if spell is None:
             progress.messages.append(("system", "That spell is not available."))
@@ -2424,7 +2418,7 @@ class EncounterState:
                         else None
                     ),
                     "save_detail": result.details.get("save_detail"),
-                    "effects": _serialize_effects(result.effects),
+                    "effects": serialize_effects(result.effects),
                     "success": result.details.get("success", False),
                 },
             )
@@ -2461,56 +2455,11 @@ class EncounterState:
         )
 
     def _apply_effects(self, effects) -> list[tuple[str, str]]:
-        messages: list[tuple[str, str]] = []
-        for effect in effects:
-            if effect.kind == "apply_status":
-                self._apply_status_effect(effect)
-            elif effect.kind == "remove_status":
-                self._remove_status_effect(effect)
-            elif effect.kind == "message":
-                messages.extend(self._message_effects(effect))
-            else:
-                raise ValueError(f"Unsupported effect kind: {effect.kind}")
-        return messages
-
-    def _apply_status_effect(self, effect) -> None:
-        status_name = _effect_status_name(effect.data)
-        source_ref = effect.data.get("source_ref")
-        source_label = effect.data.get("source_label")
-        if not isinstance(status_name, str):
-            raise ValueError("apply_status effect requires a status_name.")
-        if not isinstance(source_ref, str) or not isinstance(source_label, str):
-            raise ValueError("apply_status effect requires source identity.")
-        status = build_named_status(
-            name=status_name,
-            source_ref=source_ref,
-            source_label=source_label,
-            target_ref=effect.target_ref,
-            expires_on_actor_ref=(
-                effect.data.get("expires_on_actor_ref")
-                if isinstance(effect.data.get("expires_on_actor_ref"), str)
-                else None
-            ),
-            expires_on_round=(
-                effect.data.get("expires_on_round")
-                if isinstance(effect.data.get("expires_on_round"), int)
-                else None
-            ),
+        return apply_effects(
+            effects,
+            apply_status=self._apply_status,
+            remove_status=self._remove_status,
         )
-        self._apply_status(status)
-
-    def _remove_status_effect(self, effect) -> None:
-        status_name = _effect_status_name(effect.data)
-        if not isinstance(status_name, str):
-            raise ValueError("remove_status effect requires a status_name.")
-        self._remove_status(effect.target_ref, status_name)
-
-    def _message_effects(self, effect) -> list[tuple[str, str]]:
-        channel = effect.data.get("channel", "system")
-        text = effect.data.get("text")
-        if not isinstance(channel, str) or not isinstance(text, str):
-            raise ValueError("message effect requires string channel and text.")
-        return [(channel, text)]
 
     def _apply_status(self, status: Status) -> None:
         self.conditions = [
@@ -3486,42 +3435,11 @@ def _selected_attack_type(
     return attack_source.attack_modes[0]
 
 
-def _spell_action_value(spell_id: str, target_ref: str) -> str:
-    return f"{spell_id}:{target_ref}"
-
-
-def _parse_spell_action_value(value: str) -> tuple[str, str]:
-    spell_id, _, target_index = value.partition(":")
-    if not spell_id or not target_index:
-        raise ValueError(f"Unsupported spell action payload: {value!r}.")
-    return spell_id, target_index
-
-
-def _effect_status_name(data: dict[str, object]) -> str | None:
-    for key in ("status_name", "condition", "name"):
-        value = data.get(key)
-        if isinstance(value, str):
-            return value
-    return None
-
-
 def _condition_suffix(conditions: tuple[Status, ...]) -> str:
     if not conditions:
         return ""
     labels = ", ".join(condition.name.capitalize() for condition in conditions)
     return f" [{labels}]"
-
-
-def _serialize_effects(effects) -> list[dict[str, object]]:
-    return [
-        {
-            "kind": effect.kind,
-            "target_ref": effect.target_ref,
-            "success": effect.success,
-            "data": dict(effect.data),
-        }
-        for effect in effects
-    ]
 
 
 def _can_make_opportunity_attack(
