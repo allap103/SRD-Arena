@@ -7,6 +7,7 @@ from typing import Generator
 
 from .feature_actions import resolve_feature_action
 from .encounter_effects import apply_effects, serialize_effects
+from .encounter_geometry import AreaOfEffect, DIRECTION_VECTORS, build_cone_area
 from .encounter_spells import (
     parse_spell_action_value,
     spell_action_economy,
@@ -944,6 +945,18 @@ class EncounterState:
                 targets.append(target)
         return targets
 
+    def _spell_area_targets(
+        self,
+        player: Actor,
+        spell: Spell,
+        target_ref: str,
+    ) -> tuple[SpellTargetContext, ...]:
+        area = self._spell_area(player, spell, target_ref)
+        if area is None:
+            target = self._spell_target_context(player, target_ref)
+            return (target,) if target is not None else ()
+        return tuple(self._targets_in_area(player, area))
+
     def _spend_spell_resources(
         self,
         spellcasting: Spellcasting,
@@ -959,6 +972,60 @@ class EncounterState:
             self.player_reaction_available = False
         if spell.level > 0:
             spellcasting.spell_slots_remaining[spell.level] -= 1
+
+    def _spell_area(
+        self,
+        player: Actor,
+        spell: Spell,
+        target_ref: str,
+    ) -> AreaOfEffect | None:
+        if spell.range_data.get("type") != "cone":
+            return None
+        target = self._spell_target_context(player, target_ref)
+        if target is None or target_ref == "player":
+            return None
+        direction = self._direction_toward(self.player_position, self._actor_position(target_ref))
+        if direction is None:
+            return None
+        length = self._spell_range_squares(spell, player)
+        if length is None:
+            return None
+        return build_cone_area(self.player_position, direction, length, self.definition.grid)
+
+    def _targets_in_area(
+        self,
+        player: Actor,
+        area: AreaOfEffect,
+    ) -> list[SpellTargetContext]:
+        occupied_cells = {(cell.x, cell.y) for cell in area.cells}
+        targets: list[SpellTargetContext] = []
+        if (self.player_position.x, self.player_position.y) in occupied_cells:
+            target = self._spell_target_context(player, "player")
+            if target is not None:
+                targets.append(target)
+        for index, enemy in enumerate(self.enemies):
+            if not enemy.is_alive:
+                continue
+            if (enemy.position.x, enemy.position.y) not in occupied_cells:
+                continue
+            target = self._spell_target_context(player, _enemy_ref(index))
+            if target is not None:
+                targets.append(target)
+        return targets
+
+    def _direction_toward(
+        self,
+        origin: Position,
+        target: Position,
+    ) -> str | None:
+        delta_x = target.x - origin.x
+        delta_y = target.y - origin.y
+        step_x = 0 if delta_x == 0 else (1 if delta_x > 0 else -1)
+        step_y = 0 if delta_y == 0 else (1 if delta_y > 0 else -1)
+        for direction, (direction_x, direction_y) in DIRECTION_VECTORS.items():
+            if direction_x == step_x and direction_y == step_y:
+                return direction
+        return None
 
     def apply_action(
         self,
@@ -2361,8 +2428,10 @@ class EncounterState:
                 )
             )
             return
+        area = self._spell_area(player, spell, target_ref)
+        targets = self._spell_area_targets(player, spell, target_ref)
         target = self._spell_target_context(player, target_ref)
-        if target is None:
+        if target is None or not targets:
             progress.messages.append(("system", "That target is not available."))
             progress.events.append(
                 self._event(
@@ -2379,6 +2448,8 @@ class EncounterState:
                 spell=spell,
                 target=target,
                 current_round=self.round_number,
+                targets=targets,
+                area=area,
                 source_ref="player",
                 roller=roll_die,
             )
@@ -2411,6 +2482,9 @@ class EncounterState:
                     "spell_level": result.details.get("spell_level", spell.level),
                     "target_ref": result.details.get("target_ref", target_ref),
                     "target_label": result.details.get("target_label", target.target_label),
+                    "target_refs": result.details.get("target_refs"),
+                    "target_labels": result.details.get("target_labels"),
+                    "area": result.details.get("area"),
                     "slot_level": result.details.get("slot_level", spell.level),
                     "spell_slots_remaining": (
                         spellcasting.spell_slots_remaining.get(spell.level, 0)
@@ -2418,6 +2492,7 @@ class EncounterState:
                         else None
                     ),
                     "save_detail": result.details.get("save_detail"),
+                    "save_details": result.details.get("save_details"),
                     "effects": serialize_effects(result.effects),
                     "success": result.details.get("success", False),
                 },

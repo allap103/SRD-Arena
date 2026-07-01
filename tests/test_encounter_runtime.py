@@ -201,6 +201,38 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatc
     assert spell_event.data["effects"][0]["data"]["condition"] == "blinded"
 
 
+def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    assert session.player.spellcasting is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 4
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 3
+    state.enemies[1].position.x = 4
+    state.enemies[1].position.y = 2
+    state.enemies[2].actor.current_health = 0
+
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+
+    result = session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+
+    assert state.has_condition("enemy:0", "blinded") is True
+    assert state.has_condition("enemy:1", "blinded") is True
+    spell_event = next(event for event in result.events if event.type == "spell_cast")
+    assert spell_event.data["target_refs"] == ["enemy:0", "enemy:1"]
+    assert spell_event.data["area"]["shape"] == "cone"
+    assert spell_event.data["area"]["origin"] == {"x": 4, "y": 4}
+    assert len(spell_event.data["save_details"]) == 2
+    assert [effect["target_ref"] for effect in spell_event.data["effects"]] == [
+        "enemy:0",
+        "enemy:1",
+    ]
+
+
 def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
     session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
