@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 from .game_logging import CHANNEL_ENGINE, get_game_logger
 from .loaders import (
@@ -16,6 +17,10 @@ from .loaders import (
 )
 from .models.actor import Actor
 from .models.item import Item
+from .models.rules_config import (
+    DEFAULT_DIRECTIONAL_AOE_CELL_COVERAGE_THRESHOLD,
+    RulesConfig,
+)
 from .models.scene import Scene
 from .scene_runner import SceneRunner
 from .session import GameSession
@@ -29,6 +34,7 @@ class Game:
     scenes: dict[str, Scene]
     actors: list[Actor]
     items: list[Item]
+    rules_config: RulesConfig
 
     def __init__(
         self,
@@ -39,6 +45,7 @@ class Game:
     ):
         self.directory = Path(directory)
         self.system_directory = Path(system_directory)
+        self.rules_config = self._load_rules_config(self.directory / "settings.json")
         self.stat_blocks = load_bestiary_stat_blocks(self.system_directory)
         self.class_blocks = load_class_blocks(self.system_directory)
         self.subclass_blocks = load_subclass_blocks(self.system_directory)
@@ -104,7 +111,21 @@ class Game:
             start_scene_id=self.start_scene,
             game_dir=self.directory,
             control_mode=control_mode or self.control_mode,
+            rules_config=self.rules_config,
         )
+
+    def _load_rules_config(self, path: Path) -> RulesConfig:
+        if not path.exists():
+            return RulesConfig()
+        with path.open("r", encoding="utf-8") as config_file:
+            payload = json.load(config_file)
+        rules = payload.get("rules", {})
+        threshold = DEFAULT_DIRECTIONAL_AOE_CELL_COVERAGE_THRESHOLD
+        if isinstance(rules, dict):
+            configured = rules.get("directional_aoe_cell_coverage_threshold")
+            if isinstance(configured, (int, float)):
+                threshold = min(max(float(configured), 0.0), 1.0)
+        return RulesConfig(directional_aoe_cell_coverage_threshold=threshold)
 
     def run(self):
         session = self.create_session()

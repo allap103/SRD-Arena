@@ -2,9 +2,19 @@ from __future__ import annotations
 
 import sys
 
+from .encounter import ActionCost, EncounterAction
+from .encounter_geometry import (
+    Vector2D,
+    build_cone_area_from_vector,
+    build_cube_area_from_vector,
+    build_line_area_from_vector,
+    serialize_area,
+)
+from .encounter_spells import parse_spell_action_value, spell_action_value, spell_range_squares
 from .engine import GAME_DIR, Game
 from .dice_presentation import build_roll_views, without_roll_details
 from .presentation import MOVE_DIRECTIONS, SessionPresentation, build_session_presentation
+from .models.scene import Grid, Position
 from .session import (
     ActionView,
     EXIT_CHOICE_TEXT,
@@ -132,6 +142,8 @@ class CyoaPySide6Window(QMainWindow):
 
         self.battlefield_widget = BattlefieldWidget(self.game.directory)
         self.battlefield_widget.actor_clicked.connect(self._handle_battlefield_actor_clicked)
+        self.battlefield_widget.cell_clicked.connect(self._handle_battlefield_cell_clicked)
+        self.battlefield_widget.point_clicked.connect(self._handle_battlefield_point_clicked)
         battlefield_layout.addWidget(self.battlefield_widget, stretch=1)
 
         roll_rail = QFrame()
@@ -347,6 +359,7 @@ class CyoaPySide6Window(QMainWindow):
             self.scene_group.show()
             self.story_choices_group.show()
             self.encounter_panel.hide()
+            self.battlefield_widget.set_area_overlay(None)
             self._render_story_actions(presentation.story_actions)
         else:
             self.scene_group.hide()
@@ -374,8 +387,14 @@ class CyoaPySide6Window(QMainWindow):
         self.battlefield_widget.set_battlefield(encounter.battlefield)
 
         target_modes = self._target_selection_modes(encounter.non_movement_actions)
-        if self._pending_target_mode not in target_modes:
+        if not self._target_mode_is_available(encounter.non_movement_actions, target_modes):
             self._pending_target_mode = None
+        self.battlefield_widget.set_cell_targeting_enabled(
+            self._pending_directional_spell_action(encounter.non_movement_actions) is not None
+        )
+        self.battlefield_widget.set_area_overlay(
+            self._pending_spell_overlay(encounter.non_movement_actions)
+        )
         selected_targetable_actions = (
             target_modes.get(self._pending_target_mode, {}) if self._pending_target_mode is not None else {}
         )
@@ -895,6 +914,40 @@ class CyoaPySide6Window(QMainWindow):
             return
         self._select_action(action.index)
 
+    def _handle_battlefield_cell_clicked(self, x: int, y: int) -> None:
+        self._handle_battlefield_point_clicked(x + 0.5, y + 0.5)
+
+    def _handle_battlefield_point_clicked(self, x: float, y: float) -> None:
+        if self._presentation is None or self._presentation.encounter is None:
+            return
+        action = self._pending_directional_spell_action(self._presentation.encounter.non_movement_actions)
+        if action is None:
+            return
+        if self.session.encounter_state is None:
+            return
+        payload = spell_action_value(
+            parse_spell_action_value(str(action.value))[0],
+            aim_point=(x, y),
+        )
+        encounter_action = EncounterAction(
+            label=action.label,
+            kind=action.kind,
+            value=payload,
+            id=action.id,
+            actor_ref=action.actor_ref,
+            cost=ActionCost(
+                movement=action.cost.get("movement", 0),
+                action=action.cost.get("action", 0),
+                bonus_action=action.cost.get("bonus_action", 0),
+                reaction=action.cost.get("reaction", 0),
+            ),
+            source_trigger_id=action.source_trigger_id,
+        )
+        self._pending_target_mode = None
+        self._action_menu_scope = None
+        result = self.session.choose_encounter_action(encounter_action)
+        self._apply_turn_result(result)
+
     def _target_selection_modes(
         self,
         actions: list[ActionView],
@@ -909,6 +962,11 @@ class CyoaPySide6Window(QMainWindow):
         return modes
 
     def _target_mode_for_action(self, action: ActionView) -> TargetSelectionMode | None:
+        if action.kind == "spell" and self._is_directional_spell_action(action):
+            return TargetSelectionMode(
+                kind=action.kind,
+                source_trigger_id=action.id,
+            )
         if self._target_actor_ref(action) is None:
             return None
         return TargetSelectionMode(
@@ -917,6 +975,13 @@ class CyoaPySide6Window(QMainWindow):
         )
 
     def _target_mode_label(self, mode: TargetSelectionMode) -> str:
+        if mode.kind == "spell" and self._presentation is not None and self._presentation.encounter is not None:
+            action = self._pending_directional_spell_action(
+                self._presentation.encounter.non_movement_actions,
+                mode=mode,
+            )
+            if action is not None:
+                return action.label
         return "Opportunity attack" if mode.kind == "opportunity_attack" else "Attack"
 
     def _target_actor_ref(self, action: ActionView | None) -> str | None:
@@ -927,6 +992,43 @@ class CyoaPySide6Window(QMainWindow):
         if not isinstance(action.value, int):
             return None
         return f"enemy:{action.value}"
+
+    def _is_directional_spell_action(self, action: ActionView) -> bool:
+        if action.kind != "spell" or not isinstance(action.value, str):
+            return False
+        spell_id, target_ref, aim_cell = parse_spell_action_value(action.value)
+        return bool(spell_id) and target_ref is None and aim_cell is None
+
+    def _pending_directional_spell_action(
+        self,
+        actions: list[ActionView],
+        *,
+        mode: TargetSelectionMode | None = None,
+    ) -> ActionView | None:
+        pending_mode = mode or self._pending_target_mode
+        if pending_mode is None or pending_mode.kind != "spell":
+            return None
+        return next(
+            (
+                action
+                for action in actions
+                if action.kind == "spell"
+                and action.id == pending_mode.source_trigger_id
+                and self._is_directional_spell_action(action)
+            ),
+            None,
+        )
+
+    def _target_mode_is_available(
+        self,
+        actions: list[ActionView],
+        target_modes: dict[TargetSelectionMode, dict[str, ActionView]],
+    ) -> bool:
+        if self._pending_target_mode is None:
+            return False
+        if self._pending_target_mode in target_modes:
+            return True
+        return self._pending_directional_spell_action(actions) is not None
 
     def _apply_turn_result(self, result) -> None:
         encounter_state = self.session.encounter_state
@@ -964,6 +1066,65 @@ class CyoaPySide6Window(QMainWindow):
         self.dice_roll_panel.start_round(encounter_state.round_number)
         self._logged_round_number = encounter_state.round_number
         QTimer.singleShot(20, self._scroll_roll_log_to_bottom)
+
+    def _pending_spell_overlay(self, actions: list[ActionView]) -> dict[str, object] | None:
+        action = self._pending_directional_spell_action(actions)
+        if action is None or self.session.encounter_state is None or self.session.player.spellcasting is None:
+            return None
+        spell_id, _, _ = parse_spell_action_value(str(action.value))
+        spell = next(
+            (spell for spell in self.session.player.spellcasting.learned_spells if spell.id == spell_id),
+            None,
+        )
+        if spell is None:
+            return None
+        length = spell_range_squares(spell, self.session.player)
+        if length is None:
+            return None
+        origin = Position(
+            self.session.encounter_state.player_position.x,
+            self.session.encounter_state.player_position.y,
+        )
+        grid = Grid(
+            width=self.session.encounter_state.definition.grid.width,
+            height=self.session.encounter_state.definition.grid.height,
+        )
+        default_direction = Vector2D(1.0, 0.0)
+        coverage_threshold = (
+            self.session.encounter_state.rules_config.directional_aoe_cell_coverage_threshold
+        )
+        shape = spell.range_data.get("type")
+        if shape == "cone":
+            return serialize_area(
+                build_cone_area_from_vector(
+                    origin,
+                    default_direction,
+                    length,
+                    grid,
+                    coverage_threshold=coverage_threshold,
+                )
+            )
+        if shape == "line":
+            return serialize_area(
+                build_line_area_from_vector(
+                    origin,
+                    default_direction,
+                    length,
+                    grid,
+                    coverage_threshold=coverage_threshold,
+                )
+            )
+        if shape == "cube":
+            return serialize_area(
+                build_cube_area_from_vector(
+                    origin,
+                    default_direction,
+                    length,
+                    grid,
+                    coverage_threshold=coverage_threshold,
+                )
+            )
+        return None
 
     def _scroll_roll_log_to_bottom(self) -> None:
         scrollbar = self.roll_scroll.verticalScrollBar()

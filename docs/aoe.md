@@ -121,43 +121,48 @@ We therefore need a documented project policy.
 
 If the continuous shape touches any part of a square, that square is included.
 
-Pros:
+### Candidate policy B: half-cell
 
-- simple to reason about
-- generous to players
-- easy to explain visually
+Only squares with at least 50 percent coverage are included.
 
-Cons:
-
-- may produce larger areas than expected
-- can make narrow cones and lines feel too wide
-
-### Candidate policy B: majority-cell
-
-Only squares with more than 50 percent coverage are included.
-
-Pros:
-
-- closer to the visible body of the shape
-- reduces edge inflation
-
-Cons:
-
-- harder to compute and explain
-- can create unintuitive borderline exclusions
+When a square crosses that threshold, the whole square is treated as affected in the
+encounter layer.
 
 ### Project decision
 
-For the current system, we use touched-cell rasterization.
+For the current directional-shape system, we use configurable coverage-threshold
+rasterization.
 
-That means a grid square is included if the continuous AoE shape touches any part of that
-square.
+That means:
+
+- cone, line, and cube areas are first constructed as continuous shapes
+- each grid square is measured by overlap area with that shape
+- a square is included only if it meets the configured minimum coverage threshold
+- once included, the square is treated as fully affected
 
 ### Project note
 
-This policy now applies to the continuous cone, line, and cube implementations and should
-also be treated as the intended policy for other AoE shapes as they move onto the continuous
-geometry layer.
+This is a project implementation rule, not a direct SRD claim about square-grid
+rasterization.
+
+### Current project override
+
+The threshold is now configurable in game data via `settings.json` under:
+
+`rules.directional_aoe_cell_coverage_threshold`
+
+The current sample game sets this to `0.1`, meaning a directional AoE square is included
+once at least 10 percent of that square is covered.
+
+### Project note
+
+This 10 percent value is an intentional project tuning choice for now. It is not presented
+as an SRD rule.
+
+### Current limitation
+
+The current `radius` helper still uses the older touched-cell behavior and should be migrated
+to the same half-cell policy when we revisit non-directional continuous shapes.
 
 ## Shape-Specific Notes
 
@@ -210,7 +215,7 @@ The final cone system should be aimed by direction vector or aim point, not only
 ### Current state
 
 The implementation now accepts an arbitrary 2D aim vector and rasterizes the resulting
-continuous triangle with the touched-cell policy.
+continuous triangle with the configured coverage-threshold policy.
 
 ### Line
 
@@ -227,7 +232,7 @@ than introducing a separate ad hoc grid rule.
 ### Current state
 
 The implementation now treats a line as a continuous 1-cell-wide rectangle cast along an
-arbitrary 2D aim vector and rasterizes it with the touched-cell policy.
+arbitrary 2D aim vector and rasterizes it with the configured coverage-threshold policy.
 
 ### Cube
 
@@ -244,7 +249,8 @@ direction, even though the resulting footprint is not line-like.
 ### Current state
 
 The implementation now treats a cube as a continuous square projected outward from the point
-of origin along an arbitrary 2D aim vector and rasterizes it with the touched-cell policy.
+of origin along an arbitrary 2D aim vector and rasterizes it with the configured
+coverage-threshold policy.
 
 ### Project note
 

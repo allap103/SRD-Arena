@@ -112,6 +112,39 @@ def test_build_roll_views_extracts_feature_healing():
     assert healing.total == 9
 
 
+def test_build_roll_views_extracts_spell_save_dice():
+    event = CombatEvent(
+        seq=1,
+        type="spell_cast",
+        data={
+            "spell_name": "Color Spray",
+            "save_details": [
+                {
+                    "target_label": "Goblin",
+                    "ability": "constitution",
+                    "die": 4,
+                    "dice": [15, 4],
+                    "selected_index": 1,
+                    "modifier": 2,
+                    "total": 6,
+                    "target_dc": 12,
+                    "success": False,
+                }
+            ],
+        },
+    )
+
+    [save] = build_roll_views([event])
+
+    assert save.label == "Goblin Constitution save vs Color Spray"
+    assert [die.value for die in save.dice] == [15, 4]
+    assert [die.selected for die in save.dice] == [False, True]
+    assert save.modifier == 2
+    assert save.total == 6
+    assert save.target == 12
+    assert save.success is False
+
+
 def test_build_roll_views_exposes_individual_rerollable_damage_dice():
     event = CombatEvent(
         seq=1,
@@ -155,6 +188,7 @@ def test_without_roll_details_keeps_outcomes_and_removes_formula_messages():
     messages = [
         ("system", "Traveler attacks Goblin. Roll d20=17 + STR mod 3 = 20."),
         ("system", "Damage to Goblin: 1d8=6 + STR mod 3 = 9."),
+        ("system", "Goblin makes a Constitution save: d20=4 + 2 = 6 vs DC 12."),
         ("system", "Traveler hits Goblin for 9 damage."),
         ("system", "Healing: 1d10=7 + level 2 = 9; applied 9."),
         ("system", "Traveler uses Second Wind."),

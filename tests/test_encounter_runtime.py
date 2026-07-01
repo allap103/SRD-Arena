@@ -1,12 +1,15 @@
 from pathlib import Path
+from types import SimpleNamespace
 
-from game.encounter import EncounterAction
+from game.encounter import ActionCost, EncounterAction
 from game.engine import Game
 from game.pyside6_app import CyoaPySide6Window
 from game.features import EffectResult
 from game.presentation import SpellSlotTrackView, build_session_presentation
 from game.save import load_from_file, save_to_file
 from game.session import ActionView
+from game.ui.encounter import BattlefieldWidget
+from game.ui.encounter.config import TargetSelectionMode
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 SAMPLE_GAME_DIR = Path(__file__).parents[1] / "sample_game"
@@ -21,6 +24,27 @@ def _action_index_by_prefix(session, prefix: str) -> int:
         index
         for index, choice in enumerate(session.get_scene_view().choices)
         if choice.startswith(prefix)
+    )
+
+
+def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
+    scene_view = session.get_scene_view()
+    action = next(detail for detail in scene_view.action_details if detail.label == label)
+    return session.choose_encounter_action(
+        EncounterAction(
+            label=action.label,
+            kind=action.kind,
+            value=f"{action.value}@{aim_cell[0] + 0.5:.4f},{aim_cell[1] + 0.5:.4f}",
+            id=action.id,
+            actor_ref=action.actor_ref,
+            cost=ActionCost(
+                movement=action.cost.get("movement", 0),
+                action=action.cost.get("action", 0),
+                bonus_action=action.cost.get("bonus_action", 0),
+                reaction=action.cost.get("reaction", 0),
+            ),
+            source_trigger_id=action.source_trigger_id,
+        )
     )
 
 
@@ -126,7 +150,7 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
 
-    assert "Cast Color Spray on enemy 1 (Goblin)" in session.get_scene_view().choices
+    assert "Cast Color Spray" in session.get_scene_view().choices
 
 
 def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypatch) -> None:
@@ -140,7 +164,7 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypat
     session.encounter_state.enemies[0].position.y = 2
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
 
-    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     presentation = build_session_presentation(session)
 
     assert presentation.encounter is not None
@@ -187,7 +211,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatc
 
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
 
-    result = session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
 
     assert ("system", "Traveler casts Color Spray on Enemy 1 (Goblin).") in result.messages
     assert any("is blinded until the end of your next turn" in message for _, message in result.messages)
@@ -218,7 +242,7 @@ def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
 
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
 
-    result = session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
 
     assert state.has_condition("enemy:0", "blinded") is True
     assert state.has_condition("enemy:1", "blinded") is True
@@ -226,7 +250,8 @@ def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
     assert spell_event.data["target_refs"] == ["enemy:0", "enemy:1"]
     assert spell_event.data["area"]["shape"] == "cone"
     assert spell_event.data["area"]["origin"] == {"x": 4, "y": 4}
-    assert spell_event.data["area"]["rasterization_policy"] == "touched_cell"
+    assert spell_event.data["area"]["rasterization_policy"] == "coverage_threshold"
+    assert spell_event.data["area"]["coverage_threshold"] == 0.1
     assert len(spell_event.data["save_details"]) == 2
     assert [effect["target_ref"] for effect in spell_event.data["effects"]] == [
         "enemy:0",
@@ -250,7 +275,7 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
 
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
 
-    result = session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    result = _choose_directional_spell(session, "Cast Color Spray", (5, 3))
 
     assert state.has_condition("enemy:0", "blinded") is True
     assert state.has_condition("enemy:1", "blinded") is True
@@ -260,6 +285,112 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
         "x": 0.9486832980505138,
         "y": -0.31622776601683794,
     }
+
+
+def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 4
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 3
+    state.enemies[1].position.x = 4
+    state.enemies[1].position.y = 2
+    state.enemies[2].actor.current_health = 0
+
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+
+    result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
+    area = next(
+        event.data["area"]
+        for event in result.events
+        if event.type == "spell_cast"
+    )
+
+    assert area is not None
+    assert area["shape"] == "cone"
+    assert area["origin"] == {"x": 4, "y": 4}
+    assert area["rasterization_policy"] == "coverage_threshold"
+    assert area["coverage_threshold"] == 0.1
+    assert len(area["cells"]) >= 2
+
+
+def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 4
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 3
+    state.enemies[1].actor.current_health = 0
+    state.enemies[2].actor.current_health = 0
+
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr(
+        "game.pyside6_app.QTimer",
+        SimpleNamespace(singleShot=lambda _delay, callback: callback()),
+    )
+
+    result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
+
+    window = CyoaPySide6Window.__new__(CyoaPySide6Window)
+    window.session = session
+    window._presentation = SimpleNamespace(encounter=object())
+    window._combat_log_scene_id = state.scene_id
+    window.dice_roll_panel = SimpleNamespace(
+        append_entry=lambda _messages, _rolls: None,
+    )
+    window._scroll_roll_log_to_bottom = lambda: None
+    window.refresh_view = lambda: None
+    window.close = lambda: None
+
+    CyoaPySide6Window._apply_turn_result(window, result)
+
+    assert not hasattr(window, "_resolved_area_overlay")
+
+
+def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 4
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 3
+    state.enemies[1].position.x = 4
+    state.enemies[1].position.y = 2
+    state.enemies[2].actor.current_health = 0
+
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+
+    result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
+    presentation = build_session_presentation(session)
+
+    assert presentation.encounter is not None
+    original_area = next(
+        event.data["area"]
+        for event in result.events
+        if event.type == "spell_cast"
+    )
+    preview = BattlefieldWidget._preview_area_overlay(
+        original_area,
+        (6, 4),
+        presentation.encounter.battlefield,
+    )
+
+    assert preview is not None
+    assert preview["shape"] == "cone"
+    assert preview["origin"] == {"x": 4, "y": 4}
+    assert preview["continuous_area"]["direction"] != original_area["continuous_area"]["direction"]
+    assert preview["cells"] != original_area["cells"]
 
 
 def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
@@ -279,7 +410,7 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: next(rolls, 3))
     monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
 
-    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     result = session.choose(session.get_scene_view().choices.index("Wait"))
 
     attack_event = next(
@@ -303,7 +434,7 @@ def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
     state.enemies[0].position.y = 2
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
 
-    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    _choose_directional_spell(session, "Cast Color Spray", (3, 2))
 
     attack_mode = state._attack_roll_mode_for(
         "player",
@@ -332,7 +463,7 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatc
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: next(rolls, 3))
     monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
 
-    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     session.choose(session.get_scene_view().choices.index("Wait"))
 
     assert state.has_condition("enemy:0", "blinded") is True
@@ -357,9 +488,9 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
     monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
 
-    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    _choose_directional_spell(session, "Cast Color Spray", (4, 1))
     session.choose(session.get_scene_view().choices.index("Wait"))
-    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    _choose_directional_spell(session, "Cast Color Spray", (4, 1))
 
     assert state.has_condition("enemy:0", "blinded") is True
     assert len(state.conditions_for("enemy:0")) == 1
@@ -442,7 +573,7 @@ def test_save_and_load_preserve_color_spray_condition_and_slots(tmp_path: Path, 
     session.encounter_state.enemies[0].position.y = 2
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
 
-    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     save_path = tmp_path / "color_spray_save.json"
 
     save_to_file(session, save_path)
@@ -524,9 +655,9 @@ def test_save_and_load_preserve_refreshed_blinded_duration(tmp_path: Path, monke
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
     monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
 
-    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    _choose_directional_spell(session, "Cast Color Spray", (4, 1))
     session.choose(session.get_scene_view().choices.index("Wait"))
-    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    _choose_directional_spell(session, "Cast Color Spray", (4, 1))
     save_path = tmp_path / "refreshed_blind_save.json"
 
     save_to_file(session, save_path)
@@ -978,7 +1109,7 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
     state.enemies[0].position.y = 2
     monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
 
-    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     presentation = build_session_presentation(session)
 
     assert presentation.encounter is not None
@@ -995,16 +1126,37 @@ def test_spell_actions_map_to_magic_menu_bucket() -> None:
         None,
         ActionView(
             index=0,
-            id="player-spell-color-spray-0",
-            label="Cast Color Spray on enemy 1 (Goblin)",
+            id="player-spell-color_spray",
+            label="Cast Color Spray",
             kind="spell",
             actor_ref="player",
-            value="color_spray:0",
+            value="color_spray",
             cost={"action": 1},
         ),
     )
 
     assert bucket == "magic"
+
+
+def test_directional_spell_target_mode_stays_available_without_actor_target_map() -> None:
+    window = CyoaPySide6Window.__new__(CyoaPySide6Window)
+    window._pending_target_mode = TargetSelectionMode(
+        kind="spell",
+        source_trigger_id="player-spell-color_spray",
+    )
+    actions = [
+        ActionView(
+            index=0,
+            id="player-spell-color_spray",
+            label="Cast Color Spray",
+            kind="spell",
+            actor_ref="player",
+            value="color_spray",
+            cost={"action": 1},
+        )
+    ]
+
+    assert CyoaPySide6Window._target_mode_is_available(window, actions, {}) is True
 
 
 def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:

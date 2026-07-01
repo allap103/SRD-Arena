@@ -16,9 +16,11 @@ DIRECTION_VECTORS = {
     "down-right": (1, 1),
 }
 
-RASTERIZATION_POLICY = "touched_cell"
+RASTERIZATION_POLICY = "coverage_threshold"
+LEGACY_TOUCHED_CELL_POLICY = "touched_cell"
 EPSILON = 1e-9
 BOUNDARY_SHRINK = 1e-6
+DEFAULT_CELL_COVERAGE_THRESHOLD = 0.5
 
 
 @dataclass(frozen=True)
@@ -42,6 +44,7 @@ class ContinuousArea:
     width: float | None = None
     radius: float | None = None
     rasterization_policy: str = RASTERIZATION_POLICY
+    coverage_threshold: float | None = None
 
 
 @dataclass(frozen=True)
@@ -51,6 +54,7 @@ class AreaOfEffect:
     cells: tuple[Position, ...]
     continuous_area: ContinuousArea | None = None
     rasterization_policy: str = RASTERIZATION_POLICY
+    coverage_threshold: float | None = None
 
 
 def serialize_area(area: AreaOfEffect | None) -> dict[str, object] | None:
@@ -62,6 +66,8 @@ def serialize_area(area: AreaOfEffect | None) -> dict[str, object] | None:
         "cells": [{"x": cell.x, "y": cell.y} for cell in area.cells],
         "rasterization_policy": area.rasterization_policy,
     }
+    if area.coverage_threshold is not None:
+        payload["coverage_threshold"] = area.coverage_threshold
     if area.continuous_area is not None:
         payload["continuous_area"] = serialize_continuous_area(area.continuous_area)
     return payload
@@ -81,7 +87,64 @@ def serialize_continuous_area(area: ContinuousArea) -> dict[str, object]:
         payload["width"] = area.width
     if area.radius is not None:
         payload["radius"] = area.radius
+    if area.coverage_threshold is not None:
+        payload["coverage_threshold"] = area.coverage_threshold
     return payload
+
+
+def deserialize_continuous_area(payload: object) -> ContinuousArea | None:
+    if not isinstance(payload, dict):
+        return None
+    shape = payload.get("shape")
+    origin = payload.get("origin")
+    if (
+        not isinstance(shape, str)
+        or not isinstance(origin, dict)
+        or not isinstance(origin.get("x"), (int, float))
+        or not isinstance(origin.get("y"), (int, float))
+    ):
+        return None
+    direction_payload = payload.get("direction")
+    direction = None
+    if (
+        isinstance(direction_payload, dict)
+        and isinstance(direction_payload.get("x"), (int, float))
+        and isinstance(direction_payload.get("y"), (int, float))
+    ):
+        direction = Vector2D(
+            float(direction_payload["x"]),
+            float(direction_payload["y"]),
+        )
+    return ContinuousArea(
+        shape=shape,
+        origin=Point2D(float(origin["x"]), float(origin["y"])),
+        direction=direction,
+        length=float(payload["length"]) if isinstance(payload.get("length"), (int, float)) else None,
+        width=float(payload["width"]) if isinstance(payload.get("width"), (int, float)) else None,
+        radius=float(payload["radius"]) if isinstance(payload.get("radius"), (int, float)) else None,
+        rasterization_policy=(
+            str(payload["rasterization_policy"])
+            if isinstance(payload.get("rasterization_policy"), str)
+            else RASTERIZATION_POLICY
+        ),
+        coverage_threshold=(
+            float(payload["coverage_threshold"])
+            if isinstance(payload.get("coverage_threshold"), (int, float))
+            else None
+        ),
+    )
+
+
+def continuous_area_outline(area: ContinuousArea) -> tuple[Point2D, ...] | None:
+    if area.direction is None:
+        return None
+    if area.shape == "cone" and area.length is not None:
+        return _cone_polygon(area.origin, normalize_vector(area.direction), area.length)
+    if area.shape == "line" and area.length is not None:
+        return _line_polygon(area.origin, normalize_vector(area.direction), area.length)
+    if area.shape == "cube" and area.length is not None:
+        return _cube_polygon(area.origin, normalize_vector(area.direction), area.length)
+    return None
 
 
 def build_radius_area(
@@ -94,6 +157,7 @@ def build_radius_area(
         shape="radius",
         origin=origin_point,
         radius=float(radius_squares),
+        rasterization_policy=LEGACY_TOUCHED_CELL_POLICY,
     )
     cells = _rasterize_cells(
         grid,
@@ -104,6 +168,7 @@ def build_radius_area(
         origin=origin,
         cells=cells,
         continuous_area=continuous_area,
+        rasterization_policy=LEGACY_TOUCHED_CELL_POLICY,
     )
 
 
@@ -126,6 +191,8 @@ def build_cone_area_from_vector(
     direction: Vector2D,
     length_squares: int,
     grid: Grid,
+    *,
+    coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
     unit_direction = normalize_vector(direction)
     origin_point = directional_origin_point(origin, unit_direction)
@@ -139,16 +206,25 @@ def build_cone_area_from_vector(
         origin=origin_point,
         direction=unit_direction,
         length=float(length_squares),
+        coverage_threshold=coverage_threshold,
     )
     cells = _filter_origin_cell(
         origin,
-        _rasterize_cells(grid, lambda cell: _cell_intersects_polygon(cell, polygon)),
+        _rasterize_cells(
+            grid,
+            lambda cell: _cell_meets_polygon_coverage_threshold(
+                cell,
+                polygon,
+                coverage_threshold=coverage_threshold,
+            ),
+        ),
     )
     return AreaOfEffect(
         shape="cone",
         origin=origin,
         cells=cells,
         continuous_area=continuous_area,
+        coverage_threshold=coverage_threshold,
     )
 
 
@@ -171,6 +247,8 @@ def build_line_area_from_vector(
     direction: Vector2D,
     length_squares: int,
     grid: Grid,
+    *,
+    coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
     unit_direction = normalize_vector(direction)
     origin_point = directional_origin_point(origin, unit_direction)
@@ -185,16 +263,25 @@ def build_line_area_from_vector(
         direction=unit_direction,
         length=float(length_squares),
         width=1.0,
+        coverage_threshold=coverage_threshold,
     )
     cells = _filter_origin_cell(
         origin,
-        _rasterize_cells(grid, lambda cell: _cell_intersects_polygon(cell, polygon)),
+        _rasterize_cells(
+            grid,
+            lambda cell: _cell_meets_polygon_coverage_threshold(
+                cell,
+                polygon,
+                coverage_threshold=coverage_threshold,
+            ),
+        ),
     )
     return AreaOfEffect(
         shape="line",
         origin=origin,
         cells=cells,
         continuous_area=continuous_area,
+        coverage_threshold=coverage_threshold,
     )
 
 
@@ -217,6 +304,8 @@ def build_cube_area_from_vector(
     direction: Vector2D,
     size_squares: int,
     grid: Grid,
+    *,
+    coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
     unit_direction = normalize_vector(direction)
     origin_point = directional_origin_point(origin, unit_direction)
@@ -231,16 +320,25 @@ def build_cube_area_from_vector(
         direction=unit_direction,
         length=float(size_squares),
         width=float(size_squares),
+        coverage_threshold=coverage_threshold,
     )
     cells = _filter_origin_cell(
         origin,
-        _rasterize_cells(grid, lambda cell: _cell_intersects_polygon(cell, polygon)),
+        _rasterize_cells(
+            grid,
+            lambda cell: _cell_meets_polygon_coverage_threshold(
+                cell,
+                polygon,
+                coverage_threshold=coverage_threshold,
+            ),
+        ),
     )
     return AreaOfEffect(
         shape="cube",
         origin=origin,
         cells=cells,
         continuous_area=continuous_area,
+        coverage_threshold=coverage_threshold,
     )
 
 
@@ -366,6 +464,109 @@ def _cell_intersects_circle(
     closest_x = min(max(center.x, min_x), max_x)
     closest_y = min(max(center.y, min_y), max_y)
     return _distance_squared(center, Point2D(closest_x, closest_y)) <= (radius * radius) + EPSILON
+
+
+def _cell_meets_polygon_coverage_threshold(
+    cell: Position,
+    polygon: tuple[Point2D, ...],
+    *,
+    coverage_threshold: float,
+) -> bool:
+    return _cell_polygon_overlap_area(cell, polygon) >= (coverage_threshold - EPSILON)
+
+
+def _cell_polygon_overlap_area(
+    cell: Position,
+    polygon: tuple[Point2D, ...],
+) -> float:
+    clipped = _clip_polygon_to_cell(polygon, cell)
+    if len(clipped) < 3:
+        return 0.0
+    return _polygon_area(clipped)
+
+
+def _clip_polygon_to_cell(
+    polygon: tuple[Point2D, ...],
+    cell: Position,
+) -> tuple[Point2D, ...]:
+    min_x, max_x, min_y, max_y = _cell_bounds(cell)
+    clipped = list(polygon)
+    clipped = _clip_polygon_against_boundary(
+        clipped,
+        inside=lambda point: point.x >= min_x - EPSILON,
+        intersect=lambda start, end: _intersect_with_vertical_boundary(start, end, min_x),
+    )
+    clipped = _clip_polygon_against_boundary(
+        clipped,
+        inside=lambda point: point.x <= max_x + EPSILON,
+        intersect=lambda start, end: _intersect_with_vertical_boundary(start, end, max_x),
+    )
+    clipped = _clip_polygon_against_boundary(
+        clipped,
+        inside=lambda point: point.y >= min_y - EPSILON,
+        intersect=lambda start, end: _intersect_with_horizontal_boundary(start, end, min_y),
+    )
+    clipped = _clip_polygon_against_boundary(
+        clipped,
+        inside=lambda point: point.y <= max_y + EPSILON,
+        intersect=lambda start, end: _intersect_with_horizontal_boundary(start, end, max_y),
+    )
+    return tuple(clipped)
+
+
+def _clip_polygon_against_boundary(
+    polygon: list[Point2D],
+    *,
+    inside,
+    intersect,
+) -> list[Point2D]:
+    if not polygon:
+        return []
+    clipped: list[Point2D] = []
+    previous = polygon[-1]
+    previous_inside = inside(previous)
+    for current in polygon:
+        current_inside = inside(current)
+        if current_inside:
+            if not previous_inside:
+                clipped.append(intersect(previous, current))
+            clipped.append(current)
+        elif previous_inside:
+            clipped.append(intersect(previous, current))
+        previous = current
+        previous_inside = current_inside
+    return clipped
+
+
+def _intersect_with_vertical_boundary(
+    start: Point2D,
+    end: Point2D,
+    boundary_x: float,
+) -> Point2D:
+    delta_x = end.x - start.x
+    if abs(delta_x) <= EPSILON:
+        return Point2D(boundary_x, start.y)
+    ratio = (boundary_x - start.x) / delta_x
+    return Point2D(boundary_x, start.y + ((end.y - start.y) * ratio))
+
+
+def _intersect_with_horizontal_boundary(
+    start: Point2D,
+    end: Point2D,
+    boundary_y: float,
+) -> Point2D:
+    delta_y = end.y - start.y
+    if abs(delta_y) <= EPSILON:
+        return Point2D(start.x, boundary_y)
+    ratio = (boundary_y - start.y) / delta_y
+    return Point2D(start.x + ((end.x - start.x) * ratio), boundary_y)
+
+
+def _polygon_area(points: tuple[Point2D, ...]) -> float:
+    signed_area = 0.0
+    for start, end in _polygon_edges(points):
+        signed_area += (start.x * end.y) - (end.x * start.y)
+    return abs(signed_area) / 2.0
 
 
 def _cell_intersects_polygon(

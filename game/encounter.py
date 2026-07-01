@@ -9,6 +9,7 @@ from .feature_actions import resolve_feature_action
 from .encounter_effects import apply_effects, serialize_effects
 from .encounter_geometry import (
     AreaOfEffect,
+    Vector2D,
     build_cone_area_from_vector,
     build_cube_area_from_vector,
     build_line_area_from_vector,
@@ -28,6 +29,7 @@ from .models.actor import Actor
 from .models.item import Item
 from .models.scene import Behavior, Encounter, Position
 from .models.spellcasting import Spell, Spellcasting
+from .models.rules_config import RulesConfig
 from .models.status import Status, StatusSnapshot
 from .rules.registry import matching_rules, reroll_eligible_indices
 from .rules.types import RuleGrant
@@ -311,6 +313,7 @@ class EncounterState:
     pending_attack: PendingAttack | None = None
     conditions: list[Status] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)
+    rules_config: RulesConfig = field(default_factory=RulesConfig)
     _behaviors: list[Generator[EncounterAction | None, BehaviorContext, None]] = field(
         default_factory=list,
         repr=False,
@@ -324,6 +327,7 @@ class EncounterState:
         actor_templates: dict[str, Actor],
         item_templates: dict[str, Item] | None = None,
         control_mode: str = "default",
+        rules_config: RulesConfig | None = None,
     ) -> EncounterState:
         enemies = [
             EncounterEnemyState(
@@ -344,6 +348,7 @@ class EncounterState:
             enemies=enemies,
             control_mode=control_mode,
             item_templates=item_templates or {},
+            rules_config=rules_config or RulesConfig(),
         )
         state._initialize_behaviors()
         return state
@@ -355,6 +360,7 @@ class EncounterState:
         snapshot: EncounterSnapshot,
         actor_templates: dict[str, Actor],
         item_templates: dict[str, Item] | None = None,
+        rules_config: RulesConfig | None = None,
     ) -> EncounterState:
         behavior_by_index = {index: enemy.behavior for index, enemy in enumerate(definition.enemies)}
         enemies = []
@@ -435,6 +441,7 @@ class EncounterState:
                 for condition in snapshot.conditions
             ],
             item_templates=item_templates or {},
+            rules_config=rules_config or RulesConfig(),
         )
         state._initialize_behaviors()
         state._normalize_turn()
@@ -870,6 +877,20 @@ class EncounterState:
             cost = self._spell_action_cost(spell)
             if self._spell_cast_block_reason(spellcasting, spell, cost) is not None:
                 continue
+            if spell.geometry_mode == "directional_area":
+                if not self._spell_action_targets(player, spell):
+                    continue
+                actions.append(
+                    EncounterAction(
+                        spell_action_label(spell),
+                        "spell",
+                        spell_action_value(spell.id),
+                        id=spell_action_id(spell),
+                        actor_ref="player",
+                        cost=cost,
+                    )
+                )
+                continue
             for target in self._spell_action_targets(player, spell):
                 actions.append(
                     EncounterAction(
@@ -955,10 +976,13 @@ class EncounterState:
         self,
         player: Actor,
         spell: Spell,
-        target_ref: str,
+        target_ref: str | None = None,
+        aim_point: tuple[float, float] | None = None,
     ) -> tuple[SpellTargetContext, ...]:
-        area = self._spell_area(player, spell, target_ref)
+        area = self._spell_area(player, spell, target_ref=target_ref, aim_point=aim_point)
         if area is None:
+            if target_ref is None:
+                return ()
             target = self._spell_target_context(player, target_ref)
             return (target,) if target is not None else ()
         return tuple(self._targets_in_area(player, area))
@@ -983,17 +1007,33 @@ class EncounterState:
         self,
         player: Actor,
         spell: Spell,
-        target_ref: str,
+        target_ref: str | None = None,
+        aim_point: tuple[float, float] | None = None,
     ) -> AreaOfEffect | None:
         if spell.geometry_mode != "directional_area":
             return None
-        target = self._spell_target_context(player, target_ref)
-        if target is None or target_ref == "player":
-            return None
-        direction = vector_between_positions(self.player_position, self._actor_position(target_ref))
+        if aim_point is not None:
+            if abs(aim_point[0] - (self.player_position.x + 0.5)) < 1e-9 and abs(
+                aim_point[1] - (self.player_position.y + 0.5)
+            ) < 1e-9:
+                return None
+            direction = Vector2D(
+                aim_point[0] - (self.player_position.x + 0.5),
+                aim_point[1] - (self.player_position.y + 0.5),
+            )
+        else:
+            if target_ref is None:
+                return None
+            target = self._spell_target_context(player, target_ref)
+            if target is None or target_ref == "player":
+                return None
+            direction = vector_between_positions(self.player_position, self._actor_position(target_ref))
         length = self._spell_range_squares(spell, player)
         if length is None:
             return None
+        coverage_threshold = (
+            self.rules_config.directional_aoe_cell_coverage_threshold
+        )
         shape = spell.range_data.get("type")
         if shape == "cone":
             return build_cone_area_from_vector(
@@ -1001,6 +1041,7 @@ class EncounterState:
                 direction,
                 length,
                 self.definition.grid,
+                coverage_threshold=coverage_threshold,
             )
         if shape == "line":
             return build_line_area_from_vector(
@@ -1008,6 +1049,7 @@ class EncounterState:
                 direction,
                 length,
                 self.definition.grid,
+                coverage_threshold=coverage_threshold,
             )
         if shape == "cube":
             return build_cube_area_from_vector(
@@ -1015,6 +1057,7 @@ class EncounterState:
                 direction,
                 length,
                 self.definition.grid,
+                coverage_threshold=coverage_threshold,
             )
         return None
 
@@ -2414,7 +2457,7 @@ class EncounterState:
                 )
             )
             return
-        spell_id, target_ref = parse_spell_action_value(spell_value)
+        spell_id, target_ref, aim_point = parse_spell_action_value(spell_value)
         spell = next((candidate for candidate in spellcasting.learned_spells if candidate.id == spell_id), None)
         if spell is None:
             progress.messages.append(("system", "That spell is not available."))
@@ -2440,9 +2483,15 @@ class EncounterState:
                 )
             )
             return
-        area = self._spell_area(player, spell, target_ref)
-        targets = self._spell_area_targets(player, spell, target_ref)
-        target = self._spell_target_context(player, target_ref)
+        area = self._spell_area(player, spell, target_ref=target_ref, aim_point=aim_point)
+        targets = self._spell_area_targets(player, spell, target_ref=target_ref, aim_point=aim_point)
+        target = (
+            self._spell_target_context(player, target_ref)
+            if target_ref is not None
+            else targets[0]
+            if targets
+            else None
+        )
         if target is None or not targets:
             progress.messages.append(("system", "That target is not available."))
             progress.events.append(

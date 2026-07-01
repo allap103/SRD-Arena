@@ -3,12 +3,22 @@ from __future__ import annotations
 from pathlib import Path
 
 from ...dice_presentation import RollView
+from ...encounter_geometry import (
+    Vector2D,
+    build_cone_area_from_vector,
+    build_cube_area_from_vector,
+    build_line_area_from_vector,
+    continuous_area_outline,
+    deserialize_continuous_area,
+    serialize_area,
+)
 from ...engine import GAME_DIR
+from ...models.scene import Grid, Position
 from ...presentation import BattlefieldView
 
 try:
-    from PySide6.QtCore import QSize, Qt, Signal
-    from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap
+    from PySide6.QtCore import QPointF, QSize, Qt, Signal
+    from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap, QPolygonF
     from PySide6.QtSvg import QSvgRenderer
     from PySide6.QtWidgets import (
         QFrame,
@@ -24,6 +34,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     def Signal(*args, **kwargs):  # type: ignore[no-untyped-def]
         return None
 
+    QPointF = object  # type: ignore[assignment]
     QSize = object  # type: ignore[assignment]
     Qt = object  # type: ignore[assignment]
     QColor = object  # type: ignore[assignment]
@@ -31,6 +42,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QPainter = object  # type: ignore[assignment]
     QPen = object  # type: ignore[assignment]
     QPixmap = object  # type: ignore[assignment]
+    QPolygonF = object  # type: ignore[assignment]
     QSvgRenderer = object  # type: ignore[assignment]
     QFrame = object  # type: ignore[assignment]
     QGridLayout = object  # type: ignore[assignment]
@@ -266,6 +278,8 @@ def _single_die_sides(expression: str) -> int | None:
 
 class BattlefieldWidget(QWidget):
     actor_clicked = Signal(str)
+    cell_clicked = Signal(int, int)
+    point_clicked = Signal(float, float)
     BASE_CELL_SIZE = 72
     MINIMUM_HEIGHT = 320
 
@@ -275,10 +289,16 @@ class BattlefieldWidget(QWidget):
         self._actor_positions: dict[str, tuple[float, float, float]] = {}
         self._targetable_actor_refs: set[str] = set()
         self._selected_actor_ref: str | None = None
+        self._area_overlay: dict[str, object] | None = None
+        self._hover_cell: tuple[int, int] | None = None
+        self._hover_point: tuple[float, float] | None = None
+        self._board_metrics: tuple[float, float, float, int, int] | None = None
+        self._cell_targeting_enabled = False
         self._sprites_dir = Path(game_dir) / "sprites"
         self._sprite_cache: dict[str, QPixmap | None] = {}
         self.setMinimumHeight(self.MINIMUM_HEIGHT)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setMouseTracking(True)
 
     def sizeHint(self) -> QSize:
         if self._battlefield is None:
@@ -299,7 +319,16 @@ class BattlefieldWidget(QWidget):
                 else "None"
             )
             tooltip_lines.append(f"{actor.label}: {conditions}")
+        if self._area_overlay is not None:
+            tooltip_lines.append(self._area_overlay_tooltip(self._area_overlay))
         self.setToolTip("\n".join(tooltip_lines))
+        self.update()
+
+    def set_area_overlay(self, area: dict[str, object] | None) -> None:
+        self._area_overlay = area
+        if self._battlefield is not None:
+            self.set_battlefield(self._battlefield)
+            return
         self.update()
 
     def set_targeting_state(
@@ -310,6 +339,12 @@ class BattlefieldWidget(QWidget):
         self._targetable_actor_refs = set(targetable_actor_refs)
         self._selected_actor_ref = selected_actor_ref
         self.update()
+
+    def set_cell_targeting_enabled(self, enabled: bool) -> None:
+        self._cell_targeting_enabled = enabled
+        self.setCursor(
+            Qt.CursorShape.CrossCursor if enabled else Qt.CursorShape.ArrowCursor
+        )
 
     def paintEvent(self, event) -> None:  # pragma: no cover - GUI painting
         if self._battlefield is None:
@@ -326,6 +361,8 @@ class BattlefieldWidget(QWidget):
         board_height = cell_size * rows
         origin_x = rect.x() + (rect.width() - board_width) / 2
         origin_y = rect.y() + (rect.height() - board_height) / 2
+        self._board_metrics = (origin_x, origin_y, cell_size, cols, rows)
+        display_overlay = self._display_area_overlay()
 
         grid_pen = QPen(QColor("#c8b68c"))
         grid_pen.setWidth(1)
@@ -338,6 +375,63 @@ class BattlefieldWidget(QWidget):
                 cell_y = origin_y + y * cell_size
                 painter.fillRect(int(cell_x), int(cell_y), int(cell_size), int(cell_size), fill)
                 painter.drawRect(int(cell_x), int(cell_y), int(cell_size), int(cell_size))
+
+        overlay_cells = self._overlay_cells(display_overlay)
+        overlay_origin = self._overlay_origin(display_overlay)
+        if overlay_cells:
+            painter.setPen(Qt.PenStyle.NoPen)
+            for cell_x, cell_y in overlay_cells:
+                draw_x = origin_x + cell_x * cell_size
+                draw_y = origin_y + cell_y * cell_size
+                painter.fillRect(
+                    int(draw_x + 1),
+                    int(draw_y + 1),
+                    max(1, int(cell_size - 2)),
+                    max(1, int(cell_size - 2)),
+                    QColor(72, 142, 212, 95),
+                )
+            continuous_area = self._continuous_area(display_overlay)
+            if continuous_area is not None:
+                outline = continuous_area_outline(continuous_area)
+                if outline is not None:
+                    painter.setBrush(QColor(132, 188, 234, 55))
+                    outline_pen = QPen(QColor("#1c4e80"), 2)
+                    outline_pen.setStyle(Qt.PenStyle.DashLine)
+                    painter.setPen(outline_pen)
+                    painter.drawPolygon(
+                        QPolygonF(
+                            [
+                                QPointF(
+                                    origin_x + (point.x * cell_size),
+                                    origin_y + (point.y * cell_size),
+                                )
+                                for point in outline
+                            ]
+                        )
+                    )
+            painter.setPen(QPen(QColor("#2a5f92"), 2))
+            for cell_x, cell_y in overlay_cells:
+                draw_x = origin_x + cell_x * cell_size
+                draw_y = origin_y + cell_y * cell_size
+                painter.drawRect(
+                    int(draw_x + 1),
+                    int(draw_y + 1),
+                    max(1, int(cell_size - 2)),
+                    max(1, int(cell_size - 2)),
+                )
+
+        if overlay_origin is not None:
+            origin_cell_x, origin_cell_y = overlay_origin
+            draw_x = origin_x + origin_cell_x * cell_size
+            draw_y = origin_y + origin_cell_y * cell_size
+            painter.setBrush(QColor(255, 247, 186, 110))
+            painter.setPen(QPen(QColor("#9a7a17"), 3))
+            painter.drawRect(
+                int(draw_x + 2),
+                int(draw_y + 2),
+                max(1, int(cell_size - 4)),
+                max(1, int(cell_size - 4)),
+            )
 
         self._actor_positions = {}
         for actor in self._battlefield.actors:
@@ -415,7 +509,162 @@ class BattlefieldWidget(QWidget):
                     actor.label[:1].upper(),
                 )
 
+        if display_overlay is not None:
+            badge_rect = rect.adjusted(12, 12, -12, -12)
+            badge_height = 32
+            badge_width = min(int(cell_size * 3.8), max(160, badge_rect.width() // 3))
+            painter.setBrush(QColor(23, 54, 74, 220))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(
+                badge_rect.x(),
+                badge_rect.y(),
+                badge_width,
+                badge_height,
+                10,
+                10,
+            )
+            painter.setPen(QColor("white"))
+            font = QFont()
+            font.setBold(True)
+            font.setPointSize(10)
+            painter.setFont(font)
+            painter.drawText(
+                badge_rect.x() + 12,
+                badge_rect.y(),
+                badge_width - 24,
+                badge_height,
+                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
+                self._area_overlay_label(display_overlay),
+            )
+
         painter.end()
+
+    def _display_area_overlay(self) -> dict[str, object] | None:
+        preview = self._preview_area_overlay(
+            self._area_overlay,
+            self._hover_point,
+            self._battlefield,
+        )
+        return preview if preview is not None else self._area_overlay
+
+    def _overlay_cells(self, area: dict[str, object] | None) -> set[tuple[int, int]]:
+        if not isinstance(area, dict):
+            return set()
+        cells = area.get("cells")
+        if not isinstance(cells, list):
+            return set()
+        return {
+            (cell["x"], cell["y"])
+            for cell in cells
+            if isinstance(cell, dict)
+            and isinstance(cell.get("x"), int)
+            and isinstance(cell.get("y"), int)
+        }
+
+    def _overlay_origin(self, area: dict[str, object] | None) -> tuple[int, int] | None:
+        if not isinstance(area, dict):
+            return None
+        origin = area.get("origin")
+        if not isinstance(origin, dict):
+            return None
+        x = origin.get("x")
+        y = origin.get("y")
+        if not isinstance(x, int) or not isinstance(y, int):
+            return None
+        return (x, y)
+
+    def _continuous_area(self, area: dict[str, object] | None):
+        if not isinstance(area, dict):
+            return None
+        return deserialize_continuous_area(area.get("continuous_area"))
+
+    def _area_overlay_label(self, area: dict[str, object]) -> str:
+        shape = area.get("shape")
+        label = str(shape).capitalize() if isinstance(shape, str) else "Area"
+        return f"{label} AoE"
+
+    def _area_overlay_tooltip(self, area: dict[str, object]) -> str:
+        label = self._area_overlay_label(area)
+        cell_count = len(self._overlay_cells(area))
+        policy = area.get("rasterization_policy")
+        if isinstance(policy, str):
+            threshold = area.get("coverage_threshold")
+            if isinstance(threshold, (int, float)):
+                return (
+                    f"{label}: {cell_count} cells "
+                    f"({policy.replace('_', ' ')}, {float(threshold) * 100:.0f}% min)"
+                )
+            return f"{label}: {cell_count} cells ({policy.replace('_', ' ')})"
+        return f"{label}: {cell_count} cells"
+
+    @staticmethod
+    def _preview_area_overlay(
+        area: dict[str, object] | None,
+        hover_point: tuple[float, float] | None,
+        battlefield: BattlefieldView | None,
+    ) -> dict[str, object] | None:
+        if area is None or hover_point is None or battlefield is None:
+            return None
+        origin = area.get("origin")
+        if not isinstance(origin, dict):
+            return None
+        origin_x = origin.get("x")
+        origin_y = origin.get("y")
+        if not isinstance(origin_x, int) or not isinstance(origin_y, int):
+            return None
+        continuous_area = deserialize_continuous_area(area.get("continuous_area"))
+        if (
+            continuous_area is None
+            or continuous_area.direction is None
+            or continuous_area.shape not in {"cone", "line", "cube"}
+            or continuous_area.length is None
+        ):
+            return None
+        if int(hover_point[0]) == origin_x and int(hover_point[1]) == origin_y:
+            return None
+        direction = Vector2D(
+            hover_point[0] - continuous_area.origin.x,
+            hover_point[1] - continuous_area.origin.y,
+        )
+        origin_position = Position(origin_x, origin_y)
+        grid = Grid(width=battlefield.width, height=battlefield.height)
+        size = max(1, int(round(continuous_area.length)))
+        coverage_threshold = (
+            continuous_area.coverage_threshold
+            if continuous_area.coverage_threshold is not None
+            else 0.5
+        )
+        if continuous_area.shape == "cone":
+            return serialize_area(
+                build_cone_area_from_vector(
+                    origin_position,
+                    direction,
+                    size,
+                    grid,
+                    coverage_threshold=coverage_threshold,
+                )
+            )
+        if continuous_area.shape == "line":
+            return serialize_area(
+                build_line_area_from_vector(
+                    origin_position,
+                    direction,
+                    size,
+                    grid,
+                    coverage_threshold=coverage_threshold,
+                )
+            )
+        if continuous_area.shape == "cube":
+            return serialize_area(
+                build_cube_area_from_vector(
+                    origin_position,
+                    direction,
+                    size,
+                    grid,
+                    coverage_threshold=coverage_threshold,
+                )
+            )
+        return None
 
     def _sprite_for_actor(self, actor_id: str, label: str) -> QPixmap | None:
         for name in self._sprite_names(actor_id, label):
@@ -436,6 +685,13 @@ class BattlefieldWidget(QWidget):
         return names
 
     def mousePressEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+        point = self._point_at_pixel(event.position().x(), event.position().y())
+        if self._cell_targeting_enabled and point is not None:
+            self.point_clicked.emit(point[0], point[1])
+            return
+        cell = self._cell_at_point(event.position().x(), event.position().y())
+        if cell is not None:
+            self.cell_clicked.emit(cell[0], cell[1])
         for actor_ref, (center_x, center_y, radius) in self._actor_positions.items():
             dx = event.position().x() - center_x
             dy = event.position().y() - center_y
@@ -443,3 +699,41 @@ class BattlefieldWidget(QWidget):
                 self.actor_clicked.emit(actor_ref)
                 break
         super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+        previous_hover = self._hover_cell
+        previous_point = self._hover_point
+        self._hover_cell = self._cell_at_point(event.position().x(), event.position().y())
+        self._hover_point = self._point_at_pixel(event.position().x(), event.position().y())
+        if self._hover_cell != previous_hover or self._hover_point != previous_point:
+            self.update()
+        super().mouseMoveEvent(event)
+
+    def leaveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+        if self._hover_cell is not None or self._hover_point is not None:
+            self._hover_cell = None
+            self._hover_point = None
+            self.update()
+        super().leaveEvent(event)
+
+    def _cell_at_point(self, x: float, y: float) -> tuple[int, int] | None:
+        if self._board_metrics is None:
+            return None
+        origin_x, origin_y, cell_size, cols, rows = self._board_metrics
+        if x < origin_x or y < origin_y:
+            return None
+        col = int((x - origin_x) // cell_size)
+        row = int((y - origin_y) // cell_size)
+        if not (0 <= col < cols and 0 <= row < rows):
+            return None
+        return (col, row)
+
+    def _point_at_pixel(self, x: float, y: float) -> tuple[float, float] | None:
+        if self._board_metrics is None:
+            return None
+        origin_x, origin_y, cell_size, cols, rows = self._board_metrics
+        local_x = (x - origin_x) / cell_size
+        local_y = (y - origin_y) / cell_size
+        if not (0.0 <= local_x <= cols and 0.0 <= local_y <= rows):
+            return None
+        return (local_x, local_y)

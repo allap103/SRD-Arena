@@ -6,6 +6,7 @@ from game.loaders import load_actor, load_bestiary_stat_blocks, load_scene
 from game.save import load_from_file, save_to_file
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
+SAMPLE_GAME_DIR = Path(__file__).parents[1] / "sample_game"
 
 
 def test_load_scene_parses_optional_encounter_block() -> None:
@@ -104,6 +105,12 @@ def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
     assert items_by_id["shortsword"].weapon_stat.damage == "1d6"
     assert items_by_id["chain_mail"].armor_stat is not None
     assert items_by_id["chain_mail"].armor_stat.armor_class == 16
+
+
+def test_game_loads_rule_settings_from_settings_json() -> None:
+    game = Game(str(SAMPLE_GAME_DIR))
+
+    assert game.rules_config.directional_aoe_cell_coverage_threshold == 0.1
 
 
 def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:

@@ -72,6 +72,10 @@ def build_roll_views(events: list[CombatEvent]) -> list[RollView]:
             )
             if healing is not None:
                 views.append(healing)
+            continue
+
+        if event.type == "spell_cast":
+            views.extend(_saving_throw_roll_views(event))
     return views
 
 
@@ -86,6 +90,7 @@ def without_roll_details(
             "Roll d20=" in message
             or message.startswith("Damage to ")
             or message.startswith("Healing:")
+            or " save: d20=" in message
         )
     ]
 
@@ -119,6 +124,57 @@ def _attack_roll_view(event: CombatEvent) -> RollView | None:
         total=total,
         target=target if isinstance(target, int) else None,
         success=event.data.get("hit") if isinstance(event.data.get("hit"), bool) else None,
+    )
+
+
+def _saving_throw_roll_views(event: CombatEvent) -> list[RollView]:
+    details = event.data.get("save_details")
+    if not isinstance(details, list):
+        detail = event.data.get("save_detail")
+        details = [detail] if isinstance(detail, dict) else []
+    views: list[RollView] = []
+    spell_name = event.data.get("spell_name")
+    for detail in details:
+        if not isinstance(detail, dict):
+            continue
+        roll_view = _saving_throw_roll_view(detail, spell_name)
+        if roll_view is not None:
+            views.append(roll_view)
+    return views
+
+
+def _saving_throw_roll_view(
+    detail: dict[str, object],
+    spell_name: object,
+) -> RollView | None:
+    die = detail.get("die")
+    dice = detail.get("dice")
+    selected_index = detail.get("selected_index")
+    modifier = detail.get("modifier")
+    total = detail.get("total")
+    target = detail.get("target_dc")
+    success = detail.get("success")
+    target_label = detail.get("target_label")
+    ability = detail.get("ability")
+    if not all(isinstance(value, int) for value in (die, modifier, total)):
+        return None
+    label = "Saving Throw"
+    if isinstance(target_label, str) and isinstance(ability, str):
+        label = f"{target_label} {ability.capitalize()} save"
+        if isinstance(spell_name, str):
+            label = f"{label} vs {spell_name}"
+    rendered_dice = _attack_dice_views(
+        die=die,
+        dice=dice,
+        selected_index=selected_index,
+    )
+    return RollView(
+        label=label,
+        dice=rendered_dice,
+        modifier=modifier,
+        total=total,
+        target=target if isinstance(target, int) else None,
+        success=success if isinstance(success, bool) else None,
     )
 
 

@@ -6,6 +6,7 @@ from .choice_resolver import ChoiceResolver
 from .encounter import CombatEvent, EncounterAction, EncounterSnapshot, EncounterState
 from .models.actor import Actor
 from .models.item import Item
+from .models.rules_config import RulesConfig
 from .models.scene import Scene
 from .rest import apply_rest
 
@@ -64,6 +65,7 @@ class GameSession:
         save_dir: str | Path = "saves",
         control_mode: str = "default",
         ai_action_limit: int | None = None,
+        rules_config: RulesConfig | None = None,
     ):
         self.scenes = scenes
         self.player = player
@@ -77,6 +79,7 @@ class GameSession:
         self.save_dir = Path(save_dir)
         self.control_mode = control_mode
         self.ai_action_limit = ai_action_limit
+        self.rules_config = rules_config or RulesConfig()
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
 
@@ -251,6 +254,7 @@ class GameSession:
         self.item_templates = loaded.item_templates
         self.encounter_state = loaded.encounter_state
         self.control_mode = loaded.control_mode
+        self.rules_config = loaded.rules_config
         if self.encounter_state is not None:
             self.encounter_state.ai_action_limit = self.ai_action_limit
         self._encounter_actions = []
@@ -288,6 +292,34 @@ class GameSession:
             raise RuntimeError("Encounter action requested without an active encounter.")
 
         action = self._encounter_actions[choice_index]
+        return self._apply_encounter_action(
+            action,
+            selected_index=choice_index,
+            selected_choice_text=action.label,
+        )
+
+    def choose_encounter_action(
+        self,
+        action: EncounterAction,
+        *,
+        selected_choice_text: str | None = None,
+    ) -> TurnResult:
+        self._ensure_encounter_state()
+        if self.encounter_state is None:
+            raise RuntimeError("Encounter action requested without an active encounter.")
+        return self._apply_encounter_action(
+            action,
+            selected_index=None,
+            selected_choice_text=selected_choice_text or action.label,
+        )
+
+    def _apply_encounter_action(
+        self,
+        action: EncounterAction,
+        *,
+        selected_index: int | None,
+        selected_choice_text: str,
+    ) -> TurnResult:
         progress = self.encounter_state.apply_action(self.player, action)
         messages = progress.messages
         transition = progress.transition
@@ -314,8 +346,8 @@ class GameSession:
         )
         return TurnResult(
             scene=self.get_scene_view(),
-            selected_index=choice_index,
-            selected_choice_text=action.label,
+            selected_index=selected_index,
+            selected_choice_text=selected_choice_text,
             selected_action_id=action.id,
             messages=messages,
             next_scene_id=self.current_scene_id,
@@ -383,6 +415,7 @@ class GameSession:
             self.actor_templates,
             self.item_templates,
             self.control_mode,
+            self.rules_config,
         )
         self.encounter_state.ai_action_limit = self.ai_action_limit
         self._encounter_actions = []
@@ -411,6 +444,7 @@ class GameSession:
             snapshot,
             self.actor_templates,
             self.item_templates,
+            self.rules_config,
         )
         self.encounter_state.ai_action_limit = self.ai_action_limit
 
