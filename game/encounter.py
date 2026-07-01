@@ -9,10 +9,10 @@ from .feature_actions import resolve_feature_action
 from .encounter_effects import apply_effects, serialize_effects
 from .encounter_geometry import (
     AreaOfEffect,
-    DIRECTION_VECTORS,
-    build_cone_area,
-    build_cube_area,
-    build_line_area,
+    build_cone_area_from_vector,
+    build_cube_area_from_vector,
+    build_line_area_from_vector,
+    vector_between_positions,
 )
 from .encounter_spells import (
     parse_spell_action_value,
@@ -987,24 +987,35 @@ class EncounterState:
     ) -> AreaOfEffect | None:
         if spell.geometry_mode != "directional_area":
             return None
-        if spell.range_data.get("type") != "cone":
-            return None
         target = self._spell_target_context(player, target_ref)
         if target is None or target_ref == "player":
             return None
-        direction = self._direction_toward(self.player_position, self._actor_position(target_ref))
-        if direction is None:
-            return None
+        direction = vector_between_positions(self.player_position, self._actor_position(target_ref))
         length = self._spell_range_squares(spell, player)
         if length is None:
             return None
         shape = spell.range_data.get("type")
         if shape == "cone":
-            return build_cone_area(self.player_position, direction, length, self.definition.grid)
+            return build_cone_area_from_vector(
+                self.player_position,
+                direction,
+                length,
+                self.definition.grid,
+            )
         if shape == "line":
-            return build_line_area(self.player_position, direction, length, self.definition.grid)
+            return build_line_area_from_vector(
+                self.player_position,
+                direction,
+                length,
+                self.definition.grid,
+            )
         if shape == "cube":
-            return build_cube_area(self.player_position, direction, length, self.definition.grid)
+            return build_cube_area_from_vector(
+                self.player_position,
+                direction,
+                length,
+                self.definition.grid,
+            )
         return None
 
     def _targets_in_area(
@@ -1027,20 +1038,6 @@ class EncounterState:
             if target is not None:
                 targets.append(target)
         return targets
-
-    def _direction_toward(
-        self,
-        origin: Position,
-        target: Position,
-    ) -> str | None:
-        delta_x = target.x - origin.x
-        delta_y = target.y - origin.y
-        step_x = 0 if delta_x == 0 else (1 if delta_x > 0 else -1)
-        step_y = 0 if delta_y == 0 else (1 if delta_y > 0 else -1)
-        for direction, (direction_x, direction_y) in DIRECTION_VECTORS.items():
-            if direction_x == step_x and direction_y == step_y:
-                return direction
-        return None
 
     def apply_action(
         self,

@@ -146,10 +146,18 @@ Cons:
 - harder to compute and explain
 - can create unintuitive borderline exclusions
 
-### Project decision needed
+### Project decision
 
-Before expanding AoE support much further, we should choose one rasterization policy and
-apply it consistently across cones, lines, and other partial-cell shapes.
+For the current system, we use touched-cell rasterization.
+
+That means a grid square is included if the continuous AoE shape touches any part of that
+square.
+
+### Project note
+
+This policy now applies to the continuous cone, line, and cube implementations and should
+also be treated as the intended policy for other AoE shapes as they move onto the continuous
+geometry layer.
 
 ## Shape-Specific Notes
 
@@ -199,9 +207,10 @@ shape.
 The final cone system should be aimed by direction vector or aim point, not only by one of
 8 named grid facings.
 
-### Current temporary simplification
+### Current state
 
-The current implementation uses 8-direction grid facings as a stepping stone.
+The implementation now accepts an arbitrary 2D aim vector and rasterizes the resulting
+continuous triangle with the touched-cell policy.
 
 ### Line
 
@@ -215,10 +224,10 @@ and length.
 Lines should share the same continuous-direction and rasterization framework as cones rather
 than introducing a separate ad hoc grid rule.
 
-### Current temporary simplification
+### Current state
 
-The current implementation treats a line as a 1-cell-wide ray along one of 8 grid-facing
-directions. This is only a stepping stone until continuous-direction rasterization is added.
+The implementation now treats a line as a continuous 1-cell-wide rectangle cast along an
+arbitrary 2D aim vector and rasterizes it with the touched-cell policy.
 
 ### Cube
 
@@ -232,11 +241,15 @@ its full side length.
 Cubes belong to the directional-shape family because the face placement depends on chosen
 direction, even though the resulting footprint is not line-like.
 
-### Current temporary simplification
+### Current state
 
-The current implementation treats a cube as a square block of cells offset away from the
-origin in one of 8 grid-facing directions. Cardinal facings center the cube on the
-perpendicular axis; diagonal facings place it into the corresponding quadrant.
+The implementation now treats a cube as a continuous square projected outward from the point
+of origin along an arbitrary 2D aim vector and rasterizes it with the touched-cell policy.
+
+### Project note
+
+This is still a 2D-only approximation of the tabletop concept. It does not model vertical
+placement.
 
 ### Sphere / radius
 

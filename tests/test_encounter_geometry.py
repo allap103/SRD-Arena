@@ -1,7 +1,12 @@
 from game.encounter_geometry import (
+    RASTERIZATION_POLICY,
+    Vector2D,
     build_cone_area,
+    build_cone_area_from_vector,
     build_cube_area,
+    build_cube_area_from_vector,
     build_line_area,
+    build_line_area_from_vector,
     build_radius_area,
 )
 from game.models.scene import Grid, Position
@@ -16,6 +21,9 @@ def test_radius_area_includes_chebyshev_cells_within_bounds() -> None:
 
     assert area.shape == "radius"
     assert area.origin == Position(2, 2)
+    assert area.rasterization_policy == RASTERIZATION_POLICY
+    assert area.continuous_area is not None
+    assert area.continuous_area.radius == 1.0
     assert _coords(area) == {
         (1, 1),
         (2, 1),
@@ -44,16 +52,16 @@ def test_cone_area_widens_each_step_for_cardinal_direction() -> None:
     area = build_cone_area(Position(3, 4), "up", 3, Grid(width=7, height=7))
 
     assert area.shape == "cone"
+    assert area.continuous_area is not None
+    assert area.continuous_area.direction == Vector2D(0.0, -1.0)
     assert _coords(area) == {
-        (3, 3),
-        (2, 2),
-        (3, 2),
-        (4, 2),
-        (1, 1),
         (2, 1),
+        (2, 2),
         (3, 1),
+        (3, 2),
+        (3, 3),
         (4, 1),
-        (5, 1),
+        (4, 2),
     }
 
 
@@ -61,15 +69,18 @@ def test_cone_area_supports_diagonal_direction() -> None:
     area = build_cone_area(Position(2, 4), "up-right", 3, Grid(width=7, height=7))
 
     assert _coords(area) == {
-        (3, 3),
+        (2, 3),
+        (3, 0),
+        (3, 1),
         (3, 2),
+        (3, 3),
+        (3, 4),
+        (4, 1),
         (4, 2),
         (4, 3),
-        (3, 1),
-        (4, 1),
-        (5, 1),
         (5, 2),
         (5, 3),
+        (6, 3),
     }
 
 
@@ -88,9 +99,14 @@ def test_line_area_supports_diagonal_direction() -> None:
     area = build_line_area(Position(2, 4), "up-right", 3, Grid(width=7, height=7))
 
     assert _coords(area) == {
+        (2, 3),
+        (3, 2),
         (3, 3),
+        (3, 4),
+        (4, 1),
         (4, 2),
-        (5, 1),
+        (4, 3),
+        (5, 2),
     }
 
 
@@ -115,13 +131,98 @@ def test_cube_area_supports_diagonal_direction() -> None:
     area = build_cube_area(Position(2, 4), "up-right", 3, Grid(width=7, height=7))
 
     assert _coords(area) == {
+        (1, 2),
+        (1, 3),
+        (2, 1),
+        (2, 2),
+        (2, 3),
+        (3, 0),
         (3, 1),
-        (4, 1),
-        (5, 1),
         (3, 2),
-        (4, 2),
-        (5, 2),
         (3, 3),
+        (3, 4),
+        (3, 5),
+        (4, 1),
+        (4, 2),
         (4, 3),
+        (4, 4),
+        (4, 5),
+        (5, 2),
         (5, 3),
+        (5, 4),
+        (6, 3),
+    }
+
+
+def test_line_area_from_non_grid_vector_rasterizes_without_direction_snapping() -> None:
+    area = build_line_area_from_vector(
+        Position(2, 4),
+        Vector2D(3.0, -1.0),
+        4,
+        Grid(width=8, height=8),
+    )
+
+    assert _coords(area) == {
+        (2, 3),
+        (3, 3),
+        (3, 4),
+        (4, 3),
+        (4, 4),
+        (5, 2),
+        (5, 3),
+        (5, 4),
+        (6, 2),
+        (6, 3),
+    }
+
+
+def test_cone_area_from_non_grid_vector_uses_continuous_aim() -> None:
+    area = build_cone_area_from_vector(
+        Position(2, 4),
+        Vector2D(3.0, -1.0),
+        3,
+        Grid(width=8, height=8),
+    )
+
+    assert _coords(area) == {
+        (3, 3),
+        (3, 4),
+        (4, 2),
+        (4, 3),
+        (4, 4),
+        (5, 1),
+        (5, 2),
+        (5, 3),
+        (5, 4),
+        (6, 3),
+        (6, 4),
+    }
+
+
+def test_cube_area_from_non_grid_vector_rotates_with_aim() -> None:
+    area = build_cube_area_from_vector(
+        Position(2, 4),
+        Vector2D(2.0, -1.0),
+        3,
+        Grid(width=8, height=8),
+    )
+
+    assert _coords(area) == {
+        (2, 2),
+        (2, 3),
+        (3, 2),
+        (3, 3),
+        (3, 4),
+        (3, 5),
+        (4, 1),
+        (4, 2),
+        (4, 3),
+        (4, 4),
+        (4, 5),
+        (5, 1),
+        (5, 2),
+        (5, 3),
+        (5, 4),
+        (6, 3),
+        (6, 4),
     }
