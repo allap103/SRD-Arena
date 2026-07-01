@@ -65,6 +65,8 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
 
 
 SIDEBAR_WIDTH = 220
+ENCOUNTER_BUTTON_HEIGHT = 36
+RESOURCE_BAR_HEIGHT = 28
 ARROW_LABELS = {
     "up-left": "↖",
     "up": "↑",
@@ -303,6 +305,19 @@ def _single_die_sides(expression: str) -> int | None:
     except ValueError:
         return None
     return sides if sides in {4, 6, 8, 10, 12, 20} else None
+
+
+def _spell_slot_rich_text(level: int, remaining: int, maximum: int) -> str:
+    gap = "&nbsp;"
+    available = gap.join(
+        '<span style="color:#2f6f9d;">&#x25A0;</span>' for _ in range(remaining)
+    )
+    spent = gap.join(
+        '<span style="color:#9d2f2f;">&#x25A0;</span>'
+        for _ in range(max(0, maximum - remaining))
+    )
+    markers = gap.join(part for part in (available, spent) if part)
+    return f"{level}: {markers}"
 
 
 class BattlefieldWidget(QWidget):
@@ -572,7 +587,14 @@ class CyoaPySide6Window(QMainWindow):
         encounter_controls_layout.setContentsMargins(0, 0, 0, 0)
         encounter_controls_layout.setSpacing(10)
 
-        self.movement_group = self._build_group("Movement")
+        self.movement_group = QWidget()
+        self.movement_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        movement_layout = QVBoxLayout(self.movement_group)
+        movement_layout.setContentsMargins(0, 0, 0, 0)
+        movement_layout.setSpacing(8)
+        movement_layout.addWidget(
+            self._build_action_header("Movement", True, "#2f6f9d", show_indicator=False)
+        )
         self.movement_buttons: dict[str, QPushButton] = {}
         movement_grid = QGridLayout()
         movement_grid.setSpacing(6)
@@ -586,9 +608,14 @@ class CyoaPySide6Window(QMainWindow):
             "down": (2, 1),
             "down-right": (2, 2),
         }
+        self.movement_status = QWidget()
+        self.movement_status_layout = QVBoxLayout(self.movement_status)
+        self.movement_status_layout.setContentsMargins(0, 0, 0, 0)
+        self.movement_status_layout.setSpacing(6)
+        movement_layout.addWidget(self.movement_status)
         for direction in MOVE_DIRECTIONS:
             button = QPushButton(ARROW_LABELS[direction])
-            button.setMinimumHeight(46)
+            button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
             button.clicked.connect(
                 lambda _checked=False, move_direction=direction: self._trigger_move(move_direction)
             )
@@ -598,9 +625,9 @@ class CyoaPySide6Window(QMainWindow):
         movement_center = QLabel("Move")
         movement_center.setAlignment(Qt.AlignmentFlag.AlignCenter)
         movement_grid.addWidget(movement_center, 1, 1)
-        self.movement_group.layout().addLayout(movement_grid)
+        movement_layout.addLayout(movement_grid)
+        movement_layout.addStretch(1)
         self.movement_group.setFixedWidth(210)
-        encounter_controls_layout.addWidget(self.movement_group)
 
         self.encounter_actions_group = self._build_untitled_panel()
         self.encounter_actions_layout = QHBoxLayout()
@@ -613,6 +640,7 @@ class CyoaPySide6Window(QMainWindow):
         actions_footer_layout.setContentsMargins(0, 0, 0, 0)
         actions_footer_layout.addStretch(1)
         self.end_turn_button = QPushButton("End Turn")
+        self.end_turn_button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
         self.end_turn_button.clicked.connect(self._end_turn)
         actions_footer_layout.addWidget(self.end_turn_button)
         self.encounter_actions_group.layout().addWidget(actions_footer)
@@ -788,6 +816,8 @@ class CyoaPySide6Window(QMainWindow):
             action = encounter.movement_actions.get(direction)
             button.setEnabled(action is not None)
 
+        self._render_movement_status(encounter.resources)
+
         action_groups = self._action_groups(encounter.non_movement_actions)
         if self._action_menu_scope is not None and encounter.action_pane_title != "Actions":
             self._action_menu_scope = None
@@ -799,9 +829,12 @@ class CyoaPySide6Window(QMainWindow):
         ):
             self._action_menu_scope = None
 
+        self.encounter_actions_layout.removeWidget(self.movement_group)
+        self.movement_group.setParent(None)
         _clear_layout(self.encounter_actions_layout)
         rendered_target_modes: set[TargetSelectionMode] = set()
         if encounter.action_pane_title != "Actions":
+            self.encounter_actions_layout.addWidget(self.movement_group)
             self._render_action_detail_column(
                 encounter.action_pane_title,
                 encounter.non_movement_actions,
@@ -810,6 +843,7 @@ class CyoaPySide6Window(QMainWindow):
             )
             self.encounter_actions_layout.addStretch(1)
         else:
+            self.encounter_actions_layout.addWidget(self.movement_group)
             self._render_action_economy_column(
                 title="Actions",
                 economy="action",
@@ -874,6 +908,7 @@ class CyoaPySide6Window(QMainWindow):
         for bucket_key, bucket_title in self._action_buckets():
             actions = bucket_actions[bucket_key]
             button = QPushButton(bucket_title)
+            button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
             button.setEnabled(bool(actions))
             button.clicked.connect(
                 lambda _checked=False, selected_economy=economy, selected_bucket=bucket_key: (
@@ -913,6 +948,7 @@ class CyoaPySide6Window(QMainWindow):
         column_layout.addStretch(1)
         if scope is not None:
             back = QPushButton("Back")
+            back.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
             back.clicked.connect(lambda _checked=False, selected_scope=scope: self._close_action_menu(selected_scope))
             column_layout.addWidget(back)
         self.encounter_actions_layout.addWidget(column, stretch=1)
@@ -927,11 +963,14 @@ class CyoaPySide6Window(QMainWindow):
         column_layout.setContentsMargins(0, 0, 0, 0)
         column_layout.setSpacing(8)
 
-        header = QLabel("Class Features")
-        header_font = QFont()
-        header_font.setBold(True)
-        header.setFont(header_font)
-        column_layout.addWidget(header)
+        column_layout.addWidget(
+            self._build_action_header(
+                "Class Features",
+                bool(feature_actions),
+                "#9c8b68",
+                show_indicator=False,
+            )
+        )
 
         if not feature_actions:
             empty = QLabel("None")
@@ -959,45 +998,58 @@ class CyoaPySide6Window(QMainWindow):
         column_layout.addWidget(header)
         column_layout.addWidget(
             self._build_resource_bar(
-                "Health",
                 resources.current_health,
                 resources.max_health,
                 "#9d2f2f",
-                f"{resources.current_health}/{resources.max_health}",
+                f"{resources.current_health} / {resources.max_health} HP",
+                height=RESOURCE_BAR_HEIGHT,
             )
         )
-        column_layout.addWidget(
-            self._build_resource_bar(
-                "Movement",
-                resources.movement_remaining_feet,
-                resources.movement_total_feet,
-                "#2f6f9d",
-                f"{resources.movement_remaining_feet}/{resources.movement_total_feet} ft",
-            )
-        )
+        if resources.spell_slots:
+            column_layout.addWidget(self._build_spell_slot_section(resources))
         conditions = QLabel(f"Conditions: {', '.join(condition.capitalize() for condition in resources.conditions) if resources.conditions else 'None'}")
         conditions.setWordWrap(True)
         column_layout.addWidget(conditions)
         column_layout.addStretch(1)
         self.encounter_actions_layout.addWidget(column, stretch=1)
 
-    def _build_action_header(self, title: str, available: bool, indicator_color: str) -> QWidget:
+    def _render_movement_status(self, resources) -> None:
+        _clear_layout(self.movement_status_layout)
+        self.movement_status_layout.addWidget(
+            self._build_resource_bar(
+                resources.movement_remaining_feet,
+                resources.movement_total_feet,
+                "#2f6f9d",
+                f"{resources.movement_remaining_feet}/{resources.movement_total_feet} ft",
+                height=RESOURCE_BAR_HEIGHT,
+            )
+        )
+
+    def _build_action_header(
+        self,
+        title: str,
+        available: bool,
+        indicator_color: str,
+        *,
+        show_indicator: bool = True,
+    ) -> QWidget:
         container = QWidget()
         layout = QHBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
 
-        indicator = QFrame()
-        indicator.setFixedSize(10, 10)
-        if available:
-            indicator.setStyleSheet(
-                f"QFrame {{ background: {indicator_color}; border: 1px solid {indicator_color}; border-radius: 5px; }}"
-            )
-        else:
-            indicator.setStyleSheet(
-                "QFrame { background: transparent; border: 1px solid #8a806a; border-radius: 5px; }"
-            )
-        layout.addWidget(indicator)
+        if show_indicator:
+            indicator = QFrame()
+            indicator.setFixedSize(10, 10)
+            if available:
+                indicator.setStyleSheet(
+                    f"QFrame {{ background: {indicator_color}; border: 1px solid {indicator_color}; border-radius: 5px; }}"
+                )
+            else:
+                indicator.setStyleSheet(
+                    "QFrame { background: #9d2f2f; border: 1px solid #9d2f2f; border-radius: 5px; }"
+                )
+            layout.addWidget(indicator)
 
         header = QLabel(title)
         header_font = QFont()
@@ -1009,21 +1061,21 @@ class CyoaPySide6Window(QMainWindow):
 
     def _build_resource_bar(
         self,
-        label: str,
         current: int,
         maximum: int,
         color: str,
         value_text: str,
+        height: int = 24,
     ) -> QWidget:
         container = QWidget()
+        container.setFixedHeight(height)
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(3)
-        title = QLabel(label)
-        layout.addWidget(title)
+        layout.setSpacing(0)
 
         bar = QFrame()
-        bar.setMinimumHeight(24)
+        bar.setMinimumHeight(height)
+        bar.setMaximumHeight(height)
         bar.setStyleSheet(
             "QFrame {"
             "border: 1px solid #9c8b68;"
@@ -1051,6 +1103,21 @@ class CyoaPySide6Window(QMainWindow):
         layout.addWidget(bar)
         return container
 
+    def _build_spell_slot_section(self, resources) -> QWidget:
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        title = QLabel("Spell Slots")
+        title.setStyleSheet("QLabel { font-weight: 600; }")
+        layout.addWidget(title)
+        for track in resources.spell_slots:
+            row = QLabel(_spell_slot_rich_text(track.level, track.remaining, track.maximum))
+            row.setTextFormat(Qt.TextFormat.RichText)
+            row.setStyleSheet("QLabel { font-family: Menlo, Monaco, monospace; }")
+            layout.addWidget(row)
+        return container
+
     def _build_encounter_action_button(
         self,
         action: ActionView,
@@ -1062,6 +1129,7 @@ class CyoaPySide6Window(QMainWindow):
                 return None
             rendered_target_modes.add(target_mode)
             button = QPushButton(self._target_mode_label(target_mode))
+            button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
             button.setCheckable(True)
             button.setChecked(target_mode == self._pending_target_mode)
             if action.index < 0:
@@ -1073,6 +1141,7 @@ class CyoaPySide6Window(QMainWindow):
             return button
 
         button = QPushButton(action.label)
+        button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
         if action.index < 0:
             button.setEnabled(False)
             return button
@@ -1085,27 +1154,24 @@ class CyoaPySide6Window(QMainWindow):
         self,
         action: ActionView,
         rendered_target_modes: set[TargetSelectionMode],
-    ) -> QWidget | None:
+    ) -> QPushButton | None:
         button = self._build_encounter_action_button(action, rendered_target_modes)
         if button is None:
             return None
-        container = QWidget()
-        layout = QHBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
-        indicator = QFrame()
-        indicator.setFixedSize(10, 10)
+        dot = (
+            "🟡"
+            if action.cost.get("bonus_action", 0) > 0
+            else "🔵"
+            if action.cost.get("action", 0) > 0
+            else "🔴"
+            if action.cost.get("reaction", 0) > 0
+            else "⚪"
+        )
         if action.cost.get("bonus_action", 0) > 0:
-            indicator.setStyleSheet(
-                "QFrame { background: #c9a227; border: 1px solid #c9a227; border-radius: 5px; }"
-            )
+            button.setText(f"{button.text()}  {dot}")
         else:
-            indicator.setStyleSheet(
-                "QFrame { background: #9c8b68; border: 1px solid #9c8b68; border-radius: 5px; }"
-            )
-        layout.addWidget(indicator)
-        layout.addWidget(button, stretch=1)
-        return container
+            button.setText(f"{button.text()}  {dot}")
+        return button
 
     def _action_groups(
         self,

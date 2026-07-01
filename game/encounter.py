@@ -667,6 +667,22 @@ class EncounterState:
                 "conditions": [
                     condition.name for condition in self.conditions_for("player")
                 ],
+                "spell_slots_max": (
+                    {
+                        str(level): slots
+                        for level, slots in player.spellcasting.spell_slots_max.items()
+                    }
+                    if player.spellcasting is not None
+                    else {}
+                ),
+                "spell_slots_remaining": (
+                    {
+                        str(level): slots
+                        for level, slots in player.spellcasting.spell_slots_remaining.items()
+                    }
+                    if player.spellcasting is not None
+                    else {}
+                ),
                 "team_id": self._actor_team_id("player"),
                 "controller": self._actor_controller("player"),
             },

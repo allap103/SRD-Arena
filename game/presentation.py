@@ -26,6 +26,7 @@ class ResourceSummaryView:
     bonus_action_status: str
     reaction_status: str
     conditions: tuple[str, ...]
+    spell_slots: tuple["SpellSlotTrackView", ...]
     movement_remaining: int
     movement_total: int
     movement_remaining_feet: int
@@ -39,6 +40,10 @@ class ResourceSummaryView:
                 f"Bonus Action: {self.bonus_action_status}",
                 f"Reaction: {self.reaction_status}",
                 f"Conditions: {_condition_text(self.conditions)}",
+                *[
+                    f"{slot.level}: {'□' * slot.remaining}{'■' * (slot.maximum - slot.remaining)}"
+                    for slot in self.spell_slots
+                ],
                 f"Movement: {self.movement_remaining_feet}/{self.movement_total_feet} ft",
             ]
         )
@@ -48,6 +53,13 @@ class ResourceSummaryView:
 class GridPositionView:
     x: int
     y: int
+
+
+@dataclass(frozen=True)
+class SpellSlotTrackView:
+    level: int
+    remaining: int
+    maximum: int
 
 
 @dataclass
@@ -202,8 +214,8 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
     )
     normal_turn = decision["kind"] == "turn"
     return ResourceSummaryView(
-        current_health=actor_state["health"],
-        max_health=actor_state["max_health"],
+        current_health=player_state["health"],
+        max_health=player_state["max_health"],
         action_status=(
             "Ready"
             if normal_turn
@@ -231,13 +243,14 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
         reaction_status="Ready" if actor_state["reaction_available"] else "Spent",
         conditions=tuple(
             condition
-            for condition in actor_state.get("conditions", [])
+            for condition in player_state.get("conditions", [])
             if isinstance(condition, str)
         ),
-        movement_remaining=actor_state["movement_remaining"],
-        movement_total=actor_state["movement_total"],
-        movement_remaining_feet=actor_state["movement_remaining_feet"],
-        movement_total_feet=actor_state["movement_total_feet"],
+        spell_slots=_build_spell_slot_tracks(player_state),
+        movement_remaining=player_state["movement_remaining"],
+        movement_total=player_state["movement_total"],
+        movement_remaining_feet=player_state["movement_remaining_feet"],
+        movement_total_feet=player_state["movement_total_feet"],
     )
 
 
@@ -370,3 +383,30 @@ def _condition_suffix(conditions: object) -> str:
     if not labels:
         return ""
     return f" [{', '.join(labels)}]"
+
+
+def _build_spell_slot_tracks(player_state: dict[str, object]) -> tuple[SpellSlotTrackView, ...]:
+    slot_max = player_state.get("spell_slots_max", {})
+    slot_remaining = player_state.get("spell_slots_remaining", {})
+    if not isinstance(slot_max, dict) or not isinstance(slot_remaining, dict):
+        return ()
+
+    tracks: list[SpellSlotTrackView] = []
+    for key, maximum in sorted(slot_max.items(), key=lambda item: int(item[0])):
+        try:
+            level = int(key)
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(maximum, int) or maximum <= 0:
+            continue
+        remaining = slot_remaining.get(key, slot_remaining.get(level, maximum))
+        if not isinstance(remaining, int):
+            remaining = maximum
+        tracks.append(
+            SpellSlotTrackView(
+                level=level,
+                remaining=max(0, min(remaining, maximum)),
+                maximum=maximum,
+            )
+        )
+    return tuple(tracks)

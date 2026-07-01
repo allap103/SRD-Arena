@@ -53,6 +53,7 @@ def _resolve_color_spray(
     *,
     target_ref: str,
     target_label: str,
+    target_conditions: tuple[str, ...] = (),
     current_round: int,
     source_ref: str,
     roller: DieRoller,

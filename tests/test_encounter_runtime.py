@@ -4,7 +4,7 @@ from game.encounter import EncounterAction
 from game.engine import Game
 from game.pyside6_app import CyoaPySide6Window
 from game.features import EffectResult
-from game.presentation import build_session_presentation
+from game.presentation import SpellSlotTrackView, build_session_presentation
 from game.save import load_from_file, save_to_file
 from game.session import ActionView
 
@@ -129,11 +129,34 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
     assert "Cast Color Spray on enemy 1 (Goblin)" in session.get_scene_view().choices
 
 
+def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    session.encounter_state.player_position.x = 4
+    session.encounter_state.player_position.y = 3
+    session.encounter_state.enemies[0].position.x = 4
+    session.encounter_state.enemies[0].position.y = 2
+    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+
+    session.choose(_action_index_by_prefix(session, "Cast Color Spray on enemy 1"))
+    presentation = build_session_presentation(session)
+
+    assert presentation.encounter is not None
+    assert presentation.encounter.resources.spell_slots == (
+        SpellSlotTrackView(level=1, remaining=2, maximum=3),
+    )
+
+
 def test_lesser_restoration_appears_when_player_has_removable_condition() -> None:
     session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
+    assert session.player.spellcasting is not None
+    session.player.spellcasting.spell_slots_max[2] = 1
+    session.player.spellcasting.spell_slots_remaining[2] = 1
     session.encounter_state._apply_effects(
         [
             EffectResult(
@@ -376,6 +399,8 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
 
     assert session.encounter_state is not None
     assert session.player.spellcasting is not None
+    session.player.spellcasting.spell_slots_max[2] = 1
+    session.player.spellcasting.spell_slots_remaining[2] = 1
     state = session.encounter_state
     state._apply_effects(
         [
@@ -398,7 +423,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     assert state.has_condition("player", "blinded") is False
     assert state.player_bonus_action_available is False
     assert state.player_action_available is True
-    assert session.player.spellcasting.spell_slots_remaining[2] == 1
+    assert session.player.spellcasting.spell_slots_remaining[2] == 0
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Lesser Restoration"
     assert spell_event.data["target_ref"] == "player"
