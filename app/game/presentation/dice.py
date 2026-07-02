@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 
-from ..combat.encounter import CombatEvent
+from ..combat.models import CombatEvent
 
 
 @dataclass(frozen=True)

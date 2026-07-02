@@ -1,17 +1,44 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass, field
 import re
-from typing import Generator
 
 from ..features.actions import resolve_feature_action
+from .behaviors import (
+    DIRECTION_DELTAS,
+    build_behavior as _build_behavior,
+    chebyshev_distance as _chebyshev_distance,
+    is_adjacent as _is_adjacent,
+    manhattan_distance as _manhattan_distance,
+    movement_squares as _movement_squares,
+    step_toward as _step_toward,
+)
 from .effects import apply_effects, serialize_effects
 from .geometry import (
     AreaOfEffect,
     Vector2D,
     build_directional_area,
     vector_between_positions,
+)
+from .models import (
+    ActionCost,
+    ActorRef,
+    AttackOutcome,
+    AttackSource,
+    BehaviorContext,
+    CombatEvent,
+    DecisionFrame,
+    DecisionFrameSnapshot,
+    EncounterAction,
+    EncounterEnemyState,
+    EncounterProgress,
+    EncounterSnapshot,
+    EncounterSnapshotEnemy,
+    EncounterStateData,
+    PendingAction,
+    PendingActionSnapshot,
+    PendingAttack,
+    PendingAttackSnapshot,
 )
 from .spells import (
     parse_spell_action_value,
@@ -25,7 +52,7 @@ from .spells import (
 )
 from ..models.actor import Actor
 from ..models.item import Item
-from ..models.scene import Behavior, Encounter, Position
+from ..models.scene import Encounter, Position
 from ..models.spellcasting import Spell, Spellcasting
 from ..models.rules_config import RulesConfig
 from ..models.status import Status, StatusSnapshot
@@ -46,277 +73,7 @@ from ..systems.roll import (
     roll_die,
 )
 
-ActorRef = str
-
-DIRECTION_DELTAS = {
-    "up": (0, -1),
-    "down": (0, 1),
-    "left": (-1, 0),
-    "right": (1, 0),
-    "up-left": (-1, -1),
-    "up-right": (1, -1),
-    "down-left": (-1, 1),
-    "down-right": (1, 1),
-}
-
-
-@dataclass
-class ActionCost:
-    movement: int = 0
-    action: int = 0
-    bonus_action: int = 0
-    reaction: int = 0
-
-
-@dataclass
-class EncounterAction:
-    label: str
-    kind: str
-    value: str | int | None = None
-    id: str = ""
-    actor_ref: ActorRef = "player"
-    source_trigger_id: str | None = None
-    cost: ActionCost = field(default_factory=ActionCost)
-
-
-@dataclass
-class DecisionFrame:
-    id: str
-    actor_ref: ActorRef
-    kind: str
-    reason: str
-    parent_frame_id: str | None = None
-    parent_action_id: str | None = None
-    can_pass: bool = False
-
-
-@dataclass
-class CombatEvent:
-    seq: int
-    type: str
-    actor_ref: ActorRef | None = None
-    frame_id: str | None = None
-    action_id: str | None = None
-    data: dict[str, object] = field(default_factory=dict)
-
-
-@dataclass
-class EncounterProgress:
-    messages: list[tuple[str, str]] = field(default_factory=list)
-    transition: str | None = None
-    events: list[CombatEvent] = field(default_factory=list)
-    paused_for_decision: bool = False
-    paused_for_ai: bool = False
-
-
-@dataclass
-class BehaviorContext:
-    player_position: Position
-    enemy_position: Position
-    can_attack: bool
-
-
-@dataclass
-class PendingAction:
-    id: str
-    kind: str
-    actor_ref: ActorRef
-    direction: str
-    from_position: Position
-    to_position: Position
-    resume_enemy_index: int | None = None
-    remaining_movement_after: int | None = None
-    trigger_id: str | None = None
-
-
-@dataclass
-class EncounterEnemyState:
-    actor_id: str
-    actor: Actor
-    position: Position
-    behavior: Behavior
-    patrol_index: int = 0
-    reaction_available: bool = True
-    movement_remaining: int | None = None
-
-    @property
-    def is_alive(self) -> bool:
-        return self.actor.get_health() > 0
-
-
-@dataclass
-class EncounterSnapshotEnemy:
-    actor_id: str
-    current_health: int
-    position: Position
-    patrol_index: int = 0
-    reaction_available: bool = True
-    movement_remaining: int | None = None
-
-
-@dataclass
-class DecisionFrameSnapshot:
-    id: str
-    actor_ref: ActorRef
-    kind: str
-    reason: str
-    parent_frame_id: str | None = None
-    parent_action_id: str | None = None
-    can_pass: bool = False
-
-
-@dataclass
-class PendingActionSnapshot:
-    id: str
-    kind: str
-    actor_ref: ActorRef
-    direction: str
-    from_position: Position
-    to_position: Position
-    resume_enemy_index: int | None = None
-    remaining_movement_after: int | None = None
-    trigger_id: str | None = None
-
-
-@dataclass
-class PendingAttackSnapshot:
-    action_id: str
-    attacker_ref: ActorRef
-    target_ref: ActorRef
-    target_index: int
-    attacker_label: str
-    target_label: str
-    attacks_remaining: int
-    attack_roll: int
-    attack_roll_detail: dict[str, object]
-    damage_dice: str
-    damage_die_rolls: list[list[int]]
-    damage_die_sides: list[int]
-    damage_modifier: int
-    damage_modifier_label: str
-    attack_type: str
-    damage_type: str
-    critical_hit: bool
-    weapon_id: str | None
-    weapon_name: str | None
-    continuation: str
-    reaction: bool
-    rule_id: str
-    rule_source_type: str
-    rule_source_id: str
-    rule_trigger: str
-    rule_operation: str
-    rule_conditions: dict[str, object]
-    rule_parameters: dict[str, object]
-
-
-@dataclass
-class EncounterSnapshot:
-    scene_id: str
-    player_position: Position
-    control_mode: str = "default"
-    turn_index: int = 0
-    round_number: int = 1
-    player_movement_remaining: int | None = None
-    player_action_available: bool = True
-    player_attacks_remaining: int = 0
-    player_bonus_action_available: bool = True
-    player_reaction_available: bool = True
-    action_sequence: int = 1
-    frame_sequence: int = 1
-    event_sequence: int = 1
-    decision_stack: list[DecisionFrameSnapshot] = field(default_factory=list)
-    pending_action: PendingActionSnapshot | None = None
-    pending_attack: PendingAttackSnapshot | None = None
-    conditions: list[StatusSnapshot] = field(default_factory=list)
-    enemies: list[EncounterSnapshotEnemy] = field(default_factory=list)
-
-
-@dataclass
-class AttackOutcome:
-    messages: list[tuple[str, str]]
-    hit: bool
-    attack_roll: int
-    damage: int
-    defender_defeated: bool
-    attack_roll_detail: dict[str, object]
-    damage_roll_detail: dict[str, object] | None = None
-    attack_check: CheckResult | None = None
-    damage_roll: DicePoolResult | None = None
-    damage_dice: str | None = None
-    damage_modifier: int = 0
-    damage_modifier_label: str = "STR mod"
-    attack_type: str = "melee"
-    damage_type: str = "damage"
-    critical_hit: bool = False
-    weapon_id: str | None = None
-    weapon_name: str | None = None
-    weapon_properties: tuple[str, ...] = ()
-
-
-@dataclass
-class PendingAttack:
-    action_id: str
-    attacker_ref: ActorRef
-    target_ref: ActorRef
-    target_index: int
-    attacker_label: str
-    target_label: str
-    attacks_remaining: int
-    attack: AttackOutcome
-    rule: RuleGrant
-    continuation: str = "return_to_turn"
-    reaction: bool = False
-
-
-@dataclass(frozen=True)
-class AttackSource:
-    name: str
-    damage_dice: str
-    damage_bonus: int
-    damage_bonus_label: str
-    damage_type: str
-    attack_bonus: int
-    attack_bonus_label: str
-    attack_modes: tuple[str, ...]
-    ability_modifier: int = 0
-    proficiency_bonus: int = 0
-    range_normal: int | None = None
-    range_long: int | None = None
-    weapon_id: str | None = None
-    weapon_name: str | None = None
-    weapon_properties: tuple[str, ...] = ()
-
-
-@dataclass
-class EncounterState:
-    scene_id: str
-    definition: Encounter
-    player_position: Position
-    enemies: list[EncounterEnemyState]
-    control_mode: str = "default"
-    ai_action_limit: int | None = None
-    turn_index: int = 0
-    round_number: int = 1
-    player_movement_remaining: int | None = None
-    player_action_available: bool = True
-    player_attacks_remaining: int = 0
-    player_bonus_action_available: bool = True
-    player_reaction_available: bool = True
-    action_sequence: int = 1
-    frame_sequence: int = 1
-    event_sequence: int = 1
-    decision_stack: list[DecisionFrame] = field(default_factory=list)
-    pending_action: PendingAction | None = None
-    pending_attack: PendingAttack | None = None
-    conditions: list[Status] = field(default_factory=list)
-    item_templates: dict[str, Item] = field(default_factory=dict)
-    rules_config: RulesConfig = field(default_factory=RulesConfig)
-    _behaviors: list[Generator[EncounterAction | None, BehaviorContext, None]] = field(
-        default_factory=list,
-        repr=False,
-    )
-
+class EncounterState(EncounterStateData):
     @classmethod
     def from_definition(
         cls,
@@ -2944,124 +2701,6 @@ class EncounterState:
         if actor_ref == "player":
             return player
         return self.enemies[_enemy_index(actor_ref)].actor
-
-
-def _build_behavior(
-    enemy: EncounterEnemyState,
-    items_by_id: dict[str, Item],
-) -> Generator[EncounterAction | None, BehaviorContext, None]:
-    if enemy.behavior.type == "archer":
-        return _archer_behavior(enemy, items_by_id)
-    if enemy.behavior.type == "guard":
-        return _guard_behavior(enemy)
-    if enemy.behavior.type == "patrol":
-        return _patrol_behavior(enemy)
-    return _chase_behavior(enemy)
-
-
-def _chase_behavior(enemy: EncounterEnemyState) -> Generator[EncounterAction | None, BehaviorContext, None]:
-    context = yield None
-    while True:
-        if context.can_attack:
-            context = yield EncounterAction("Attack", "attack", "melee")
-            continue
-
-        direction = _step_toward(context.enemy_position, context.player_position)
-        command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
-        context = yield command
-
-
-def _archer_behavior(
-    enemy: EncounterEnemyState,
-    items_by_id: dict[str, Item],
-) -> Generator[EncounterAction | None, BehaviorContext, None]:
-    context = yield None
-    while True:
-        range_squares = _weapon_normal_range_squares(enemy.actor, items_by_id)
-        if range_squares is not None and _chebyshev_distance(
-            context.enemy_position,
-            context.player_position,
-        ) <= range_squares:
-            context = yield EncounterAction("Attack", "attack", "ranged")
-            continue
-        direction = _step_toward(context.enemy_position, context.player_position)
-        command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
-        context = yield command
-
-
-def _guard_behavior(enemy: EncounterEnemyState) -> Generator[EncounterAction | None, BehaviorContext, None]:
-    context = yield None
-    while True:
-        anchor = enemy.behavior.anchor or enemy.position
-        within_radius = (
-            enemy.behavior.radius is not None
-            and _manhattan_distance(context.player_position, anchor) <= enemy.behavior.radius
-        )
-        if context.can_attack:
-            context = yield EncounterAction("Attack", "attack", "melee")
-            continue
-        if within_radius:
-            direction = _step_toward(context.enemy_position, context.player_position)
-            command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
-            context = yield command
-            continue
-        if context.enemy_position.x != anchor.x or context.enemy_position.y != anchor.y:
-            direction = _step_toward(context.enemy_position, anchor)
-            command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
-            context = yield command
-            continue
-        context = yield EncounterAction("Wait", "wait")
-
-
-def _patrol_behavior(enemy: EncounterEnemyState) -> Generator[EncounterAction | None, BehaviorContext, None]:
-    context = yield None
-    while True:
-        if context.can_attack:
-            context = yield EncounterAction("Attack", "attack", "melee")
-            continue
-        if not enemy.behavior.path:
-            context = yield EncounterAction("Wait", "wait")
-            continue
-        enemy.patrol_index = (enemy.patrol_index + 1) % len(enemy.behavior.path)
-        target = enemy.behavior.path[enemy.patrol_index]
-        direction = _step_toward(context.enemy_position, target)
-        command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
-        context = yield command
-
-
-def _step_toward(start: Position, target: Position) -> str | None:
-    dx = target.x - start.x
-    dy = target.y - start.y
-    step_x = _sign(dx)
-    step_y = _sign(dy)
-    for direction, delta in DIRECTION_DELTAS.items():
-        if delta == (step_x, step_y):
-            return direction
-    return None
-
-
-def _sign(value: int) -> int:
-    if value > 0:
-        return 1
-    if value < 0:
-        return -1
-    return 0
-
-
-def _is_adjacent(a: Position, b: Position) -> bool:
-    return _chebyshev_distance(a, b) == 1
-
-
-def _chebyshev_distance(a: Position, b: Position) -> int:
-    return max(abs(a.x - b.x), abs(a.y - b.y))
-
-
-def _manhattan_distance(a: Position, b: Position) -> int:
-    return abs(a.x - b.x) + abs(a.y - b.y)
-
-
-def _movement_squares(actor: Actor) -> int:
-    return actor.attributes.movement.squares_per_turn
 
 
 def _healing_potions_in_inventory(actor: Actor, items_by_id: dict[str, Item]) -> list[Item]:

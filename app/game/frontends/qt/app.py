@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from ...combat.encounter import ActionCost, EncounterAction
+from ...combat.models import ActionCost, EncounterAction
 from ...combat.geometry import (
     Vector2D,
     build_directional_area,

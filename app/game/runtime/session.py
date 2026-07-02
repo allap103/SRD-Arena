@@ -2,11 +2,8 @@ from copy import deepcopy
 from pathlib import Path
 
 from .choice_resolver import ChoiceResolver
-from ..combat.encounter import (
-    EncounterAction,
-    EncounterSnapshot,
-    EncounterState,
-)
+from ..combat.encounter import EncounterState
+from ..combat.models import EncounterAction, EncounterSnapshot
 from ..models.actor import Actor
 from ..models.item import Item
 from ..presentation.models import ActionView, SceneView, TurnResult
