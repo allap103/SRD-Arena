@@ -5,11 +5,11 @@ from pathlib import Path
 
 from .api.savegames import run_savegame_api
 from ..runtime.game import GAME_DIR, Game
+from ..support.scenarios import VALID_GAME_SUBDIRS, list_scenarios
 from ..support.logging import configure_game_logging
 from ..support.paths import REPO_ROOT, SCENARIOS_ROOT
 
 SCENARIOS_DIR = SCENARIOS_ROOT
-VALID_GAME_SUBDIRS = ("actors", "items", "scenes")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -21,6 +21,10 @@ def build_parser() -> argparse.ArgumentParser:
             "Game directory as a relative path, an absolute path, or the name of "
             "a subfolder in app/content/scenarios/."
         ),
+    )
+    parser.add_argument(
+        "--start-scene",
+        help="Override the scenario start scene.",
     )
     parser.add_argument(
         "--frontend",
@@ -50,7 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def resolve_game_directory(game: str | None) -> Path:
     if game is None:
-        return _validate_game_directory((REPO_ROOT / GAME_DIR).resolve())
+        raise FileNotFoundError("No game directory provided.")
 
     requested = Path(game).expanduser()
     candidates = []
@@ -72,40 +76,71 @@ def resolve_game_directory(game: str | None) -> Path:
 
 def launch(
     frontend: str,
-    game_dir: Path,
+    game_dir: Path | None,
     host: str = "127.0.0.1",
     port: int = 8000,
     control_mode: str = "default",
+    start_scene: str | None = None,
 ) -> None:
     if frontend == "pyside6":
         from .qt.app import run_pyside6_app
 
-        run_pyside6_app(Game(str(game_dir), control_mode=control_mode))
+        game = (
+            Game(str(game_dir), start_scene=start_scene, control_mode=control_mode)
+            if game_dir is not None
+            else None
+        )
+        run_pyside6_app(game=game, start_scene_override=start_scene)
         return
+    if game_dir is None:
+        game_dir = select_game_directory()
     if frontend == "api":
         run_savegame_api(
             host=host,
             port=port,
             game_dir=game_dir,
             control_mode=control_mode,
+            start_scene=start_scene,
         )
         return
 
     configure_game_logging()
-    Game(str(game_dir), control_mode=control_mode).run()
+    Game(str(game_dir), start_scene=start_scene, control_mode=control_mode).run()
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
-    game_dir = resolve_game_directory(args.game)
+    game_dir = None if args.game is None and args.frontend == "pyside6" else (
+        resolve_game_directory(args.game) if args.game is not None else select_game_directory()
+    )
     launch(
         args.frontend,
         game_dir,
         host=args.host,
         port=args.port,
         control_mode=args.control_mode,
+        start_scene=args.start_scene,
     )
+
+
+def select_game_directory() -> Path:
+    scenarios = list_scenarios(SCENARIOS_DIR)
+    if not scenarios:
+        raise FileNotFoundError("No scenarios are available in app/content/scenarios/.")
+    print("Available scenarios:")
+    for index, scenario in enumerate(scenarios, start=1):
+        print(f"{index}. {scenario.label} ({scenario.id})")
+    while True:
+        choice = input("Choose a scenario: ")
+        try:
+            selected_index = int(choice) - 1
+        except ValueError:
+            print("Please enter a valid number.")
+            continue
+        if 0 <= selected_index < len(scenarios):
+            return scenarios[selected_index].directory
+        print("Please choose one of the listed scenarios.")
 
 
 def _validate_game_directory(path: Path) -> Path:

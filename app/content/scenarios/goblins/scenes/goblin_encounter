@@ -63,7 +63,8 @@
             }
         ],
         "victory": {
-            "next_scene": "goblin_encounter_victory"
+            "next_scene": "goblin_encounter_victory",
+            "message": "The goblins are defeated. Take a moment before continuing."
         },
         "defeat": {
             "next_scene": "goblin_encounter_defeat"

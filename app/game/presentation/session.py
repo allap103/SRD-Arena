@@ -93,6 +93,8 @@ class EncounterView:
     feature_actions: list[ActionView]
     end_turn_action: ActionView | None
     action_pane_title: str
+    transition_message: str | None = None
+    transition_action: ActionView | None = None
 
 
 @dataclass
@@ -159,6 +161,19 @@ def build_session_presentation(
             feature_actions=feature_actions,
             end_turn_action=end_turn_action,
             action_pane_title=action_pane_title,
+            transition_message=(
+                session.pending_scene_transition.message
+                if session.pending_scene_transition is not None
+                else None
+            ),
+            transition_action=(
+                next(
+                    (action for action in story_actions if action.kind == "system_continue_transition"),
+                    None,
+                )
+                if session.pending_scene_transition is not None
+                else None
+            ),
         ),
     )
 

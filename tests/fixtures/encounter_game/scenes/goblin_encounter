@@ -63,7 +63,8 @@
             }
         ],
         "victory": {
-            "next_scene": "goblin_encounter_victory"
+            "next_scene": "goblin_encounter_victory",
+            "message": "The last goblin falls. You catch your breath before moving on."
         },
         "defeat": {
             "next_scene": "goblin_encounter_defeat"

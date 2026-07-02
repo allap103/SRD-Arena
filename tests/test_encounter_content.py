@@ -33,6 +33,9 @@ def test_load_scene_parses_optional_encounter_block() -> None:
     assert len(scene.encounter.enemies[2].behavior.path) == 3
     assert scene.encounter.victory is not None
     assert scene.encounter.victory.next_scene == "goblin_encounter_victory"
+    assert scene.encounter.victory.message == (
+        "The last goblin falls. You catch your breath before moving on."
+    )
     assert scene.encounter.defeat is not None
     assert scene.encounter.defeat.next_scene == "goblin_encounter_defeat"
     assert scene.encounter.flee is not None
@@ -105,6 +108,32 @@ def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
     assert items_by_id["shortsword"].weapon_stat.damage == "1d6"
     assert items_by_id["chain_mail"].armor_stat is not None
     assert items_by_id["chain_mail"].armor_stat.armor_class == 16
+
+
+def test_game_uses_start_scene_from_settings_when_not_overridden(tmp_path: Path) -> None:
+    game_dir = tmp_path / "encounter_start"
+    for subdir in ("actors", "items", "scenes", "custom_stat_blocks"):
+        (game_dir / subdir).mkdir(parents=True, exist_ok=True)
+    (game_dir / "settings.json").write_text('{"start_scene": "arena"}\n', encoding="utf-8")
+    (game_dir / "actors" / "player").write_text(
+        (FIXTURE_ENCOUNTER_DIR / "actors" / "player").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    (game_dir / "custom_stat_blocks" / "player").write_text(
+        (FIXTURE_ENCOUNTER_DIR / "custom_stat_blocks" / "player").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    (game_dir / "scenes" / "arena").write_text(
+        (FIXTURE_ENCOUNTER_DIR / "scenes" / "goblin_encounter").read_text(encoding="utf-8").replace(
+            '"id": "goblin_encounter"',
+            '"id": "arena"',
+        ),
+        encoding="utf-8",
+    )
+
+    game = Game(str(game_dir))
+
+    assert game.start_scene == "arena"
 
 
 def test_game_loads_rule_settings_from_settings_json() -> None:

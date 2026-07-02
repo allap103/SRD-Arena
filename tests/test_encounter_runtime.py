@@ -1230,8 +1230,11 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None
 
     assert result.selected_choice_text is not None
     assert result.selected_choice_text.startswith("Attack enemy 1")
-    assert session.current_scene_id == "goblin_encounter_victory"
-    assert result.scene_changed is True
+    assert session.current_scene_id == "goblin_encounter"
+    assert session.pending_scene_transition is not None
+    assert session.encounter_state is not None
+    assert result.scene_changed is False
+    assert result.scene.choices[0] == "Continue"
 
 
 def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
@@ -1356,3 +1359,35 @@ def test_save_and_load_preserve_pending_reaction_state(tmp_path: Path) -> None:
     assert loaded.encounter_state.current_decision().kind == "reaction"
     assert loaded.encounter_state.pending_action is not None
     assert loaded.encounter_state.pending_action.actor_ref == "enemy:0"
+
+
+def test_encounter_victory_waits_for_continue_before_scene_transition() -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    for enemy in session.encounter_state.enemies:
+        enemy.actor.current_health = 0
+
+    wait_index = session.get_scene_view().choices.index("Wait")
+    result = session.choose(wait_index)
+
+    assert result.scene_changed is False
+    assert session.current_scene_id == "goblin_encounter"
+    assert session.pending_scene_transition is not None
+    assert session.encounter_state is not None
+    assert ("system", "The last goblin falls. You catch your breath before moving on.") in result.messages
+    assert result.scene.scene_text == (
+        "As you charge towards the goblins, they quickly ready their weapons and prepare "
+        "to fight. The goblin with the bow takes aim at you, while the other two reach "
+        "for their primitive swords. The battle begins!"
+    )
+    assert session.pending_scene_transition.message == (
+        "The last goblin falls. You catch your breath before moving on."
+    )
+    assert result.scene.choices[0] == "Continue"
+
+    continue_result = session.choose(0)
+
+    assert continue_result.scene_changed is True
+    assert session.pending_scene_transition is None
+    assert session.current_scene_id == "goblin_encounter_victory"

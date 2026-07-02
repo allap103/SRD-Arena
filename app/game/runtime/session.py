@@ -1,4 +1,5 @@
 from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
 
 from .choice_resolver import ChoiceResolver
@@ -17,6 +18,13 @@ LONG_REST_CHOICE_TEXT = "Long Rest"
 SAVE_CHOICE_TEXT = "Save game"
 LOAD_CHOICE_TEXT = "Load game"
 EXIT_CHOICE_TEXT = "Exit game"
+CONTINUE_CHOICE_TEXT = "Continue"
+
+
+@dataclass
+class PendingSceneTransition:
+    next_scene_id: str
+    message: str
 
 
 class GameSession:
@@ -49,12 +57,36 @@ class GameSession:
         self.rules_config = rules_config or RulesConfig()
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
+        self.pending_scene_transition: PendingSceneTransition | None = None
 
     @property
     def current_scene(self) -> Scene:
         return self.scenes[self.current_scene_id]
 
     def get_scene_view(self) -> SceneView:
+        if self.pending_scene_transition is not None:
+            action_details = [
+                ActionView(
+                    index=0,
+                    id="system-continue-scene-transition",
+                    label=CONTINUE_CHOICE_TEXT,
+                    kind="system_continue_transition",
+                    actor_ref="player",
+                    value=None,
+                )
+            ]
+            system_action_details = self._system_action_details(1)
+            return SceneView(
+                scene_id=self.current_scene.id,
+                scene_text=(
+                    self.current_scene.text
+                    if self.encounter_state is not None
+                    else self.pending_scene_transition.message
+                ),
+                choices=[CONTINUE_CHOICE_TEXT, SAVE_CHOICE_TEXT, LOAD_CHOICE_TEXT, EXIT_CHOICE_TEXT],
+                action_details=action_details + system_action_details,
+            )
+
         self._ensure_encounter_state()
         scene = self.current_scene
         scene_text = scene.text
@@ -95,6 +127,17 @@ class GameSession:
         )
 
     def choose(self, choice_index: int) -> TurnResult:
+        if self.pending_scene_transition is not None:
+            if choice_index == 0:
+                return self._continue_scene_transition()
+            if choice_index == 1:
+                return self._save_game()
+            if choice_index == 2:
+                return self._load_game()
+            if choice_index == 3:
+                return self._exit_game()
+            raise IndexError("Choice index is out of range for the transition prompt.")
+
         self._ensure_encounter_state()
         scene = self.current_scene
         action_count = (
@@ -147,6 +190,7 @@ class GameSession:
         self.player = deepcopy(self._initial_player)
         self.choice_resolver = ChoiceResolver()
         self.current_scene_id = self.start_scene_id
+        self.pending_scene_transition = None
 
     def _take_rest(self, rest_type: str) -> TurnResult:
         outcome = apply_rest(self.player, rest_type)
@@ -222,6 +266,7 @@ class GameSession:
         self.encounter_state = loaded.encounter_state
         self.control_mode = loaded.control_mode
         self.rules_config = loaded.rules_config
+        self.pending_scene_transition = loaded.pending_scene_transition
         if self.encounter_state is not None:
             self.encounter_state.ai_action_limit = self.ai_action_limit
         self._encounter_actions = []
@@ -295,11 +340,12 @@ class GameSession:
 
         scene_changed = False
         if transition is not None:
-            previous_scene_id = self.current_scene_id
-            self.current_scene_id = transition
-            self.encounter_state = None
-            self._encounter_actions = []
-            scene_changed = previous_scene_id != transition
+            scene_changed = self._apply_encounter_transition(transition)
+            if self.pending_scene_transition is not None:
+                messages = [
+                    *messages,
+                    ("system", self.pending_scene_transition.message),
+                ]
 
         combat_state = (
             self.encounter_state.export_state(self.player)
@@ -342,11 +388,12 @@ class GameSession:
 
         scene_changed = False
         if transition is not None:
-            previous_scene_id = self.current_scene_id
-            self.current_scene_id = transition
-            self.encounter_state = None
-            self._encounter_actions = []
-            scene_changed = previous_scene_id != transition
+            scene_changed = self._apply_encounter_transition(transition)
+            if self.pending_scene_transition is not None:
+                progress.messages = [
+                    *progress.messages,
+                    ("system", self.pending_scene_transition.message),
+                ]
 
         combat_state = (
             self.encounter_state.export_state(self.player)
@@ -414,6 +461,46 @@ class GameSession:
             self.rules_config,
         )
         self.encounter_state.ai_action_limit = self.ai_action_limit
+
+    def _continue_scene_transition(self) -> TurnResult:
+        pending = self.pending_scene_transition
+        if pending is None:
+            raise RuntimeError("Continue requested without a pending scene transition.")
+        previous_scene_id = self.current_scene_id
+        self.current_scene_id = pending.next_scene_id
+        self.pending_scene_transition = None
+        self.encounter_state = None
+        self._encounter_actions = []
+        return TurnResult(
+            scene=self.get_scene_view(),
+            selected_index=0,
+            selected_choice_text=CONTINUE_CHOICE_TEXT,
+            selected_action_id="system-continue-scene-transition",
+            next_scene_id=self.current_scene_id,
+            scene_changed=previous_scene_id != self.current_scene_id,
+        )
+
+    def _apply_encounter_transition(self, transition: str) -> bool:
+        encounter = self.current_scene.encounter
+        if (
+            encounter is not None
+            and encounter.victory is not None
+            and transition == encounter.victory.next_scene
+            and self.player.get_health() > 0
+        ):
+            self.pending_scene_transition = PendingSceneTransition(
+                next_scene_id=transition,
+                message=encounter.victory.message or "Victory! Press continue to proceed.",
+            )
+            self._encounter_actions = []
+            return False
+
+        previous_scene_id = self.current_scene_id
+        self.current_scene_id = transition
+        self.pending_scene_transition = None
+        self.encounter_state = None
+        self._encounter_actions = []
+        return previous_scene_id != transition
 
     def _non_encounter_action_details(self) -> list[ActionView]:
         scene_actions = [

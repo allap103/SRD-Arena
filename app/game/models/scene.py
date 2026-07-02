@@ -41,6 +41,7 @@ class EncounterTeam:
 @dataclass
 class EncounterResolution:
     next_scene: str
+    message: str | None = None
 
 
 @dataclass

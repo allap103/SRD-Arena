@@ -30,6 +30,7 @@ from ...runtime.session import (
     SHORT_REST_CHOICE_TEXT,
     GameSession,
 )
+from ...support.scenarios import ScenarioInfo, list_scenarios
 from .ui.encounter import (
     ARROW_LABELS,
     ENCOUNTER_BUTTON_HEIGHT,
@@ -119,7 +120,6 @@ class CyoaPySide6Window(QMainWindow):
         root_layout.addWidget(self._build_sidebar())
 
         self.refresh_view()
-
     def _build_main_content(self) -> QWidget:
         container = QWidget()
         layout = QVBoxLayout(container)
@@ -239,6 +239,41 @@ class CyoaPySide6Window(QMainWindow):
         encounter_controls_layout.addWidget(self.encounter_actions_group, stretch=1)
 
         encounter_layout.addWidget(encounter_controls)
+
+        self.victory_overlay = QFrame(self.encounter_panel)
+        self.victory_overlay.setStyleSheet(
+            "QFrame { background: rgba(12, 10, 6, 190); }"
+            "QLabel { color: #f6edd9; }"
+            "QPushButton { min-width: 140px; min-height: 40px; }"
+        )
+        self.victory_overlay.hide()
+        overlay_layout = QVBoxLayout(self.victory_overlay)
+        overlay_layout.setContentsMargins(40, 40, 40, 40)
+        overlay_layout.setSpacing(12)
+        overlay_layout.addStretch(1)
+        overlay_card = QFrame()
+        overlay_card.setStyleSheet(
+            "QFrame { background: #1d1710; border: 2px solid #c9a227; border-radius: 10px; }"
+        )
+        overlay_card_layout = QVBoxLayout(overlay_card)
+        overlay_card_layout.setContentsMargins(24, 24, 24, 24)
+        overlay_card_layout.setSpacing(12)
+        overlay_title = QLabel("Victory")
+        overlay_title_font = QFont()
+        overlay_title_font.setPointSize(18)
+        overlay_title_font.setBold(True)
+        overlay_title.setFont(overlay_title_font)
+        overlay_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        overlay_card_layout.addWidget(overlay_title)
+        self.victory_overlay_message = QLabel("")
+        self.victory_overlay_message.setWordWrap(True)
+        self.victory_overlay_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        overlay_card_layout.addWidget(self.victory_overlay_message)
+        self.victory_overlay_button = QPushButton("Continue")
+        self.victory_overlay_button.clicked.connect(self._continue_pending_transition)
+        overlay_card_layout.addWidget(self.victory_overlay_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        overlay_layout.addWidget(overlay_card, alignment=Qt.AlignmentFlag.AlignCenter)
+        overlay_layout.addStretch(1)
 
         layout.addWidget(self.scene_group, stretch=1)
         layout.addWidget(self.story_choices_group, stretch=1)
@@ -365,6 +400,7 @@ class CyoaPySide6Window(QMainWindow):
             self.scene_group.show()
             self.story_choices_group.show()
             self.encounter_panel.hide()
+            self.victory_overlay.hide()
             self.battlefield_widget.set_area_overlay(None)
             self._render_story_actions(presentation.story_actions)
         else:
@@ -373,6 +409,7 @@ class CyoaPySide6Window(QMainWindow):
             self.encounter_panel.show()
             self._sync_combat_log_round(presentation.scene_id)
             self._render_encounter(presentation)
+        self._sync_victory_overlay(presentation)
         self._schedule_ai_step_if_needed()
 
     def _render_story_actions(self, actions: list[ActionView]) -> None:
@@ -470,6 +507,29 @@ class CyoaPySide6Window(QMainWindow):
             self.end_turn_button.setText(
                 "Pass Reaction" if encounter.end_turn_action.kind == "pass" else "End Turn"
             )
+
+    def _sync_victory_overlay(self, presentation: SessionPresentation) -> None:
+        encounter = presentation.encounter
+        if encounter is None or encounter.transition_message is None:
+            self.victory_overlay.hide()
+            return
+        self.victory_overlay_message.setText(encounter.transition_message)
+        self.victory_overlay_button.setEnabled(encounter.transition_action is not None)
+        self._update_victory_overlay_geometry()
+        self.victory_overlay.show()
+        self.victory_overlay.raise_()
+
+    def _update_victory_overlay_geometry(self) -> None:
+        if not hasattr(self, "victory_overlay"):
+            return
+        self.victory_overlay.setGeometry(self.encounter_panel.rect())
+
+    def _continue_pending_transition(self) -> None:
+        if self._presentation is None or self._presentation.encounter is None:
+            return
+        action = self._presentation.encounter.transition_action
+        if action is not None:
+            self._select_action(action.index)
 
     def _render_action_economy_column(
         self,
@@ -1119,6 +1179,7 @@ class CyoaPySide6Window(QMainWindow):
         if (
             self._ai_step_scheduled
             or state is None
+            or self.session.pending_scene_transition is not None
             or not state.needs_ai_advance()
         ):
             return
@@ -1173,10 +1234,74 @@ class CyoaPySide6Window(QMainWindow):
         item = self._items_by_id.get(item_id)
         return item.name if item else item_id
 
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._update_victory_overlay_geometry()
 
-def run_pyside6_app(game: Game | None = None) -> None:
+
+class ScenarioPickerWindow(QMainWindow):
+    def __init__(self, start_scene_override: str | None = None):
+        _require_pyside6()
+        super().__init__()
+        self._start_scene_override = start_scene_override
+        self._game_window: CyoaPySide6Window | None = None
+        self.setWindowTitle("Choose Scenario")
+        self.resize(520, 420)
+
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(12)
+
+        title = QLabel("Choose a scenario")
+        title_font = QFont()
+        title_font.setPointSize(18)
+        title_font.setBold(True)
+        title.setFont(title_font)
+        layout.addWidget(title)
+
+        subtitle = QLabel("Start a new session from any available scenario.")
+        subtitle.setWordWrap(True)
+        layout.addWidget(subtitle)
+
+        scenarios = list_scenarios()
+        if not scenarios:
+            empty = QLabel("No valid scenarios were found in app/content/scenarios/.")
+            empty.setWordWrap(True)
+            layout.addWidget(empty)
+            return
+
+        for scenario in scenarios:
+            button = QPushButton(f"{scenario.label} ({scenario.id})")
+            button.setMinimumHeight(44)
+            button.clicked.connect(
+                lambda _checked=False, selected=scenario: self._open_scenario(selected)
+            )
+            layout.addWidget(button)
+        layout.addStretch(1)
+
+    def _open_scenario(self, scenario: ScenarioInfo) -> None:
+        self._game_window = CyoaPySide6Window(
+            Game(
+                str(scenario.directory),
+                start_scene=self._start_scene_override,
+            )
+        )
+        self._game_window.show()
+        self.close()
+
+
+def run_pyside6_app(
+    game: Game | None = None,
+    start_scene_override: str | None = None,
+) -> None:
     _require_pyside6()
     app = QApplication.instance() or QApplication(sys.argv)
-    window = CyoaPySide6Window(game=game)
+    window = (
+        CyoaPySide6Window(game=game)
+        if game is not None
+        else ScenarioPickerWindow(start_scene_override=start_scene_override)
+    )
     window.show()
     app.exec()

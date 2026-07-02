@@ -118,6 +118,7 @@ def run_savegame_api(
     port: int = 8000,
     game_dir: str | Path = GAME_DIR,
     control_mode: str = "default",
+    start_scene: str | None = None,
 ) -> None:
-    api = SavegameApi(Game(str(game_dir), control_mode=control_mode))
+    api = SavegameApi(Game(str(game_dir), start_scene=start_scene, control_mode=control_mode))
     uvicorn.run(api.create_app(), host=host, port=port)

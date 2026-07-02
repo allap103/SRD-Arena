@@ -23,15 +23,15 @@ from ..models.attributes import Attributes, Movement
 from ..models.status import StatusSnapshot
 from ..models.spellcasting import Spellcasting
 from ..models.scene import Position
-from .session import GameSession
+from .session import GameSession, PendingSceneTransition
 from ..systems.equipment import Equipment
 from ..systems.inventory import Inventory
 
-SAVE_VERSION = 4
+SAVE_VERSION = 5
 JsonScalar: TypeAlias = str | int | float | bool | None
 JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
 SAVEGAME_EXAMPLE: dict[str, JsonValue] = {
-    "version": 4,
+    "version": 5,
     "current_scene_id": "welcome",
     "start_scene_id": "welcome",
     "player": {
@@ -210,6 +210,13 @@ class ConditionStateModel(BaseModel):
     expires_on_round: int | None = None
 
 
+class PendingSceneTransitionModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    next_scene_id: str
+    message: str
+
+
 class SaveGame(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -223,6 +230,7 @@ class SaveGame(BaseModel):
     player: PlayerState
     completed_tests: list[CompletedTestState] = Field(default_factory=list)
     encounter: EncounterStateModel | None = None
+    pending_scene_transition: PendingSceneTransitionModel | None = None
 
 
 def create_save(session: GameSession) -> SaveGame:
@@ -236,6 +244,14 @@ def create_save(session: GameSession) -> SaveGame:
             for scene_id, choice_text in sorted(session.choice_resolver.completed_tests)
         ],
         encounter=_create_encounter_state(session.get_encounter_snapshot()),
+        pending_scene_transition=(
+            PendingSceneTransitionModel(
+                next_scene_id=session.pending_scene_transition.next_scene_id,
+                message=session.pending_scene_transition.message,
+            )
+            if session.pending_scene_transition is not None
+            else None
+        ),
     )
 
 
@@ -264,6 +280,14 @@ def restore_save(save: SaveGame, game_dir: str | Path) -> GameSession:
     )
     session.current_scene_id = save.current_scene_id
     session.restore_encounter_snapshot(_restore_encounter_state(save.encounter))
+    session.pending_scene_transition = (
+        PendingSceneTransition(
+            next_scene_id=save.pending_scene_transition.next_scene_id,
+            message=save.pending_scene_transition.message,
+        )
+        if save.pending_scene_transition is not None
+        else None
+    )
     return session
 
 

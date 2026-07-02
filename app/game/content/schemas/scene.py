@@ -105,6 +105,7 @@ class EncounterResolutionSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     next_scene: str
+    message: str | None = None
 
 
 class FleeSchema(EncounterResolutionSchema):

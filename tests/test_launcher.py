@@ -13,20 +13,9 @@ def _make_game_dir(path: Path) -> Path:
     return path
 
 
-def test_resolve_game_directory_uses_default_sample_game(monkeypatch, tmp_path: Path) -> None:
-    repo_root = tmp_path / "repo"
-    sample_game = _make_game_dir(repo_root / "app" / "content" / "scenarios" / "sample_game")
-    monkeypatch.setattr(launcher, "REPO_ROOT", repo_root)
-    monkeypatch.setattr(launcher, "SCENARIOS_DIR", repo_root / "app" / "content" / "scenarios")
-    monkeypatch.setattr(
-        launcher,
-        "GAME_DIR",
-        Path("app") / "content" / "scenarios" / "sample_game",
-    )
-
-    resolved = launcher.resolve_game_directory(None)
-
-    assert resolved == sample_game.resolve()
+def test_resolve_game_directory_requires_explicit_name() -> None:
+    with pytest.raises(FileNotFoundError):
+        launcher.resolve_game_directory(None)
 
 
 def test_resolve_game_directory_accepts_relative_path(monkeypatch, tmp_path: Path) -> None:
@@ -75,7 +64,11 @@ def test_launch_runs_pyside6_frontend(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setitem(
         sys.modules,
         "game.frontends.qt.app",
-        SimpleNamespace(run_pyside6_app=lambda game: launched.append(game.directory)),
+        SimpleNamespace(
+            run_pyside6_app=lambda game=None, start_scene_override=None: launched.append(
+                None if game is None else game.directory
+            )
+        ),
     )
 
     launcher.launch("pyside6", game_dir)
@@ -100,6 +93,27 @@ def test_main_launches_pyside6_by_default(
     launcher.main([str(game_dir)])
 
     assert launched == [("pyside6", game_dir.resolve())]
+
+
+def test_main_without_game_launches_picker_for_default_frontend(monkeypatch) -> None:
+    launched = []
+
+    monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(args))
+
+    launcher.main([])
+
+    assert launched == [("pyside6", None)]
+
+
+def test_select_game_directory_lists_available_scenarios(monkeypatch, tmp_path: Path) -> None:
+    first = _make_game_dir(tmp_path / "alpha")
+    _make_game_dir(tmp_path / "beta")
+    monkeypatch.setattr(launcher, "SCENARIOS_DIR", tmp_path)
+    monkeypatch.setattr("builtins.input", lambda _prompt: "1")
+
+    resolved = launcher.select_game_directory()
+
+    assert resolved == first.resolve()
 
 
 def test_parser_rejects_textual_frontend() -> None:

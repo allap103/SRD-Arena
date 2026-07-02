@@ -16,6 +16,7 @@ from game.runtime.save import (
     save_to_slot,
 )
 from game.runtime.session import (
+    CONTINUE_CHOICE_TEXT,
     EXIT_CHOICE_TEXT,
     LOAD_CHOICE_TEXT,
     LONG_REST_CHOICE_TEXT,
@@ -37,7 +38,7 @@ def test_create_save_captures_mutable_session_state() -> None:
 
     save = create_save(session)
 
-    assert save.version == 4
+    assert save.version == 5
     assert save.current_scene_id == "shared_target"
     assert save.start_scene_id == "start"
     assert save.player.actor_id == "player"
@@ -77,7 +78,7 @@ def test_save_to_file_writes_versioned_json_and_loads_session(tmp_path: Path) ->
     loaded = load_from_file(save_path, FIXTURE_GAME_DIR)
 
     assert written_path == save_path
-    assert json.loads(save_path.read_text(encoding="utf-8"))["version"] == 4
+    assert json.loads(save_path.read_text(encoding="utf-8"))["version"] == 5
     assert loaded.current_scene_id == "shared_target"
 
 
@@ -207,6 +208,24 @@ def test_session_exit_choice_requests_shutdown(tmp_path: Path) -> None:
     assert result.messages == [("system", "Exiting game.")]
     assert result.should_exit is True
     assert session.current_scene_id == "start"
+
+
+def test_save_and_load_preserve_pending_scene_transition(tmp_path: Path) -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    for enemy in session.encounter_state.enemies:
+        enemy.actor.current_health = 0
+
+    wait_index = session.get_scene_view().choices.index("Wait")
+    session.choose(wait_index)
+    save_path = tmp_path / "pending_transition.json"
+
+    save_to_file(session, save_path)
+    loaded = load_from_file(save_path, FIXTURE_ENCOUNTER_DIR)
+
+    assert loaded.pending_scene_transition is not None
+    assert CONTINUE_CHOICE_TEXT in loaded.get_scene_view().choices
 
 
 def test_save_validation_rejects_unknown_fields() -> None:

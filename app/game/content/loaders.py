@@ -170,8 +170,14 @@ def _build_encounter(encounter) -> Encounter | None:
             for enemy in encounter.enemies
         ],
         teams=teams,
-        victory=EncounterResolution(next_scene=encounter.victory.next_scene),
-        defeat=EncounterResolution(next_scene=encounter.defeat.next_scene),
+        victory=EncounterResolution(
+            next_scene=encounter.victory.next_scene,
+            message=encounter.victory.message,
+        ),
+        defeat=EncounterResolution(
+            next_scene=encounter.defeat.next_scene,
+            message=encounter.defeat.message,
+        ),
         flee=FleeResolution(
             next_scene=encounter.flee.next_scene,
             allowed=encounter.flee.allowed,

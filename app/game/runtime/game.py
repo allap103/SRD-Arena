@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+from dataclasses import dataclass, field
 
 from ..support.logging import CHANNEL_ENGINE, get_game_logger
 from ..content.loaders import (
@@ -31,6 +32,12 @@ GAME_SYSTEM_DIR = SYSTEM_CONTENT_ROOT
 LOGGER = get_game_logger(CHANNEL_ENGINE)
 
 
+@dataclass(frozen=True)
+class GameSettings:
+    start_scene: str = "welcome"
+    rules_config: RulesConfig = field(default_factory=RulesConfig)
+
+
 class Game:
     scenes: dict[str, Scene]
     actors: list[Actor]
@@ -40,13 +47,14 @@ class Game:
     def __init__(
         self,
         directory: str | Path = GAME_DIR,
-        start_scene: str = "welcome",
+        start_scene: str | None = None,
         system_directory: str | Path = GAME_SYSTEM_DIR,
         control_mode: str = "default",
     ):
         self.directory = Path(directory)
         self.system_directory = Path(system_directory)
-        self.rules_config = self._load_rules_config(self.directory / "settings.json")
+        settings = self._load_settings(self.directory / "settings.json")
+        self.rules_config = settings.rules_config
         self.stat_blocks = load_bestiary_stat_blocks(self.system_directory)
         self.class_blocks = load_class_blocks(self.system_directory)
         self.subclass_blocks = load_subclass_blocks(self.system_directory)
@@ -60,7 +68,7 @@ class Game:
             load_system_items(self.system_directory),
             self.load_items_from_directory(self.directory / "items"),
         )
-        self.start_scene = start_scene
+        self.start_scene = start_scene or settings.start_scene
         self.control_mode = control_mode
         self.scene_runner = SceneRunner()
 
@@ -115,18 +123,22 @@ class Game:
             rules_config=self.rules_config,
         )
 
-    def _load_rules_config(self, path: Path) -> RulesConfig:
+    def _load_settings(self, path: Path) -> GameSettings:
         if not path.exists():
-            return RulesConfig()
+            return GameSettings()
         with path.open("r", encoding="utf-8") as config_file:
             payload = json.load(config_file)
+        start_scene = payload.get("start_scene")
         rules = payload.get("rules", {})
         threshold = DEFAULT_DIRECTIONAL_AOE_CELL_COVERAGE_THRESHOLD
         if isinstance(rules, dict):
             configured = rules.get("directional_aoe_cell_coverage_threshold")
             if isinstance(configured, (int, float)):
                 threshold = min(max(float(configured), 0.0), 1.0)
-        return RulesConfig(directional_aoe_cell_coverage_threshold=threshold)
+        return GameSettings(
+            start_scene=start_scene if isinstance(start_scene, str) and start_scene else "welcome",
+            rules_config=RulesConfig(directional_aoe_cell_coverage_threshold=threshold),
+        )
 
     def run(self):
         session = self.create_session()
