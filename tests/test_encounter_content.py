@@ -6,7 +6,7 @@ from game.loaders import load_actor, load_bestiary_stat_blocks, load_scene
 from game.save import load_from_file, save_to_file
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
-SAMPLE_GAME_DIR = Path(__file__).parents[1] / "sample_game"
+SAMPLE_GAME_DIR = Path(__file__).parents[1] / "scenarios" / "sample_game"
 
 
 def test_load_scene_parses_optional_encounter_block() -> None:
@@ -278,14 +278,14 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
 
 
 def test_save_and_load_preserve_spell_slots(tmp_path: Path) -> None:
-    session = Game("sample_game").create_session()
+    session = Game("scenarios/sample_game").create_session()
 
     assert session.player.spellcasting is not None
     session.player.spellcasting.spell_slots_remaining[1] = 1
     save_path = tmp_path / "spell_slots_save.json"
 
     save_to_file(session, save_path)
-    loaded = load_from_file(save_path, "sample_game")
+    loaded = load_from_file(save_path, "scenarios/sample_game")
 
     assert loaded.player.spellcasting is not None
     assert loaded.player.spellcasting.spell_slots_max == {1: 3}

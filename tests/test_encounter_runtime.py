@@ -12,7 +12,7 @@ from game.ui.encounter import BattlefieldWidget
 from game.ui.encounter.config import TargetSelectionMode
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
-SAMPLE_GAME_DIR = Path(__file__).parents[1] / "sample_game"
+SAMPLE_GAME_DIR = Path(__file__).parents[1] / "scenarios" / "sample_game"
 
 
 def _item_id_by_name(session, name: str) -> str:

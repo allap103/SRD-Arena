@@ -25,7 +25,7 @@ from .models.scene import Scene
 from .scene_runner import SceneRunner
 from .session import GameSession
 
-GAME_DIR = Path("sample_game")
+GAME_DIR = Path("scenarios") / "sample_game"
 GAME_SYSTEM_DIR = Path("game_system")
 LOGGER = get_game_logger(CHANNEL_ENGINE)
 

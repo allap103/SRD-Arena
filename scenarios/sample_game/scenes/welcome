@@ -1,0 +1,36 @@
+{
+    "id": "welcome",
+    "type": "basic",
+    "text": "You step into a clearing in the woods and spot three goblins. They haven't noticed you yet. One is armed with a bow, while the other two wield swords. What do you do?",
+    "choices": {
+        "Greet the goblins.": {
+            "message": "You call out a friendly greeting to the goblins.\nThe goblins look up, surprised to see you. They exchange glances and then burst into laughter, but it's not the friendly kind.\nYou know you will have to fight your way out of this.",
+            "next_scene": "goblin_encounter"
+        },
+        "Charge into battle.": {
+            "message": "You charge the goblins.",
+            "next_scene": "goblin_encounter"
+        },
+        "Try to sneak away.": {
+            "message": "You attempt to sneak away from the goblins, hoping to avoid a fight.",
+            "next_scene": "goblin_encounter",
+            "test": {
+                "skill": "dexterity",
+                "difficulty": 12,
+                "repeatable": false,
+                "effects": {
+                    "on_success": {
+                        "message": "Before the goblins notice you, you slip back into the shadows.",
+                        "gain_item": "key",
+                        "next_scene": "sneaking_success"
+                    },
+                    "on_failure": {
+                        "message": "The goblin with the bow notices you and looses an arrow at you.\nYou draw your blade and prepare to fight.",
+                        "damage": 2,
+                        "next_scene": "goblin_encounter"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -15,10 +15,10 @@ def _make_game_dir(path: Path) -> Path:
 
 def test_resolve_game_directory_uses_default_sample_game(monkeypatch, tmp_path: Path) -> None:
     repo_root = tmp_path / "repo"
-    sample_game = _make_game_dir(repo_root / "sample_game")
+    sample_game = _make_game_dir(repo_root / "scenarios" / "sample_game")
     monkeypatch.setattr(launcher, "REPO_ROOT", repo_root)
-    monkeypatch.setattr(launcher, "ADVENTURES_DIR", repo_root / "adventures")
-    monkeypatch.setattr(launcher, "GAME_DIR", Path("sample_game"))
+    monkeypatch.setattr(launcher, "SCENARIOS_DIR", repo_root / "scenarios")
+    monkeypatch.setattr(launcher, "GAME_DIR", Path("scenarios") / "sample_game")
 
     resolved = launcher.resolve_game_directory(None)
 
@@ -42,14 +42,14 @@ def test_resolve_game_directory_accepts_absolute_path(tmp_path: Path) -> None:
     assert resolved == absolute_game.resolve()
 
 
-def test_resolve_game_directory_accepts_adventures_subfolder_name(
+def test_resolve_game_directory_accepts_scenarios_subfolder_name(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
     repo_root = tmp_path / "repo"
-    adventure_game = _make_game_dir(repo_root / "adventures" / "forest_trial")
+    adventure_game = _make_game_dir(repo_root / "scenarios" / "forest_trial")
     monkeypatch.setattr(launcher, "REPO_ROOT", repo_root)
-    monkeypatch.setattr(launcher, "ADVENTURES_DIR", repo_root / "adventures")
+    monkeypatch.setattr(launcher, "SCENARIOS_DIR", repo_root / "scenarios")
 
     resolved = launcher.resolve_game_directory("forest_trial")
 

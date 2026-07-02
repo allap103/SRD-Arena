@@ -1,0 +1,10 @@
+{
+    "id": "goblin_encounter_defeat",
+    "type": "basic",
+    "text": "The goblins overwhelm you. Your adventure ends here.",
+    "choices": {
+        "Try again.": {
+            "next_scene": "welcome"
+        }
+    }
+}

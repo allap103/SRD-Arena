@@ -61,7 +61,7 @@ class GameSession:
         item_templates: dict[str, Item] | None = None,
         choice_resolver: ChoiceResolver | None = None,
         start_scene_id: str = "welcome",
-        game_dir: str | Path = "sample_game",
+        game_dir: str | Path = Path("scenarios") / "sample_game",
         save_dir: str | Path = "saves",
         control_mode: str = "default",
         ai_action_limit: int | None = None,

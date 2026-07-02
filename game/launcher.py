@@ -8,7 +8,7 @@ from .engine import GAME_DIR, Game
 from .game_logging import configure_game_logging
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ADVENTURES_DIR = REPO_ROOT / "adventures"
+SCENARIOS_DIR = REPO_ROOT / "scenarios"
 VALID_GAME_SUBDIRS = ("actors", "items", "scenes")
 
 
@@ -19,7 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="?",
         help=(
             "Game directory as a relative path, an absolute path, or the name of "
-            "a subfolder in adventures/."
+            "a subfolder in scenarios/."
         ),
     )
     parser.add_argument(
@@ -58,7 +58,7 @@ def resolve_game_directory(game: str | None) -> Path:
         candidates.append(requested)
     else:
         candidates.append((Path.cwd() / requested).resolve())
-        candidates.append((ADVENTURES_DIR / game).resolve())
+        candidates.append((SCENARIOS_DIR / game).resolve())
 
     for candidate in candidates:
         if candidate.exists():
@@ -66,7 +66,7 @@ def resolve_game_directory(game: str | None) -> Path:
 
     raise FileNotFoundError(
         "Could not find a game directory for "
-        f"'{game}'. Tried the current working directory and adventures/."
+        f"'{game}'. Tried the current working directory and scenarios/."
     )
 
 

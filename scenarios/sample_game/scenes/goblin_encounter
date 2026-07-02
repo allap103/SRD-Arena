@@ -1,0 +1,78 @@
+{
+    "id": "goblin_encounter",
+    "type": "encounter",
+    "text": "As you charge towards the goblins, they quickly ready their weapons and prepare to fight. The goblin with the bow takes aim at you, while the other two reach for their primitive swords. The battle begins!",
+    "encounter": {
+        "grid": {
+            "width": 13,
+            "height": 13
+        },
+        "player_start": {
+            "x": 1,
+            "y": 6
+        },
+        "teams": [
+            {
+                "id": "heroes",
+                "name": "Heroes",
+                "members": ["player"],
+                "controller": "user"
+            },
+            {
+                "id": "goblins",
+                "name": "Goblins",
+                "members": ["goblin_1", "goblin_2", "goblin_3"],
+                "controller": "ai"
+            }
+        ],
+        "enemies": [
+            {
+                "actor_id": "goblin_1",
+                "start": {
+                    "x": 5,
+                    "y": 2
+                },
+                "behavior": {
+                    "type": "chase"
+                }
+            },
+            {
+                "actor_id": "goblin_2",
+                "start": {
+                    "x": 6,
+                    "y": 2
+                },
+                "behavior": {
+                    "type": "chase",
+                    "anchor": {
+                        "x": 6,
+                        "y": 2
+                    },
+                    "radius": 2
+                }
+            },
+            {
+                "actor_id": "goblin_3",
+                "start": {
+                    "x": 4,
+                    "y": 1
+                },
+                "behavior": {
+                    "type": "archer"
+                }
+            }
+        ],
+        "victory": {
+            "next_scene": "goblin_encounter_victory"
+        },
+        "defeat": {
+            "next_scene": "goblin_encounter_defeat"
+        },
+        "flee": {
+            "allowed": true,
+            "next_scene": "welcome"
+        }
+    },
+    "choices": {
+    }
+}
