@@ -1,5 +1,5 @@
-from game.dice_presentation import build_roll_views, without_roll_details
-from game.encounter import CombatEvent
+from game.presentation.dice import build_roll_views, without_roll_details
+from game.combat.encounter import CombatEvent
 
 
 def test_build_roll_views_extracts_attack_and_damage():

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from .models.scene import Grid, Position
+from ..models.scene import Grid, Position
 
 DIRECTION_VECTORS = {
     "up": (0, -1),
@@ -71,6 +71,42 @@ def serialize_area(area: AreaOfEffect | None) -> dict[str, object] | None:
     if area.continuous_area is not None:
         payload["continuous_area"] = serialize_continuous_area(area.continuous_area)
     return payload
+
+
+def build_directional_area(
+    shape: object,
+    origin: Position,
+    direction: Vector2D,
+    size_squares: int,
+    grid: Grid,
+    *,
+    coverage_threshold: float | None = None,
+) -> AreaOfEffect | None:
+    if shape == "cone":
+        return build_cone_area_from_vector(
+            origin,
+            direction,
+            size_squares,
+            grid,
+            coverage_threshold=coverage_threshold,
+        )
+    if shape == "line":
+        return build_line_area_from_vector(
+            origin,
+            direction,
+            size_squares,
+            grid,
+            coverage_threshold=coverage_threshold,
+        )
+    if shape == "cube":
+        return build_cube_area_from_vector(
+            origin,
+            direction,
+            size_squares,
+            grid,
+            coverage_threshold=coverage_threshold,
+        )
+    return None
 
 
 def serialize_continuous_area(area: ContinuousArea) -> dict[str, object]:

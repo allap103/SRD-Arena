@@ -3,20 +3,20 @@ from pathlib import Path
 import re
 from typing import cast
 
-from .content_schema import ActorSchema, ItemSchema, SceneSchema
-from .content_schema.actor import ActorItemReferenceSchema
-from .models.actor import Actor
-from .models.attributes import Attributes, Movement
-from .models.class_features import (
+from .schemas import ActorSchema, ItemSchema, SceneSchema
+from .schemas.actor import ActorItemReferenceSchema
+from ..models.actor import Actor
+from ..models.attributes import Attributes, Movement
+from ..models.class_features import (
     ClassRef,
     CombatProfile,
     FeatureActionDefinition,
     FeatureGrant,
     SubclassRef,
 )
-from .rules.normalization import normalize_optional_feature_rules
-from .rules.types import RuleGrant
-from .models.choice import (
+from ..rules.normalization import normalize_optional_feature_rules
+from ..rules.types import RuleGrant
+from ..models.choice import (
     Choice,
     Effects,
     ItemRequirement,
@@ -24,10 +24,10 @@ from .models.choice import (
     Requirements,
     SkillTest,
 )
-from .models.item import ArmorStat, Item, WeaponStat
-from .models.monster_attack import MonsterAttack
-from .models.spellcasting import Spell, Spellcasting
-from .models.scene import (
+from ..models.item import ArmorStat, Item, WeaponStat
+from ..models.monster_attack import MonsterAttack
+from ..models.spellcasting import Spell, Spellcasting
+from ..models.scene import (
     Behavior,
     Encounter,
     EncounterEnemy,
@@ -38,8 +38,8 @@ from .models.scene import (
     Position,
     Scene,
 )
-from .systems.equipment import Equipment
-from .systems.inventory import Inventory
+from ..systems.equipment import Equipment
+from ..systems.inventory import Inventory
 
 
 StatBlockCatalog = dict[tuple[str, str | None], dict]
@@ -1340,7 +1340,7 @@ def _build_system_item(raw_item: dict) -> Item:
             name=str(raw_item["name"]),
             description=_system_item_description(raw_item),
             category="weapon",
-            weapon_stat=WeaponStat(
+            weapon_stat=_build_weapon_stat(
                 slot=["left_hand", "right_hand"],
                 damage=str(raw_item.get("dmg1", "1d4")),
                 damage_type=_damage_type(str(raw_item.get("dmgType", ""))),
@@ -1359,11 +1359,15 @@ def _build_system_item(raw_item: dict) -> Item:
             name=str(raw_item["name"]),
             description=_system_item_description(raw_item),
             category="armor",
-            armor_stat=ArmorStat(
+            armor_stat=_build_armor_stat(
                 slot="body",
                 type=_armor_type(item_type),
                 armor_class=int(raw_item.get("ac", 10)),
-                modifier_cap=0 if item_type.startswith("HA") else 2 if item_type.startswith("MA") else 99,
+                modifier_cap=0
+                if item_type.startswith("HA")
+                else 2
+                if item_type.startswith("MA")
+                else 99,
             ),
             item_type=item_type,
             misc_tags=_misc_tags(raw_item),
@@ -1465,14 +1469,60 @@ def load_item(path: str | Path, system_items: SystemItemCatalog | None = None) -
         name=schema.name,
         description=schema.description,
         category=schema.category,
-        weapon_stat=WeaponStat(**schema.weapon_stat.model_dump())
-        if schema.weapon_stat
-        else None,
-        armor_stat=ArmorStat(**schema.armor_stat.model_dump())
-        if schema.armor_stat
-        else None,
+        weapon_stat=_build_weapon_stat_from_schema(schema.weapon_stat),
+        armor_stat=_build_armor_stat_from_schema(schema.armor_stat),
         item_type=schema.item_type,
         misc_tags=list(schema.misc_tags),
+    )
+
+
+def _build_weapon_stat_from_schema(schema: object) -> WeaponStat | None:
+    if schema is None:
+        return None
+    return _build_weapon_stat(**schema.model_dump())
+
+
+def _build_armor_stat_from_schema(schema: object) -> ArmorStat | None:
+    if schema is None:
+        return None
+    return _build_armor_stat(**schema.model_dump())
+
+
+def _build_weapon_stat(
+    *,
+    slot: list[str],
+    damage: str,
+    damage_type: str,
+    properties: list[str],
+    attack_type: str = "",
+    range_normal: int | None = None,
+    range_long: int | None = None,
+    weapon_category: str = "",
+) -> WeaponStat:
+    return WeaponStat(
+        slot=slot,
+        damage=damage,
+        damage_type=damage_type,
+        properties=properties,
+        attack_type=attack_type,
+        range_normal=range_normal,
+        range_long=range_long,
+        weapon_category=weapon_category,
+    )
+
+
+def _build_armor_stat(
+    *,
+    slot: str,
+    type: str,
+    armor_class: int,
+    modifier_cap: int,
+) -> ArmorStat:
+    return ArmorStat(
+        slot=slot,
+        type=type,
+        armor_class=armor_class,
+        modifier_cap=modifier_cap,
     )
 
 

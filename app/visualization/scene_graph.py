@@ -5,7 +5,7 @@ from pathlib import Path
 import tomllib
 from typing import Any
 
-from game.loaders import load_scene
+from game.content.loaders import load_scene
 from game.models.scene import Scene
 
 

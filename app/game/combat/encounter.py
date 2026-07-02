@@ -5,17 +5,15 @@ from dataclasses import dataclass, field
 import re
 from typing import Generator
 
-from .feature_actions import resolve_feature_action
-from .encounter_effects import apply_effects, serialize_effects
-from .encounter_geometry import (
+from ..features.actions import resolve_feature_action
+from .effects import apply_effects, serialize_effects
+from .geometry import (
     AreaOfEffect,
     Vector2D,
-    build_cone_area_from_vector,
-    build_cube_area_from_vector,
-    build_line_area_from_vector,
+    build_directional_area,
     vector_between_positions,
 )
-from .encounter_spells import (
+from .spells import (
     parse_spell_action_value,
     spell_action_economy,
     spell_action_id,
@@ -25,16 +23,16 @@ from .encounter_spells import (
     spell_range_squares,
     spell_targets_self_only,
 )
-from .models.actor import Actor
-from .models.item import Item
-from .models.scene import Behavior, Encounter, Position
-from .models.spellcasting import Spell, Spellcasting
-from .models.rules_config import RulesConfig
-from .models.status import Status, StatusSnapshot
-from .rules.registry import matching_rules, reroll_eligible_indices
-from .rules.types import RuleGrant
+from ..models.actor import Actor
+from ..models.item import Item
+from ..models.scene import Behavior, Encounter, Position
+from ..models.spellcasting import Spell, Spellcasting
+from ..models.rules_config import RulesConfig
+from ..models.status import Status, StatusSnapshot
+from ..rules.registry import matching_rules, reroll_eligible_indices
+from ..rules.types import RuleGrant
 from .spell_actions import SpellActionContext, SpellTargetContext, resolve_spell_action
-from .systems.roll import (
+from ..systems.roll import (
     CheckResult,
     D20RollMode,
     DicePoolResult,
@@ -1034,32 +1032,14 @@ class EncounterState:
         coverage_threshold = (
             self.rules_config.directional_aoe_cell_coverage_threshold
         )
-        shape = spell.range_data.get("type")
-        if shape == "cone":
-            return build_cone_area_from_vector(
-                self.player_position,
-                direction,
-                length,
-                self.definition.grid,
-                coverage_threshold=coverage_threshold,
-            )
-        if shape == "line":
-            return build_line_area_from_vector(
-                self.player_position,
-                direction,
-                length,
-                self.definition.grid,
-                coverage_threshold=coverage_threshold,
-            )
-        if shape == "cube":
-            return build_cube_area_from_vector(
-                self.player_position,
-                direction,
-                length,
-                self.definition.grid,
-                coverage_threshold=coverage_threshold,
-            )
-        return None
+        return build_directional_area(
+            spell.range_data.get("type"),
+            self.player_position,
+            direction,
+            length,
+            self.definition.grid,
+            coverage_threshold=coverage_threshold,
+        )
 
     def _targets_in_area(
         self,

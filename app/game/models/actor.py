@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from ..game_logging import CHANNEL_SYSTEM, get_game_logger
+from ..support.logging import CHANNEL_SYSTEM, get_game_logger
 from ..systems.equipment import Equipment
 from ..systems.inventory import Inventory
 from .attributes import Attributes

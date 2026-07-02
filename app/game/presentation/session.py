@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .models.class_features import FeatureActionDefinition
-from .session import ActionView, GameSession, SceneView
+from ..models.class_features import FeatureActionDefinition
+from .models import ActionView, SceneView
+from ..runtime.session import GameSession
 
 SYSTEM_ACTION_COUNT = 3
 MOVE_DIRECTIONS = (

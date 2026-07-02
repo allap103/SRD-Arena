@@ -1,5 +1,11 @@
-from .game_logging import CHANNEL_CHOICE, CHANNEL_SCENE, CHANNEL_SYSTEM, get_game_logger
-from .session import GameSession, TurnResult
+from ..support.logging import (
+    CHANNEL_CHOICE,
+    CHANNEL_SCENE,
+    CHANNEL_SYSTEM,
+    get_game_logger,
+)
+from ..presentation.models import TurnResult
+from .session import GameSession
 
 SCENE_LOGGER = get_game_logger(CHANNEL_SCENE)
 CHOICE_LOGGER = get_game_logger(CHANNEL_CHOICE)

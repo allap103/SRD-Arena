@@ -1,8 +1,8 @@
 from pathlib import Path
 import json
 
-from .game_logging import CHANNEL_ENGINE, get_game_logger
-from .loaders import (
+from ..support.logging import CHANNEL_ENGINE, get_game_logger
+from ..content.loaders import (
     load_actor,
     load_bestiary_stat_blocks,
     load_class_blocks,
@@ -15,14 +15,14 @@ from .loaders import (
     load_system_item_catalog,
     load_system_items,
 )
-from .models.actor import Actor
-from .models.item import Item
-from .models.rules_config import (
+from ..models.actor import Actor
+from ..models.item import Item
+from ..models.rules_config import (
     DEFAULT_DIRECTIONAL_AOE_CELL_COVERAGE_THRESHOLD,
     RulesConfig,
 )
-from .models.scene import Scene
-from .paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
+from ..models.scene import Scene
+from ..support.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
 from .scene_runner import SceneRunner
 from .session import GameSession
 

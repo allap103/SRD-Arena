@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from game.engine import Game
-from game.save import (
+from game.runtime.game import Game
+from game.runtime.save import (
     SaveGame,
     create_save,
     get_slot_path,
@@ -15,7 +15,7 @@ from game.save import (
     save_to_file,
     save_to_slot,
 )
-from game.session import (
+from game.runtime.session import (
     EXIT_CHOICE_TEXT,
     LOAD_CHOICE_TEXT,
     LONG_REST_CHOICE_TEXT,

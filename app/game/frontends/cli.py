@@ -4,9 +4,9 @@ import argparse
 from pathlib import Path
 
 from .api.savegames import run_savegame_api
-from .engine import GAME_DIR, Game
-from .game_logging import configure_game_logging
-from .paths import REPO_ROOT, SCENARIOS_ROOT
+from ..runtime.game import GAME_DIR, Game
+from ..support.logging import configure_game_logging
+from ..support.paths import REPO_ROOT, SCENARIOS_ROOT
 
 SCENARIOS_DIR = SCENARIOS_ROOT
 VALID_GAME_SUBDIRS = ("actors", "items", "scenes")
@@ -78,7 +78,7 @@ def launch(
     control_mode: str = "default",
 ) -> None:
     if frontend == "pyside6":
-        from .pyside6_app import run_pyside6_app
+        from .qt.app import run_pyside6_app
 
         run_pyside6_app(Game(str(game_dir), control_mode=control_mode))
         return

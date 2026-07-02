@@ -1,4 +1,4 @@
-from game.encounter_geometry import (
+from game.combat.geometry import (
     LEGACY_TOUCHED_CELL_POLICY,
     RASTERIZATION_POLICY,
     Vector2D,

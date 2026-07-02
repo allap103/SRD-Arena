@@ -1,15 +1,15 @@
 from pathlib import Path
 from types import SimpleNamespace
 
-from game.encounter import ActionCost, EncounterAction
-from game.engine import Game
-from game.pyside6_app import CyoaPySide6Window
+from game.combat.encounter import ActionCost, EncounterAction
+from game.runtime.game import Game
+from game.frontends.qt.app import CyoaPySide6Window
 from game.features import EffectResult
-from game.presentation import SpellSlotTrackView, build_session_presentation
-from game.save import load_from_file, save_to_file
-from game.session import ActionView
-from game.ui.encounter import BattlefieldWidget
-from game.ui.encounter.config import TargetSelectionMode
+from game.presentation.session import SpellSlotTrackView, build_session_presentation
+from game.presentation.models import ActionView
+from game.runtime.save import load_from_file, save_to_file
+from game.frontends.qt.ui.encounter import BattlefieldWidget
+from game.frontends.qt.ui.encounter.config import TargetSelectionMode
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 SAMPLE_GAME_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
@@ -175,7 +175,7 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypat
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     presentation = build_session_presentation(session)
@@ -222,7 +222,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatc
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
 
@@ -253,7 +253,7 @@ def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
     state.enemies[1].position.y = 2
     state.enemies[2].actor.current_health = 0
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
 
@@ -286,7 +286,7 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
     state.enemies[1].position.y = 4
     state.enemies[2].actor.current_health = 0
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (5, 3))
 
@@ -315,7 +315,7 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
     state.enemies[2].actor.current_health = 0
 
     rolls = iter([5, 1, 2, 3, 16, 4, 5, 6])
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: next(rolls))
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: next(rolls))
 
     result = _choose_directional_spell(session, "Cast Burning Hands", (4, 3))
 
@@ -346,7 +346,7 @@ def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
     state.enemies[1].position.y = 2
     state.enemies[2].actor.current_health = 0
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
     area = next(
@@ -376,9 +376,9 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
     state.enemies[1].actor.current_health = 0
     state.enemies[2].actor.current_health = 0
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
     monkeypatch.setattr(
-        "game.pyside6_app.QTimer",
+        "game.frontends.qt.app.QTimer",
         SimpleNamespace(singleShot=lambda _delay, callback: callback()),
     )
 
@@ -414,7 +414,7 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch)
     state.enemies[1].position.y = 2
     state.enemies[2].actor.current_health = 0
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
     presentation = build_session_presentation(session)
@@ -452,8 +452,8 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
     state.enemies[1].actor.current_health = 0
     state.enemies[2].actor.current_health = 0
     rolls = iter([5, 17, 4, 1])
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: next(rolls, 3))
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: next(rolls, 3))
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     result = session.choose(session.get_scene_view().choices.index("Wait"))
@@ -477,7 +477,7 @@ def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
     state.player_position.y = 2
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
 
@@ -505,8 +505,8 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatc
     state.enemies[1].actor.current_health = 0
     state.enemies[2].actor.current_health = 0
     rolls = iter([5, 3, 3])
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: next(rolls, 3))
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: next(rolls, 3))
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     session.choose(session.get_scene_view().choices.index("Wait"))
@@ -530,8 +530,8 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
     state.enemies[0].position.y = 1
     state.enemies[1].actor.current_health = 0
     state.enemies[2].actor.current_health = 0
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
     session.choose(session.get_scene_view().choices.index("Wait"))
@@ -616,7 +616,7 @@ def test_save_and_load_preserve_color_spray_condition_and_slots(tmp_path: Path, 
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     save_path = tmp_path / "color_spray_save.json"
@@ -697,8 +697,8 @@ def test_save_and_load_preserve_refreshed_blinded_duration(tmp_path: Path, monke
     state.enemies[0].position.y = 1
     state.enemies[1].actor.current_health = 0
     state.enemies[2].actor.current_health = 0
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
     session.choose(session.get_scene_view().choices.index("Wait"))
@@ -762,8 +762,8 @@ def test_enemy_movement_can_pause_for_player_opportunity_attack(monkeypatch) -> 
     labels = [action.label for action in session.encounter_state.available_actions(session.player)]
     assert labels == ["Opportunity attack Goblin", "Pass reaction"]
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 20)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 1)
 
     reaction = session.encounter_state.available_actions(session.player)[0]
     reaction_progress = session.encounter_state.apply_action(session.player, reaction)
@@ -829,8 +829,8 @@ def test_ranged_weapon_attacks_have_disadvantage_when_target_is_adjacent(monkeyp
     session.encounter_state.turn_index = 1
 
     rolls = iter([17, 5, 4])
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: next(rolls))
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: next(rolls))
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: next(rolls))
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: next(rolls))
 
     progress = session.encounter_state.advance_until_next_decision(session.player)
 
@@ -863,8 +863,8 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch
     session.encounter_state.player_position.y = 6
     session.encounter_state.turn_index = 1
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 4)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 20)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 4)
 
     progress = session.encounter_state.advance_until_next_decision(session.player)
 
@@ -907,8 +907,8 @@ def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:
     session.encounter_state.enemies[0].position.x = 5
     session.encounter_state.enemies[0].position.y = 2
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 4)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 20)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 4)
 
     scene_view = session.get_scene_view()
     attack_index = next(
@@ -958,8 +958,8 @@ def test_natural_twenty_is_a_critical_hit_and_auto_hits(monkeypatch) -> None:
     session.encounter_state.enemies[0].actor.current_health = 30
     damage_rolls = iter([4, 7])
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: next(damage_rolls))
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 20)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: next(damage_rolls))
 
     attack_index = next(
         index
@@ -994,7 +994,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
     session.encounter_state.enemies[0].actor.attributes.base_armor_class = 0
     starting_health = session.encounter_state.enemies[0].actor.get_health()
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 1)
 
     attack_index = next(
         index
@@ -1026,8 +1026,8 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     session.encounter_state.enemies[0].position.y = 2
     session.encounter_state.enemies[0].actor.current_health = 20
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 20)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 1)
 
     attack_index = next(
         index
@@ -1074,7 +1074,7 @@ def test_goblin_encounter_can_utilize_healing_potion(monkeypatch) -> None:
     session.current_scene_id = "goblin_encounter"
     session.player.current_health = 10
 
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 5)
 
     scene_view = session.get_scene_view()
     potion_index = scene_view.choices.index("Drink Potion of Healing")
@@ -1102,7 +1102,7 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
     session.current_scene_id = "goblin_encounter"
     session.player.current_health = 10
 
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 5)
 
     scene_view = session.get_scene_view()
     second_wind_index = scene_view.choices.index("Second Wind")
@@ -1128,7 +1128,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable(monkeypatc
     session.current_scene_id = "goblin_encounter"
     session.player.current_health = 10
 
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 5)
 
     second_wind_index = session.get_scene_view().choices.index("Second Wind")
     session.choose(second_wind_index)
@@ -1152,7 +1152,7 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
     state.player_position.y = 3
     state.enemies[0].position.x = 4
     state.enemies[0].position.y = 2
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     presentation = build_session_presentation(session)
@@ -1219,8 +1219,8 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None
     session.encounter_state.enemies[1].actor.current_health = 0
     session.encounter_state.enemies[2].actor.current_health = 0
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("game.encounter.roll_dice", lambda num_dice, sides: 4)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 20)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 4)
 
     scene_view = session.get_scene_view()
     attack_index = next(
@@ -1246,7 +1246,7 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 1)
 
     attack_index = next(
         index
@@ -1305,7 +1305,7 @@ def test_save_and_load_preserve_spent_action(tmp_path: Path, monkeypatch) -> Non
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
 
-    monkeypatch.setattr("game.encounter.roll_die", lambda sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 1)
 
     attack_index = next(
         index

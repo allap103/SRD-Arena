@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from game.engine import Game
-from game.encounter import EncounterAction
+from game.runtime.game import Game
+from game.combat.encounter import EncounterAction
 from game.rules import RuleGrant, matching_rules, reroll_eligible_indices
-from game.save import load_from_file, save_to_file
+from game.runtime.save import load_from_file, save_to_file
 from game.systems.roll import reroll_dice, resolve_dice
 
 SAMPLE_GAME_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
@@ -77,9 +77,9 @@ def test_great_weapon_fighting_pauses_damage_and_rerolls_each_die_once(
 ):
     session = _adjacent_sample_encounter()
     damage_rolls = iter([1, 2, 6, 1])
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr(
-        "game.encounter.roll_dice",
+        "game.combat.encounter.roll_dice",
         lambda _count, _sides: next(damage_rolls, 1),
     )
 
@@ -127,9 +127,9 @@ def test_great_weapon_fighting_pauses_damage_and_rerolls_each_die_once(
 def test_pending_damage_reroll_survives_save_and_load(tmp_path, monkeypatch):
     session = _adjacent_sample_encounter()
     damage_rolls = iter([1, 5])
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr(
-        "game.encounter.roll_dice",
+        "game.combat.encounter.roll_dice",
         lambda _count, _sides: next(damage_rolls, 1),
     )
     attack_index = next(
@@ -157,9 +157,9 @@ def test_pending_damage_reroll_survives_save_and_load(tmp_path, monkeypatch):
 def test_great_weapon_fighting_can_decline_rerolls(monkeypatch):
     session = _adjacent_sample_encounter()
     damage_rolls = iter([1, 5])
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr(
-        "game.encounter.roll_dice",
+        "game.combat.encounter.roll_dice",
         lambda _count, _sides: next(damage_rolls, 1),
     )
     attack_index = next(
@@ -182,8 +182,8 @@ def test_great_weapon_fighting_can_decline_rerolls(monkeypatch):
 def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatch):
     session = _adjacent_sample_encounter()
     session.player.equipment.equipped_items["right_hand"] = "longsword"
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
-    monkeypatch.setattr("game.encounter.roll_dice", lambda _count, _sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: 15)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda _count, _sides: 1)
     attack_index = next(
         index
         for index, choice in enumerate(session.get_scene_view().choices)
@@ -201,9 +201,9 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
 def test_opportunity_attack_reroll_resumes_interrupted_movement(monkeypatch):
     session = _sample_opportunity_attack()
     damage_rolls = iter([1, 2, 6, 5])
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr(
-        "game.encounter.roll_dice",
+        "game.combat.encounter.roll_dice",
         lambda _count, _sides: next(damage_rolls, 1),
     )
 
@@ -243,9 +243,9 @@ def test_opportunity_attack_reroll_resumes_interrupted_movement(monkeypatch):
 def test_nested_opportunity_reroll_survives_save_and_load(tmp_path, monkeypatch):
     session = _sample_opportunity_attack()
     damage_rolls = iter([1, 5])
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 15)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr(
-        "game.encounter.roll_dice",
+        "game.combat.encounter.roll_dice",
         lambda _count, _sides: next(damage_rolls, 1),
     )
     session.choose(
@@ -267,7 +267,7 @@ def test_nested_opportunity_reroll_survives_save_and_load(tmp_path, monkeypatch)
     assert state.pending_attack.continuation == "complete_reaction"
     assert state.pending_attack.reaction is True
 
-    monkeypatch.setattr("game.encounter.roll_dice", lambda _count, _sides: 6)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda _count, _sides: 6)
     restored.choose(
         restored.get_scene_view().choices.index("Reroll damage die 1 (1)")
     )

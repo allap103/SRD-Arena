@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 
-from game.engine import Game
-from game.loaders import load_actor, load_bestiary_stat_blocks, load_scene
-from game.save import load_from_file, save_to_file
+from game.runtime.game import Game
+from game.content.loaders import load_actor, load_bestiary_stat_blocks, load_scene
+from game.runtime.save import load_from_file, save_to_file
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 SAMPLE_GAME_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"

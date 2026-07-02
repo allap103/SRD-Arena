@@ -1,9 +1,9 @@
-from .features import (
+from .registry import resolve_feature_action
+from .types import (
     CapabilityActionResult,
     DiceRoller,
     EffectResult,
     FeatureActionResult,
-    resolve_feature_action,
 )
 
 __all__ = [

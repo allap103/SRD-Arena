@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from game import launcher
+from game.frontends import cli as launcher
 
 
 def _make_game_dir(path: Path) -> Path:
@@ -74,7 +74,7 @@ def test_launch_runs_pyside6_frontend(monkeypatch, tmp_path: Path) -> None:
 
     monkeypatch.setitem(
         sys.modules,
-        "game.pyside6_app",
+        "game.frontends.qt.app",
         SimpleNamespace(run_pyside6_app=lambda game: launched.append(game.directory)),
     )
 

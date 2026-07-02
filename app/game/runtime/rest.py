@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .models.actor import Actor
+from ..models.actor import Actor
 
 
 def apply_rest(actor: Actor, rest_type: str) -> dict[str, int]:

@@ -2,19 +2,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ...dice_presentation import RollView
-from ...encounter_geometry import (
+from .....presentation.dice import RollView
+from .....combat.geometry import (
     Vector2D,
-    build_cone_area_from_vector,
-    build_cube_area_from_vector,
-    build_line_area_from_vector,
+    build_directional_area,
     continuous_area_outline,
     deserialize_continuous_area,
     serialize_area,
 )
-from ...engine import GAME_DIR
-from ...models.scene import Grid, Position
-from ...presentation import BattlefieldView
+from .....runtime.game import GAME_DIR
+from .....models.scene import Grid, Position
+from .....presentation.session import BattlefieldView
 
 try:
     from PySide6.QtCore import QPointF, QSize, Qt, Signal
@@ -81,7 +79,7 @@ class DieSvgWidget(QWidget):
         self._value = value
         self._selected = selected
         self._action_id = action_id
-        svg_path = Path(__file__).parents[2] / "assets" / "dice" / f"d{sides}.svg"
+        svg_path = Path(__file__).parents[4] / "assets" / "dice" / f"d{sides}.svg"
         self._renderer = QSvgRenderer(str(svg_path))
         self.setFixedSize(self.SIZE, self.SIZE)
         if action_id is not None:
@@ -634,37 +632,16 @@ class BattlefieldWidget(QWidget):
             if continuous_area.coverage_threshold is not None
             else 0.5
         )
-        if continuous_area.shape == "cone":
-            return serialize_area(
-                build_cone_area_from_vector(
-                    origin_position,
-                    direction,
-                    size,
-                    grid,
-                    coverage_threshold=coverage_threshold,
-                )
+        return serialize_area(
+            build_directional_area(
+                continuous_area.shape,
+                origin_position,
+                direction,
+                size,
+                grid,
+                coverage_threshold=coverage_threshold,
             )
-        if continuous_area.shape == "line":
-            return serialize_area(
-                build_line_area_from_vector(
-                    origin_position,
-                    direction,
-                    size,
-                    grid,
-                    coverage_threshold=coverage_threshold,
-                )
-            )
-        if continuous_area.shape == "cube":
-            return serialize_area(
-                build_cube_area_from_vector(
-                    origin_position,
-                    direction,
-                    size,
-                    grid,
-                    coverage_threshold=coverage_threshold,
-                )
-            )
-        return None
+        )
 
     def _sprite_for_actor(self, actor_id: str, label: str) -> QPixmap | None:
         for name in self._sprite_names(actor_id, label):

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from game.engine import Game
-from game.save import create_save, restore_save
+from game.runtime.game import Game
+from game.runtime.save import create_save, restore_save
 
 SAMPLE_GAME_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
 
@@ -89,8 +89,8 @@ def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
     state.player_position.y = 2
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2
-    monkeypatch.setattr("game.encounter.roll_die", lambda _sides: 20)
-    monkeypatch.setattr("game.encounter.roll_dice", lambda _count, _sides: 1)
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: 20)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda _count, _sides: 1)
     session.choose(session.get_scene_view().choices.index("Wait"))
 
     attack = next(

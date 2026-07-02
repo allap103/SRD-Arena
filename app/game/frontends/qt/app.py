@@ -2,21 +2,27 @@ from __future__ import annotations
 
 import sys
 
-from .encounter import ActionCost, EncounterAction
-from .encounter_geometry import (
+from ...combat.encounter import ActionCost, EncounterAction
+from ...combat.geometry import (
     Vector2D,
-    build_cone_area_from_vector,
-    build_cube_area_from_vector,
-    build_line_area_from_vector,
+    build_directional_area,
     serialize_area,
 )
-from .encounter_spells import parse_spell_action_value, spell_action_value, spell_range_squares
-from .engine import GAME_DIR, Game
-from .dice_presentation import build_roll_views, without_roll_details
-from .presentation import MOVE_DIRECTIONS, SessionPresentation, build_session_presentation
-from .models.scene import Grid, Position
-from .session import (
-    ActionView,
+from ...combat.spells import (
+    parse_spell_action_value,
+    spell_action_value,
+    spell_range_squares,
+)
+from ...runtime.game import GAME_DIR, Game
+from ...presentation.dice import build_roll_views, without_roll_details
+from ...presentation.session import (
+    MOVE_DIRECTIONS,
+    SessionPresentation,
+    build_session_presentation,
+)
+from ...models.scene import Grid, Position
+from ...presentation.models import ActionView
+from ...runtime.session import (
     EXIT_CHOICE_TEXT,
     LOAD_CHOICE_TEXT,
     LONG_REST_CHOICE_TEXT,
@@ -1093,38 +1099,16 @@ class CyoaPySide6Window(QMainWindow):
         coverage_threshold = (
             self.session.encounter_state.rules_config.directional_aoe_cell_coverage_threshold
         )
-        shape = spell.range_data.get("type")
-        if shape == "cone":
-            return serialize_area(
-                build_cone_area_from_vector(
-                    origin,
-                    default_direction,
-                    length,
-                    grid,
-                    coverage_threshold=coverage_threshold,
-                )
+        return serialize_area(
+            build_directional_area(
+                spell.range_data.get("type"),
+                origin,
+                default_direction,
+                length,
+                grid,
+                coverage_threshold=coverage_threshold,
             )
-        if shape == "line":
-            return serialize_area(
-                build_line_area_from_vector(
-                    origin,
-                    default_direction,
-                    length,
-                    grid,
-                    coverage_threshold=coverage_threshold,
-                )
-            )
-        if shape == "cube":
-            return serialize_area(
-                build_cube_area_from_vector(
-                    origin,
-                    default_direction,
-                    length,
-                    grid,
-                    coverage_threshold=coverage_threshold,
-                )
-            )
-        return None
+        )
 
     def _scroll_roll_log_to_bottom(self) -> None:
         scrollbar = self.roll_scroll.verticalScrollBar()

@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-srd-arena = "game.launcher:main"
+srd-arena = "game.main:main"
 scene-graph = "visualization.scene_graph:main"
 render-scene-graph = "visualization.scene_graph:main"
 

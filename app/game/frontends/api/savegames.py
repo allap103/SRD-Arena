@@ -6,9 +6,9 @@ from dataclasses import asdict
 from fastapi import Body, FastAPI, HTTPException
 import uvicorn
 
-from game.engine import GAME_DIR, Game
-from game.save import SAVEGAME_EXAMPLE, SaveGame, create_save, restore_save
-from game.session import GameSession
+from ...runtime.game import GAME_DIR, Game
+from ...runtime.save import SAVEGAME_EXAMPLE, SaveGame, create_save, restore_save
+from ...runtime.session import GameSession
 
 
 class SavegameApi:

@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
 
-from .choice_resolver import ChoiceResolver
-from .engine import Game
-from .save import (
+from .presentation.models import SceneView, TurnResult
+from .runtime.game import Game
+from .runtime.choice_resolver import ChoiceResolver
+from .runtime.save import (
     SaveGame,
     create_save,
     load_from_file,
@@ -11,14 +12,14 @@ from .save import (
     save_to_file,
     save_to_slot,
 )
-from .scene_runner import SceneRunner
-from .session import GameSession, SceneView, TurnResult
+from .runtime.scene_runner import SceneRunner
+from .runtime.session import GameSession
 
 if TYPE_CHECKING:
-    from .pyside6_app import CyoaPySide6Window
+    from .frontends.qt.app import CyoaPySide6Window
 
 try:
-    from .pyside6_app import CyoaPySide6Window
+    from .frontends.qt.app import CyoaPySide6Window
 except ModuleNotFoundError:
     pass
 

@@ -10,22 +10,22 @@ from typing import TypeAlias
 from pydantic import BaseModel, ConfigDict, Field
 
 from .choice_resolver import ChoiceResolver
-from .encounter import (
+from ..combat.encounter import (
     DecisionFrameSnapshot,
     EncounterSnapshot,
     EncounterSnapshotEnemy,
     PendingAttackSnapshot,
     PendingActionSnapshot,
 )
-from .engine import Game
-from .models.actor import Actor
-from .models.attributes import Attributes, Movement
-from .models.status import StatusSnapshot
-from .models.spellcasting import Spellcasting
-from .models.scene import Position
+from .game import Game
+from ..models.actor import Actor
+from ..models.attributes import Attributes, Movement
+from ..models.status import StatusSnapshot
+from ..models.spellcasting import Spellcasting
+from ..models.scene import Position
 from .session import GameSession
-from .systems.equipment import Equipment
-from .systems.inventory import Inventory
+from ..systems.equipment import Equipment
+from ..systems.inventory import Inventory
 
 SAVE_VERSION = 4
 JsonScalar: TypeAlias = str | int | float | bool | None

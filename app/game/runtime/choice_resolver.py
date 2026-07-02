@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 
-from .models.actor import Actor
-from .models.choice import Choice, Effects, Outcome
-from .models.scene import Scene
-from .systems.roll import roll_die
+from ..models.actor import Actor
+from ..models.choice import Choice, Effects, Outcome
+from ..models.scene import Scene
+from ..systems.roll import roll_die
 
 
 @dataclass
@@ -148,7 +148,6 @@ class ChoiceResolver:
                     f"You take {damage_taken} damage and now have {actor.get_health()} health.",
                 )
             )
-        return outcome.next_scene
         if outcome.healing:
             health_restored = actor.heal(outcome.healing)
             messages.append(
@@ -157,3 +156,4 @@ class ChoiceResolver:
                     f"You recover {health_restored} health and now have {actor.get_health()} health.",
                 )
             )
+        return outcome.next_scene

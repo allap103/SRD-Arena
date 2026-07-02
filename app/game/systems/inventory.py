@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from ..game_logging import CHANNEL_SYSTEM, get_game_logger
+from ..support.logging import CHANNEL_SYSTEM, get_game_logger
 
 LOGGER = get_game_logger(CHANNEL_SYSTEM)
 

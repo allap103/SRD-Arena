@@ -1,10 +1,10 @@
 from hypothesis import given
 from hypothesis import strategies as st
 
-import game.choice_resolver as choice_resolver_module
-from game.choice_resolver import ChoiceResolver
-from game.engine import Game
-from game.loaders import load_scene
+import game.runtime.choice_resolver as choice_resolver_module
+from game.runtime.choice_resolver import ChoiceResolver
+from game.runtime.game import Game
+from game.content.loaders import load_scene
 from game.models.choice import Choice, Effects, Outcome, SkillTest
 from game.models.scene import Scene
 

@@ -2,9 +2,9 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from game.api.savegames import SavegameApi
-from game.engine import Game
-from game.save import SAVEGAME_EXAMPLE, create_save
+from game.frontends.api.savegames import SavegameApi
+from game.runtime.game import Game
+from game.runtime.save import SAVEGAME_EXAMPLE, create_save
 
 FIXTURE_GAME_DIR = Path(__file__).parent / "fixtures" / "graph_game"
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
