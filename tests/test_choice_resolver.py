@@ -85,7 +85,7 @@ def test_failure_outcome_can_transition_to_scene(monkeypatch) -> None:
 
 
 def test_load_scene_reads_damage_outcome() -> None:
-    scene = load_scene("scenarios/sample_game/scenes/welcome")
+    scene = load_scene("app/content/scenarios/sample_game/scenes/welcome")
     choice = next(
         choice for choice in scene.choices if choice.choice_text == "Try to sneak away."
     )

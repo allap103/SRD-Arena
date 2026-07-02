@@ -6,9 +6,9 @@ from pathlib import Path
 from .api.savegames import run_savegame_api
 from .engine import GAME_DIR, Game
 from .game_logging import configure_game_logging
+from .paths import REPO_ROOT, SCENARIOS_ROOT
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SCENARIOS_DIR = REPO_ROOT / "scenarios"
+SCENARIOS_DIR = SCENARIOS_ROOT
 VALID_GAME_SUBDIRS = ("actors", "items", "scenes")
 
 
@@ -19,7 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="?",
         help=(
             "Game directory as a relative path, an absolute path, or the name of "
-            "a subfolder in scenarios/."
+            "a subfolder in app/content/scenarios/."
         ),
     )
     parser.add_argument(
@@ -66,7 +66,7 @@ def resolve_game_directory(game: str | None) -> Path:
 
     raise FileNotFoundError(
         "Could not find a game directory for "
-        f"'{game}'. Tried the current working directory and scenarios/."
+        f"'{game}'. Tried the current working directory and app/content/scenarios/."
     )
 
 

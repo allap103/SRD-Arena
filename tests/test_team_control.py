@@ -3,7 +3,7 @@ from pathlib import Path
 from game.engine import Game
 from game.save import create_save, restore_save
 
-SAMPLE_GAME_DIR = Path(__file__).parents[1] / "scenarios" / "sample_game"
+SAMPLE_GAME_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
 
 
 def test_sample_encounter_loads_explicit_teams():

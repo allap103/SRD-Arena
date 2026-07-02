@@ -22,11 +22,12 @@ from .models.rules_config import (
     RulesConfig,
 )
 from .models.scene import Scene
+from .paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
 from .scene_runner import SceneRunner
 from .session import GameSession
 
-GAME_DIR = Path("scenarios") / "sample_game"
-GAME_SYSTEM_DIR = Path("game_system")
+GAME_DIR = SCENARIOS_ROOT / "sample_game"
+GAME_SYSTEM_DIR = SYSTEM_CONTENT_ROOT
 LOGGER = get_game_logger(CHANNEL_ENGINE)
 
 

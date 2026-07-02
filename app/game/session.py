@@ -6,6 +6,7 @@ from .choice_resolver import ChoiceResolver
 from .encounter import CombatEvent, EncounterAction, EncounterSnapshot, EncounterState
 from .models.actor import Actor
 from .models.item import Item
+from .paths import SCENARIOS_ROOT
 from .models.rules_config import RulesConfig
 from .models.scene import Scene
 from .rest import apply_rest
@@ -61,7 +62,7 @@ class GameSession:
         item_templates: dict[str, Item] | None = None,
         choice_resolver: ChoiceResolver | None = None,
         start_scene_id: str = "welcome",
-        game_dir: str | Path = Path("scenarios") / "sample_game",
+        game_dir: str | Path = SCENARIOS_ROOT / "sample_game",
         save_dir: str | Path = "saves",
         control_mode: str = "default",
         ai_action_limit: int | None = None,

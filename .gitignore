@@ -4,7 +4,6 @@ ___
 .coverage
 .pycache
 saves/
-game_system/
 dist
 build
 *.egg-info
