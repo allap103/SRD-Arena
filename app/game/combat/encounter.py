@@ -2,37 +2,31 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from ..features.actions import resolve_feature_action
-from .attacks import (
-    apply_attack_damage,
-    can_make_opportunity_attack,
-    damage_roll_detail,
-    matching_damage_reroll_rule,
-    resolve_attack,
-    selected_attack_type,
-)
 from .behaviors import (
-    DIRECTION_DELTAS,
     build_behavior as _build_behavior,
-    chebyshev_distance as _chebyshev_distance,
     is_adjacent as _is_adjacent,
-    manhattan_distance as _manhattan_distance,
     movement_squares as _movement_squares,
-    step_toward as _step_toward,
 )
-from .consumables import healing_potion_dice, healing_potions_in_inventory
-from .effects import apply_effects, serialize_effects
-from .geometry import (
-    AreaOfEffect,
-    Vector2D,
-    build_directional_area,
-    vector_between_positions,
+from .action_options import (
+    available_actions as _available_actions_impl,
+    available_feature_actions as _available_feature_actions_impl,
+    available_spell_actions as _available_spell_actions_impl,
+    feature_action_available as _feature_action_available_impl,
+    spell_action_cost as _spell_action_cost_impl,
+    spell_action_targets as _spell_action_targets_impl,
+    spell_area as _spell_area_impl,
+    spell_area_targets as _spell_area_targets_impl,
+    spell_cast_block_reason_for as _spell_cast_block_reason_impl,
+    spell_range_squares_for as _spell_range_squares_impl,
+    spell_target_context as _spell_target_context_impl,
+    spell_targets_self_only_for as _spell_targets_self_only_impl,
+    spend_spell_resources as _spend_spell_resources_impl,
+    targets_in_area as _targets_in_area_impl,
 )
+from .effects import apply_effects
 from .models import (
     ActionCost,
     ActorRef,
-    AttackOutcome,
-    BehaviorContext,
     CombatEvent,
     DecisionFrame,
     DecisionFrameSnapshot,
@@ -42,38 +36,133 @@ from .models import (
     EncounterSnapshot,
     EncounterSnapshotEnemy,
     EncounterStateData,
+    InterruptState,
+    PendingAttack,
+    RoundState,
+    TurnState,
     PendingAction,
     PendingActionSnapshot,
-    PendingAttack,
 )
 from .pending import restore_pending_attack, snapshot_pending_attack
-from .spells import (
-    parse_spell_action_value,
-    spell_action_economy,
-    spell_action_id,
-    spell_action_label,
-    spell_action_value,
-    spell_cast_block_reason,
-    spell_range_squares,
-    spell_targets_self_only,
+from .player_actions import (
+    apply_action as _apply_action_impl,
+    apply_player_move as _apply_player_move_impl,
+    apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
+    resolve_flee_action as _resolve_flee_action_impl,
+    resolve_feature_action as _resolve_feature_action_impl,
+    resolve_player_attack_action as _resolve_player_attack_action_impl,
+    resolve_spell_action as _resolve_spell_action_impl,
+    resolve_utilize_action as _resolve_utilize_action_impl,
+    resolve_wait_action as _resolve_wait_action_impl,
+    user_controlled_enemy_actions as _user_controlled_enemy_actions_impl,
 )
+from .reactions import REACTION_ENGINE, ReactionEngine
+from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 from ..models.actor import Actor
 from ..models.item import Item
 from ..models.scene import Encounter, Position
-from ..models.spellcasting import Spell, Spellcasting
 from ..models.rules_config import RulesConfig
 from ..models.status import Status, StatusSnapshot
-from ..rules.registry import matching_rules, reroll_eligible_indices
+from ..rules.registry import matching_rules
 from ..rules.types import RuleGrant
-from .spell_actions import SpellActionContext, SpellTargetContext, resolve_spell_action
-from ..systems.roll import (
-    D20RollMode,
-    reroll_dice,
-    roll_dice,
-    roll_die,
-)
+from .turn_flow import TURN_ENGINE, TurnEngine
+from ..systems.roll import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
+
+# Keep these module-level names for tests and helpers that monkeypatch
+# `game.combat.encounter.roll_die` / `roll_dice`.
+roll_die = _roll_die
+roll_dice = _roll_dice
+__all__ = ["ActionCost", "EncounterAction", "EncounterState", "roll_die", "roll_dice"]
 
 class EncounterState(EncounterStateData):
+    @property
+    def reaction_engine(self) -> ReactionEngine:
+        return REACTION_ENGINE
+
+    @property
+    def turn_engine(self) -> TurnEngine:
+        return TURN_ENGINE
+
+    @property
+    def decision_stack(self) -> list[DecisionFrame]:
+        return self.interrupts.decision_stack
+
+    @decision_stack.setter
+    def decision_stack(self, value: list[DecisionFrame]) -> None:
+        self.interrupts.decision_stack = value
+
+    @property
+    def pending_action(self) -> PendingAction | None:
+        return self.interrupts.pending_action
+
+    @pending_action.setter
+    def pending_action(self, value: PendingAction | None) -> None:
+        self.interrupts.pending_action = value
+
+    @property
+    def pending_attack(self) -> PendingAttack | None:
+        return self.interrupts.pending_attack
+
+    @pending_attack.setter
+    def pending_attack(self, value: PendingAttack | None) -> None:
+        self.interrupts.pending_attack = value
+
+    @property
+    def turn_index(self) -> int:
+        return self.turn.index
+
+    @turn_index.setter
+    def turn_index(self, value: int) -> None:
+        self.turn.index = value
+
+    @property
+    def round_number(self) -> int:
+        return self.round.number
+
+    @round_number.setter
+    def round_number(self, value: int) -> None:
+        self.round.number = value
+
+    @property
+    def player_movement_remaining(self) -> int | None:
+        return self.turn.player_movement_remaining
+
+    @player_movement_remaining.setter
+    def player_movement_remaining(self, value: int | None) -> None:
+        self.turn.player_movement_remaining = value
+
+    @property
+    def player_action_available(self) -> bool:
+        return self.turn.player_action_available
+
+    @player_action_available.setter
+    def player_action_available(self, value: bool) -> None:
+        self.turn.player_action_available = value
+
+    @property
+    def player_attacks_remaining(self) -> int:
+        return self.turn.player_attacks_remaining
+
+    @player_attacks_remaining.setter
+    def player_attacks_remaining(self, value: int) -> None:
+        self.turn.player_attacks_remaining = value
+
+    @property
+    def player_bonus_action_available(self) -> bool:
+        return self.turn.player_bonus_action_available
+
+    @player_bonus_action_available.setter
+    def player_bonus_action_available(self, value: bool) -> None:
+        self.turn.player_bonus_action_available = value
+
+    @property
+    def player_reaction_available(self) -> bool:
+        return self.turn.player_reaction_available
+
+    @player_reaction_available.setter
+    def player_reaction_available(self, value: bool) -> None:
+        self.turn.player_reaction_available = value
+
     @classmethod
     def from_definition(
         cls,
@@ -102,6 +191,9 @@ class EncounterState(EncounterStateData):
             ),
             enemies=enemies,
             control_mode=control_mode,
+            round=RoundState(),
+            turn=TurnState(),
+            interrupts=InterruptState(),
             item_templates=item_templates or {},
             rules_config=rules_config or RulesConfig(),
         )
@@ -139,50 +231,54 @@ class EncounterState(EncounterStateData):
             player_position=Position(snapshot.player_position.x, snapshot.player_position.y),
             enemies=enemies,
             control_mode=snapshot.control_mode,
-            turn_index=snapshot.turn_index,
-            round_number=snapshot.round_number,
-            player_movement_remaining=snapshot.player_movement_remaining,
-            player_action_available=snapshot.player_action_available,
-            player_attacks_remaining=snapshot.player_attacks_remaining,
-            player_bonus_action_available=snapshot.player_bonus_action_available,
-            player_reaction_available=snapshot.player_reaction_available,
+            round=RoundState(number=snapshot.round_number),
+            turn=TurnState(
+                index=snapshot.turn_index,
+                player_movement_remaining=snapshot.player_movement_remaining,
+                player_action_available=snapshot.player_action_available,
+                player_attacks_remaining=snapshot.player_attacks_remaining,
+                player_bonus_action_available=snapshot.player_bonus_action_available,
+                player_reaction_available=snapshot.player_reaction_available,
+            ),
             action_sequence=snapshot.action_sequence,
             frame_sequence=snapshot.frame_sequence,
             event_sequence=snapshot.event_sequence,
-            decision_stack=[
-                DecisionFrame(
-                    id=frame.id,
-                    actor_ref=frame.actor_ref,
-                    kind=frame.kind,
-                    reason=frame.reason,
-                    parent_frame_id=frame.parent_frame_id,
-                    parent_action_id=frame.parent_action_id,
-                    can_pass=frame.can_pass,
-                )
-                for frame in snapshot.decision_stack
-            ],
-            pending_action=(
-                PendingAction(
-                    id=snapshot.pending_action.id,
-                    kind=snapshot.pending_action.kind,
-                    actor_ref=snapshot.pending_action.actor_ref,
-                    direction=snapshot.pending_action.direction,
-                    from_position=Position(
-                        snapshot.pending_action.from_position.x,
-                        snapshot.pending_action.from_position.y,
-                    ),
-                    to_position=Position(
-                        snapshot.pending_action.to_position.x,
-                        snapshot.pending_action.to_position.y,
-                    ),
-                    resume_enemy_index=snapshot.pending_action.resume_enemy_index,
-                    remaining_movement_after=snapshot.pending_action.remaining_movement_after,
-                    trigger_id=snapshot.pending_action.trigger_id,
-                )
-                if snapshot.pending_action is not None
-                else None
+            interrupts=InterruptState(
+                decision_stack=[
+                    DecisionFrame(
+                        id=frame.id,
+                        actor_ref=frame.actor_ref,
+                        kind=frame.kind,
+                        reason=frame.reason,
+                        parent_frame_id=frame.parent_frame_id,
+                        parent_action_id=frame.parent_action_id,
+                        can_pass=frame.can_pass,
+                    )
+                    for frame in snapshot.decision_stack
+                ],
+                pending_action=(
+                    PendingAction(
+                        id=snapshot.pending_action.id,
+                        kind=snapshot.pending_action.kind,
+                        actor_ref=snapshot.pending_action.actor_ref,
+                        direction=snapshot.pending_action.direction,
+                        from_position=Position(
+                            snapshot.pending_action.from_position.x,
+                            snapshot.pending_action.from_position.y,
+                        ),
+                        to_position=Position(
+                            snapshot.pending_action.to_position.x,
+                            snapshot.pending_action.to_position.y,
+                        ),
+                        resume_enemy_index=snapshot.pending_action.resume_enemy_index,
+                        remaining_movement_after=snapshot.pending_action.remaining_movement_after,
+                        trigger_id=snapshot.pending_action.trigger_id,
+                    )
+                    if snapshot.pending_action is not None
+                    else None
+                ),
+                pending_attack=restore_pending_attack(snapshot.pending_attack),
             ),
-            pending_attack=restore_pending_attack(snapshot.pending_attack),
             conditions=[
                 Status(
                     id=condition.id,
@@ -514,1830 +610,31 @@ class EncounterState(EncounterStateData):
     def needs_ai_advance(self) -> bool:
         return self._actor_controller(self.current_decision().actor_ref) == "ai"
 
-    def available_actions(self, player: Actor) -> list[EncounterAction]:
-        decision = self.current_decision()
-        if self._actor_controller(decision.actor_ref) != "user":
-            return []
-        if decision.actor_ref != "player":
-            return self._user_controlled_enemy_actions(player, decision.actor_ref)
-        if decision.kind == "reroll_dice":
-            return self._reroll_damage_actions()
-        if decision.kind == "reaction":
-            return self._reaction_actions()
-
-        actions = []
-        if self._player_movement_remaining(player) > 0:
-            for direction, (dx, dy) in DIRECTION_DELTAS.items():
-                target_x = self.player_position.x + dx
-                target_y = self.player_position.y + dy
-                if not self._is_within_bounds(target_x, target_y):
-                    continue
-                if self._live_enemy_at(target_x, target_y) is not None:
-                    continue
-                actions.append(
-                    EncounterAction(
-                        f"Move {direction}",
-                        "move",
-                        direction,
-                        id=f"player-move-{direction}",
-                        actor_ref="player",
-                        cost=ActionCost(movement=1),
-                    )
-                )
-
-        can_attack = self.player_action_available or self.player_attacks_remaining > 0
-        for index, enemy in enumerate(self.enemies):
-            if (
-                can_attack
-                and enemy.is_alive
-                and self._actors_are_opponents("player", _enemy_ref(index))
-                and _is_adjacent(self.player_position, enemy.position)
-            ):
-                actions.append(
-                    EncounterAction(
-                        f"Attack enemy {index + 1} ({enemy.actor.name})",
-                        "attack",
-                        index,
-                        id=f"player-attack-{index}",
-                        actor_ref="player",
-                        cost=ActionCost(action=1 if self.player_action_available else 0),
-                    )
-                )
-
-        actions.extend(self._available_feature_actions(player))
-        actions.extend(self._available_spell_actions(player))
-
-        if self.player_bonus_action_available:
-            for item in healing_potions_in_inventory(player, self.item_templates):
-                actions.append(
-                    EncounterAction(
-                        f"Drink {item.name}",
-                        "utilize",
-                        item.id,
-                        id=f"player-utilize-drink-{item.id}",
-                        actor_ref="player",
-                        cost=ActionCost(bonus_action=1),
-                    )
-                )
-
-        actions.append(
-            EncounterAction(
-                "Wait",
-                "wait",
-                id="player-wait",
-                actor_ref="player",
-            )
-        )
-
-        if self.definition.flee and self.definition.flee.allowed:
-            actions.append(
-                EncounterAction(
-                    "Flee encounter",
-                    "flee",
-                    id="player-flee",
-                    actor_ref="player",
-                )
-            )
-
-        return actions
-
-    def _available_feature_actions(self, player: Actor) -> list[EncounterAction]:
-        actions: list[EncounterAction] = []
-        for feature_id, definition in player.combat_profile.feature_actions.items():
-            if not self._feature_action_available(player, definition):
-                continue
-            action_cost = ActionCost(
-                bonus_action=1 if definition.economy == "bonus_action" else 0,
-                action=1 if definition.economy == "action" else 0,
-                reaction=1 if definition.economy == "reaction" else 0,
-            )
-            actions.append(
-                EncounterAction(
-                    definition.label,
-                    "feature",
-                    feature_id,
-                    id=f"player-feature-{feature_id.replace('_', '-')}",
-                    actor_ref="player",
-                    cost=action_cost,
-                )
-            )
-        return actions
-
-    def _available_spell_actions(self, player: Actor) -> list[EncounterAction]:
-        spellcasting = player.spellcasting
-        if spellcasting is None:
-            return []
-        actions: list[EncounterAction] = []
-        for spell in spellcasting.learned_spells:
-            cost = self._spell_action_cost(spell)
-            if self._spell_cast_block_reason(spellcasting, spell, cost) is not None:
-                continue
-            if spell.geometry_mode == "directional_area":
-                if not self._spell_action_targets(player, spell):
-                    continue
-                actions.append(
-                    EncounterAction(
-                        spell_action_label(spell),
-                        "spell",
-                        spell_action_value(spell.id),
-                        id=spell_action_id(spell),
-                        actor_ref="player",
-                        cost=cost,
-                    )
-                )
-                continue
-            for target in self._spell_action_targets(player, spell):
-                actions.append(
-                    EncounterAction(
-                        spell_action_label(
-                            spell,
-                            target_ref=target.target_ref,
-                            target_label=target.target_label,
-                        ),
-                        "spell",
-                        spell_action_value(spell.id, target.target_ref),
-                        id=spell_action_id(spell, target_ref=target.target_ref),
-                        actor_ref="player",
-                        cost=cost,
-                    )
-                )
-        return actions
-
-    def _feature_action_available(self, player: Actor, definition) -> bool:
-        if definition.economy == "bonus_action" and not self.player_bonus_action_available:
-            return False
-        if definition.economy == "action" and not self.player_action_available:
-            return False
-        if definition.economy == "reaction" and not self.player_reaction_available:
-            return False
-        return player.feature_uses_remaining.get(definition.feature_id, 0) > 0
-
-    def _spell_action_cost(self, spell: Spell) -> ActionCost:
-        economy = spell_action_economy(spell)
-        return ActionCost(
-            action=economy.action,
-            bonus_action=economy.bonus_action,
-            reaction=economy.reaction,
-        )
-
-    def _spell_cast_block_reason(
-        self,
-        spellcasting: Spellcasting,
-        spell: Spell,
-        cost: ActionCost,
-    ) -> str | None:
-        return spell_cast_block_reason(
-            spellcasting,
-            spell,
-            spell_action_economy(spell),
-            action_available=self.player_action_available,
-            bonus_action_available=self.player_bonus_action_available,
-            reaction_available=self.player_reaction_available,
-        )
-
-    def _spell_targets_self_only(self, spell: Spell) -> bool:
-        return spell.geometry_mode == "self_only" or spell_targets_self_only(spell)
-
-    def _spell_range_squares(self, spell: Spell, actor: Actor) -> int | None:
-        return spell_range_squares(spell, actor)
-
-    def _spell_action_targets(
-        self,
-        player: Actor,
-        spell: Spell,
-    ) -> list[SpellTargetContext]:
-        if self._spell_targets_self_only(spell):
-            target = self._spell_target_context(player, "player")
-            if target is None:
-                return []
-            if any(condition in spell.removable_conditions for condition in target.target_conditions):
-                return [target]
-            return []
-
-        max_range = self._spell_range_squares(spell, player)
-        targets: list[SpellTargetContext] = []
-        for index, enemy in enumerate(self.enemies):
-            target_ref = _enemy_ref(index)
-            if not enemy.is_alive or not self._actors_are_opponents("player", target_ref):
-                continue
-            if max_range is not None and _chebyshev_distance(self.player_position, enemy.position) > max_range:
-                continue
-            target = self._spell_target_context(player, target_ref)
-            if target is not None:
-                targets.append(target)
-        return targets
-
-    def _spell_area_targets(
-        self,
-        player: Actor,
-        spell: Spell,
-        target_ref: str | None = None,
-        aim_point: tuple[float, float] | None = None,
-    ) -> tuple[SpellTargetContext, ...]:
-        area = self._spell_area(player, spell, target_ref=target_ref, aim_point=aim_point)
-        if area is None:
-            if target_ref is None:
-                return ()
-            target = self._spell_target_context(player, target_ref)
-            return (target,) if target is not None else ()
-        return tuple(self._targets_in_area(player, area))
-
-    def _spend_spell_resources(
-        self,
-        spellcasting: Spellcasting,
-        spell: Spell,
-        cost: ActionCost,
-    ) -> None:
-        if cost.action > 0:
-            self.player_action_available = False
-            self.player_attacks_remaining = 0
-        if cost.bonus_action > 0:
-            self.player_bonus_action_available = False
-        if cost.reaction > 0:
-            self.player_reaction_available = False
-        if spell.level > 0:
-            spellcasting.spell_slots_remaining[spell.level] -= 1
-
-    def _spell_area(
-        self,
-        player: Actor,
-        spell: Spell,
-        target_ref: str | None = None,
-        aim_point: tuple[float, float] | None = None,
-    ) -> AreaOfEffect | None:
-        if spell.geometry_mode != "directional_area":
-            return None
-        if aim_point is not None:
-            if abs(aim_point[0] - (self.player_position.x + 0.5)) < 1e-9 and abs(
-                aim_point[1] - (self.player_position.y + 0.5)
-            ) < 1e-9:
-                return None
-            direction = Vector2D(
-                aim_point[0] - (self.player_position.x + 0.5),
-                aim_point[1] - (self.player_position.y + 0.5),
-            )
-        else:
-            if target_ref is None:
-                return None
-            target = self._spell_target_context(player, target_ref)
-            if target is None or target_ref == "player":
-                return None
-            direction = vector_between_positions(self.player_position, self._actor_position(target_ref))
-        length = self._spell_range_squares(spell, player)
-        if length is None:
-            return None
-        coverage_threshold = (
-            self.rules_config.directional_aoe_cell_coverage_threshold
-        )
-        return build_directional_area(
-            spell.range_data.get("type"),
-            self.player_position,
-            direction,
-            length,
-            self.definition.grid,
-            coverage_threshold=coverage_threshold,
-        )
-
-    def _targets_in_area(
-        self,
-        player: Actor,
-        area: AreaOfEffect,
-    ) -> list[SpellTargetContext]:
-        occupied_cells = {(cell.x, cell.y) for cell in area.cells}
-        targets: list[SpellTargetContext] = []
-        if (self.player_position.x, self.player_position.y) in occupied_cells:
-            target = self._spell_target_context(player, "player")
-            if target is not None:
-                targets.append(target)
-        for index, enemy in enumerate(self.enemies):
-            if not enemy.is_alive:
-                continue
-            if (enemy.position.x, enemy.position.y) not in occupied_cells:
-                continue
-            target = self._spell_target_context(player, _enemy_ref(index))
-            if target is not None:
-                targets.append(target)
-        return targets
-
-    def apply_action(
-        self,
-        player: Actor,
-        action: EncounterAction,
-    ) -> EncounterProgress:
-        decision = self.current_decision()
-        if self._actor_controller(decision.actor_ref) != "user":
-            raise RuntimeError("User action requested for an AI-controlled actor.")
-        if decision.actor_ref != "player":
-            return self._apply_user_controlled_enemy_action(player, action, decision)
-        if decision.kind == "reroll_dice":
-            return self._apply_damage_reroll_action(player, action, decision)
-        if decision.kind == "reaction":
-            return self._apply_reaction_action(player, action, decision)
-
-        progress = EncounterProgress()
-        resolved_action_id = self._next_action_id()
-        progress.events.append(
-            self._event(
-                "action_declared",
-                actor_ref="player",
-                action_id=resolved_action_id,
-                data={
-                    "kind": action.kind,
-                    "value": action.value,
-                    "selected_action_id": action.id,
-                },
-            )
-        )
-        action_ends_turn = False
-
-        if action.kind == "move":
-            direction = str(action.value)
-            progress.messages.extend(
-                self._resolve_enemy_opportunity_attacks_against_player(
-                    player,
-                    direction,
-                    resolved_action_id,
-                    progress,
-                )
-            )
-            if player.get_health() > 0:
-                self._apply_player_move(player, direction, progress, resolved_action_id)
-        elif action.kind == "attack":
-            if not self.player_action_available and self.player_attacks_remaining <= 0:
-                progress.messages.append(("system", "You have already used your Action."))
-                progress.events.append(
-                    self._event(
-                        "action_resolved",
-                        actor_ref="player",
-                        action_id=resolved_action_id,
-                        data={"kind": "attack", "success": False},
-                    )
-                )
-                return progress
-            if not isinstance(action.value, int):
-                raise ValueError(
-                    f"Encounter attack action requires an integer target, got {action.value!r}."
-                )
-            enemy_index = action.value
-            enemy = self.enemies[enemy_index]
-            target_label = f"Enemy {enemy_index + 1} ({enemy.actor.name})"
-            if self.player_action_available:
-                self.player_action_available = False
-                self.player_attacks_remaining = max(
-                    0,
-                    player.combat_profile.attacks_per_attack_action - 1,
-                )
-            elif self.player_attacks_remaining > 0:
-                self.player_attacks_remaining -= 1
-
-            attack = resolve_attack(
-                player,
-                enemy.actor,
-                attacker_label=player.name,
-                target_label=target_label,
-                items_by_id=self.item_templates,
-                attacker_position=self.player_position,
-                nearby_opponent_positions=tuple(
-                    other_enemy.position
-                    for other_enemy in self.enemies
-                    if other_enemy.is_alive
-                ),
-                attack_roll_mode_override=self._attack_roll_mode_for(
-                    "player",
-                    _enemy_ref(enemy_index),
-                    selected_attack_type(player, self.item_templates),
-                    self.player_position,
-                    tuple(
-                        other_enemy.position
-                        for other_enemy in self.enemies
-                        if other_enemy.is_alive
-                    ),
-                ),
-                d20_roller=roll_die,
-                dice_roller=roll_dice,
-            )
-            reroll_rule = matching_damage_reroll_rule(player, attack)
-            if attack.hit and reroll_rule is not None:
-                self._open_damage_reroll_decision(
-                    attack=attack,
-                    rule=reroll_rule,
-                    target_index=enemy_index,
-                    attacker_label=player.name,
-                    target_label=target_label,
-                    action_id=resolved_action_id,
-                    progress=progress,
-                )
-                return progress
-            apply_attack_damage(
-                attack,
-                enemy.actor,
-                attacker_label=player.name,
-                target_label=target_label,
-            )
-            progress.messages.extend(attack.messages)
-            progress.events.append(
-                self._event(
-                    "attack_resolved",
-                    actor_ref="player",
-                    action_id=resolved_action_id,
-                    data={
-                        "attacker_label": player.name,
-                        "target_ref": _enemy_ref(enemy_index),
-                        "target_label": target_label,
-                        "attacks_remaining": self.player_attacks_remaining,
-                        "attack_roll": attack.attack_roll,
-                        "attack_roll_detail": attack.attack_roll_detail,
-                        "hit": attack.hit,
-                        "critical_hit": attack.critical_hit,
-                        "damage": attack.damage,
-                        "damage_roll_detail": attack.damage_roll_detail,
-                    },
-                )
-            )
-            if not enemy.is_alive:
-                progress.events.append(
-                    self._event(
-                        "actor_defeated",
-                        actor_ref=_enemy_ref(enemy_index),
-                        action_id=resolved_action_id,
-                    )
-                )
-        elif action.kind == "utilize":
-            if not isinstance(action.value, str):
-                raise ValueError(
-                    f"Encounter utilize action requires an item id, got {action.value!r}."
-                )
-            self._resolve_utilize_action(player, action.value, progress, resolved_action_id)
-        elif action.kind == "feature":
-            if not isinstance(action.value, str):
-                raise ValueError(
-                    f"Encounter feature action requires a feature id, got {action.value!r}."
-                )
-            self._resolve_feature_action(player, action.value, progress, resolved_action_id)
-        elif action.kind == "spell":
-            if not isinstance(action.value, str):
-                raise ValueError(
-                    f"Encounter spell action requires a spell payload, got {action.value!r}."
-                )
-            self._resolve_spell_action(player, action.value, progress, resolved_action_id)
-        elif action.kind == "wait":
-            action_ends_turn = True
-            progress.messages.append(("system", "You hold your ground."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=resolved_action_id,
-                    data={"kind": "wait"},
-                )
-            )
-        elif action.kind == "flee":
-            progress.messages.append(("system", "You flee the encounter."))
-            progress.transition = self.definition.flee.next_scene if self.definition.flee else None
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=resolved_action_id,
-                    data={"kind": "flee"},
-                )
-            )
-            return progress
-
-        progress.transition = self._check_transition()
-        if progress.transition is not None or player.get_health() <= 0:
-            return progress
-
-        if not action_ends_turn:
-            return progress
-
-        self._advance_turn()
-        self._maybe_reset_reactions()
-        follow_up = self.advance_until_next_decision(player)
-        self._merge_progress(progress, follow_up)
-        return progress
-
-    def _user_controlled_enemy_actions(
-        self,
-        player: Actor,
-        actor_ref: ActorRef,
-    ) -> list[EncounterAction]:
-        enemy_index = _enemy_index(actor_ref)
-        enemy = self.enemies[enemy_index]
-        if enemy.movement_remaining is None:
-            enemy.movement_remaining = _movement_squares(enemy.actor)
-        actions: list[EncounterAction] = []
-        if enemy.movement_remaining > 0:
-            for direction, (dx, dy) in DIRECTION_DELTAS.items():
-                target_x = enemy.position.x + dx
-                target_y = enemy.position.y + dy
-                if not self._is_free_for_enemy(target_x, target_y):
-                    continue
-                actions.append(
-                    EncounterAction(
-                        f"Move {direction}",
-                        "move",
-                        direction,
-                        id=f"{actor_ref}-move-{direction}",
-                        actor_ref=actor_ref,
-                        cost=ActionCost(movement=1),
-                    )
-                )
-        for target_ref in self._living_actor_refs(player):
-            if target_ref == actor_ref or not self._actors_are_opponents(
-                actor_ref,
-                target_ref,
-            ):
-                continue
-            if not _is_adjacent(enemy.position, self._actor_position(target_ref)):
-                continue
-            actions.append(
-                EncounterAction(
-                    f"Attack {self._actor_label(target_ref)}",
-                    "attack",
-                    target_ref,
-                    id=f"{actor_ref}-attack-{target_ref.replace(':', '-')}",
-                    actor_ref=actor_ref,
-                    cost=ActionCost(action=1),
-                )
-            )
-        actions.append(
-            EncounterAction(
-                "Wait",
-                "wait",
-                id=f"{actor_ref}-wait",
-                actor_ref=actor_ref,
-            )
-        )
-        return actions
-
-    def _apply_user_controlled_enemy_action(
-        self,
-        player: Actor,
-        action: EncounterAction,
-        decision: DecisionFrame,
-    ) -> EncounterProgress:
-        enemy_index = _enemy_index(decision.actor_ref)
-        enemy = self.enemies[enemy_index]
-        progress = EncounterProgress()
-        action_id = self._next_action_id()
-        progress.events.append(
-            self._event(
-                "action_declared",
-                actor_ref=decision.actor_ref,
-                action_id=action_id,
-                data={
-                    "kind": action.kind,
-                    "value": action.value,
-                    "selected_action_id": action.id,
-                },
-            )
-        )
-        action_ends_turn = action.kind in {"attack", "wait"}
-
-        if action.kind == "move":
-            direction = str(action.value)
-            dx, dy = DIRECTION_DELTAS[direction]
-            destination = Position(enemy.position.x + dx, enemy.position.y + dy)
-            remaining = max(0, (enemy.movement_remaining or 0) - 1)
-            if self._queue_player_opportunity_attack(
-                player,
-                enemy_index,
-                action_id,
-                direction,
-                Position(enemy.position.x, enemy.position.y),
-                destination,
-                remaining,
-                progress,
-            ):
-                progress.paused_for_decision = True
-                return progress
-            enemy.position = destination
-            enemy.movement_remaining = remaining
-            progress.messages.append(
-                (
-                    "system",
-                    f"{enemy.actor.name} moves {direction} to "
-                    f"({destination.x}, {destination.y}).",
-                )
-            )
-            progress.events.append(
-                self._event(
-                    "movement_resolved",
-                    actor_ref=decision.actor_ref,
-                    action_id=action_id,
-                    data={
-                        "direction": direction,
-                        "to": {"x": destination.x, "y": destination.y},
-                    },
-                )
-            )
-        elif action.kind == "attack":
-            if not isinstance(action.value, str):
-                raise ValueError("Attack action requires an actor reference.")
-            target_ref = action.value
-            if not self._actors_are_opponents(decision.actor_ref, target_ref):
-                raise ValueError("Attack target must belong to an opposing team.")
-            defender = self._actor_for_ref(player, target_ref)
-            target_label = self._actor_label(target_ref)
-            attacker_label = self._actor_label(decision.actor_ref)
-            attack = resolve_attack(
-                enemy.actor,
-                defender,
-                attacker_label=attacker_label,
-                target_label=target_label,
-                items_by_id=self.item_templates,
-                attacker_position=enemy.position,
-                nearby_opponent_positions=(self.player_position,),
-                attack_roll_mode_override=self._attack_roll_mode_for(
-                    decision.actor_ref,
-                    target_ref,
-                    selected_attack_type(enemy.actor, self.item_templates),
-                    enemy.position,
-                    (self.player_position,),
-                ),
-                d20_roller=roll_die,
-                dice_roller=roll_dice,
-            )
-            apply_attack_damage(
-                attack,
-                defender,
-                attacker_label=attacker_label,
-                target_label=target_label,
-            )
-            progress.messages.extend(attack.messages)
-            progress.events.append(
-                self._event(
-                    "attack_resolved",
-                    actor_ref=decision.actor_ref,
-                    action_id=action_id,
-                    data={
-                        "attacker_label": attacker_label,
-                        "target_ref": target_ref,
-                        "target_label": target_label,
-                        "attack_roll": attack.attack_roll,
-                        "attack_roll_detail": attack.attack_roll_detail,
-                        "hit": attack.hit,
-                        "critical_hit": attack.critical_hit,
-                        "damage": attack.damage,
-                        "damage_roll_detail": attack.damage_roll_detail,
-                    },
-                )
-            )
-            if defender.get_health() <= 0:
-                progress.events.append(
-                    self._event(
-                        "actor_defeated",
-                        actor_ref=target_ref,
-                        action_id=action_id,
-                    )
-                )
-        elif action.kind == "wait":
-            progress.messages.append(("system", f"{enemy.actor.name} waits."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref=decision.actor_ref,
-                    action_id=action_id,
-                    data={"kind": "wait"},
-                )
-            )
-        else:
-            raise ValueError(f"Unsupported user-controlled enemy action: {action.kind}")
-
-        progress.transition = self._check_transition()
-        if (
-            progress.transition is not None
-            or player.get_health() <= 0
-            or not action_ends_turn
-        ):
-            return progress
-        self._advance_turn()
-        self._maybe_reset_reactions()
-        follow_up = self.advance_until_next_decision(player)
-        self._merge_progress(progress, follow_up)
-        return progress
-
-    def _open_damage_reroll_decision(
-        self,
-        *,
-        attack: AttackOutcome,
-        rule: RuleGrant,
-        target_index: int,
-        attacker_label: str,
-        target_label: str,
-        action_id: str,
-        progress: EncounterProgress,
-        continuation: str = "return_to_turn",
-        reaction: bool = False,
-    ) -> None:
-        frame_id = self._next_frame_id()
-        current_frame = self.current_decision()
-        self.pending_attack = PendingAttack(
-            action_id=action_id,
-            attacker_ref="player",
-            target_ref=_enemy_ref(target_index),
-            target_index=target_index,
-            attacker_label=attacker_label,
-            target_label=target_label,
-            attacks_remaining=self.player_attacks_remaining,
-            attack=attack,
-            rule=rule,
-            continuation=continuation,
-            reaction=reaction,
-        )
-        self.decision_stack.append(
-            DecisionFrame(
-                id=frame_id,
-                actor_ref="player",
-                kind="reroll_dice",
-                reason=rule.id,
-                parent_frame_id=current_frame.id,
-                parent_action_id=action_id,
-                can_pass=True,
-            )
-        )
-        progress.messages.extend(attack.messages)
-        attack.messages = []
-        progress.messages.append(
-            (
-                "system",
-                f"{rule.id.replace('_', ' ').title()} can reroll qualifying damage dice.",
-            )
-        )
-        progress.events.append(
-            self._event(
-                "attack_pending",
-                actor_ref="player",
-                frame_id=frame_id,
-                action_id=action_id,
-                data=self._pending_attack_event_data(),
-            )
-        )
-        progress.paused_for_decision = True
-
-    def _reroll_damage_actions(self) -> list[EncounterAction]:
-        pending = self.pending_attack
-        if pending is None or pending.attack.damage_roll is None:
-            return []
-        actions = [
-            EncounterAction(
-                f"Reroll damage die {index + 1} ({pending.attack.damage_roll.dice[index].result})",
-                "reroll_die",
-                index,
-                id=_reroll_die_action_id(pending.action_id, index),
-                actor_ref="player",
-            )
-            for index in reroll_eligible_indices(
-                pending.rule,
-                pending.attack.damage_roll,
-            )
-        ]
-        actions.append(
-            EncounterAction(
-                "Use current damage",
-                "accept_roll",
-                id=f"{pending.action_id}-accept-damage",
-                actor_ref="player",
-            )
-        )
-        return actions
-
-    def _apply_damage_reroll_action(
-        self,
-        player: Actor,
-        action: EncounterAction,
-        decision: DecisionFrame,
-    ) -> EncounterProgress:
-        pending = self.pending_attack
-        if pending is None or pending.attack.damage_roll is None:
-            raise RuntimeError("Damage reroll requested without a pending attack.")
-        progress = EncounterProgress()
-        progress.events.append(
-            self._event(
-                "action_declared",
-                actor_ref="player",
-                frame_id=decision.id,
-                action_id=pending.action_id,
-                data={"kind": action.kind, "selected_action_id": action.id},
-            )
-        )
-
-        if action.kind == "reroll_die":
-            if not isinstance(action.value, int):
-                raise ValueError("Reroll die action requires an integer die index.")
-            eligible = reroll_eligible_indices(
-                pending.rule,
-                pending.attack.damage_roll,
-            )
-            if action.value not in eligible:
-                raise ValueError(f"Damage die {action.value} is not eligible for reroll.")
-            previous = pending.attack.damage_roll.dice[action.value].result
-            pending.attack.damage_roll = reroll_dice(
-                pending.attack.damage_roll,
-                [action.value],
-                roller=lambda sides: roll_dice(1, sides),
-            )
-            replacement = pending.attack.damage_roll.dice[action.value].result
-            pending.attack.damage_roll_detail = damage_roll_detail(pending.attack)
-            progress.messages.append(
-                (
-                    "system",
-                    f"Damage die {action.value + 1} rerolled: {previous} -> {replacement}.",
-                )
-            )
-            progress.events.append(
-                self._event(
-                    "damage_rerolled",
-                    actor_ref="player",
-                    frame_id=decision.id,
-                    action_id=pending.action_id,
-                    data=self._pending_attack_event_data(),
-                )
-            )
-            if reroll_eligible_indices(pending.rule, pending.attack.damage_roll):
-                progress.paused_for_decision = True
-                return progress
-        elif action.kind != "accept_roll":
-            raise ValueError(f"Unsupported damage reroll action: {action.kind}")
-
-        self._finalize_pending_attack(player, progress, decision)
-        return progress
-
-    def _finalize_pending_attack(
-        self,
-        player: Actor,
-        progress: EncounterProgress,
-        decision: DecisionFrame,
-    ) -> None:
-        pending = self.pending_attack
-        if pending is None:
-            raise RuntimeError("Cannot finalize an attack that is not pending.")
-        target = self.enemies[pending.target_index]
-        apply_attack_damage(
-            pending.attack,
-            target.actor,
-            attacker_label=player.name,
-            target_label=pending.target_label,
-        )
-        progress.messages.extend(pending.attack.messages)
-        progress.events.append(
-            self._event(
-                "attack_resolved",
-                actor_ref="player",
-                frame_id=decision.id,
-                action_id=pending.action_id,
-                data={
-                    **self._pending_attack_event_data(),
-                    "hit": True,
-                    "damage": pending.attack.damage,
-                    "damage_roll_detail": pending.attack.damage_roll_detail,
-                    "eligible_die_indices": [],
-                    "reroll_action_ids": {},
-                    "accept_action_id": None,
-                },
-            )
-        )
-        if not target.is_alive:
-            progress.events.append(
-                self._event(
-                    "actor_defeated",
-                    actor_ref=pending.target_ref,
-                    frame_id=decision.id,
-                    action_id=pending.action_id,
-                )
-            )
-        self.pending_attack = None
-        self.decision_stack.pop()
-        progress.events.append(
-            self._event(
-                "decision_closed",
-                actor_ref="player",
-                frame_id=decision.id,
-                action_id=pending.action_id,
-            )
-        )
-        progress.transition = self._check_transition()
-        if (
-            pending.continuation == "complete_reaction"
-            and progress.transition is None
-            and player.get_health() > 0
-        ):
-            self._complete_parent_reaction(player, progress, pending.action_id)
-
-    def _complete_parent_reaction(
-        self,
-        player: Actor,
-        progress: EncounterProgress,
-        action_id: str,
-    ) -> None:
-        reaction = self.current_decision()
-        if reaction.kind != "reaction":
-            raise RuntimeError(
-                "Pending attack expected to resume a reaction, "
-                f"but current decision is '{reaction.kind}'."
-            )
-        self.decision_stack.pop()
-        progress.events.append(
-            self._event(
-                "decision_closed",
-                actor_ref="player",
-                frame_id=reaction.id,
-                action_id=action_id,
-            )
-        )
-        self._resume_pending_action(player, progress)
-        progress.transition = self._check_transition()
-        if progress.transition is not None or player.get_health() <= 0:
-            return
-        follow_up = self.advance_until_next_decision(player)
-        self._merge_progress(progress, follow_up)
-
-    def _pending_attack_event_data(self) -> dict[str, object]:
-        pending = self.pending_attack
-        if pending is None or pending.attack.damage_roll is None:
-            return {}
-        eligible = reroll_eligible_indices(
-            pending.rule,
-            pending.attack.damage_roll,
-        )
-        return {
-            "attacker_label": pending.attacker_label,
-            "target_ref": pending.target_ref,
-            "target_label": pending.target_label,
-            "attacks_remaining": pending.attacks_remaining,
-            "attack_roll": pending.attack.attack_roll,
-            "attack_roll_detail": pending.attack.attack_roll_detail,
-            "hit": True,
-            "critical_hit": pending.attack.critical_hit,
-            "damage": 0,
-                    "damage_roll_detail": damage_roll_detail(pending.attack),
-            "roll_id": f"{pending.action_id}:damage",
-            "rule_id": pending.rule.id,
-            "eligible_die_indices": list(eligible),
-            "reroll_action_ids": {
-                str(index): _reroll_die_action_id(pending.action_id, index)
-                for index in eligible
-            },
-            "accept_action_id": f"{pending.action_id}-accept-damage",
-            "reaction": pending.reaction,
-        }
-
-    def advance_until_next_decision(self, player: Actor) -> EncounterProgress:
-        progress = EncounterProgress()
-        ai_actions_resolved = 0
-        while True:
-            if player.get_health() <= 0:
-                break
-            if self.decision_stack and self._actor_controller(
-                self.current_decision().actor_ref
-            ) == "user":
-                progress.paused_for_decision = True
-                break
-            actor_type, enemy_index = self._active_turn_actor()
-            actor_ref = (
-                "player"
-                if actor_type == "player"
-                else _enemy_ref(enemy_index if enemy_index is not None else 0)
-            )
-            if self._actor_controller(actor_ref) == "user":
-                progress.paused_for_decision = True
-                break
-            if actor_type == "player":
-                break
-            assert enemy_index is not None
-            remaining_limit = (
-                None
-                if self.ai_action_limit is None
-                else self.ai_action_limit - ai_actions_resolved
-            )
-            completed_turn, enemy_progress, actions_resolved = self._run_enemy_turn(
-                player,
-                enemy_index,
-                action_limit=remaining_limit,
-            )
-            ai_actions_resolved += actions_resolved
-            self._merge_progress(progress, enemy_progress)
-            if progress.transition is not None or progress.paused_for_decision:
-                break
-            if completed_turn:
-                self._advance_turn()
-                self._maybe_reset_reactions()
-                progress.transition = self._check_transition()
-                if progress.transition is not None:
-                    break
-            if (
-                self.ai_action_limit is not None
-                and ai_actions_resolved >= self.ai_action_limit
-            ):
-                progress.paused_for_ai = True
-                break
-        return progress
-
-    def _run_enemy_turn(
-        self,
-        player: Actor,
-        enemy_index: int,
-        *,
-        action_limit: int | None = None,
-    ) -> tuple[bool, EncounterProgress, int]:
-        enemy = self.enemies[enemy_index]
-        progress = EncounterProgress()
-        if not enemy.is_alive:
-            return True, progress, 0
-        if enemy.movement_remaining is None:
-            enemy.movement_remaining = _movement_squares(enemy.actor)
-
-        behavior = self._behaviors[enemy_index]
-        actions_resolved = 0
-        while enemy.is_alive and player.get_health() > 0:
-            command = behavior.send(
-                BehaviorContext(
-                    player_position=Position(self.player_position.x, self.player_position.y),
-                    enemy_position=Position(enemy.position.x, enemy.position.y),
-                    can_attack=(
-                        _is_adjacent(self.player_position, enemy.position)
-                        and self._actors_are_opponents(
-                            _enemy_ref(enemy_index),
-                            "player",
-                        )
-                    ),
-                )
-            )
-            if command is None:
-                break
-
-            action_id = self._next_action_id()
-            progress.events.append(
-                self._event(
-                    "action_declared",
-                    actor_ref=_enemy_ref(enemy_index),
-                    action_id=action_id,
-                    data={"kind": command.kind, "value": command.value},
-                )
-            )
-
-            if command.kind == "move":
-                if enemy.movement_remaining <= 0:
-                    break
-                direction = str(command.value)
-                dx, dy = DIRECTION_DELTAS[direction]
-                target_x = enemy.position.x + dx
-                target_y = enemy.position.y + dy
-                if not self._is_free_for_enemy(target_x, target_y):
-                    break
-                if self._queue_player_opportunity_attack(
-                    player,
-                    enemy_index,
-                    action_id,
-                    direction,
-                    Position(enemy.position.x, enemy.position.y),
-                    Position(target_x, target_y),
-                    enemy.movement_remaining - 1,
-                    progress,
-                ):
-                    progress.paused_for_decision = True
-                    return False, progress, actions_resolved
-                enemy.position = Position(target_x, target_y)
-                enemy.movement_remaining -= 1
-                actions_resolved += 1
-                progress.messages.append(
-                    (
-                        "system",
-                        f"{enemy.actor.name} moves {direction} to ({target_x}, {target_y}).",
-                    )
-                )
-                progress.events.append(
-                    self._event(
-                        "movement_resolved",
-                        actor_ref=_enemy_ref(enemy_index),
-                        action_id=action_id,
-                        data={
-                            "direction": direction,
-                            "to": {"x": target_x, "y": target_y},
-                        },
-                    )
-                )
-                if action_limit is not None and actions_resolved >= action_limit:
-                    return False, progress, actions_resolved
-                continue
-
-            if command.kind == "attack":
-                preferred_attack_type = (
-                    str(command.value)
-                    if isinstance(command.value, str) and command.value in {"melee", "ranged"}
-                    else None
-                )
-                attack = resolve_attack(
-                    enemy.actor,
-                    player,
-                    attacker_label=f"Enemy {enemy_index + 1} ({enemy.actor.name})",
-                    target_label=player.name,
-                    items_by_id=self.item_templates,
-                    attacker_position=enemy.position,
-                    nearby_opponent_positions=(self.player_position,),
-                    preferred_attack_type=preferred_attack_type,
-                    attack_roll_mode_override=self._attack_roll_mode_for(
-                        _enemy_ref(enemy_index),
-                        "player",
-                        selected_attack_type(
-                            enemy.actor,
-                            self.item_templates,
-                            preferred_attack_type=preferred_attack_type,
-                        ),
-                        enemy.position,
-                        (self.player_position,),
-                    ),
-                    d20_roller=roll_die,
-                    dice_roller=roll_dice,
-                )
-                apply_attack_damage(
-                    attack,
-                    player,
-                    attacker_label=f"Enemy {enemy_index + 1} ({enemy.actor.name})",
-                    target_label=player.name,
-                )
-                progress.messages.extend(attack.messages)
-                progress.events.append(
-                    self._event(
-                        "attack_resolved",
-                        actor_ref=_enemy_ref(enemy_index),
-                        action_id=action_id,
-                        data={
-                            "attacker_label": f"Enemy {enemy_index + 1} ({enemy.actor.name})",
-                            "target_ref": "player",
-                            "target_label": player.name,
-                            "attack_roll": attack.attack_roll,
-                            "attack_roll_detail": attack.attack_roll_detail,
-                            "hit": attack.hit,
-                            "critical_hit": attack.critical_hit,
-                            "damage": attack.damage,
-                            "damage_roll_detail": attack.damage_roll_detail,
-                        },
-                    )
-                )
-                actions_resolved += 1
-                return True, progress, actions_resolved
-
-            progress.messages.append(("system", f"{enemy.actor.name} waits."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref=_enemy_ref(enemy_index),
-                    action_id=action_id,
-                    data={"kind": "wait"},
-                )
-            )
-            actions_resolved += 1
-            return True, progress, actions_resolved
-        return True, progress, actions_resolved
-
-    def _apply_reaction_action(
-        self,
-        player: Actor,
-        action: EncounterAction,
-        decision: DecisionFrame,
-    ) -> EncounterProgress:
-        progress = EncounterProgress()
-        pending_action = self.pending_action
-        if pending_action is None:
-            raise RuntimeError("Reaction action requested without a pending action.")
-        resolved_action_id = self._next_action_id()
-
-        progress.events.append(
-            self._event(
-                "action_declared",
-                actor_ref="player",
-                frame_id=decision.id,
-                action_id=resolved_action_id,
-                data={"kind": action.kind, "selected_action_id": action.id},
-            )
-        )
-
-        if action.kind == "opportunity_attack":
-            self.player_reaction_available = False
-            target_index = _enemy_index(pending_action.actor_ref)
-            target = self.enemies[target_index]
-            target_label = f"Enemy {target_index + 1} ({target.actor.name})"
-            attack = resolve_attack(
-                player,
-                target.actor,
-                attacker_label=player.name,
-                target_label=target_label,
-                action_label="Opportunity attack",
-                items_by_id=self.item_templates,
-                attacker_position=self.player_position,
-                nearby_opponent_positions=(target.position,),
-                preferred_attack_type="melee",
-                attack_roll_mode_override=self._attack_roll_mode_for(
-                    "player",
-                    pending_action.actor_ref,
-                    "melee",
-                    self.player_position,
-                    (target.position,),
-                ),
-                d20_roller=roll_die,
-                dice_roller=roll_dice,
-            )
-            reroll_rule = matching_damage_reroll_rule(player, attack)
-            if attack.hit and reroll_rule is not None:
-                self._open_damage_reroll_decision(
-                    attack=attack,
-                    rule=reroll_rule,
-                    target_index=target_index,
-                    attacker_label=player.name,
-                    target_label=target_label,
-                    action_id=resolved_action_id,
-                    progress=progress,
-                    continuation="complete_reaction",
-                    reaction=True,
-                )
-                return progress
-            apply_attack_damage(
-                attack,
-                target.actor,
-                attacker_label=player.name,
-                target_label=target_label,
-            )
-            progress.messages.extend(attack.messages)
-            progress.events.append(
-                self._event(
-                    "attack_resolved",
-                    actor_ref="player",
-                    frame_id=decision.id,
-                    action_id=resolved_action_id,
-                    data={
-                        "attacker_label": player.name,
-                        "target_ref": pending_action.actor_ref,
-                        "target_label": target_label,
-                        "attack_roll": attack.attack_roll,
-                        "attack_roll_detail": attack.attack_roll_detail,
-                        "hit": attack.hit,
-                        "critical_hit": attack.critical_hit,
-                        "damage": attack.damage,
-                        "damage_roll_detail": attack.damage_roll_detail,
-                        "reaction": True,
-                    },
-                )
-            )
-            if not target.is_alive:
-                progress.events.append(
-                    self._event(
-                        "actor_defeated",
-                        actor_ref=pending_action.actor_ref,
-                        frame_id=decision.id,
-                        action_id=resolved_action_id,
-                    )
-                )
-        elif action.kind != "pass":
-            raise ValueError(f"Unsupported reaction action: {action.kind}")
-
-        self.decision_stack.pop()
-        progress.events.append(
-            self._event(
-                "decision_closed",
-                actor_ref="player",
-                frame_id=decision.id,
-                action_id=resolved_action_id,
-            )
-        )
-
-        self._resume_pending_action(player, progress)
-        progress.transition = self._check_transition()
-        if progress.transition is not None or player.get_health() <= 0:
-            return progress
-
-        follow_up = self.advance_until_next_decision(player)
-        self._merge_progress(progress, follow_up)
-        return progress
-
-    def _resume_pending_action(self, player: Actor, progress: EncounterProgress) -> None:
-        pending_action = self.pending_action
-        if pending_action is None:
-            return
-        self.pending_action = None
-        if pending_action.kind != "move":
-            return
-
-        if pending_action.actor_ref == "player":
-            return
-
-        enemy_index = _enemy_index(pending_action.actor_ref)
-        enemy = self.enemies[enemy_index]
-        if enemy.is_alive and self._is_free_for_enemy(
-            pending_action.to_position.x,
-            pending_action.to_position.y,
-        ):
-            enemy.position = Position(
-                pending_action.to_position.x,
-                pending_action.to_position.y,
-            )
-            progress.messages.append(
-                (
-                    "system",
-                    f"{enemy.actor.name} moves {pending_action.direction} to "
-                    f"({pending_action.to_position.x}, {pending_action.to_position.y}).",
-                )
-            )
-            progress.events.append(
-                self._event(
-                    "movement_resolved",
-                    actor_ref=pending_action.actor_ref,
-                    action_id=pending_action.id,
-                    data={
-                        "direction": pending_action.direction,
-                        "to": {
-                            "x": pending_action.to_position.x,
-                            "y": pending_action.to_position.y,
-                        },
-                        "resumed": True,
-                    },
-                )
-            )
-
-        if pending_action.resume_enemy_index is None:
-            return
-        if self._actor_controller(pending_action.actor_ref) == "user":
-            enemy.movement_remaining = pending_action.remaining_movement_after
-            return
-        enemy.movement_remaining = pending_action.remaining_movement_after
-        if self.ai_action_limit is not None:
-            return
-        completed_turn, resumed, _ = self._run_enemy_turn(
-            player,
-            pending_action.resume_enemy_index,
-        )
-        self._merge_progress(progress, resumed)
-        if completed_turn and not progress.paused_for_decision:
-            self._advance_turn()
-            self._maybe_reset_reactions()
-
-    def _resolve_enemy_opportunity_attacks_against_player(
-        self,
-        player: Actor,
-        direction: str,
-        action_id: str,
-        progress: EncounterProgress,
-    ) -> list[tuple[str, str]]:
-        dx, dy = DIRECTION_DELTAS[direction]
-        origin = Position(self.player_position.x, self.player_position.y)
-        destination = Position(self.player_position.x + dx, self.player_position.y + dy)
-        messages: list[tuple[str, str]] = []
-        threatened_by = [
-            (index, enemy)
-            for index, enemy in enumerate(self.enemies)
-            if enemy.is_alive
-            and self._actors_are_opponents(_enemy_ref(index), "player")
-            and enemy.reaction_available
-            and can_make_opportunity_attack(enemy.actor, self.item_templates)
-            and _is_adjacent(origin, enemy.position)
-            and not _is_adjacent(destination, enemy.position)
-        ]
-        for index, enemy in threatened_by:
-            enemy.reaction_available = False
-            trigger_id = self._next_frame_id(prefix="trigger")
-            progress.events.append(
-                self._event(
-                    "trigger_opened",
-                    actor_ref=_enemy_ref(index),
-                    action_id=action_id,
-                    data={"kind": "opportunity_attack", "trigger_id": trigger_id},
-                )
-            )
-            attack = resolve_attack(
-                enemy.actor,
-                player,
-                attacker_label=f"Enemy {index + 1} ({enemy.actor.name})",
-                target_label=player.name,
-                action_label="Opportunity attack",
-                items_by_id=self.item_templates,
-                attacker_position=enemy.position,
-                nearby_opponent_positions=(self.player_position,),
-                preferred_attack_type="melee",
-                attack_roll_mode_override=self._attack_roll_mode_for(
-                    _enemy_ref(index),
-                    "player",
-                    "melee",
-                    enemy.position,
-                    (self.player_position,),
-                ),
-                d20_roller=roll_die,
-                dice_roller=roll_dice,
-            )
-            apply_attack_damage(
-                attack,
-                player,
-                attacker_label=f"Enemy {index + 1} ({enemy.actor.name})",
-                target_label=player.name,
-            )
-            messages.extend(attack.messages)
-            progress.events.append(
-                self._event(
-                    "attack_resolved",
-                    actor_ref=_enemy_ref(index),
-                    action_id=action_id,
-                    data={
-                        "attacker_label": f"Enemy {index + 1} ({enemy.actor.name})",
-                        "target_ref": "player",
-                        "target_label": player.name,
-                        "attack_roll": attack.attack_roll,
-                        "attack_roll_detail": attack.attack_roll_detail,
-                        "hit": attack.hit,
-                        "critical_hit": attack.critical_hit,
-                        "damage": attack.damage,
-                        "damage_roll_detail": attack.damage_roll_detail,
-                        "reaction": True,
-                    },
-                )
-            )
-            if player.get_health() <= 0:
-                break
-        return messages
-
-    def _resolve_utilize_action(
-        self,
-        player: Actor,
-        item_id: str,
-        progress: EncounterProgress,
-        action_id: str,
-    ) -> None:
-        item = self.item_templates.get(item_id)
-        if item is None or not player.inventory.has_item(item_id):
-            progress.messages.append(("system", "You do not have that item."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "utilize", "item_id": item_id, "success": False},
-                )
-            )
-            return
-
-        if not self.player_bonus_action_available:
-            progress.messages.append(("system", "You have already used your Bonus Action."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={
-                        "kind": "utilize",
-                        "item_id": item.id,
-                        "item_name": item.name,
-                        "success": False,
-                    },
-                )
-            )
-            return
-
-        healing_dice = healing_potion_dice(item)
-        if healing_dice is None:
-            progress.messages.append(("system", f"{item.name} cannot be used that way yet."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={
-                        "kind": "utilize",
-                        "item_id": item.id,
-                        "item_name": item.name,
-                        "success": False,
-                    },
-                )
-            )
-            return
-
-        dice_count, dice_sides, modifier = healing_dice
-        dice_total = roll_dice(dice_count, dice_sides)
-        healing_total = dice_total + modifier
-        applied_healing = player.heal(healing_total)
-        consumed = item.has_misc_tag("CNS")
-        if consumed:
-            player.inventory.remove_item(item.id)
-        self.player_bonus_action_available = False
-
-        modifier_text = f" + {modifier}" if modifier else ""
-        progress.messages.extend(
-            [
-                ("system", f"{player.name} drinks {item.name}."),
-                (
-                    "system",
-                    f"Healing: {dice_count}d{dice_sides}={dice_total}{modifier_text} "
-                    f"= {healing_total}; applied {applied_healing}.",
-                ),
-            ]
-        )
-        if consumed:
-            progress.messages.append(("system", f"{item.name} is consumed."))
-        progress.events.append(
-            self._event(
-                "item_used",
-                actor_ref="player",
-                action_id=action_id,
-                data={
-                    "kind": "utilize",
-                    "mode": "drink",
-                    "item_id": item.id,
-                    "item_name": item.name,
-                    "target_ref": "player",
-                    "target_label": player.name,
-                    "success": True,
-                    "consumed": consumed,
-                    "effect": "healing",
-                    "healing": applied_healing,
-                    "healing_roll_detail": {
-                        "dice": f"{dice_count}d{dice_sides}",
-                        "dice_total": dice_total,
-                        "modifier": modifier,
-                        "total": healing_total,
-                        "applied_healing": applied_healing,
-                    },
-                },
-            )
-        )
-
-    def _resolve_feature_action(
-        self,
-        player: Actor,
-        feature_id: str,
-        progress: EncounterProgress,
-        action_id: str,
-    ) -> None:
-        feature_action = player.combat_profile.feature_actions.get(feature_id)
-        if feature_action is None:
-            progress.messages.append(("system", f"{feature_id} is not implemented yet."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "feature", "feature_id": feature_id, "success": False},
-                )
-            )
-            return
-
-        if feature_action.economy == "bonus_action" and not self.player_bonus_action_available:
-            progress.messages.append(("system", "You have already used your Bonus Action."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "feature", "feature_id": feature_id, "success": False},
-                )
-            )
-            return
-        if feature_action.economy == "action" and not self.player_action_available:
-            progress.messages.append(("system", "You have already used your Action."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "feature", "feature_id": feature_id, "success": False},
-                )
-            )
-            return
-        if feature_action.economy == "reaction" and not self.player_reaction_available:
-            progress.messages.append(("system", "You have already used your Reaction."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "feature", "feature_id": feature_id, "success": False},
-                )
-            )
-            return
-
-        uses_remaining = player.feature_uses_remaining.get(feature_id, 0)
-        if uses_remaining <= 0:
-            progress.messages.append(
-                ("system", f"You have no uses of {feature_action.label} remaining.")
-            )
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "feature", "feature_id": feature_id, "success": False},
-                )
-            )
-            return
-
-        result = resolve_feature_action(player, feature_id, roll_dice)
-        if result is None:
-            progress.messages.append(("system", f"{feature_action.label} is not implemented yet."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "feature", "feature_id": feature_id, "success": False},
-                )
-            )
-            return
-
-        if feature_action.economy == "bonus_action":
-            self.player_bonus_action_available = False
-        elif feature_action.economy == "action":
-            self.player_action_available = False
-        elif feature_action.economy == "reaction":
-            self.player_reaction_available = False
-
-        progress.messages.extend(result.messages)
-        healing_effect = next(
-            (effect for effect in result.effects if effect.kind == "healing"),
-            None,
-        )
-        healing_data = healing_effect.data if healing_effect is not None else {}
-        healing_roll_detail = healing_data.get("roll", {})
-        target_ref = healing_effect.target_ref if healing_effect is not None else "player"
-        target_label = healing_data.get("target_label", player.name)
-        healing = healing_data.get("amount", 0)
-        progress.events.append(
-            self._event(
-                "feature_used",
-                actor_ref="player",
-                action_id=action_id,
-                data={
-                    "kind": "feature",
-                    "feature_id": result.capability_id,
-                    "feature_name": result.capability_name,
-                    "target_ref": target_ref,
-                    "target_label": target_label,
-                    "success": True,
-                    "healing": healing,
-                    "healing_roll_detail": healing_roll_detail,
-                    "uses_remaining": result.resource_updates.get(feature_id),
-                    "effects": [
-                        {
-                            "kind": effect.kind,
-                            "target_ref": effect.target_ref,
-                            "success": effect.success,
-                            "data": effect.data,
-                        }
-                        for effect in result.effects
-                    ],
-                },
-            )
-        )
-
-    def _resolve_spell_action(
-        self,
-        player: Actor,
-        spell_value: str,
-        progress: EncounterProgress,
-        action_id: str,
-    ) -> None:
-        spellcasting = player.spellcasting
-        if spellcasting is None:
-            progress.messages.append(("system", "You cannot cast spells."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "spell", "success": False},
-                )
-            )
-            return
-        spell_id, target_ref, aim_point = parse_spell_action_value(spell_value)
-        spell = next((candidate for candidate in spellcasting.learned_spells if candidate.id == spell_id), None)
-        if spell is None:
-            progress.messages.append(("system", "That spell is not available."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "spell", "spell_id": spell_id, "success": False},
-                )
-            )
-            return
-        cost = self._spell_action_cost(spell)
-        block_reason = self._spell_cast_block_reason(spellcasting, spell, cost)
-        if block_reason is not None:
-            progress.messages.append(("system", block_reason))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "spell", "spell_id": spell.id, "success": False},
-                )
-            )
-            return
-        area = self._spell_area(player, spell, target_ref=target_ref, aim_point=aim_point)
-        targets = self._spell_area_targets(player, spell, target_ref=target_ref, aim_point=aim_point)
-        target = (
-            self._spell_target_context(player, target_ref)
-            if target_ref is not None
-            else targets[0]
-            if targets
-            else None
-        )
-        if target is None or not targets:
-            progress.messages.append(("system", "That target is not available."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "spell", "spell_id": spell.id, "success": False},
-                )
-            )
-            return
-        result = resolve_spell_action(
-            SpellActionContext(
-                actor=player,
-                spell=spell,
-                target=target,
-                current_round=self.round_number,
-                targets=targets,
-                area=area,
-                source_ref="player",
-                roller=roll_die,
-            )
-        )
-        if result is None:
-            progress.messages.append(("system", f"{spell.name} is not implemented yet."))
-            progress.events.append(
-                self._event(
-                    "action_resolved",
-                    actor_ref="player",
-                    action_id=action_id,
-                    data={"kind": "spell", "spell_id": spell.id, "success": False},
-                )
-            )
-            return
-
-        self._spend_spell_resources(spellcasting, spell, cost)
-
-        progress.messages.extend(result.messages)
-        progress.messages.extend(self._apply_effects(result.effects))
-        progress.events.append(
-            self._event(
-                "spell_cast",
-                actor_ref="player",
-                action_id=action_id,
-                data={
-                    "kind": "spell",
-                    "spell_id": result.capability_id,
-                    "spell_name": result.capability_name,
-                    "spell_level": result.details.get("spell_level", spell.level),
-                    "target_ref": result.details.get("target_ref", target_ref),
-                    "target_label": result.details.get("target_label", target.target_label),
-                    "target_refs": result.details.get("target_refs"),
-                    "target_labels": result.details.get("target_labels"),
-                    "area": result.details.get("area"),
-                    "slot_level": result.details.get("slot_level", spell.level),
-                    "spell_slots_remaining": (
-                        spellcasting.spell_slots_remaining.get(spell.level, 0)
-                        if spell.level > 0
-                        else None
-                    ),
-                    "save_detail": result.details.get("save_detail"),
-                    "save_details": result.details.get("save_details"),
-                    "damage_roll_detail": result.details.get("damage_roll_detail"),
-                    "damage_roll_details": result.details.get("damage_roll_details"),
-                    "effects": serialize_effects(result.effects),
-                    "success": result.details.get("success", False),
-                },
-            )
-        )
-        return
-
-    def _spell_target_context(
-        self,
-        player: Actor,
-        target_ref: str,
-    ) -> SpellTargetContext | None:
-        if target_ref == "player":
-            return SpellTargetContext(
-                actor=player,
-                target_ref="player",
-                target_label=player.name,
-                target_conditions=tuple(
-                    condition.name for condition in self.conditions_for("player")
-                ),
-            )
-        enemy_index = _enemy_index(target_ref)
-        if enemy_index < 0 or enemy_index >= len(self.enemies):
-            return None
-        enemy = self.enemies[enemy_index]
-        if not enemy.is_alive:
-            return None
-        return SpellTargetContext(
-            actor=enemy.actor,
-            target_ref=target_ref,
-            target_label=f"Enemy {enemy_index + 1} ({enemy.actor.name})",
-            target_conditions=tuple(
-                condition.name for condition in self.conditions_for(target_ref)
-            ),
-        )
+    apply_action = _apply_action_impl
+    available_actions = _available_actions_impl
+    _available_feature_actions = _available_feature_actions_impl
+    _available_spell_actions = _available_spell_actions_impl
+    _feature_action_available = _feature_action_available_impl
+    _spell_action_cost = _spell_action_cost_impl
+    _spell_cast_block_reason = _spell_cast_block_reason_impl
+    _spell_targets_self_only = _spell_targets_self_only_impl
+    _spell_range_squares = _spell_range_squares_impl
+    _spell_action_targets = _spell_action_targets_impl
+    _spell_area_targets = _spell_area_targets_impl
+    _spend_spell_resources = _spend_spell_resources_impl
+    _spell_area = _spell_area_impl
+    _targets_in_area = _targets_in_area_impl
+    _user_controlled_enemy_actions = _user_controlled_enemy_actions_impl
+    _apply_user_controlled_enemy_action = _apply_user_controlled_enemy_action_impl
+    _resolve_player_attack_action = _resolve_player_attack_action_impl
+    _resolve_wait_action = _resolve_wait_action_impl
+    _resolve_flee_action = _resolve_flee_action_impl
+    _resolve_utilize_action = _resolve_utilize_action_impl
+    _resolve_feature_action = _resolve_feature_action_impl
+    _resolve_spell_action = _resolve_spell_action_impl
+    _apply_player_move = _apply_player_move_impl
+
+    _spell_target_context = _spell_target_context_impl
 
     def _apply_effects(self, effects) -> list[tuple[str, str]]:
         return apply_effects(
@@ -2366,141 +663,6 @@ class EncounterState(EncounterStateData):
                 and existing.name == status_name
             )
         ]
-
-    def _apply_player_move(
-        self,
-        player: Actor,
-        direction: str,
-        progress: EncounterProgress,
-        action_id: str,
-    ) -> None:
-        dx, dy = DIRECTION_DELTAS[direction]
-        self.player_position = Position(self.player_position.x + dx, self.player_position.y + dy)
-        self.player_movement_remaining = self._player_movement_remaining(player) - 1
-        progress.messages.append(
-            (
-                "system",
-                f"You move {direction}. Movement remaining: {self.player_movement_remaining}.",
-            )
-        )
-        progress.events.append(
-            self._event(
-                "movement_resolved",
-                actor_ref="player",
-                action_id=action_id,
-                data={
-                    "direction": direction,
-                    "to": {"x": self.player_position.x, "y": self.player_position.y},
-                },
-            )
-        )
-
-    def _queue_player_opportunity_attack(
-        self,
-        player: Actor,
-        enemy_index: int,
-        action_id: str,
-        direction: str,
-        from_position: Position,
-        to_position: Position,
-        remaining_movement_after: int,
-        progress: EncounterProgress,
-    ) -> bool:
-        if not self._actors_are_opponents("player", _enemy_ref(enemy_index)):
-            return False
-        if not self.player_reaction_available:
-            return False
-        if not can_make_opportunity_attack(player, self.item_templates):
-            return False
-        if not _is_adjacent(from_position, self.player_position):
-            return False
-        if _is_adjacent(to_position, self.player_position):
-            return False
-
-        frame_id = self._next_frame_id()
-        trigger_id = self._next_frame_id(prefix="trigger")
-        current_frame = self.current_decision()
-        self.pending_action = PendingAction(
-            id=action_id,
-            kind="move",
-            actor_ref=_enemy_ref(enemy_index),
-            direction=direction,
-            from_position=Position(from_position.x, from_position.y),
-            to_position=Position(to_position.x, to_position.y),
-            resume_enemy_index=enemy_index,
-            remaining_movement_after=remaining_movement_after,
-            trigger_id=trigger_id,
-        )
-        self.decision_stack.append(
-            DecisionFrame(
-                id=frame_id,
-                actor_ref="player",
-                kind="reaction",
-                reason="opportunity_attack",
-                parent_frame_id=current_frame.id,
-                parent_action_id=action_id,
-                can_pass=True,
-            )
-        )
-        progress.events.append(
-            self._event(
-                "trigger_opened",
-                actor_ref="player",
-                frame_id=frame_id,
-                action_id=action_id,
-                data={
-                    "kind": "opportunity_attack",
-                    "target_ref": _enemy_ref(enemy_index),
-                    "trigger_id": trigger_id,
-                },
-            )
-        )
-        return True
-
-    def _reaction_actions(self) -> list[EncounterAction]:
-        pending_action = self.pending_action
-        if pending_action is None or pending_action.kind != "move":
-            return [
-                EncounterAction(
-                    "Pass reaction",
-                    "pass",
-                    id="player-reaction-pass",
-                    actor_ref="player",
-                    cost=ActionCost(),
-                )
-            ]
-
-        target_index = _enemy_index(pending_action.actor_ref)
-        target = self.enemies[target_index]
-        actions: list[EncounterAction] = []
-        if self.player_reaction_available and target.is_alive:
-            actions.append(
-                EncounterAction(
-                    f"Opportunity attack {target.actor.name}",
-                    "opportunity_attack",
-                    target_index,
-                    id=f"player-opportunity-attack-{target_index}",
-                    actor_ref="player",
-                    source_trigger_id=pending_action.trigger_id,
-                    cost=ActionCost(reaction=1),
-                )
-            )
-        actions.append(
-            EncounterAction(
-                "Pass reaction",
-                "pass",
-                id="player-reaction-pass",
-                actor_ref="player",
-                source_trigger_id=pending_action.trigger_id,
-            )
-        )
-        return actions
-
-    def _active_turn_actor(self) -> tuple[str, int | None]:
-        self._normalize_turn()
-        if self.turn_index == 0:
-            return ("player", None)
-        return ("enemy", self.turn_index - 1)
 
     def _actor_controller(self, actor_ref: ActorRef) -> str:
         if self.control_mode == "all-user":
@@ -2535,96 +697,163 @@ class EncounterState(EncounterStateData):
             second_actor_ref
         )
 
+    def _open_damage_reroll_decision(self, **kwargs) -> None:
+        self.reaction_engine.open_damage_reroll_decision(self, **kwargs)
+
+    def _reroll_damage_actions(self) -> list[EncounterAction]:
+        return self.reaction_engine.reroll_damage_actions(self)
+
+    def _apply_damage_reroll_action(
+        self,
+        player: Actor,
+        action: EncounterAction,
+        decision: DecisionFrame,
+    ) -> EncounterProgress:
+        return self.reaction_engine.apply_damage_reroll_action(
+            self,
+            player,
+            action,
+            decision,
+        )
+
+    def _finalize_pending_attack(
+        self,
+        player: Actor,
+        progress: EncounterProgress,
+        decision: DecisionFrame,
+    ) -> None:
+        self.reaction_engine.finalize_pending_attack(self, player, progress, decision)
+
+    def _complete_parent_reaction(
+        self,
+        player: Actor,
+        progress: EncounterProgress,
+        action_id: str,
+    ) -> None:
+        self.reaction_engine.complete_parent_reaction(
+            self,
+            player,
+            progress,
+            action_id,
+        )
+
+    def _pending_attack_event_data(self) -> dict[str, object]:
+        return self.reaction_engine.pending_attack_event_data(self)
+
+    def advance_until_next_decision(self, player: Actor) -> EncounterProgress:
+        return self.turn_engine.advance_until_next_decision(self, player)
+
+    def _run_enemy_turn(
+        self,
+        player: Actor,
+        enemy_index: int,
+        *,
+        action_limit: int | None = None,
+    ) -> tuple[bool, EncounterProgress, int]:
+        return self.turn_engine.run_enemy_turn(
+            self,
+            player,
+            enemy_index,
+            action_limit=action_limit,
+        )
+
+    def _apply_reaction_action(
+        self,
+        player: Actor,
+        action: EncounterAction,
+        decision: DecisionFrame,
+    ) -> EncounterProgress:
+        return self.reaction_engine.apply_reaction_action(
+            self,
+            player,
+            action,
+            decision,
+        )
+
+    def _resume_pending_action(
+        self,
+        player: Actor,
+        progress: EncounterProgress,
+    ) -> None:
+        self.reaction_engine.resume_pending_action(self, player, progress)
+
+    def _resolve_enemy_opportunity_attacks_against_player(
+        self,
+        player: Actor,
+        direction: str,
+        action_id: str,
+        progress: EncounterProgress,
+    ) -> list[tuple[str, str]]:
+        return self.reaction_engine.resolve_enemy_opportunity_attacks_against_player(
+            self,
+            player,
+            direction,
+            action_id,
+            progress,
+        )
+
+    def _queue_player_opportunity_attack(
+        self,
+        player: Actor,
+        enemy_index: int,
+        action_id: str,
+        direction: str,
+        from_position: Position,
+        to_position: Position,
+        remaining_movement_after: int,
+        progress: EncounterProgress,
+    ) -> bool:
+        return self.reaction_engine.queue_player_opportunity_attack(
+            self,
+            player,
+            enemy_index,
+            action_id,
+            direction,
+            from_position,
+            to_position,
+            remaining_movement_after,
+            progress,
+        )
+
+    def _reaction_actions(self) -> list[EncounterAction]:
+        return self.reaction_engine.reaction_actions(self)
+
+    def _active_turn_actor(self) -> tuple[str, int | None]:
+        return self.turn_engine.active_turn_actor(self)
+
     def _check_transition(self) -> str | None:
-        opponents = [
-            enemy
-            for index, enemy in enumerate(self.enemies)
-            if self._actors_are_opponents("player", _enemy_ref(index))
-        ]
-        if opponents and all(not enemy.is_alive for enemy in opponents):
-            return self.definition.victory.next_scene if self.definition.victory else None
-        return None
+        return self.turn_engine.check_transition(self)
 
     def _advance_turn(self) -> None:
-        ending_actor_ref = self.current_decision().actor_ref
-        ending_round = self.round_number
-        self._expire_conditions_for_turn_end(ending_actor_ref, ending_round)
-        self.turn_index += 1
-        if self.turn_index >= self._turn_count():
-            self.turn_index = 0
-            self.round_number += 1
-        self._normalize_turn()
-        if self.turn_index == 0:
-            self.player_movement_remaining = None
-            self.player_action_available = True
-            self.player_attacks_remaining = 0
-            self.player_bonus_action_available = True
-        else:
-            self.enemies[self.turn_index - 1].movement_remaining = None
+        self.turn_engine.advance_turn(self)
 
     def _expire_conditions_for_turn_end(
         self,
         actor_ref: ActorRef,
         round_number: int,
     ) -> None:
-        self.conditions = [
-            condition
-            for condition in self.conditions
-            if not (
-                condition.expires_on_actor_ref == actor_ref
-                and condition.expires_on_round == round_number
-            )
-        ]
+        self.turn_engine.expire_conditions_for_turn_end(self, actor_ref, round_number)
 
     def _maybe_reset_reactions(self) -> None:
-        if self.turn_index != 0:
-            return
-        self.player_reaction_available = True
-        for enemy in self.enemies:
-            enemy.reaction_available = True
+        self.turn_engine.maybe_reset_reactions(self)
 
     def _normalize_turn(self) -> None:
-        if self.turn_index >= self._turn_count():
-            self.turn_index = 0
-
-        for _ in range(self._turn_count()):
-            if self.turn_index == 0:
-                return
-            enemy = self.enemies[self.turn_index - 1]
-            if enemy.is_alive:
-                return
-            self.turn_index += 1
-            if self.turn_index >= self._turn_count():
-                self.turn_index = 0
-                self.round_number += 1
+        self.turn_engine.normalize_turn(self)
 
     def _player_movement_remaining(self, player: Actor) -> int:
-        if self.player_movement_remaining is None:
-            self.player_movement_remaining = _movement_squares(player)
-        return self.player_movement_remaining
+        return self.turn_engine.player_movement_remaining(self, player)
 
     def _turn_count(self) -> int:
-        return len(self.enemies) + 1
+        return self.turn_engine.turn_count(self)
 
     def _live_enemy_at(self, x: int, y: int) -> EncounterEnemyState | None:
-        return next(
-            (
-                enemy
-                for enemy in self.enemies
-                if enemy.is_alive and enemy.position.x == x and enemy.position.y == y
-            ),
-            None,
-        )
+        return self.turn_engine.live_enemy_at(self, x, y)
 
     def _is_free_for_enemy(self, x: int, y: int) -> bool:
-        if not self._is_within_bounds(x, y):
-            return False
-        if self.player_position.x == x and self.player_position.y == y:
-            return False
-        return self._live_enemy_at(x, y) is None
+        return self.turn_engine.is_free_for_enemy(self, x, y)
 
     def _is_within_bounds(self, x: int, y: int) -> bool:
-        return 0 <= x < self.definition.grid.width and 0 <= y < self.definition.grid.height
+        return self.turn_engine.is_within_bounds(self, x, y)
 
     def _next_action_id(self) -> str:
         action_id = f"action_{self.action_sequence}"
@@ -2740,17 +969,3 @@ def _condition_suffix(conditions: tuple[Status, ...]) -> str:
         return ""
     labels = ", ".join(condition.name.capitalize() for condition in conditions)
     return f" [{labels}]"
-
-def _reroll_die_action_id(action_id: str, die_index: int) -> str:
-    return f"{action_id}-reroll-damage-{die_index}"
-
-
-def _enemy_ref(enemy_index: int) -> str:
-    return f"enemy:{enemy_index}"
-
-
-def _enemy_index(actor_ref: ActorRef) -> int:
-    prefix = "enemy:"
-    if not actor_ref.startswith(prefix):
-        raise ValueError(f"'{actor_ref}' is not an enemy actor reference.")
-    return int(actor_ref[len(prefix):])

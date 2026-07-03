@@ -13,7 +13,7 @@ SCENARIOS_DIR = SCENARIOS_ROOT
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Launch the CYOA project.")
+    parser = argparse.ArgumentParser(description="Launch SRD Arena.")
     parser.add_argument(
         "game",
         nargs="?",

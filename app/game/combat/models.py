@@ -64,6 +64,34 @@ class EncounterProgress:
 
 
 @dataclass
+class RoundState:
+    number: int = 1
+
+    def advance(self) -> None:
+        self.number += 1
+
+    def matches(self, round_number: int | None) -> bool:
+        return round_number == self.number
+
+
+@dataclass
+class TurnState:
+    index: int = 0
+    player_movement_remaining: int | None = None
+    player_action_available: bool = True
+    player_attacks_remaining: int = 0
+    player_bonus_action_available: bool = True
+    player_reaction_available: bool = True
+
+
+@dataclass
+class InterruptState:
+    decision_stack: list[DecisionFrame] = field(default_factory=list)
+    pending_action: PendingAction | None = None
+    pending_attack: PendingAttack | None = None
+
+
+@dataclass
 class BehaviorContext:
     player_position: Position
     enemy_position: Position
@@ -250,19 +278,12 @@ class EncounterStateData:
     enemies: list[EncounterEnemyState]
     control_mode: str = "default"
     ai_action_limit: int | None = None
-    turn_index: int = 0
-    round_number: int = 1
-    player_movement_remaining: int | None = None
-    player_action_available: bool = True
-    player_attacks_remaining: int = 0
-    player_bonus_action_available: bool = True
-    player_reaction_available: bool = True
+    round: RoundState = field(default_factory=RoundState)
+    turn: TurnState = field(default_factory=TurnState)
+    interrupts: InterruptState = field(default_factory=InterruptState)
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
-    decision_stack: list[DecisionFrame] = field(default_factory=list)
-    pending_action: PendingAction | None = None
-    pending_attack: PendingAttack | None = None
     conditions: list[Status] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)
     rules_config: RulesConfig = field(default_factory=RulesConfig)
