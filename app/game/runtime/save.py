@@ -9,7 +9,7 @@ from typing import TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .choice_resolver import ChoiceResolver
+from ..story.choice_resolver import ChoiceResolver
 from ..combat.models import (
     DecisionFrameSnapshot,
     EncounterSnapshot,

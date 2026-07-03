@@ -2,7 +2,6 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 
-from .choice_resolver import ChoiceResolver
 from ..combat.encounter import EncounterState
 from ..combat.models import EncounterAction, EncounterSnapshot
 from ..models.actor import Actor
@@ -11,7 +10,8 @@ from ..presentation.models import ActionView, SceneView, TurnResult
 from ..support.paths import SCENARIOS_ROOT
 from ..models.rules_config import RulesConfig
 from ..models.scene import Scene
-from .rest import apply_rest
+from ..story.choice_resolver import ChoiceResolver
+from ..story.rest import apply_rest
 
 SHORT_REST_CHOICE_TEXT = "Short Rest"
 LONG_REST_CHOICE_TEXT = "Long Rest"

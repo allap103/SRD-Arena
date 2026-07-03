@@ -1,8 +1,8 @@
 from hypothesis import given
 from hypothesis import strategies as st
 
-import game.runtime.choice_resolver as choice_resolver_module
-from game.runtime.choice_resolver import ChoiceResolver
+import game.story.choice_resolver as choice_resolver_module
+from game.story.choice_resolver import ChoiceResolver
 from game.runtime.game import Game
 from game.content.loaders import load_scene
 from game.models.choice import Choice, Effects, Outcome, SkillTest

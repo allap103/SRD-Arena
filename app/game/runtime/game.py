@@ -3,6 +3,7 @@ import json
 from dataclasses import dataclass, field
 
 from ..support.logging import CHANNEL_ENGINE, get_game_logger
+from ..story.scene_runner import SceneRunner
 from ..content.loaders import (
     load_actor,
     load_bestiary_stat_blocks,
@@ -24,7 +25,6 @@ from ..models.rules_config import (
 )
 from ..models.scene import Scene
 from ..support.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
-from .scene_runner import SceneRunner
 from .session import GameSession
 
 GAME_DIR = SCENARIOS_ROOT / "sample_game"
