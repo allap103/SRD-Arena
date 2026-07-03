@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from game.frontends import cli as launcher
+from game import main as launcher
 
 
 def _make_game_dir(path: Path) -> Path:
