@@ -149,6 +149,8 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
+    session.encounter_state.enemies[0].actor.current_health = 30
+    session.encounter_state.enemies[0].actor.current_health = 30
 
     assert "Cast Color Spray" in session.get_scene_view().choices
 
@@ -177,7 +179,7 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypat
     session.encounter_state.enemies[0].position.y = 2
     monkeypatch.setattr("game.combat.encounter.roll_die", lambda sides: 5)
 
-    result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
+    _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     presentation = build_session_presentation(session)
 
     assert presentation.encounter is not None
@@ -747,9 +749,9 @@ def test_enemy_movement_can_pause_for_player_opportunity_attack(monkeypatch) -> 
     session.encounter_state.turn_index = 1
 
     def scripted_behavior():
-        context = yield None
+        yield None
         while True:
-            context = yield EncounterAction("Move", "move", "right")
+            yield EncounterAction("Move", "move", "right")
 
     behavior = scripted_behavior()
     next(behavior)
@@ -794,15 +796,15 @@ def test_ranged_weapons_do_not_enable_opportunity_attacks() -> None:
     session.encounter_state.turn_index = 1
 
     def scripted_behavior():
-        context = yield None
+        yield None
         while True:
-            context = yield EncounterAction("Move", "move", "right")
+            yield EncounterAction("Move", "move", "right")
 
     behavior = scripted_behavior()
     next(behavior)
     session.encounter_state._behaviors[0] = behavior
 
-    progress = session.encounter_state.advance_until_next_decision(session.player)
+    session.encounter_state.advance_until_next_decision(session.player)
 
     assert session.encounter_state.current_decision().kind == "turn"
     assert session.encounter_state.enemies[0].position.x > 3
@@ -1137,9 +1139,52 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable(monkeypatc
 
     assert presentation.encounter is not None
     assert "Second Wind" not in session.get_scene_view().choices
-    assert [action.label for action in presentation.encounter.feature_actions] == ["Second Wind"]
-    assert presentation.encounter.feature_actions[0].index == -1
-    assert presentation.encounter.feature_actions[0].cost["bonus_action"] == 1
+    feature_actions = {action.label: action for action in presentation.encounter.feature_actions}
+    assert set(feature_actions) == {"Second Wind", "Action Surge"}
+    assert feature_actions["Second Wind"].index == -1
+    assert feature_actions["Second Wind"].cost["bonus_action"] == 1
+
+
+def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    session.encounter_state.player_position.x = 4
+    session.encounter_state.player_position.y = 3
+    session.encounter_state.enemies[0].position.x = 4
+    session.encounter_state.enemies[0].position.y = 2
+    session.encounter_state.enemies[0].actor.current_health = 30
+
+    def fixed_roll(sides: int) -> int:
+        return 18 if sides == 20 else 6
+
+    monkeypatch.setattr("game.combat.encounter.roll_die", fixed_roll)
+    monkeypatch.setattr("game.combat.encounter.roll_dice", lambda num_dice, sides: 6)
+
+    first_attack_index = next(
+        index
+        for index, choice in enumerate(session.get_scene_view().choices)
+        if choice.startswith("Attack enemy 1")
+    )
+    session.choose(first_attack_index)
+
+    assert session.encounter_state.player_actions_remaining == 0
+
+    scene_view = session.get_scene_view()
+    action_surge_index = scene_view.choices.index("Action Surge")
+    result = session.choose(action_surge_index)
+
+    assert ("system", "Traveler uses Action Surge.") in result.messages
+    assert session.encounter_state.player_actions_remaining == 1
+    assert session.encounter_state.player_magic_actions_remaining == 0
+    assert session.player.feature_uses_remaining["action_surge"] == 0
+    updated_choices = session.get_scene_view().choices
+    assert any(choice.startswith("Attack enemy ") for choice in updated_choices)
+    assert not any(choice.startswith("Cast ") for choice in updated_choices)
+    event = next(event for event in result.events if event.type == "feature_used")
+    assert event.data["feature_id"] == "action_surge"
+    assert event.data["granted_actions"] == 1
 
 
 def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> None:
@@ -1342,9 +1387,9 @@ def test_save_and_load_preserve_pending_reaction_state(tmp_path: Path) -> None:
     session.encounter_state.turn_index = 1
 
     def scripted_behavior():
-        context = yield None
+        yield None
         while True:
-            context = yield EncounterAction("Move", "move", "right")
+            yield EncounterAction("Move", "move", "right")
 
     behavior = scripted_behavior()
     next(behavior)

@@ -156,6 +156,14 @@ class EncounterState(EncounterStateData):
         self.turn.player_actions_remaining = max(0, value)
 
     @property
+    def player_magic_actions_remaining(self) -> int:
+        return self.turn.player_magic_actions_remaining
+
+    @player_magic_actions_remaining.setter
+    def player_magic_actions_remaining(self, value: int) -> None:
+        self.turn.player_magic_actions_remaining = max(0, value)
+
+    @property
     def player_attacks_remaining(self) -> int:
         return self.turn.player_attacks_remaining
 
@@ -252,6 +260,7 @@ class EncounterState(EncounterStateData):
                 index=snapshot.turn_index,
                 player_movement_remaining=snapshot.player_movement_remaining,
                 player_actions_remaining=snapshot.player_actions_remaining,
+                player_magic_actions_remaining=snapshot.player_magic_actions_remaining,
                 player_attacks_remaining=snapshot.player_attacks_remaining,
                 player_bonus_action_available=snapshot.player_bonus_action_available,
                 player_reaction_available=snapshot.player_reaction_available,
@@ -323,6 +332,7 @@ class EncounterState(EncounterStateData):
             round_number=self.round_number,
             player_movement_remaining=self.player_movement_remaining,
             player_actions_remaining=self.player_actions_remaining,
+            player_magic_actions_remaining=self.player_magic_actions_remaining,
             player_action_available=self.player_action_available,
             player_attacks_remaining=self.player_attacks_remaining,
             player_bonus_action_available=self.player_bonus_action_available,
@@ -610,6 +620,21 @@ class EncounterState(EncounterStateData):
 
     def _pending_attack_event_data(self) -> dict[str, object]:
         return self.reaction_engine.pending_attack_event_data(self)
+
+    def _consume_action(self, *, allow_magic: bool) -> None:
+        if self.player_actions_remaining <= 0:
+            raise RuntimeError("No Action remains to consume.")
+        non_magic_only_actions = max(
+            0,
+            self.player_actions_remaining - self.player_magic_actions_remaining,
+        )
+        if allow_magic:
+            if self.player_magic_actions_remaining <= 0:
+                raise RuntimeError("No spell-capable Action remains to consume.")
+            self.player_magic_actions_remaining -= 1
+        elif non_magic_only_actions <= 0 and self.player_magic_actions_remaining > 0:
+            self.player_magic_actions_remaining -= 1
+        self.player_actions_remaining -= 1
 
     def advance_until_next_decision(self, player: Actor) -> EncounterProgress:
         return self.turn_engine.advance_until_next_decision(self, player)

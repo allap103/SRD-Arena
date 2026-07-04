@@ -98,12 +98,15 @@ def resolve_feature_action(
     if feature_action.economy == "bonus_action":
         self.player_bonus_action_available = False
     elif feature_action.economy == "action":
-        self.player_actions_remaining -= 1
+        self._consume_action(allow_magic=False)
         self.player_attacks_remaining = 0
     elif feature_action.economy == "reaction":
         self.player_reaction_available = False
 
     progress.messages.extend(result.messages)
+    granted_actions = result.details.get("grant_actions", 0)
+    if isinstance(granted_actions, int) and granted_actions > 0:
+        self.player_actions_remaining += granted_actions
     healing_effect = next((effect for effect in result.effects if effect.kind == "healing"), None)
     healing_data = healing_effect.data if healing_effect is not None else {}
     healing_roll_detail = healing_data.get("roll", {})
@@ -125,6 +128,7 @@ def resolve_feature_action(
                 "healing": healing,
                 "healing_roll_detail": healing_roll_detail,
                 "uses_remaining": result.resource_updates.get(feature_id),
+                "granted_actions": granted_actions if isinstance(granted_actions, int) else 0,
                 "effects": [
                     {
                         "kind": effect.kind,

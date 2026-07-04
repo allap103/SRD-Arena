@@ -84,14 +84,21 @@ def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
     ]
     assert player.combat_profile.attacks_per_attack_action == 1
     assert "second_wind" in {grant.id for grant in player.feature_grants}
+    assert "action_surge" in {grant.id for grant in player.feature_grants}
     second_wind = next(grant for grant in player.feature_grants if grant.id == "second_wind")
     assert second_wind.data["healing_die_count"] == 1
     assert second_wind.data["healing_die_sides"] == 10
+    action_surge = next(grant for grant in player.feature_grants if grant.id == "action_surge")
+    assert action_surge.data["uses"] == 1
     assert "second_wind" in player.combat_profile.bonus_action_options
+    assert player.combat_profile.feature_actions["action_surge"].economy == "none"
     assert player.combat_profile.feature_uses_max["second_wind"] == 2
+    assert player.combat_profile.feature_uses_max["action_surge"] == 1
     assert player.combat_profile.feature_recharge["second_wind"]["short_rest"] == 1
     assert player.combat_profile.feature_recharge["second_wind"]["long_rest"] == "all"
+    assert player.combat_profile.feature_recharge["action_surge"]["short_rest"] == "all"
     assert player.feature_uses_remaining["second_wind"] == 2
+    assert player.feature_uses_remaining["action_surge"] == 1
     assert player.get_max_health() == 20
     assert player.get_armor_class() == 16
     assert player.inventory.items == ["potion_of_healing"]

@@ -29,3 +29,16 @@ def test_second_wind_returns_healing_effect_result() -> None:
         "total": 7,
         "applied_healing": 7,
     }
+
+
+def test_action_surge_returns_extra_action_result() -> None:
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+
+    result = resolve_feature_action(session.player, "action_surge", lambda num_dice, sides: 0)
+
+    assert isinstance(result, CapabilityActionResult)
+    assert result.capability_id == "action_surge"
+    assert result.capability_name == "Action Surge"
+    assert result.resource_updates == {"action_surge": 0}
+    assert result.effects == []
+    assert result.details["grant_actions"] == 1

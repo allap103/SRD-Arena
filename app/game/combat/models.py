@@ -79,6 +79,7 @@ class TurnState:
     index: int = 0
     player_movement_remaining: int | None = None
     player_actions_remaining: int = 1
+    player_magic_actions_remaining: int = 1
     player_attacks_remaining: int = 0
     player_bonus_action_available: bool = True
     player_reaction_available: bool = True
@@ -205,6 +206,7 @@ class EncounterSnapshot:
     round_number: int = 1
     player_movement_remaining: int | None = None
     player_actions_remaining: int = 1
+    player_magic_actions_remaining: int = 1
     player_action_available: bool = True
     player_attacks_remaining: int = 0
     player_bonus_action_available: bool = True

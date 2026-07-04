@@ -49,7 +49,7 @@ def resolve_player_attack_action(
     enemy = self.enemies[enemy_index]
     target_label = f"Enemy {enemy_index + 1} ({enemy.actor.name})"
     if self.player_attacks_remaining == 0 and self.player_actions_remaining > 0:
-        self.player_actions_remaining -= 1
+        self._consume_action(allow_magic=False)
         self.player_attacks_remaining = max(
             0,
             player.combat_profile.attacks_per_attack_action - 1,

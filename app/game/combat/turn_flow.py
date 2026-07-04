@@ -274,6 +274,7 @@ class TurnEngine:
         if state.turn_index == 0:
             state.player_movement_remaining = None
             state.player_actions_remaining = 1
+            state.player_magic_actions_remaining = 1
             state.player_attacks_remaining = 0
             state.player_bonus_action_available = True
         else:

@@ -380,19 +380,29 @@ def _normalize_feature_grant(
     }
     attacks = extra_attack_counts.get(feature_name)
     if attacks is None:
-        if feature_name != "Second Wind":
+        if feature_name == "Second Wind":
+            return FeatureGrant(
+                id="second_wind",
+                name=feature_name,
+                source_class=class_name,
+                level=feature_level,
+                source_subclass=source_subclass,
+                data={
+                    "uses": _second_wind_uses(class_block, actor_level),
+                    **_second_wind_healing_dice(class_block, feature_name, feature_level),
+                },
+            )
+        if feature_name == "Action Surge":
+            return FeatureGrant(
+                id="action_surge",
+                name=feature_name,
+                source_class=class_name,
+                level=feature_level,
+                source_subclass=source_subclass,
+                data={"uses": _action_surge_uses(class_block, actor_level)},
+            )
+        else:
             return None
-        return FeatureGrant(
-            id="second_wind",
-            name=feature_name,
-            source_class=class_name,
-            level=feature_level,
-            source_subclass=source_subclass,
-            data={
-                "uses": _second_wind_uses(class_block, actor_level),
-                **_second_wind_healing_dice(class_block, feature_name, feature_level),
-            },
-        )
     return FeatureGrant(
         id="extra_attack",
         name=feature_name,
@@ -440,6 +450,25 @@ def _build_combat_profile(feature_grants: list[FeatureGrant]) -> CombatProfile:
                         "short_rest": 1,
                         "long_rest": "all",
                     }
+            continue
+        if grant.id == "action_surge":
+            profile.feature_actions["action_surge"] = FeatureActionDefinition(
+                feature_id="action_surge",
+                label="Action Surge",
+                economy="none",
+                target="self",
+                resolver="action_surge",
+            )
+            uses = grant.data.get("uses")
+            if isinstance(uses, int):
+                profile.feature_uses_max["action_surge"] = max(
+                    profile.feature_uses_max.get("action_surge", 0),
+                    uses,
+                )
+            profile.feature_recharge["action_surge"] = {
+                "short_rest": "all",
+                "long_rest": "all",
+            }
     return profile
 
 
@@ -719,6 +748,18 @@ def _second_wind_uses(class_block: dict | None, feature_level: int) -> int:
         return int(table_value)
     except ValueError:
         return 2
+
+
+def _action_surge_uses(class_block: dict | None, feature_level: int) -> int:
+    if class_block is None:
+        return 1
+    table_value = _class_table_value(class_block, "Action Surge", feature_level)
+    if table_value is None:
+        return 1
+    try:
+        return int(table_value)
+    except ValueError:
+        return 1
 
 
 def _second_wind_healing_dice(

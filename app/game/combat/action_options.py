@@ -215,7 +215,7 @@ def spell_cast_block_reason_for(
         spellcasting,
         spell,
         spell_action_economy(spell),
-        action_available=self.player_actions_remaining > 0,
+        action_available=self.player_magic_actions_remaining > 0,
         bonus_action_available=self.player_bonus_action_available,
         reaction_available=self.player_reaction_available,
     )
@@ -279,7 +279,7 @@ def spend_spell_resources(
     cost: ActionCost,
 ) -> None:
     if cost.action > 0:
-        self.player_actions_remaining -= 1
+        self._consume_action(allow_magic=True)
         self.player_attacks_remaining = 0
     if cost.bonus_action > 0:
         self.player_bonus_action_available = False

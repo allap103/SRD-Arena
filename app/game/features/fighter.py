@@ -11,6 +11,8 @@ def resolve_fighter_feature(
 ) -> CapabilityActionResult | None:
     if feature_id == "second_wind":
         return _resolve_second_wind(actor, roll_dice)
+    if feature_id == "action_surge":
+        return _resolve_action_surge(actor)
     return None
 
 
@@ -53,6 +55,23 @@ def _resolve_second_wind(actor: Actor, roll_dice: DiceRoller) -> CapabilityActio
             )
         ],
         resource_updates={"second_wind": actor.feature_uses_remaining["second_wind"]},
+    )
+
+
+def _resolve_action_surge(actor: Actor) -> CapabilityActionResult:
+    actor.feature_uses_remaining["action_surge"] = (
+        actor.feature_uses_remaining.get("action_surge", 0) - 1
+    )
+    return CapabilityActionResult(
+        capability_id="action_surge",
+        capability_name="Action Surge",
+        messages=[
+            ("system", f"{actor.name} uses Action Surge."),
+            ("system", "You steel yourself and gain an additional Action this turn."),
+        ],
+        effects=[],
+        resource_updates={"action_surge": actor.feature_uses_remaining["action_surge"]},
+        details={"grant_actions": 1},
     )
 
 
