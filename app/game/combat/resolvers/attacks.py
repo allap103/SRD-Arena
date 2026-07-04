@@ -30,7 +30,7 @@ def resolve_player_attack_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    if not self.player_action_available and self.player_attacks_remaining <= 0:
+    if self.player_actions_remaining <= 0 and self.player_attacks_remaining <= 0:
         progress.messages.append(("system", "You have already used your Action."))
         progress.events.append(
             self._event(
@@ -48,8 +48,8 @@ def resolve_player_attack_action(
     enemy_index = action.value
     enemy = self.enemies[enemy_index]
     target_label = f"Enemy {enemy_index + 1} ({enemy.actor.name})"
-    if self.player_action_available:
-        self.player_action_available = False
+    if self.player_attacks_remaining == 0 and self.player_actions_remaining > 0:
+        self.player_actions_remaining -= 1
         self.player_attacks_remaining = max(
             0,
             player.combat_profile.attacks_per_attack_action - 1,

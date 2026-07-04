@@ -59,7 +59,7 @@ def available_actions(self: EncounterState, player: Actor) -> list[EncounterActi
                 )
             )
 
-    can_attack = self.player_action_available or self.player_attacks_remaining > 0
+    can_attack = self.player_actions_remaining > 0 or self.player_attacks_remaining > 0
     for index, enemy in enumerate(self.enemies):
         if (
             can_attack
@@ -74,7 +74,7 @@ def available_actions(self: EncounterState, player: Actor) -> list[EncounterActi
                     index,
                     id=f"player-attack-{index}",
                     actor_ref="player",
-                    cost=ActionCost(action=1 if self.player_action_available else 0),
+                    cost=ActionCost(action=1 if self.player_attacks_remaining == 0 else 0),
                 )
             )
 
@@ -189,7 +189,7 @@ def available_spell_actions(
 def feature_action_available(self: EncounterState, player: Actor, definition) -> bool:
     if definition.economy == "bonus_action" and not self.player_bonus_action_available:
         return False
-    if definition.economy == "action" and not self.player_action_available:
+    if definition.economy == "action" and self.player_actions_remaining <= 0:
         return False
     if definition.economy == "reaction" and not self.player_reaction_available:
         return False
@@ -215,7 +215,7 @@ def spell_cast_block_reason_for(
         spellcasting,
         spell,
         spell_action_economy(spell),
-        action_available=self.player_action_available,
+        action_available=self.player_actions_remaining > 0,
         bonus_action_available=self.player_bonus_action_available,
         reaction_available=self.player_reaction_available,
     )
@@ -279,7 +279,7 @@ def spend_spell_resources(
     cost: ActionCost,
 ) -> None:
     if cost.action > 0:
-        self.player_action_available = False
+        self.player_actions_remaining -= 1
         self.player_attacks_remaining = 0
     if cost.bonus_action > 0:
         self.player_bonus_action_available = False

@@ -273,7 +273,7 @@ class TurnEngine:
         self.normalize_turn(state)
         if state.turn_index == 0:
             state.player_movement_remaining = None
-            state.player_action_available = True
+            state.player_actions_remaining = 1
             state.player_attacks_remaining = 0
             state.player_bonus_action_available = True
         else:

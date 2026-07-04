@@ -46,7 +46,7 @@ def resolve_feature_action(
             )
         )
         return
-    if feature_action.economy == "action" and not self.player_action_available:
+    if feature_action.economy == "action" and self.player_actions_remaining <= 0:
         progress.messages.append(("system", "You have already used your Action."))
         progress.events.append(
             self._event(
@@ -98,7 +98,8 @@ def resolve_feature_action(
     if feature_action.economy == "bonus_action":
         self.player_bonus_action_available = False
     elif feature_action.economy == "action":
-        self.player_action_available = False
+        self.player_actions_remaining -= 1
+        self.player_attacks_remaining = 0
     elif feature_action.economy == "reaction":
         self.player_reaction_available = False
 

@@ -142,7 +142,18 @@ class EncounterState(EncounterStateData):
 
     @player_action_available.setter
     def player_action_available(self, value: bool) -> None:
-        self.turn.player_action_available = value
+        if value:
+            self.turn.player_actions_remaining = max(1, self.turn.player_actions_remaining)
+        else:
+            self.turn.player_actions_remaining = 0
+
+    @property
+    def player_actions_remaining(self) -> int:
+        return self.turn.player_actions_remaining
+
+    @player_actions_remaining.setter
+    def player_actions_remaining(self, value: int) -> None:
+        self.turn.player_actions_remaining = max(0, value)
 
     @property
     def player_attacks_remaining(self) -> int:
@@ -240,7 +251,7 @@ class EncounterState(EncounterStateData):
             turn=TurnState(
                 index=snapshot.turn_index,
                 player_movement_remaining=snapshot.player_movement_remaining,
-                player_action_available=snapshot.player_action_available,
+                player_actions_remaining=snapshot.player_actions_remaining,
                 player_attacks_remaining=snapshot.player_attacks_remaining,
                 player_bonus_action_available=snapshot.player_bonus_action_available,
                 player_reaction_available=snapshot.player_reaction_available,
@@ -311,6 +322,7 @@ class EncounterState(EncounterStateData):
             turn_index=self.turn_index,
             round_number=self.round_number,
             player_movement_remaining=self.player_movement_remaining,
+            player_actions_remaining=self.player_actions_remaining,
             player_action_available=self.player_action_available,
             player_attacks_remaining=self.player_attacks_remaining,
             player_bonus_action_available=self.player_bonus_action_available,

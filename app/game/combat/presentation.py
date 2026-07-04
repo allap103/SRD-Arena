@@ -47,7 +47,7 @@ def render(self: EncounterState, player: Actor) -> str:
                 f"at ({self.player_position.x}, {self.player_position.y})"
                 f"{_condition_suffix(self.conditions_for('player'))}"
             ),
-            f"Action available: {'yes' if self.player_action_available else 'no'}",
+            f"Actions remaining: {self.player_actions_remaining}",
             f"Attacks remaining in action: {self.player_attacks_remaining}",
             f"Reaction available: {'yes' if self.player_reaction_available else 'no'}",
             "Enemies:",
@@ -99,6 +99,7 @@ def export_state(self: EncounterState, player: Actor) -> dict[str, object]:
             ),
             "movement_total_feet": player.attributes.movement.speed_feet,
             "action_available": self.player_action_available,
+            "actions_remaining": self.player_actions_remaining,
             "attacks_remaining": self.player_attacks_remaining,
             "bonus_action_available": self.player_bonus_action_available,
             "reaction_available": self.player_reaction_available,

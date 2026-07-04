@@ -185,6 +185,7 @@ class EncounterStateModel(BaseModel):
     turn_index: int = 0
     round_number: int = 1
     player_movement_remaining: int | None = None
+    player_actions_remaining: int = 1
     player_action_available: bool = True
     player_attacks_remaining: int = 0
     player_bonus_action_available: bool = True
@@ -399,6 +400,7 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
         turn_index=snapshot.turn_index,
         round_number=snapshot.round_number,
         player_movement_remaining=snapshot.player_movement_remaining,
+        player_actions_remaining=snapshot.player_actions_remaining,
         player_action_available=snapshot.player_action_available,
         player_attacks_remaining=snapshot.player_attacks_remaining,
         player_bonus_action_available=snapshot.player_bonus_action_available,
@@ -511,6 +513,7 @@ def _restore_encounter_state(
         turn_index=state.turn_index,
         round_number=state.round_number,
         player_movement_remaining=state.player_movement_remaining,
+        player_actions_remaining=state.player_actions_remaining,
         player_action_available=state.player_action_available,
         player_attacks_remaining=state.player_attacks_remaining,
         player_bonus_action_available=state.player_bonus_action_available,
