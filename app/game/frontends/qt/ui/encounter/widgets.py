@@ -659,6 +659,11 @@ class BattlefieldWidget(QWidget):
         slug = label_name.strip().lower().replace(" ", "_")
         if slug:
             names.append(f"{slug}.png")
+            if "_" in slug:
+                names.append(f"{slug.split('_')[0]}.png")
+        actor_prefix = actor_id.split("_")[0].strip().lower()
+        if actor_prefix and f"{actor_prefix}.png" not in names:
+            names.append(f"{actor_prefix}.png")
         return names
 
     def mousePressEvent(self, event) -> None:  # pragma: no cover - GUI interaction
