@@ -14,6 +14,7 @@ from ..combat.models import (
     DecisionFrameSnapshot,
     EncounterSnapshot,
     EncounterSnapshotEnemy,
+    InitiativeEntrySnapshot,
     PendingAttackSnapshot,
     PendingActionSnapshot,
 )
@@ -194,6 +195,8 @@ class EncounterStateModel(BaseModel):
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
+    initiative_order: list[str] = Field(default_factory=lambda: ["player"])
+    initiative_entries: list[dict[str, object]] = Field(default_factory=list)
     decision_stack: list[DecisionFrameStateModel] = Field(default_factory=list)
     pending_action: PendingActionStateModel | None = None
     pending_attack: PendingAttackStateModel | None = None
@@ -410,6 +413,16 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
         action_sequence=snapshot.action_sequence,
         frame_sequence=snapshot.frame_sequence,
         event_sequence=snapshot.event_sequence,
+        initiative_order=list(snapshot.initiative_order),
+        initiative_entries=[
+            {
+                "actor_ref": entry.actor_ref,
+                "roll": entry.roll,
+                "modifier": entry.modifier,
+                "total": entry.total,
+            }
+            for entry in snapshot.initiative_entries
+        ],
         decision_stack=[
             DecisionFrameStateModel(
                 id=frame.id,
@@ -524,6 +537,16 @@ def _restore_encounter_state(
         action_sequence=state.action_sequence,
         frame_sequence=state.frame_sequence,
         event_sequence=state.event_sequence,
+        initiative_order=list(state.initiative_order),
+        initiative_entries=[
+            InitiativeEntrySnapshot(
+                actor_ref=str(entry["actor_ref"]),
+                roll=int(entry["roll"]),
+                modifier=int(entry["modifier"]),
+                total=int(entry["total"]),
+            )
+            for entry in state.initiative_entries
+        ],
         decision_stack=[
             DecisionFrameSnapshot(
                 id=frame.id,

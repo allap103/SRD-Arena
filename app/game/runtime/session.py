@@ -426,6 +426,7 @@ class GameSession:
         self.encounter_state = EncounterState.from_definition(
             scene.id,
             scene.encounter,
+            self.player,
             self.actor_templates,
             self.item_templates,
             self.control_mode,

@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from game.combat.encounter import EncounterState
 from game.runtime.game import Game
 from game.runtime.save import (
     SaveGame,
@@ -26,6 +27,18 @@ from game.runtime.session import (
 
 FIXTURE_GAME_DIR = Path(__file__).parent / "fixtures" / "graph_game"
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
+
+
+@pytest.fixture(autouse=True)
+def _player_first_initiative(monkeypatch):
+    def _fixed_initiative(self, player):
+        self.initiative_entries = []
+        self.initiative_order = [
+            "player",
+            *(f"enemy:{index}" for index, _enemy in enumerate(self.enemies)),
+        ]
+
+    monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
 def test_create_save_captures_mutable_session_state() -> None:

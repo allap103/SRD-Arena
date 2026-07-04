@@ -82,6 +82,17 @@ def export_state(self: EncounterState, player: Actor) -> dict[str, object]:
         },
         "round_number": self.round_number,
         "turn_index": self.turn_index,
+        "initiative_order": list(self.initiative_order),
+        "initiative": [
+            {
+                "actor_ref": entry.actor_ref,
+                "label": self._actor_label(entry.actor_ref),
+                "roll": entry.roll,
+                "modifier": entry.modifier,
+                "total": entry.total,
+            }
+            for entry in self.initiative_entries
+        ],
         "control_mode": self.control_mode,
         "active_actor_ref": active_actor_ref,
         "active_controller": self._actor_controller(active_actor_ref),

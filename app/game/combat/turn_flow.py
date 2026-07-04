@@ -7,7 +7,7 @@ from ..models.scene import Position
 from .attacks import apply_attack_damage, resolve_attack, selected_attack_type
 from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent, movement_squares as _movement_squares
 from .models import ActorRef, BehaviorContext, EncounterEnemyState, EncounterProgress
-from .refs import enemy_ref as _enemy_ref
+from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -248,9 +248,10 @@ class TurnEngine:
 
     def active_turn_actor(self, state: EncounterState) -> tuple[str, int | None]:
         self.normalize_turn(state)
-        if state.turn_index == 0:
+        actor_ref = state.initiative_order[state.turn_index]
+        if actor_ref == "player":
             return ("player", None)
-        return ("enemy", state.turn_index - 1)
+        return ("enemy", _enemy_index(actor_ref))
 
     def check_transition(self, state: EncounterState) -> str | None:
         opponents = [
@@ -271,14 +272,15 @@ class TurnEngine:
             state.turn_index = 0
             state.round.advance()
         self.normalize_turn(state)
-        if state.turn_index == 0:
+        actor_ref = state.initiative_order[state.turn_index]
+        if actor_ref == "player":
             state.player_movement_remaining = None
             state.player_actions_remaining = 1
             state.player_magic_actions_remaining = 1
             state.player_attacks_remaining = 0
             state.player_bonus_action_available = True
         else:
-            state.enemies[state.turn_index - 1].movement_remaining = None
+            state.enemies[_enemy_index(actor_ref)].movement_remaining = None
 
     def expire_conditions_for_turn_end(
         self,
@@ -307,9 +309,10 @@ class TurnEngine:
             state.turn_index = 0
 
         for _ in range(self.turn_count(state)):
-            if state.turn_index == 0:
+            actor_ref = state.initiative_order[state.turn_index]
+            if actor_ref == "player":
                 return
-            enemy = state.enemies[state.turn_index - 1]
+            enemy = state.enemies[_enemy_index(actor_ref)]
             if enemy.is_alive:
                 return
             state.turn_index += 1
@@ -323,7 +326,7 @@ class TurnEngine:
         return state.player_movement_remaining
 
     def turn_count(self, state: EncounterState) -> int:
-        return len(state.enemies) + 1
+        return len(state.initiative_order)
 
     def live_enemy_at(
         self,

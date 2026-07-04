@@ -1,7 +1,9 @@
 from pathlib import Path
 from types import SimpleNamespace
 
-from game.combat.encounter import ActionCost, EncounterAction
+import pytest
+
+from game.combat.encounter import ActionCost, EncounterAction, EncounterState
 from game.runtime.game import Game
 from game.frontends.qt.app import CyoaPySide6Window
 from game.features import EffectResult
@@ -13,6 +15,19 @@ from game.frontends.qt.ui.encounter.config import TargetSelectionMode
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 SAMPLE_GAME_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
+_ROLL_INITIATIVE = EncounterState._roll_initiative
+
+
+@pytest.fixture(autouse=True)
+def _player_first_initiative(monkeypatch):
+    def _fixed_initiative(self, player):
+        self.initiative_entries = []
+        self.initiative_order = [
+            "player",
+            *(f"enemy:{index}" for index, _enemy in enumerate(self.enemies)),
+        ]
+
+    monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
 def _item_id_by_name(session, name: str) -> str:
@@ -65,6 +80,31 @@ def test_goblin_encounter_scene_generates_runtime_actions_and_grid() -> None:
     assert "Wait" in scene_view.choices
     assert "Flee encounter" in scene_view.choices
     assert "Retreat until the encounter system is ready." not in scene_view.choices
+
+
+def test_initiative_is_rolled_for_all_combatants_at_encounter_start(monkeypatch) -> None:
+    monkeypatch.setattr(EncounterState, "_roll_initiative", _ROLL_INITIATIVE)
+    rolls = iter([12, 18, 7, 14])
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: next(rolls))
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    assert [entry.actor_ref for entry in session.encounter_state.initiative_entries] == [
+        "enemy:0",
+        "enemy:2",
+        "player",
+        "enemy:1",
+    ]
+    assert [entry.total for entry in session.encounter_state.initiative_entries] == [
+        20,
+        16,
+        13,
+        9,
+    ]
+    assert session.encounter_state.current_decision().actor_ref == "enemy:0"
 
 
 def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> None:

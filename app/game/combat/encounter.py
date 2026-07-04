@@ -41,6 +41,8 @@ from .models import (
     EncounterSnapshot,
     EncounterSnapshotEnemy,
     EncounterStateData,
+    InitiativeEntry,
+    InitiativeEntrySnapshot,
     InterruptState,
     PendingAttack,
     RoundState,
@@ -192,6 +194,7 @@ class EncounterState(EncounterStateData):
         cls,
         scene_id: str,
         definition: Encounter,
+        player: Actor,
         actor_templates: dict[str, Actor],
         item_templates: dict[str, Item] | None = None,
         control_mode: str = "default",
@@ -221,6 +224,7 @@ class EncounterState(EncounterStateData):
             item_templates=item_templates or {},
             rules_config=rules_config or RulesConfig(),
         )
+        state._roll_initiative(player)
         state._initialize_behaviors()
         return state
 
@@ -268,6 +272,16 @@ class EncounterState(EncounterStateData):
             action_sequence=snapshot.action_sequence,
             frame_sequence=snapshot.frame_sequence,
             event_sequence=snapshot.event_sequence,
+            initiative_order=list(snapshot.initiative_order),
+            initiative_entries=[
+                InitiativeEntry(
+                    actor_ref=entry.actor_ref,
+                    roll=entry.roll,
+                    modifier=entry.modifier,
+                    total=entry.total,
+                )
+                for entry in snapshot.initiative_entries
+            ],
             interrupts=InterruptState(
                 decision_stack=[
                     DecisionFrame(
@@ -319,6 +333,18 @@ class EncounterState(EncounterStateData):
             item_templates=item_templates or {},
             rules_config=rules_config or RulesConfig(),
         )
+        if not state.initiative_order or len(state.initiative_order) != len(state.enemies) + 1:
+            state.initiative_order = ["player", *(_enemy_ref(index) for index, _enemy in enumerate(state.enemies))]
+        if not state.initiative_entries:
+            state.initiative_entries = [
+                InitiativeEntry(
+                    actor_ref=actor_ref,
+                    roll=0,
+                    modifier=0,
+                    total=0,
+                )
+                for actor_ref in state.initiative_order
+            ]
         state._initialize_behaviors()
         state._normalize_turn()
         return state
@@ -340,6 +366,16 @@ class EncounterState(EncounterStateData):
             action_sequence=self.action_sequence,
             frame_sequence=self.frame_sequence,
             event_sequence=self.event_sequence,
+            initiative_order=list(self.initiative_order),
+            initiative_entries=[
+                InitiativeEntrySnapshot(
+                    actor_ref=entry.actor_ref,
+                    roll=entry.roll,
+                    modifier=entry.modifier,
+                    total=entry.total,
+                )
+                for entry in self.initiative_entries
+            ],
             decision_stack=[
                 DecisionFrameSnapshot(
                     id=frame.id,
@@ -405,6 +441,37 @@ class EncounterState(EncounterStateData):
             behavior = _build_behavior(enemy, self.item_templates)
             next(behavior)
             self._behaviors.append(behavior)
+
+    def _roll_initiative(self, player: Actor) -> None:
+        entries = [
+            InitiativeEntry(
+                actor_ref="player",
+                roll=roll_die(20),
+                modifier=player.get_modifier(player.attributes.dexterity),
+                total=0,
+            )
+        ]
+        for index, enemy in enumerate(self.enemies):
+            entries.append(
+                InitiativeEntry(
+                    actor_ref=_enemy_ref(index),
+                    roll=roll_die(20),
+                    modifier=enemy.actor.get_modifier(enemy.actor.attributes.dexterity),
+                    total=0,
+                )
+            )
+        for entry in entries:
+            entry.total = entry.roll + entry.modifier
+        entries.sort(
+            key=lambda entry: (
+                -entry.total,
+                -entry.modifier,
+                0 if entry.actor_ref == "player" else 1,
+                entry.actor_ref,
+            )
+        )
+        self.initiative_entries = entries
+        self.initiative_order = [entry.actor_ref for entry in entries]
 
     def current_turn_label(self) -> str:
         decision = self.current_decision()

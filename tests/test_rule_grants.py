@@ -1,5 +1,8 @@
 from pathlib import Path
 
+import pytest
+
+from game.combat.encounter import EncounterState
 from game.runtime.game import Game
 from game.combat.encounter import EncounterAction
 from game.rules import RuleGrant, matching_rules, reroll_eligible_indices
@@ -7,6 +10,18 @@ from game.runtime.save import load_from_file, save_to_file
 from game.systems.roll import reroll_dice, resolve_dice
 
 SAMPLE_GAME_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
+
+
+@pytest.fixture(autouse=True)
+def _player_first_initiative(monkeypatch):
+    def _fixed_initiative(self, player):
+        self.initiative_entries = []
+        self.initiative_order = [
+            "player",
+            *(f"enemy:{index}" for index, _enemy in enumerate(self.enemies)),
+        ]
+
+    monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
 def test_rule_matching_uses_generic_context_conditions():

@@ -142,6 +142,22 @@ class EncounterSnapshotEnemy:
 
 
 @dataclass
+class InitiativeEntry:
+    actor_ref: ActorRef
+    roll: int
+    modifier: int
+    total: int
+
+
+@dataclass
+class InitiativeEntrySnapshot:
+    actor_ref: ActorRef
+    roll: int
+    modifier: int
+    total: int
+
+
+@dataclass
 class DecisionFrameSnapshot:
     id: str
     actor_ref: ActorRef
@@ -214,6 +230,8 @@ class EncounterSnapshot:
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
+    initiative_order: list[ActorRef] = field(default_factory=lambda: ["player"])
+    initiative_entries: list[InitiativeEntrySnapshot] = field(default_factory=list)
     decision_stack: list[DecisionFrameSnapshot] = field(default_factory=list)
     pending_action: PendingActionSnapshot | None = None
     pending_attack: PendingAttackSnapshot | None = None
@@ -291,6 +309,8 @@ class EncounterStateData:
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
+    initiative_order: list[ActorRef] = field(default_factory=lambda: ["player"])
+    initiative_entries: list[InitiativeEntry] = field(default_factory=list)
     conditions: list[Status] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)
     rules_config: RulesConfig = field(default_factory=RulesConfig)
