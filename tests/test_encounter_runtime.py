@@ -397,6 +397,48 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
     assert any("Enemy 2 (Goblin) is defeated." == message for _, message in result.messages)
 
 
+def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    assert session.player.spellcasting is not None
+    state = session.encounter_state
+    state.player_position.x = 1
+    state.player_position.y = 6
+    state.enemies[0].position.x = 5
+    state.enemies[0].position.y = 2
+    state.enemies[1].position.x = 6
+    state.enemies[1].position.y = 2
+    state.enemies[2].position.x = 4
+    state.enemies[2].position.y = 1
+    starting_healths = [enemy.actor.get_health() for enemy in state.enemies]
+
+    rolls = iter([1, 2, 3, 4, 5, 6, 1, 2, 5, 16, 3])
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: next(rolls))
+
+    result = _choose_directional_spell(session, "Cast Fireball", (5, 2))
+
+    spell_event = next(event for event in result.events if event.type == "spell_cast")
+    assert spell_event.data["spell_name"] == "Fireball"
+    assert spell_event.data["target_refs"] == ["enemy:0", "enemy:1", "enemy:2"]
+    assert spell_event.data["area"]["shape"] == "radius"
+    assert spell_event.data["area"]["origin"] == {"x": 5, "y": 2}
+    assert spell_event.data["save_details"][0]["ability"] == "dexterity"
+    assert spell_event.data["damage_roll_details"][0]["dice"] == "8d6"
+    assert spell_event.data["damage_roll_details"][0]["dice_total"] == 24
+    assert spell_event.data["damage_roll_details"][0]["final_damage"] == 24
+    assert spell_event.data["damage_roll_details"][0]["applied_damage"] == min(24, starting_healths[0])
+    assert spell_event.data["damage_roll_details"][1]["final_damage"] == 12
+    assert spell_event.data["damage_roll_details"][1]["applied_damage"] == min(12, starting_healths[1])
+    assert spell_event.data["damage_roll_details"][2]["final_damage"] == 24
+    assert spell_event.data["damage_roll_details"][2]["applied_damage"] == min(24, starting_healths[2])
+    assert session.player.spellcasting.spell_slots_remaining[3] == 1
+    assert state.enemies[0].actor.get_health() == 0
+    assert state.enemies[1].actor.get_health() == 0
+    assert state.enemies[2].actor.get_health() == 0
+
+
 def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
     session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()

@@ -6,6 +6,7 @@ from .....presentation.dice import RollView
 from .....combat.geometry import (
     Vector2D,
     build_directional_area,
+    build_radius_area,
     continuous_area_outline,
     deserialize_continuous_area,
     serialize_area,
@@ -544,7 +545,12 @@ class BattlefieldWidget(QWidget):
             self._hover_point,
             self._battlefield,
         )
-        return preview if preview is not None else self._area_overlay
+        if preview is not None:
+            return preview
+        continuous_area = self._continuous_area(self._area_overlay)
+        if continuous_area is not None and continuous_area.shape == "radius":
+            return None
+        return self._area_overlay
 
     def _overlay_cells(self, area: dict[str, object] | None) -> set[tuple[int, int]]:
         if not isinstance(area, dict):
@@ -614,12 +620,23 @@ class BattlefieldWidget(QWidget):
         continuous_area = deserialize_continuous_area(area.get("continuous_area"))
         if (
             continuous_area is None
-            or continuous_area.direction is None
-            or continuous_area.shape not in {"cone", "line", "cube"}
-            or continuous_area.length is None
         ):
             return None
         if int(hover_point[0]) == origin_x and int(hover_point[1]) == origin_y:
+            return None
+        if continuous_area.shape == "radius" and continuous_area.radius is not None:
+            return serialize_area(
+                build_radius_area(
+                    Position(int(hover_point[0]), int(hover_point[1])),
+                    max(1, int(round(continuous_area.radius))),
+                    Grid(width=battlefield.width, height=battlefield.height),
+                )
+            )
+        if (
+            continuous_area.direction is None
+            or continuous_area.shape not in {"cone", "line", "cube"}
+            or continuous_area.length is None
+        ):
             return None
         direction = Vector2D(
             hover_point[0] - continuous_area.origin.x,

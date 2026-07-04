@@ -665,6 +665,7 @@ def _build_spell(
             value for value in raw.get("areaTags", []) if isinstance(value, str)
         ),
         geometry_mode=_spell_geometry_mode(raw),
+        area_size_feet=_spell_area_size_feet(raw),
     )
 
 
@@ -733,6 +734,20 @@ def _spell_geometry_mode(raw: dict) -> str:
     if range_type == "point" and area_tags:
         return "point_area"
     return "point_target"
+
+
+def _spell_area_size_feet(raw: dict[str, object]) -> int | None:
+    entries = raw.get("entries", [])
+    if not isinstance(entries, list):
+        return None
+    text_parts = [entry for entry in entries if isinstance(entry, str)]
+    if not text_parts:
+        return None
+    text = " ".join(text_parts).casefold()
+    radius_match = re.search(r"(\d+)-foot-radius", text)
+    if radius_match is not None:
+        return int(radius_match.group(1))
+    return None
 
 
 def _second_wind_uses(class_block: dict | None, feature_level: int) -> int:

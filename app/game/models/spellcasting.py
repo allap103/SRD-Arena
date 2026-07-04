@@ -27,6 +27,7 @@ class Spell:
     damage_inflict: tuple[str, ...] = ()
     area_tags: tuple[str, ...] = ()
     geometry_mode: str = "point_target"
+    area_size_feet: int | None = None
 
 
 @dataclass

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..models.actor import Actor
+from ..models.scene import Position
 from ..models.spellcasting import Spell, Spellcasting
 from .behaviors import (
     DIRECTION_DELTAS,
@@ -10,7 +11,7 @@ from .behaviors import (
     is_adjacent as _is_adjacent,
 )
 from .consumables import healing_potions_in_inventory
-from .geometry import AreaOfEffect, Vector2D, build_directional_area, vector_between_positions
+from .geometry import AreaOfEffect, Vector2D, build_directional_area, build_radius_area, vector_between_positions
 from .models import ActionCost, EncounterAction
 from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 from .spell_actions import SpellTargetContext
@@ -154,9 +155,10 @@ def available_spell_actions(
         cost = self._spell_action_cost(spell)
         if self._spell_cast_block_reason(spellcasting, spell, cost) is not None:
             continue
-        if spell.geometry_mode == "directional_area":
+        if spell.geometry_mode in {"directional_area", "point_area"}:
             if not self._spell_action_targets(player, spell):
-                continue
+                if spell.geometry_mode == "directional_area":
+                    continue
             actions.append(
                 EncounterAction(
                     spell_action_label(spell),
@@ -234,6 +236,18 @@ def spell_action_targets(
     player: Actor,
     spell: Spell,
 ) -> list[SpellTargetContext]:
+    if spell.geometry_mode == "point_area":
+        max_range = self._spell_range_squares(spell, player)
+        if max_range is None:
+            return []
+        return [
+            target
+            for index, enemy in enumerate(self.enemies)
+            if enemy.is_alive
+            and self._actors_are_opponents("player", _enemy_ref(index))
+            and _chebyshev_distance(self.player_position, enemy.position) <= max_range
+            and (target := self._spell_target_context(player, _enemy_ref(index))) is not None
+        ]
     if self._spell_targets_self_only(spell):
         target = self._spell_target_context(player, "player")
         if target is None:
@@ -296,6 +310,15 @@ def spell_area(
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
 ) -> AreaOfEffect | None:
+    if spell.geometry_mode == "point_area":
+        if aim_point is None:
+            return None
+        radius_feet = spell.area_size_feet
+        if radius_feet is None:
+            return None
+        radius_squares = max(1, radius_feet // player.attributes.movement.feet_per_square)
+        origin = Position(int(aim_point[0]), int(aim_point[1]))
+        return build_radius_area(origin, radius_squares, self.definition.grid)
     if spell.geometry_mode != "directional_area":
         return None
     if aim_point is not None:

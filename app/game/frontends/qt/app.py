@@ -8,6 +8,7 @@ from ...combat.models import ActionCost, EncounterAction
 from ...combat.geometry import (
     Vector2D,
     build_directional_area,
+    build_radius_area,
     serialize_area,
 )
 from ...combat.spells import (
@@ -509,7 +510,7 @@ class CyoaPySide6Window(QMainWindow):
         if not self._target_mode_is_available(encounter.non_movement_actions, target_modes):
             self._pending_target_mode = None
         self.battlefield_widget.set_cell_targeting_enabled(
-            self._pending_directional_spell_action(encounter.non_movement_actions) is not None
+            self._pending_area_spell_action(encounter.non_movement_actions) is not None
         )
         self.battlefield_widget.set_area_overlay(
             self._pending_spell_overlay(encounter.non_movement_actions)
@@ -1114,7 +1115,7 @@ class CyoaPySide6Window(QMainWindow):
     def _handle_battlefield_point_clicked(self, x: float, y: float) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
-        action = self._pending_directional_spell_action(self._presentation.encounter.non_movement_actions)
+        action = self._pending_area_spell_action(self._presentation.encounter.non_movement_actions)
         if action is None:
             return
         if self.session.encounter_state is None:
@@ -1156,7 +1157,7 @@ class CyoaPySide6Window(QMainWindow):
         return modes
 
     def _target_mode_for_action(self, action: ActionView) -> TargetSelectionMode | None:
-        if action.kind == "spell" and self._is_directional_spell_action(action):
+        if action.kind == "spell" and self._is_area_spell_action(action):
             return TargetSelectionMode(
                 kind=action.kind,
                 source_trigger_id=action.id,
@@ -1170,7 +1171,7 @@ class CyoaPySide6Window(QMainWindow):
 
     def _target_mode_label(self, mode: TargetSelectionMode) -> str:
         if mode.kind == "spell" and self._presentation is not None and self._presentation.encounter is not None:
-            action = self._pending_directional_spell_action(
+            action = self._pending_area_spell_action(
                 self._presentation.encounter.non_movement_actions,
                 mode=mode,
             )
@@ -1187,13 +1188,18 @@ class CyoaPySide6Window(QMainWindow):
             return None
         return f"enemy:{action.value}"
 
-    def _is_directional_spell_action(self, action: ActionView) -> bool:
+    def _is_area_spell_action(self, action: ActionView) -> bool:
         if action.kind != "spell" or not isinstance(action.value, str):
             return False
         spell_id, target_ref, aim_cell = parse_spell_action_value(action.value)
-        return bool(spell_id) and target_ref is None and aim_cell is None
+        if not spell_id or target_ref is not None or aim_cell is not None:
+            return False
+        spell = self._spell_by_id(spell_id)
+        if spell is None:
+            return True
+        return spell is not None and spell.geometry_mode in {"directional_area", "point_area"}
 
-    def _pending_directional_spell_action(
+    def _pending_area_spell_action(
         self,
         actions: list[ActionView],
         *,
@@ -1208,7 +1214,7 @@ class CyoaPySide6Window(QMainWindow):
                 for action in actions
                 if action.kind == "spell"
                 and action.id == pending_mode.source_trigger_id
-                and self._is_directional_spell_action(action)
+                and self._is_area_spell_action(action)
             ),
             None,
         )
@@ -1222,7 +1228,7 @@ class CyoaPySide6Window(QMainWindow):
             return False
         if self._pending_target_mode in target_modes:
             return True
-        return self._pending_directional_spell_action(actions) is not None
+        return self._pending_area_spell_action(actions) is not None
 
     def _apply_turn_result(self, result) -> None:
         encounter_state = self.session.encounter_state
@@ -1262,26 +1268,32 @@ class CyoaPySide6Window(QMainWindow):
         QTimer.singleShot(20, self._scroll_roll_log_to_bottom)
 
     def _pending_spell_overlay(self, actions: list[ActionView]) -> dict[str, object] | None:
-        action = self._pending_directional_spell_action(actions)
+        action = self._pending_area_spell_action(actions)
         if action is None or self.session.encounter_state is None or self.session.player.spellcasting is None:
             return None
         spell_id, _, _ = parse_spell_action_value(str(action.value))
-        spell = next(
-            (spell for spell in self.session.player.spellcasting.learned_spells if spell.id == spell_id),
-            None,
-        )
+        spell = self._spell_by_id(spell_id)
         if spell is None:
             return None
+        grid = Grid(
+            width=self.session.encounter_state.definition.grid.width,
+            height=self.session.encounter_state.definition.grid.height,
+        )
+        if spell.geometry_mode == "point_area":
+            radius_feet = spell.area_size_feet
+            if radius_feet is None:
+                return None
+            radius_squares = max(
+                1,
+                radius_feet // self.session.player.attributes.movement.feet_per_square,
+            )
+            return serialize_area(build_radius_area(Position(0, 0), radius_squares, grid))
         length = spell_range_squares(spell, self.session.player)
         if length is None:
             return None
         origin = Position(
             self.session.encounter_state.player_position.x,
             self.session.encounter_state.player_position.y,
-        )
-        grid = Grid(
-            width=self.session.encounter_state.definition.grid.width,
-            height=self.session.encounter_state.definition.grid.height,
         )
         default_direction = Vector2D(1.0, 0.0)
         coverage_threshold = (
@@ -1296,6 +1308,15 @@ class CyoaPySide6Window(QMainWindow):
                 grid,
                 coverage_threshold=coverage_threshold,
             )
+        )
+
+    def _spell_by_id(self, spell_id: str):
+        session = getattr(self, "session", None)
+        if session is None or session.player.spellcasting is None:
+            return None
+        return next(
+            (spell for spell in session.player.spellcasting.learned_spells if spell.id == spell_id),
+            None,
         )
 
     def _scroll_roll_log_to_bottom(self) -> None:

@@ -311,6 +311,10 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
     assert spells["Lightning Bolt"].geometry_mode == "directional_area"
     assert spells["Lightning Bolt"].area_tags == ("L",)
     assert spells["Fireball"].geometry_mode == "point_area"
+    assert spells["Fireball"].area_size_feet == 20
+    assert spells["Fireball"].saving_throw_abilities == ("dexterity",)
+    assert spells["Fireball"].damage_dice == "8d6"
+    assert spells["Fireball"].damage_inflict == ("fire",)
 
 
 def test_save_and_load_preserve_spell_slots(tmp_path: Path) -> None:
