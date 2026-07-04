@@ -1,0 +1,147 @@
+from __future__ import annotations
+
+try:
+    from PySide6.QtGui import QFont
+    from PySide6.QtWidgets import QApplication
+except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
+    QApplication = None  # type: ignore[assignment]
+    QFont = object  # type: ignore[assignment]
+
+
+FANTASY_STYLESHEET = """
+QWidget {
+    background: #1b1712;
+    color: #eadfca;
+    font-family: "Palatino", "Georgia", "Times New Roman", serif;
+    font-size: 14px;
+}
+
+QMainWindow {
+    background: #140f0b;
+}
+
+QLabel {
+    background: transparent;
+    color: #eadfca;
+}
+
+QFrame#panel,
+QFrame#untitledPanel,
+QFrame#sidebarPanel,
+QFrame#rollRail,
+QFrame#overlayCard {
+    background: #241c15;
+    border: 1px solid #8e6d3b;
+    border-radius: 12px;
+}
+
+QFrame#scenePanel,
+QFrame#choicesPanel,
+QWidget#encounterPanel {
+    background: #1d1711;
+    border: 1px solid #73552c;
+    border-radius: 14px;
+}
+
+QWidget#rootCentral {
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 #16110d,
+        stop: 0.5 #221a13,
+        stop: 1 #110d0a
+    );
+}
+
+QTextEdit,
+QScrollArea,
+QStackedWidget {
+    background: #2a2119;
+    color: #f2e8d5;
+    border: 1px solid #80613a;
+    border-radius: 10px;
+}
+
+QTextEdit {
+    padding: 10px;
+    selection-background-color: #8a6730;
+}
+
+QPushButton {
+    background: #5b4020;
+    color: #f7edd9;
+    border: 1px solid #c59a4b;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-weight: 600;
+}
+
+QPushButton:hover {
+    background: #755229;
+    border-color: #e1bb73;
+}
+
+QPushButton:pressed {
+    background: #493116;
+}
+
+QPushButton:disabled {
+    background: #34271c;
+    color: #9d8a72;
+    border-color: #5e4b36;
+}
+
+QPushButton#sidebarButton {
+    text-align: left;
+    padding-left: 16px;
+    min-height: 40px;
+}
+
+QPushButton#endTurnButton {
+    min-width: 150px;
+}
+
+QPushButton#movementButton {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+QWidget#actionHeader {
+    background: #30241a;
+    border: 1px solid #7d6038;
+    border-radius: 10px;
+}
+
+QLabel#sectionTitle,
+QLabel#windowTitle,
+QLabel#overlayTitle {
+    color: #f3deb0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+QLabel#sectionSubtitle {
+    color: #c9b89b;
+}
+
+QWidget#combatBoard {
+    background: #211a14;
+    border: 1px solid #7a5c33;
+    border-radius: 12px;
+}
+
+QWidget#dicePanel {
+    background: #221b15;
+}
+
+QFrame#victoryOverlay {
+    background: rgba(10, 8, 6, 200);
+    border-radius: 16px;
+}
+"""
+
+
+def apply_fantasy_theme(app: QApplication) -> None:
+    app.setStyleSheet(FANTASY_STYLESHEET)
+    font = QFont("Palatino")
+    font.setPointSize(11)
+    app.setFont(font)

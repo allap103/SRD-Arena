@@ -114,6 +114,7 @@ class DieSvgWidget(QWidget):
 class DiceRollPanel(QWidget):
     def __init__(self, action_callback=None):
         super().__init__()
+        self.setObjectName("dicePanel")
         self._action_callback = action_callback
         self._roll_action_widgets: dict[str, list[QWidget]] = {}
         self._layout = QVBoxLayout(self)

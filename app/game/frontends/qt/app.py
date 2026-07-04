@@ -31,6 +31,7 @@ from ...runtime.session import (
     GameSession,
 )
 from ...support.scenarios import ScenarioInfo, list_scenarios
+from .theme import apply_fantasy_theme
 from .ui.encounter import (
     ARROW_LABELS,
     ENCOUNTER_BUTTON_HEIGHT,
@@ -111,6 +112,7 @@ class CyoaPySide6Window(QMainWindow):
         self.resize(1400, 900)
 
         central = QWidget()
+        central.setObjectName("rootCentral")
         self.setCentralWidget(central)
         root_layout = QHBoxLayout(central)
         root_layout.setContentsMargins(12, 12, 12, 12)
@@ -127,16 +129,19 @@ class CyoaPySide6Window(QMainWindow):
         layout.setSpacing(10)
 
         self.scene_group = self._build_group("Scene")
+        self.scene_group.setObjectName("scenePanel")
         self.scene_text = self._build_readonly_text(minimum_height=180)
         self.scene_group.layout().addWidget(self.scene_text)
 
         self.story_choices_group = self._build_group("Choices")
+        self.story_choices_group.setObjectName("choicesPanel")
         self.story_choices_layout = QVBoxLayout()
         self.story_choices_layout.setSpacing(8)
         story_scroll = self._wrap_in_scroll(self.story_choices_layout)
         self.story_choices_group.layout().addWidget(story_scroll)
 
         self.encounter_panel = QWidget()
+        self.encounter_panel.setObjectName("encounterPanel")
         encounter_layout = QVBoxLayout(self.encounter_panel)
         encounter_layout.setContentsMargins(0, 0, 0, 0)
         encounter_layout.setSpacing(10)
@@ -147,18 +152,21 @@ class CyoaPySide6Window(QMainWindow):
         battlefield_layout.setSpacing(10)
 
         self.battlefield_widget = BattlefieldWidget(self.game.directory)
+        self.battlefield_widget.setObjectName("combatBoard")
         self.battlefield_widget.actor_clicked.connect(self._handle_battlefield_actor_clicked)
         self.battlefield_widget.cell_clicked.connect(self._handle_battlefield_cell_clicked)
         self.battlefield_widget.point_clicked.connect(self._handle_battlefield_point_clicked)
         battlefield_layout.addWidget(self.battlefield_widget, stretch=1)
 
         roll_rail = QFrame()
+        roll_rail.setObjectName("rollRail")
         roll_rail.setFrameShape(QFrame.Shape.StyledPanel)
         roll_rail.setFixedWidth(310)
         roll_rail_layout = QVBoxLayout(roll_rail)
         roll_rail_layout.setContentsMargins(10, 10, 10, 10)
         roll_rail_layout.setSpacing(8)
         roll_title = QLabel("Combat Log")
+        roll_title.setObjectName("sectionTitle")
         roll_title.setStyleSheet("QLabel { font-weight: 700; }")
         roll_rail_layout.addWidget(roll_title)
 
@@ -207,6 +215,7 @@ class CyoaPySide6Window(QMainWindow):
         movement_layout.addWidget(self.movement_status)
         for direction in MOVE_DIRECTIONS:
             button = QPushButton(ARROW_LABELS[direction])
+            button.setObjectName("movementButton")
             button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
             button.clicked.connect(
                 lambda _checked=False, move_direction=direction: self._trigger_move(move_direction)
@@ -232,6 +241,7 @@ class CyoaPySide6Window(QMainWindow):
         actions_footer_layout.setContentsMargins(0, 0, 0, 0)
         actions_footer_layout.addStretch(1)
         self.end_turn_button = QPushButton("End Turn")
+        self.end_turn_button.setObjectName("endTurnButton")
         self.end_turn_button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
         self.end_turn_button.clicked.connect(self._end_turn)
         actions_footer_layout.addWidget(self.end_turn_button)
@@ -241,6 +251,7 @@ class CyoaPySide6Window(QMainWindow):
         encounter_layout.addWidget(encounter_controls)
 
         self.victory_overlay = QFrame(self.encounter_panel)
+        self.victory_overlay.setObjectName("victoryOverlay")
         self.victory_overlay.setStyleSheet(
             "QFrame { background: rgba(12, 10, 6, 190); }"
             "QLabel { color: #f6edd9; }"
@@ -252,6 +263,7 @@ class CyoaPySide6Window(QMainWindow):
         overlay_layout.setSpacing(12)
         overlay_layout.addStretch(1)
         overlay_card = QFrame()
+        overlay_card.setObjectName("overlayCard")
         overlay_card.setStyleSheet(
             "QFrame { background: #1d1710; border: 2px solid #c9a227; border-radius: 10px; }"
         )
@@ -259,6 +271,7 @@ class CyoaPySide6Window(QMainWindow):
         overlay_card_layout.setContentsMargins(24, 24, 24, 24)
         overlay_card_layout.setSpacing(12)
         overlay_title = QLabel("Victory")
+        overlay_title.setObjectName("overlayTitle")
         overlay_title_font = QFont()
         overlay_title_font.setPointSize(18)
         overlay_title_font.setBold(True)
@@ -282,6 +295,7 @@ class CyoaPySide6Window(QMainWindow):
 
     def _build_sidebar(self) -> QWidget:
         sidebar = self._framed_panel("Menu")
+        sidebar.setObjectName("sidebarPanel")
         sidebar.setFixedWidth(SIDEBAR_WIDTH)
         layout = sidebar.layout()
 
@@ -340,6 +354,7 @@ class CyoaPySide6Window(QMainWindow):
 
     def _build_group(self, title: str) -> QFrame:
         group = QFrame()
+        group.setObjectName("panel")
         group.setFrameShape(QFrame.Shape.StyledPanel)
         layout = QVBoxLayout(group)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -353,6 +368,7 @@ class CyoaPySide6Window(QMainWindow):
 
     def _build_untitled_panel(self) -> QFrame:
         panel = QFrame()
+        panel.setObjectName("untitledPanel")
         panel.setFrameShape(QFrame.Shape.StyledPanel)
         panel.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         layout = QVBoxLayout(panel)
@@ -383,6 +399,7 @@ class CyoaPySide6Window(QMainWindow):
 
     def _sidebar_button(self, label: str, callback) -> QPushButton:
         button = QPushButton(label)
+        button.setObjectName("sidebarButton")
         button.clicked.connect(callback)
         return button
 
@@ -693,6 +710,7 @@ class CyoaPySide6Window(QMainWindow):
         show_indicator: bool = True,
     ) -> QWidget:
         container = QWidget()
+        container.setObjectName("actionHeader")
         layout = QHBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
@@ -711,6 +729,7 @@ class CyoaPySide6Window(QMainWindow):
             layout.addWidget(indicator)
 
         header = QLabel(title)
+        header.setObjectName("sectionTitle")
         header_font = QFont()
         header_font.setBold(True)
         header.setFont(header_font)
@@ -1249,12 +1268,14 @@ class ScenarioPickerWindow(QMainWindow):
         self.resize(520, 420)
 
         central = QWidget()
+        central.setObjectName("rootCentral")
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
 
         title = QLabel("Choose a scenario")
+        title.setObjectName("windowTitle")
         title_font = QFont()
         title_font.setPointSize(18)
         title_font.setBold(True)
@@ -1262,6 +1283,7 @@ class ScenarioPickerWindow(QMainWindow):
         layout.addWidget(title)
 
         subtitle = QLabel("Start a new session from any available scenario.")
+        subtitle.setObjectName("sectionSubtitle")
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
 
@@ -1274,6 +1296,7 @@ class ScenarioPickerWindow(QMainWindow):
 
         for scenario in scenarios:
             button = QPushButton(f"{scenario.label} ({scenario.id})")
+            button.setObjectName("sidebarButton")
             button.setMinimumHeight(44)
             button.clicked.connect(
                 lambda _checked=False, selected=scenario: self._open_scenario(selected)
@@ -1298,6 +1321,7 @@ def run_pyside6_app(
 ) -> None:
     _require_pyside6()
     app = QApplication.instance() or QApplication(sys.argv)
+    apply_fantasy_theme(app)
     window = (
         CyoaPySide6Window(game=game)
         if game is not None
