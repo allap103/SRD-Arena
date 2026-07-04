@@ -133,6 +133,44 @@ QWidget#dicePanel {
     background: #221b15;
 }
 
+QFrame#initiativeCard {
+    background: #2b2118;
+    border: 1px solid #7f6137;
+    border-radius: 10px;
+}
+
+QFrame#initiativeCard[active="true"] {
+    background: #3a2a16;
+    border: 1px solid #d4ad58;
+}
+
+QLabel#initiativeRank {
+    color: #c9b89b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+QLabel#initiativeName {
+    color: #eadfca;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+QLabel#initiativeScore {
+    color: #f3deb0;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+QLabel#initiativeBadge {
+    color: #1f160c;
+    background: #d4ad58;
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
 QFrame#victoryOverlay {
     background: rgba(10, 8, 6, 200);
     border-radius: 16px;

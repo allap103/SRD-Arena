@@ -107,6 +107,27 @@ def test_initiative_is_rolled_for_all_combatants_at_encounter_start(monkeypatch)
     assert session.encounter_state.current_decision().actor_ref == "enemy:0"
 
 
+def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
+    monkeypatch.setattr(EncounterState, "_roll_initiative", _ROLL_INITIATIVE)
+    rolls = iter([12, 18, 7, 14])
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: next(rolls))
+    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+
+    presentation = build_session_presentation(session)
+
+    assert presentation.encounter is not None
+    assert [
+        (entry.label, entry.total, entry.is_active)
+        for entry in presentation.encounter.resources.initiative
+    ] == [
+        ("Enemy 1 (Goblin)", 20, True),
+        ("Enemy 3 (Goblin)", 16, False),
+        ("Player", 13, False),
+        ("Enemy 2 (Goblin)", 9, False),
+    ]
+
+
 def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> None:
     session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"

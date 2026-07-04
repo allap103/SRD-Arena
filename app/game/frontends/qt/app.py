@@ -171,6 +171,28 @@ class CyoaPySide6Window(QMainWindow):
         self.battlefield_widget.point_clicked.connect(self._handle_battlefield_point_clicked)
         battlefield_layout.addWidget(self.battlefield_widget, stretch=1)
 
+        self.initiative_rail = QFrame()
+        self.initiative_rail.setObjectName("rollRail")
+        self.initiative_rail.setFrameShape(QFrame.Shape.StyledPanel)
+        self.initiative_rail.setFixedWidth(220)
+        initiative_layout = QVBoxLayout(self.initiative_rail)
+        initiative_layout.setContentsMargins(10, 10, 10, 10)
+        initiative_layout.setSpacing(8)
+        initiative_title = QLabel("Initiative")
+        initiative_title.setObjectName("sectionTitle")
+        initiative_title.setStyleSheet("QLabel { font-weight: 700; }")
+        initiative_layout.addWidget(initiative_title)
+        self.initiative_scroll = QScrollArea()
+        self.initiative_scroll.setWidgetResizable(True)
+        self.initiative_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.initiative_content = QWidget()
+        self.initiative_layout = QVBoxLayout(self.initiative_content)
+        self.initiative_layout.setContentsMargins(0, 0, 0, 0)
+        self.initiative_layout.setSpacing(4)
+        self.initiative_scroll.setWidget(self.initiative_content)
+        initiative_layout.addWidget(self.initiative_scroll, stretch=1)
+        battlefield_layout.addWidget(self.initiative_rail)
+
         roll_rail = QFrame()
         roll_rail.setObjectName("rollRail")
         roll_rail.setFrameShape(QFrame.Shape.StyledPanel)
@@ -507,6 +529,7 @@ class CyoaPySide6Window(QMainWindow):
             button.setEnabled(action is not None)
 
         self._render_movement_status(encounter.resources)
+        self._render_initiative_rail(encounter.resources)
 
         action_groups = self._action_groups(encounter.non_movement_actions)
         if self._action_menu_scope is not None and encounter.action_pane_title != "Actions":
@@ -737,6 +760,55 @@ class CyoaPySide6Window(QMainWindow):
                 height=RESOURCE_BAR_HEIGHT,
             )
         )
+
+    def _render_initiative_rail(self, resources) -> None:
+        clear_layout(self.initiative_layout)
+        if not resources.initiative:
+            empty = QLabel("No initiative order.")
+            empty.setEnabled(False)
+            self.initiative_layout.addWidget(empty)
+            self.initiative_layout.addStretch(1)
+            return
+        for index, entry in enumerate(resources.initiative, start=1):
+            self.initiative_layout.addWidget(
+                self._build_initiative_entry_widget(index, entry)
+            )
+        self.initiative_layout.addStretch(1)
+
+    def _build_initiative_entry_widget(self, index: int, entry) -> QWidget:
+        card = QFrame()
+        card.setObjectName("initiativeCard")
+        card.setProperty("active", entry.is_active)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setSpacing(4)
+
+        top_row = QWidget()
+        top_layout = QHBoxLayout(top_row)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(6)
+
+        rank = QLabel(f"#{index}")
+        rank.setObjectName("initiativeRank")
+        top_layout.addWidget(rank)
+
+        top_layout.addStretch(1)
+        if entry.is_active:
+            badge = QLabel("ACTING")
+            badge.setObjectName("initiativeBadge")
+            top_layout.addWidget(badge)
+
+        layout.addWidget(top_row)
+
+        name = QLabel(entry.label)
+        name.setObjectName("initiativeName")
+        name.setWordWrap(True)
+        layout.addWidget(name)
+
+        score = QLabel(f"Initiative {entry.total}")
+        score.setObjectName("initiativeScore")
+        layout.addWidget(score)
+        return card
 
     def _build_action_header(
         self,

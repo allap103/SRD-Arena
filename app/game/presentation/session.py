@@ -32,6 +32,7 @@ class ResourceSummaryView:
     movement_total: int
     movement_remaining_feet: int
     movement_total_feet: int
+    initiative: tuple["InitiativeTrackEntryView", ...] = ()
 
     def as_text(self) -> str:
         return "\n".join(
@@ -61,6 +62,14 @@ class SpellSlotTrackView:
     level: int
     remaining: int
     maximum: int
+
+
+@dataclass(frozen=True)
+class InitiativeTrackEntryView:
+    actor_ref: str
+    label: str
+    total: int
+    is_active: bool = False
 
 
 @dataclass
@@ -267,6 +276,7 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
         movement_total=player_state["movement_total"],
         movement_remaining_feet=player_state["movement_remaining_feet"],
         movement_total_feet=player_state["movement_total_feet"],
+        initiative=_build_initiative_track(combat_state),
     )
 
 
@@ -399,6 +409,39 @@ def _condition_suffix(conditions: object) -> str:
     if not labels:
         return ""
     return f" [{', '.join(labels)}]"
+
+
+def _build_initiative_track(
+    combat_state: dict[str, object],
+) -> tuple[InitiativeTrackEntryView, ...]:
+    initiative = combat_state.get("initiative", [])
+    decision = combat_state.get("decision", {})
+    active_actor_ref = (
+        decision.get("actor_ref")
+        if isinstance(decision, dict)
+        else None
+    )
+    if not isinstance(initiative, list):
+        return ()
+
+    entries: list[InitiativeTrackEntryView] = []
+    for entry in initiative:
+        if not isinstance(entry, dict):
+            continue
+        actor_ref = entry.get("actor_ref")
+        label = entry.get("label")
+        total = entry.get("total")
+        if not isinstance(actor_ref, str) or not isinstance(label, str) or not isinstance(total, int):
+            continue
+        entries.append(
+            InitiativeTrackEntryView(
+                actor_ref=actor_ref,
+                label=label,
+                total=total,
+                is_active=actor_ref == active_actor_ref,
+            )
+        )
+    return tuple(entries)
 
 
 def _build_spell_slot_tracks(player_state: dict[str, object]) -> tuple[SpellSlotTrackView, ...]:
