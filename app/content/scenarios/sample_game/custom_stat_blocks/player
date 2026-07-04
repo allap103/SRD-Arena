@@ -24,6 +24,10 @@
         {
             "name": "Burning Hands",
             "source": "XPHB"
+        },
+        {
+            "name": "Fireball",
+            "source": "XPHB"
         }
     ],
     "optional_features": [
@@ -34,7 +38,7 @@
     ],
     "attributes": {
         "base_health": 32,
-        "level": 5,
+        "level": 13,
         "movement": {
             "speed_feet": 30,
             "feet_per_square": 5

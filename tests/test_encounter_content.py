@@ -324,5 +324,5 @@ def test_save_and_load_preserve_spell_slots(tmp_path: Path) -> None:
     loaded = load_from_file(save_path, "app/content/scenarios/sample_game")
 
     assert loaded.player.spellcasting is not None
-    assert loaded.player.spellcasting.spell_slots_max == {1: 3}
-    assert loaded.player.spellcasting.spell_slots_remaining == {1: 1}
+    assert loaded.player.spellcasting.spell_slots_max == {1: 4, 2: 3, 3: 2}
+    assert loaded.player.spellcasting.spell_slots_remaining == {1: 1, 2: 3, 3: 2}

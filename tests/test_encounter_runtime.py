@@ -245,7 +245,9 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypat
 
     assert presentation.encounter is not None
     assert presentation.encounter.resources.spell_slots == (
-        SpellSlotTrackView(level=1, remaining=2, maximum=3),
+        SpellSlotTrackView(level=1, remaining=3, maximum=4),
+        SpellSlotTrackView(level=2, remaining=3, maximum=3),
+        SpellSlotTrackView(level=3, remaining=2, maximum=2),
     )
 
 
@@ -292,7 +294,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatc
     assert ("system", "Traveler casts Color Spray on Enemy 1 (Goblin).") in result.messages
     assert any("is blinded until the end of your next turn" in message for _, message in result.messages)
     assert session.encounter_state.player_action_available is False
-    assert session.player.spellcasting.spell_slots_remaining[1] == 2
+    assert session.player.spellcasting.spell_slots_remaining[1] == 3
     assert session.encounter_state.has_condition("enemy:0", "blinded") is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Color Spray"
@@ -689,7 +691,7 @@ def test_save_and_load_preserve_color_spray_condition_and_slots(tmp_path: Path, 
 
     assert loaded.encounter_state is not None
     assert loaded.player.spellcasting is not None
-    assert loaded.player.spellcasting.spell_slots_remaining[1] == 2
+    assert loaded.player.spellcasting.spell_slots_remaining[1] == 3
     assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
 
 
