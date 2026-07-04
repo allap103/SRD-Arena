@@ -12,7 +12,7 @@ FANTASY_STYLESHEET = """
 QWidget {
     background: #1b1712;
     color: #eadfca;
-    font-family: "Palatino", "Georgia", "Times New Roman", serif;
+    font-family: "Palatino", "Georgia", "Times New Roman";
     font-size: 14px;
 }
 

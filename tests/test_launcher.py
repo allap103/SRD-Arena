@@ -41,7 +41,6 @@ def test_resolve_game_directory_accepts_scenarios_subfolder_name(
 ) -> None:
     repo_root = tmp_path / "repo"
     adventure_game = _make_game_dir(repo_root / "app" / "content" / "scenarios" / "forest_trial")
-    monkeypatch.setattr(launcher, "REPO_ROOT", repo_root)
     monkeypatch.setattr(launcher, "SCENARIOS_DIR", repo_root / "app" / "content" / "scenarios")
 
     resolved = launcher.resolve_game_directory("forest_trial")
@@ -65,15 +64,18 @@ def test_launch_runs_pyside6_frontend(monkeypatch, tmp_path: Path) -> None:
         sys.modules,
         "game.frontends.qt.app",
         SimpleNamespace(
-            run_pyside6_app=lambda game=None, start_scene_override=None: launched.append(
-                None if game is None else game.directory
+            run_pyside6_app=lambda game=None, start_scene_override=None, show_encounter_json=False: launched.append(
+                (
+                    None if game is None else game.directory,
+                    show_encounter_json,
+                )
             )
         ),
     )
 
-    launcher.launch("pyside6", game_dir)
+    launcher.launch("pyside6", game_dir, show_encounter_json=True)
 
-    assert launched == [game_dir]
+    assert launched == [(game_dir, True)]
 
 
 def test_main_launches_pyside6_by_default(
@@ -121,3 +123,11 @@ def test_parser_rejects_textual_frontend() -> None:
 
     with pytest.raises(SystemExit):
         parser.parse_args(["--frontend", "textual"])
+
+
+def test_parser_accepts_encounter_json_flag() -> None:
+    parser = launcher.build_parser()
+
+    args = parser.parse_args(["--show-encounter-json"])
+
+    assert args.show_encounter_json is True

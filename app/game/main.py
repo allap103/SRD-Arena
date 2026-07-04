@@ -4,9 +4,9 @@ import argparse
 from pathlib import Path
 
 from .frontends.api.savegames import run_savegame_api
-from .runtime.game import GAME_DIR, Game
+from .runtime.game import Game
 from .support.logging import configure_game_logging
-from .support.paths import REPO_ROOT, SCENARIOS_ROOT
+from .support.paths import SCENARIOS_ROOT
 from .support.scenarios import VALID_GAME_SUBDIRS, list_scenarios
 
 SCENARIOS_DIR = SCENARIOS_ROOT
@@ -49,6 +49,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="default",
         help="Who controls encounter teams. Defaults to content-defined controllers.",
     )
+    parser.add_argument(
+        "--show-encounter-json",
+        action="store_true",
+        help="Open an additional window that shows the live encounter JSON.",
+    )
     return parser
 
 
@@ -81,6 +86,7 @@ def launch(
     port: int = 8000,
     control_mode: str = "default",
     start_scene: str | None = None,
+    show_encounter_json: bool = False,
 ) -> None:
     if frontend == "pyside6":
         from .frontends.qt.app import run_pyside6_app
@@ -90,7 +96,11 @@ def launch(
             if game_dir is not None
             else None
         )
-        run_pyside6_app(game=game, start_scene_override=start_scene)
+        run_pyside6_app(
+            game=game,
+            start_scene_override=start_scene,
+            show_encounter_json=show_encounter_json,
+        )
         return
     if game_dir is None:
         game_dir = select_game_directory()
@@ -121,6 +131,7 @@ def main(argv: list[str] | None = None) -> None:
         port=args.port,
         control_mode=args.control_mode,
         start_scene=args.start_scene,
+        show_encounter_json=args.show_encounter_json,
     )
 
 

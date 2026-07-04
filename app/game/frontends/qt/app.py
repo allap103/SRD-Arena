@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import sys
+from datetime import datetime, timezone
 
 from ...combat.models import ActionCost, EncounterAction
 from ...combat.geometry import (
@@ -50,10 +52,12 @@ try:
     from PySide6.QtWidgets import (
         QApplication,
         QFrame,
+        QFileDialog,
         QGridLayout,
         QHBoxLayout,
         QLabel,
         QMainWindow,
+        QMessageBox,
         QPushButton,
         QScrollArea,
         QSizePolicy,
@@ -72,10 +76,12 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QTimer = object  # type: ignore[assignment]
     QFont = object  # type: ignore[assignment]
     QFrame = object  # type: ignore[assignment]
+    QFileDialog = object  # type: ignore[assignment]
     QGridLayout = object  # type: ignore[assignment]
     QHBoxLayout = object  # type: ignore[assignment]
     QLabel = object  # type: ignore[assignment]
     QMainWindow = object  # type: ignore[assignment]
+    QMessageBox = object  # type: ignore[assignment]
     QPushButton = object  # type: ignore[assignment]
     QScrollArea = object  # type: ignore[assignment]
     QSizePolicy = object  # type: ignore[assignment]
@@ -94,7 +100,12 @@ def _require_pyside6() -> None:
 
 
 class CyoaPySide6Window(QMainWindow):
-    def __init__(self, game: Game | None = None):
+    def __init__(
+        self,
+        game: Game | None = None,
+        *,
+        show_encounter_json: bool = False,
+    ):
         _require_pyside6()
         super().__init__()
         self.game = game or Game(GAME_DIR)
@@ -107,6 +118,7 @@ class CyoaPySide6Window(QMainWindow):
         self._combat_log_scene_id: str | None = None
         self._logged_round_number: int | None = None
         self._ai_step_scheduled = False
+        self._show_encounter_json = show_encounter_json
 
         self.setWindowTitle("CYOA")
         self.resize(1400, 900)
@@ -122,6 +134,7 @@ class CyoaPySide6Window(QMainWindow):
         root_layout.addWidget(self._build_sidebar())
 
         self.refresh_view()
+
     def _build_main_content(self) -> QWidget:
         container = QWidget()
         layout = QVBoxLayout(container)
@@ -304,6 +317,8 @@ class CyoaPySide6Window(QMainWindow):
         self.sidebar_stack.addWidget(self._build_inventory_page())
         self.sidebar_stack.addWidget(self._build_attributes_page())
         self.sidebar_stack.addWidget(self._build_system_page())
+        if self._show_encounter_json:
+            self.sidebar_stack.addWidget(self._build_encounter_json_page())
         layout.addWidget(self.sidebar_stack)
         return sidebar
 
@@ -348,8 +363,29 @@ class CyoaPySide6Window(QMainWindow):
         layout.addWidget(self._sidebar_button("Back", self.show_menu_root))
         layout.addWidget(self._sidebar_button(SAVE_CHOICE_TEXT, self._system_save))
         layout.addWidget(self._sidebar_button(LOAD_CHOICE_TEXT, self._system_load))
+        if self._show_encounter_json:
+            layout.addWidget(
+                self._sidebar_button("Encounter JSON", self.show_encounter_json)
+            )
         layout.addWidget(self._sidebar_button(EXIT_CHOICE_TEXT, self.close))
         layout.addStretch(1)
+        return page
+
+    def _build_encounter_json_page(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.addWidget(self._sidebar_button("Back", self.show_system_menu))
+        self.encounter_json_status = QLabel("Waiting for encounter data.")
+        self.encounter_json_status.setWordWrap(True)
+        layout.addWidget(self.encounter_json_status)
+        self.encounter_json_text = self._build_readonly_text(minimum_height=400)
+        self.encounter_json_text.setObjectName("encounterJsonText")
+        layout.addWidget(self.encounter_json_text, stretch=1)
+        self.encounter_json_export_button = self._sidebar_button(
+            "Export JSON",
+            self._export_encounter_json,
+        )
+        layout.addWidget(self.encounter_json_export_button)
         return page
 
     def _build_group(self, title: str) -> QFrame:
@@ -427,6 +463,7 @@ class CyoaPySide6Window(QMainWindow):
             self._sync_combat_log_round(presentation.scene_id)
             self._render_encounter(presentation)
         self._sync_victory_overlay(presentation)
+        self._sync_encounter_json_view()
         self._schedule_ai_step_if_needed()
 
     def _render_story_actions(self, actions: list[ActionView]) -> None:
@@ -1249,6 +1286,11 @@ class CyoaPySide6Window(QMainWindow):
     def show_system_menu(self) -> None:
         self.sidebar_stack.setCurrentIndex(3)
 
+    def show_encounter_json(self) -> None:
+        if not self._show_encounter_json:
+            return
+        self.sidebar_stack.setCurrentIndex(4)
+
     def display_item_name(self, item_id: str) -> str:
         item = self._items_by_id.get(item_id)
         return item.name if item else item_id
@@ -1257,12 +1299,69 @@ class CyoaPySide6Window(QMainWindow):
         super().resizeEvent(event)
         self._update_victory_overlay_geometry()
 
+    def _sync_encounter_json_view(self) -> None:
+        if not self._show_encounter_json or not hasattr(self, "encounter_json_text"):
+            return
+        payload = self._encounter_json_payload()
+        encounter_active = bool(payload.get("encounter_active"))
+        self.encounter_json_status.setText(
+            "Live encounter state." if encounter_active else "No active encounter."
+        )
+        self.encounter_json_text.setPlainText(
+            json.dumps(payload, indent=2, sort_keys=True)
+        )
+        self.encounter_json_export_button.setEnabled(bool(payload))
+
+    def _encounter_json_payload(self) -> dict[str, object]:
+        encounter_state = self.session.encounter_state
+        if encounter_state is None:
+            return {
+                "encounter_active": False,
+                "scene_id": self.session.current_scene_id,
+                "scene_text": self.session.current_scene.text,
+            }
+        return {
+            "encounter_active": True,
+            "encounter": encounter_state.export_state(self.session.player),
+        }
+
+    def _export_encounter_json(self) -> None:
+        payload = self._encounter_json_payload()
+        default_name = self._default_encounter_json_export_name(payload)
+        target_path, _selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Export Encounter JSON",
+            default_name,
+            "JSON Files (*.json);;All Files (*)",
+        )
+        if not target_path:
+            return
+        with open(target_path, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+        QMessageBox.information(self, "Export Complete", f"Saved JSON to:\n{target_path}")
+
+    def _default_encounter_json_export_name(self, payload: dict[str, object]) -> str:
+        scene_id = payload.get("encounter", {}).get("scene_id") if isinstance(
+            payload.get("encounter"),
+            dict,
+        ) else None
+        suffix = scene_id if isinstance(scene_id, str) and scene_id else "no-encounter"
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        return f"encounter-{suffix}-{timestamp}.json"
+
 
 class ScenarioPickerWindow(QMainWindow):
-    def __init__(self, start_scene_override: str | None = None):
+    def __init__(
+        self,
+        start_scene_override: str | None = None,
+        *,
+        show_encounter_json: bool = False,
+    ):
         _require_pyside6()
         super().__init__()
         self._start_scene_override = start_scene_override
+        self._show_encounter_json = show_encounter_json
         self._game_window: CyoaPySide6Window | None = None
         self.setWindowTitle("Choose Scenario")
         self.resize(520, 420)
@@ -1309,7 +1408,8 @@ class ScenarioPickerWindow(QMainWindow):
             Game(
                 str(scenario.directory),
                 start_scene=self._start_scene_override,
-            )
+            ),
+            show_encounter_json=self._show_encounter_json,
         )
         self._game_window.show()
         self.close()
@@ -1318,14 +1418,18 @@ class ScenarioPickerWindow(QMainWindow):
 def run_pyside6_app(
     game: Game | None = None,
     start_scene_override: str | None = None,
+    show_encounter_json: bool = False,
 ) -> None:
     _require_pyside6()
     app = QApplication.instance() or QApplication(sys.argv)
     apply_fantasy_theme(app)
     window = (
-        CyoaPySide6Window(game=game)
+        CyoaPySide6Window(game=game, show_encounter_json=show_encounter_json)
         if game is not None
-        else ScenarioPickerWindow(start_scene_override=start_scene_override)
+        else ScenarioPickerWindow(
+            start_scene_override=start_scene_override,
+            show_encounter_json=show_encounter_json,
+        )
     )
     window.show()
     app.exec()
