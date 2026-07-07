@@ -130,13 +130,33 @@ class TurnEngine:
             )
 
             if command.kind == "move":
-                if enemy.movement_remaining <= 0:
+                movement_cost = state._movement_cost_for(player, _enemy_ref(enemy_index))
+                if movement_cost is None or enemy.movement_remaining < movement_cost:
                     break
                 direction = str(command.value)
                 dx, dy = DIRECTION_DELTAS[direction]
                 target_x = enemy.position.x + dx
                 target_y = enemy.position.y + dy
-                if not self.is_free_for_enemy(state, target_x, target_y):
+                grappling_targets = state._grappling_targets_for(_enemy_ref(enemy_index))
+                moving_refs = {_enemy_ref(enemy_index), *grappling_targets}
+                target_positions = {
+                    _enemy_ref(enemy_index): Position(target_x, target_y),
+                    **{
+                        target_ref: Position(
+                            state._actor_position(target_ref).x + dx,
+                            state._actor_position(target_ref).y + dy,
+                        )
+                        for target_ref in grappling_targets
+                    },
+                }
+                if not state._position_is_free(target_x, target_y, ignored_refs=moving_refs) or any(
+                    not state._position_is_free(
+                        target_position.x,
+                        target_position.y,
+                        ignored_refs=moving_refs,
+                    )
+                    for target_position in target_positions.values()
+                ):
                     break
                 if state.reaction_engine.queue_player_opportunity_attack(
                     state,
@@ -146,13 +166,20 @@ class TurnEngine:
                     direction,
                     Position(enemy.position.x, enemy.position.y),
                     Position(target_x, target_y),
-                    enemy.movement_remaining - 1,
+                    enemy.movement_remaining - movement_cost,
                     progress,
                 ):
                     progress.paused_for_decision = True
                     return False, progress, actions_resolved
                 enemy.position = Position(target_x, target_y)
-                enemy.movement_remaining -= 1
+                for target_ref, target_position in target_positions.items():
+                    if target_ref == _enemy_ref(enemy_index):
+                        continue
+                    if target_ref == "player":
+                        state.player_position = target_position
+                    else:
+                        state.enemies[_enemy_index(target_ref)].position = target_position
+                enemy.movement_remaining -= movement_cost
                 actions_resolved += 1
                 progress.messages.append(
                     (
@@ -192,6 +219,7 @@ class TurnEngine:
                     nearby_opponent_positions=(state.player_position,),
                     preferred_attack_type=preferred_attack_type,
                     attack_roll_mode_override=state._attack_roll_mode_for(
+                        player,
                         _enemy_ref(enemy_index),
                         "player",
                         selected_attack_type(
@@ -321,6 +349,8 @@ class TurnEngine:
                 state.round.advance()
 
     def player_movement_remaining(self, state: EncounterState, player: Actor) -> int:
+        if state._is_grappled("player"):
+            return 0
         if state.player_movement_remaining is None:
             state.player_movement_remaining = _movement_squares(player)
         return state.player_movement_remaining

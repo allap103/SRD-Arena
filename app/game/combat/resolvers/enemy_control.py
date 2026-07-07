@@ -32,14 +32,16 @@ def user_controlled_enemy_actions(
 ) -> list[EncounterAction]:
     enemy_index = _enemy_index(actor_ref)
     enemy = self.enemies[enemy_index]
+    movement_cost = self._movement_cost_for(player, actor_ref)
     if enemy.movement_remaining is None:
         enemy.movement_remaining = _movement_squares(enemy.actor)
     actions: list[EncounterAction] = []
-    if enemy.movement_remaining > 0:
+    if movement_cost is not None and enemy.movement_remaining >= movement_cost:
+        moving_refs = {actor_ref, *self._grappling_targets_for(actor_ref)}
         for direction, (dx, dy) in DIRECTION_DELTAS.items():
             target_x = enemy.position.x + dx
             target_y = enemy.position.y + dy
-            if not self._is_free_for_enemy(target_x, target_y):
+            if not self._position_is_free(target_x, target_y, ignored_refs=moving_refs):
                 continue
             actions.append(
                 EncounterAction(

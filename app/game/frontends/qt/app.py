@@ -1007,7 +1007,7 @@ class CyoaPySide6Window(QMainWindow):
         return "action"
 
     def _action_bucket_key(self, action: ActionView) -> str:
-        if action.kind in {"attack", "opportunity_attack"}:
+        if action.kind in {"attack", "opportunity_attack", "grapple"}:
             return "attack"
         if action.kind in {"magic", "spell"}:
             return "magic"

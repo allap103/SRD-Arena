@@ -20,6 +20,7 @@ class Actor:
     inventory: Inventory
     attributes: Attributes
     equipment: Equipment
+    size: str = "M"
     current_health: int | None = None
     class_ref: ClassRef | None = None
     subclass_ref: SubclassRef | None = None

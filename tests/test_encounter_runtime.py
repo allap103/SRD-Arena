@@ -164,6 +164,193 @@ def test_goblin_encounter_allows_diagonal_movement() -> None:
     assert session.encounter_state.player_position.y == 5
 
 
+def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 4
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 3
+    state.enemies[1].position.x = 6
+    state.enemies[1].position.y = 2
+    state.enemies[2].position.x = 1
+    state.enemies[2].position.y = 1
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_status",
+                target_ref="player",
+                data={
+                    "condition": "grappled",
+                    "source_ref": "enemy:0",
+                    "source_label": "Goblin",
+                },
+            ),
+            EffectResult(
+                kind="apply_status",
+                target_ref="enemy:0",
+                data={
+                    "condition": "grappling",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                },
+            ),
+        ]
+    )
+
+    choices = session.get_scene_view().choices
+    assert not any(choice.startswith("Move ") for choice in choices)
+    assert (
+        state._attack_roll_mode_for(
+            session.player,
+            "player",
+            "enemy:1",
+            "melee",
+            state.player_position,
+            tuple(enemy.position for enemy in state.enemies if enemy.is_alive),
+        )
+        == "disadvantage"
+    )
+    assert (
+        state._attack_roll_mode_for(
+            session.player,
+            "player",
+            "enemy:0",
+            "melee",
+            state.player_position,
+            tuple(enemy.position for enemy in state.enemies if enemy.is_alive),
+        )
+        == "normal"
+    )
+
+
+def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 4
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 3
+
+    rolls = iter([20, 1])
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: next(rolls))
+
+    scene_view = session.get_scene_view()
+    grapple_index = next(index for index, choice in enumerate(scene_view.choices) if choice.startswith("Grapple enemy 1"))
+    result = session.choose(grapple_index)
+
+    assert ("system", "Traveler grapples Enemy 1 (Goblin).") in result.messages
+    assert session.encounter_state.has_condition("enemy:0", "grappled") is True
+    assert session.encounter_state.has_condition("player", "grappling") is True
+    assert "Grapple enemy 1 (Goblin)" in scene_view.choices
+
+
+def test_grapple_action_requires_a_free_hand_in_the_menu() -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 4
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 3
+    session.player.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longsword")
+    session.player.equipment.equipped_items["left_hand"] = _item_id_by_name(session, "Longbow")
+
+    choices = session.get_scene_view().choices
+
+    assert "Grapple enemy 1 (Goblin)" not in choices
+
+
+def test_grapple_action_is_rejected_without_a_free_hand(monkeypatch) -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 4
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 3
+    session.player.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longsword")
+    session.player.equipment.equipped_items["left_hand"] = _item_id_by_name(session, "Longbow")
+    starting_actions = state.player_actions_remaining
+
+    rolls = iter([20, 1])
+    monkeypatch.setattr("game.combat.encounter.roll_die", lambda _sides: next(rolls))
+
+    result = session.choose_encounter_action(
+        EncounterAction(
+            label="Grapple enemy 1 (Goblin)",
+            kind="grapple",
+            value=0,
+            id="player-grapple-0",
+            actor_ref="player",
+            cost=ActionCost(action=1),
+        )
+    )
+
+    assert ("system", "You need a free hand to grapple.") in result.messages
+    assert state.has_condition("enemy:0", "grappled") is False
+    assert state.has_condition("player", "grappling") is False
+    assert state.player_actions_remaining == starting_actions
+
+
+def test_grappling_moves_target_and_costs_extra_movement() -> None:
+    session = Game(str(SAMPLE_GAME_DIR), start_scene="goblin_encounter").create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.player_position.x = 4
+    state.player_position.y = 4
+    state.enemies[0].position.x = 4
+    state.enemies[0].position.y = 3
+    state.enemies[1].position.x = 6
+    state.enemies[1].position.y = 2
+    state.enemies[2].position.x = 1
+    state.enemies[2].position.y = 1
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_status",
+                target_ref="player",
+                data={
+                    "condition": "grappling",
+                    "source_ref": "enemy:0",
+                    "source_label": "Goblin",
+                },
+            ),
+            EffectResult(
+                kind="apply_status",
+                target_ref="enemy:0",
+                data={
+                    "condition": "grappled",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                },
+            ),
+        ]
+    )
+
+    move_up_index = session.get_scene_view().choices.index("Move up")
+    result = session.choose(move_up_index)
+
+    assert ("system", "You move up. Movement remaining: 4.") in result.messages
+    assert state.player_position.x == 4
+    assert state.player_position.y == 3
+    assert state.enemies[0].position.x == 4
+    assert state.enemies[0].position.y == 2
+    assert state.player_movement_remaining == 4
+
+
 def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
     session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -1331,6 +1518,23 @@ def test_spell_actions_map_to_magic_menu_bucket() -> None:
     )
 
     assert bucket == "magic"
+
+
+def test_grapple_actions_map_to_attack_menu_bucket() -> None:
+    bucket = CyoaPySide6Window._action_bucket_key(
+        None,
+        ActionView(
+            index=0,
+            id="player-grapple-0",
+            label="Grapple enemy 1 (Goblin)",
+            kind="grapple",
+            actor_ref="player",
+            value=0,
+            cost={"action": 1},
+        ),
+    )
+
+    assert bucket == "attack"
 
 
 def test_directional_spell_target_mode_stays_available_without_actor_target_map() -> None:

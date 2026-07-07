@@ -367,6 +367,7 @@ def _restore_player_state(player_template: Actor, state: PlayerState) -> Actor:
             movement=Movement(**state.attributes.movement.model_dump()),
         ),
         equipment=Equipment(equipped_items=dict(state.equipment)),
+        size=player_template.size,
         current_health=state.current_health,
         class_ref=deepcopy(player_template.class_ref),
         subclass_ref=deepcopy(player_template.subclass_ref),

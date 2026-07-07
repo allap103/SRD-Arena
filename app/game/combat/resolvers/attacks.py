@@ -71,6 +71,7 @@ def resolve_player_attack_action(
         attacker_position=self.player_position,
         nearby_opponent_positions=nearby_opponents,
         attack_roll_mode_override=self._attack_roll_mode_for(
+            player,
             "player",
             _enemy_ref(enemy_index),
             selected_attack_type(player, self.item_templates),

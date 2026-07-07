@@ -6,6 +6,7 @@ from ..schemas import ActorSchema
 from ..schemas.actor import ActorItemReferenceSchema
 from ...models.actor import Actor
 from ...models.attributes import Attributes, Movement
+from ...models.size import normalize_size
 from ...models.class_features import (
     ClassRef,
     CombatProfile,
@@ -100,6 +101,7 @@ def load_actor(
         inventory=Inventory(items=[_actor_item_id(item) for item in schema.inventory]),
         attributes=attributes,
         equipment=equipment,
+        size=_build_actor_size(schema, stat_block),
         class_ref=(
             ClassRef(name=schema.class_ref.name, source=schema.class_ref.source)
             if schema.class_ref
@@ -245,6 +247,24 @@ def _build_actor_attributes(
         base_armor_class=_stat_block_base_ac(stat_block, schema.attributes.base_armor_class),
         proficiencies=proficiencies,
     )
+
+
+def _build_actor_size(
+    schema: ActorSchema,
+    stat_block: dict | None,
+) -> str:
+    if stat_block is not None:
+        size = _normalize_size_value(stat_block.get("size"))
+        if size != "M" or stat_block.get("size") is not None:
+            return size
+    metadata_size = schema.metadata.get("size")
+    return _normalize_size_value(metadata_size)
+
+
+def _normalize_size_value(value: object) -> str:
+    if isinstance(value, list) and value:
+        return normalize_size(value[0])
+    return normalize_size(value)
 
 
 def _merge_proficiencies(*sources: dict[str, object]) -> dict[str, object]:

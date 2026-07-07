@@ -351,6 +351,7 @@ class ReactionEngine:
                 nearby_opponent_positions=(target.position,),
                 preferred_attack_type="melee",
                 attack_roll_mode_override=state._attack_roll_mode_for(
+                    player,
                     "player",
                     pending_action.actor_ref,
                     "melee",
@@ -544,6 +545,7 @@ class ReactionEngine:
                 nearby_opponent_positions=(state.player_position,),
                 preferred_attack_type="melee",
                 attack_roll_mode_override=state._attack_roll_mode_for(
+                    player,
                     _enemy_ref(index),
                     "player",
                     "melee",

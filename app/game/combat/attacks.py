@@ -207,6 +207,13 @@ def equipped_weapon(attacker: Actor, items_by_id: dict[str, Item]) -> Item | Non
     return None
 
 
+def has_free_hand(actor: Actor) -> bool:
+    return any(
+        actor.equipment.equipped_items.get(slot) is None
+        for slot in ("right_hand", "left_hand")
+    )
+
+
 def unarmed_attack_source(attacker: Actor) -> AttackSource:
     strength_modifier = attacker.get_modifier(attacker.attributes.strength)
     return AttackSource(

@@ -4,7 +4,11 @@ from typing import TYPE_CHECKING
 
 from ..models.actor import Actor
 from ..models.scene import Position
-from .behaviors import DIRECTION_DELTAS
+from ..models.size import can_grapple
+from ..systems.roll import resolve_d20
+from ..features.types import EffectResult
+from .attacks import has_free_hand
+from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
 from .models import EncounterAction, EncounterProgress
 from .resolvers import (
     apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
@@ -19,6 +23,12 @@ from .resolvers import (
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
+
+
+def _roll_die(sides: int) -> int:
+    from . import encounter as encounter_module
+
+    return encounter_module.roll_die(sides)
 
 
 def apply_action(
@@ -65,6 +75,8 @@ def apply_action(
             self._apply_player_move(player, direction, progress, resolved_action_id)
     elif action.kind == "attack":
         self._resolve_player_attack_action(player, action, progress, resolved_action_id)
+    elif action.kind == "grapple":
+        self._resolve_grapple_action(player, action, progress, resolved_action_id)
     elif action.kind == "utilize":
         if not isinstance(action.value, str):
             raise ValueError(
@@ -110,8 +122,43 @@ def apply_player_move(
     action_id: str,
 ) -> None:
     dx, dy = DIRECTION_DELTAS[direction]
-    self.player_position = Position(self.player_position.x + dx, self.player_position.y + dy)
-    self.player_movement_remaining = self._player_movement_remaining(player) - 1
+    movement_cost = self._movement_cost_for(player, "player")
+    if movement_cost is None:
+        progress.messages.append(("system", "You cannot move while grappled."))
+        return
+    if self._player_movement_remaining(player) < movement_cost:
+        progress.messages.append(("system", "You do not have enough movement remaining."))
+        return
+
+    moving_refs = {"player", *self._grappling_targets_for("player")}
+    next_player_position = Position(self.player_position.x + dx, self.player_position.y + dy)
+    next_target_positions = {
+        target_ref: Position(target_position.x + dx, target_position.y + dy)
+        for target_ref in self._grappling_targets_for("player")
+        if (target_position := self._actor_position(target_ref)) is not None
+    }
+    if not self._position_is_free(
+        next_player_position.x,
+        next_player_position.y,
+        ignored_refs=moving_refs,
+    ) or any(
+        not self._position_is_free(
+            target_position.x,
+            target_position.y,
+            ignored_refs=moving_refs,
+        )
+        for target_position in next_target_positions.values()
+    ):
+        progress.messages.append(("system", "You cannot move there while grappling."))
+        return
+
+    self.player_position = next_player_position
+    for target_ref, target_position in next_target_positions.items():
+        if target_ref == "player":
+            continue
+        if target_ref.startswith("enemy:"):
+            self.enemies[int(target_ref.split(":", 1)[1])].position = target_position
+    self.player_movement_remaining = self._player_movement_remaining(player) - movement_cost
     progress.messages.append(
         (
             "system",
@@ -127,6 +174,122 @@ def apply_player_move(
                 "direction": direction,
                 "to": {"x": self.player_position.x, "y": self.player_position.y},
             },
+        )
+    )
+
+
+def resolve_grapple_action(
+    self: EncounterState,
+    player: Actor,
+    action: EncounterAction,
+    progress: EncounterProgress,
+    action_id: str,
+) -> None:
+    if self.player_actions_remaining <= 0:
+        progress.messages.append(("system", "You have already used your Action."))
+        progress.events.append(
+            self._event(
+                "action_resolved",
+                actor_ref="player",
+                action_id=action_id,
+                data={"kind": "grapple", "success": False},
+            )
+        )
+        return
+    if not isinstance(action.value, int):
+        raise ValueError(
+            f"Encounter grapple action requires an integer target, got {action.value!r}."
+        )
+
+    target_index = action.value
+    target = self.enemies[target_index]
+    if not target.is_alive:
+        progress.messages.append(("system", "The target is no longer available."))
+        return
+    if not _is_adjacent(self.player_position, target.position):
+        progress.messages.append(("system", "The target is out of reach."))
+        return
+    if not has_free_hand(player):
+        progress.messages.append(("system", "You need a free hand to grapple."))
+        progress.events.append(
+            self._event(
+                "action_resolved",
+                actor_ref="player",
+                action_id=action_id,
+                data={"kind": "grapple", "success": False},
+            )
+        )
+        return
+    if not can_grapple(target.actor.size, player.size):
+        progress.messages.append(("system", "The target is too large to grapple."))
+        return
+
+    self._consume_action(allow_magic=False)
+
+    player_roll = resolve_d20(modifier=player.get_modifier(player.attributes.strength), roller=_roll_die)
+    target_roll = resolve_d20(modifier=target.actor.get_modifier(target.actor.attributes.strength), roller=_roll_die)
+    success = player_roll.total >= target_roll.total
+    target_label = f"Enemy {target_index + 1} ({target.actor.name})"
+
+    progress.events.append(
+        self._event(
+            "grapple_resolved",
+            actor_ref="player",
+            action_id=action_id,
+            data={
+                "target_ref": f"enemy:{target_index}",
+                "target_label": target_label,
+                "player_roll": player_roll.total,
+                "target_roll": target_roll.total,
+                "player_die": player_roll.selected,
+                "target_die": target_roll.selected,
+                "success": success,
+            },
+        )
+    )
+
+    if not success:
+        progress.messages.append(("system", f"{player.name} fails to grapple {target_label}."))
+        progress.events.append(
+            self._event(
+                "action_resolved",
+                actor_ref="player",
+                action_id=action_id,
+                data={"kind": "grapple", "success": False},
+            )
+        )
+        return
+
+    progress.messages.append(("system", f"{player.name} grapples {target_label}."))
+    progress.messages.append(("system", f"{target_label} is grappled."))
+    self._apply_effects(
+        [
+            EffectResult(
+                kind="apply_status",
+                target_ref=f"enemy:{target_index}",
+                data={
+                    "condition": "grappled",
+                    "source_ref": "player",
+                    "source_label": player.name,
+                },
+            ),
+            EffectResult(
+                kind="apply_status",
+                target_ref="player",
+                data={
+                    "condition": "grappling",
+                    "source_ref": f"enemy:{target_index}",
+                    "source_label": target.actor.name,
+                },
+            ),
+        ]
+    )
+    progress.events.append(
+        self._event(
+            "action_resolved",
+            actor_ref="player",
+            action_id=action_id,
+            data={"kind": "grapple", "success": True, "target_ref": f"enemy:{target_index}"},
         )
     )
 

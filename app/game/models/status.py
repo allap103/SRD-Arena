@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 
 from ..rules.types import RuleGrant
 
+RELATIONAL_STATUS_NAMES = {"grappled", "grappling"}
+
 
 @dataclass(frozen=True)
 class Status:
@@ -39,7 +41,7 @@ def build_named_status(
     expires_on_round: int | None = None,
 ) -> Status:
     return Status(
-        id=f"{name}:{target_ref}",
+        id=_status_id(name=name, source_ref=source_ref, target_ref=target_ref),
         name=name,
         source_ref=source_ref,
         source_label=source_label,
@@ -72,3 +74,9 @@ def _status_rules(name: str, target_ref: str) -> list[RuleGrant]:
             conditions={"target_ref": target_ref},
         ),
     ]
+
+
+def _status_id(*, name: str, source_ref: str, target_ref: str) -> str:
+    if name in RELATIONAL_STATUS_NAMES:
+        return f"{name}:{source_ref}:{target_ref}"
+    return f"{name}:{target_ref}"

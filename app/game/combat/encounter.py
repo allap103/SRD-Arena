@@ -55,6 +55,7 @@ from .player_actions import (
     apply_action as _apply_action_impl,
     apply_player_move as _apply_player_move_impl,
     apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
+    resolve_grapple_action as _resolve_grapple_action_impl,
     resolve_flee_action as _resolve_flee_action_impl,
     resolve_feature_action as _resolve_feature_action_impl,
     resolve_player_attack_action as _resolve_player_attack_action_impl,
@@ -69,6 +70,7 @@ from ..models.actor import Actor
 from ..models.item import Item
 from ..models.scene import Encounter, Position
 from ..models.rules_config import RulesConfig
+from ..models.size import is_two_sizes_smaller
 from ..models.status import Status, StatusSnapshot
 from ..rules.registry import matching_rules
 from ..rules.types import RuleGrant
@@ -509,6 +511,7 @@ class EncounterState(EncounterStateData):
 
     def _attack_roll_mode_for(
         self,
+        player: Actor,
         attacker_ref: ActorRef,
         target_ref: ActorRef,
         attack_type: str,
@@ -528,6 +531,13 @@ class EncounterState(EncounterStateData):
             "target_ref": target_ref,
             "attack_type": attack_type,
         }
+        if any(
+            status.name == "grappled"
+            and status.target_ref == attacker_ref
+            and status.source_ref != target_ref
+            for status in self.conditions
+        ):
+            modes.append("disadvantage")
         for rule in matching_rules(
             self._active_status_rules(),
             "attack_roll_created",
@@ -580,6 +590,7 @@ class EncounterState(EncounterStateData):
     _resolve_utilize_action = _resolve_utilize_action_impl
     _resolve_feature_action = _resolve_feature_action_impl
     _resolve_spell_action = _resolve_spell_action_impl
+    _resolve_grapple_action = _resolve_grapple_action_impl
     _apply_player_move = _apply_player_move_impl
 
     _spell_target_context = _spell_target_context_impl
@@ -595,14 +606,16 @@ class EncounterState(EncounterStateData):
         self.conditions = [
             existing
             for existing in self.conditions
-            if not (
-                existing.target_ref == status.target_ref
-                and existing.name == status.name
-            )
+            if not self._status_replaces(existing, status)
         ]
         self.conditions.append(status)
 
     def _remove_status(self, target_ref: ActorRef, status_name: str) -> None:
+        removed_statuses = [
+            condition
+            for condition in self.conditions
+            if condition.target_ref == target_ref and condition.name == status_name
+        ]
         self.conditions = [
             existing
             for existing in self.conditions
@@ -611,6 +624,27 @@ class EncounterState(EncounterStateData):
                 and existing.name == status_name
             )
         ]
+        for status in removed_statuses:
+            if status.name == "grappled":
+                self.conditions = [
+                    existing
+                    for existing in self.conditions
+                    if not (
+                        existing.name == "grappling"
+                        and existing.target_ref == status.source_ref
+                        and existing.source_ref == status.target_ref
+                    )
+                ]
+            elif status.name == "grappling":
+                self.conditions = [
+                    existing
+                    for existing in self.conditions
+                    if not (
+                        existing.name == "grappled"
+                        and existing.target_ref == status.source_ref
+                        and existing.source_ref == status.target_ref
+                    )
+                ]
 
     def _actor_controller(self, actor_ref: ActorRef) -> str:
         if self.control_mode == "all-user":
@@ -880,10 +914,69 @@ class EncounterState(EncounterStateData):
             return self.player_position
         return self.enemies[_enemy_index(actor_ref)].position
 
+    def _position_is_free(
+        self,
+        x: int,
+        y: int,
+        *,
+        ignored_refs: set[ActorRef] | frozenset[ActorRef] = frozenset(),
+    ) -> bool:
+        if x < 0 or y < 0 or x >= self.definition.grid.width or y >= self.definition.grid.height:
+            return False
+        if "player" not in ignored_refs and self.player_position.x == x and self.player_position.y == y:
+            return False
+        for index, enemy in enumerate(self.enemies):
+            actor_ref = _enemy_ref(index)
+            if actor_ref in ignored_refs or not enemy.is_alive:
+                continue
+            if enemy.position.x == x and enemy.position.y == y:
+                return False
+        return True
+
+    def _actor_size(self, player: Actor, actor_ref: ActorRef) -> str:
+        return self._actor_for_ref(player, actor_ref).size
+
+    def _condition_sources_for(self, actor_ref: ActorRef, condition_name: str) -> tuple[ActorRef, ...]:
+        return tuple(
+            condition.source_ref
+            for condition in self.conditions
+            if condition.target_ref == actor_ref and condition.name == condition_name
+        )
+
+    def _grappled_sources_for(self, actor_ref: ActorRef) -> tuple[ActorRef, ...]:
+        return self._condition_sources_for(actor_ref, "grappled")
+
+    def _grappling_targets_for(self, actor_ref: ActorRef) -> tuple[ActorRef, ...]:
+        return self._condition_sources_for(actor_ref, "grappling")
+
+    def _is_grappled(self, actor_ref: ActorRef) -> bool:
+        return bool(self._grappled_sources_for(actor_ref))
+
+    def _movement_cost_for(self, player: Actor, actor_ref: ActorRef) -> int | None:
+        if self._is_grappled(actor_ref):
+            return None
+        cost = 1
+        grappling_targets = self._grappling_targets_for(actor_ref)
+        grappler_size = self._actor_size(player, actor_ref)
+        for target_ref in grappling_targets:
+            target_size = self._actor_size(player, target_ref)
+            if not is_two_sizes_smaller(target_size, grappler_size):
+                cost += 1
+        return cost
+
     def _actor_for_ref(self, player: Actor, actor_ref: ActorRef) -> Actor:
         if actor_ref == "player":
             return player
         return self.enemies[_enemy_index(actor_ref)].actor
+
+    def _status_replaces(self, existing: Status, status: Status) -> bool:
+        if existing.name != status.name:
+            return False
+        if existing.target_ref != status.target_ref:
+            return False
+        if existing.name in {"grappled", "grappling"}:
+            return existing.source_ref == status.source_ref
+        return True
 
 def _attack_roll_mode(
     attack_type: str,

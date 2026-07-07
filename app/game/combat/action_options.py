@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from ..models.actor import Actor
 from ..models.scene import Position
 from ..models.spellcasting import Spell, Spellcasting
+from ..models.size import can_grapple
+from .attacks import has_free_hand
 from .behaviors import (
     DIRECTION_DELTAS,
     chebyshev_distance as _chebyshev_distance,
@@ -41,13 +43,13 @@ def available_actions(self: EncounterState, player: Actor) -> list[EncounterActi
         return self._reaction_actions()
 
     actions = []
-    if self._player_movement_remaining(player) > 0:
+    movement_cost = self._movement_cost_for(player, "player")
+    if movement_cost is not None and self._player_movement_remaining(player) >= movement_cost:
+        moving_refs = {"player", *self._grappling_targets_for("player")}
         for direction, (dx, dy) in DIRECTION_DELTAS.items():
             target_x = self.player_position.x + dx
             target_y = self.player_position.y + dy
-            if not self._is_within_bounds(target_x, target_y):
-                continue
-            if self._live_enemy_at(target_x, target_y) is not None:
+            if not self._position_is_free(target_x, target_y, ignored_refs=moving_refs):
                 continue
             actions.append(
                 EncounterAction(
@@ -76,6 +78,24 @@ def available_actions(self: EncounterState, player: Actor) -> list[EncounterActi
                     id=f"player-attack-{index}",
                     actor_ref="player",
                     cost=ActionCost(action=1 if self.player_attacks_remaining == 0 else 0),
+                )
+            )
+        if (
+            self.player_actions_remaining > 0
+            and enemy.is_alive
+            and self._actors_are_opponents("player", _enemy_ref(index))
+            and _is_adjacent(self.player_position, enemy.position)
+            and has_free_hand(player)
+            and can_grapple(enemy.actor.size, player.size)
+        ):
+            actions.append(
+                EncounterAction(
+                    f"Grapple enemy {index + 1} ({enemy.actor.name})",
+                    "grapple",
+                    index,
+                    id=f"player-grapple-{index}",
+                    actor_ref="player",
+                    cost=ActionCost(action=1),
                 )
             )
 
