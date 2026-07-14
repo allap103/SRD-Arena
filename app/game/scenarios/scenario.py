@@ -114,16 +114,48 @@ class Scenario:
         player_actor_id: str = "player",
         control_mode: str | None = None,
     ) -> Session:
+        start_scene_id = self._resolve_start_scene_id(self.start_scene)
         return Session(
             scenes=self.scenes,
             player=self.get_actor(player_actor_id),
             actor_templates={actor.id: actor for actor in self.actors},
             item_templates={item.id: item for item in self.items},
-            start_scene_id=self.start_scene,
+            start_scene_id=start_scene_id,
             game_dir=self.directory,
             control_mode=control_mode or self.control_mode,
             rules_config=self.rules_config,
         )
+
+    def _resolve_start_scene_id(self, scene_id: str) -> str:
+        visited: set[str] = set()
+        current_scene_id = scene_id
+        while current_scene_id not in visited:
+            visited.add(current_scene_id)
+            scene = self.scenes[current_scene_id]
+            if scene.encounter is not None or not scene.choices:
+                return current_scene_id
+            if len(scene.choices) == 1 and scene.choices[0].next_scene in self.scenes:
+                current_scene_id = scene.choices[0].next_scene
+                continue
+            reachable = self._reachable_encounter_scene_ids(current_scene_id, visited=set())
+            if len(reachable) == 1:
+                return next(iter(reachable))
+            return current_scene_id
+        return scene_id
+
+    def _reachable_encounter_scene_ids(self, scene_id: str, visited: set[str]) -> set[str]:
+        if scene_id in visited:
+            return set()
+        visited.add(scene_id)
+        scene = self.scenes[scene_id]
+        if scene.encounter is not None:
+            return {scene_id}
+        reachable: set[str] = set()
+        for choice in scene.choices:
+            if choice.next_scene is None or choice.next_scene not in self.scenes:
+                continue
+            reachable.update(self._reachable_encounter_scene_ids(choice.next_scene, visited.copy()))
+        return reachable
 
     def _load_settings(self, path: Path) -> GameSettings:
         if not path.exists():

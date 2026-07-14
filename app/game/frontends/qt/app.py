@@ -29,9 +29,7 @@ from ...presentation.models import ActionView
 from ...runtime.session import (
     EXIT_CHOICE_TEXT,
     LOAD_CHOICE_TEXT,
-    LONG_REST_CHOICE_TEXT,
     SAVE_CHOICE_TEXT,
-    SHORT_REST_CHOICE_TEXT,
     Session,
 )
 from ...scenarios import ScenarioInfo, list_scenarios
@@ -101,7 +99,7 @@ def _require_pyside6() -> None:
         )
 
 
-class CyoaPySide6Window(QMainWindow):
+class GameWindow(QMainWindow):
     def __init__(
         self,
         game: Scenario | None = None,
@@ -122,7 +120,7 @@ class CyoaPySide6Window(QMainWindow):
         self._ai_step_scheduled = False
         self._show_encounter_json = show_encounter_json
 
-        self.setWindowTitle("CYOA")
+        self.setWindowTitle("SRD Arena")
         self.resize(1400, 900)
 
         central = QWidget()
@@ -353,16 +351,6 @@ class CyoaPySide6Window(QMainWindow):
         layout.addWidget(self._sidebar_button("Inventory", self.show_inventory))
         layout.addWidget(self._sidebar_button("System", self.show_system_menu))
         layout.addStretch(1)
-        self.short_rest_button = self._sidebar_button(
-            SHORT_REST_CHOICE_TEXT,
-            lambda: self._trigger_rest("system_short_rest"),
-        )
-        self.long_rest_button = self._sidebar_button(
-            LONG_REST_CHOICE_TEXT,
-            lambda: self._trigger_rest("system_long_rest"),
-        )
-        layout.addWidget(self.short_rest_button)
-        layout.addWidget(self.long_rest_button)
         return page
 
     def _build_inventory_page(self) -> QWidget:
@@ -471,7 +459,6 @@ class CyoaPySide6Window(QMainWindow):
             self._action_menu_scope = None
 
         self.scene_text.setPlainText(presentation.story_text or "")
-        self._sync_rest_buttons(presentation)
 
         if presentation.encounter is None:
             self.scene_group.show()
@@ -493,8 +480,6 @@ class CyoaPySide6Window(QMainWindow):
     def _render_story_actions(self, actions: list[ActionView]) -> None:
         clear_layout(self.story_choices_layout)
         for action in actions:
-            if action.kind in {"system_short_rest", "system_long_rest"}:
-                continue
             button = QPushButton(action.label)
             button.clicked.connect(
                 lambda _checked=False, action_index=action.index: self._select_action(action_index)
@@ -1046,31 +1031,6 @@ class CyoaPySide6Window(QMainWindow):
             return
         self._select_action(self._presentation.system_actions[1].index)
 
-    def _trigger_rest(self, kind: str) -> None:
-        if self._presentation is None or self._presentation.encounter is not None:
-            return
-        action = next(
-            (action for action in self._presentation.story_actions if action.kind == kind),
-            None,
-        )
-        if action is not None:
-            self._select_action(action.index)
-
-    def _sync_rest_buttons(self, presentation: SessionPresentation) -> None:
-        if not hasattr(self, "short_rest_button"):
-            return
-        if presentation.encounter is not None:
-            self.short_rest_button.hide()
-            self.long_rest_button.hide()
-            return
-        rest_actions = {action.kind: action for action in presentation.story_actions}
-        short_rest_action = rest_actions.get("system_short_rest")
-        long_rest_action = rest_actions.get("system_long_rest")
-        self.short_rest_button.setVisible(short_rest_action is not None)
-        self.long_rest_button.setVisible(long_rest_action is not None)
-        self.short_rest_button.setEnabled(short_rest_action is not None)
-        self.long_rest_button.setEnabled(long_rest_action is not None)
-
     def _select_action(self, index: int) -> None:
         self._pending_target_mode = None
         self._action_menu_scope = None
@@ -1458,7 +1418,7 @@ class ScenarioPickerWindow(QMainWindow):
         self._start_scene_override = start_scene_override
         self._control_mode = control_mode
         self._show_encounter_json = show_encounter_json
-        self._game_window: CyoaPySide6Window | None = None
+        self._game_window: GameWindow | None = None
         self.setWindowTitle("Choose Scenario")
         self.resize(520, 420)
 
@@ -1500,7 +1460,7 @@ class ScenarioPickerWindow(QMainWindow):
         layout.addStretch(1)
 
     def _open_scenario(self, scenario: ScenarioInfo) -> None:
-        self._game_window = CyoaPySide6Window(
+        self._game_window = GameWindow(
             _create_scenario(
                 scenario.directory,
                 start_scene_override=self._start_scene_override,
@@ -1535,7 +1495,7 @@ def run_pyside6_app(
     app = QApplication.instance() or QApplication(sys.argv)
     apply_fantasy_theme(app)
     window = (
-        CyoaPySide6Window(
+        GameWindow(
             game=_create_scenario(
                 scenario_dir,
                 start_scene_override=start_scene_override,
@@ -1552,3 +1512,6 @@ def run_pyside6_app(
     )
     window.show()
     app.exec()
+
+
+CyoaPySide6Window = GameWindow

@@ -12,7 +12,6 @@ from .runtime.save import (
     save_to_slot,
 )
 from .runtime.session import Session
-from .story.choice_resolver import ChoiceResolver
 from .frontends.cli.runner import CliRunner
 
 Game = Scenario
@@ -20,16 +19,18 @@ GameSession = Session
 SceneRunner = CliRunner
 
 if TYPE_CHECKING:
+    from .frontends.qt.app import GameWindow
     from .frontends.qt.app import CyoaPySide6Window
 
 try:
+    from .frontends.qt.app import GameWindow
     from .frontends.qt.app import CyoaPySide6Window
 except ModuleNotFoundError:
     pass
 
 __all__ = [
+    "GameWindow",
     "CyoaPySide6Window",
-    "ChoiceResolver",
     "CliRunner",
     "Game",
     "GameSession",

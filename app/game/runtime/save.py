@@ -9,7 +9,6 @@ from typing import TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..story.choice_resolver import ChoiceResolver
 from ..combat.models import (
     DecisionFrameSnapshot,
     EncounterSnapshot,
@@ -28,11 +27,11 @@ from .session import PendingSceneTransition, Session
 from ..systems.equipment import Equipment
 from ..systems.inventory import Inventory
 
-SAVE_VERSION = 5
+SAVE_VERSION = 6
 JsonScalar: TypeAlias = str | int | float | bool | None
 JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
 SAVEGAME_EXAMPLE: dict[str, JsonValue] = {
-    "version": 5,
+    "version": 6,
     "current_scene_id": "welcome",
     "start_scene_id": "welcome",
     "player": {
@@ -55,7 +54,6 @@ SAVEGAME_EXAMPLE: dict[str, JsonValue] = {
             "base_armor_class": 10,
         },
     },
-    "completed_tests": [],
 }
 
 
@@ -91,13 +89,6 @@ class PlayerState(BaseModel):
     attributes: AttributeState
     feature_uses_remaining: dict[str, int] = Field(default_factory=dict)
     spell_slots_remaining: dict[int, int] = Field(default_factory=dict)
-
-
-class CompletedTestState(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    scene_id: str
-    choice_text: str
 
 
 class PositionState(BaseModel):
@@ -233,7 +224,6 @@ class SaveGame(BaseModel):
     start_scene_id: str = "welcome"
     control_mode: str = "default"
     player: PlayerState
-    completed_tests: list[CompletedTestState] = Field(default_factory=list)
     encounter: EncounterStateModel | None = None
     pending_scene_transition: PendingSceneTransitionModel | None = None
 
@@ -244,10 +234,6 @@ def create_save(session: Session) -> SaveGame:
         start_scene_id=session.start_scene_id,
         control_mode=session.control_mode,
         player=_create_player_state(session.player),
-        completed_tests=[
-            CompletedTestState(scene_id=scene_id, choice_text=choice_text)
-            for scene_id, choice_text in sorted(session.choice_resolver.completed_tests)
-        ],
         encounter=_create_encounter_state(session.get_encounter_snapshot()),
         pending_scene_transition=(
             PendingSceneTransitionModel(
@@ -278,11 +264,6 @@ def restore_save(save: SaveGame, game_dir: str | Path) -> Session:
         raise ValueError(f"Saved scene '{save.current_scene_id}' does not exist.")
 
     session.player = _restore_player_state(session.player, save.player)
-    session.choice_resolver = ChoiceResolver(
-        completed_tests={
-            (test.scene_id, test.choice_text) for test in save.completed_tests
-        }
-    )
     session.current_scene_id = save.current_scene_id
     session.restore_encounter_snapshot(_restore_encounter_state(save.encounter))
     session.pending_scene_transition = (
