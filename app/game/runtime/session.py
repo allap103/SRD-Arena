@@ -27,7 +27,7 @@ class PendingSceneTransition:
     message: str
 
 
-class GameSession:
+class Session:
     def __init__(
         self,
         scenes: dict[str, Scene],
@@ -561,3 +561,6 @@ class GameSession:
                 value=None,
             ),
         ]
+
+
+GameSession = Session

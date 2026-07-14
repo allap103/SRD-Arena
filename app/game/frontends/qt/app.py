@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 from ...combat.models import ActionCost, EncounterAction
 from ...combat.geometry import (
@@ -16,7 +17,7 @@ from ...combat.spells import (
     spell_action_value,
     spell_range_squares,
 )
-from ...runtime.game import GAME_DIR, Game
+from ...scenarios import DEFAULT_SCENARIO_DIR, Scenario
 from ...presentation.dice import build_roll_views, without_roll_details
 from ...presentation.session import (
     MOVE_DIRECTIONS,
@@ -31,9 +32,9 @@ from ...runtime.session import (
     LONG_REST_CHOICE_TEXT,
     SAVE_CHOICE_TEXT,
     SHORT_REST_CHOICE_TEXT,
-    GameSession,
+    Session,
 )
-from ...support.scenarios import ScenarioInfo, list_scenarios
+from ...scenarios import ScenarioInfo, list_scenarios
 from .theme import apply_fantasy_theme
 from .ui.encounter import (
     ARROW_LABELS,
@@ -103,14 +104,14 @@ def _require_pyside6() -> None:
 class CyoaPySide6Window(QMainWindow):
     def __init__(
         self,
-        game: Game | None = None,
+        game: Scenario | None = None,
         *,
         show_encounter_json: bool = False,
     ):
         _require_pyside6()
         super().__init__()
-        self.game = game or Game(GAME_DIR)
-        self.session: GameSession = self.game.create_session()
+        self.game = game or Scenario(DEFAULT_SCENARIO_DIR)
+        self.session: Session = self.game.create_session()
         self.session.ai_action_limit = 1
         self._items_by_id = {item.id: item for item in self.game.items}
         self._presentation: SessionPresentation | None = None
@@ -1449,11 +1450,13 @@ class ScenarioPickerWindow(QMainWindow):
         self,
         start_scene_override: str | None = None,
         *,
+        control_mode: str = "default",
         show_encounter_json: bool = False,
     ):
         _require_pyside6()
         super().__init__()
         self._start_scene_override = start_scene_override
+        self._control_mode = control_mode
         self._show_encounter_json = show_encounter_json
         self._game_window: CyoaPySide6Window | None = None
         self.setWindowTitle("Choose Scenario")
@@ -1498,9 +1501,10 @@ class ScenarioPickerWindow(QMainWindow):
 
     def _open_scenario(self, scenario: ScenarioInfo) -> None:
         self._game_window = CyoaPySide6Window(
-            Game(
-                str(scenario.directory),
-                start_scene=self._start_scene_override,
+            _create_scenario(
+                scenario.directory,
+                start_scene_override=self._start_scene_override,
+                control_mode=self._control_mode,
             ),
             show_encounter_json=self._show_encounter_json,
         )
@@ -1508,19 +1512,41 @@ class ScenarioPickerWindow(QMainWindow):
         self.close()
 
 
+def _create_scenario(
+    scenario_dir: str | Path,
+    *,
+    start_scene_override: str | None,
+    control_mode: str,
+) -> Scenario:
+    return Scenario(
+        str(scenario_dir),
+        start_scene=start_scene_override,
+        control_mode=control_mode,
+    )
+
+
 def run_pyside6_app(
-    game: Game | None = None,
+    scenario_dir: str | Path | None = None,
     start_scene_override: str | None = None,
+    control_mode: str = "default",
     show_encounter_json: bool = False,
 ) -> None:
     _require_pyside6()
     app = QApplication.instance() or QApplication(sys.argv)
     apply_fantasy_theme(app)
     window = (
-        CyoaPySide6Window(game=game, show_encounter_json=show_encounter_json)
-        if game is not None
+        CyoaPySide6Window(
+            game=_create_scenario(
+                scenario_dir,
+                start_scene_override=start_scene_override,
+                control_mode=control_mode,
+            ),
+            show_encounter_json=show_encounter_json,
+        )
+        if scenario_dir is not None
         else ScenarioPickerWindow(
             start_scene_override=start_scene_override,
+            control_mode=control_mode,
             show_encounter_json=show_encounter_json,
         )
     )

@@ -509,15 +509,17 @@ class EncounterState(EncounterStateData):
             for condition in self.conditions_for(actor_ref)
         )
 
-    def _attack_roll_mode_for(
-        self,
-        player: Actor,
-        attacker_ref: ActorRef,
-        target_ref: ActorRef,
-        attack_type: str,
-        attacker_position: Position | None,
-        nearby_opponent_positions: tuple[Position, ...],
-    ) -> D20RollMode:
+    def _attack_roll_mode_for(self, *args) -> D20RollMode:
+        if len(args) == 6:
+            _player, attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions = args
+        elif len(args) == 5:
+            attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions = args
+        else:
+            raise TypeError(
+                "_attack_roll_mode_for expects either "
+                "(player, attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions) "
+                "or (attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions)."
+            )
         modes: list[D20RollMode] = []
         base_mode = _attack_roll_mode(
             attack_type,

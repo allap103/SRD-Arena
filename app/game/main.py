@@ -3,11 +3,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .frontends.api.savegames import run_savegame_api
-from .runtime.game import Game
+from .scenarios import Scenario
 from .support.logging import configure_game_logging
 from .support.paths import SCENARIOS_ROOT
-from .support.scenarios import VALID_GAME_SUBDIRS, list_scenarios
+from .scenarios import VALID_SCENARIO_SUBDIRS, list_scenarios
 
 SCENARIOS_DIR = SCENARIOS_ROOT
 
@@ -15,7 +14,7 @@ SCENARIOS_DIR = SCENARIOS_ROOT
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Launch SRD Arena.")
     parser.add_argument(
-        "game",
+        "game_dir",
         nargs="?",
         help=(
             "Game directory as a relative path, an absolute path, or the name of "
@@ -28,20 +27,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--frontend",
-        choices=("pyside6", "api", "cli"),
-        default="pyside6",
-        help="Which frontend to launch. Defaults to pyside6.",
-    )
-    parser.add_argument(
-        "--host",
-        default="127.0.0.1",
-        help="Host to bind the API frontend to.",
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8000,
-        help="Port to bind the API frontend to.",
+        choices=("gui", "cli"),
+        help="Which frontend to launch. Defaults to gui when omitted.",
     )
     parser.add_argument(
         "--control-mode",
@@ -80,55 +67,45 @@ def resolve_game_directory(game: str | None) -> Path:
 
 
 def launch(
+    *,
     frontend: str,
     game_dir: Path | None,
-    host: str = "127.0.0.1",
-    port: int = 8000,
     control_mode: str = "default",
     start_scene: str | None = None,
     show_encounter_json: bool = False,
 ) -> None:
-    if frontend == "pyside6":
-        from .frontends.qt.app import run_pyside6_app
+    match frontend:
+        case "gui":
+            from .frontends.qt.app import run_pyside6_app
 
-        game = (
-            Game(str(game_dir), start_scene=start_scene, control_mode=control_mode)
-            if game_dir is not None
-            else None
-        )
-        run_pyside6_app(
-            game=game,
-            start_scene_override=start_scene,
-            show_encounter_json=show_encounter_json,
-        )
-        return
-    if game_dir is None:
-        game_dir = select_game_directory()
-    if frontend == "api":
-        run_savegame_api(
-            host=host,
-            port=port,
-            game_dir=game_dir,
-            control_mode=control_mode,
-            start_scene=start_scene,
-        )
-        return
-
-    configure_game_logging()
-    Game(str(game_dir), start_scene=start_scene, control_mode=control_mode).run()
+            run_pyside6_app(
+                scenario_dir=game_dir,
+                start_scene_override=start_scene,
+                control_mode=control_mode,
+                show_encounter_json=show_encounter_json,
+            )
+        case "cli":
+            if game_dir is None:
+                game_dir = select_game_directory()
+            configure_game_logging()
+            Scenario(str(game_dir), start_scene=start_scene, control_mode=control_mode).run()
+        case _:
+            raise ValueError(f"Unsupported frontend: {frontend}")
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
-    game_dir = None if args.game is None and args.frontend == "pyside6" else (
-        resolve_game_directory(args.game) if args.game is not None else select_game_directory()
-    )
+    frontend = args.frontend or "gui"
+    if args.game_dir is not None:
+        game_dir = resolve_game_directory(args.game_dir)
+    elif frontend == "gui":
+        game_dir = None
+    else:
+        game_dir = select_game_directory()
     launch(
-        args.frontend,
-        game_dir,
-        host=args.host,
-        port=args.port,
+        frontend=frontend,
+        game_dir=game_dir,
         control_mode=args.control_mode,
         start_scene=args.start_scene,
         show_encounter_json=args.show_encounter_json,
@@ -159,7 +136,7 @@ def _validate_game_directory(path: Path) -> Path:
         raise NotADirectoryError(f"'{path}' is not a directory.")
 
     missing = [
-        subdir for subdir in VALID_GAME_SUBDIRS if not (path / subdir).is_dir()
+        subdir for subdir in VALID_SCENARIO_SUBDIRS if not (path / subdir).is_dir()
     ]
     if missing:
         raise FileNotFoundError(

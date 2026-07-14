@@ -56,7 +56,7 @@ def test_resolve_game_directory_rejects_missing_structure(tmp_path: Path) -> Non
         launcher.resolve_game_directory(str(invalid_game))
 
 
-def test_launch_runs_pyside6_frontend(monkeypatch, tmp_path: Path) -> None:
+def test_launch_runs_gui_frontend(monkeypatch, tmp_path: Path) -> None:
     game_dir = _make_game_dir(tmp_path / "game")
     launched = []
 
@@ -64,21 +64,21 @@ def test_launch_runs_pyside6_frontend(monkeypatch, tmp_path: Path) -> None:
         sys.modules,
         "game.frontends.qt.app",
         SimpleNamespace(
-            run_pyside6_app=lambda game=None, start_scene_override=None, show_encounter_json=False: launched.append(
+            run_pyside6_app=lambda scenario_dir=None, start_scene_override=None, control_mode="default", show_encounter_json=False: launched.append(
                 (
-                    None if game is None else game.directory,
+                    scenario_dir,
                     show_encounter_json,
                 )
             )
         ),
     )
 
-    launcher.launch("pyside6", game_dir, show_encounter_json=True)
+    launcher.launch(frontend="gui", game_dir=game_dir, show_encounter_json=True)
 
     assert launched == [(game_dir, True)]
 
 
-def test_main_launches_pyside6_by_default(
+def test_main_launches_gui_by_default(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
@@ -90,21 +90,21 @@ def test_main_launches_pyside6_by_default(
         "resolve_game_directory",
         lambda game: game_dir.resolve(),
     )
-    monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(args))
+    monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(kwargs))
 
     launcher.main([str(game_dir)])
 
-    assert launched == [("pyside6", game_dir.resolve())]
+    assert launched == [{"frontend": "gui", "game_dir": game_dir.resolve(), "control_mode": "default", "start_scene": None, "show_encounter_json": False}]
 
 
 def test_main_without_game_launches_picker_for_default_frontend(monkeypatch) -> None:
     launched = []
 
-    monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(args))
+    monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(kwargs))
 
     launcher.main([])
 
-    assert launched == [("pyside6", None)]
+    assert launched == [{"frontend": "gui", "game_dir": None, "control_mode": "default", "start_scene": None, "show_encounter_json": False}]
 
 
 def test_select_game_directory_lists_available_scenarios(monkeypatch, tmp_path: Path) -> None:
@@ -118,11 +118,35 @@ def test_select_game_directory_lists_available_scenarios(monkeypatch, tmp_path: 
     assert resolved == first.resolve()
 
 
+def test_main_with_cli_frontend_selects_cli_mode(monkeypatch, tmp_path: Path) -> None:
+    game_dir = _make_game_dir(tmp_path / "game")
+    launched = []
+
+    monkeypatch.setattr(
+        launcher,
+        "resolve_game_directory",
+        lambda game: game_dir.resolve(),
+    )
+    monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(kwargs))
+
+    launcher.main(["--frontend", "cli", str(game_dir)])
+
+    assert launched == [{"frontend": "cli", "game_dir": game_dir.resolve(), "control_mode": "default", "start_scene": None, "show_encounter_json": False}]
+
+
 def test_parser_rejects_textual_frontend() -> None:
     parser = launcher.build_parser()
 
     with pytest.raises(SystemExit):
         parser.parse_args(["--frontend", "textual"])
+
+
+def test_parser_accepts_frontend_flag() -> None:
+    parser = launcher.build_parser()
+
+    args = parser.parse_args(["--frontend", "cli"])
+
+    assert args.frontend == "cli"
 
 
 def test_parser_accepts_encounter_json_flag() -> None:

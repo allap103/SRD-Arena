@@ -5,6 +5,7 @@ from ..combat.models import CombatEvent
 
 @dataclass
 class SceneView:
+    """Frontend-facing snapshot of the current scene and its selectable actions."""
     scene_id: str
     scene_text: str | None
     choices: list[str] = field(default_factory=list)
@@ -13,6 +14,7 @@ class SceneView:
 
 @dataclass
 class ActionView:
+    """Frontend-facing description of a selectable action in the current view."""
     index: int
     id: str
     label: str
@@ -25,6 +27,7 @@ class ActionView:
 
 @dataclass
 class TurnResult:
+    """Frontend-facing outcome of applying one selected action or choice."""
     scene: SceneView
     selected_index: int | None = None
     selected_choice_text: str | None = None

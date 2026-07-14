@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from ..models.class_features import FeatureActionDefinition
 from .models import ActionView, SceneView
-from ..runtime.session import GameSession
+from ..runtime.session import Session
 
 SYSTEM_ACTION_COUNT = 3
 MOVE_DIRECTIONS = (
@@ -116,7 +116,7 @@ class SessionPresentation:
 
 
 def build_session_presentation(
-    session: GameSession,
+    session: Session,
     scene_view: SceneView | None = None,
 ) -> SessionPresentation:
     view = scene_view or session.get_scene_view()
@@ -188,7 +188,7 @@ def build_session_presentation(
 
 
 def _build_feature_actions(
-    session: GameSession,
+    session: Session,
     story_actions: list[ActionView],
 ) -> list[ActionView]:
     if (

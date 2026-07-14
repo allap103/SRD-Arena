@@ -3,12 +3,10 @@ name = "srd-arena"
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
-    "fastapi>=0.116,<1",
     "matplotlib>=3.9,<4",
     "networkx>=3.4,<4",
     "pydantic>=2.8,<3",
     "PySide6>=6.8,<7",
-    "uvicorn>=0.35,<1",
     "scipy"
 ]
 
@@ -33,7 +31,6 @@ package = true
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28,<1",
     "hypothesis>=6.0,<7",
     "mypy>=2.1.0",
     "pytest>=7.4,<9",
