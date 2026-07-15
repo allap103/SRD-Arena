@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..models.actor import Actor
-from ..models.spellcasting import Spell, Spellcasting
+from ..domain.actor import Actor
+from ..domain.spellcasting import Spell, Spellcasting
 
 
 @dataclass(frozen=True)

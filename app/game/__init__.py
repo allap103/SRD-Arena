@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from .presentation.models import SceneView, TurnResult
-from .scenarios import Scenario
+from .runtime.scenario import Scenario
 from .runtime.save import (
     SaveGame,
     create_save,

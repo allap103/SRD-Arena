@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...models.actor import Actor
+from ...domain.actor import Actor
 from ..consumables import healing_potion_dice
 from ..models import EncounterProgress
 

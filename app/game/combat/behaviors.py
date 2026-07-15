@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Generator
 
-from ..models.actor import Actor
-from ..models.item import Item
-from ..models.scene import Position
+from ..domain.actor import Actor
+from ..domain.item import Item
+from ..domain.scene import Position
 from .models import BehaviorContext, EncounterAction, EncounterEnemyState
 
 DIRECTION_DELTAS = {

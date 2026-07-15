@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from game.models.attributes import Attributes
+from game.domain.attributes import Attributes
 from game.systems.roll import resolve_roll_attempts
 from game.systems.saving_throw import reroll_saving_throw, resolve_saving_throw
 

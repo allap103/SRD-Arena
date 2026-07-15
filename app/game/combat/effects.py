@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from ..features.types import EffectResult
-from ..models.status import Status, build_named_status
+from ..domain.status import Status, build_named_status
 
 ApplyStatus = Callable[[Status], None]
 RemoveStatus = Callable[[str, str], None]

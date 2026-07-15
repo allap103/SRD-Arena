@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..models.actor import Actor
-from ..models.scene import Position
+from ..domain.actor import Actor
+from ..domain.scene import Position
 from ..rules.registry import reroll_eligible_indices
 from ..rules.types import RuleGrant
 from ..systems.roll import reroll_dice

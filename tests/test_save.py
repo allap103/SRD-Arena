@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from game.combat.encounter import EncounterState
-from game.runtime.game import Game
+from game.runtime.scenario import Game
 from game.runtime.save import (
     SaveGame,
     create_save,

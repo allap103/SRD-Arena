@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..models.actor import Actor
-from ..models.status import Status
+from ..domain.actor import Actor
+from ..domain.status import Status
 from .behaviors import movement_squares as _movement_squares
 from .refs import enemy_ref as _enemy_ref
 

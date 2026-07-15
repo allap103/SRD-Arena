@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from ..schemas import SceneSchema
-from ...models.choice import Choice, Effects, ItemRequirement, Outcome, Requirements, SkillTest
-from ...models.scene import (
+from ...domain.choice import Choice, Effects, ItemRequirement, Outcome, Requirements, SkillTest
+from ...domain.scene import (
     Behavior,
     Encounter,
     EncounterEnemy,

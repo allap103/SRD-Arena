@@ -4,18 +4,18 @@ from typing import cast
 
 from ..schemas import ActorSchema
 from ..schemas.actor import ActorItemReferenceSchema
-from ...models.actor import Actor
-from ...models.attributes import Attributes, Movement
-from ...models.size import normalize_size
-from ...models.class_features import (
+from ...domain.actor import Actor
+from ...domain.attributes import Attributes, Movement
+from ...domain.size import normalize_size
+from ...domain.class_features import (
     ClassRef,
     CombatProfile,
     FeatureActionDefinition,
     FeatureGrant,
     SubclassRef,
 )
-from ...models.monster_attack import MonsterAttack
-from ...models.spellcasting import Spell, Spellcasting
+from ...domain.monster_attack import MonsterAttack
+from ...domain.spellcasting import Spell, Spellcasting
 from ...rules.normalization import normalize_optional_feature_rules
 from ...rules.types import RuleGrant
 from ...systems.equipment import Equipment

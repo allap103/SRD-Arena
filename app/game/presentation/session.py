@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..models.class_features import FeatureActionDefinition
+from ..domain.class_features import FeatureActionDefinition
 from .models import ActionView, SceneView
 from ..runtime.session import Session
 

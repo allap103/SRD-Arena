@@ -3,12 +3,14 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .scenarios import Scenario
-from .support.logging import configure_game_logging
+from .content.scenarios import VALID_SCENARIO_SUBDIRS, list_scenarios
+from .frontends.cli.runner import CliRunner
+from .runtime.scenario import Scenario
+from .support.logging import CHANNEL_ENGINE, configure_game_logging, get_game_logger
 from .support.paths import SCENARIOS_ROOT
-from .scenarios import VALID_SCENARIO_SUBDIRS, list_scenarios
 
 SCENARIOS_DIR = SCENARIOS_ROOT
+LOGGER = get_game_logger(CHANNEL_ENGINE)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -88,7 +90,8 @@ def launch(
             if game_dir is None:
                 game_dir = select_game_directory()
             configure_game_logging()
-            Scenario(str(game_dir), start_scene=start_scene, control_mode=control_mode).run()
+            scenario = Scenario(str(game_dir), start_scene=start_scene, control_mode=control_mode)
+            run_cli(scenario)
         case _:
             raise ValueError(f"Unsupported frontend: {frontend}")
 
@@ -129,6 +132,16 @@ def select_game_directory() -> Path:
         if 0 <= selected_index < len(scenarios):
             return scenarios[selected_index].directory
         print("Please choose one of the listed scenarios.")
+
+
+def run_cli(scenario: Scenario) -> None:
+    session = scenario.create_session()
+    runner = CliRunner()
+    try:
+        while runner.run(session):
+            pass
+    except (KeyboardInterrupt, EOFError):
+        LOGGER.info("You set the story aside for now. Thanks for playing.")
 
 
 def _validate_game_directory(path: Path) -> Path:

@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from game.combat.encounter import EncounterState
-from game.runtime.game import Game
+from game.runtime.scenario import Game
 from game.combat.encounter import EncounterAction
 from game.rules import RuleGrant, matching_rules, reroll_eligible_indices
 from game.runtime.save import load_from_file, save_to_file

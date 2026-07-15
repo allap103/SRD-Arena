@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...features.actions import resolve_feature_action as _resolve_feature_action_impl
-from ...models.actor import Actor
+from ...domain.actor import Actor
 from ..models import EncounterProgress
 
 if TYPE_CHECKING:

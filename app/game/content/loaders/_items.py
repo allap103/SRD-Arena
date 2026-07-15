@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from ..schemas import ItemSchema
-from ...models.item import ArmorStat, Item, WeaponStat
+from ...domain.item import ArmorStat, Item, WeaponStat
 from ._catalogs import _find_system_item, load_system_item_catalog
 from ._shared import SOURCE_PRIORITY, _load_json, _slug
 from ._types import SystemItemCatalog

@@ -17,14 +17,14 @@ from ...combat.spells import (
     spell_action_value,
     spell_range_squares,
 )
-from ...scenarios import DEFAULT_SCENARIO_DIR, Scenario
+from ...runtime.scenario import DEFAULT_SCENARIO_DIR, Scenario
 from ...presentation.dice import build_roll_views, without_roll_details
 from ...presentation.session import (
     MOVE_DIRECTIONS,
     SessionPresentation,
     build_session_presentation,
 )
-from ...models.scene import Grid, Position
+from ...domain.scene import Grid, Position
 from ...presentation.models import ActionView
 from ...runtime.session import (
     EXIT_CHOICE_TEXT,
@@ -32,7 +32,7 @@ from ...runtime.session import (
     SAVE_CHOICE_TEXT,
     Session,
 )
-from ...scenarios import ScenarioInfo, list_scenarios
+from ...content.scenarios import ScenarioInfo, list_scenarios
 from .theme import apply_fantasy_theme
 from .ui.encounter import (
     ARROW_LABELS,

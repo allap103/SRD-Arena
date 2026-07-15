@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..models.actor import Actor
+from ..domain.actor import Actor
 from .types import CapabilityActionResult, DiceRoller, EffectResult
 
 

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..models.actor import Actor
-from ..models.scene import Position
-from ..models.spellcasting import Spell, Spellcasting
-from ..models.size import can_grapple
+from ..domain.actor import Actor
+from ..domain.scene import Position
+from ..domain.size import can_grapple
+from ..domain.spellcasting import Spell, Spellcasting
 from .attacks import has_free_hand
 from .behaviors import (
     DIRECTION_DELTAS,

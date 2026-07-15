@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from game.combat.encounter import EncounterState
-from game.runtime.game import Game
+from game.runtime.scenario import Game
 from game.runtime.save import create_save, restore_save
 
 SAMPLE_GAME_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"

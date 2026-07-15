@@ -4,11 +4,11 @@ from pathlib import Path
 
 from ..combat.encounter import EncounterState
 from ..combat.models import EncounterAction, EncounterSnapshot
-from ..models.actor import Actor
-from ..models.choice import Choice
-from ..models.item import Item
-from ..models.rules_config import RulesConfig
-from ..models.scene import Scene
+from ..domain.actor import Actor
+from ..domain.choice import Choice
+from ..domain.item import Item
+from ..domain.scene import Scene
+from ..rules.config import RulesConfig
 from ..presentation.models import ActionView, SceneView, TurnResult
 from ..support.paths import SCENARIOS_ROOT
 

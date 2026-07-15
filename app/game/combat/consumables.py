@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import re
 
-from ..models.actor import Actor
-from ..models.item import Item
+from ..domain.actor import Actor
+from ..domain.item import Item
 
 
 def healing_potions_in_inventory(actor: Actor, items_by_id: dict[str, Item]) -> list[Item]:

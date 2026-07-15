@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from game.combat.encounter import ActionCost, EncounterAction, EncounterState
-from game.runtime.game import Game
+from game.runtime.scenario import Game
 from game.frontends.qt.app import CyoaPySide6Window
 from game.features import EffectResult
 from game.presentation.session import SpellSlotTrackView, build_session_presentation

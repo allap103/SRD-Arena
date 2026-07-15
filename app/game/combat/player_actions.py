@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..models.actor import Actor
-from ..models.scene import Position
-from ..models.size import can_grapple
+from ..domain.actor import Actor
+from ..domain.scene import Position
+from ..domain.size import can_grapple
 from ..systems.roll import resolve_d20
 from ..features.types import EffectResult
 from .attacks import has_free_hand

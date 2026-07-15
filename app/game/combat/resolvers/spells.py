@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...models.actor import Actor
+from ...domain.actor import Actor
 from ..effects import serialize_effects
 from ..models import EncounterProgress
 from ..spell_actions import SpellActionContext, resolve_spell_action as _resolve_spell_action_impl

@@ -17,12 +17,12 @@ from ..combat.models import (
     PendingAttackSnapshot,
     PendingActionSnapshot,
 )
-from ..scenarios import Scenario
-from ..models.actor import Actor
-from ..models.attributes import Attributes, Movement
-from ..models.status import StatusSnapshot
-from ..models.spellcasting import Spellcasting
-from ..models.scene import Position
+from .scenario import Scenario
+from ..domain.actor import Actor
+from ..domain.attributes import Attributes, Movement
+from ..domain.scene import Position
+from ..domain.spellcasting import Spellcasting
+from ..domain.status import StatusSnapshot
 from .session import PendingSceneTransition, Session
 from ..systems.equipment import Equipment
 from ..systems.inventory import Inventory

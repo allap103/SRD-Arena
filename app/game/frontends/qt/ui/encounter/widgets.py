@@ -11,8 +11,8 @@ from .....combat.geometry import (
     deserialize_continuous_area,
     serialize_area,
 )
-from .....runtime.game import GAME_DIR
-from .....models.scene import Grid, Position
+from .....runtime.scenario import GAME_DIR
+from .....domain.scene import Grid, Position
 from .....presentation.session import BattlefieldView
 
 try:

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from ..models.actor import Actor
-from ..models.item import Item
-from ..models.scene import Position
+from ..domain.actor import Actor
+from ..domain.item import Item
+from ..domain.scene import Position
 from ..rules.registry import matching_rules, reroll_eligible_indices
 from ..rules.types import RuleGrant
 from ..systems.roll import D20RollMode, resolve_check, resolve_d20, resolve_dice, roll_dice, roll_die

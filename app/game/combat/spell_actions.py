@@ -6,8 +6,8 @@ import re
 
 from .geometry import AreaOfEffect, serialize_area
 from ..features.types import CapabilityActionResult, EffectResult
-from ..models.actor import Actor
-from ..models.spellcasting import Spell
+from ..domain.actor import Actor
+from ..domain.spellcasting import Spell
 from ..systems.roll import resolve_dice
 from ..systems.saving_throw import resolve_saving_throw
 

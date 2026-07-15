@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...models.actor import Actor
-from ...models.scene import Position
+from ...domain.actor import Actor
+from ...domain.scene import Position
 from ..attacks import apply_attack_damage, resolve_attack, selected_attack_type
 from ..behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent, movement_squares as _movement_squares
 from ..models import ActionCost, ActorRef, DecisionFrame, EncounterAction, EncounterProgress

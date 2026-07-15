@@ -66,12 +66,12 @@ from .player_actions import (
 )
 from .reactions import REACTION_ENGINE, ReactionEngine
 from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
-from ..models.actor import Actor
-from ..models.item import Item
-from ..models.scene import Encounter, Position
-from ..models.rules_config import RulesConfig
-from ..models.size import is_two_sizes_smaller
-from ..models.status import Status, StatusSnapshot
+from ..domain.actor import Actor
+from ..domain.item import Item
+from ..domain.scene import Encounter, Position
+from ..domain.size import is_two_sizes_smaller
+from ..domain.status import Status, StatusSnapshot
+from ..rules.config import RulesConfig
 from ..rules.registry import matching_rules
 from ..rules.types import RuleGrant
 from .turn_flow import TURN_ENGINE, TurnEngine
