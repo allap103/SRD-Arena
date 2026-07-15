@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ..rules.types import RuleGrant
+from .rules.types import RuleGrant
 
 RELATIONAL_STATUS_NAMES = {"grappled", "grappling"}
 

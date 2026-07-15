@@ -1,7 +1,7 @@
 from game.domain.actor import Actor
 from game.domain.attributes import Attributes
-from game.systems.equipment import Equipment
-from game.systems.inventory import Inventory
+from game.domain.equipment import Equipment
+from game.domain.inventory import Inventory
 
 
 def make_actor() -> Actor:

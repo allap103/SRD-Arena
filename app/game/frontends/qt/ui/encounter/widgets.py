@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .....presentation.dice import RollView
-from .....combat.geometry import (
+from .....domain.combat.geometry import (
     Vector2D,
     build_directional_area,
     build_radius_area,

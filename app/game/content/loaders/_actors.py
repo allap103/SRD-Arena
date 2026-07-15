@@ -16,10 +16,10 @@ from ...domain.class_features import (
 )
 from ...domain.monster_attack import MonsterAttack
 from ...domain.spellcasting import Spell, Spellcasting
-from ...rules.normalization import normalize_optional_feature_rules
-from ...rules.types import RuleGrant
-from ...systems.equipment import Equipment
-from ...systems.inventory import Inventory
+from ...domain.rules.types import RuleGrant
+from ..normalization import normalize_optional_feature_rules
+from ...domain.equipment import Equipment
+from ...domain.inventory import Inventory
 from ._catalogs import (
     _find_class_block,
     _find_optional_feature,
@@ -194,8 +194,17 @@ def _resolve_optional_feature_rules(
                 f"Actor references optional feature '{reference.name}', "
                 "but no optional feature catalog was loaded."
             )
-        feature = _find_optional_feature(reference.name, reference.source, catalog)
-        rules.extend(normalize_optional_feature_rules(feature))
+        try:
+            feature = _find_optional_feature(reference.name, reference.source, catalog)
+        except KeyError:
+            normalized = normalize_optional_feature_rules(
+                {"name": reference.name, "source": reference.source or ""}
+            )
+            if not normalized:
+                raise
+            rules.extend(normalized)
+        else:
+            rules.extend(normalize_optional_feature_rules(feature))
     return rules
 
 

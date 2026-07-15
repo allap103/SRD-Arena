@@ -9,7 +9,7 @@ from typing import TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..combat.models import (
+from ..domain.combat.models import (
     DecisionFrameSnapshot,
     EncounterSnapshot,
     EncounterSnapshotEnemy,
@@ -24,8 +24,8 @@ from ..domain.scene import Position
 from ..domain.spellcasting import Spellcasting
 from ..domain.status import StatusSnapshot
 from .session import PendingSceneTransition, Session
-from ..systems.equipment import Equipment
-from ..systems.inventory import Inventory
+from ..domain.equipment import Equipment
+from ..domain.inventory import Inventory
 
 SAVE_VERSION = 6
 JsonScalar: TypeAlias = str | int | float | bool | None

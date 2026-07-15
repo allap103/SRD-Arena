@@ -2,13 +2,14 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..combat.encounter import EncounterState
-from ..combat.models import EncounterAction, EncounterSnapshot
+from ..domain.combat.encounter import EncounterState
+from ..domain.combat.models import EncounterAction, EncounterSnapshot
+from ..presentation.combat import render_encounter_text
 from ..domain.actor import Actor
 from ..domain.choice import Choice
 from ..domain.item import Item
 from ..domain.scene import Scene
-from ..rules.config import RulesConfig
+from ..domain.rules.config import RulesConfig
 from ..presentation.models import ActionView, SceneView, TurnResult
 from ..support.paths import SCENARIOS_ROOT
 
@@ -87,7 +88,7 @@ class Session:
         if self.encounter_state is not None:
             scene_text = "\n\n".join(
                 part
-                for part in [scene.text, self.encounter_state.render(self.player)]
+                for part in [scene.text, render_encounter_text(self.encounter_state, self.player)]
                 if part
             )
             self._encounter_actions = self.encounter_state.available_actions(self.player)

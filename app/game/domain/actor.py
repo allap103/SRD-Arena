@@ -1,16 +1,12 @@
 from dataclasses import dataclass, field
 
-from ..support.logging import CHANNEL_SYSTEM, get_game_logger
-from ..systems.equipment import Equipment
-from ..systems.inventory import Inventory
+from .equipment import Equipment
+from .inventory import Inventory
 from .attributes import Attributes
 from .class_features import ClassRef, CombatProfile, FeatureGrant, SubclassRef
-from ..rules.types import RuleGrant
+from .rules.types import RuleGrant
 from .monster_attack import MonsterAttack
 from .spellcasting import Spellcasting
-
-LOGGER = get_game_logger(CHANNEL_SYSTEM)
-
 
 @dataclass
 class Actor:
@@ -47,22 +43,21 @@ class Actor:
     def remove_item(self, item: str):
         self.inventory.remove_item(item)
 
-    def show_equipment(self):
-        self.equipment.show()
+    def show_equipment(self) -> dict[str, str | None]:
+        return self.equipment.show()
 
-    def equip_item(self, item: str, slot: str):
-        if self.inventory.has_item(item):
-            self.equipment.equip(item, slot)
+    def equip_item(self, item: str, slot: str) -> bool:
+        if self.inventory.has_item(item) and self.equipment.equip(item, slot):
             self.inventory.remove_item(item)
-        else:
-            LOGGER.info(f"Item '{item}' not found in inventory.")
+            return True
+        return False
 
-    def unequip_item(self, slot: str):
+    def unequip_item(self, slot: str) -> bool:
         removed_item = self.equipment.unequip(slot)
         if removed_item is not None:
             self.inventory.add_item(removed_item)
-        else:
-            LOGGER.info(f"No item equipped in slot '{slot}'.")
+            return True
+        return False
 
     def get_modifier(self, attribute_value: int) -> int:
         return (attribute_value - 10) // 2

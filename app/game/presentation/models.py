@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from ..combat.models import CombatEvent
+from ..domain.combat.models import CombatEvent
 
 
 @dataclass

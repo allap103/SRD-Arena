@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from game.combat.encounter import EncounterState
+from game.domain.combat.encounter import EncounterState
 from game.runtime.scenario import Game
 from game.runtime.save import (
     SaveGame,

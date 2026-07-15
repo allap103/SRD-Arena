@@ -5,14 +5,14 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ...combat.models import ActionCost, EncounterAction
-from ...combat.geometry import (
+from ...domain.combat.models import ActionCost, EncounterAction
+from ...domain.combat.geometry import (
     Vector2D,
     build_directional_area,
     build_radius_area,
     serialize_area,
 )
-from ...combat.spells import (
+from ...domain.combat.spells import (
     parse_spell_action_value,
     spell_action_value,
     spell_range_squares,

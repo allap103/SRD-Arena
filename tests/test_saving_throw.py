@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from game.domain.attributes import Attributes
-from game.systems.roll import resolve_roll_attempts
-from game.systems.saving_throw import reroll_saving_throw, resolve_saving_throw
+from game.domain.rules.dice import resolve_roll_attempts
+from game.domain.rules.saving_throws import reroll_saving_throw, resolve_saving_throw
 
 
 @dataclass
