@@ -4,13 +4,13 @@ from pathlib import Path
 
 from ..domain.combat.encounter import EncounterState
 from ..domain.combat.models import EncounterAction, EncounterSnapshot
-from ..presentation.combat import render_encounter_text
+from ..frontends.shared.combat import render_encounter_text
 from ..domain.actor import Actor
 from ..domain.choice import Choice
 from ..domain.item import Item
 from ..domain.scene import Scene
 from ..domain.rules.config import RulesConfig
-from ..presentation.models import ActionView, SceneView, TurnResult
+from ..frontends.shared.models import ActionView, SceneView, TurnResult
 from ..support.paths import SCENARIOS_ROOT
 
 SAVE_CHOICE_TEXT = "Save game"

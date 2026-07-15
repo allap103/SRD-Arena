@@ -1,4 +1,4 @@
-from ...presentation.models import TurnResult
+from ..shared.models import TurnResult
 from ...runtime.session import Session
 from ...support.logging import (
     CHANNEL_CHOICE,

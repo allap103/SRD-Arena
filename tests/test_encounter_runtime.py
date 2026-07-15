@@ -7,8 +7,8 @@ from game.domain.combat.encounter import ActionCost, EncounterAction, EncounterS
 from game.runtime.scenario import Game
 from game.frontends.qt.app import CyoaPySide6Window
 from game.domain.combat.features import EffectResult
-from game.presentation.session import SpellSlotTrackView, build_session_presentation
-from game.presentation.models import ActionView
+from game.frontends.shared.session import SpellSlotTrackView, build_session_presentation
+from game.frontends.shared.models import ActionView
 from game.runtime.save import load_from_file, save_to_file
 from game.frontends.qt.ui.encounter import BattlefieldWidget
 from game.frontends.qt.ui.encounter.config import TargetSelectionMode

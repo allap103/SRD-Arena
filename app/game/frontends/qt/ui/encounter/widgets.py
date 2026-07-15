@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .....presentation.dice import RollView
+from ....shared.dice import RollView
 from .....domain.combat.geometry import (
     Vector2D,
     build_directional_area,
@@ -13,7 +13,7 @@ from .....domain.combat.geometry import (
 )
 from .....runtime.scenario import GAME_DIR
 from .....domain.scene import Grid, Position
-from .....presentation.session import BattlefieldView
+from ....shared.session import BattlefieldView
 
 try:
     from PySide6.QtCore import QPointF, QSize, Qt, Signal
@@ -80,7 +80,7 @@ class DieSvgWidget(QWidget):
         self._value = value
         self._selected = selected
         self._action_id = action_id
-        svg_path = Path(__file__).parents[4] / "assets" / "dice" / f"d{sides}.svg"
+        svg_path = Path(__file__).parents[3] / "assets" / "dice" / f"d{sides}.svg"
         self._renderer = QSvgRenderer(str(svg_path))
         self.setFixedSize(self.SIZE, self.SIZE)
         if action_id is not None:

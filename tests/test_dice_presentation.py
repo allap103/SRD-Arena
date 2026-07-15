@@ -1,4 +1,4 @@
-from game.presentation.dice import build_roll_views, without_roll_details
+from game.frontends.shared.dice import build_roll_views, without_roll_details
 from game.domain.combat.encounter import CombatEvent
 
 

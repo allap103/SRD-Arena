@@ -18,14 +18,14 @@ from ...domain.combat.spells import (
     spell_range_squares,
 )
 from ...runtime.scenario import DEFAULT_SCENARIO_DIR, Scenario
-from ...presentation.dice import build_roll_views, without_roll_details
-from ...presentation.session import (
+from ..shared.dice import build_roll_views, without_roll_details
+from ..shared.session import (
     MOVE_DIRECTIONS,
     SessionPresentation,
     build_session_presentation,
 )
 from ...domain.scene import Grid, Position
-from ...presentation.models import ActionView
+from ..shared.models import ActionView
 from ...runtime.session import (
     EXIT_CHOICE_TEXT,
     LOAD_CHOICE_TEXT,

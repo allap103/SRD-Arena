@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from .presentation.models import SceneView, TurnResult
+from .frontends.shared.models import SceneView, TurnResult
 from .runtime.scenario import Scenario
 from .runtime.save import (
     SaveGame,

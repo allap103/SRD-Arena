@@ -1,6 +1,6 @@
-from ..domain.actor import Actor
-from ..domain.combat.behaviors import movement_squares
-from ..domain.combat.encounter import EncounterState
+from ...domain.actor import Actor
+from ...domain.combat.behaviors import movement_squares
+from ...domain.combat.encounter import EncounterState
 
 
 def render_encounter_text(encounter: EncounterState, player: Actor) -> str:
