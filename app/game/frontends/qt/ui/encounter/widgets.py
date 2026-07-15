@@ -11,7 +11,7 @@ from .....domain.combat.geometry import (
     deserialize_continuous_area,
     serialize_area,
 )
-from .....runtime.scenario import GAME_DIR
+from .....runtime.scenario import DEFAULT_SCENARIO_DIR
 from .....domain.scene import Grid, Position
 from ....shared.session import BattlefieldView
 
@@ -283,7 +283,7 @@ class BattlefieldWidget(QWidget):
     BASE_CELL_SIZE = 72
     MINIMUM_HEIGHT = 320
 
-    def __init__(self, game_dir: str | Path = GAME_DIR):
+    def __init__(self, scenario_dir: str | Path = DEFAULT_SCENARIO_DIR):
         super().__init__()
         self._battlefield: BattlefieldView | None = None
         self._actor_positions: dict[str, tuple[float, float, float]] = {}
@@ -294,7 +294,7 @@ class BattlefieldWidget(QWidget):
         self._hover_point: tuple[float, float] | None = None
         self._board_metrics: tuple[float, float, float, int, int] | None = None
         self._cell_targeting_enabled = False
-        self._sprites_dir = Path(game_dir) / "sprites"
+        self._sprites_dir = Path(scenario_dir) / "sprites"
         self._sprite_cache: dict[str, QPixmap | None] = {}
         self.setMinimumHeight(self.MINIMUM_HEIGHT)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)

@@ -7,57 +7,57 @@ import pytest
 from game import main as launcher
 
 
-def _make_game_dir(path: Path) -> Path:
+def _make_scenario_dir(path: Path) -> Path:
     for subdir in ("actors", "items", "scenes"):
         (path / subdir).mkdir(parents=True, exist_ok=True)
     return path
 
 
-def test_resolve_game_directory_requires_explicit_name() -> None:
+def test_resolve_scenario_directory_requires_explicit_name() -> None:
     with pytest.raises(FileNotFoundError):
-        launcher.resolve_game_directory(None)
+        launcher.resolve_scenario_directory(None)
 
 
-def test_resolve_game_directory_accepts_relative_path(monkeypatch, tmp_path: Path) -> None:
-    relative_game = _make_game_dir(tmp_path / "my_relative_game")
+def test_resolve_scenario_directory_accepts_relative_path(monkeypatch, tmp_path: Path) -> None:
+    relative_scenario = _make_scenario_dir(tmp_path / "my_relative_scenario")
     monkeypatch.chdir(tmp_path)
 
-    resolved = launcher.resolve_game_directory("my_relative_game")
+    resolved = launcher.resolve_scenario_directory("my_relative_scenario")
 
-    assert resolved == relative_game.resolve()
-
-
-def test_resolve_game_directory_accepts_absolute_path(tmp_path: Path) -> None:
-    absolute_game = _make_game_dir(tmp_path / "absolute_game")
-
-    resolved = launcher.resolve_game_directory(str(absolute_game.resolve()))
-
-    assert resolved == absolute_game.resolve()
+    assert resolved == relative_scenario.resolve()
 
 
-def test_resolve_game_directory_accepts_scenarios_subfolder_name(
+def test_resolve_scenario_directory_accepts_absolute_path(tmp_path: Path) -> None:
+    absolute_scenario = _make_scenario_dir(tmp_path / "absolute_scenario")
+
+    resolved = launcher.resolve_scenario_directory(str(absolute_scenario.resolve()))
+
+    assert resolved == absolute_scenario.resolve()
+
+
+def test_resolve_scenario_directory_accepts_scenarios_subfolder_name(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
     repo_root = tmp_path / "repo"
-    adventure_game = _make_game_dir(repo_root / "app" / "content" / "scenarios" / "forest_trial")
-    monkeypatch.setattr(launcher, "SCENARIOS_DIR", repo_root / "app" / "content" / "scenarios")
+    adventure_scenario = _make_scenario_dir(repo_root / "app" / "content" / "scenarios" / "forest_trial")
+    monkeypatch.setattr(launcher, "SCENARIOS_ROOT", repo_root / "app" / "content" / "scenarios")
 
-    resolved = launcher.resolve_game_directory("forest_trial")
+    resolved = launcher.resolve_scenario_directory("forest_trial")
 
-    assert resolved == adventure_game.resolve()
+    assert resolved == adventure_scenario.resolve()
 
 
-def test_resolve_game_directory_rejects_missing_structure(tmp_path: Path) -> None:
-    invalid_game = tmp_path / "broken_game"
-    invalid_game.mkdir()
+def test_resolve_scenario_directory_rejects_missing_structure(tmp_path: Path) -> None:
+    invalid_scenario = tmp_path / "broken_game"
+    invalid_scenario.mkdir()
 
     with pytest.raises(FileNotFoundError):
-        launcher.resolve_game_directory(str(invalid_game))
+        launcher.resolve_scenario_directory(str(invalid_scenario))
 
 
 def test_launch_runs_gui_frontend(monkeypatch, tmp_path: Path) -> None:
-    game_dir = _make_game_dir(tmp_path / "game")
+    scenario_dir = _make_scenario_dir(tmp_path / "game")
     launched = []
 
     monkeypatch.setitem(
@@ -73,65 +73,65 @@ def test_launch_runs_gui_frontend(monkeypatch, tmp_path: Path) -> None:
         ),
     )
 
-    launcher.launch(frontend="gui", game_dir=game_dir, show_encounter_json=True)
+    launcher.launch(frontend="gui", scenario_dir=scenario_dir, show_encounter_json=True)
 
-    assert launched == [(game_dir, True)]
+    assert launched == [(scenario_dir, True)]
 
 
 def test_main_launches_gui_by_default(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
-    game_dir = _make_game_dir(tmp_path / "game")
+    scenario_dir = _make_scenario_dir(tmp_path / "game")
     launched = []
 
     monkeypatch.setattr(
         launcher,
-        "resolve_game_directory",
-        lambda game: game_dir.resolve(),
+        "resolve_scenario_directory",
+        lambda scenario: scenario_dir.resolve(),
     )
     monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(kwargs))
 
-    launcher.main([str(game_dir)])
+    launcher.main([str(scenario_dir)])
 
-    assert launched == [{"frontend": "gui", "game_dir": game_dir.resolve(), "control_mode": "default", "start_scene": None, "show_encounter_json": False}]
+    assert launched == [{"frontend": "gui", "scenario_dir": scenario_dir.resolve(), "control_mode": "default", "start_scene": None, "show_encounter_json": False}]
 
 
-def test_main_without_game_launches_picker_for_default_frontend(monkeypatch) -> None:
+def test_main_without_scenario_launches_picker_for_default_frontend(monkeypatch) -> None:
     launched = []
 
     monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(kwargs))
 
     launcher.main([])
 
-    assert launched == [{"frontend": "gui", "game_dir": None, "control_mode": "default", "start_scene": None, "show_encounter_json": False}]
+    assert launched == [{"frontend": "gui", "scenario_dir": None, "control_mode": "default", "start_scene": None, "show_encounter_json": False}]
 
 
-def test_select_game_directory_lists_available_scenarios(monkeypatch, tmp_path: Path) -> None:
-    first = _make_game_dir(tmp_path / "alpha")
-    _make_game_dir(tmp_path / "beta")
-    monkeypatch.setattr(launcher, "SCENARIOS_DIR", tmp_path)
+def test_select_scenario_directory_lists_available_scenarios(monkeypatch, tmp_path: Path) -> None:
+    first = _make_scenario_dir(tmp_path / "alpha")
+    _make_scenario_dir(tmp_path / "beta")
+    monkeypatch.setattr(launcher, "SCENARIOS_ROOT", tmp_path)
     monkeypatch.setattr("builtins.input", lambda _prompt: "1")
 
-    resolved = launcher.select_game_directory()
+    resolved = launcher.select_scenario_directory()
 
     assert resolved == first.resolve()
 
 
 def test_main_with_cli_frontend_selects_cli_mode(monkeypatch, tmp_path: Path) -> None:
-    game_dir = _make_game_dir(tmp_path / "game")
+    scenario_dir = _make_scenario_dir(tmp_path / "game")
     launched = []
 
     monkeypatch.setattr(
         launcher,
-        "resolve_game_directory",
-        lambda game: game_dir.resolve(),
+        "resolve_scenario_directory",
+        lambda scenario: scenario_dir.resolve(),
     )
     monkeypatch.setattr(launcher, "launch", lambda *args, **kwargs: launched.append(kwargs))
 
-    launcher.main(["--frontend", "cli", str(game_dir)])
+    launcher.main(["--frontend", "cli", str(scenario_dir)])
 
-    assert launched == [{"frontend": "cli", "game_dir": game_dir.resolve(), "control_mode": "default", "start_scene": None, "show_encounter_json": False}]
+    assert launched == [{"frontend": "cli", "scenario_dir": scenario_dir.resolve(), "control_mode": "default", "start_scene": None, "show_encounter_json": False}]
 
 
 def test_parser_rejects_textual_frontend() -> None:

@@ -3,13 +3,13 @@ from pathlib import Path
 import pytest
 
 from game.domain.combat.encounter import EncounterState
-from game.runtime.scenario import Game
+from game.runtime.scenario import Scenario
 from game.domain.combat.encounter import EncounterAction
 from game.domain.rules import RuleGrant, matching_rules, reroll_eligible_indices
 from game.runtime.save import load_from_file, save_to_file
 from game.domain.rules.dice import reroll_dice, resolve_dice
 
-SAMPLE_GAME_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
+SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
 
 
 @pytest.fixture(autouse=True)
@@ -76,7 +76,7 @@ def test_reroll_matching_dice_enforces_maximum_per_die():
 
 
 def test_sample_fighter_loads_great_weapon_fighting_rule():
-    player = Game(SAMPLE_GAME_DIR).create_session().player
+    player = Scenario(SAMPLE_SCENARIO_DIR).create_session().player
 
     [rule] = [
         rule for rule in player.rule_grants if rule.id == "great_weapon_fighting"
@@ -156,7 +156,7 @@ def test_pending_damage_reroll_survives_save_and_load(tmp_path, monkeypatch):
 
     save_path = tmp_path / "pending-reroll.json"
     save_to_file(session, save_path)
-    restored = load_from_file(save_path, SAMPLE_GAME_DIR)
+    restored = load_from_file(save_path, SAMPLE_SCENARIO_DIR)
 
     assert restored.encounter_state is not None
     assert restored.encounter_state.current_decision().kind == "reroll_dice"
@@ -269,7 +269,7 @@ def test_nested_opportunity_reroll_survives_save_and_load(tmp_path, monkeypatch)
 
     save_path = tmp_path / "nested-reroll.json"
     save_to_file(session, save_path)
-    restored = load_from_file(save_path, SAMPLE_GAME_DIR)
+    restored = load_from_file(save_path, SAMPLE_SCENARIO_DIR)
 
     assert restored.encounter_state is not None
     state = restored.encounter_state
@@ -293,7 +293,7 @@ def test_nested_opportunity_reroll_survives_save_and_load(tmp_path, monkeypatch)
 
 
 def _adjacent_sample_encounter():
-    session = Game(SAMPLE_GAME_DIR, start_scene="goblin_encounter").create_session()
+    session = Scenario(SAMPLE_SCENARIO_DIR, start_scene="goblin_encounter").create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     session.encounter_state.player_position.x = 4
@@ -304,7 +304,7 @@ def _adjacent_sample_encounter():
 
 
 def _sample_opportunity_attack():
-    session = Game(SAMPLE_GAME_DIR, start_scene="goblin_encounter").create_session()
+    session = Scenario(SAMPLE_SCENARIO_DIR, start_scene="goblin_encounter").create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state

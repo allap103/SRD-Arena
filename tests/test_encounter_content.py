@@ -1,12 +1,12 @@
 import json
 from pathlib import Path
 
-from game.runtime.scenario import Game
-from game.content.loaders import load_actor, load_bestiary_stat_blocks, load_scene
-from game.runtime.save import load_from_file, save_to_file
+from scenario.runtime.scenario import Scenario
+from scenario.content.loaders import load_actor, load_bestiary_stat_blocks, load_scene
+from scenario.runtime.save import load_from_file, save_to_file
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
-SAMPLE_GAME_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
+SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
 
 
 def test_load_scene_parses_optional_encounter_block() -> None:
@@ -62,14 +62,14 @@ def test_load_actor_can_reference_system_stat_block() -> None:
 
 
 def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
-    game = Game(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
 
-    actor_ids = {actor.id for actor in game.actors}
-    player = game.get_actor("player")
-    items_by_id = {item.id: item for item in game.items}
+    actor_ids = {actor.id for actor in scenario.actors}
+    player = scenario.get_actor("player")
+    items_by_id = {item.id: item for item in scenario.items}
 
     assert "player" in actor_ids
-    assert len([actor for actor in game.actors if actor.id == "player"]) == 1
+    assert len([actor for actor in scenario.actors if actor.id == "player"]) == 1
     assert {"goblin_1", "goblin_2", "goblin_3"}.issubset(actor_ids)
     assert player.name == "Traveler"
     assert player.class_ref is not None
@@ -118,19 +118,19 @@ def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
 
 
 def test_game_uses_start_scene_from_settings_when_not_overridden(tmp_path: Path) -> None:
-    game_dir = tmp_path / "encounter_start"
+    scenario_dir = tmp_path / "encounter_start"
     for subdir in ("actors", "items", "scenes", "custom_stat_blocks"):
-        (game_dir / subdir).mkdir(parents=True, exist_ok=True)
-    (game_dir / "settings.json").write_text('{"start_scene": "arena"}\n', encoding="utf-8")
-    (game_dir / "actors" / "player").write_text(
+        (scenario_dir / subdir).mkdir(parents=True, exist_ok=True)
+    (scenario_dir / "settings.json").write_text('{"start_scene": "arena"}\n', encoding="utf-8")
+    (scenario_dir / "actors" / "player").write_text(
         (FIXTURE_ENCOUNTER_DIR / "actors" / "player").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
-    (game_dir / "custom_stat_blocks" / "player").write_text(
+    (scenario_dir / "custom_stat_blocks" / "player").write_text(
         (FIXTURE_ENCOUNTER_DIR / "custom_stat_blocks" / "player").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
-    (game_dir / "scenes" / "arena").write_text(
+    (scenario_dir / "scenes" / "arena").write_text(
         (FIXTURE_ENCOUNTER_DIR / "scenes" / "goblin_encounter").read_text(encoding="utf-8").replace(
             '"id": "goblin_encounter"',
             '"id": "arena"',
@@ -138,19 +138,19 @@ def test_game_uses_start_scene_from_settings_when_not_overridden(tmp_path: Path)
         encoding="utf-8",
     )
 
-    game = Game(str(game_dir))
+    scenario = Scenario(str(scenario_dir))
 
-    assert game.start_scene == "arena"
+    assert scenario.start_scene == "arena"
 
 
 def test_game_loads_rule_settings_from_settings_json() -> None:
-    game = Game(str(SAMPLE_GAME_DIR))
+    scenario = Scenario(str(SAMPLE_SCENARIO_DIR))
 
-    assert game.rules_config.directional_aoe_cell_coverage_threshold == 0.1
+    assert scenario.rules_config.directional_aoe_cell_coverage_threshold == 0.1
 
 
 def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
-    game = Game(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
     actor_path = tmp_path / "fighter_level_five.json"
     actor_path.write_text(
         json.dumps(
@@ -175,9 +175,9 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
     )
     upgraded = load_actor(
         actor_path,
-        game.stat_blocks,
-        game.class_blocks,
-        game.custom_stat_blocks,
+        scenario.stat_blocks,
+        scenario.class_blocks,
+        scenario.custom_stat_blocks,
     )
 
     assert any(grant.id == "extra_attack" for grant in upgraded.feature_grants)
@@ -185,7 +185,7 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
 
 
 def test_actor_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path) -> None:
-    game = Game(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
     actor_path = tmp_path / "eldritch_knight.json"
     actor_path.write_text(
         json.dumps(
@@ -220,12 +220,12 @@ def test_actor_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path)
     )
     actor = load_actor(
         actor_path,
-        game.stat_blocks,
-        game.class_blocks,
-        game.custom_stat_blocks,
-        game.optional_feature_blocks,
-        game.subclass_blocks,
-        game.spell_catalog,
+        scenario.stat_blocks,
+        scenario.class_blocks,
+        scenario.custom_stat_blocks,
+        scenario.optional_feature_blocks,
+        scenario.subclass_blocks,
+        scenario.spell_catalog,
     )
 
     assert actor.subclass_ref is not None
@@ -259,7 +259,7 @@ def test_actor_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path)
 
 
 def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) -> None:
-    game = Game(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
     actor_path = tmp_path / "geometry_spells.json"
     actor_path.write_text(
         json.dumps(
@@ -290,12 +290,12 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
     )
     actor = load_actor(
         actor_path,
-        game.stat_blocks,
-        game.class_blocks,
-        game.custom_stat_blocks,
-        game.optional_feature_blocks,
-        game.subclass_blocks,
-        game.spell_catalog,
+        scenario.stat_blocks,
+        scenario.class_blocks,
+        scenario.custom_stat_blocks,
+        scenario.optional_feature_blocks,
+        scenario.subclass_blocks,
+        scenario.spell_catalog,
     )
 
     assert actor.spellcasting is not None
@@ -318,7 +318,7 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
 
 
 def test_save_and_load_preserve_spell_slots(tmp_path: Path) -> None:
-    session = Game("app/content/scenarios/sample_game").create_session()
+    session = Scenario("app/content/scenarios/sample_game").create_session()
 
     assert session.player.spellcasting is not None
     session.player.spellcasting.spell_slots_remaining[1] = 1

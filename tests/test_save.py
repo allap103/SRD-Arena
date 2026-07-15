@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from game.domain.combat.encounter import EncounterState
-from game.runtime.scenario import Game
+from game.runtime.scenario import Scenario
 from game.runtime.save import (
     SaveGame,
     create_save,
@@ -39,7 +39,7 @@ def _player_first_initiative(monkeypatch):
 
 
 def test_create_save_captures_mutable_session_state() -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     starting_health = session.player.get_health()
     starting_inventory = list(session.player.inventory.items)
     session.player.take_damage(3)
@@ -60,7 +60,7 @@ def test_create_save_captures_mutable_session_state() -> None:
 
 
 def test_restore_save_reloads_content_and_applies_saved_state() -> None:
-    original = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    original = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     starting_health = original.player.get_health()
     player_name = original.player.name
     starting_inventory = list(original.player.inventory.items)
@@ -83,7 +83,7 @@ def test_restore_save_reloads_content_and_applies_saved_state() -> None:
 
 
 def test_save_to_file_writes_versioned_json_and_loads_session(tmp_path: Path) -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     save_path = tmp_path / "save.json"
 
@@ -96,7 +96,7 @@ def test_save_to_file_writes_versioned_json_and_loads_session(tmp_path: Path) ->
 
 
 def test_slot_helpers_use_separate_save_files(tmp_path: Path) -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
 
     slot_path = save_to_slot(session, tmp_path, 2)
     loaded = load_from_slot(tmp_path, 2, FIXTURE_ENCOUNTER_DIR)
@@ -107,7 +107,7 @@ def test_slot_helpers_use_separate_save_files(tmp_path: Path) -> None:
 
 
 def test_scene_view_includes_continue_and_system_options(tmp_path: Path) -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.save_dir = tmp_path
     session.current_scene_id = "welcome"
 
@@ -122,7 +122,7 @@ def test_scene_view_includes_continue_and_system_options(tmp_path: Path) -> None
 
 
 def test_save_and_load_preserve_feature_uses(tmp_path: Path) -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.player.feature_uses_remaining["second_wind"] = 1
     save_path = tmp_path / "feature_uses_save.json"
 
@@ -133,7 +133,7 @@ def test_save_and_load_preserve_feature_uses(tmp_path: Path) -> None:
 
 
 def test_session_save_choice_writes_default_slot(tmp_path: Path) -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.save_dir = tmp_path
 
@@ -148,7 +148,7 @@ def test_session_save_choice_writes_default_slot(tmp_path: Path) -> None:
 
 
 def test_session_load_choice_restores_saved_state_from_default_slot(tmp_path: Path) -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     starting_health = session.player.get_health()
     starting_inventory = list(session.player.inventory.items)
     session.save_dir = tmp_path
@@ -156,7 +156,7 @@ def test_session_load_choice_restores_saved_state_from_default_slot(tmp_path: Pa
     session.player.inventory.add_item("map")
     save_to_slot(session, tmp_path, 1)
 
-    fresh_session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    fresh_session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     fresh_session.save_dir = tmp_path
     load_choice_index = fresh_session.get_scene_view().choices.index(LOAD_CHOICE_TEXT)
 
@@ -169,7 +169,7 @@ def test_session_load_choice_restores_saved_state_from_default_slot(tmp_path: Pa
 
 
 def test_session_load_choice_reports_missing_default_slot(tmp_path: Path) -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.save_dir = tmp_path
     load_choice_index = session.get_scene_view().choices.index(LOAD_CHOICE_TEXT)
 
@@ -181,7 +181,7 @@ def test_session_load_choice_reports_missing_default_slot(tmp_path: Path) -> Non
 
 
 def test_session_exit_choice_requests_shutdown(tmp_path: Path) -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.save_dir = tmp_path
     exit_choice_index = session.get_scene_view().choices.index(EXIT_CHOICE_TEXT)
 
@@ -193,7 +193,7 @@ def test_session_exit_choice_requests_shutdown(tmp_path: Path) -> None:
 
 
 def test_save_and_load_preserve_pending_scene_transition(tmp_path: Path) -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
     state = session.encounter_state

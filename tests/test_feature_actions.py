@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from game.runtime.scenario import Game
+from game.runtime.scenario import Scenario
 from game.domain.combat.features import CapabilityActionResult, resolve_feature_action
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 
 
 def test_second_wind_returns_healing_effect_result() -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.player.current_health = 10
 
     result = resolve_feature_action(session.player, "second_wind", lambda num_dice, sides: 5)
@@ -32,7 +32,7 @@ def test_second_wind_returns_healing_effect_result() -> None:
 
 
 def test_action_surge_returns_extra_action_result() -> None:
-    session = Game(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
 
     result = resolve_feature_action(session.player, "action_surge", lambda num_dice, sides: 0)
 

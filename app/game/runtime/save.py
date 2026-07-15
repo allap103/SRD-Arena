@@ -246,16 +246,16 @@ def create_save(session: Session) -> SaveGame:
     )
 
 
-def restore_save(save: SaveGame, game_dir: str | Path) -> Session:
+def restore_save(save: SaveGame, scenario_dir: str | Path) -> Session:
     if save.version != SAVE_VERSION:
         raise ValueError(f"Unsupported save version: {save.version}")
 
-    game = Scenario(
-        str(game_dir),
+    scenario = Scenario(
+        str(scenario_dir),
         start_scene=save.start_scene_id,
         control_mode=save.control_mode,
     )
-    session = game.create_session(
+    session = scenario.create_session(
         player_actor_id=save.player.actor_id,
         control_mode=save.control_mode,
     )
@@ -284,11 +284,11 @@ def save_to_file(session: Session, path: str | Path) -> Path:
     return output_path
 
 
-def load_from_file(path: str | Path, game_dir: str | Path) -> Session:
+def load_from_file(path: str | Path, scenario_dir: str | Path) -> Session:
     save_path = Path(path)
     with save_path.open("r", encoding="utf-8") as save_file:
         save = SaveGame.model_validate_json(save_file.read())
-    return restore_save(save, game_dir)
+    return restore_save(save, scenario_dir)
 
 
 def get_slot_path(save_dir: str | Path, slot: str | int) -> Path:
@@ -302,9 +302,9 @@ def save_to_slot(session: Session, save_dir: str | Path, slot: str | int) -> Pat
 def load_from_slot(
     save_dir: str | Path,
     slot: str | int,
-    game_dir: str | Path,
+    scenario_dir: str | Path,
 ) -> Session:
-    return load_from_file(get_slot_path(save_dir, slot), game_dir)
+    return load_from_file(get_slot_path(save_dir, slot), scenario_dir)
 
 
 def _create_player_state(player: Actor) -> PlayerState:

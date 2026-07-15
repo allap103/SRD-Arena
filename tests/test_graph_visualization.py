@@ -9,11 +9,11 @@ from visualization.scene_graph import (
 
 nx = pytest.importorskip("networkx")
 
-FIXTURE_GAME_DIR = Path(__file__).parent / "fixtures" / "graph_game"
+FIXTURE_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "graph_game"
 
 
 def test_build_scene_graph_keeps_multiple_choices_to_same_target() -> None:
-    scenes = load_scenes_from_game_dir(FIXTURE_GAME_DIR)
+    scenes = load_scenes_from_game_dir(FIXTURE_SCENARIO_DIR)
 
     graph = build_scene_graph(scenes)
 
@@ -22,7 +22,7 @@ def test_build_scene_graph_keeps_multiple_choices_to_same_target() -> None:
 
 
 def test_build_scene_graph_marks_missing_target_nodes() -> None:
-    scenes = load_scenes_from_game_dir(FIXTURE_GAME_DIR)
+    scenes = load_scenes_from_game_dir(FIXTURE_SCENARIO_DIR)
 
     graph = build_scene_graph(scenes)
 
@@ -35,7 +35,7 @@ def test_render_scene_graph_writes_png(tmp_path: Path) -> None:
     output = tmp_path / "scene_graph.png"
 
     rendered_path = render_scene_graph(
-        FIXTURE_GAME_DIR,
+        FIXTURE_SCENARIO_DIR,
         output,
         start_scene_id="start",
     )

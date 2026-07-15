@@ -1,6 +1,6 @@
 from ..shared.models import TurnResult
 from ...runtime.session import Session
-from ...support.logging import (
+from ...infrastructure.logging import (
     CHANNEL_CHOICE,
     CHANNEL_SCENE,
     CHANNEL_SYSTEM,

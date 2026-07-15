@@ -11,7 +11,7 @@ from ..domain.item import Item
 from ..domain.scene import Scene
 from ..domain.rules.config import RulesConfig
 from ..frontends.shared.models import ActionView, SceneView, TurnResult
-from ..support.paths import SCENARIOS_ROOT
+from ..content.paths import SCENARIOS_ROOT
 
 SAVE_CHOICE_TEXT = "Save game"
 LOAD_CHOICE_TEXT = "Load game"
@@ -33,7 +33,7 @@ class Session:
         actor_templates: dict[str, Actor] | None = None,
         item_templates: dict[str, Item] | None = None,
         start_scene_id: str = "welcome",
-        game_dir: str | Path = SCENARIOS_ROOT / "sample_game",
+        scenario_dir: str | Path = SCENARIOS_ROOT / "sample_game",
         save_dir: str | Path = "saves",
         control_mode: str = "default",
         ai_action_limit: int | None = None,
@@ -46,7 +46,7 @@ class Session:
         self.start_scene_id = start_scene_id
         self.current_scene_id = self._resolve_scene_id(start_scene_id)
         self._initial_player = deepcopy(player)
-        self.game_dir = Path(game_dir)
+        self.scenario_dir = Path(scenario_dir)
         self.save_dir = Path(save_dir)
         self.control_mode = control_mode
         self.ai_action_limit = ai_action_limit
@@ -180,7 +180,7 @@ class Session:
         from .save import load_from_slot
 
         try:
-            loaded = load_from_slot(self.save_dir, 1, self.game_dir)
+            loaded = load_from_slot(self.save_dir, 1, self.scenario_dir)
         except FileNotFoundError:
             return TurnResult(
                 scene=self.get_scene_view(),
@@ -512,7 +512,6 @@ class Session:
                 continue
             reachable.update(self._reachable_encounter_scene_ids(choice.next_scene, visited.copy()))
         return reachable
-
     def _system_action_details(self, start_index: int) -> list[ActionView]:
         return [
             ActionView(
@@ -540,6 +539,3 @@ class Session:
                 value=None,
             ),
         ]
-
-
-GameSession = Session

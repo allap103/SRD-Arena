@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..support.paths import SCENARIOS_ROOT
+from .paths import SCENARIOS_ROOT
 
 VALID_SCENARIO_SUBDIRS = ("actors", "items", "scenes")
 

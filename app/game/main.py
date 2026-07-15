@@ -4,22 +4,21 @@ import argparse
 from pathlib import Path
 
 from .content.scenarios import VALID_SCENARIO_SUBDIRS, list_scenarios
+from .content.paths import SCENARIOS_ROOT
 from .frontends.cli.runner import CliRunner
+from .infrastructure.logging import CHANNEL_ENGINE, configure_game_logging, get_game_logger
 from .runtime.scenario import Scenario
-from .support.logging import CHANNEL_ENGINE, configure_game_logging, get_game_logger
-from .support.paths import SCENARIOS_ROOT
 
-SCENARIOS_DIR = SCENARIOS_ROOT
 LOGGER = get_game_logger(CHANNEL_ENGINE)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Launch SRD Arena.")
     parser.add_argument(
-        "game_dir",
+        "scenario_dir",
         nargs="?",
         help=(
-            "Game directory as a relative path, an absolute path, or the name of "
+            "Scenario directory as a relative path, an absolute path, or the name of "
             "a subfolder in app/content/scenarios/."
         ),
     )
@@ -46,32 +45,32 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def resolve_game_directory(game: str | None) -> Path:
-    if game is None:
-        raise FileNotFoundError("No game directory provided.")
+def resolve_scenario_directory(scenario: str | None) -> Path:
+    if scenario is None:
+        raise FileNotFoundError("No scenario directory provided.")
 
-    requested = Path(game).expanduser()
+    requested = Path(scenario).expanduser()
     candidates = []
     if requested.is_absolute():
         candidates.append(requested)
     else:
         candidates.append((Path.cwd() / requested).resolve())
-        candidates.append((SCENARIOS_DIR / game).resolve())
+        candidates.append((SCENARIOS_ROOT / scenario).resolve())
 
     for candidate in candidates:
         if candidate.exists():
-            return _validate_game_directory(candidate)
+            return _validate_scenario_directory(candidate)
 
     raise FileNotFoundError(
-        "Could not find a game directory for "
-        f"'{game}'. Tried the current working directory and app/content/scenarios/."
+        "Could not find a scenario directory for "
+        f"'{scenario}'. Tried the current working directory and app/content/scenarios/."
     )
 
 
 def launch(
     *,
     frontend: str,
-    game_dir: Path | None,
+    scenario_dir: Path | None,
     control_mode: str = "default",
     start_scene: str | None = None,
     show_encounter_json: bool = False,
@@ -81,16 +80,16 @@ def launch(
             from .frontends.qt.app import run_pyside6_app
 
             run_pyside6_app(
-                scenario_dir=game_dir,
+                scenario_dir=scenario_dir,
                 start_scene_override=start_scene,
                 control_mode=control_mode,
                 show_encounter_json=show_encounter_json,
             )
         case "cli":
-            if game_dir is None:
-                game_dir = select_game_directory()
+            if scenario_dir is None:
+                scenario_dir = select_scenario_directory()
             configure_game_logging()
-            scenario = Scenario(str(game_dir), start_scene=start_scene, control_mode=control_mode)
+            scenario = Scenario(str(scenario_dir), start_scene=start_scene, control_mode=control_mode)
             run_cli(scenario)
         case _:
             raise ValueError(f"Unsupported frontend: {frontend}")
@@ -100,23 +99,23 @@ def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
     frontend = args.frontend or "gui"
-    if args.game_dir is not None:
-        game_dir = resolve_game_directory(args.game_dir)
+    if args.scenario_dir is not None:
+        scenario_dir = resolve_scenario_directory(args.scenario_dir)
     elif frontend == "gui":
-        game_dir = None
+        scenario_dir = None
     else:
-        game_dir = select_game_directory()
+        scenario_dir = select_scenario_directory()
     launch(
         frontend=frontend,
-        game_dir=game_dir,
+        scenario_dir=scenario_dir,
         control_mode=args.control_mode,
         start_scene=args.start_scene,
         show_encounter_json=args.show_encounter_json,
     )
 
 
-def select_game_directory() -> Path:
-    scenarios = list_scenarios(SCENARIOS_DIR)
+def select_scenario_directory() -> Path:
+    scenarios = list_scenarios(SCENARIOS_ROOT)
     if not scenarios:
         raise FileNotFoundError("No scenarios are available in app/content/scenarios/.")
     print("Available scenarios:")
@@ -144,7 +143,7 @@ def run_cli(scenario: Scenario) -> None:
         LOGGER.info("You set the story aside for now. Thanks for playing.")
 
 
-def _validate_game_directory(path: Path) -> Path:
+def _validate_scenario_directory(path: Path) -> Path:
     if not path.is_dir():
         raise NotADirectoryError(f"'{path}' is not a directory.")
 
@@ -153,7 +152,7 @@ def _validate_game_directory(path: Path) -> Path:
     ]
     if missing:
         raise FileNotFoundError(
-            f"'{path}' is not a valid game directory. Missing: {', '.join(missing)}."
+            f"'{path}' is not a valid scenario directory. Missing: {', '.join(missing)}."
         )
     return path
 

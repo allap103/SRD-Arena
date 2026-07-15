@@ -25,7 +25,7 @@ from ..domain.rules.config import (
 )
 from ..domain.scene import Scene
 from ..runtime.session import Session
-from ..support.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
+from ..content.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
 
 DEFAULT_SCENARIO_DIR = SCENARIOS_ROOT / "sample_game"
 DEFAULT_SYSTEM_CONTENT_DIR = SYSTEM_CONTENT_ROOT
@@ -117,7 +117,7 @@ class Scenario:
             actor_templates={actor.id: actor for actor in self.actors},
             item_templates={item.id: item for item in self.items},
             start_scene_id=start_scene_id,
-            game_dir=self.directory,
+            scenario_dir=self.directory,
             control_mode=control_mode or self.control_mode,
             rules_config=self.rules_config,
         )
@@ -169,8 +169,3 @@ class Scenario:
             start_scene=start_scene if isinstance(start_scene, str) and start_scene else "welcome",
             rules_config=RulesConfig(directional_aoe_cell_coverage_threshold=threshold),
         )
-
-
-Game = Scenario
-GAME_DIR = DEFAULT_SCENARIO_DIR
-GAME_SYSTEM_DIR = DEFAULT_SYSTEM_CONTENT_DIR
