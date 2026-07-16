@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from .actor import EquipmentSlot
+from .creature import EquipmentSlot
 
 
 class WeaponStatSchema(BaseModel):

@@ -397,8 +397,8 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].actor.current_health = 30
-    session.encounter_state.enemies[0].actor.current_health = 30
+    session.encounter_state.enemies[0].creature.current_health = 30
+    session.encounter_state.enemies[0].creature.current_health = 30
 
     assert "Cast Color Spray" in session.get_scene_view().choices
 
@@ -503,7 +503,7 @@ def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
     state.enemies[0].position.y = 3
     state.enemies[1].position.x = 4
     state.enemies[1].position.y = 2
-    state.enemies[2].actor.current_health = 0
+    state.enemies[2].creature.current_health = 0
 
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 5)
 
@@ -536,7 +536,7 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
     state.enemies[0].position.y = 3
     state.enemies[1].position.x = 5
     state.enemies[1].position.y = 4
-    state.enemies[2].actor.current_health = 0
+    state.enemies[2].creature.current_health = 0
 
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 5)
 
@@ -564,7 +564,7 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
     state.enemies[0].position.y = 3
     state.enemies[1].position.x = 4
     state.enemies[1].position.y = 2
-    state.enemies[2].actor.current_health = 0
+    state.enemies[2].creature.current_health = 0
 
     rolls = iter([5, 1, 2, 3, 16, 4, 5, 6])
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: next(rolls))
@@ -577,8 +577,8 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
     assert spell_event.data["damage_roll_details"][0]["dice"] == "3d6"
     assert spell_event.data["damage_roll_details"][0]["applied_damage"] == 6
     assert spell_event.data["damage_roll_details"][1]["applied_damage"] == 7
-    assert state.enemies[0].actor.get_health() == 1
-    assert state.enemies[1].actor.get_health() == 0
+    assert state.enemies[0].creature.get_health() == 1
+    assert state.enemies[1].creature.get_health() == 0
     assert any("takes 6 fire damage." in message for _, message in result.messages)
     assert any("takes 7 fire damage on a successful save." in message for _, message in result.messages)
     assert any("Enemy 2 (Goblin) is defeated." == message for _, message in result.messages)
@@ -599,7 +599,7 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
     state.enemies[1].position.y = 2
     state.enemies[2].position.x = 4
     state.enemies[2].position.y = 1
-    starting_healths = [enemy.actor.get_health() for enemy in state.enemies]
+    starting_healths = [enemy.creature.get_health() for enemy in state.enemies]
 
     rolls = iter([1, 2, 3, 4, 5, 6, 1, 2, 5, 16, 3])
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda _sides: next(rolls))
@@ -621,9 +621,9 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
     assert spell_event.data["damage_roll_details"][2]["final_damage"] == 24
     assert spell_event.data["damage_roll_details"][2]["applied_damage"] == min(24, starting_healths[2])
     assert session.player.spellcasting.spell_slots_remaining[3] == 1
-    assert state.enemies[0].actor.get_health() == 0
-    assert state.enemies[1].actor.get_health() == 0
-    assert state.enemies[2].actor.get_health() == 0
+    assert state.enemies[0].creature.get_health() == 0
+    assert state.enemies[1].creature.get_health() == 0
+    assert state.enemies[2].creature.get_health() == 0
 
 
 def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
@@ -638,7 +638,7 @@ def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
     state.enemies[0].position.y = 3
     state.enemies[1].position.x = 4
     state.enemies[1].position.y = 2
-    state.enemies[2].actor.current_health = 0
+    state.enemies[2].creature.current_health = 0
 
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 5)
 
@@ -667,8 +667,8 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
     state.player_position.y = 4
     state.enemies[0].position.x = 4
     state.enemies[0].position.y = 3
-    state.enemies[1].actor.current_health = 0
-    state.enemies[2].actor.current_health = 0
+    state.enemies[1].creature.current_health = 0
+    state.enemies[2].creature.current_health = 0
 
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 5)
     monkeypatch.setattr(
@@ -706,7 +706,7 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch)
     state.enemies[0].position.y = 3
     state.enemies[1].position.x = 4
     state.enemies[1].position.y = 2
-    state.enemies[2].actor.current_health = 0
+    state.enemies[2].creature.current_health = 0
 
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 5)
 
@@ -743,8 +743,8 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
     state.player_position.y = 2
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2
-    state.enemies[1].actor.current_health = 0
-    state.enemies[2].actor.current_health = 0
+    state.enemies[1].creature.current_health = 0
+    state.enemies[2].creature.current_health = 0
     rolls = iter([5, 17, 4, 1])
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: next(rolls, 3))
     monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: 1)
@@ -796,8 +796,8 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatc
     state.player_position.y = 2
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2
-    state.enemies[1].actor.current_health = 0
-    state.enemies[2].actor.current_health = 0
+    state.enemies[1].creature.current_health = 0
+    state.enemies[2].creature.current_health = 0
     rolls = iter([5, 3, 3])
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: next(rolls, 3))
     monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: 1)
@@ -822,8 +822,8 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
     state.player_position.y = 1
     state.enemies[0].position.x = 4
     state.enemies[0].position.y = 1
-    state.enemies[1].actor.current_health = 0
-    state.enemies[2].actor.current_health = 0
+    state.enemies[1].creature.current_health = 0
+    state.enemies[2].creature.current_health = 0
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 5)
     monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: 1)
 
@@ -989,8 +989,8 @@ def test_save_and_load_preserve_refreshed_blinded_duration(tmp_path: Path, monke
     state.player_position.y = 1
     state.enemies[0].position.x = 4
     state.enemies[0].position.y = 1
-    state.enemies[1].actor.current_health = 0
-    state.enemies[2].actor.current_health = 0
+    state.enemies[1].creature.current_health = 0
+    state.enemies[2].creature.current_health = 0
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 5)
     monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: 1)
 
@@ -1024,7 +1024,7 @@ def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> Non
 
     assert progress.transition is None
     assert ("system", "Goblin moves down-left to (4, 3).") in progress.messages
-    assert session.encounter_state.active_actor() == ("player", None)
+    assert session.encounter_state.active_creature() == ("player", None)
     assert session.encounter_state.round_number == 2
 
 
@@ -1083,8 +1083,8 @@ def test_ranged_weapons_do_not_enable_opportunity_attacks() -> None:
     session.encounter_state.player_position.y = 2
     session.encounter_state.enemies[0].position.x = 3
     session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[1].actor.current_health = 0
-    session.encounter_state.enemies[2].actor.current_health = 0
+    session.encounter_state.enemies[1].creature.current_health = 0
+    session.encounter_state.enemies[2].creature.current_health = 0
     session.encounter_state.turn_index = 1
 
     def scripted_behavior():
@@ -1112,12 +1112,12 @@ def test_ranged_weapon_attacks_have_disadvantage_when_target_is_adjacent(monkeyp
     assert session.encounter_state is not None
     enemy = session.encounter_state.enemies[0]
     enemy.behavior.type = "archer"
-    enemy.actor.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longbow")
+    enemy.creature.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longbow")
     session.encounter_state._initialize_behaviors()
     enemy.position.x = 2
     enemy.position.y = 2
-    session.encounter_state.enemies[1].actor.current_health = 0
-    session.encounter_state.enemies[2].actor.current_health = 0
+    session.encounter_state.enemies[1].creature.current_health = 0
+    session.encounter_state.enemies[2].creature.current_health = 0
     session.encounter_state.player_position.x = 1
     session.encounter_state.player_position.y = 2
     session.encounter_state.turn_index = 1
@@ -1149,8 +1149,8 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch
     enemy = session.encounter_state.enemies[0]
     enemy.behavior.type = "archer"
     session.encounter_state._initialize_behaviors()
-    session.encounter_state.enemies[1].actor.current_health = 0
-    session.encounter_state.enemies[2].actor.current_health = 0
+    session.encounter_state.enemies[1].creature.current_health = 0
+    session.encounter_state.enemies[2].creature.current_health = 0
     enemy.position.x = 5
     enemy.position.y = 2
     session.encounter_state.player_position.x = 1
@@ -1248,8 +1248,8 @@ def test_natural_twenty_is_a_critical_hit_and_auto_hits(monkeypatch) -> None:
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].actor.attributes.base_armor_class = 30
-    session.encounter_state.enemies[0].actor.current_health = 30
+    session.encounter_state.enemies[0].creature.attributes.base_armor_class = 30
+    session.encounter_state.enemies[0].creature.current_health = 30
     damage_rolls = iter([4, 7])
 
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 20)
@@ -1285,8 +1285,8 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].actor.attributes.base_armor_class = 0
-    starting_health = session.encounter_state.enemies[0].actor.get_health()
+    session.encounter_state.enemies[0].creature.attributes.base_armor_class = 0
+    starting_health = session.encounter_state.enemies[0].creature.get_health()
 
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 1)
 
@@ -1304,7 +1304,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
     assert attack_event.data["damage"] == 0
     assert attack_event.data["damage_roll_detail"] is None
     assert attack_event.data["attack_roll_detail"]["critical_miss"] is True
-    assert session.encounter_state.enemies[0].actor.get_health() == starting_health
+    assert session.encounter_state.enemies[0].creature.get_health() == starting_health
 
 
 def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
@@ -1318,7 +1318,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].actor.current_health = 20
+    session.encounter_state.enemies[0].creature.current_health = 20
 
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 20)
     monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: 1)
@@ -1333,7 +1333,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     attack_events = [event for event in first_result.events if event.type == "attack_resolved"]
     assert len(attack_events) == 1
     assert attack_events[0].data["attacks_remaining"] == 1
-    assert session.encounter_state.enemies[0].actor.get_health() == 15
+    assert session.encounter_state.enemies[0].creature.get_health() == 15
     assert session.encounter_state.player_action_available is False
     assert session.encounter_state.player_attacks_remaining == 1
 
@@ -1355,7 +1355,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     second_attack_events = [event for event in second_result.events if event.type == "attack_resolved"]
     assert len(second_attack_events) == 1
     assert second_attack_events[0].data["attacks_remaining"] == 0
-    assert session.encounter_state.enemies[0].actor.get_health() == 10
+    assert session.encounter_state.enemies[0].creature.get_health() == 10
     assert session.encounter_state.player_attacks_remaining == 0
     assert not any(
         choice.startswith("Attack enemy")
@@ -1446,7 +1446,7 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].actor.current_health = 30
+    session.encounter_state.enemies[0].creature.current_health = 30
 
     def fixed_roll(sides: int) -> int:
         return 18 if sides == 20 else 6
@@ -1498,8 +1498,8 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
     assert "Blinded" in presentation.encounter.battlefield.summary_text
     assert presentation.encounter.resources.conditions == ()
     assert any(
-        actor.actor_ref == "enemy:0" and actor.conditions == ("blinded",)
-        for actor in presentation.encounter.battlefield.actors
+        creature.actor_ref == "enemy:0" and creature.conditions == ("blinded",)
+        for creature in presentation.encounter.battlefield.creatures
     )
 
 
@@ -1537,7 +1537,7 @@ def test_grapple_actions_map_to_attack_menu_bucket() -> None:
     assert bucket == "attack"
 
 
-def test_directional_spell_target_mode_stays_available_without_actor_target_map() -> None:
+def test_directional_spell_target_mode_stays_available_without_creature_target_map() -> None:
     window = CyoaPySide6Window.__new__(CyoaPySide6Window)
     window._pending_target_mode = TargetSelectionMode(
         kind="spell",
@@ -1569,9 +1569,9 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].actor.current_health = 1
-    session.encounter_state.enemies[1].actor.current_health = 0
-    session.encounter_state.enemies[2].actor.current_health = 0
+    session.encounter_state.enemies[0].creature.current_health = 1
+    session.encounter_state.enemies[1].creature.current_health = 0
+    session.encounter_state.enemies[2].creature.current_health = 0
 
     monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 20)
     monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: 4)
@@ -1720,7 +1720,7 @@ def test_encounter_victory_waits_for_continue_before_scene_transition() -> None:
     session.get_scene_view()
     assert session.encounter_state is not None
     for enemy in session.encounter_state.enemies:
-        enemy.actor.current_health = 0
+        enemy.creature.current_health = 0
 
     wait_index = session.get_scene_view().choices.index("Wait")
     result = session.choose(wait_index)

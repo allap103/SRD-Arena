@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ..schemas import ActorSchema
+from ..schemas import CreatureSchema
 from .source_data import SOURCE_PRIORITY, _load_json
 from .types import (
     ClassCatalog,
@@ -19,7 +19,7 @@ def load_custom_stat_blocks(directory: str | Path) -> CustomStatBlockCatalog:
         return {}
     return {
         schema.id: schema
-        for schema in (ActorSchema.model_validate(_load_json(path)) for path in custom_dir.glob("*"))
+        for schema in (CreatureSchema.model_validate(_load_json(path)) for path in custom_dir.glob("*"))
     }
 
 
@@ -165,7 +165,7 @@ def _find_stat_block(
     stat_blocks: StatBlockCatalog | None,
 ) -> dict:
     if stat_blocks is None:
-        raise ValueError(f"Actor references stat block '{name}', but no stat block catalog was loaded.")
+        raise ValueError(f"Creature references stat block '{name}', but no stat block catalog was loaded.")
     key = (name.casefold(), source)
     if key in stat_blocks:
         return stat_blocks[key]
@@ -186,7 +186,7 @@ def _find_class_block(
     class_blocks: ClassCatalog | None,
 ) -> dict:
     if class_blocks is None:
-        raise ValueError(f"Actor references class '{name}', but no class catalog was loaded.")
+        raise ValueError(f"Creature references class '{name}', but no class catalog was loaded.")
     key = (name.casefold(), source)
     if key in class_blocks:
         return class_blocks[key]
@@ -208,7 +208,7 @@ def _find_subclass_block(
 ) -> dict:
     if subclass_blocks is None:
         raise ValueError(
-            f"Actor references subclass '{reference.name}', but no subclass catalog was loaded."
+            f"Creature references subclass '{reference.name}', but no subclass catalog was loaded."
         )
     class_name = (
         reference.class_name
@@ -298,7 +298,7 @@ def _find_spell(
 ) -> dict:
     if spell_catalog is None:
         raise ValueError(
-            f"Actor references spell '{name}', but no spell catalog was loaded."
+            f"Creature references spell '{name}', but no spell catalog was loaded."
         )
     for key in (
         (name.casefold(), source),

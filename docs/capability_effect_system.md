@@ -44,7 +44,7 @@ and a passive rule that modifies saving throws while the item is equipped.
 
 ### Capability
 
-A capability is an action-like ability granted by an actor or item. It may be active,
+A capability is an action-like ability granted by a creature or item. It may be active,
 triggered, or usable as a special attack.
 
 ```python
@@ -306,7 +306,7 @@ Capability(
     cost={"bonus_action": 1},
     data={
         "dice": "1d10",
-        "modifier": "actor.level",
+        "modifier": "creature.level",
     },
 )
 ```
@@ -402,7 +402,7 @@ The current rest code already has the right general idea: restore resources base
 
 - How should targeting definitions express areas, saving throws, and multi-target effects?
 - How much of monster stat block text should be parsed automatically versus normalized by curated adapters?
-- Should item-granted capabilities live on the actor only while equipped, or should inventory items expose them dynamically?
+- Should item-granted capabilities live on the creature only while equipped, or should inventory items expose them dynamically?
 - How should conflicting rules be ordered when several grants modify the same resolution hook?
 - Which status durations must be persisted in encounter snapshots?
 

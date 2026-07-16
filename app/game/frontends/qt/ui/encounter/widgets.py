@@ -286,9 +286,9 @@ class BattlefieldWidget(QWidget):
     def __init__(self, scenario_dir: str | Path = DEFAULT_SCENARIO_DIR):
         super().__init__()
         self._battlefield: BattlefieldView | None = None
-        self._actor_positions: dict[str, tuple[float, float, float]] = {}
-        self._targetable_actor_refs: set[str] = set()
-        self._selected_actor_ref: str | None = None
+        self._creature_positions: dict[str, tuple[float, float, float]] = {}
+        self._targetable_creature_refs: set[str] = set()
+        self._selected_creature_ref: str | None = None
         self._area_overlay: dict[str, object] | None = None
         self._hover_cell: tuple[int, int] | None = None
         self._hover_point: tuple[float, float] | None = None
@@ -310,15 +310,15 @@ class BattlefieldWidget(QWidget):
 
     def set_battlefield(self, battlefield: BattlefieldView) -> None:
         self._battlefield = battlefield
-        self._actor_positions = {}
+        self._creature_positions = {}
         tooltip_lines = []
-        for actor in battlefield.actors:
+        for creature in battlefield.creatures:
             conditions = (
-                ", ".join(condition.capitalize() for condition in actor.conditions)
-                if actor.conditions
+                ", ".join(condition.capitalize() for condition in creature.conditions)
+                if creature.conditions
                 else "None"
             )
-            tooltip_lines.append(f"{actor.label}: {conditions}")
+            tooltip_lines.append(f"{creature.label}: {conditions}")
         if self._area_overlay is not None:
             tooltip_lines.append(self._area_overlay_tooltip(self._area_overlay))
         self.setToolTip("\n".join(tooltip_lines))
@@ -333,11 +333,11 @@ class BattlefieldWidget(QWidget):
 
     def set_targeting_state(
         self,
-        targetable_actor_refs: set[str],
-        selected_actor_ref: str | None = None,
+        targetable_creature_refs: set[str],
+        selected_creature_ref: str | None = None,
     ) -> None:
-        self._targetable_actor_refs = set(targetable_actor_refs)
-        self._selected_actor_ref = selected_actor_ref
+        self._targetable_creature_refs = set(targetable_creature_refs)
+        self._selected_creature_ref = selected_creature_ref
         self.update()
 
     def set_cell_targeting_enabled(self, enabled: bool) -> None:
@@ -433,16 +433,16 @@ class BattlefieldWidget(QWidget):
                 max(1, int(cell_size - 4)),
             )
 
-        self._actor_positions = {}
-        for actor in self._battlefield.actors:
-            center_x = origin_x + (actor.position.x + 0.5) * cell_size
-            center_y = origin_y + (actor.position.y + 0.5) * cell_size
+        self._creature_positions = {}
+        for creature in self._battlefield.creatures:
+            center_x = origin_x + (creature.position.x + 0.5) * cell_size
+            center_y = origin_y + (creature.position.y + 0.5) * cell_size
             radius = max(14, int(cell_size * 0.38))
-            fill = QColor("#2e6f95") if actor.is_player else QColor("#b34a3c")
-            border = QColor("#17364a") if actor.is_player else QColor("#5a1f18")
-            self._actor_positions[actor.actor_ref] = (center_x, center_y, radius)
+            fill = QColor("#2e6f95") if creature.is_player else QColor("#b34a3c")
+            border = QColor("#17364a") if creature.is_player else QColor("#5a1f18")
+            self._creature_positions[creature.actor_ref] = (center_x, center_y, radius)
 
-            if actor.is_active:
+            if creature.is_active:
                 painter.setBrush(QColor(255, 215, 0, 70))
                 painter.setPen(Qt.PenStyle.NoPen)
                 highlight_radius = int(radius * 1.6)
@@ -453,7 +453,7 @@ class BattlefieldWidget(QWidget):
                     highlight_radius * 2,
                 )
 
-            if actor.actor_ref in self._targetable_actor_refs:
+            if creature.actor_ref in self._targetable_creature_refs:
                 painter.setBrush(QColor(84, 196, 110, 70))
                 painter.setPen(QPen(QColor("#2d7a3d"), 2))
                 target_radius = int(radius * 1.3)
@@ -464,7 +464,7 @@ class BattlefieldWidget(QWidget):
                     target_radius * 2,
                 )
 
-            if actor.actor_ref == self._selected_actor_ref:
+            if creature.actor_ref == self._selected_creature_ref:
                 painter.setBrush(QColor(255, 255, 255, 0))
                 painter.setPen(QPen(QColor("#1b1b1b"), 3))
                 selected_radius = int(radius * 1.45)
@@ -475,7 +475,7 @@ class BattlefieldWidget(QWidget):
                     selected_radius * 2,
                 )
 
-            sprite = self._sprite_for_actor(actor.actor_id, actor.label)
+            sprite = self._sprite_for_actor(creature.actor_id, creature.label)
             if sprite is not None:
                 sprite_size = int(cell_size * 0.82)
                 painter.drawPixmap(
@@ -506,7 +506,7 @@ class BattlefieldWidget(QWidget):
                     radius * 2,
                     radius * 2,
                     Qt.AlignmentFlag.AlignCenter,
-                    actor.label[:1].upper(),
+                    creature.label[:1].upper(),
                 )
 
         if display_overlay is not None:
@@ -692,7 +692,7 @@ class BattlefieldWidget(QWidget):
         cell = self._cell_at_point(event.position().x(), event.position().y())
         if cell is not None:
             self.cell_clicked.emit(cell[0], cell[1])
-        for actor_ref, (center_x, center_y, radius) in self._actor_positions.items():
+        for actor_ref, (center_x, center_y, radius) in self._creature_positions.items():
             dx = event.position().x() - center_x
             dy = event.position().y() - center_y
             if dx * dx + dy * dy <= radius * radius:

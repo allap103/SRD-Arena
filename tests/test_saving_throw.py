@@ -6,15 +6,15 @@ from game.domain.rules.saving_throws import reroll_saving_throw, resolve_saving_
 
 
 @dataclass
-class StubActor:
+class StubCreature:
     attributes: Attributes
 
     def get_modifier(self, attribute_value: int) -> int:
         return (attribute_value - 10) // 2
 
 
-def _actor() -> StubActor:
-    return StubActor(
+def _actor() -> StubCreature:
+    return StubCreature(
         Attributes(
             base_health=10,
             level=5,
@@ -67,15 +67,15 @@ def test_resolve_saving_throw_supports_advantage_without_proficiency():
 
 
 def test_failed_saving_throw_can_be_rerolled_with_bonus_and_must_use_new_result():
-    actor = _actor()
+    creature = _actor()
     original = resolve_saving_throw(
-        actor,
+        creature,
         "wisdom",
         15,
         roller=lambda _sides: 10,
     )
     rerolled = reroll_saving_throw(
-        actor,
+        creature,
         original,
         bonus_modifier=5,
         roller=lambda _sides: 12,

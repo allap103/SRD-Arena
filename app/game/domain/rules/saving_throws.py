@@ -22,7 +22,7 @@ Ability = Literal[
 ]
 
 
-class SavingThrowActor(Protocol):
+class SavingThrowCreature(Protocol):
     attributes: object
 
     def get_modifier(self, attribute_value: int) -> int: ...
@@ -48,7 +48,7 @@ class SavingThrowResult:
 
 
 def resolve_saving_throw(
-    actor: SavingThrowActor,
+    creature: SavingThrowCreature,
     ability: Ability,
     target: int,
     *,
@@ -56,12 +56,12 @@ def resolve_saving_throw(
     other_modifier: int = 0,
     roller: DieRoller = roll_die,
 ) -> SavingThrowResult:
-    """Resolve an actor's saving throw against a target."""
-    ability_score = getattr(actor.attributes, ability)
-    ability_modifier = actor.get_modifier(ability_score)
-    proficient = _is_save_proficient(actor, ability)
+    """Resolve an creature's saving throw against a target."""
+    ability_score = getattr(creature.attributes, ability)
+    ability_modifier = creature.get_modifier(ability_score)
+    proficient = _is_save_proficient(creature, ability)
     proficiency_modifier = (
-        int(getattr(actor.attributes, "proficiency_bonus")) if proficient else 0
+        int(getattr(creature.attributes, "proficiency_bonus")) if proficient else 0
     )
     modifiers = SavingThrowModifiers(
         ability=ability_modifier,
@@ -78,7 +78,7 @@ def resolve_saving_throw(
 
 
 def reroll_saving_throw(
-    actor: SavingThrowActor,
+    creature: SavingThrowCreature,
     original: SavingThrowResult,
     *,
     bonus_modifier: int = 0,
@@ -87,7 +87,7 @@ def reroll_saving_throw(
 ) -> SavingThrowResult:
     """Repeat a save against the same target, retaining its existing modifiers."""
     return resolve_saving_throw(
-        actor,
+        creature,
         original.ability,
         original.check.target,
         mode=mode,
@@ -96,8 +96,8 @@ def reroll_saving_throw(
     )
 
 
-def _is_save_proficient(actor: SavingThrowActor, ability: Ability) -> bool:
-    proficiencies = getattr(actor.attributes, "proficiencies", {})
+def _is_save_proficient(creature: SavingThrowCreature, ability: Ability) -> bool:
+    proficiencies = getattr(creature.attributes, "proficiencies", {})
     if not isinstance(proficiencies, dict):
         return False
     saving_throws = proficiencies.get("saving_throws", [])

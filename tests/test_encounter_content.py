@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from game.content.loaders import load_actor, load_bestiary_stat_blocks, load_scene
+from game.content.loaders import load_creature, load_bestiary_stat_blocks, load_scene
 from game.runtime.save import load_from_file, save_to_file
 from game.runtime.scenario import Scenario
 
@@ -43,33 +43,33 @@ def test_load_scene_parses_optional_encounter_block() -> None:
     assert scene.encounter.flee.next_scene == "welcome"
 
 
-def test_load_actor_can_reference_system_stat_block() -> None:
+def test_load_creature_can_reference_system_stat_block() -> None:
     stat_blocks = load_bestiary_stat_blocks("app/content/system")
 
-    actor = load_actor(FIXTURE_ENCOUNTER_DIR / "actors" / "goblin_1", stat_blocks)
+    creature = load_creature(FIXTURE_ENCOUNTER_DIR / "actors" / "goblin_1", stat_blocks)
 
-    assert actor.id == "goblin_1"
-    assert actor.name == "Goblin"
-    assert actor.get_max_health() == 7
-    assert actor.get_armor_class() == 15
-    assert actor.attributes.strength == 8
-    assert actor.attributes.dexterity == 14
-    assert actor.attributes.movement.speed_feet == 30
-    assert [attack.name for attack in actor.monster_attacks] == ["Scimitar", "Shortbow"]
-    assert actor.monster_attacks[0].attack_modes == ("melee",)
-    assert actor.monster_attacks[1].attack_modes == ("ranged",)
-    assert actor.monster_attacks[1].range_normal == 80
+    assert creature.id == "goblin_1"
+    assert creature.name == "Goblin"
+    assert creature.get_max_health() == 7
+    assert creature.get_armor_class() == 15
+    assert creature.attributes.strength == 8
+    assert creature.attributes.dexterity == 14
+    assert creature.attributes.movement.speed_feet == 30
+    assert [attack.name for attack in creature.monster_attacks] == ["Scimitar", "Shortbow"]
+    assert creature.monster_attacks[0].attack_modes == ("melee",)
+    assert creature.monster_attacks[1].attack_modes == ("ranged",)
+    assert creature.monster_attacks[1].range_normal == 80
 
 
-def test_game_loads_custom_stat_blocks_and_actor_instances() -> None:
+def test_game_loads_custom_stat_blocks_and_creature_instances() -> None:
     scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
 
-    actor_ids = {actor.id for actor in scenario.actors}
-    player = scenario.get_actor("player")
+    actor_ids = {creature.id for creature in scenario.creatures}
+    player = scenario.get_creature("player")
     items_by_id = {item.id: item for item in scenario.items}
 
     assert "player" in actor_ids
-    assert len([actor for actor in scenario.actors if actor.id == "player"]) == 1
+    assert len([creature for creature in scenario.creatures if creature.id == "player"]) == 1
     assert {"goblin_1", "goblin_2", "goblin_3"}.issubset(actor_ids)
     assert player.name == "Traveler"
     assert player.class_ref is not None
@@ -173,7 +173,7 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
-    upgraded = load_actor(
+    upgraded = load_creature(
         actor_path,
         scenario.stat_blocks,
         scenario.class_blocks,
@@ -184,7 +184,7 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
     assert upgraded.combat_profile.attacks_per_attack_action == 2
 
 
-def test_actor_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path) -> None:
+def test_creature_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path) -> None:
     scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
     actor_path = tmp_path / "eldritch_knight.json"
     actor_path.write_text(
@@ -218,7 +218,7 @@ def test_actor_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path)
         ),
         encoding="utf-8",
     )
-    actor = load_actor(
+    creature = load_creature(
         actor_path,
         scenario.stat_blocks,
         scenario.class_blocks,
@@ -228,34 +228,34 @@ def test_actor_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path)
         scenario.spell_catalog,
     )
 
-    assert actor.subclass_ref is not None
-    assert actor.subclass_ref.name == "Eldritch Knight"
-    assert actor.spellcasting is not None
-    assert actor.spellcasting.ability == "int"
-    assert actor.spellcasting.ability_modifier == 1
-    assert actor.spellcasting.save_dc == 12
-    assert actor.spellcasting.attack_bonus == 4
-    assert actor.spellcasting.preparation_mode == "fixed"
-    assert actor.spellcasting.cantrips_known == 2
-    assert actor.spellcasting.spell_count == 4
-    assert actor.spellcasting.spell_slots_max == {1: 3}
-    assert actor.spellcasting.spell_slots_remaining == {1: 3}
-    assert [spell.name for spell in actor.spellcasting.learned_spells] == [
+    assert creature.subclass_ref is not None
+    assert creature.subclass_ref.name == "Eldritch Knight"
+    assert creature.spellcasting is not None
+    assert creature.spellcasting.ability == "int"
+    assert creature.spellcasting.ability_modifier == 1
+    assert creature.spellcasting.save_dc == 12
+    assert creature.spellcasting.attack_bonus == 4
+    assert creature.spellcasting.preparation_mode == "fixed"
+    assert creature.spellcasting.cantrips_known == 2
+    assert creature.spellcasting.spell_count == 4
+    assert creature.spellcasting.spell_slots_max == {1: 3}
+    assert creature.spellcasting.spell_slots_remaining == {1: 3}
+    assert [spell.name for spell in creature.spellcasting.learned_spells] == [
         "Color Spray",
         "Lesser Restoration",
     ]
-    assert actor.spellcasting.learned_spells[0].level == 1
-    assert actor.spellcasting.learned_spells[0].condition_inflict == ("blinded",)
-    assert actor.spellcasting.learned_spells[0].area_tags == ("N",)
-    assert actor.spellcasting.learned_spells[0].geometry_mode == "directional_area"
-    assert actor.spellcasting.learned_spells[1].level == 2
-    assert actor.spellcasting.learned_spells[1].removable_conditions == (
+    assert creature.spellcasting.learned_spells[0].level == 1
+    assert creature.spellcasting.learned_spells[0].condition_inflict == ("blinded",)
+    assert creature.spellcasting.learned_spells[0].area_tags == ("N",)
+    assert creature.spellcasting.learned_spells[0].geometry_mode == "directional_area"
+    assert creature.spellcasting.learned_spells[1].level == 2
+    assert creature.spellcasting.learned_spells[1].removable_conditions == (
         "blinded",
         "deafened",
         "paralyzed",
         "poisoned",
     )
-    assert actor.spellcasting.learned_spells[1].geometry_mode == "self_only"
+    assert creature.spellcasting.learned_spells[1].geometry_mode == "self_only"
 
 
 def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) -> None:
@@ -288,7 +288,7 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
         ),
         encoding="utf-8",
     )
-    actor = load_actor(
+    creature = load_creature(
         actor_path,
         scenario.stat_blocks,
         scenario.class_blocks,
@@ -298,8 +298,8 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
         scenario.spell_catalog,
     )
 
-    assert actor.spellcasting is not None
-    spells = {spell.name: spell for spell in actor.spellcasting.learned_spells}
+    assert creature.spellcasting is not None
+    spells = {spell.name: spell for spell in creature.spellcasting.learned_spells}
 
     assert spells["Burning Hands"].geometry_mode == "directional_area"
     assert spells["Burning Hands"].area_tags == ("N",)

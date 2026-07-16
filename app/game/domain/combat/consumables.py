@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import re
 
-from ..actor import Actor
+from ..creature import Creature
 from ..item import Item
 
 
-def healing_potions_in_inventory(actor: Actor, items_by_id: dict[str, Item]) -> list[Item]:
+def healing_potions_in_inventory(creature: Creature, items_by_id: dict[str, Item]) -> list[Item]:
     seen: set[str] = set()
     potions: list[Item] = []
-    for item_id in actor.inventory.items:
+    for item_id in creature.inventory.items:
         if item_id in seen:
             continue
         seen.add(item_id)

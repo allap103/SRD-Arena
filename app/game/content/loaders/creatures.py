@@ -2,9 +2,9 @@ from pathlib import Path
 import re
 from typing import cast
 
-from ..schemas import ActorSchema
-from ..schemas.actor import ActorItemReferenceSchema
-from ...domain.actor import Actor
+from ..schemas import CreatureSchema
+from ..schemas.creature import CreatureItemReferenceSchema
+from ...domain.creature import Creature
 from ...domain.attributes import Attributes, Movement
 from ...domain.size import normalize_size
 from ...domain.class_features import (
@@ -38,7 +38,7 @@ from .types import (
 )
 
 
-def load_actor(
+def load_creature(
     path: str | Path,
     stat_blocks: StatBlockCatalog | None = None,
     class_blocks: ClassCatalog | None = None,
@@ -46,9 +46,9 @@ def load_actor(
     optional_features: OptionalFeatureCatalog | None = None,
     subclass_blocks: SubclassCatalog | None = None,
     spell_catalog: SpellCatalog | None = None,
-) -> Actor:
-    schema = _resolve_actor_schema(
-        ActorSchema.model_validate(_load_json(path)),
+) -> Creature:
+    schema = _resolve_creature_schema(
+        CreatureSchema.model_validate(_load_json(path)),
         custom_stat_blocks,
     )
     stat_block = (
@@ -70,12 +70,12 @@ def load_actor(
         equipped_items={
             **Equipment().equipped_items,
             **{
-                slot: _actor_item_id(item)
+                slot: _creature_item_id(item)
                 for slot, item in cast(dict[str, object], dict(schema.equipment)).items()
             },
         }
     )
-    attributes = _build_actor_attributes(schema, stat_block, class_block)
+    attributes = _build_creature_attributes(schema, stat_block, class_block)
     feature_grants = _resolve_class_feature_grants(class_block, schema.attributes.level)
     feature_grants.extend(
         _resolve_subclass_feature_grants(
@@ -94,14 +94,14 @@ def load_actor(
         spell_catalog,
     )
 
-    return Actor(
+    return Creature(
         id=schema.id,
         name=schema.name or _stat_block_name(stat_block),
         description=schema.description,
-        inventory=Inventory(items=[_actor_item_id(item) for item in schema.inventory]),
+        inventory=Inventory(items=[_creature_item_id(item) for item in schema.inventory]),
         attributes=attributes,
         equipment=equipment,
-        size=_build_actor_size(schema, stat_block),
+        size=_build_creature_size(schema, stat_block),
         class_ref=(
             ClassRef(name=schema.class_ref.name, source=schema.class_ref.source)
             if schema.class_ref
@@ -126,15 +126,15 @@ def load_actor(
     )
 
 
-def _resolve_actor_schema(
-    instance: ActorSchema,
+def _resolve_creature_schema(
+    instance: CreatureSchema,
     custom_stat_blocks: CustomStatBlockCatalog | None,
-) -> ActorSchema:
+) -> CreatureSchema:
     if instance.custom_stat_block is None:
         return instance
     if custom_stat_blocks is None:
         raise ValueError(
-            f"Actor '{instance.id}' references custom stat block "
+            f"Creature '{instance.id}' references custom stat block "
             f"'{instance.custom_stat_block}', but no custom stat block catalog was loaded."
         )
     template = custom_stat_blocks.get(instance.custom_stat_block)
@@ -180,18 +180,18 @@ def _resolve_actor_schema(
             *instance.spells_known,
         ],
     }
-    return ActorSchema.model_validate(merged)
+    return CreatureSchema.model_validate(merged)
 
 
 def _resolve_optional_feature_rules(
-    schema: ActorSchema,
+    schema: CreatureSchema,
     catalog: OptionalFeatureCatalog | None,
 ) -> list[RuleGrant]:
     rules: list[RuleGrant] = []
     for reference in schema.optional_features:
         if catalog is None:
             raise ValueError(
-                f"Actor references optional feature '{reference.name}', "
+                f"Creature references optional feature '{reference.name}', "
                 "but no optional feature catalog was loaded."
             )
         try:
@@ -208,20 +208,20 @@ def _resolve_optional_feature_rules(
     return rules
 
 
-def _actor_item_id(item: str | ActorItemReferenceSchema | object) -> str:
+def _creature_item_id(item: str | CreatureItemReferenceSchema | object) -> str:
     if isinstance(item, str):
         return item
-    if isinstance(item, ActorItemReferenceSchema):
+    if isinstance(item, CreatureItemReferenceSchema):
         return _slug(item.name)
     if isinstance(item, dict):
         name = item.get("name")
         if isinstance(name, str):
             return _slug(name)
-    raise TypeError(f"Unsupported actor item reference: {item!r}")
+    raise TypeError(f"Unsupported creature item reference: {item!r}")
 
 
-def _build_actor_attributes(
-    schema: ActorSchema,
+def _build_creature_attributes(
+    schema: CreatureSchema,
     stat_block: dict | None,
     class_block: dict | None,
 ) -> Attributes:
@@ -258,8 +258,8 @@ def _build_actor_attributes(
     )
 
 
-def _build_actor_size(
-    schema: ActorSchema,
+def _build_creature_size(
+    schema: CreatureSchema,
     stat_block: dict | None,
 ) -> str:
     if stat_block is not None:
@@ -398,7 +398,7 @@ def _normalize_feature_grant(
     feature_name: str,
     feature_level: int,
     class_block: dict | None = None,
-    actor_level: int = 1,
+    creature_level: int = 1,
     source_subclass: str | None = None,
 ) -> FeatureGrant | None:
     extra_attack_counts = {
@@ -417,7 +417,7 @@ def _normalize_feature_grant(
                 level=feature_level,
                 source_subclass=source_subclass,
                 data={
-                    "uses": _second_wind_uses(class_block, actor_level),
+                    "uses": _second_wind_uses(class_block, creature_level),
                     **_second_wind_healing_dice(class_block, feature_name, feature_level),
                 },
             )
@@ -428,7 +428,7 @@ def _normalize_feature_grant(
                 source_class=class_name,
                 level=feature_level,
                 source_subclass=source_subclass,
-                data={"uses": _action_surge_uses(class_block, actor_level)},
+                data={"uses": _action_surge_uses(class_block, creature_level)},
             )
         else:
             return None
@@ -506,7 +506,7 @@ def _build_feature_uses_remaining(combat_profile: CombatProfile) -> dict[str, in
 
 
 def _build_spellcasting(
-    schema: ActorSchema,
+    schema: CreatureSchema,
     attributes: Attributes,
     class_block: dict | None,
     subclass_block: dict | None,
@@ -902,7 +902,7 @@ def _class_table_value(
 
 def _stat_block_name(stat_block: dict | None) -> str:
     if stat_block is None:
-        raise ValueError("Actor must define either 'name' or 'stat_block'.")
+        raise ValueError("Creature must define either 'name' or 'stat_block'.")
     return str(stat_block["name"])
 
 

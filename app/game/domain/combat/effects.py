@@ -58,9 +58,9 @@ def _status_from_effect(effect: EffectResult) -> Status:
         source_ref=source_ref,
         source_label=source_label,
         target_ref=effect.target_ref,
-        expires_on_actor_ref=(
-            effect.data.get("expires_on_actor_ref")
-            if isinstance(effect.data.get("expires_on_actor_ref"), str)
+        expires_on_creature_ref=(
+            effect.data.get("expires_on_creature_ref")
+            if isinstance(effect.data.get("expires_on_creature_ref"), str)
             else None
         ),
         expires_on_round=(

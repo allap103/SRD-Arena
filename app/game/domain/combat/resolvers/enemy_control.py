@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...actor import Actor
+from ...creature import Creature
 from ...scene import Position
 from ..attacks import apply_attack_damage, resolve_attack, selected_attack_type
 from ..behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent, movement_squares as _movement_squares
-from ..models import ActionCost, ActorRef, DecisionFrame, EncounterAction, EncounterProgress
+from ..models import ActionCost, CreatureRef, DecisionFrame, EncounterAction, EncounterProgress
 from ..refs import enemy_index as _enemy_index
 
 if TYPE_CHECKING:
@@ -27,14 +27,14 @@ def _roll_dice(count: int, sides: int) -> int:
 
 def user_controlled_enemy_actions(
     self: EncounterState,
-    player: Actor,
-    actor_ref: ActorRef,
+    player: Creature,
+    actor_ref: CreatureRef,
 ) -> list[EncounterAction]:
     enemy_index = _enemy_index(actor_ref)
     enemy = self.enemies[enemy_index]
     movement_cost = self._movement_cost_for(player, actor_ref)
     if enemy.movement_remaining is None:
-        enemy.movement_remaining = _movement_squares(enemy.actor)
+        enemy.movement_remaining = _movement_squares(enemy.creature)
     actions: list[EncounterAction] = []
     if movement_cost is not None and enemy.movement_remaining >= movement_cost:
         moving_refs = {actor_ref, *self._grappling_targets_for(actor_ref)}
@@ -53,14 +53,14 @@ def user_controlled_enemy_actions(
                     cost=ActionCost(movement=1),
                 )
             )
-    for target_ref in self._living_actor_refs(player):
+    for target_ref in self._living_creature_refs(player):
         if target_ref == actor_ref or not self._actors_are_opponents(actor_ref, target_ref):
             continue
-        if not _is_adjacent(enemy.position, self._actor_position(target_ref)):
+        if not _is_adjacent(enemy.position, self._creature_position(target_ref)):
             continue
         actions.append(
             EncounterAction(
-                f"Attack {self._actor_label(target_ref)}",
+                f"Attack {self._creature_label(target_ref)}",
                 "attack",
                 target_ref,
                 id=f"{actor_ref}-attack-{target_ref.replace(':', '-')}",
@@ -81,7 +81,7 @@ def user_controlled_enemy_actions(
 
 def apply_user_controlled_enemy_action(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     action: EncounterAction,
     decision: DecisionFrame,
 ) -> EncounterProgress:
@@ -125,7 +125,7 @@ def apply_user_controlled_enemy_action(
         progress.messages.append(
             (
                 "system",
-                f"{enemy.actor.name} moves {direction} to "
+                f"{enemy.creature.name} moves {direction} to "
                 f"({destination.x}, {destination.y}).",
             )
         )
@@ -142,15 +142,15 @@ def apply_user_controlled_enemy_action(
         )
     elif action.kind == "attack":
         if not isinstance(action.value, str):
-            raise ValueError("Attack action requires an actor reference.")
+            raise ValueError("Attack action requires an creature reference.")
         target_ref = action.value
         if not self._actors_are_opponents(decision.actor_ref, target_ref):
             raise ValueError("Attack target must belong to an opposing team.")
-        defender = self._actor_for_ref(player, target_ref)
-        target_label = self._actor_label(target_ref)
-        attacker_label = self._actor_label(decision.actor_ref)
+        defender = self._creature_for_ref(player, target_ref)
+        target_label = self._creature_label(target_ref)
+        attacker_label = self._creature_label(decision.actor_ref)
         attack = resolve_attack(
-            enemy.actor,
+            enemy.creature,
             defender,
             attacker_label=attacker_label,
             target_label=target_label,
@@ -160,7 +160,7 @@ def apply_user_controlled_enemy_action(
             attack_roll_mode_override=self._attack_roll_mode_for(
                 decision.actor_ref,
                 target_ref,
-                selected_attack_type(enemy.actor, self.item_templates),
+                selected_attack_type(enemy.creature, self.item_templates),
                 enemy.position,
                 (self.player_position,),
             ),
@@ -201,7 +201,7 @@ def apply_user_controlled_enemy_action(
                 )
             )
     elif action.kind == "wait":
-        progress.messages.append(("system", f"{enemy.actor.name} waits."))
+        progress.messages.append(("system", f"{enemy.creature.name} waits."))
         progress.events.append(
             self._event(
                 "action_resolved",

@@ -1,4 +1,4 @@
-from .actors import load_actor
+from .creatures import load_creature
 from .catalogs import (
     load_bestiary_stat_blocks,
     load_class_blocks,
@@ -27,7 +27,7 @@ __all__ = [
     "StatBlockCatalog",
     "SubclassCatalog",
     "SystemItemCatalog",
-    "load_actor",
+    "load_creature",
     "load_bestiary_stat_blocks",
     "load_class_blocks",
     "load_custom_stat_blocks",

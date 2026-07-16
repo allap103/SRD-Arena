@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...actor import Actor
+from ...creature import Creature
 from ..attacks import apply_attack_damage, matching_damage_reroll_rule, resolve_attack, selected_attack_type
 from ..models import EncounterAction, EncounterProgress
 from ..refs import enemy_ref as _enemy_ref
@@ -25,7 +25,7 @@ def _roll_dice(count: int, sides: int) -> int:
 
 def resolve_player_attack_action(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     action: EncounterAction,
     progress: EncounterProgress,
     action_id: str,
@@ -47,7 +47,7 @@ def resolve_player_attack_action(
         )
     enemy_index = action.value
     enemy = self.enemies[enemy_index]
-    target_label = f"Enemy {enemy_index + 1} ({enemy.actor.name})"
+    target_label = f"Enemy {enemy_index + 1} ({enemy.creature.name})"
     if self.player_attacks_remaining == 0 and self.player_actions_remaining > 0:
         self._consume_action(allow_magic=False)
         self.player_attacks_remaining = max(
@@ -64,7 +64,7 @@ def resolve_player_attack_action(
     )
     attack = resolve_attack(
         player,
-        enemy.actor,
+        enemy.creature,
         attacker_label=player.name,
         target_label=target_label,
         items_by_id=self.item_templates,
@@ -95,7 +95,7 @@ def resolve_player_attack_action(
         return
     apply_attack_damage(
         attack,
-        enemy.actor,
+        enemy.creature,
         attacker_label=player.name,
         target_label=target_label,
     )

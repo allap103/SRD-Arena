@@ -14,7 +14,7 @@ class Status:
     source_ref: str
     source_label: str
     target_ref: str
-    expires_on_actor_ref: str | None = None
+    expires_on_creature_ref: str | None = None
     expires_on_round: int | None = None
     rules: list[RuleGrant] = field(default_factory=list)
     tags: set[str] = field(default_factory=set)
@@ -27,7 +27,7 @@ class StatusSnapshot:
     source_ref: str
     source_label: str
     target_ref: str
-    expires_on_actor_ref: str | None = None
+    expires_on_creature_ref: str | None = None
     expires_on_round: int | None = None
 
 
@@ -37,7 +37,7 @@ def build_named_status(
     source_ref: str,
     source_label: str,
     target_ref: str,
-    expires_on_actor_ref: str | None = None,
+    expires_on_creature_ref: str | None = None,
     expires_on_round: int | None = None,
 ) -> Status:
     return Status(
@@ -46,7 +46,7 @@ def build_named_status(
         source_ref=source_ref,
         source_label=source_label,
         target_ref=target_ref,
-        expires_on_actor_ref=expires_on_actor_ref,
+        expires_on_creature_ref=expires_on_creature_ref,
         expires_on_round=expires_on_round,
         rules=_status_rules(name, target_ref),
         tags={name, "condition"},

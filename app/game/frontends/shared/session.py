@@ -73,7 +73,7 @@ class InitiativeTrackEntryView:
 
 
 @dataclass
-class BattlefieldActorView:
+class BattlefieldCreatureView:
     actor_ref: str
     actor_id: str
     label: str
@@ -88,7 +88,7 @@ class BattlefieldActorView:
 class BattlefieldView:
     width: int
     height: int
-    actors: list[BattlefieldActorView]
+    creatures: list[BattlefieldCreatureView]
     summary_text: str
 
 
@@ -282,8 +282,8 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
 
 def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
     decision = combat_state["decision"]
-    actors = [
-        BattlefieldActorView(
+    creatures = [
+        BattlefieldCreatureView(
             actor_ref="player",
             actor_id=combat_state["player"]["actor_id"],
             label=combat_state["player"]["name"],
@@ -301,8 +301,8 @@ def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
             is_active=decision["actor_ref"] == "player",
         )
     ]
-    actors.extend(
-        BattlefieldActorView(
+    creatures.extend(
+        BattlefieldCreatureView(
             actor_ref=enemy["actor_ref"],
             actor_id=enemy["actor_id"],
             label=f"Enemy {index + 1} ({enemy['name']})",
@@ -324,7 +324,7 @@ def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
     return BattlefieldView(
         width=combat_state["grid"]["width"],
         height=combat_state["grid"]["height"],
-        actors=actors,
+        creatures=creatures,
         summary_text=_render_battlefield_text(combat_state),
     )
 
@@ -416,7 +416,7 @@ def _build_initiative_track(
 ) -> tuple[InitiativeTrackEntryView, ...]:
     initiative = combat_state.get("initiative", [])
     decision = combat_state.get("decision", {})
-    active_actor_ref = (
+    active_creature_ref = (
         decision.get("actor_ref")
         if isinstance(decision, dict)
         else None
@@ -438,7 +438,7 @@ def _build_initiative_track(
                 actor_ref=actor_ref,
                 label=label,
                 total=total,
-                is_active=actor_ref == active_actor_ref,
+                is_active=actor_ref == active_creature_ref,
             )
         )
     return tuple(entries)

@@ -1,4 +1,4 @@
-from .actor import Actor
+from .creature import Creature
 from .attributes import Attributes
 from .class_features import ClassRef, CombatProfile, FeatureGrant, SubclassRef
 from .choice import Choice
@@ -10,7 +10,7 @@ from .spellcasting import Spell, SpellRef, Spellcasting
 from .status import Status, StatusSnapshot
 
 __all__ = [
-    "Actor",
+    "Creature",
     "ArmorStat",
     "Attributes",
     "ClassRef",

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..actor import Actor
+from ..creature import Creature
 from ..spellcasting import Spell, Spellcasting
 
 
@@ -50,14 +50,14 @@ def spell_targets_self_only(spell: Spell) -> bool:
     return bool(spell.removable_conditions) and spell.range_data.get("type") == "point"
 
 
-def spell_range_squares(spell: Spell, actor: Actor) -> int | None:
+def spell_range_squares(spell: Spell, creature: Creature) -> int | None:
     distance = spell.range_data.get("distance", {})
     if not isinstance(distance, dict):
         return None
     amount = distance.get("amount")
     if not isinstance(amount, int):
         return None
-    return max(1, amount // actor.attributes.movement.feet_per_square)
+    return max(1, amount // creature.attributes.movement.feet_per_square)
 
 
 def spell_action_label(

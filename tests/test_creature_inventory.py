@@ -1,31 +1,31 @@
 from game.domain.equipment import Equipment
 from game.domain.inventory import Inventory
-from tests.helpers import make_actor
+from tests.helpers import make_creature
 
 
 def test_equipping_moves_item_from_inventory_to_equipment() -> None:
-    actor = make_actor()
-    actor.inventory.add_item("greatsword")
+    creature = make_creature()
+    creature.inventory.add_item("greatsword")
 
-    assert actor.equip_item("greatsword", "right_hand") is True
-    assert actor.inventory.has_item("greatsword") is False
-    assert actor.equipment.is_equipped("greatsword") is True
+    assert creature.equip_item("greatsword", "right_hand") is True
+    assert creature.inventory.has_item("greatsword") is False
+    assert creature.equipment.is_equipped("greatsword") is True
 
 
 def test_invalid_equipment_slot_does_not_remove_inventory_item() -> None:
-    actor = make_actor()
-    actor.inventory.add_item("greatsword")
+    creature = make_creature()
+    creature.inventory.add_item("greatsword")
 
-    assert actor.equip_item("greatsword", "invalid") is False
-    assert actor.inventory.has_item("greatsword") is True
+    assert creature.equip_item("greatsword", "invalid") is False
+    assert creature.inventory.has_item("greatsword") is True
 
 
 def test_unequipping_returns_item_to_inventory() -> None:
-    actor = make_actor()
-    actor.equipment.equip("greatsword", "right_hand")
+    creature = make_creature()
+    creature.equipment.equip("greatsword", "right_hand")
 
-    assert actor.unequip_item("right_hand") is True
-    assert actor.inventory.has_item("greatsword") is True
+    assert creature.unequip_item("right_hand") is True
+    assert creature.inventory.has_item("greatsword") is True
 
 
 def test_inventory_reports_removed_quantity() -> None:

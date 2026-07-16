@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Generator
 
-from ..actor import Actor
+from ..creature import Creature
 from ..item import Item
 from ..scene import Behavior, Encounter, Position
 from ..status import Status, StatusSnapshot
@@ -11,7 +11,7 @@ from ..rules.config import RulesConfig
 from ..rules.dice import CheckResult, DicePoolResult
 from ..rules.types import RuleGrant
 
-ActorRef = str
+CreatureRef = str
 
 
 @dataclass
@@ -28,7 +28,7 @@ class EncounterAction:
     kind: str
     value: str | int | None = None
     id: str = ""
-    actor_ref: ActorRef = "player"
+    actor_ref: CreatureRef = "player"
     source_trigger_id: str | None = None
     cost: ActionCost = field(default_factory=ActionCost)
 
@@ -36,7 +36,7 @@ class EncounterAction:
 @dataclass
 class DecisionFrame:
     id: str
-    actor_ref: ActorRef
+    actor_ref: CreatureRef
     kind: str
     reason: str
     parent_frame_id: str | None = None
@@ -48,7 +48,7 @@ class DecisionFrame:
 class CombatEvent:
     seq: int
     type: str
-    actor_ref: ActorRef | None = None
+    actor_ref: CreatureRef | None = None
     frame_id: str | None = None
     action_id: str | None = None
     data: dict[str, object] = field(default_factory=dict)
@@ -107,7 +107,7 @@ class BehaviorContext:
 class PendingAction:
     id: str
     kind: str
-    actor_ref: ActorRef
+    actor_ref: CreatureRef
     direction: str
     from_position: Position
     to_position: Position
@@ -119,7 +119,7 @@ class PendingAction:
 @dataclass
 class EncounterEnemyState:
     actor_id: str
-    actor: Actor
+    creature: Creature
     position: Position
     behavior: Behavior
     patrol_index: int = 0
@@ -128,7 +128,7 @@ class EncounterEnemyState:
 
     @property
     def is_alive(self) -> bool:
-        return self.actor.get_health() > 0
+        return self.creature.get_health() > 0
 
 
 @dataclass
@@ -143,7 +143,7 @@ class EncounterSnapshotEnemy:
 
 @dataclass
 class InitiativeEntry:
-    actor_ref: ActorRef
+    actor_ref: CreatureRef
     roll: int
     modifier: int
     total: int
@@ -151,7 +151,7 @@ class InitiativeEntry:
 
 @dataclass
 class InitiativeEntrySnapshot:
-    actor_ref: ActorRef
+    actor_ref: CreatureRef
     roll: int
     modifier: int
     total: int
@@ -160,7 +160,7 @@ class InitiativeEntrySnapshot:
 @dataclass
 class DecisionFrameSnapshot:
     id: str
-    actor_ref: ActorRef
+    actor_ref: CreatureRef
     kind: str
     reason: str
     parent_frame_id: str | None = None
@@ -172,7 +172,7 @@ class DecisionFrameSnapshot:
 class PendingActionSnapshot:
     id: str
     kind: str
-    actor_ref: ActorRef
+    actor_ref: CreatureRef
     direction: str
     from_position: Position
     to_position: Position
@@ -184,8 +184,8 @@ class PendingActionSnapshot:
 @dataclass
 class PendingAttackSnapshot:
     action_id: str
-    attacker_ref: ActorRef
-    target_ref: ActorRef
+    attacker_ref: CreatureRef
+    target_ref: CreatureRef
     target_index: int
     attacker_label: str
     target_label: str
@@ -230,7 +230,7 @@ class EncounterSnapshot:
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
-    initiative_order: list[ActorRef] = field(default_factory=lambda: ["player"])
+    initiative_order: list[CreatureRef] = field(default_factory=lambda: ["player"])
     initiative_entries: list[InitiativeEntrySnapshot] = field(default_factory=list)
     decision_stack: list[DecisionFrameSnapshot] = field(default_factory=list)
     pending_action: PendingActionSnapshot | None = None
@@ -264,8 +264,8 @@ class AttackOutcome:
 @dataclass
 class PendingAttack:
     action_id: str
-    attacker_ref: ActorRef
-    target_ref: ActorRef
+    attacker_ref: CreatureRef
+    target_ref: CreatureRef
     target_index: int
     attacker_label: str
     target_label: str
@@ -309,7 +309,7 @@ class EncounterStateData:
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
-    initiative_order: list[ActorRef] = field(default_factory=lambda: ["player"])
+    initiative_order: list[CreatureRef] = field(default_factory=lambda: ["player"])
     initiative_entries: list[InitiativeEntry] = field(default_factory=list)
     conditions: list[Status] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)

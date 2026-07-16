@@ -166,7 +166,7 @@ class GameWindow(QMainWindow):
 
         self.battlefield_widget = BattlefieldWidget(self.game.directory)
         self.battlefield_widget.setObjectName("combatBoard")
-        self.battlefield_widget.actor_clicked.connect(self._handle_battlefield_actor_clicked)
+        self.battlefield_widget.actor_clicked.connect(self._handle_battlefield_creature_clicked)
         self.battlefield_widget.cell_clicked.connect(self._handle_battlefield_cell_clicked)
         self.battlefield_widget.point_clicked.connect(self._handle_battlefield_point_clicked)
         battlefield_layout.addWidget(self.battlefield_widget, stretch=1)
@@ -507,7 +507,7 @@ class GameWindow(QMainWindow):
         targetable_refs = {
             target_ref
             for action in selected_targetable_actions.values()
-            if (target_ref := self._target_actor_ref(action)) is not None
+            if (target_ref := self._target_creature_ref(action)) is not None
         }
         self.battlefield_widget.set_targeting_state(targetable_refs)
 
@@ -1055,7 +1055,7 @@ class GameWindow(QMainWindow):
         self._pending_target_mode = None if self._pending_target_mode == mode else mode
         self.refresh_view()
 
-    def _handle_battlefield_actor_clicked(self, actor_ref: str) -> None:
+    def _handle_battlefield_creature_clicked(self, actor_ref: str) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
         if self._pending_target_mode is None:
@@ -1111,10 +1111,10 @@ class GameWindow(QMainWindow):
         modes: dict[TargetSelectionMode, dict[str, ActionView]] = {}
         for action in actions:
             target_mode = self._target_mode_for_action(action)
-            target_actor_ref = self._target_actor_ref(action)
-            if target_mode is None or target_actor_ref is None:
+            target_creature_ref = self._target_creature_ref(action)
+            if target_mode is None or target_creature_ref is None:
                 continue
-            modes.setdefault(target_mode, {})[target_actor_ref] = action
+            modes.setdefault(target_mode, {})[target_creature_ref] = action
         return modes
 
     def _target_mode_for_action(self, action: ActionView) -> TargetSelectionMode | None:
@@ -1123,7 +1123,7 @@ class GameWindow(QMainWindow):
                 kind=action.kind,
                 source_trigger_id=action.id,
             )
-        if self._target_actor_ref(action) is None:
+        if self._target_creature_ref(action) is None:
             return None
         return TargetSelectionMode(
             kind=action.kind,
@@ -1140,7 +1140,7 @@ class GameWindow(QMainWindow):
                 return action.label
         return "Opportunity attack" if mode.kind == "opportunity_attack" else "Attack"
 
-    def _target_actor_ref(self, action: ActionView | None) -> str | None:
+    def _target_creature_ref(self, action: ActionView | None) -> str | None:
         if action is None or action.kind not in {"attack", "opportunity_attack"}:
             return None
         if isinstance(action.value, str):

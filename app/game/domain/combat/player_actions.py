@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..actor import Actor
+from ..creature import Creature
 from ..scene import Position
 from ..size import can_grapple
 from ..rules.dice import resolve_d20
@@ -33,12 +33,12 @@ def _roll_die(sides: int) -> int:
 
 def apply_action(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     action: EncounterAction,
 ) -> EncounterProgress:
     decision = self.current_decision()
-    if self._actor_controller(decision.actor_ref) != "user":
-        raise RuntimeError("User action requested for an AI-controlled actor.")
+    if self._creature_controller(decision.actor_ref) != "user":
+        raise RuntimeError("User action requested for an AI-controlled creature.")
     if decision.actor_ref != "player":
         return self._apply_user_controlled_enemy_action(player, action, decision)
     if decision.kind == "reroll_dice":
@@ -116,7 +116,7 @@ def apply_action(
 
 def apply_player_move(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     direction: str,
     progress: EncounterProgress,
     action_id: str,
@@ -135,7 +135,7 @@ def apply_player_move(
     next_target_positions = {
         target_ref: Position(target_position.x + dx, target_position.y + dy)
         for target_ref in self._grappling_targets_for("player")
-        if (target_position := self._actor_position(target_ref)) is not None
+        if (target_position := self._creature_position(target_ref)) is not None
     }
     if not self._position_is_free(
         next_player_position.x,
@@ -180,7 +180,7 @@ def apply_player_move(
 
 def resolve_grapple_action(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     action: EncounterAction,
     progress: EncounterProgress,
     action_id: str,
@@ -220,16 +220,16 @@ def resolve_grapple_action(
             )
         )
         return
-    if not can_grapple(target.actor.size, player.size):
+    if not can_grapple(target.creature.size, player.size):
         progress.messages.append(("system", "The target is too large to grapple."))
         return
 
     self._consume_action(allow_magic=False)
 
     player_roll = resolve_d20(modifier=player.get_modifier(player.attributes.strength), roller=_roll_die)
-    target_roll = resolve_d20(modifier=target.actor.get_modifier(target.actor.attributes.strength), roller=_roll_die)
+    target_roll = resolve_d20(modifier=target.creature.get_modifier(target.creature.attributes.strength), roller=_roll_die)
     success = player_roll.total >= target_roll.total
-    target_label = f"Enemy {target_index + 1} ({target.actor.name})"
+    target_label = f"Enemy {target_index + 1} ({target.creature.name})"
 
     progress.events.append(
         self._event(
@@ -279,7 +279,7 @@ def resolve_grapple_action(
                 data={
                     "condition": "grappling",
                     "source_ref": f"enemy:{target_index}",
-                    "source_label": target.actor.name,
+                    "source_label": target.creature.name,
                 },
             ),
         ]

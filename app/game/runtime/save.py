@@ -18,7 +18,7 @@ from ..domain.combat.models import (
     PendingActionSnapshot,
 )
 from .scenario import Scenario
-from ..domain.actor import Actor
+from ..domain.creature import Creature
 from ..domain.attributes import Attributes, Movement
 from ..domain.scene import Position
 from ..domain.spellcasting import Spellcasting
@@ -202,7 +202,7 @@ class ConditionStateModel(BaseModel):
     source_ref: str
     source_label: str
     target_ref: str
-    expires_on_actor_ref: str | None = None
+    expires_on_creature_ref: str | None = None
     expires_on_round: int | None = None
 
 
@@ -256,7 +256,7 @@ def restore_save(save: SaveGame, scenario_dir: str | Path) -> Session:
         control_mode=save.control_mode,
     )
     session = scenario.create_session(
-        player_actor_id=save.player.actor_id,
+        player_creature_id=save.player.actor_id,
         control_mode=save.control_mode,
     )
 
@@ -307,7 +307,7 @@ def load_from_slot(
     return load_from_file(get_slot_path(save_dir, slot), scenario_dir)
 
 
-def _create_player_state(player: Actor) -> PlayerState:
+def _create_player_state(player: Creature) -> PlayerState:
     return PlayerState(
         actor_id=player.id,
         current_health=player.get_health(),
@@ -337,8 +337,8 @@ def _create_player_state(player: Actor) -> PlayerState:
     )
 
 
-def _restore_player_state(player_template: Actor, state: PlayerState) -> Actor:
-    return Actor(
+def _restore_player_state(player_template: Creature, state: PlayerState) -> Creature:
+    return Creature(
         id=player_template.id,
         name=player_template.name,
         description=player_template.description,
@@ -478,7 +478,7 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
                 source_ref=condition.source_ref,
                 source_label=condition.source_label,
                 target_ref=condition.target_ref,
-                expires_on_actor_ref=condition.expires_on_actor_ref,
+                expires_on_creature_ref=condition.expires_on_creature_ref,
                 expires_on_round=condition.expires_on_round,
             )
             for condition in snapshot.conditions
@@ -603,7 +603,7 @@ def _restore_encounter_state(
                 source_ref=condition.source_ref,
                 source_label=condition.source_label,
                 target_ref=condition.target_ref,
-                expires_on_actor_ref=condition.expires_on_actor_ref,
+                expires_on_creature_ref=condition.expires_on_creature_ref,
                 expires_on_round=condition.expires_on_round,
             )
             for condition in state.conditions

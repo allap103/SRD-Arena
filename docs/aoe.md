@@ -38,7 +38,7 @@ The long-term AoE pipeline should be:
 3. Construct a continuous geometric shape.
 4. Rasterize that shape to affected grid cells.
 5. Apply later filters such as total-cover blocking.
-6. Map surviving cells to actors.
+6. Map surviving cells to creatures.
 7. Apply spell- or effect-specific inclusion and exclusion rules.
 
 ### Project decision
@@ -321,7 +321,7 @@ The encounter layer should consume rasterized AoE output in this shape:
 Then later:
 
 - cover and line-of-effect filters trim the cell set
-- actors in remaining cells become candidate targets
+- creatures in remaining cells become candidate targets
 - spell rules decide who is actually affected
 
 ### Project decision

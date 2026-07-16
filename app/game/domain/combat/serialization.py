@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..actor import Actor
+from ..creature import Creature
 from ..status import Status
 from .behaviors import movement_squares as _movement_squares
 from .refs import enemy_ref as _enemy_ref
@@ -27,8 +27,8 @@ def export_decision(self: EncounterState) -> dict[str, object]:
     return payload
 
 
-def export_state(self: EncounterState, player: Actor) -> dict[str, object]:
-    active_actor_ref = self.current_decision().actor_ref
+def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
+    active_creature_ref = self.current_decision().actor_ref
     return {
         "scene_id": self.scene_id,
         "grid": {
@@ -41,7 +41,7 @@ def export_state(self: EncounterState, player: Actor) -> dict[str, object]:
         "initiative": [
             {
                 "actor_ref": entry.actor_ref,
-                "label": self._actor_label(entry.actor_ref),
+                "label": self._creature_label(entry.actor_ref),
                 "roll": entry.roll,
                 "modifier": entry.modifier,
                 "total": entry.total,
@@ -49,8 +49,8 @@ def export_state(self: EncounterState, player: Actor) -> dict[str, object]:
             for entry in self.initiative_entries
         ],
         "control_mode": self.control_mode,
-        "active_actor_ref": active_actor_ref,
-        "active_controller": self._actor_controller(active_actor_ref),
+        "active_creature_ref": active_creature_ref,
+        "active_controller": self._creature_controller(active_creature_ref),
         "player": {
             "actor_id": player.id,
             "name": player.name,
@@ -88,16 +88,16 @@ def export_state(self: EncounterState, player: Actor) -> dict[str, object]:
                 if player.spellcasting is not None
                 else {}
             ),
-            "team_id": self._actor_team_id("player"),
-            "controller": self._actor_controller("player"),
+            "team_id": self._creature_team_id("player"),
+            "controller": self._creature_controller("player"),
         },
         "enemies": [
             {
                 "actor_ref": _enemy_ref(index),
                 "actor_id": enemy.actor_id,
-                "name": enemy.actor.name,
+                "name": enemy.creature.name,
                 "position": {"x": enemy.position.x, "y": enemy.position.y},
-                "health": enemy.actor.get_health(),
+                "health": enemy.creature.get_health(),
                 "reaction_available": enemy.reaction_available,
                 "conditions": [
                     condition.name
@@ -106,21 +106,21 @@ def export_state(self: EncounterState, player: Actor) -> dict[str, object]:
                 "movement_remaining": (
                     enemy.movement_remaining
                     if enemy.movement_remaining is not None
-                    else _movement_squares(enemy.actor)
+                    else _movement_squares(enemy.creature)
                 ),
-                "movement_total": _movement_squares(enemy.actor),
+                "movement_total": _movement_squares(enemy.creature),
                 "movement_remaining_feet": (
                     (
                         enemy.movement_remaining
                         if enemy.movement_remaining is not None
-                        else _movement_squares(enemy.actor)
+                        else _movement_squares(enemy.creature)
                     )
-                    * enemy.actor.attributes.movement.feet_per_square
+                    * enemy.creature.attributes.movement.feet_per_square
                 ),
-                "movement_total_feet": enemy.actor.attributes.movement.speed_feet,
-                "max_health": enemy.actor.get_max_health(),
-                "team_id": self._actor_team_id(_enemy_ref(index)),
-                "controller": self._actor_controller(_enemy_ref(index)),
+                "movement_total_feet": enemy.creature.attributes.movement.speed_feet,
+                "max_health": enemy.creature.get_max_health(),
+                "team_id": self._creature_team_id(_enemy_ref(index)),
+                "controller": self._creature_controller(_enemy_ref(index)),
                 "is_alive": enemy.is_alive,
             }
             for index, enemy in enumerate(self.enemies)

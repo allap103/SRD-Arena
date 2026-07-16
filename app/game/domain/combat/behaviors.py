@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Generator
 
-from ..actor import Actor
+from ..creature import Creature
 from ..item import Item
 from ..scene import Position
 from .models import BehaviorContext, EncounterAction, EncounterEnemyState
@@ -51,7 +51,7 @@ def _archer_behavior(
 ) -> Generator[EncounterAction | None, BehaviorContext, None]:
     context = yield None
     while True:
-        range_squares = weapon_normal_range_squares(enemy.actor, items_by_id)
+        range_squares = weapon_normal_range_squares(enemy.creature, items_by_id)
         if range_squares is not None and chebyshev_distance(
             context.enemy_position,
             context.player_position,
@@ -136,11 +136,11 @@ def manhattan_distance(a: Position, b: Position) -> int:
     return abs(a.x - b.x) + abs(a.y - b.y)
 
 
-def movement_squares(actor: Actor) -> int:
-    return actor.attributes.movement.squares_per_turn
+def movement_squares(creature: Creature) -> int:
+    return creature.attributes.movement.squares_per_turn
 
 
-def weapon_normal_range_squares(attacker: Actor, items_by_id: dict[str, Item]) -> int | None:
+def weapon_normal_range_squares(attacker: Creature, items_by_id: dict[str, Item]) -> int | None:
     for slot in ("right_hand", "left_hand"):
         item_id = attacker.equipment.equipped_items.get(slot)
         if item_id is None:

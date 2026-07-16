@@ -107,7 +107,7 @@ def test_great_weapon_fighting_pauses_damage_and_rerolls_each_die_once(
 
     assert session.encounter_state is not None
     assert session.encounter_state.current_decision().kind == "reroll_dice"
-    assert session.encounter_state.enemies[0].actor.get_health() == 7
+    assert session.encounter_state.enemies[0].creature.get_health() == 7
     assert [action.kind for action in session.encounter_state.available_actions(session.player)] == [
         "reroll_die",
         "reroll_die",
@@ -121,7 +121,7 @@ def test_great_weapon_fighting_pauses_damage_and_rerolls_each_die_once(
     )
 
     assert session.encounter_state.current_decision().kind == "reroll_dice"
-    assert session.encounter_state.enemies[0].actor.get_health() == 7
+    assert session.encounter_state.enemies[0].creature.get_health() == 7
     reroll_event = next(
         event for event in first_reroll.events if event.type == "damage_rerolled"
     )
@@ -133,7 +133,7 @@ def test_great_weapon_fighting_pauses_damage_and_rerolls_each_die_once(
 
     assert session.encounter_state.current_decision().kind == "turn"
     assert session.encounter_state.pending_attack is None
-    assert session.encounter_state.enemies[0].actor.get_health() == 0
+    assert session.encounter_state.enemies[0].creature.get_health() == 0
     resolved = next(event for event in final.events if event.type == "attack_resolved")
     assert resolved.data["damage_roll_detail"]["die_rolls"] == [[1, 6], [2, 1]]
     assert resolved.data["damage_roll_detail"]["dice_total"] == 7
@@ -233,7 +233,7 @@ def test_opportunity_attack_reroll_resumes_interrupted_movement(monkeypatch):
         "reroll_dice",
     ]
     assert state.enemies[0].position.x == 3
-    assert state.enemies[0].actor.get_health() == 30
+    assert state.enemies[0].creature.get_health() == 30
     assert next(event for event in opportunity.events if event.type == "attack_pending").data[
         "reaction"
     ] is True
@@ -246,7 +246,7 @@ def test_opportunity_attack_reroll_resumes_interrupted_movement(monkeypatch):
     assert state.pending_attack is None
     assert state.pending_action is None
     assert state.decision_stack == []
-    assert state.enemies[0].actor.get_health() == 15
+    assert state.enemies[0].creature.get_health() == 15
     assert state.enemies[0].position.x > 3
     resolved = next(event for event in final.events if event.type == "attack_resolved")
     assert resolved.data["reaction"] is True
@@ -312,7 +312,7 @@ def _sample_opportunity_attack():
     state.player_position.y = 2
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2
-    state.enemies[0].actor.current_health = 30
+    state.enemies[0].creature.current_health = 30
     state.turn_index = 1
 
     def scripted_behavior():

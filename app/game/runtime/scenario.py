@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..content.loaders import (
-    load_actor,
+    load_creature,
     load_bestiary_stat_blocks,
     load_class_blocks,
     load_custom_stat_blocks,
@@ -17,7 +17,7 @@ from ..content.loaders import (
     load_system_item_catalog,
     load_system_items,
 )
-from ..domain.actor import Actor
+from ..domain.creature import Creature
 from ..domain.item import Item
 from ..domain.rules.config import (
     DEFAULT_DIRECTIONAL_AOE_CELL_COVERAGE_THRESHOLD,
@@ -39,7 +39,7 @@ class GameSettings:
 
 class Scenario:
     scenes: dict[str, Scene]
-    actors: list[Actor]
+    creatures: list[Creature]
     items: list[Item]
     rules_config: RulesConfig
 
@@ -62,7 +62,7 @@ class Scenario:
         self.custom_stat_blocks = load_custom_stat_blocks(self.directory / "custom_stat_blocks")
         self.system_item_catalog = load_system_item_catalog(self.system_directory)
         self.scenes = self.load_scenes_from_directory(self.directory / "scenes")
-        self.actors = self.load_actors_from_directory(self.directory)
+        self.creatures = self.load_creatures_from_directory(self.directory)
         self.items = self._merge_items(
             load_system_items(self.system_directory),
             self.load_items_from_directory(self.directory / "items"),
@@ -70,10 +70,10 @@ class Scenario:
         self.start_scene = start_scene or settings.start_scene
         self.control_mode = control_mode
 
-    def load_actors_from_directory(self, directory: str | Path) -> list[Actor]:
-        actor_dir = Path(directory) / "actors"
+    def load_creatures_from_directory(self, directory: str | Path) -> list[Creature]:
+        creature_dir = Path(directory) / "actors"
         return [
-            load_actor(
+            load_creature(
                 path,
                 self.stat_blocks,
                 self.class_blocks,
@@ -82,7 +82,7 @@ class Scenario:
                 self.subclass_blocks,
                 self.spell_catalog,
             )
-            for path in actor_dir.glob("*")
+            for path in creature_dir.glob("*")
         ]
 
     def load_items_from_directory(self, directory: str | Path) -> list[Item]:
@@ -99,22 +99,22 @@ class Scenario:
             for scene in (load_scene(path) for path in Path(directory).glob("*"))
         }
 
-    def get_actor(self, actor_id: str) -> Actor:
-        for actor in self.actors:
-            if actor.id == actor_id:
-                return actor
-        raise KeyError(f"Actor '{actor_id}' not found.")
+    def get_creature(self, actor_id: str) -> Creature:
+        for creature in self.creatures:
+            if creature.id == actor_id:
+                return creature
+        raise KeyError(f"Creature '{actor_id}' not found.")
 
     def create_session(
         self,
-        player_actor_id: str = "player",
+        player_creature_id: str = "player",
         control_mode: str | None = None,
     ) -> Session:
         start_scene_id = self._resolve_start_scene_id(self.start_scene)
         return Session(
             scenes=self.scenes,
-            player=self.get_actor(player_actor_id),
-            actor_templates={actor.id: actor for actor in self.actors},
+            player=self.get_creature(player_creature_id),
+            creature_templates={creature.id: creature for creature in self.creatures},
             item_templates={item.id: item for item in self.items},
             start_scene_id=start_scene_id,
             scenario_dir=self.directory,

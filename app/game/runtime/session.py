@@ -5,7 +5,7 @@ from pathlib import Path
 from ..domain.combat.encounter import EncounterState
 from ..domain.combat.models import EncounterAction, EncounterSnapshot
 from ..frontends.shared.combat import render_encounter_text
-from ..domain.actor import Actor
+from ..domain.creature import Creature
 from ..domain.choice import Choice
 from ..domain.item import Item
 from ..domain.scene import Scene
@@ -29,8 +29,8 @@ class Session:
     def __init__(
         self,
         scenes: dict[str, Scene],
-        player: Actor,
-        actor_templates: dict[str, Actor] | None = None,
+        player: Creature,
+        creature_templates: dict[str, Creature] | None = None,
         item_templates: dict[str, Item] | None = None,
         start_scene_id: str = "welcome",
         scenario_dir: str | Path = SCENARIOS_ROOT / "sample_game",
@@ -41,7 +41,7 @@ class Session:
     ):
         self.scenes = scenes
         self.player = player
-        self.actor_templates = actor_templates or {player.id: player}
+        self.creature_templates = creature_templates or {player.id: player}
         self.item_templates = item_templates or {}
         self.start_scene_id = start_scene_id
         self.current_scene_id = self._resolve_scene_id(start_scene_id)
@@ -196,7 +196,7 @@ class Session:
         self.current_scene_id = loaded.current_scene_id
         self.start_scene_id = loaded.start_scene_id
         self._initial_player = deepcopy(loaded._initial_player)
-        self.actor_templates = loaded.actor_templates
+        self.creature_templates = loaded.creature_templates
         self.item_templates = loaded.item_templates
         self.encounter_state = loaded.encounter_state
         self.control_mode = loaded.control_mode
@@ -306,7 +306,7 @@ class Session:
         if self.encounter_state is None:
             raise RuntimeError("AI advancement requested without an active encounter.")
         if not self.encounter_state.needs_ai_advance():
-            raise RuntimeError("AI advancement requested while no AI actor is active.")
+            raise RuntimeError("AI advancement requested while no AI creature is active.")
 
         progress = self.encounter_state.advance_until_next_decision(self.player)
         transition = progress.transition
@@ -358,7 +358,7 @@ class Session:
             scene.id,
             scene.encounter,
             self.player,
-            self.actor_templates,
+            self.creature_templates,
             self.item_templates,
             self.control_mode,
             self.rules_config,
@@ -388,7 +388,7 @@ class Session:
         self.encounter_state = EncounterState.from_snapshot(
             scene.encounter,
             snapshot,
-            self.actor_templates,
+            self.creature_templates,
             self.item_templates,
             self.rules_config,
         )

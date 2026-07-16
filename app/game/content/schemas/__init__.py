@@ -1,6 +1,6 @@
-from .actor import (
-    ActorItemReferenceSchema,
-    ActorSchema,
+from .creature import (
+    CreatureItemReferenceSchema,
+    CreatureSchema,
     AttributesSchema,
     EQUIPMENT_SLOTS,
     StatBlockReferenceSchema,
@@ -19,8 +19,8 @@ from .scene import (
 )
 
 __all__ = [
-    "ActorSchema",
-    "ActorItemReferenceSchema",
+    "CreatureSchema",
+    "CreatureItemReferenceSchema",
     "ArmorStatSchema",
     "AttributesSchema",
     "BehaviorSchema",

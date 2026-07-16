@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..actor import Actor
+from ..creature import Creature
 from ..scene import Position
 from ..rules.dice import reroll_dice
 from ..rules.registry import reroll_eligible_indices
@@ -132,7 +132,7 @@ class ReactionEngine:
     def apply_damage_reroll_action(
         self,
         state: EncounterState,
-        player: Actor,
+        player: Creature,
         action: EncounterAction,
         decision: DecisionFrame,
     ) -> EncounterProgress:
@@ -194,7 +194,7 @@ class ReactionEngine:
     def finalize_pending_attack(
         self,
         state: EncounterState,
-        player: Actor,
+        player: Creature,
         progress: EncounterProgress,
         decision: DecisionFrame,
     ) -> None:
@@ -204,7 +204,7 @@ class ReactionEngine:
         target = state.enemies[pending.target_index]
         apply_attack_damage(
             pending.attack,
-            target.actor,
+            target.creature,
             attacker_label=player.name,
             target_label=pending.target_label,
         )
@@ -256,7 +256,7 @@ class ReactionEngine:
     def complete_parent_reaction(
         self,
         state: EncounterState,
-        player: Actor,
+        player: Creature,
         progress: EncounterProgress,
         action_id: str,
     ) -> None:
@@ -315,7 +315,7 @@ class ReactionEngine:
     def apply_reaction_action(
         self,
         state: EncounterState,
-        player: Actor,
+        player: Creature,
         action: EncounterAction,
         decision: DecisionFrame,
     ) -> EncounterProgress:
@@ -339,10 +339,10 @@ class ReactionEngine:
             state.player_reaction_available = False
             target_index = _enemy_index(pending_action.actor_ref)
             target = state.enemies[target_index]
-            target_label = f"Enemy {target_index + 1} ({target.actor.name})"
+            target_label = f"Enemy {target_index + 1} ({target.creature.name})"
             attack = resolve_attack(
                 player,
-                target.actor,
+                target.creature,
                 attacker_label=player.name,
                 target_label=target_label,
                 action_label="Opportunity attack",
@@ -378,7 +378,7 @@ class ReactionEngine:
                 return progress
             apply_attack_damage(
                 attack,
-                target.actor,
+                target.creature,
                 attacker_label=player.name,
                 target_label=target_label,
             )
@@ -437,7 +437,7 @@ class ReactionEngine:
     def resume_pending_action(
         self,
         state: EncounterState,
-        player: Actor,
+        player: Creature,
         progress: EncounterProgress,
     ) -> None:
         pending_action = state.pending_action
@@ -463,7 +463,7 @@ class ReactionEngine:
             progress.messages.append(
                 (
                     "system",
-                    f"{enemy.actor.name} moves {pending_action.direction} to "
+                    f"{enemy.creature.name} moves {pending_action.direction} to "
                     f"({pending_action.to_position.x}, {pending_action.to_position.y}).",
                 )
             )
@@ -485,7 +485,7 @@ class ReactionEngine:
 
         if pending_action.resume_enemy_index is None:
             return
-        if state._actor_controller(pending_action.actor_ref) == "user":
+        if state._creature_controller(pending_action.actor_ref) == "user":
             enemy.movement_remaining = pending_action.remaining_movement_after
             return
         enemy.movement_remaining = pending_action.remaining_movement_after
@@ -504,7 +504,7 @@ class ReactionEngine:
     def resolve_enemy_opportunity_attacks_against_player(
         self,
         state: EncounterState,
-        player: Actor,
+        player: Creature,
         direction: str,
         action_id: str,
         progress: EncounterProgress,
@@ -519,7 +519,7 @@ class ReactionEngine:
             if enemy.is_alive
             and state._actors_are_opponents(_enemy_ref(index), "player")
             and enemy.reaction_available
-            and can_make_opportunity_attack(enemy.actor, state.item_templates)
+            and can_make_opportunity_attack(enemy.creature, state.item_templates)
             and _is_adjacent(origin, enemy.position)
             and not _is_adjacent(destination, enemy.position)
         ]
@@ -535,9 +535,9 @@ class ReactionEngine:
                 )
             )
             attack = resolve_attack(
-                enemy.actor,
+                enemy.creature,
                 player,
-                attacker_label=f"Enemy {index + 1} ({enemy.actor.name})",
+                attacker_label=f"Enemy {index + 1} ({enemy.creature.name})",
                 target_label=player.name,
                 action_label="Opportunity attack",
                 items_by_id=state.item_templates,
@@ -558,7 +558,7 @@ class ReactionEngine:
             apply_attack_damage(
                 attack,
                 player,
-                attacker_label=f"Enemy {index + 1} ({enemy.actor.name})",
+                attacker_label=f"Enemy {index + 1} ({enemy.creature.name})",
                 target_label=player.name,
             )
             messages.extend(attack.messages)
@@ -568,7 +568,7 @@ class ReactionEngine:
                     actor_ref=_enemy_ref(index),
                     action_id=action_id,
                     data={
-                        "attacker_label": f"Enemy {index + 1} ({enemy.actor.name})",
+                        "attacker_label": f"Enemy {index + 1} ({enemy.creature.name})",
                         "target_ref": "player",
                         "target_label": player.name,
                         "attack_roll": attack.attack_roll,
@@ -588,7 +588,7 @@ class ReactionEngine:
     def queue_player_opportunity_attack(
         self,
         state: EncounterState,
-        player: Actor,
+        player: Creature,
         enemy_index: int,
         action_id: str,
         direction: str,
@@ -667,7 +667,7 @@ class ReactionEngine:
         if state.player_reaction_available and target.is_alive:
             actions.append(
                 EncounterAction(
-                    f"Opportunity attack {target.actor.name}",
+                    f"Opportunity attack {target.creature.name}",
                     "opportunity_attack",
                     target_index,
                     id=f"player-opportunity-attack-{target_index}",

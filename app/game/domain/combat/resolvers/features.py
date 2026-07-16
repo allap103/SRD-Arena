@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..features.actions import resolve_feature_action as _resolve_feature_action_impl
-from ...actor import Actor
+from ...creature import Creature
 from ..models import EncounterProgress
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ def _roll_dice(count: int, sides: int) -> int:
 
 def resolve_feature_action(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     feature_id: str,
     progress: EncounterProgress,
     action_id: str,

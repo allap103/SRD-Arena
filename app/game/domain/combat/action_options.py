@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..actor import Actor
+from ..creature import Creature
 from ..scene import Position
 from ..size import can_grapple
 from ..spellcasting import Spell, Spellcasting
@@ -31,9 +31,9 @@ if TYPE_CHECKING:
     from .encounter import EncounterState
 
 
-def available_actions(self: EncounterState, player: Actor) -> list[EncounterAction]:
+def available_actions(self: EncounterState, player: Creature) -> list[EncounterAction]:
     decision = self.current_decision()
-    if self._actor_controller(decision.actor_ref) != "user":
+    if self._creature_controller(decision.actor_ref) != "user":
         return []
     if decision.actor_ref != "player":
         return self._user_controlled_enemy_actions(player, decision.actor_ref)
@@ -72,7 +72,7 @@ def available_actions(self: EncounterState, player: Actor) -> list[EncounterActi
         ):
             actions.append(
                 EncounterAction(
-                    f"Attack enemy {index + 1} ({enemy.actor.name})",
+                    f"Attack enemy {index + 1} ({enemy.creature.name})",
                     "attack",
                     index,
                     id=f"player-attack-{index}",
@@ -86,11 +86,11 @@ def available_actions(self: EncounterState, player: Actor) -> list[EncounterActi
             and self._actors_are_opponents("player", _enemy_ref(index))
             and _is_adjacent(self.player_position, enemy.position)
             and has_free_hand(player)
-            and can_grapple(enemy.actor.size, player.size)
+            and can_grapple(enemy.creature.size, player.size)
         ):
             actions.append(
                 EncounterAction(
-                    f"Grapple enemy {index + 1} ({enemy.actor.name})",
+                    f"Grapple enemy {index + 1} ({enemy.creature.name})",
                     "grapple",
                     index,
                     id=f"player-grapple-{index}",
@@ -139,7 +139,7 @@ def available_actions(self: EncounterState, player: Actor) -> list[EncounterActi
 
 def available_feature_actions(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
 ) -> list[EncounterAction]:
     actions: list[EncounterAction] = []
     for feature_id, definition in player.combat_profile.feature_actions.items():
@@ -165,7 +165,7 @@ def available_feature_actions(
 
 def available_spell_actions(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
 ) -> list[EncounterAction]:
     spellcasting = player.spellcasting
     if spellcasting is None:
@@ -208,7 +208,7 @@ def available_spell_actions(
     return actions
 
 
-def feature_action_available(self: EncounterState, player: Actor, definition) -> bool:
+def feature_action_available(self: EncounterState, player: Creature, definition) -> bool:
     if definition.economy == "bonus_action" and not self.player_bonus_action_available:
         return False
     if definition.economy == "action" and self.player_actions_remaining <= 0:
@@ -247,13 +247,13 @@ def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
     return spell.geometry_mode == "self_only" or spell_targets_self_only(spell)
 
 
-def spell_range_squares_for(self: EncounterState, spell: Spell, actor: Actor) -> int | None:
-    return spell_range_squares(spell, actor)
+def spell_range_squares_for(self: EncounterState, spell: Spell, creature: Creature) -> int | None:
+    return spell_range_squares(spell, creature)
 
 
 def spell_action_targets(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     spell: Spell,
 ) -> list[SpellTargetContext]:
     if spell.geometry_mode == "point_area":
@@ -292,7 +292,7 @@ def spell_action_targets(
 
 def spell_area_targets(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     spell: Spell,
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
@@ -325,7 +325,7 @@ def spend_spell_resources(
 
 def spell_area(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     spell: Spell,
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
@@ -356,7 +356,7 @@ def spell_area(
         target = self._spell_target_context(player, target_ref)
         if target is None or target_ref == "player":
             return None
-        direction = vector_between_positions(self.player_position, self._actor_position(target_ref))
+        direction = vector_between_positions(self.player_position, self._creature_position(target_ref))
     length = self._spell_range_squares(spell, player)
     if length is None:
         return None
@@ -373,7 +373,7 @@ def spell_area(
 
 def targets_in_area(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     area: AreaOfEffect,
 ) -> list[SpellTargetContext]:
     occupied_cells = {(cell.x, cell.y) for cell in area.cells}
@@ -395,12 +395,12 @@ def targets_in_area(
 
 def spell_target_context(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     target_ref: str,
 ) -> SpellTargetContext | None:
     if target_ref == "player":
         return SpellTargetContext(
-            actor=player,
+            creature=player,
             target_ref="player",
             target_label=player.name,
             target_conditions=tuple(
@@ -414,9 +414,9 @@ def spell_target_context(
     if not enemy.is_alive:
         return None
     return SpellTargetContext(
-        actor=enemy.actor,
+        creature=enemy.creature,
         target_ref=target_ref,
-        target_label=f"Enemy {enemy_index + 1} ({enemy.actor.name})",
+        target_label=f"Enemy {enemy_index + 1} ({enemy.creature.name})",
         target_conditions=tuple(
             condition.name for condition in self.conditions_for(target_ref)
         ),

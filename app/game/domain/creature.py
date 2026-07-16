@@ -9,7 +9,7 @@ from .monster_attack import MonsterAttack
 from .spellcasting import Spellcasting
 
 @dataclass
-class Actor:
+class Creature:
     id: str
     name: str
     description: str
@@ -32,7 +32,7 @@ class Actor:
             self.current_health = self.get_max_health()
 
     def __str__(self):
-        return f"Actor with attributes: {self.attributes} and inventory: {self.inventory.items}"
+        return f"Creature with attributes: {self.attributes} and inventory: {self.inventory.items}"
 
     def has_item(self, item: str) -> bool:
         return self.inventory.has_item(item)

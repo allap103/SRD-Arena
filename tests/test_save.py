@@ -199,7 +199,7 @@ def test_save_and_load_preserve_pending_scene_transition(tmp_path: Path) -> None
     state = session.encounter_state
     assert state is not None
     for enemy in state.enemies:
-        enemy.actor.current_health = 0
+        enemy.creature.current_health = 0
     wait_index = session.get_scene_view().choices.index("Wait")
     session.choose(wait_index)
 

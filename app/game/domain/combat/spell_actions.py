@@ -6,7 +6,7 @@ import re
 
 from .geometry import AreaOfEffect, serialize_area
 from .features.types import CapabilityActionResult, EffectResult
-from ..actor import Actor
+from ..creature import Creature
 from ..spellcasting import Spell
 from ..rules.dice import resolve_dice
 from ..rules.saving_throws import resolve_saving_throw
@@ -16,7 +16,7 @@ DieRoller = Callable[[int], int]
 
 @dataclass(frozen=True)
 class SpellTargetContext:
-    actor: Actor
+    creature: Creature
     target_ref: str
     target_label: str
     target_conditions: tuple[str, ...] = ()
@@ -24,7 +24,7 @@ class SpellTargetContext:
 
 @dataclass(frozen=True)
 class SpellActionContext:
-    actor: Actor
+    creature: Creature
     spell: Spell
     target: SpellTargetContext
     current_round: int
@@ -50,9 +50,9 @@ def resolve_spell_action(
 
 
 def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
-    actor = context.actor
+    creature = context.creature
     spell = context.spell
-    assert actor.spellcasting is not None
+    assert creature.spellcasting is not None
     assert context.roller is not None
     ability = (
         spell.saving_throw_abilities[0]
@@ -60,14 +60,14 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
         else "constitution"
     )
     targets = context.targets or (context.target,)
-    messages = [("system", f"{actor.name} casts {spell.name} on {context.target.target_label}.")]
+    messages = [("system", f"{creature.name} casts {spell.name} on {context.target.target_label}.")]
     effects: list[EffectResult] = []
     save_details: list[dict[str, object]] = []
     for target in targets:
         save_result = resolve_saving_throw(
-            target.actor,
+            target.creature,
             ability,
-            actor.spellcasting.save_dc,
+            creature.spellcasting.save_dc,
             roller=context.roller,
         )
         save_detail = {
@@ -93,7 +93,7 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
                 "system",
                 f"{target.target_label} makes a Constitution save: d20={save_result.check.roll.selected} "
                 f"+ {save_result.modifiers.total} = {save_result.check.roll.total} "
-                f"vs DC {actor.spellcasting.save_dc}.",
+                f"vs DC {creature.spellcasting.save_dc}.",
             ),
         )
         if save_result.check.success:
@@ -110,8 +110,8 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
                     "status_name": "blinded",
                     "condition": "blinded",
                     "source_ref": context.source_ref,
-                    "source_label": actor.name,
-                    "expires_on_actor_ref": context.source_ref,
+                    "source_label": creature.name,
+                    "expires_on_creature_ref": context.source_ref,
                     "expires_on_round": context.current_round + 1,
                     "target_label": target.target_label,
                     "save_detail": save_detail,
@@ -140,7 +140,7 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
 
 
 def _resolve_lesser_restoration(context: SpellActionContext) -> CapabilityActionResult:
-    actor = context.actor
+    creature = context.creature
     spell = context.spell
     target_ref = context.target.target_ref
     target_label = context.target.target_label
@@ -153,7 +153,7 @@ def _resolve_lesser_restoration(context: SpellActionContext) -> CapabilityAction
         ),
         None,
     )
-    messages = [("system", f"{actor.name} casts {spell.name} on {target_label}.")]
+    messages = [("system", f"{creature.name} casts {spell.name} on {target_label}.")]
     effects: list[EffectResult] = []
     if removed_condition is None:
         messages.append(
@@ -190,9 +190,9 @@ def _resolve_lesser_restoration(context: SpellActionContext) -> CapabilityAction
 
 
 def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResult:
-    actor = context.actor
+    creature = context.creature
     spell = context.spell
-    assert actor.spellcasting is not None
+    assert creature.spellcasting is not None
     assert context.roller is not None
     damage_dice = spell.damage_dice or "3d6"
     damage_count, damage_sides = _parse_damage_dice(damage_dice)
@@ -203,15 +203,15 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
     )
     damage_type = spell.damage_inflict[0] if spell.damage_inflict else "damage"
     targets = context.targets or (context.target,)
-    messages = [("system", f"{actor.name} casts {spell.name}.")]
+    messages = [("system", f"{creature.name} casts {spell.name}.")]
     save_details: list[dict[str, object]] = []
     damage_details: list[dict[str, object]] = []
 
     for target in targets:
         save_result = resolve_saving_throw(
-            target.actor,
+            target.creature,
             ability,
-            actor.spellcasting.save_dc,
+            creature.spellcasting.save_dc,
             roller=context.roller,
         )
         save_detail = {
@@ -237,7 +237,7 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
                 "system",
                 f"{target.target_label} makes a Dexterity save: d20={save_result.check.roll.selected} "
                 f"+ {save_result.modifiers.total} = {save_result.check.roll.total} "
-                f"vs DC {actor.spellcasting.save_dc}.",
+                f"vs DC {creature.spellcasting.save_dc}.",
             ),
         )
         damage_roll = resolve_dice(
@@ -247,7 +247,7 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
         )
         full_damage = damage_roll.total
         final_damage = full_damage // 2 if save_result.check.success else full_damage
-        applied_damage = target.actor.take_damage(final_damage)
+        applied_damage = target.creature.take_damage(final_damage)
         damage_detail = {
             "target_ref": target.target_ref,
             "target_label": target.target_label,
@@ -278,7 +278,7 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
             messages.append(
                 ("system", f"{target.target_label} takes {applied_damage} {damage_type} damage.")
             )
-        if target.actor.get_health() <= 0:
+        if target.creature.get_health() <= 0:
             messages.append(("system", f"{target.target_label} is defeated."))
 
     return CapabilityActionResult(
@@ -304,9 +304,9 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
 
 
 def _resolve_fireball(context: SpellActionContext) -> CapabilityActionResult:
-    actor = context.actor
+    creature = context.creature
     spell = context.spell
-    assert actor.spellcasting is not None
+    assert creature.spellcasting is not None
     assert context.roller is not None
     damage_dice = spell.damage_dice or "8d6"
     damage_count, damage_sides = _parse_damage_dice(damage_dice)
@@ -317,7 +317,7 @@ def _resolve_fireball(context: SpellActionContext) -> CapabilityActionResult:
     )
     damage_type = spell.damage_inflict[0] if spell.damage_inflict else "damage"
     targets = context.targets or (context.target,)
-    messages = [("system", f"{actor.name} casts {spell.name}.")]
+    messages = [("system", f"{creature.name} casts {spell.name}.")]
     save_details: list[dict[str, object]] = []
     damage_details: list[dict[str, object]] = []
     damage_roll = resolve_dice(
@@ -329,9 +329,9 @@ def _resolve_fireball(context: SpellActionContext) -> CapabilityActionResult:
 
     for target in targets:
         save_result = resolve_saving_throw(
-            target.actor,
+            target.creature,
             ability,
-            actor.spellcasting.save_dc,
+            creature.spellcasting.save_dc,
             roller=context.roller,
         )
         save_detail = {
@@ -357,11 +357,11 @@ def _resolve_fireball(context: SpellActionContext) -> CapabilityActionResult:
                 "system",
                 f"{target.target_label} makes a Dexterity save: d20={save_result.check.roll.selected} "
                 f"+ {save_result.modifiers.total} = {save_result.check.roll.total} "
-                f"vs DC {actor.spellcasting.save_dc}.",
+                f"vs DC {creature.spellcasting.save_dc}.",
             ),
         )
         final_damage = full_damage // 2 if save_result.check.success else full_damage
-        applied_damage = target.actor.take_damage(final_damage)
+        applied_damage = target.creature.take_damage(final_damage)
         damage_detail = {
             "target_ref": target.target_ref,
             "target_label": target.target_label,
@@ -392,7 +392,7 @@ def _resolve_fireball(context: SpellActionContext) -> CapabilityActionResult:
             messages.append(
                 ("system", f"{target.target_label} takes {applied_damage} {damage_type} damage.")
             )
-        if target.actor.get_health() <= 0:
+        if target.creature.get_health() <= 0:
             messages.append(("system", f"{target.target_label} is defeated."))
 
     return CapabilityActionResult(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...actor import Actor
+from ...creature import Creature
 from ..consumables import healing_potion_dice
 from ..models import EncounterProgress
 
@@ -18,7 +18,7 @@ def _roll_dice(count: int, sides: int) -> int:
 
 def resolve_utilize_action(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     item_id: str,
     progress: EncounterProgress,
     action_id: str,

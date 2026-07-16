@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..actor import Actor
+from ..creature import Creature
 from ..item import Item
 from ..scene import Position
 from ..rules.dice import (
@@ -18,8 +18,8 @@ from .models import AttackOutcome, AttackSource
 
 
 def resolve_attack(
-    attacker: Actor,
-    defender: Actor,
+    attacker: Creature,
+    defender: Creature,
     attacker_label: str,
     target_label: str,
     action_label: str = "Attack",
@@ -148,7 +148,7 @@ def resolve_attack(
 
 def apply_attack_damage(
     attack: AttackOutcome,
-    defender: Actor,
+    defender: Creature,
     *,
     attacker_label: str,
     target_label: str,
@@ -203,7 +203,7 @@ def damage_roll_detail(
     return detail
 
 
-def equipped_weapon(attacker: Actor, items_by_id: dict[str, Item]) -> Item | None:
+def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | None:
     for slot in ("right_hand", "left_hand"):
         item_id = attacker.equipment.equipped_items.get(slot)
         if item_id is None:
@@ -214,14 +214,14 @@ def equipped_weapon(attacker: Actor, items_by_id: dict[str, Item]) -> Item | Non
     return None
 
 
-def has_free_hand(actor: Actor) -> bool:
+def has_free_hand(creature: Creature) -> bool:
     return any(
-        actor.equipment.equipped_items.get(slot) is None
+        creature.equipment.equipped_items.get(slot) is None
         for slot in ("right_hand", "left_hand")
     )
 
 
-def unarmed_attack_source(attacker: Actor) -> AttackSource:
+def unarmed_attack_source(attacker: Creature) -> AttackSource:
     strength_modifier = attacker.get_modifier(attacker.attributes.strength)
     return AttackSource(
         name="Unarmed Strike",
@@ -236,7 +236,7 @@ def unarmed_attack_source(attacker: Actor) -> AttackSource:
     )
 
 
-def weapon_attack_source(attacker: Actor, weapon: Item) -> AttackSource:
+def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
     assert weapon.weapon_stat is not None
     attack_type = weapon.weapon_stat.attack_type or "melee"
     ability_modifier = (
@@ -286,7 +286,7 @@ def monster_attack_source(attack) -> AttackSource:
 
 
 def select_attack_source(
-    attacker: Actor,
+    attacker: Creature,
     items_by_id: dict[str, Item],
     *,
     preferred_attack_type: str | None = None,
@@ -309,7 +309,7 @@ def select_attack_source(
     return None
 
 
-def attack_sources(attacker: Actor, items_by_id: dict[str, Item]) -> list[AttackSource]:
+def attack_sources(attacker: Creature, items_by_id: dict[str, Item]) -> list[AttackSource]:
     weapon = equipped_weapon(attacker, items_by_id)
     if weapon is not None:
         return [weapon_attack_source(attacker, weapon)]
@@ -349,7 +349,7 @@ def attack_roll_mode(
 
 
 def selected_attack_type(
-    attacker: Actor,
+    attacker: Creature,
     items_by_id: dict[str, Item],
     *,
     preferred_attack_type: str | None = None,
@@ -365,7 +365,7 @@ def selected_attack_type(
 
 
 def can_make_opportunity_attack(
-    attacker: Actor,
+    attacker: Creature,
     items_by_id: dict[str, Item],
 ) -> bool:
     attack_source = select_attack_source(attacker, items_by_id, preferred_attack_type="melee")
@@ -373,7 +373,7 @@ def can_make_opportunity_attack(
 
 
 def matching_damage_reroll_rule(
-    attacker: Actor,
+    attacker: Creature,
     attack: AttackOutcome,
 ) -> RuleGrant | None:
     if attack.damage_roll is None:
@@ -402,7 +402,7 @@ def matching_damage_reroll_rule(
     )
 
 
-def weapon_proficiency_bonus(attacker: Actor, weapon: Item | None) -> int:
+def weapon_proficiency_bonus(attacker: Creature, weapon: Item | None) -> int:
     if weapon is None or weapon.weapon_stat is None:
         return 0
     weapon_proficiencies = attacker.attributes.proficiencies.get("weapons", [])

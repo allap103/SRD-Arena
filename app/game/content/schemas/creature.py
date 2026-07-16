@@ -24,14 +24,14 @@ EquipmentSlot = Literal[
 ]
 
 
-class ActorItemReferenceSchema(BaseModel):
+class CreatureItemReferenceSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
     source: str | None = None
 
 
-ItemIdOrReference = str | ActorItemReferenceSchema
+ItemIdOrReference = str | CreatureItemReferenceSchema
 
 
 class AttributesSchema(BaseModel):
@@ -57,7 +57,7 @@ class MovementSchema(BaseModel):
     feet_per_square: int = 5
 
 
-class ActorSchema(BaseModel):
+class CreatureSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...actor import Actor
+from ...creature import Creature
 from ..effects import serialize_effects
 from ..models import EncounterProgress
 from ..spell_actions import SpellActionContext, resolve_spell_action as _resolve_spell_action_impl
@@ -20,7 +20,7 @@ def _roll_die(sides: int) -> int:
 
 def resolve_spell_action(
     self: EncounterState,
-    player: Actor,
+    player: Creature,
     spell_value: str,
     progress: EncounterProgress,
     action_id: str,
@@ -85,7 +85,7 @@ def resolve_spell_action(
         return
     result = _resolve_spell_action_impl(
         SpellActionContext(
-            actor=player,
+            creature=player,
             spell=spell,
             target=target,
             current_round=self.round_number,

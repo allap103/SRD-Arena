@@ -1,11 +1,11 @@
-from game.domain.actor import Actor
+from game.domain.creature import Creature
 from game.domain.attributes import Attributes
 from game.domain.equipment import Equipment
 from game.domain.inventory import Inventory
 
 
-def make_actor() -> Actor:
-    return Actor(
+def make_creature() -> Creature:
+    return Creature(
         id="test-player",
         name="Test Player",
         description="",

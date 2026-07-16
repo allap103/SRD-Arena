@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..actor import Actor
+from ..creature import Creature
 from ..scene import Position
 from .attacks import apply_attack_damage, resolve_attack, selected_attack_type
 from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent, movement_squares as _movement_squares
-from .models import ActorRef, BehaviorContext, EncounterEnemyState, EncounterProgress
+from .models import CreatureRef, BehaviorContext, EncounterEnemyState, EncounterProgress
 from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 
 if TYPE_CHECKING:
@@ -29,28 +29,28 @@ class TurnEngine:
     def advance_until_next_decision(
         self,
         state: EncounterState,
-        player: Actor,
+        player: Creature,
     ) -> EncounterProgress:
         progress = EncounterProgress()
         ai_actions_resolved = 0
         while True:
             if player.get_health() <= 0:
                 break
-            if state.decision_stack and state._actor_controller(
+            if state.decision_stack and state._creature_controller(
                 state.current_decision().actor_ref
             ) == "user":
                 progress.paused_for_decision = True
                 break
-            actor_type, enemy_index = self.active_turn_actor(state)
+            creature_type, enemy_index = self.active_turn_actor(state)
             actor_ref = (
                 "player"
-                if actor_type == "player"
+                if creature_type == "player"
                 else _enemy_ref(enemy_index if enemy_index is not None else 0)
             )
-            if state._actor_controller(actor_ref) == "user":
+            if state._creature_controller(actor_ref) == "user":
                 progress.paused_for_decision = True
                 break
-            if actor_type == "player":
+            if creature_type == "player":
                 break
             assert enemy_index is not None
             remaining_limit = (
@@ -85,7 +85,7 @@ class TurnEngine:
     def run_enemy_turn(
         self,
         state: EncounterState,
-        player: Actor,
+        player: Creature,
         enemy_index: int,
         *,
         action_limit: int | None = None,
@@ -95,7 +95,7 @@ class TurnEngine:
         if not enemy.is_alive:
             return True, progress, 0
         if enemy.movement_remaining is None:
-            enemy.movement_remaining = _movement_squares(enemy.actor)
+            enemy.movement_remaining = _movement_squares(enemy.creature)
 
         behavior = state._behaviors[enemy_index]
         actions_resolved = 0
@@ -143,8 +143,8 @@ class TurnEngine:
                     _enemy_ref(enemy_index): Position(target_x, target_y),
                     **{
                         target_ref: Position(
-                            state._actor_position(target_ref).x + dx,
-                            state._actor_position(target_ref).y + dy,
+                            state._creature_position(target_ref).x + dx,
+                            state._creature_position(target_ref).y + dy,
                         )
                         for target_ref in grappling_targets
                     },
@@ -184,7 +184,7 @@ class TurnEngine:
                 progress.messages.append(
                     (
                         "system",
-                        f"{enemy.actor.name} moves {direction} to ({target_x}, {target_y}).",
+                        f"{enemy.creature.name} moves {direction} to ({target_x}, {target_y}).",
                     )
                 )
                 progress.events.append(
@@ -210,9 +210,9 @@ class TurnEngine:
                     else None
                 )
                 attack = resolve_attack(
-                    enemy.actor,
+                    enemy.creature,
                     player,
-                    attacker_label=f"Enemy {enemy_index + 1} ({enemy.actor.name})",
+                    attacker_label=f"Enemy {enemy_index + 1} ({enemy.creature.name})",
                     target_label=player.name,
                     items_by_id=state.item_templates,
                     attacker_position=enemy.position,
@@ -223,7 +223,7 @@ class TurnEngine:
                         _enemy_ref(enemy_index),
                         "player",
                         selected_attack_type(
-                            enemy.actor,
+                            enemy.creature,
                             state.item_templates,
                             preferred_attack_type=preferred_attack_type,
                         ),
@@ -236,7 +236,7 @@ class TurnEngine:
                 apply_attack_damage(
                     attack,
                     player,
-                    attacker_label=f"Enemy {enemy_index + 1} ({enemy.actor.name})",
+                    attacker_label=f"Enemy {enemy_index + 1} ({enemy.creature.name})",
                     target_label=player.name,
                 )
                 progress.messages.extend(attack.messages)
@@ -246,7 +246,7 @@ class TurnEngine:
                         actor_ref=_enemy_ref(enemy_index),
                         action_id=action_id,
                         data={
-                            "attacker_label": f"Enemy {enemy_index + 1} ({enemy.actor.name})",
+                            "attacker_label": f"Enemy {enemy_index + 1} ({enemy.creature.name})",
                             "target_ref": "player",
                             "target_label": player.name,
                             "attack_roll": attack.attack_roll,
@@ -261,7 +261,7 @@ class TurnEngine:
                 actions_resolved += 1
                 return True, progress, actions_resolved
 
-            progress.messages.append(("system", f"{enemy.actor.name} waits."))
+            progress.messages.append(("system", f"{enemy.creature.name} waits."))
             progress.events.append(
                 state._event(
                     "action_resolved",
@@ -292,9 +292,9 @@ class TurnEngine:
         return None
 
     def advance_turn(self, state: EncounterState) -> None:
-        ending_actor_ref = state.current_decision().actor_ref
+        ending_creature_ref = state.current_decision().actor_ref
         ending_round = state.round.number
-        self.expire_conditions_for_turn_end(state, ending_actor_ref, ending_round)
+        self.expire_conditions_for_turn_end(state, ending_creature_ref, ending_round)
         state.turn_index += 1
         if state.turn_index >= self.turn_count(state):
             state.turn_index = 0
@@ -313,14 +313,14 @@ class TurnEngine:
     def expire_conditions_for_turn_end(
         self,
         state: EncounterState,
-        actor_ref: ActorRef,
+        actor_ref: CreatureRef,
         round_number: int,
     ) -> None:
         state.conditions = [
             condition
             for condition in state.conditions
             if not (
-                condition.expires_on_actor_ref == actor_ref
+                condition.expires_on_creature_ref == actor_ref
                 and state.round.matches(condition.expires_on_round)
             )
         ]
@@ -348,7 +348,7 @@ class TurnEngine:
                 state.turn_index = 0
                 state.round.advance()
 
-    def player_movement_remaining(self, state: EncounterState, player: Actor) -> int:
+    def player_movement_remaining(self, state: EncounterState, player: Creature) -> int:
         if state._is_grappled("player"):
             return 0
         if state.player_movement_remaining is None:

@@ -1,9 +1,9 @@
-from ...domain.actor import Actor
+from ...domain.creature import Creature
 from ...domain.combat.behaviors import movement_squares
 from ...domain.combat.encounter import EncounterState
 
 
-def render_encounter_text(encounter: EncounterState, player: Actor) -> str:
+def render_encounter_text(encounter: EncounterState, player: Creature) -> str:
     rows: list[str] = []
     for y in range(encounter.definition.grid.height):
         cells: list[str] = []
@@ -15,7 +15,7 @@ def render_encounter_text(encounter: EncounterState, player: Actor) -> str:
         rows.append(" ".join(cells))
 
     enemies = [
-        f"- Enemy {index + 1} ({enemy.actor.name}): {enemy.actor.get_health()} HP "
+        f"- Enemy {index + 1} ({enemy.creature.name}): {enemy.creature.get_health()} HP "
         f"at ({enemy.position.x}, {enemy.position.y})"
         for index, enemy in enumerate(encounter.enemies)
         if enemy.is_alive
