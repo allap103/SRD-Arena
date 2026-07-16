@@ -20,15 +20,15 @@ from ...domain.rules.types import RuleGrant
 from ..normalization import normalize_optional_feature_rules
 from ...domain.equipment import Equipment
 from ...domain.inventory import Inventory
-from ._catalogs import (
+from .catalogs import (
     _find_class_block,
     _find_optional_feature,
     _find_spell,
     _find_stat_block,
     _find_subclass_block,
 )
-from ._shared import _load_json, _slug
-from ._types import (
+from .source_data import _load_json, _slug
+from .types import (
     ClassCatalog,
     CustomStatBlockCatalog,
     OptionalFeatureCatalog,

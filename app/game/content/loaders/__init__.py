@@ -1,5 +1,5 @@
-from ._actors import load_actor
-from ._catalogs import (
+from .actors import load_actor
+from .catalogs import (
     load_bestiary_stat_blocks,
     load_class_blocks,
     load_custom_stat_blocks,
@@ -7,9 +7,9 @@ from ._catalogs import (
     load_spell_catalog,
     load_subclass_blocks,
 )
-from ._items import load_item, load_system_item_catalog, load_system_items
-from ._scenes import load_scene
-from ._types import (
+from .items import load_item, load_system_item_catalog, load_system_items
+from .scenes import load_scene
+from .types import (
     ClassCatalog,
     CustomStatBlockCatalog,
     OptionalFeatureCatalog,

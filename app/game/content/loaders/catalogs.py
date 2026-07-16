@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from ..schemas import ActorSchema
-from ._shared import SOURCE_PRIORITY, _load_json
-from ._types import (
+from .source_data import SOURCE_PRIORITY, _load_json
+from .types import (
     ClassCatalog,
     CustomStatBlockCatalog,
     OptionalFeatureCatalog,

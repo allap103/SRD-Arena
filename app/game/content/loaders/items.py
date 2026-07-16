@@ -2,9 +2,9 @@ from pathlib import Path
 
 from ..schemas import ItemSchema
 from ...domain.item import ArmorStat, Item, WeaponStat
-from ._catalogs import _find_system_item, load_system_item_catalog
-from ._shared import SOURCE_PRIORITY, _load_json, _slug
-from ._types import SystemItemCatalog
+from .catalogs import _find_system_item, load_system_item_catalog
+from .source_data import SOURCE_PRIORITY, _load_json, _slug
+from .types import SystemItemCatalog
 
 
 def load_system_items(directory: str | Path) -> list[Item]:

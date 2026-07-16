@@ -13,7 +13,7 @@ from ...domain.scene import (
     Position,
     Scene,
 )
-from ._shared import _load_json
+from .source_data import _load_json
 
 
 def _build_requirements(requirements) -> Requirements | None:
