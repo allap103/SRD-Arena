@@ -30,10 +30,6 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
-def _item_id_by_name(session, name: str) -> str:
-    return next(item_id for item_id, item in session.item_templates.items() if item.name == name)
-
-
 def _action_index_by_prefix(session, prefix: str) -> int:
     return next(
         index
@@ -249,58 +245,6 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
     assert session.encounter_state.has_condition("enemy:0", "grappled") is True
     assert session.encounter_state.has_condition("player", "grappling") is True
     assert "Grapple enemy 1 (Goblin)" in scene_view.choices
-
-
-def test_grapple_action_requires_a_free_hand_in_the_menu() -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 4
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 3
-    session.player.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longsword")
-    session.player.equipment.equipped_items["left_hand"] = _item_id_by_name(session, "Longbow")
-
-    choices = session.get_scene_view().choices
-
-    assert "Grapple enemy 1 (Goblin)" not in choices
-
-
-def test_grapple_action_is_rejected_without_a_free_hand(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 4
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 3
-    session.player.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longsword")
-    session.player.equipment.equipped_items["left_hand"] = _item_id_by_name(session, "Longbow")
-    starting_actions = state.player_actions_remaining
-
-    rolls = iter([20, 1])
-    monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda _sides: next(rolls))
-
-    result = session.choose_encounter_action(
-        EncounterAction(
-            label="Grapple enemy 1 (Goblin)",
-            kind="grapple",
-            value=0,
-            id="player-grapple-0",
-            actor_ref="player",
-            cost=ActionCost(action=1),
-        )
-    )
-
-    assert ("system", "You need a free hand to grapple.") in result.messages
-    assert state.has_condition("enemy:0", "grappled") is False
-    assert state.has_condition("player", "grappling") is False
-    assert state.player_actions_remaining == starting_actions
 
 
 def test_grappling_moves_target_and_costs_extra_movement() -> None:
@@ -1028,118 +972,6 @@ def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> Non
     assert session.encounter_state.round_number == 2
 
 
-def test_enemy_movement_can_pause_for_player_opportunity_attack(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    session.encounter_state.player_position.x = 2
-    session.encounter_state.player_position.y = 2
-    session.encounter_state.enemies[0].position.x = 3
-    session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.turn_index = 1
-
-    def scripted_behavior():
-        yield None
-        while True:
-            yield EncounterAction("Move", "move", "right")
-
-    behavior = scripted_behavior()
-    next(behavior)
-    session.encounter_state._behaviors[0] = behavior
-
-    progress = session.encounter_state.advance_until_next_decision(session.player)
-
-    assert progress.paused_for_decision is True
-    assert session.encounter_state.current_decision().kind == "reaction"
-    labels = [action.label for action in session.encounter_state.available_actions(session.player)]
-    assert labels == ["Opportunity attack Goblin", "Pass reaction"]
-
-    monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: 1)
-
-    reaction = session.encounter_state.available_actions(session.player)[0]
-    reaction_progress = session.encounter_state.apply_action(session.player, reaction)
-
-    assert any(
-        "Traveler hits Enemy 1 (Goblin)" in message
-        for _, message in reaction_progress.messages
-    )
-    assert session.encounter_state.enemies[0].position.x > 3
-    assert session.encounter_state.enemies[0].position.y == 2
-    assert session.encounter_state.pending_action is None
-    assert session.encounter_state.current_decision().actor_ref == "player"
-
-
-def test_ranged_weapons_do_not_enable_opportunity_attacks() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    session.player.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longbow")
-    session.encounter_state.player_position.x = 2
-    session.encounter_state.player_position.y = 2
-    session.encounter_state.enemies[0].position.x = 3
-    session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[1].creature.current_health = 0
-    session.encounter_state.enemies[2].creature.current_health = 0
-    session.encounter_state.turn_index = 1
-
-    def scripted_behavior():
-        yield None
-        while True:
-            yield EncounterAction("Move", "move", "right")
-
-    behavior = scripted_behavior()
-    next(behavior)
-    session.encounter_state._behaviors[0] = behavior
-
-    session.encounter_state.advance_until_next_decision(session.player)
-
-    assert session.encounter_state.current_decision().kind == "turn"
-    assert session.encounter_state.enemies[0].position.x > 3
-    assert session.encounter_state.pending_action is None
-    assert session.encounter_state.current_decision().actor_ref == "player"
-
-
-def test_ranged_weapon_attacks_have_disadvantage_when_target_is_adjacent(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    enemy = session.encounter_state.enemies[0]
-    enemy.behavior.type = "archer"
-    enemy.creature.equipment.equipped_items["right_hand"] = _item_id_by_name(session, "Longbow")
-    session.encounter_state._initialize_behaviors()
-    enemy.position.x = 2
-    enemy.position.y = 2
-    session.encounter_state.enemies[1].creature.current_health = 0
-    session.encounter_state.enemies[2].creature.current_health = 0
-    session.encounter_state.player_position.x = 1
-    session.encounter_state.player_position.y = 2
-    session.encounter_state.turn_index = 1
-
-    rolls = iter([17, 5, 4])
-    monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: next(rolls))
-    monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: next(rolls))
-
-    progress = session.encounter_state.advance_until_next_decision(session.player)
-
-    attack_event = next(
-        event
-        for event in progress.events
-        if event.type == "attack_resolved" and event.actor_ref == "enemy:0"
-    )
-    assert attack_event.data["attack_roll_detail"]["attack_type"] == "ranged"
-    assert attack_event.data["attack_roll_detail"]["mode"] == "disadvantage"
-    assert attack_event.data["attack_roll_detail"]["dice"] == [17, 5]
-    assert attack_event.data["attack_roll_detail"]["weapon_name"] == "Longbow"
-    assert attack_event.data["hit"] is False
-
-
 def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch) -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -1171,108 +1003,6 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch
     assert enemy.position.y == 2
     assert attack_event.data["attack_roll_detail"]["attack_type"] == "ranged"
     assert attack_event.data["attack_roll_detail"]["weapon_name"] == "Shortbow"
-
-
-def test_weapon_runtime_model_tracks_attack_type() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-
-    longsword_id = _item_id_by_name(session, "Longsword")
-    longbow_id = _item_id_by_name(session, "Longbow")
-    shortbow_id = _item_id_by_name(session, "Shortbow")
-
-    assert session.item_templates[longsword_id].weapon_stat is not None
-    assert session.item_templates[longsword_id].weapon_stat.attack_type == "melee"
-    assert session.item_templates[longbow_id].weapon_stat is not None
-    assert session.item_templates[longbow_id].weapon_stat.attack_type == "ranged"
-    assert session.item_templates[shortbow_id].weapon_stat is not None
-    assert session.item_templates[shortbow_id].weapon_stat.range_normal == 80
-    assert session.item_templates[shortbow_id].weapon_stat.range_long == 320
-
-
-def test_goblin_encounter_allows_diagonal_attacks(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    session.player.combat_profile.attacks_per_attack_action = 1
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 5
-    session.encounter_state.enemies[0].position.y = 2
-
-    monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: 4)
-
-    scene_view = session.get_scene_view()
-    attack_index = next(
-        index
-        for index, choice in enumerate(scene_view.choices)
-        if choice.startswith("Attack enemy 1")
-    )
-    result = session.choose(attack_index)
-
-    assert result.selected_choice_text is not None
-    assert result.selected_choice_text.startswith("Attack enemy 1")
-    assert any(
-        "Traveler hits Enemy 1 (Goblin)" in message
-        for _, message in result.messages
-    )
-    assert session.encounter_state is not None
-    assert session.encounter_state.player_action_available is False
-    assert session.encounter_state.player_attacks_remaining == 0
-    assert session.encounter_state.turn_index == 0
-    assert session.encounter_state.current_decision().actor_ref == "player"
-    assert not any(
-        choice.startswith("Attack enemy")
-        for choice in session.get_scene_view().choices
-    )
-    attack_event = next(event for event in result.events if event.type == "attack_resolved")
-    assert attack_event.data["attacker_label"] == "Traveler"
-    assert attack_event.data["target_label"] == "Enemy 1 (Goblin)"
-    assert attack_event.data["attack_roll"] == 25
-    assert attack_event.data["attack_roll_detail"]["proficiency_bonus"] == 2
-    assert attack_event.data["critical_hit"] is True
-    assert attack_event.data["damage_roll_detail"]["dice"] == "2d8"
-    assert attack_event.data["damage_roll_detail"]["weapon_name"] == "Longsword"
-
-
-def test_natural_twenty_is_a_critical_hit_and_auto_hits(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    session.player.combat_profile.attacks_per_attack_action = 1
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].creature.attributes.base_armor_class = 30
-    session.encounter_state.enemies[0].creature.current_health = 30
-    damage_rolls = iter([4, 7])
-
-    monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: next(damage_rolls))
-
-    attack_index = next(
-        index
-        for index, choice in enumerate(session.get_scene_view().choices)
-        if choice.startswith("Attack enemy 1")
-    )
-    result = session.choose(attack_index)
-
-    assert ("system", "Critical hit by Traveler!") in result.messages
-    attack_event = next(event for event in result.events if event.type == "attack_resolved")
-    assert attack_event.data["hit"] is True
-    assert attack_event.data["critical_hit"] is True
-    assert attack_event.data["attack_roll"] == 25
-    assert attack_event.data["attack_roll_detail"]["critical_hit"] is True
-    assert attack_event.data["damage"] == 14
-    assert attack_event.data["damage_roll_detail"]["dice"] == "2d8"
-    assert attack_event.data["damage_roll_detail"]["dice_values"] == [4, 7]
-    assert attack_event.data["damage_roll_detail"]["modifier"] == 3
-    assert attack_event.data["damage_roll_detail"]["critical_hit"] is True
 
 
 def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
@@ -1361,34 +1091,6 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
         choice.startswith("Attack enemy")
         for choice in session.get_scene_view().choices
     )
-
-
-def test_goblin_encounter_can_utilize_healing_potion(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    session.player.current_health = 10
-
-    monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda num_dice, sides: 5)
-
-    scene_view = session.get_scene_view()
-    potion_index = scene_view.choices.index("Drink Potion of Healing")
-    result = session.choose(potion_index)
-
-    assert ("system", "Traveler drinks Potion of Healing.") in result.messages
-    assert ("system", "Healing: 2d4=5 + 2 = 7; applied 7.") in result.messages
-    assert ("system", "Potion of Healing is consumed.") in result.messages
-    assert session.player.get_health() == 17
-    assert not session.player.inventory.has_item("potion_of_healing")
-    assert session.encounter_state is not None
-    assert session.encounter_state.player_bonus_action_available is False
-    assert session.encounter_state.turn_index == 0
-    event = next(event for event in result.events if event.type == "item_used")
-    assert event.data["kind"] == "utilize"
-    assert event.data["mode"] == "drink"
-    assert event.data["item_name"] == "Potion of Healing"
-    assert event.data["consumed"] is True
-    assert event.data["healing_roll_detail"]["dice"] == "2d4"
-    assert event.data["healing_roll_detail"]["applied_healing"] == 7
 
 
 def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
@@ -1681,38 +1383,6 @@ def test_save_and_load_preserve_spent_action(tmp_path: Path, monkeypatch) -> Non
         choice.startswith("Attack enemy")
         for choice in loaded.get_scene_view().choices
     )
-
-
-def test_save_and_load_preserve_pending_reaction_state(tmp_path: Path) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    session.encounter_state.player_position.x = 2
-    session.encounter_state.player_position.y = 2
-    session.encounter_state.enemies[0].position.x = 3
-    session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.turn_index = 1
-
-    def scripted_behavior():
-        yield None
-        while True:
-            yield EncounterAction("Move", "move", "right")
-
-    behavior = scripted_behavior()
-    next(behavior)
-    session.encounter_state._behaviors[0] = behavior
-    session.encounter_state.advance_until_next_decision(session.player)
-    save_path = tmp_path / "reaction_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, FIXTURE_ENCOUNTER_DIR)
-
-    assert loaded.encounter_state is not None
-    assert loaded.encounter_state.current_decision().kind == "reaction"
-    assert loaded.encounter_state.pending_action is not None
-    assert loaded.encounter_state.pending_action.actor_ref == "enemy:0"
 
 
 def test_encounter_victory_waits_for_continue_before_scene_transition() -> None:

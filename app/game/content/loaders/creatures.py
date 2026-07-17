@@ -5,16 +5,12 @@ from typing import cast
 from ..schemas import CreatureSchema
 from ..schemas.creature import CreatureItemReferenceSchema
 from ...domain.creature import Creature
-from ...domain.attributes import Attributes, Movement
-from ...domain.size import normalize_size
+from ...domain.attributes import Attributes
 from ...domain.class_features import (
     ClassRef,
-    CombatProfile,
-    FeatureActionDefinition,
     FeatureGrant,
     SubclassRef,
 )
-from ...domain.monster_attack import MonsterAttack
 from ...domain.spellcasting import Spell, Spellcasting
 from ...domain.rules.types import RuleGrant
 from ..normalization import normalize_optional_feature_rules
@@ -28,6 +24,16 @@ from .catalogs import (
     _find_subclass_block,
 )
 from .source_data import _load_json, _slug
+from .monster_attacks import build_monster_attacks
+from .creature_attributes import build_creature_attributes, build_creature_size
+from .creature_features import build_combat_profile, build_feature_uses_remaining
+from .creature_spellcasting import (
+    progression_value as _progression_value,
+    spell_count_progression as _spell_count_progression,
+    spell_preparation_mode as _spell_preparation_mode,
+    spell_slots_progression as _spell_slots_progression,
+    spellcasting_ability_score as _spellcasting_ability_score,
+)
 from .types import (
     ClassCatalog,
     CustomStatBlockCatalog,
@@ -75,7 +81,7 @@ def load_creature(
             },
         }
     )
-    attributes = _build_creature_attributes(schema, stat_block, class_block)
+    attributes = build_creature_attributes(schema, stat_block, class_block)
     feature_grants = _resolve_class_feature_grants(class_block, schema.attributes.level)
     feature_grants.extend(
         _resolve_subclass_feature_grants(
@@ -85,7 +91,7 @@ def load_creature(
         )
     )
     rule_grants = _resolve_optional_feature_rules(schema, optional_features)
-    combat_profile = _build_combat_profile(feature_grants)
+    combat_profile = build_combat_profile(feature_grants)
     spellcasting = _build_spellcasting(
         schema,
         attributes,
@@ -101,7 +107,7 @@ def load_creature(
         inventory=Inventory(items=[_creature_item_id(item) for item in schema.inventory]),
         attributes=attributes,
         equipment=equipment,
-        size=_build_creature_size(schema, stat_block),
+        size=build_creature_size(schema, stat_block),
         class_ref=(
             ClassRef(name=schema.class_ref.name, source=schema.class_ref.source)
             if schema.class_ref
@@ -120,8 +126,8 @@ def load_creature(
         feature_grants=feature_grants,
         rule_grants=rule_grants,
         combat_profile=combat_profile,
-        feature_uses_remaining=_build_feature_uses_remaining(combat_profile),
-        monster_attacks=_build_monster_attacks(stat_block),
+        feature_uses_remaining=build_feature_uses_remaining(combat_profile),
+        monster_attacks=build_monster_attacks(stat_block),
         spellcasting=spellcasting,
     )
 
@@ -218,101 +224,6 @@ def _creature_item_id(item: str | CreatureItemReferenceSchema | object) -> str:
         if isinstance(name, str):
             return _slug(name)
     raise TypeError(f"Unsupported creature item reference: {item!r}")
-
-
-def _build_creature_attributes(
-    schema: CreatureSchema,
-    stat_block: dict | None,
-    class_block: dict | None,
-) -> Attributes:
-    if stat_block is None:
-        attributes = schema.attributes.model_dump(exclude={"movement"})
-        attributes["proficiencies"] = _merge_proficiencies(
-            schema.attributes.proficiencies,
-            _class_proficiencies(class_block),
-        )
-        return Attributes(
-            **attributes,
-            movement=Movement(**schema.attributes.movement.model_dump()),
-        )
-
-    proficiencies = _merge_proficiencies(
-        schema.attributes.proficiencies,
-        _class_proficiencies(class_block),
-    )
-    return Attributes(
-        base_health=int(stat_block.get("hp", {}).get("average", schema.attributes.base_health)),
-        level=schema.attributes.level,
-        movement=Movement(
-            speed_feet=int(stat_block.get("speed", {}).get("walk", schema.attributes.movement.speed_feet)),
-            feet_per_square=schema.attributes.movement.feet_per_square,
-        ),
-        strength=int(stat_block.get("str", schema.attributes.strength)),
-        dexterity=int(stat_block.get("dex", schema.attributes.dexterity)),
-        constitution=int(stat_block.get("con", schema.attributes.constitution)),
-        wisdom=int(stat_block.get("wis", schema.attributes.wisdom)),
-        intelligence=int(stat_block.get("int", schema.attributes.intelligence)),
-        charisma=int(stat_block.get("cha", schema.attributes.charisma)),
-        base_armor_class=_stat_block_base_ac(stat_block, schema.attributes.base_armor_class),
-        proficiencies=proficiencies,
-    )
-
-
-def _build_creature_size(
-    schema: CreatureSchema,
-    stat_block: dict | None,
-) -> str:
-    if stat_block is not None:
-        size = _normalize_size_value(stat_block.get("size"))
-        if size != "M" or stat_block.get("size") is not None:
-            return size
-    metadata_size = schema.metadata.get("size")
-    return _normalize_size_value(metadata_size)
-
-
-def _normalize_size_value(value: object) -> str:
-    if isinstance(value, list) and value:
-        return normalize_size(value[0])
-    return normalize_size(value)
-
-
-def _merge_proficiencies(*sources: dict[str, object]) -> dict[str, object]:
-    merged: dict[str, object] = {}
-    for source in sources:
-        for key, value in source.items():
-            if isinstance(value, list):
-                existing = merged.setdefault(key, [])
-                if isinstance(existing, list):
-                    existing.extend(item for item in value if item not in existing)
-                continue
-            merged[key] = value
-    return merged
-
-
-def _class_proficiencies(class_block: dict | None) -> dict[str, object]:
-    if class_block is None:
-        return {}
-    starting = class_block.get("startingProficiencies", {})
-    weapons = starting.get("weapons", []) if isinstance(starting, dict) else []
-    proficiencies: dict[str, object] = {}
-    if isinstance(weapons, list):
-        proficiencies["weapons"] = list(weapons)
-
-    saving_throws = class_block.get("proficiency", [])
-    if isinstance(saving_throws, list):
-        ability_names = {
-            "str": "strength",
-            "dex": "dexterity",
-            "con": "constitution",
-            "int": "intelligence",
-            "wis": "wisdom",
-            "cha": "charisma",
-        }
-        proficiencies["saving_throws"] = [
-            ability_names.get(str(ability).casefold(), str(ability).casefold())
-            for ability in saving_throws
-        ]
-    return proficiencies
 
 
 def _resolve_class_feature_grants(
@@ -442,69 +353,6 @@ def _normalize_feature_grant(
     )
 
 
-def _build_combat_profile(feature_grants: list[FeatureGrant]) -> CombatProfile:
-    profile = CombatProfile()
-    for grant in feature_grants:
-        if grant.id == "extra_attack":
-            attacks = grant.data.get("attacks")
-            if isinstance(attacks, int):
-                profile.attacks_per_attack_action = max(
-                    profile.attacks_per_attack_action,
-                    attacks,
-                )
-            continue
-        if grant.id == "second_wind":
-            profile.bonus_action_options.add("second_wind")
-            profile.feature_actions["second_wind"] = FeatureActionDefinition(
-                feature_id="second_wind",
-                label="Second Wind",
-                economy="bonus_action",
-                target="self",
-                resolver="second_wind",
-            )
-            uses = grant.data.get("uses")
-            if isinstance(uses, int):
-                profile.feature_uses_max["second_wind"] = max(
-                    profile.feature_uses_max.get("second_wind", 0),
-                    uses,
-                )
-            if grant.source_class == "Fighter" and grant.name == "Second Wind":
-                if uses == 1:
-                    profile.feature_recharge["second_wind"] = {
-                        "short_rest": "all",
-                        "long_rest": "all",
-                    }
-                else:
-                    profile.feature_recharge["second_wind"] = {
-                        "short_rest": 1,
-                        "long_rest": "all",
-                    }
-            continue
-        if grant.id == "action_surge":
-            profile.feature_actions["action_surge"] = FeatureActionDefinition(
-                feature_id="action_surge",
-                label="Action Surge",
-                economy="none",
-                target="self",
-                resolver="action_surge",
-            )
-            uses = grant.data.get("uses")
-            if isinstance(uses, int):
-                profile.feature_uses_max["action_surge"] = max(
-                    profile.feature_uses_max.get("action_surge", 0),
-                    uses,
-                )
-            profile.feature_recharge["action_surge"] = {
-                "short_rest": "all",
-                "long_rest": "all",
-            }
-    return profile
-
-
-def _build_feature_uses_remaining(combat_profile: CombatProfile) -> dict[str, int]:
-    return dict(combat_profile.feature_uses_max)
-
-
 def _build_spellcasting(
     schema: CreatureSchema,
     attributes: Attributes,
@@ -557,99 +405,6 @@ def _spellcasting_source_block(
             str,
         ):
             return block
-    return None
-
-
-def _spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
-    ability_map = {
-        "str": attributes.strength,
-        "dex": attributes.dexterity,
-        "con": attributes.constitution,
-        "int": attributes.intelligence,
-        "wis": attributes.wisdom,
-        "cha": attributes.charisma,
-    }
-    return ability_map.get(ability.casefold(), 10)
-
-
-def _spell_preparation_mode(block: dict) -> str:
-    groups = block.get("subclassTableGroups") or block.get("classTableGroups") or []
-    if not isinstance(groups, list):
-        return "fixed"
-    for group in groups:
-        if not isinstance(group, dict):
-            continue
-        labels = group.get("colLabels")
-        if not isinstance(labels, list):
-            continue
-        if any(isinstance(label, str) and "Spells Prepared" in label for label in labels):
-            return "fixed"
-        if any(isinstance(label, str) and "Spells Known" in label for label in labels):
-            return "fixed"
-    return "fixed"
-
-
-def _progression_value(progression: object, level: int) -> int | None:
-    if not isinstance(progression, list):
-        return None
-    row_index = level - 1
-    if row_index < 0 or row_index >= len(progression):
-        return None
-    value = progression[row_index]
-    return int(value) if isinstance(value, int) else None
-
-
-def _spell_slots_progression(block: dict, level: int) -> dict[int, int]:
-    groups = block.get("subclassTableGroups") or block.get("classTableGroups") or []
-    if not isinstance(groups, list):
-        return {}
-    row_index = level - 1
-    for group in groups:
-        if not isinstance(group, dict):
-            continue
-        rows = group.get("rowsSpellProgression")
-        if not isinstance(rows, list) or row_index < 0 or row_index >= len(rows):
-            continue
-        row = rows[row_index]
-        if not isinstance(row, list):
-            continue
-        return {
-            spell_level: slots
-            for spell_level, slots in enumerate(row, start=1)
-            if isinstance(slots, int) and slots > 0
-        }
-    return {}
-
-
-def _spell_count_progression(block: dict, level: int) -> int | None:
-    direct = _progression_value(block.get("spellsKnownProgression"), level)
-    if direct is not None:
-        return direct
-
-    groups = block.get("subclassTableGroups") or block.get("classTableGroups") or []
-    if not isinstance(groups, list):
-        return None
-    row_index = level - 1
-    for group in groups:
-        if not isinstance(group, dict):
-            continue
-        labels = group.get("colLabels")
-        rows = group.get("rows")
-        if not isinstance(labels, list) or not isinstance(rows, list):
-            continue
-        if not any(
-            isinstance(label, str)
-            and ("Spells Known" in label or "Spells Prepared" in label)
-            for label in labels
-        ):
-            continue
-        if row_index < 0 or row_index >= len(rows):
-            continue
-        row = rows[row_index]
-        if not isinstance(row, list) or not row:
-            continue
-        value = row[0]
-        return int(value) if isinstance(value, int) else None
     return None
 
 
@@ -904,81 +659,3 @@ def _stat_block_name(stat_block: dict | None) -> str:
     if stat_block is None:
         raise ValueError("Creature must define either 'name' or 'stat_block'.")
     return str(stat_block["name"])
-
-
-def _build_monster_attacks(stat_block: dict | None) -> list[MonsterAttack]:
-    if stat_block is None:
-        return []
-    attacks: list[MonsterAttack] = []
-    for action in stat_block.get("action", []):
-        if not isinstance(action, dict):
-            continue
-        attack = _parse_monster_attack(action)
-        if attack is not None:
-            attacks.append(attack)
-    return attacks
-
-
-def _parse_monster_attack(action: dict) -> MonsterAttack | None:
-    name = action.get("name")
-    entries = action.get("entries")
-    if not isinstance(name, str) or not isinstance(entries, list) or not entries:
-        return None
-    entry = entries[0]
-    if not isinstance(entry, str):
-        return None
-
-    attack_tag = re.search(r"\{@atk(?:r)?\s+([^}]+)\}", entry)
-    hit = re.search(r"\{@hit\s+([+-]?\d+)\}", entry)
-    damage = re.search(r"\{@damage\s+(\d+d\d+)(?:\s*\+\s*(\d+))?\}", entry)
-    damage_type = re.search(r"\{@damage[^}]+\}\)?\s*([A-Za-z]+)\s+damage", entry)
-    if attack_tag is None or hit is None or damage is None or damage_type is None:
-        return None
-
-    attack_modes = _parse_attack_modes(attack_tag.group(1))
-    if not attack_modes:
-        return None
-
-    range_match = re.search(r"range\s+(\d+)\/(\d+)\s*ft", entry)
-    range_normal = int(range_match.group(1)) if range_match is not None else None
-    range_long = int(range_match.group(2)) if range_match is not None else None
-
-    return MonsterAttack(
-        name=name,
-        attack_modes=attack_modes,
-        attack_bonus=int(hit.group(1)),
-        damage_dice=damage.group(1),
-        damage_bonus=int(damage.group(2) or 0),
-        damage_type=damage_type.group(1).lower(),
-        range_normal=range_normal,
-        range_long=range_long,
-    )
-
-
-def _parse_attack_modes(value: str) -> tuple[str, ...]:
-    modes: list[str] = []
-    for token in value.split(","):
-        token = token.strip()
-        if "m" in token and "melee" not in modes:
-            modes.append("melee")
-        if "r" in token and "ranged" not in modes:
-            modes.append("ranged")
-    return tuple(modes)
-
-
-def _stat_block_base_ac(stat_block: dict, default: int) -> int:
-    armor_class = _stat_block_ac(stat_block, default)
-    dexterity = int(stat_block.get("dex", 10))
-    return armor_class - ((dexterity - 10) // 2)
-
-
-def _stat_block_ac(stat_block: dict, default: int) -> int:
-    ac = stat_block.get("ac")
-    if not isinstance(ac, list) or not ac:
-        return default
-    first = ac[0]
-    if isinstance(first, int):
-        return first
-    if isinstance(first, dict) and isinstance(first.get("ac"), int):
-        return first["ac"]
-    return default

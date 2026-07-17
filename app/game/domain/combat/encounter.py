@@ -75,6 +75,10 @@ from ..rules.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll
 from ..rules.registry import matching_rules
 from ..rules.types import RuleGrant
 from .turn_flow import TURN_ENGINE, TurnEngine
+from .queries import (
+    living_enemy_at as _living_enemy_at_impl,
+    player_movement_remaining as _player_movement_remaining_query,
+)
 
 # Keep these module-level names for tests and helpers that monkeypatch
 # `game.domain.combat.encounter.roll_die` / `roll_dice`.
@@ -838,13 +842,17 @@ class EncounterState(EncounterStateData):
         self.turn_engine.normalize_turn(self)
 
     def _player_movement_remaining(self, player: Creature) -> int:
-        return self.turn_engine.player_movement_remaining(self, player)
+        return self.player_movement_remaining_for(player)
+
+    player_movement_remaining_for = _player_movement_remaining_query
 
     def _turn_count(self) -> int:
         return self.turn_engine.turn_count(self)
 
     def _live_enemy_at(self, x: int, y: int) -> EncounterEnemyState | None:
-        return self.turn_engine.live_enemy_at(self, x, y)
+        return self.living_enemy_at(x, y)
+
+    living_enemy_at = _living_enemy_at_impl
 
     def _is_free_for_enemy(self, x: int, y: int) -> bool:
         return self.turn_engine.is_free_for_enemy(self, x, y)
