@@ -74,7 +74,7 @@ def test_goblin_encounter_scene_generates_runtime_actions_and_grid() -> None:
     assert "Move up" in scene_view.choices
     assert "Move up-right" in scene_view.choices
     assert "Wait" in scene_view.choices
-    assert "Flee encounter" in scene_view.choices
+    assert "Flee encounter" not in scene_view.choices
     assert "Retreat until the encounter system is ready." not in scene_view.choices
 
 
@@ -1407,15 +1407,9 @@ def test_encounter_victory_waits_for_continue_before_restart() -> None:
     assert session.current_scene_id == "goblin_encounter"
     assert session.pending_scene_transition is not None
     assert session.encounter_state is not None
-    assert ("system", "The last goblin falls. You catch your breath before moving on.") in result.messages
-    assert result.scene.scene_text == (
-        "As you charge towards the goblins, they quickly ready their weapons and prepare "
-        "to fight. The goblin with the bow takes aim at you, while the other two reach "
-        "for their primitive swords. The battle begins!"
-    )
-    assert session.pending_scene_transition.message == (
-        "The last goblin falls. You catch your breath before moving on."
-    )
+    assert ("system", "Victory! Press continue to proceed.") in result.messages
+    assert result.scene.scene_text == "Victory! Press continue to proceed."
+    assert session.pending_scene_transition.message == "Victory! Press continue to proceed."
     assert result.scene.choices[0] == "Continue"
 
     continue_result = session.choose(0)

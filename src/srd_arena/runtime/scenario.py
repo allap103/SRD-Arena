@@ -106,8 +106,6 @@ class Scenario:
             encounter = self.scenes[encounter_id].encounter
             encounter.victory.next_scene = next_encounter_id
             encounter.defeat.next_scene = encounter_id
-            if encounter.flee is not None:
-                encounter.flee.next_scene = encounter_id
 
     def get_creature(self, actor_id: str) -> Creature:
         for creature in self.creatures:

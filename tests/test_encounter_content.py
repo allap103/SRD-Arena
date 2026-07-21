@@ -29,13 +29,7 @@ def test_load_encounter_parses_definition() -> None:
     assert scene.encounter.enemies[1].behavior.radius == 2
     assert len(scene.encounter.enemies[2].behavior.path) == 3
     assert scene.encounter.victory.next_scene == "goblin_encounter"
-    assert scene.encounter.victory.message == (
-        "The last goblin falls. You catch your breath before moving on."
-    )
     assert scene.encounter.defeat.next_scene == "goblin_encounter"
-    assert scene.encounter.flee is not None
-    assert scene.encounter.flee.allowed is True
-    assert scene.encounter.flee.next_scene == "goblin_encounter"
 
 
 def test_nested_creature_can_reference_system_stat_block() -> None:

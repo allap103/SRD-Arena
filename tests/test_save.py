@@ -71,11 +71,6 @@ def test_restore_save_reloads_content_and_applies_saved_state() -> None:
 
     assert restored.current_scene_id == "goblin_encounter"
     assert restored.start_scene_id == "goblin_encounter"
-    assert restored.current_scene.text == (
-        "As you charge towards the goblins, they quickly ready their weapons and prepare "
-        "to fight. The goblin with the bow takes aim at you, while the other two reach "
-        "for their primitive swords. The battle begins!"
-    )
     assert restored.player.name == player_name
     assert restored.player.get_health() == starting_health - 4
     assert restored.player.inventory.items == [*starting_inventory, "map"]

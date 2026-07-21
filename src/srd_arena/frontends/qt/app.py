@@ -1369,7 +1369,6 @@ class GameWindow(QMainWindow):
             return {
                 "encounter_active": False,
                 "scene_id": self.session.current_scene_id,
-                "scene_text": self.session.current_scene.text,
             }
         return {
             "encounter_active": True,

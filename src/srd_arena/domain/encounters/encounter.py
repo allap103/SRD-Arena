@@ -50,7 +50,6 @@ from ..actions.player import (
     apply_player_move as _apply_player_move_impl,
     apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
     resolve_grapple_action as _resolve_grapple_action_impl,
-    resolve_flee_action as _resolve_flee_action_impl,
     resolve_feature_action as _resolve_feature_action_impl,
     resolve_player_attack_action as _resolve_player_attack_action_impl,
     resolve_spell_action as _resolve_spell_action_impl,
@@ -413,7 +412,6 @@ class EncounterState(EncounterStateData):
     _apply_user_controlled_enemy_action = _apply_user_controlled_enemy_action_impl
     _resolve_player_attack_action = _resolve_player_attack_action_impl
     _resolve_wait_action = _resolve_wait_action_impl
-    _resolve_flee_action = _resolve_flee_action_impl
     _resolve_utilize_action = _resolve_utilize_action_impl
     _resolve_feature_action = _resolve_feature_action_impl
     _resolve_spell_action = _resolve_spell_action_impl

@@ -124,16 +124,6 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
         )
     )
 
-    if self.definition.flee and self.definition.flee.allowed:
-        actions.append(
-            EncounterAction(
-                "Flee encounter",
-                "flee",
-                id="player-flee",
-                actor_ref="player",
-            )
-        )
-
     return actions
 
 

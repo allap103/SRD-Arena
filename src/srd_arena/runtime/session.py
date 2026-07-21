@@ -73,11 +73,7 @@ class Session:
             system_action_details = self._system_action_details(1)
             return SceneView(
                 scene_id=self.current_scene.id,
-                scene_text=(
-                    self.current_scene.text
-                    if self.encounter_state is not None
-                    else self.pending_scene_transition.message
-                ),
+                scene_text=self.pending_scene_transition.message,
                 choices=[CONTINUE_CHOICE_TEXT, SAVE_CHOICE_TEXT, LOAD_CHOICE_TEXT, EXIT_CHOICE_TEXT],
                 action_details=action_details + system_action_details,
             )
@@ -85,11 +81,7 @@ class Session:
         self._ensure_encounter_state()
         scene = self.current_scene
         assert self.encounter_state is not None
-        scene_text = "\n\n".join(
-            part
-            for part in [scene.text, render_encounter_text(self.encounter_state, self.player)]
-            if part
-        )
+        scene_text = render_encounter_text(self.encounter_state, self.player)
         self._encounter_actions = self.encounter_state.available_actions(self.player)
         action_details = [
                 ActionView(
@@ -410,7 +402,7 @@ class Session:
         ):
             self.pending_scene_transition = PendingSceneTransition(
                 next_scene_id=transition,
-                message=encounter.victory.message or "Victory! Press continue to proceed.",
+                message="Victory! Press continue to proceed.",
             )
             self._encounter_actions = []
             return False

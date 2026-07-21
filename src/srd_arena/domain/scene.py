@@ -39,12 +39,6 @@ class EncounterTeam:
 @dataclass
 class EncounterResolution:
     next_scene: str
-    message: str | None = None
-
-
-@dataclass
-class FleeResolution(EncounterResolution):
-    allowed: bool = False
 
 
 @dataclass
@@ -55,17 +49,15 @@ class Encounter:
     teams: list[EncounterTeam] = field(default_factory=list)
     victory: EncounterResolution | None = None
     defeat: EncounterResolution | None = None
-    flee: FleeResolution | None = None
 
 
 @dataclass
 class Scene:
     id: str
-    text: str
     encounter: Encounter
 
     def __str__(self):
-        return f"Scene ID: {self.id}, Text: {self.text}"
+        return f"Scene ID: {self.id}"
 
     def __repr__(self):
-        return f"Scene(id='{self.id}', text={self.text!r}, encounter={self.encounter!r})"
+        return f"Scene(id='{self.id}', encounter={self.encounter!r})"

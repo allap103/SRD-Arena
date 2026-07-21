@@ -11,7 +11,6 @@ from .attacks import resolve_player_attack_action as _resolve_player_attack_acti
 from .features import resolve_feature_action as _resolve_feature_action_impl
 from .items import resolve_utilize_action as _resolve_utilize_action_impl
 from .spells import resolve_spell_action as _resolve_spell_action_impl
-from .utility import resolve_flee_action as _resolve_flee_action_impl
 from .utility import resolve_wait_action as _resolve_wait_action_impl
 from .attack_resolution import has_free_hand
 from ..encounters.behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
@@ -97,9 +96,6 @@ def apply_action(
         self._resolve_spell_action(player, action.value, progress, resolved_action_id)
     elif action.kind == "wait":
         self._resolve_wait_action(progress, resolved_action_id)
-    elif action.kind == "flee":
-        self._resolve_flee_action(progress, resolved_action_id)
-        return progress
 
     progress.transition = self._check_transition()
     if progress.transition is not None or player.get_health() <= 0:
@@ -296,7 +292,6 @@ def resolve_grapple_action(
 
 resolve_player_attack_action = _resolve_player_attack_action_impl
 resolve_wait_action = _resolve_wait_action_impl
-resolve_flee_action = _resolve_flee_action_impl
 user_controlled_enemy_actions = _user_controlled_enemy_actions_impl
 apply_user_controlled_enemy_action = _apply_user_controlled_enemy_action_impl
 resolve_utilize_action = _resolve_utilize_action_impl

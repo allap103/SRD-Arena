@@ -159,11 +159,11 @@ def build_session_presentation(
     )
     return SessionPresentation(
         scene_id=view.scene_id,
-        story_text=session.current_scene.text,
+        story_text="",
         story_actions=story_actions,
         system_actions=system_actions,
         encounter=EncounterView(
-            narrative_text=session.current_scene.text,
+            narrative_text="",
             battlefield=_build_battlefield_view(combat_state),
             resources=resources,
             movement_actions=movement_actions,

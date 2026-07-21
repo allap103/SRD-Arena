@@ -1,6 +1,5 @@
 {
     "id":  "goblin_encounter",
-    "description":  "As you charge towards the goblins, they quickly ready their weapons and prepare to fight. The goblin with the bow takes aim at you, while the other two reach for their primitive swords. The battle begins!",
     "grid":  {
                  "width":  13,
                  "height":  13
@@ -86,23 +85,14 @@
                   ],
     "teams":  [
                   {
-                      "id": "player",
-                      "name": "Player",
-                      "controller": "user"
+                      "id":  "player",
+                      "name":  "Player",
+                      "controller":  "user"
                   },
                   {
-                      "id": "enemies",
-                      "name": "Enemies",
-                      "controller": "ai"
+                      "id":  "enemies",
+                      "name":  "Enemies",
+                      "controller":  "ai"
                   }
-              ],
-    "victory":  {
-                    "message":  "The last goblin falls. You catch your breath before moving on."
-                },
-    "defeat":  {
-
-               },
-    "flee":  {
-                 "allowed":  true
-             }
+              ]
 }

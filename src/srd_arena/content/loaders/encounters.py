@@ -9,7 +9,6 @@ from ...domain.scene import (
     EncounterEnemy,
     EncounterResolution,
     EncounterTeam,
-    FleeResolution,
     Grid,
     Position,
     Scene,
@@ -89,19 +88,10 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> Encounter:
         teams=teams,
         victory=EncounterResolution(
             next_scene=schema.id,
-            message=schema.victory.message,
         ),
         defeat=EncounterResolution(
             next_scene=schema.id,
-            message=schema.defeat.message,
         ),
-        flee=FleeResolution(
-            next_scene=schema.id,
-            message=schema.flee.message,
-            allowed=schema.flee.allowed,
-        )
-        if schema.flee
-        else None,
     )
 
 
@@ -118,7 +108,6 @@ def load_encounter(
     return LoadedEncounter(
         scene=Scene(
             id=schema.id,
-            text=schema.description,
             encounter=_build_encounter(schema),
         ),
         creatures=tuple(

@@ -9,8 +9,6 @@ from .encounter import (
     BehaviorSchema,
     EncounterCreatureSchema,
     EncounterDefinitionSchema,
-    EncounterOutcomeSchema,
-    FleeSchema,
     GridSchema,
     PositionSchema,
 )
@@ -23,8 +21,6 @@ __all__ = [
     "EQUIPMENT_SLOTS",
     "EncounterCreatureSchema",
     "EncounterDefinitionSchema",
-    "EncounterOutcomeSchema",
-    "FleeSchema",
     "GridSchema",
     "PositionSchema",
     "StatBlockReferenceSchema",
