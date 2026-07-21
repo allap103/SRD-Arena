@@ -6,7 +6,7 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.runtime.save import create_save, restore_save
 
-SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "sample_game"
+TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
 
 @pytest.fixture(autouse=True)
@@ -21,8 +21,8 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
-def test_sample_encounter_loads_explicit_teams():
-    game = Scenario(SAMPLE_SCENARIO_DIR, start_scene="goblin_encounter")
+def test_tactical_fixture_loads_explicit_teams():
+    game = Scenario(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter")
     encounter = game.scenes["goblin_encounter"].encounter
 
     assert encounter is not None
@@ -35,7 +35,7 @@ def test_sample_encounter_loads_explicit_teams():
 
 def test_all_user_mode_pauses_for_each_goblin_turn():
     session = Scenario(
-        SAMPLE_SCENARIO_DIR,
+        TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
         control_mode="all-user",
     ).create_session()
@@ -59,7 +59,7 @@ def test_all_user_mode_pauses_for_each_goblin_turn():
 
 def test_user_controlled_goblin_can_move_then_end_turn():
     session = Scenario(
-        SAMPLE_SCENARIO_DIR,
+        TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
         control_mode="all-user",
     ).create_session()
@@ -93,7 +93,7 @@ def test_user_controlled_goblin_can_move_then_end_turn():
 
 def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
     session = Scenario(
-        SAMPLE_SCENARIO_DIR,
+        TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
         control_mode="all-user",
     ).create_session()
@@ -134,7 +134,7 @@ def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
 
 def test_team_members_are_not_valid_attack_targets():
     session = Scenario(
-        SAMPLE_SCENARIO_DIR,
+        TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
         control_mode="all-user",
     ).create_session()
@@ -160,7 +160,7 @@ def test_team_members_are_not_valid_attack_targets():
 
 def test_user_controlled_teammate_can_target_opposing_team():
     session = Scenario(
-        SAMPLE_SCENARIO_DIR,
+        TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
         control_mode="all-user",
     ).create_session()
@@ -191,14 +191,14 @@ def test_user_controlled_teammate_can_target_opposing_team():
 
 def test_all_user_mode_is_preserved_in_save_games():
     session = Scenario(
-        SAMPLE_SCENARIO_DIR,
+        TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
         control_mode="all-user",
     ).create_session()
     session.get_scene_view()
 
     save = create_save(session)
-    restored = restore_save(save, SAMPLE_SCENARIO_DIR)
+    restored = restore_save(save, TACTICAL_SCENARIO_DIR)
 
     assert save.control_mode == "all-user"
     assert restored.control_mode == "all-user"
@@ -208,7 +208,7 @@ def test_all_user_mode_is_preserved_in_save_games():
 
 def test_paced_ai_resolves_one_visible_action_per_step():
     session = Scenario(
-        SAMPLE_SCENARIO_DIR,
+        TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     ).create_session()
     session.ai_action_limit = 1
@@ -234,7 +234,7 @@ def test_paced_ai_resolves_one_visible_action_per_step():
 
 def test_default_ai_still_resolves_until_the_next_user_decision():
     session = Scenario(
-        SAMPLE_SCENARIO_DIR,
+        TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     ).create_session()
     session.get_scene_view()

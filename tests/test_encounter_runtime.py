@@ -14,7 +14,7 @@ from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
 from srd_arena.frontends.qt.ui.encounter.config import TargetSelectionMode
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
-SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "sample_game"
+TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 _ROLL_INITIATIVE = EncounterState._roll_initiative
 
 
@@ -169,7 +169,7 @@ def test_goblin_encounter_allows_diagonal_movement() -> None:
 
 
 def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -232,7 +232,7 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
 
 
 def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -256,7 +256,7 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
 
 
 def test_grappling_moves_target_and_costs_extra_movement() -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -341,7 +341,7 @@ def test_goblin_encounter_wait_advances_enemy_turns() -> None:
 
 
 def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -356,7 +356,7 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
 
 
 def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -369,7 +369,7 @@ def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
 
 
 def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -391,7 +391,7 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypat
 
 
 def test_lesser_restoration_appears_when_player_has_removable_condition() -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -416,7 +416,7 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
 
 
 def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -443,7 +443,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatc
 
 
 def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -477,7 +477,7 @@ def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
 
 
 def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -505,7 +505,7 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
 
 
 def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -537,7 +537,7 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
 
 
 def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -579,7 +579,7 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
 
 
 def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -610,7 +610,7 @@ def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
 
 
 def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -647,7 +647,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
 
 
 def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -685,7 +685,7 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch)
 
 
 def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -714,7 +714,7 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
 
 
 def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -739,7 +739,7 @@ def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
 
 
 def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -765,7 +765,7 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatc
 
 
 def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -794,7 +794,7 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
 
 
 def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -853,7 +853,7 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
 
 
 def test_save_and_load_preserve_color_spray_condition_and_slots(tmp_path: Path, monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -868,7 +868,7 @@ def test_save_and_load_preserve_color_spray_condition_and_slots(tmp_path: Path, 
     save_path = tmp_path / "color_spray_save.json"
 
     save_to_file(session, save_path)
-    loaded = load_from_file(save_path, SAMPLE_SCENARIO_DIR)
+    loaded = load_from_file(save_path, TACTICAL_SCENARIO_DIR)
 
     assert loaded.encounter_state is not None
     assert loaded.player.spellcasting is not None
@@ -877,7 +877,7 @@ def test_save_and_load_preserve_color_spray_condition_and_slots(tmp_path: Path, 
 
 
 def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -932,7 +932,7 @@ def test_lesser_restoration_uses_magic_menu_bucket() -> None:
 
 
 def test_save_and_load_preserve_refreshed_blinded_duration(tmp_path: Path, monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -952,7 +952,7 @@ def test_save_and_load_preserve_refreshed_blinded_duration(tmp_path: Path, monke
     save_path = tmp_path / "refreshed_blind_save.json"
 
     save_to_file(session, save_path)
-    loaded = load_from_file(save_path, SAMPLE_SCENARIO_DIR)
+    loaded = load_from_file(save_path, TACTICAL_SCENARIO_DIR)
 
     assert loaded.encounter_state is not None
     assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
@@ -1190,7 +1190,7 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
 
 
 def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> None:
-    session = Scenario(str(SAMPLE_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None

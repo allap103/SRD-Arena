@@ -11,7 +11,7 @@ from srd_arena.domain.effects import (
 )
 from srd_arena.domain.rolls.dice import reroll_dice, resolve_dice
 
-SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "sample_game"
+TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
 
 @pytest.fixture(autouse=True)
@@ -77,8 +77,8 @@ def test_reroll_matching_dice_enforces_maximum_per_die():
     assert reroll_eligible_indices(effect, rerolled) == (1,)
 
 
-def test_sample_fighter_loads_great_weapon_fighting_effect():
-    player = Scenario(SAMPLE_SCENARIO_DIR).create_session().player
+def test_tactical_fighter_loads_great_weapon_fighting_effect():
+    player = Scenario(TACTICAL_SCENARIO_DIR).create_session().player
 
     [effect] = [
         effect
@@ -92,7 +92,7 @@ def test_sample_fighter_loads_great_weapon_fighting_effect():
 
 
 def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatch):
-    session = _adjacent_sample_encounter()
+    session = _adjacent_tactical_encounter()
     session.player.equipment.equipped_items["right_hand"] = "longsword"
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1)
@@ -110,8 +110,8 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
     assert not any(event.type == "attack_pending" for event in result.events)
 
 
-def _adjacent_sample_encounter():
-    session = Scenario(SAMPLE_SCENARIO_DIR, start_scene="goblin_encounter").create_session()
+def _adjacent_tactical_encounter():
+    session = Scenario(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter").create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     session.encounter_state.player_position.x = 4

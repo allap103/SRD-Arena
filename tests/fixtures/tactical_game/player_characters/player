@@ -1,0 +1,70 @@
+{
+    "id": "player",
+    "name":"Traveler",
+    "description":"A traveler",
+    "class_ref": {
+        "name": "Fighter",
+        "source": "XPHB"
+    },
+    "subclass_ref": {
+        "name": "Eldritch Knight",
+        "source": "XPHB",
+        "class_name": "Fighter",
+        "class_source": "XPHB"
+    },
+    "spells_known": [
+        {
+            "name": "Color Spray",
+            "source": "XPHB"
+        },
+        {
+            "name": "Lesser Restoration",
+            "source": "XPHB"
+        },
+        {
+            "name": "Burning Hands",
+            "source": "XPHB"
+        },
+        {
+            "name": "Fireball",
+            "source": "XPHB"
+        }
+    ],
+    "optional_features": [
+        {
+            "name": "Great Weapon Fighting",
+            "source": "PHB"
+        }
+    ],
+    "attributes": {
+        "base_health": 32,
+        "level": 13,
+        "movement": {
+            "speed_feet": 30,
+            "feet_per_square": 5
+        },
+        "strength": 18,
+        "dexterity": 12,
+        "constitution": 16,
+        "wisdom": 8,
+        "intelligence": 12,
+        "charisma": 10,
+        "base_armor_class": 15
+    },
+    "inventory": [
+        {
+            "name": "Potion of Healing",
+            "source": "XDMG"
+        }
+    ],
+    "equipment": {
+        "right_hand": {
+            "name": "Greatsword",
+            "source": "XPHB"
+        },
+        "body": {
+            "name": "Chain Mail",
+            "source": "XPHB"
+        }
+    }
+}

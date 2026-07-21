@@ -6,7 +6,7 @@ from srd_arena.runtime.save import load_from_file, save_to_file
 from srd_arena.runtime.scenario import Scenario
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
-SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "sample_game"
+TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
 
 def test_load_encounter_parses_definition() -> None:
@@ -85,9 +85,9 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
 
 
 def test_game_loads_rule_settings_from_config_json() -> None:
-    scenario = Scenario(str(SAMPLE_SCENARIO_DIR))
+    scenario = Scenario(str(TACTICAL_SCENARIO_DIR))
 
-    assert scenario.display_name == "Sample Game"
+    assert scenario.display_name == "Tactical Test Game"
     assert scenario.rules_config.directional_aoe_cell_coverage_threshold == 0.1
 
 
@@ -260,14 +260,14 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
 
 
 def test_save_and_load_preserve_spell_slots(tmp_path: Path) -> None:
-    session = Scenario("content/scenarios/sample_game").create_session()
+    session = Scenario(TACTICAL_SCENARIO_DIR).create_session()
 
     assert session.player.spellcasting is not None
     session.player.spellcasting.spell_slots_remaining[1] = 1
     save_path = tmp_path / "spell_slots_save.json"
 
     save_to_file(session, save_path)
-    loaded = load_from_file(save_path, "content/scenarios/sample_game")
+    loaded = load_from_file(save_path, TACTICAL_SCENARIO_DIR)
 
     assert loaded.player.spellcasting is not None
     assert loaded.player.spellcasting.spell_slots_max == {1: 4, 2: 3, 3: 2}

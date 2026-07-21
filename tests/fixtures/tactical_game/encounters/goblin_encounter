@@ -1,0 +1,84 @@
+{
+    "id":  "goblin_encounter",
+    "grid":  {
+                 "width":  13,
+                 "height":  13
+             },
+    "creatures":  [
+                      {
+                          "id":  "player",
+                          "token_image":  "tokens/traveler.png",
+                          "player_character":  "player",
+                          "start":  {
+                                        "x":  1,
+                                        "y":  6
+                                    },
+                          "team_id":  "heroes"
+                      },
+                      {
+                          "id":  "goblin_1",
+                          "token_image":  "tokens/goblin.png",
+                          "stat_block":  {
+                                             "name":  "Goblin Warrior",
+                                             "source":  "XMM"
+                                         },
+                          "start":  {
+                                        "x":  5,
+                                        "y":  2
+                                    },
+                          "team_id":  "goblins",
+                          "behavior":  {
+                                           "type":  "chase"
+                                       }
+                      },
+                      {
+                          "id":  "goblin_2",
+                          "token_image":  "tokens/goblin.png",
+                          "stat_block":  {
+                                             "name":  "Goblin Warrior",
+                                             "source":  "XMM"
+                                         },
+                          "start":  {
+                                        "x":  6,
+                                        "y":  2
+                                    },
+                          "team_id":  "goblins",
+                          "behavior":  {
+                                           "type":  "chase",
+                                           "anchor":  {
+                                                          "x":  6,
+                                                          "y":  2
+                                                      },
+                                           "radius":  2
+                                       }
+                      },
+                      {
+                          "id":  "goblin_3",
+                          "token_image":  "tokens/goblin.png",
+                          "stat_block":  {
+                                             "name":  "Goblin Warrior",
+                                             "source":  "XMM"
+                                         },
+                          "start":  {
+                                        "x":  4,
+                                        "y":  1
+                                    },
+                          "team_id":  "goblins",
+                          "behavior":  {
+                                           "type":  "archer"
+                                       }
+                      }
+                  ],
+    "teams":  [
+                  {
+                      "id":  "heroes",
+                      "name":  "Heroes",
+                      "controller":  "user"
+                  },
+                  {
+                      "id":  "goblins",
+                      "name":  "Goblins",
+                      "controller":  "ai"
+                  }
+              ]
+}
