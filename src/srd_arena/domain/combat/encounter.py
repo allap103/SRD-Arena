@@ -85,6 +85,10 @@ from .participants import (
     creature_for_ref as _creature_for_ref_impl,
     creature_team_id as _creature_team_id_impl,
 )
+from .queries import (
+    living_enemy_at as _living_enemy_at_impl,
+    player_movement_remaining as _player_movement_remaining_query,
+)
 from .snapshots import create_snapshot, restore_snapshot
 
 # Keep these module-level names for tests and helpers that monkeypatch
