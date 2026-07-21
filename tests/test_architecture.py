@@ -71,7 +71,7 @@ def test_relative_import_resolution() -> None:
 
     assert (
         _resolve_from_import(
-            "srd_arena.domain.combat.attacks",
+            "srd_arena.domain.actions.attack_resolution",
             is_package=False,
             node=node,
         )

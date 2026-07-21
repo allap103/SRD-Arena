@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..combat.models import EncounterProgress
+from ..encounters.models import EncounterProgress
 
 if TYPE_CHECKING:
-    from ..combat.encounter import EncounterState
+    from ..encounters.encounter import EncounterState
 
 
 def resolve_wait_action(

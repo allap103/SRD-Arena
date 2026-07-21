@@ -2,8 +2,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..domain.combat.encounter import EncounterState
-from ..domain.combat.models import EncounterAction, EncounterSnapshot
+from ..domain.encounters.encounter import EncounterState
+from ..domain.encounters.models import EncounterAction, EncounterSnapshot
 from ..frontends.shared.combat import render_encounter_text
 from ..domain.creatures import Creature
 from ..domain.choice import Choice

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.domain.combat.encounter import EncounterState
+from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.domain.effects import (
     TriggeredEffect,
@@ -94,8 +94,8 @@ def test_sample_fighter_loads_great_weapon_fighting_effect():
 def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatch):
     session = _adjacent_sample_encounter()
     session.player.equipment.equipped_items["right_hand"] = "longsword"
-    monkeypatch.setattr("srd_arena.domain.combat.encounter.roll_die", lambda _sides: 15)
-    monkeypatch.setattr("srd_arena.domain.combat.encounter.roll_dice", lambda _count, _sides: 1)
+    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 15)
+    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1)
     attack_index = next(
         index
         for index, choice in enumerate(session.get_scene_view().choices)

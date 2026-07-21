@@ -16,8 +16,8 @@ from ..effects.triggered import (
     matching_effects,
     reroll_eligible_indices,
 )
-from .behaviors import is_adjacent as _is_adjacent
-from .models import AttackOutcome, AttackSource
+from ..encounters.behaviors import is_adjacent as _is_adjacent
+from ..encounters.models import AttackOutcome, AttackSource
 
 
 def resolve_attack(

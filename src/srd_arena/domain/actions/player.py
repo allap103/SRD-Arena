@@ -7,28 +7,26 @@ from ..scene import Position
 from ..creatures import can_grapple
 from ..rules.dice import resolve_d20
 from ..effects.results import EffectResult
-from ..actions import (
-    resolve_feature_action as _resolve_feature_action_impl,
-    resolve_flee_action as _resolve_flee_action_impl,
-    resolve_player_attack_action as _resolve_player_attack_action_impl,
-    resolve_spell_action as _resolve_spell_action_impl,
-    resolve_utilize_action as _resolve_utilize_action_impl,
-    resolve_wait_action as _resolve_wait_action_impl,
-)
-from .attacks import has_free_hand
-from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
-from .models import EncounterAction, EncounterProgress
-from .resolvers import (
+from .attacks import resolve_player_attack_action as _resolve_player_attack_action_impl
+from .features import resolve_feature_action as _resolve_feature_action_impl
+from .items import resolve_utilize_action as _resolve_utilize_action_impl
+from .spells import resolve_spell_action as _resolve_spell_action_impl
+from .utility import resolve_flee_action as _resolve_flee_action_impl
+from .utility import resolve_wait_action as _resolve_wait_action_impl
+from .attack_resolution import has_free_hand
+from ..encounters.behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
+from ..encounters.models import EncounterAction, EncounterProgress
+from ..encounters.enemy_control import (
     apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
     user_controlled_enemy_actions as _user_controlled_enemy_actions_impl,
 )
 
 if TYPE_CHECKING:
-    from .encounter import EncounterState
+    from ..encounters.encounter import EncounterState
 
 
 def _roll_die(sides: int) -> int:
-    from . import encounter as encounter_module
+    from ..encounters import encounter as encounter_module
 
     return encounter_module.roll_die(sides)
 

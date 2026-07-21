@@ -9,7 +9,7 @@ from typing import TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..domain.combat.models import (
+from ..domain.encounters.models import (
     DecisionFrameSnapshot,
     EncounterSnapshot,
     EncounterSnapshotEnemy,

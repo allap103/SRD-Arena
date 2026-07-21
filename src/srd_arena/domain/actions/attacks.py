@@ -3,27 +3,27 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..creatures import Creature
-from ..combat.attacks import (
+from .attack_resolution import (
     apply_attack_damage,
     matching_damage_reroll_rule,
     resolve_attack,
     selected_attack_type,
 )
-from ..combat.models import EncounterAction, EncounterProgress
-from ..combat.refs import enemy_ref as _enemy_ref
+from ..encounters.models import EncounterAction, EncounterProgress
+from ..encounters.refs import enemy_ref as _enemy_ref
 
 if TYPE_CHECKING:
-    from ..combat.encounter import EncounterState
+    from ..encounters.encounter import EncounterState
 
 
 def _roll_die(sides: int) -> int:
-    from ..combat import encounter as encounter_module
+    from ..encounters import encounter as encounter_module
 
     return encounter_module.roll_die(sides)
 
 
 def _roll_dice(count: int, sides: int) -> int:
-    from ..combat import encounter as encounter_module
+    from ..encounters import encounter as encounter_module
 
     return encounter_module.roll_dice(count, sides)
 

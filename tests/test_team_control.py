@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.domain.combat.encounter import EncounterState
+from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.runtime.save import create_save, restore_save
 
@@ -104,8 +104,8 @@ def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
     state.player_position.y = 2
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2
-    monkeypatch.setattr("srd_arena.domain.combat.encounter.roll_die", lambda _sides: 20)
-    monkeypatch.setattr("srd_arena.domain.combat.encounter.roll_dice", lambda _count, _sides: 1)
+    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20)
+    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1)
     session.choose(session.get_scene_view().choices.index("Wait"))
 
     attack = next(

@@ -4,19 +4,19 @@ from typing import TYPE_CHECKING
 
 from ..creatures import Creature
 from ..effects import serialize_effects
-from ..combat.models import EncounterProgress
-from ..combat.spell_actions import (
+from ..encounters.models import EncounterProgress
+from .spell_resolution import (
     SpellActionContext,
     resolve_spell_action as _resolve_spell_action_impl,
 )
-from ..combat.spells import parse_spell_action_value
+from .spell_rules import parse_spell_action_value
 
 if TYPE_CHECKING:
-    from ..combat.encounter import EncounterState
+    from ..encounters.encounter import EncounterState
 
 
 def _roll_die(sides: int) -> int:
-    from ..combat import encounter as encounter_module
+    from ..encounters import encounter as encounter_module
 
     return encounter_module.roll_die(sides)
 

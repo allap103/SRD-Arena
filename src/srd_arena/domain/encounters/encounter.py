@@ -6,7 +6,7 @@ from .behaviors import (
     build_behavior as _build_behavior,
     is_adjacent as _is_adjacent,
 )
-from .action_options import (
+from ..actions.options import (
     available_actions as _available_actions_impl,
     available_feature_actions as _available_feature_actions_impl,
     available_spell_actions as _available_spell_actions_impl,
@@ -45,7 +45,7 @@ from .models import (
     TurnState,
     PendingAction,
 )
-from .player_actions import (
+from ..actions.player import (
     apply_action as _apply_action_impl,
     apply_player_move as _apply_player_move_impl,
     apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
@@ -91,7 +91,7 @@ from .queries import (
 from .snapshots import create_snapshot, restore_snapshot
 
 # Keep these module-level names for tests and helpers that monkeypatch
-# `srd_arena.domain.combat.encounter.roll_die` / `roll_dice`.
+# `srd_arena.domain.encounters.encounter.roll_die` / `roll_dice`.
 roll_die = _roll_die
 roll_dice = _roll_dice
 __all__ = ["ActionCost", "EncounterAction", "EncounterState", "roll_die", "roll_dice"]

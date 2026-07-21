@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from ..creatures import Creature
 from ..scene import Position
-from .attacks import apply_attack_damage, resolve_attack, selected_attack_type
+from ..actions.attack_resolution import apply_attack_damage, resolve_attack, selected_attack_type
 from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent, movement_squares as _movement_squares
 from .models import CreatureRef, BehaviorContext, EncounterEnemyState, EncounterProgress
 from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref

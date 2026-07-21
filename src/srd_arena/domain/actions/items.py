@@ -3,15 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..creatures import Creature
-from ..combat.consumables import healing_potion_dice
-from ..combat.models import EncounterProgress
+from .consumables import healing_potion_dice
+from ..encounters.models import EncounterProgress
 
 if TYPE_CHECKING:
-    from ..combat.encounter import EncounterState
+    from ..encounters.encounter import EncounterState
 
 
 def _roll_dice(count: int, sides: int) -> int:
-    from ..combat import encounter as encounter_module
+    from ..encounters import encounter as encounter_module
 
     return encounter_module.roll_dice(count, sides)
 

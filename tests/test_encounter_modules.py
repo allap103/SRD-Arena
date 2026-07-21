@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
-from srd_arena.domain.combat.conditions import apply_status, remove_status, status_replaces
-from srd_arena.domain.combat.participants import (
+from srd_arena.domain.encounters.conditions import apply_status, remove_status, status_replaces
+from srd_arena.domain.encounters.participants import (
     actors_are_opponents,
     creature_controller,
     creature_team_id,

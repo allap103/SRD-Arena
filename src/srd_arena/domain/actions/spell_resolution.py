@@ -4,8 +4,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import re
 
-from .geometry import AreaOfEffect, serialize_area
-from .features.types import CapabilityActionResult
+from ..geometry import AreaOfEffect, serialize_area
+from .feature_rules.types import CapabilityActionResult
 from ..creatures import Creature
 from ..effects.results import EffectResult
 from ..spellcasting import Spell

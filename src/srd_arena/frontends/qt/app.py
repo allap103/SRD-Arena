@@ -4,14 +4,14 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ...domain.combat.models import ActionCost, EncounterAction
-from ...domain.combat.geometry import (
+from ...domain.encounters.models import ActionCost, EncounterAction
+from ...domain.geometry import (
     Vector2D,
     build_directional_area,
     build_radius_area,
     serialize_area,
 )
-from ...domain.combat.spells import (
+from ...domain.actions.spell_rules import (
     parse_spell_action_value,
     spell_action_value,
     spell_range_squares,

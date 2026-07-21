@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from ..scene import Grid, Position
+from .scene import Grid, Position
 
 DIRECTION_VECTORS = {
     "up": (0, -1),

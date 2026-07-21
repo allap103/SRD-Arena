@@ -6,7 +6,7 @@ from ..creatures import Creature
 from ..scene import Position
 from ..rules.dice import reroll_dice
 from ..effects.triggered import TriggeredEffect, reroll_eligible_indices
-from .attacks import (
+from ..actions.attack_resolution import (
     apply_attack_damage,
     can_make_opportunity_attack,
     damage_roll_detail,

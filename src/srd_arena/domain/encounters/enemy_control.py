@@ -2,25 +2,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from ...scene import Position
-from ..attacks import apply_attack_damage, resolve_attack, selected_attack_type
-from ..behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent, movement_squares as _movement_squares
-from ..models import ActionCost, CreatureRef, DecisionFrame, EncounterAction, EncounterProgress
-from ..refs import enemy_index as _enemy_index
+from ..creatures import Creature
+from ..scene import Position
+from ..actions.attack_resolution import apply_attack_damage, resolve_attack, selected_attack_type
+from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent, movement_squares as _movement_squares
+from .models import ActionCost, CreatureRef, DecisionFrame, EncounterAction, EncounterProgress
+from .refs import enemy_index as _enemy_index
 
 if TYPE_CHECKING:
-    from ..encounter import EncounterState
+    from .encounter import EncounterState
 
 
 def _roll_die(sides: int) -> int:
-    from .. import encounter as encounter_module
+    from . import encounter as encounter_module
 
     return encounter_module.roll_die(sides)
 
 
 def _roll_dice(count: int, sides: int) -> int:
-    from .. import encounter as encounter_module
+    from . import encounter as encounter_module
 
     return encounter_module.roll_dice(count, sides)
 

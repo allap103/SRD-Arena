@@ -1,4 +1,4 @@
-from srd_arena.domain.combat.geometry import (
+from srd_arena.domain.geometry import (
     LEGACY_TOUCHED_CELL_POLICY,
     RASTERIZATION_POLICY,
     Vector2D,
