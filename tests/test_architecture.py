@@ -90,6 +90,50 @@ def test_relative_import_resolution() -> None:
     )
 
 
+def test_domain_root_is_namespace_only() -> None:
+    violations: list[str] = []
+    search_roots = (PACKAGE_ROOT, Path(__file__).parent)
+    domain_init = ast.parse(
+        (PACKAGE_ROOT / "domain" / "__init__.py").read_text(encoding="utf-8")
+    )
+
+    assert (
+        len(domain_init.body) == 1
+        and isinstance(domain_init.body[0], ast.Expr)
+        and isinstance(domain_init.body[0].value, ast.Constant)
+        and isinstance(domain_init.body[0].value.value, str)
+    ), (
+        "srd_arena.domain.__init__ must remain a descriptive namespace without re-exports."
+    )
+
+    for search_root in search_roots:
+        for path in sorted(search_root.rglob("*.py")):
+            module = (
+                _module_name(path)
+                if path.is_relative_to(PACKAGE_ROOT.parent)
+                else f"tests.{path.relative_to(search_root).with_suffix('').as_posix().replace('/', '.')}"
+            )
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ImportFrom):
+                    continue
+                imported_module = _resolve_from_import(
+                    module,
+                    path.name == "__init__.py",
+                    node,
+                )
+                if imported_module == "srd_arena.domain":
+                    imported_names = ", ".join(alias.name for alias in node.names)
+                    violations.append(
+                        f"{path.relative_to(PACKAGE_ROOT.parent.parent)}:{node.lineno}: "
+                        f"import {imported_names} from its owning domain subpackage"
+                    )
+
+    assert not violations, "Domain-root imports hide concept ownership:\n" + "\n".join(
+        violations
+    )
+
+
 def _imports(path: Path, module: str) -> list[tuple[int, str]]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     imports: list[tuple[int, str]] = []
