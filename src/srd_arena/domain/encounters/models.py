@@ -5,7 +5,8 @@ from typing import Generator
 
 from ..creatures import Creature
 from ..item import Item
-from ..scene import Behavior, Encounter, Position
+from ..geometry import Position
+from ..scene import Behavior, Encounter
 from ..effects.conditions import Status, StatusSnapshot
 from ..config import RulesConfig
 from ..rolls.dice import CheckResult, DicePoolResult

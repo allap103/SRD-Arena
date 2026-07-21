@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..creatures import Creature
-from ..scene import Position
+from ..geometry import Position
 from ..creatures import can_grapple
 from ..rolls.dice import resolve_d20
 from ..effects.results import EffectResult

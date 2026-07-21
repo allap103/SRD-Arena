@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ..creatures import Creature
 from ..item import Item
-from ..scene import Position
+from ..geometry import Position
 from ..rolls.dice import (
     D20RollMode,
     resolve_check,

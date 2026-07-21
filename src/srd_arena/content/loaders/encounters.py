@@ -3,14 +3,13 @@ from pathlib import Path
 
 from ..schemas import CreatureSchema, EncounterDefinitionSchema
 from ...domain.creatures import Creature
+from ...domain.geometry import Grid, Position
 from ...domain.scene import (
     Behavior,
     Encounter,
     EncounterEnemy,
     EncounterResolution,
     EncounterTeam,
-    Grid,
-    Position,
     Scene,
 )
 from .source_data import _load_json

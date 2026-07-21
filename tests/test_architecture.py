@@ -37,6 +37,13 @@ RULES = (
             "srd_arena.frontends.qt",
         ),
     ),
+    DependencyRule(
+        package="srd_arena.domain.geometry",
+        forbidden=(
+            "srd_arena.domain.encounters",
+            "srd_arena.domain.scene",
+        ),
+    ),
 )
 
 

@@ -1,30 +1,20 @@
 from dataclasses import dataclass, field
 
-
-@dataclass
-class Position:
-    x: int
-    y: int
-
-
-@dataclass
-class Grid:
-    width: int
-    height: int
+from . import geometry
 
 
 @dataclass
 class Behavior:
     type: str
-    anchor: Position | None = None
+    anchor: geometry.Position | None = None
     radius: int | None = None
-    path: list[Position] = field(default_factory=list)
+    path: list[geometry.Position] = field(default_factory=list)
 
 
 @dataclass
 class EncounterEnemy:
     actor_id: str
-    start: Position
+    start: geometry.Position
     behavior: Behavior
 
 
@@ -43,8 +33,8 @@ class EncounterResolution:
 
 @dataclass
 class Encounter:
-    grid: Grid
-    player_start: Position
+    grid: geometry.Grid
+    player_start: geometry.Position
     enemies: list[EncounterEnemy] = field(default_factory=list)
     teams: list[EncounterTeam] = field(default_factory=list)
     victory: EncounterResolution | None = None

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..creatures import Creature
-from ..scene import Position
+from ..geometry import Position
 from ..creatures import can_grapple
 from ..spellcasting import Spell, Spellcasting
 from .attack_resolution import has_free_hand

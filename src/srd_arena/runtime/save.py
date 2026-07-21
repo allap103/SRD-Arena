@@ -20,7 +20,7 @@ from ..domain.encounters.models import (
 from .scenario import Scenario
 from ..domain.creatures import Creature
 from ..domain.creatures import Attributes, Movement
-from ..domain.scene import Position
+from ..domain.geometry import Position
 from ..domain.spellcasting import Spellcasting
 from ..domain.effects.conditions import StatusSnapshot
 from .session import PendingSceneTransition, Session

@@ -4,7 +4,7 @@ from typing import Generator
 
 from ..creatures import Creature
 from ..item import Item
-from ..scene import Position
+from ..geometry import Position
 from .models import BehaviorContext, EncounterAction, EncounterEnemyState
 
 DIRECTION_DELTAS = {

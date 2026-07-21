@@ -5,6 +5,8 @@ from pathlib import Path
 from .....content.paths import IMAGES_ROOT
 from ....shared.dice import RollView
 from .....domain.geometry import (
+    Grid,
+    Position,
     Vector2D,
     build_directional_area,
     build_radius_area,
@@ -13,7 +15,6 @@ from .....domain.geometry import (
     serialize_area,
 )
 from .....runtime.scenario import DEFAULT_SCENARIO_DIR
-from .....domain.scene import Grid, Position
 from ....shared.session import BattlefieldView
 
 try:

@@ -6,6 +6,8 @@ from pathlib import Path
 
 from ...domain.encounters.models import ActionCost, EncounterAction
 from ...domain.geometry import (
+    Grid,
+    Position,
     Vector2D,
     build_directional_area,
     build_radius_area,
@@ -23,7 +25,6 @@ from ..shared.session import (
     SessionPresentation,
     build_session_presentation,
 )
-from ...domain.scene import Grid, Position
 from ..shared.models import ActionView
 from ...runtime.session import (
     EXIT_CHOICE_TEXT,

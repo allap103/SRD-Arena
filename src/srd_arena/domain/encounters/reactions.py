@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..creatures import Creature
-from ..scene import Position
+from ..geometry import Position
 from ..rolls.dice import reroll_dice
 from ..effects.triggered import TriggeredEffect, reroll_eligible_indices
 from ..actions.attack_resolution import (

@@ -22,7 +22,8 @@ from .refs import enemy_ref
 from ..creatures import Creature
 from ..item import Item
 from ..config import RulesConfig
-from ..scene import Encounter, Position
+from ..geometry import Position
+from ..scene import Encounter
 from ..effects.conditions import Status, StatusSnapshot
 
 if TYPE_CHECKING:
