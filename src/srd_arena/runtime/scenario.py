@@ -7,7 +7,7 @@ from pathlib import Path
 from ..content.loaders import (
     load_bestiary_stat_blocks,
     load_class_blocks,
-    load_custom_stat_blocks,
+    load_player_characters,
     load_optional_feature_blocks,
     load_encounter,
     load_spell_catalog,
@@ -56,7 +56,7 @@ class Scenario:
         self.subclass_blocks = load_subclass_blocks(self.system_directory)
         self.spell_catalog = load_spell_catalog(self.system_directory)
         self.optional_feature_blocks = load_optional_feature_blocks(self.system_directory)
-        self.custom_stat_blocks = load_custom_stat_blocks(self.directory / "custom_stat_blocks")
+        self.player_characters = load_player_characters(self.directory / "player_characters")
         self.scenes, self.creatures = self.load_encounters_from_directory(
             self.directory / "encounters"
         )
@@ -74,7 +74,7 @@ class Scenario:
                 path,
                 self.stat_blocks,
                 self.class_blocks,
-                self.custom_stat_blocks,
+                self.player_characters,
                 self.optional_feature_blocks,
                 self.subclass_blocks,
                 self.spell_catalog,

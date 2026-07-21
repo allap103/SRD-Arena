@@ -72,7 +72,7 @@ class CreatureSchema(BaseModel):
     subclass_ref: "SubclassReferenceSchema | None" = None
     spells_known: list["StatBlockReferenceSchema"] = Field(default_factory=list)
     optional_features: list["StatBlockReferenceSchema"] = Field(default_factory=list)
-    custom_stat_block: str | None = None
+    player_character: str | None = None
     stat_block: "StatBlockReferenceSchema | None" = None
 
 

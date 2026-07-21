@@ -43,11 +43,11 @@ def test_nested_creature_can_reference_system_stat_block() -> None:
     creature = scenario.get_creature("goblin_1")
 
     assert creature.id == "goblin_1"
-    assert creature.name == "Goblin"
-    assert creature.get_max_health() == 7
+    assert creature.name == "Goblin Warrior"
+    assert creature.get_max_health() == 10
     assert creature.get_armor_class() == 15
     assert creature.attributes.strength == 8
-    assert creature.attributes.dexterity == 14
+    assert creature.attributes.dexterity == 15
     assert creature.attributes.movement.speed_feet == 30
     assert [attack.name for attack in creature.monster_attacks] == ["Scimitar", "Shortbow"]
     assert creature.monster_attacks[0].attack_modes == ("melee",)
@@ -58,13 +58,13 @@ def test_nested_creature_can_reference_system_stat_block() -> None:
 
 def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: Path) -> None:
     scenario_dir = tmp_path / "encounter_start"
-    for subdir in ("encounters", "custom_stat_blocks"):
+    for subdir in ("encounters", "player_characters"):
         (scenario_dir / subdir).mkdir(parents=True, exist_ok=True)
     (scenario_dir / "settings.json").write_text(
         '{"encounters": ["arena", "arena_two"]}\n', encoding="utf-8"
     )
-    (scenario_dir / "custom_stat_blocks" / "player").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "custom_stat_blocks" / "player").read_text(encoding="utf-8"),
+    (scenario_dir / "player_characters" / "player").write_text(
+        (FIXTURE_ENCOUNTER_DIR / "player_characters" / "player").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
     (scenario_dir / "encounters" / "arena").write_text(
@@ -123,7 +123,7 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
         actor_path,
         scenario.stat_blocks,
         scenario.class_blocks,
-        scenario.custom_stat_blocks,
+        scenario.player_characters,
     )
 
     assert any(grant.id == "extra_attack" for grant in upgraded.feature_grants)
@@ -168,7 +168,7 @@ def test_creature_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Pa
         actor_path,
         scenario.stat_blocks,
         scenario.class_blocks,
-        scenario.custom_stat_blocks,
+        scenario.player_characters,
         scenario.optional_feature_blocks,
         scenario.subclass_blocks,
         scenario.spell_catalog,
@@ -238,7 +238,7 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
         actor_path,
         scenario.stat_blocks,
         scenario.class_blocks,
-        scenario.custom_stat_blocks,
+        scenario.player_characters,
         scenario.optional_feature_blocks,
         scenario.subclass_blocks,
         scenario.spell_catalog,

@@ -125,10 +125,10 @@ def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
         (entry.label, entry.total, entry.is_active)
         for entry in presentation.encounter.resources.initiative
     ] == [
-        ("Enemy 1 (Goblin)", 20, True),
-        ("Enemy 3 (Goblin)", 16, False),
+        ("Enemy 1 (Goblin Warrior)", 20, True),
+        ("Enemy 3 (Goblin Warrior)", 16, False),
         ("Player", 13, False),
-        ("Enemy 2 (Goblin)", 9, False),
+        ("Enemy 2 (Goblin Warrior)", 9, False),
     ]
 
 
@@ -249,10 +249,10 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
     grapple_index = next(index for index, choice in enumerate(scene_view.choices) if choice.startswith("Grapple enemy 1"))
     result = session.choose(grapple_index)
 
-    assert ("system", "Traveler grapples Enemy 1 (Goblin).") in result.messages
+    assert ("system", "Traveler grapples Enemy 1 (Goblin Warrior).") in result.messages
     assert session.encounter_state.has_condition("enemy:0", "grappled") is True
     assert session.encounter_state.has_condition("player", "grappling") is True
-    assert "Grapple enemy 1 (Goblin)" in scene_view.choices
+    assert "Grapple enemy 1 (Goblin Warrior)" in scene_view.choices
 
 
 def test_grappling_moves_target_and_costs_extra_movement() -> None:
@@ -430,7 +430,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatc
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
 
-    assert ("system", "Traveler casts Color Spray on Enemy 1 (Goblin).") in result.messages
+    assert ("system", "Traveler casts Color Spray on Enemy 1 (Goblin Warrior).") in result.messages
     assert any("is blinded until the end of your next turn" in message for _, message in result.messages)
     assert session.encounter_state.player_action_available is False
     assert session.player.spellcasting.spell_slots_remaining[1] == 3
@@ -529,11 +529,11 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
     assert spell_event.data["damage_roll_details"][0]["dice"] == "3d6"
     assert spell_event.data["damage_roll_details"][0]["applied_damage"] == 6
     assert spell_event.data["damage_roll_details"][1]["applied_damage"] == 7
-    assert state.enemies[0].creature.get_health() == 1
-    assert state.enemies[1].creature.get_health() == 0
+    assert state.enemies[0].creature.get_health() == 4
+    assert state.enemies[1].creature.get_health() == 3
     assert any("takes 6 fire damage." in message for _, message in result.messages)
     assert any("takes 7 fire damage on a successful save." in message for _, message in result.messages)
-    assert any("Enemy 2 (Goblin) is defeated." == message for _, message in result.messages)
+    assert not any("Enemy 2 (Goblin Warrior) is defeated." == message for _, message in result.messages)
 
 
 def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
@@ -975,7 +975,7 @@ def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> Non
     progress = session.encounter_state.advance_until_next_decision(session.player)
 
     assert progress.transition is None
-    assert ("system", "Goblin moves down-left to (4, 3).") in progress.messages
+    assert ("system", "Goblin Warrior moves down-left to (4, 3).") in progress.messages
     assert session.encounter_state.active_creature() == ("player", None)
     assert session.encounter_state.round_number == 2
 
@@ -1035,7 +1035,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
     )
     result = session.choose(attack_index)
 
-    assert ("system", "Traveler misses Enemy 1 (Goblin).") in result.messages
+    assert ("system", "Traveler misses Enemy 1 (Goblin Warrior).") in result.messages
     attack_event = next(event for event in result.events if event.type == "attack_resolved")
     assert attack_event.data["hit"] is False
     assert attack_event.data["critical_hit"] is False
@@ -1236,7 +1236,7 @@ def test_grapple_actions_map_to_attack_menu_bucket() -> None:
         ActionView(
             index=0,
             id="player-grapple-0",
-            label="Grapple enemy 1 (Goblin)",
+            label="Grapple enemy 1 (Goblin Warrior)",
             kind="grapple",
             actor_ref="player",
             value=0,

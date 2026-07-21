@@ -36,7 +36,7 @@ from .creature_spellcasting import (
 )
 from .types import (
     ClassCatalog,
-    CustomStatBlockCatalog,
+    PlayerCharacterCatalog,
     OptionalFeatureCatalog,
     SpellCatalog,
     StatBlockCatalog,
@@ -48,7 +48,7 @@ def load_creature(
     path: str | Path,
     stat_blocks: StatBlockCatalog | None = None,
     class_blocks: ClassCatalog | None = None,
-    custom_stat_blocks: CustomStatBlockCatalog | None = None,
+    player_characters: PlayerCharacterCatalog | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     subclass_blocks: SubclassCatalog | None = None,
     spell_catalog: SpellCatalog | None = None,
@@ -57,7 +57,7 @@ def load_creature(
         CreatureSchema.model_validate(_load_json(path)),
         stat_blocks,
         class_blocks,
-        custom_stat_blocks,
+        player_characters,
         optional_features,
         subclass_blocks,
         spell_catalog,
@@ -68,12 +68,12 @@ def build_creature(
     schema: CreatureSchema,
     stat_blocks: StatBlockCatalog | None = None,
     class_blocks: ClassCatalog | None = None,
-    custom_stat_blocks: CustomStatBlockCatalog | None = None,
+    player_characters: PlayerCharacterCatalog | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     subclass_blocks: SubclassCatalog | None = None,
     spell_catalog: SpellCatalog | None = None,
 ) -> Creature:
-    schema = _resolve_creature_schema(schema, custom_stat_blocks)
+    schema = _resolve_creature_schema(schema, player_characters)
     stat_block = (
         _find_stat_block(schema.stat_block.name, schema.stat_block.source, stat_blocks)
         if schema.stat_block
@@ -152,25 +152,25 @@ def build_creature(
 
 def _resolve_creature_schema(
     instance: CreatureSchema,
-    custom_stat_blocks: CustomStatBlockCatalog | None,
+    player_characters: PlayerCharacterCatalog | None,
 ) -> CreatureSchema:
-    if instance.custom_stat_block is None:
+    if instance.player_character is None:
         return instance
-    if custom_stat_blocks is None:
+    if player_characters is None:
         raise ValueError(
-            f"Creature '{instance.id}' references custom stat block "
-            f"'{instance.custom_stat_block}', but no custom stat block catalog was loaded."
+            f"Creature '{instance.id}' references player character "
+            f"'{instance.player_character}', but no player character catalog was loaded."
         )
-    template = custom_stat_blocks.get(instance.custom_stat_block)
+    template = player_characters.get(instance.player_character)
     if template is None:
-        raise KeyError(f"Custom stat block '{instance.custom_stat_block}' not found.")
+        raise KeyError(f"Player character '{instance.player_character}' not found.")
 
-    template_data = template.model_dump(exclude={"id", "custom_stat_block"})
+    template_data = template.model_dump(exclude={"id", "player_character"})
     instance_data = instance.model_dump(
         exclude_unset=True,
         exclude={
             "attributes",
-            "custom_stat_block",
+            "player_character",
             "equipment",
             "inventory",
             "metadata",

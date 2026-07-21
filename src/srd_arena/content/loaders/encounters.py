@@ -18,7 +18,7 @@ from .source_data import _load_json
 from .creatures import build_creature
 from .types import (
     ClassCatalog,
-    CustomStatBlockCatalog,
+    PlayerCharacterCatalog,
     OptionalFeatureCatalog,
     SpellCatalog,
     StatBlockCatalog,
@@ -109,7 +109,7 @@ def load_encounter(
     path: str | Path,
     stat_blocks: StatBlockCatalog | None = None,
     class_blocks: ClassCatalog | None = None,
-    custom_stat_blocks: CustomStatBlockCatalog | None = None,
+    player_characters: PlayerCharacterCatalog | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     subclass_blocks: SubclassCatalog | None = None,
     spell_catalog: SpellCatalog | None = None,
@@ -131,7 +131,7 @@ def load_encounter(
                 ),
                 stat_blocks,
                 class_blocks,
-                custom_stat_blocks,
+                player_characters,
                 optional_features,
                 subclass_blocks,
                 spell_catalog,

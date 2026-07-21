@@ -4,7 +4,7 @@ from ..schemas import CreatureSchema
 from .source_data import SOURCE_PRIORITY, _load_json
 from .types import (
     ClassCatalog,
-    CustomStatBlockCatalog,
+    PlayerCharacterCatalog,
     OptionalFeatureCatalog,
     SpellCatalog,
     StatBlockCatalog,
@@ -13,13 +13,16 @@ from .types import (
 )
 
 
-def load_custom_stat_blocks(directory: str | Path) -> CustomStatBlockCatalog:
-    custom_dir = Path(directory)
-    if not custom_dir.is_dir():
+def load_player_characters(directory: str | Path) -> PlayerCharacterCatalog:
+    player_characters_dir = Path(directory)
+    if not player_characters_dir.is_dir():
         return {}
     return {
         schema.id: schema
-        for schema in (CreatureSchema.model_validate(_load_json(path)) for path in custom_dir.glob("*"))
+        for schema in (
+            CreatureSchema.model_validate(_load_json(path))
+            for path in player_characters_dir.glob("*")
+        )
     }
 
 
@@ -56,19 +59,19 @@ def _find_optional_feature(
 
 def load_bestiary_stat_blocks(directory: str | Path) -> StatBlockCatalog:
     catalog: StatBlockCatalog = {}
-    bestiary_dir = Path(directory) / "bestiary"
-    if not bestiary_dir.is_dir():
-        return catalog
-
-    for path in bestiary_dir.glob("bestiary-*.json"):
-        data = _load_json(path)
-        for monster in data.get("monster", []):
-            if not isinstance(monster, dict) or not isinstance(monster.get("name"), str):
-                continue
-            source = monster.get("source")
-            source_key = source if isinstance(source, str) else None
-            catalog[(monster["name"].casefold(), source_key)] = monster
-            catalog.setdefault((monster["name"].casefold(), None), monster)
+    system_dir = Path(directory)
+    for bestiary_dir in (system_dir, system_dir / "bestiary"):
+        if not bestiary_dir.is_dir():
+            continue
+        for path in bestiary_dir.glob("bestiary-*.json"):
+            data = _load_json(path)
+            for monster in data.get("monster", []):
+                if not isinstance(monster, dict) or not isinstance(monster.get("name"), str):
+                    continue
+                source = monster.get("source")
+                source_key = source if isinstance(source, str) else None
+                catalog[(monster["name"].casefold(), source_key)] = monster
+                catalog.setdefault((monster["name"].casefold(), None), monster)
     return catalog
 
 
