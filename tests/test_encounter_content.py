@@ -122,7 +122,10 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
         scenario.player_characters,
     )
 
-    assert any(grant.id == "extra_attack" for grant in upgraded.feature_grants)
+    assert any(
+        class_feature.id == "extra_attack"
+        for class_feature in upgraded.class_features
+    )
     assert upgraded.combat_profile.attacks_per_attack_action == 2
 
 

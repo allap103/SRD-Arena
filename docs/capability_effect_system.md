@@ -385,7 +385,7 @@ The current rest code already has the right general idea: restore resources base
 
 ## Migration Plan
 
-1. Keep the current `FeatureGrant` path working.
+1. Keep the current `ClassFeature` loading path working.
 2. Introduce `Capability`, `EffectResult`, and `CapabilityActionResult` alongside existing feature types.
 3. Convert Second Wind internally to return `CapabilityActionResult` effects while preserving the existing event payload for compatibility.
 4. Add a generic `healing.self` resolver and make Second Wind use it.
@@ -396,7 +396,7 @@ The current rest code already has the right general idea: restore resources base
 9. Normalize Great Weapon Fighting into `reroll_matching_dice` as the first passive rule.
 10. Route rule-created choices through the encounter decision system.
 11. Add first-class statuses whose modifiers are represented by temporary rule grants.
-12. Rename or replace `FeatureGrant` with a general grant/resource model once the compatibility layer is thin.
+12. Keep `ClassFeature` narrow; introduce separate capability and resource models rather than generalizing it.
 
 ## Open Questions
 

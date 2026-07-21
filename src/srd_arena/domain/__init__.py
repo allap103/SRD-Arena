@@ -1,5 +1,13 @@
-from .creatures import Attributes, Creature, Equipment, Inventory
-from .class_features import ClassRef, CombatProfile, FeatureGrant, SubclassRef
+from .creatures import (
+    Attributes,
+    ClassFeature,
+    ClassRef,
+    CombatProfile,
+    Creature,
+    Equipment,
+    Inventory,
+    SubclassRef,
+)
 from .equipment import ArmorStat, Item, WeaponStat
 from .spellcasting import Spell, SpellRef, Spellcasting
 from .effects.conditions import Status, StatusSnapshot
@@ -11,7 +19,7 @@ __all__ = [
     "ClassRef",
     "CombatProfile",
     "Equipment",
-    "FeatureGrant",
+    "ClassFeature",
     "Item",
     "Inventory",
     "Spell",

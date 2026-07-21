@@ -77,11 +77,18 @@ def _resolve_action_surge(creature: Creature) -> CapabilityActionResult:
 
 
 def _feature_healing_dice(creature: Creature, feature_id: str) -> tuple[int, int]:
-    grant = next((grant for grant in creature.feature_grants if grant.id == feature_id), None)
-    if grant is None:
+    class_feature = next(
+        (
+            class_feature
+            for class_feature in creature.class_features
+            if class_feature.id == feature_id
+        ),
+        None,
+    )
+    if class_feature is None:
         return 1, 10
-    dice_count = grant.data.get("healing_die_count")
-    dice_sides = grant.data.get("healing_die_sides")
+    dice_count = class_feature.data.get("healing_die_count")
+    dice_sides = class_feature.data.get("healing_die_sides")
     if not isinstance(dice_count, int) or not isinstance(dice_sides, int):
         return 1, 10
     return dice_count, dice_sides

@@ -4,18 +4,18 @@ from typing import cast
 
 from ..schemas import CreatureSchema
 from ..schemas.creature import CreatureItemReferenceSchema
-from ...domain.creatures import Creature
-from ...domain.creatures import Attributes
-from ...domain.class_features import (
+from ...domain.creatures import (
+    Attributes,
+    ClassFeature,
     ClassRef,
-    FeatureGrant,
+    Creature,
+    Equipment,
+    Inventory,
     SubclassRef,
 )
 from ...domain.spellcasting import Spell, Spellcasting
 from ...domain.effects.triggered import TriggeredEffect
 from ..normalization import normalize_optional_feature_effects
-from ...domain.creatures import Equipment
-from ...domain.creatures import Inventory
 from .catalogs import (
     _find_class_block,
     _find_optional_feature,
@@ -99,16 +99,16 @@ def build_creature(
         }
     )
     attributes = build_creature_attributes(schema, stat_block, class_block)
-    feature_grants = _resolve_class_feature_grants(class_block, schema.attributes.level)
-    feature_grants.extend(
-        _resolve_subclass_feature_grants(
+    class_features = _resolve_class_features(class_block, schema.attributes.level)
+    class_features.extend(
+        _resolve_subclass_features(
             subclass_block,
             schema.attributes.level,
             class_name=schema.class_ref.name if schema.class_ref else None,
         )
     )
     triggered_effects = _resolve_optional_feature_effects(schema, optional_features)
-    combat_profile = build_combat_profile(feature_grants)
+    combat_profile = build_combat_profile(class_features)
     spellcasting = _build_spellcasting(
         schema,
         attributes,
@@ -141,7 +141,7 @@ def build_creature(
             if schema.subclass_ref
             else None
         ),
-        feature_grants=feature_grants,
+        class_features=class_features,
         triggered_effects=triggered_effects,
         combat_profile=combat_profile,
         feature_uses_remaining=build_feature_uses_remaining(combat_profile),
@@ -244,18 +244,18 @@ def _creature_item_id(item: str | CreatureItemReferenceSchema | object) -> str:
     raise TypeError(f"Unsupported creature item reference: {item!r}")
 
 
-def _resolve_class_feature_grants(
+def _resolve_class_features(
     class_block: dict | None,
     level: int,
-) -> list[FeatureGrant]:
+) -> list[ClassFeature]:
     if class_block is None:
         return []
 
     class_name = str(class_block.get("name", ""))
     features = class_block.get("classFeatures", [])
-    grants: list[FeatureGrant] = []
+    class_features: list[ClassFeature] = []
     if not isinstance(features, list):
-        return grants
+        return class_features
 
     for feature_ref in features:
         parsed = _parse_class_feature_reference(feature_ref)
@@ -264,32 +264,32 @@ def _resolve_class_feature_grants(
         feature_name, feature_level = parsed
         if feature_level > level:
             continue
-        grant = _normalize_feature_grant(
+        class_feature = _normalize_class_feature(
             class_name,
             feature_name,
             feature_level,
             class_block,
             level,
         )
-        if grant is not None:
-            grants.append(grant)
-    return grants
+        if class_feature is not None:
+            class_features.append(class_feature)
+    return class_features
 
 
-def _resolve_subclass_feature_grants(
+def _resolve_subclass_features(
     subclass_block: dict | None,
     level: int,
     *,
     class_name: str | None,
-) -> list[FeatureGrant]:
+) -> list[ClassFeature]:
     if subclass_block is None:
         return []
 
     subclass_name = str(subclass_block.get("name", ""))
     features = subclass_block.get("subclassFeatures", [])
-    grants: list[FeatureGrant] = []
+    class_features: list[ClassFeature] = []
     if not isinstance(features, list):
-        return grants
+        return class_features
 
     for feature_ref in features:
         parsed = _parse_class_feature_reference(feature_ref)
@@ -298,15 +298,15 @@ def _resolve_subclass_feature_grants(
         feature_name, feature_level = parsed
         if feature_level > level:
             continue
-        grant = _normalize_feature_grant(
+        class_feature = _normalize_class_feature(
             class_name or str(subclass_block.get("className", "")),
             feature_name,
             feature_level,
             source_subclass=subclass_name,
         )
-        if grant is not None:
-            grants.append(grant)
-    return grants
+        if class_feature is not None:
+            class_features.append(class_feature)
+    return class_features
 
 
 def _parse_class_feature_reference(feature_ref: str | dict[str, object]) -> tuple[str, int] | None:
@@ -322,14 +322,14 @@ def _parse_class_feature_reference(feature_ref: str | dict[str, object]) -> tupl
     return None
 
 
-def _normalize_feature_grant(
+def _normalize_class_feature(
     class_name: str,
     feature_name: str,
     feature_level: int,
     class_block: dict | None = None,
     creature_level: int = 1,
     source_subclass: str | None = None,
-) -> FeatureGrant | None:
+) -> ClassFeature | None:
     extra_attack_counts = {
         "Extra Attack": 2,
         "Extra Attack (2)": 3,
@@ -339,7 +339,7 @@ def _normalize_feature_grant(
     attacks = extra_attack_counts.get(feature_name)
     if attacks is None:
         if feature_name == "Second Wind":
-            return FeatureGrant(
+            return ClassFeature(
                 id="second_wind",
                 name=feature_name,
                 source_class=class_name,
@@ -351,7 +351,7 @@ def _normalize_feature_grant(
                 },
             )
         if feature_name == "Action Surge":
-            return FeatureGrant(
+            return ClassFeature(
                 id="action_surge",
                 name=feature_name,
                 source_class=class_name,
@@ -361,7 +361,7 @@ def _normalize_feature_grant(
             )
         else:
             return None
-    return FeatureGrant(
+    return ClassFeature(
         id="extra_attack",
         name=feature_name,
         source_class=class_name,

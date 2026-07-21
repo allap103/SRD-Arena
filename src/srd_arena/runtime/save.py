@@ -353,7 +353,7 @@ def _restore_player_state(player_template: Creature, state: PlayerState) -> Crea
         current_health=state.current_health,
         class_ref=deepcopy(player_template.class_ref),
         subclass_ref=deepcopy(player_template.subclass_ref),
-        feature_grants=deepcopy(player_template.feature_grants),
+        class_features=deepcopy(player_template.class_features),
         triggered_effects=deepcopy(player_template.triggered_effects),
         combat_profile=deepcopy(player_template.combat_profile),
         feature_uses_remaining=dict(state.feature_uses_remaining),
