@@ -54,6 +54,7 @@ def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
         "player": {
             "actor_id": player.id,
             "name": player.name,
+            "token_image": player.token_image,
             "position": {"x": self.player_position.x, "y": self.player_position.y},
             "health": player.get_health(),
             "max_health": player.get_max_health(),
@@ -96,6 +97,7 @@ def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
                 "actor_ref": _enemy_ref(index),
                 "actor_id": enemy.actor_id,
                 "name": enemy.creature.name,
+                "token_image": enemy.creature.token_image,
                 "position": {"x": enemy.position.x, "y": enemy.position.y},
                 "health": enemy.creature.get_health(),
                 "reaction_available": enemy.reaction_available,

@@ -55,6 +55,7 @@ def test_load_creature_can_reference_system_stat_block() -> None:
     assert creature.monster_attacks[0].attack_modes == ("melee",)
     assert creature.monster_attacks[1].attack_modes == ("ranged",)
     assert creature.monster_attacks[1].range_normal == 80
+    assert creature.token_image == "tokens/goblin.png"
 
 
 def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: Path) -> None:

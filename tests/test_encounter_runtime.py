@@ -114,6 +114,14 @@ def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
 
     assert presentation.encounter is not None
     assert [
+        creature.token_image for creature in presentation.encounter.battlefield.creatures
+    ] == [
+        "tokens/traveler.png",
+        "tokens/goblin.png",
+        "tokens/goblin.png",
+        "tokens/goblin.png",
+    ]
+    assert [
         (entry.label, entry.total, entry.is_active)
         for entry in presentation.encounter.resources.initiative
     ] == [

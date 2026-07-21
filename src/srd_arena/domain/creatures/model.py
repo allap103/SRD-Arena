@@ -16,6 +16,7 @@ class Creature:
     inventory: Inventory
     attributes: Attributes
     equipment: Equipment
+    token_image: str | None = None
     size: str = "M"
     current_health: int | None = None
     class_ref: ClassRef | None = None

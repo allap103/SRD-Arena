@@ -104,6 +104,7 @@ def load_creature(
         id=schema.id,
         name=schema.name or _stat_block_name(stat_block),
         description=schema.description,
+        token_image=schema.token_image,
         inventory=Inventory(items=[_creature_item_id(item) for item in schema.inventory]),
         attributes=attributes,
         equipment=equipment,

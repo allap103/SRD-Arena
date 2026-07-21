@@ -63,6 +63,7 @@ class CreatureSchema(BaseModel):
     id: str
     name: str | None = None
     description: str = ""
+    token_image: str | None = None
     attributes: AttributesSchema = Field(default_factory=AttributesSchema)
     inventory: list[ItemIdOrReference] = Field(default_factory=list)
     equipment: dict[EquipmentSlot, ItemIdOrReference] = Field(default_factory=dict)

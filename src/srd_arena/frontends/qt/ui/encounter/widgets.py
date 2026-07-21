@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .....content.paths import IMAGES_ROOT
 from ....shared.dice import RollView
 from .....domain.geometry import (
     Vector2D,
@@ -294,8 +295,7 @@ class BattlefieldWidget(QWidget):
         self._hover_point: tuple[float, float] | None = None
         self._board_metrics: tuple[float, float, float, int, int] | None = None
         self._cell_targeting_enabled = False
-        self._sprites_dir = Path(scenario_dir) / "sprites"
-        self._sprite_cache: dict[str, QPixmap | None] = {}
+        self._image_cache: dict[str, QPixmap | None] = {}
         self.setMinimumHeight(self.MINIMUM_HEIGHT)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMouseTracking(True)
@@ -475,15 +475,15 @@ class BattlefieldWidget(QWidget):
                     selected_radius * 2,
                 )
 
-            sprite = self._sprite_for_actor(creature.actor_id, creature.label)
-            if sprite is not None:
+            token = self._token_image(creature.token_image)
+            if token is not None:
                 sprite_size = int(cell_size * 0.82)
                 painter.drawPixmap(
                     int(center_x - sprite_size / 2),
                     int(center_y - sprite_size / 2),
                     sprite_size,
                     sprite_size,
-                    sprite,
+                    token,
                 )
             else:
                 painter.setBrush(fill)
@@ -661,28 +661,16 @@ class BattlefieldWidget(QWidget):
             )
         )
 
-    def _sprite_for_actor(self, actor_id: str, label: str) -> QPixmap | None:
-        for name in self._sprite_names(actor_id, label):
-            if name not in self._sprite_cache:
-                path = self._sprites_dir / name
-                pixmap = QPixmap(str(path)) if path.exists() else None
-                self._sprite_cache[name] = pixmap if pixmap is not None and not pixmap.isNull() else None
-            if self._sprite_cache[name] is not None:
-                return self._sprite_cache[name]
-        return None
-
-    def _sprite_names(self, actor_id: str, label: str) -> list[str]:
-        names = [f"{actor_id}.png"]
-        label_name = label.split("(")[-1].rstrip(")") if "(" in label else label
-        slug = label_name.strip().lower().replace(" ", "_")
-        if slug:
-            names.append(f"{slug}.png")
-            if "_" in slug:
-                names.append(f"{slug.split('_')[0]}.png")
-        actor_prefix = actor_id.split("_")[0].strip().lower()
-        if actor_prefix and f"{actor_prefix}.png" not in names:
-            names.append(f"{actor_prefix}.png")
-        return names
+    def _token_image(self, image_reference: str | None) -> QPixmap | None:
+        if image_reference is None:
+            return None
+        if image_reference not in self._image_cache:
+            path = IMAGES_ROOT / image_reference
+            pixmap = QPixmap(str(path)) if path.is_file() else None
+            self._image_cache[image_reference] = (
+                pixmap if pixmap is not None and not pixmap.isNull() else None
+            )
+        return self._image_cache[image_reference]
 
     def mousePressEvent(self, event) -> None:  # pragma: no cover - GUI interaction
         point = self._point_at_pixel(event.position().x(), event.position().y())
