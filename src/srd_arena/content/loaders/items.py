@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ...domain.item import ArmorStat, Item, WeaponStat
+from ...domain.equipment import ArmorStat, Item, WeaponStat
 from .catalogs import load_system_item_catalog
 from .source_data import SOURCE_PRIORITY, _slug
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Generator
 
 from ..creatures import Creature
-from ..item import Item
+from ..equipment import Item
 from ..geometry import Position
 from .models import BehaviorContext, EncounterAction, EncounterEnemyState
 

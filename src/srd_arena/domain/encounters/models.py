@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Generator
 
 from ..creatures import Creature
-from ..item import Item
+from ..equipment import Item
 from ..geometry import Position
 from .definitions import EncounterBehavior, EncounterDefinition
 from ..effects.conditions import Status, StatusSnapshot

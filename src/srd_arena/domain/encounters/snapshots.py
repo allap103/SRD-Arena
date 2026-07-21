@@ -20,7 +20,7 @@ from .models import (
 from .pending import restore_pending_attack, snapshot_pending_attack
 from .refs import enemy_ref
 from ..creatures import Creature
-from ..item import Item
+from ..equipment import Item
 from ..config import RulesConfig
 from ..geometry import Position
 from .definitions import EncounterDefinition

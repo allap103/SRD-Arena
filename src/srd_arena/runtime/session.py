@@ -7,7 +7,7 @@ from ..domain.encounters.models import EncounterAction, EncounterSnapshot
 from ..frontends.shared.combat import render_encounter_text
 from ..domain.creatures import Creature
 from ..domain.encounters import EncounterDefinition
-from ..domain.item import Item
+from ..domain.equipment import Item
 from ..domain.config import RulesConfig
 from ..frontends.shared.models import ActionView, SceneView, TurnResult
 from ..content.paths import SCENARIOS_ROOT

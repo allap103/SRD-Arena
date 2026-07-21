@@ -16,7 +16,7 @@ from ..content.loaders import (
 )
 from ..domain.creatures import Creature
 from ..domain.encounters import EncounterDefinition
-from ..domain.item import Item
+from ..domain.equipment import Item
 from ..domain.config import (
     DEFAULT_DIRECTIONAL_AOE_CELL_COVERAGE_THRESHOLD,
     RulesConfig,

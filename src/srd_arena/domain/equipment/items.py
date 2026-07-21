@@ -1,24 +1,7 @@
 from dataclasses import dataclass
 
-
-@dataclass
-class WeaponStat:
-    slot: list[str]
-    damage: str
-    damage_type: str
-    properties: list[str]
-    attack_type: str = ""
-    range_normal: int | None = None
-    range_long: int | None = None
-    weapon_category: str = ""
-
-
-@dataclass
-class ArmorStat:
-    slot: str
-    type: str
-    armor_class: int
-    modifier_cap: int
+from .armor import ArmorStat
+from .weapons import WeaponStat
 
 
 @dataclass

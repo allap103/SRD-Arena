@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 from ..creatures import Creature
-from ..item import Item
+from ..equipment import Item
 
 
 def healing_potions_in_inventory(creature: Creature, items_by_id: dict[str, Item]) -> list[Item]:

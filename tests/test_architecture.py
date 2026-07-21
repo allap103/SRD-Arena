@@ -44,6 +44,10 @@ RULES = (
             "srd_arena.domain.scene",
         ),
     ),
+    DependencyRule(
+        package="srd_arena.domain.equipment",
+        forbidden=("srd_arena.domain.encounters",),
+    ),
 )
 
 
