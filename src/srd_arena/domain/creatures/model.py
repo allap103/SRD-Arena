@@ -8,7 +8,7 @@ from .class_features import ClassFeature
 from .combat_profile import CombatProfile
 from ..effects.triggered import TriggeredEffect
 from .monster_attack import MonsterAttack
-from ..spellcasting import Spellcasting
+from .spellcasting import Spellcasting
 
 @dataclass
 class Creature:

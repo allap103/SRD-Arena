@@ -10,7 +10,7 @@ from ..effects.results import EffectResult
 from .attacks import resolve_player_attack_action as _resolve_player_attack_action_impl
 from .features import resolve_feature_action as _resolve_feature_action_impl
 from .items import resolve_utilize_action as _resolve_utilize_action_impl
-from .spells import resolve_spell_action as _resolve_spell_action_impl
+from .spells.casting import resolve_spell_action as _resolve_spell_action_impl
 from .utility import resolve_wait_action as _resolve_wait_action_impl
 from .attack_resolution import has_free_hand
 from ..encounters.behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent

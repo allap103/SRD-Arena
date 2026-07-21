@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creatures import Creature
-from ..effects import serialize_effects
-from ..encounters.models import EncounterProgress
-from .spell_resolution import (
+from ...creatures import Creature
+from ...effects import serialize_effects
+from ...encounters.models import EncounterProgress
+from .resolution import (
     SpellActionContext,
     resolve_spell_action as _resolve_spell_action_impl,
 )
-from .spell_rules import parse_spell_action_value
+from .rules import parse_spell_action_value
 
 if TYPE_CHECKING:
-    from ..encounters.encounter import EncounterState
+    from ...encounters.encounter import EncounterState
 
 
 def _roll_die(sides: int) -> int:
-    from ..encounters import encounter as encounter_module
+    from ...encounters import encounter as encounter_module
 
     return encounter_module.roll_die(sides)
 

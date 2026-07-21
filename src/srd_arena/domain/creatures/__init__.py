@@ -7,6 +7,7 @@ from .inventory import Inventory
 from .model import Creature
 from .monster_attack import MonsterAttack
 from .size import can_grapple, is_two_sizes_smaller, normalize_size, size_rank
+from .spellcasting import Spellcasting
 
 __all__ = [
     "Attributes",
@@ -19,6 +20,7 @@ __all__ = [
     "Movement",
     "MonsterAttack",
     "SubclassRef",
+    "Spellcasting",
     "can_grapple",
     "is_two_sizes_smaller",
     "normalize_size",

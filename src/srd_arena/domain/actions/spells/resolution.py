@@ -4,13 +4,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import re
 
-from ..geometry import AreaOfEffect, serialize_area
-from .feature_rules.types import CapabilityActionResult
-from ..creatures import Creature
-from ..effects.results import EffectResult
-from ..spellcasting import Spell
-from ..rolls.dice import resolve_dice
-from ..rolls.saving_throws import resolve_saving_throw
+from ...creatures import Creature
+from ...effects.results import EffectResult
+from ...geometry import AreaOfEffect, serialize_area
+from ...rolls.dice import resolve_dice
+from ...rolls.saving_throws import resolve_saving_throw
+from ..feature_rules.types import CapabilityActionResult
+from .definitions import Spell
 
 DieRoller = Callable[[int], int]
 

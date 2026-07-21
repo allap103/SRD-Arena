@@ -21,7 +21,7 @@ from .scenario import Scenario
 from ..domain.creatures import Creature
 from ..domain.creatures import Attributes, Movement
 from ..domain.geometry import Position
-from ..domain.spellcasting import Spellcasting
+from ..domain.creatures import Spellcasting
 from ..domain.effects.conditions import StatusSnapshot
 from .session import PendingSceneTransition, Session
 from ..domain.creatures import Equipment

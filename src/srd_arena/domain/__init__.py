@@ -6,10 +6,11 @@ from .creatures import (
     Creature,
     Equipment,
     Inventory,
+    Spellcasting,
     SubclassRef,
 )
 from .equipment import ArmorStat, Item, WeaponStat
-from .spellcasting import Spell, SpellRef, Spellcasting
+from .actions.spells import Spell, SpellRef
 from .effects.conditions import Status, StatusSnapshot
 
 __all__ = [

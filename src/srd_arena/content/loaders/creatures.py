@@ -13,7 +13,8 @@ from ...domain.creatures import (
     Inventory,
     SubclassRef,
 )
-from ...domain.spellcasting import Spell, Spellcasting
+from ...domain.actions.spells import Spell
+from ...domain.creatures import Spellcasting
 from ...domain.effects.triggered import TriggeredEffect
 from ..normalization import normalize_optional_feature_effects
 from .catalogs import (
