@@ -106,21 +106,6 @@ def test_slot_helpers_use_separate_save_files(tmp_path: Path) -> None:
     assert loaded.current_scene_id == "goblin_encounter"
 
 
-def test_scene_view_includes_continue_and_system_options(tmp_path: Path) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.save_dir = tmp_path
-    session.current_scene_id = "welcome"
-
-    scene_view = session.get_scene_view()
-
-    assert scene_view.choices[0] == CONTINUE_CHOICE_TEXT
-    assert scene_view.choices[-3:] == [
-        SAVE_CHOICE_TEXT,
-        LOAD_CHOICE_TEXT,
-        EXIT_CHOICE_TEXT,
-    ]
-
-
 def test_save_and_load_preserve_feature_uses(tmp_path: Path) -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.player.feature_uses_remaining["second_wind"] = 1

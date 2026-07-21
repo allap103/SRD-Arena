@@ -33,7 +33,7 @@ JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
 SAVEGAME_EXAMPLE: dict[str, JsonValue] = {
     "version": 6,
     "current_scene_id": "welcome",
-    "start_scene_id": "welcome",
+    "start_scene_id": "goblin_encounter",
     "player": {
         "actor_id": "player",
         "current_health": 12,
@@ -222,7 +222,7 @@ class SaveGame(BaseModel):
 
     version: int = SAVE_VERSION
     current_scene_id: str
-    start_scene_id: str = "welcome"
+    start_scene_id: str = "goblin_encounter"
     control_mode: str = "default"
     player: PlayerState
     encounter: EncounterStateModel | None = None

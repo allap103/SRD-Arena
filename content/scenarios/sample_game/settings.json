@@ -1,4 +1,5 @@
 {
+  "encounters": ["goblin_encounter"],
   "rules": {
     "directional_aoe_cell_coverage_threshold": 0.1
   }

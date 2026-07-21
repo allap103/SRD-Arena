@@ -1385,7 +1385,7 @@ def test_save_and_load_preserve_spent_action(tmp_path: Path, monkeypatch) -> Non
     )
 
 
-def test_encounter_victory_waits_for_continue_before_scene_transition() -> None:
+def test_encounter_victory_waits_for_continue_before_restart() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
@@ -1412,6 +1412,8 @@ def test_encounter_victory_waits_for_continue_before_scene_transition() -> None:
 
     continue_result = session.choose(0)
 
-    assert continue_result.scene_changed is True
+    assert continue_result.scene_changed is False
     assert session.pending_scene_transition is None
-    assert session.current_scene_id == "goblin_encounter_victory"
+    assert session.current_scene_id == "goblin_encounter"
+    assert session.encounter_state is not None
+    assert all(enemy.creature.get_health() > 0 for enemy in session.encounter_state.enemies)

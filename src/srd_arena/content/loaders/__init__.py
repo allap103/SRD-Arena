@@ -8,7 +8,7 @@ from .catalogs import (
     load_subclass_blocks,
 )
 from .items import load_item, load_system_item_catalog, load_system_items
-from .scenes import load_scene
+from .encounters import load_encounter
 from .types import (
     ClassCatalog,
     CustomStatBlockCatalog,
@@ -33,7 +33,7 @@ __all__ = [
     "load_custom_stat_blocks",
     "load_item",
     "load_optional_feature_blocks",
-    "load_scene",
+    "load_encounter",
     "load_spell_catalog",
     "load_subclass_blocks",
     "load_system_item_catalog",

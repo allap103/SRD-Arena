@@ -6,7 +6,6 @@ from ..domain.encounters.encounter import EncounterState
 from ..domain.encounters.models import EncounterAction, EncounterSnapshot
 from ..frontends.shared.combat import render_encounter_text
 from ..domain.creatures import Creature
-from ..domain.choice import Choice
 from ..domain.item import Item
 from ..domain.scene import Scene
 from ..domain.config import RulesConfig
@@ -32,7 +31,7 @@ class Session:
         player: Creature,
         creature_templates: dict[str, Creature] | None = None,
         item_templates: dict[str, Item] | None = None,
-        start_scene_id: str = "welcome",
+        start_scene_id: str = "goblin_encounter",
         scenario_dir: str | Path = SCENARIOS_ROOT / "sample_game",
         save_dir: str | Path = "saves",
         control_mode: str = "default",
@@ -44,7 +43,7 @@ class Session:
         self.creature_templates = creature_templates or {player.id: player}
         self.item_templates = item_templates or {}
         self.start_scene_id = start_scene_id
-        self.current_scene_id = self._resolve_scene_id(start_scene_id)
+        self.current_scene_id = start_scene_id
         self._initial_player = deepcopy(player)
         self.scenario_dir = Path(scenario_dir)
         self.save_dir = Path(save_dir)
@@ -85,14 +84,14 @@ class Session:
 
         self._ensure_encounter_state()
         scene = self.current_scene
-        if self.encounter_state is not None:
-            scene_text = "\n\n".join(
-                part
-                for part in [scene.text, render_encounter_text(self.encounter_state, self.player)]
-                if part
-            )
-            self._encounter_actions = self.encounter_state.available_actions(self.player)
-            action_details = [
+        assert self.encounter_state is not None
+        scene_text = "\n\n".join(
+            part
+            for part in [scene.text, render_encounter_text(self.encounter_state, self.player)]
+            if part
+        )
+        self._encounter_actions = self.encounter_state.available_actions(self.player)
+        action_details = [
                 ActionView(
                     index=index,
                     id=action.id,
@@ -108,11 +107,8 @@ class Session:
                     },
                     source_trigger_id=action.source_trigger_id,
                 )
-                for index, action in enumerate(self._encounter_actions)
-            ]
-        else:
-            scene_text = scene.text
-            action_details = self._scene_transition_action_details()
+            for index, action in enumerate(self._encounter_actions)
+        ]
 
         choices = [action.label for action in action_details]
         system_action_details = self._system_action_details(len(choices))
@@ -136,11 +132,7 @@ class Session:
             raise IndexError("Choice index is out of range for the transition prompt.")
 
         self._ensure_encounter_state()
-        action_count = (
-            len(self._encounter_actions)
-            if self.encounter_state is not None
-            else len(self._scene_transition_action_details())
-        )
+        action_count = len(self._encounter_actions)
         if choice_index == action_count:
             return self._save_game()
         if choice_index == action_count + 1:
@@ -153,11 +145,11 @@ class Session:
             raise IndexError(
                 f"Choice index {choice_index} is out of range for scene '{self.current_scene.id}'."
             )
-        return self._continue_scene()
+        raise RuntimeError("No encounter is active.")
 
     def reset(self) -> None:
         self.player = deepcopy(self._initial_player)
-        self.current_scene_id = self._resolve_scene_id(self.start_scene_id)
+        self.current_scene_id = self.start_scene_id
         self.pending_scene_transition = None
         self.encounter_state = None
         self._encounter_actions = []
@@ -348,10 +340,6 @@ class Session:
 
     def _ensure_encounter_state(self) -> None:
         scene = self.current_scene
-        if scene.encounter is None:
-            self.encounter_state = None
-            self._encounter_actions = []
-            return
         if self.encounter_state is not None and self.encounter_state.scene_id == scene.id:
             return
         self.encounter_state = EncounterState.from_definition(
@@ -399,7 +387,7 @@ class Session:
         if pending is None:
             raise RuntimeError("Continue requested without a pending scene transition.")
         previous_scene_id = self.current_scene_id
-        self.current_scene_id = self._resolve_scene_id(pending.next_scene_id)
+        self.current_scene_id = pending.next_scene_id
         self.pending_scene_transition = None
         self.encounter_state = None
         self._encounter_actions = []
@@ -408,23 +396,6 @@ class Session:
             selected_index=0,
             selected_choice_text=CONTINUE_CHOICE_TEXT,
             selected_action_id="system-continue-scene-transition",
-            next_scene_id=self.current_scene_id,
-            scene_changed=previous_scene_id != self.current_scene_id,
-        )
-
-    def _continue_scene(self) -> TurnResult:
-        transition_target = self._scene_transition_target()
-        if transition_target is None:
-            raise RuntimeError(f"Scene '{self.current_scene.id}' does not expose a selectable transition.")
-        previous_scene_id = self.current_scene_id
-        next_scene_id = self._resolve_scene_id(transition_target)
-        self.current_scene_id = next_scene_id
-        self._clear_encounter_if_scene_changed(previous_scene_id, next_scene_id)
-        return TurnResult(
-            scene=self.get_scene_view(),
-            selected_index=0,
-            selected_choice_text=CONTINUE_CHOICE_TEXT,
-            selected_action_id="scene-continue",
             next_scene_id=self.current_scene_id,
             scene_changed=previous_scene_id != self.current_scene_id,
         )
@@ -445,73 +416,12 @@ class Session:
             return False
 
         previous_scene_id = self.current_scene_id
-        self.current_scene_id = self._resolve_scene_id(transition)
+        self.current_scene_id = transition
         self.pending_scene_transition = None
         self.encounter_state = None
         self._encounter_actions = []
         return previous_scene_id != self.current_scene_id
 
-    def _scene_transition_action_details(self) -> list[ActionView]:
-        transition_target = self._scene_transition_target()
-        if transition_target is None:
-            return []
-        return [
-            ActionView(
-                index=0,
-                id="scene-continue",
-                label=CONTINUE_CHOICE_TEXT,
-                kind="scene_continue",
-                actor_ref="player",
-                value=transition_target,
-            )
-        ]
-
-    def _scene_transition_choice(self) -> Choice | None:
-        choices = self.current_scene.choices
-        if not choices:
-            return None
-        if len(choices) > 1:
-            transition_target = self._find_unique_reachable_encounter(self.current_scene.id)
-            if transition_target is None:
-                raise RuntimeError(
-                    f"Scene '{self.current_scene.id}' still contains multiple narrative choices. "
-                    "Remove branching story content or convert it to combat transitions."
-                )
-            return Choice(choice_text=CONTINUE_CHOICE_TEXT, next_scene=transition_target)
-        return choices[0]
-
-    def _scene_transition_target(self) -> str | None:
-        transition_choice = self._scene_transition_choice()
-        if transition_choice is None:
-            return None
-        return transition_choice.next_scene
-
-    def _resolve_scene_id(self, scene_id: str) -> str:
-        scene = self.scenes[scene_id]
-        if scene.encounter is not None or len(scene.choices) <= 1:
-            return scene_id
-        next_scene_id = self._find_unique_reachable_encounter(scene_id)
-        return next_scene_id or scene_id
-
-    def _find_unique_reachable_encounter(self, scene_id: str) -> str | None:
-        reachable = self._reachable_encounter_scene_ids(scene_id, visited=set())
-        if len(reachable) == 1:
-            return next(iter(reachable))
-        return None
-
-    def _reachable_encounter_scene_ids(self, scene_id: str, visited: set[str]) -> set[str]:
-        if scene_id in visited:
-            return set()
-        visited.add(scene_id)
-        scene = self.scenes[scene_id]
-        if scene.encounter is not None:
-            return {scene_id}
-        reachable: set[str] = set()
-        for choice in scene.choices:
-            if choice.next_scene is None or choice.next_scene not in self.scenes:
-                continue
-            reachable.update(self._reachable_encounter_scene_ids(choice.next_scene, visited.copy()))
-        return reachable
     def _system_action_details(self, start_index: int) -> list[ActionView]:
         return [
             ActionView(

@@ -1,7 +1,5 @@
 from dataclasses import dataclass, field
 
-from .choice import Choice
-
 
 @dataclass
 class Position:
@@ -63,13 +61,11 @@ class Encounter:
 @dataclass
 class Scene:
     id: str
-    text: str | None = None
-    choices: list[Choice] = field(default_factory=list)
-    type: str = "basic"
-    encounter: Encounter | None = None
+    text: str
+    encounter: Encounter
 
     def __str__(self):
-        return f"Scene ID: {self.id}, Text: {self.text}, Choices: {[str(choice) for choice in self.choices]}"
+        return f"Scene ID: {self.id}, Text: {self.text}"
 
     def __repr__(self):
-        return f"Scene(id='{self.id}', text='{self.text}', choices={self.choices})"
+        return f"Scene(id='{self.id}', text={self.text!r}, encounter={self.encounter!r})"

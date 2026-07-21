@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from srd_arena.content.loaders import load_creature, load_bestiary_stat_blocks, load_scene
+from srd_arena.content.loaders import load_creature, load_bestiary_stat_blocks, load_encounter
 from srd_arena.runtime.save import load_from_file, save_to_file
 from srd_arena.runtime.scenario import Scenario
 
@@ -9,14 +9,12 @@ FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "sample_game"
 
 
-def test_load_scene_parses_optional_encounter_block() -> None:
-    scene_path = FIXTURE_ENCOUNTER_DIR / "scenes" / "goblin_encounter"
+def test_load_encounter_parses_definition() -> None:
+    encounter_path = FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter"
 
-    scene = load_scene(scene_path)
+    scene = load_encounter(encounter_path)
 
     assert scene.id == "goblin_encounter"
-    assert scene.type == "encounter"
-    assert scene.encounter is not None
     assert scene.encounter.grid.width == 13
     assert scene.encounter.grid.height == 13
     assert scene.encounter.player_start.x == 1
@@ -31,22 +29,20 @@ def test_load_scene_parses_optional_encounter_block() -> None:
     assert scene.encounter.enemies[1].behavior.anchor is not None
     assert scene.encounter.enemies[1].behavior.radius == 2
     assert len(scene.encounter.enemies[2].behavior.path) == 3
-    assert scene.encounter.victory is not None
-    assert scene.encounter.victory.next_scene == "goblin_encounter_victory"
+    assert scene.encounter.victory.next_scene == "goblin_encounter"
     assert scene.encounter.victory.message == (
         "The last goblin falls. You catch your breath before moving on."
     )
-    assert scene.encounter.defeat is not None
-    assert scene.encounter.defeat.next_scene == "goblin_encounter_defeat"
+    assert scene.encounter.defeat.next_scene == "goblin_encounter"
     assert scene.encounter.flee is not None
     assert scene.encounter.flee.allowed is True
-    assert scene.encounter.flee.next_scene == "welcome"
+    assert scene.encounter.flee.next_scene == "goblin_encounter"
 
 
 def test_load_creature_can_reference_system_stat_block() -> None:
     stat_blocks = load_bestiary_stat_blocks("content/system")
 
-    creature = load_creature(FIXTURE_ENCOUNTER_DIR / "actors" / "goblin_1", stat_blocks)
+    creature = load_creature(FIXTURE_ENCOUNTER_DIR / "creatures" / "goblin_1", stat_blocks)
 
     assert creature.id == "goblin_1"
     assert creature.name == "Goblin"
@@ -61,30 +57,41 @@ def test_load_creature_can_reference_system_stat_block() -> None:
     assert creature.monster_attacks[1].range_normal == 80
 
 
-def test_game_uses_start_scene_from_settings_when_not_overridden(tmp_path: Path) -> None:
+def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: Path) -> None:
     scenario_dir = tmp_path / "encounter_start"
-    for subdir in ("actors", "items", "scenes", "custom_stat_blocks"):
+    for subdir in ("creatures", "items", "encounters", "custom_stat_blocks"):
         (scenario_dir / subdir).mkdir(parents=True, exist_ok=True)
-    (scenario_dir / "settings.json").write_text('{"start_scene": "arena"}\n', encoding="utf-8")
-    (scenario_dir / "actors" / "player").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "actors" / "player").read_text(encoding="utf-8"),
+    (scenario_dir / "settings.json").write_text(
+        '{"encounters": ["arena", "arena_two"]}\n', encoding="utf-8"
+    )
+    (scenario_dir / "creatures" / "player").write_text(
+        (FIXTURE_ENCOUNTER_DIR / "creatures" / "player").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
     (scenario_dir / "custom_stat_blocks" / "player").write_text(
         (FIXTURE_ENCOUNTER_DIR / "custom_stat_blocks" / "player").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
-    (scenario_dir / "scenes" / "arena").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "scenes" / "goblin_encounter").read_text(encoding="utf-8").replace(
-            '"id": "goblin_encounter"',
-            '"id": "arena"',
+    (scenario_dir / "encounters" / "arena").write_text(
+        (FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter").read_text(encoding="utf-8").replace(
+            '"id":  "goblin_encounter"',
+            '"id":  "arena"',
         ),
+        encoding="utf-8",
+    )
+    (scenario_dir / "encounters" / "arena_two").write_text(
+        (FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter")
+        .read_text(encoding="utf-8")
+        .replace('"id":  "goblin_encounter"', '"id":  "arena_two"'),
         encoding="utf-8",
     )
 
     scenario = Scenario(str(scenario_dir))
 
     assert scenario.start_scene == "arena"
+    assert scenario.encounter_order == ("arena", "arena_two")
+    assert scenario.scenes["arena"].encounter.victory.next_scene == "arena_two"
+    assert scenario.scenes["arena_two"].encounter.victory.next_scene == "arena_two"
 
 
 def test_game_loads_rule_settings_from_settings_json() -> None:
