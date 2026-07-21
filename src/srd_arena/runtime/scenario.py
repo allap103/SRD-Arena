@@ -8,12 +8,10 @@ from ..content.loaders import (
     load_bestiary_stat_blocks,
     load_class_blocks,
     load_custom_stat_blocks,
-    load_item,
     load_optional_feature_blocks,
     load_encounter,
     load_spell_catalog,
     load_subclass_blocks,
-    load_system_item_catalog,
     load_system_items,
 )
 from ..domain.creatures import Creature
@@ -59,26 +57,14 @@ class Scenario:
         self.spell_catalog = load_spell_catalog(self.system_directory)
         self.optional_feature_blocks = load_optional_feature_blocks(self.system_directory)
         self.custom_stat_blocks = load_custom_stat_blocks(self.directory / "custom_stat_blocks")
-        self.system_item_catalog = load_system_item_catalog(self.system_directory)
         self.scenes, self.creatures = self.load_encounters_from_directory(
             self.directory / "encounters"
         )
         self.encounter_order = settings.encounters
         self._link_encounters()
-        self.items = self._merge_items(
-            load_system_items(self.system_directory),
-            self.load_items_from_directory(self.directory / "items"),
-        )
+        self.items = load_system_items(self.system_directory)
         self.start_scene = start_scene or self.encounter_order[0]
         self.control_mode = control_mode
-
-    def load_items_from_directory(self, directory: str | Path) -> list[Item]:
-        return [load_item(path, self.system_item_catalog) for path in Path(directory).glob("*")]
-
-    def _merge_items(self, system_items: list[Item], local_items: list[Item]) -> list[Item]:
-        items_by_id = {item.id: item for item in system_items}
-        items_by_id.update({item.id: item for item in local_items})
-        return list(items_by_id.values())
 
     def load_encounters_from_directory(
         self, directory: str | Path

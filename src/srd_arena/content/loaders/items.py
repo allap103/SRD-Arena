@@ -1,10 +1,8 @@
 from pathlib import Path
 
-from ..schemas import ItemSchema
 from ...domain.item import ArmorStat, Item, WeaponStat
-from .catalogs import _find_system_item, load_system_item_catalog
-from .source_data import SOURCE_PRIORITY, _load_json, _slug
-from .types import SystemItemCatalog
+from .catalogs import load_system_item_catalog
+from .source_data import SOURCE_PRIORITY, _slug
 
 
 def load_system_items(directory: str | Path) -> list[Item]:
@@ -130,46 +128,6 @@ def _property_name(value: str) -> str:
         "T": "thrown",
         "2H": "two-handed",
     }.get(value.split("|", 1)[0], value.lower())
-
-
-def load_item(path: str | Path, system_items: SystemItemCatalog | None = None) -> Item:
-    schema = ItemSchema.model_validate(_load_json(path))
-    if schema.item_ref is not None:
-        if system_items is None:
-            raise ValueError(f"Item '{schema.id}' references a system item, but no system item catalog was loaded.")
-        raw_item = _find_system_item(schema.item_ref.name, schema.item_ref.source, system_items)
-        item = _build_system_item(raw_item)
-        item.id = schema.id
-        if schema.name is not None:
-            item.name = schema.name
-        if schema.description:
-            item.description = schema.description
-        return item
-
-    assert schema.name is not None
-    assert schema.category is not None
-    return Item(
-        id=schema.id,
-        name=schema.name,
-        description=schema.description,
-        category=schema.category,
-        weapon_stat=_build_weapon_stat_from_schema(schema.weapon_stat),
-        armor_stat=_build_armor_stat_from_schema(schema.armor_stat),
-        item_type=schema.item_type,
-        misc_tags=list(schema.misc_tags),
-    )
-
-
-def _build_weapon_stat_from_schema(schema: object) -> WeaponStat | None:
-    if schema is None:
-        return None
-    return _build_weapon_stat(**schema.model_dump())
-
-
-def _build_armor_stat_from_schema(schema: object) -> ArmorStat | None:
-    if schema is None:
-        return None
-    return _build_armor_stat(**schema.model_dump())
 
 
 def _build_weapon_stat(

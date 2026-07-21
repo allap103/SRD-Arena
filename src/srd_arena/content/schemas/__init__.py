@@ -5,7 +5,6 @@ from .creature import (
     EQUIPMENT_SLOTS,
     StatBlockReferenceSchema,
 )
-from .item import ArmorStatSchema, ItemReferenceSchema, ItemSchema, WeaponStatSchema
 from .encounter import (
     BehaviorSchema,
     EncounterCreatureSchema,
@@ -19,7 +18,6 @@ from .encounter import (
 __all__ = [
     "CreatureSchema",
     "CreatureItemReferenceSchema",
-    "ArmorStatSchema",
     "AttributesSchema",
     "BehaviorSchema",
     "EQUIPMENT_SLOTS",
@@ -28,9 +26,6 @@ __all__ = [
     "EncounterOutcomeSchema",
     "FleeSchema",
     "GridSchema",
-    "ItemSchema",
-    "ItemReferenceSchema",
     "PositionSchema",
     "StatBlockReferenceSchema",
-    "WeaponStatSchema",
 ]

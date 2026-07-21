@@ -7,7 +7,7 @@ from .catalogs import (
     load_spell_catalog,
     load_subclass_blocks,
 )
-from .items import load_item, load_system_item_catalog, load_system_items
+from .items import load_system_item_catalog, load_system_items
 from .encounters import load_encounter
 from .types import (
     ClassCatalog,
@@ -31,7 +31,6 @@ __all__ = [
     "load_bestiary_stat_blocks",
     "load_class_blocks",
     "load_custom_stat_blocks",
-    "load_item",
     "load_optional_feature_blocks",
     "load_encounter",
     "load_spell_catalog",

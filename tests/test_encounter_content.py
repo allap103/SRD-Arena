@@ -58,7 +58,7 @@ def test_nested_creature_can_reference_system_stat_block() -> None:
 
 def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: Path) -> None:
     scenario_dir = tmp_path / "encounter_start"
-    for subdir in ("items", "encounters", "custom_stat_blocks"):
+    for subdir in ("encounters", "custom_stat_blocks"):
         (scenario_dir / subdir).mkdir(parents=True, exist_ok=True)
     (scenario_dir / "settings.json").write_text(
         '{"encounters": ["arena", "arena_two"]}\n', encoding="utf-8"

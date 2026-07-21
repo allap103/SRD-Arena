@@ -8,7 +8,7 @@ from srd_arena import main as launcher
 
 
 def _make_scenario_dir(path: Path) -> Path:
-    for subdir in ("items", "encounters"):
+    for subdir in ("encounters",):
         (path / subdir).mkdir(parents=True, exist_ok=True)
     return path
 
