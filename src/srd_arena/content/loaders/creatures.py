@@ -53,10 +53,27 @@ def load_creature(
     subclass_blocks: SubclassCatalog | None = None,
     spell_catalog: SpellCatalog | None = None,
 ) -> Creature:
-    schema = _resolve_creature_schema(
+    return build_creature(
         CreatureSchema.model_validate(_load_json(path)),
+        stat_blocks,
+        class_blocks,
         custom_stat_blocks,
+        optional_features,
+        subclass_blocks,
+        spell_catalog,
     )
+
+
+def build_creature(
+    schema: CreatureSchema,
+    stat_blocks: StatBlockCatalog | None = None,
+    class_blocks: ClassCatalog | None = None,
+    custom_stat_blocks: CustomStatBlockCatalog | None = None,
+    optional_features: OptionalFeatureCatalog | None = None,
+    subclass_blocks: SubclassCatalog | None = None,
+    spell_catalog: SpellCatalog | None = None,
+) -> Creature:
+    schema = _resolve_creature_schema(schema, custom_stat_blocks)
     stat_block = (
         _find_stat_block(schema.stat_block.name, schema.stat_block.source, stat_blocks)
         if schema.stat_block

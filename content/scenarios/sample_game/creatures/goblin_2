@@ -1,8 +1,0 @@
-{
-    "id": "goblin_2",
-    "token_image": "tokens/goblin.png",
-    "stat_block": {
-        "name": "Goblin",
-        "source": "MM"
-    }
-}

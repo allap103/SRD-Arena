@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .paths import SCENARIOS_ROOT
 
-VALID_SCENARIO_SUBDIRS = ("creatures", "items", "encounters")
+VALID_SCENARIO_SUBDIRS = ("items", "encounters")
 
 
 @dataclass(frozen=True)

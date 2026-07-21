@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..content.loaders import (
-    load_creature,
     load_bestiary_stat_blocks,
     load_class_blocks,
     load_custom_stat_blocks,
@@ -61,31 +60,17 @@ class Scenario:
         self.optional_feature_blocks = load_optional_feature_blocks(self.system_directory)
         self.custom_stat_blocks = load_custom_stat_blocks(self.directory / "custom_stat_blocks")
         self.system_item_catalog = load_system_item_catalog(self.system_directory)
-        self.scenes = self.load_encounters_from_directory(self.directory / "encounters")
+        self.scenes, self.creatures = self.load_encounters_from_directory(
+            self.directory / "encounters"
+        )
         self.encounter_order = settings.encounters
         self._link_encounters()
-        self.creatures = self.load_creatures_from_directory(self.directory)
         self.items = self._merge_items(
             load_system_items(self.system_directory),
             self.load_items_from_directory(self.directory / "items"),
         )
         self.start_scene = start_scene or self.encounter_order[0]
         self.control_mode = control_mode
-
-    def load_creatures_from_directory(self, directory: str | Path) -> list[Creature]:
-        creature_dir = Path(directory) / "creatures"
-        return [
-            load_creature(
-                path,
-                self.stat_blocks,
-                self.class_blocks,
-                self.custom_stat_blocks,
-                self.optional_feature_blocks,
-                self.subclass_blocks,
-                self.spell_catalog,
-            )
-            for path in creature_dir.glob("*")
-        ]
 
     def load_items_from_directory(self, directory: str | Path) -> list[Item]:
         return [load_item(path, self.system_item_catalog) for path in Path(directory).glob("*")]
@@ -95,11 +80,30 @@ class Scenario:
         items_by_id.update({item.id: item for item in local_items})
         return list(items_by_id.values())
 
-    def load_encounters_from_directory(self, directory: str | Path) -> dict[str, Scene]:
-        return {
-            encounter.id: encounter
-            for encounter in (load_encounter(path) for path in Path(directory).glob("*"))
+    def load_encounters_from_directory(
+        self, directory: str | Path
+    ) -> tuple[dict[str, Scene], list[Creature]]:
+        loaded = [
+            load_encounter(
+                path,
+                self.stat_blocks,
+                self.class_blocks,
+                self.custom_stat_blocks,
+                self.optional_feature_blocks,
+                self.subclass_blocks,
+                self.spell_catalog,
+            )
+            for path in Path(directory).glob("*")
+        ]
+        creatures_by_id = {
+            creature.id: creature
+            for encounter in loaded
+            for creature in encounter.creatures
         }
+        return (
+            {encounter.scene.id: encounter.scene for encounter in loaded},
+            list(creatures_by_id.values()),
+        )
 
     def _link_encounters(self) -> None:
         if not self.encounter_order:

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from srd_arena.content.loaders import load_creature, load_bestiary_stat_blocks, load_encounter
+from srd_arena.content.loaders import load_creature
 from srd_arena.runtime.save import load_from_file, save_to_file
 from srd_arena.runtime.scenario import Scenario
 
@@ -10,9 +10,8 @@ SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "sam
 
 
 def test_load_encounter_parses_definition() -> None:
-    encounter_path = FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter"
-
-    scene = load_encounter(encounter_path)
+    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
+    scene = scenario.scenes["goblin_encounter"]
 
     assert scene.id == "goblin_encounter"
     assert scene.encounter.grid.width == 13
@@ -39,10 +38,9 @@ def test_load_encounter_parses_definition() -> None:
     assert scene.encounter.flee.next_scene == "goblin_encounter"
 
 
-def test_load_creature_can_reference_system_stat_block() -> None:
-    stat_blocks = load_bestiary_stat_blocks("content/system")
-
-    creature = load_creature(FIXTURE_ENCOUNTER_DIR / "creatures" / "goblin_1", stat_blocks)
+def test_nested_creature_can_reference_system_stat_block() -> None:
+    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
+    creature = scenario.get_creature("goblin_1")
 
     assert creature.id == "goblin_1"
     assert creature.name == "Goblin"
@@ -60,14 +58,10 @@ def test_load_creature_can_reference_system_stat_block() -> None:
 
 def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: Path) -> None:
     scenario_dir = tmp_path / "encounter_start"
-    for subdir in ("creatures", "items", "encounters", "custom_stat_blocks"):
+    for subdir in ("items", "encounters", "custom_stat_blocks"):
         (scenario_dir / subdir).mkdir(parents=True, exist_ok=True)
     (scenario_dir / "settings.json").write_text(
         '{"encounters": ["arena", "arena_two"]}\n', encoding="utf-8"
-    )
-    (scenario_dir / "creatures" / "player").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "creatures" / "player").read_text(encoding="utf-8"),
-        encoding="utf-8",
     )
     (scenario_dir / "custom_stat_blocks" / "player").write_text(
         (FIXTURE_ENCOUNTER_DIR / "custom_stat_blocks" / "player").read_text(encoding="utf-8"),

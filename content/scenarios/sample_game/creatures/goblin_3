@@ -1,8 +1,0 @@
-{
-    "id": "goblin_3",
-    "token_image": "tokens/goblin.png",
-    "stat_block": {
-        "name": "Goblin Warrior",
-        "source": "XMM"
-    }
-}

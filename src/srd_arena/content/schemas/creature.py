@@ -90,3 +90,6 @@ class SubclassReferenceSchema(BaseModel):
     source: str | None = None
     class_name: str | None = None
     class_source: str | None = None
+
+
+CreatureSchema.model_rebuild()

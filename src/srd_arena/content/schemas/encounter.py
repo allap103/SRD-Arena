@@ -2,6 +2,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .creature import CreatureSchema
+
 
 class PositionSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -26,12 +28,12 @@ class BehaviorSchema(BaseModel):
     path: list[PositionSchema] = Field(default_factory=list)
 
 
-class EncounterCreatureSchema(BaseModel):
+class EncounterCreatureSchema(CreatureSchema):
     model_config = ConfigDict(extra="forbid")
 
-    creature_id: str
     start: PositionSchema
-    behavior: BehaviorSchema
+    team_id: str
+    behavior: BehaviorSchema | None = None
 
 
 class EncounterTeamSchema(BaseModel):
@@ -39,7 +41,6 @@ class EncounterTeamSchema(BaseModel):
 
     id: str
     name: str
-    members: list[str]
     controller: Literal["user", "ai"]
 
 
@@ -59,9 +60,11 @@ class EncounterDefinitionSchema(BaseModel):
     id: str
     description: str
     grid: GridSchema
-    player_start: PositionSchema
     creatures: list[EncounterCreatureSchema] = Field(default_factory=list)
     teams: list[EncounterTeamSchema] = Field(default_factory=list)
     victory: EncounterOutcomeSchema = Field(default_factory=EncounterOutcomeSchema)
     defeat: EncounterOutcomeSchema = Field(default_factory=EncounterOutcomeSchema)
     flee: FleeSchema | None = None
+
+
+EncounterDefinitionSchema.model_rebuild()
