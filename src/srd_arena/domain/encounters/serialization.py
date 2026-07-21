@@ -30,7 +30,7 @@ def export_decision(self: EncounterState) -> dict[str, object]:
 def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
     active_creature_ref = self.current_decision().actor_ref
     return {
-        "scene_id": self.scene_id,
+        "encounter_id": self.encounter_id,
         "grid": {
             "width": self.definition.grid.width,
             "height": self.definition.grid.height,

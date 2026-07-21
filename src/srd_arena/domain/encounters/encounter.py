@@ -62,7 +62,7 @@ from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 from ..creatures import Creature
 from ..item import Item
 from ..geometry import Position
-from ..scene import Encounter
+from .definitions import EncounterDefinition
 from ..effects.conditions import Status
 from ..config import RulesConfig
 from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
@@ -207,29 +207,47 @@ class EncounterState(EncounterStateData):
     @classmethod
     def from_definition(
         cls,
-        scene_id: str,
-        definition: Encounter,
+        encounter_id: str,
+        definition: EncounterDefinition,
         player: Creature,
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
         control_mode: str = "default",
         rules_config: RulesConfig | None = None,
     ) -> EncounterState:
-        enemies = [
-            EncounterEnemyState(
-                actor_id=enemy.actor_id,
-                creature=deepcopy(creature_templates[enemy.actor_id]),
-                position=Position(enemy.start.x, enemy.start.y),
-                behavior=deepcopy(enemy.behavior),
-            )
-            for enemy in definition.enemies
+        player_participants = [
+            participant
+            for participant in definition.participants
+            if participant.actor_id == player.id
         ]
+        if len(player_participants) != 1:
+            raise ValueError(
+                f"Encounter '{definition.id}' must place player '{player.id}' exactly once."
+            )
+        player_participant = player_participants[0]
+        enemies = []
+        for participant in definition.participants:
+            if participant.actor_id == player.id:
+                continue
+            if participant.behavior is None:
+                raise ValueError(
+                    f"Encounter '{definition.id}' participant "
+                    f"'{participant.actor_id}' requires a behavior."
+                )
+            enemies.append(
+                EncounterEnemyState(
+                    actor_id=participant.actor_id,
+                    creature=deepcopy(creature_templates[participant.actor_id]),
+                    position=Position(participant.start.x, participant.start.y),
+                    behavior=deepcopy(participant.behavior),
+                )
+            )
         state = cls(
-            scene_id=scene_id,
+            encounter_id=encounter_id,
             definition=definition,
             player_position=Position(
-                definition.player_start.x,
-                definition.player_start.y,
+                player_participant.start.x,
+                player_participant.start.y,
             ),
             enemies=enemies,
             control_mode=control_mode,
@@ -246,7 +264,7 @@ class EncounterState(EncounterStateData):
     @classmethod
     def from_snapshot(
         cls,
-        definition: Encounter,
+        definition: EncounterDefinition,
         snapshot: EncounterSnapshot,
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,

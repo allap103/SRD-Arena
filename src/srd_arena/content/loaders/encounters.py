@@ -3,15 +3,14 @@ from pathlib import Path
 
 from ..schemas import CreatureSchema, EncounterDefinitionSchema
 from ...domain.creatures import Creature
-from ...domain.geometry import Grid, Position
-from ...domain.scene import (
-    Behavior,
-    Encounter,
-    EncounterEnemy,
-    EncounterResolution,
+from ...domain.encounters import (
+    EncounterBehavior,
+    EncounterDefinition,
+    EncounterParticipant,
     EncounterTeam,
-    Scene,
+    EncounterTransition,
 )
+from ...domain.geometry import Grid, Position
 from .source_data import _load_json
 from .creatures import build_creature
 from .types import (
@@ -26,7 +25,7 @@ from .types import (
 
 @dataclass(frozen=True)
 class LoadedEncounter:
-    scene: Scene
+    definition: EncounterDefinition
     creatures: tuple[Creature, ...]
 
 
@@ -34,11 +33,10 @@ def _build_position(position) -> Position:
     return Position(x=position.x, y=position.y)
 
 
-def _build_encounter(schema: EncounterDefinitionSchema) -> Encounter:
+def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
     players = [creature for creature in schema.creatures if creature.id == "player"]
     if len(players) != 1:
         raise ValueError(f"Encounter '{schema.id}' must define exactly one player creature.")
-    player = players[0]
     team_ids = {team.id for team in schema.teams}
     unknown_team_ids = sorted(
         {creature.team_id for creature in schema.creatures} - team_ids
@@ -60,14 +58,14 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> Encounter:
         )
         for team in schema.teams
     ]
-    return Encounter(
+    return EncounterDefinition(
+        id=schema.id,
         grid=Grid(width=schema.grid.width, height=schema.grid.height),
-        player_start=_build_position(player.start),
-        enemies=[
-            EncounterEnemy(
+        participants=[
+            EncounterParticipant(
                 actor_id=creature.id,
                 start=_build_position(creature.start),
-                behavior=Behavior(
+                behavior=EncounterBehavior(
                     type=creature.behavior.type,
                     anchor=_build_position(creature.behavior.anchor)
                     if creature.behavior and creature.behavior.anchor
@@ -79,17 +77,18 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> Encounter:
                             creature.behavior.path if creature.behavior else []
                         )
                     ],
-                ),
+                )
+                if creature.behavior
+                else None,
             )
             for creature in schema.creatures
-            if creature.id != "player"
         ],
         teams=teams,
-        victory=EncounterResolution(
-            next_scene=schema.id,
+        victory=EncounterTransition(
+            next_encounter_id=schema.id,
         ),
-        defeat=EncounterResolution(
-            next_scene=schema.id,
+        defeat=EncounterTransition(
+            next_encounter_id=schema.id,
         ),
     )
 
@@ -105,10 +104,7 @@ def load_encounter(
 ) -> LoadedEncounter:
     schema = EncounterDefinitionSchema.model_validate(_load_json(path))
     return LoadedEncounter(
-        scene=Scene(
-            id=schema.id,
-            encounter=_build_encounter(schema),
-        ),
+        definition=_build_encounter(schema),
         creatures=tuple(
             build_creature(
                 CreatureSchema.model_validate(

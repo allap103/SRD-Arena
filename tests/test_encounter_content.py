@@ -11,25 +11,25 @@ TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
 def test_load_encounter_parses_definition() -> None:
     scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
-    scene = scenario.scenes["goblin_encounter"]
+    encounter = scenario.encounters["goblin_encounter"]
 
-    assert scene.id == "goblin_encounter"
-    assert scene.encounter.grid.width == 13
-    assert scene.encounter.grid.height == 13
-    assert scene.encounter.player_start.x == 1
-    assert scene.encounter.player_start.y == 6
-    assert len(scene.encounter.enemies) == 3
-    assert [enemy.actor_id for enemy in scene.encounter.enemies] == [
+    assert encounter.id == "goblin_encounter"
+    assert encounter.grid.width == 13
+    assert encounter.grid.height == 13
+    assert encounter.participants[0].start.x == 1
+    assert encounter.participants[0].start.y == 6
+    assert len(encounter.participants) == 4
+    assert [participant.actor_id for participant in encounter.participants[1:]] == [
         "goblin_1",
         "goblin_2",
         "goblin_3",
     ]
-    assert scene.encounter.enemies[0].behavior.type == "chase"
-    assert scene.encounter.enemies[1].behavior.anchor is not None
-    assert scene.encounter.enemies[1].behavior.radius == 2
-    assert len(scene.encounter.enemies[2].behavior.path) == 3
-    assert scene.encounter.victory.next_scene == "goblin_encounter"
-    assert scene.encounter.defeat.next_scene == "goblin_encounter"
+    assert encounter.participants[1].behavior.type == "chase"
+    assert encounter.participants[2].behavior.anchor is not None
+    assert encounter.participants[2].behavior.radius == 2
+    assert len(encounter.participants[3].behavior.path) == 3
+    assert encounter.victory.next_encounter_id == "goblin_encounter"
+    assert encounter.defeat.next_encounter_id == "goblin_encounter"
 
 
 def test_nested_creature_can_reference_system_stat_block() -> None:
@@ -80,8 +80,8 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
 
     assert scenario.start_scene == "arena"
     assert scenario.encounter_order == ("arena", "arena_two")
-    assert scenario.scenes["arena"].encounter.victory.next_scene == "arena_two"
-    assert scenario.scenes["arena_two"].encounter.victory.next_scene == "arena_two"
+    assert scenario.encounters["arena"].victory.next_encounter_id == "arena_two"
+    assert scenario.encounters["arena_two"].victory.next_encounter_id == "arena_two"
 
 
 def test_game_loads_rule_settings_from_config_json() -> None:

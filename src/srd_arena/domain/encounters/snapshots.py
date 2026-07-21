@@ -23,7 +23,7 @@ from ..creatures import Creature
 from ..item import Item
 from ..config import RulesConfig
 from ..geometry import Position
-from ..scene import Encounter
+from .definitions import EncounterDefinition
 from ..effects.conditions import Status, StatusSnapshot
 
 if TYPE_CHECKING:
@@ -32,14 +32,16 @@ if TYPE_CHECKING:
 
 def restore_snapshot(
     state_type: type[EncounterState],
-    definition: Encounter,
+    definition: EncounterDefinition,
     snapshot: EncounterSnapshot,
     creature_templates: dict[str, Creature],
     item_templates: dict[str, Item] | None = None,
     rules_config: RulesConfig | None = None,
 ) -> EncounterState:
-    behavior_by_index = {
-        index: enemy.behavior for index, enemy in enumerate(definition.enemies)
+    behavior_by_actor_id = {
+        participant.actor_id: participant.behavior
+        for participant in definition.participants
+        if participant.behavior is not None
     }
     enemies = []
     for index, saved_enemy in enumerate(snapshot.enemies):
@@ -50,14 +52,14 @@ def restore_snapshot(
                 actor_id=saved_enemy.actor_id,
                 creature=creature,
                 position=Position(saved_enemy.position.x, saved_enemy.position.y),
-                behavior=deepcopy(behavior_by_index[index]),
+                behavior=deepcopy(behavior_by_actor_id[saved_enemy.actor_id]),
                 patrol_index=saved_enemy.patrol_index,
                 reaction_available=saved_enemy.reaction_available,
                 movement_remaining=saved_enemy.movement_remaining,
             )
         )
     state = state_type(
-        scene_id=snapshot.scene_id,
+        encounter_id=snapshot.encounter_id,
         definition=definition,
         player_position=Position(snapshot.player_position.x, snapshot.player_position.y),
         enemies=enemies,
@@ -153,7 +155,7 @@ def restore_snapshot(
 
 def create_snapshot(state: EncounterState) -> EncounterSnapshot:
     return EncounterSnapshot(
-        scene_id=state.scene_id,
+        encounter_id=state.encounter_id,
         player_position=Position(state.player_position.x, state.player_position.y),
         control_mode=state.control_mode,
         turn_index=state.turn_index,

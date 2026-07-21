@@ -6,7 +6,7 @@ from typing import Generator
 from ..creatures import Creature
 from ..item import Item
 from ..geometry import Position
-from ..scene import Behavior, Encounter
+from .definitions import EncounterBehavior, EncounterDefinition
 from ..effects.conditions import Status, StatusSnapshot
 from ..config import RulesConfig
 from ..rolls.dice import CheckResult, DicePoolResult
@@ -122,7 +122,7 @@ class EncounterEnemyState:
     actor_id: str
     creature: Creature
     position: Position
-    behavior: Behavior
+    behavior: EncounterBehavior
     patrol_index: int = 0
     reaction_available: bool = True
     movement_remaining: int | None = None
@@ -216,7 +216,7 @@ class PendingAttackSnapshot:
 
 @dataclass
 class EncounterSnapshot:
-    scene_id: str
+    encounter_id: str
     player_position: Position
     control_mode: str = "default"
     turn_index: int = 0
@@ -298,8 +298,8 @@ class AttackSource:
 
 @dataclass
 class EncounterStateData:
-    scene_id: str
-    definition: Encounter
+    encounter_id: str
+    definition: EncounterDefinition
     player_position: Position
     enemies: list[EncounterEnemyState]
     control_mode: str = "default"

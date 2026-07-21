@@ -23,7 +23,7 @@ def _player_first_initiative(monkeypatch):
 
 def test_tactical_fixture_loads_explicit_teams():
     game = Scenario(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter")
-    encounter = game.scenes["goblin_encounter"].encounter
+    encounter = game.encounters["goblin_encounter"]
 
     assert encounter is not None
     assert [(team.id, team.controller) for team in encounter.teams] == [

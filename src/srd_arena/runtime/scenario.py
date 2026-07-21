@@ -15,12 +15,12 @@ from ..content.loaders import (
     load_system_items,
 )
 from ..domain.creatures import Creature
+from ..domain.encounters import EncounterDefinition
 from ..domain.item import Item
 from ..domain.config import (
     DEFAULT_DIRECTIONAL_AOE_CELL_COVERAGE_THRESHOLD,
     RulesConfig,
 )
-from ..domain.scene import Scene
 from ..runtime.session import Session
 from ..content.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
 
@@ -36,7 +36,7 @@ class ScenarioConfig:
 
 
 class Scenario:
-    scenes: dict[str, Scene]
+    encounters: dict[str, EncounterDefinition]
     creatures: list[Creature]
     items: list[Item]
     rules_config: RulesConfig
@@ -59,7 +59,7 @@ class Scenario:
         self.spell_catalog = load_spell_catalog(self.system_directory)
         self.optional_feature_blocks = load_optional_feature_blocks(self.system_directory)
         self.player_characters = load_player_characters(self.directory / "player_characters")
-        self.scenes, self.creatures = self.load_encounters_from_directory(
+        self.encounters, self.creatures = self.load_encounters_from_directory(
             self.directory / "encounters"
         )
         self.encounter_order = config.encounters
@@ -70,7 +70,7 @@ class Scenario:
 
     def load_encounters_from_directory(
         self, directory: str | Path
-    ) -> tuple[dict[str, Scene], list[Creature]]:
+    ) -> tuple[dict[str, EncounterDefinition], list[Creature]]:
         loaded = [
             load_encounter(
                 path,
@@ -89,14 +89,18 @@ class Scenario:
             for creature in encounter.creatures
         }
         return (
-            {encounter.scene.id: encounter.scene for encounter in loaded},
+            {encounter.definition.id: encounter.definition for encounter in loaded},
             list(creatures_by_id.values()),
         )
 
     def _link_encounters(self) -> None:
         if not self.encounter_order:
             raise ValueError("A scenario must contain at least one encounter.")
-        missing = [encounter_id for encounter_id in self.encounter_order if encounter_id not in self.scenes]
+        missing = [
+            encounter_id
+            for encounter_id in self.encounter_order
+            if encounter_id not in self.encounters
+        ]
         if missing:
             raise ValueError(f"Scenario references missing encounters: {', '.join(missing)}")
         for index, encounter_id in enumerate(self.encounter_order):
@@ -105,9 +109,9 @@ class Scenario:
                 if index + 1 < len(self.encounter_order)
                 else encounter_id
             )
-            encounter = self.scenes[encounter_id].encounter
-            encounter.victory.next_scene = next_encounter_id
-            encounter.defeat.next_scene = encounter_id
+            encounter = self.encounters[encounter_id]
+            encounter.victory.next_encounter_id = next_encounter_id
+            encounter.defeat.next_encounter_id = encounter_id
 
     def get_creature(self, actor_id: str) -> Creature:
         for creature in self.creatures:
@@ -121,7 +125,7 @@ class Scenario:
         control_mode: str | None = None,
     ) -> Session:
         return Session(
-            scenes=self.scenes,
+            encounters=self.encounters,
             player=self.get_creature(player_creature_id),
             creature_templates={creature.id: creature for creature in self.creatures},
             item_templates={item.id: item for item in self.items},

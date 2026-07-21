@@ -6,8 +6,8 @@ from ..domain.encounters.encounter import EncounterState
 from ..domain.encounters.models import EncounterAction, EncounterSnapshot
 from ..frontends.shared.combat import render_encounter_text
 from ..domain.creatures import Creature
+from ..domain.encounters import EncounterDefinition
 from ..domain.item import Item
-from ..domain.scene import Scene
 from ..domain.config import RulesConfig
 from ..frontends.shared.models import ActionView, SceneView, TurnResult
 from ..content.paths import SCENARIOS_ROOT
@@ -27,7 +27,7 @@ class PendingSceneTransition:
 class Session:
     def __init__(
         self,
-        scenes: dict[str, Scene],
+        encounters: dict[str, EncounterDefinition],
         player: Creature,
         creature_templates: dict[str, Creature] | None = None,
         item_templates: dict[str, Item] | None = None,
@@ -38,7 +38,7 @@ class Session:
         ai_action_limit: int | None = None,
         rules_config: RulesConfig | None = None,
     ):
-        self.scenes = scenes
+        self.encounters = encounters
         self.player = player
         self.creature_templates = creature_templates or {player.id: player}
         self.item_templates = item_templates or {}
@@ -55,8 +55,8 @@ class Session:
         self.pending_scene_transition: PendingSceneTransition | None = None
 
     @property
-    def current_scene(self) -> Scene:
-        return self.scenes[self.current_scene_id]
+    def current_encounter(self) -> EncounterDefinition:
+        return self.encounters[self.current_scene_id]
 
     def get_scene_view(self) -> SceneView:
         if self.pending_scene_transition is not None:
@@ -72,14 +72,14 @@ class Session:
             ]
             system_action_details = self._system_action_details(1)
             return SceneView(
-                scene_id=self.current_scene.id,
+                scene_id=self.current_encounter.id,
                 scene_text=self.pending_scene_transition.message,
                 choices=[CONTINUE_CHOICE_TEXT, SAVE_CHOICE_TEXT, LOAD_CHOICE_TEXT, EXIT_CHOICE_TEXT],
                 action_details=action_details + system_action_details,
             )
 
         self._ensure_encounter_state()
-        scene = self.current_scene
+        encounter = self.current_encounter
         assert self.encounter_state is not None
         scene_text = render_encounter_text(self.encounter_state, self.player)
         self._encounter_actions = self.encounter_state.available_actions(self.player)
@@ -105,7 +105,7 @@ class Session:
         choices = [action.label for action in action_details]
         system_action_details = self._system_action_details(len(choices))
         return SceneView(
-            scene_id=scene.id,
+            scene_id=encounter.id,
             scene_text=scene_text,
             choices=choices + [SAVE_CHOICE_TEXT, LOAD_CHOICE_TEXT, EXIT_CHOICE_TEXT],
             action_details=action_details + system_action_details,
@@ -135,7 +135,8 @@ class Session:
             return self._choose_encounter(choice_index)
         if not 0 <= choice_index < action_count:
             raise IndexError(
-                f"Choice index {choice_index} is out of range for scene '{self.current_scene.id}'."
+                f"Choice index {choice_index} is out of range for encounter "
+                f"'{self.current_encounter.id}'."
             )
         raise RuntimeError("No encounter is active.")
 
@@ -216,7 +217,8 @@ class Session:
     def _choose_encounter(self, choice_index: int) -> TurnResult:
         if not 0 <= choice_index < len(self._encounter_actions):
             raise IndexError(
-                f"Choice index {choice_index} is out of range for encounter scene '{self.current_scene.id}'."
+                f"Choice index {choice_index} is out of range for encounter "
+                f"'{self.current_encounter.id}'."
             )
         if self.encounter_state is None:
             raise RuntimeError("Encounter action requested without an active encounter.")
@@ -253,8 +255,8 @@ class Session:
         progress = self.encounter_state.apply_action(self.player, action)
         messages = progress.messages
         transition = progress.transition
-        if self.player.get_health() <= 0 and self.current_scene.encounter and self.current_scene.encounter.defeat:
-            transition = self.current_scene.encounter.defeat.next_scene
+        if self.player.get_health() <= 0 and self.current_encounter.defeat:
+            transition = self.current_encounter.defeat.next_encounter_id
 
         scene_changed = False
         if transition is not None:
@@ -296,10 +298,9 @@ class Session:
         transition = progress.transition
         if (
             self.player.get_health() <= 0
-            and self.current_scene.encounter
-            and self.current_scene.encounter.defeat
+            and self.current_encounter.defeat
         ):
-            transition = self.current_scene.encounter.defeat.next_scene
+            transition = self.current_encounter.defeat.next_encounter_id
 
         scene_changed = False
         if transition is not None:
@@ -331,12 +332,15 @@ class Session:
         )
 
     def _ensure_encounter_state(self) -> None:
-        scene = self.current_scene
-        if self.encounter_state is not None and self.encounter_state.scene_id == scene.id:
+        encounter = self.current_encounter
+        if (
+            self.encounter_state is not None
+            and self.encounter_state.encounter_id == encounter.id
+        ):
             return
         self.encounter_state = EncounterState.from_definition(
-            scene.id,
-            scene.encounter,
+            encounter.id,
+            encounter,
             self.player,
             self.creature_templates,
             self.item_templates,
@@ -362,11 +366,11 @@ class Session:
         self._encounter_actions = []
         if snapshot is None:
             return
-        scene = self.scenes.get(snapshot.scene_id)
-        if scene is None or scene.encounter is None:
-            raise ValueError(f"Encounter scene '{snapshot.scene_id}' does not exist.")
+        encounter = self.encounters.get(snapshot.encounter_id)
+        if encounter is None:
+            raise ValueError(f"Encounter '{snapshot.encounter_id}' does not exist.")
         self.encounter_state = EncounterState.from_snapshot(
-            scene.encounter,
+            encounter,
             snapshot,
             self.creature_templates,
             self.item_templates,
@@ -393,11 +397,11 @@ class Session:
         )
 
     def _apply_encounter_transition(self, transition: str) -> bool:
-        encounter = self.current_scene.encounter
+        encounter = self.current_encounter
         if (
             encounter is not None
             and encounter.victory is not None
-            and transition == encounter.victory.next_scene
+            and transition == encounter.victory.next_encounter_id
             and self.player.get_health() > 0
         ):
             self.pending_scene_transition = PendingSceneTransition(

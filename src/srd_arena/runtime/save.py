@@ -261,7 +261,7 @@ def restore_save(save: SaveGame, scenario_dir: str | Path) -> Session:
         control_mode=save.control_mode,
     )
 
-    if save.current_scene_id not in session.scenes:
+    if save.current_scene_id not in session.encounters:
         raise ValueError(f"Saved scene '{save.current_scene_id}' does not exist.")
 
     session.player = _restore_player_state(session.player, save.player)
@@ -378,7 +378,7 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
         return None
 
     return EncounterStateModel(
-        scene_id=snapshot.scene_id,
+        scene_id=snapshot.encounter_id,
         player_position=PositionState(
             x=snapshot.player_position.x,
             y=snapshot.player_position.y,
@@ -505,7 +505,7 @@ def _restore_encounter_state(
         return None
 
     return EncounterSnapshot(
-        scene_id=state.scene_id,
+        encounter_id=state.scene_id,
         player_position=Position(x=state.player_position.x, y=state.player_position.y),
         control_mode=state.control_mode,
         turn_index=state.turn_index,

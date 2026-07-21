@@ -1197,9 +1197,9 @@ class GameWindow(QMainWindow):
         is_combat_result = was_in_encounter or encounter_state is not None
         if (
             encounter_state is not None
-            and self._combat_log_scene_id != encounter_state.scene_id
+            and self._combat_log_scene_id != encounter_state.encounter_id
         ):
-            self._sync_combat_log_round(encounter_state.scene_id)
+            self._sync_combat_log_round(encounter_state.encounter_id)
         if is_combat_result:
             roll_views = build_roll_views(result.events)
             messages = without_roll_details(result.messages)

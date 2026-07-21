@@ -288,7 +288,11 @@ class TurnEngine:
             if state._actors_are_opponents("player", _enemy_ref(index))
         ]
         if opponents and all(not enemy.is_alive for enemy in opponents):
-            return state.definition.victory.next_scene if state.definition.victory else None
+            return (
+                state.definition.victory.next_encounter_id
+                if state.definition.victory
+                else None
+            )
         return None
 
     def advance_turn(self, state: EncounterState) -> None:

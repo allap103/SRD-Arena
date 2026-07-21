@@ -633,7 +633,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
     window = CyoaPySide6Window.__new__(CyoaPySide6Window)
     window.session = session
     window._presentation = SimpleNamespace(encounter=object())
-    window._combat_log_scene_id = state.scene_id
+    window._combat_log_scene_id = state.encounter_id
     window.dice_roll_panel = SimpleNamespace(
         append_entry=lambda _messages, _rolls: None,
     )

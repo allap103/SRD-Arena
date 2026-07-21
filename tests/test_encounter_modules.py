@@ -6,7 +6,7 @@ from srd_arena.domain.encounters.participants import (
     creature_controller,
     creature_team_id,
 )
-from srd_arena.domain.scene import EncounterTeam
+from srd_arena.domain.encounters import EncounterTeam
 from srd_arena.domain.effects.conditions import Status
 
 
