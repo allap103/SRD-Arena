@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ..rules.dice import DicePoolResult, DieReplacement, DieRollResult
-from ..rules.types import RuleGrant
+from ..effects.triggered import TriggeredEffect
 from .attacks import damage_roll_detail
 from .models import AttackOutcome, PendingAttack, PendingAttackSnapshot
 
@@ -36,13 +36,13 @@ def snapshot_pending_attack(
         weapon_name=attack.weapon_name,
         continuation=pending.continuation,
         reaction=pending.reaction,
-        rule_id=pending.rule.id,
-        rule_source_type=pending.rule.source_type,
-        rule_source_id=pending.rule.source_id,
-        rule_trigger=pending.rule.trigger,
-        rule_operation=pending.rule.operation,
-        rule_conditions=dict(pending.rule.conditions),
-        rule_parameters=dict(pending.rule.parameters),
+        triggered_effect_id=pending.triggered_effect.id,
+        triggered_effect_source_type=pending.triggered_effect.source_type,
+        triggered_effect_source_id=pending.triggered_effect.source_id,
+        triggered_effect_trigger=pending.triggered_effect.trigger,
+        triggered_effect_operation=pending.triggered_effect.operation,
+        triggered_effect_conditions=dict(pending.triggered_effect.conditions),
+        triggered_effect_parameters=dict(pending.triggered_effect.parameters),
     )
 
 
@@ -103,14 +103,14 @@ def restore_pending_attack(
         target_label=snapshot.target_label,
         attacks_remaining=snapshot.attacks_remaining,
         attack=attack,
-        rule=RuleGrant(
-            id=snapshot.rule_id,
-            source_type=snapshot.rule_source_type,
-            source_id=snapshot.rule_source_id,
-            trigger=snapshot.rule_trigger,
-            operation=snapshot.rule_operation,
-            conditions=dict(snapshot.rule_conditions),
-            parameters=dict(snapshot.rule_parameters),
+        triggered_effect=TriggeredEffect(
+            id=snapshot.triggered_effect_id,
+            source_type=snapshot.triggered_effect_source_type,
+            source_id=snapshot.triggered_effect_source_id,
+            trigger=snapshot.triggered_effect_trigger,
+            operation=snapshot.triggered_effect_operation,
+            conditions=dict(snapshot.triggered_effect_conditions),
+            parameters=dict(snapshot.triggered_effect_parameters),
         ),
         continuation=snapshot.continuation,
         reaction=snapshot.reaction,

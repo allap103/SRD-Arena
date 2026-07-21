@@ -4,7 +4,7 @@ from .equipment import Equipment
 from .inventory import Inventory
 from .attributes import Attributes
 from .class_features import ClassRef, CombatProfile, FeatureGrant, SubclassRef
-from .rules.types import RuleGrant
+from .effects.triggered import TriggeredEffect
 from .monster_attack import MonsterAttack
 from .spellcasting import Spellcasting
 
@@ -21,7 +21,7 @@ class Creature:
     class_ref: ClassRef | None = None
     subclass_ref: SubclassRef | None = None
     feature_grants: list[FeatureGrant] = field(default_factory=list)
-    rule_grants: list[RuleGrant] = field(default_factory=list)
+    triggered_effects: list[TriggeredEffect] = field(default_factory=list)
     combat_profile: CombatProfile = field(default_factory=CombatProfile)
     feature_uses_remaining: dict[str, int] = field(default_factory=dict)
     monster_attacks: list[MonsterAttack] = field(default_factory=list)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .rules.types import RuleGrant
+from .triggered import TriggeredEffect
 
 RELATIONAL_STATUS_NAMES = {"grappled", "grappling"}
 
@@ -16,7 +16,7 @@ class Status:
     target_ref: str
     expires_on_creature_ref: str | None = None
     expires_on_round: int | None = None
-    rules: list[RuleGrant] = field(default_factory=list)
+    triggered_effects: list[TriggeredEffect] = field(default_factory=list)
     tags: set[str] = field(default_factory=set)
 
 
@@ -48,16 +48,16 @@ def build_named_status(
         target_ref=target_ref,
         expires_on_creature_ref=expires_on_creature_ref,
         expires_on_round=expires_on_round,
-        rules=_status_rules(name, target_ref),
+        triggered_effects=_status_effects(name, target_ref),
         tags={name, "condition"},
     )
 
 
-def _status_rules(name: str, target_ref: str) -> list[RuleGrant]:
+def _status_effects(name: str, target_ref: str) -> list[TriggeredEffect]:
     if name != "blinded":
         return []
     return [
-        RuleGrant(
+        TriggeredEffect(
             id=f"{name}:attack-disadvantage:{target_ref}",
             source_type="condition",
             source_id=name,
@@ -65,7 +65,7 @@ def _status_rules(name: str, target_ref: str) -> list[RuleGrant]:
             operation="grant_disadvantage",
             conditions={"attacker_ref": target_ref},
         ),
-        RuleGrant(
+        TriggeredEffect(
             id=f"{name}:defender-advantage:{target_ref}",
             source_type="condition",
             source_id=name,

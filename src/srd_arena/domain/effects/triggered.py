@@ -1,32 +1,45 @@
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field
 
-from .dice import DicePoolResult
-from .types import RuleGrant
+from ..rules.dice import DicePoolResult
 
 
-def matching_rules(
-    rules: Iterable[RuleGrant],
+@dataclass(frozen=True)
+class TriggeredEffect:
+    """A conditional mechanical effect contributed by a rules source."""
+
+    id: str
+    source_type: str
+    source_id: str
+    trigger: str
+    operation: str
+    conditions: dict[str, object] = field(default_factory=dict)
+    parameters: dict[str, object] = field(default_factory=dict)
+
+
+def matching_effects(
+    effects: Iterable[TriggeredEffect],
     trigger: str,
     context: Mapping[str, object],
-) -> list[RuleGrant]:
+) -> list[TriggeredEffect]:
     return [
-        rule
-        for rule in rules
-        if rule.trigger == trigger and _conditions_match(rule.conditions, context)
+        effect
+        for effect in effects
+        if effect.trigger == trigger and _conditions_match(effect.conditions, context)
     ]
 
 
 def reroll_eligible_indices(
-    rule: RuleGrant,
+    effect: TriggeredEffect,
     pool: DicePoolResult,
 ) -> tuple[int, ...]:
-    if rule.operation != "reroll_matching_dice":
+    if effect.operation != "reroll_matching_dice":
         return ()
-    values = rule.parameters.get("values", [])
+    values = effect.parameters.get("values", [])
     if not isinstance(values, list):
         return ()
     qualifying_values = {value for value in values if isinstance(value, int)}
-    maximum_per_die = rule.parameters.get("maximum_per_die", 1)
+    maximum_per_die = effect.parameters.get("maximum_per_die", 1)
     if not isinstance(maximum_per_die, int):
         maximum_per_die = 1
     rerolls_by_index: dict[int, int] = {}

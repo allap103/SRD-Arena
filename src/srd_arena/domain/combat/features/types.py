@@ -3,15 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable
 
+from ...effects.results import EffectResult
+
 DiceRoller = Callable[[int, int], int]
-
-
-@dataclass(frozen=True)
-class EffectResult:
-    kind: str
-    target_ref: str
-    success: bool = True
-    data: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

@@ -7,7 +7,7 @@ from .inventory import Inventory
 from .item import ArmorStat, Item, WeaponStat
 from .scene import Scene
 from .spellcasting import Spell, SpellRef, Spellcasting
-from .status import Status, StatusSnapshot
+from .effects.conditions import Status, StatusSnapshot
 
 __all__ = [
     "Creature",

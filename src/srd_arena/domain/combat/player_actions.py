@@ -6,7 +6,7 @@ from ..creature import Creature
 from ..scene import Position
 from ..size import can_grapple
 from ..rules.dice import resolve_d20
-from .features.types import EffectResult
+from ..effects.results import EffectResult
 from .attacks import has_free_hand
 from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
 from .models import EncounterAction, EncounterProgress

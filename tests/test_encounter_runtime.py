@@ -6,7 +6,7 @@ import pytest
 from srd_arena.domain.combat.encounter import ActionCost, EncounterAction, EncounterState
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.frontends.qt.app import CyoaPySide6Window
-from srd_arena.domain.combat.features import EffectResult
+from srd_arena.domain.effects import EffectResult
 from srd_arena.frontends.shared.session import SpellSlotTrackView, build_session_presentation
 from srd_arena.frontends.shared.models import ActionView
 from srd_arena.runtime.save import load_from_file, save_to_file

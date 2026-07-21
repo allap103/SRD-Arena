@@ -85,7 +85,7 @@ def resolve_player_attack_action(
     if attack.hit and reroll_rule is not None:
         self._open_damage_reroll_decision(
             attack=attack,
-            rule=reroll_rule,
+            triggered_effect=reroll_rule,
             target_index=enemy_index,
             attacker_label=player.name,
             target_label=target_label,

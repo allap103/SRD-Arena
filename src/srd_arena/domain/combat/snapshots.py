@@ -23,7 +23,7 @@ from ..creature import Creature
 from ..item import Item
 from ..rules.config import RulesConfig
 from ..scene import Encounter, Position
-from ..status import Status, StatusSnapshot
+from ..effects.conditions import Status, StatusSnapshot
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

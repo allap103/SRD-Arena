@@ -11,8 +11,11 @@ from ..rules.dice import (
     roll_dice,
     roll_die,
 )
-from ..rules.registry import matching_rules, reroll_eligible_indices
-from ..rules.types import RuleGrant
+from ..effects.triggered import (
+    TriggeredEffect,
+    matching_effects,
+    reroll_eligible_indices,
+)
 from .behaviors import is_adjacent as _is_adjacent
 from .models import AttackOutcome, AttackSource
 
@@ -375,7 +378,7 @@ def can_make_opportunity_attack(
 def matching_damage_reroll_rule(
     attacker: Creature,
     attack: AttackOutcome,
-) -> RuleGrant | None:
+) -> TriggeredEffect | None:
     if attack.damage_roll is None:
         return None
     wielded_with = (
@@ -390,13 +393,13 @@ def matching_damage_reroll_rule(
     }
     return next(
         (
-            rule
-            for rule in matching_rules(
-                attacker.rule_grants,
+            effect
+            for effect in matching_effects(
+                attacker.triggered_effects,
                 "weapon_damage_rolled",
                 context,
             )
-            if reroll_eligible_indices(rule, attack.damage_roll)
+            if reroll_eligible_indices(effect, attack.damage_roll)
         ),
         None,
     )

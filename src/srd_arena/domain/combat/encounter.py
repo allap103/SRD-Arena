@@ -22,7 +22,7 @@ from .action_options import (
     spend_spell_resources as _spend_spell_resources_impl,
     targets_in_area as _targets_in_area_impl,
 )
-from .effects import apply_effects
+from ..effects.application import apply_effects
 from .serialization import (
     export_decision as _export_decision_impl,
     export_pending_action as _export_pending_action_impl,
@@ -63,11 +63,10 @@ from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 from ..creature import Creature
 from ..item import Item
 from ..scene import Encounter, Position
-from ..status import Status
+from ..effects.conditions import Status
 from ..rules.config import RulesConfig
 from ..rules.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
-from ..rules.registry import matching_rules
-from ..rules.types import RuleGrant
+from ..effects.triggered import TriggeredEffect, matching_effects
 from .turn_flow import TURN_ENGINE, TurnEngine
 from .conditions import (
     apply_status as _apply_status_impl,
@@ -367,22 +366,22 @@ class EncounterState(EncounterStateData):
             for status in self.conditions
         ):
             modes.append("disadvantage")
-        for rule in matching_rules(
-            self._active_status_rules(),
+        for effect in matching_effects(
+            self._active_status_effects(),
             "attack_roll_created",
             context,
         ):
-            if rule.operation == "grant_advantage":
+            if effect.operation == "grant_advantage":
                 modes.append("advantage")
-            elif rule.operation == "grant_disadvantage":
+            elif effect.operation == "grant_disadvantage":
                 modes.append("disadvantage")
         return _combine_roll_modes(modes)
 
-    def _active_status_rules(self) -> list[RuleGrant]:
+    def _active_status_effects(self) -> list[TriggeredEffect]:
         return [
-            rule
+            effect
             for status in self.conditions
-            for rule in status.rules
+            for effect in status.triggered_effects
         ]
 
     def active_creature(self) -> tuple[str, int | None]:

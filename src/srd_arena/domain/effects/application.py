@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from .features.types import EffectResult
-from ..status import Status, build_named_status
+from .conditions import Status, build_named_status
+from .results import EffectResult
 
 ApplyStatus = Callable[[Status], None]
 RemoveStatus = Callable[[str, str], None]

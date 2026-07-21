@@ -4,7 +4,11 @@ import pytest
 
 from srd_arena.domain.combat.encounter import EncounterState
 from srd_arena.runtime.scenario import Scenario
-from srd_arena.domain.rules import RuleGrant, matching_rules, reroll_eligible_indices
+from srd_arena.domain.effects import (
+    TriggeredEffect,
+    matching_effects,
+    reroll_eligible_indices,
+)
 from srd_arena.domain.rules.dice import reroll_dice, resolve_dice
 
 SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "sample_game"
@@ -22,8 +26,8 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
-def test_rule_matching_uses_generic_context_conditions():
-    rule = RuleGrant(
+def test_triggered_effect_matching_uses_generic_context_conditions():
+    effect = TriggeredEffect(
         id="test",
         source_type="test",
         source_id="test",
@@ -35,16 +39,16 @@ def test_rule_matching_uses_generic_context_conditions():
         },
     )
 
-    assert matching_rules(
-        [rule],
+    assert matching_effects(
+        [effect],
         "weapon_damage_rolled",
         {
             "attack_type": "melee",
             "weapon_properties": ["heavy", "two-handed"],
         },
-    ) == [rule]
-    assert matching_rules(
-        [rule],
+    ) == [effect]
+    assert matching_effects(
+        [effect],
         "weapon_damage_rolled",
         {
             "attack_type": "ranged",
@@ -54,7 +58,7 @@ def test_rule_matching_uses_generic_context_conditions():
 
 
 def test_reroll_matching_dice_enforces_maximum_per_die():
-    rule = RuleGrant(
+    effect = TriggeredEffect(
         id="test",
         source_type="test",
         source_id="test",
@@ -65,23 +69,25 @@ def test_reroll_matching_dice_enforces_maximum_per_die():
     rolls = iter([1, 2])
     pool = resolve_dice(2, 6, roller=lambda _sides: next(rolls))
 
-    assert reroll_eligible_indices(rule, pool) == (0, 1)
+    assert reroll_eligible_indices(effect, pool) == (0, 1)
 
     rerolled = reroll_dice(pool, [0], roller=lambda _sides: 1)
 
     assert rerolled.dice[0].rolls == (1, 1)
-    assert reroll_eligible_indices(rule, rerolled) == (1,)
+    assert reroll_eligible_indices(effect, rerolled) == (1,)
 
 
-def test_sample_fighter_loads_great_weapon_fighting_rule():
+def test_sample_fighter_loads_great_weapon_fighting_effect():
     player = Scenario(SAMPLE_SCENARIO_DIR).create_session().player
 
-    [rule] = [
-        rule for rule in player.rule_grants if rule.id == "great_weapon_fighting"
+    [effect] = [
+        effect
+        for effect in player.triggered_effects
+        if effect.id == "great_weapon_fighting"
     ]
 
-    assert rule.operation == "reroll_matching_dice"
-    assert rule.parameters["values"] == [1, 2]
+    assert effect.operation == "reroll_matching_dice"
+    assert effect.parameters["values"] == [1, 2]
     assert player.equipment.equipped_items["right_hand"] == "greatsword"
 
 

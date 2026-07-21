@@ -6,10 +6,10 @@ from typing import Generator
 from ..creature import Creature
 from ..item import Item
 from ..scene import Behavior, Encounter, Position
-from ..status import Status, StatusSnapshot
+from ..effects.conditions import Status, StatusSnapshot
 from ..rules.config import RulesConfig
 from ..rules.dice import CheckResult, DicePoolResult
-from ..rules.types import RuleGrant
+from ..effects.triggered import TriggeredEffect
 
 CreatureRef = str
 
@@ -204,13 +204,13 @@ class PendingAttackSnapshot:
     weapon_name: str | None
     continuation: str
     reaction: bool
-    rule_id: str
-    rule_source_type: str
-    rule_source_id: str
-    rule_trigger: str
-    rule_operation: str
-    rule_conditions: dict[str, object]
-    rule_parameters: dict[str, object]
+    triggered_effect_id: str
+    triggered_effect_source_type: str
+    triggered_effect_source_id: str
+    triggered_effect_trigger: str
+    triggered_effect_operation: str
+    triggered_effect_conditions: dict[str, object]
+    triggered_effect_parameters: dict[str, object]
 
 
 @dataclass
@@ -271,7 +271,7 @@ class PendingAttack:
     target_label: str
     attacks_remaining: int
     attack: AttackOutcome
-    rule: RuleGrant
+    triggered_effect: TriggeredEffect
     continuation: str = "return_to_turn"
     reaction: bool = False
 

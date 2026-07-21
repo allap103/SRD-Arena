@@ -5,8 +5,9 @@ from dataclasses import dataclass
 import re
 
 from .geometry import AreaOfEffect, serialize_area
-from .features.types import CapabilityActionResult, EffectResult
+from .features.types import CapabilityActionResult
 from ..creature import Creature
+from ..effects.results import EffectResult
 from ..spellcasting import Spell
 from ..rules.dice import resolve_dice
 from ..rules.saving_throws import resolve_saving_throw

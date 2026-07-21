@@ -12,8 +12,8 @@ from ...domain.class_features import (
     SubclassRef,
 )
 from ...domain.spellcasting import Spell, Spellcasting
-from ...domain.rules.types import RuleGrant
-from ..normalization import normalize_optional_feature_rules
+from ...domain.effects.triggered import TriggeredEffect
+from ..normalization import normalize_optional_feature_effects
 from ...domain.equipment import Equipment
 from ...domain.inventory import Inventory
 from .catalogs import (
@@ -90,7 +90,7 @@ def load_creature(
             class_name=schema.class_ref.name if schema.class_ref else None,
         )
     )
-    rule_grants = _resolve_optional_feature_rules(schema, optional_features)
+    triggered_effects = _resolve_optional_feature_effects(schema, optional_features)
     combat_profile = build_combat_profile(feature_grants)
     spellcasting = _build_spellcasting(
         schema,
@@ -124,7 +124,7 @@ def load_creature(
             else None
         ),
         feature_grants=feature_grants,
-        rule_grants=rule_grants,
+        triggered_effects=triggered_effects,
         combat_profile=combat_profile,
         feature_uses_remaining=build_feature_uses_remaining(combat_profile),
         monster_attacks=build_monster_attacks(stat_block),
@@ -189,11 +189,11 @@ def _resolve_creature_schema(
     return CreatureSchema.model_validate(merged)
 
 
-def _resolve_optional_feature_rules(
+def _resolve_optional_feature_effects(
     schema: CreatureSchema,
     catalog: OptionalFeatureCatalog | None,
-) -> list[RuleGrant]:
-    rules: list[RuleGrant] = []
+) -> list[TriggeredEffect]:
+    effects: list[TriggeredEffect] = []
     for reference in schema.optional_features:
         if catalog is None:
             raise ValueError(
@@ -203,15 +203,15 @@ def _resolve_optional_feature_rules(
         try:
             feature = _find_optional_feature(reference.name, reference.source, catalog)
         except KeyError:
-            normalized = normalize_optional_feature_rules(
+            normalized = normalize_optional_feature_effects(
                 {"name": reference.name, "source": reference.source or ""}
             )
             if not normalized:
                 raise
-            rules.extend(normalized)
+            effects.extend(normalized)
         else:
-            rules.extend(normalize_optional_feature_rules(feature))
-    return rules
+            effects.extend(normalize_optional_feature_effects(feature))
+    return effects
 
 
 def _creature_item_id(item: str | CreatureItemReferenceSchema | object) -> str:

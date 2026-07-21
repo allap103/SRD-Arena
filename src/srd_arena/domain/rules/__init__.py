@@ -20,14 +20,12 @@ from .dice import (
     roll_die,
     select_d20,
 )
-from .registry import matching_rules, reroll_eligible_indices
 from .saving_throws import (
     SavingThrowModifiers,
     SavingThrowResult,
     reroll_saving_throw,
     resolve_saving_throw,
 )
-from .types import RuleGrant
 
 __all__ = [
     "CheckResult",
@@ -38,15 +36,12 @@ __all__ = [
     "DieReplacement",
     "DieRollResult",
     "RollResolution",
-    "RuleGrant",
     "RulesConfig",
     "SavingThrowModifiers",
     "SavingThrowResult",
     "extend_d20_pool",
-    "matching_rules",
     "reroll_dice",
     "reroll_dice_pool",
-    "reroll_eligible_indices",
     "reroll_saving_throw",
     "resolve_check",
     "resolve_d20",

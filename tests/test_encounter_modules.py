@@ -7,7 +7,7 @@ from srd_arena.domain.combat.participants import (
     creature_team_id,
 )
 from srd_arena.domain.scene import EncounterTeam
-from srd_arena.domain.status import Status
+from srd_arena.domain.effects.conditions import Status
 
 
 def _status(name: str, source: str, target: str) -> Status:

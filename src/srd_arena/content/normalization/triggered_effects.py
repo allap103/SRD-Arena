@@ -1,13 +1,13 @@
-from ...domain.rules.types import RuleGrant
+from ...domain.effects.triggered import TriggeredEffect
 
 
-def normalize_optional_feature_rules(feature: dict) -> list[RuleGrant]:
+def normalize_optional_feature_effects(feature: dict) -> list[TriggeredEffect]:
     name = str(feature.get("name", ""))
     source = str(feature.get("source", ""))
     canonical_id = f"{name.casefold().replace(' ', '_')}|{source.casefold()}"
     if (name.casefold(), source.upper()) == ("great weapon fighting", "PHB"):
         return [
-            RuleGrant(
+            TriggeredEffect(
                 id="great_weapon_fighting",
                 source_type="fighting_style",
                 source_id=canonical_id,

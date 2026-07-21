@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from ...creature import Creature
-from .types import CapabilityActionResult, DiceRoller, EffectResult
+from ...effects.results import EffectResult
+from .types import CapabilityActionResult, DiceRoller
 
 
 def resolve_fighter_feature(

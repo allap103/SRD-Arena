@@ -22,7 +22,7 @@ from ..domain.creature import Creature
 from ..domain.attributes import Attributes, Movement
 from ..domain.scene import Position
 from ..domain.spellcasting import Spellcasting
-from ..domain.status import StatusSnapshot
+from ..domain.effects.conditions import StatusSnapshot
 from .session import PendingSceneTransition, Session
 from ..domain.equipment import Equipment
 from ..domain.inventory import Inventory
@@ -159,6 +159,7 @@ class PendingAttackStateModel(BaseModel):
     weapon_name: str | None = None
     continuation: str = "return_to_turn"
     reaction: bool = False
+    # Retain the version-6 JSON field names for save compatibility.
     rule_id: str
     rule_source_type: str
     rule_source_id: str
@@ -353,7 +354,7 @@ def _restore_player_state(player_template: Creature, state: PlayerState) -> Crea
         class_ref=deepcopy(player_template.class_ref),
         subclass_ref=deepcopy(player_template.subclass_ref),
         feature_grants=deepcopy(player_template.feature_grants),
-        rule_grants=deepcopy(player_template.rule_grants),
+        triggered_effects=deepcopy(player_template.triggered_effects),
         combat_profile=deepcopy(player_template.combat_profile),
         feature_uses_remaining=dict(state.feature_uses_remaining),
         monster_attacks=deepcopy(player_template.monster_attacks),
@@ -461,13 +462,13 @@ def _create_encounter_state(snapshot: EncounterSnapshot | None) -> EncounterStat
                 weapon_name=snapshot.pending_attack.weapon_name,
                 continuation=snapshot.pending_attack.continuation,
                 reaction=snapshot.pending_attack.reaction,
-                rule_id=snapshot.pending_attack.rule_id,
-                rule_source_type=snapshot.pending_attack.rule_source_type,
-                rule_source_id=snapshot.pending_attack.rule_source_id,
-                rule_trigger=snapshot.pending_attack.rule_trigger,
-                rule_operation=snapshot.pending_attack.rule_operation,
-                rule_conditions=snapshot.pending_attack.rule_conditions,
-                rule_parameters=snapshot.pending_attack.rule_parameters,
+                rule_id=snapshot.pending_attack.triggered_effect_id,
+                rule_source_type=snapshot.pending_attack.triggered_effect_source_type,
+                rule_source_id=snapshot.pending_attack.triggered_effect_source_id,
+                rule_trigger=snapshot.pending_attack.triggered_effect_trigger,
+                rule_operation=snapshot.pending_attack.triggered_effect_operation,
+                rule_conditions=snapshot.pending_attack.triggered_effect_conditions,
+                rule_parameters=snapshot.pending_attack.triggered_effect_parameters,
             )
             if snapshot.pending_attack is not None
             else None
@@ -585,13 +586,13 @@ def _restore_encounter_state(
                 weapon_name=state.pending_attack.weapon_name,
                 continuation=state.pending_attack.continuation,
                 reaction=state.pending_attack.reaction,
-                rule_id=state.pending_attack.rule_id,
-                rule_source_type=state.pending_attack.rule_source_type,
-                rule_source_id=state.pending_attack.rule_source_id,
-                rule_trigger=state.pending_attack.rule_trigger,
-                rule_operation=state.pending_attack.rule_operation,
-                rule_conditions=dict(state.pending_attack.rule_conditions),
-                rule_parameters=dict(state.pending_attack.rule_parameters),
+                triggered_effect_id=state.pending_attack.rule_id,
+                triggered_effect_source_type=state.pending_attack.rule_source_type,
+                triggered_effect_source_id=state.pending_attack.rule_source_id,
+                triggered_effect_trigger=state.pending_attack.rule_trigger,
+                triggered_effect_operation=state.pending_attack.rule_operation,
+                triggered_effect_conditions=dict(state.pending_attack.rule_conditions),
+                triggered_effect_parameters=dict(state.pending_attack.rule_parameters),
             )
             if state.pending_attack is not None
             else None

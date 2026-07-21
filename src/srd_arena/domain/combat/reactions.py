@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING
 from ..creature import Creature
 from ..scene import Position
 from ..rules.dice import reroll_dice
-from ..rules.registry import reroll_eligible_indices
-from ..rules.types import RuleGrant
+from ..effects.triggered import TriggeredEffect, reroll_eligible_indices
 from .attacks import (
     apply_attack_damage,
     can_make_opportunity_attack,
@@ -48,7 +47,7 @@ class ReactionEngine:
         state: EncounterState,
         *,
         attack: AttackOutcome,
-        rule: RuleGrant,
+        triggered_effect: TriggeredEffect,
         target_index: int,
         attacker_label: str,
         target_label: str,
@@ -68,7 +67,7 @@ class ReactionEngine:
             target_label=target_label,
             attacks_remaining=state.player_attacks_remaining,
             attack=attack,
-            rule=rule,
+            triggered_effect=triggered_effect,
             continuation=continuation,
             reaction=reaction,
         )
@@ -77,7 +76,7 @@ class ReactionEngine:
                 id=frame_id,
                 actor_ref="player",
                 kind="reroll_dice",
-                reason=rule.id,
+                reason=triggered_effect.id,
                 parent_frame_id=current_frame.id,
                 parent_action_id=action_id,
                 can_pass=True,
@@ -88,7 +87,7 @@ class ReactionEngine:
         progress.messages.append(
             (
                 "system",
-                f"{rule.id.replace('_', ' ').title()} can reroll qualifying damage dice.",
+                f"{triggered_effect.id.replace('_', ' ').title()} can reroll qualifying damage dice.",
             )
         )
         progress.events.append(
@@ -115,7 +114,7 @@ class ReactionEngine:
                 actor_ref="player",
             )
             for index in reroll_eligible_indices(
-                pending.rule,
+                pending.triggered_effect,
                 pending.attack.damage_roll,
             )
         ]
@@ -154,7 +153,7 @@ class ReactionEngine:
             if not isinstance(action.value, int):
                 raise ValueError("Reroll die action requires an integer die index.")
             eligible = reroll_eligible_indices(
-                pending.rule,
+                pending.triggered_effect,
                 pending.attack.damage_roll,
             )
             if action.value not in eligible:
@@ -182,7 +181,10 @@ class ReactionEngine:
                     data=self.pending_attack_event_data(state),
                 )
             )
-            if reroll_eligible_indices(pending.rule, pending.attack.damage_roll):
+            if reroll_eligible_indices(
+                pending.triggered_effect,
+                pending.attack.damage_roll,
+            ):
                 progress.paused_for_decision = True
                 return progress
         elif action.kind != "accept_roll":
@@ -287,7 +289,7 @@ class ReactionEngine:
         if pending is None or pending.attack.damage_roll is None:
             return {}
         eligible = reroll_eligible_indices(
-            pending.rule,
+            pending.triggered_effect,
             pending.attack.damage_roll,
         )
         return {
@@ -302,7 +304,7 @@ class ReactionEngine:
             "damage": 0,
             "damage_roll_detail": damage_roll_detail(pending.attack),
             "roll_id": f"{pending.action_id}:damage",
-            "rule_id": pending.rule.id,
+            "triggered_effect_id": pending.triggered_effect.id,
             "eligible_die_indices": list(eligible),
             "reroll_action_ids": {
                 str(index): _reroll_die_action_id(pending.action_id, index)
@@ -366,7 +368,7 @@ class ReactionEngine:
                 self.open_damage_reroll_decision(
                     state,
                     attack=attack,
-                    rule=reroll_rule,
+                    triggered_effect=reroll_rule,
                     target_index=target_index,
                     attacker_label=player.name,
                     target_label=target_label,
