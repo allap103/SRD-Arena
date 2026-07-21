@@ -9,7 +9,7 @@ from srd_arena.domain.effects import (
     matching_effects,
     reroll_eligible_indices,
 )
-from srd_arena.domain.rules.dice import reroll_dice, resolve_dice
+from srd_arena.domain.rolls.dice import reroll_dice, resolve_dice
 
 SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "sample_game"
 

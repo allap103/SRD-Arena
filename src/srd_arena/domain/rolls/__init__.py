@@ -1,4 +1,3 @@
-from .config import RulesConfig
 from .dice import (
     CheckResult,
     D20PoolResult,
@@ -36,7 +35,6 @@ __all__ = [
     "DieReplacement",
     "DieRollResult",
     "RollResolution",
-    "RulesConfig",
     "SavingThrowModifiers",
     "SavingThrowResult",
     "extend_d20_pool",

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from ..creatures import Creature
 from ..scene import Position
 from ..creatures import can_grapple
-from ..rules.dice import resolve_d20
+from ..rolls.dice import resolve_d20
 from ..effects.results import EffectResult
 from .attacks import resolve_player_attack_action as _resolve_player_attack_action_impl
 from .features import resolve_feature_action as _resolve_feature_action_impl

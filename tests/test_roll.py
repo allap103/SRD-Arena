@@ -2,7 +2,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from srd_arena.domain.rules.dice import (
+from srd_arena.domain.rolls.dice import (
     extend_d20_pool,
     reroll_dice,
     reroll_dice_pool,

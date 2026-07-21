@@ -64,8 +64,8 @@ from ..creatures import Creature
 from ..item import Item
 from ..scene import Encounter, Position
 from ..effects.conditions import Status
-from ..rules.config import RulesConfig
-from ..rules.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
+from ..config import RulesConfig
+from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
 from ..effects.triggered import TriggeredEffect, matching_effects
 from .turn_flow import TURN_ENGINE, TurnEngine
 from .conditions import (

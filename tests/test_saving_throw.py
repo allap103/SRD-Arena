@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from srd_arena.domain.creatures import Attributes
-from srd_arena.domain.rules.dice import resolve_roll_attempts
-from srd_arena.domain.rules.saving_throws import reroll_saving_throw, resolve_saving_throw
+from srd_arena.domain.rolls.dice import resolve_roll_attempts
+from srd_arena.domain.rolls.saving_throws import reroll_saving_throw, resolve_saving_throw
 
 
 @dataclass

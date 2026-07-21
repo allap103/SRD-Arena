@@ -9,8 +9,8 @@ from .feature_rules.types import CapabilityActionResult
 from ..creatures import Creature
 from ..effects.results import EffectResult
 from ..spellcasting import Spell
-from ..rules.dice import resolve_dice
-from ..rules.saving_throws import resolve_saving_throw
+from ..rolls.dice import resolve_dice
+from ..rolls.saving_throws import resolve_saving_throw
 
 DieRoller = Callable[[int], int]
 

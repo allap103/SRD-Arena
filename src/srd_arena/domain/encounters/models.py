@@ -7,8 +7,8 @@ from ..creatures import Creature
 from ..item import Item
 from ..scene import Behavior, Encounter, Position
 from ..effects.conditions import Status, StatusSnapshot
-from ..rules.config import RulesConfig
-from ..rules.dice import CheckResult, DicePoolResult
+from ..config import RulesConfig
+from ..rolls.dice import CheckResult, DicePoolResult
 from ..effects.triggered import TriggeredEffect
 
 CreatureRef = str

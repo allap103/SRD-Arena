@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from ..creatures import Creature
 from ..scene import Position
-from ..rules.dice import reroll_dice
+from ..rolls.dice import reroll_dice
 from ..effects.triggered import TriggeredEffect, reroll_eligible_indices
 from ..actions.attack_resolution import (
     apply_attack_damage,

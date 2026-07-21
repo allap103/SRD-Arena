@@ -1,6 +1,6 @@
 import re
 
-from ...domain.monster_attack import MonsterAttack
+from ...domain.creatures.monster_attack import MonsterAttack
 
 
 def build_monster_attacks(stat_block: dict | None) -> list[MonsterAttack]:

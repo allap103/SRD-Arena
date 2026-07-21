@@ -1,7 +1,7 @@
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 
-from ..rules.dice import DicePoolResult
+from ..rolls.dice import DicePoolResult
 
 
 @dataclass(frozen=True)

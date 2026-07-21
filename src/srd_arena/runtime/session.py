@@ -9,7 +9,7 @@ from ..domain.creatures import Creature
 from ..domain.choice import Choice
 from ..domain.item import Item
 from ..domain.scene import Scene
-from ..domain.rules.config import RulesConfig
+from ..domain.config import RulesConfig
 from ..frontends.shared.models import ActionView, SceneView, TurnResult
 from ..content.paths import SCENARIOS_ROOT
 

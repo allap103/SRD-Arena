@@ -19,7 +19,7 @@ from ..content.loaders import (
 )
 from ..domain.creatures import Creature
 from ..domain.item import Item
-from ..domain.rules.config import (
+from ..domain.config import (
     DEFAULT_DIRECTIONAL_AOE_CELL_COVERAGE_THRESHOLD,
     RulesConfig,
 )

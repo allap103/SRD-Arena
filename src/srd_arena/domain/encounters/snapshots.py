@@ -21,7 +21,7 @@ from .pending import restore_pending_attack, snapshot_pending_attack
 from .refs import enemy_ref
 from ..creatures import Creature
 from ..item import Item
-from ..rules.config import RulesConfig
+from ..config import RulesConfig
 from ..scene import Encounter, Position
 from ..effects.conditions import Status, StatusSnapshot
 
