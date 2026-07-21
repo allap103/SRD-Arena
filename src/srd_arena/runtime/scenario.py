@@ -29,7 +29,8 @@ DEFAULT_SYSTEM_CONTENT_DIR = SYSTEM_CONTENT_ROOT
 
 
 @dataclass(frozen=True)
-class GameSettings:
+class ScenarioConfig:
+    display_name: str = "Unnamed Scenario"
     encounters: tuple[str, ...] = ("goblin_encounter",)
     rules_config: RulesConfig = field(default_factory=RulesConfig)
 
@@ -49,8 +50,9 @@ class Scenario:
     ):
         self.directory = Path(directory)
         self.system_directory = Path(system_directory)
-        settings = self._load_settings(self.directory / "settings.json")
-        self.rules_config = settings.rules_config
+        config = self._load_config(self.directory / "config.json")
+        self.display_name = config.display_name
+        self.rules_config = config.rules_config
         self.stat_blocks = load_bestiary_stat_blocks(self.system_directory)
         self.class_blocks = load_class_blocks(self.system_directory)
         self.subclass_blocks = load_subclass_blocks(self.system_directory)
@@ -60,7 +62,7 @@ class Scenario:
         self.scenes, self.creatures = self.load_encounters_from_directory(
             self.directory / "encounters"
         )
-        self.encounter_order = settings.encounters
+        self.encounter_order = config.encounters
         self._link_encounters()
         self.items = load_system_items(self.system_directory)
         self.start_scene = start_scene or self.encounter_order[0]
@@ -129,9 +131,9 @@ class Scenario:
             rules_config=self.rules_config,
         )
 
-    def _load_settings(self, path: Path) -> GameSettings:
+    def _load_config(self, path: Path) -> ScenarioConfig:
         if not path.exists():
-            return GameSettings()
+            return ScenarioConfig()
         with path.open("r", encoding="utf-8") as config_file:
             payload = json.load(config_file)
         encounters = payload.get("encounters")
@@ -141,7 +143,8 @@ class Scenario:
             configured = rules.get("directional_aoe_cell_coverage_threshold")
             if isinstance(configured, (int, float)):
                 threshold = min(max(float(configured), 0.0), 1.0)
-        return GameSettings(
+        return ScenarioConfig(
+            display_name=str(payload.get("display_name", "Unnamed Scenario")),
             encounters=(
                 tuple(str(encounter_id) for encounter_id in encounters)
                 if isinstance(encounters, list) and encounters

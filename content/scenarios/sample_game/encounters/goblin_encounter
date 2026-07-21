@@ -67,6 +67,38 @@
                           "behavior":  {
                                            "type":  "archer"
                                        }
+                      },
+                                            {
+                          "id":  "goblin_4",
+                          "token_image":  "tokens/goblin.png",
+                          "stat_block":  {
+                                             "name":  "Goblin Warrior",
+                                             "source":  "XMM"
+                                         },
+                          "start":  {
+                                        "x":  4,
+                                        "y":  4
+                                    },
+                          "team_id":  "goblins",
+                          "behavior":  {
+                                           "type":  "archer"
+                                       }
+                      },
+                                            {
+                          "id":  "goblin_5",
+                          "token_image":  "tokens/goblin.png",
+                          "stat_block":  {
+                                             "name":  "Goblin Warrior",
+                                             "source":  "XMM"
+                                         },
+                          "start":  {
+                                        "x":  4,
+                                        "y":  3
+                                    },
+                          "team_id":  "goblins",
+                          "behavior":  {
+                                           "type":  "archer"
+                                       }
                       }
                   ],
     "teams":  [

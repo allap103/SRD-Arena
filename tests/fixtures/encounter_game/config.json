@@ -1,3 +1,4 @@
 {
+  "display_name": "Encounter Test Game",
   "encounters": ["goblin_encounter"]
 }

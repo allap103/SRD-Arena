@@ -10,6 +10,10 @@ from srd_arena import main as launcher
 def _make_scenario_dir(path: Path) -> Path:
     for subdir in ("encounters",):
         (path / subdir).mkdir(parents=True, exist_ok=True)
+    (path / "config.json").write_text(
+        f'{{"display_name": "{path.name.title()}"}}\n',
+        encoding="utf-8",
+    )
     return path
 
 
@@ -107,7 +111,11 @@ def test_main_without_scenario_launches_picker_for_default_frontend(monkeypatch)
     assert launched == [{"frontend": "gui", "scenario_dir": None, "control_mode": "default", "start_scene": None, "show_encounter_json": False}]
 
 
-def test_select_scenario_directory_lists_available_scenarios(monkeypatch, tmp_path: Path) -> None:
+def test_select_scenario_directory_lists_only_display_names(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+) -> None:
     first = _make_scenario_dir(tmp_path / "alpha")
     _make_scenario_dir(tmp_path / "beta")
     monkeypatch.setattr(launcher, "SCENARIOS_ROOT", tmp_path)
@@ -116,6 +124,11 @@ def test_select_scenario_directory_lists_available_scenarios(monkeypatch, tmp_pa
     resolved = launcher.select_scenario_directory()
 
     assert resolved == first.resolve()
+    output = capsys.readouterr().out
+    assert "1. Alpha" in output
+    assert "2. Beta" in output
+    assert "(alpha)" not in output
+    assert "(beta)" not in output
 
 
 def test_main_with_cli_frontend_selects_cli_mode(monkeypatch, tmp_path: Path) -> None:

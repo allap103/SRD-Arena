@@ -120,7 +120,7 @@ def select_scenario_directory() -> Path:
         raise FileNotFoundError("No scenarios are available in content/scenarios/.")
     print("Available scenarios:")
     for index, scenario in enumerate(scenarios, start=1):
-        print(f"{index}. {scenario.label} ({scenario.id})")
+        print(f"{index}. {scenario.label}")
     while True:
         choice = input("Choose a scenario: ")
         try:

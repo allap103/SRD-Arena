@@ -54,8 +54,9 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
     scenario_dir = tmp_path / "encounter_start"
     for subdir in ("encounters", "player_characters"):
         (scenario_dir / subdir).mkdir(parents=True, exist_ok=True)
-    (scenario_dir / "settings.json").write_text(
-        '{"encounters": ["arena", "arena_two"]}\n', encoding="utf-8"
+    (scenario_dir / "config.json").write_text(
+        '{"display_name": "Two Arenas", "encounters": ["arena", "arena_two"]}\n',
+        encoding="utf-8",
     )
     (scenario_dir / "player_characters" / "player").write_text(
         (FIXTURE_ENCOUNTER_DIR / "player_characters" / "player").read_text(encoding="utf-8"),
@@ -83,9 +84,10 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
     assert scenario.scenes["arena_two"].encounter.victory.next_scene == "arena_two"
 
 
-def test_game_loads_rule_settings_from_settings_json() -> None:
+def test_game_loads_rule_settings_from_config_json() -> None:
     scenario = Scenario(str(SAMPLE_SCENARIO_DIR))
 
+    assert scenario.display_name == "Sample Game"
     assert scenario.rules_config.directional_aoe_cell_coverage_threshold == 0.1
 
 

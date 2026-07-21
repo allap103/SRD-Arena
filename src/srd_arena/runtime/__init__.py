@@ -1,4 +1,4 @@
-from .scenario import GameSettings, Scenario
+from .scenario import Scenario, ScenarioConfig
 from .session import Session
 
-__all__ = ["GameSettings", "Scenario", "Session"]
+__all__ = ["Scenario", "ScenarioConfig", "Session"]

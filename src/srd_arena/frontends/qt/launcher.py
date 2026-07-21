@@ -66,7 +66,7 @@ class ScenarioPickerWindow(QMainWindow):
             return
 
         for scenario in scenarios:
-            button = QPushButton(f"{scenario.label} ({scenario.id})")
+            button = QPushButton(scenario.label)
             button.setObjectName("sidebarButton")
             button.setMinimumHeight(44)
             button.clicked.connect(
