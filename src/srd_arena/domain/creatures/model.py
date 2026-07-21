@@ -3,10 +3,10 @@ from dataclasses import dataclass, field
 from .equipment import Equipment
 from .inventory import Inventory
 from .attributes import Attributes
-from .class_features import ClassRef, CombatProfile, FeatureGrant, SubclassRef
-from .effects.triggered import TriggeredEffect
-from .monster_attack import MonsterAttack
-from .spellcasting import Spellcasting
+from ..class_features import ClassRef, CombatProfile, FeatureGrant, SubclassRef
+from ..effects.triggered import TriggeredEffect
+from ..monster_attack import MonsterAttack
+from ..spellcasting import Spellcasting
 
 @dataclass
 class Creature:

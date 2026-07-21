@@ -60,7 +60,7 @@ from .player_actions import (
 )
 from .reactions import REACTION_ENGINE, ReactionEngine
 from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
-from ..creature import Creature
+from ..creatures import Creature
 from ..item import Item
 from ..scene import Encounter, Position
 from ..effects.conditions import Status

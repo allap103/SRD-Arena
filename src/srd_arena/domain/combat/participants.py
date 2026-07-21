@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from .models import CreatureRef
 from .refs import enemy_index
-from ..creature import Creature
+from ..creatures import Creature
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

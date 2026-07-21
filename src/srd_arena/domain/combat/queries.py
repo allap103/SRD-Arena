@@ -6,7 +6,7 @@ from .models import EncounterEnemyState
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
-    from ..creature import Creature
+    from ..creatures import Creature
 
 
 def player_movement_remaining(state: EncounterState, player: Creature) -> int:

@@ -4,8 +4,8 @@ from typing import cast
 
 from ..schemas import CreatureSchema
 from ..schemas.creature import CreatureItemReferenceSchema
-from ...domain.creature import Creature
-from ...domain.attributes import Attributes
+from ...domain.creatures import Creature
+from ...domain.creatures import Attributes
 from ...domain.class_features import (
     ClassRef,
     FeatureGrant,
@@ -14,8 +14,8 @@ from ...domain.class_features import (
 from ...domain.spellcasting import Spell, Spellcasting
 from ...domain.effects.triggered import TriggeredEffect
 from ..normalization import normalize_optional_feature_effects
-from ...domain.equipment import Equipment
-from ...domain.inventory import Inventory
+from ...domain.creatures import Equipment
+from ...domain.creatures import Inventory
 from .catalogs import (
     _find_class_block,
     _find_optional_feature,

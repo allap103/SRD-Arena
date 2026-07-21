@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creature import Creature
+from ..creatures import Creature
 from ..scene import Position
-from ..size import can_grapple
+from ..creatures import can_grapple
 from ..spellcasting import Spell, Spellcasting
 from .attacks import has_free_hand
 from .behaviors import (

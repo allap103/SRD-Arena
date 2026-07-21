@@ -1,9 +1,6 @@
-from .creature import Creature
-from .attributes import Attributes
+from .creatures import Attributes, Creature, Equipment, Inventory
 from .class_features import ClassRef, CombatProfile, FeatureGrant, SubclassRef
 from .choice import Choice
-from .equipment import Equipment
-from .inventory import Inventory
 from .item import ArmorStat, Item, WeaponStat
 from .scene import Scene
 from .spellcasting import Spell, SpellRef, Spellcasting

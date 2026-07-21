@@ -67,7 +67,7 @@ def test_package_dependencies_follow_architecture() -> None:
 
 
 def test_relative_import_resolution() -> None:
-    node = ast.ImportFrom(module="creature", names=[], level=2)
+    node = ast.ImportFrom(module="creatures", names=[], level=2)
 
     assert (
         _resolve_from_import(
@@ -75,7 +75,7 @@ def test_relative_import_resolution() -> None:
             is_package=False,
             node=node,
         )
-        == "srd_arena.domain.creature"
+        == "srd_arena.domain.creatures"
     )
 
 

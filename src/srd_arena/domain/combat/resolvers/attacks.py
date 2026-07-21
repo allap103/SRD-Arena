@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creature import Creature
+from ...creatures import Creature
 from ..attacks import apply_attack_damage, matching_damage_reroll_rule, resolve_attack, selected_attack_type
 from ..models import EncounterAction, EncounterProgress
 from ..refs import enemy_ref as _enemy_ref

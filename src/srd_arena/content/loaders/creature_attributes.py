@@ -1,6 +1,6 @@
 from ..schemas import CreatureSchema
-from ...domain.attributes import Attributes, Movement
-from ...domain.size import normalize_size
+from ...domain.creatures import Attributes, Movement
+from ...domain.creatures import normalize_size
 
 
 def build_creature_attributes(

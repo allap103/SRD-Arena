@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..creature import Creature
+from ..creatures import Creature
 from ..item import Item
 from ..scene import Position
 from ..rules.dice import (

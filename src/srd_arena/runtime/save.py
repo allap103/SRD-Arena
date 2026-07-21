@@ -18,14 +18,14 @@ from ..domain.combat.models import (
     PendingActionSnapshot,
 )
 from .scenario import Scenario
-from ..domain.creature import Creature
-from ..domain.attributes import Attributes, Movement
+from ..domain.creatures import Creature
+from ..domain.creatures import Attributes, Movement
 from ..domain.scene import Position
 from ..domain.spellcasting import Spellcasting
 from ..domain.effects.conditions import StatusSnapshot
 from .session import PendingSceneTransition, Session
-from ..domain.equipment import Equipment
-from ..domain.inventory import Inventory
+from ..domain.creatures import Equipment
+from ..domain.creatures import Inventory
 
 SAVE_VERSION = 6
 JsonScalar: TypeAlias = str | int | float | bool | None

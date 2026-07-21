@@ -1,5 +1,5 @@
-from srd_arena.domain.equipment import Equipment
-from srd_arena.domain.inventory import Inventory
+from srd_arena.domain.creatures import Equipment
+from srd_arena.domain.creatures import Inventory
 from tests.helpers import make_creature
 
 

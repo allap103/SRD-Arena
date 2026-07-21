@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from ..creature import Creature
+from ..creatures import Creature
 from ..item import Item
 
 

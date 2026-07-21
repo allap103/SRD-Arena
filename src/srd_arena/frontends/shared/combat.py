@@ -1,4 +1,4 @@
-from ...domain.creature import Creature
+from ...domain.creatures import Creature
 from ...domain.combat.behaviors import movement_squares
 from ...domain.combat.encounter import EncounterState
 

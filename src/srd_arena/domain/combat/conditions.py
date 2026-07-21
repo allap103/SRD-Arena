@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .models import CreatureRef
-from ..creature import Creature
-from ..size import is_two_sizes_smaller
+from ..creatures import Creature
+from ..creatures import is_two_sizes_smaller
 from ..effects.conditions import Status
 
 if TYPE_CHECKING:

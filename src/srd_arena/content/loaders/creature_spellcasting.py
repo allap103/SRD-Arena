@@ -1,4 +1,4 @@
-from ...domain.attributes import Attributes
+from ...domain.creatures import Attributes
 
 
 def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:

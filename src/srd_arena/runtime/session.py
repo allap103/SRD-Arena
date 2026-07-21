@@ -5,7 +5,7 @@ from pathlib import Path
 from ..domain.combat.encounter import EncounterState
 from ..domain.combat.models import EncounterAction, EncounterSnapshot
 from ..frontends.shared.combat import render_encounter_text
-from ..domain.creature import Creature
+from ..domain.creatures import Creature
 from ..domain.choice import Choice
 from ..domain.item import Item
 from ..domain.scene import Scene

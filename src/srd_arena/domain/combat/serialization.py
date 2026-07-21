@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creature import Creature
+from ..creatures import Creature
 from ..effects.conditions import Status
 from .behaviors import movement_squares as _movement_squares
 from .refs import enemy_ref as _enemy_ref

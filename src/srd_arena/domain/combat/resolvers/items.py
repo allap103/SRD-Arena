@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creature import Creature
+from ...creatures import Creature
 from ..consumables import healing_potion_dice
 from ..models import EncounterProgress
 
