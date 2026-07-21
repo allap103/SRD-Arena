@@ -223,7 +223,7 @@ class Session:
             selected_index=len(self.get_scene_view().choices) - 1,
             selected_choice_text=EXIT_CHOICE_TEXT,
             selected_action_id="system-exit",
-            messages=[("system", "Exiting game.")],
+            messages=[("system", "Exiting srd_arena.")],
             next_scene_id=self.current_scene_id,
             scene_changed=False,
             should_exit=True,

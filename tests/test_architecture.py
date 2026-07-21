@@ -4,7 +4,7 @@ import ast
 from dataclasses import dataclass
 from pathlib import Path
 
-GAME_PACKAGE = Path(__file__).parents[1] / "app" / "game"
+PACKAGE_ROOT = Path(__file__).parents[1] / "src" / "srd_arena"
 
 
 @dataclass(frozen=True)
@@ -15,26 +15,26 @@ class DependencyRule:
 
 RULES = (
     DependencyRule(
-        package="game.domain",
+        package="srd_arena.domain",
         forbidden=(
-            "game.content",
-            "game.frontends",
-            "game.infrastructure",
-            "game.runtime",
+            "srd_arena.content",
+            "srd_arena.frontends",
+            "srd_arena.infrastructure",
+            "srd_arena.runtime",
         ),
     ),
     DependencyRule(
-        package="game.content",
+        package="srd_arena.content",
         forbidden=(
-            "game.frontends",
-            "game.runtime",
+            "srd_arena.frontends",
+            "srd_arena.runtime",
         ),
     ),
     DependencyRule(
-        package="game.runtime",
+        package="srd_arena.runtime",
         forbidden=(
-            "game.frontends.cli",
-            "game.frontends.qt",
+            "srd_arena.frontends.cli",
+            "srd_arena.frontends.qt",
         ),
     ),
 )
@@ -44,7 +44,7 @@ def test_package_dependencies_follow_architecture() -> None:
     violations: list[str] = []
 
     for rule in RULES:
-        package_dir = GAME_PACKAGE.joinpath(*rule.package.split(".")[1:])
+        package_dir = PACKAGE_ROOT.joinpath(*rule.package.split(".")[1:])
         for path in sorted(package_dir.rglob("*.py")):
             module = _module_name(path)
             for line, imported_module in _imports(path, module):
@@ -58,7 +58,7 @@ def test_package_dependencies_follow_architecture() -> None:
                 )
                 if forbidden is not None:
                     violations.append(
-                        f"{path.relative_to(GAME_PACKAGE.parent)}:{line}: "
+                        f"{path.relative_to(PACKAGE_ROOT.parent)}:{line}: "
                         f"{module} imports forbidden package {imported_module} "
                         f"({forbidden})"
                     )
@@ -71,11 +71,11 @@ def test_relative_import_resolution() -> None:
 
     assert (
         _resolve_from_import(
-            "game.domain.combat.attacks",
+            "srd_arena.domain.combat.attacks",
             is_package=False,
             node=node,
         )
-        == "game.domain.creature"
+        == "srd_arena.domain.creature"
     )
 
 
@@ -112,7 +112,7 @@ def _resolve_from_import(
 
 
 def _module_name(path: Path) -> str:
-    relative = path.relative_to(GAME_PACKAGE.parent).with_suffix("")
+    relative = path.relative_to(PACKAGE_ROOT.parent).with_suffix("")
     parts = list(relative.parts)
     if parts[-1] == "__init__":
         parts.pop()

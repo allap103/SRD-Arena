@@ -1444,7 +1444,7 @@ class ScenarioPickerWindow(QMainWindow):
 
         scenarios = list_scenarios()
         if not scenarios:
-            empty = QLabel("No valid scenarios were found in app/content/scenarios/.")
+            empty = QLabel("No valid scenarios were found in content/scenarios/.")
             empty.setWordWrap(True)
             layout.addWidget(empty)
             return

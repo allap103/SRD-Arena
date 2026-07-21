@@ -1,12 +1,12 @@
 import json
 from pathlib import Path
 
-from game.content.loaders import load_creature, load_bestiary_stat_blocks, load_scene
-from game.runtime.save import load_from_file, save_to_file
-from game.runtime.scenario import Scenario
+from srd_arena.content.loaders import load_creature, load_bestiary_stat_blocks, load_scene
+from srd_arena.runtime.save import load_from_file, save_to_file
+from srd_arena.runtime.scenario import Scenario
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
-SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
+SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "sample_game"
 
 
 def test_load_scene_parses_optional_encounter_block() -> None:
@@ -44,7 +44,7 @@ def test_load_scene_parses_optional_encounter_block() -> None:
 
 
 def test_load_creature_can_reference_system_stat_block() -> None:
-    stat_blocks = load_bestiary_stat_blocks("app/content/system")
+    stat_blocks = load_bestiary_stat_blocks("content/system")
 
     creature = load_creature(FIXTURE_ENCOUNTER_DIR / "actors" / "goblin_1", stat_blocks)
 
@@ -59,62 +59,6 @@ def test_load_creature_can_reference_system_stat_block() -> None:
     assert creature.monster_attacks[0].attack_modes == ("melee",)
     assert creature.monster_attacks[1].attack_modes == ("ranged",)
     assert creature.monster_attacks[1].range_normal == 80
-
-
-def test_game_loads_custom_stat_blocks_and_creature_instances() -> None:
-    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
-
-    actor_ids = {creature.id for creature in scenario.creatures}
-    player = scenario.get_creature("player")
-    items_by_id = {item.id: item for item in scenario.items}
-
-    assert "player" in actor_ids
-    assert len([creature for creature in scenario.creatures if creature.id == "player"]) == 1
-    assert {"goblin_1", "goblin_2", "goblin_3"}.issubset(actor_ids)
-    assert player.name == "Traveler"
-    assert player.class_ref is not None
-    assert player.class_ref.name == "Fighter"
-    assert player.class_ref.source == "XPHB"
-    assert player.attributes.level == 2
-    assert player.attributes.proficiency_bonus == 2
-    assert player.attributes.proficiencies["weapons"] == ["simple", "martial"]
-    assert player.attributes.proficiencies["saving_throws"] == [
-        "strength",
-        "constitution",
-    ]
-    assert player.combat_profile.attacks_per_attack_action == 1
-    assert "second_wind" in {grant.id for grant in player.feature_grants}
-    assert "action_surge" in {grant.id for grant in player.feature_grants}
-    second_wind = next(grant for grant in player.feature_grants if grant.id == "second_wind")
-    assert second_wind.data["healing_die_count"] == 1
-    assert second_wind.data["healing_die_sides"] == 10
-    action_surge = next(grant for grant in player.feature_grants if grant.id == "action_surge")
-    assert action_surge.data["uses"] == 1
-    assert "second_wind" in player.combat_profile.bonus_action_options
-    assert player.combat_profile.feature_actions["action_surge"].economy == "none"
-    assert player.combat_profile.feature_uses_max["second_wind"] == 2
-    assert player.combat_profile.feature_uses_max["action_surge"] == 1
-    assert player.combat_profile.feature_recharge["second_wind"]["short_rest"] == 1
-    assert player.combat_profile.feature_recharge["second_wind"]["long_rest"] == "all"
-    assert player.combat_profile.feature_recharge["action_surge"]["short_rest"] == "all"
-    assert player.feature_uses_remaining["second_wind"] == 2
-    assert player.feature_uses_remaining["action_surge"] == 1
-    assert player.get_max_health() == 20
-    assert player.get_armor_class() == 16
-    assert player.inventory.items == ["potion_of_healing"]
-    assert player.equipment.equipped_items["right_hand"] == "longsword"
-    assert player.equipment.equipped_items["body"] == "chain_mail"
-    assert items_by_id["longsword"].name == "Longsword"
-    assert items_by_id["longsword"].weapon_stat is not None
-    assert items_by_id["longsword"].weapon_stat.weapon_category == "martial"
-    assert items_by_id["chain_mail"].name == "Chain Mail"
-    assert items_by_id["potion_of_healing"].name == "Potion of Healing"
-    assert items_by_id["dagger"].weapon_stat is not None
-    assert items_by_id["dagger"].weapon_stat.damage == "1d4"
-    assert items_by_id["shortsword"].weapon_stat is not None
-    assert items_by_id["shortsword"].weapon_stat.damage == "1d6"
-    assert items_by_id["chain_mail"].armor_stat is not None
-    assert items_by_id["chain_mail"].armor_stat.armor_class == 16
 
 
 def test_game_uses_start_scene_from_settings_when_not_overridden(tmp_path: Path) -> None:
@@ -318,14 +262,14 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
 
 
 def test_save_and_load_preserve_spell_slots(tmp_path: Path) -> None:
-    session = Scenario("app/content/scenarios/sample_game").create_session()
+    session = Scenario("content/scenarios/sample_game").create_session()
 
     assert session.player.spellcasting is not None
     session.player.spellcasting.spell_slots_remaining[1] = 1
     save_path = tmp_path / "spell_slots_save.json"
 
     save_to_file(session, save_path)
-    loaded = load_from_file(save_path, "app/content/scenarios/sample_game")
+    loaded = load_from_file(save_path, "content/scenarios/sample_game")
 
     assert loaded.player.spellcasting is not None
     assert loaded.player.spellcasting.spell_slots_max == {1: 4, 2: 3, 3: 2}

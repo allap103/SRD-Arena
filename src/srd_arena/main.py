@@ -19,7 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="?",
         help=(
             "Scenario directory as a relative path, an absolute path, or the name of "
-            "a subfolder in app/content/scenarios/."
+            "a subfolder in content/scenarios/."
         ),
     )
     parser.add_argument(
@@ -63,7 +63,7 @@ def resolve_scenario_directory(scenario: str | None) -> Path:
 
     raise FileNotFoundError(
         "Could not find a scenario directory for "
-        f"'{scenario}'. Tried the current working directory and app/content/scenarios/."
+        f"'{scenario}'. Tried the current working directory and content/scenarios/."
     )
 
 
@@ -117,7 +117,7 @@ def main(argv: list[str] | None = None) -> None:
 def select_scenario_directory() -> Path:
     scenarios = list_scenarios(SCENARIOS_ROOT)
     if not scenarios:
-        raise FileNotFoundError("No scenarios are available in app/content/scenarios/.")
+        raise FileNotFoundError("No scenarios are available in content/scenarios/.")
     print("Available scenarios:")
     for index, scenario in enumerate(scenarios, start=1):
         print(f"{index}. {scenario.label} ({scenario.id})")

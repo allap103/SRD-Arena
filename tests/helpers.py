@@ -1,7 +1,7 @@
-from game.domain.creature import Creature
-from game.domain.attributes import Attributes
-from game.domain.equipment import Equipment
-from game.domain.inventory import Inventory
+from srd_arena.domain.creature import Creature
+from srd_arena.domain.attributes import Attributes
+from srd_arena.domain.equipment import Equipment
+from srd_arena.domain.inventory import Inventory
 
 
 def make_creature() -> Creature:
