@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..features.actions import resolve_feature_action as _resolve_feature_action_impl
-from ...creatures import Creature
-from ..models import EncounterProgress
+from ..combat.features.actions import resolve_feature_action as _resolve_feature_action_impl
+from ..creatures import Creature
+from ..combat.models import EncounterProgress
 
 if TYPE_CHECKING:
-    from ..encounter import EncounterState
+    from ..combat.encounter import EncounterState
 
 
 def _roll_dice(count: int, sides: int) -> int:
-    from .. import encounter as encounter_module
+    from ..combat import encounter as encounter_module
 
     return encounter_module.roll_dice(count, sides)
 

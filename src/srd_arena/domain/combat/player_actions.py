@@ -7,17 +7,19 @@ from ..scene import Position
 from ..creatures import can_grapple
 from ..rules.dice import resolve_d20
 from ..effects.results import EffectResult
-from .attacks import has_free_hand
-from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
-from .models import EncounterAction, EncounterProgress
-from .resolvers import (
-    apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
+from ..actions import (
     resolve_feature_action as _resolve_feature_action_impl,
     resolve_flee_action as _resolve_flee_action_impl,
     resolve_player_attack_action as _resolve_player_attack_action_impl,
     resolve_spell_action as _resolve_spell_action_impl,
     resolve_utilize_action as _resolve_utilize_action_impl,
     resolve_wait_action as _resolve_wait_action_impl,
+)
+from .attacks import has_free_hand
+from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
+from .models import EncounterAction, EncounterProgress
+from .resolvers import (
+    apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
     user_controlled_enemy_actions as _user_controlled_enemy_actions_impl,
 )
 
