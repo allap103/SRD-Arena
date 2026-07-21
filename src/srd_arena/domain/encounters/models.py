@@ -8,7 +8,7 @@ from ..equipment import Item
 from ..geometry import Position
 from .definitions import EncounterBehavior, EncounterDefinition
 from ..effects.conditions import Status, StatusSnapshot
-from ..config import RulesConfig
+from ..geometry import GeometryConfig
 from ..rolls.dice import CheckResult, DicePoolResult
 from ..effects.triggered import TriggeredEffect
 
@@ -314,7 +314,7 @@ class EncounterStateData:
     initiative_entries: list[InitiativeEntry] = field(default_factory=list)
     conditions: list[Status] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)
-    rules_config: RulesConfig = field(default_factory=RulesConfig)
+    geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
     _behaviors: list[Generator[EncounterAction | None, BehaviorContext, None]] = field(
         default_factory=list,
         repr=False,

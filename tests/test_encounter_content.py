@@ -84,11 +84,11 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
     assert scenario.encounters["arena_two"].victory.next_encounter_id == "arena_two"
 
 
-def test_game_loads_rule_settings_from_config_json() -> None:
+def test_game_loads_geometry_settings_from_config_json() -> None:
     scenario = Scenario(str(TACTICAL_SCENARIO_DIR))
 
     assert scenario.display_name == "Tactical Test Game"
-    assert scenario.rules_config.directional_aoe_cell_coverage_threshold == 0.1
+    assert scenario.geometry_config.directional_area_cell_coverage_threshold == 0.1
 
 
 def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:

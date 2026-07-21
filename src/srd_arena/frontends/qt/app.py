@@ -1256,7 +1256,7 @@ class GameWindow(QMainWindow):
         )
         default_direction = Vector2D(1.0, 0.0)
         coverage_threshold = (
-            self.session.encounter_state.rules_config.directional_aoe_cell_coverage_threshold
+            self.session.encounter_state.geometry_config.directional_area_cell_coverage_threshold
         )
         return serialize_area(
             build_directional_area(

@@ -17,10 +17,7 @@ from ..content.loaders import (
 from ..domain.creatures import Creature
 from ..domain.encounters import EncounterDefinition
 from ..domain.equipment import Item
-from ..domain.config import (
-    DEFAULT_DIRECTIONAL_AOE_CELL_COVERAGE_THRESHOLD,
-    RulesConfig,
-)
+from ..domain.geometry import GeometryConfig
 from ..runtime.session import Session
 from ..content.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
 
@@ -32,14 +29,14 @@ DEFAULT_SYSTEM_CONTENT_DIR = SYSTEM_CONTENT_ROOT
 class ScenarioConfig:
     display_name: str = "Unnamed Scenario"
     encounters: tuple[str, ...] = ("goblin_encounter",)
-    rules_config: RulesConfig = field(default_factory=RulesConfig)
+    geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
 
 
 class Scenario:
     encounters: dict[str, EncounterDefinition]
     creatures: list[Creature]
     items: list[Item]
-    rules_config: RulesConfig
+    geometry_config: GeometryConfig
 
     def __init__(
         self,
@@ -52,7 +49,7 @@ class Scenario:
         self.system_directory = Path(system_directory)
         config = self._load_config(self.directory / "config.json")
         self.display_name = config.display_name
-        self.rules_config = config.rules_config
+        self.geometry_config = config.geometry_config
         self.stat_blocks = load_bestiary_stat_blocks(self.system_directory)
         self.class_blocks = load_class_blocks(self.system_directory)
         self.subclass_blocks = load_subclass_blocks(self.system_directory)
@@ -132,7 +129,7 @@ class Scenario:
             start_scene_id=self.start_scene,
             scenario_dir=self.directory,
             control_mode=control_mode or self.control_mode,
-            rules_config=self.rules_config,
+            geometry_config=self.geometry_config,
         )
 
     def _load_config(self, path: Path) -> ScenarioConfig:
@@ -141,10 +138,10 @@ class Scenario:
         with path.open("r", encoding="utf-8") as config_file:
             payload = json.load(config_file)
         encounters = payload.get("encounters")
-        rules = payload.get("rules", {})
-        threshold = DEFAULT_DIRECTIONAL_AOE_CELL_COVERAGE_THRESHOLD
-        if isinstance(rules, dict):
-            configured = rules.get("directional_aoe_cell_coverage_threshold")
+        geometry = payload.get("geometry", {})
+        threshold = GeometryConfig().directional_area_cell_coverage_threshold
+        if isinstance(geometry, dict):
+            configured = geometry.get("directional_area_cell_coverage_threshold")
             if isinstance(configured, (int, float)):
                 threshold = min(max(float(configured), 0.0), 1.0)
         return ScenarioConfig(
@@ -154,5 +151,7 @@ class Scenario:
                 if isinstance(encounters, list) and encounters
                 else ("goblin_encounter",)
             ),
-            rules_config=RulesConfig(directional_aoe_cell_coverage_threshold=threshold),
+            geometry_config=GeometryConfig(
+                directional_area_cell_coverage_threshold=threshold
+            ),
         )

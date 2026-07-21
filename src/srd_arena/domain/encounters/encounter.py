@@ -64,7 +64,7 @@ from ..equipment import Item
 from ..geometry import Position
 from .definitions import EncounterDefinition
 from ..effects.conditions import Status
-from ..config import RulesConfig
+from ..geometry import GeometryConfig
 from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
 from ..effects.triggered import TriggeredEffect, matching_effects
 from .turn_flow import TURN_ENGINE, TurnEngine
@@ -213,7 +213,7 @@ class EncounterState(EncounterStateData):
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
         control_mode: str = "default",
-        rules_config: RulesConfig | None = None,
+        geometry_config: GeometryConfig | None = None,
     ) -> EncounterState:
         player_participants = [
             participant
@@ -255,7 +255,7 @@ class EncounterState(EncounterStateData):
             turn=TurnState(),
             interrupts=InterruptState(),
             item_templates=item_templates or {},
-            rules_config=rules_config or RulesConfig(),
+            geometry_config=geometry_config or GeometryConfig(),
         )
         state._roll_initiative(player)
         state._initialize_behaviors()
@@ -268,7 +268,7 @@ class EncounterState(EncounterStateData):
         snapshot: EncounterSnapshot,
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
-        rules_config: RulesConfig | None = None,
+        geometry_config: GeometryConfig | None = None,
     ) -> EncounterState:
         return restore_snapshot(
             cls,
@@ -276,7 +276,7 @@ class EncounterState(EncounterStateData):
             snapshot,
             creature_templates,
             item_templates,
-            rules_config,
+            geometry_config,
         )
     def snapshot(self) -> EncounterSnapshot:
         return create_snapshot(self)

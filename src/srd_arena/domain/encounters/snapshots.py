@@ -21,7 +21,7 @@ from .pending import restore_pending_attack, snapshot_pending_attack
 from .refs import enemy_ref
 from ..creatures import Creature
 from ..equipment import Item
-from ..config import RulesConfig
+from ..geometry import GeometryConfig
 from ..geometry import Position
 from .definitions import EncounterDefinition
 from ..effects.conditions import Status, StatusSnapshot
@@ -36,7 +36,7 @@ def restore_snapshot(
     snapshot: EncounterSnapshot,
     creature_templates: dict[str, Creature],
     item_templates: dict[str, Item] | None = None,
-    rules_config: RulesConfig | None = None,
+    geometry_config: GeometryConfig | None = None,
 ) -> EncounterState:
     behavior_by_actor_id = {
         participant.actor_id: participant.behavior
@@ -136,7 +136,7 @@ def restore_snapshot(
             for condition in snapshot.conditions
         ],
         item_templates=item_templates or {},
-        rules_config=rules_config or RulesConfig(),
+        geometry_config=geometry_config or GeometryConfig(),
     )
     if not state.initiative_order or len(state.initiative_order) != len(state.enemies) + 1:
         state.initiative_order = [

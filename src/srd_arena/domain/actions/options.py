@@ -351,7 +351,9 @@ def spell_area(
     length = self._spell_range_squares(spell, player)
     if length is None:
         return None
-    coverage_threshold = self.rules_config.directional_aoe_cell_coverage_threshold
+    coverage_threshold = (
+        self.geometry_config.directional_area_cell_coverage_threshold
+    )
     return build_directional_area(
         spell.range_data.get("type"),
         self.player_position,

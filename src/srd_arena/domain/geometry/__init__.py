@@ -24,6 +24,7 @@ from .areas import (
     vector_from_direction,
 )
 from .primitives import Grid, Position
+from .config import GeometryConfig
 
 __all__ = [
     "LEGACY_TOUCHED_CELL_POLICY",
@@ -31,6 +32,7 @@ __all__ = [
     "AreaOfEffect",
     "ContinuousArea",
     "Grid",
+    "GeometryConfig",
     "Point2D",
     "Position",
     "Vector2D",

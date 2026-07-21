@@ -8,7 +8,7 @@ from ..frontends.shared.combat import render_encounter_text
 from ..domain.creatures import Creature
 from ..domain.encounters import EncounterDefinition
 from ..domain.equipment import Item
-from ..domain.config import RulesConfig
+from ..domain.geometry import GeometryConfig
 from ..frontends.shared.models import ActionView, SceneView, TurnResult
 from ..content.paths import SCENARIOS_ROOT
 
@@ -36,7 +36,7 @@ class Session:
         save_dir: str | Path = "saves",
         control_mode: str = "default",
         ai_action_limit: int | None = None,
-        rules_config: RulesConfig | None = None,
+        geometry_config: GeometryConfig | None = None,
     ):
         self.encounters = encounters
         self.player = player
@@ -49,7 +49,7 @@ class Session:
         self.save_dir = Path(save_dir)
         self.control_mode = control_mode
         self.ai_action_limit = ai_action_limit
-        self.rules_config = rules_config or RulesConfig()
+        self.geometry_config = geometry_config or GeometryConfig()
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
         self.pending_scene_transition: PendingSceneTransition | None = None
@@ -185,7 +185,7 @@ class Session:
         self.item_templates = loaded.item_templates
         self.encounter_state = loaded.encounter_state
         self.control_mode = loaded.control_mode
-        self.rules_config = loaded.rules_config
+        self.geometry_config = loaded.geometry_config
         self.pending_scene_transition = loaded.pending_scene_transition
         if self.encounter_state is not None:
             self.encounter_state.ai_action_limit = self.ai_action_limit
@@ -345,7 +345,7 @@ class Session:
             self.creature_templates,
             self.item_templates,
             self.control_mode,
-            self.rules_config,
+            self.geometry_config,
         )
         self.encounter_state.ai_action_limit = self.ai_action_limit
         self._encounter_actions = []
@@ -374,7 +374,7 @@ class Session:
             snapshot,
             self.creature_templates,
             self.item_templates,
-            self.rules_config,
+            self.geometry_config,
         )
         self.encounter_state.ai_action_limit = self.ai_action_limit
 
