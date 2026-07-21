@@ -33,23 +33,18 @@ from .models import (
     CreatureRef,
     CombatEvent,
     DecisionFrame,
-    DecisionFrameSnapshot,
     EncounterAction,
     EncounterEnemyState,
     EncounterProgress,
     EncounterSnapshot,
-    EncounterSnapshotEnemy,
     EncounterStateData,
     InitiativeEntry,
-    InitiativeEntrySnapshot,
     InterruptState,
     PendingAttack,
     RoundState,
     TurnState,
     PendingAction,
-    PendingActionSnapshot,
 )
-from .pending import restore_pending_attack, snapshot_pending_attack
 from .player_actions import (
     apply_action as _apply_action_impl,
     apply_player_move as _apply_player_move_impl,
@@ -68,20 +63,32 @@ from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 from ..creature import Creature
 from ..item import Item
 from ..scene import Encounter, Position
-from ..size import is_two_sizes_smaller
-from ..status import Status, StatusSnapshot
+from ..status import Status
 from ..rules.config import RulesConfig
 from ..rules.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
 from ..rules.registry import matching_rules
 from ..rules.types import RuleGrant
 from .turn_flow import TURN_ENGINE, TurnEngine
-from .queries import (
-    living_enemy_at as _living_enemy_at_impl,
-    player_movement_remaining as _player_movement_remaining_query,
+from .conditions import (
+    apply_status as _apply_status_impl,
+    condition_sources_for as _condition_sources_for_impl,
+    grappled_sources_for as _grappled_sources_for_impl,
+    grappling_targets_for as _grappling_targets_for_impl,
+    is_grappled as _is_grappled_impl,
+    movement_cost_for as _movement_cost_for_impl,
+    remove_status as _remove_status_impl,
+    status_replaces as _status_replaces_impl,
 )
+from .participants import (
+    actors_are_opponents as _actors_are_opponents_impl,
+    creature_controller as _creature_controller_impl,
+    creature_for_ref as _creature_for_ref_impl,
+    creature_team_id as _creature_team_id_impl,
+)
+from .snapshots import create_snapshot, restore_snapshot
 
 # Keep these module-level names for tests and helpers that monkeypatch
-# `game.domain.combat.encounter.roll_die` / `roll_dice`.
+# `srd_arena.domain.combat.encounter.roll_die` / `roll_dice`.
 roll_die = _roll_die
 roll_dice = _roll_dice
 __all__ = ["ActionCost", "EncounterAction", "EncounterState", "roll_die", "roll_dice"]
@@ -242,203 +249,16 @@ class EncounterState(EncounterStateData):
         item_templates: dict[str, Item] | None = None,
         rules_config: RulesConfig | None = None,
     ) -> EncounterState:
-        behavior_by_index = {index: enemy.behavior for index, enemy in enumerate(definition.enemies)}
-        enemies = []
-        for index, saved_enemy in enumerate(snapshot.enemies):
-            creature = deepcopy(creature_templates[saved_enemy.actor_id])
-            creature.current_health = saved_enemy.current_health
-            enemies.append(
-                EncounterEnemyState(
-                    actor_id=saved_enemy.actor_id,
-                    creature=creature,
-                    position=Position(saved_enemy.position.x, saved_enemy.position.y),
-                    behavior=deepcopy(behavior_by_index[index]),
-                    patrol_index=saved_enemy.patrol_index,
-                    reaction_available=saved_enemy.reaction_available,
-                    movement_remaining=saved_enemy.movement_remaining,
-                )
-            )
-        state = cls(
-            scene_id=snapshot.scene_id,
-            definition=definition,
-            player_position=Position(snapshot.player_position.x, snapshot.player_position.y),
-            enemies=enemies,
-            control_mode=snapshot.control_mode,
-            round=RoundState(number=snapshot.round_number),
-            turn=TurnState(
-                index=snapshot.turn_index,
-                player_movement_remaining=snapshot.player_movement_remaining,
-                player_actions_remaining=snapshot.player_actions_remaining,
-                player_magic_actions_remaining=snapshot.player_magic_actions_remaining,
-                player_attacks_remaining=snapshot.player_attacks_remaining,
-                player_bonus_action_available=snapshot.player_bonus_action_available,
-                player_reaction_available=snapshot.player_reaction_available,
-            ),
-            action_sequence=snapshot.action_sequence,
-            frame_sequence=snapshot.frame_sequence,
-            event_sequence=snapshot.event_sequence,
-            initiative_order=list(snapshot.initiative_order),
-            initiative_entries=[
-                InitiativeEntry(
-                    actor_ref=entry.actor_ref,
-                    roll=entry.roll,
-                    modifier=entry.modifier,
-                    total=entry.total,
-                )
-                for entry in snapshot.initiative_entries
-            ],
-            interrupts=InterruptState(
-                decision_stack=[
-                    DecisionFrame(
-                        id=frame.id,
-                        actor_ref=frame.actor_ref,
-                        kind=frame.kind,
-                        reason=frame.reason,
-                        parent_frame_id=frame.parent_frame_id,
-                        parent_action_id=frame.parent_action_id,
-                        can_pass=frame.can_pass,
-                    )
-                    for frame in snapshot.decision_stack
-                ],
-                pending_action=(
-                    PendingAction(
-                        id=snapshot.pending_action.id,
-                        kind=snapshot.pending_action.kind,
-                        actor_ref=snapshot.pending_action.actor_ref,
-                        direction=snapshot.pending_action.direction,
-                        from_position=Position(
-                            snapshot.pending_action.from_position.x,
-                            snapshot.pending_action.from_position.y,
-                        ),
-                        to_position=Position(
-                            snapshot.pending_action.to_position.x,
-                            snapshot.pending_action.to_position.y,
-                        ),
-                        resume_enemy_index=snapshot.pending_action.resume_enemy_index,
-                        remaining_movement_after=snapshot.pending_action.remaining_movement_after,
-                        trigger_id=snapshot.pending_action.trigger_id,
-                    )
-                    if snapshot.pending_action is not None
-                    else None
-                ),
-                pending_attack=restore_pending_attack(snapshot.pending_attack),
-            ),
-            conditions=[
-                Status(
-                    id=condition.id,
-                    name=condition.name,
-                    source_ref=condition.source_ref,
-                    source_label=condition.source_label,
-                    target_ref=condition.target_ref,
-                    expires_on_creature_ref=condition.expires_on_creature_ref,
-                    expires_on_round=condition.expires_on_round,
-                )
-                for condition in snapshot.conditions
-            ],
-            item_templates=item_templates or {},
-            rules_config=rules_config or RulesConfig(),
+        return restore_snapshot(
+            cls,
+            definition,
+            snapshot,
+            creature_templates,
+            item_templates,
+            rules_config,
         )
-        if not state.initiative_order or len(state.initiative_order) != len(state.enemies) + 1:
-            state.initiative_order = ["player", *(_enemy_ref(index) for index, _enemy in enumerate(state.enemies))]
-        if not state.initiative_entries:
-            state.initiative_entries = [
-                InitiativeEntry(
-                    actor_ref=actor_ref,
-                    roll=0,
-                    modifier=0,
-                    total=0,
-                )
-                for actor_ref in state.initiative_order
-            ]
-        state._initialize_behaviors()
-        state._normalize_turn()
-        return state
-
     def snapshot(self) -> EncounterSnapshot:
-        return EncounterSnapshot(
-            scene_id=self.scene_id,
-            player_position=Position(self.player_position.x, self.player_position.y),
-            control_mode=self.control_mode,
-            turn_index=self.turn_index,
-            round_number=self.round_number,
-            player_movement_remaining=self.player_movement_remaining,
-            player_actions_remaining=self.player_actions_remaining,
-            player_magic_actions_remaining=self.player_magic_actions_remaining,
-            player_action_available=self.player_action_available,
-            player_attacks_remaining=self.player_attacks_remaining,
-            player_bonus_action_available=self.player_bonus_action_available,
-            player_reaction_available=self.player_reaction_available,
-            action_sequence=self.action_sequence,
-            frame_sequence=self.frame_sequence,
-            event_sequence=self.event_sequence,
-            initiative_order=list(self.initiative_order),
-            initiative_entries=[
-                InitiativeEntrySnapshot(
-                    actor_ref=entry.actor_ref,
-                    roll=entry.roll,
-                    modifier=entry.modifier,
-                    total=entry.total,
-                )
-                for entry in self.initiative_entries
-            ],
-            decision_stack=[
-                DecisionFrameSnapshot(
-                    id=frame.id,
-                    actor_ref=frame.actor_ref,
-                    kind=frame.kind,
-                    reason=frame.reason,
-                    parent_frame_id=frame.parent_frame_id,
-                    parent_action_id=frame.parent_action_id,
-                    can_pass=frame.can_pass,
-                )
-                for frame in self.decision_stack
-            ],
-            pending_action=(
-                PendingActionSnapshot(
-                    id=self.pending_action.id,
-                    kind=self.pending_action.kind,
-                    actor_ref=self.pending_action.actor_ref,
-                    direction=self.pending_action.direction,
-                    from_position=Position(
-                        self.pending_action.from_position.x,
-                        self.pending_action.from_position.y,
-                    ),
-                    to_position=Position(
-                        self.pending_action.to_position.x,
-                        self.pending_action.to_position.y,
-                    ),
-                    resume_enemy_index=self.pending_action.resume_enemy_index,
-                    remaining_movement_after=self.pending_action.remaining_movement_after,
-                    trigger_id=self.pending_action.trigger_id,
-                )
-                if self.pending_action is not None
-                else None
-            ),
-            pending_attack=snapshot_pending_attack(self.pending_attack),
-            conditions=[
-                StatusSnapshot(
-                    id=condition.id,
-                    name=condition.name,
-                    source_ref=condition.source_ref,
-                    source_label=condition.source_label,
-                    target_ref=condition.target_ref,
-                    expires_on_creature_ref=condition.expires_on_creature_ref,
-                    expires_on_round=condition.expires_on_round,
-                )
-                for condition in self.conditions
-            ],
-            enemies=[
-                EncounterSnapshotEnemy(
-                    actor_id=enemy.actor_id,
-                    current_health=enemy.creature.get_health(),
-                    position=Position(enemy.position.x, enemy.position.y),
-                    patrol_index=enemy.patrol_index,
-                    reaction_available=enemy.reaction_available,
-                    movement_remaining=enemy.movement_remaining,
-                )
-                for enemy in self.enemies
-            ],
-        )
+        return create_snapshot(self)
 
     def _initialize_behaviors(self) -> None:
         self._behaviors = []
@@ -606,82 +426,11 @@ class EncounterState(EncounterStateData):
             remove_status=self._remove_status,
         )
 
-    def _apply_status(self, status: Status) -> None:
-        self.conditions = [
-            existing
-            for existing in self.conditions
-            if not self._status_replaces(existing, status)
-        ]
-        self.conditions.append(status)
-
-    def _remove_status(self, target_ref: CreatureRef, status_name: str) -> None:
-        removed_statuses = [
-            condition
-            for condition in self.conditions
-            if condition.target_ref == target_ref and condition.name == status_name
-        ]
-        self.conditions = [
-            existing
-            for existing in self.conditions
-            if not (
-                existing.target_ref == target_ref
-                and existing.name == status_name
-            )
-        ]
-        for status in removed_statuses:
-            if status.name == "grappled":
-                self.conditions = [
-                    existing
-                    for existing in self.conditions
-                    if not (
-                        existing.name == "grappling"
-                        and existing.target_ref == status.source_ref
-                        and existing.source_ref == status.target_ref
-                    )
-                ]
-            elif status.name == "grappling":
-                self.conditions = [
-                    existing
-                    for existing in self.conditions
-                    if not (
-                        existing.name == "grappled"
-                        and existing.target_ref == status.source_ref
-                        and existing.source_ref == status.target_ref
-                    )
-                ]
-
-    def _creature_controller(self, actor_ref: CreatureRef) -> str:
-        if self.control_mode == "all-user":
-            return "user"
-        team_id = self._creature_team_id(actor_ref)
-        team = next(
-            (team for team in self.definition.teams if team.id == team_id),
-            None,
-        )
-        return team.controller if team is not None else (
-            "user" if actor_ref == "player" else "ai"
-        )
-
-    def _creature_team_id(self, actor_ref: CreatureRef) -> str:
-        actor_id = (
-            "player"
-            if actor_ref == "player"
-            else self.enemies[_enemy_index(actor_ref)].actor_id
-        )
-        team = next(
-            (team for team in self.definition.teams if actor_id in team.members),
-            None,
-        )
-        return team.id if team is not None else actor_id
-
-    def _actors_are_opponents(
-        self,
-        first_creature_ref: CreatureRef,
-        second_creature_ref: CreatureRef,
-    ) -> bool:
-        return self._creature_team_id(first_creature_ref) != self._creature_team_id(
-            second_creature_ref
-        )
+    _apply_status = _apply_status_impl
+    _remove_status = _remove_status_impl
+    _creature_controller = _creature_controller_impl
+    _creature_team_id = _creature_team_id_impl
+    _actors_are_opponents = _actors_are_opponents_impl
 
     def _open_damage_reroll_decision(self, **kwargs) -> None:
         self.reaction_engine.open_damage_reroll_decision(self, **kwargs)
@@ -944,47 +693,13 @@ class EncounterState(EncounterStateData):
     def _creature_size(self, player: Creature, actor_ref: CreatureRef) -> str:
         return self._creature_for_ref(player, actor_ref).size
 
-    def _condition_sources_for(self, actor_ref: CreatureRef, condition_name: str) -> tuple[CreatureRef, ...]:
-        return tuple(
-            condition.source_ref
-            for condition in self.conditions
-            if condition.target_ref == actor_ref and condition.name == condition_name
-        )
-
-    def _grappled_sources_for(self, actor_ref: CreatureRef) -> tuple[CreatureRef, ...]:
-        return self._condition_sources_for(actor_ref, "grappled")
-
-    def _grappling_targets_for(self, actor_ref: CreatureRef) -> tuple[CreatureRef, ...]:
-        return self._condition_sources_for(actor_ref, "grappling")
-
-    def _is_grappled(self, actor_ref: CreatureRef) -> bool:
-        return bool(self._grappled_sources_for(actor_ref))
-
-    def _movement_cost_for(self, player: Creature, actor_ref: CreatureRef) -> int | None:
-        if self._is_grappled(actor_ref):
-            return None
-        cost = 1
-        grappling_targets = self._grappling_targets_for(actor_ref)
-        grappler_size = self._creature_size(player, actor_ref)
-        for target_ref in grappling_targets:
-            target_size = self._creature_size(player, target_ref)
-            if not is_two_sizes_smaller(target_size, grappler_size):
-                cost += 1
-        return cost
-
-    def _creature_for_ref(self, player: Creature, actor_ref: CreatureRef) -> Creature:
-        if actor_ref == "player":
-            return player
-        return self.enemies[_enemy_index(actor_ref)].creature
-
-    def _status_replaces(self, existing: Status, status: Status) -> bool:
-        if existing.name != status.name:
-            return False
-        if existing.target_ref != status.target_ref:
-            return False
-        if existing.name in {"grappled", "grappling"}:
-            return existing.source_ref == status.source_ref
-        return True
+    _condition_sources_for = _condition_sources_for_impl
+    _grappled_sources_for = _grappled_sources_for_impl
+    _grappling_targets_for = _grappling_targets_for_impl
+    _is_grappled = _is_grappled_impl
+    _movement_cost_for = _movement_cost_for_impl
+    _creature_for_ref = _creature_for_ref_impl
+    _status_replaces = staticmethod(_status_replaces_impl)
 
 def _attack_roll_mode(
     attack_type: str,

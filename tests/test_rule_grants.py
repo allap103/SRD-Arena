@@ -2,12 +2,12 @@ from pathlib import Path
 
 import pytest
 
-from game.domain.combat.encounter import EncounterState
-from game.runtime.scenario import Scenario
-from game.domain.rules import RuleGrant, matching_rules, reroll_eligible_indices
-from game.domain.rules.dice import reroll_dice, resolve_dice
+from srd_arena.domain.combat.encounter import EncounterState
+from srd_arena.runtime.scenario import Scenario
+from srd_arena.domain.rules import RuleGrant, matching_rules, reroll_eligible_indices
+from srd_arena.domain.rules.dice import reroll_dice, resolve_dice
 
-SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "app" / "content" / "scenarios" / "sample_game"
+SAMPLE_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "sample_game"
 
 
 @pytest.fixture(autouse=True)
@@ -88,8 +88,8 @@ def test_sample_fighter_loads_great_weapon_fighting_rule():
 def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatch):
     session = _adjacent_sample_encounter()
     session.player.equipment.equipped_items["right_hand"] = "longsword"
-    monkeypatch.setattr("game.domain.combat.encounter.roll_die", lambda _sides: 15)
-    monkeypatch.setattr("game.domain.combat.encounter.roll_dice", lambda _count, _sides: 1)
+    monkeypatch.setattr("srd_arena.domain.combat.encounter.roll_die", lambda _sides: 15)
+    monkeypatch.setattr("srd_arena.domain.combat.encounter.roll_dice", lambda _count, _sides: 1)
     attack_index = next(
         index
         for index, choice in enumerate(session.get_scene_view().choices)
@@ -113,4 +113,3 @@ def _adjacent_sample_encounter():
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
     return session
-

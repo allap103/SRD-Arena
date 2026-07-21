@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from game.runtime.scenario import Scenario
-from game.domain.combat.features import CapabilityActionResult, resolve_feature_action
+from srd_arena.runtime.scenario import Scenario
+from srd_arena.domain.combat.features import CapabilityActionResult, resolve_feature_action
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 

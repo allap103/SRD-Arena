@@ -1,4 +1,4 @@
-from game.domain.combat.geometry import (
+from srd_arena.domain.combat.geometry import (
     LEGACY_TOUCHED_CELL_POLICY,
     RASTERIZATION_POLICY,
     Vector2D,
@@ -10,7 +10,7 @@ from game.domain.combat.geometry import (
     build_line_area_from_vector,
     build_radius_area,
 )
-from game.domain.scene import Grid, Position
+from srd_arena.domain.scene import Grid, Position
 
 
 def _coords(area) -> set[tuple[int, int]]:

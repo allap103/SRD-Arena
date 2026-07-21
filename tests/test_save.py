@@ -4,9 +4,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from game.domain.combat.encounter import EncounterState
-from game.runtime.scenario import Scenario
-from game.runtime.save import (
+from srd_arena.domain.combat.encounter import EncounterState
+from srd_arena.runtime.scenario import Scenario
+from srd_arena.runtime.save import (
     SaveGame,
     create_save,
     get_slot_path,
@@ -16,7 +16,7 @@ from game.runtime.save import (
     save_to_file,
     save_to_slot,
 )
-from game.runtime.session import (
+from srd_arena.runtime.session import (
     CONTINUE_CHOICE_TEXT,
     EXIT_CHOICE_TEXT,
     LOAD_CHOICE_TEXT,

@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from game import main as launcher
+from srd_arena import main as launcher
 
 
 def _make_scenario_dir(path: Path) -> Path:
@@ -40,8 +40,8 @@ def test_resolve_scenario_directory_accepts_scenarios_subfolder_name(
     tmp_path: Path,
 ) -> None:
     repo_root = tmp_path / "repo"
-    adventure_scenario = _make_scenario_dir(repo_root / "app" / "content" / "scenarios" / "forest_trial")
-    monkeypatch.setattr(launcher, "SCENARIOS_ROOT", repo_root / "app" / "content" / "scenarios")
+    adventure_scenario = _make_scenario_dir(repo_root / "content" / "scenarios" / "forest_trial")
+    monkeypatch.setattr(launcher, "SCENARIOS_ROOT", repo_root / "content" / "scenarios")
 
     resolved = launcher.resolve_scenario_directory("forest_trial")
 
@@ -62,7 +62,7 @@ def test_launch_runs_gui_frontend(monkeypatch, tmp_path: Path) -> None:
 
     monkeypatch.setitem(
         sys.modules,
-        "game.frontends.qt.app",
+        "srd_arena.frontends.qt.app",
         SimpleNamespace(
             run_pyside6_app=lambda scenario_dir=None, start_scene_override=None, control_mode="default", show_encounter_json=False: launched.append(
                 (

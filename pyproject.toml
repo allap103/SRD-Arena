@@ -8,18 +8,18 @@ dependencies = [
 ]
 
 [project.scripts]
-srd-arena = "game.main:main"
+srd-arena = "srd_arena.main:main"
 
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-package-dir = {"" = "app"}
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["app"]
-include = ["game*"]
+where = ["src"]
+include = ["srd_arena*"]
 
 [tool.uv]
 package = true
