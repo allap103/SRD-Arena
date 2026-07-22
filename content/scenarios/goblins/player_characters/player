@@ -7,7 +7,7 @@
         "source": "XPHB"
     },
     "subclass_ref": {
-        "name": "Eldritch Knight",
+        "name": "Champion",
         "source": "XPHB",
         "class_name": "Fighter",
         "class_source": "XPHB"

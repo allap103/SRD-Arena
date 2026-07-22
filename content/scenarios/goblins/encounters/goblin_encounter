@@ -7,7 +7,7 @@
     "creatures":  [
                       {
                           "id":  "player",
-                          "token_image":  "tokens/traveler.png",
+                          "token_image":  "tokens/arcane_swashbuckler.png",
                           "player_character":  "player",
                           "start":  {
                                         "x":  1,
@@ -17,7 +17,7 @@
                       },
                       {
                           "id":  "goblin_1",
-                          "token_image":  "tokens/goblin.png",
+                          "token_image":  "tokens/goblin_warrior.png",
                           "stat_block":  {
                                              "name":  "Goblin Warrior",
                                              "source":  "XMM"
@@ -33,7 +33,7 @@
                       },
                       {
                           "id":  "goblin_2",
-                          "token_image":  "tokens/goblin.png",
+                          "token_image":  "tokens/goblin_warrior.png",
                           "stat_block":  {
                                              "name":  "Goblin Warrior",
                                              "source":  "XMM"
@@ -54,7 +54,7 @@
                       },
                       {
                           "id":  "goblin_3",
-                          "token_image":  "tokens/goblin.png",
+                          "token_image":  "tokens/goblin_archer.png",
                           "stat_block":  {
                                              "name":  "Goblin Warrior",
                                              "source":  "XMM"
