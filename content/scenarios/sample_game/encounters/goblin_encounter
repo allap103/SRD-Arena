@@ -7,7 +7,7 @@
     "creatures":  [
                       {
                           "id":  "player",
-                          "token_image":  "tokens/arcane_swashbuckler.png",
+                          "token_image":  "tokens/human_fighter.png",
                           "player_character":  "player",
                           "start":  {
                                         "x":  1,
