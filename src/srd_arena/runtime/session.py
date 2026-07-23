@@ -31,6 +31,9 @@ class Session:
         controllers_by_creature: dict[str, str] | None = None,
         ai_action_limit: int | None = None,
         geometry_config: GeometryConfig | None = None,
+        background_image: str | None = None,
+        grid_color: str = "#d3d3d3",
+        grid_opacity: float = 1.0,
     ):
         self.encounters = encounters
         self.primary_creature_id = primary_creature_id
@@ -43,6 +46,9 @@ class Session:
         self.controllers_by_creature = dict(controllers_by_creature or {})
         self.ai_action_limit = ai_action_limit
         self.geometry_config = geometry_config or GeometryConfig()
+        self.background_image = background_image
+        self.grid_color = grid_color
+        self.grid_opacity = grid_opacity
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
         self.pending_scene_transition: PendingSceneTransition | None = None

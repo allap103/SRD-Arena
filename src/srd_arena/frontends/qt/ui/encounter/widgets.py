@@ -365,16 +365,40 @@ class BattlefieldWidget(QWidget):
         self._board_metrics = (origin_x, origin_y, cell_size, cols, rows)
         display_overlay = self._display_area_overlay()
 
-        grid_pen = QPen(QColor("#c8b68c"))
+        board_x = int(origin_x)
+        board_y = int(origin_y)
+        board_width_px = int(board_width)
+        board_height_px = int(board_height)
+        background = self._content_image(self._battlefield.background_image)
+        if background is None:
+            painter.fillRect(
+                board_x,
+                board_y,
+                board_width_px,
+                board_height_px,
+                QColor("#303030"),
+            )
+        else:
+            painter.drawPixmap(
+                board_x,
+                board_y,
+                board_width_px,
+                board_height_px,
+                background,
+            )
+
+        grid_color = QColor(self._battlefield.grid_color)
+        if not grid_color.isValid():
+            grid_color = QColor("#d3d3d3")
+        grid_color.setAlphaF(min(max(self._battlefield.grid_opacity, 0.0), 1.0))
+        grid_pen = QPen(grid_color)
         grid_pen.setWidth(1)
         painter.setPen(grid_pen)
 
         for y in range(rows):
             for x in range(cols):
-                fill = QColor("#f4ecd8") if (x + y) % 2 == 0 else QColor("#eadfbe")
                 cell_x = origin_x + x * cell_size
                 cell_y = origin_y + y * cell_size
-                painter.fillRect(int(cell_x), int(cell_y), int(cell_size), int(cell_size), fill)
                 painter.drawRect(int(cell_x), int(cell_y), int(cell_size), int(cell_size))
 
         overlay_cells = self._overlay_cells(display_overlay)
@@ -663,6 +687,9 @@ class BattlefieldWidget(QWidget):
         )
 
     def _token_image(self, image_reference: str | None) -> QPixmap | None:
+        return self._content_image(image_reference)
+
+    def _content_image(self, image_reference: str | None) -> QPixmap | None:
         if image_reference is None:
             return None
         if image_reference not in self._image_cache:

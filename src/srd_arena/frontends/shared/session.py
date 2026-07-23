@@ -92,6 +92,9 @@ class BattlefieldView:
     height: int
     creatures: list[BattlefieldCreatureView]
     summary_text: str
+    background_image: str | None = None
+    grid_color: str = "#d3d3d3"
+    grid_opacity: float = 1.0
 
 
 @dataclass
@@ -168,7 +171,12 @@ def build_session_presentation(
         system_actions=system_actions,
         encounter=EncounterView(
             narrative_text="",
-            battlefield=_build_battlefield_view(combat_state),
+            battlefield=_build_battlefield_view(
+                combat_state,
+                background_image=session.background_image,
+                grid_color=session.grid_color,
+                grid_opacity=session.grid_opacity,
+            ),
             resources=resources,
             movement_actions=movement_actions,
             non_movement_actions=non_movement_actions,
@@ -276,7 +284,13 @@ def _build_resource_summary(combat_state: dict[str, Any]) -> ResourceSummaryView
     )
 
 
-def _build_battlefield_view(combat_state: dict[str, Any]) -> BattlefieldView:
+def _build_battlefield_view(
+    combat_state: dict[str, Any],
+    *,
+    background_image: str | None = None,
+    grid_color: str = "#d3d3d3",
+    grid_opacity: float = 1.0,
+) -> BattlefieldView:
     decision = combat_state["decision"]
     primary_ref = combat_state["primary_creature_ref"]
     creatures = [
@@ -306,6 +320,9 @@ def _build_battlefield_view(combat_state: dict[str, Any]) -> BattlefieldView:
         height=combat_state["grid"]["height"],
         creatures=creatures,
         summary_text=_render_battlefield_text(combat_state),
+        background_image=background_image,
+        grid_color=grid_color,
+        grid_opacity=grid_opacity,
     )
 
 

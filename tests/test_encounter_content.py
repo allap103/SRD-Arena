@@ -152,6 +152,24 @@ def test_game_loads_geometry_settings_from_config_json() -> None:
 
     assert scenario.display_name == "Tactical Test Game"
     assert scenario.geometry_config.directional_area_cell_coverage_threshold == 0.1
+    assert scenario.background_image == "maps/tactical-test.png"
+    assert scenario.grid_color == "#8fa3ad"
+    assert scenario.grid_opacity == 0.65
+
+    session = scenario.create_session()
+    session.get_scene_view()
+
+    assert session.background_image == "maps/tactical-test.png"
+    assert session.grid_color == "#8fa3ad"
+    assert session.grid_opacity == 0.65
+
+
+def test_game_uses_default_board_presentation_settings() -> None:
+    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
+
+    assert scenario.background_image is None
+    assert scenario.grid_color == "#d3d3d3"
+    assert scenario.grid_opacity == 1.0
 
 
 def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:

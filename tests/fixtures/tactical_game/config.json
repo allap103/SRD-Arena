@@ -1,6 +1,9 @@
 {
   "display_name": "Tactical Test Game",
   "encounters": ["goblin_encounter"],
+  "background_image": "maps/tactical-test.png",
+  "grid_color": "#8fa3ad",
+  "grid_opacity": 0.65,
   "geometry": {
     "directional_area_cell_coverage_threshold": 0.1
   }
