@@ -146,13 +146,13 @@ def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
         "tokens/goblin.png",
     ]
     assert [
-        (entry.label, entry.total, entry.is_active)
+        (entry.name, entry.total, entry.is_active)
         for entry in presentation.encounter.resources.initiative
     ] == [
-            ("Goblin Warrior (goblin_1)", 20, True),
-            ("Goblin Warrior (goblin_3)", 16, False),
-            ("Traveler (player)", 13, False),
-            ("Goblin Warrior (goblin_2)", 9, False),
+            ("Goblin Warrior", 20, True),
+            ("Goblin Warrior", 16, False),
+            ("Traveler", 13, False),
+            ("Goblin Warrior", 9, False),
     ]
 
 

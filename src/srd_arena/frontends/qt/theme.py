@@ -139,15 +139,51 @@ QFrame#initiativeCard {
     border-radius: 10px;
 }
 
+QFrame#accordionSection {
+    background: #241c15;
+    border: 1px solid #7d6038;
+    border-radius: 8px;
+}
+
+QToolButton#accordionToggle {
+    background: #30241a;
+    color: #f3deb0;
+    border: none;
+    border-radius: 7px;
+    padding: 9px;
+    font-weight: 700;
+    text-align: left;
+}
+
+QToolButton#accordionToggle:hover {
+    background: #493116;
+}
+
+QWidget#accordionBody {
+    background: #241c15;
+}
+
+QTabWidget#battlefieldRail::pane {
+    background: #241c15;
+    border: 1px solid #8e6d3b;
+    border-radius: 10px;
+}
+
+QTabWidget#battlefieldRail QTabBar::tab {
+    background: #30241a;
+    color: #c9b89b;
+    border: 1px solid #7d6038;
+    padding: 8px 14px;
+}
+
+QTabWidget#battlefieldRail QTabBar::tab:selected {
+    background: #5b4020;
+    color: #f3deb0;
+}
+
 QFrame#initiativeCard[active="true"] {
     background: #3a2a16;
     border: 1px solid #d4ad58;
-}
-
-QLabel#initiativeRank {
-    color: #c9b89b;
-    font-size: 12px;
-    font-weight: 600;
 }
 
 QLabel#initiativeName {
@@ -159,15 +195,6 @@ QLabel#initiativeName {
 QLabel#initiativeScore {
     color: #f3deb0;
     font-size: 15px;
-    font-weight: 700;
-}
-
-QLabel#initiativeBadge {
-    color: #1f160c;
-    background: #d4ad58;
-    border-radius: 8px;
-    padding: 2px 8px;
-    font-size: 11px;
     font-weight: 700;
 }
 

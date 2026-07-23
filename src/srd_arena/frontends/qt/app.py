@@ -59,6 +59,7 @@ try:
         QSizePolicy,
         QStackedWidget,
         QTextEdit,
+        QToolButton,
         QVBoxLayout,
         QWidget,
     )
@@ -83,9 +84,10 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QSizePolicy = object  # type: ignore[assignment]
     QStackedWidget = object  # type: ignore[assignment]
     QTextEdit = object  # type: ignore[assignment]
+    QToolButton = object  # type: ignore[assignment]
     QVBoxLayout = object  # type: ignore[assignment]
     QWidget = object  # type: ignore[assignment]
-SIDEBAR_WIDTH = 220
+SIDEBAR_WIDTH = 320
 
 
 def _require_pyside6() -> None:
@@ -170,14 +172,10 @@ class GameWindow(QMainWindow):
         self.initiative_rail = QFrame()
         self.initiative_rail.setObjectName("rollRail")
         self.initiative_rail.setFrameShape(QFrame.Shape.StyledPanel)
-        self.initiative_rail.setFixedWidth(220)
+        self.initiative_rail.setFixedWidth(110)
         initiative_layout = QVBoxLayout(self.initiative_rail)
-        initiative_layout.setContentsMargins(10, 10, 10, 10)
-        initiative_layout.setSpacing(8)
-        initiative_title = QLabel("Initiative")
-        initiative_title.setObjectName("sectionTitle")
-        initiative_title.setStyleSheet("QLabel { font-weight: 700; }")
-        initiative_layout.addWidget(initiative_title)
+        initiative_layout.setContentsMargins(6, 6, 6, 6)
+        initiative_layout.setSpacing(4)
         self.initiative_scroll = QScrollArea()
         self.initiative_scroll.setWidgetResizable(True)
         self.initiative_scroll.setFrameShape(QFrame.Shape.NoFrame)
@@ -189,97 +187,7 @@ class GameWindow(QMainWindow):
         initiative_layout.addWidget(self.initiative_scroll, stretch=1)
         battlefield_layout.addWidget(self.initiative_rail)
 
-        roll_rail = QFrame()
-        roll_rail.setObjectName("rollRail")
-        roll_rail.setFrameShape(QFrame.Shape.StyledPanel)
-        roll_rail.setFixedWidth(310)
-        roll_rail_layout = QVBoxLayout(roll_rail)
-        roll_rail_layout.setContentsMargins(10, 10, 10, 10)
-        roll_rail_layout.setSpacing(8)
-        roll_title = QLabel("Combat Log")
-        roll_title.setObjectName("sectionTitle")
-        roll_title.setStyleSheet("QLabel { font-weight: 700; }")
-        roll_rail_layout.addWidget(roll_title)
-
-        self.dice_roll_panel = DiceRollPanel(self._select_action_by_id)
-        self.roll_scroll = QScrollArea()
-        self.roll_scroll.setWidgetResizable(True)
-        self.roll_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.roll_scroll.setWidget(self.dice_roll_panel)
-        roll_rail_layout.addWidget(self.roll_scroll, stretch=1)
-        battlefield_layout.addWidget(roll_rail)
-
         encounter_layout.addWidget(battlefield_area, stretch=1)
-
-        encounter_controls = QWidget()
-        encounter_controls.setFixedHeight(280)
-        encounter_controls.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        encounter_controls_layout = QHBoxLayout(encounter_controls)
-        encounter_controls_layout.setContentsMargins(0, 0, 0, 0)
-        encounter_controls_layout.setSpacing(10)
-
-        self.movement_group = QWidget()
-        self.movement_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
-        movement_layout = QVBoxLayout(self.movement_group)
-        movement_layout.setContentsMargins(0, 0, 0, 0)
-        movement_layout.setSpacing(8)
-        movement_layout.addWidget(
-            self._build_action_header("Movement", True, "#2f6f9d", show_indicator=False)
-        )
-        self.movement_buttons: dict[str, QPushButton] = {}
-        movement_grid = QGridLayout()
-        movement_grid.setSpacing(6)
-        positions = {
-            "up-left": (0, 0),
-            "up": (0, 1),
-            "up-right": (0, 2),
-            "left": (1, 0),
-            "right": (1, 2),
-            "down-left": (2, 0),
-            "down": (2, 1),
-            "down-right": (2, 2),
-        }
-        self.movement_status = QWidget()
-        self.movement_status_layout = QVBoxLayout(self.movement_status)
-        self.movement_status_layout.setContentsMargins(0, 0, 0, 0)
-        self.movement_status_layout.setSpacing(6)
-        movement_layout.addWidget(self.movement_status)
-        for direction in MOVE_DIRECTIONS:
-            button = QPushButton(ARROW_LABELS[direction])
-            button.setObjectName("movementButton")
-            button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
-            button.clicked.connect(
-                lambda _checked=False, move_direction=direction: self._trigger_move(move_direction)
-            )
-            self.movement_buttons[direction] = button
-            row, col = positions[direction]
-            movement_grid.addWidget(button, row, col)
-        movement_center = QLabel("Move")
-        movement_center.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        movement_grid.addWidget(movement_center, 1, 1)
-        movement_layout.addLayout(movement_grid)
-        movement_layout.addStretch(1)
-        self.movement_group.setFixedWidth(210)
-
-        self.encounter_actions_group = self._build_untitled_panel()
-        self.encounter_actions_layout = QHBoxLayout()
-        self.encounter_actions_layout.setSpacing(12)
-        self.encounter_actions_group.layout().addWidget(
-            self._wrap_in_scroll(self.encounter_actions_layout)
-        )
-        actions_footer = QWidget()
-        actions_footer_layout = QHBoxLayout(actions_footer)
-        actions_footer_layout.setContentsMargins(0, 0, 0, 0)
-        actions_footer_layout.addStretch(1)
-        self.end_turn_button = QPushButton("End Turn")
-        self.end_turn_button.setObjectName("endTurnButton")
-        self.end_turn_button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
-        self.end_turn_button.clicked.connect(self._end_turn)
-        actions_footer_layout.addWidget(self.end_turn_button)
-        self.encounter_actions_group.layout().addWidget(actions_footer)
-        encounter_controls_layout.addWidget(self.encounter_actions_group, stretch=1)
-
-        encounter_layout.addWidget(encounter_controls)
 
         self.victory_overlay = QFrame(self.encounter_panel)
         self.victory_overlay.setObjectName("victoryOverlay")
@@ -335,8 +243,13 @@ class GameWindow(QMainWindow):
         self.sidebar_stack.addWidget(self._build_inventory_page())
         self.sidebar_stack.addWidget(self._build_attributes_page())
         self.sidebar_stack.addWidget(self._build_system_page())
+        self.combat_sidebar_index = self.sidebar_stack.addWidget(
+            self._build_combat_sidebar_page()
+        )
         if self._show_encounter_json:
-            self.sidebar_stack.addWidget(self._build_encounter_json_page())
+            self.encounter_json_sidebar_index = self.sidebar_stack.addWidget(
+                self._build_encounter_json_page()
+            )
         layout.addWidget(self.sidebar_stack)
         return sidebar
 
@@ -348,6 +261,155 @@ class GameWindow(QMainWindow):
         layout.addWidget(self._sidebar_button("System", self.show_system_menu))
         layout.addStretch(1)
         return page
+
+    def _build_combat_sidebar_page(self) -> QWidget:
+        page = QWidget()
+        page_layout = QVBoxLayout(page)
+        page_layout.setContentsMargins(0, 0, 0, 0)
+        page_layout.setSpacing(8)
+
+        navigation = QWidget()
+        navigation_layout = QHBoxLayout(navigation)
+        navigation_layout.setContentsMargins(0, 0, 0, 0)
+        navigation_layout.setSpacing(6)
+        navigation_layout.addWidget(
+            self._sidebar_button("Attributes", self.show_attributes)
+        )
+        navigation_layout.addWidget(
+            self._sidebar_button("Inventory", self.show_inventory)
+        )
+        navigation_layout.addWidget(self._sidebar_button("System", self.show_system_menu))
+        page_layout.addWidget(navigation)
+
+        scroll = QScrollArea()
+        scroll.setObjectName("combatSidebarScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        content = QWidget()
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(6)
+
+        movement_section, movement_layout = self._build_collapsible_section(
+            "Movement",
+            expanded=True,
+        )
+        self.movement_status = QWidget()
+        self.movement_status_layout = QVBoxLayout(self.movement_status)
+        self.movement_status_layout.setContentsMargins(0, 0, 0, 0)
+        self.movement_status_layout.setSpacing(6)
+        movement_layout.addWidget(self.movement_status)
+        self.movement_buttons = {}
+        movement_grid = QGridLayout()
+        movement_grid.setSpacing(6)
+        positions = {
+            "up-left": (0, 0),
+            "up": (0, 1),
+            "up-right": (0, 2),
+            "left": (1, 0),
+            "right": (1, 2),
+            "down-left": (2, 0),
+            "down": (2, 1),
+            "down-right": (2, 2),
+        }
+        for direction in MOVE_DIRECTIONS:
+            button = QPushButton(ARROW_LABELS[direction])
+            button.setObjectName("movementButton")
+            button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
+            button.clicked.connect(
+                lambda _checked=False, move_direction=direction: self._trigger_move(
+                    move_direction
+                )
+            )
+            self.movement_buttons[direction] = button
+            row, col = positions[direction]
+            movement_grid.addWidget(button, row, col)
+        movement_center = QLabel("Move")
+        movement_center.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        movement_grid.addWidget(movement_center, 1, 1)
+        movement_layout.addLayout(movement_grid)
+        content_layout.addWidget(movement_section)
+
+        actions_section, self.actions_section_layout = self._build_collapsible_section(
+            "Actions",
+            expanded=True,
+        )
+        content_layout.addWidget(actions_section)
+        bonus_section, self.bonus_actions_section_layout = (
+            self._build_collapsible_section("Bonus Actions", expanded=False)
+        )
+        content_layout.addWidget(bonus_section)
+        features_section, self.features_section_layout = (
+            self._build_collapsible_section("Class Features", expanded=False)
+        )
+        content_layout.addWidget(features_section)
+        status_section, self.status_section_layout = self._build_collapsible_section(
+            "Status",
+            expanded=True,
+        )
+        content_layout.addWidget(status_section)
+
+        log_section, log_layout = self._build_collapsible_section(
+            "Combat Log",
+            expanded=False,
+        )
+        self.dice_roll_panel = DiceRollPanel(self._select_action_by_id)
+        self.roll_scroll = QScrollArea()
+        self.roll_scroll.setWidgetResizable(True)
+        self.roll_scroll.setMinimumHeight(180)
+        self.roll_scroll.setWidget(self.dice_roll_panel)
+        log_layout.addWidget(self.roll_scroll)
+        content_layout.addWidget(log_section)
+        content_layout.addStretch(1)
+        scroll.setWidget(content)
+        page_layout.addWidget(scroll, stretch=1)
+
+        self.end_turn_button = QPushButton("End Turn")
+        self.end_turn_button.setObjectName("endTurnButton")
+        self.end_turn_button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
+        self.end_turn_button.clicked.connect(self._end_turn)
+        page_layout.addWidget(self.end_turn_button)
+        return page
+
+    def _build_collapsible_section(
+        self,
+        title: str,
+        *,
+        expanded: bool,
+    ) -> tuple[QWidget, QVBoxLayout]:
+        section = QFrame()
+        section.setObjectName("accordionSection")
+        section_layout = QVBoxLayout(section)
+        section_layout.setContentsMargins(0, 0, 0, 0)
+        section_layout.setSpacing(0)
+
+        toggle = QToolButton()
+        toggle.setObjectName("accordionToggle")
+        toggle.setText(title)
+        toggle.setCheckable(True)
+        toggle.setChecked(expanded)
+        toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        toggle.setArrowType(
+            Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow
+        )
+        section_layout.addWidget(toggle)
+
+        body = QWidget()
+        body.setObjectName("accordionBody")
+        body_layout = QVBoxLayout(body)
+        body_layout.setContentsMargins(8, 8, 8, 8)
+        body_layout.setSpacing(8)
+        body.setVisible(expanded)
+        section_layout.addWidget(body)
+
+        def set_expanded(checked: bool) -> None:
+            body.setVisible(checked)
+            toggle.setArrowType(
+                Qt.ArrowType.DownArrow if checked else Qt.ArrowType.RightArrow
+            )
+
+        toggle.toggled.connect(set_expanded)
+        return section, body_layout
 
     def _build_inventory_page(self) -> QWidget:
         page = QWidget()
@@ -455,6 +517,8 @@ class GameWindow(QMainWindow):
         self.scene_text.setPlainText(presentation.story_text or "")
 
         if presentation.encounter is None:
+            if self.sidebar_stack.currentIndex() == self.combat_sidebar_index:
+                self.sidebar_stack.setCurrentIndex(0)
             self.scene_group.show()
             self.story_choices_group.show()
             self.encounter_panel.hide()
@@ -462,6 +526,8 @@ class GameWindow(QMainWindow):
             self.battlefield_widget.set_area_overlay(None)
             self._render_story_actions(presentation.story_actions)
         else:
+            if self.sidebar_stack.currentIndex() == 0:
+                self.sidebar_stack.setCurrentIndex(self.combat_sidebar_index)
             self.scene_group.hide()
             self.story_choices_group.hide()
             self.encounter_panel.show()
@@ -523,21 +589,23 @@ class GameWindow(QMainWindow):
         ):
             self._action_menu_scope = None
 
-        self.encounter_actions_layout.removeWidget(self.movement_group)
-        self.movement_group.setParent(None)
-        clear_layout(self.encounter_actions_layout)
+        for section_layout in (
+            self.actions_section_layout,
+            self.bonus_actions_section_layout,
+            self.features_section_layout,
+            self.status_section_layout,
+        ):
+            clear_layout(section_layout)
         rendered_target_modes: set[TargetSelectionMode] = set()
         if encounter.action_pane_title != "Actions":
-            self.encounter_actions_layout.addWidget(self.movement_group)
             self._render_action_detail_column(
                 encounter.action_pane_title,
                 encounter.non_movement_actions,
                 rendered_target_modes,
                 scope=None,
+                target_layout=self.actions_section_layout,
             )
-            self.encounter_actions_layout.addStretch(1)
         else:
-            self.encounter_actions_layout.addWidget(self.movement_group)
             self._render_action_economy_column(
                 title="Actions",
                 economy="action",
@@ -545,6 +613,7 @@ class GameWindow(QMainWindow):
                 available=encounter.resources.action_status == "Ready",
                 rendered_target_modes=rendered_target_modes,
                 indicator_color="#2f6f9d",
+                target_layout=self.actions_section_layout,
             )
             self._render_action_economy_column(
                 title="Bonus Actions",
@@ -553,9 +622,17 @@ class GameWindow(QMainWindow):
                 available=encounter.resources.bonus_action_status == "Ready",
                 rendered_target_modes=rendered_target_modes,
                 indicator_color="#c9a227",
+                target_layout=self.bonus_actions_section_layout,
             )
-            self._render_feature_column(encounter.feature_actions, rendered_target_modes)
-            self._render_status_column(encounter.resources)
+            self._render_feature_column(
+                encounter.feature_actions,
+                rendered_target_modes,
+                self.features_section_layout,
+            )
+        self._render_status_column(
+            encounter.resources,
+            self.status_section_layout,
+        )
 
         if encounter.end_turn_action is None:
             self.end_turn_button.setEnabled(False)
@@ -597,6 +674,7 @@ class GameWindow(QMainWindow):
         available: bool,
         rendered_target_modes: set[TargetSelectionMode],
         indicator_color: str,
+        target_layout: QVBoxLayout,
     ) -> None:
         if self._action_menu_scope is not None and self._action_menu_scope.economy == economy:
             self._render_action_detail_column(
@@ -604,9 +682,17 @@ class GameWindow(QMainWindow):
                 bucket_actions[self._action_menu_scope.bucket],
                 rendered_target_modes,
                 scope=self._action_menu_scope,
+                target_layout=target_layout,
             )
             return
-        self._render_action_menu_column(title, economy, bucket_actions, available, indicator_color)
+        self._render_action_menu_column(
+            title,
+            economy,
+            bucket_actions,
+            available,
+            indicator_color,
+            target_layout,
+        )
 
     def _render_action_menu_column(
         self,
@@ -615,12 +701,15 @@ class GameWindow(QMainWindow):
         bucket_actions: dict[str, list[ActionView]],
         available: bool,
         indicator_color: str,
+        target_layout: QVBoxLayout,
     ) -> None:
         column = QWidget()
         column_layout = QVBoxLayout(column)
         column_layout.setContentsMargins(0, 0, 0, 0)
         column_layout.setSpacing(8)
-        column_layout.addWidget(self._build_action_header(title, available, indicator_color))
+        availability = QLabel("Ready" if available else "Unavailable")
+        availability.setObjectName("sectionSubtitle")
+        column_layout.addWidget(availability)
 
         for bucket_key, bucket_title in self._action_buckets():
             actions = bucket_actions[bucket_key]
@@ -635,7 +724,7 @@ class GameWindow(QMainWindow):
             column_layout.addWidget(button)
 
         column_layout.addStretch(1)
-        self.encounter_actions_layout.addWidget(column, stretch=1)
+        target_layout.addWidget(column)
 
     def _render_action_detail_column(
         self,
@@ -643,6 +732,7 @@ class GameWindow(QMainWindow):
         actions: list[ActionView],
         rendered_target_modes: set[TargetSelectionMode],
         scope: ActionMenuScope | None,
+        target_layout: QVBoxLayout,
     ) -> None:
         column = QWidget()
         column_layout = QVBoxLayout(column)
@@ -668,26 +758,18 @@ class GameWindow(QMainWindow):
             back.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
             back.clicked.connect(lambda _checked=False, selected_scope=scope: self._close_action_menu(selected_scope))
             column_layout.addWidget(back)
-        self.encounter_actions_layout.addWidget(column, stretch=1)
+        target_layout.addWidget(column)
 
     def _render_feature_column(
         self,
         feature_actions: list[ActionView],
         rendered_target_modes: set[TargetSelectionMode],
+        target_layout: QVBoxLayout,
     ) -> None:
         column = QWidget()
         column_layout = QVBoxLayout(column)
         column_layout.setContentsMargins(0, 0, 0, 0)
         column_layout.setSpacing(8)
-
-        column_layout.addWidget(
-            self._build_action_header(
-                "Class Features",
-                bool(feature_actions),
-                "#9c8b68",
-                show_indicator=False,
-            )
-        )
 
         if not feature_actions:
             empty = QLabel("None")
@@ -700,19 +782,18 @@ class GameWindow(QMainWindow):
                     column_layout.addWidget(widget)
 
         column_layout.addStretch(1)
-        self.encounter_actions_layout.addWidget(column, stretch=1)
+        target_layout.addWidget(column)
 
-    def _render_status_column(self, resources) -> None:
+    def _render_status_column(
+        self,
+        resources,
+        target_layout: QVBoxLayout,
+    ) -> None:
         column = QWidget()
         column_layout = QVBoxLayout(column)
         column_layout.setContentsMargins(0, 0, 0, 0)
         column_layout.setSpacing(8)
 
-        header = QLabel("Status")
-        header_font = QFont()
-        header_font.setBold(True)
-        header.setFont(header_font)
-        column_layout.addWidget(header)
         column_layout.addWidget(
             self._build_resource_bar(
                 resources.current_health,
@@ -728,7 +809,7 @@ class GameWindow(QMainWindow):
         conditions.setWordWrap(True)
         column_layout.addWidget(conditions)
         column_layout.addStretch(1)
-        self.encounter_actions_layout.addWidget(column, stretch=1)
+        target_layout.addWidget(column)
 
     def _render_movement_status(self, resources) -> None:
         clear_layout(self.movement_status_layout)
@@ -750,43 +831,24 @@ class GameWindow(QMainWindow):
             self.initiative_layout.addWidget(empty)
             self.initiative_layout.addStretch(1)
             return
-        for index, entry in enumerate(resources.initiative, start=1):
-            self.initiative_layout.addWidget(
-                self._build_initiative_entry_widget(index, entry)
-            )
+        for entry in resources.initiative:
+            self.initiative_layout.addWidget(self._build_initiative_entry_widget(entry))
         self.initiative_layout.addStretch(1)
 
-    def _build_initiative_entry_widget(self, index: int, entry) -> QWidget:
+    def _build_initiative_entry_widget(self, entry) -> QWidget:
         card = QFrame()
         card.setObjectName("initiativeCard")
         card.setProperty("active", entry.is_active)
         layout = QVBoxLayout(card)
-        layout.setContentsMargins(10, 8, 10, 8)
-        layout.setSpacing(4)
+        layout.setContentsMargins(10, 7, 10, 7)
+        layout.setSpacing(2)
 
-        top_row = QWidget()
-        top_layout = QHBoxLayout(top_row)
-        top_layout.setContentsMargins(0, 0, 0, 0)
-        top_layout.setSpacing(6)
-
-        rank = QLabel(f"#{index}")
-        rank.setObjectName("initiativeRank")
-        top_layout.addWidget(rank)
-
-        top_layout.addStretch(1)
-        if entry.is_active:
-            badge = QLabel("ACTING")
-            badge.setObjectName("initiativeBadge")
-            top_layout.addWidget(badge)
-
-        layout.addWidget(top_row)
-
-        name = QLabel(entry.label)
+        name = QLabel(entry.name)
         name.setObjectName("initiativeName")
         name.setWordWrap(True)
         layout.addWidget(name)
 
-        score = QLabel(f"Initiative {entry.total}")
+        score = QLabel(str(entry.total))
         score.setObjectName("initiativeScore")
         layout.addWidget(score)
         return card
@@ -1288,7 +1350,10 @@ class GameWindow(QMainWindow):
         self._apply_turn_result(self.session.advance_ai())
 
     def show_menu_root(self) -> None:
-        self.sidebar_stack.setCurrentIndex(0)
+        if self._presentation is not None and self._presentation.encounter is not None:
+            self.sidebar_stack.setCurrentIndex(self.combat_sidebar_index)
+        else:
+            self.sidebar_stack.setCurrentIndex(0)
 
     def show_inventory(self) -> None:
         items = self.session.primary_creature.inventory.items
@@ -1327,7 +1392,7 @@ class GameWindow(QMainWindow):
     def show_encounter_json(self) -> None:
         if not self._show_encounter_json:
             return
-        self.sidebar_stack.setCurrentIndex(4)
+        self.sidebar_stack.setCurrentIndex(self.encounter_json_sidebar_index)
 
     def display_item_name(self, item_id: str) -> str:
         item = self._items_by_id.get(item_id)

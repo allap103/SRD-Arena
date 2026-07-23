@@ -68,7 +68,7 @@ class SpellSlotTrackView:
 @dataclass(frozen=True)
 class InitiativeTrackEntryView:
     creature_ref: str
-    label: str
+    name: str
     total: int
     is_active: bool = False
 
@@ -426,18 +426,28 @@ def _build_initiative_track(
         return ()
 
     entries: list[InitiativeTrackEntryView] = []
+    creatures = combat_state.get("creatures", {})
     for entry in initiative:
         if not isinstance(entry, dict):
             continue
         creature_ref = entry.get("creature_ref")
-        label = entry.get("label")
         total = entry.get("total")
-        if not isinstance(creature_ref, str) or not isinstance(label, str) or not isinstance(total, int):
+        creature_state = (
+            creatures.get(creature_ref)
+            if isinstance(creatures, dict) and isinstance(creature_ref, str)
+            else None
+        )
+        name = creature_state.get("name") if isinstance(creature_state, dict) else None
+        if (
+            not isinstance(creature_ref, str)
+            or not isinstance(name, str)
+            or not isinstance(total, int)
+        ):
             continue
         entries.append(
             InitiativeTrackEntryView(
                 creature_ref=creature_ref,
-                label=label,
+                name=name,
                 total=total,
                 is_active=creature_ref == active_creature_ref,
             )
