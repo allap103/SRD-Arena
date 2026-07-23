@@ -1,17 +1,4 @@
-import json
-from pathlib import Path
-
-SOURCE_PRIORITY = {
-    "XPHB": 30,
-    "XDMG": 30,
-    "PHB": 20,
-    "DMG": 20,
-}
-
-
-def _load_json(path: str | Path) -> dict:
-    with open(path, "r") as f:
-        return json.load(f)
+from ..sources import SOURCE_PRIORITY, load_json as _load_json
 
 
 def _slug(value: str) -> str:

@@ -1,27 +1,26 @@
 import re
 
 from ...domain.creatures.monster_attack import MonsterAttack
+from ..schemas.bestiary import BestiaryActionSchema, BestiaryMonsterSchema
 
 
-def build_monster_attacks(stat_block: dict | None) -> list[MonsterAttack]:
+def build_monster_attacks(
+    stat_block: BestiaryMonsterSchema | None,
+) -> list[MonsterAttack]:
     if stat_block is None:
         return []
     attacks: list[MonsterAttack] = []
-    for action in stat_block.get("action", []):
-        if not isinstance(action, dict):
-            continue
+    for action in stat_block.action:
         attack = _parse_monster_attack(action)
         if attack is not None:
             attacks.append(attack)
     return attacks
 
 
-def _parse_monster_attack(action: dict) -> MonsterAttack | None:
-    name = action.get("name")
-    entries = action.get("entries")
-    if not isinstance(name, str) or not isinstance(entries, list) or not entries:
+def _parse_monster_attack(action: BestiaryActionSchema) -> MonsterAttack | None:
+    if not action.entries:
         return None
-    entry = entries[0]
+    entry = action.entries[0]
     if not isinstance(entry, str):
         return None
 
@@ -38,7 +37,7 @@ def _parse_monster_attack(action: dict) -> MonsterAttack | None:
 
     range_match = re.search(r"range\s+(\d+)\/(\d+)\s*ft", entry)
     return MonsterAttack(
-        name=name,
+        name=action.name,
         attack_modes=attack_modes,
         attack_bonus=int(hit.group(1)),
         damage_dice=damage.group(1),

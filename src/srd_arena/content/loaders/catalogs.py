@@ -7,7 +7,6 @@ from .types import (
     PlayerCharacterCatalog,
     OptionalFeatureCatalog,
     SpellCatalog,
-    StatBlockCatalog,
     SubclassCatalog,
     SystemItemCatalog,
 )
@@ -55,24 +54,6 @@ def _find_optional_feature(
             return catalog[key]
     source_text = f"|{source}" if source else ""
     raise KeyError(f"Optional feature '{name}{source_text}' not found.")
-
-
-def load_bestiary_stat_blocks(directory: str | Path) -> StatBlockCatalog:
-    catalog: StatBlockCatalog = {}
-    system_dir = Path(directory)
-    for bestiary_dir in (system_dir, system_dir / "bestiary"):
-        if not bestiary_dir.is_dir():
-            continue
-        for path in bestiary_dir.glob("bestiary-*.json"):
-            data = _load_json(path)
-            for monster in data.get("monster", []):
-                if not isinstance(monster, dict) or not isinstance(monster.get("name"), str):
-                    continue
-                source = monster.get("source")
-                source_key = source if isinstance(source, str) else None
-                catalog[(monster["name"].casefold(), source_key)] = monster
-                catalog.setdefault((monster["name"].casefold(), None), monster)
-    return catalog
 
 
 def load_class_blocks(directory: str | Path) -> ClassCatalog:
@@ -160,27 +141,6 @@ def load_spell_catalog(directory: str | Path) -> SpellCatalog:
             ):
                 catalog[fallback_key] = spell
     return catalog
-
-
-def _find_stat_block(
-    name: str,
-    source: str | None,
-    stat_blocks: StatBlockCatalog | None,
-) -> dict:
-    if stat_blocks is None:
-        raise ValueError(f"Creature references stat block '{name}', but no stat block catalog was loaded.")
-    key = (name.casefold(), source)
-    if key in stat_blocks:
-        return stat_blocks[key]
-    if source is not None:
-        source_key = (name.casefold(), source.upper())
-        if source_key in stat_blocks:
-            return stat_blocks[source_key]
-    fallback_key = (name.casefold(), None)
-    if source is None and fallback_key in stat_blocks:
-        return stat_blocks[fallback_key]
-    source_text = f"|{source}" if source else ""
-    raise KeyError(f"Stat block '{name}{source_text}' not found.")
 
 
 def _find_class_block(

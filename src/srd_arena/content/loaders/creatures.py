@@ -4,6 +4,8 @@ from typing import cast
 
 from ..schemas import CreatureSchema
 from ..schemas.creature import CreatureItemReferenceSchema
+from ..catalogs import BestiaryCatalog
+from ..schemas.bestiary import BestiaryMonsterSchema
 from ...domain.creatures import (
     Attributes,
     ClassFeature,
@@ -21,7 +23,6 @@ from .catalogs import (
     _find_class_block,
     _find_optional_feature,
     _find_spell,
-    _find_stat_block,
     _find_subclass_block,
 )
 from .source_data import _load_json, _slug
@@ -40,14 +41,13 @@ from .types import (
     PlayerCharacterCatalog,
     OptionalFeatureCatalog,
     SpellCatalog,
-    StatBlockCatalog,
     SubclassCatalog,
 )
 
 
 def load_creature(
     path: str | Path,
-    stat_blocks: StatBlockCatalog | None = None,
+    bestiary: BestiaryCatalog | None = None,
     class_blocks: ClassCatalog | None = None,
     player_characters: PlayerCharacterCatalog | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
@@ -56,7 +56,7 @@ def load_creature(
 ) -> Creature:
     return build_creature(
         CreatureSchema.model_validate(_load_json(path)),
-        stat_blocks,
+        bestiary,
         class_blocks,
         player_characters,
         optional_features,
@@ -67,7 +67,7 @@ def load_creature(
 
 def build_creature(
     schema: CreatureSchema,
-    stat_blocks: StatBlockCatalog | None = None,
+    bestiary: BestiaryCatalog | None = None,
     class_blocks: ClassCatalog | None = None,
     player_characters: PlayerCharacterCatalog | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
@@ -75,11 +75,7 @@ def build_creature(
     spell_catalog: SpellCatalog | None = None,
 ) -> Creature:
     schema = _resolve_creature_schema(schema, player_characters)
-    stat_block = (
-        _find_stat_block(schema.stat_block.name, schema.stat_block.source, stat_blocks)
-        if schema.stat_block
-        else None
-    )
+    stat_block = _find_bestiary_monster(schema, bestiary)
     class_block = (
         _find_class_block(schema.class_ref.name, schema.class_ref.source, class_blocks)
         if schema.class_ref
@@ -696,7 +692,21 @@ def _class_table_value(
     return None
 
 
-def _stat_block_name(stat_block: dict | None) -> str:
+def _find_bestiary_monster(
+    schema: CreatureSchema,
+    bestiary: BestiaryCatalog | None,
+) -> BestiaryMonsterSchema | None:
+    if schema.stat_block is None:
+        return None
+    if bestiary is None:
+        raise ValueError(
+            f"Creature references stat block '{schema.stat_block.name}', "
+            "but no bestiary catalog was loaded."
+        )
+    return bestiary.find(schema.stat_block.name, schema.stat_block.source)
+
+
+def _stat_block_name(stat_block: BestiaryMonsterSchema | None) -> str:
     if stat_block is None:
         raise ValueError("Creature must define either 'name' or 'stat_block'.")
-    return str(stat_block["name"])
+    return stat_block.public_name

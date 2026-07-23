@@ -13,12 +13,20 @@ from .encounter import (
     GridSchema,
     PositionSchema,
 )
+from .bestiary import (
+    BestiaryActionSchema,
+    BestiaryFileSchema,
+    BestiaryMonsterSchema,
+)
 
 __all__ = [
     "CreatureSchema",
     "CreatureItemReferenceSchema",
     "AttributesSchema",
     "BehaviorSchema",
+    "BestiaryActionSchema",
+    "BestiaryFileSchema",
+    "BestiaryMonsterSchema",
     "EQUIPMENT_SLOTS",
     "EncounterCreatureSchema",
     "EncounterDefinitionSchema",

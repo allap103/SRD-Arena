@@ -1,6 +1,6 @@
 from .creatures import load_creature
+from ..catalogs import BestiaryCatalog, load_bestiary_catalog
 from .catalogs import (
-    load_bestiary_stat_blocks,
     load_class_blocks,
     load_player_characters,
     load_optional_feature_blocks,
@@ -14,7 +14,6 @@ from .types import (
     PlayerCharacterCatalog,
     OptionalFeatureCatalog,
     SpellCatalog,
-    StatBlockCatalog,
     SubclassCatalog,
     SystemItemCatalog,
 )
@@ -24,11 +23,11 @@ __all__ = [
     "PlayerCharacterCatalog",
     "OptionalFeatureCatalog",
     "SpellCatalog",
-    "StatBlockCatalog",
+    "BestiaryCatalog",
     "SubclassCatalog",
     "SystemItemCatalog",
     "load_creature",
-    "load_bestiary_stat_blocks",
+    "load_bestiary_catalog",
     "load_class_blocks",
     "load_player_characters",
     "load_optional_feature_blocks",

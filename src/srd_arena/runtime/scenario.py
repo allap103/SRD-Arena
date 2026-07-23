@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..content.loaders import (
-    load_bestiary_stat_blocks,
+    load_bestiary_catalog,
     load_class_blocks,
     load_player_characters,
     load_optional_feature_blocks,
@@ -50,7 +50,7 @@ class Scenario:
         config = self._load_config(self.directory / "config.json")
         self.display_name = config.display_name
         self.geometry_config = config.geometry_config
-        self.stat_blocks = load_bestiary_stat_blocks(self.system_directory)
+        self.bestiary = load_bestiary_catalog(self.system_directory)
         self.class_blocks = load_class_blocks(self.system_directory)
         self.subclass_blocks = load_subclass_blocks(self.system_directory)
         self.spell_catalog = load_spell_catalog(self.system_directory)
@@ -71,7 +71,7 @@ class Scenario:
         loaded = [
             load_encounter(
                 path,
-                self.stat_blocks,
+                self.bestiary,
                 self.class_blocks,
                 self.player_characters,
                 self.optional_feature_blocks,

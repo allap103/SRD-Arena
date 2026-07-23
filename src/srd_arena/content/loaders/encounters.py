@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..schemas import CreatureSchema, EncounterDefinitionSchema
+from ..catalogs import BestiaryCatalog
 from ...domain.creatures import Creature
 from ...domain.encounters import (
     EncounterBehavior,
@@ -18,7 +19,6 @@ from .types import (
     PlayerCharacterCatalog,
     OptionalFeatureCatalog,
     SpellCatalog,
-    StatBlockCatalog,
     SubclassCatalog,
 )
 
@@ -95,7 +95,7 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
 
 def load_encounter(
     path: str | Path,
-    stat_blocks: StatBlockCatalog | None = None,
+    bestiary: BestiaryCatalog | None = None,
     class_blocks: ClassCatalog | None = None,
     player_characters: PlayerCharacterCatalog | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
@@ -113,7 +113,7 @@ def load_encounter(
                         exclude={"start", "team_id", "behavior"},
                     )
                 ),
-                stat_blocks,
+                bestiary,
                 class_blocks,
                 player_characters,
                 optional_features,

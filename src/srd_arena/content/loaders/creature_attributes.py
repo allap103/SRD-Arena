@@ -1,11 +1,12 @@
 from ..schemas import CreatureSchema
+from ..schemas.bestiary import BestiaryMonsterSchema
 from ...domain.creatures import Attributes, Movement
 from ...domain.creatures import normalize_size
 
 
 def build_creature_attributes(
     schema: CreatureSchema,
-    stat_block: dict | None,
+    stat_block: BestiaryMonsterSchema | None,
     class_block: dict | None,
 ) -> Attributes:
     if stat_block is None:
@@ -19,18 +20,26 @@ def build_creature_attributes(
         )
 
     return Attributes(
-        base_health=int(stat_block.get("hp", {}).get("average", schema.attributes.base_health)),
+        base_health=(
+            stat_block.average_hit_points
+            if stat_block.average_hit_points is not None
+            else schema.attributes.base_health
+        ),
         level=schema.attributes.level,
         movement=Movement(
-            speed_feet=int(stat_block.get("speed", {}).get("walk", schema.attributes.movement.speed_feet)),
+            speed_feet=(
+                stat_block.walk_speed
+                if stat_block.walk_speed is not None
+                else schema.attributes.movement.speed_feet
+            ),
             feet_per_square=schema.attributes.movement.feet_per_square,
         ),
-        strength=int(stat_block.get("str", schema.attributes.strength)),
-        dexterity=int(stat_block.get("dex", schema.attributes.dexterity)),
-        constitution=int(stat_block.get("con", schema.attributes.constitution)),
-        wisdom=int(stat_block.get("wis", schema.attributes.wisdom)),
-        intelligence=int(stat_block.get("int", schema.attributes.intelligence)),
-        charisma=int(stat_block.get("cha", schema.attributes.charisma)),
+        strength=stat_block.strength,
+        dexterity=stat_block.dexterity,
+        constitution=stat_block.constitution,
+        wisdom=stat_block.wisdom,
+        intelligence=stat_block.intelligence,
+        charisma=stat_block.charisma,
         base_armor_class=_stat_block_base_ac(stat_block, schema.attributes.base_armor_class),
         proficiencies=_merge_proficiencies(
             schema.attributes.proficiencies, _class_proficiencies(class_block)
@@ -38,11 +47,12 @@ def build_creature_attributes(
     )
 
 
-def build_creature_size(schema: CreatureSchema, stat_block: dict | None) -> str:
+def build_creature_size(
+    schema: CreatureSchema,
+    stat_block: BestiaryMonsterSchema | None,
+) -> str:
     if stat_block is not None:
-        size = _normalize_size_value(stat_block.get("size"))
-        if size != "M" or stat_block.get("size") is not None:
-            return size
+        return normalize_size(stat_block.primary_size)
     return _normalize_size_value(schema.metadata.get("size"))
 
 
@@ -86,19 +96,15 @@ def _class_proficiencies(class_block: dict | None) -> dict[str, object]:
     return proficiencies
 
 
-def _stat_block_base_ac(stat_block: dict, default: int) -> int:
+def _stat_block_base_ac(stat_block: BestiaryMonsterSchema, default: int) -> int:
     armor_class = _stat_block_ac(stat_block, default)
-    dexterity = int(stat_block.get("dex", 10))
+    dexterity = stat_block.dexterity
     return armor_class - ((dexterity - 10) // 2)
 
 
-def _stat_block_ac(stat_block: dict, default: int) -> int:
-    ac = stat_block.get("ac")
-    if not isinstance(ac, list) or not ac:
-        return default
-    first = ac[0]
-    if isinstance(first, int):
-        return first
-    if isinstance(first, dict) and isinstance(first.get("ac"), int):
-        return first["ac"]
-    return default
+def _stat_block_ac(stat_block: BestiaryMonsterSchema, default: int) -> int:
+    return (
+        stat_block.armor_class
+        if stat_block.armor_class is not None
+        else default
+    )
