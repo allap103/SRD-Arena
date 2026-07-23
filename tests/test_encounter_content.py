@@ -129,20 +129,27 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
     assert upgraded.combat_profile.attacks_per_attack_action == 2
 
 
-def test_creature_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path) -> None:
+def test_creature_can_load_subclass_and_explicit_spellcasting(tmp_path: Path) -> None:
     scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
-    actor_path = tmp_path / "eldritch_knight.json"
+    actor_path = tmp_path / "arcane_champion.json"
     actor_path.write_text(
         json.dumps(
             {
-                "id": "eldritch_knight",
+                "id": "arcane_champion",
                 "name": "Arcane Veteran",
                 "class_ref": {"name": "Fighter", "source": "XPHB"},
                 "subclass_ref": {
-                    "name": "Eldritch Knight",
+                    "name": "Champion",
                     "source": "XPHB",
                     "class_name": "Fighter",
                     "class_source": "XPHB",
+                },
+                "spellcasting": {
+                    "ability": "int",
+                    "caster_progression": "1/3",
+                    "cantrips_known": 2,
+                    "spell_count": 4,
+                    "spell_slots": {"1": 3},
                 },
                 "spells_known": [
                     {"name": "Color Spray", "source": "XPHB"},
@@ -174,7 +181,7 @@ def test_creature_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Pa
     )
 
     assert creature.subclass_ref is not None
-    assert creature.subclass_ref.name == "Eldritch Knight"
+    assert creature.subclass_ref.name == "Champion"
     assert creature.spellcasting is not None
     assert creature.spellcasting.ability == "int"
     assert creature.spellcasting.ability_modifier == 1

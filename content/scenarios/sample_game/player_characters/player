@@ -12,6 +12,17 @@
         "class_name": "Fighter",
         "class_source": "XPHB"
     },
+    "spellcasting": {
+        "ability": "int",
+        "caster_progression": "1/3",
+        "cantrips_known": 3,
+        "spell_count": 8,
+        "spell_slots": {
+            "1": 4,
+            "2": 3,
+            "3": 2
+        }
+    },
     "spells_known": [
         {
             "name": "Color Spray",

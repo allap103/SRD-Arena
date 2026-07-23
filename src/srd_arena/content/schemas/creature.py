@@ -57,6 +57,17 @@ class MovementSchema(BaseModel):
     feet_per_square: int = 5
 
 
+class SpellcastingSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    ability: Literal["str", "dex", "con", "int", "wis", "cha"]
+    caster_progression: str
+    preparation_mode: str = "fixed"
+    cantrips_known: int = 0
+    spell_count: int | None = None
+    spell_slots: dict[int, int] = Field(default_factory=dict)
+
+
 class CreatureSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -70,6 +81,7 @@ class CreatureSchema(BaseModel):
     metadata: dict[str, object] = Field(default_factory=dict)
     class_ref: "StatBlockReferenceSchema | None" = None
     subclass_ref: "SubclassReferenceSchema | None" = None
+    spellcasting: SpellcastingSchema | None = None
     spells_known: list["StatBlockReferenceSchema"] = Field(default_factory=list)
     optional_features: list["StatBlockReferenceSchema"] = Field(default_factory=list)
     player_character: str | None = None

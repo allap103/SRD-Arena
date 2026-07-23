@@ -379,6 +379,28 @@ def _build_spellcasting(
     subclass_block: dict | None,
     spell_catalog: SpellCatalog | None,
 ) -> Spellcasting | None:
+    if schema.spellcasting is not None:
+        config = schema.spellcasting
+        ability_score = _spellcasting_ability_score(attributes, config.ability)
+        ability_modifier = (ability_score - 10) // 2
+        spell_slots_max = dict(config.spell_slots)
+        return Spellcasting(
+            ability=config.ability,
+            ability_modifier=ability_modifier,
+            save_dc=8 + attributes.proficiency_bonus + ability_modifier,
+            attack_bonus=attributes.proficiency_bonus + ability_modifier,
+            caster_progression=config.caster_progression,
+            preparation_mode=config.preparation_mode,
+            cantrips_known=config.cantrips_known,
+            spell_count=config.spell_count,
+            spell_slots_max=spell_slots_max,
+            spell_slots_remaining=dict(spell_slots_max),
+            learned_spells=[
+                _build_spell(reference.name, reference.source, spell_catalog)
+                for reference in schema.spells_known
+            ],
+        )
+
     source_block = _spellcasting_source_block(class_block, subclass_block)
     if source_block is None:
         return None

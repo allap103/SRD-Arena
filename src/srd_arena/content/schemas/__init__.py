@@ -3,6 +3,7 @@ from .creature import (
     CreatureSchema,
     AttributesSchema,
     EQUIPMENT_SLOTS,
+    SpellcastingSchema,
     StatBlockReferenceSchema,
 )
 from .encounter import (
@@ -23,5 +24,6 @@ __all__ = [
     "EncounterDefinitionSchema",
     "GridSchema",
     "PositionSchema",
+    "SpellcastingSchema",
     "StatBlockReferenceSchema",
 ]
