@@ -532,12 +532,18 @@ class BattlefieldWidget(QWidget):
 
             token = self._token_image(creature.token_image)
             if token is not None:
-                sprite_size = int(cell_size * 0.98)
+                maximum_size = cell_size * 0.98
+                scale = min(
+                    maximum_size / token.width(),
+                    maximum_size / token.height(),
+                )
+                sprite_width = max(1, int(token.width() * scale))
+                sprite_height = max(1, int(token.height() * scale))
                 painter.drawPixmap(
-                    int(center_x - sprite_size / 2),
-                    int(center_y - sprite_size / 2),
-                    sprite_size,
-                    sprite_size,
+                    int(center_x - sprite_width / 2),
+                    int(center_y + cell_size / 2 - sprite_height),
+                    sprite_width,
+                    sprite_height,
                     token,
                 )
             else:
