@@ -25,6 +25,7 @@ from .items import (
     ItemPropertySchema,
     ItemSchema,
 )
+from .optional_features import OptionalFeatureFileSchema, OptionalFeatureSchema
 
 __all__ = [
     "CreatureSchema",
@@ -42,6 +43,8 @@ __all__ = [
     "ItemFileSchema",
     "ItemPropertySchema",
     "ItemSchema",
+    "OptionalFeatureFileSchema",
+    "OptionalFeatureSchema",
     "PositionSchema",
     "SpellcastingSchema",
     "SpellFileSchema",

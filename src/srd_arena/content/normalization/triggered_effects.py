@@ -1,9 +1,12 @@
 from ...domain.effects.triggered import TriggeredEffect
+from ..schemas.optional_features import OptionalFeatureSchema
 
 
-def normalize_optional_feature_effects(feature: dict) -> list[TriggeredEffect]:
-    name = str(feature.get("name", ""))
-    source = str(feature.get("source", ""))
+def normalize_optional_feature_effects(
+    feature: OptionalFeatureSchema,
+) -> list[TriggeredEffect]:
+    name = feature.public_name
+    source = feature.source
     canonical_id = f"{name.casefold().replace(' ', '_')}|{source.casefold()}"
     if (name.casefold(), source.upper()) == ("great weapon fighting", "PHB"):
         return [

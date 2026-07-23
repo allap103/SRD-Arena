@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..schemas import CreatureSchema, EncounterDefinitionSchema
-from ..catalogs import BestiaryCatalog, SpellCatalog
+from ..catalogs import BestiaryCatalog, OptionalFeatureCatalog, SpellCatalog
 from ...domain.creatures import Creature
 from ...domain.encounters import (
     EncounterBehavior,
@@ -17,7 +17,6 @@ from .creatures import build_creature
 from .types import (
     ClassCatalog,
     PlayerCharacterCatalog,
-    OptionalFeatureCatalog,
     SubclassCatalog,
 )
 

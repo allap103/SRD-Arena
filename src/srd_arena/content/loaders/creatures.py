@@ -2,9 +2,9 @@ from pathlib import Path
 import re
 from typing import cast
 
-from ..schemas import CreatureSchema
+from ..schemas import CreatureSchema, OptionalFeatureSchema
 from ..schemas.creature import CreatureItemReferenceSchema
-from ..catalogs import BestiaryCatalog, SpellCatalog
+from ..catalogs import BestiaryCatalog, OptionalFeatureCatalog, SpellCatalog
 from ..schemas.bestiary import BestiaryMonsterSchema
 from ...domain.creatures import (
     Attributes,
@@ -19,11 +19,7 @@ from ...domain.creatures import Spellcasting
 from ...domain.effects.triggered import TriggeredEffect
 from ..normalization import normalize_optional_feature_effects
 from ..translators import build_spell
-from .catalogs import (
-    _find_class_block,
-    _find_optional_feature,
-    _find_subclass_block,
-)
+from .catalogs import _find_class_block, _find_subclass_block
 from .source_data import _load_json, _slug
 from .monster_attacks import build_monster_attacks
 from .creature_attributes import build_creature_attributes, build_creature_size
@@ -38,7 +34,6 @@ from .creature_spellcasting import (
 from .types import (
     ClassCatalog,
     PlayerCharacterCatalog,
-    OptionalFeatureCatalog,
     SubclassCatalog,
 )
 
@@ -214,10 +209,13 @@ def _resolve_optional_feature_effects(
                 "but no optional feature catalog was loaded."
             )
         try:
-            feature = _find_optional_feature(reference.name, reference.source, catalog)
+            feature = catalog.find(reference.name, reference.source)
         except KeyError:
             normalized = normalize_optional_feature_effects(
-                {"name": reference.name, "source": reference.source or ""}
+                OptionalFeatureSchema(
+                    name=reference.name,
+                    source=reference.source or "",
+                )
             )
             if not normalized:
                 raise

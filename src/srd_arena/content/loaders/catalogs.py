@@ -5,7 +5,6 @@ from .source_data import _load_json
 from .types import (
     ClassCatalog,
     PlayerCharacterCatalog,
-    OptionalFeatureCatalog,
     SubclassCatalog,
 )
 
@@ -21,37 +20,6 @@ def load_player_characters(directory: str | Path) -> PlayerCharacterCatalog:
             for path in player_characters_dir.glob("*")
         )
     }
-
-
-def load_optional_feature_blocks(directory: str | Path) -> OptionalFeatureCatalog:
-    path = Path(directory) / "optionalfeatures.json"
-    if not path.is_file():
-        return {}
-    catalog: OptionalFeatureCatalog = {}
-    for feature in _load_json(path).get("optionalfeature", []):
-        if not isinstance(feature, dict) or not isinstance(feature.get("name"), str):
-            continue
-        source = feature.get("source")
-        source_key = source if isinstance(source, str) else None
-        catalog[(feature["name"].casefold(), source_key)] = feature
-        catalog.setdefault((feature["name"].casefold(), None), feature)
-    return catalog
-
-
-def _find_optional_feature(
-    name: str,
-    source: str | None,
-    catalog: OptionalFeatureCatalog,
-) -> dict:
-    for key in (
-        (name.casefold(), source),
-        (name.casefold(), source.upper() if source is not None else None),
-        (name.casefold(), None),
-    ):
-        if key in catalog:
-            return catalog[key]
-    source_text = f"|{source}" if source else ""
-    raise KeyError(f"Optional feature '{name}{source_text}' not found.")
 
 
 def load_class_blocks(directory: str | Path) -> ClassCatalog:

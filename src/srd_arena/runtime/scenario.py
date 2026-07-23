@@ -8,7 +8,7 @@ from ..content.loaders import (
     load_bestiary_catalog,
     load_class_blocks,
     load_player_characters,
-    load_optional_feature_blocks,
+    load_optional_feature_catalog,
     load_encounter,
     load_spell_catalog,
     load_subclass_blocks,
@@ -54,7 +54,7 @@ class Scenario:
         self.class_blocks = load_class_blocks(self.system_directory)
         self.subclass_blocks = load_subclass_blocks(self.system_directory)
         self.spells = load_spell_catalog(self.system_directory)
-        self.optional_feature_blocks = load_optional_feature_blocks(self.system_directory)
+        self.optional_features = load_optional_feature_catalog(self.system_directory)
         self.player_characters = load_player_characters(self.directory / "player_characters")
         self.encounters, self.creatures = self.load_encounters_from_directory(
             self.directory / "encounters"
@@ -74,7 +74,7 @@ class Scenario:
                 self.bestiary,
                 self.class_blocks,
                 self.player_characters,
-                self.optional_feature_blocks,
+                self.optional_features,
                 self.subclass_blocks,
                 self.spells,
             )
