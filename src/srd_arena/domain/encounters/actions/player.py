@@ -2,30 +2,30 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creatures import Creature
-from ..geometry import Position
-from ..creatures import can_grapple
-from ..rolls.dice import resolve_d20
-from ..effects.results import EffectResult
+from ...creatures import Creature
+from ...geometry import Position
+from ...creatures import can_grapple
+from ...rolls.dice import resolve_d20
+from ...effects.results import EffectResult
 from .attacks import resolve_player_attack_action as _resolve_player_attack_action_impl
 from .features import resolve_feature_action as _resolve_feature_action_impl
 from .items import resolve_utilize_action as _resolve_utilize_action_impl
-from .spells.casting import resolve_spell_action as _resolve_spell_action_impl
+from .spellcasting import resolve_spell_action as _resolve_spell_action_impl
 from .utility import resolve_wait_action as _resolve_wait_action_impl
 from .attack_resolution import has_free_hand
-from ..encounters.behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
-from ..encounters.models import EncounterAction, EncounterProgress
-from ..encounters.enemy_control import (
+from ..behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
+from ..models import EncounterAction, EncounterProgress
+from ..enemy_control import (
     apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
     user_controlled_enemy_actions as _user_controlled_enemy_actions_impl,
 )
 
 if TYPE_CHECKING:
-    from ..encounters.encounter import EncounterState
+    from ..encounter import EncounterState
 
 
 def _roll_die(sides: int) -> int:
-    from ..encounters import encounter as encounter_module
+    from .. import encounter as encounter_module
 
     return encounter_module.roll_die(sides)
 

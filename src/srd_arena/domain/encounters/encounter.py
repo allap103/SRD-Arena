@@ -6,7 +6,7 @@ from .behaviors import (
     build_behavior as _build_behavior,
     is_adjacent as _is_adjacent,
 )
-from ..actions.options import (
+from .actions.options import (
     available_actions as _available_actions_impl,
     available_feature_actions as _available_feature_actions_impl,
     available_spell_actions as _available_spell_actions_impl,
@@ -45,7 +45,7 @@ from .models import (
     TurnState,
     PendingAction,
 )
-from ..actions.player import (
+from .actions.player import (
     apply_action as _apply_action_impl,
     apply_player_move as _apply_player_move_impl,
     apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,

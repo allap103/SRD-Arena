@@ -45,6 +45,14 @@ RULES = (
         package="srd_arena.domain.equipment",
         forbidden=("srd_arena.domain.encounters",),
     ),
+    DependencyRule(
+        package="srd_arena.domain.creatures",
+        forbidden=("srd_arena.domain.encounters",),
+    ),
+    DependencyRule(
+        package="srd_arena.domain.spells",
+        forbidden=("srd_arena.domain.encounters",),
+    ),
 )
 
 
@@ -75,15 +83,23 @@ def test_package_dependencies_follow_architecture() -> None:
 
 
 def test_relative_import_resolution() -> None:
-    node = ast.ImportFrom(module="creatures", names=[], level=2)
+    node = ast.ImportFrom(module="creatures", names=[], level=3)
 
     assert (
         _resolve_from_import(
-            "srd_arena.domain.actions.attack_resolution",
+            "srd_arena.domain.encounters.actions.attack_resolution",
             is_package=False,
             node=node,
         )
         == "srd_arena.domain.creatures"
+    )
+
+
+def test_encounter_actions_have_no_legacy_peer_package() -> None:
+    legacy_actions = PACKAGE_ROOT / "domain" / "actions"
+
+    assert not list(legacy_actions.rglob("*.py")), (
+        "Encounter-specific actions belong in srd_arena.domain.encounters.actions."
     )
 
 

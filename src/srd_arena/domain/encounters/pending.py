@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ..rolls.dice import DicePoolResult, DieReplacement, DieRollResult
 from ..effects.triggered import TriggeredEffect
-from ..actions.attack_resolution import damage_roll_detail
+from .actions.attack_resolution import damage_roll_detail
 from .models import AttackOutcome, PendingAttack, PendingAttackSnapshot
 
 

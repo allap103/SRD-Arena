@@ -2,23 +2,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creatures import Creature
-from ..geometry import Position
-from ..creatures import can_grapple
-from ..creatures import Spellcasting
+from ...creatures import Creature
+from ...geometry import Position
+from ...creatures import can_grapple
+from ...creatures import Spellcasting
 from .attack_resolution import has_free_hand
-from ..encounters.behaviors import (
+from ..behaviors import (
     DIRECTION_DELTAS,
     chebyshev_distance as _chebyshev_distance,
     is_adjacent as _is_adjacent,
 )
 from .consumables import healing_potions_in_inventory
-from ..geometry import AreaOfEffect, Vector2D, build_directional_area, build_radius_area, vector_between_positions
-from ..encounters.models import ActionCost, EncounterAction
-from ..encounters.refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
-from ..spells.definitions import Spell
-from ..spells.resolution import SpellTargetContext
-from ..spells.rules import (
+from ...geometry import AreaOfEffect, Vector2D, build_directional_area, build_radius_area, vector_between_positions
+from ..models import ActionCost, EncounterAction
+from ..refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
+from ...spells.definitions import Spell
+from ...spells.resolution import SpellTargetContext
+from ...spells.rules import (
     spell_action_economy,
     spell_action_id,
     spell_action_label,
@@ -29,7 +29,7 @@ from ..spells.rules import (
 )
 
 if TYPE_CHECKING:
-    from ..encounters.encounter import EncounterState
+    from ..encounter import EncounterState
 
 
 def available_actions(self: EncounterState, player: Creature) -> list[EncounterAction]:

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from ..creatures import Creature
-from ..equipment import Item
-from ..geometry import Position
-from ..rolls.dice import (
+from ...creatures import Creature
+from ...equipment import Item
+from ...geometry import Position
+from ...rolls.dice import (
     D20RollMode,
     resolve_check,
     resolve_d20,
@@ -11,13 +11,13 @@ from ..rolls.dice import (
     roll_dice,
     roll_die,
 )
-from ..effects.triggered import (
+from ...effects.triggered import (
     TriggeredEffect,
     matching_effects,
     reroll_eligible_indices,
 )
-from ..encounters.behaviors import is_adjacent as _is_adjacent
-from ..encounters.models import AttackOutcome, AttackSource
+from ..behaviors import is_adjacent as _is_adjacent
+from ..models import AttackOutcome, AttackSource
 
 
 def resolve_attack(
