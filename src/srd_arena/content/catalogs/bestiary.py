@@ -1,7 +1,10 @@
 from pathlib import Path
 
-from ..schemas.bestiary import BestiaryFileSchema, BestiaryMonsterSchema
-from ..sources import SOURCE_PRIORITY, load_json
+from srd_arena.content.schemas.bestiary import (
+    BestiaryFileSchema,
+    BestiaryMonsterSchema,
+)
+from srd_arena.content.sources import SOURCE_PRIORITY, load_json
 from .base import SourceCatalog
 
 BestiaryCatalog = SourceCatalog[BestiaryMonsterSchema]

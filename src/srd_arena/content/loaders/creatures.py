@@ -2,11 +2,28 @@ from pathlib import Path
 import re
 from typing import cast
 
-from ..schemas import CreatureSchema, OptionalFeatureSchema
-from ..schemas.creature import CreatureItemReferenceSchema
-from ..catalogs import BestiaryCatalog, OptionalFeatureCatalog, SpellCatalog
-from ..schemas.bestiary import BestiaryMonsterSchema
-from ...domain.creatures import (
+from srd_arena.content.catalogs import (
+    BestiaryCatalog,
+    ClassCatalog,
+    ClassRecord,
+    OptionalFeatureCatalog,
+    SpellCatalog,
+    SubclassCatalog,
+    SubclassRecord,
+)
+from srd_arena.content.normalization import normalize_optional_feature_effects
+from srd_arena.content.schemas import CreatureSchema, OptionalFeatureSchema
+from srd_arena.content.schemas.bestiary import BestiaryMonsterSchema
+from srd_arena.content.schemas.classes import (
+    ClassFeatureReferenceSchema,
+    ClassFeatureSchema,
+    ClassSchema,
+    SubclassSchema,
+)
+from srd_arena.content.schemas.creature import CreatureItemReferenceSchema
+from srd_arena.content.sources import load_json, slug
+from srd_arena.content.translators import build_spell
+from srd_arena.domain.creatures import (
     Attributes,
     ClassFeature,
     ClassRef,
@@ -15,12 +32,8 @@ from ...domain.creatures import (
     Inventory,
     SubclassRef,
 )
-from ...domain.creatures import Spellcasting
-from ...domain.effects.triggered import TriggeredEffect
-from ..normalization import normalize_optional_feature_effects
-from ..translators import build_spell
-from .catalogs import _find_class_block, _find_subclass_block
-from .source_data import _load_json, _slug
+from srd_arena.domain.creatures import Spellcasting
+from srd_arena.domain.effects.triggered import TriggeredEffect
 from .monster_attacks import build_monster_attacks
 from .creature_attributes import build_creature_attributes, build_creature_size
 from .creature_features import build_combat_profile, build_feature_uses_remaining
@@ -31,29 +44,25 @@ from .creature_spellcasting import (
     spell_slots_progression as _spell_slots_progression,
     spellcasting_ability_score as _spellcasting_ability_score,
 )
-from .types import (
-    ClassCatalog,
-    PlayerCharacterCatalog,
-    SubclassCatalog,
-)
+from .player_characters import PlayerCharacterTemplates
 
 
 def load_creature(
     path: str | Path,
     bestiary: BestiaryCatalog | None = None,
-    class_blocks: ClassCatalog | None = None,
-    player_characters: PlayerCharacterCatalog | None = None,
+    classes: ClassCatalog | None = None,
+    player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
-    subclass_blocks: SubclassCatalog | None = None,
+    subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> Creature:
     return build_creature(
-        CreatureSchema.model_validate(_load_json(path)),
+        CreatureSchema.model_validate(load_json(path)),
         bestiary,
-        class_blocks,
+        classes,
         player_characters,
         optional_features,
-        subclass_blocks,
+        subclasses,
         spells,
     )
 
@@ -61,24 +70,16 @@ def load_creature(
 def build_creature(
     schema: CreatureSchema,
     bestiary: BestiaryCatalog | None = None,
-    class_blocks: ClassCatalog | None = None,
-    player_characters: PlayerCharacterCatalog | None = None,
+    classes: ClassCatalog | None = None,
+    player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
-    subclass_blocks: SubclassCatalog | None = None,
+    subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> Creature:
     schema = _resolve_creature_schema(schema, player_characters)
     stat_block = _find_bestiary_monster(schema, bestiary)
-    class_block = (
-        _find_class_block(schema.class_ref.name, schema.class_ref.source, class_blocks)
-        if schema.class_ref
-        else None
-    )
-    subclass_block = (
-        _find_subclass_block(schema.subclass_ref, subclass_blocks, class_block)
-        if schema.subclass_ref
-        else None
-    )
+    class_record = _find_class_record(schema, classes)
+    subclass_record = _find_subclass_record(schema, subclasses, class_record)
     equipment = Equipment(
         equipped_items={
             **Equipment().equipped_items,
@@ -88,11 +89,11 @@ def build_creature(
             },
         }
     )
-    attributes = build_creature_attributes(schema, stat_block, class_block)
-    class_features = _resolve_class_features(class_block, schema.attributes.level)
+    attributes = build_creature_attributes(schema, stat_block, class_record)
+    class_features = _resolve_class_features(class_record, schema.attributes.level)
     class_features.extend(
         _resolve_subclass_features(
-            subclass_block,
+            subclass_record,
             schema.attributes.level,
             class_name=schema.class_ref.name if schema.class_ref else None,
         )
@@ -102,8 +103,8 @@ def build_creature(
     spellcasting = _build_spellcasting(
         schema,
         attributes,
-        class_block,
-        subclass_block,
+        class_record,
+        subclass_record,
         spells,
     )
 
@@ -142,7 +143,7 @@ def build_creature(
 
 def _resolve_creature_schema(
     instance: CreatureSchema,
-    player_characters: PlayerCharacterCatalog | None,
+    player_characters: PlayerCharacterTemplates | None,
 ) -> CreatureSchema:
     if instance.player_character is None:
         return instance
@@ -225,32 +226,76 @@ def _resolve_optional_feature_effects(
     return effects
 
 
+def _find_class_record(
+    schema: CreatureSchema,
+    classes: ClassCatalog | None,
+) -> ClassRecord | None:
+    if schema.class_ref is None:
+        return None
+    if classes is None:
+        raise ValueError(
+            f"Creature references class '{schema.class_ref.name}', "
+            "but no class catalog was loaded."
+        )
+    return classes.find(schema.class_ref.name, schema.class_ref.source)
+
+
+def _find_subclass_record(
+    schema: CreatureSchema,
+    subclasses: SubclassCatalog | None,
+    class_record: ClassRecord | None,
+) -> SubclassRecord | None:
+    reference = schema.subclass_ref
+    if reference is None:
+        return None
+    if subclasses is None:
+        raise ValueError(
+            f"Creature references subclass '{reference.name}', "
+            "but no subclass catalog was loaded."
+        )
+    class_name = (
+        reference.class_name
+        or (class_record.definition.public_name if class_record else None)
+    )
+    if class_name is None:
+        raise ValueError(
+            f"Subclass '{reference.name}' requires a class name."
+        )
+    class_source = (
+        reference.class_source
+        or (class_record.definition.source if class_record else None)
+    )
+    return subclasses.find(
+        reference.name,
+        reference.source,
+        class_name,
+        class_source,
+    )
+
+
 def _creature_item_id(item: str | CreatureItemReferenceSchema | object) -> str:
     if isinstance(item, str):
         return item
     if isinstance(item, CreatureItemReferenceSchema):
-        return _slug(item.name)
+        return slug(item.name)
     if isinstance(item, dict):
         name = item.get("name")
         if isinstance(name, str):
-            return _slug(name)
+            return slug(name)
     raise TypeError(f"Unsupported creature item reference: {item!r}")
 
 
 def _resolve_class_features(
-    class_block: dict | None,
+    class_record: ClassRecord | None,
     level: int,
 ) -> list[ClassFeature]:
-    if class_block is None:
+    if class_record is None:
         return []
 
-    class_name = str(class_block.get("name", ""))
-    features = class_block.get("classFeatures", [])
+    definition = class_record.definition
     class_features: list[ClassFeature] = []
-    if not isinstance(features, list):
-        return class_features
 
-    for feature_ref in features:
+    for feature_ref in definition.class_features:
         parsed = _parse_class_feature_reference(feature_ref)
         if parsed is None:
             continue
@@ -258,10 +303,10 @@ def _resolve_class_features(
         if feature_level > level:
             continue
         class_feature = _normalize_class_feature(
-            class_name,
+            definition.public_name,
             feature_name,
             feature_level,
-            class_block,
+            class_record,
             level,
         )
         if class_feature is not None:
@@ -270,21 +315,18 @@ def _resolve_class_features(
 
 
 def _resolve_subclass_features(
-    subclass_block: dict | None,
+    subclass_record: SubclassRecord | None,
     level: int,
     *,
     class_name: str | None,
 ) -> list[ClassFeature]:
-    if subclass_block is None:
+    if subclass_record is None:
         return []
 
-    subclass_name = str(subclass_block.get("name", ""))
-    features = subclass_block.get("subclassFeatures", [])
+    definition = subclass_record.definition
     class_features: list[ClassFeature] = []
-    if not isinstance(features, list):
-        return class_features
 
-    for feature_ref in features:
+    for feature_ref in definition.subclass_features:
         parsed = _parse_class_feature_reference(feature_ref)
         if parsed is None:
             continue
@@ -292,20 +334,24 @@ def _resolve_subclass_features(
         if feature_level > level:
             continue
         class_feature = _normalize_class_feature(
-            class_name or str(subclass_block.get("className", "")),
+            class_name or definition.class_name,
             feature_name,
             feature_level,
-            source_subclass=subclass_name,
+            source_subclass=definition.public_name,
         )
         if class_feature is not None:
             class_features.append(class_feature)
     return class_features
 
 
-def _parse_class_feature_reference(feature_ref: str | dict[str, object]) -> tuple[str, int] | None:
-    raw_ref = feature_ref if isinstance(feature_ref, str) else feature_ref.get("classFeature")
-    if not isinstance(raw_ref, str):
-        return None
+def _parse_class_feature_reference(
+    feature_ref: str | ClassFeatureReferenceSchema,
+) -> tuple[str, int] | None:
+    raw_ref = (
+        feature_ref
+        if isinstance(feature_ref, str)
+        else feature_ref.class_feature
+    )
     parts = raw_ref.split("|")
     if not parts:
         return None
@@ -319,7 +365,7 @@ def _normalize_class_feature(
     class_name: str,
     feature_name: str,
     feature_level: int,
-    class_block: dict | None = None,
+    class_record: ClassRecord | None = None,
     creature_level: int = 1,
     source_subclass: str | None = None,
 ) -> ClassFeature | None:
@@ -339,8 +385,12 @@ def _normalize_class_feature(
                 level=feature_level,
                 source_subclass=source_subclass,
                 data={
-                    "uses": _second_wind_uses(class_block, creature_level),
-                    **_second_wind_healing_dice(class_block, feature_name, feature_level),
+                    "uses": _second_wind_uses(class_record, creature_level),
+                    **_second_wind_healing_dice(
+                        class_record,
+                        feature_name,
+                        feature_level,
+                    ),
                 },
             )
         if feature_name == "Action Surge":
@@ -350,7 +400,7 @@ def _normalize_class_feature(
                 source_class=class_name,
                 level=feature_level,
                 source_subclass=source_subclass,
-                data={"uses": _action_surge_uses(class_block, creature_level)},
+                data={"uses": _action_surge_uses(class_record, creature_level)},
             )
         else:
             return None
@@ -367,8 +417,8 @@ def _normalize_class_feature(
 def _build_spellcasting(
     schema: CreatureSchema,
     attributes: Attributes,
-    class_block: dict | None,
-    subclass_block: dict | None,
+    class_record: ClassRecord | None,
+    subclass_record: SubclassRecord | None,
     spells: SpellCatalog | None,
 ) -> Spellcasting | None:
     if schema.spellcasting is not None:
@@ -393,19 +443,22 @@ def _build_spellcasting(
             ],
         )
 
-    source_block = _spellcasting_source_block(class_block, subclass_block)
-    if source_block is None:
+    source_definition = _spellcasting_source_definition(
+        class_record,
+        subclass_record,
+    )
+    if source_definition is None:
         return None
 
-    ability = source_block.get("spellcastingAbility")
-    caster_progression = source_block.get("casterProgression")
-    if not isinstance(ability, str) or not isinstance(caster_progression, str):
+    ability = source_definition.spellcasting_ability
+    caster_progression = source_definition.caster_progression
+    if ability is None or caster_progression is None:
         return None
 
     level = attributes.level
     ability_score = _spellcasting_ability_score(attributes, ability)
     ability_modifier = (ability_score - 10) // 2
-    spell_slots_max = _spell_slots_progression(source_block, level)
+    spell_slots_max = _spell_slots_progression(source_definition, level)
     learned_spells = [
         build_spell(reference.name, reference.source, spells)
         for reference in schema.spells_known
@@ -417,37 +470,48 @@ def _build_spellcasting(
         save_dc=8 + attributes.proficiency_bonus + ability_modifier,
         attack_bonus=attributes.proficiency_bonus + ability_modifier,
         caster_progression=caster_progression,
-        preparation_mode=_spell_preparation_mode(source_block),
-        cantrips_known=_progression_value(source_block.get("cantripProgression"), level) or 0,
-        spell_count=_spell_count_progression(source_block, level),
+        preparation_mode=_spell_preparation_mode(source_definition),
+        cantrips_known=(
+            _progression_value(source_definition.cantrip_progression, level) or 0
+        ),
+        spell_count=_spell_count_progression(source_definition, level),
         spell_slots_max=spell_slots_max,
         spell_slots_remaining=dict(spell_slots_max),
         learned_spells=learned_spells,
     )
 
 
-def _spellcasting_source_block(
-    class_block: dict | None,
-    subclass_block: dict | None,
-) -> dict | None:
-    for block in (subclass_block, class_block):
-        if not isinstance(block, dict):
-            continue
-        if isinstance(block.get("spellcastingAbility"), str) and isinstance(
-            block.get("casterProgression"),
-            str,
+def _spellcasting_source_definition(
+    class_record: ClassRecord | None,
+    subclass_record: SubclassRecord | None,
+) -> ClassSchema | SubclassSchema | None:
+    definitions: tuple[ClassSchema | SubclassSchema | None, ...] = (
+        subclass_record.definition if subclass_record else None,
+        class_record.definition if class_record else None,
+    )
+    for definition in definitions:
+        if (
+            definition is not None
+            and definition.spellcasting_ability is not None
+            and definition.caster_progression is not None
         ):
-            return block
+            return definition
     return None
 
 
-def _second_wind_uses(class_block: dict | None, feature_level: int) -> int:
-    if class_block is None:
+def _second_wind_uses(
+    class_record: ClassRecord | None,
+    feature_level: int,
+) -> int:
+    if class_record is None:
         return 1
-    source = class_block.get("source")
-    if source != "XPHB":
+    if class_record.definition.source != "XPHB":
         return 1
-    table_value = _class_table_value(class_block, "Second Wind", feature_level)
+    table_value = _class_table_value(
+        class_record.definition,
+        "Second Wind",
+        feature_level,
+    )
     if table_value is None:
         return 2
     try:
@@ -456,10 +520,17 @@ def _second_wind_uses(class_block: dict | None, feature_level: int) -> int:
         return 2
 
 
-def _action_surge_uses(class_block: dict | None, feature_level: int) -> int:
-    if class_block is None:
+def _action_surge_uses(
+    class_record: ClassRecord | None,
+    feature_level: int,
+) -> int:
+    if class_record is None:
         return 1
-    table_value = _class_table_value(class_block, "Action Surge", feature_level)
+    table_value = _class_table_value(
+        class_record.definition,
+        "Action Surge",
+        feature_level,
+    )
     if table_value is None:
         return 1
     try:
@@ -469,12 +540,18 @@ def _action_surge_uses(class_block: dict | None, feature_level: int) -> int:
 
 
 def _second_wind_healing_dice(
-    class_block: dict | None,
+    class_record: ClassRecord | None,
     feature_name: str,
     feature_level: int,
 ) -> dict[str, int]:
-    feature_entry = _class_feature_entry(class_block, feature_name, feature_level)
-    dice = _first_dice_expression(feature_entry)
+    feature_entry = _class_feature_entry(
+        class_record,
+        feature_name,
+        feature_level,
+    )
+    dice = _first_dice_expression(
+        feature_entry.entries if feature_entry is not None else None
+    )
     if dice is None:
         return {
             "healing_die_count": 1,
@@ -488,25 +565,19 @@ def _second_wind_healing_dice(
 
 
 def _class_feature_entry(
-    class_block: dict | None,
+    class_record: ClassRecord | None,
     feature_name: str,
     feature_level: int,
-) -> dict | None:
-    if class_block is None:
+) -> ClassFeatureSchema | None:
+    if class_record is None:
         return None
-    class_name = class_block.get("name")
-    class_source = class_block.get("source")
-    entries = class_block.get("__classFeatureEntries", [])
-    if not isinstance(entries, list):
-        return None
-    for entry in entries:
-        if not isinstance(entry, dict):
+    definition = class_record.definition
+    for entry in class_record.features:
+        if entry.public_name != feature_name or entry.level != feature_level:
             continue
-        if entry.get("name") != feature_name or entry.get("level") != feature_level:
+        if entry.class_name != definition.name:
             continue
-        if entry.get("className") != class_name:
-            continue
-        if entry.get("classSource") != class_source:
+        if entry.class_source != definition.source:
             continue
         return entry
     return None
@@ -533,20 +604,13 @@ def _first_dice_expression(value: object) -> tuple[int, int] | None:
 
 
 def _class_table_value(
-    class_block: dict,
+    definition: ClassSchema,
     column_label: str,
     level: int,
 ) -> str | None:
-    groups = class_block.get("classTableGroups", [])
-    if not isinstance(groups, list):
-        return None
-    for group in groups:
-        if not isinstance(group, dict):
-            continue
-        labels = group.get("colLabels", [])
-        rows = group.get("rows", [])
-        if not isinstance(labels, list) or not isinstance(rows, list):
-            continue
+    for group in definition.table_groups:
+        labels = group.column_labels
+        rows = group.rows
         try:
             column_index = labels.index(column_label)
         except ValueError:

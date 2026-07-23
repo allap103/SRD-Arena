@@ -1,24 +1,26 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..schemas import CreatureSchema, EncounterDefinitionSchema
-from ..catalogs import BestiaryCatalog, OptionalFeatureCatalog, SpellCatalog
-from ...domain.creatures import Creature
-from ...domain.encounters import (
+from srd_arena.content.catalogs import (
+    BestiaryCatalog,
+    ClassCatalog,
+    OptionalFeatureCatalog,
+    SpellCatalog,
+    SubclassCatalog,
+)
+from srd_arena.content.schemas import CreatureSchema, EncounterDefinitionSchema
+from srd_arena.content.sources import load_json
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.encounters import (
     EncounterBehavior,
     EncounterDefinition,
     EncounterParticipant,
     EncounterTeam,
     EncounterTransition,
 )
-from ...domain.geometry import Grid, Position
-from .source_data import _load_json
+from srd_arena.domain.geometry import Grid, Position
 from .creatures import build_creature
-from .types import (
-    ClassCatalog,
-    PlayerCharacterCatalog,
-    SubclassCatalog,
-)
+from .player_characters import PlayerCharacterTemplates
 
 
 @dataclass(frozen=True)
@@ -94,13 +96,13 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
 def load_encounter(
     path: str | Path,
     bestiary: BestiaryCatalog | None = None,
-    class_blocks: ClassCatalog | None = None,
-    player_characters: PlayerCharacterCatalog | None = None,
+    classes: ClassCatalog | None = None,
+    player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
-    subclass_blocks: SubclassCatalog | None = None,
+    subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> LoadedEncounter:
-    schema = EncounterDefinitionSchema.model_validate(_load_json(path))
+    schema = EncounterDefinitionSchema.model_validate(load_json(path))
     return LoadedEncounter(
         definition=_build_encounter(schema),
         creatures=tuple(
@@ -112,10 +114,10 @@ def load_encounter(
                     )
                 ),
                 bestiary,
-                class_blocks,
+                classes,
                 player_characters,
                 optional_features,
-                subclass_blocks,
+                subclasses,
                 spells,
             )
             for creature in schema.creatures

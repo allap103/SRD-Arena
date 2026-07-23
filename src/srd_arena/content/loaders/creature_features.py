@@ -1,5 +1,5 @@
-from ...domain.creatures.feature_actions import FeatureActionDefinition
-from ...domain.creatures import ClassFeature, CombatProfile
+from srd_arena.domain.creatures import ClassFeature, CombatProfile
+from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
 
 
 def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:

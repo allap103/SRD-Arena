@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from ..domain.encounters.models import CombatEvent
+from srd_arena.domain.encounters.models import CombatEvent
 
 
 @dataclass

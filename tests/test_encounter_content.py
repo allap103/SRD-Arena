@@ -117,7 +117,7 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
     upgraded = load_creature(
         actor_path,
         scenario.bestiary,
-        scenario.class_blocks,
+        scenario.classes,
         scenario.player_characters,
     )
 
@@ -172,10 +172,10 @@ def test_creature_can_load_subclass_and_explicit_spellcasting(tmp_path: Path) ->
     creature = load_creature(
         actor_path,
         scenario.bestiary,
-        scenario.class_blocks,
+        scenario.classes,
         scenario.player_characters,
         scenario.optional_features,
-        scenario.subclass_blocks,
+        scenario.subclasses,
         scenario.spells,
     )
 
@@ -242,10 +242,10 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
     creature = load_creature(
         actor_path,
         scenario.bestiary,
-        scenario.class_blocks,
+        scenario.classes,
         scenario.player_characters,
         scenario.optional_features,
-        scenario.subclass_blocks,
+        scenario.subclasses,
         scenario.spells,
     )
 

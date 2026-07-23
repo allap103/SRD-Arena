@@ -1,6 +1,6 @@
-from ...domain.equipment import ArmorStat, Item, WeaponStat
-from ..schemas.items import ItemSchema
-from ..sources import slug
+from srd_arena.content.schemas.items import ItemSchema
+from srd_arena.content.sources import slug
+from srd_arena.domain.equipment import ArmorStat, Item, WeaponStat
 
 
 def build_item(source_item: ItemSchema) -> Item:

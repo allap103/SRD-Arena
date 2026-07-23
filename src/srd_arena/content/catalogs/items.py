@@ -1,7 +1,11 @@
 from pathlib import Path
 
-from ..schemas.items import BaseItemFileSchema, ItemFileSchema, ItemSchema
-from ..sources import SOURCE_PRIORITY, load_json
+from srd_arena.content.schemas.items import (
+    BaseItemFileSchema,
+    ItemFileSchema,
+    ItemSchema,
+)
+from srd_arena.content.sources import SOURCE_PRIORITY, load_json
 from .base import SourceCatalog
 
 ItemCatalog = SourceCatalog[ItemSchema]

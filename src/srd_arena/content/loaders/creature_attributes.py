@@ -1,18 +1,18 @@
-from ..schemas import CreatureSchema
-from ..schemas.bestiary import BestiaryMonsterSchema
-from ...domain.creatures import Attributes, Movement
-from ...domain.creatures import normalize_size
+from srd_arena.content.catalogs import ClassRecord
+from srd_arena.content.schemas import CreatureSchema
+from srd_arena.content.schemas.bestiary import BestiaryMonsterSchema
+from srd_arena.domain.creatures import Attributes, Movement, normalize_size
 
 
 def build_creature_attributes(
     schema: CreatureSchema,
     stat_block: BestiaryMonsterSchema | None,
-    class_block: dict | None,
+    class_record: ClassRecord | None,
 ) -> Attributes:
     if stat_block is None:
         attributes = schema.attributes.model_dump(exclude={"movement"})
         attributes["proficiencies"] = _merge_proficiencies(
-            schema.attributes.proficiencies, _class_proficiencies(class_block)
+            schema.attributes.proficiencies, _class_proficiencies(class_record)
         )
         return Attributes(
             **attributes,
@@ -42,7 +42,7 @@ def build_creature_attributes(
         charisma=stat_block.charisma,
         base_armor_class=_stat_block_base_ac(stat_block, schema.attributes.base_armor_class),
         proficiencies=_merge_proficiencies(
-            schema.attributes.proficiencies, _class_proficiencies(class_block)
+            schema.attributes.proficiencies, _class_proficiencies(class_record)
         ),
     )
 
@@ -75,24 +75,20 @@ def _merge_proficiencies(*sources: dict[str, object]) -> dict[str, object]:
     return merged
 
 
-def _class_proficiencies(class_block: dict | None) -> dict[str, object]:
-    if class_block is None:
+def _class_proficiencies(class_record: ClassRecord | None) -> dict[str, object]:
+    if class_record is None:
         return {}
-    starting = class_block.get("startingProficiencies", {})
-    weapons = starting.get("weapons", []) if isinstance(starting, dict) else []
+    definition = class_record.definition
     proficiencies: dict[str, object] = {}
-    if isinstance(weapons, list):
-        proficiencies["weapons"] = list(weapons)
-    saving_throws = class_block.get("proficiency", [])
-    if isinstance(saving_throws, list):
-        ability_names = {
-            "str": "strength", "dex": "dexterity", "con": "constitution",
-            "int": "intelligence", "wis": "wisdom", "cha": "charisma",
-        }
-        proficiencies["saving_throws"] = [
-            ability_names.get(str(value).casefold(), str(value).casefold())
-            for value in saving_throws
-        ]
+    proficiencies["weapons"] = list(definition.starting_proficiencies.weapons)
+    ability_names = {
+        "str": "strength", "dex": "dexterity", "con": "constitution",
+        "int": "intelligence", "wis": "wisdom", "cha": "charisma",
+    }
+    proficiencies["saving_throws"] = [
+        ability_names.get(value.casefold(), value.casefold())
+        for value in definition.proficiency
+    ]
     return proficiencies
 
 

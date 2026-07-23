@@ -26,12 +26,27 @@ from .items import (
     ItemSchema,
 )
 from .optional_features import OptionalFeatureFileSchema, OptionalFeatureSchema
+from .classes import (
+    ClassFeatureReferenceSchema,
+    ClassFeatureSchema,
+    ClassFileSchema,
+    ClassSchema,
+    ClassTableGroupSchema,
+    StartingProficienciesSchema,
+    SubclassFeatureSchema,
+    SubclassSchema,
+)
 
 __all__ = [
     "CreatureSchema",
     "CreatureItemReferenceSchema",
     "AttributesSchema",
     "BehaviorSchema",
+    "ClassFeatureReferenceSchema",
+    "ClassFeatureSchema",
+    "ClassFileSchema",
+    "ClassSchema",
+    "ClassTableGroupSchema",
     "BestiaryActionSchema",
     "BestiaryFileSchema",
     "BestiaryMonsterSchema",
@@ -49,5 +64,8 @@ __all__ = [
     "SpellcastingSchema",
     "SpellFileSchema",
     "SpellSchema",
+    "StartingProficienciesSchema",
     "StatBlockReferenceSchema",
+    "SubclassFeatureSchema",
+    "SubclassSchema",
 ]

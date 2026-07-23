@@ -1,9 +1,9 @@
 import re
 
-from ...domain.spells import Spell
-from ..catalogs import SpellCatalog
-from ..schemas.spells import SpellSchema
-from ..sources import slug
+from srd_arena.content.catalogs import SpellCatalog
+from srd_arena.content.schemas.spells import SpellSchema
+from srd_arena.content.sources import slug
+from srd_arena.domain.spells import Spell
 
 
 def build_spell(

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from ..schemas.spells import SpellFileSchema, SpellSchema
-from ..sources import SOURCE_PRIORITY, load_json
+from srd_arena.content.schemas.spells import SpellFileSchema, SpellSchema
+from srd_arena.content.sources import SOURCE_PRIORITY, load_json
 from .base import SourceCatalog
 
 SpellCatalog = SourceCatalog[SpellSchema]

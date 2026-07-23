@@ -95,6 +95,25 @@ def test_relative_import_resolution() -> None:
     )
 
 
+def test_content_and_runtime_use_absolute_cross_package_imports() -> None:
+    violations: list[str] = []
+
+    for package_name in ("content", "runtime"):
+        package_dir = PACKAGE_ROOT / package_name
+        for path in sorted(package_dir.rglob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom) and node.level > 1:
+                    violations.append(
+                        f"{path.relative_to(PACKAGE_ROOT.parent)}:{node.lineno}"
+                    )
+
+    assert not violations, (
+        "Use absolute imports across content/runtime package boundaries:\n"
+        + "\n".join(violations)
+    )
+
+
 def test_encounter_actions_have_no_legacy_peer_package() -> None:
     legacy_actions = PACKAGE_ROOT / "domain" / "actions"
 

@@ -4,22 +4,23 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ..content.loaders import (
+from srd_arena.content.loaders import (
     load_bestiary_catalog,
-    load_class_blocks,
-    load_player_characters,
+    load_class_catalog,
+    load_player_character_templates,
     load_optional_feature_catalog,
     load_encounter,
     load_spell_catalog,
-    load_subclass_blocks,
+    load_subclass_catalog,
     load_system_items,
 )
-from ..domain.creatures import Creature
-from ..domain.encounters import EncounterDefinition
-from ..domain.equipment import Item
-from ..domain.geometry import GeometryConfig
-from ..runtime.session import Session
-from ..content.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
+from srd_arena.content.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.encounters import EncounterDefinition
+from srd_arena.domain.equipment import Item
+from srd_arena.domain.geometry import GeometryConfig
+
+from .session import Session
 
 DEFAULT_SCENARIO_DIR = SCENARIOS_ROOT / "sample_game"
 DEFAULT_SYSTEM_CONTENT_DIR = SYSTEM_CONTENT_ROOT
@@ -51,11 +52,13 @@ class Scenario:
         self.display_name = config.display_name
         self.geometry_config = config.geometry_config
         self.bestiary = load_bestiary_catalog(self.system_directory)
-        self.class_blocks = load_class_blocks(self.system_directory)
-        self.subclass_blocks = load_subclass_blocks(self.system_directory)
+        self.classes = load_class_catalog(self.system_directory)
+        self.subclasses = load_subclass_catalog(self.system_directory)
         self.spells = load_spell_catalog(self.system_directory)
         self.optional_features = load_optional_feature_catalog(self.system_directory)
-        self.player_characters = load_player_characters(self.directory / "player_characters")
+        self.player_characters = load_player_character_templates(
+            self.directory / "player_characters"
+        )
         self.encounters, self.creatures = self.load_encounters_from_directory(
             self.directory / "encounters"
         )
@@ -72,10 +75,10 @@ class Scenario:
             load_encounter(
                 path,
                 self.bestiary,
-                self.class_blocks,
+                self.classes,
                 self.player_characters,
                 self.optional_features,
-                self.subclass_blocks,
+                self.subclasses,
                 self.spells,
             )
             for path in Path(directory).glob("*")
@@ -107,6 +110,10 @@ class Scenario:
                 else encounter_id
             )
             encounter = self.encounters[encounter_id]
+            if encounter.victory is None or encounter.defeat is None:
+                raise ValueError(
+                    f"Encounter '{encounter_id}' must define transitions."
+                )
             encounter.victory.next_encounter_id = next_encounter_id
             encounter.defeat.next_encounter_id = encounter_id
 

@@ -1,12 +1,12 @@
 from copy import deepcopy
 from dataclasses import dataclass
 
-from ..domain.encounters.encounter import EncounterState
-from ..domain.encounters.models import EncounterAction
-from ..domain.creatures import Creature
-from ..domain.encounters import EncounterDefinition
-from ..domain.equipment import Item
-from ..domain.geometry import GeometryConfig
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.encounters import EncounterDefinition
+from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.encounters.models import EncounterAction
+from srd_arena.domain.equipment import Item
+from srd_arena.domain.geometry import GeometryConfig
 from .models import ActionView, SceneView, TurnResult
 
 EXIT_CHOICE_TEXT = "Exit game"

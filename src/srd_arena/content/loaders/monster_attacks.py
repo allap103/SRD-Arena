@@ -1,7 +1,10 @@
 import re
 
-from ...domain.creatures.monster_attack import MonsterAttack
-from ..schemas.bestiary import BestiaryActionSchema, BestiaryMonsterSchema
+from srd_arena.content.schemas.bestiary import (
+    BestiaryActionSchema,
+    BestiaryMonsterSchema,
+)
+from srd_arena.domain.creatures.monster_attack import MonsterAttack
 
 
 def build_monster_attacks(
