@@ -36,7 +36,6 @@ from .models import (
     EncounterAction,
     EncounterEnemyState,
     EncounterProgress,
-    EncounterSnapshot,
     EncounterStateData,
     InitiativeEntry,
     InterruptState,
@@ -88,7 +87,6 @@ from .queries import (
     living_enemy_at as _living_enemy_at_impl,
     player_movement_remaining as _player_movement_remaining_query,
 )
-from .snapshots import create_snapshot, restore_snapshot
 
 # Keep these module-level names for tests and helpers that monkeypatch
 # `srd_arena.domain.encounters.encounter.roll_die` / `roll_dice`.
@@ -260,26 +258,6 @@ class EncounterState(EncounterStateData):
         state._roll_initiative(player)
         state._initialize_behaviors()
         return state
-
-    @classmethod
-    def from_snapshot(
-        cls,
-        definition: EncounterDefinition,
-        snapshot: EncounterSnapshot,
-        creature_templates: dict[str, Creature],
-        item_templates: dict[str, Item] | None = None,
-        geometry_config: GeometryConfig | None = None,
-    ) -> EncounterState:
-        return restore_snapshot(
-            cls,
-            definition,
-            snapshot,
-            creature_templates,
-            item_templates,
-            geometry_config,
-        )
-    def snapshot(self) -> EncounterSnapshot:
-        return create_snapshot(self)
 
     def _initialize_behaviors(self) -> None:
         self._behaviors = []

@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 from srd_arena.content.loaders import load_creature
-from srd_arena.runtime.save import load_from_file, save_to_file
 from srd_arena.runtime.scenario import Scenario
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
@@ -267,18 +266,3 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
     assert spells["Fireball"].saving_throw_abilities == ("dexterity",)
     assert spells["Fireball"].damage_dice == "8d6"
     assert spells["Fireball"].damage_inflict == ("fire",)
-
-
-def test_save_and_load_preserve_spell_slots(tmp_path: Path) -> None:
-    session = Scenario(TACTICAL_SCENARIO_DIR).create_session()
-
-    assert session.player.spellcasting is not None
-    session.player.spellcasting.spell_slots_remaining[1] = 1
-    save_path = tmp_path / "spell_slots_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, TACTICAL_SCENARIO_DIR)
-
-    assert loaded.player.spellcasting is not None
-    assert loaded.player.spellcasting.spell_slots_max == {1: 4, 2: 3, 3: 2}
-    assert loaded.player.spellcasting.spell_slots_remaining == {1: 1, 2: 3, 3: 2}

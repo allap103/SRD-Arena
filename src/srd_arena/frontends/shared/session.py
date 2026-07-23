@@ -6,7 +6,7 @@ from ...domain.creatures.feature_actions import FeatureActionDefinition
 from ...runtime.models import ActionView, SceneView
 from ...runtime.session import Session
 
-SYSTEM_ACTION_COUNT = 3
+SYSTEM_ACTION_COUNT = 1
 MOVE_DIRECTIONS = (
     "up-left",
     "up",

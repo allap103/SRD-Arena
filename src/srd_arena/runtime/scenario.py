@@ -127,7 +127,6 @@ class Scenario:
             creature_templates={creature.id: creature for creature in self.creatures},
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
-            scenario_dir=self.directory,
             control_mode=control_mode or self.control_mode,
             geometry_config=self.geometry_config,
         )

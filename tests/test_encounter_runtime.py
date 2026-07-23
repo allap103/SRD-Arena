@@ -10,7 +10,6 @@ from srd_arena.frontends.qt.app import CyoaPySide6Window
 from srd_arena.domain.effects import EffectResult
 from srd_arena.frontends.shared.session import SpellSlotTrackView, build_session_presentation
 from srd_arena.runtime.models import ActionView
-from srd_arena.runtime.save import load_from_file, save_to_file
 from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
 from srd_arena.frontends.qt.ui.encounter.config import TargetSelectionMode
 
@@ -71,6 +70,9 @@ def test_goblin_encounter_scene_generates_runtime_actions() -> None:
     assert "Wait" in scene_view.choices
     assert "Flee encounter" not in scene_view.choices
     assert "Retreat until the encounter system is ready." not in scene_view.choices
+    assert "Save game" not in scene_view.choices
+    assert "Load game" not in scene_view.choices
+    assert scene_view.choices[-1] == "Exit game"
 
 
 def test_cli_encounter_renderer_generates_grid_text() -> None:
@@ -862,30 +864,6 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
     ) == "normal"
 
 
-def test_save_and_load_preserve_color_spray_condition_and_slots(tmp_path: Path, monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    assert session.player.spellcasting is not None
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
-
-    _choose_directional_spell(session, "Cast Color Spray", (4, 2))
-    save_path = tmp_path / "color_spray_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, TACTICAL_SCENARIO_DIR)
-
-    assert loaded.encounter_state is not None
-    assert loaded.player.spellcasting is not None
-    assert loaded.player.spellcasting.spell_slots_remaining[1] == 3
-    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
-
-
 def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> None:
     session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
@@ -939,39 +917,6 @@ def test_lesser_restoration_uses_magic_menu_bucket() -> None:
     )
 
     assert bucket == "magic"
-
-
-def test_save_and_load_preserve_refreshed_blinded_duration(tmp_path: Path, monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    state = session.encounter_state
-    state.player_position.x = 1
-    state.player_position.y = 1
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 1
-    state.enemies[1].creature.current_health = 0
-    state.enemies[2].creature.current_health = 0
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
-
-    _choose_directional_spell(session, "Cast Color Spray", (4, 1))
-    session.choose(session.get_scene_view().choices.index("Wait"))
-    _choose_directional_spell(session, "Cast Color Spray", (4, 1))
-    save_path = tmp_path / "refreshed_blind_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, TACTICAL_SCENARIO_DIR)
-
-    assert loaded.encounter_state is not None
-    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
-
-    loaded.choose(loaded.get_scene_view().choices.index("Wait"))
-    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
-
-    loaded.choose(loaded.get_scene_view().choices.index("Wait"))
-    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is False
 
 
 def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> None:
@@ -1345,61 +1290,6 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
     assert any(
         choice.startswith("Attack enemy")
         for choice in session.get_scene_view().choices
-    )
-
-
-def test_save_and_load_preserve_encounter_progress(tmp_path: Path) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    move_up_index = session.get_scene_view().choices.index("Move up")
-    session.choose(move_up_index)
-    save_path = tmp_path / "encounter_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, FIXTURE_ENCOUNTER_DIR)
-
-    assert loaded.encounter_state is not None
-    assert loaded.current_scene_id == "goblin_encounter"
-    assert loaded.encounter_state.player_position.x == 1
-    assert loaded.encounter_state.player_position.y == 5
-    assert loaded.encounter_state.enemies[0].position.x == 5
-    assert loaded.encounter_state.enemies[0].position.y == 2
-    assert loaded.encounter_state.turn_index == 0
-    assert loaded.encounter_state.round_number == 1
-    assert loaded.encounter_state.player_movement_remaining == 5
-    assert loaded.encounter_state.player_action_available is True
-
-
-def test_save_and_load_preserve_spent_action(tmp_path: Path, monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    session.player.combat_profile.attacks_per_attack_action = 1
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
-
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1)
-
-    attack_index = next(
-        index
-        for index, choice in enumerate(session.get_scene_view().choices)
-        if choice.startswith("Attack enemy 1")
-    )
-    session.choose(attack_index)
-    save_path = tmp_path / "spent_action_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, FIXTURE_ENCOUNTER_DIR)
-
-    assert loaded.encounter_state is not None
-    assert loaded.encounter_state.player_action_available is False
-    assert not any(
-        choice.startswith("Attack enemy")
-        for choice in loaded.get_scene_view().choices
     )
 
 

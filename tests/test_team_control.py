@@ -4,7 +4,6 @@ import pytest
 
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.runtime.scenario import Scenario
-from srd_arena.runtime.save import create_save, restore_save
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
@@ -187,23 +186,6 @@ def test_user_controlled_teammate_can_target_opposing_team():
         action.kind == "attack" and action.value == "player"
         for action in actions
     )
-
-
-def test_all_user_mode_is_preserved_in_save_games():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
-    session.get_scene_view()
-
-    save = create_save(session)
-    restored = restore_save(save, TACTICAL_SCENARIO_DIR)
-
-    assert save.control_mode == "all-user"
-    assert restored.control_mode == "all-user"
-    assert restored.encounter_state is not None
-    assert restored.encounter_state.control_mode == "all-user"
 
 
 def test_paced_ai_resolves_one_visible_action_per_step():

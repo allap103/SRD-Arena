@@ -28,8 +28,6 @@ from ..shared.session import (
 from ...runtime.models import ActionView
 from ...runtime.session import (
     EXIT_CHOICE_TEXT,
-    LOAD_CHOICE_TEXT,
-    SAVE_CHOICE_TEXT,
     Session,
 )
 from .ui.encounter import (
@@ -371,8 +369,6 @@ class GameWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.addWidget(self._sidebar_button("Back", self.show_menu_root))
-        layout.addWidget(self._sidebar_button(SAVE_CHOICE_TEXT, self._system_save))
-        layout.addWidget(self._sidebar_button(LOAD_CHOICE_TEXT, self._system_load))
         if self._show_encounter_json:
             layout.addWidget(
                 self._sidebar_button("Encounter JSON", self.show_encounter_json)
@@ -1018,16 +1014,6 @@ class GameWindow(QMainWindow):
         action = self._presentation.encounter.end_turn_action
         if action is not None:
             self._select_action(action.index)
-
-    def _system_save(self) -> None:
-        if self._presentation is None:
-            return
-        self._select_action(self._presentation.system_actions[0].index)
-
-    def _system_load(self) -> None:
-        if self._presentation is None:
-            return
-        self._select_action(self._presentation.system_actions[1].index)
 
     def _select_action(self, index: int) -> None:
         self._pending_target_mode = None

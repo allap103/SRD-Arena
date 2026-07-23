@@ -20,17 +20,6 @@ class Status:
     tags: set[str] = field(default_factory=set)
 
 
-@dataclass(frozen=True)
-class StatusSnapshot:
-    id: str
-    name: str
-    source_ref: str
-    source_label: str
-    target_ref: str
-    expires_on_creature_ref: str | None = None
-    expires_on_round: int | None = None
-
-
 def build_named_status(
     *,
     name: str,
