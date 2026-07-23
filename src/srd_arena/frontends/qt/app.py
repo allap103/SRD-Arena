@@ -268,18 +268,20 @@ class GameWindow(QMainWindow):
         page_layout.setContentsMargins(0, 0, 0, 0)
         page_layout.setSpacing(8)
 
-        navigation = QWidget()
-        navigation_layout = QHBoxLayout(navigation)
-        navigation_layout.setContentsMargins(0, 0, 0, 0)
-        navigation_layout.setSpacing(6)
-        navigation_layout.addWidget(
-            self._sidebar_button("Attributes", self.show_attributes)
-        )
-        navigation_layout.addWidget(
-            self._sidebar_button("Inventory", self.show_inventory)
-        )
-        navigation_layout.addWidget(self._sidebar_button("System", self.show_system_menu))
-        page_layout.addWidget(navigation)
+        resource_summary = QFrame()
+        resource_summary.setObjectName("accordionSection")
+        resource_layout = QVBoxLayout(resource_summary)
+        resource_layout.setContentsMargins(8, 8, 8, 8)
+        resource_layout.setSpacing(6)
+        self.health_status = QWidget()
+        self.health_status_layout = QVBoxLayout(self.health_status)
+        self.health_status_layout.setContentsMargins(0, 0, 0, 0)
+        resource_layout.addWidget(self.health_status)
+        self.movement_status = QWidget()
+        self.movement_status_layout = QVBoxLayout(self.movement_status)
+        self.movement_status_layout.setContentsMargins(0, 0, 0, 0)
+        resource_layout.addWidget(self.movement_status)
+        page_layout.addWidget(resource_summary)
 
         scroll = QScrollArea()
         scroll.setObjectName("combatSidebarScroll")
@@ -294,11 +296,6 @@ class GameWindow(QMainWindow):
             "Movement",
             expanded=True,
         )
-        self.movement_status = QWidget()
-        self.movement_status_layout = QVBoxLayout(self.movement_status)
-        self.movement_status_layout.setContentsMargins(0, 0, 0, 0)
-        self.movement_status_layout.setSpacing(6)
-        movement_layout.addWidget(self.movement_status)
         self.movement_buttons = {}
         movement_grid = QGridLayout()
         movement_grid.setSpacing(6)
@@ -360,6 +357,39 @@ class GameWindow(QMainWindow):
         self.roll_scroll.setWidget(self.dice_roll_panel)
         log_layout.addWidget(self.roll_scroll)
         content_layout.addWidget(log_section)
+
+        attributes_section, attributes_layout = self._build_collapsible_section(
+            "Attributes",
+            expanded=False,
+        )
+        self.combat_attributes_text = self._build_readonly_text(
+            minimum_height=180,
+            maximum_height=260,
+        )
+        attributes_layout.addWidget(self.combat_attributes_text)
+        content_layout.addWidget(attributes_section)
+
+        inventory_section, inventory_layout = self._build_collapsible_section(
+            "Inventory",
+            expanded=False,
+        )
+        self.combat_inventory_text = self._build_readonly_text(
+            minimum_height=140,
+            maximum_height=240,
+        )
+        inventory_layout.addWidget(self.combat_inventory_text)
+        content_layout.addWidget(inventory_section)
+
+        system_section, system_layout = self._build_collapsible_section(
+            "System",
+            expanded=False,
+        )
+        if self._show_encounter_json:
+            system_layout.addWidget(
+                self._sidebar_button("Encounter JSON", self.show_encounter_json)
+            )
+        system_layout.addWidget(self._sidebar_button(EXIT_CHOICE_TEXT, self.close))
+        content_layout.addWidget(system_section)
         content_layout.addStretch(1)
         scroll.setWidget(content)
         page_layout.addWidget(scroll, stretch=1)
@@ -576,6 +606,7 @@ class GameWindow(QMainWindow):
             button.setEnabled(action is not None)
 
         self._render_movement_status(encounter.resources)
+        self._render_health_status(encounter.resources)
         self._render_initiative_rail(encounter.resources)
 
         action_groups = self._action_groups(encounter.non_movement_actions)
@@ -633,6 +664,7 @@ class GameWindow(QMainWindow):
             encounter.resources,
             self.status_section_layout,
         )
+        self._sync_combat_sidebar_details()
 
         if encounter.end_turn_action is None:
             self.end_turn_button.setEnabled(False)
@@ -794,15 +826,6 @@ class GameWindow(QMainWindow):
         column_layout.setContentsMargins(0, 0, 0, 0)
         column_layout.setSpacing(8)
 
-        column_layout.addWidget(
-            self._build_resource_bar(
-                resources.current_health,
-                resources.max_health,
-                "#9d2f2f",
-                f"{resources.current_health} / {resources.max_health} HP",
-                height=RESOURCE_BAR_HEIGHT,
-            )
-        )
         if resources.spell_slots:
             column_layout.addWidget(self._build_spell_slot_section(resources))
         conditions = QLabel(f"Conditions: {', '.join(condition.capitalize() for condition in resources.conditions) if resources.conditions else 'None'}")
@@ -819,6 +842,18 @@ class GameWindow(QMainWindow):
                 resources.movement_total_feet,
                 "#2f6f9d",
                 f"{resources.movement_remaining_feet}/{resources.movement_total_feet} ft",
+                height=RESOURCE_BAR_HEIGHT,
+            )
+        )
+
+    def _render_health_status(self, resources) -> None:
+        clear_layout(self.health_status_layout)
+        self.health_status_layout.addWidget(
+            self._build_resource_bar(
+                resources.current_health,
+                resources.max_health,
+                "#9d2f2f",
+                f"{resources.current_health} / {resources.max_health} HP",
                 height=RESOURCE_BAR_HEIGHT,
             )
         )
@@ -1356,19 +1391,27 @@ class GameWindow(QMainWindow):
             self.sidebar_stack.setCurrentIndex(0)
 
     def show_inventory(self) -> None:
-        items = self.session.primary_creature.inventory.items
-        inventory_text = (
-            "Inventory is empty."
-            if not items
-            else "\n".join(self.display_item_name(item_id) for item_id in items)
-        )
-        self.inventory_text.setPlainText(inventory_text)
+        self.inventory_text.setPlainText(self._inventory_text())
         self.sidebar_stack.setCurrentIndex(1)
 
     def show_attributes(self) -> None:
+        self.attributes_text.setPlainText(self._attributes_text())
+        self.sidebar_stack.setCurrentIndex(2)
+
+    def _sync_combat_sidebar_details(self) -> None:
+        self.combat_attributes_text.setPlainText(self._attributes_text())
+        self.combat_inventory_text.setPlainText(self._inventory_text())
+
+    def _inventory_text(self) -> str:
+        items = self.session.primary_creature.inventory.items
+        if not items:
+            return "Inventory is empty."
+        return "\n".join(self.display_item_name(item_id) for item_id in items)
+
+    def _attributes_text(self) -> str:
         player = self.session.primary_creature
         attributes = player.attributes
-        attributes_text = "\n".join(
+        return "\n".join(
             [
                 f"Name: {player.name}",
                 f"HP: {player.get_health()}/{player.get_max_health()}",
@@ -1383,8 +1426,6 @@ class GameWindow(QMainWindow):
                 f"PB: +{attributes.proficiency_bonus}",
             ]
         )
-        self.attributes_text.setPlainText(attributes_text)
-        self.sidebar_stack.setCurrentIndex(2)
 
     def show_system_menu(self) -> None:
         self.sidebar_stack.setCurrentIndex(3)

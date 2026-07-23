@@ -163,24 +163,6 @@ QWidget#accordionBody {
     background: #241c15;
 }
 
-QTabWidget#battlefieldRail::pane {
-    background: #241c15;
-    border: 1px solid #8e6d3b;
-    border-radius: 10px;
-}
-
-QTabWidget#battlefieldRail QTabBar::tab {
-    background: #30241a;
-    color: #c9b89b;
-    border: 1px solid #7d6038;
-    padding: 8px 14px;
-}
-
-QTabWidget#battlefieldRail QTabBar::tab:selected {
-    background: #5b4020;
-    color: #f3deb0;
-}
-
 QFrame#initiativeCard[active="true"] {
     background: #3a2a16;
     border: 1px solid #d4ad58;
