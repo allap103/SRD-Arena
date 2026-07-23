@@ -284,6 +284,9 @@ class BattlefieldWidget(QWidget):
     point_clicked = Signal(float, float)
     BASE_CELL_SIZE = 72
     MINIMUM_HEIGHT = 320
+    MIN_ZOOM = 1.0
+    MAX_ZOOM = 4.0
+    ZOOM_STEP = 1.15
 
     def __init__(self, scenario_dir: str | Path = DEFAULT_SCENARIO_DIR):
         super().__init__()
@@ -297,6 +300,9 @@ class BattlefieldWidget(QWidget):
         self._board_metrics: tuple[float, float, float, int, int] | None = None
         self._cell_targeting_enabled = False
         self._image_cache: dict[str, QPixmap | None] = {}
+        self._zoom = self.MIN_ZOOM
+        self._pan_offset = (0.0, 0.0)
+        self._pan_anchor: tuple[float, float] | None = None
         self.setMinimumHeight(self.MINIMUM_HEIGHT)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMouseTracking(True)
@@ -310,9 +316,21 @@ class BattlefieldWidget(QWidget):
         )
 
     def set_battlefield(self, battlefield: BattlefieldView) -> None:
+        dimensions_changed = (
+            self._battlefield is not None
+            and (
+                self._battlefield.width != battlefield.width
+                or self._battlefield.height != battlefield.height
+            )
+        )
+        if dimensions_changed:
+            self._zoom = self.MIN_ZOOM
+            self._pan_offset = (0.0, 0.0)
         self._battlefield = battlefield
         self._creature_positions = {}
-        tooltip_lines = []
+        tooltip_lines = [
+            "Mouse wheel: zoom. Middle- or right-drag: pan.",
+        ]
         for creature in battlefield.creatures:
             conditions = (
                 ", ".join(condition.capitalize() for condition in creature.conditions)
@@ -343,9 +361,7 @@ class BattlefieldWidget(QWidget):
 
     def set_cell_targeting_enabled(self, enabled: bool) -> None:
         self._cell_targeting_enabled = enabled
-        self.setCursor(
-            Qt.CursorShape.CrossCursor if enabled else Qt.CursorShape.ArrowCursor
-        )
+        self._update_cursor()
 
     def paintEvent(self, event) -> None:  # pragma: no cover - GUI painting
         if self._battlefield is None:
@@ -357,11 +373,25 @@ class BattlefieldWidget(QWidget):
         rect = self.rect().adjusted(12, 12, -12, -12)
         cols = max(1, self._battlefield.width)
         rows = max(1, self._battlefield.height)
-        cell_size = min(rect.width() / cols, rect.height() / rows)
+        fitted_cell_size = min(rect.width() / cols, rect.height() / rows)
+        cell_size = fitted_cell_size * self._zoom
         board_width = cell_size * cols
         board_height = cell_size * rows
-        origin_x = rect.x() + (rect.width() - board_width) / 2
-        origin_y = rect.y() + (rect.height() - board_height) / 2
+        self._pan_offset = self._clamped_pan_offset(
+            rect,
+            board_width,
+            board_height,
+        )
+        origin_x = (
+            rect.x()
+            + (rect.width() - board_width) / 2
+            + self._pan_offset[0]
+        )
+        origin_y = (
+            rect.y()
+            + (rect.height() - board_height) / 2
+            + self._pan_offset[1]
+        )
         self._board_metrics = (origin_x, origin_y, cell_size, cols, rows)
         display_overlay = self._display_area_overlay()
 
@@ -502,7 +532,7 @@ class BattlefieldWidget(QWidget):
 
             token = self._token_image(creature.token_image)
             if token is not None:
-                sprite_size = int(cell_size * 0.82)
+                sprite_size = int(cell_size * 0.98)
                 painter.drawPixmap(
                     int(center_x - sprite_size / 2),
                     int(center_y - sprite_size / 2),
@@ -701,6 +731,18 @@ class BattlefieldWidget(QWidget):
         return self._image_cache[image_reference]
 
     def mousePressEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+        if (
+            event.button()
+            in {Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton}
+            and self._zoom > self.MIN_ZOOM
+        ):
+            self._pan_anchor = (event.position().x(), event.position().y())
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            event.accept()
+            return
+        if event.button() != Qt.MouseButton.LeftButton:
+            super().mousePressEvent(event)
+            return
         point = self._point_at_pixel(event.position().x(), event.position().y())
         if self._cell_targeting_enabled and point is not None:
             self.point_clicked.emit(point[0], point[1])
@@ -717,6 +759,18 @@ class BattlefieldWidget(QWidget):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+        if self._pan_anchor is not None:
+            current = (event.position().x(), event.position().y())
+            delta_x = current[0] - self._pan_anchor[0]
+            delta_y = current[1] - self._pan_anchor[1]
+            self._pan_offset = (
+                self._pan_offset[0] + delta_x,
+                self._pan_offset[1] + delta_y,
+            )
+            self._pan_anchor = current
+            self.update()
+            event.accept()
+            return
         previous_hover = self._hover_cell
         previous_point = self._hover_point
         self._hover_cell = self._cell_at_point(event.position().x(), event.position().y())
@@ -724,6 +778,109 @@ class BattlefieldWidget(QWidget):
         if self._hover_cell != previous_hover or self._hover_point != previous_point:
             self.update()
         super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+        if self._pan_anchor is not None and event.button() in {
+            Qt.MouseButton.MiddleButton,
+            Qt.MouseButton.RightButton,
+        }:
+            self._pan_anchor = None
+            self._update_cursor()
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
+
+    def wheelEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+        if self._battlefield is None or event.angleDelta().y() == 0:
+            super().wheelEvent(event)
+            return
+        old_metrics = self._board_metrics
+        if old_metrics is None:
+            return
+        old_origin_x, old_origin_y, old_cell_size, _, _ = old_metrics
+        cursor_x = event.position().x()
+        cursor_y = event.position().y()
+        board_x = (cursor_x - old_origin_x) / old_cell_size
+        board_y = (cursor_y - old_origin_y) / old_cell_size
+        zoom_factor = (
+            self.ZOOM_STEP if event.angleDelta().y() > 0 else 1 / self.ZOOM_STEP
+        )
+        new_zoom = min(max(self._zoom * zoom_factor, self.MIN_ZOOM), self.MAX_ZOOM)
+        if new_zoom == self._zoom:
+            event.accept()
+            return
+
+        self._zoom = new_zoom
+        if self._zoom == self.MIN_ZOOM:
+            self._pan_offset = (0.0, 0.0)
+        else:
+            rect = self.rect().adjusted(12, 12, -12, -12)
+            cols = max(1, self._battlefield.width)
+            rows = max(1, self._battlefield.height)
+            fitted_cell_size = min(rect.width() / cols, rect.height() / rows)
+            cell_size = fitted_cell_size * self._zoom
+            centered_origin_x = rect.x() + (rect.width() - cell_size * cols) / 2
+            centered_origin_y = rect.y() + (rect.height() - cell_size * rows) / 2
+            self._pan_offset = (
+                cursor_x - centered_origin_x - board_x * cell_size,
+                cursor_y - centered_origin_y - board_y * cell_size,
+            )
+            self._pan_offset = self._clamped_pan_offset(
+                rect,
+                cell_size * cols,
+                cell_size * rows,
+            )
+        self._update_cursor()
+        self.update()
+        event.accept()
+
+    def _update_cursor(self) -> None:
+        if self._cell_targeting_enabled:
+            cursor = Qt.CursorShape.CrossCursor
+        elif self._zoom > self.MIN_ZOOM:
+            cursor = Qt.CursorShape.OpenHandCursor
+        else:
+            cursor = Qt.CursorShape.ArrowCursor
+        self.setCursor(cursor)
+
+    def _clamped_pan_offset(
+        self,
+        rect,
+        board_width: float,
+        board_height: float,
+    ) -> tuple[float, float]:
+        centered_x = rect.x() + (rect.width() - board_width) / 2
+        centered_y = rect.y() + (rect.height() - board_height) / 2
+
+        def clamp_axis(
+            offset: float,
+            viewport_start: float,
+            viewport_size: float,
+            board_start: float,
+            board_size: float,
+        ) -> float:
+            if board_size <= viewport_size:
+                return 0.0
+            minimum = viewport_start + viewport_size - board_size - board_start
+            maximum = viewport_start - board_start
+            return min(max(offset, minimum), maximum)
+
+        return (
+            clamp_axis(
+                self._pan_offset[0],
+                rect.x(),
+                rect.width(),
+                centered_x,
+                board_width,
+            ),
+            clamp_axis(
+                self._pan_offset[1],
+                rect.y(),
+                rect.height(),
+                centered_y,
+                board_height,
+            ),
+        )
 
     def leaveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
         if self._hover_cell is not None or self._hover_point is not None:
