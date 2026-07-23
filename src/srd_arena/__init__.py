@@ -1,5 +1,4 @@
-from .frontends.shared.models import SceneView, TurnResult
-from .frontends.cli.runner import CliRunner
+from .runtime.models import SceneView, TurnResult
 from .runtime.scenario import Scenario
 from .runtime.save import (
     SaveGame,
@@ -13,7 +12,6 @@ from .runtime.save import (
 from .runtime.session import Session
 
 __all__ = [
-    "CliRunner",
     "Scenario",
     "Session",
     "SceneView",

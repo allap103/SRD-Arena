@@ -1,4 +1,4 @@
-from ..shared.models import TurnResult
+from ...runtime.models import TurnResult
 from ...runtime.session import Session
 from ...infrastructure.logging import (
     CHANNEL_CHOICE,
@@ -6,6 +6,7 @@ from ...infrastructure.logging import (
     CHANNEL_SYSTEM,
     get_game_logger,
 )
+from .combat import render_encounter_text
 
 SCENE_LOGGER = get_game_logger(CHANNEL_SCENE)
 CHOICE_LOGGER = get_game_logger(CHANNEL_CHOICE)
@@ -15,7 +16,11 @@ SYSTEM_LOGGER = get_game_logger(CHANNEL_SYSTEM)
 class CliRunner:
     def display(self, session: Session) -> None:
         scene_view = session.get_scene_view()
-        SCENE_LOGGER.info(scene_view.scene_text)
+        scene_text = scene_view.scene_text
+        if scene_text is None and session.encounter_state is not None:
+            scene_text = render_encounter_text(session.encounter_state, session.player)
+        if scene_text is not None:
+            SCENE_LOGGER.info(scene_text)
         for index, choice in enumerate(scene_view.choices):
             CHOICE_LOGGER.info(f"{index + 1}. {choice}")
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ...domain.actions.feature_actions import FeatureActionDefinition
-from .models import ActionView, SceneView
+from ...runtime.models import ActionView, SceneView
 from ...runtime.session import Session
 
 SYSTEM_ACTION_COUNT = 3

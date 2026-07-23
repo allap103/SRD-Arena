@@ -4,11 +4,12 @@ from types import SimpleNamespace
 import pytest
 
 from srd_arena.domain.encounters.encounter import ActionCost, EncounterAction, EncounterState
+from srd_arena.frontends.cli.combat import render_encounter_text
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.frontends.qt.app import CyoaPySide6Window
 from srd_arena.domain.effects import EffectResult
 from srd_arena.frontends.shared.session import SpellSlotTrackView, build_session_presentation
-from srd_arena.frontends.shared.models import ActionView
+from srd_arena.runtime.models import ActionView
 from srd_arena.runtime.save import load_from_file, save_to_file
 from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
 from srd_arena.frontends.qt.ui.encounter.config import TargetSelectionMode
@@ -59,23 +60,32 @@ def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
     )
 
 
-def test_goblin_encounter_scene_generates_runtime_actions_and_grid() -> None:
+def test_goblin_encounter_scene_generates_runtime_actions() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
 
     scene_view = session.get_scene_view()
-    assert scene_view.scene_text is not None
-
-    assert "P" in scene_view.scene_text
-    assert "E" in scene_view.scene_text
-    assert "Round 1 - Turn: Player" in scene_view.scene_text
-    assert "Movement remaining: 6/6 squares" in scene_view.scene_text
-    assert "Player HP:" in scene_view.scene_text
+    assert scene_view.scene_text is None
     assert "Move up" in scene_view.choices
     assert "Move up-right" in scene_view.choices
     assert "Wait" in scene_view.choices
     assert "Flee encounter" not in scene_view.choices
     assert "Retreat until the encounter system is ready." not in scene_view.choices
+
+
+def test_cli_encounter_renderer_generates_grid_text() -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+
+    scene_text = render_encounter_text(session.encounter_state, session.player)
+
+    assert "P" in scene_text
+    assert "E" in scene_text
+    assert "Round 1 - Turn: Player" in scene_text
+    assert "Movement remaining: 6/6 squares" in scene_text
+    assert "Player HP:" in scene_text
 
 
 def test_initiative_is_rolled_for_all_combatants_at_encounter_start(monkeypatch) -> None:

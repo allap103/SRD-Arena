@@ -25,7 +25,7 @@ from ..shared.session import (
     SessionPresentation,
     build_session_presentation,
 )
-from ..shared.models import ActionView
+from ...runtime.models import ActionView
 from ...runtime.session import (
     EXIT_CHOICE_TEXT,
     LOAD_CHOICE_TEXT,

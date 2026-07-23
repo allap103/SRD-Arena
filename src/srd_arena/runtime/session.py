@@ -4,13 +4,12 @@ from pathlib import Path
 
 from ..domain.encounters.encounter import EncounterState
 from ..domain.encounters.models import EncounterAction, EncounterSnapshot
-from ..frontends.shared.combat import render_encounter_text
 from ..domain.creatures import Creature
 from ..domain.encounters import EncounterDefinition
 from ..domain.equipment import Item
 from ..domain.geometry import GeometryConfig
-from ..frontends.shared.models import ActionView, SceneView, TurnResult
 from ..content.paths import SCENARIOS_ROOT
+from .models import ActionView, SceneView, TurnResult
 
 SAVE_CHOICE_TEXT = "Save game"
 LOAD_CHOICE_TEXT = "Load game"
@@ -81,7 +80,6 @@ class Session:
         self._ensure_encounter_state()
         encounter = self.current_encounter
         assert self.encounter_state is not None
-        scene_text = render_encounter_text(self.encounter_state, self.player)
         self._encounter_actions = self.encounter_state.available_actions(self.player)
         action_details = [
                 ActionView(
@@ -106,7 +104,7 @@ class Session:
         system_action_details = self._system_action_details(len(choices))
         return SceneView(
             scene_id=encounter.id,
-            scene_text=scene_text,
+            scene_text=None,
             choices=choices + [SAVE_CHOICE_TEXT, LOAD_CHOICE_TEXT, EXIT_CHOICE_TEXT],
             action_details=action_details + system_action_details,
         )
