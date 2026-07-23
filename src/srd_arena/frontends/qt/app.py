@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,7 +22,6 @@ from ...domain.spells.rules import (
 from ...runtime.scenario import DEFAULT_SCENARIO_DIR, Scenario
 from ..shared.dice import build_roll_views, without_roll_details
 from ..shared.session import (
-    MOVE_DIRECTIONS,
     SessionPresentation,
     build_session_presentation,
 )
@@ -31,7 +31,6 @@ from ...runtime.session import (
     Session,
 )
 from .ui.encounter import (
-    ARROW_LABELS,
     ENCOUNTER_BUTTON_HEIGHT,
     RESOURCE_BAR_HEIGHT,
     ActionMenuScope,
@@ -90,6 +89,26 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QVBoxLayout = object  # type: ignore[assignment]
     QWidget = object  # type: ignore[assignment]
 SIDEBAR_WIDTH = 320
+MOVE_DELTAS = {
+    "up-left": (-1, -1),
+    "up": (0, -1),
+    "up-right": (1, -1),
+    "left": (-1, 0),
+    "right": (1, 0),
+    "down-left": (-1, 1),
+    "down": (0, 1),
+    "down-right": (1, 1),
+}
+MOVEMENT_PATH_DIRECTIONS = (
+    "up",
+    "right",
+    "down",
+    "left",
+    "up-right",
+    "down-right",
+    "down-left",
+    "up-left",
+)
 
 
 def _require_pyside6() -> None:
@@ -123,6 +142,8 @@ class GameWindow(QMainWindow):
         self._always_show_creature_names = False
         self._team_outline_toggles: list[QCheckBox] = []
         self._creature_name_toggles: list[QCheckBox] = []
+        self._movement_plan: dict[tuple[int, int], tuple[str, ...]] = {}
+        self._movement_planner_ref: str | None = None
 
         self.setWindowTitle("SRD Arena")
         self.resize(1400, 900)
@@ -298,44 +319,9 @@ class GameWindow(QMainWindow):
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.setSpacing(6)
 
-        movement_section, movement_layout = self._build_collapsible_section(
-            "Movement",
-            expanded=True,
-        )
-        self.movement_buttons = {}
-        movement_grid = QGridLayout()
-        movement_grid.setSpacing(6)
-        positions = {
-            "up-left": (0, 0),
-            "up": (0, 1),
-            "up-right": (0, 2),
-            "left": (1, 0),
-            "right": (1, 2),
-            "down-left": (2, 0),
-            "down": (2, 1),
-            "down-right": (2, 2),
-        }
-        for direction in MOVE_DIRECTIONS:
-            button = QPushButton(ARROW_LABELS[direction])
-            button.setObjectName("movementButton")
-            button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
-            button.clicked.connect(
-                lambda _checked=False, move_direction=direction: self._trigger_move(
-                    move_direction
-                )
-            )
-            self.movement_buttons[direction] = button
-            row, col = positions[direction]
-            movement_grid.addWidget(button, row, col)
-        movement_center = QLabel("Move")
-        movement_center.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        movement_grid.addWidget(movement_center, 1, 1)
-        movement_layout.addLayout(movement_grid)
-        content_layout.addWidget(movement_section)
-
         actions_section, self.actions_section_layout = self._build_collapsible_section(
             "Actions",
-            expanded=True,
+            expanded=False,
         )
         content_layout.addWidget(actions_section)
         bonus_section, self.bonus_actions_section_layout = (
@@ -348,21 +334,9 @@ class GameWindow(QMainWindow):
         content_layout.addWidget(features_section)
         status_section, self.status_section_layout = self._build_collapsible_section(
             "Status",
-            expanded=True,
-        )
-        content_layout.addWidget(status_section)
-
-        log_section, log_layout = self._build_collapsible_section(
-            "Combat Log",
             expanded=False,
         )
-        self.dice_roll_panel = DiceRollPanel(self._select_action_by_id)
-        self.roll_scroll = QScrollArea()
-        self.roll_scroll.setWidgetResizable(True)
-        self.roll_scroll.setMinimumHeight(180)
-        self.roll_scroll.setWidget(self.dice_roll_panel)
-        log_layout.addWidget(self.roll_scroll)
-        content_layout.addWidget(log_section)
+        content_layout.addWidget(status_section)
 
         attributes_section, attributes_layout = self._build_collapsible_section(
             "Attributes",
@@ -401,6 +375,22 @@ class GameWindow(QMainWindow):
         content_layout.addStretch(1)
         scroll.setWidget(content)
         page_layout.addWidget(scroll, stretch=1)
+
+        log_section = QFrame()
+        log_section.setObjectName("accordionSection")
+        log_layout = QVBoxLayout(log_section)
+        log_layout.setContentsMargins(8, 8, 8, 8)
+        log_layout.setSpacing(6)
+        log_title = QLabel("Combat Log")
+        log_title.setObjectName("sectionSubtitle")
+        log_layout.addWidget(log_title)
+        self.dice_roll_panel = DiceRollPanel(self._select_action_by_id)
+        self.roll_scroll = QScrollArea()
+        self.roll_scroll.setWidgetResizable(True)
+        self.roll_scroll.setMinimumHeight(180)
+        self.roll_scroll.setWidget(self.dice_roll_panel)
+        log_layout.addWidget(self.roll_scroll)
+        page_layout.addWidget(log_section)
 
         self.end_turn_button = QPushButton("End Turn")
         self.end_turn_button.setObjectName("endTurnButton")
@@ -625,6 +615,12 @@ class GameWindow(QMainWindow):
         encounter = presentation.encounter
         assert encounter is not None
         self.battlefield_widget.set_battlefield(encounter.battlefield)
+        if self._movement_planner_ref is not None and not any(
+            creature.creature_ref == self._movement_planner_ref
+            and creature.is_active
+            for creature in encounter.battlefield.creatures
+        ):
+            self._clear_movement_plan()
 
         target_modes = self._target_selection_modes(encounter.non_movement_actions)
         if not self._target_mode_is_available(encounter.non_movement_actions, target_modes):
@@ -644,10 +640,6 @@ class GameWindow(QMainWindow):
             if (target_ref := self._target_creature_ref(action)) is not None
         }
         self.battlefield_widget.set_targeting_state(targetable_refs)
-
-        for direction, button in self.movement_buttons.items():
-            action = encounter.movement_actions.get(direction)
-            button.setEnabled(action is not None)
 
         self._render_movement_status(encounter.resources)
         self._render_health_status(encounter.resources)
@@ -1104,11 +1096,13 @@ class GameWindow(QMainWindow):
         )
 
     def _open_action_menu(self, economy: str, bucket: str) -> None:
+        self._clear_movement_plan()
         self._pending_target_mode = None
         self._action_menu_scope = ActionMenuScope(economy=economy, bucket=bucket)
         self.refresh_view()
 
     def _close_action_menu(self, scope: ActionMenuScope | None = None) -> None:
+        self._clear_movement_plan()
         self._pending_target_mode = None
         if scope is not None and self._action_menu_scope != scope:
             return
@@ -1138,15 +1132,6 @@ class GameWindow(QMainWindow):
             return "utilize"
         return "other"
 
-    def _trigger_move(self, direction: str) -> None:
-        if self._presentation is None or self._presentation.encounter is None:
-            return
-        self._pending_target_mode = None
-        self._action_menu_scope = None
-        action = self._presentation.encounter.movement_actions.get(direction)
-        if action is not None:
-            self._select_action(action.index)
-
     def _end_turn(self) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
@@ -1157,6 +1142,7 @@ class GameWindow(QMainWindow):
             self._select_action(action.index)
 
     def _select_action(self, index: int) -> None:
+        self._clear_movement_plan()
         self._pending_target_mode = None
         self._action_menu_scope = None
         result = self.session.choose(index)
@@ -1177,6 +1163,7 @@ class GameWindow(QMainWindow):
             self._select_action(action.index)
 
     def _toggle_target_action(self, mode: TargetSelectionMode) -> None:
+        self._clear_movement_plan()
         self._pending_target_mode = None if self._pending_target_mode == mode else mode
         self.refresh_view()
 
@@ -1184,6 +1171,7 @@ class GameWindow(QMainWindow):
         if self._presentation is None or self._presentation.encounter is None:
             return
         if self._pending_target_mode is None:
+            self._begin_movement_plan(creature_ref)
             return
         action = self._target_selection_modes(self._presentation.encounter.non_movement_actions).get(
             self._pending_target_mode,
@@ -1196,7 +1184,106 @@ class GameWindow(QMainWindow):
         self._select_action(action.index)
 
     def _handle_battlefield_cell_clicked(self, x: int, y: int) -> None:
+        path = self._movement_plan.get((x, y))
+        if path:
+            self._confirm_movement_path(path)
+            return
         self._handle_battlefield_point_clicked(x + 0.5, y + 0.5)
+
+    def _begin_movement_plan(self, creature_ref: str) -> None:
+        if self._presentation is None or self._presentation.encounter is None:
+            return
+        encounter = self._presentation.encounter
+        planner = next(
+            (
+                creature
+                for creature in encounter.battlefield.creatures
+                if creature.creature_ref == creature_ref and creature.is_active
+            ),
+            None,
+        )
+        movement_costs = [
+            action.cost.get("movement", 0)
+            for action in encounter.movement_actions.values()
+            if action.cost.get("movement", 0) > 0
+        ]
+        if planner is None or not movement_costs:
+            return
+        step_cost = min(movement_costs)
+        max_steps = encounter.resources.movement_remaining // step_cost
+        blocked = {
+            (creature.position.x, creature.position.y)
+            for creature in encounter.battlefield.creatures
+            if creature.creature_ref != creature_ref
+        }
+        origin = (planner.position.x, planner.position.y)
+        self._movement_plan = self._shortest_movement_paths(
+            encounter.battlefield.width,
+            encounter.battlefield.height,
+            origin,
+            blocked,
+            max_steps,
+        )
+        self._movement_planner_ref = creature_ref
+        self._pending_target_mode = None
+        self._action_menu_scope = None
+        self.battlefield_widget.set_movement_plan(
+            creature_ref,
+            self._movement_plan,
+        )
+
+    @staticmethod
+    def _shortest_movement_paths(
+        width: int,
+        height: int,
+        origin: tuple[int, int],
+        blocked: set[tuple[int, int]],
+        max_steps: int,
+    ) -> dict[tuple[int, int], tuple[str, ...]]:
+        paths = {origin: ()}
+        frontier = deque([origin])
+        while frontier:
+            position = frontier.popleft()
+            path = paths[position]
+            if len(path) >= max_steps:
+                continue
+            for direction in MOVEMENT_PATH_DIRECTIONS:
+                delta_x, delta_y = MOVE_DELTAS[direction]
+                destination = (
+                    position[0] + delta_x,
+                    position[1] + delta_y,
+                )
+                if (
+                    destination in paths
+                    or destination in blocked
+                    or not 0 <= destination[0] < width
+                    or not 0 <= destination[1] < height
+                ):
+                    continue
+                paths[destination] = (*path, direction)
+                frontier.append(destination)
+        return paths
+
+    def _confirm_movement_path(self, path: tuple[str, ...]) -> None:
+        planner_ref = self._movement_planner_ref
+        self._clear_movement_plan()
+        if planner_ref is None:
+            return
+        for direction in path:
+            presentation = build_session_presentation(self.session)
+            encounter = presentation.encounter
+            if encounter is None:
+                break
+            action = encounter.movement_actions.get(direction)
+            if action is None or action.creature_ref != planner_ref:
+                break
+            self._apply_turn_result(self.session.choose(action.index))
+
+    def _clear_movement_plan(self) -> None:
+        self._movement_plan = {}
+        self._movement_planner_ref = None
+        if hasattr(self, "battlefield_widget"):
+            self.battlefield_widget.set_movement_plan(None, {})
 
     def _handle_battlefield_point_clicked(self, x: float, y: float) -> None:
         if self._presentation is None or self._presentation.encounter is None:

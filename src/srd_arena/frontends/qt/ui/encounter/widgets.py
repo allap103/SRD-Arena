@@ -305,6 +305,8 @@ class BattlefieldWidget(QWidget):
         self._pan_anchor: tuple[float, float] | None = None
         self._show_team_outlines = True
         self._always_show_creature_names = False
+        self._movement_planner_ref: str | None = None
+        self._movement_paths: dict[tuple[int, int], tuple[str, ...]] = {}
         self.setMinimumHeight(self.MINIMUM_HEIGHT)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMouseTracking(True)
@@ -330,19 +332,7 @@ class BattlefieldWidget(QWidget):
             self._pan_offset = (0.0, 0.0)
         self._battlefield = battlefield
         self._creature_positions = {}
-        tooltip_lines = [
-            "Mouse wheel: zoom. Middle- or right-drag: pan.",
-        ]
-        for creature in battlefield.creatures:
-            conditions = (
-                ", ".join(condition.capitalize() for condition in creature.conditions)
-                if creature.conditions
-                else "None"
-            )
-            tooltip_lines.append(f"{creature.label}: {conditions}")
-        if self._area_overlay is not None:
-            tooltip_lines.append(self._area_overlay_tooltip(self._area_overlay))
-        self.setToolTip("\n".join(tooltip_lines))
+        self.setToolTip("")
         self.update()
 
     def set_area_overlay(self, area: dict[str, object] | None) -> None:
@@ -371,6 +361,15 @@ class BattlefieldWidget(QWidget):
 
     def set_always_show_creature_names(self, visible: bool) -> None:
         self._always_show_creature_names = visible
+        self.update()
+
+    def set_movement_plan(
+        self,
+        creature_ref: str | None,
+        paths: dict[tuple[int, int], tuple[str, ...]],
+    ) -> None:
+        self._movement_planner_ref = creature_ref
+        self._movement_paths = dict(paths)
         self.update()
 
     def paintEvent(self, event) -> None:  # pragma: no cover - GUI painting
@@ -458,6 +457,65 @@ class BattlefieldWidget(QWidget):
                     max(1, int(cell_size - inset * 2)),
                     max(1, int(cell_size - inset * 2)),
                 )
+
+        if self._movement_paths:
+            painter.setPen(Qt.PenStyle.NoPen)
+            for cell_x, cell_y in self._movement_paths:
+                if not self._movement_paths[(cell_x, cell_y)]:
+                    continue
+                draw_x = origin_x + cell_x * cell_size
+                draw_y = origin_y + cell_y * cell_size
+                painter.fillRect(
+                    int(draw_x + 2),
+                    int(draw_y + 2),
+                    max(1, int(cell_size - 4)),
+                    max(1, int(cell_size - 4)),
+                    QColor(63, 127, 213, 70),
+                )
+
+        preview_path = self._movement_paths.get(self._hover_cell)
+        planner = next(
+            (
+                creature
+                for creature in self._battlefield.creatures
+                if creature.creature_ref == self._movement_planner_ref
+            ),
+            None,
+        )
+        preview_cells: list[tuple[int, int]] = []
+        if planner is not None and preview_path:
+            preview_x = planner.position.x
+            preview_y = planner.position.y
+            preview_cells.append((preview_x, preview_y))
+            for direction in preview_path:
+                delta_x, delta_y = {
+                    "up-left": (-1, -1),
+                    "up": (0, -1),
+                    "up-right": (1, -1),
+                    "left": (-1, 0),
+                    "right": (1, 0),
+                    "down-left": (-1, 1),
+                    "down": (0, 1),
+                    "down-right": (1, 1),
+                }[direction]
+                preview_x += delta_x
+                preview_y += delta_y
+                preview_cells.append((preview_x, preview_y))
+            path_pen = QPen(QColor(218, 235, 255, 210))
+            path_pen.setWidth(max(2, int(cell_size * 0.06)))
+            painter.setPen(path_pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawPolyline(
+                QPolygonF(
+                    [
+                        QPointF(
+                            origin_x + (path_x + 0.5) * cell_size,
+                            origin_y + (path_y + 0.5) * cell_size,
+                        )
+                        for path_x, path_y in preview_cells
+                    ]
+                )
+            )
 
         overlay_cells = self._overlay_cells(display_overlay)
         overlay_origin = self._overlay_origin(display_overlay)
@@ -630,6 +688,39 @@ class BattlefieldWidget(QWidget):
                     creature.name,
                 )
 
+        if planner is not None and len(preview_cells) > 1:
+            destination_x, destination_y = preview_cells[-1]
+            center_x = origin_x + (destination_x + 0.5) * cell_size
+            center_y = origin_y + (destination_y + 0.5) * cell_size
+            token = self._token_image(planner.token_image)
+            painter.setOpacity(0.45)
+            if token is not None:
+                maximum_size = cell_size * 0.98
+                scale = min(
+                    maximum_size / token.width(),
+                    maximum_size / token.height(),
+                )
+                sprite_width = max(1, int(token.width() * scale))
+                sprite_height = max(1, int(token.height() * scale))
+                painter.drawPixmap(
+                    int(center_x - sprite_width / 2),
+                    int(center_y + cell_size / 2 - sprite_height),
+                    sprite_width,
+                    sprite_height,
+                    token,
+                )
+            else:
+                radius = max(14, int(cell_size * 0.38))
+                painter.setBrush(QColor("#2e6f95"))
+                painter.setPen(QPen(QColor("#17364a"), 2))
+                painter.drawEllipse(
+                    int(center_x - radius),
+                    int(center_y - radius),
+                    radius * 2,
+                    radius * 2,
+                )
+            painter.setOpacity(1.0)
+
         if display_overlay is not None:
             badge_rect = rect.adjusted(12, 12, -12, -12)
             badge_height = 32
@@ -708,20 +799,6 @@ class BattlefieldWidget(QWidget):
         shape = area.get("shape")
         label = str(shape).capitalize() if isinstance(shape, str) else "Area"
         return f"{label} AoE"
-
-    def _area_overlay_tooltip(self, area: dict[str, object]) -> str:
-        label = self._area_overlay_label(area)
-        cell_count = len(self._overlay_cells(area))
-        policy = area.get("rasterization_policy")
-        if isinstance(policy, str):
-            threshold = area.get("coverage_threshold")
-            if isinstance(threshold, (int, float)):
-                return (
-                    f"{label}: {cell_count} cells "
-                    f"({policy.replace('_', ' ')}, {float(threshold) * 100:.0f}% min)"
-                )
-            return f"{label}: {cell_count} cells ({policy.replace('_', ' ')})"
-        return f"{label}: {cell_count} cells"
 
     @staticmethod
     def _preview_area_overlay(

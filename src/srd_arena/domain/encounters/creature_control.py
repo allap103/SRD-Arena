@@ -58,7 +58,7 @@ def available_creature_actions(
                     direction,
                     id=f"{creature_ref}-move-{direction}",
                     creature_ref=creature_ref,
-                    cost=ActionCost(movement=1),
+                    cost=ActionCost(movement=movement_cost),
                 )
             )
     can_attack = enemy.actions_remaining > 0 or enemy.attacks_remaining > 0
