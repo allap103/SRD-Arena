@@ -131,7 +131,7 @@ class Scenario:
     ) -> Session:
         return Session(
             encounters=self.encounters,
-            player=self.get_creature(player_creature_id),
+            primary_creature_id=player_creature_id,
             creature_templates={creature.id: creature for creature in self.creatures},
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,

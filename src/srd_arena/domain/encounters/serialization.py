@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from ..creatures import Creature
 from ..effects.conditions import Status
 from .behaviors import movement_squares as _movement_squares
-from .refs import enemy_ref as _enemy_ref
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -27,7 +26,7 @@ def export_decision(self: EncounterState) -> dict[str, object]:
     return payload
 
 
-def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
+def export_state(self: EncounterState, _player: Creature) -> dict[str, object]:
     active_creature_ref = self.current_decision().creature_ref
     return {
         "encounter_id": self.encounter_id,
@@ -51,84 +50,74 @@ def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
         "control_mode": self.control_mode,
         "active_creature_ref": active_creature_ref,
         "active_controller": self._creature_controller(active_creature_ref),
-        "player": {
-            "creature_id": player.id,
-            "name": player.name,
-            "token_image": player.token_image,
-            "position": {"x": self.player_position.x, "y": self.player_position.y},
-            "health": player.get_health(),
-            "max_health": player.get_max_health(),
-            "movement_remaining": self._player_movement_remaining(player),
-            "movement_total": _movement_squares(player),
-            "movement_remaining_feet": (
-                self._player_movement_remaining(player)
-                * player.attributes.movement.feet_per_square
-            ),
-            "movement_total_feet": player.attributes.movement.speed_feet,
-            "action_available": self.player_action_available,
-            "actions_remaining": self.player_actions_remaining,
-            "attacks_remaining": self.player_attacks_remaining,
-            "bonus_action_available": self.player_bonus_action_available,
-            "reaction_available": self.player_reaction_available,
-            "conditions": [
-                condition.name for condition in self.conditions_for("player")
-            ],
-            "spell_slots_max": (
-                {
-                    str(level): slots
-                    for level, slots in player.spellcasting.spell_slots_max.items()
-                }
-                if player.spellcasting is not None
-                else {}
-            ),
-            "spell_slots_remaining": (
-                {
-                    str(level): slots
-                    for level, slots in player.spellcasting.spell_slots_remaining.items()
-                }
-                if player.spellcasting is not None
-                else {}
-            ),
-            "team_id": self._creature_team_id("player"),
-            "controller": self._creature_controller("player"),
+        "primary_creature_ref": self.primary_creature_ref,
+        "creatures": {
+            creature_ref: _export_creature(self, creature_ref)
+            for creature_ref in self.creatures
         },
-        "enemies": [
-            {
-                "creature_ref": _enemy_ref(index),
-                "creature_id": enemy.creature_id,
-                "name": enemy.creature.name,
-                "token_image": enemy.creature.token_image,
-                "position": {"x": enemy.position.x, "y": enemy.position.y},
-                "health": enemy.creature.get_health(),
-                "reaction_available": enemy.reaction_available,
-                "conditions": [
-                    condition.name
-                    for condition in self.conditions_for(_enemy_ref(index))
-                ],
-                "movement_remaining": (
-                    enemy.movement_remaining
-                    if enemy.movement_remaining is not None
-                    else _movement_squares(enemy.creature)
-                ),
-                "movement_total": _movement_squares(enemy.creature),
-                "movement_remaining_feet": (
-                    (
-                        enemy.movement_remaining
-                        if enemy.movement_remaining is not None
-                        else _movement_squares(enemy.creature)
-                    )
-                    * enemy.creature.attributes.movement.feet_per_square
-                ),
-                "movement_total_feet": enemy.creature.attributes.movement.speed_feet,
-                "max_health": enemy.creature.get_max_health(),
-                "team_id": self._creature_team_id(_enemy_ref(index)),
-                "controller": self._creature_controller(_enemy_ref(index)),
-                "is_alive": enemy.is_alive,
-            }
-            for index, enemy in enumerate(self.enemies)
-        ],
         "decision": self.export_decision(),
         "pending_action": self._export_pending_action(),
+    }
+
+
+def _export_creature(
+    state: EncounterState,
+    creature_ref: str,
+) -> dict[str, object]:
+    creature_state = state.creatures[creature_ref]
+    creature = creature_state.creature
+    movement_remaining = (
+        creature_state.movement_remaining
+        if creature_state.movement_remaining is not None
+        else _movement_squares(creature)
+    )
+    spellcasting = creature.spellcasting
+    return {
+        "creature_ref": creature_ref,
+        "creature_id": creature_state.creature_id,
+        "name": creature.name,
+        "label": state._creature_label(creature_ref),
+        "token_image": creature.token_image,
+        "position": {
+            "x": creature_state.position.x,
+            "y": creature_state.position.y,
+        },
+        "health": creature.get_health(),
+        "max_health": creature.get_max_health(),
+        "movement_remaining": movement_remaining,
+        "movement_total": _movement_squares(creature),
+        "movement_remaining_feet": (
+            movement_remaining * creature.attributes.movement.feet_per_square
+        ),
+        "movement_total_feet": creature.attributes.movement.speed_feet,
+        "action_available": creature_state.actions_remaining > 0,
+        "actions_remaining": creature_state.actions_remaining,
+        "attacks_remaining": creature_state.attacks_remaining,
+        "bonus_action_available": creature_state.bonus_action_available,
+        "reaction_available": creature_state.reaction_available,
+        "conditions": [
+            condition.name for condition in state.conditions_for(creature_ref)
+        ],
+        "spell_slots_max": (
+            {
+                str(level): slots
+                for level, slots in spellcasting.spell_slots_max.items()
+            }
+            if spellcasting is not None
+            else {}
+        ),
+        "spell_slots_remaining": (
+            {
+                str(level): slots
+                for level, slots in spellcasting.spell_slots_remaining.items()
+            }
+            if spellcasting is not None
+            else {}
+        ),
+        "team_id": state._creature_team_id(creature_ref),
+        "controller": state._creature_controller(creature_ref),
+        "is_alive": creature_state.is_alive,
+        "is_primary": creature_ref == state.primary_creature_ref,
     }
 
 
@@ -148,7 +137,6 @@ def export_pending_action(self: EncounterState) -> dict[str, object] | None:
             "x": self.pending_action.to_position.x,
             "y": self.pending_action.to_position.y,
         },
-        "resume_enemy_index": self.pending_action.resume_enemy_index,
         "remaining_movement_after": self.pending_action.remaining_movement_after,
         "trigger_id": self.pending_action.trigger_id,
     }

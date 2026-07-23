@@ -13,7 +13,7 @@ from .actions.attack_resolution import (
     matching_damage_reroll_rule,
     resolve_attack,
 )
-from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
+from .behaviors import is_adjacent as _is_adjacent
 from .models import (
     ActionCost,
     AttackOutcome,
@@ -23,7 +23,7 @@ from .models import (
     PendingAction,
     PendingAttack,
 )
-from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref, reroll_die_action_id as _reroll_die_action_id
+from .refs import reroll_die_action_id as _reroll_die_action_id
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -42,13 +42,93 @@ def _roll_dice(count: int, sides: int) -> int:
 
 
 class ReactionEngine:
+    def resolve_automatic_opportunity_attacks(
+        self,
+        state: EncounterState,
+        *,
+        mover_ref: str,
+        from_position: Position,
+        to_position: Position,
+        action_id: str,
+        progress: EncounterProgress,
+    ) -> list[tuple[str, str]]:
+        mover = state.creatures[mover_ref]
+        messages: list[tuple[str, str]] = []
+        reactors = [
+            (reactor_ref, reactor)
+            for reactor_ref, reactor in state.creatures.items()
+            if reactor_ref != mover_ref
+            and reactor.is_alive
+            and state._creatures_are_opponents(reactor_ref, mover_ref)
+            and state._creature_controller(reactor_ref) == "ai"
+            and reactor.reaction_available
+            and can_make_opportunity_attack(
+                reactor.creature,
+                state.item_templates,
+            )
+            and _is_adjacent(from_position, reactor.position)
+            and not _is_adjacent(to_position, reactor.position)
+        ]
+        for reactor_ref, reactor in reactors:
+            reactor.reaction_available = False
+            attack = resolve_attack(
+                reactor.creature,
+                mover.creature,
+                attacker_label=reactor.creature.name,
+                target_label=mover.creature.name,
+                action_label="Opportunity attack",
+                items_by_id=state.item_templates,
+                attacker_position=reactor.position,
+                nearby_opponent_positions=(mover.position,),
+                preferred_attack_type="melee",
+                attack_roll_mode_override=state._attack_roll_mode_for(
+                    reactor_ref,
+                    mover_ref,
+                    "melee",
+                    reactor.position,
+                    (mover.position,),
+                ),
+                d20_roller=_roll_die,
+                dice_roller=_roll_dice,
+            )
+            apply_attack_damage(
+                attack,
+                mover.creature,
+                attacker_label=reactor.creature.name,
+                target_label=mover.creature.name,
+            )
+            messages.extend(attack.messages)
+            progress.events.append(
+                state._event(
+                    "attack_resolved",
+                    creature_ref=reactor_ref,
+                    action_id=action_id,
+                    data={
+                        "attacker_label": reactor.creature.name,
+                        "target_ref": mover_ref,
+                        "target_label": mover.creature.name,
+                        "attack_roll": attack.attack_roll,
+                        "attack_roll_detail": attack.attack_roll_detail,
+                        "hit": attack.hit,
+                        "critical_hit": attack.critical_hit,
+                        "damage": attack.damage,
+                        "damage_roll_detail": attack.damage_roll_detail,
+                        "reaction": True,
+                    },
+                )
+            )
+            if not mover.is_alive:
+                break
+        return messages
+
     def open_damage_reroll_decision(
         self,
         state: EncounterState,
         *,
         attack: AttackOutcome,
         triggered_effect: TriggeredEffect,
-        target_index: int,
+        attacker_ref: str,
+        target_ref: str,
         attacker_label: str,
         target_label: str,
         action_id: str,
@@ -60,12 +140,11 @@ class ReactionEngine:
         current_frame = state.current_decision()
         state.pending_attack = PendingAttack(
             action_id=action_id,
-            attacker_ref="player",
-            target_ref=_enemy_ref(target_index),
-            target_index=target_index,
+            attacker_ref=attacker_ref,
+            target_ref=target_ref,
             attacker_label=attacker_label,
             target_label=target_label,
-            attacks_remaining=state.player_attacks_remaining,
+            attacks_remaining=state.active_attacks_remaining,
             attack=attack,
             triggered_effect=triggered_effect,
             continuation=continuation,
@@ -74,7 +153,7 @@ class ReactionEngine:
         state.decision_stack.append(
             DecisionFrame(
                 id=frame_id,
-                creature_ref="player",
+                creature_ref=attacker_ref,
                 kind="reroll_dice",
                 reason=triggered_effect.id,
                 parent_frame_id=current_frame.id,
@@ -93,7 +172,7 @@ class ReactionEngine:
         progress.events.append(
             state._event(
                 "attack_pending",
-                creature_ref="player",
+                creature_ref=attacker_ref,
                 frame_id=frame_id,
                 action_id=action_id,
                 data=self.pending_attack_event_data(state),
@@ -111,7 +190,7 @@ class ReactionEngine:
                 "reroll_die",
                 index,
                 id=_reroll_die_action_id(pending.action_id, index),
-                creature_ref="player",
+                creature_ref=pending.attacker_ref,
             )
             for index in reroll_eligible_indices(
                 pending.triggered_effect,
@@ -123,7 +202,7 @@ class ReactionEngine:
                 "Use current damage",
                 "accept_roll",
                 id=f"{pending.action_id}-accept-damage",
-                creature_ref="player",
+                creature_ref=pending.attacker_ref,
             )
         )
         return actions
@@ -142,7 +221,7 @@ class ReactionEngine:
         progress.events.append(
             state._event(
                 "action_declared",
-                creature_ref="player",
+                creature_ref=pending.attacker_ref,
                 frame_id=decision.id,
                 action_id=pending.action_id,
                 data={"kind": action.kind, "selected_action_id": action.id},
@@ -175,7 +254,7 @@ class ReactionEngine:
             progress.events.append(
                 state._event(
                     "damage_rerolled",
-                    creature_ref="player",
+                    creature_ref=pending.attacker_ref,
                     frame_id=decision.id,
                     action_id=pending.action_id,
                     data=self.pending_attack_event_data(state),
@@ -203,18 +282,19 @@ class ReactionEngine:
         pending = state.pending_attack
         if pending is None:
             raise RuntimeError("Cannot finalize an attack that is not pending.")
-        target = state.enemies[pending.target_index]
+        attacker = state.creatures[pending.attacker_ref].creature
+        target = state.creatures[pending.target_ref]
         apply_attack_damage(
             pending.attack,
             target.creature,
-            attacker_label=player.name,
+            attacker_label=attacker.name,
             target_label=pending.target_label,
         )
         progress.messages.extend(pending.attack.messages)
         progress.events.append(
             state._event(
                 "attack_resolved",
-                creature_ref="player",
+                creature_ref=pending.attacker_ref,
                 frame_id=decision.id,
                 action_id=pending.action_id,
                 data={
@@ -242,7 +322,7 @@ class ReactionEngine:
         progress.events.append(
             state._event(
                 "decision_closed",
-                creature_ref="player",
+                creature_ref=pending.attacker_ref,
                 frame_id=decision.id,
                 action_id=pending.action_id,
             )
@@ -272,7 +352,7 @@ class ReactionEngine:
         progress.events.append(
             state._event(
                 "decision_closed",
-                creature_ref="player",
+                creature_ref=reaction.creature_ref,
                 frame_id=reaction.id,
                 action_id=action_id,
             )
@@ -327,10 +407,12 @@ class ReactionEngine:
             raise RuntimeError("Reaction action requested without a pending action.")
         resolved_action_id = state._next_action_id()
 
+        reactor_ref = decision.creature_ref
+        reactor = state.creatures[reactor_ref]
         progress.events.append(
             state._event(
                 "action_declared",
-                creature_ref="player",
+                creature_ref=reactor_ref,
                 frame_id=decision.id,
                 action_id=resolved_action_id,
                 data={"kind": action.kind, "selected_action_id": action.id},
@@ -338,39 +420,40 @@ class ReactionEngine:
         )
 
         if action.kind == "opportunity_attack":
-            state.player_reaction_available = False
-            target_index = _enemy_index(pending_action.creature_ref)
-            target = state.enemies[target_index]
-            target_label = f"Enemy {target_index + 1} ({target.creature.name})"
+            reactor.reaction_available = False
+            target_ref = pending_action.creature_ref
+            target = state.creatures[target_ref]
+            target_label = state._creature_label(target_ref)
+            reactor_label = state._creature_label(reactor_ref)
             attack = resolve_attack(
-                player,
+                reactor.creature,
                 target.creature,
-                attacker_label=player.name,
+                attacker_label=reactor_label,
                 target_label=target_label,
                 action_label="Opportunity attack",
                 items_by_id=state.item_templates,
-                attacker_position=state.player_position,
+                attacker_position=reactor.position,
                 nearby_opponent_positions=(target.position,),
                 preferred_attack_type="melee",
                 attack_roll_mode_override=state._attack_roll_mode_for(
-                    player,
-                    "player",
-                    pending_action.creature_ref,
+                    reactor_ref,
+                    target_ref,
                     "melee",
-                    state.player_position,
+                    reactor.position,
                     (target.position,),
                 ),
                 d20_roller=_roll_die,
                 dice_roller=_roll_dice,
             )
-            reroll_rule = matching_damage_reroll_rule(player, attack)
+            reroll_rule = matching_damage_reroll_rule(reactor.creature, attack)
             if attack.hit and reroll_rule is not None:
                 self.open_damage_reroll_decision(
                     state,
                     attack=attack,
                     triggered_effect=reroll_rule,
-                    target_index=target_index,
-                    attacker_label=player.name,
+                    attacker_ref=reactor_ref,
+                    target_ref=target_ref,
+                    attacker_label=reactor_label,
                     target_label=target_label,
                     action_id=resolved_action_id,
                     progress=progress,
@@ -381,19 +464,19 @@ class ReactionEngine:
             apply_attack_damage(
                 attack,
                 target.creature,
-                attacker_label=player.name,
+                attacker_label=reactor_label,
                 target_label=target_label,
             )
             progress.messages.extend(attack.messages)
             progress.events.append(
                 state._event(
                     "attack_resolved",
-                    creature_ref="player",
+                    creature_ref=reactor_ref,
                     frame_id=decision.id,
                     action_id=resolved_action_id,
                     data={
-                        "attacker_label": player.name,
-                        "target_ref": pending_action.creature_ref,
+                        "attacker_label": reactor_label,
+                        "target_ref": target_ref,
                         "target_label": target_label,
                         "attack_roll": attack.attack_roll,
                         "attack_roll_detail": attack.attack_roll_detail,
@@ -421,7 +504,7 @@ class ReactionEngine:
         progress.events.append(
             state._event(
                 "decision_closed",
-                creature_ref="player",
+                creature_ref=reactor_ref,
                 frame_id=decision.id,
                 action_id=resolved_action_id,
             )
@@ -448,24 +531,20 @@ class ReactionEngine:
         state.pending_action = None
         if pending_action.kind != "move":
             return
-        if pending_action.creature_ref == "player":
-            return
-
-        enemy_index = _enemy_index(pending_action.creature_ref)
-        enemy = state.enemies[enemy_index]
-        if enemy.is_alive and state.turn_engine.is_free_for_enemy(
-            state,
+        mover = state.creatures[pending_action.creature_ref]
+        if mover.is_alive and state._position_is_free(
             pending_action.to_position.x,
             pending_action.to_position.y,
+            ignored_refs={pending_action.creature_ref},
         ):
-            enemy.position = Position(
+            mover.position = Position(
                 pending_action.to_position.x,
                 pending_action.to_position.y,
             )
             progress.messages.append(
                 (
                     "system",
-                    f"{enemy.creature.name} moves {pending_action.direction} to "
+                    f"{mover.creature.name} moves {pending_action.direction} to "
                     f"({pending_action.to_position.x}, {pending_action.to_position.y}).",
                 )
             )
@@ -485,130 +564,59 @@ class ReactionEngine:
                 )
             )
 
-        if pending_action.resume_enemy_index is None:
+        if pending_action.creature_ref == state.primary_creature_ref:
+            mover.movement_remaining = pending_action.remaining_movement_after
             return
         if state._creature_controller(pending_action.creature_ref) == "user":
-            enemy.movement_remaining = pending_action.remaining_movement_after
+            mover.movement_remaining = pending_action.remaining_movement_after
             return
-        enemy.movement_remaining = pending_action.remaining_movement_after
+        mover.movement_remaining = pending_action.remaining_movement_after
         if state.ai_action_limit is not None:
             return
-        completed_turn, resumed, _ = state.turn_engine.run_enemy_turn(
+        completed_turn, resumed, _ = state.turn_engine.run_creature_turn(
             state,
             player,
-            pending_action.resume_enemy_index,
+            pending_action.creature_ref,
         )
         state._merge_progress(progress, resumed)
         if completed_turn and not progress.paused_for_decision:
             state.turn_engine.advance_turn(state)
             state.turn_engine.maybe_reset_reactions(state)
 
-    def resolve_enemy_opportunity_attacks_against_player(
+    def queue_opportunity_attack(
         self,
         state: EncounterState,
-        player: Creature,
-        direction: str,
-        action_id: str,
-        progress: EncounterProgress,
-    ) -> list[tuple[str, str]]:
-        dx, dy = DIRECTION_DELTAS[direction]
-        origin = Position(state.player_position.x, state.player_position.y)
-        destination = Position(state.player_position.x + dx, state.player_position.y + dy)
-        messages: list[tuple[str, str]] = []
-        threatened_by = [
-            (index, enemy)
-            for index, enemy in enumerate(state.enemies)
-            if enemy.is_alive
-            and state._creatures_are_opponents(_enemy_ref(index), "player")
-            and enemy.reaction_available
-            and can_make_opportunity_attack(enemy.creature, state.item_templates)
-            and _is_adjacent(origin, enemy.position)
-            and not _is_adjacent(destination, enemy.position)
-        ]
-        for index, enemy in threatened_by:
-            enemy.reaction_available = False
-            trigger_id = state._next_frame_id(prefix="trigger")
-            progress.events.append(
-                state._event(
-                    "trigger_opened",
-                    creature_ref=_enemy_ref(index),
-                    action_id=action_id,
-                    data={"kind": "opportunity_attack", "trigger_id": trigger_id},
-                )
-            )
-            attack = resolve_attack(
-                enemy.creature,
-                player,
-                attacker_label=f"Enemy {index + 1} ({enemy.creature.name})",
-                target_label=player.name,
-                action_label="Opportunity attack",
-                items_by_id=state.item_templates,
-                attacker_position=enemy.position,
-                nearby_opponent_positions=(state.player_position,),
-                preferred_attack_type="melee",
-                attack_roll_mode_override=state._attack_roll_mode_for(
-                    player,
-                    _enemy_ref(index),
-                    "player",
-                    "melee",
-                    enemy.position,
-                    (state.player_position,),
-                ),
-                d20_roller=_roll_die,
-                dice_roller=_roll_dice,
-            )
-            apply_attack_damage(
-                attack,
-                player,
-                attacker_label=f"Enemy {index + 1} ({enemy.creature.name})",
-                target_label=player.name,
-            )
-            messages.extend(attack.messages)
-            progress.events.append(
-                state._event(
-                    "attack_resolved",
-                    creature_ref=_enemy_ref(index),
-                    action_id=action_id,
-                    data={
-                        "attacker_label": f"Enemy {index + 1} ({enemy.creature.name})",
-                        "target_ref": "player",
-                        "target_label": player.name,
-                        "attack_roll": attack.attack_roll,
-                        "attack_roll_detail": attack.attack_roll_detail,
-                        "hit": attack.hit,
-                        "critical_hit": attack.critical_hit,
-                        "damage": attack.damage,
-                        "damage_roll_detail": attack.damage_roll_detail,
-                        "reaction": True,
-                    },
-                )
-            )
-            if player.get_health() <= 0:
-                break
-        return messages
-
-    def queue_player_opportunity_attack(
-        self,
-        state: EncounterState,
-        player: Creature,
-        enemy_index: int,
+        *,
+        mover_ref: str,
         action_id: str,
         direction: str,
         from_position: Position,
         to_position: Position,
         remaining_movement_after: int,
         progress: EncounterProgress,
+        user_controlled_only: bool,
     ) -> bool:
-        if not state._creatures_are_opponents("player", _enemy_ref(enemy_index)):
+        reactors = [
+            (creature_ref, creature_state)
+            for creature_ref, creature_state in state.creatures.items()
+            if creature_ref != mover_ref
+            and creature_state.is_alive
+            and state._creatures_are_opponents(creature_ref, mover_ref)
+            and (
+                not user_controlled_only
+                or state._creature_controller(creature_ref) == "user"
+            )
+            and creature_state.reaction_available
+            and can_make_opportunity_attack(
+                creature_state.creature,
+                state.item_templates,
+            )
+            and _is_adjacent(from_position, creature_state.position)
+            and not _is_adjacent(to_position, creature_state.position)
+        ]
+        if not reactors:
             return False
-        if not state.player_reaction_available:
-            return False
-        if not can_make_opportunity_attack(player, state.item_templates):
-            return False
-        if not _is_adjacent(from_position, state.player_position):
-            return False
-        if _is_adjacent(to_position, state.player_position):
-            return False
+        reactor_ref, _reactor = reactors[0]
 
         frame_id = state._next_frame_id()
         trigger_id = state._next_frame_id(prefix="trigger")
@@ -616,18 +624,17 @@ class ReactionEngine:
         state.pending_action = PendingAction(
             id=action_id,
             kind="move",
-            creature_ref=_enemy_ref(enemy_index),
+            creature_ref=mover_ref,
             direction=direction,
             from_position=Position(from_position.x, from_position.y),
             to_position=Position(to_position.x, to_position.y),
-            resume_enemy_index=enemy_index,
             remaining_movement_after=remaining_movement_after,
             trigger_id=trigger_id,
         )
         state.decision_stack.append(
             DecisionFrame(
                 id=frame_id,
-                creature_ref="player",
+                creature_ref=reactor_ref,
                 kind="reaction",
                 reason="opportunity_attack",
                 parent_frame_id=current_frame.id,
@@ -638,12 +645,12 @@ class ReactionEngine:
         progress.events.append(
             state._event(
                 "trigger_opened",
-                creature_ref="player",
+                creature_ref=reactor_ref,
                 frame_id=frame_id,
                 action_id=action_id,
                 data={
                     "kind": "opportunity_attack",
-                    "target_ref": _enemy_ref(enemy_index),
+                    "target_ref": mover_ref,
                     "trigger_id": trigger_id,
                 },
             )
@@ -653,27 +660,33 @@ class ReactionEngine:
     def reaction_actions(self, state: EncounterState) -> list[EncounterAction]:
         pending_action = state.pending_action
         if pending_action is None or pending_action.kind != "move":
+            creature_ref = state.current_decision().creature_ref
             return [
                 EncounterAction(
                     "Pass reaction",
                     "pass",
-                    id="player-reaction-pass",
-                    creature_ref="player",
+                    id=f"{creature_ref}-reaction-pass",
+                    creature_ref=creature_ref,
                     cost=ActionCost(),
                 )
             ]
 
-        target_index = _enemy_index(pending_action.creature_ref)
-        target = state.enemies[target_index]
+        target_ref = pending_action.creature_ref
+        target = state.creatures[target_ref]
+        reactor_ref = state.current_decision().creature_ref
+        reactor = state.creatures[reactor_ref]
         actions: list[EncounterAction] = []
-        if state.player_reaction_available and target.is_alive:
+        if reactor.reaction_available and target.is_alive:
             actions.append(
                 EncounterAction(
                     f"Opportunity attack {target.creature.name}",
                     "opportunity_attack",
-                    target_index,
-                    id=f"player-opportunity-attack-{target_index}",
-                    creature_ref="player",
+                    target_ref,
+                    id=(
+                        f"{reactor_ref}-opportunity-attack-"
+                        f"{target_ref.replace(':', '-')}"
+                    ),
+                    creature_ref=reactor_ref,
                     source_trigger_id=pending_action.trigger_id,
                     cost=ActionCost(reaction=1),
                 )
@@ -682,8 +695,8 @@ class ReactionEngine:
             EncounterAction(
                 "Pass reaction",
                 "pass",
-                id="player-reaction-pass",
-                creature_ref="player",
+                id=f"{reactor_ref}-reaction-pass",
+                creature_ref=reactor_ref,
                 source_trigger_id=pending_action.trigger_id,
             )
         )

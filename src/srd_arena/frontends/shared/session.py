@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any, cast
 
 from ...domain.creatures.feature_actions import FeatureActionDefinition
 from ...runtime.models import ActionView, SceneView
@@ -132,7 +133,10 @@ def build_session_presentation(
             system_actions=system_actions,
         )
 
-    combat_state = session.encounter_state.export_state(session.player)
+    combat_state = cast(
+        dict[str, Any],
+        session.encounter_state.export_state(session.primary_creature),
+    )
     resources = _build_resource_summary(combat_state)
     movement_actions = {
         str(action.value): action
@@ -192,52 +196,47 @@ def _build_feature_actions(
     session: Session,
     story_actions: list[ActionView],
 ) -> list[ActionView]:
-    if (
-        session.encounter_state is not None
-        and session.encounter_state.current_decision().creature_ref != "player"
-    ):
+    if session.encounter_state is None:
         return []
+    creature_ref = session.encounter_state.current_decision().creature_ref
+    creature = session.encounter_state.creatures[creature_ref].creature
     available_feature_actions = {
         str(action.value): action
         for action in story_actions
         if action.kind == "feature" and isinstance(action.value, str)
     }
     feature_actions: list[ActionView] = []
-    for feature_id, definition in session.player.combat_profile.feature_actions.items():
+    for feature_id, definition in creature.combat_profile.feature_actions.items():
         available_action = available_feature_actions.get(feature_id)
         if available_action is not None:
             feature_actions.append(available_action)
             continue
-        feature_actions.append(_build_unavailable_feature_action(definition))
+        feature_actions.append(
+            _build_unavailable_feature_action(definition, creature_ref)
+        )
     return feature_actions
 
 
-def _build_unavailable_feature_action(definition: FeatureActionDefinition) -> ActionView:
+def _build_unavailable_feature_action(
+    definition: FeatureActionDefinition,
+    creature_ref: str,
+) -> ActionView:
     cost = {definition.economy: 1} if definition.economy else {}
     return ActionView(
         index=-1,
         id=f"unavailable-feature-{definition.feature_id}",
         label=definition.label,
         kind="feature",
-        creature_ref="player",
+        creature_ref=creature_ref,
         value=definition.feature_id,
         cost=cost,
     )
 
 
-def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryView:
-    player_state = combat_state["player"]
+def _build_resource_summary(combat_state: dict[str, Any]) -> ResourceSummaryView:
     decision = combat_state["decision"]
     creature_ref = decision["creature_ref"]
-    creature_state = (
-        player_state
-        if creature_ref == "player"
-        else next(
-            enemy
-            for enemy in combat_state["enemies"]
-            if enemy["creature_ref"] == creature_ref
-        )
-    )
+    creature_state = combat_state["creatures"][creature_ref]
     normal_turn = decision["kind"] == "turn"
     return ResourceSummaryView(
         current_health=creature_state["health"],
@@ -245,14 +244,11 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
         action_status=(
             "Ready"
             if normal_turn
-            and (
-                creature_ref != "player"
-                or player_state["action_available"]
-            )
-            else f"{player_state['attacks_remaining']} attack left"
-            if normal_turn and player_state["attacks_remaining"] == 1
-            else f"{player_state['attacks_remaining']} attacks left"
-            if normal_turn and player_state["attacks_remaining"] > 1
+            and creature_state["action_available"]
+            else f"{creature_state['attacks_remaining']} attack left"
+            if normal_turn and creature_state["attacks_remaining"] == 1
+            else f"{creature_state['attacks_remaining']} attacks left"
+            if normal_turn and creature_state["attacks_remaining"] > 1
             else "Spent"
             if normal_turn
             else "Waiting"
@@ -260,8 +256,7 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
         bonus_action_status=(
             "Ready"
             if normal_turn
-            and creature_ref == "player"
-            and player_state["bonus_action_available"]
+            and creature_state["bonus_action_available"]
             else "Spent"
             if normal_turn
             else "Waiting"
@@ -272,11 +267,7 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
             for condition in creature_state.get("conditions", [])
             if isinstance(condition, str)
         ),
-        spell_slots=(
-            _build_spell_slot_tracks(player_state)
-            if creature_ref == "player"
-            else ()
-        ),
+        spell_slots=_build_spell_slot_tracks(creature_state),
         movement_remaining=creature_state["movement_remaining"],
         movement_total=creature_state["movement_total"],
         movement_remaining_feet=creature_state["movement_remaining_feet"],
@@ -285,49 +276,31 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
     )
 
 
-def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
+def _build_battlefield_view(combat_state: dict[str, Any]) -> BattlefieldView:
     decision = combat_state["decision"]
+    primary_ref = combat_state["primary_creature_ref"]
     creatures = [
         BattlefieldCreatureView(
-            creature_ref="player",
-            creature_id=combat_state["player"]["creature_id"],
-            label=combat_state["player"]["name"],
-            token_image=combat_state["player"].get("token_image"),
+            creature_ref=creature_ref,
+            creature_id=creature["creature_id"],
+            label=creature["label"],
+            token_image=creature.get("token_image"),
             position=GridPositionView(
-                x=combat_state["player"]["position"]["x"],
-                y=combat_state["player"]["position"]["y"],
+                x=creature["position"]["x"],
+                y=creature["position"]["y"],
             ),
-            health=combat_state["player"]["health"],
+            health=creature["health"],
             conditions=tuple(
                 condition
-                for condition in combat_state["player"].get("conditions", [])
+                for condition in creature.get("conditions", [])
                 if isinstance(condition, str)
             ),
-            is_player=True,
-            is_active=decision["creature_ref"] == "player",
+            is_player=creature_ref == primary_ref,
+            is_active=decision["creature_ref"] == creature_ref,
         )
+        for creature_ref, creature in combat_state["creatures"].items()
+        if creature["is_alive"]
     ]
-    creatures.extend(
-        BattlefieldCreatureView(
-            creature_ref=enemy["creature_ref"],
-            creature_id=enemy["creature_id"],
-            label=f"Enemy {index + 1} ({enemy['name']})",
-            token_image=enemy.get("token_image"),
-            position=GridPositionView(
-                x=enemy["position"]["x"],
-                y=enemy["position"]["y"],
-            ),
-            health=enemy["health"],
-            conditions=tuple(
-                condition
-                for condition in enemy.get("conditions", [])
-                if isinstance(condition, str)
-            ),
-            is_active=decision["creature_ref"] == enemy["creature_ref"],
-        )
-        for index, enemy in enumerate(combat_state["enemies"])
-        if enemy["is_alive"]
-    )
     return BattlefieldView(
         width=combat_state["grid"]["width"],
         height=combat_state["grid"]["height"],
@@ -336,42 +309,49 @@ def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
     )
 
 
-def _render_battlefield_text(combat_state: dict[str, object]) -> str:
+def _render_battlefield_text(combat_state: dict[str, Any]) -> str:
     width = combat_state["grid"]["width"]
     height = combat_state["grid"]["height"]
-    player_state = combat_state["player"]
-    player_position = player_state["position"]
-    live_enemies = [enemy for enemy in combat_state["enemies"] if enemy["is_alive"]]
+    primary_ref = combat_state["primary_creature_ref"]
+    creatures = combat_state["creatures"]
+    primary_state = creatures[primary_ref]
+    primary_position = primary_state["position"]
+    live_others = [
+        creature
+        for creature_ref, creature in creatures.items()
+        if creature_ref != primary_ref and creature["is_alive"]
+    ]
 
     rows: list[str] = []
     for y in range(height):
         row: list[str] = []
         for x in range(width):
-            if player_position["x"] == x and player_position["y"] == y:
+            if primary_position["x"] == x and primary_position["y"] == y:
                 row.append("P")
                 continue
-            enemy_here = next(
+            creature_here = next(
                 (
-                    enemy
-                    for enemy in live_enemies
-                    if enemy["position"]["x"] == x and enemy["position"]["y"] == y
+                    creature
+                    for creature in live_others
+                    if creature["position"]["x"] == x
+                    and creature["position"]["y"] == y
                 ),
                 None,
             )
-            row.append("E" if enemy_here else ".")
+            row.append("E" if creature_here else ".")
         rows.append(" ".join(row))
 
-    enemy_lines = [
+    creature_lines = [
         (
             f"- Enemy {index + 1} ({enemy['name']}): {enemy['health']} HP at "
             f"({enemy['position']['x']}, {enemy['position']['y']})"
             f"{_condition_suffix(enemy.get('conditions', []))}"
         )
-        for index, enemy in enumerate(combat_state["enemies"])
+        for index, enemy in enumerate(live_others)
         if enemy["is_alive"]
     ]
-    if not enemy_lines:
-        enemy_lines = ["- No enemies remaining."]
+    if not creature_lines:
+        creature_lines = ["- No other creatures remaining."]
 
     turn_label = _turn_label(combat_state)
     return "\n".join(
@@ -380,24 +360,21 @@ def _render_battlefield_text(combat_state: dict[str, object]) -> str:
             "",
             f"Round {combat_state['round_number']} - Turn: {turn_label}",
             (
-                f"Player HP: {player_state['health']}/{player_state['max_health']} "
-                f"at ({player_position['x']}, {player_position['y']})"
-                f"{_condition_suffix(player_state.get('conditions', []))}"
+                f"{primary_state['name']} HP: "
+                f"{primary_state['health']}/{primary_state['max_health']} "
+                f"at ({primary_position['x']}, {primary_position['y']})"
+                f"{_condition_suffix(primary_state.get('conditions', []))}"
             ),
-            "Enemies:",
-            *enemy_lines,
+            "Other creatures:",
+            *creature_lines,
         ]
     )
 
 
-def _turn_label(combat_state: dict[str, object]) -> str:
+def _turn_label(combat_state: dict[str, Any]) -> str:
     decision = combat_state["decision"]
     creature_ref = decision["creature_ref"]
-    if creature_ref == "player":
-        return "Player" if decision["kind"] != "reaction" else "Player (Reaction)"
-    enemy_index = int(creature_ref.split(":")[1])
-    enemy = combat_state["enemies"][enemy_index]
-    label = f"Enemy {enemy_index + 1} ({enemy['name']})"
+    label = combat_state["creatures"][creature_ref]["label"]
     if decision["kind"] == "reaction":
         return f"{label} (Reaction)"
     return label
@@ -419,7 +396,7 @@ def _condition_suffix(conditions: object) -> str:
 
 
 def _build_initiative_track(
-    combat_state: dict[str, object],
+    combat_state: dict[str, Any],
 ) -> tuple[InitiativeTrackEntryView, ...]:
     initiative = combat_state.get("initiative", [])
     decision = combat_state.get("decision", {})

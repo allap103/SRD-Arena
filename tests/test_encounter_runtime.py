@@ -23,8 +23,12 @@ def _player_first_initiative(monkeypatch):
     def _fixed_initiative(self, player):
         self.initiative_entries = []
         self.initiative_order = [
-            "player",
-            *(f"enemy:{index}" for index, _enemy in enumerate(self.enemies)),
+            self.primary_creature_ref,
+            *(
+                creature_ref
+                for creature_ref in self.creatures
+                if creature_ref != self.primary_creature_ref
+            ),
         ]
 
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
@@ -35,6 +39,14 @@ def _action_index_by_prefix(session, prefix: str) -> int:
         index
         for index, choice in enumerate(session.get_scene_view().choices)
         if choice.startswith(prefix)
+    )
+
+
+def _action_index(session, kind: str, value: object) -> int:
+    return next(
+        action.index
+        for action in session.get_scene_view().action_details
+        if action.kind == kind and action.value == value
     )
 
 
@@ -81,11 +93,11 @@ def test_cli_encounter_renderer_generates_grid_text() -> None:
     session.get_scene_view()
     assert session.encounter_state is not None
 
-    scene_text = render_encounter_text(session.encounter_state, session.player)
+    scene_text = render_encounter_text(session.encounter_state, session.primary_creature)
 
     assert "P" in scene_text
     assert "E" in scene_text
-    assert "Round 1 - Turn: Player" in scene_text
+    assert "Round 1 - Turn: Traveler (player)" in scene_text
     assert "Movement remaining: 6/6 squares" in scene_text
     assert "Player HP:" in scene_text
 
@@ -101,10 +113,10 @@ def test_initiative_is_rolled_for_all_combatants_at_encounter_start(monkeypatch)
 
     assert session.encounter_state is not None
     assert [entry.creature_ref for entry in session.encounter_state.initiative_entries] == [
-        "enemy:0",
-        "enemy:2",
+        "participant:0",
+        "participant:2",
         "player",
-        "enemy:1",
+        "participant:1",
     ]
     assert [entry.total for entry in session.encounter_state.initiative_entries] == [
         20,
@@ -112,7 +124,7 @@ def test_initiative_is_rolled_for_all_combatants_at_encounter_start(monkeypatch)
         13,
         9,
     ]
-    assert session.encounter_state.current_decision().creature_ref == "enemy:0"
+    assert session.encounter_state.current_decision().creature_ref == "participant:0"
 
 
 def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
@@ -137,10 +149,10 @@ def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
         (entry.label, entry.total, entry.is_active)
         for entry in presentation.encounter.resources.initiative
     ] == [
-        ("Enemy 1 (Goblin Warrior)", 20, True),
-        ("Enemy 3 (Goblin Warrior)", 16, False),
-        ("Player", 13, False),
-        ("Enemy 2 (Goblin Warrior)", 9, False),
+            ("Goblin Warrior (goblin_1)", 20, True),
+            ("Goblin Warrior (goblin_3)", 16, False),
+            ("Traveler (player)", 13, False),
+            ("Goblin Warrior (goblin_2)", 9, False),
     ]
 
 
@@ -152,17 +164,17 @@ def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> N
     move_up_index = scene_view.choices.index("Move up")
     result = session.choose(move_up_index)
 
-    assert ("system", "You move up. Movement remaining: 5.") in result.messages
+    assert ("system", "Traveler moves up to (1, 5).") in result.messages
     assert session.encounter_state is not None
-    assert session.encounter_state.player_position.x == 1
-    assert session.encounter_state.player_position.y == 5
-    assert session.encounter_state.player_movement_remaining == 5
-    assert session.encounter_state.enemies[0].position.x == 5
-    assert session.encounter_state.enemies[0].position.y == 2
-    assert session.encounter_state.enemies[1].position.x == 6
-    assert session.encounter_state.enemies[1].position.y == 2
-    assert session.encounter_state.enemies[2].position.x == 4
-    assert session.encounter_state.enemies[2].position.y == 1
+    assert session.encounter_state.primary_position.x == 1
+    assert session.encounter_state.primary_position.y == 5
+    assert session.encounter_state.active_movement_remaining == 5
+    assert session.encounter_state.creatures["participant:0"].position.x == 5
+    assert session.encounter_state.creatures["participant:0"].position.y == 2
+    assert session.encounter_state.creatures["participant:1"].position.x == 6
+    assert session.encounter_state.creatures["participant:1"].position.y == 2
+    assert session.encounter_state.creatures["participant:2"].position.x == 4
+    assert session.encounter_state.creatures["participant:2"].position.y == 1
     assert session.encounter_state.turn_index == 0
     assert session.encounter_state.round_number == 1
 
@@ -174,10 +186,10 @@ def test_goblin_encounter_allows_diagonal_movement() -> None:
     move_index = session.get_scene_view().choices.index("Move up-right")
     result = session.choose(move_index)
 
-    assert ("system", "You move up-right. Movement remaining: 5.") in result.messages
+    assert ("system", "Traveler moves up-right to (2, 5).") in result.messages
     assert session.encounter_state is not None
-    assert session.encounter_state.player_position.x == 2
-    assert session.encounter_state.player_position.y == 5
+    assert session.encounter_state.primary_position.x == 2
+    assert session.encounter_state.primary_position.y == 5
 
 
 def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
@@ -186,14 +198,14 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 4
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 3
-    state.enemies[1].position.x = 6
-    state.enemies[1].position.y = 2
-    state.enemies[2].position.x = 1
-    state.enemies[2].position.y = 1
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
+    state.creatures["participant:1"].position.x = 6
+    state.creatures["participant:1"].position.y = 2
+    state.creatures["participant:2"].position.x = 1
+    state.creatures["participant:2"].position.y = 1
     state._apply_effects(
         [
             EffectResult(
@@ -201,13 +213,13 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
                 target_ref="player",
                 data={
                     "condition": "grappled",
-                    "source_ref": "enemy:0",
+                    "source_ref": "participant:0",
                     "source_label": "Goblin",
                 },
             ),
             EffectResult(
                 kind="apply_status",
-                target_ref="enemy:0",
+                target_ref="participant:0",
                 data={
                     "condition": "grappling",
                     "source_ref": "player",
@@ -221,23 +233,33 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
     assert not any(choice.startswith("Move ") for choice in choices)
     assert (
         state._attack_roll_mode_for(
-            session.player,
+            session.primary_creature,
             "player",
-            "enemy:1",
+            "participant:1",
             "melee",
-            state.player_position,
-            tuple(enemy.position for enemy in state.enemies if enemy.is_alive),
+            state.primary_position,
+            tuple(
+                creature_state.position
+                for creature_ref, creature_state in state.creatures.items()
+                if creature_ref != state.primary_creature_ref
+                and creature_state.is_alive
+            ),
         )
         == "disadvantage"
     )
     assert (
         state._attack_roll_mode_for(
-            session.player,
+            session.primary_creature,
             "player",
-            "enemy:0",
+            "participant:0",
             "melee",
-            state.player_position,
-            tuple(enemy.position for enemy in state.enemies if enemy.is_alive),
+            state.primary_position,
+            tuple(
+                creature_state.position
+                for creature_ref, creature_state in state.creatures.items()
+                if creature_ref != state.primary_creature_ref
+                and creature_state.is_alive
+            ),
         )
         == "normal"
     )
@@ -249,22 +271,28 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 4
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 3
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
 
     rolls = iter([20, 1])
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls))
 
     scene_view = session.get_scene_view()
-    grapple_index = next(index for index, choice in enumerate(scene_view.choices) if choice.startswith("Grapple enemy 1"))
+    grapple_index = _action_index(session, "grapple", "participant:0")
     result = session.choose(grapple_index)
 
-    assert ("system", "Traveler grapples Enemy 1 (Goblin Warrior).") in result.messages
-    assert session.encounter_state.has_condition("enemy:0", "grappled") is True
+    assert (
+        "system",
+        "Traveler grapples Goblin Warrior (goblin_1).",
+    ) in result.messages
+    assert session.encounter_state.has_condition("participant:0", "grappled") is True
     assert session.encounter_state.has_condition("player", "grappling") is True
-    assert "Grapple enemy 1 (Goblin Warrior)" in scene_view.choices
+    assert any(
+        action.kind == "grapple" and action.value == "participant:0"
+        for action in scene_view.action_details
+    )
 
 
 def test_grappling_moves_target_and_costs_extra_movement() -> None:
@@ -273,14 +301,14 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 4
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 3
-    state.enemies[1].position.x = 6
-    state.enemies[1].position.y = 2
-    state.enemies[2].position.x = 1
-    state.enemies[2].position.y = 1
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
+    state.creatures["participant:1"].position.x = 6
+    state.creatures["participant:1"].position.y = 2
+    state.creatures["participant:2"].position.x = 1
+    state.creatures["participant:2"].position.y = 1
     state._apply_effects(
         [
             EffectResult(
@@ -288,13 +316,13 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
                 target_ref="player",
                 data={
                     "condition": "grappling",
-                    "source_ref": "enemy:0",
+                    "source_ref": "participant:0",
                     "source_label": "Goblin",
                 },
             ),
             EffectResult(
                 kind="apply_status",
-                target_ref="enemy:0",
+                target_ref="participant:0",
                 data={
                     "condition": "grappled",
                     "source_ref": "player",
@@ -307,12 +335,12 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
     move_up_index = session.get_scene_view().choices.index("Move up")
     result = session.choose(move_up_index)
 
-    assert ("system", "You move up. Movement remaining: 4.") in result.messages
-    assert state.player_position.x == 4
-    assert state.player_position.y == 3
-    assert state.enemies[0].position.x == 4
-    assert state.enemies[0].position.y == 2
-    assert state.player_movement_remaining == 4
+    assert ("system", "Traveler moves up to (4, 3).") in result.messages
+    assert state.primary_position.x == 4
+    assert state.primary_position.y == 3
+    assert state.creatures["participant:0"].position.x == 4
+    assert state.creatures["participant:0"].position.y == 2
+    assert state.active_movement_remaining == 4
 
 
 def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
@@ -324,7 +352,7 @@ def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
         move_right_index = scene_view.choices.index("Move right")
         result = session.choose(move_right_index)
 
-    assert ("system", "You move right. Movement remaining: 0.") in result.messages
+    assert ("system", "Traveler moves right to (7, 6).") in result.messages
     assert session.encounter_state is not None
     assert session.encounter_state.turn_index == 0
     assert session.encounter_state.round_number == 1
@@ -340,14 +368,14 @@ def test_goblin_encounter_wait_advances_enemy_turns() -> None:
     wait_index = session.get_scene_view().choices.index("Wait")
     result = session.choose(wait_index)
 
-    assert ("system", "You hold your ground.") in result.messages
+    assert ("system", "Traveler waits.") in result.messages
     assert session.encounter_state is not None
-    assert session.encounter_state.enemies[0].position.x == 2
-    assert session.encounter_state.enemies[0].position.y == 5
-    assert session.encounter_state.enemies[1].position.x == 3
-    assert session.encounter_state.enemies[1].position.y == 5
-    assert session.encounter_state.enemies[2].position.x == 4
-    assert session.encounter_state.enemies[2].position.y == 1
+    assert session.encounter_state.creatures["participant:0"].position.x == 2
+    assert session.encounter_state.creatures["participant:0"].position.y == 5
+    assert session.encounter_state.creatures["participant:1"].position.x == 3
+    assert session.encounter_state.creatures["participant:1"].position.y == 5
+    assert session.encounter_state.creatures["participant:2"].position.x == 4
+    assert session.encounter_state.creatures["participant:2"].position.y == 1
     assert session.encounter_state.turn_index == 0
     assert session.encounter_state.round_number == 2
 
@@ -357,12 +385,12 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].creature.current_health = 30
-    session.encounter_state.enemies[0].creature.current_health = 30
+    session.encounter_state.primary_position.x = 4
+    session.encounter_state.primary_position.y = 3
+    session.encounter_state.creatures["participant:0"].position.x = 4
+    session.encounter_state.creatures["participant:0"].position.y = 2
+    session.encounter_state.creatures["participant:0"].creature.current_health = 30
+    session.encounter_state.creatures["participant:0"].creature.current_health = 30
 
     assert "Cast Color Spray" in session.get_scene_view().choices
 
@@ -372,10 +400,10 @@ def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
+    session.encounter_state.primary_position.x = 4
+    session.encounter_state.primary_position.y = 3
+    session.encounter_state.creatures["participant:0"].position.x = 4
+    session.encounter_state.creatures["participant:0"].position.y = 2
 
     assert "Cast Burning Hands" in session.get_scene_view().choices
 
@@ -385,10 +413,10 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypat
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
+    session.encounter_state.primary_position.x = 4
+    session.encounter_state.primary_position.y = 3
+    session.encounter_state.creatures["participant:0"].position.x = 4
+    session.encounter_state.creatures["participant:0"].position.y = 2
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 2))
@@ -407,9 +435,9 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    assert session.player.spellcasting is not None
-    session.player.spellcasting.spell_slots_max[2] = 1
-    session.player.spellcasting.spell_slots_remaining[2] = 1
+    assert session.primary_creature.spellcasting is not None
+    session.primary_creature.spellcasting.spell_slots_max[2] = 1
+    session.primary_creature.spellcasting.spell_slots_remaining[2] = 1
     session.encounter_state._apply_effects(
         [
             EffectResult(
@@ -417,7 +445,7 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
                 target_ref="player",
                 data={
                     "condition": "blinded",
-                    "source_ref": "enemy:0",
+                    "source_ref": "participant:0",
                     "source_label": "Goblin",
                 },
             )
@@ -432,21 +460,21 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatc
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    assert session.player.spellcasting is not None
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
+    assert session.primary_creature.spellcasting is not None
+    session.encounter_state.primary_position.x = 4
+    session.encounter_state.primary_position.y = 3
+    session.encounter_state.creatures["participant:0"].position.x = 4
+    session.encounter_state.creatures["participant:0"].position.y = 2
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
 
-    assert ("system", "Traveler casts Color Spray on Enemy 1 (Goblin Warrior).") in result.messages
+    assert ("system", "Traveler casts Color Spray on Goblin Warrior.") in result.messages
     assert any("is blinded until the end of your next turn" in message for _, message in result.messages)
-    assert session.encounter_state.player_action_available is False
-    assert session.player.spellcasting.spell_slots_remaining[1] == 3
-    assert session.encounter_state.has_condition("enemy:0", "blinded") is True
+    assert session.encounter_state.active_action_available is False
+    assert session.primary_creature.spellcasting.spell_slots_remaining[1] == 3
+    assert session.encounter_state.has_condition("participant:0", "blinded") is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Color Spray"
     assert spell_event.data["save_detail"]["ability"] == "constitution"
@@ -459,32 +487,32 @@ def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    assert session.player.spellcasting is not None
+    assert session.primary_creature.spellcasting is not None
     state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 4
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 3
-    state.enemies[1].position.x = 4
-    state.enemies[1].position.y = 2
-    state.enemies[2].creature.current_health = 0
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
+    state.creatures["participant:1"].position.x = 4
+    state.creatures["participant:1"].position.y = 2
+    state.creatures["participant:2"].creature.current_health = 0
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
 
-    assert state.has_condition("enemy:0", "blinded") is True
-    assert state.has_condition("enemy:1", "blinded") is True
+    assert state.has_condition("participant:0", "blinded") is True
+    assert state.has_condition("participant:1", "blinded") is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
-    assert spell_event.data["target_refs"] == ["enemy:0", "enemy:1"]
+    assert spell_event.data["target_refs"] == ["participant:0", "participant:1"]
     assert spell_event.data["area"]["shape"] == "cone"
     assert spell_event.data["area"]["origin"] == {"x": 4, "y": 4}
     assert spell_event.data["area"]["rasterization_policy"] == "coverage_threshold"
     assert spell_event.data["area"]["coverage_threshold"] == 0.1
     assert len(spell_event.data["save_details"]) == 2
     assert [effect["target_ref"] for effect in spell_event.data["effects"]] == [
-        "enemy:0",
-        "enemy:1",
+        "participant:0",
+        "participant:1",
     ]
 
 
@@ -494,22 +522,22 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 2
-    state.player_position.y = 4
-    state.enemies[0].position.x = 5
-    state.enemies[0].position.y = 3
-    state.enemies[1].position.x = 5
-    state.enemies[1].position.y = 4
-    state.enemies[2].creature.current_health = 0
+    state.primary_position.x = 2
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 5
+    state.creatures["participant:0"].position.y = 3
+    state.creatures["participant:1"].position.x = 5
+    state.creatures["participant:1"].position.y = 4
+    state.creatures["participant:2"].creature.current_health = 0
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (5, 3))
 
-    assert state.has_condition("enemy:0", "blinded") is True
-    assert state.has_condition("enemy:1", "blinded") is True
+    assert state.has_condition("participant:0", "blinded") is True
+    assert state.has_condition("participant:1", "blinded") is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
-    assert spell_event.data["target_refs"] == ["enemy:0", "enemy:1"]
+    assert spell_event.data["target_refs"] == ["participant:0", "participant:1"]
     assert spell_event.data["area"]["continuous_area"]["direction"] == {
         "x": 0.9486832980505138,
         "y": -0.31622776601683794,
@@ -522,13 +550,13 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 4
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 3
-    state.enemies[1].position.x = 4
-    state.enemies[1].position.y = 2
-    state.enemies[2].creature.current_health = 0
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
+    state.creatures["participant:1"].position.x = 4
+    state.creatures["participant:1"].position.y = 2
+    state.creatures["participant:2"].creature.current_health = 0
 
     rolls = iter([5, 1, 2, 3, 16, 4, 5, 6])
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls))
@@ -541,8 +569,8 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
     assert spell_event.data["damage_roll_details"][0]["dice"] == "3d6"
     assert spell_event.data["damage_roll_details"][0]["applied_damage"] == 6
     assert spell_event.data["damage_roll_details"][1]["applied_damage"] == 7
-    assert state.enemies[0].creature.get_health() == 4
-    assert state.enemies[1].creature.get_health() == 3
+    assert state.creatures["participant:0"].creature.get_health() == 4
+    assert state.creatures["participant:1"].creature.get_health() == 3
     assert any("takes 6 fire damage." in message for _, message in result.messages)
     assert any("takes 7 fire damage on a successful save." in message for _, message in result.messages)
     assert not any("Enemy 2 (Goblin Warrior) is defeated." == message for _, message in result.messages)
@@ -553,17 +581,21 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    assert session.player.spellcasting is not None
+    assert session.primary_creature.spellcasting is not None
     state = session.encounter_state
-    state.player_position.x = 1
-    state.player_position.y = 6
-    state.enemies[0].position.x = 5
-    state.enemies[0].position.y = 2
-    state.enemies[1].position.x = 6
-    state.enemies[1].position.y = 2
-    state.enemies[2].position.x = 4
-    state.enemies[2].position.y = 1
-    starting_healths = [enemy.creature.get_health() for enemy in state.enemies]
+    state.primary_position.x = 1
+    state.primary_position.y = 6
+    state.creatures["participant:0"].position.x = 5
+    state.creatures["participant:0"].position.y = 2
+    state.creatures["participant:1"].position.x = 6
+    state.creatures["participant:1"].position.y = 2
+    state.creatures["participant:2"].position.x = 4
+    state.creatures["participant:2"].position.y = 1
+    starting_healths = [
+        creature_state.creature.get_health()
+        for creature_ref, creature_state in state.creatures.items()
+        if creature_ref != state.primary_creature_ref
+    ]
 
     rolls = iter([1, 2, 3, 4, 5, 6, 1, 2, 5, 16, 3])
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls))
@@ -572,7 +604,7 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
 
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Fireball"
-    assert spell_event.data["target_refs"] == ["enemy:0", "enemy:1", "enemy:2"]
+    assert spell_event.data["target_refs"] == ["participant:0", "participant:1", "participant:2"]
     assert spell_event.data["area"]["shape"] == "radius"
     assert spell_event.data["area"]["origin"] == {"x": 5, "y": 2}
     assert spell_event.data["save_details"][0]["ability"] == "dexterity"
@@ -584,10 +616,10 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
     assert spell_event.data["damage_roll_details"][1]["applied_damage"] == min(12, starting_healths[1])
     assert spell_event.data["damage_roll_details"][2]["final_damage"] == 24
     assert spell_event.data["damage_roll_details"][2]["applied_damage"] == min(24, starting_healths[2])
-    assert session.player.spellcasting.spell_slots_remaining[3] == 1
-    assert state.enemies[0].creature.get_health() == 0
-    assert state.enemies[1].creature.get_health() == 0
-    assert state.enemies[2].creature.get_health() == 0
+    assert session.primary_creature.spellcasting.spell_slots_remaining[3] == 1
+    assert state.creatures["participant:0"].creature.get_health() == 0
+    assert state.creatures["participant:1"].creature.get_health() == 0
+    assert state.creatures["participant:2"].creature.get_health() == 0
 
 
 def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
@@ -596,13 +628,13 @@ def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 4
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 3
-    state.enemies[1].position.x = 4
-    state.enemies[1].position.y = 2
-    state.enemies[2].creature.current_health = 0
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
+    state.creatures["participant:1"].position.x = 4
+    state.creatures["participant:1"].position.y = 2
+    state.creatures["participant:2"].creature.current_health = 0
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
 
@@ -627,12 +659,12 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 4
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 3
-    state.enemies[1].creature.current_health = 0
-    state.enemies[2].creature.current_health = 0
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
+    state.creatures["participant:1"].creature.current_health = 0
+    state.creatures["participant:2"].creature.current_health = 0
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
     monkeypatch.setattr(
@@ -664,13 +696,13 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch)
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 4
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 3
-    state.enemies[1].position.x = 4
-    state.enemies[1].position.y = 2
-    state.enemies[2].creature.current_health = 0
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
+    state.creatures["participant:1"].position.x = 4
+    state.creatures["participant:1"].position.y = 2
+    state.creatures["participant:2"].creature.current_health = 0
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
 
@@ -701,14 +733,14 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    assert session.player.spellcasting is not None
+    assert session.primary_creature.spellcasting is not None
     state = session.encounter_state
-    state.player_position.x = 2
-    state.player_position.y = 2
-    state.enemies[0].position.x = 3
-    state.enemies[0].position.y = 2
-    state.enemies[1].creature.current_health = 0
-    state.enemies[2].creature.current_health = 0
+    state.primary_position.x = 2
+    state.primary_position.y = 2
+    state.creatures["participant:0"].position.x = 3
+    state.creatures["participant:0"].position.y = 2
+    state.creatures["participant:1"].creature.current_health = 0
+    state.creatures["participant:2"].creature.current_health = 0
     rolls = iter([5, 17, 4, 1])
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls, 3))
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
@@ -719,7 +751,7 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
     attack_event = next(
         event
         for event in result.events
-        if event.type == "attack_resolved" and event.creature_ref == "enemy:0"
+        if event.type == "attack_resolved" and event.creature_ref == "participant:0"
     )
     assert attack_event.data["attack_roll_detail"]["mode"] == "disadvantage"
     assert attack_event.data["attack_roll_detail"]["dice"] == [17, 4]
@@ -731,20 +763,20 @@ def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 2
-    state.player_position.y = 2
-    state.enemies[0].position.x = 3
-    state.enemies[0].position.y = 2
+    state.primary_position.x = 2
+    state.primary_position.y = 2
+    state.creatures["participant:0"].position.x = 3
+    state.creatures["participant:0"].position.y = 2
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
 
     attack_mode = state._attack_roll_mode_for(
         "player",
-        "enemy:0",
+        "participant:0",
         "melee",
-        state.player_position,
-        (state.enemies[0].position,),
+        state.primary_position,
+        (state.creatures["participant:0"].position,),
     )
 
     assert attack_mode == "advantage"
@@ -756,12 +788,12 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatc
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 2
-    state.player_position.y = 2
-    state.enemies[0].position.x = 3
-    state.enemies[0].position.y = 2
-    state.enemies[1].creature.current_health = 0
-    state.enemies[2].creature.current_health = 0
+    state.primary_position.x = 2
+    state.primary_position.y = 2
+    state.creatures["participant:0"].position.x = 3
+    state.creatures["participant:0"].position.y = 2
+    state.creatures["participant:1"].creature.current_health = 0
+    state.creatures["participant:2"].creature.current_health = 0
     rolls = iter([5, 3, 3])
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls, 3))
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
@@ -769,11 +801,11 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatc
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     session.choose(session.get_scene_view().choices.index("Wait"))
 
-    assert state.has_condition("enemy:0", "blinded") is True
+    assert state.has_condition("participant:0", "blinded") is True
 
     session.choose(session.get_scene_view().choices.index("Wait"))
 
-    assert state.has_condition("enemy:0", "blinded") is False
+    assert state.has_condition("participant:0", "blinded") is False
 
 
 def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) -> None:
@@ -782,12 +814,12 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 1
-    state.player_position.y = 1
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 1
-    state.enemies[1].creature.current_health = 0
-    state.enemies[2].creature.current_health = 0
+    state.primary_position.x = 1
+    state.primary_position.y = 1
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 1
+    state.creatures["participant:1"].creature.current_health = 0
+    state.creatures["participant:2"].creature.current_health = 0
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
 
@@ -795,14 +827,14 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
     session.choose(session.get_scene_view().choices.index("Wait"))
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
 
-    assert state.has_condition("enemy:0", "blinded") is True
-    assert len(state.conditions_for("enemy:0")) == 1
+    assert state.has_condition("participant:0", "blinded") is True
+    assert len(state.conditions_for("participant:0")) == 1
 
     session.choose(session.get_scene_view().choices.index("Wait"))
-    assert state.has_condition("enemy:0", "blinded") is True
+    assert state.has_condition("participant:0", "blinded") is True
 
     session.choose(session.get_scene_view().choices.index("Wait"))
-    assert state.has_condition("enemy:0", "blinded") is False
+    assert state.has_condition("participant:0", "blinded") is False
 
 
 def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
@@ -811,16 +843,16 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 2
-    state.player_position.y = 2
-    state.enemies[0].position.x = 3
-    state.enemies[0].position.y = 2
+    state.primary_position.x = 2
+    state.primary_position.y = 2
+    state.creatures["participant:0"].position.x = 3
+    state.creatures["participant:0"].position.y = 2
 
     state._apply_effects(
         [
             EffectResult(
                 kind="apply_status",
-                target_ref="enemy:0",
+                target_ref="participant:0",
                 data={
                     "condition": "blinded",
                     "source_ref": "player",
@@ -829,13 +861,13 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
             )
         ]
     )
-    assert state.has_condition("enemy:0", "blinded") is True
+    assert state.has_condition("participant:0", "blinded") is True
     assert state._attack_roll_mode_for(
         "player",
-        "enemy:0",
+        "participant:0",
         "melee",
-        state.player_position,
-        (state.enemies[0].position,),
+        state.primary_position,
+        (state.creatures["participant:0"].position,),
     ) == "advantage"
 
     messages = state._apply_effects(
@@ -847,20 +879,20 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
             ),
             EffectResult(
                 kind="remove_status",
-                target_ref="enemy:0",
+                target_ref="participant:0",
                 data={"condition": "blinded"},
             ),
         ]
     )
 
     assert messages == [("system", "Status removed.")]
-    assert state.has_condition("enemy:0", "blinded") is False
+    assert state.has_condition("participant:0", "blinded") is False
     assert state._attack_roll_mode_for(
         "player",
-        "enemy:0",
+        "participant:0",
         "melee",
-        state.player_position,
-        (state.enemies[0].position,),
+        state.primary_position,
+        (state.creatures["participant:0"].position,),
     ) == "normal"
 
 
@@ -869,9 +901,9 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    assert session.player.spellcasting is not None
-    session.player.spellcasting.spell_slots_max[2] = 1
-    session.player.spellcasting.spell_slots_remaining[2] = 1
+    assert session.primary_creature.spellcasting is not None
+    session.primary_creature.spellcasting.spell_slots_max[2] = 1
+    session.primary_creature.spellcasting.spell_slots_remaining[2] = 1
     state = session.encounter_state
     state._apply_effects(
         [
@@ -880,7 +912,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
                 target_ref="player",
                 data={
                     "condition": "blinded",
-                    "source_ref": "enemy:0",
+                    "source_ref": "participant:0",
                     "source_label": "Goblin",
                 },
             )
@@ -892,9 +924,9 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     assert ("system", "Traveler casts Lesser Restoration on Traveler.") in result.messages
     assert ("system", "Traveler is no longer blinded.") in result.messages
     assert state.has_condition("player", "blinded") is False
-    assert state.player_bonus_action_available is False
-    assert state.player_action_available is True
-    assert session.player.spellcasting.spell_slots_remaining[2] == 0
+    assert state.active_bonus_action_available is False
+    assert state.active_action_available is True
+    assert session.primary_creature.spellcasting.spell_slots_remaining[2] == 0
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Lesser Restoration"
     assert spell_event.data["target_ref"] == "player"
@@ -907,7 +939,7 @@ def test_lesser_restoration_uses_magic_menu_bucket() -> None:
         None,
         ActionView(
             index=0,
-            id="player-spell-lesser-restoration-player",
+            id="spell-lesser-restoration-player",
             label="Cast Lesser Restoration",
             kind="spell",
             creature_ref="player",
@@ -927,11 +959,11 @@ def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> Non
     assert session.encounter_state is not None
     session.encounter_state.turn_index = 1
 
-    progress = session.encounter_state.advance_until_next_decision(session.player)
+    progress = session.encounter_state.advance_until_next_decision(session.primary_creature)
 
     assert progress.transition is None
     assert ("system", "Goblin Warrior moves down-left to (4, 3).") in progress.messages
-    assert session.encounter_state.active_creature() == ("player", None)
+    assert session.encounter_state.active_creature() == "player"
     assert session.encounter_state.round_number == 2
 
 
@@ -941,26 +973,26 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    enemy = session.encounter_state.enemies[0]
+    enemy = session.encounter_state.creatures["participant:0"]
     enemy.behavior.type = "archer"
     session.encounter_state._initialize_behaviors()
-    session.encounter_state.enemies[1].creature.current_health = 0
-    session.encounter_state.enemies[2].creature.current_health = 0
+    session.encounter_state.creatures["participant:1"].creature.current_health = 0
+    session.encounter_state.creatures["participant:2"].creature.current_health = 0
     enemy.position.x = 5
     enemy.position.y = 2
-    session.encounter_state.player_position.x = 1
-    session.encounter_state.player_position.y = 6
+    session.encounter_state.primary_position.x = 1
+    session.encounter_state.primary_position.y = 6
     session.encounter_state.turn_index = 1
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 4)
 
-    progress = session.encounter_state.advance_until_next_decision(session.player)
+    progress = session.encounter_state.advance_until_next_decision(session.primary_creature)
 
     attack_event = next(
         event
         for event in progress.events
-        if event.type == "attack_resolved" and event.creature_ref == "enemy:0"
+        if event.type == "attack_resolved" and event.creature_ref == "participant:0"
     )
     assert enemy.position.x == 5
     assert enemy.position.y == 2
@@ -974,30 +1006,29 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].creature.attributes.base_armor_class = 0
-    starting_health = session.encounter_state.enemies[0].creature.get_health()
+    session.encounter_state.primary_position.x = 4
+    session.encounter_state.primary_position.y = 3
+    session.encounter_state.creatures["participant:0"].position.x = 4
+    session.encounter_state.creatures["participant:0"].position.y = 2
+    session.encounter_state.creatures["participant:0"].creature.attributes.base_armor_class = 0
+    starting_health = session.encounter_state.creatures["participant:0"].creature.get_health()
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1)
 
-    attack_index = next(
-        index
-        for index, choice in enumerate(session.get_scene_view().choices)
-        if choice.startswith("Attack enemy 1")
-    )
+    attack_index = _action_index(session, "attack", "participant:0")
     result = session.choose(attack_index)
 
-    assert ("system", "Traveler misses Enemy 1 (Goblin Warrior).") in result.messages
+    assert (
+        "system",
+        "Traveler misses Goblin Warrior (goblin_1).",
+    ) in result.messages
     attack_event = next(event for event in result.events if event.type == "attack_resolved")
     assert attack_event.data["hit"] is False
     assert attack_event.data["critical_hit"] is False
     assert attack_event.data["damage"] == 0
     assert attack_event.data["damage_roll_detail"] is None
     assert attack_event.data["attack_roll_detail"]["critical_miss"] is True
-    assert session.encounter_state.enemies[0].creature.get_health() == starting_health
+    assert session.encounter_state.creatures["participant:0"].creature.get_health() == starting_health
 
 
 def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
@@ -1006,50 +1037,42 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    session.player.combat_profile.attacks_per_attack_action = 2
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].creature.current_health = 20
+    session.primary_creature.combat_profile.attacks_per_attack_action = 2
+    session.encounter_state.primary_position.x = 4
+    session.encounter_state.primary_position.y = 3
+    session.encounter_state.creatures["participant:0"].position.x = 4
+    session.encounter_state.creatures["participant:0"].position.y = 2
+    session.encounter_state.creatures["participant:0"].creature.current_health = 20
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
 
-    attack_index = next(
-        index
-        for index, choice in enumerate(session.get_scene_view().choices)
-        if choice.startswith("Attack enemy 1")
-    )
+    attack_index = _action_index(session, "attack", "participant:0")
     first_result = session.choose(attack_index)
 
     attack_events = [event for event in first_result.events if event.type == "attack_resolved"]
     assert len(attack_events) == 1
     assert attack_events[0].data["attacks_remaining"] == 1
-    assert session.encounter_state.enemies[0].creature.get_health() == 15
-    assert session.encounter_state.player_action_available is False
-    assert session.encounter_state.player_attacks_remaining == 1
+    assert session.encounter_state.creatures["participant:0"].creature.get_health() == 15
+    assert session.encounter_state.active_action_available is False
+    assert session.encounter_state.active_attacks_remaining == 1
 
     move_index = session.get_scene_view().choices.index("Move left")
     move_result = session.choose(move_index)
 
-    assert ("system", "You move left. Movement remaining: 5.") in move_result.messages
-    assert session.encounter_state.player_position.x == 3
-    assert session.encounter_state.player_position.y == 3
-    assert session.encounter_state.player_attacks_remaining == 1
+    assert ("system", "Traveler moves left to (3, 3).") in move_result.messages
+    assert session.encounter_state.primary_position.x == 3
+    assert session.encounter_state.primary_position.y == 3
+    assert session.encounter_state.active_attacks_remaining == 1
 
-    second_attack_index = next(
-        index
-        for index, choice in enumerate(session.get_scene_view().choices)
-        if choice.startswith("Attack enemy 1")
-    )
+    second_attack_index = _action_index(session, "attack", "participant:0")
     second_result = session.choose(second_attack_index)
 
     second_attack_events = [event for event in second_result.events if event.type == "attack_resolved"]
     assert len(second_attack_events) == 1
     assert second_attack_events[0].data["attacks_remaining"] == 0
-    assert session.encounter_state.enemies[0].creature.get_health() == 10
-    assert session.encounter_state.player_attacks_remaining == 0
+    assert session.encounter_state.creatures["participant:0"].creature.get_health() == 10
+    assert session.encounter_state.active_attacks_remaining == 0
     assert not any(
         choice.startswith("Attack enemy")
         for choice in session.get_scene_view().choices
@@ -1059,7 +1082,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
 def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
-    session.player.current_health = 10
+    session.primary_creature.current_health = 10
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5)
 
@@ -1069,10 +1092,10 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
 
     assert ("system", "Traveler uses Second Wind.") in result.messages
     assert ("system", "Healing: 1d10=5 + level 2 = 7; applied 7.") in result.messages
-    assert session.player.get_health() == 17
+    assert session.primary_creature.get_health() == 17
     assert session.encounter_state is not None
-    assert session.encounter_state.player_bonus_action_available is False
-    assert session.player.feature_uses_remaining["second_wind"] == 1
+    assert session.encounter_state.active_bonus_action_available is False
+    assert session.primary_creature.feature_uses_remaining["second_wind"] == 1
     assert "Second Wind" not in session.get_scene_view().choices
     event = next(event for event in result.events if event.type == "feature_used")
     assert event.data["feature_id"] == "second_wind"
@@ -1085,7 +1108,7 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
 def test_second_wind_stays_visible_in_feature_column_when_unavailable(monkeypatch) -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
-    session.player.current_health = 10
+    session.primary_creature.current_health = 10
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5)
 
@@ -1107,11 +1130,11 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
     assert session.encounter_state is not None
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].creature.current_health = 30
+    session.encounter_state.primary_position.x = 4
+    session.encounter_state.primary_position.y = 3
+    session.encounter_state.creatures["participant:0"].position.x = 4
+    session.encounter_state.creatures["participant:0"].position.y = 2
+    session.encounter_state.creatures["participant:0"].creature.current_health = 30
 
     def fixed_roll(sides: int) -> int:
         return 18 if sides == 20 else 6
@@ -1119,26 +1142,27 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", fixed_roll)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 6)
 
-    first_attack_index = next(
-        index
-        for index, choice in enumerate(session.get_scene_view().choices)
-        if choice.startswith("Attack enemy 1")
-    )
+    first_attack_index = _action_index(session, "attack", "participant:0")
     session.choose(first_attack_index)
 
-    assert session.encounter_state.player_actions_remaining == 0
+    assert session.encounter_state.active_actions_remaining == 0
 
     scene_view = session.get_scene_view()
     action_surge_index = scene_view.choices.index("Action Surge")
     result = session.choose(action_surge_index)
 
     assert ("system", "Traveler uses Action Surge.") in result.messages
-    assert session.encounter_state.player_actions_remaining == 1
-    assert session.encounter_state.player_magic_actions_remaining == 0
-    assert session.player.feature_uses_remaining["action_surge"] == 0
-    updated_choices = session.get_scene_view().choices
-    assert any(choice.startswith("Attack enemy ") for choice in updated_choices)
-    assert not any(choice.startswith("Cast ") for choice in updated_choices)
+    assert session.encounter_state.active_actions_remaining == 1
+    assert session.encounter_state.active_magic_actions_remaining == 0
+    assert session.primary_creature.feature_uses_remaining["action_surge"] == 0
+    assert any(
+        action.kind == "attack"
+        for action in session.get_scene_view().action_details
+    )
+    assert not any(
+        action.kind == "spell"
+        for action in session.get_scene_view().action_details
+    )
     event = next(event for event in result.events if event.type == "feature_used")
     assert event.data["feature_id"] == "action_surge"
     assert event.data["granted_actions"] == 1
@@ -1150,10 +1174,10 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.player_position.x = 4
-    state.player_position.y = 3
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 2
+    state.primary_position.x = 4
+    state.primary_position.y = 3
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 2
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 2))
@@ -1163,7 +1187,7 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
     assert "Blinded" in presentation.encounter.battlefield.summary_text
     assert presentation.encounter.resources.conditions == ()
     assert any(
-        creature.creature_ref == "enemy:0" and creature.conditions == ("blinded",)
+        creature.creature_ref == "participant:0" and creature.conditions == ("blinded",)
         for creature in presentation.encounter.battlefield.creatures
     )
 
@@ -1173,7 +1197,7 @@ def test_spell_actions_map_to_magic_menu_bucket() -> None:
         None,
         ActionView(
             index=0,
-            id="player-spell-color_spray",
+            id="spell-color_spray",
             label="Cast Color Spray",
             kind="spell",
             creature_ref="player",
@@ -1206,12 +1230,12 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
     window = CyoaPySide6Window.__new__(CyoaPySide6Window)
     window._pending_target_mode = TargetSelectionMode(
         kind="spell",
-        source_trigger_id="player-spell-color_spray",
+        source_trigger_id="spell-color_spray",
     )
     actions = [
         ActionView(
             index=0,
-            id="player-spell-color_spray",
+            id="spell-color_spray",
             label="Cast Color Spray",
             kind="spell",
             creature_ref="player",
@@ -1229,26 +1253,23 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    session.player.combat_profile.attacks_per_attack_action = 1
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
-    session.encounter_state.enemies[0].creature.current_health = 1
-    session.encounter_state.enemies[1].creature.current_health = 0
-    session.encounter_state.enemies[2].creature.current_health = 0
+    session.primary_creature.combat_profile.attacks_per_attack_action = 1
+    session.encounter_state.primary_position.x = 4
+    session.encounter_state.primary_position.y = 3
+    session.encounter_state.creatures["participant:0"].position.x = 4
+    session.encounter_state.creatures["participant:0"].position.y = 2
+    session.encounter_state.creatures["participant:0"].creature.current_health = 1
+    session.encounter_state.creatures["participant:1"].creature.current_health = 0
+    session.encounter_state.creatures["participant:2"].creature.current_health = 0
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 4)
 
-    scene_view = session.get_scene_view()
-    attack_index = next(
-        index for index, choice in enumerate(scene_view.choices) if choice.startswith("Attack enemy 1")
-    )
+    attack_index = _action_index(session, "attack", "participant:0")
     result = session.choose(attack_index)
 
     assert result.selected_choice_text is not None
-    assert result.selected_choice_text.startswith("Attack enemy 1")
+    assert result.events[0].data["kind"] == "attack"
     assert session.current_scene_id == "goblin_encounter"
     assert session.pending_scene_transition is not None
     assert session.encounter_state is not None
@@ -1262,34 +1283,32 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    session.player.combat_profile.attacks_per_attack_action = 1
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
+    session.primary_creature.combat_profile.attacks_per_attack_action = 1
+    session.encounter_state.primary_position.x = 4
+    session.encounter_state.primary_position.y = 3
+    session.encounter_state.creatures["participant:0"].position.x = 4
+    session.encounter_state.creatures["participant:0"].position.y = 2
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1)
 
-    attack_index = next(
-        index
-        for index, choice in enumerate(session.get_scene_view().choices)
-        if choice.startswith("Attack enemy 1")
-    )
+    attack_index = _action_index(session, "attack", "participant:0")
     session.choose(attack_index)
 
-    assert session.encounter_state.player_action_available is False
+    assert session.encounter_state.active_action_available is False
     assert not any(
-        choice.startswith("Attack enemy")
-        for choice in session.get_scene_view().choices
+        action.kind == "attack"
+        for action in session.get_scene_view().action_details
     )
 
     wait_index = session.get_scene_view().choices.index("Wait")
     session.choose(wait_index)
+    while session.encounter_state.current_decision().kind == "reaction":
+        session.choose(session.get_scene_view().choices.index("Pass reaction"))
 
-    assert session.encounter_state.player_action_available is True
+    assert session.encounter_state.creatures["player"].actions_remaining == 1
     assert any(
-        choice.startswith("Attack enemy")
-        for choice in session.get_scene_view().choices
+        action.kind == "attack"
+        for action in session.get_scene_view().action_details
     )
 
 
@@ -1297,8 +1316,9 @@ def test_encounter_victory_waits_for_continue_before_restart() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
-    for enemy in session.encounter_state.enemies:
-        enemy.creature.current_health = 0
+    for creature_ref, creature_state in session.encounter_state.creatures.items():
+        if creature_ref != session.encounter_state.primary_creature_ref:
+            creature_state.creature.current_health = 0
 
     wait_index = session.get_scene_view().choices.index("Wait")
     result = session.choose(wait_index)
@@ -1318,4 +1338,8 @@ def test_encounter_victory_waits_for_continue_before_restart() -> None:
     assert session.pending_scene_transition is None
     assert session.current_scene_id == "goblin_encounter"
     assert session.encounter_state is not None
-    assert all(enemy.creature.get_health() > 0 for enemy in session.encounter_state.enemies)
+    assert all(
+        creature_state.creature.get_health() > 0
+        for creature_ref, creature_state in session.encounter_state.creatures.items()
+        if creature_ref != session.encounter_state.primary_creature_ref
+    )

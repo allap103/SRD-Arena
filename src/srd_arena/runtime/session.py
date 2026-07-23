@@ -23,8 +23,8 @@ class Session:
     def __init__(
         self,
         encounters: dict[str, EncounterDefinition],
-        player: Creature,
-        creature_templates: dict[str, Creature] | None = None,
+        primary_creature_id: str,
+        creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
         start_scene_id: str = "goblin_encounter",
         control_mode: str = "default",
@@ -33,12 +33,12 @@ class Session:
         geometry_config: GeometryConfig | None = None,
     ):
         self.encounters = encounters
-        self.player = player
-        self.creature_templates = creature_templates or {player.id: player}
+        self.primary_creature_id = primary_creature_id
+        self.creature_templates = creature_templates
         self.item_templates = item_templates or {}
         self.start_scene_id = start_scene_id
         self.current_scene_id = start_scene_id
-        self._initial_player = deepcopy(player)
+        self._initial_creature_templates = deepcopy(creature_templates)
         self.control_mode = control_mode
         self.controllers_by_creature = dict(controllers_by_creature or {})
         self.ai_action_limit = ai_action_limit
@@ -46,6 +46,12 @@ class Session:
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
         self.pending_scene_transition: PendingSceneTransition | None = None
+
+    @property
+    def primary_creature(self) -> Creature:
+        if self.encounter_state is not None:
+            return self.encounter_state.primary_creature_state.creature
+        return self.creature_templates[self.primary_creature_id]
 
     @property
     def current_encounter(self) -> EncounterDefinition:
@@ -74,7 +80,9 @@ class Session:
         self._ensure_encounter_state()
         encounter = self.current_encounter
         assert self.encounter_state is not None
-        self._encounter_actions = self.encounter_state.available_actions(self.player)
+        self._encounter_actions = self.encounter_state.available_actions(
+            self.primary_creature
+        )
         action_details = [
                 ActionView(
                     index=index,
@@ -125,7 +133,7 @@ class Session:
         raise RuntimeError("No encounter is active.")
 
     def reset(self) -> None:
-        self.player = deepcopy(self._initial_player)
+        self.creature_templates = deepcopy(self._initial_creature_templates)
         self.current_scene_id = self.start_scene_id
         self.pending_scene_transition = None
         self.encounter_state = None
@@ -181,10 +189,10 @@ class Session:
         selected_choice_text: str,
     ) -> TurnResult:
         assert self.encounter_state is not None
-        progress = self.encounter_state.apply_action(self.player, action)
+        progress = self.encounter_state.apply_action(self.primary_creature, action)
         messages = progress.messages
         transition = progress.transition
-        if self.player.get_health() <= 0 and self.current_encounter.defeat:
+        if self.primary_creature.get_health() <= 0 and self.current_encounter.defeat:
             transition = self.current_encounter.defeat.next_encounter_id
 
         scene_changed = False
@@ -194,7 +202,7 @@ class Session:
                 messages = [*messages, ("system", self.pending_scene_transition.message)]
 
         combat_state = (
-            self.encounter_state.export_state(self.player)
+            self.encounter_state.export_state(self.primary_creature)
             if self.encounter_state is not None
             else None
         )
@@ -223,10 +231,12 @@ class Session:
         if not self.encounter_state.needs_ai_advance():
             raise RuntimeError("AI advancement requested while no AI creature is active.")
 
-        progress = self.encounter_state.advance_until_next_decision(self.player)
+        progress = self.encounter_state.advance_until_next_decision(
+            self.primary_creature
+        )
         transition = progress.transition
         if (
-            self.player.get_health() <= 0
+            self.primary_creature.get_health() <= 0
             and self.current_encounter.defeat
         ):
             transition = self.current_encounter.defeat.next_encounter_id
@@ -241,7 +251,7 @@ class Session:
                 ]
 
         combat_state = (
-            self.encounter_state.export_state(self.player)
+            self.encounter_state.export_state(self.primary_creature)
             if self.encounter_state is not None
             else None
         )
@@ -270,7 +280,7 @@ class Session:
         self.encounter_state = EncounterState.from_definition(
             encounter.id,
             encounter,
-            self.player,
+            self.primary_creature,
             self.creature_templates,
             self.item_templates,
             self.control_mode,
@@ -309,7 +319,7 @@ class Session:
             encounter is not None
             and encounter.victory is not None
             and transition == encounter.victory.next_encounter_id
-            and self.player.get_health() > 0
+            and self.primary_creature.get_health() > 0
         ):
             self.pending_scene_transition = PendingSceneTransition(
                 next_scene_id=transition,

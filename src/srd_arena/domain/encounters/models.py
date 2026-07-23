@@ -78,16 +78,6 @@ class RoundState:
 @dataclass
 class TurnState:
     index: int = 0
-    player_movement_remaining: int | None = None
-    player_actions_remaining: int = 1
-    player_magic_actions_remaining: int = 1
-    player_attacks_remaining: int = 0
-    player_bonus_action_available: bool = True
-    player_reaction_available: bool = True
-
-    @property
-    def player_action_available(self) -> bool:
-        return self.player_actions_remaining > 0
 
 
 @dataclass
@@ -99,8 +89,8 @@ class InterruptState:
 
 @dataclass
 class BehaviorContext:
-    player_position: Position
-    enemy_position: Position
+    target_position: Position
+    actor_position: Position
     can_attack: bool
 
 
@@ -112,13 +102,12 @@ class PendingAction:
     direction: str
     from_position: Position
     to_position: Position
-    resume_enemy_index: int | None = None
     remaining_movement_after: int | None = None
     trigger_id: str | None = None
 
 
 @dataclass
-class EncounterEnemyState:
+class EncounterCreatureState:
     creature_id: str
     creature: Creature
     position: Position
@@ -126,6 +115,10 @@ class EncounterEnemyState:
     patrol_index: int = 0
     reaction_available: bool = True
     movement_remaining: int | None = None
+    actions_remaining: int = 1
+    magic_actions_remaining: int = 1
+    attacks_remaining: int = 0
+    bonus_action_available: bool = True
 
     @property
     def is_alive(self) -> bool:
@@ -167,7 +160,6 @@ class PendingAttack:
     action_id: str
     attacker_ref: CreatureRef
     target_ref: CreatureRef
-    target_index: int
     attacker_label: str
     target_label: str
     attacks_remaining: int
@@ -200,8 +192,8 @@ class AttackSource:
 class EncounterStateData:
     encounter_id: str
     definition: EncounterDefinition
-    player_position: Position
-    enemies: list[EncounterEnemyState]
+    creatures: dict[CreatureRef, EncounterCreatureState]
+    primary_creature_ref: CreatureRef = "player"
     control_mode: str = "default"
     controllers_by_creature: dict[str, str] = field(default_factory=dict)
     ai_action_limit: int | None = None
@@ -216,7 +208,10 @@ class EncounterStateData:
     conditions: list[Status] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
-    _behaviors: list[Generator[EncounterAction | None, BehaviorContext, None]] = field(
-        default_factory=list,
+    _behaviors: dict[
+        CreatureRef,
+        Generator[EncounterAction | None, BehaviorContext, None],
+    ] = field(
+        default_factory=dict,
         repr=False,
     )

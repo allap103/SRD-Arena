@@ -63,22 +63,21 @@ def spell_range_squares(spell: Spell, creature: Creature) -> int | None:
 def spell_action_label(
     spell: Spell,
     *,
+    actor_ref: str,
     target_ref: str | None = None,
     target_label: str | None = None,
 ) -> str:
-    if target_ref is None or target_ref == "player" or target_label is None:
+    if target_ref is None or target_ref == actor_ref or target_label is None:
         return f"Cast {spell.name}"
     return f"Cast {spell.name} on {target_label[:1].lower()}{target_label[1:]}"
 
 
 def spell_action_id(spell: Spell, *, target_ref: str | None = None) -> str:
     if target_ref is None:
-        return f"player-spell-{spell.id}"
-    if target_ref == "player":
-        return f"player-spell-{spell.id}-player"
-    if target_ref.startswith("enemy:"):
-        return f"player-spell-{spell.id}-{target_ref.removeprefix('enemy:')}"
-    return f"player-spell-{spell.id}-{target_ref.replace(':', '-')}"
+        return f"spell-{spell.id}"
+    if target_ref.startswith("participant:"):
+        return f"spell-{spell.id}-{target_ref.removeprefix('participant:')}"
+    return f"spell-{spell.id}-{target_ref.replace(':', '-')}"
 
 
 def spell_action_value(

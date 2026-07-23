@@ -18,7 +18,7 @@ class CliRunner:
         scene_view = session.get_scene_view()
         scene_text = scene_view.scene_text
         if scene_text is None and session.encounter_state is not None:
-            scene_text = render_encounter_text(session.encounter_state, session.player)
+            scene_text = render_encounter_text(session.encounter_state, session.primary_creature)
         if scene_text is not None:
             SCENE_LOGGER.info(scene_text)
         for index, choice in enumerate(scene_view.choices):

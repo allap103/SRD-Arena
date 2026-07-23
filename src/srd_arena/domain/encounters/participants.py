@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .models import CreatureRef
-from .refs import enemy_index
 from ..creatures import Creature
 
 if TYPE_CHECKING:
@@ -31,15 +30,11 @@ def creature_controller(state: EncounterState, creature_ref: CreatureRef) -> str
     team = next((team for team in state.definition.teams if team.id == team_id), None)
     if team is not None:
         return team.controller
-    return "user" if creature_ref == "player" else "ai"
+    return "user" if creature_ref == state.primary_creature_ref else "ai"
 
 
 def creature_id_for_ref(state: EncounterState, creature_ref: CreatureRef) -> str:
-    return (
-        "player"
-        if creature_ref == "player"
-        else state.enemies[enemy_index(creature_ref)].creature_id
-    )
+    return state.creatures[creature_ref].creature_id
 
 
 def creature_team_id(state: EncounterState, creature_ref: CreatureRef) -> str:
@@ -64,6 +59,4 @@ def creatures_are_opponents(
 def creature_for_ref(
     state: EncounterState, player: Creature, creature_ref: CreatureRef
 ) -> Creature:
-    if creature_ref == "player":
-        return player
-    return state.enemies[enemy_index(creature_ref)].creature
+    return state.creatures[creature_ref].creature

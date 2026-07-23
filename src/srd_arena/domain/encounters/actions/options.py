@@ -4,18 +4,12 @@ from typing import TYPE_CHECKING
 
 from ...creatures import Creature
 from ...geometry import Position
-from ...creatures import can_grapple
 from ...creatures import Spellcasting
-from .attack_resolution import has_free_hand
 from ..behaviors import (
-    DIRECTION_DELTAS,
     chebyshev_distance as _chebyshev_distance,
-    is_adjacent as _is_adjacent,
 )
-from .consumables import healing_potions_in_inventory
 from ...geometry import AreaOfEffect, Vector2D, build_directional_area, build_radius_area, vector_between_positions
 from ..models import ActionCost, EncounterAction
-from ..refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 from ...spells.definitions import Spell
 from ...spells.resolution import SpellTargetContext
 from ...spells.rules import (
@@ -36,105 +30,20 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
     decision = self.current_decision()
     if self._creature_controller(decision.creature_ref) != "user":
         return []
-    if decision.creature_ref != "player":
-        return self._user_controlled_enemy_actions(player, decision.creature_ref)
     if decision.kind == "reroll_dice":
         return self._reroll_damage_actions()
     if decision.kind == "reaction":
         return self._reaction_actions()
-
-    actions = []
-    movement_cost = self._movement_cost_for(player, "player")
-    if movement_cost is not None and self._player_movement_remaining(player) >= movement_cost:
-        moving_refs = {"player", *self._grappling_targets_for("player")}
-        for direction, (dx, dy) in DIRECTION_DELTAS.items():
-            target_x = self.player_position.x + dx
-            target_y = self.player_position.y + dy
-            if not self._position_is_free(target_x, target_y, ignored_refs=moving_refs):
-                continue
-            actions.append(
-                EncounterAction(
-                    f"Move {direction}",
-                    "move",
-                    direction,
-                    id=f"player-move-{direction}",
-                    creature_ref="player",
-                    cost=ActionCost(movement=1),
-                )
-            )
-
-    can_attack = self.player_actions_remaining > 0 or self.player_attacks_remaining > 0
-    for index, enemy in enumerate(self.enemies):
-        if (
-            can_attack
-            and enemy.is_alive
-            and self._creatures_are_opponents("player", _enemy_ref(index))
-            and _is_adjacent(self.player_position, enemy.position)
-        ):
-            actions.append(
-                EncounterAction(
-                    f"Attack enemy {index + 1} ({enemy.creature.name})",
-                    "attack",
-                    index,
-                    id=f"player-attack-{index}",
-                    creature_ref="player",
-                    cost=ActionCost(action=1 if self.player_attacks_remaining == 0 else 0),
-                )
-            )
-        if (
-            self.player_actions_remaining > 0
-            and enemy.is_alive
-            and self._creatures_are_opponents("player", _enemy_ref(index))
-            and _is_adjacent(self.player_position, enemy.position)
-            and has_free_hand(player)
-            and can_grapple(enemy.creature.size, player.size)
-        ):
-            actions.append(
-                EncounterAction(
-                    f"Grapple enemy {index + 1} ({enemy.creature.name})",
-                    "grapple",
-                    index,
-                    id=f"player-grapple-{index}",
-                    creature_ref="player",
-                    cost=ActionCost(action=1),
-                )
-            )
-
-    actions.extend(self._available_feature_actions(player))
-    actions.extend(self._available_spell_actions(player))
-
-    if self.player_bonus_action_available:
-        for item in healing_potions_in_inventory(player, self.item_templates):
-            actions.append(
-                EncounterAction(
-                    f"Drink {item.name}",
-                    "utilize",
-                    item.id,
-                    id=f"player-utilize-drink-{item.id}",
-                    creature_ref="player",
-                    cost=ActionCost(bonus_action=1),
-                )
-            )
-
-    actions.append(
-        EncounterAction(
-            "Wait",
-            "wait",
-            id="player-wait",
-            creature_ref="player",
-        )
-    )
-
-    return actions
-
+    return self._available_creature_actions(player, decision.creature_ref)
 
 def available_feature_actions(
     self: EncounterState,
-    player: Creature,
+    creature: Creature,
 ) -> list[EncounterAction]:
+    creature_ref = self.current_decision().creature_ref
     actions: list[EncounterAction] = []
-    for feature_id, definition in player.combat_profile.feature_actions.items():
-        if not self._feature_action_available(player, definition):
+    for feature_id, definition in creature.combat_profile.feature_actions.items():
+        if not self._feature_action_available(creature, definition):
             continue
         action_cost = ActionCost(
             bonus_action=1 if definition.economy == "bonus_action" else 0,
@@ -146,8 +55,8 @@ def available_feature_actions(
                 definition.label,
                 "feature",
                 feature_id,
-                id=f"player-feature-{feature_id.replace('_', '-')}",
-                creature_ref="player",
+                id=f"{creature_ref}-feature-{feature_id.replace('_', '-')}",
+                creature_ref=creature_ref,
                 cost=action_cost,
             )
         )
@@ -159,6 +68,7 @@ def available_spell_actions(
     player: Creature,
 ) -> list[EncounterAction]:
     spellcasting = player.spellcasting
+    creature_ref = self.current_decision().creature_ref
     if spellcasting is None:
         return []
     actions: list[EncounterAction] = []
@@ -172,11 +82,11 @@ def available_spell_actions(
                     continue
             actions.append(
                 EncounterAction(
-                    spell_action_label(spell),
+                    spell_action_label(spell, actor_ref=creature_ref),
                     "spell",
                     spell_action_value(spell.id),
                     id=spell_action_id(spell),
-                    creature_ref="player",
+                    creature_ref=creature_ref,
                     cost=cost,
                 )
             )
@@ -186,13 +96,14 @@ def available_spell_actions(
                 EncounterAction(
                     spell_action_label(
                         spell,
+                        actor_ref=creature_ref,
                         target_ref=target.target_ref,
                         target_label=target.target_label,
                     ),
                     "spell",
                     spell_action_value(spell.id, target.target_ref),
                     id=spell_action_id(spell, target_ref=target.target_ref),
-                    creature_ref="player",
+                    creature_ref=creature_ref,
                     cost=cost,
                 )
             )
@@ -200,11 +111,11 @@ def available_spell_actions(
 
 
 def feature_action_available(self: EncounterState, player: Creature, definition) -> bool:
-    if definition.economy == "bonus_action" and not self.player_bonus_action_available:
+    if definition.economy == "bonus_action" and not self.active_bonus_action_available:
         return False
-    if definition.economy == "action" and self.player_actions_remaining <= 0:
+    if definition.economy == "action" and self.active_actions_remaining <= 0:
         return False
-    if definition.economy == "reaction" and not self.player_reaction_available:
+    if definition.economy == "reaction" and not self.active_reaction_available:
         return False
     return player.feature_uses_remaining.get(definition.feature_id, 0) > 0
 
@@ -228,9 +139,9 @@ def spell_cast_block_reason_for(
         spellcasting,
         spell,
         spell_action_economy(spell),
-        action_available=self.player_magic_actions_remaining > 0,
-        bonus_action_available=self.player_bonus_action_available,
-        reaction_available=self.player_reaction_available,
+        action_available=self.active_magic_actions_remaining > 0,
+        bonus_action_available=self.active_bonus_action_available,
+        reaction_available=self.active_reaction_available,
     )
 
 
@@ -247,20 +158,22 @@ def spell_action_targets(
     player: Creature,
     spell: Spell,
 ) -> list[SpellTargetContext]:
+    creature_ref = self.current_decision().creature_ref
+    creature_position = self._creature_position(creature_ref)
     if spell.geometry_mode == "point_area":
         max_range = self._spell_range_squares(spell, player)
         if max_range is None:
             return []
         return [
             target
-            for index, enemy in enumerate(self.enemies)
-            if enemy.is_alive
-            and self._creatures_are_opponents("player", _enemy_ref(index))
-            and _chebyshev_distance(self.player_position, enemy.position) <= max_range
-            and (target := self._spell_target_context(player, _enemy_ref(index))) is not None
+            for target_ref, target_state in self.creatures.items()
+            if target_state.is_alive
+            and self._creatures_are_opponents(creature_ref, target_ref)
+            and _chebyshev_distance(creature_position, target_state.position) <= max_range
+            and (target := self._spell_target_context(player, target_ref)) is not None
         ]
     if self._spell_targets_self_only(spell):
-        target = self._spell_target_context(player, "player")
+        target = self._spell_target_context(player, creature_ref)
         if target is None:
             return []
         if any(condition in spell.removable_conditions for condition in target.target_conditions):
@@ -269,11 +182,16 @@ def spell_action_targets(
 
     max_range = self._spell_range_squares(spell, player)
     targets: list[SpellTargetContext] = []
-    for index, enemy in enumerate(self.enemies):
-        target_ref = _enemy_ref(index)
-        if not enemy.is_alive or not self._creatures_are_opponents("player", target_ref):
+    for target_ref, target_state in self.creatures.items():
+        if not target_state.is_alive or not self._creatures_are_opponents(
+            creature_ref,
+            target_ref,
+        ):
             continue
-        if max_range is not None and _chebyshev_distance(self.player_position, enemy.position) > max_range:
+        if max_range is not None and _chebyshev_distance(
+            creature_position,
+            target_state.position,
+        ) > max_range:
             continue
         target = self._spell_target_context(player, target_ref)
         if target is not None:
@@ -305,11 +223,11 @@ def spend_spell_resources(
 ) -> None:
     if cost.action > 0:
         self._consume_action(allow_magic=True)
-        self.player_attacks_remaining = 0
+        self.active_attacks_remaining = 0
     if cost.bonus_action > 0:
-        self.player_bonus_action_available = False
+        self.active_bonus_action_available = False
     if cost.reaction > 0:
-        self.player_reaction_available = False
+        self.active_reaction_available = False
     if spell.level > 0:
         spellcasting.spell_slots_remaining[spell.level] -= 1
 
@@ -321,6 +239,8 @@ def spell_area(
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
 ) -> AreaOfEffect | None:
+    creature_ref = self.current_decision().creature_ref
+    creature_position = self._creature_position(creature_ref)
     if spell.geometry_mode == "point_area":
         if aim_point is None:
             return None
@@ -333,21 +253,24 @@ def spell_area(
     if spell.geometry_mode != "directional_area":
         return None
     if aim_point is not None:
-        if abs(aim_point[0] - (self.player_position.x + 0.5)) < 1e-9 and abs(
-            aim_point[1] - (self.player_position.y + 0.5)
+        if abs(aim_point[0] - (creature_position.x + 0.5)) < 1e-9 and abs(
+            aim_point[1] - (creature_position.y + 0.5)
         ) < 1e-9:
             return None
         direction = Vector2D(
-            aim_point[0] - (self.player_position.x + 0.5),
-            aim_point[1] - (self.player_position.y + 0.5),
+            aim_point[0] - (creature_position.x + 0.5),
+            aim_point[1] - (creature_position.y + 0.5),
         )
     else:
         if target_ref is None:
             return None
         target = self._spell_target_context(player, target_ref)
-        if target is None or target_ref == "player":
+        if target is None or target_ref == creature_ref:
             return None
-        direction = vector_between_positions(self.player_position, self._creature_position(target_ref))
+        direction = vector_between_positions(
+            creature_position,
+            self._creature_position(target_ref),
+        )
     length = self._spell_range_squares(spell, player)
     if length is None:
         return None
@@ -356,7 +279,7 @@ def spell_area(
     )
     return build_directional_area(
         spell.range_data.get("type"),
-        self.player_position,
+        creature_position,
         direction,
         length,
         self.definition.grid,
@@ -371,16 +294,12 @@ def targets_in_area(
 ) -> list[SpellTargetContext]:
     occupied_cells = {(cell.x, cell.y) for cell in area.cells}
     targets: list[SpellTargetContext] = []
-    if (self.player_position.x, self.player_position.y) in occupied_cells:
-        target = self._spell_target_context(player, "player")
-        if target is not None:
-            targets.append(target)
-    for index, enemy in enumerate(self.enemies):
-        if not enemy.is_alive:
+    for target_ref, target_state in self.creatures.items():
+        if not target_state.is_alive:
             continue
-        if (enemy.position.x, enemy.position.y) not in occupied_cells:
+        if (target_state.position.x, target_state.position.y) not in occupied_cells:
             continue
-        target = self._spell_target_context(player, _enemy_ref(index))
+        target = self._spell_target_context(player, target_ref)
         if target is not None:
             targets.append(target)
     return targets
@@ -391,25 +310,13 @@ def spell_target_context(
     player: Creature,
     target_ref: str,
 ) -> SpellTargetContext | None:
-    if target_ref == "player":
-        return SpellTargetContext(
-            creature=player,
-            target_ref="player",
-            target_label=player.name,
-            target_conditions=tuple(
-                condition.name for condition in self.conditions_for("player")
-            ),
-        )
-    enemy_index = _enemy_index(target_ref)
-    if enemy_index < 0 or enemy_index >= len(self.enemies):
-        return None
-    enemy = self.enemies[enemy_index]
-    if not enemy.is_alive:
+    target_state = self.creatures.get(target_ref)
+    if target_state is None or not target_state.is_alive:
         return None
     return SpellTargetContext(
-        creature=enemy.creature,
+        creature=target_state.creature,
         target_ref=target_ref,
-        target_label=f"Enemy {enemy_index + 1} ({enemy.creature.name})",
+        target_label=target_state.creature.name,
         target_conditions=tuple(
             condition.name for condition in self.conditions_for(target_ref)
         ),

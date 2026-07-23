@@ -20,77 +20,78 @@ def _roll_dice(count: int, sides: int) -> int:
 
 def resolve_feature_action(
     self: EncounterState,
-    player: Creature,
+    creature: Creature,
     feature_id: str,
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    feature_action = player.combat_profile.feature_actions.get(feature_id)
+    creature_ref = self.current_decision().creature_ref
+    feature_action = creature.combat_profile.feature_actions.get(feature_id)
     if feature_action is None:
         progress.messages.append(("system", f"{feature_id} is not implemented yet."))
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
         )
         return
-    if feature_action.economy == "bonus_action" and not self.player_bonus_action_available:
+    if feature_action.economy == "bonus_action" and not self.active_bonus_action_available:
         progress.messages.append(("system", "You have already used your Bonus Action."))
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
         )
         return
-    if feature_action.economy == "action" and self.player_actions_remaining <= 0:
+    if feature_action.economy == "action" and self.active_actions_remaining <= 0:
         progress.messages.append(("system", "You have already used your Action."))
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
         )
         return
-    if feature_action.economy == "reaction" and not self.player_reaction_available:
+    if feature_action.economy == "reaction" and not self.active_reaction_available:
         progress.messages.append(("system", "You have already used your Reaction."))
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
         )
         return
 
-    uses_remaining = player.feature_uses_remaining.get(feature_id, 0)
+    uses_remaining = creature.feature_uses_remaining.get(feature_id, 0)
     if uses_remaining <= 0:
         progress.messages.append(("system", f"You have no uses of {feature_action.label} remaining."))
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
         )
         return
 
-    result = _resolve_feature_action_impl(player, feature_id, _roll_dice)
+    result = _resolve_feature_action_impl(creature, feature_id, _roll_dice)
     if result is None:
         progress.messages.append(("system", f"{feature_action.label} is not implemented yet."))
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
@@ -98,27 +99,31 @@ def resolve_feature_action(
         return
 
     if feature_action.economy == "bonus_action":
-        self.player_bonus_action_available = False
+        self.active_bonus_action_available = False
     elif feature_action.economy == "action":
         self._consume_action(allow_magic=False)
-        self.player_attacks_remaining = 0
+        self.active_attacks_remaining = 0
     elif feature_action.economy == "reaction":
-        self.player_reaction_available = False
+        self.active_reaction_available = False
 
     progress.messages.extend(result.messages)
     granted_actions = result.details.get("grant_actions", 0)
     if isinstance(granted_actions, int) and granted_actions > 0:
-        self.player_actions_remaining += granted_actions
+        self.active_actions_remaining += granted_actions
     healing_effect = next((effect for effect in result.effects if effect.kind == "healing"), None)
     healing_data = healing_effect.data if healing_effect is not None else {}
     healing_roll_detail = healing_data.get("roll", {})
-    target_ref = healing_effect.target_ref if healing_effect is not None else "player"
-    target_label = healing_data.get("target_label", player.name)
+    target_ref = (
+        healing_effect.target_ref
+        if healing_effect is not None
+        else creature_ref
+    )
+    target_label = healing_data.get("target_label", creature.name)
     healing = healing_data.get("amount", 0)
     progress.events.append(
         self._event(
             "feature_used",
-            creature_ref="player",
+            creature_ref=creature_ref,
             action_id=action_id,
             data={
                 "kind": "feature",

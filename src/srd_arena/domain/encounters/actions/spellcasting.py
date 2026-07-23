@@ -28,13 +28,14 @@ def resolve_spell_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
+    creature_ref = self.current_decision().creature_ref
     spellcasting = player.spellcasting
     if spellcasting is None:
         progress.messages.append(("system", "You cannot cast spells."))
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "spell", "success": False},
             )
@@ -47,7 +48,7 @@ def resolve_spell_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "spell", "spell_id": spell_id, "success": False},
             )
@@ -60,7 +61,7 @@ def resolve_spell_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "spell", "spell_id": spell.id, "success": False},
             )
@@ -80,7 +81,7 @@ def resolve_spell_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "spell", "spell_id": spell.id, "success": False},
             )
@@ -94,7 +95,7 @@ def resolve_spell_action(
             current_round=self.round_number,
             targets=targets,
             area=area,
-            source_ref="player",
+            source_ref=creature_ref,
             roller=_roll_die,
         )
     )
@@ -103,7 +104,7 @@ def resolve_spell_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "spell", "spell_id": spell.id, "success": False},
             )
@@ -116,7 +117,7 @@ def resolve_spell_action(
     progress.events.append(
         self._event(
             "spell_cast",
-            creature_ref="player",
+            creature_ref=creature_ref,
             action_id=action_id,
             data={
                 "kind": "spell",

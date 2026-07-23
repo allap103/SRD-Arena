@@ -23,24 +23,25 @@ def resolve_utilize_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
+    creature_ref = self.current_decision().creature_ref
     item = self.item_templates.get(item_id)
     if item is None or not player.inventory.has_item(item_id):
         progress.messages.append(("system", "You do not have that item."))
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={"kind": "utilize", "item_id": item_id, "success": False},
             )
         )
         return
-    if not self.player_bonus_action_available:
+    if not self.active_bonus_action_available:
         progress.messages.append(("system", "You have already used your Bonus Action."))
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={
                     "kind": "utilize",
@@ -57,7 +58,7 @@ def resolve_utilize_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                creature_ref="player",
+                creature_ref=creature_ref,
                 action_id=action_id,
                 data={
                     "kind": "utilize",
@@ -76,7 +77,7 @@ def resolve_utilize_action(
     consumed = item.has_misc_tag("CNS")
     if consumed:
         player.inventory.remove_item(item.id)
-    self.player_bonus_action_available = False
+    self.active_bonus_action_available = False
 
     modifier_text = f" + {modifier}" if modifier else ""
     progress.messages.extend(
@@ -94,14 +95,14 @@ def resolve_utilize_action(
     progress.events.append(
         self._event(
             "item_used",
-            creature_ref="player",
+            creature_ref=creature_ref,
             action_id=action_id,
             data={
                 "kind": "utilize",
                 "mode": "drink",
                 "item_id": item.id,
                 "item_name": item.name,
-                "target_ref": "player",
+                "target_ref": creature_ref,
                 "target_label": player.name,
                 "success": True,
                 "consumed": consumed,
