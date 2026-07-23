@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.frontends.shared.session import build_session_presentation
 from srd_arena.runtime.scenario import Scenario
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
@@ -32,6 +33,55 @@ def test_tactical_fixture_loads_explicit_teams():
     assert encounter.teams[1].members == ["goblin_1", "goblin_2", "goblin_3"]
 
 
+def test_session_can_override_controller_for_one_creature():
+    session = Scenario(
+        TACTICAL_SCENARIO_DIR,
+        start_scene="goblin_encounter",
+    ).create_session(controllers_by_creature={"goblin_1": "user"})
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    assert session.encounter_state._creature_controller("enemy:0") == "user"
+    assert session.encounter_state._creature_controller("enemy:1") == "ai"
+
+
+def test_runtime_override_pauses_only_for_assigned_creature():
+    session = Scenario(
+        TACTICAL_SCENARIO_DIR,
+        start_scene="goblin_encounter",
+    ).create_session(controllers_by_creature={"goblin_1": "user"})
+    session.get_scene_view()
+
+    result = session.choose(session.get_scene_view().choices.index("Wait"))
+
+    assert session.encounter_state is not None
+    assert session.encounter_state.current_decision().creature_ref == "enemy:0"
+    assert result.decision is not None
+    assert result.decision["creature_ref"] == "enemy:0"
+    assert {
+        action.creature_ref
+        for action in session.encounter_state.available_actions(session.player)
+    } == {"enemy:0"}
+
+
+def test_resource_summary_uses_active_creature_movement():
+    session = Scenario(
+        TACTICAL_SCENARIO_DIR,
+        start_scene="goblin_encounter",
+        control_mode="all-user",
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    session.encounter_state.player_movement_remaining = 2
+
+    session.choose(session.get_scene_view().choices.index("Wait"))
+    presentation = build_session_presentation(session)
+
+    assert presentation.encounter is not None
+    assert presentation.encounter.resources.movement_remaining == 6
+    assert presentation.encounter.resources.movement_remaining_feet == 30
+
+
 def test_all_user_mode_pauses_for_each_goblin_turn():
     session = Scenario(
         TACTICAL_SCENARIO_DIR,
@@ -45,13 +95,13 @@ def test_all_user_mode_pauses_for_each_goblin_turn():
 
     result = session.choose(session.get_scene_view().choices.index("Wait"))
 
-    assert state.current_decision().actor_ref == "enemy:0"
+    assert state.current_decision().creature_ref == "enemy:0"
     assert result.decision is not None
-    assert result.decision["actor_ref"] == "enemy:0"
+    assert result.decision["creature_ref"] == "enemy:0"
     assert (state.enemies[0].position.x, state.enemies[0].position.y) == starting_position
     actions = state.available_actions(session.player)
     assert actions
-    assert {action.actor_ref for action in actions} == {"enemy:0"}
+    assert {action.creature_ref for action in actions} == {"enemy:0"}
     assert "Wait" in [action.label for action in actions]
     assert any(action.kind == "move" for action in actions)
 
@@ -81,13 +131,13 @@ def test_user_controlled_goblin_can_move_then_end_turn():
         )
     )
 
-    assert state.current_decision().actor_ref == "enemy:0"
+    assert state.current_decision().creature_ref == "enemy:0"
     assert (state.enemies[0].position.x, state.enemies[0].position.y) != start
     assert state.enemies[0].movement_remaining == 5
 
     session.choose(session.get_scene_view().choices.index("Wait"))
 
-    assert state.current_decision().actor_ref == "enemy:1"
+    assert state.current_decision().creature_ref == "enemy:1"
 
 
 def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
@@ -113,7 +163,7 @@ def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
         if action.kind == "attack"
     )
 
-    assert attack.actor_ref == "enemy:0"
+    assert attack.creature_ref == "enemy:0"
     assert attack.value == "player"
     health_before = session.player.get_health()
     result = session.choose(
@@ -125,9 +175,9 @@ def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
     )
 
     assert session.player.get_health() < health_before
-    assert state.current_decision().actor_ref == "enemy:1"
+    assert state.current_decision().creature_ref == "enemy:1"
     event = next(event for event in result.events if event.type == "attack_resolved")
-    assert event.actor_ref == "enemy:0"
+    assert event.creature_ref == "enemy:0"
     assert event.data["target_ref"] == "player"
 
 
@@ -200,7 +250,7 @@ def test_paced_ai_resolves_one_visible_action_per_step():
 
     first = session.choose(session.get_scene_view().choices.index("Wait"))
 
-    assert state.current_decision().actor_ref == "enemy:0"
+    assert state.current_decision().creature_ref == "enemy:0"
     assert len(
         [event for event in first.events if event.type == "movement_resolved"]
     ) == 1
@@ -211,7 +261,7 @@ def test_paced_ai_resolves_one_visible_action_per_step():
     assert len(
         [event for event in second.events if event.type == "movement_resolved"]
     ) == 1
-    assert state.current_decision().actor_ref == "enemy:0"
+    assert state.current_decision().creature_ref == "enemy:0"
 
 
 def test_default_ai_still_resolves_until_the_next_user_decision():
@@ -224,7 +274,7 @@ def test_default_ai_still_resolves_until_the_next_user_decision():
     result = session.choose(session.get_scene_view().choices.index("Wait"))
 
     assert session.encounter_state is not None
-    assert session.encounter_state.current_decision().actor_ref == "player"
+    assert session.encounter_state.current_decision().creature_ref == "player"
     assert len(
         [event for event in result.events if event.type == "movement_resolved"]
     ) > 1

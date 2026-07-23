@@ -36,9 +36,9 @@ def apply_action(
     action: EncounterAction,
 ) -> EncounterProgress:
     decision = self.current_decision()
-    if self._creature_controller(decision.actor_ref) != "user":
+    if self._creature_controller(decision.creature_ref) != "user":
         raise RuntimeError("User action requested for an AI-controlled creature.")
-    if decision.actor_ref != "player":
+    if decision.creature_ref != "player":
         return self._apply_user_controlled_enemy_action(player, action, decision)
     if decision.kind == "reroll_dice":
         return self._apply_damage_reroll_action(player, action, decision)
@@ -50,7 +50,7 @@ def apply_action(
     progress.events.append(
         self._event(
             "action_declared",
-            actor_ref="player",
+            creature_ref="player",
             action_id=resolved_action_id,
             data={
                 "kind": action.kind,
@@ -164,7 +164,7 @@ def apply_player_move(
     progress.events.append(
         self._event(
             "movement_resolved",
-            actor_ref="player",
+            creature_ref="player",
             action_id=action_id,
             data={
                 "direction": direction,
@@ -186,7 +186,7 @@ def resolve_grapple_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "grapple", "success": False},
             )
@@ -210,7 +210,7 @@ def resolve_grapple_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "grapple", "success": False},
             )
@@ -230,7 +230,7 @@ def resolve_grapple_action(
     progress.events.append(
         self._event(
             "grapple_resolved",
-            actor_ref="player",
+            creature_ref="player",
             action_id=action_id,
             data={
                 "target_ref": f"enemy:{target_index}",
@@ -249,7 +249,7 @@ def resolve_grapple_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "grapple", "success": False},
             )
@@ -283,7 +283,7 @@ def resolve_grapple_action(
     progress.events.append(
         self._event(
             "action_resolved",
-            actor_ref="player",
+            creature_ref="player",
             action_id=action_id,
             data={"kind": "grapple", "success": True, "target_ref": f"enemy:{target_index}"},
         )

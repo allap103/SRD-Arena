@@ -162,7 +162,7 @@ class GameWindow(QMainWindow):
 
         self.battlefield_widget = BattlefieldWidget(self.game.directory)
         self.battlefield_widget.setObjectName("combatBoard")
-        self.battlefield_widget.actor_clicked.connect(self._handle_battlefield_creature_clicked)
+        self.battlefield_widget.creature_clicked.connect(self._handle_battlefield_creature_clicked)
         self.battlefield_widget.cell_clicked.connect(self._handle_battlefield_cell_clicked)
         self.battlefield_widget.point_clicked.connect(self._handle_battlefield_point_clicked)
         battlefield_layout.addWidget(self.battlefield_widget, stretch=1)
@@ -1039,7 +1039,7 @@ class GameWindow(QMainWindow):
         self._pending_target_mode = None if self._pending_target_mode == mode else mode
         self.refresh_view()
 
-    def _handle_battlefield_creature_clicked(self, actor_ref: str) -> None:
+    def _handle_battlefield_creature_clicked(self, creature_ref: str) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
         if self._pending_target_mode is None:
@@ -1048,7 +1048,7 @@ class GameWindow(QMainWindow):
             self._pending_target_mode,
             {},
         ).get(
-            actor_ref
+            creature_ref
         )
         if action is None:
             return
@@ -1074,7 +1074,7 @@ class GameWindow(QMainWindow):
             kind=action.kind,
             value=payload,
             id=action.id,
-            actor_ref=action.actor_ref,
+            creature_ref=action.creature_ref,
             cost=ActionCost(
                 movement=action.cost.get("movement", 0),
                 action=action.cost.get("action", 0),

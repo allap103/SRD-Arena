@@ -10,27 +10,48 @@ if TYPE_CHECKING:
     from .encounter import EncounterState
 
 
-def creature_controller(state: EncounterState, actor_ref: CreatureRef) -> str:
+def creature_controller(state: EncounterState, creature_ref: CreatureRef) -> str:
     if state.control_mode == "all-user":
         return "user"
-    team_id = creature_team_id(state, actor_ref)
+    creature_id = creature_id_for_ref(state, creature_ref)
+    assigned = state.controllers_by_creature.get(creature_id)
+    if assigned is not None:
+        return assigned
+    participant = next(
+        (
+            participant
+            for participant in state.definition.participants
+            if participant.creature_id == creature_id
+        ),
+        None,
+    )
+    if participant is not None and participant.controller is not None:
+        return participant.controller
+    team_id = creature_team_id(state, creature_ref)
     team = next((team for team in state.definition.teams if team.id == team_id), None)
     if team is not None:
         return team.controller
-    return "user" if actor_ref == "player" else "ai"
+    return "user" if creature_ref == "player" else "ai"
 
 
-def creature_team_id(state: EncounterState, actor_ref: CreatureRef) -> str:
-    actor_id = (
+def creature_id_for_ref(state: EncounterState, creature_ref: CreatureRef) -> str:
+    return (
         "player"
-        if actor_ref == "player"
-        else state.enemies[enemy_index(actor_ref)].actor_id
+        if creature_ref == "player"
+        else state.enemies[enemy_index(creature_ref)].creature_id
     )
-    team = next((team for team in state.definition.teams if actor_id in team.members), None)
-    return team.id if team is not None else actor_id
 
 
-def actors_are_opponents(
+def creature_team_id(state: EncounterState, creature_ref: CreatureRef) -> str:
+    creature_id = creature_id_for_ref(state, creature_ref)
+    team = next(
+        (team for team in state.definition.teams if creature_id in team.members),
+        None,
+    )
+    return team.id if team is not None else creature_id
+
+
+def creatures_are_opponents(
     state: EncounterState,
     first_creature_ref: CreatureRef,
     second_creature_ref: CreatureRef,
@@ -41,8 +62,8 @@ def actors_are_opponents(
 
 
 def creature_for_ref(
-    state: EncounterState, player: Creature, actor_ref: CreatureRef
+    state: EncounterState, player: Creature, creature_ref: CreatureRef
 ) -> Creature:
-    if actor_ref == "player":
+    if creature_ref == "player":
         return player
-    return state.enemies[enemy_index(actor_ref)].creature
+    return state.enemies[enemy_index(creature_ref)].creature

@@ -34,7 +34,7 @@ def resolve_spell_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "spell", "success": False},
             )
@@ -47,7 +47,7 @@ def resolve_spell_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "spell", "spell_id": spell_id, "success": False},
             )
@@ -60,7 +60,7 @@ def resolve_spell_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "spell", "spell_id": spell.id, "success": False},
             )
@@ -80,7 +80,7 @@ def resolve_spell_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "spell", "spell_id": spell.id, "success": False},
             )
@@ -103,7 +103,7 @@ def resolve_spell_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "spell", "spell_id": spell.id, "success": False},
             )
@@ -116,7 +116,7 @@ def resolve_spell_action(
     progress.events.append(
         self._event(
             "spell_cast",
-            actor_ref="player",
+            creature_ref="player",
             action_id=action_id,
             data={
                 "kind": "spell",

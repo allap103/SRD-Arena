@@ -31,7 +31,7 @@ def resolve_feature_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
@@ -42,7 +42,7 @@ def resolve_feature_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
@@ -53,7 +53,7 @@ def resolve_feature_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
@@ -64,7 +64,7 @@ def resolve_feature_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
@@ -77,7 +77,7 @@ def resolve_feature_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
@@ -90,7 +90,7 @@ def resolve_feature_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "feature", "feature_id": feature_id, "success": False},
             )
@@ -118,7 +118,7 @@ def resolve_feature_action(
     progress.events.append(
         self._event(
             "feature_used",
-            actor_ref="player",
+            creature_ref="player",
             action_id=action_id,
             data={
                 "kind": "feature",

@@ -29,7 +29,7 @@ class EncounterAction:
     kind: str
     value: str | int | None = None
     id: str = ""
-    actor_ref: CreatureRef = "player"
+    creature_ref: CreatureRef = "player"
     source_trigger_id: str | None = None
     cost: ActionCost = field(default_factory=ActionCost)
 
@@ -37,7 +37,7 @@ class EncounterAction:
 @dataclass
 class DecisionFrame:
     id: str
-    actor_ref: CreatureRef
+    creature_ref: CreatureRef
     kind: str
     reason: str
     parent_frame_id: str | None = None
@@ -49,7 +49,7 @@ class DecisionFrame:
 class CombatEvent:
     seq: int
     type: str
-    actor_ref: CreatureRef | None = None
+    creature_ref: CreatureRef | None = None
     frame_id: str | None = None
     action_id: str | None = None
     data: dict[str, object] = field(default_factory=dict)
@@ -108,7 +108,7 @@ class BehaviorContext:
 class PendingAction:
     id: str
     kind: str
-    actor_ref: CreatureRef
+    creature_ref: CreatureRef
     direction: str
     from_position: Position
     to_position: Position
@@ -119,7 +119,7 @@ class PendingAction:
 
 @dataclass
 class EncounterEnemyState:
-    actor_id: str
+    creature_id: str
     creature: Creature
     position: Position
     behavior: EncounterBehavior
@@ -134,7 +134,7 @@ class EncounterEnemyState:
 
 @dataclass
 class InitiativeEntry:
-    actor_ref: CreatureRef
+    creature_ref: CreatureRef
     roll: int
     modifier: int
     total: int
@@ -203,6 +203,7 @@ class EncounterStateData:
     player_position: Position
     enemies: list[EncounterEnemyState]
     control_mode: str = "default"
+    controllers_by_creature: dict[str, str] = field(default_factory=dict)
     ai_action_limit: int | None = None
     round: RoundState = field(default_factory=RoundState)
     turn: TurnState = field(default_factory=TurnState)

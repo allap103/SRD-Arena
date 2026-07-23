@@ -6,6 +6,9 @@ from srd_arena.runtime.scenario import Scenario
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
+GOBLIN_SKIRMISH_DIR = (
+    Path(__file__).parents[1] / "content" / "scenarios" / "goblin_skirmish"
+)
 
 
 def test_load_encounter_parses_definition() -> None:
@@ -18,7 +21,7 @@ def test_load_encounter_parses_definition() -> None:
     assert encounter.participants[0].start.x == 1
     assert encounter.participants[0].start.y == 6
     assert len(encounter.participants) == 4
-    assert [participant.actor_id for participant in encounter.participants[1:]] == [
+    assert [participant.creature_id for participant in encounter.participants[1:]] == [
         "goblin_1",
         "goblin_2",
         "goblin_3",
@@ -29,6 +32,67 @@ def test_load_encounter_parses_definition() -> None:
     assert len(encounter.participants[3].behavior.path) == 3
     assert encounter.victory.next_encounter_id == "goblin_encounter"
     assert encounter.defeat.next_encounter_id == "goblin_encounter"
+
+
+def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None:
+    scenario_dir = tmp_path / "mixed_control"
+    (scenario_dir / "encounters").mkdir(parents=True)
+    (scenario_dir / "player_characters").mkdir()
+    (scenario_dir / "player_characters" / "player").write_text(
+        (
+            FIXTURE_ENCOUNTER_DIR / "player_characters" / "player"
+        ).read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    encounter_data = json.loads(
+        (FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter").read_text(
+            encoding="utf-8"
+        )
+    )
+    encounter_data["creatures"][1]["controller"] = "user"
+    encounter_data["creatures"][1].pop("behavior")
+    (scenario_dir / "encounters" / "goblin_encounter").write_text(
+        json.dumps(encounter_data),
+        encoding="utf-8",
+    )
+
+    scenario = Scenario(scenario_dir)
+    participant = scenario.encounters["goblin_encounter"].participants[1]
+    session = scenario.create_session()
+    session.get_scene_view()
+
+    assert participant.creature_id == "goblin_1"
+    assert participant.controller == "user"
+    assert session.encounter_state is not None
+
+
+def test_goblin_skirmish_gives_user_control_to_every_creature() -> None:
+    scenario = Scenario(GOBLIN_SKIRMISH_DIR)
+    encounter = scenario.encounters["goblin_skirmish"]
+    session = scenario.create_session()
+    session.get_scene_view()
+
+    assert {creature.name for creature in scenario.creatures} == {
+        "Aldren",
+        "Brynn",
+        "Redblade",
+        "Redeye",
+        "Blueblade",
+        "Blueeye",
+    }
+    assert scenario.get_creature("player").subclass_ref is not None
+    assert scenario.get_creature("champion_2").subclass_ref is not None
+    assert scenario.get_creature("champion_2").subclass_ref.name == "Champion"
+    assert all(
+        participant.controller == "user"
+        for participant in encounter.participants
+    )
+    assert all(team.controller == "user" for team in encounter.teams)
+    assert session.encounter_state is not None
+    assert all(
+        session.encounter_state._creature_controller(creature_ref) == "user"
+        for creature_ref in session.encounter_state.initiative_order
+    )
 
 
 def test_nested_creature_can_reference_system_stat_block() -> None:
@@ -92,8 +156,8 @@ def test_game_loads_geometry_settings_from_config_json() -> None:
 
 def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
     scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
-    actor_path = tmp_path / "fighter_level_five.json"
-    actor_path.write_text(
+    creature_path = tmp_path / "fighter_level_five.json"
+    creature_path.write_text(
         json.dumps(
             {
                 "id": "fighter_level_five",
@@ -115,7 +179,7 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     upgraded = load_creature(
-        actor_path,
+        creature_path,
         scenario.bestiary,
         scenario.classes,
         scenario.player_characters,
@@ -130,8 +194,8 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
 
 def test_creature_can_load_subclass_and_explicit_spellcasting(tmp_path: Path) -> None:
     scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
-    actor_path = tmp_path / "arcane_champion.json"
-    actor_path.write_text(
+    creature_path = tmp_path / "arcane_champion.json"
+    creature_path.write_text(
         json.dumps(
             {
                 "id": "arcane_champion",
@@ -170,7 +234,7 @@ def test_creature_can_load_subclass_and_explicit_spellcasting(tmp_path: Path) ->
         encoding="utf-8",
     )
     creature = load_creature(
-        actor_path,
+        creature_path,
         scenario.bestiary,
         scenario.classes,
         scenario.player_characters,
@@ -211,8 +275,8 @@ def test_creature_can_load_subclass_and_explicit_spellcasting(tmp_path: Path) ->
 
 def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) -> None:
     scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
-    actor_path = tmp_path / "geometry_spells.json"
-    actor_path.write_text(
+    creature_path = tmp_path / "geometry_spells.json"
+    creature_path.write_text(
         json.dumps(
             {
                 "id": "geometry_spells",
@@ -240,7 +304,7 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
         encoding="utf-8",
     )
     creature = load_creature(
-        actor_path,
+        creature_path,
         scenario.bestiary,
         scenario.classes,
         scenario.player_characters,

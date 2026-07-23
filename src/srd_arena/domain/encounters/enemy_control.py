@@ -28,16 +28,16 @@ def _roll_dice(count: int, sides: int) -> int:
 def user_controlled_enemy_actions(
     self: EncounterState,
     player: Creature,
-    actor_ref: CreatureRef,
+    creature_ref: CreatureRef,
 ) -> list[EncounterAction]:
-    enemy_index = _enemy_index(actor_ref)
+    enemy_index = _enemy_index(creature_ref)
     enemy = self.enemies[enemy_index]
-    movement_cost = self._movement_cost_for(player, actor_ref)
+    movement_cost = self._movement_cost_for(player, creature_ref)
     if enemy.movement_remaining is None:
         enemy.movement_remaining = _movement_squares(enemy.creature)
     actions: list[EncounterAction] = []
     if movement_cost is not None and enemy.movement_remaining >= movement_cost:
-        moving_refs = {actor_ref, *self._grappling_targets_for(actor_ref)}
+        moving_refs = {creature_ref, *self._grappling_targets_for(creature_ref)}
         for direction, (dx, dy) in DIRECTION_DELTAS.items():
             target_x = enemy.position.x + dx
             target_y = enemy.position.y + dy
@@ -48,13 +48,13 @@ def user_controlled_enemy_actions(
                     f"Move {direction}",
                     "move",
                     direction,
-                    id=f"{actor_ref}-move-{direction}",
-                    actor_ref=actor_ref,
+                    id=f"{creature_ref}-move-{direction}",
+                    creature_ref=creature_ref,
                     cost=ActionCost(movement=1),
                 )
             )
     for target_ref in self._living_creature_refs(player):
-        if target_ref == actor_ref or not self._actors_are_opponents(actor_ref, target_ref):
+        if target_ref == creature_ref or not self._creatures_are_opponents(creature_ref, target_ref):
             continue
         if not _is_adjacent(enemy.position, self._creature_position(target_ref)):
             continue
@@ -63,8 +63,8 @@ def user_controlled_enemy_actions(
                 f"Attack {self._creature_label(target_ref)}",
                 "attack",
                 target_ref,
-                id=f"{actor_ref}-attack-{target_ref.replace(':', '-')}",
-                actor_ref=actor_ref,
+                id=f"{creature_ref}-attack-{target_ref.replace(':', '-')}",
+                creature_ref=creature_ref,
                 cost=ActionCost(action=1),
             )
         )
@@ -72,8 +72,8 @@ def user_controlled_enemy_actions(
         EncounterAction(
             "Wait",
             "wait",
-            id=f"{actor_ref}-wait",
-            actor_ref=actor_ref,
+            id=f"{creature_ref}-wait",
+            creature_ref=creature_ref,
         )
     )
     return actions
@@ -85,14 +85,14 @@ def apply_user_controlled_enemy_action(
     action: EncounterAction,
     decision: DecisionFrame,
 ) -> EncounterProgress:
-    enemy_index = _enemy_index(decision.actor_ref)
+    enemy_index = _enemy_index(decision.creature_ref)
     enemy = self.enemies[enemy_index]
     progress = EncounterProgress()
     action_id = self._next_action_id()
     progress.events.append(
         self._event(
             "action_declared",
-            actor_ref=decision.actor_ref,
+            creature_ref=decision.creature_ref,
             action_id=action_id,
             data={
                 "kind": action.kind,
@@ -132,7 +132,7 @@ def apply_user_controlled_enemy_action(
         progress.events.append(
             self._event(
                 "movement_resolved",
-                actor_ref=decision.actor_ref,
+                creature_ref=decision.creature_ref,
                 action_id=action_id,
                 data={
                     "direction": direction,
@@ -144,11 +144,11 @@ def apply_user_controlled_enemy_action(
         if not isinstance(action.value, str):
             raise ValueError("Attack action requires an creature reference.")
         target_ref = action.value
-        if not self._actors_are_opponents(decision.actor_ref, target_ref):
+        if not self._creatures_are_opponents(decision.creature_ref, target_ref):
             raise ValueError("Attack target must belong to an opposing team.")
         defender = self._creature_for_ref(player, target_ref)
         target_label = self._creature_label(target_ref)
-        attacker_label = self._creature_label(decision.actor_ref)
+        attacker_label = self._creature_label(decision.creature_ref)
         attack = resolve_attack(
             enemy.creature,
             defender,
@@ -158,7 +158,7 @@ def apply_user_controlled_enemy_action(
             attacker_position=enemy.position,
             nearby_opponent_positions=(self.player_position,),
             attack_roll_mode_override=self._attack_roll_mode_for(
-                decision.actor_ref,
+                decision.creature_ref,
                 target_ref,
                 selected_attack_type(enemy.creature, self.item_templates),
                 enemy.position,
@@ -177,7 +177,7 @@ def apply_user_controlled_enemy_action(
         progress.events.append(
             self._event(
                 "attack_resolved",
-                actor_ref=decision.actor_ref,
+                creature_ref=decision.creature_ref,
                 action_id=action_id,
                 data={
                     "attacker_label": attacker_label,
@@ -195,8 +195,8 @@ def apply_user_controlled_enemy_action(
         if defender.get_health() <= 0:
             progress.events.append(
                 self._event(
-                    "actor_defeated",
-                    actor_ref=target_ref,
+                    "creature_defeated",
+                    creature_ref=target_ref,
                     action_id=action_id,
                 )
             )
@@ -205,7 +205,7 @@ def apply_user_controlled_enemy_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref=decision.actor_ref,
+                creature_ref=decision.creature_ref,
                 action_id=action_id,
                 data={"kind": "wait"},
             )

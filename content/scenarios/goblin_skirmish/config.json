@@ -1,0 +1,7 @@
+{
+  "display_name": "Goblin Skirmish - Full Control",
+  "encounters": ["goblin_skirmish"],
+  "geometry": {
+    "directional_area_cell_coverage_threshold": 0.1
+  }
+}

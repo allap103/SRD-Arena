@@ -34,9 +34,6 @@ def _build_position(position) -> Position:
 
 
 def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
-    players = [creature for creature in schema.creatures if creature.id == "player"]
-    if len(players) != 1:
-        raise ValueError(f"Encounter '{schema.id}' must define exactly one player creature.")
     team_ids = {team.id for team in schema.teams}
     unknown_team_ids = sorted(
         {creature.team_id for creature in schema.creatures} - team_ids
@@ -63,8 +60,9 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
         grid=Grid(width=schema.grid.width, height=schema.grid.height),
         participants=[
             EncounterParticipant(
-                actor_id=creature.id,
+                creature_id=creature.id,
                 start=_build_position(creature.start),
+                controller=creature.controller,
                 behavior=EncounterBehavior(
                     type=creature.behavior.type,
                     anchor=_build_position(creature.behavior.anchor)
@@ -110,7 +108,7 @@ def load_encounter(
                 CreatureSchema.model_validate(
                     creature.model_dump(
                         exclude_unset=True,
-                        exclude={"start", "team_id", "behavior"},
+                        exclude={"start", "team_id", "controller", "behavior"},
                     )
                 ),
                 bestiary,

@@ -28,6 +28,7 @@ class Session:
         item_templates: dict[str, Item] | None = None,
         start_scene_id: str = "goblin_encounter",
         control_mode: str = "default",
+        controllers_by_creature: dict[str, str] | None = None,
         ai_action_limit: int | None = None,
         geometry_config: GeometryConfig | None = None,
     ):
@@ -39,6 +40,7 @@ class Session:
         self.current_scene_id = start_scene_id
         self._initial_player = deepcopy(player)
         self.control_mode = control_mode
+        self.controllers_by_creature = dict(controllers_by_creature or {})
         self.ai_action_limit = ai_action_limit
         self.geometry_config = geometry_config or GeometryConfig()
         self.encounter_state: EncounterState | None = None
@@ -57,7 +59,7 @@ class Session:
                     id="system-continue-scene-transition",
                     label=CONTINUE_CHOICE_TEXT,
                     kind="system_continue_transition",
-                    actor_ref="player",
+                    creature_ref="player",
                     value=None,
                 )
             ]
@@ -79,7 +81,7 @@ class Session:
                     id=action.id,
                     label=action.label,
                     kind=action.kind,
-                    actor_ref=action.actor_ref,
+                    creature_ref=action.creature_ref,
                     value=action.value,
                     cost={
                         "movement": action.cost.movement,
@@ -272,6 +274,7 @@ class Session:
             self.creature_templates,
             self.item_templates,
             self.control_mode,
+            self.controllers_by_creature,
             self.geometry_config,
         )
         self.encounter_state.ai_action_limit = self.ai_action_limit
@@ -329,7 +332,7 @@ class Session:
                 id="system-exit",
                 label=EXIT_CHOICE_TEXT,
                 kind="system_exit",
-                actor_ref="player",
+                creature_ref="player",
                 value=None,
             ),
         ]

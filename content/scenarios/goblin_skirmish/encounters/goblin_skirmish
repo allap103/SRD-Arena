@@ -1,0 +1,103 @@
+{
+  "id": "goblin_skirmish",
+  "grid": {
+    "width": 11,
+    "height": 9
+  },
+  "creatures": [
+    {
+      "id": "player",
+      "token_image": "tokens/human_fighter.png",
+      "player_character": "champion",
+      "start": {
+        "x": 1,
+        "y": 3
+      },
+      "team_id": "heroes",
+      "controller": "user"
+    },
+    {
+      "id": "champion_2",
+      "token_image": "tokens/human_fighter.png",
+      "player_character": "champion_2",
+      "start": {
+        "x": 1,
+        "y": 5
+      },
+      "team_id": "heroes",
+      "controller": "user"
+    },
+    {
+      "id": "red_blade",
+      "name": "Redblade",
+      "token_image": "tokens/goblin_warrior.png",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 7,
+        "y": 2
+      },
+      "team_id": "goblins",
+      "controller": "user"
+    },
+    {
+      "id": "red_archer",
+      "name": "Redeye",
+      "token_image": "tokens/goblin_archer.png",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 8,
+        "y": 2
+      },
+      "team_id": "goblins",
+      "controller": "user"
+    },
+    {
+      "id": "blue_blade",
+      "name": "Blueblade",
+      "token_image": "tokens/goblin_warrior.png",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 8,
+        "y": 3
+      },
+      "team_id": "goblins",
+      "controller": "user"
+    },
+    {
+      "id": "blue_archer",
+      "name": "Blueeye",
+      "token_image": "tokens/goblin_archer.png",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 8,
+        "y": 5
+      },
+      "team_id": "goblins",
+      "controller": "user"
+    }
+  ],
+  "teams": [
+    {
+      "id": "heroes",
+      "name": "Champion Fighters",
+      "controller": "user"
+    },
+    {
+      "id": "goblins",
+      "name": "Goblins",
+      "controller": "user"
+    }
+  ]
+}

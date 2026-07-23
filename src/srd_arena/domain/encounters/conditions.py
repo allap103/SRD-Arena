@@ -46,33 +46,33 @@ def remove_status(state: EncounterState, target_ref: CreatureRef, status_name: s
 
 
 def condition_sources_for(
-    state: EncounterState, actor_ref: CreatureRef, condition_name: str
+    state: EncounterState, creature_ref: CreatureRef, condition_name: str
 ) -> tuple[CreatureRef, ...]:
     return tuple(
         condition.source_ref
         for condition in state.conditions
-        if condition.target_ref == actor_ref and condition.name == condition_name
+        if condition.target_ref == creature_ref and condition.name == condition_name
     )
 
 
-def grappled_sources_for(state: EncounterState, actor_ref: CreatureRef) -> tuple[CreatureRef, ...]:
-    return condition_sources_for(state, actor_ref, "grappled")
+def grappled_sources_for(state: EncounterState, creature_ref: CreatureRef) -> tuple[CreatureRef, ...]:
+    return condition_sources_for(state, creature_ref, "grappled")
 
 
-def grappling_targets_for(state: EncounterState, actor_ref: CreatureRef) -> tuple[CreatureRef, ...]:
-    return condition_sources_for(state, actor_ref, "grappling")
+def grappling_targets_for(state: EncounterState, creature_ref: CreatureRef) -> tuple[CreatureRef, ...]:
+    return condition_sources_for(state, creature_ref, "grappling")
 
 
-def is_grappled(state: EncounterState, actor_ref: CreatureRef) -> bool:
-    return bool(grappled_sources_for(state, actor_ref))
+def is_grappled(state: EncounterState, creature_ref: CreatureRef) -> bool:
+    return bool(grappled_sources_for(state, creature_ref))
 
 
-def movement_cost_for(state: EncounterState, player: Creature, actor_ref: CreatureRef) -> int | None:
-    if is_grappled(state, actor_ref):
+def movement_cost_for(state: EncounterState, player: Creature, creature_ref: CreatureRef) -> int | None:
+    if is_grappled(state, creature_ref):
         return None
     cost = 1
-    grappler_size = state._creature_size(player, actor_ref)
-    for target_ref in grappling_targets_for(state, actor_ref):
+    grappler_size = state._creature_size(player, creature_ref)
+    for target_ref in grappling_targets_for(state, creature_ref):
         if not is_two_sizes_smaller(
             state._creature_size(player, target_ref), grappler_size
         ):

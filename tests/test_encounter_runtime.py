@@ -47,7 +47,7 @@ def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
             kind=action.kind,
             value=f"{action.value}@{aim_cell[0] + 0.5:.4f},{aim_cell[1] + 0.5:.4f}",
             id=action.id,
-            actor_ref=action.actor_ref,
+            creature_ref=action.creature_ref,
             cost=ActionCost(
                 movement=action.cost.get("movement", 0),
                 action=action.cost.get("action", 0),
@@ -100,7 +100,7 @@ def test_initiative_is_rolled_for_all_combatants_at_encounter_start(monkeypatch)
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    assert [entry.actor_ref for entry in session.encounter_state.initiative_entries] == [
+    assert [entry.creature_ref for entry in session.encounter_state.initiative_entries] == [
         "enemy:0",
         "enemy:2",
         "player",
@@ -112,7 +112,7 @@ def test_initiative_is_rolled_for_all_combatants_at_encounter_start(monkeypatch)
         13,
         9,
     ]
-    assert session.encounter_state.current_decision().actor_ref == "enemy:0"
+    assert session.encounter_state.current_decision().creature_ref == "enemy:0"
 
 
 def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
@@ -719,7 +719,7 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
     attack_event = next(
         event
         for event in result.events
-        if event.type == "attack_resolved" and event.actor_ref == "enemy:0"
+        if event.type == "attack_resolved" and event.creature_ref == "enemy:0"
     )
     assert attack_event.data["attack_roll_detail"]["mode"] == "disadvantage"
     assert attack_event.data["attack_roll_detail"]["dice"] == [17, 4]
@@ -910,7 +910,7 @@ def test_lesser_restoration_uses_magic_menu_bucket() -> None:
             id="player-spell-lesser-restoration-player",
             label="Cast Lesser Restoration",
             kind="spell",
-            actor_ref="player",
+            creature_ref="player",
             value="lesser_restoration:player",
             cost={"bonus_action": 1},
         ),
@@ -960,7 +960,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch
     attack_event = next(
         event
         for event in progress.events
-        if event.type == "attack_resolved" and event.actor_ref == "enemy:0"
+        if event.type == "attack_resolved" and event.creature_ref == "enemy:0"
     )
     assert enemy.position.x == 5
     assert enemy.position.y == 2
@@ -1163,7 +1163,7 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
     assert "Blinded" in presentation.encounter.battlefield.summary_text
     assert presentation.encounter.resources.conditions == ()
     assert any(
-        creature.actor_ref == "enemy:0" and creature.conditions == ("blinded",)
+        creature.creature_ref == "enemy:0" and creature.conditions == ("blinded",)
         for creature in presentation.encounter.battlefield.creatures
     )
 
@@ -1176,7 +1176,7 @@ def test_spell_actions_map_to_magic_menu_bucket() -> None:
             id="player-spell-color_spray",
             label="Cast Color Spray",
             kind="spell",
-            actor_ref="player",
+            creature_ref="player",
             value="color_spray",
             cost={"action": 1},
         ),
@@ -1193,7 +1193,7 @@ def test_grapple_actions_map_to_attack_menu_bucket() -> None:
             id="player-grapple-0",
             label="Grapple enemy 1 (Goblin Warrior)",
             kind="grapple",
-            actor_ref="player",
+            creature_ref="player",
             value=0,
             cost={"action": 1},
         ),
@@ -1214,7 +1214,7 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
             id="player-spell-color_spray",
             label="Cast Color Spray",
             kind="spell",
-            actor_ref="player",
+            creature_ref="player",
             value="color_spray",
             cost={"action": 1},
         )

@@ -40,7 +40,7 @@ def resolve_player_attack_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "attack", "success": False},
             )
@@ -108,7 +108,7 @@ def resolve_player_attack_action(
     progress.events.append(
         self._event(
             "attack_resolved",
-            actor_ref="player",
+            creature_ref="player",
             action_id=action_id,
             data={
                 "attacker_label": player.name,
@@ -127,8 +127,8 @@ def resolve_player_attack_action(
     if not enemy.is_alive:
         progress.events.append(
             self._event(
-                "actor_defeated",
-                actor_ref=_enemy_ref(enemy_index),
+                "creature_defeated",
+                creature_ref=_enemy_ref(enemy_index),
                 action_id=action_id,
             )
         )

@@ -33,6 +33,7 @@ class EncounterCreatureSchema(CreatureSchema):
 
     start: PositionSchema
     team_id: str
+    controller: Literal["user", "ai"] | None = None
     behavior: BehaviorSchema | None = None
 
 

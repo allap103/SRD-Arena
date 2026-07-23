@@ -279,7 +279,7 @@ def _single_die_sides(expression: str) -> int | None:
 
 
 class BattlefieldWidget(QWidget):
-    actor_clicked = Signal(str)
+    creature_clicked = Signal(str)
     cell_clicked = Signal(int, int)
     point_clicked = Signal(float, float)
     BASE_CELL_SIZE = 72
@@ -441,7 +441,7 @@ class BattlefieldWidget(QWidget):
             radius = max(14, int(cell_size * 0.38))
             fill = QColor("#2e6f95") if creature.is_player else QColor("#b34a3c")
             border = QColor("#17364a") if creature.is_player else QColor("#5a1f18")
-            self._creature_positions[creature.actor_ref] = (center_x, center_y, radius)
+            self._creature_positions[creature.creature_ref] = (center_x, center_y, radius)
 
             if creature.is_active:
                 painter.setBrush(QColor(255, 215, 0, 70))
@@ -454,7 +454,7 @@ class BattlefieldWidget(QWidget):
                     highlight_radius * 2,
                 )
 
-            if creature.actor_ref in self._targetable_creature_refs:
+            if creature.creature_ref in self._targetable_creature_refs:
                 painter.setBrush(QColor(84, 196, 110, 70))
                 painter.setPen(QPen(QColor("#2d7a3d"), 2))
                 target_radius = int(radius * 1.3)
@@ -465,7 +465,7 @@ class BattlefieldWidget(QWidget):
                     target_radius * 2,
                 )
 
-            if creature.actor_ref == self._selected_creature_ref:
+            if creature.creature_ref == self._selected_creature_ref:
                 painter.setBrush(QColor(255, 255, 255, 0))
                 painter.setPen(QPen(QColor("#1b1b1b"), 3))
                 selected_radius = int(radius * 1.45)
@@ -681,11 +681,11 @@ class BattlefieldWidget(QWidget):
         cell = self._cell_at_point(event.position().x(), event.position().y())
         if cell is not None:
             self.cell_clicked.emit(cell[0], cell[1])
-        for actor_ref, (center_x, center_y, radius) in self._creature_positions.items():
+        for creature_ref, (center_x, center_y, radius) in self._creature_positions.items():
             dx = event.position().x() - center_x
             dy = event.position().y() - center_y
             if dx * dx + dy * dy <= radius * radius:
-                self.actor_clicked.emit(actor_ref)
+                self.creature_clicked.emit(creature_ref)
                 break
         super().mousePressEvent(event)
 

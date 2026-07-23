@@ -117,16 +117,17 @@ class Scenario:
             encounter.victory.next_encounter_id = next_encounter_id
             encounter.defeat.next_encounter_id = encounter_id
 
-    def get_creature(self, actor_id: str) -> Creature:
+    def get_creature(self, creature_id: str) -> Creature:
         for creature in self.creatures:
-            if creature.id == actor_id:
+            if creature.id == creature_id:
                 return creature
-        raise KeyError(f"Creature '{actor_id}' not found.")
+        raise KeyError(f"Creature '{creature_id}' not found.")
 
     def create_session(
         self,
         player_creature_id: str = "player",
         control_mode: str | None = None,
+        controllers_by_creature: dict[str, str] | None = None,
     ) -> Session:
         return Session(
             encounters=self.encounters,
@@ -135,6 +136,7 @@ class Scenario:
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
             control_mode=control_mode or self.control_mode,
+            controllers_by_creature=controllers_by_creature,
             geometry_config=self.geometry_config,
         )
 

@@ -61,7 +61,7 @@ from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
-from .definitions import EncounterDefinition
+from .definitions import EncounterBehavior, EncounterDefinition
 from ..effects.conditions import Status
 from ..geometry import GeometryConfig
 from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
@@ -78,7 +78,7 @@ from .conditions import (
     status_replaces as _status_replaces_impl,
 )
 from .participants import (
-    actors_are_opponents as _actors_are_opponents_impl,
+    creatures_are_opponents as _creatures_are_opponents_impl,
     creature_controller as _creature_controller_impl,
     creature_for_ref as _creature_for_ref_impl,
     creature_team_id as _creature_team_id_impl,
@@ -211,12 +211,13 @@ class EncounterState(EncounterStateData):
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
         control_mode: str = "default",
+        controllers_by_creature: dict[str, str] | None = None,
         geometry_config: GeometryConfig | None = None,
     ) -> EncounterState:
         player_participants = [
             participant
             for participant in definition.participants
-            if participant.actor_id == player.id
+            if participant.creature_id == player.id
         ]
         if len(player_participants) != 1:
             raise ValueError(
@@ -225,19 +226,16 @@ class EncounterState(EncounterStateData):
         player_participant = player_participants[0]
         enemies = []
         for participant in definition.participants:
-            if participant.actor_id == player.id:
+            if participant.creature_id == player.id:
                 continue
-            if participant.behavior is None:
-                raise ValueError(
-                    f"Encounter '{definition.id}' participant "
-                    f"'{participant.actor_id}' requires a behavior."
-                )
             enemies.append(
                 EncounterEnemyState(
-                    actor_id=participant.actor_id,
-                    creature=deepcopy(creature_templates[participant.actor_id]),
+                    creature_id=participant.creature_id,
+                    creature=deepcopy(creature_templates[participant.creature_id]),
                     position=Position(participant.start.x, participant.start.y),
-                    behavior=deepcopy(participant.behavior),
+                    behavior=deepcopy(
+                        participant.behavior or EncounterBehavior(type="wait")
+                    ),
                 )
             )
         state = cls(
@@ -249,6 +247,7 @@ class EncounterState(EncounterStateData):
             ),
             enemies=enemies,
             control_mode=control_mode,
+            controllers_by_creature=dict(controllers_by_creature or {}),
             round=RoundState(),
             turn=TurnState(),
             interrupts=InterruptState(),
@@ -269,7 +268,7 @@ class EncounterState(EncounterStateData):
     def _roll_initiative(self, player: Creature) -> None:
         entries = [
             InitiativeEntry(
-                actor_ref="player",
+                creature_ref="player",
                 roll=roll_die(20),
                 modifier=player.get_modifier(player.attributes.dexterity),
                 total=0,
@@ -278,7 +277,7 @@ class EncounterState(EncounterStateData):
         for index, enemy in enumerate(self.enemies):
             entries.append(
                 InitiativeEntry(
-                    actor_ref=_enemy_ref(index),
+                    creature_ref=_enemy_ref(index),
                     roll=roll_die(20),
                     modifier=enemy.creature.get_modifier(enemy.creature.attributes.dexterity),
                     total=0,
@@ -290,45 +289,45 @@ class EncounterState(EncounterStateData):
             key=lambda entry: (
                 -entry.total,
                 -entry.modifier,
-                0 if entry.actor_ref == "player" else 1,
-                entry.actor_ref,
+                0 if entry.creature_ref == "player" else 1,
+                entry.creature_ref,
             )
         )
         self.initiative_entries = entries
-        self.initiative_order = [entry.actor_ref for entry in entries]
+        self.initiative_order = [entry.creature_ref for entry in entries]
 
     def current_turn_label(self) -> str:
         decision = self.current_decision()
         if decision.kind == "reaction":
-            return f"{self._creature_label(decision.actor_ref)} (Reaction)"
-        return self._creature_label(decision.actor_ref)
+            return f"{self._creature_label(decision.creature_ref)} (Reaction)"
+        return self._creature_label(decision.creature_ref)
 
     def current_decision(self) -> DecisionFrame:
         if self.decision_stack:
             return self.decision_stack[-1]
-        creature_type, enemy_index = self._active_turn_actor()
+        creature_type, enemy_index = self._active_turn_creature()
         if creature_type == "player":
             return DecisionFrame(
                 id="turn-player",
-                actor_ref="player",
+                creature_ref="player",
                 kind="turn",
                 reason="normal_turn",
             )
         assert enemy_index is not None
         return DecisionFrame(
             id=f"turn-enemy-{enemy_index}",
-            actor_ref=_enemy_ref(enemy_index),
+            creature_ref=_enemy_ref(enemy_index),
             kind="turn",
             reason="normal_turn",
         )
 
-    def conditions_for(self, actor_ref: CreatureRef) -> tuple[Status, ...]:
-        return tuple(condition for condition in self.conditions if condition.target_ref == actor_ref)
+    def conditions_for(self, creature_ref: CreatureRef) -> tuple[Status, ...]:
+        return tuple(condition for condition in self.conditions if condition.target_ref == creature_ref)
 
-    def has_condition(self, actor_ref: CreatureRef, condition_name: str) -> bool:
+    def has_condition(self, creature_ref: CreatureRef, condition_name: str) -> bool:
         return any(
             condition.name == condition_name
-            for condition in self.conditions_for(actor_ref)
+            for condition in self.conditions_for(creature_ref)
         )
 
     def _attack_roll_mode_for(self, *args) -> D20RollMode:
@@ -381,13 +380,13 @@ class EncounterState(EncounterStateData):
         ]
 
     def active_creature(self) -> tuple[str, int | None]:
-        actor_ref = self.current_decision().actor_ref
-        if actor_ref == "player":
+        creature_ref = self.current_decision().creature_ref
+        if creature_ref == "player":
             return ("player", None)
-        return ("enemy", _enemy_index(actor_ref))
+        return ("enemy", _enemy_index(creature_ref))
 
     def needs_ai_advance(self) -> bool:
-        return self._creature_controller(self.current_decision().actor_ref) == "ai"
+        return self._creature_controller(self.current_decision().creature_ref) == "ai"
 
     apply_action = _apply_action_impl
     export_decision = _export_decision_impl
@@ -428,7 +427,7 @@ class EncounterState(EncounterStateData):
     _remove_status = _remove_status_impl
     _creature_controller = _creature_controller_impl
     _creature_team_id = _creature_team_id_impl
-    _actors_are_opponents = _actors_are_opponents_impl
+    _creatures_are_opponents = _creatures_are_opponents_impl
 
     def _open_damage_reroll_decision(self, **kwargs) -> None:
         self.reaction_engine.open_damage_reroll_decision(self, **kwargs)
@@ -566,8 +565,8 @@ class EncounterState(EncounterStateData):
     def _reaction_actions(self) -> list[EncounterAction]:
         return self.reaction_engine.reaction_actions(self)
 
-    def _active_turn_actor(self) -> tuple[str, int | None]:
-        return self.turn_engine.active_turn_actor(self)
+    def _active_turn_creature(self) -> tuple[str, int | None]:
+        return self.turn_engine.active_turn_creature(self)
 
     def _check_transition(self) -> str | None:
         return self.turn_engine.check_transition(self)
@@ -577,10 +576,10 @@ class EncounterState(EncounterStateData):
 
     def _expire_conditions_for_turn_end(
         self,
-        actor_ref: CreatureRef,
+        creature_ref: CreatureRef,
         round_number: int,
     ) -> None:
-        self.turn_engine.expire_conditions_for_turn_end(self, actor_ref, round_number)
+        self.turn_engine.expire_conditions_for_turn_end(self, creature_ref, round_number)
 
     def _maybe_reset_reactions(self) -> None:
         self.turn_engine.maybe_reset_reactions(self)
@@ -620,7 +619,7 @@ class EncounterState(EncounterStateData):
     def _event(
         self,
         event_type: str,
-        actor_ref: CreatureRef | None = None,
+        creature_ref: CreatureRef | None = None,
         frame_id: str | None = None,
         action_id: str | None = None,
         data: dict[str, object] | None = None,
@@ -628,7 +627,7 @@ class EncounterState(EncounterStateData):
         event = CombatEvent(
             seq=self.event_sequence,
             type=event_type,
-            actor_ref=actor_ref,
+            creature_ref=creature_ref,
             frame_id=frame_id,
             action_id=action_id,
             data=data or {},
@@ -646,10 +645,10 @@ class EncounterState(EncounterStateData):
 
     _export_pending_action = _export_pending_action_impl
 
-    def _creature_label(self, actor_ref: CreatureRef) -> str:
-        if actor_ref == "player":
+    def _creature_label(self, creature_ref: CreatureRef) -> str:
+        if creature_ref == "player":
             return "Player"
-        enemy_index = _enemy_index(actor_ref)
+        enemy_index = _enemy_index(creature_ref)
         enemy = self.enemies[enemy_index]
         return f"Enemy {enemy_index + 1} ({enemy.creature.name})"
 
@@ -664,10 +663,10 @@ class EncounterState(EncounterStateData):
         )
         return refs
 
-    def _creature_position(self, actor_ref: CreatureRef) -> Position:
-        if actor_ref == "player":
+    def _creature_position(self, creature_ref: CreatureRef) -> Position:
+        if creature_ref == "player":
             return self.player_position
-        return self.enemies[_enemy_index(actor_ref)].position
+        return self.enemies[_enemy_index(creature_ref)].position
 
     def _position_is_free(
         self,
@@ -681,15 +680,15 @@ class EncounterState(EncounterStateData):
         if "player" not in ignored_refs and self.player_position.x == x and self.player_position.y == y:
             return False
         for index, enemy in enumerate(self.enemies):
-            actor_ref = _enemy_ref(index)
-            if actor_ref in ignored_refs or not enemy.is_alive:
+            creature_ref = _enemy_ref(index)
+            if creature_ref in ignored_refs or not enemy.is_alive:
                 continue
             if enemy.position.x == x and enemy.position.y == y:
                 return False
         return True
 
-    def _creature_size(self, player: Creature, actor_ref: CreatureRef) -> str:
-        return self._creature_for_ref(player, actor_ref).size
+    def _creature_size(self, player: Creature, creature_ref: CreatureRef) -> str:
+        return self._creature_for_ref(player, creature_ref).size
 
     _condition_sources_for = _condition_sources_for_impl
     _grappled_sources_for = _grappled_sources_for_impl

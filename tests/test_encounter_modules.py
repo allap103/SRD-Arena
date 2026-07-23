@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from srd_arena.domain.encounters.conditions import apply_status, remove_status, status_replaces
 from srd_arena.domain.encounters.participants import (
-    actors_are_opponents,
+    creatures_are_opponents,
     creature_controller,
     creature_team_id,
 )
@@ -56,8 +56,10 @@ def test_removing_grappled_also_removes_matching_grappling_status() -> None:
 def test_participant_queries_use_authored_teams_and_controllers() -> None:
     state = SimpleNamespace(
         control_mode="default",
-        enemies=[SimpleNamespace(actor_id="goblin")],
+        controllers_by_creature={},
+        enemies=[SimpleNamespace(creature_id="goblin")],
         definition=SimpleNamespace(
+            participants=[],
             teams=[
                 EncounterTeam("heroes", "Heroes", ["player"], "user"),
                 EncounterTeam("monsters", "Monsters", ["goblin"], "ai"),
@@ -68,10 +70,40 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
     assert creature_team_id(state, "player") == "heroes"
     assert creature_team_id(state, "enemy:0") == "monsters"
     assert creature_controller(state, "enemy:0") == "ai"
-    assert actors_are_opponents(state, "player", "enemy:0") is True
+    assert creatures_are_opponents(state, "player", "enemy:0") is True
 
 
 def test_all_user_control_mode_overrides_authored_controller() -> None:
     state = SimpleNamespace(control_mode="all-user")
+
+    assert creature_controller(state, "enemy:0") == "user"
+
+
+def test_creature_controller_assignment_overrides_team_default() -> None:
+    state = SimpleNamespace(
+        control_mode="default",
+        controllers_by_creature={"goblin": "user"},
+        enemies=[SimpleNamespace(creature_id="goblin")],
+        definition=SimpleNamespace(
+            participants=[],
+            teams=[EncounterTeam("monsters", "Monsters", ["goblin"], "ai")],
+        ),
+    )
+
+    assert creature_controller(state, "enemy:0") == "user"
+
+
+def test_authored_creature_controller_overrides_team_default() -> None:
+    state = SimpleNamespace(
+        control_mode="default",
+        controllers_by_creature={},
+        enemies=[SimpleNamespace(creature_id="goblin")],
+        definition=SimpleNamespace(
+            participants=[
+                SimpleNamespace(creature_id="goblin", controller="user"),
+            ],
+            teams=[EncounterTeam("monsters", "Monsters", ["goblin"], "ai")],
+        ),
+    )
 
     assert creature_controller(state, "enemy:0") == "user"

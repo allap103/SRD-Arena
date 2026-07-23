@@ -15,7 +15,7 @@ def export_decision(self: EncounterState) -> dict[str, object]:
     decision = self.current_decision()
     payload: dict[str, object] = {
         "frame_id": decision.id,
-        "actor_ref": decision.actor_ref,
+        "creature_ref": decision.creature_ref,
         "kind": decision.kind,
         "reason": decision.reason,
         "can_pass": decision.can_pass,
@@ -28,7 +28,7 @@ def export_decision(self: EncounterState) -> dict[str, object]:
 
 
 def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
-    active_creature_ref = self.current_decision().actor_ref
+    active_creature_ref = self.current_decision().creature_ref
     return {
         "encounter_id": self.encounter_id,
         "grid": {
@@ -40,8 +40,8 @@ def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
         "initiative_order": list(self.initiative_order),
         "initiative": [
             {
-                "actor_ref": entry.actor_ref,
-                "label": self._creature_label(entry.actor_ref),
+                "creature_ref": entry.creature_ref,
+                "label": self._creature_label(entry.creature_ref),
                 "roll": entry.roll,
                 "modifier": entry.modifier,
                 "total": entry.total,
@@ -52,7 +52,7 @@ def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
         "active_creature_ref": active_creature_ref,
         "active_controller": self._creature_controller(active_creature_ref),
         "player": {
-            "actor_id": player.id,
+            "creature_id": player.id,
             "name": player.name,
             "token_image": player.token_image,
             "position": {"x": self.player_position.x, "y": self.player_position.y},
@@ -94,8 +94,8 @@ def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
         },
         "enemies": [
             {
-                "actor_ref": _enemy_ref(index),
-                "actor_id": enemy.actor_id,
+                "creature_ref": _enemy_ref(index),
+                "creature_id": enemy.creature_id,
                 "name": enemy.creature.name,
                 "token_image": enemy.creature.token_image,
                 "position": {"x": enemy.position.x, "y": enemy.position.y},
@@ -138,7 +138,7 @@ def export_pending_action(self: EncounterState) -> dict[str, object] | None:
     return {
         "id": self.pending_action.id,
         "kind": self.pending_action.kind,
-        "actor_ref": self.pending_action.actor_ref,
+        "creature_ref": self.pending_action.creature_ref,
         "direction": self.pending_action.direction,
         "from": {
             "x": self.pending_action.from_position.x,

@@ -29,7 +29,7 @@ def resolve_utilize_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={"kind": "utilize", "item_id": item_id, "success": False},
             )
@@ -40,7 +40,7 @@ def resolve_utilize_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={
                     "kind": "utilize",
@@ -57,7 +57,7 @@ def resolve_utilize_action(
         progress.events.append(
             self._event(
                 "action_resolved",
-                actor_ref="player",
+                creature_ref="player",
                 action_id=action_id,
                 data={
                     "kind": "utilize",
@@ -94,7 +94,7 @@ def resolve_utilize_action(
     progress.events.append(
         self._event(
             "item_used",
-            actor_ref="player",
+            creature_ref="player",
             action_id=action_id,
             data={
                 "kind": "utilize",

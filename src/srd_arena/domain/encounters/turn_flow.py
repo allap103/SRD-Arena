@@ -37,17 +37,17 @@ class TurnEngine:
             if player.get_health() <= 0:
                 break
             if state.decision_stack and state._creature_controller(
-                state.current_decision().actor_ref
+                state.current_decision().creature_ref
             ) == "user":
                 progress.paused_for_decision = True
                 break
-            creature_type, enemy_index = self.active_turn_actor(state)
-            actor_ref = (
+            creature_type, enemy_index = self.active_turn_creature(state)
+            creature_ref = (
                 "player"
                 if creature_type == "player"
                 else _enemy_ref(enemy_index if enemy_index is not None else 0)
             )
-            if state._creature_controller(actor_ref) == "user":
+            if state._creature_controller(creature_ref) == "user":
                 progress.paused_for_decision = True
                 break
             if creature_type == "player":
@@ -109,7 +109,7 @@ class TurnEngine:
                     enemy_position=Position(enemy.position.x, enemy.position.y),
                     can_attack=(
                         _is_adjacent(state.player_position, enemy.position)
-                        and state._actors_are_opponents(
+                        and state._creatures_are_opponents(
                             _enemy_ref(enemy_index),
                             "player",
                         )
@@ -123,7 +123,7 @@ class TurnEngine:
             progress.events.append(
                 state._event(
                     "action_declared",
-                    actor_ref=_enemy_ref(enemy_index),
+                    creature_ref=_enemy_ref(enemy_index),
                     action_id=action_id,
                     data={"kind": command.kind, "value": command.value},
                 )
@@ -190,7 +190,7 @@ class TurnEngine:
                 progress.events.append(
                     state._event(
                         "movement_resolved",
-                        actor_ref=_enemy_ref(enemy_index),
+                        creature_ref=_enemy_ref(enemy_index),
                         action_id=action_id,
                         data={
                             "direction": direction,
@@ -243,7 +243,7 @@ class TurnEngine:
                 progress.events.append(
                     state._event(
                         "attack_resolved",
-                        actor_ref=_enemy_ref(enemy_index),
+                        creature_ref=_enemy_ref(enemy_index),
                         action_id=action_id,
                         data={
                             "attacker_label": f"Enemy {enemy_index + 1} ({enemy.creature.name})",
@@ -265,7 +265,7 @@ class TurnEngine:
             progress.events.append(
                 state._event(
                     "action_resolved",
-                    actor_ref=_enemy_ref(enemy_index),
+                    creature_ref=_enemy_ref(enemy_index),
                     action_id=action_id,
                     data={"kind": "wait"},
                 )
@@ -274,18 +274,18 @@ class TurnEngine:
             return True, progress, actions_resolved
         return True, progress, actions_resolved
 
-    def active_turn_actor(self, state: EncounterState) -> tuple[str, int | None]:
+    def active_turn_creature(self, state: EncounterState) -> tuple[str, int | None]:
         self.normalize_turn(state)
-        actor_ref = state.initiative_order[state.turn_index]
-        if actor_ref == "player":
+        creature_ref = state.initiative_order[state.turn_index]
+        if creature_ref == "player":
             return ("player", None)
-        return ("enemy", _enemy_index(actor_ref))
+        return ("enemy", _enemy_index(creature_ref))
 
     def check_transition(self, state: EncounterState) -> str | None:
         opponents = [
             enemy
             for index, enemy in enumerate(state.enemies)
-            if state._actors_are_opponents("player", _enemy_ref(index))
+            if state._creatures_are_opponents("player", _enemy_ref(index))
         ]
         if opponents and all(not enemy.is_alive for enemy in opponents):
             return (
@@ -296,7 +296,7 @@ class TurnEngine:
         return None
 
     def advance_turn(self, state: EncounterState) -> None:
-        ending_creature_ref = state.current_decision().actor_ref
+        ending_creature_ref = state.current_decision().creature_ref
         ending_round = state.round.number
         self.expire_conditions_for_turn_end(state, ending_creature_ref, ending_round)
         state.turn_index += 1
@@ -304,27 +304,27 @@ class TurnEngine:
             state.turn_index = 0
             state.round.advance()
         self.normalize_turn(state)
-        actor_ref = state.initiative_order[state.turn_index]
-        if actor_ref == "player":
+        creature_ref = state.initiative_order[state.turn_index]
+        if creature_ref == "player":
             state.player_movement_remaining = None
             state.player_actions_remaining = 1
             state.player_magic_actions_remaining = 1
             state.player_attacks_remaining = 0
             state.player_bonus_action_available = True
         else:
-            state.enemies[_enemy_index(actor_ref)].movement_remaining = None
+            state.enemies[_enemy_index(creature_ref)].movement_remaining = None
 
     def expire_conditions_for_turn_end(
         self,
         state: EncounterState,
-        actor_ref: CreatureRef,
+        creature_ref: CreatureRef,
         round_number: int,
     ) -> None:
         state.conditions = [
             condition
             for condition in state.conditions
             if not (
-                condition.expires_on_creature_ref == actor_ref
+                condition.expires_on_creature_ref == creature_ref
                 and state.round.matches(condition.expires_on_round)
             )
         ]
@@ -341,10 +341,10 @@ class TurnEngine:
             state.turn_index = 0
 
         for _ in range(self.turn_count(state)):
-            actor_ref = state.initiative_order[state.turn_index]
-            if actor_ref == "player":
+            creature_ref = state.initiative_order[state.turn_index]
+            if creature_ref == "player":
                 return
-            enemy = state.enemies[_enemy_index(actor_ref)]
+            enemy = state.enemies[_enemy_index(creature_ref)]
             if enemy.is_alive:
                 return
             state.turn_index += 1

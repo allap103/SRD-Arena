@@ -13,8 +13,9 @@ class EncounterBehavior:
 
 @dataclass
 class EncounterParticipant:
-    actor_id: str
+    creature_id: str
     start: Position
+    controller: str | None = None
     behavior: EncounterBehavior | None = None
 
 

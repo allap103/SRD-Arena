@@ -34,10 +34,10 @@ if TYPE_CHECKING:
 
 def available_actions(self: EncounterState, player: Creature) -> list[EncounterAction]:
     decision = self.current_decision()
-    if self._creature_controller(decision.actor_ref) != "user":
+    if self._creature_controller(decision.creature_ref) != "user":
         return []
-    if decision.actor_ref != "player":
-        return self._user_controlled_enemy_actions(player, decision.actor_ref)
+    if decision.creature_ref != "player":
+        return self._user_controlled_enemy_actions(player, decision.creature_ref)
     if decision.kind == "reroll_dice":
         return self._reroll_damage_actions()
     if decision.kind == "reaction":
@@ -58,7 +58,7 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
                     "move",
                     direction,
                     id=f"player-move-{direction}",
-                    actor_ref="player",
+                    creature_ref="player",
                     cost=ActionCost(movement=1),
                 )
             )
@@ -68,7 +68,7 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
         if (
             can_attack
             and enemy.is_alive
-            and self._actors_are_opponents("player", _enemy_ref(index))
+            and self._creatures_are_opponents("player", _enemy_ref(index))
             and _is_adjacent(self.player_position, enemy.position)
         ):
             actions.append(
@@ -77,14 +77,14 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
                     "attack",
                     index,
                     id=f"player-attack-{index}",
-                    actor_ref="player",
+                    creature_ref="player",
                     cost=ActionCost(action=1 if self.player_attacks_remaining == 0 else 0),
                 )
             )
         if (
             self.player_actions_remaining > 0
             and enemy.is_alive
-            and self._actors_are_opponents("player", _enemy_ref(index))
+            and self._creatures_are_opponents("player", _enemy_ref(index))
             and _is_adjacent(self.player_position, enemy.position)
             and has_free_hand(player)
             and can_grapple(enemy.creature.size, player.size)
@@ -95,7 +95,7 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
                     "grapple",
                     index,
                     id=f"player-grapple-{index}",
-                    actor_ref="player",
+                    creature_ref="player",
                     cost=ActionCost(action=1),
                 )
             )
@@ -111,7 +111,7 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
                     "utilize",
                     item.id,
                     id=f"player-utilize-drink-{item.id}",
-                    actor_ref="player",
+                    creature_ref="player",
                     cost=ActionCost(bonus_action=1),
                 )
             )
@@ -121,7 +121,7 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
             "Wait",
             "wait",
             id="player-wait",
-            actor_ref="player",
+            creature_ref="player",
         )
     )
 
@@ -147,7 +147,7 @@ def available_feature_actions(
                 "feature",
                 feature_id,
                 id=f"player-feature-{feature_id.replace('_', '-')}",
-                actor_ref="player",
+                creature_ref="player",
                 cost=action_cost,
             )
         )
@@ -176,7 +176,7 @@ def available_spell_actions(
                     "spell",
                     spell_action_value(spell.id),
                     id=spell_action_id(spell),
-                    actor_ref="player",
+                    creature_ref="player",
                     cost=cost,
                 )
             )
@@ -192,7 +192,7 @@ def available_spell_actions(
                     "spell",
                     spell_action_value(spell.id, target.target_ref),
                     id=spell_action_id(spell, target_ref=target.target_ref),
-                    actor_ref="player",
+                    creature_ref="player",
                     cost=cost,
                 )
             )
@@ -255,7 +255,7 @@ def spell_action_targets(
             target
             for index, enemy in enumerate(self.enemies)
             if enemy.is_alive
-            and self._actors_are_opponents("player", _enemy_ref(index))
+            and self._creatures_are_opponents("player", _enemy_ref(index))
             and _chebyshev_distance(self.player_position, enemy.position) <= max_range
             and (target := self._spell_target_context(player, _enemy_ref(index))) is not None
         ]
@@ -271,7 +271,7 @@ def spell_action_targets(
     targets: list[SpellTargetContext] = []
     for index, enemy in enumerate(self.enemies):
         target_ref = _enemy_ref(index)
-        if not enemy.is_alive or not self._actors_are_opponents("player", target_ref):
+        if not enemy.is_alive or not self._creatures_are_opponents("player", target_ref):
             continue
         if max_range is not None and _chebyshev_distance(self.player_position, enemy.position) > max_range:
             continue

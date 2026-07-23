@@ -23,6 +23,8 @@ def build_behavior(
     enemy: EncounterEnemyState,
     items_by_id: dict[str, Item],
 ) -> Generator[EncounterAction | None, BehaviorContext, None]:
+    if enemy.behavior.type == "wait":
+        return _wait_behavior()
     if enemy.behavior.type == "archer":
         return _archer_behavior(enemy, items_by_id)
     if enemy.behavior.type == "guard":
@@ -30,6 +32,12 @@ def build_behavior(
     if enemy.behavior.type == "patrol":
         return _patrol_behavior(enemy)
     return _chase_behavior(enemy)
+
+
+def _wait_behavior() -> Generator[EncounterAction | None, BehaviorContext, None]:
+    yield None
+    while True:
+        yield EncounterAction("Wait", "wait")
 
 
 def _chase_behavior(
