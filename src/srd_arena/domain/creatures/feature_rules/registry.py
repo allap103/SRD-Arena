@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from ...creatures import Creature
+from ..model import Creature
 from .fighter import resolve_fighter_feature
 from .types import CapabilityActionResult, DiceRoller
 

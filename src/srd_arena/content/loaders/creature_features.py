@@ -1,4 +1,4 @@
-from ...domain.actions.feature_actions import FeatureActionDefinition
+from ...domain.creatures.feature_actions import FeatureActionDefinition
 from ...domain.creatures import ClassFeature, CombatProfile
 
 

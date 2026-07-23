@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ...creatures import Creature, Spellcasting
+from ..creatures import Creature, Spellcasting
 from .definitions import Spell
 
 

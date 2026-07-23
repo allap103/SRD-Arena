@@ -13,7 +13,7 @@ from ...domain.geometry import (
     build_radius_area,
     serialize_area,
 )
-from ...domain.actions.spells.rules import (
+from ...domain.spells.rules import (
     parse_spell_action_value,
     spell_action_value,
     spell_range_squares,

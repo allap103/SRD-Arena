@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 from ...creatures import Creature
 from ...effects import serialize_effects
 from ...encounters.models import EncounterProgress
-from .resolution import (
+from ...spells.resolution import (
     SpellActionContext,
     resolve_spell_action as _resolve_spell_action_impl,
 )
-from .rules import parse_spell_action_value
+from ...spells.rules import parse_spell_action_value
 
 if TYPE_CHECKING:
     from ...encounters.encounter import EncounterState

@@ -16,9 +16,9 @@ from .consumables import healing_potions_in_inventory
 from ..geometry import AreaOfEffect, Vector2D, build_directional_area, build_radius_area, vector_between_positions
 from ..encounters.models import ActionCost, EncounterAction
 from ..encounters.refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
-from .spells.definitions import Spell
-from .spells.resolution import SpellTargetContext
-from .spells.rules import (
+from ..spells.definitions import Spell
+from ..spells.resolution import SpellTargetContext
+from ..spells.rules import (
     spell_action_economy,
     spell_action_id,
     spell_action_label,

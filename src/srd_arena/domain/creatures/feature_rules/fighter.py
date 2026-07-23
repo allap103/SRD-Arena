@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ...creatures import Creature
+from ..model import Creature
 from ...effects.results import EffectResult
 from .types import CapabilityActionResult, DiceRoller
 

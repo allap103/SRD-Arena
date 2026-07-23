@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .feature_rules.actions import resolve_feature_action as _resolve_feature_action_impl
+from ..creatures.feature_rules.actions import (
+    resolve_feature_action as _resolve_feature_action_impl,
+)
 from ..creatures import Creature
 from ..encounters.models import EncounterProgress
 
