@@ -47,6 +47,7 @@ try:
     from PySide6.QtGui import QFont
     from PySide6.QtWidgets import (
         QApplication,
+        QCheckBox,
         QFrame,
         QFileDialog,
         QGridLayout,
@@ -68,6 +69,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
         return None
 
     QApplication = None  # type: ignore[assignment]
+    QCheckBox = object  # type: ignore[assignment]
     QSize = object  # type: ignore[assignment]
     Qt = object  # type: ignore[assignment]
     QTimer = object  # type: ignore[assignment]
@@ -117,6 +119,10 @@ class GameWindow(QMainWindow):
         self._logged_round_number: int | None = None
         self._ai_step_scheduled = False
         self._show_encounter_json = show_encounter_json
+        self._show_team_outlines = True
+        self._always_show_creature_names = False
+        self._team_outline_toggles: list[QCheckBox] = []
+        self._creature_name_toggles: list[QCheckBox] = []
 
         self.setWindowTitle("SRD Arena")
         self.resize(1400, 900)
@@ -388,6 +394,8 @@ class GameWindow(QMainWindow):
             system_layout.addWidget(
                 self._sidebar_button("Encounter JSON", self.show_encounter_json)
             )
+        system_layout.addWidget(self._build_team_outline_toggle())
+        system_layout.addWidget(self._build_creature_name_toggle())
         system_layout.addWidget(self._sidebar_button(EXIT_CHOICE_TEXT, self.close))
         content_layout.addWidget(system_section)
         content_layout.addStretch(1)
@@ -441,6 +449,40 @@ class GameWindow(QMainWindow):
         toggle.toggled.connect(set_expanded)
         return section, body_layout
 
+    def _build_team_outline_toggle(self) -> QCheckBox:
+        toggle = QCheckBox("Show team outlines")
+        toggle.setChecked(self._show_team_outlines)
+        toggle.toggled.connect(self._set_team_outlines_visible)
+        self._team_outline_toggles.append(toggle)
+        return toggle
+
+    def _build_creature_name_toggle(self) -> QCheckBox:
+        toggle = QCheckBox("Always show creature names")
+        toggle.setChecked(self._always_show_creature_names)
+        toggle.toggled.connect(self._set_always_show_creature_names)
+        self._creature_name_toggles.append(toggle)
+        return toggle
+
+    def _set_team_outlines_visible(self, visible: bool) -> None:
+        self._show_team_outlines = visible
+        self.battlefield_widget.set_team_outlines_visible(visible)
+        self._sync_board_setting_toggles(self._team_outline_toggles, visible)
+
+    def _set_always_show_creature_names(self, visible: bool) -> None:
+        self._always_show_creature_names = visible
+        self.battlefield_widget.set_always_show_creature_names(visible)
+        self._sync_board_setting_toggles(self._creature_name_toggles, visible)
+
+    @staticmethod
+    def _sync_board_setting_toggles(
+        toggles: list[QCheckBox],
+        checked: bool,
+    ) -> None:
+        for toggle in toggles:
+            toggle.blockSignals(True)
+            toggle.setChecked(checked)
+            toggle.blockSignals(False)
+
     def _build_inventory_page(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
@@ -465,6 +507,8 @@ class GameWindow(QMainWindow):
             layout.addWidget(
                 self._sidebar_button("Encounter JSON", self.show_encounter_json)
             )
+        layout.addWidget(self._build_team_outline_toggle())
+        layout.addWidget(self._build_creature_name_toggle())
         layout.addWidget(self._sidebar_button(EXIT_CHOICE_TEXT, self.close))
         layout.addStretch(1)
         return page

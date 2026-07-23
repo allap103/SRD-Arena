@@ -303,6 +303,8 @@ class BattlefieldWidget(QWidget):
         self._zoom = self.MIN_ZOOM
         self._pan_offset = (0.0, 0.0)
         self._pan_anchor: tuple[float, float] | None = None
+        self._show_team_outlines = True
+        self._always_show_creature_names = False
         self.setMinimumHeight(self.MINIMUM_HEIGHT)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMouseTracking(True)
@@ -362,6 +364,14 @@ class BattlefieldWidget(QWidget):
     def set_cell_targeting_enabled(self, enabled: bool) -> None:
         self._cell_targeting_enabled = enabled
         self._update_cursor()
+
+    def set_team_outlines_visible(self, visible: bool) -> None:
+        self._show_team_outlines = visible
+        self.update()
+
+    def set_always_show_creature_names(self, visible: bool) -> None:
+        self._always_show_creature_names = visible
+        self.update()
 
     def paintEvent(self, event) -> None:  # pragma: no cover - GUI painting
         if self._battlefield is None:
@@ -430,6 +440,24 @@ class BattlefieldWidget(QWidget):
                 cell_x = origin_x + x * cell_size
                 cell_y = origin_y + y * cell_size
                 painter.drawRect(int(cell_x), int(cell_y), int(cell_size), int(cell_size))
+
+        if self._show_team_outlines:
+            for creature in self._battlefield.creatures:
+                cell_x = origin_x + creature.position.x * cell_size
+                cell_y = origin_y + creature.position.y * cell_size
+                team_color = QColor(creature.team_color)
+                team_color.setAlphaF(0.7)
+                team_pen = QPen(team_color)
+                team_pen.setWidth(max(2, int(cell_size * 0.05)))
+                painter.setPen(team_pen)
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                inset = max(1, team_pen.width() // 2)
+                painter.drawRect(
+                    int(cell_x + inset),
+                    int(cell_y + inset),
+                    max(1, int(cell_size - inset * 2)),
+                    max(1, int(cell_size - inset * 2)),
+                )
 
         overlay_cells = self._overlay_cells(display_overlay)
         overlay_origin = self._overlay_origin(display_overlay)
@@ -568,6 +596,38 @@ class BattlefieldWidget(QWidget):
                     radius * 2,
                     Qt.AlignmentFlag.AlignCenter,
                     creature.label[:1].upper(),
+                )
+
+            if self._always_show_creature_names or self._hover_cell == (
+                creature.position.x,
+                creature.position.y,
+            ):
+                label_x = origin_x + creature.position.x * cell_size + 3
+                label_y = origin_y + creature.position.y * cell_size + 3
+                label_width = max(1, int(cell_size - 6))
+                label_height = max(16, int(cell_size * 0.22))
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(QColor(16, 14, 11, 175))
+                painter.drawRoundedRect(
+                    int(label_x),
+                    int(label_y),
+                    label_width,
+                    label_height,
+                    4,
+                    4,
+                )
+                painter.setPen(QColor("#f7edd9"))
+                font = QFont()
+                font.setBold(True)
+                font.setPointSize(max(7, min(11, int(cell_size * 0.13))))
+                painter.setFont(font)
+                painter.drawText(
+                    int(label_x + 3),
+                    int(label_y),
+                    max(1, label_width - 6),
+                    label_height,
+                    Qt.AlignmentFlag.AlignCenter,
+                    creature.name,
                 )
 
         if display_overlay is not None:

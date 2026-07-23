@@ -51,7 +51,7 @@ class EncounterDefinitionSchema(BaseModel):
     id: str
     grid: GridSchema
     creatures: list[EncounterCreatureSchema] = Field(default_factory=list)
-    teams: list[EncounterTeamSchema] = Field(default_factory=list)
+    teams: list[EncounterTeamSchema] = Field(default_factory=list, max_length=5)
 
 
 EncounterDefinitionSchema.model_rebuild()

@@ -146,6 +146,15 @@ def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
         "tokens/goblin.png",
     ]
     assert [
+        creature.team_color
+        for creature in presentation.encounter.battlefield.creatures
+    ] == [
+        "#3f7fd5",
+        "#d64545",
+        "#d64545",
+        "#d64545",
+    ]
+    assert [
         (entry.name, entry.total, entry.is_active)
         for entry in presentation.encounter.resources.initiative
     ] == [

@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
+from pydantic import ValidationError
+
 from srd_arena.content.loaders import load_creature
+from srd_arena.content.schemas import EncounterDefinitionSchema
 from srd_arena.runtime.scenario import Scenario
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
@@ -170,6 +174,20 @@ def test_game_uses_default_board_presentation_settings() -> None:
     assert scenario.background_image is None
     assert scenario.grid_color == "#d3d3d3"
     assert scenario.grid_opacity == 1.0
+
+
+def test_encounter_schema_rejects_more_than_five_teams() -> None:
+    with pytest.raises(ValidationError):
+        EncounterDefinitionSchema.model_validate(
+            {
+                "id": "too_many_teams",
+                "grid": {"width": 1, "height": 1},
+                "teams": [
+                    {"id": f"team_{index}", "name": "Team", "controller": "ai"}
+                    for index in range(6)
+                ],
+            }
+        )
 
 
 def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:

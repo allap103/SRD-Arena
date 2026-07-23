@@ -18,6 +18,7 @@ MOVE_DIRECTIONS = (
     "down",
     "down-right",
 )
+TEAM_COLORS = ("#3f7fd5", "#d64545", "#3fa45b", "#d5ad36", "#8a5bd1")
 
 
 @dataclass
@@ -77,8 +78,10 @@ class InitiativeTrackEntryView:
 class BattlefieldCreatureView:
     creature_ref: str
     creature_id: str
+    name: str
     label: str
     token_image: str | None
+    team_color: str
     position: GridPositionView
     health: int
     conditions: tuple[str, ...] = ()
@@ -176,6 +179,9 @@ def build_session_presentation(
                 background_image=session.background_image,
                 grid_color=session.grid_color,
                 grid_opacity=session.grid_opacity,
+                team_ids=tuple(
+                    team.id for team in session.current_encounter.teams
+                ),
             ),
             resources=resources,
             movement_actions=movement_actions,
@@ -290,15 +296,23 @@ def _build_battlefield_view(
     background_image: str | None = None,
     grid_color: str = "#d3d3d3",
     grid_opacity: float = 1.0,
+    team_ids: tuple[str, ...] = (),
 ) -> BattlefieldView:
+    if len(team_ids) > len(TEAM_COLORS):
+        raise ValueError("Battlefield presentation supports at most five teams.")
+    team_colors = dict(
+        zip(team_ids, TEAM_COLORS[: len(team_ids)], strict=True)
+    )
     decision = combat_state["decision"]
     primary_ref = combat_state["primary_creature_ref"]
     creatures = [
         BattlefieldCreatureView(
             creature_ref=creature_ref,
             creature_id=creature["creature_id"],
+            name=creature["name"],
             label=creature["label"],
             token_image=creature.get("token_image"),
+            team_color=team_colors.get(creature.get("team_id"), TEAM_COLORS[0]),
             position=GridPositionView(
                 x=creature["position"]["x"],
                 y=creature["position"]["y"],
