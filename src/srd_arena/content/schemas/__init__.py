@@ -19,6 +19,12 @@ from .bestiary import (
     BestiaryMonsterSchema,
 )
 from .spells import SpellFileSchema, SpellSchema
+from .items import (
+    BaseItemFileSchema,
+    ItemFileSchema,
+    ItemPropertySchema,
+    ItemSchema,
+)
 
 __all__ = [
     "CreatureSchema",
@@ -28,10 +34,14 @@ __all__ = [
     "BestiaryActionSchema",
     "BestiaryFileSchema",
     "BestiaryMonsterSchema",
+    "BaseItemFileSchema",
     "EQUIPMENT_SLOTS",
     "EncounterCreatureSchema",
     "EncounterDefinitionSchema",
     "GridSchema",
+    "ItemFileSchema",
+    "ItemPropertySchema",
+    "ItemSchema",
     "PositionSchema",
     "SpellcastingSchema",
     "SpellFileSchema",

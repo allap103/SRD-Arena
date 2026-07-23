@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from typing import Generic, TypeVar
 
 T = TypeVar("T")
@@ -20,6 +20,7 @@ class SourceCatalog(Generic[T]):
         self._records: dict[tuple[str, str | None], T] = {}
         self._fallback_priorities: dict[str, int] = {}
         self._record_count = 0
+        self._source_records: list[T] = []
         self._source_priority = {
             source.casefold(): priority
             for source, priority in (source_priority or {}).items()
@@ -43,6 +44,9 @@ class SourceCatalog(Generic[T]):
     def __len__(self) -> int:
         return self._record_count
 
+    def __iter__(self) -> Iterator[T]:
+        return iter(self._source_records)
+
     def _add(self, record: T, name: str, source: str | None) -> None:
         name_key = name.casefold()
         source_key = source.casefold() if source is not None else None
@@ -51,6 +55,7 @@ class SourceCatalog(Generic[T]):
             source_text = f"|{source}" if source else ""
             raise ValueError(f"Duplicate content record '{name}{source_text}'.")
         self._records[exact_key] = record
+        self._source_records.append(record)
         self._record_count += 1
 
         fallback_key = (name_key, None)

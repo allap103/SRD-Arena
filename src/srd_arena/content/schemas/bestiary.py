@@ -1,27 +1,25 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
+
+from .base import SourceModel
 
 
-class BestiarySourceModel(BaseModel):
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
-
-
-class BestiaryHitPointsSchema(BestiarySourceModel):
+class BestiaryHitPointsSchema(SourceModel):
     average: int | None = None
     formula: str | None = None
     special: str | None = None
 
 
-class BestiaryArmorClassSchema(BestiarySourceModel):
+class BestiaryArmorClassSchema(SourceModel):
     ac: int | None = None
     special: str | None = None
 
 
-class BestiaryActionSchema(BestiarySourceModel):
+class BestiaryActionSchema(SourceModel):
     name: str
     entries: list[object] = Field(default_factory=list)
 
 
-class BestiaryMonsterSchema(BestiarySourceModel):
+class BestiaryMonsterSchema(SourceModel):
     name: str
     source: str
     size: str | list[str] = "M"
@@ -68,5 +66,5 @@ class BestiaryMonsterSchema(BestiarySourceModel):
         return self.size[0] if self.size else "M"
 
 
-class BestiaryFileSchema(BestiarySourceModel):
+class BestiaryFileSchema(SourceModel):
     monster: list[BestiaryMonsterSchema] = Field(default_factory=list)

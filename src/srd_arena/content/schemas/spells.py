@@ -1,9 +1,9 @@
 from pydantic import Field
 
-from .bestiary import BestiarySourceModel
+from .base import SourceModel
 
 
-class SpellSchema(BestiarySourceModel):
+class SpellSchema(SourceModel):
     name: str
     source: str
     level: int
@@ -28,5 +28,5 @@ class SpellSchema(BestiarySourceModel):
         return self.name
 
 
-class SpellFileSchema(BestiarySourceModel):
+class SpellFileSchema(SourceModel):
     spell: list[SpellSchema] = Field(default_factory=list)

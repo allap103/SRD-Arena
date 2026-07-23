@@ -1,13 +1,12 @@
 from pathlib import Path
 
 from ..schemas import CreatureSchema
-from .source_data import SOURCE_PRIORITY, _load_json
+from .source_data import _load_json
 from .types import (
     ClassCatalog,
     PlayerCharacterCatalog,
     OptionalFeatureCatalog,
     SubclassCatalog,
-    SystemItemCatalog,
 )
 
 
@@ -185,45 +184,3 @@ def _find_subclass_block(
             return subclass_blocks[key]
     source_text = f"|{reference.source}" if reference.source else ""
     raise KeyError(f"Subclass '{reference.name}{source_text}' not found.")
-
-
-def load_system_item_catalog(directory: str | Path) -> SystemItemCatalog:
-    system_dir = Path(directory)
-    catalog: SystemItemCatalog = {}
-    for path, key in ((system_dir / "items-base.json", "baseitem"), (system_dir / "items.json", "item")):
-        if not path.is_file():
-            continue
-        data = _load_json(path)
-        for raw_item in data.get(key, []):
-            if not isinstance(raw_item, dict) or not isinstance(raw_item.get("name"), str):
-                continue
-            source = raw_item.get("source")
-            source_key = source if isinstance(source, str) else None
-            catalog[(raw_item["name"].casefold(), source_key)] = raw_item
-            fallback_key = (raw_item["name"].casefold(), None)
-            current = catalog.get(fallback_key)
-            if current is None or SOURCE_PRIORITY.get(str(source), 0) >= SOURCE_PRIORITY.get(
-                str(current.get("source", "")),
-                0,
-            ):
-                catalog[fallback_key] = raw_item
-    return catalog
-
-
-def _find_system_item(
-    name: str,
-    source: str | None,
-    system_items: SystemItemCatalog,
-) -> dict:
-    key = (name.casefold(), source)
-    if key in system_items:
-        return system_items[key]
-    if source is not None:
-        source_key = (name.casefold(), source.upper())
-        if source_key in system_items:
-            return system_items[source_key]
-    fallback_key = (name.casefold(), None)
-    if source is None and fallback_key in system_items:
-        return system_items[fallback_key]
-    source_text = f"|{source}" if source else ""
-    raise KeyError(f"System item '{name}{source_text}' not found.")
