@@ -6,7 +6,6 @@ from .types import (
     ClassCatalog,
     PlayerCharacterCatalog,
     OptionalFeatureCatalog,
-    SpellCatalog,
     SubclassCatalog,
     SystemItemCatalog,
 )
@@ -119,30 +118,6 @@ def load_subclass_blocks(directory: str | Path) -> SubclassCatalog:
     return catalog
 
 
-def load_spell_catalog(directory: str | Path) -> SpellCatalog:
-    spells_dir = Path(directory) / "spells"
-    catalog: SpellCatalog = {}
-    if not spells_dir.is_dir():
-        return catalog
-
-    for path in spells_dir.glob("spells-*.json"):
-        data = _load_json(path)
-        for spell in data.get("spell", []):
-            if not isinstance(spell, dict) or not isinstance(spell.get("name"), str):
-                continue
-            source = spell.get("source")
-            source_key = source if isinstance(source, str) else None
-            catalog[(spell["name"].casefold(), source_key)] = spell
-            fallback_key = (spell["name"].casefold(), None)
-            current = catalog.get(fallback_key)
-            if current is None or SOURCE_PRIORITY.get(str(source), 0) >= SOURCE_PRIORITY.get(
-                str(current.get("source", "")),
-                0,
-            ):
-                catalog[fallback_key] = spell
-    return catalog
-
-
 def _find_class_block(
     name: str,
     source: str | None,
@@ -252,23 +227,3 @@ def _find_system_item(
         return system_items[fallback_key]
     source_text = f"|{source}" if source else ""
     raise KeyError(f"System item '{name}{source_text}' not found.")
-
-
-def _find_spell(
-    name: str,
-    source: str | None,
-    spell_catalog: SpellCatalog | None,
-) -> dict:
-    if spell_catalog is None:
-        raise ValueError(
-            f"Creature references spell '{name}', but no spell catalog was loaded."
-        )
-    for key in (
-        (name.casefold(), source),
-        (name.casefold(), source.upper() if isinstance(source, str) else None),
-        (name.casefold(), None),
-    ):
-        if key in spell_catalog:
-            return spell_catalog[key]
-    source_text = f"|{source}" if source else ""
-    raise KeyError(f"Spell '{name}{source_text}' not found.")

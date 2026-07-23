@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..schemas import CreatureSchema, EncounterDefinitionSchema
-from ..catalogs import BestiaryCatalog
+from ..catalogs import BestiaryCatalog, SpellCatalog
 from ...domain.creatures import Creature
 from ...domain.encounters import (
     EncounterBehavior,
@@ -18,7 +18,6 @@ from .types import (
     ClassCatalog,
     PlayerCharacterCatalog,
     OptionalFeatureCatalog,
-    SpellCatalog,
     SubclassCatalog,
 )
 
@@ -100,7 +99,7 @@ def load_encounter(
     player_characters: PlayerCharacterCatalog | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     subclass_blocks: SubclassCatalog | None = None,
-    spell_catalog: SpellCatalog | None = None,
+    spells: SpellCatalog | None = None,
 ) -> LoadedEncounter:
     schema = EncounterDefinitionSchema.model_validate(_load_json(path))
     return LoadedEncounter(
@@ -118,7 +117,7 @@ def load_encounter(
                 player_characters,
                 optional_features,
                 subclass_blocks,
-                spell_catalog,
+                spells,
             )
             for creature in schema.creatures
         ),

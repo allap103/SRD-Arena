@@ -4,7 +4,7 @@ from typing import cast
 
 from ..schemas import CreatureSchema
 from ..schemas.creature import CreatureItemReferenceSchema
-from ..catalogs import BestiaryCatalog
+from ..catalogs import BestiaryCatalog, SpellCatalog
 from ..schemas.bestiary import BestiaryMonsterSchema
 from ...domain.creatures import (
     Attributes,
@@ -15,14 +15,13 @@ from ...domain.creatures import (
     Inventory,
     SubclassRef,
 )
-from ...domain.spells import Spell
 from ...domain.creatures import Spellcasting
 from ...domain.effects.triggered import TriggeredEffect
 from ..normalization import normalize_optional_feature_effects
+from ..translators import build_spell
 from .catalogs import (
     _find_class_block,
     _find_optional_feature,
-    _find_spell,
     _find_subclass_block,
 )
 from .source_data import _load_json, _slug
@@ -40,7 +39,6 @@ from .types import (
     ClassCatalog,
     PlayerCharacterCatalog,
     OptionalFeatureCatalog,
-    SpellCatalog,
     SubclassCatalog,
 )
 
@@ -52,7 +50,7 @@ def load_creature(
     player_characters: PlayerCharacterCatalog | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     subclass_blocks: SubclassCatalog | None = None,
-    spell_catalog: SpellCatalog | None = None,
+    spells: SpellCatalog | None = None,
 ) -> Creature:
     return build_creature(
         CreatureSchema.model_validate(_load_json(path)),
@@ -61,7 +59,7 @@ def load_creature(
         player_characters,
         optional_features,
         subclass_blocks,
-        spell_catalog,
+        spells,
     )
 
 
@@ -72,7 +70,7 @@ def build_creature(
     player_characters: PlayerCharacterCatalog | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     subclass_blocks: SubclassCatalog | None = None,
-    spell_catalog: SpellCatalog | None = None,
+    spells: SpellCatalog | None = None,
 ) -> Creature:
     schema = _resolve_creature_schema(schema, player_characters)
     stat_block = _find_bestiary_monster(schema, bestiary)
@@ -111,7 +109,7 @@ def build_creature(
         attributes,
         class_block,
         subclass_block,
-        spell_catalog,
+        spells,
     )
 
     return Creature(
@@ -373,7 +371,7 @@ def _build_spellcasting(
     attributes: Attributes,
     class_block: dict | None,
     subclass_block: dict | None,
-    spell_catalog: SpellCatalog | None,
+    spells: SpellCatalog | None,
 ) -> Spellcasting | None:
     if schema.spellcasting is not None:
         config = schema.spellcasting
@@ -392,7 +390,7 @@ def _build_spellcasting(
             spell_slots_max=spell_slots_max,
             spell_slots_remaining=dict(spell_slots_max),
             learned_spells=[
-                _build_spell(reference.name, reference.source, spell_catalog)
+                build_spell(reference.name, reference.source, spells)
                 for reference in schema.spells_known
             ],
         )
@@ -411,7 +409,7 @@ def _build_spellcasting(
     ability_modifier = (ability_score - 10) // 2
     spell_slots_max = _spell_slots_progression(source_block, level)
     learned_spells = [
-        _build_spell(reference.name, reference.source, spell_catalog)
+        build_spell(reference.name, reference.source, spells)
         for reference in schema.spells_known
     ]
 
@@ -442,132 +440,6 @@ def _spellcasting_source_block(
             str,
         ):
             return block
-    return None
-
-
-def _build_spell(
-    name: str,
-    source: str | None,
-    spell_catalog: SpellCatalog | None,
-) -> Spell:
-    raw = _find_spell(name, source, spell_catalog)
-    return Spell(
-        id=_slug(name),
-        name=name,
-        source=source,
-        level=int(raw.get("level", 0)),
-        school=raw.get("school") if isinstance(raw.get("school"), str) else None,
-        casting_time=tuple(
-            entry for entry in raw.get("time", []) if isinstance(entry, dict)
-        ),
-        range_data=dict(raw.get("range", {})) if isinstance(raw.get("range"), dict) else {},
-        duration_data=tuple(
-            entry for entry in raw.get("duration", []) if isinstance(entry, dict)
-        ),
-        components=(
-            dict(raw.get("components", {}))
-            if isinstance(raw.get("components"), dict)
-            else {}
-        ),
-        saving_throw_abilities=tuple(
-            _normalize_save_ability(value)
-            for value in raw.get("savingThrow", [])
-            if _normalize_save_ability(value) is not None
-        ),
-        condition_inflict=tuple(
-            value for value in raw.get("conditionInflict", []) if isinstance(value, str)
-        ),
-        removable_conditions=_spell_removable_conditions(raw),
-        damage_dice=_spell_damage_dice(raw),
-        damage_inflict=tuple(
-            value for value in raw.get("damageInflict", []) if isinstance(value, str)
-        ),
-        area_tags=tuple(
-            value for value in raw.get("areaTags", []) if isinstance(value, str)
-        ),
-        geometry_mode=_spell_geometry_mode(raw),
-        area_size_feet=_spell_area_size_feet(raw),
-    )
-
-
-def _normalize_save_ability(value: object) -> str | None:
-    if not isinstance(value, str):
-        return None
-    aliases = {
-        "str": "strength",
-        "dex": "dexterity",
-        "con": "constitution",
-        "int": "intelligence",
-        "wis": "wisdom",
-        "cha": "charisma",
-    }
-    normalized = value.casefold()
-    return aliases.get(normalized, normalized)
-
-
-def _spell_damage_dice(raw: dict[str, object]) -> str | None:
-    entries = raw.get("entries", [])
-    if not isinstance(entries, list):
-        return None
-    for entry in entries:
-        if not isinstance(entry, str):
-            continue
-        match = re.search(r"\{@damage ([^}]+)\}", entry)
-        if match is not None:
-            return match.group(1)
-    return None
-
-
-def _spell_removable_conditions(raw: dict) -> tuple[str, ...]:
-    entries = raw.get("entries", [])
-    if not isinstance(entries, list):
-        return ()
-    text_parts = [entry for entry in entries if isinstance(entry, str)]
-    if not text_parts:
-        return ()
-    text = " ".join(text_parts)
-    if "end one condition on it:" not in text.casefold():
-        return ()
-    return tuple(
-        match.casefold()
-        for match in re.findall(r"\{@condition ([^|}]+)", text)
-    )
-
-
-def _spell_geometry_mode(raw: dict) -> str:
-    range_data = raw.get("range", {})
-    range_type = (
-        range_data.get("type")
-        if isinstance(range_data, dict) and isinstance(range_data.get("type"), str)
-        else None
-    )
-    removable_conditions = _spell_removable_conditions(raw)
-    area_tags = tuple(
-        value for value in raw.get("areaTags", []) if isinstance(value, str)
-    )
-
-    if removable_conditions and range_type == "point":
-        return "self_only"
-    if range_type in {"cone", "line", "cube"}:
-        return "directional_area"
-    if range_type in {"radius", "sphere", "cylinder", "emanation"}:
-        return "non_directional_area"
-    if range_type == "point" and area_tags:
-        return "point_area"
-    return "point_target"
-
-
-def _spell_area_size_feet(raw: dict[str, object]) -> int | None:
-    entries = raw.get("entries", [])
-    if not isinstance(entries, list):
-        return None
-    text_parts = [entry for entry in entries if isinstance(entry, str)]
-    if not text_parts:
-        return None
-    text = " ".join(text_parts).casefold()
-    radius_match = re.search(r"(\d+)-foot-radius", text)
-    if radius_match is not None:
-        return int(radius_match.group(1))
     return None
 
 

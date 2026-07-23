@@ -17,3 +17,7 @@ def load_json(path: str | Path) -> dict[str, object]:
     if not isinstance(payload, dict):
         raise ValueError(f"Expected a JSON object in '{path}'.")
     return payload
+
+
+def slug(value: str) -> str:
+    return value.lower().replace("'", "").replace(",", "").replace(" ", "_")

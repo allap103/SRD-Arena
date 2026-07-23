@@ -53,7 +53,7 @@ class Scenario:
         self.bestiary = load_bestiary_catalog(self.system_directory)
         self.class_blocks = load_class_blocks(self.system_directory)
         self.subclass_blocks = load_subclass_blocks(self.system_directory)
-        self.spell_catalog = load_spell_catalog(self.system_directory)
+        self.spells = load_spell_catalog(self.system_directory)
         self.optional_feature_blocks = load_optional_feature_blocks(self.system_directory)
         self.player_characters = load_player_characters(self.directory / "player_characters")
         self.encounters, self.creatures = self.load_encounters_from_directory(
@@ -76,7 +76,7 @@ class Scenario:
                 self.player_characters,
                 self.optional_feature_blocks,
                 self.subclass_blocks,
-                self.spell_catalog,
+                self.spells,
             )
             for path in Path(directory).glob("*")
         ]

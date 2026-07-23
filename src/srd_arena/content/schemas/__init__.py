@@ -18,6 +18,7 @@ from .bestiary import (
     BestiaryFileSchema,
     BestiaryMonsterSchema,
 )
+from .spells import SpellFileSchema, SpellSchema
 
 __all__ = [
     "CreatureSchema",
@@ -33,5 +34,7 @@ __all__ = [
     "GridSchema",
     "PositionSchema",
     "SpellcastingSchema",
+    "SpellFileSchema",
+    "SpellSchema",
     "StatBlockReferenceSchema",
 ]

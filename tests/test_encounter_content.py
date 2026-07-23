@@ -176,7 +176,7 @@ def test_creature_can_load_subclass_and_explicit_spellcasting(tmp_path: Path) ->
         scenario.player_characters,
         scenario.optional_feature_blocks,
         scenario.subclass_blocks,
-        scenario.spell_catalog,
+        scenario.spells,
     )
 
     assert creature.subclass_ref is not None
@@ -246,7 +246,7 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
         scenario.player_characters,
         scenario.optional_feature_blocks,
         scenario.subclass_blocks,
-        scenario.spell_catalog,
+        scenario.spells,
     )
 
     assert creature.spellcasting is not None
