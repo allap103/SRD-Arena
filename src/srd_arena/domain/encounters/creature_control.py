@@ -181,6 +181,7 @@ def apply_creature_action(
             remaining_movement_after=remaining,
             progress=progress,
             user_controlled_only=True,
+            excluded_reactor_refs=grappled_refs,
         ):
             progress.paused_for_decision = True
             return progress
@@ -192,6 +193,7 @@ def apply_creature_action(
                 to_position=destination,
                 action_id=action_id,
                 progress=progress,
+                excluded_reactor_refs=grappled_refs,
             )
         )
         if not enemy.is_alive:

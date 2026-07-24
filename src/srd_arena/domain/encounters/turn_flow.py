@@ -180,6 +180,7 @@ class TurnEngine:
                     remaining_movement_after=enemy.movement_remaining - movement_cost,
                     progress=progress,
                     user_controlled_only=True,
+                    excluded_reactor_refs=grappling_targets,
                 ):
                     progress.paused_for_decision = True
                     return False, progress, actions_resolved
@@ -194,6 +195,7 @@ class TurnEngine:
                         to_position=Position(target_x, target_y),
                         action_id=action_id,
                         progress=progress,
+                        excluded_reactor_refs=grappling_targets,
                     )
                 )
                 if not enemy.is_alive:

@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterCreatureState
 from srd_arena.frontends.shared.session import build_session_presentation
@@ -373,6 +374,51 @@ def test_user_controlled_goblin_chooses_reaction_to_primary_movement() -> None:
     assert goblin.reaction_available is False
     assert state.current_decision().creature_ref == "player"
     assert (aldren.position.x, aldren.position.y) == (3, 2)
+
+
+def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> None:
+    session = Scenario(GOBLIN_SKIRMISH_DIR).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    aldren = state.creatures["player"]
+    goblin = state.creatures["participant:1"]
+    aldren.position.x, aldren.position.y = 3, 3
+    goblin.position.x, goblin.position.y = 3, 4
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_status",
+                target_ref="player",
+                data={
+                    "condition": "grappling",
+                    "source_ref": "participant:1",
+                    "source_label": goblin.creature.name,
+                },
+            ),
+            EffectResult(
+                kind="apply_status",
+                target_ref="participant:1",
+                data={
+                    "condition": "grappled",
+                    "source_ref": "player",
+                    "source_label": aldren.creature.name,
+                },
+            ),
+        ]
+    )
+
+    move = next(
+        action
+        for action in state.available_actions(session.primary_creature)
+        if action.kind == "move" and action.value == "up"
+    )
+    session.choose_encounter_action(move)
+
+    assert state.current_decision().creature_ref == "player"
+    assert goblin.reaction_available is True
+    assert (aldren.position.x, aldren.position.y) == (3, 2)
+    assert (goblin.position.x, goblin.position.y) == (3, 3)
 
 
 def test_ai_controlled_creature_resolves_opportunity_attack_automatically(

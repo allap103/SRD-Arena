@@ -371,6 +371,8 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
     assert state.primary_position.y == 3
     assert state.creatures["participant:0"].position.x == 4
     assert state.creatures["participant:0"].position.y == 2
+    assert state.creatures["participant:0"].reaction_available is True
+    assert not any(event.type == "opportunity_attack_resolved" for event in result.events)
     assert state.active_movement_remaining == 4
 
 

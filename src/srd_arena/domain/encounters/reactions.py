@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Collection
 from typing import TYPE_CHECKING
 
 from ..creatures import Creature
@@ -51,6 +52,7 @@ class ReactionEngine:
         to_position: Position,
         action_id: str,
         progress: EncounterProgress,
+        excluded_reactor_refs: Collection[str] = (),
     ) -> list[tuple[str, str]]:
         mover = state.creatures[mover_ref]
         messages: list[tuple[str, str]] = []
@@ -58,6 +60,7 @@ class ReactionEngine:
             (reactor_ref, reactor)
             for reactor_ref, reactor in state.creatures.items()
             if reactor_ref != mover_ref
+            and reactor_ref not in excluded_reactor_refs
             and reactor.is_alive
             and state._creatures_are_opponents(reactor_ref, mover_ref)
             and state._creature_controller(reactor_ref) == "ai"
@@ -595,11 +598,13 @@ class ReactionEngine:
         remaining_movement_after: int,
         progress: EncounterProgress,
         user_controlled_only: bool,
+        excluded_reactor_refs: Collection[str] = (),
     ) -> bool:
         reactors = [
             (creature_ref, creature_state)
             for creature_ref, creature_state in state.creatures.items()
             if creature_ref != mover_ref
+            and creature_ref not in excluded_reactor_refs
             and creature_state.is_alive
             and state._creatures_are_opponents(creature_ref, mover_ref)
             and (
