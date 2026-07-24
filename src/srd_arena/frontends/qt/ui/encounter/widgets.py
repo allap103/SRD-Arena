@@ -282,6 +282,7 @@ class BattlefieldWidget(QWidget):
     creature_clicked = Signal(str)
     cell_clicked = Signal(int, int)
     point_clicked = Signal(float, float)
+    interaction_cancelled = Signal()
     BASE_CELL_SIZE = 72
     MINIMUM_HEIGHT = 320
     MIN_ZOOM = 1.0
@@ -875,6 +876,13 @@ class BattlefieldWidget(QWidget):
 
     def mousePressEvent(self, event) -> None:  # pragma: no cover - GUI interaction
         if (
+            event.button() == Qt.MouseButton.RightButton
+            and self._interaction_is_pending()
+        ):
+            self.interaction_cancelled.emit()
+            event.accept()
+            return
+        if (
             event.button()
             in {Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton}
             and self._zoom > self.MIN_ZOOM
@@ -900,6 +908,13 @@ class BattlefieldWidget(QWidget):
                 self.creature_clicked.emit(creature_ref)
                 break
         super().mousePressEvent(event)
+
+    def _interaction_is_pending(self) -> bool:
+        return bool(
+            self._movement_paths
+            or self._targetable_creature_refs
+            or self._cell_targeting_enabled
+        )
 
     def mouseMoveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
         if self._pan_anchor is not None:

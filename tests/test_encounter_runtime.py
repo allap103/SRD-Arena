@@ -1257,11 +1257,78 @@ def test_grapple_actions_map_to_attack_menu_bucket() -> None:
     assert bucket == "attack"
 
 
+def test_grapple_actions_share_one_board_targeting_mode() -> None:
+    window = CyoaPySide6Window.__new__(CyoaPySide6Window)
+    actions = [
+        ActionView(
+            index=index,
+            id=f"player-grapple-{index}",
+            label=f"Grapple target {index}",
+            kind="grapple",
+            creature_ref="player",
+            value=f"participant:{index}",
+            cost={"action": 1},
+        )
+        for index in range(2)
+    ]
+
+    modes = CyoaPySide6Window._target_selection_modes(window, actions)
+
+    mode = TargetSelectionMode(kind="grapple", source_trigger_id="grapple")
+    assert set(modes) == {mode}
+    assert set(modes[mode]) == {"participant:0", "participant:1"}
+    assert CyoaPySide6Window._target_mode_label(window, mode) == "Grapple"
+
+
+@pytest.mark.parametrize(
+    ("attacks_available", "actions", "expected"),
+    [
+        (
+            1,
+            [
+                ActionView(
+                    index=0,
+                    id="attack-goblin",
+                    label="Attack Goblin",
+                    kind="attack",
+                    creature_ref="player",
+                    value="participant:0",
+                    cost={"action": 1},
+                )
+            ],
+            TargetSelectionMode(kind="attack", source_trigger_id="attack"),
+        ),
+        (0, [], None),
+        (1, [], None),
+    ],
+)
+def test_follow_up_attack_is_queued_only_with_attacks_and_targets(
+    monkeypatch,
+    attacks_available,
+    actions,
+    expected,
+) -> None:
+    window = CyoaPySide6Window.__new__(CyoaPySide6Window)
+    window.session = object()
+    presentation = SimpleNamespace(
+        encounter=SimpleNamespace(
+            resources=SimpleNamespace(attacks_available=attacks_available),
+            non_movement_actions=actions,
+        )
+    )
+    monkeypatch.setattr(
+        "srd_arena.frontends.qt.app.build_session_presentation",
+        lambda _session: presentation,
+    )
+
+    assert CyoaPySide6Window._available_follow_up_attack_mode(window) == expected
+
+
 def test_directional_spell_target_mode_stays_available_without_creature_target_map() -> None:
     window = CyoaPySide6Window.__new__(CyoaPySide6Window)
     window._pending_target_mode = TargetSelectionMode(
         kind="spell",
-        source_trigger_id="spell-color_spray",
+        source_trigger_id="color_spray",
     )
     actions = [
         ActionView(

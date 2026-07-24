@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-ENCOUNTER_BUTTON_HEIGHT = 36
+ENCOUNTER_BUTTON_HEIGHT = 32
 RESOURCE_BAR_HEIGHT = 28
 ARROW_LABELS = {
     "up-left": "↖",

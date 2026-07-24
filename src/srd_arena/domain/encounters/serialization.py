@@ -93,6 +93,9 @@ def _export_creature(
         "action_available": creature_state.actions_remaining > 0,
         "actions_remaining": creature_state.actions_remaining,
         "attacks_remaining": creature_state.attacks_remaining,
+        "attacks_per_attack_action": (
+            creature.combat_profile.attacks_per_attack_action
+        ),
         "bonus_action_available": creature_state.bonus_action_available,
         "reaction_available": creature_state.reaction_available,
         "conditions": [

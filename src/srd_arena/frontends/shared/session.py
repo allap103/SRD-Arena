@@ -28,6 +28,7 @@ class ResourceSummaryView:
     action_status: str
     bonus_action_status: str
     reaction_status: str
+    attacks_available: int
     conditions: tuple[str, ...]
     spell_slots: tuple["SpellSlotTrackView", ...]
     movement_remaining: int
@@ -276,6 +277,13 @@ def _build_resource_summary(combat_state: dict[str, Any]) -> ResourceSummaryView
             else "Waiting"
         ),
         reaction_status="Ready" if creature_state["reaction_available"] else "Spent",
+        attacks_available=(
+            creature_state["attacks_remaining"]
+            if creature_state["attacks_remaining"] > 0
+            else creature_state["attacks_per_attack_action"]
+            if normal_turn and creature_state["action_available"]
+            else 0
+        ),
         conditions=tuple(
             condition
             for condition in creature_state.get("conditions", [])

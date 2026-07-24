@@ -145,6 +145,11 @@ QFrame#accordionSection {
     border-radius: 8px;
 }
 
+QWidget#accordionHeader {
+    background: #30241a;
+    border-radius: 7px;
+}
+
 QToolButton#accordionToggle {
     background: #30241a;
     color: #f3deb0;
@@ -159,13 +164,27 @@ QToolButton#accordionToggle:hover {
     background: #493116;
 }
 
+QToolButton#accordionToggle[centered="true"] {
+    text-align: center;
+}
+
 QWidget#accordionBody {
     background: #241c15;
+}
+
+QWidget#accordionBody QPushButton {
+    padding: 4px 8px;
 }
 
 QFrame#initiativeCard[active="true"] {
     background: #3a2a16;
     border: 1px solid #d4ad58;
+}
+
+QLabel#initiativeTitle {
+    color: #f3deb0;
+    font-size: 13px;
+    font-weight: 700;
 }
 
 QLabel#initiativeName {
