@@ -81,8 +81,7 @@ def available_creature_actions(
                 )
             )
             if (
-                enemy.actions_remaining > 0
-                and has_free_hand(enemy.creature)
+                has_free_hand(enemy.creature)
                 and can_grapple(
                     self.creatures[target_ref].creature.size,
                     enemy.creature.size,
@@ -95,7 +94,9 @@ def available_creature_actions(
                         target_ref,
                         id=f"{creature_ref}-grapple-{target_ref.replace(':', '-')}",
                         creature_ref=creature_ref,
-                        cost=ActionCost(action=1),
+                        cost=ActionCost(
+                            action=1 if enemy.attacks_remaining == 0 else 0
+                        ),
                     )
                 )
     actions.extend(self._available_feature_actions(enemy.creature))

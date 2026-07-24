@@ -51,7 +51,10 @@ def resolve_grapple_action(
 ) -> None:
     creature_ref = self.current_decision().creature_ref
     creature_state = self.creatures[creature_ref]
-    if self.active_actions_remaining <= 0:
+    if (
+        creature_state.actions_remaining <= 0
+        and creature_state.attacks_remaining <= 0
+    ):
         progress.messages.append(("system", "You have already used your Action."))
         progress.events.append(
             self._event(
@@ -90,7 +93,14 @@ def resolve_grapple_action(
         progress.messages.append(("system", "The target is too large to grapple."))
         return
 
-    self._consume_action(allow_magic=False)
+    if creature_state.attacks_remaining == 0:
+        self._consume_action(allow_magic=False)
+        creature_state.attacks_remaining = max(
+            0,
+            player.combat_profile.attacks_per_attack_action - 1,
+        )
+    else:
+        creature_state.attacks_remaining -= 1
 
     player_roll = resolve_d20(modifier=player.get_modifier(player.attributes.strength), roller=_roll_die)
     target_roll = resolve_d20(modifier=target.creature.get_modifier(target.creature.attributes.strength), roller=_roll_die)

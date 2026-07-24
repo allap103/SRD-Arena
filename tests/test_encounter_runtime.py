@@ -326,6 +326,69 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
     )
 
 
+def test_grapple_replaces_only_one_attack_in_multiattack(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    session.primary_creature.combat_profile.attacks_per_attack_action = 2
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 10,
+    )
+
+    session.choose(_action_index(session, "grapple", "participant:0"))
+
+    assert state.active_action_available is False
+    assert state.active_attacks_remaining == 1
+    assert any(
+        action.kind == "attack"
+        for action in state.available_actions(session.primary_creature)
+    )
+
+
+def test_grapple_can_replace_remaining_attack_after_weapon_attack(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    session.primary_creature.combat_profile.attacks_per_attack_action = 2
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
+    state.creatures["participant:0"].creature.current_health = 20
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+
+    session.choose(_action_index(session, "attack", "participant:0"))
+    assert state.active_attacks_remaining == 1
+
+    session.choose(_action_index(session, "grapple", "participant:0"))
+
+    assert state.active_attacks_remaining == 0
+    assert not any(
+        action.kind in {"attack", "grapple"}
+        for action in state.available_actions(session.primary_creature)
+    )
+
+
 def test_grappling_moves_target_and_costs_extra_movement() -> None:
     session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
