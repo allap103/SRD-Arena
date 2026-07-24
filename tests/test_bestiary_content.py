@@ -3,8 +3,14 @@ from pathlib import Path
 import pytest
 
 from srd_arena.content.catalogs import SourceCatalog, load_bestiary_catalog
+from srd_arena.content.loaders.creatures import build_creature
 from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import BestiaryFileSchema, BestiaryMonsterSchema
+from srd_arena.content.schemas import (
+    BestiaryFileSchema,
+    BestiaryMonsterSchema,
+    CreatureSchema,
+)
+from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 
 
 def test_bundled_bestiary_loads_as_typed_records() -> None:
@@ -18,6 +24,41 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     assert goblin.average_hit_points == 10
     assert goblin.walk_speed == 30
     assert [action.name for action in goblin.action] == ["Scimitar", "Shortbow"]
+
+
+def test_bestiary_core_statistics_build_a_domain_creature() -> None:
+    catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
+    creature = build_creature(
+        CreatureSchema.model_validate(
+            {
+                "id": "aboleth",
+                "stat_block": {"name": "Aboleth", "source": "XMM"},
+            }
+        ),
+        bestiary=catalog,
+    )
+
+    assert creature.get_max_health() == 150
+    assert creature.get_armor_class() == 17
+    assert creature.attributes.proficiency_bonus == 4
+    assert creature.attributes.movement.speed_feet == 10
+    assert creature.attributes.movement.swim_feet == 40
+    assert creature.statistics.creature_type == "aberration"
+    assert creature.statistics.challenge_rating == "10"
+    assert creature.statistics.saving_throw_bonuses["intelligence"] == 8
+    assert creature.statistics.skill_bonuses["perception"] == 10
+    assert creature.statistics.senses == ("Darkvision 120 ft.",)
+    assert creature.statistics.passive_perception == 20
+    assert creature.statistics.languages == (
+        "Deep Speech; telepathy 120 ft.",
+    )
+    saving_throw = resolve_saving_throw(
+        creature,
+        "intelligence",
+        15,
+        roller=lambda _sides: 10,
+    )
+    assert saving_throw.modifiers.total == 8
 
 
 def test_bestiary_schema_preserves_unknown_source_fields() -> None:

@@ -44,6 +44,7 @@ from .creature_spellcasting import (
     spell_slots_progression as _spell_slots_progression,
     spellcasting_ability_score as _spellcasting_ability_score,
 )
+from .creature_statistics import build_creature_statistics
 from .player_characters import PlayerCharacterTemplates
 
 
@@ -138,6 +139,12 @@ def build_creature(
         feature_uses_remaining=build_feature_uses_remaining(combat_profile),
         monster_attacks=build_monster_attacks(stat_block),
         spellcasting=spellcasting,
+        statistics=build_creature_statistics(stat_block),
+        max_health_override=(
+            stat_block.average_hit_points
+            if stat_block is not None
+            else None
+        ),
     )
 
 

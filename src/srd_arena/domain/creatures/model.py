@@ -9,6 +9,7 @@ from .combat_profile import CombatProfile
 from ..effects.triggered import TriggeredEffect
 from .monster_attack import MonsterAttack
 from .spellcasting import Spellcasting
+from .statistics import CreatureStatistics
 
 @dataclass
 class Creature:
@@ -29,6 +30,8 @@ class Creature:
     feature_uses_remaining: dict[str, int] = field(default_factory=dict)
     monster_attacks: list[MonsterAttack] = field(default_factory=list)
     spellcasting: Spellcasting | None = None
+    statistics: CreatureStatistics = field(default_factory=CreatureStatistics)
+    max_health_override: int | None = None
 
     def __post_init__(self):
         if self.current_health is None:
@@ -66,6 +69,8 @@ class Creature:
         return (attribute_value - 10) // 2
 
     def get_max_health(self) -> int:
+        if self.max_health_override is not None:
+            return self.max_health_override
         return (
             self.attributes.base_health
             + self.get_modifier(self.attributes.constitution) * self.attributes.level

@@ -5,6 +5,10 @@ from dataclasses import dataclass, field
 class Movement:
     speed_feet: int = 30
     feet_per_square: int = 5
+    burrow_feet: int | None = None
+    climb_feet: int | None = None
+    fly_feet: int | None = None
+    swim_feet: int | None = None
 
     @property
     def squares_per_turn(self) -> int:
@@ -23,11 +27,12 @@ class Attributes:
     charisma: int
     base_armor_class: int
     movement: Movement = field(default_factory=Movement)
-    proficiency_bonus: int = 2
+    proficiency_bonus: int = 0
     proficiencies: dict = field(default_factory=dict)
 
     def __post_init__(self):
-        self.proficiency_bonus = 2 + max(0, self.level - 1) // 4
+        if self.proficiency_bonus <= 0:
+            self.proficiency_bonus = 2 + max(0, self.level - 1) // 4
 
     def __str__(self):
         return f"Base Health: {self.base_health}, Level: {self.level}, Strength: {self.strength}, Dexterity: {self.dexterity}, Constitution: {self.constitution}, Wisdom: {self.wisdom}, Intelligence: {self.intelligence}, Charisma: {self.charisma}, Base Armor Class: {self.base_armor_class}"

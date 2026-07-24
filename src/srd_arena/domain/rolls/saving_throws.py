@@ -59,9 +59,14 @@ def resolve_saving_throw(
     """Resolve an creature's saving throw against a target."""
     ability_score = getattr(creature.attributes, ability)
     ability_modifier = creature.get_modifier(ability_score)
-    proficient = _is_save_proficient(creature, ability)
+    explicit_bonus = _explicit_saving_throw_bonus(creature, ability)
+    proficient = explicit_bonus is not None or _is_save_proficient(creature, ability)
     proficiency_modifier = (
-        int(getattr(creature.attributes, "proficiency_bonus")) if proficient else 0
+        explicit_bonus - ability_modifier
+        if explicit_bonus is not None
+        else int(getattr(creature.attributes, "proficiency_bonus"))
+        if proficient
+        else 0
     )
     modifiers = SavingThrowModifiers(
         ability=ability_modifier,
@@ -113,3 +118,15 @@ def _is_save_proficient(creature: SavingThrowCreature, ability: Ability) -> bool
     }
     normalized = {str(item).casefold() for item in saving_throws}
     return ability in normalized or aliases[ability] in normalized
+
+
+def _explicit_saving_throw_bonus(
+    creature: SavingThrowCreature,
+    ability: Ability,
+) -> int | None:
+    statistics = getattr(creature, "statistics", None)
+    bonuses = getattr(statistics, "saving_throw_bonuses", {})
+    if not isinstance(bonuses, dict):
+        return None
+    value = bonuses.get(ability)
+    return value if isinstance(value, int) else None

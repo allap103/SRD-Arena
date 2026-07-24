@@ -1,4 +1,5 @@
 from .attributes import Attributes, Movement
+from .statistics import CreatureStatistics
 from .classes import ClassRef, SubclassRef
 from .class_features import ClassFeature
 from .combat_profile import CombatProfile
@@ -11,6 +12,7 @@ from .spellcasting import Spellcasting
 
 __all__ = [
     "Attributes",
+    "CreatureStatistics",
     "ClassFeature",
     "ClassRef",
     "CombatProfile",

@@ -84,6 +84,19 @@ def _export_creature(
         },
         "health": creature.get_health(),
         "max_health": creature.get_max_health(),
+        "statistics": {
+            "creature_type": creature.statistics.creature_type,
+            "type_tags": list(creature.statistics.type_tags),
+            "alignment": list(creature.statistics.alignment),
+            "challenge_rating": creature.statistics.challenge_rating,
+            "saving_throw_bonuses": dict(
+                creature.statistics.saving_throw_bonuses
+            ),
+            "skill_bonuses": dict(creature.statistics.skill_bonuses),
+            "senses": list(creature.statistics.senses),
+            "passive_perception": creature.statistics.passive_perception,
+            "languages": list(creature.statistics.languages),
+        },
         "movement_remaining": movement_remaining,
         "movement_total": _movement_squares(creature),
         "movement_remaining_feet": (

@@ -2,6 +2,7 @@ from srd_arena.content.catalogs import ClassRecord
 from srd_arena.content.schemas import CreatureSchema
 from srd_arena.content.schemas.bestiary import BestiaryMonsterSchema
 from srd_arena.domain.creatures import Attributes, Movement, normalize_size
+from .creature_statistics import challenge_rating_proficiency_bonus
 
 
 def build_creature_attributes(
@@ -33,6 +34,10 @@ def build_creature_attributes(
                 else schema.attributes.movement.speed_feet
             ),
             feet_per_square=schema.attributes.movement.feet_per_square,
+            burrow_feet=_movement_speed(stat_block, "burrow"),
+            climb_feet=_movement_speed(stat_block, "climb"),
+            fly_feet=_movement_speed(stat_block, "fly"),
+            swim_feet=_movement_speed(stat_block, "swim"),
         ),
         strength=stat_block.strength,
         dexterity=stat_block.dexterity,
@@ -41,8 +46,18 @@ def build_creature_attributes(
         intelligence=stat_block.intelligence,
         charisma=stat_block.charisma,
         base_armor_class=_stat_block_base_ac(stat_block, schema.attributes.base_armor_class),
+        proficiency_bonus=challenge_rating_proficiency_bonus(
+            stat_block.challenge_rating
+        ),
         proficiencies=_merge_proficiencies(
-            schema.attributes.proficiencies, _class_proficiencies(class_record)
+            schema.attributes.proficiencies,
+            _class_proficiencies(class_record),
+            {
+                "saving_throws": [
+                    ability.casefold()
+                    for ability in stat_block.save
+                ]
+            },
         ),
     )
 
@@ -104,3 +119,17 @@ def _stat_block_ac(stat_block: BestiaryMonsterSchema, default: int) -> int:
         if stat_block.armor_class is not None
         else default
     )
+
+
+def _movement_speed(
+    stat_block: BestiaryMonsterSchema,
+    mode: str,
+) -> int | None:
+    value = stat_block.speed.get(mode)
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
+    if isinstance(value, dict):
+        number = value.get("number")
+        if isinstance(number, int) and not isinstance(number, bool):
+            return number
+    return None
