@@ -4,8 +4,18 @@ from typing import TYPE_CHECKING
 
 from ..creatures import Creature
 from ..geometry import Position
-from .actions.attack_resolution import apply_attack_damage, resolve_attack, selected_attack_type
-from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent, movement_squares as _movement_squares
+from .actions.attack_resolution import (
+    apply_attack_damage,
+    attack_range_squares,
+    resolve_attack,
+    selected_attack_type,
+)
+from .actions.hit_effects import apply_attack_hit_effects
+from .behaviors import (
+    DIRECTION_DELTAS,
+    chebyshev_distance as _chebyshev_distance,
+    movement_squares as _movement_squares,
+)
 from .models import (
     BehaviorContext,
     CreatureRef,
@@ -120,7 +130,19 @@ class TurnEngine:
                     ),
                     actor_position=Position(enemy.position.x, enemy.position.y),
                     can_attack=(
-                        _is_adjacent(target_state.position, enemy.position)
+                        _chebyshev_distance(
+                            target_state.position,
+                            enemy.position,
+                        )
+                        <= attack_range_squares(
+                            enemy.creature,
+                            state.item_templates,
+                            preferred_attack_type=(
+                                "ranged"
+                                if enemy.behavior.type == "archer"
+                                else "melee"
+                            ),
+                        )
                         and state._creatures_are_opponents(
                             creature_ref,
                             target_ref,
@@ -281,6 +303,14 @@ class TurnEngine:
                         attacker_label=enemy.creature.name,
                         target_label=state._creature_label(target_ref),
                     )
+                    if attack.hit and target.get_health() > 0:
+                        apply_attack_hit_effects(
+                            state,
+                            attacker_ref=creature_ref,
+                            target_ref=target_ref,
+                            effects=attack.hit_effects,
+                            progress=progress,
+                        )
                     progress.messages.extend(attack.messages)
                     progress.events.append(
                         state._event(
@@ -302,6 +332,9 @@ class TurnEngine:
                         )
                     )
                     if not target_state.is_alive:
+                        state._remove_relational_statuses_for_creature(
+                            target_ref
+                        )
                         break
                 actions_resolved += len(attack_names)
                 return True, progress, actions_resolved

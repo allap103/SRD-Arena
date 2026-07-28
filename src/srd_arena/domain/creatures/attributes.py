@@ -11,8 +11,12 @@ class Movement:
     swim_feet: int | None = None
 
     @property
+    def effective_speed_feet(self) -> int:
+        return max(self.speed_feet, self.fly_feet or 0)
+
+    @property
     def squares_per_turn(self) -> int:
-        return self.speed_feet // self.feet_per_square
+        return self.effective_speed_feet // self.feet_per_square
 
 
 @dataclass

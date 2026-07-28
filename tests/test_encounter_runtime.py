@@ -1,9 +1,14 @@
 from pathlib import Path
+from copy import deepcopy
 from types import SimpleNamespace
 
 import pytest
 
 from srd_arena.domain.encounters.encounter import ActionCost, EncounterAction, EncounterState
+from srd_arena.domain.encounters.actions.hit_effects import (
+    apply_attack_hit_effects,
+)
+from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.frontends.cli.combat import render_encounter_text
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.frontends.qt.app import CyoaPySide6Window
@@ -264,11 +269,29 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
         action
         for action in state.available_actions(session.primary_creature)
         if action.kind == "multiattack"
-        and action.value == "participant:0"
     )
-    first = state.apply_action(session.primary_creature, multiattack)
+    initial_actions = state.available_actions(session.primary_creature)
+    assert multiattack.value is None
+    assert not any(action.kind == "attack" for action in initial_actions)
+
+    started = state.apply_action(session.primary_creature, multiattack)
 
     assert state.primary_creature_state.actions_remaining == 0
+    assert state.primary_creature_state.attacks_remaining == 2
+    assert state.primary_creature_state.pending_attack_names == [
+        "Thunderous Slam",
+        "Thunderous Slam",
+    ]
+    assert not any(event.type == "attack_resolved" for event in started.events)
+
+    invocation = next(
+        action
+        for action in state.available_actions(session.primary_creature)
+        if action.kind == "attack" and action.value == "participant:0"
+    )
+    assert invocation.source_trigger_id == "Thunderous Slam"
+    first = state.apply_action(session.primary_creature, invocation)
+
     assert state.primary_creature_state.attacks_remaining == 1
     assert state.primary_creature_state.pending_attack_names == [
         "Thunderous Slam"
@@ -279,12 +302,12 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
         if event.type == "attack_resolved"
     ] == ["Thunderous Slam"]
 
-    follow_up = next(
+    second_invocation = next(
         action
         for action in state.available_actions(session.primary_creature)
         if action.kind == "attack" and action.value == "participant:0"
     )
-    second = state.apply_action(session.primary_creature, follow_up)
+    second = state.apply_action(session.primary_creature, second_invocation)
 
     assert state.primary_creature_state.attacks_remaining == 0
     assert state.primary_creature_state.pending_attack_names == []
@@ -328,12 +351,140 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
     runtime_creatures = session.encounter_state.export_state(
         session.primary_creature
     )["creatures"]
-    assert runtime_creatures["player"]["movement_total_feet"] == 40
-    assert runtime_creatures["participant:0"]["movement_total_feet"] == 10
+    assert runtime_creatures["player"]["movement_total_feet"] == 80
+    assert runtime_creatures["participant:0"]["movement_total_feet"] == 90
     assert runtime_creatures["participant:1"]["movement_total_feet"] == 10
     assert {
         creature["controller"] for creature in runtime_creatures.values()
     } == {"user"}
+
+
+def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
+    monkeypatch,
+) -> None:
+    session = Scenario(MULTIATTACK_SCENARIO_DIR).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.initiative_order = ["participant:1", "participant:0", "player"]
+    state.turn_index = 0
+    state.creatures["participant:1"].position.x = 7
+    state.creatures["participant:1"].position.y = 4
+    state.creatures["participant:0"].position.x = 5
+    state.creatures["participant:0"].position.y = 4
+    state.creatures["player"].position.x = 4
+    state.creatures["player"].position.y = 4
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 20,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda count, _sides: count,
+    )
+
+    multiattack = next(
+        action
+        for action in state.available_actions(session.primary_creature)
+        if action.kind == "multiattack"
+    )
+    state.apply_action(session.primary_creature, multiattack)
+    tentacle = next(
+        action
+        for action in state.available_actions(session.primary_creature)
+        if action.kind == "attack" and action.value == "participant:0"
+    )
+    state.apply_action(session.primary_creature, tentacle)
+
+    grapple = next(
+        status
+        for status in state.conditions_for("participant:0")
+        if status.name == "grappled"
+    )
+    assert grapple.source_ref == "participant:1"
+    assert grapple.metadata["escape_dc"] == 14
+    assert state._grappling_targets_for("participant:1") == (
+        "participant:0",
+    )
+
+    huge_target_tentacle = next(
+        action
+        for action in state.available_actions(session.primary_creature)
+        if action.kind == "attack" and action.value == "player"
+    )
+    state.apply_action(session.primary_creature, huge_target_tentacle)
+    assert state.has_condition("player", "grappled") is False
+
+    state.initiative_order = ["participant:0", "participant:1", "player"]
+    state.turn_index = 0
+    state.creatures["participant:0"].actions_remaining = 1
+    failed_escape = next(
+        action
+        for action in state.available_actions(session.primary_creature)
+        if action.kind == "escape_grapple"
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+    failed = state.apply_action(session.primary_creature, failed_escape)
+    assert state.has_condition("participant:0", "grappled") is True
+    assert state.creatures["participant:0"].actions_remaining == 0
+    assert any("fails to escape" in text for _, text in failed.messages)
+
+    state.creatures["participant:0"].actions_remaining = 1
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 20,
+    )
+    escape = next(
+        action
+        for action in state.available_actions(session.primary_creature)
+        if action.kind == "escape_grapple"
+    )
+    result = state.apply_action(session.primary_creature, escape)
+
+    assert escape.label == "Escape The Deep One (DC 14)"
+    assert state.has_condition("participant:0", "grappled") is False
+    assert state.has_condition("participant:1", "grappling") is False
+    assert any("escapes The Deep One's grapple" in text for _, text in result.messages)
+
+
+def test_tentacle_grapple_enforces_capacity_without_counting_duplicates() -> None:
+    session = Scenario(MULTIATTACK_SCENARIO_DIR).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    aboleth_ref = "participant:1"
+    template = state.creatures["participant:0"]
+    for index in range(4):
+        state.creatures[f"tentacle-target:{index}"] = deepcopy(template)
+    tentacle = state.creatures[aboleth_ref].creature.monster_attacks[0]
+    [grapple_effect] = tentacle.hit_effects
+
+    for target_ref in (
+        "participant:0",
+        "participant:0",
+        "tentacle-target:0",
+        "tentacle-target:1",
+        "tentacle-target:2",
+        "tentacle-target:3",
+    ):
+        apply_attack_hit_effects(
+            state,
+            attacker_ref=aboleth_ref,
+            target_ref=target_ref,
+            effects=(grapple_effect,),
+            progress=EncounterProgress(),
+        )
+
+    assert set(state._grappling_targets_for(aboleth_ref)) == {
+        "participant:0",
+        "tentacle-target:0",
+        "tentacle-target:1",
+        "tentacle-target:2",
+    }
+    assert state.has_condition("tentacle-target:3", "grappled") is False
 
 
 def test_fallback_tokens_use_team_colors() -> None:

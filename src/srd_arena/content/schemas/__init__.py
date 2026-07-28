@@ -19,6 +19,12 @@ from .bestiary import (
     BestiaryMonsterSchema,
 )
 from .multiattack import MultiattackMechanicsSchema
+from .action_mechanics import (
+    AttackActionMechanicsSchema,
+    AutomaticActionMechanicsSchema,
+    SavingThrowActionMechanicsSchema,
+    SpellcastingActionMechanicsSchema,
+)
 from .spells import SpellFileSchema, SpellSchema
 from .items import (
     BaseItemFileSchema,
@@ -52,6 +58,10 @@ __all__ = [
     "BestiaryFileSchema",
     "BestiaryMonsterSchema",
     "MultiattackMechanicsSchema",
+    "AttackActionMechanicsSchema",
+    "AutomaticActionMechanicsSchema",
+    "SavingThrowActionMechanicsSchema",
+    "SpellcastingActionMechanicsSchema",
     "BaseItemFileSchema",
     "EQUIPMENT_SLOTS",
     "EncounterCreatureSchema",

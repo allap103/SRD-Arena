@@ -39,6 +39,51 @@ def test_build_roll_views_extracts_attack_and_damage():
     assert damage.total == 12
 
 
+def test_build_roll_views_displays_additional_typed_attack_damage():
+    event = CombatEvent(
+        seq=1,
+        type="attack_resolved",
+        data={
+            "attacker_label": "White Dragon",
+            "target_label": "Target",
+            "hit": True,
+            "attack_roll_detail": {
+                "die": 17,
+                "modifier": 11,
+                "total": 28,
+                "target_ac": 15,
+            },
+            "damage_roll_detail": {
+                "dice": "2d6",
+                "dice_total": 7,
+                "modifier": 6,
+                "total": 13,
+                "damage_type": "slashing",
+                "additional_damage": [
+                    {
+                        "dice": "1d8",
+                        "dice_values": [5],
+                        "die_rolls": [[5]],
+                        "dice_total": 5,
+                        "modifier": 0,
+                        "total": 5,
+                        "damage_type": "cold",
+                    }
+                ],
+            },
+        },
+    )
+
+    attack, slashing, cold = build_roll_views([event])
+
+    assert attack.label == "White Dragon attacks Target"
+    assert slashing.label == "Slashing damage"
+    assert slashing.total == 13
+    assert cold.label == "Cold damage"
+    assert cold.dice[0].expression == "d8"
+    assert cold.total == 5
+
+
 def test_build_roll_views_shows_both_d20s_for_advantage_or_disadvantage():
     event = CombatEvent(
         seq=1,

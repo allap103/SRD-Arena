@@ -42,14 +42,20 @@ def build_roll_views(events: list[CombatEvent]) -> list[RollView]:
                 attack = _attack_roll_view(event)
                 if attack is not None:
                     views.append(attack)
+            damage_detail = event.data.get("damage_roll_detail")
             damage = _pool_roll_view(
-                event.data.get("damage_roll_detail"),
-                label="Damage",
+                damage_detail,
+                label=_attack_damage_label(damage_detail),
                 roll_id=event.data.get("roll_id"),
                 reroll_action_ids=event.data.get("reroll_action_ids"),
             )
             if damage is not None:
                 views.append(damage)
+            views.extend(
+                _additional_attack_damage_roll_views(
+                    event.data.get("damage_roll_detail")
+                )
+            )
             continue
 
         if event.type == "damage_rerolled":
@@ -125,6 +131,39 @@ def _attack_roll_view(event: CombatEvent) -> RollView | None:
         total=total,
         target=target if isinstance(target, int) else None,
         success=event.data.get("hit") if isinstance(event.data.get("hit"), bool) else None,
+    )
+
+
+def _additional_attack_damage_roll_views(detail: object) -> list[RollView]:
+    if not isinstance(detail, dict):
+        return []
+    additional = detail.get("additional_damage")
+    if not isinstance(additional, list):
+        return []
+    views: list[RollView] = []
+    for component in additional:
+        if not isinstance(component, dict):
+            continue
+        damage_type = component.get("damage_type")
+        label = (
+            f"{damage_type.capitalize()} damage"
+            if isinstance(damage_type, str)
+            else "Additional damage"
+        )
+        view = _pool_roll_view(component, label=label)
+        if view is not None:
+            views.append(view)
+    return views
+
+
+def _attack_damage_label(detail: object) -> str:
+    if not isinstance(detail, dict):
+        return "Damage"
+    damage_type = detail.get("damage_type")
+    return (
+        f"{damage_type.capitalize()} damage"
+        if isinstance(damage_type, str)
+        else "Damage"
     )
 
 

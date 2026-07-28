@@ -72,6 +72,8 @@ from .conditions import (
     is_grappled as _is_grappled_impl,
     movement_cost_for as _movement_cost_for_impl,
     remove_status as _remove_status_impl,
+    remove_status_from_source as _remove_status_from_source_impl,
+    remove_relational_statuses_for_creature as _remove_relational_statuses_for_creature_impl,
     status_replaces as _status_replaces_impl,
 )
 from .participants import (
@@ -429,6 +431,10 @@ class EncounterState(EncounterStateData):
 
     _apply_status = _apply_status_impl
     _remove_status = _remove_status_impl
+    _remove_status_from_source = _remove_status_from_source_impl
+    _remove_relational_statuses_for_creature = (
+        _remove_relational_statuses_for_creature_impl
+    )
     _creature_controller = _creature_controller_impl
     _creature_team_id = _creature_team_id_impl
     _creatures_are_opponents = _creatures_are_opponents_impl

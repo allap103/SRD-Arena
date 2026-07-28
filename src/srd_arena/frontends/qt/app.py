@@ -1305,7 +1305,7 @@ class GameWindow(QMainWindow):
             result,
             queue_follow_up_attack=(
                 selected_action is not None
-                and selected_action.kind in {"attack", "multiattack"}
+                and selected_action.kind == "attack"
             ),
         )
 
@@ -1507,7 +1507,7 @@ class GameWindow(QMainWindow):
         return TargetSelectionMode(
             kind=action.kind,
             source_trigger_id=(
-                action.kind
+                action.source_trigger_id or action.kind
                 if action.kind in {"attack", "grapple"}
                 else action.source_trigger_id
             ),
@@ -1522,6 +1522,11 @@ class GameWindow(QMainWindow):
             return "Opportunity attack"
         if mode.kind == "grapple":
             return "Grapple"
+        if mode.kind == "attack" and mode.source_trigger_id not in {
+            None,
+            "attack",
+        }:
+            return mode.source_trigger_id
         return "Attack"
 
     def _target_creature_ref(self, action: ActionView | None) -> str | None:

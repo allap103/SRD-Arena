@@ -113,6 +113,32 @@ def resolve_attack(
     )
     damage_die_total = damage_roll.subtotal
     damage_total = damage_roll.total
+    additional_damage = 0
+    additional_damage_details: list[dict[str, object]] = []
+    for extra_dice, extra_bonus, extra_type in attack_source.additional_damage:
+        extra_count, extra_sides = parse_damage_dice(extra_dice)
+        if critical_hit:
+            extra_count *= 2
+            extra_dice = f"{extra_count}d{extra_sides}"
+        extra_roll = resolve_dice(
+            extra_count,
+            extra_sides,
+            modifier=extra_bonus,
+            roller=lambda sides: dice_roller(1, sides),
+        )
+        additional_damage += max(0, extra_roll.total)
+        additional_damage_details.append(
+            {
+                "dice": extra_dice,
+                "dice_values": [die.result for die in extra_roll.dice],
+                "die_rolls": [list(die.rolls) for die in extra_roll.dice],
+                "dice_total": extra_roll.subtotal,
+                "modifier": extra_bonus,
+                "total": extra_roll.total,
+                "damage_type": extra_type,
+                "critical_hit": critical_hit,
+            }
+        )
     damage_roll_detail = {
         "dice": damage_dice,
         "dice_values": [die.result for die in damage_roll.dice],
@@ -121,6 +147,8 @@ def resolve_attack(
         "modifier": attack_source.damage_bonus,
         "total": damage_total,
         "critical_hit": critical_hit,
+        "damage_type": attack_source.damage_type,
+        "additional_damage": additional_damage_details,
     }
     if attack_source.weapon_id is not None:
         damage_roll_detail["weapon_id"] = attack_source.weapon_id
@@ -133,7 +161,7 @@ def resolve_attack(
         messages=messages,
         hit=True,
         attack_roll=attack_result.total,
-        damage=max(1, damage_total),
+        damage=max(1, damage_total) + additional_damage,
         defender_defeated=False,
         attack_roll_detail=attack_roll_detail,
         damage_roll_detail=damage_roll_detail,
@@ -148,6 +176,9 @@ def resolve_attack(
         weapon_id=attack_source.weapon_id,
         weapon_name=attack_source.weapon_name,
         weapon_properties=attack_source.weapon_properties,
+        additional_damage=additional_damage,
+        additional_damage_details=tuple(additional_damage_details),
+        hit_effects=attack_source.hit_effects,
     )
 
 
@@ -161,7 +192,7 @@ def apply_attack_damage(
     if not attack.hit or attack.damage_roll is None or attack.damage_dice is None:
         return
     damage_total = attack.damage_roll.total
-    damage = max(1, damage_total)
+    damage = max(1, damage_total) + attack.additional_damage
     applied_damage = defender.take_damage(damage)
     attack.damage = applied_damage
     attack.defender_defeated = defender.get_health() <= 0
@@ -197,6 +228,8 @@ def damage_roll_detail(
         "modifier": attack.damage_modifier,
         "total": attack.damage_roll.total,
         "critical_hit": attack.critical_hit,
+        "damage_type": attack.damage_type,
+        "additional_damage": list(attack.additional_damage_details),
     }
     if applied_damage is not None:
         detail["minimum_applied_total"] = max(1, attack.damage_roll.total)
@@ -287,6 +320,12 @@ def monster_attack_source(attack) -> AttackSource:
         range_normal=attack.range_normal,
         range_long=attack.range_long,
         weapon_name=attack.name,
+        additional_damage=tuple(
+            (component.dice, component.bonus, component.damage_type)
+            for component in attack.additional_damage
+        ),
+        hit_effects=attack.hit_effects,
+        reach_feet=attack.reach_feet,
     )
 
 
@@ -336,6 +375,56 @@ def attack_sources(attacker: Creature, items_by_id: dict[str, Item]) -> list[Att
     return [monster_attack_source(attack) for attack in attacker.monster_attacks]
 
 
+def attack_range_squares(
+    attacker: Creature,
+    items_by_id: dict[str, Item],
+    *,
+    preferred_attack_type: str | None = None,
+    preferred_attack_name: str | None = None,
+) -> int:
+    source = select_attack_source(
+        attacker,
+        items_by_id,
+        preferred_attack_type=preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
+    if source is None:
+        return 1
+    attack_type = source.attack_modes[0]
+    range_feet = (
+        source.range_normal
+        if attack_type == "ranged"
+        else source.reach_feet or 5
+    )
+    return max(1, range_feet // attacker.attributes.movement.feet_per_square)
+
+
+def maximum_attack_range_squares(
+    attacker: Creature,
+    items_by_id: dict[str, Item],
+) -> int:
+    sources = attack_sources(attacker, items_by_id)
+    if not sources:
+        return 1
+    ranges = []
+    for source in sources:
+        for attack_type in source.attack_modes:
+            range_feet = (
+                source.range_normal
+                if attack_type == "ranged"
+                else source.reach_feet or 5
+            )
+            if range_feet is not None:
+                ranges.append(
+                    max(
+                        1,
+                        range_feet
+                        // attacker.attributes.movement.feet_per_square,
+                    )
+                )
+    return max(ranges, default=1)
+
+
 def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
     return AttackSource(
         name=source.name,
@@ -353,6 +442,9 @@ def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
         weapon_id=source.weapon_id,
         weapon_name=source.weapon_name,
         weapon_properties=source.weapon_properties,
+        additional_damage=source.additional_damage,
+        hit_effects=source.hit_effects,
+        reach_feet=source.reach_feet,
     )
 
 

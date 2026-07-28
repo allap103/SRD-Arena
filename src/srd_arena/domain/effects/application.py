@@ -68,6 +68,11 @@ def _status_from_effect(effect: EffectResult) -> Status:
             if isinstance(effect.data.get("expires_on_round"), int)
             else None
         ),
+        metadata=(
+            effect.data.get("metadata")
+            if isinstance(effect.data.get("metadata"), dict)
+            else None
+        ),
     )
 
 

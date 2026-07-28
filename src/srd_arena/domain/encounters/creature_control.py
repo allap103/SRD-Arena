@@ -6,13 +6,20 @@ from ..creatures import Creature, can_grapple
 from ..geometry import Position
 from .actions.attack_resolution import (
     apply_attack_damage,
+    attack_range_squares,
     has_free_hand,
     resolve_attack,
     selected_attack_type,
 )
 from .actions.consumables import healing_potions_in_inventory
-from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent, movement_squares as _movement_squares
+from .actions.hit_effects import apply_attack_hit_effects
+from .behaviors import (
+    DIRECTION_DELTAS,
+    chebyshev_distance as _chebyshev_distance,
+    movement_squares as _movement_squares,
+)
 from .models import ActionCost, CreatureRef, DecisionFrame, EncounterAction, EncounterProgress
+from ..rolls.dice import resolve_d20
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -72,35 +79,54 @@ def available_creature_actions(
             and enemy.attacks_remaining == 0
             else None
         )
+        if multiattack_sequence is not None:
+            actions.append(
+                EncounterAction(
+                    "Multiattack",
+                    "multiattack",
+                    id=f"{creature_ref}-multiattack",
+                    creature_ref=creature_ref,
+                    cost=ActionCost(action=1),
+                )
+            )
         for target_ref in self._living_creature_refs(player):
             if target_ref == creature_ref or not self._creatures_are_opponents(creature_ref, target_ref):
                 continue
-            if not _is_adjacent(enemy.position, self._creature_position(target_ref)):
-                continue
-            actions.append(
-                EncounterAction(
-                    f"Attack {_lower_initial(self._creature_label(target_ref))}",
-                    "attack",
-                    target_ref,
-                    id=f"{creature_ref}-attack-{target_ref.replace(':', '-')}",
-                    creature_ref=creature_ref,
-                    cost=ActionCost(
-                        action=1 if enemy.attacks_remaining == 0 else 0
-                    ),
-                )
+            attack_reach_squares = attack_range_squares(
+                enemy.creature,
+                self.item_templates,
+                preferred_attack_name=(
+                    enemy.pending_attack_names[0]
+                    if enemy.pending_attack_names
+                    else None
+                ),
             )
-            if multiattack_sequence is not None:
+            if _chebyshev_distance(
+                enemy.position,
+                self._creature_position(target_ref),
+            ) > attack_reach_squares:
+                continue
+            if multiattack_sequence is None or enemy.pending_attack_names:
                 actions.append(
                     EncounterAction(
-                        f"Multiattack {_lower_initial(self._creature_label(target_ref))}",
-                        "multiattack",
-                        target_ref,
-                        id=(
-                            f"{creature_ref}-multiattack-"
-                            f"{target_ref.replace(':', '-')}"
+                        (
+                            f"{enemy.pending_attack_names[0]} "
+                            f"{_lower_initial(self._creature_label(target_ref))}"
+                            if enemy.pending_attack_names
+                            else f"Attack {_lower_initial(self._creature_label(target_ref))}"
                         ),
+                        "attack",
+                        target_ref,
+                        id=f"{creature_ref}-attack-{target_ref.replace(':', '-')}",
                         creature_ref=creature_ref,
-                        cost=ActionCost(action=1),
+                        cost=ActionCost(
+                            action=1 if enemy.attacks_remaining == 0 else 0
+                        ),
+                        source_trigger_id=(
+                            enemy.pending_attack_names[0]
+                            if enemy.pending_attack_names
+                            else None
+                        ),
                     )
                 )
             if (
@@ -124,6 +150,24 @@ def available_creature_actions(
                 )
     actions.extend(self._available_feature_actions(enemy.creature))
     actions.extend(self._available_spell_actions(enemy.creature))
+    if enemy.actions_remaining > 0:
+        for status in self.conditions_for(creature_ref):
+            escape_dc = status.metadata.get("escape_dc")
+            if status.name != "grappled" or not isinstance(escape_dc, int):
+                continue
+            actions.append(
+                EncounterAction(
+                    f"Escape {status.source_label} (DC {escape_dc})",
+                    "escape_grapple",
+                    status.source_ref,
+                    id=(
+                        f"{creature_ref}-escape-grapple-"
+                        f"{status.source_ref.replace(':', '-')}"
+                    ),
+                    creature_ref=creature_ref,
+                    cost=ActionCost(action=1),
+                )
+            )
     if enemy.bonus_action_available:
         for item in healing_potions_in_inventory(
             enemy.creature,
@@ -244,26 +288,36 @@ def apply_creature_action(
                 },
             )
         )
-    elif action.kind in {"attack", "multiattack"}:
-        preferred_attack_name: str | None = None
-        if action.kind == "multiattack":
-            if enemy.actions_remaining <= 0 or enemy.attacks_remaining > 0:
-                raise RuntimeError("No Action remains to make a Multiattack.")
-            multiattack = enemy.creature.multiattack
-            sequence = (
-                multiattack.executable_attack_sequence(
-                    {attack.name for attack in enemy.creature.monster_attacks}
-                )
-                if multiattack is not None
-                else None
+    elif action.kind == "multiattack":
+        if enemy.actions_remaining <= 0 or enemy.attacks_remaining > 0:
+            raise RuntimeError("No Action remains to make a Multiattack.")
+        multiattack = enemy.creature.multiattack
+        sequence = (
+            multiattack.executable_attack_sequence(
+                {attack.name for attack in enemy.creature.monster_attacks}
             )
-            if not sequence:
-                raise RuntimeError("This creature has no executable Multiattack plan.")
-            self._consume_action(allow_magic=False)
-            preferred_attack_name = sequence[0]
-            enemy.pending_attack_names = list(sequence[1:])
-            enemy.attacks_remaining = len(enemy.pending_attack_names)
-        elif enemy.pending_attack_names:
+            if multiattack is not None
+            else None
+        )
+        if not sequence:
+            raise RuntimeError("This creature has no executable Multiattack plan.")
+        self._consume_action(allow_magic=False)
+        enemy.pending_attack_names = list(sequence)
+        enemy.attacks_remaining = len(sequence)
+        progress.messages.append(
+            ("system", f"{enemy.creature.name} begins Multiattack.")
+        )
+        progress.events.append(
+            self._event(
+                "action_resolved",
+                creature_ref=decision.creature_ref,
+                action_id=action_id,
+                data={"kind": "multiattack", "sequence": list(sequence)},
+            )
+        )
+    elif action.kind == "attack":
+        preferred_attack_name: str | None = None
+        if enemy.pending_attack_names:
             preferred_attack_name = enemy.pending_attack_names.pop(0)
             enemy.attacks_remaining = len(enemy.pending_attack_names)
         elif enemy.attacks_remaining == 0:
@@ -317,6 +371,14 @@ def apply_creature_action(
             attacker_label=attacker_label,
             target_label=target_label,
         )
+        if attack.hit and defender.get_health() > 0:
+            apply_attack_hit_effects(
+                self,
+                attacker_ref=decision.creature_ref,
+                target_ref=target_ref,
+                effects=attack.hit_effects,
+                progress=progress,
+            )
         progress.messages.extend(attack.messages)
         progress.events.append(
             self._event(
@@ -339,6 +401,7 @@ def apply_creature_action(
             )
         )
         if defender.get_health() <= 0:
+            self._remove_relational_statuses_for_creature(target_ref)
             progress.events.append(
                 self._event(
                     "creature_defeated",
@@ -361,6 +424,58 @@ def apply_creature_action(
             action,
             progress,
             action_id,
+        )
+    elif action.kind == "escape_grapple":
+        if enemy.actions_remaining <= 0:
+            raise RuntimeError("No Action remains to escape a grapple.")
+        if not isinstance(action.value, str):
+            raise ValueError("Escape grapple requires the grappler reference.")
+        grapple = next(
+            (
+                status
+                for status in self.conditions_for(decision.creature_ref)
+                if status.name == "grappled"
+                and status.source_ref == action.value
+                and isinstance(status.metadata.get("escape_dc"), int)
+            ),
+            None,
+        )
+        if grapple is None:
+            raise RuntimeError("That grapple is no longer active.")
+        self._consume_action(allow_magic=False)
+        escape_dc = grapple.metadata["escape_dc"]
+        modifier = max(
+            enemy.creature.get_modifier(enemy.creature.attributes.strength),
+            enemy.creature.get_modifier(enemy.creature.attributes.dexterity),
+        )
+        check = resolve_d20(modifier=modifier, roller=_roll_die)
+        success = check.total >= escape_dc
+        if success:
+            self._remove_status_from_source(
+                decision.creature_ref,
+                "grappled",
+                action.value,
+            )
+        progress.messages.append(
+            (
+                "system",
+                f"{enemy.creature.name} {'escapes' if success else 'fails to escape'} "
+                f"{grapple.source_label}'s grapple (rolled {check.total} vs DC {escape_dc}).",
+            )
+        )
+        progress.events.append(
+            self._event(
+                "action_resolved",
+                creature_ref=decision.creature_ref,
+                action_id=action_id,
+                data={
+                    "kind": "escape_grapple",
+                    "source_ref": action.value,
+                    "dc": escape_dc,
+                    "roll": check.total,
+                    "success": success,
+                },
+            )
         )
     elif action.kind == "utilize":
         if not isinstance(action.value, str):

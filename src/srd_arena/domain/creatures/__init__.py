@@ -6,7 +6,7 @@ from .combat_profile import CombatProfile
 from .equipment import Equipment
 from .inventory import Inventory
 from .model import Creature
-from .monster_attack import MonsterAttack
+from .monster_attack import MonsterAttack, MonsterAttackDamage
 from .multiattack import (
     Multiattack,
     MultiattackCount,
@@ -18,6 +18,14 @@ from .multiattack import (
 )
 from .size import can_grapple, is_two_sizes_smaller, normalize_size, size_rank
 from .spellcasting import Spellcasting
+from .stat_block_actions import (
+    ActionEffect,
+    ActionOutcomeStage,
+    ActionTarget,
+    AttackActionDefinition,
+    SavingThrowActionDefinition,
+    StatBlockActionDefinition,
+)
 
 __all__ = [
     "Attributes",
@@ -30,6 +38,7 @@ __all__ = [
     "Inventory",
     "Movement",
     "MonsterAttack",
+    "MonsterAttackDamage",
     "Multiattack",
     "MultiattackCount",
     "MultiattackInvocation",
@@ -39,6 +48,12 @@ __all__ = [
     "MultiattackStep",
     "SubclassRef",
     "Spellcasting",
+    "ActionEffect",
+    "ActionOutcomeStage",
+    "ActionTarget",
+    "AttackActionDefinition",
+    "SavingThrowActionDefinition",
+    "StatBlockActionDefinition",
     "can_grapple",
     "is_two_sizes_smaller",
     "normalize_size",

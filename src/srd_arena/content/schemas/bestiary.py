@@ -7,6 +7,11 @@ from .multiattack import (
     MultiattackMechanicsSchema,
     iter_stat_block_references,
 )
+from .action_mechanics import NonMultiattackMechanicsSchema
+
+BestiaryActionMechanicsSchema = (
+    MultiattackMechanicsSchema | NonMultiattackMechanicsSchema
+)
 
 
 class BestiaryHitPointsSchema(SourceModel):
@@ -63,7 +68,10 @@ class BestiarySpeedSchema(SourceModel):
 class BestiaryActionSchema(SourceModel):
     name: str
     entries: list[object] = Field(default_factory=list)
-    mechanics: MultiattackMechanicsSchema | None = None
+    mechanics: BestiaryActionMechanicsSchema | None = Field(
+        default=None,
+        discriminator="type",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -73,6 +81,17 @@ class BestiaryActionSchema(SourceModel):
                 "Use 'mechanics' instead of the obsolete "
                 "'srdArenaMultiattack' key."
             )
+        if isinstance(value, dict):
+            mechanics = value.get("mechanics")
+            if (
+                isinstance(mechanics, dict)
+                and "type" not in mechanics
+                and "plans" in mechanics
+            ):
+                return {
+                    **value,
+                    "mechanics": {"type": "multiattack", **mechanics},
+                }
         return value
 
 
@@ -122,7 +141,7 @@ class BestiaryMonsterSchema(SourceModel):
         }
         for action in self.action:
             mechanics = action.mechanics
-            if mechanics is None:
+            if not isinstance(mechanics, MultiattackMechanicsSchema):
                 continue
             for section, name in iter_stat_block_references(mechanics):
                 if _reference_name(name) not in sections[section]:

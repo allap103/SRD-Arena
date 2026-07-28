@@ -18,6 +18,7 @@ class Status:
     expires_on_round: int | None = None
     triggered_effects: list[TriggeredEffect] = field(default_factory=list)
     tags: set[str] = field(default_factory=set)
+    metadata: dict[str, object] = field(default_factory=dict)
 
 
 def build_named_status(
@@ -28,6 +29,7 @@ def build_named_status(
     target_ref: str,
     expires_on_creature_ref: str | None = None,
     expires_on_round: int | None = None,
+    metadata: dict[str, object] | None = None,
 ) -> Status:
     return Status(
         id=_status_id(name=name, source_ref=source_ref, target_ref=target_ref),
@@ -39,6 +41,7 @@ def build_named_status(
         expires_on_round=expires_on_round,
         triggered_effects=_status_effects(name, target_ref),
         tags={name, "condition"},
+        metadata=dict(metadata or {}),
     )
 
 

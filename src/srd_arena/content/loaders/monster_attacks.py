@@ -4,7 +4,15 @@ from srd_arena.content.schemas.bestiary import (
     BestiaryActionSchema,
     BestiaryMonsterSchema,
 )
-from srd_arena.domain.creatures.monster_attack import MonsterAttack
+from srd_arena.content.schemas.action_mechanics import (
+    AttackActionMechanicsSchema,
+    DamageEffectSchema,
+)
+from srd_arena.domain.creatures.monster_attack import (
+    MonsterAttack,
+    MonsterAttackDamage,
+)
+from srd_arena.domain.creatures.stat_block_actions import ActionEffect
 
 
 def build_monster_attacks(
@@ -21,6 +29,45 @@ def build_monster_attacks(
 
 
 def _parse_monster_attack(action: BestiaryActionSchema) -> MonsterAttack | None:
+    if isinstance(action.mechanics, AttackActionMechanicsSchema):
+        damage = [
+            effect
+            for effect in action.mechanics.hit
+            if isinstance(effect, DamageEffectSchema)
+        ]
+        if not damage:
+            return None
+        primary, *additional = damage
+        return MonsterAttack(
+            name=action.name,
+            attack_modes=tuple(action.mechanics.attack_modes),
+            attack_bonus=action.mechanics.attack_bonus,
+            damage_dice=primary.dice,
+            damage_bonus=primary.bonus,
+            damage_type=primary.damage_type,
+            range_normal=action.mechanics.range_normal_feet,
+            range_long=action.mechanics.range_long_feet,
+            additional_damage=tuple(
+                MonsterAttackDamage(
+                    dice=component.dice,
+                    bonus=component.bonus,
+                    damage_type=component.damage_type,
+                )
+                for component in additional
+            ),
+            hit_effects=tuple(
+                ActionEffect(
+                    kind=effect.type,
+                    parameters=effect.model_dump(
+                        exclude={"type"},
+                        exclude_none=True,
+                    ),
+                )
+                for effect in action.mechanics.hit
+                if not isinstance(effect, DamageEffectSchema)
+            ),
+            reach_feet=action.mechanics.reach_feet,
+        )
     if not action.entries:
         return None
     entry = action.entries[0]

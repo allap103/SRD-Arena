@@ -36,6 +36,7 @@ from srd_arena.domain.creatures import Spellcasting
 from srd_arena.domain.effects.triggered import TriggeredEffect
 from .monster_attacks import build_monster_attacks
 from .multiattacks import build_multiattack
+from .stat_block_actions import build_stat_block_actions
 from .creature_attributes import build_creature_attributes, build_creature_size
 from .creature_features import build_combat_profile, build_feature_uses_remaining
 from .creature_spellcasting import (
@@ -158,6 +159,7 @@ def build_creature(
             if multiattack_action is not None
             else None
         ),
+        stat_block_actions=build_stat_block_actions(stat_block),
         spellcasting=spellcasting,
         statistics=build_creature_statistics(stat_block),
         max_health_override=(

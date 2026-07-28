@@ -19,15 +19,30 @@ def apply_status(state: EncounterState, status: Status) -> None:
 
 
 def remove_status(state: EncounterState, target_ref: CreatureRef, status_name: str) -> None:
+    remove_status_from_source(state, target_ref, status_name)
+
+
+def remove_status_from_source(
+    state: EncounterState,
+    target_ref: CreatureRef,
+    status_name: str,
+    source_ref: CreatureRef | None = None,
+) -> None:
     removed = [
         condition
         for condition in state.conditions
-        if condition.target_ref == target_ref and condition.name == status_name
+        if condition.target_ref == target_ref
+        and condition.name == status_name
+        and (source_ref is None or condition.source_ref == source_ref)
     ]
     state.conditions = [
         condition
         for condition in state.conditions
-        if not (condition.target_ref == target_ref and condition.name == status_name)
+        if not (
+            condition.target_ref == target_ref
+            and condition.name == status_name
+            and (source_ref is None or condition.source_ref == source_ref)
+        )
     ]
     counterparts = {"grappled": "grappling", "grappling": "grappled"}
     for status in removed:
@@ -43,6 +58,23 @@ def remove_status(state: EncounterState, target_ref: CreatureRef, status_name: s
                 and condition.source_ref == status.target_ref
             )
         ]
+
+
+def remove_relational_statuses_for_creature(
+    state: EncounterState,
+    creature_ref: CreatureRef,
+) -> None:
+    state.conditions = [
+        status
+        for status in state.conditions
+        if not (
+            status.name in {"grappled", "grappling"}
+            and (
+                status.target_ref == creature_ref
+                or status.source_ref == creature_ref
+            )
+        )
+    ]
 
 
 def condition_sources_for(

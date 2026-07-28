@@ -1,6 +1,12 @@
 from types import SimpleNamespace
 
-from srd_arena.domain.encounters.conditions import apply_status, remove_status, status_replaces
+from srd_arena.domain.encounters.conditions import (
+    apply_status,
+    remove_relational_statuses_for_creature,
+    remove_status,
+    remove_status_from_source,
+    status_replaces,
+)
 from srd_arena.domain.encounters.participants import (
     creatures_are_opponents,
     creature_controller,
@@ -49,6 +55,41 @@ def test_removing_grappled_also_removes_matching_grappling_status() -> None:
     state = SimpleNamespace(conditions=[grappled, grappling, unrelated])
 
     remove_status(state, "player", "grappled")
+
+    assert state.conditions == [unrelated]
+
+
+def test_removing_one_grapple_source_preserves_other_grapples() -> None:
+    first_grappled = _status("grappled", "participant:0", "player")
+    first_grappling = _status("grappling", "player", "participant:0")
+    second_grappled = _status("grappled", "participant:1", "player")
+    second_grappling = _status("grappling", "player", "participant:1")
+    state = SimpleNamespace(
+        conditions=[
+            first_grappled,
+            first_grappling,
+            second_grappled,
+            second_grappling,
+        ]
+    )
+
+    remove_status_from_source(
+        state,
+        "player",
+        "grappled",
+        "participant:0",
+    )
+
+    assert state.conditions == [second_grappled, second_grappling]
+
+
+def test_defeated_creature_releases_all_relational_grapples() -> None:
+    grappled = _status("grappled", "aboleth", "player")
+    grappling = _status("grappling", "player", "aboleth")
+    unrelated = _status("blinded", "participant:1", "player")
+    state = SimpleNamespace(conditions=[grappled, grappling, unrelated])
+
+    remove_relational_statuses_for_creature(state, "aboleth")
 
     assert state.conditions == [unrelated]
 

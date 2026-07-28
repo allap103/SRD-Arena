@@ -11,6 +11,7 @@ from .monster_attack import MonsterAttack
 from .multiattack import Multiattack
 from .spellcasting import Spellcasting
 from .statistics import CreatureStatistics
+from .stat_block_actions import StatBlockActionDefinition
 
 @dataclass
 class Creature:
@@ -31,6 +32,9 @@ class Creature:
     feature_uses_remaining: dict[str, int] = field(default_factory=dict)
     monster_attacks: list[MonsterAttack] = field(default_factory=list)
     multiattack: Multiattack | None = None
+    stat_block_actions: dict[str, StatBlockActionDefinition] = field(
+        default_factory=dict
+    )
     spellcasting: Spellcasting | None = None
     statistics: CreatureStatistics = field(default_factory=CreatureStatistics)
     max_health_override: int | None = None
