@@ -35,10 +35,6 @@ class DicePoolResult:
     replacements: tuple[DieReplacement, ...] = ()
 
 
-# Compatibility name for callers introduced before the pool terminology.
-DiceRollResult = DicePoolResult
-
-
 @dataclass(frozen=True)
 class D20PoolResult:
     dice: tuple[int, ...]

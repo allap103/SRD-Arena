@@ -11,8 +11,9 @@ from srd_arena.domain.encounters.actions.hit_effects import (
 from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.frontends.cli.combat import render_encounter_text
 from srd_arena.runtime.scenario import Scenario
-from srd_arena.frontends.qt.app import CyoaPySide6Window
+from srd_arena.frontends.qt.app import GameWindow
 from srd_arena.domain.effects import EffectResult
+from srd_arena.domain.creatures import AttackActionDefinition
 from srd_arena.frontends.shared.session import SpellSlotTrackView, build_session_presentation
 from srd_arena.runtime.models import ActionView
 from srd_arena.content.catalogs import load_bestiary_catalog
@@ -118,14 +119,14 @@ def test_cli_encounter_renderer_generates_grid_text() -> None:
 
 
 def test_movement_preview_uses_shortest_paths_around_occupied_cells() -> None:
-    unobstructed_paths = CyoaPySide6Window._shortest_movement_paths(
+    unobstructed_paths = GameWindow._shortest_movement_paths(
         width=4,
         height=4,
         origin=(0, 0),
         blocked=set(),
         max_steps=2,
     )
-    movement_paths = CyoaPySide6Window._shortest_movement_paths(
+    movement_paths = GameWindow._shortest_movement_paths(
         width=4,
         height=4,
         origin=(0, 0),
@@ -278,7 +279,10 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
 
     assert state.primary_creature_state.actions_remaining == 0
     assert state.primary_creature_state.attacks_remaining == 2
-    assert state.primary_creature_state.pending_attack_names == [
+    assert [
+        invocation.name
+        for invocation in state.primary_creature_state.pending_multiattack
+    ] == [
         "Thunderous Slam",
         "Thunderous Slam",
     ]
@@ -293,9 +297,10 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
     first = state.apply_action(session.primary_creature, invocation)
 
     assert state.primary_creature_state.attacks_remaining == 1
-    assert state.primary_creature_state.pending_attack_names == [
-        "Thunderous Slam"
-    ]
+    assert [
+        invocation.name
+        for invocation in state.primary_creature_state.pending_multiattack
+    ] == ["Thunderous Slam"]
     assert [
         event.data["attack_name"]
         for event in first.events
@@ -310,7 +315,7 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
     second = state.apply_action(session.primary_creature, second_invocation)
 
     assert state.primary_creature_state.attacks_remaining == 0
-    assert state.primary_creature_state.pending_attack_names == []
+    assert state.primary_creature_state.pending_multiattack == []
     assert [
         event.data["attack_name"]
         for event in second.events
@@ -331,20 +336,42 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
     }
     assert set(creatures) == {"player", "air_elemental", "aboleth"}
     assert creatures["player"].multiattack is not None
-    assert creatures["player"].multiattack.executable_attack_sequence(
-        {attack.name for attack in creatures["player"].monster_attacks}
-    ) == ("Rend", "Rend", "Rend")
-    assert creatures["air_elemental"].multiattack is not None
-    assert creatures["air_elemental"].multiattack.executable_attack_sequence(
+    player_sequence = creatures["player"].multiattack.executable_sequence(
         {
-            attack.name
-            for attack in creatures["air_elemental"].monster_attacks
+            action.name
+            for action in creatures["player"].stat_block_actions.values()
+            if isinstance(action, AttackActionDefinition)
         }
-    ) == ("Thunderous Slam", "Thunderous Slam")
+    )
+    assert [invocation.name for invocation in player_sequence] == [
+        "Rend",
+        "Rend",
+        "Rend",
+    ]
+    assert creatures["air_elemental"].multiattack is not None
+    elemental_sequence = creatures["air_elemental"].multiattack.executable_sequence(
+        {
+            action.name
+            for action in creatures["air_elemental"].stat_block_actions.values()
+            if isinstance(action, AttackActionDefinition)
+        }
+    )
+    assert [invocation.name for invocation in elemental_sequence] == [
+        "Thunderous Slam",
+        "Thunderous Slam",
+    ]
     assert creatures["aboleth"].multiattack is not None
-    assert creatures["aboleth"].multiattack.executable_attack_sequence(
-        {attack.name for attack in creatures["aboleth"].monster_attacks}
-    ) == ("Tentacle", "Tentacle")
+    aboleth_sequence = creatures["aboleth"].multiattack.executable_sequence(
+        {
+            action.name
+            for action in creatures["aboleth"].stat_block_actions.values()
+            if isinstance(action, AttackActionDefinition)
+        }
+    )
+    assert [invocation.name for invocation in aboleth_sequence] == [
+        "Tentacle",
+        "Tentacle",
+    ]
     assert creatures["player"].attributes.movement.speed_feet == 40
     assert creatures["air_elemental"].attributes.movement.speed_feet == 10
     assert creatures["aboleth"].attributes.movement.speed_feet == 10
@@ -459,8 +486,11 @@ def test_tentacle_grapple_enforces_capacity_without_counting_duplicates() -> Non
     template = state.creatures["participant:0"]
     for index in range(4):
         state.creatures[f"tentacle-target:{index}"] = deepcopy(template)
-    tentacle = state.creatures[aboleth_ref].creature.monster_attacks[0]
-    [grapple_effect] = tentacle.hit_effects
+    tentacle = state.creatures[aboleth_ref].creature.stat_block_actions[
+        "Tentacle"
+    ]
+    assert isinstance(tentacle, AttackActionDefinition)
+    [_, grapple_effect] = tentacle.hit
 
     for target_ref in (
         "participant:0",
@@ -1045,7 +1075,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
 
-    window = CyoaPySide6Window.__new__(CyoaPySide6Window)
+    window = GameWindow.__new__(GameWindow)
     window.session = session
     window._presentation = SimpleNamespace(encounter=object())
     window._combat_log_scene_id = state.encounter_id
@@ -1056,7 +1086,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
     window.refresh_view = lambda: None
     window.close = lambda: None
 
-    CyoaPySide6Window._apply_turn_result(window, result)
+    GameWindow._apply_turn_result(window, result)
 
     assert not hasattr(window, "_resolved_area_overlay")
 
@@ -1306,7 +1336,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
 
 
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:
-    bucket = CyoaPySide6Window._action_bucket_key(
+    bucket = GameWindow._action_bucket_key(
         None,
         ActionView(
             index=0,
@@ -1564,7 +1594,7 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
 
 
 def test_spell_actions_map_to_magic_menu_bucket() -> None:
-    bucket = CyoaPySide6Window._action_bucket_key(
+    bucket = GameWindow._action_bucket_key(
         None,
         ActionView(
             index=0,
@@ -1581,7 +1611,7 @@ def test_spell_actions_map_to_magic_menu_bucket() -> None:
 
 
 def test_grapple_actions_map_to_attack_menu_bucket() -> None:
-    bucket = CyoaPySide6Window._action_bucket_key(
+    bucket = GameWindow._action_bucket_key(
         None,
         ActionView(
             index=0,
@@ -1598,7 +1628,7 @@ def test_grapple_actions_map_to_attack_menu_bucket() -> None:
 
 
 def test_grapple_actions_share_one_board_targeting_mode() -> None:
-    window = CyoaPySide6Window.__new__(CyoaPySide6Window)
+    window = GameWindow.__new__(GameWindow)
     actions = [
         ActionView(
             index=index,
@@ -1612,12 +1642,12 @@ def test_grapple_actions_share_one_board_targeting_mode() -> None:
         for index in range(2)
     ]
 
-    modes = CyoaPySide6Window._target_selection_modes(window, actions)
+    modes = GameWindow._target_selection_modes(window, actions)
 
     mode = TargetSelectionMode(kind="grapple", source_trigger_id="grapple")
     assert set(modes) == {mode}
     assert set(modes[mode]) == {"participant:0", "participant:1"}
-    assert CyoaPySide6Window._target_mode_label(window, mode) == "Grapple"
+    assert GameWindow._target_mode_label(window, mode) == "Grapple"
 
 
 @pytest.mark.parametrize(
@@ -1648,7 +1678,7 @@ def test_follow_up_attack_is_queued_only_with_attacks_and_targets(
     actions,
     expected,
 ) -> None:
-    window = CyoaPySide6Window.__new__(CyoaPySide6Window)
+    window = GameWindow.__new__(GameWindow)
     window.session = object()
     presentation = SimpleNamespace(
         encounter=SimpleNamespace(
@@ -1661,11 +1691,11 @@ def test_follow_up_attack_is_queued_only_with_attacks_and_targets(
         lambda _session: presentation,
     )
 
-    assert CyoaPySide6Window._available_follow_up_attack_mode(window) == expected
+    assert GameWindow._available_follow_up_attack_mode(window) == expected
 
 
 def test_directional_spell_target_mode_stays_available_without_creature_target_map() -> None:
-    window = CyoaPySide6Window.__new__(CyoaPySide6Window)
+    window = GameWindow.__new__(GameWindow)
     window._pending_target_mode = TargetSelectionMode(
         kind="spell",
         source_trigger_id="color_spray",
@@ -1682,7 +1712,7 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
         )
     ]
 
-    assert CyoaPySide6Window._target_mode_is_available(window, actions, {}) is True
+    assert GameWindow._target_mode_is_available(window, actions, {}) is True
 
 
 def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:

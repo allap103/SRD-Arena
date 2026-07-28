@@ -77,7 +77,7 @@ def launch(
 ) -> None:
     match frontend:
         case "gui":
-            from .frontends.qt.app import run_pyside6_app
+            from .frontends.qt.launcher import run_pyside6_app
 
             run_pyside6_app(
                 scenario_dir=scenario_dir,

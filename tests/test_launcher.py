@@ -66,7 +66,7 @@ def test_launch_runs_gui_frontend(monkeypatch, tmp_path: Path) -> None:
 
     monkeypatch.setitem(
         sys.modules,
-        "srd_arena.frontends.qt.app",
+        "srd_arena.frontends.qt.launcher",
         SimpleNamespace(
             run_pyside6_app=lambda scenario_dir=None, start_scene_override=None, control_mode="default", show_encounter_json=False: launched.append(
                 (

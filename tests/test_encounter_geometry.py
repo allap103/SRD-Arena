@@ -1,5 +1,5 @@
 from srd_arena.domain.geometry import (
-    LEGACY_TOUCHED_CELL_POLICY,
+    TOUCHED_CELL_POLICY,
     RASTERIZATION_POLICY,
     Grid,
     Position,
@@ -23,7 +23,7 @@ def test_radius_area_includes_chebyshev_cells_within_bounds() -> None:
 
     assert area.shape == "radius"
     assert area.origin == Position(2, 2)
-    assert area.rasterization_policy == LEGACY_TOUCHED_CELL_POLICY
+    assert area.rasterization_policy == TOUCHED_CELL_POLICY
     assert area.continuous_area is not None
     assert area.continuous_area.radius == 1.0
     assert _coords(area) == {

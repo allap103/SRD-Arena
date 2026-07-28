@@ -3,7 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable
 
 from ...creatures import size_rank
-from ...creatures.stat_block_actions import ActionEffect
+from ...creatures.stat_block_actions import (
+    ActionEffect,
+    ConditionEffect,
+    SizeRequirement,
+)
 from ...effects.results import EffectResult
 from ..models import EncounterProgress
 
@@ -25,7 +29,7 @@ def apply_attack_hit_effects(
     progress: EncounterProgress,
 ) -> None:
     for effect in effects:
-        handler = _HIT_EFFECT_HANDLERS.get(effect.kind)
+        handler = _HIT_EFFECT_HANDLERS.get(type(effect))
         if handler is not None:
             handler(state, attacker_ref, target_ref, effect, progress)
 
@@ -34,20 +38,18 @@ def _apply_condition(
     state: EncounterState,
     attacker_ref: str,
     target_ref: str,
-    effect: ActionEffect,
+    effect: ConditionEffect,
     progress: EncounterProgress,
 ) -> None:
-    if effect.parameters.get("condition") != "grappled":
+    if effect.condition != "grappled":
         return
     attacker = state.creatures[attacker_ref].creature
     target = state.creatures[target_ref].creature
-    requirements = effect.parameters.get("requirements", [])
     maximum_size = next(
         (
-            requirement.get("maximum")
-            for requirement in requirements
-            if isinstance(requirement, dict)
-            and requirement.get("type") == "size"
+            requirement.maximum
+            for requirement in effect.requirements
+            if isinstance(requirement, SizeRequirement)
         ),
         None,
     )
@@ -57,7 +59,7 @@ def _apply_condition(
     ):
         return
     already_grappled = attacker_ref in state._grappled_sources_for(target_ref)
-    capacity = effect.parameters.get("source_capacity")
+    capacity = effect.source_capacity
     if (
         not already_grappled
         and isinstance(capacity, int)
@@ -65,7 +67,7 @@ def _apply_condition(
     ):
         return
     metadata = {
-        "escape_dc": effect.parameters.get("escape_dc"),
+        "escape_dc": effect.escape_dc,
         "originating_action": "attack",
     }
     state._apply_effects(
@@ -97,6 +99,6 @@ def _apply_condition(
     )
 
 
-_HIT_EFFECT_HANDLERS: dict[str, HitEffectHandler] = {
-    "condition": _apply_condition,
+_HIT_EFFECT_HANDLERS: dict[type[ActionEffect], HitEffectHandler] = {
+    ConditionEffect: _apply_condition,
 }

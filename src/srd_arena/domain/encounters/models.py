@@ -12,6 +12,7 @@ from ..geometry import GeometryConfig
 from ..rolls.dice import CheckResult, DicePoolResult
 from ..effects.triggered import TriggeredEffect
 from ..creatures.stat_block_actions import ActionEffect
+from ..creatures.multiattack import MultiattackInvocation
 
 CreatureRef = str
 
@@ -119,7 +120,9 @@ class EncounterCreatureState:
     actions_remaining: int = 1
     magic_actions_remaining: int = 1
     attacks_remaining: int = 0
-    pending_attack_names: list[str] = field(default_factory=list)
+    pending_multiattack: list[MultiattackInvocation] = field(
+        default_factory=list
+    )
     bonus_action_available: bool = True
 
     @property

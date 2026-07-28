@@ -6,16 +6,9 @@ from ...creatures import Creature
 from ...creatures import can_grapple
 from ...rolls.dice import resolve_d20
 from ...effects.results import EffectResult
-from .features import resolve_feature_action as _resolve_feature_action_impl
-from .items import resolve_utilize_action as _resolve_utilize_action_impl
-from .spellcasting import resolve_spell_action as _resolve_spell_action_impl
 from .attack_resolution import has_free_hand
 from ..behaviors import is_adjacent as _is_adjacent
 from ..models import EncounterAction, EncounterProgress
-from ..creature_control import (
-    apply_creature_action as _apply_creature_action_impl,
-    available_creature_actions as _available_creature_actions_impl,
-)
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -168,10 +161,3 @@ def resolve_grapple_action(
             data={"kind": "grapple", "success": True, "target_ref": target_ref},
         )
     )
-
-
-available_creature_actions = _available_creature_actions_impl
-apply_creature_action = _apply_creature_action_impl
-resolve_utilize_action = _resolve_utilize_action_impl
-resolve_feature_action = _resolve_feature_action_impl
-resolve_spell_action = _resolve_spell_action_impl

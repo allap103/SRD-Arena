@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..creatures import Creature
+from ..creatures.stat_block_actions import AttackActionDefinition
 from ..geometry import Position
 from .actions.attack_resolution import (
     apply_attack_damage,
@@ -258,17 +259,21 @@ class TurnEngine:
                     else None
                 )
                 multiattack_sequence = (
-                    enemy.creature.multiattack.executable_attack_sequence(
+                    enemy.creature.multiattack.executable_sequence(
                         {
-                            attack.name
-                            for attack in enemy.creature.monster_attacks
+                            action.name
+                            for action in enemy.creature.stat_block_actions.values()
+                            if isinstance(action, AttackActionDefinition)
                         }
                     )
                     if enemy.creature.multiattack is not None
                     else None
                 )
                 attack_names: tuple[str | None, ...] = (
-                    tuple(multiattack_sequence)
+                    tuple(
+                        invocation.name
+                        for invocation in multiattack_sequence
+                    )
                     if multiattack_sequence is not None
                     else (None,)
                 )
@@ -388,7 +393,7 @@ class TurnEngine:
         creature_state.actions_remaining = 1
         creature_state.magic_actions_remaining = 1
         creature_state.attacks_remaining = 0
-        creature_state.pending_attack_names.clear()
+        creature_state.pending_multiattack.clear()
         creature_state.bonus_action_available = True
 
     def expire_conditions_for_turn_end(

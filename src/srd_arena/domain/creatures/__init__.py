@@ -6,7 +6,6 @@ from .combat_profile import CombatProfile
 from .equipment import Equipment
 from .inventory import Inventory
 from .model import Creature
-from .monster_attack import MonsterAttack, MonsterAttackDamage
 from .multiattack import (
     Multiattack,
     MultiattackCount,
@@ -21,8 +20,10 @@ from .spellcasting import Spellcasting
 from .stat_block_actions import (
     ActionEffect,
     ActionOutcomeStage,
+    ActionResource,
     ActionTarget,
     AttackActionDefinition,
+    DamageEffect,
     SavingThrowActionDefinition,
     StatBlockActionDefinition,
 )
@@ -37,8 +38,6 @@ __all__ = [
     "Equipment",
     "Inventory",
     "Movement",
-    "MonsterAttack",
-    "MonsterAttackDamage",
     "Multiattack",
     "MultiattackCount",
     "MultiattackInvocation",
@@ -50,8 +49,10 @@ __all__ = [
     "Spellcasting",
     "ActionEffect",
     "ActionOutcomeStage",
+    "ActionResource",
     "ActionTarget",
     "AttackActionDefinition",
+    "DamageEffect",
     "SavingThrowActionDefinition",
     "StatBlockActionDefinition",
     "can_grapple",

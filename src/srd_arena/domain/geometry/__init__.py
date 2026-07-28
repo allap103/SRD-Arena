@@ -1,5 +1,5 @@
 from .areas import (
-    LEGACY_TOUCHED_CELL_POLICY,
+    TOUCHED_CELL_POLICY,
     RASTERIZATION_POLICY,
     AreaOfEffect,
     ContinuousArea,
@@ -27,7 +27,7 @@ from .primitives import Grid, Position
 from .config import GeometryConfig
 
 __all__ = [
-    "LEGACY_TOUCHED_CELL_POLICY",
+    "TOUCHED_CELL_POLICY",
     "RASTERIZATION_POLICY",
     "AreaOfEffect",
     "ContinuousArea",

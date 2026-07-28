@@ -17,7 +17,7 @@ DIRECTION_VECTORS = {
 }
 
 RASTERIZATION_POLICY = "coverage_threshold"
-LEGACY_TOUCHED_CELL_POLICY = "touched_cell"
+TOUCHED_CELL_POLICY = "touched_cell"
 EPSILON = 1e-9
 BOUNDARY_SHRINK = 1e-6
 DEFAULT_CELL_COVERAGE_THRESHOLD = 0.5
@@ -193,7 +193,7 @@ def build_radius_area(
         shape="radius",
         origin=origin_point,
         radius=float(radius_squares),
-        rasterization_policy=LEGACY_TOUCHED_CELL_POLICY,
+        rasterization_policy=TOUCHED_CELL_POLICY,
     )
     cells = _rasterize_cells(
         grid,
@@ -204,7 +204,7 @@ def build_radius_area(
         origin=origin,
         cells=cells,
         continuous_area=continuous_area,
-        rasterization_policy=LEGACY_TOUCHED_CELL_POLICY,
+        rasterization_policy=TOUCHED_CELL_POLICY,
     )
 
 

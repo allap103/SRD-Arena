@@ -40,9 +40,6 @@ class ActionUsedThisTurnRequirementSchema(MultiattackSchemaModel):
     action: str = Field(min_length=1)
 
 
-MultiattackRequirementSchema = ActionUsedThisTurnRequirementSchema
-
-
 class SpellReferenceSchema(MultiattackSchemaModel):
     name: str = Field(min_length=1)
     source: str | None = None
@@ -120,13 +117,13 @@ class MultiattackReplacementSchema(MultiattackSchemaModel):
     replace_count: PositiveInt = 1
     maximum_uses: PositiveInt | Literal["unbounded"] = 1
     options: list[MultiattackInvocationSchema] = Field(min_length=1)
-    requirement: MultiattackRequirementSchema | None = None
+    requirement: ActionUsedThisTurnRequirementSchema | None = None
 
 
 class MultiattackPlanSchema(MultiattackSchemaModel):
     steps: list[MultiattackStepSchema] = Field(min_length=1)
     ordering: Literal["any", "strict"] = "any"
-    requirement: MultiattackRequirementSchema | None = None
+    requirement: ActionUsedThisTurnRequirementSchema | None = None
     replacements: list[MultiattackReplacementSchema] = Field(
         default_factory=list
     )

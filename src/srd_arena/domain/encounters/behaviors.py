@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Generator
 
 from ..creatures import Creature
+from ..creatures.stat_block_actions import AttackActionDefinition
 from ..equipment import Item
 from ..geometry import Position
 from .models import BehaviorContext, EncounterAction, EncounterCreatureState
@@ -159,8 +160,16 @@ def weapon_normal_range_squares(attacker: Creature, items_by_id: dict[str, Item]
         if weapon.weapon_stat.range_normal is None:
             return None
         return max(1, weapon.weapon_stat.range_normal // attacker.attributes.movement.feet_per_square)
-    for attack in attacker.monster_attacks:
-        if "ranged" not in attack.attack_modes or attack.range_normal is None:
+    for attack in attacker.stat_block_actions.values():
+        if (
+            not isinstance(attack, AttackActionDefinition)
+            or "ranged" not in attack.attack_modes
+            or attack.range_normal_feet is None
+        ):
             continue
-        return max(1, attack.range_normal // attacker.attributes.movement.feet_per_square)
+        return max(
+            1,
+            attack.range_normal_feet
+            // attacker.attributes.movement.feet_per_square,
+        )
     return None

@@ -4,8 +4,6 @@ import json
 import textwrap
 from collections import deque
 from datetime import datetime, timezone
-from pathlib import Path
-
 from ...domain.encounters.models import ActionCost, EncounterAction
 from ...domain.geometry import (
     Grid,
@@ -1825,18 +1823,3 @@ class GameWindow(QMainWindow):
         suffix = scene_id if isinstance(scene_id, str) and scene_id else "no-encounter"
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         return f"encounter-{suffix}-{timestamp}.json"
-
-
-def run_pyside6_app(
-    scenario_dir: str | Path | None = None,
-    start_scene_override: str | None = None,
-    control_mode: str = "default",
-    show_encounter_json: bool = False,
-) -> None:
-    # Compatibility entry point; new code can import this from ``qt.launcher``.
-    from .launcher import run_pyside6_app as launch
-
-    launch(scenario_dir, start_scene_override, control_mode, show_encounter_json)
-
-
-CyoaPySide6Window = GameWindow

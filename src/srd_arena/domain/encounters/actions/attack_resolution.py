@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from ...creatures import Creature
+from ...creatures.stat_block_actions import (
+    AttackActionDefinition,
+    DamageEffect,
+)
 from ...equipment import Item
 from ...geometry import Position
 from ...rolls.dice import (
@@ -307,24 +311,32 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
     )
 
 
-def monster_attack_source(attack) -> AttackSource:
+def stat_block_attack_source(attack: AttackActionDefinition) -> AttackSource:
+    damage = [
+        effect for effect in attack.hit if isinstance(effect, DamageEffect)
+    ]
+    if not damage:
+        raise ValueError(f"Attack '{attack.name}' has no damage effect.")
+    primary, *additional = damage
     return AttackSource(
         name=attack.name,
-        damage_dice=attack.damage_dice,
-        damage_bonus=attack.damage_bonus,
+        damage_dice=primary.dice,
+        damage_bonus=primary.bonus,
         damage_bonus_label="bonus",
-        damage_type=attack.damage_type,
+        damage_type=primary.damage_type,
         attack_bonus=attack.attack_bonus,
         attack_bonus_label="attack bonus",
         attack_modes=attack.attack_modes,
-        range_normal=attack.range_normal,
-        range_long=attack.range_long,
+        range_normal=attack.range_normal_feet,
+        range_long=attack.range_long_feet,
         weapon_name=attack.name,
         additional_damage=tuple(
-            (component.dice, component.bonus, component.damage_type)
-            for component in attack.additional_damage
+            (effect.dice, effect.bonus, effect.damage_type)
+            for effect in additional
         ),
-        hit_effects=attack.hit_effects,
+        hit_effects=tuple(
+            effect for effect in attack.hit if not isinstance(effect, DamageEffect)
+        ),
         reach_feet=attack.reach_feet,
     )
 
@@ -372,7 +384,11 @@ def attack_sources(attacker: Creature, items_by_id: dict[str, Item]) -> list[Att
     weapon = equipped_weapon(attacker, items_by_id)
     if weapon is not None:
         return [weapon_attack_source(attacker, weapon)]
-    return [monster_attack_source(attack) for attack in attacker.monster_attacks]
+    return [
+        stat_block_attack_source(action)
+        for action in attacker.stat_block_actions.values()
+        if isinstance(action, AttackActionDefinition)
+    ]
 
 
 def attack_range_squares(
@@ -399,30 +415,6 @@ def attack_range_squares(
     return max(1, range_feet // attacker.attributes.movement.feet_per_square)
 
 
-def maximum_attack_range_squares(
-    attacker: Creature,
-    items_by_id: dict[str, Item],
-) -> int:
-    sources = attack_sources(attacker, items_by_id)
-    if not sources:
-        return 1
-    ranges = []
-    for source in sources:
-        for attack_type in source.attack_modes:
-            range_feet = (
-                source.range_normal
-                if attack_type == "ranged"
-                else source.reach_feet or 5
-            )
-            if range_feet is not None:
-                ranges.append(
-                    max(
-                        1,
-                        range_feet
-                        // attacker.attributes.movement.feet_per_square,
-                    )
-                )
-    return max(ranges, default=1)
 
 
 def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:

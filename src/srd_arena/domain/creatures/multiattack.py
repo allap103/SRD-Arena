@@ -49,11 +49,11 @@ class MultiattackPlan:
     replacements: tuple[MultiattackReplacement, ...] = field(default_factory=tuple)
     requirement: MultiattackRequirement | None = None
 
-    def executable_attack_sequence(
+    def executable_sequence(
         self,
         attack_names: set[str],
-    ) -> tuple[str, ...] | None:
-        sequence: list[str] = []
+    ) -> tuple[MultiattackInvocation, ...] | None:
+        sequence: list[MultiattackInvocation] = []
         for step in self.steps:
             if len(step.options) != 1:
                 if step.availability == "required":
@@ -70,7 +70,7 @@ class MultiattackPlan:
                 continue
             if not isinstance(step.times, int):
                 return None
-            sequence.extend([invocation.name] * step.times)
+            sequence.extend([invocation] * step.times)
         return tuple(sequence) or None
 
 
@@ -78,12 +78,12 @@ class MultiattackPlan:
 class Multiattack:
     plans: tuple[MultiattackPlan, ...]
 
-    def executable_attack_sequence(
+    def executable_sequence(
         self,
         attack_names: set[str],
-    ) -> tuple[str, ...] | None:
+    ) -> tuple[MultiattackInvocation, ...] | None:
         for plan in self.plans:
-            sequence = plan.executable_attack_sequence(attack_names)
+            sequence = plan.executable_sequence(attack_names)
             if sequence is not None:
                 return sequence
         return None

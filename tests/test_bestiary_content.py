@@ -19,6 +19,8 @@ from srd_arena.content.schemas.multiattack import (
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.domain.creatures import (
     AttackActionDefinition,
+    ActionResource,
+    DamageEffect,
     SavingThrowActionDefinition,
 )
 from srd_arena.domain.encounters.actions.attack_resolution import resolve_attack
@@ -79,9 +81,17 @@ def test_bestiary_core_statistics_build_a_domain_creature() -> None:
         "Deep Speech; telepathy 120 ft.",
     )
     assert creature.multiattack is not None
-    assert creature.multiattack.executable_attack_sequence(
-        {attack.name for attack in creature.monster_attacks}
-    ) == ("Tentacle", "Tentacle")
+    sequence = creature.multiattack.executable_sequence(
+        {
+            action.name
+            for action in creature.stat_block_actions.values()
+            if isinstance(action, AttackActionDefinition)
+        }
+    )
+    assert [invocation.name for invocation in sequence] == [
+        "Tentacle",
+        "Tentacle",
+    ]
     assert isinstance(
         creature.stat_block_actions["Tentacle"],
         AttackActionDefinition,
@@ -92,11 +102,11 @@ def test_bestiary_core_statistics_build_a_domain_creature() -> None:
     )
     dominate = creature.stat_block_actions["Dominate Mind (2/Day)"]
     assert isinstance(dominate, SavingThrowActionDefinition)
-    assert dominate.resource == {
-        "type": "uses",
-        "maximum": 2,
-        "reset": "day",
-    }
+    assert dominate.resource == ActionResource(
+        kind="uses",
+        maximum=2,
+        reset="day",
+    )
     saving_throw = resolve_saving_throw(
         creature,
         "intelligence",
@@ -162,8 +172,12 @@ def test_first_twenty_one_xmm_multiattacks_are_enriched() -> None:
             bestiary=catalog,
         )
         assert creature.multiattack is not None
-        assert creature.multiattack.executable_attack_sequence(
-            {attack.name for attack in creature.monster_attacks}
+        assert creature.multiattack.executable_sequence(
+            {
+                action.name
+                for action in creature.stat_block_actions.values()
+                if isinstance(action, AttackActionDefinition)
+            }
         )
 
     black_dragon = catalog.find("Adult Black Dragon", "XMM")
@@ -186,13 +200,15 @@ def test_first_twenty_one_xmm_multiattacks_are_enriched() -> None:
         ),
         bestiary=catalog,
     )
-    [rend] = white_creature.monster_attacks
-    assert rend.damage_dice == "2d6"
-    assert rend.damage_bonus == 6
-    assert [
-        (damage.dice, damage.bonus, damage.damage_type)
-        for damage in rend.additional_damage
-    ] == [("1d8", 0, "cold")]
+    rend = white_creature.stat_block_actions["Rend"]
+    assert isinstance(rend, AttackActionDefinition)
+    damage = [
+        effect for effect in rend.hit if isinstance(effect, DamageEffect)
+    ]
+    assert damage == [
+        DamageEffect("2d6", 6, "slashing"),
+        DamageEffect("1d8", 0, "cold"),
+    ]
     goblin = build_creature(
         CreatureSchema.model_validate(
             {

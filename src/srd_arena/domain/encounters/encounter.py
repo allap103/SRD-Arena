@@ -46,11 +46,13 @@ from .models import (
 )
 from .actions.player import (
     apply_action as _apply_action_impl,
-    apply_creature_action as _apply_creature_action_impl,
     resolve_grapple_action as _resolve_grapple_action_impl,
-    resolve_feature_action as _resolve_feature_action_impl,
-    resolve_spell_action as _resolve_spell_action_impl,
-    resolve_utilize_action as _resolve_utilize_action_impl,
+)
+from .actions.features import resolve_feature_action as _resolve_feature_action_impl
+from .actions.items import resolve_utilize_action as _resolve_utilize_action_impl
+from .actions.spellcasting import resolve_spell_action as _resolve_spell_action_impl
+from .creature_control import (
+    apply_creature_action as _apply_creature_action_impl,
     available_creature_actions as _available_creature_actions_impl,
 )
 from .reactions import REACTION_ENGINE, ReactionEngine

@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from srd_arena.content.loaders import load_creature
 from srd_arena.content.schemas import EncounterDefinitionSchema
 from srd_arena.runtime.scenario import Scenario
+from srd_arena.domain.creatures import AttackActionDefinition
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
@@ -110,10 +111,15 @@ def test_nested_creature_can_reference_system_stat_block() -> None:
     assert creature.attributes.strength == 8
     assert creature.attributes.dexterity == 15
     assert creature.attributes.movement.speed_feet == 30
-    assert [attack.name for attack in creature.monster_attacks] == ["Scimitar", "Shortbow"]
-    assert creature.monster_attacks[0].attack_modes == ("melee",)
-    assert creature.monster_attacks[1].attack_modes == ("ranged",)
-    assert creature.monster_attacks[1].range_normal == 80
+    attacks = [
+        action
+        for action in creature.stat_block_actions.values()
+        if isinstance(action, AttackActionDefinition)
+    ]
+    assert [attack.name for attack in attacks] == ["Scimitar", "Shortbow"]
+    assert attacks[0].attack_modes == ("melee",)
+    assert attacks[1].attack_modes == ("ranged",)
+    assert attacks[1].range_normal_feet == 80
     assert creature.token_image == "tokens/goblin.png"
 
 

@@ -7,7 +7,6 @@ from .classes import ClassRef, SubclassRef
 from .class_features import ClassFeature
 from .combat_profile import CombatProfile
 from ..effects.triggered import TriggeredEffect
-from .monster_attack import MonsterAttack
 from .multiattack import Multiattack
 from .spellcasting import Spellcasting
 from .statistics import CreatureStatistics
@@ -30,7 +29,6 @@ class Creature:
     triggered_effects: list[TriggeredEffect] = field(default_factory=list)
     combat_profile: CombatProfile = field(default_factory=CombatProfile)
     feature_uses_remaining: dict[str, int] = field(default_factory=dict)
-    monster_attacks: list[MonsterAttack] = field(default_factory=list)
     multiattack: Multiattack | None = None
     stat_block_actions: dict[str, StatBlockActionDefinition] = field(
         default_factory=dict
