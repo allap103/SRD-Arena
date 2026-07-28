@@ -1,6 +1,12 @@
-from pydantic import Field
+import re
+
+from pydantic import Field, model_validator
 
 from .base import SourceModel
+from .multiattack import (
+    MultiattackMechanicsSchema,
+    iter_stat_block_references,
+)
 
 
 class BestiaryHitPointsSchema(SourceModel):
@@ -27,19 +33,61 @@ class BestiaryChallengeRatingSchema(SourceModel):
     cr: str
 
 
+class BestiaryConditionalSpeedSchema(SourceModel):
+    number: int
+    condition: str | None = None
+
+
+BestiarySpeedValue = int | BestiaryConditionalSpeedSchema
+
+
+class BestiarySpeedSchema(SourceModel):
+    walk: BestiarySpeedValue | None = None
+    burrow: BestiarySpeedValue | None = None
+    climb: BestiarySpeedValue | None = None
+    fly: BestiarySpeedValue | None = None
+    swim: BestiarySpeedValue | None = None
+    can_hover: bool = Field(default=False, alias="canHover")
+    alternate: dict[str, object] | None = None
+    choose: dict[str, object] | None = None
+
+    def feet_for(self, mode: str) -> int | None:
+        value = getattr(self, mode, None)
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
+        if isinstance(value, BestiaryConditionalSpeedSchema):
+            return value.number
+        return None
+
+
 class BestiaryActionSchema(SourceModel):
     name: str
     entries: list[object] = Field(default_factory=list)
+    mechanics: MultiattackMechanicsSchema | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_obsolete_mechanics_key(cls, value: object) -> object:
+        if isinstance(value, dict) and "srdArenaMultiattack" in value:
+            raise ValueError(
+                "Use 'mechanics' instead of the obsolete "
+                "'srdArenaMultiattack' key."
+            )
+        return value
 
 
 class BestiaryMonsterSchema(SourceModel):
     name: str
     source: str
     size: str | list[str] = "M"
-    speed: dict[str, object] = Field(default_factory=dict)
+    speed: BestiarySpeedSchema = Field(default_factory=BestiarySpeedSchema)
     hp: BestiaryHitPointsSchema = Field(default_factory=BestiaryHitPointsSchema)
     ac: list[int | BestiaryArmorClassSchema] = Field(default_factory=list)
     action: list[BestiaryActionSchema] = Field(default_factory=list)
+    bonus: list[BestiaryActionSchema] = Field(default_factory=list)
+    reaction: list[BestiaryActionSchema] = Field(default_factory=list)
+    legendary: list[BestiaryActionSchema] = Field(default_factory=list)
+    spellcasting: list[BestiaryActionSchema] = Field(default_factory=list)
     type: str | BestiaryTypeSchema | None = None
     alignment: list[str | object] = Field(default_factory=list)
     cr: str | BestiaryChallengeRatingSchema | None = None
@@ -56,6 +104,33 @@ class BestiaryMonsterSchema(SourceModel):
     charisma: int = Field(default=10, alias="cha")
     srd: bool | str | None = None
     srd52: bool | str | None = None
+
+    @model_validator(mode="after")
+    def validate_multiattack_references(self) -> "BestiaryMonsterSchema":
+        sections = {
+            section: {
+                _reference_name(entry.name)
+                for entry in getattr(self, section)
+            }
+            for section in (
+                "action",
+                "bonus",
+                "reaction",
+                "legendary",
+                "spellcasting",
+            )
+        }
+        for action in self.action:
+            mechanics = action.mechanics
+            if mechanics is None:
+                continue
+            for section, name in iter_stat_block_references(mechanics):
+                if _reference_name(name) not in sections[section]:
+                    raise ValueError(
+                        f"Multiattack references missing {section} entry "
+                        f"'{name}' on '{self.public_name}'."
+                    )
+        return self
 
     @property
     def public_name(self) -> str:
@@ -77,8 +152,7 @@ class BestiaryMonsterSchema(SourceModel):
 
     @property
     def walk_speed(self) -> int | None:
-        walk = self.speed.get("walk")
-        return walk if isinstance(walk, int) and not isinstance(walk, bool) else None
+        return self.speed.feet_for("walk")
 
     @property
     def primary_size(self) -> str:
@@ -109,3 +183,7 @@ class BestiaryMonsterSchema(SourceModel):
 
 class BestiaryFileSchema(SourceModel):
     monster: list[BestiaryMonsterSchema] = Field(default_factory=list)
+
+
+def _reference_name(name: str) -> str:
+    return re.sub(r"\s*\{@[^}]+\}", "", name).strip().casefold()

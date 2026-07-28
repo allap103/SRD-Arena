@@ -125,11 +125,4 @@ def _movement_speed(
     stat_block: BestiaryMonsterSchema,
     mode: str,
 ) -> int | None:
-    value = stat_block.speed.get(mode)
-    if isinstance(value, int) and not isinstance(value, bool):
-        return value
-    if isinstance(value, dict):
-        number = value.get("number")
-        if isinstance(number, int) and not isinstance(number, bool):
-            return number
-    return None
+    return stat_block.speed.feet_for(mode)

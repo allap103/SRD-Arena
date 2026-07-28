@@ -10,11 +10,21 @@ from srd_arena.frontends.qt.app import CyoaPySide6Window
 from srd_arena.domain.effects import EffectResult
 from srd_arena.frontends.shared.session import SpellSlotTrackView, build_session_presentation
 from srd_arena.runtime.models import ActionView
+from srd_arena.content.catalogs import load_bestiary_catalog
+from srd_arena.content.loaders.creatures import build_creature
+from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
+from srd_arena.content.schemas import CreatureSchema
 from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
 from srd_arena.frontends.qt.ui.encounter.config import TargetSelectionMode
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
+MULTIATTACK_SCENARIO_DIR = (
+    Path(__file__).parents[1]
+    / "content"
+    / "scenarios"
+    / "multiattack_showcase"
+)
 _ROLL_INITIATIVE = EncounterState._roll_initiative
 
 
@@ -221,6 +231,120 @@ def test_goblin_encounter_allows_diagonal_movement() -> None:
     assert session.encounter_state is not None
     assert session.encounter_state.primary_position.x == 2
     assert session.encounter_state.primary_position.y == 5
+
+
+def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    elemental = build_creature(
+        CreatureSchema.model_validate(
+            {
+                "id": "air-elemental",
+                "stat_block": {"name": "Air Elemental", "source": "XMM"},
+            }
+        ),
+        bestiary=load_bestiary_catalog(SYSTEM_CONTENT_ROOT),
+    )
+    state.primary_creature_state.creature = elemental
+    state.primary_position.x = 4
+    state.primary_position.y = 4
+    state.creatures["participant:0"].position.x = 4
+    state.creatures["participant:0"].position.y = 3
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+
+    multiattack = next(
+        action
+        for action in state.available_actions(session.primary_creature)
+        if action.kind == "multiattack"
+        and action.value == "participant:0"
+    )
+    first = state.apply_action(session.primary_creature, multiattack)
+
+    assert state.primary_creature_state.actions_remaining == 0
+    assert state.primary_creature_state.attacks_remaining == 1
+    assert state.primary_creature_state.pending_attack_names == [
+        "Thunderous Slam"
+    ]
+    assert [
+        event.data["attack_name"]
+        for event in first.events
+        if event.type == "attack_resolved"
+    ] == ["Thunderous Slam"]
+
+    follow_up = next(
+        action
+        for action in state.available_actions(session.primary_creature)
+        if action.kind == "attack" and action.value == "participant:0"
+    )
+    second = state.apply_action(session.primary_creature, follow_up)
+
+    assert state.primary_creature_state.attacks_remaining == 0
+    assert state.primary_creature_state.pending_attack_names == []
+    assert [
+        event.data["attack_name"]
+        for event in second.events
+        if event.type == "attack_resolved"
+    ] == ["Thunderous Slam"]
+
+
+def test_multiattack_showcase_loads_enriched_creatures() -> None:
+    scenario = Scenario(MULTIATTACK_SCENARIO_DIR)
+    session = scenario.create_session()
+    session.get_scene_view()
+
+    assert scenario.display_name == "Multiattack Showcase"
+    assert session.encounter_state is not None
+    creatures = {
+        state.creature.id: state.creature
+        for state in session.encounter_state.creatures.values()
+    }
+    assert set(creatures) == {"player", "air_elemental", "aboleth"}
+    assert creatures["player"].multiattack is not None
+    assert creatures["player"].multiattack.executable_attack_sequence(
+        {attack.name for attack in creatures["player"].monster_attacks}
+    ) == ("Rend", "Rend", "Rend")
+    assert creatures["air_elemental"].multiattack is not None
+    assert creatures["air_elemental"].multiattack.executable_attack_sequence(
+        {
+            attack.name
+            for attack in creatures["air_elemental"].monster_attacks
+        }
+    ) == ("Thunderous Slam", "Thunderous Slam")
+    assert creatures["aboleth"].multiattack is not None
+    assert creatures["aboleth"].multiattack.executable_attack_sequence(
+        {attack.name for attack in creatures["aboleth"].monster_attacks}
+    ) == ("Tentacle", "Tentacle")
+    assert creatures["player"].attributes.movement.speed_feet == 40
+    assert creatures["air_elemental"].attributes.movement.speed_feet == 10
+    assert creatures["aboleth"].attributes.movement.speed_feet == 10
+    runtime_creatures = session.encounter_state.export_state(
+        session.primary_creature
+    )["creatures"]
+    assert runtime_creatures["player"]["movement_total_feet"] == 40
+    assert runtime_creatures["participant:0"]["movement_total_feet"] == 10
+    assert runtime_creatures["participant:1"]["movement_total_feet"] == 10
+    assert {
+        creature["controller"] for creature in runtime_creatures.values()
+    } == {"user"}
+
+
+def test_fallback_tokens_use_team_colors() -> None:
+    blue_fill, blue_border = BattlefieldWidget._fallback_token_colors(
+        "#3f7fd5"
+    )
+    red_fill, red_border = BattlefieldWidget._fallback_token_colors("#d64545")
+
+    assert blue_fill.name() == "#3f7fd5"
+    assert red_fill.name() == "#d64545"
+    assert blue_border.name() != red_border.name()
 
 
 def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:

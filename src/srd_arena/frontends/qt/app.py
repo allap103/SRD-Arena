@@ -1264,7 +1264,7 @@ class GameWindow(QMainWindow):
         return "action"
 
     def _action_bucket_key(self, action: ActionView) -> str:
-        if action.kind in {"attack", "opportunity_attack", "grapple"}:
+        if action.kind in {"attack", "multiattack", "opportunity_attack", "grapple"}:
             return "attack"
         if action.kind in {"magic", "spell"}:
             return "magic"
@@ -1304,7 +1304,8 @@ class GameWindow(QMainWindow):
         self._apply_turn_result(
             result,
             queue_follow_up_attack=(
-                selected_action is not None and selected_action.kind == "attack"
+                selected_action is not None
+                and selected_action.kind in {"attack", "multiattack"}
             ),
         )
 

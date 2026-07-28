@@ -580,8 +580,7 @@ class BattlefieldWidget(QWidget):
             center_x = origin_x + (creature.position.x + 0.5) * cell_size
             center_y = origin_y + (creature.position.y + 0.5) * cell_size
             radius = max(14, int(cell_size * 0.38))
-            fill = QColor("#2e6f95") if creature.is_player else QColor("#b34a3c")
-            border = QColor("#17364a") if creature.is_player else QColor("#5a1f18")
+            fill, border = self._fallback_token_colors(creature.team_color)
             self._creature_positions[creature.creature_ref] = (center_x, center_y, radius)
 
             if creature.is_active:
@@ -712,8 +711,9 @@ class BattlefieldWidget(QWidget):
                 )
             else:
                 radius = max(14, int(cell_size * 0.38))
-                painter.setBrush(QColor("#2e6f95"))
-                painter.setPen(QPen(QColor("#17364a"), 2))
+                fill, border = self._fallback_token_colors(planner.team_color)
+                painter.setBrush(fill)
+                painter.setPen(QPen(border, 2))
                 painter.drawEllipse(
                     int(center_x - radius),
                     int(center_y - radius),
@@ -859,6 +859,13 @@ class BattlefieldWidget(QWidget):
                 coverage_threshold=coverage_threshold,
             )
         )
+
+    @staticmethod
+    def _fallback_token_colors(team_color: str) -> tuple[QColor, QColor]:
+        fill = QColor(team_color)
+        if not fill.isValid():
+            fill = QColor("#3f7fd5")
+        return fill, fill.darker(180)
 
     def _token_image(self, image_reference: str | None) -> QPixmap | None:
         return self._content_image(image_reference)

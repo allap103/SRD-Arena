@@ -118,6 +118,7 @@ class EncounterCreatureState:
     actions_remaining: int = 1
     magic_actions_remaining: int = 1
     attacks_remaining: int = 0
+    pending_attack_names: list[str] = field(default_factory=list)
     bonus_action_available: bool = True
 
     @property

@@ -96,7 +96,42 @@
           "name": "Multiattack",
           "entries": [
             "The aboleth makes two Tentacle attacks and uses either Consume Memories or Dominate Mind if available."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Tentacle"
+                    },
+                    "times": 2,
+                    "availability": "required"
+                  },
+                  {
+                    "type": "choose",
+                    "options": [
+                      {
+                        "type": "stat_block_action",
+                        "name": "Consume Memories"
+                      },
+                      {
+                        "type": "stat_block_action",
+                        "name": "Dominate Mind (2/Day)"
+                      }
+                    ],
+                    "times": 1,
+                    "availability": "use_if_available"
+                  }
+                ],
+                "ordering": "any",
+                "replacements": []
+              }
+            ]
+          }
         },
         {
           "name": "Tentacle",
@@ -302,7 +337,42 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Acid Arrow|XPHB} (level 3 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Acid Arrow",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -508,7 +578,41 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Shatter|XPHB}."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Shatter",
+                          "source": "XPHB"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -712,7 +816,45 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Sleep Breath or (B) Spellcasting to cast {@spell Scorching Ray|XPHB}."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "stat_block_action",
+                        "name": "Sleep Breath"
+                      },
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Scorching Ray",
+                          "source": "XPHB"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -924,7 +1066,46 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Repulsion Breath or (B) Spellcasting to cast {@spell Guiding Bolt|XPHB} (level 2 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "stat_block_action",
+                        "name": "Repulsion Breath"
+                      },
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Guiding Bolt",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 2
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -1138,7 +1319,46 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Slowing Breath or (B) Spellcasting to cast {@spell Mind Spike|XPHB} (level 4 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "stat_block_action",
+                        "name": "Slowing Breath"
+                      },
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Mind Spike",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 4
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -1353,7 +1573,46 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Spellcasting to cast {@spell Guiding Bolt|XPHB} (level 2 version) or (B) Weakening Breath."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Guiding Bolt",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 2
+                      },
+                      {
+                        "type": "stat_block_action",
+                        "name": "Weakening Breath"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -1576,7 +1835,42 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Mind Spike|XPHB} (level 3 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Mind Spike",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -1778,7 +2072,41 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Scorching Ray|XPHB}."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Scorching Ray",
+                          "source": "XPHB"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -1979,7 +2307,45 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Paralyzing Breath or (B) Spellcasting to cast {@spell Ice Knife|XPHB}."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "stat_block_action",
+                        "name": "Paralyzing Breath"
+                      },
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Ice Knife",
+                          "source": "XPHB"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -2199,7 +2565,24 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -2368,7 +2751,24 @@
           "name": "Multiattack",
           "entries": [
             "The elemental makes two Thunderous Slam attacks."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Thunderous Slam"
+                    },
+                    "times": 2
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Thunderous Slam",
@@ -2611,7 +3011,42 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Acid Arrow|XPHB} (level 4 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Acid Arrow",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 4
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -2818,7 +3253,42 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Shatter|XPHB} (level 3 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Shatter",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -3022,7 +3492,46 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Sleep Breath or (B) Spellcasting to cast {@spell Scorching Ray|XPHB} (level 3 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "stat_block_action",
+                        "name": "Sleep Breath"
+                      },
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Scorching Ray",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -3236,7 +3745,46 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Repulsion Breath or (B) Spellcasting to cast {@spell Guiding Bolt|XPHB} (level 2 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "stat_block_action",
+                        "name": "Repulsion Breath"
+                      },
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Guiding Bolt",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 2
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -3451,7 +3999,46 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Slowing Breath or (B) Spellcasting to cast {@spell Mind Spike|XPHB} (level 5 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "stat_block_action",
+                        "name": "Slowing Breath"
+                      },
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Mind Spike",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -3668,7 +4255,46 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Spellcasting to cast {@spell Guiding Bolt|XPHB} (level 4 version) or (B) Weakening Breath."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Guiding Bolt",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 4
+                      },
+                      {
+                        "type": "stat_block_action",
+                        "name": "Weakening Breath"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -3889,7 +4515,42 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Mind Spike|XPHB} (level 5 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Mind Spike",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 5
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -4093,7 +4754,42 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Scorching Ray|XPHB} (level 3 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Scorching Ray",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 3
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",
@@ -4296,7 +4992,46 @@
           "name": "Multiattack",
           "entries": [
             "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Paralyzing Breath or (B) Spellcasting to cast {@spell Ice Knife|XPHB} (level 2 version)."
-          ]
+          ],
+          "mechanics": {
+            "type": "multiattack",
+            "plans": [
+              {
+                "steps": [
+                  {
+                    "type": "invoke",
+                    "invocation": {
+                      "type": "stat_block_action",
+                      "name": "Rend"
+                    },
+                    "times": 3
+                  }
+                ],
+                "replacements": [
+                  {
+                    "target": {
+                      "type": "action",
+                      "name": "Rend"
+                    },
+                    "options": [
+                      {
+                        "type": "stat_block_action",
+                        "name": "Paralyzing Breath"
+                      },
+                      {
+                        "type": "cast_spell",
+                        "spell": {
+                          "name": "Ice Knife",
+                          "source": "XPHB"
+                        },
+                        "cast_level": 2
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Rend",

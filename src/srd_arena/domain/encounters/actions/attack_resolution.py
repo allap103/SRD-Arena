@@ -30,6 +30,7 @@ def resolve_attack(
     attacker_position: Position | None = None,
     nearby_opponent_positions: tuple[Position, ...] = (),
     preferred_attack_type: str | None = None,
+    preferred_attack_name: str | None = None,
     attack_roll_mode_override: D20RollMode | None = None,
     d20_roller=roll_die,
     dice_roller=roll_dice,
@@ -38,6 +39,7 @@ def resolve_attack(
         attacker,
         items_by_id or {},
         preferred_attack_type=preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
     )
     if attack_source is None:
         attack_source = unarmed_attack_source(attacker)
@@ -293,9 +295,24 @@ def select_attack_source(
     items_by_id: dict[str, Item],
     *,
     preferred_attack_type: str | None = None,
+    preferred_attack_name: str | None = None,
 ) -> AttackSource | None:
     sources = attack_sources(attacker, items_by_id)
     if not sources:
+        return None
+    if preferred_attack_name is not None:
+        for source in sources:
+            if source.name != preferred_attack_name:
+                continue
+            if (
+                preferred_attack_type is not None
+                and preferred_attack_type not in source.attack_modes
+            ):
+                return None
+            return source_for_mode(
+                source,
+                preferred_attack_type or source.attack_modes[0],
+            )
         return None
     if preferred_attack_type is not None:
         for source in sources:

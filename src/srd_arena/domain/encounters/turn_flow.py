@@ -235,55 +235,75 @@ class TurnEngine:
                     and command.value in {"melee", "ranged"}
                     else None
                 )
-                attack = resolve_attack(
-                    enemy.creature,
-                    target,
-                    attacker_label=enemy.creature.name,
-                    target_label=state._creature_label(target_ref),
-                    items_by_id=state.item_templates,
-                    attacker_position=enemy.position,
-                    nearby_opponent_positions=(target_state.position,),
-                    preferred_attack_type=preferred_attack_type,
-                    attack_roll_mode_override=state._attack_roll_mode_for(
-                        creature_ref,
-                        target_ref,
-                        selected_attack_type(
-                            enemy.creature,
-                            state.item_templates,
-                            preferred_attack_type=preferred_attack_type,
-                        ),
-                        enemy.position,
-                        (target_state.position,),
-                    ),
-                    d20_roller=_roll_die,
-                    dice_roller=_roll_dice,
-                )
-                apply_attack_damage(
-                    attack,
-                    target,
-                    attacker_label=enemy.creature.name,
-                    target_label=state._creature_label(target_ref),
-                )
-                progress.messages.extend(attack.messages)
-                progress.events.append(
-                    state._event(
-                        "attack_resolved",
-                        creature_ref=creature_ref,
-                        action_id=action_id,
-                        data={
-                            "attacker_label": enemy.creature.name,
-                            "target_ref": target_ref,
-                            "target_label": state._creature_label(target_ref),
-                            "attack_roll": attack.attack_roll,
-                            "attack_roll_detail": attack.attack_roll_detail,
-                            "hit": attack.hit,
-                            "critical_hit": attack.critical_hit,
-                            "damage": attack.damage,
-                            "damage_roll_detail": attack.damage_roll_detail,
-                        },
+                multiattack_sequence = (
+                    enemy.creature.multiattack.executable_attack_sequence(
+                        {
+                            attack.name
+                            for attack in enemy.creature.monster_attacks
+                        }
                     )
+                    if enemy.creature.multiattack is not None
+                    else None
                 )
-                actions_resolved += 1
+                attack_names: tuple[str | None, ...] = (
+                    tuple(multiattack_sequence)
+                    if multiattack_sequence is not None
+                    else (None,)
+                )
+                for attack_name in attack_names:
+                    attack = resolve_attack(
+                        enemy.creature,
+                        target,
+                        attacker_label=enemy.creature.name,
+                        target_label=state._creature_label(target_ref),
+                        items_by_id=state.item_templates,
+                        attacker_position=enemy.position,
+                        nearby_opponent_positions=(target_state.position,),
+                        preferred_attack_type=preferred_attack_type,
+                        preferred_attack_name=attack_name,
+                        attack_roll_mode_override=state._attack_roll_mode_for(
+                            creature_ref,
+                            target_ref,
+                            selected_attack_type(
+                                enemy.creature,
+                                state.item_templates,
+                                preferred_attack_type=preferred_attack_type,
+                            ),
+                            enemy.position,
+                            (target_state.position,),
+                        ),
+                        d20_roller=_roll_die,
+                        dice_roller=_roll_dice,
+                    )
+                    apply_attack_damage(
+                        attack,
+                        target,
+                        attacker_label=enemy.creature.name,
+                        target_label=state._creature_label(target_ref),
+                    )
+                    progress.messages.extend(attack.messages)
+                    progress.events.append(
+                        state._event(
+                            "attack_resolved",
+                            creature_ref=creature_ref,
+                            action_id=action_id,
+                            data={
+                                "attacker_label": enemy.creature.name,
+                                "target_ref": target_ref,
+                                "target_label": state._creature_label(target_ref),
+                                "attack_name": attack_name,
+                                "attack_roll": attack.attack_roll,
+                                "attack_roll_detail": attack.attack_roll_detail,
+                                "hit": attack.hit,
+                                "critical_hit": attack.critical_hit,
+                                "damage": attack.damage,
+                                "damage_roll_detail": attack.damage_roll_detail,
+                            },
+                        )
+                    )
+                    if not target_state.is_alive:
+                        break
+                actions_resolved += len(attack_names)
                 return True, progress, actions_resolved
 
             progress.messages.append(("system", f"{enemy.creature.name} waits."))
@@ -335,6 +355,7 @@ class TurnEngine:
         creature_state.actions_remaining = 1
         creature_state.magic_actions_remaining = 1
         creature_state.attacks_remaining = 0
+        creature_state.pending_attack_names.clear()
         creature_state.bonus_action_available = True
 
     def expire_conditions_for_turn_end(

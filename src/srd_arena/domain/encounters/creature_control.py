@@ -63,6 +63,15 @@ def available_creature_actions(
             )
     can_attack = enemy.actions_remaining > 0 or enemy.attacks_remaining > 0
     if can_attack:
+        multiattack_sequence = (
+            enemy.creature.multiattack.executable_attack_sequence(
+                {attack.name for attack in enemy.creature.monster_attacks}
+            )
+            if enemy.creature.multiattack is not None
+            and enemy.actions_remaining > 0
+            and enemy.attacks_remaining == 0
+            else None
+        )
         for target_ref in self._living_creature_refs(player):
             if target_ref == creature_ref or not self._creatures_are_opponents(creature_ref, target_ref):
                 continue
@@ -80,6 +89,20 @@ def available_creature_actions(
                     ),
                 )
             )
+            if multiattack_sequence is not None:
+                actions.append(
+                    EncounterAction(
+                        f"Multiattack {_lower_initial(self._creature_label(target_ref))}",
+                        "multiattack",
+                        target_ref,
+                        id=(
+                            f"{creature_ref}-multiattack-"
+                            f"{target_ref.replace(':', '-')}"
+                        ),
+                        creature_ref=creature_ref,
+                        cost=ActionCost(action=1),
+                    )
+                )
             if (
                 has_free_hand(enemy.creature)
                 and can_grapple(
@@ -221,8 +244,29 @@ def apply_creature_action(
                 },
             )
         )
-    elif action.kind == "attack":
-        if enemy.attacks_remaining == 0:
+    elif action.kind in {"attack", "multiattack"}:
+        preferred_attack_name: str | None = None
+        if action.kind == "multiattack":
+            if enemy.actions_remaining <= 0 or enemy.attacks_remaining > 0:
+                raise RuntimeError("No Action remains to make a Multiattack.")
+            multiattack = enemy.creature.multiattack
+            sequence = (
+                multiattack.executable_attack_sequence(
+                    {attack.name for attack in enemy.creature.monster_attacks}
+                )
+                if multiattack is not None
+                else None
+            )
+            if not sequence:
+                raise RuntimeError("This creature has no executable Multiattack plan.")
+            self._consume_action(allow_magic=False)
+            preferred_attack_name = sequence[0]
+            enemy.pending_attack_names = list(sequence[1:])
+            enemy.attacks_remaining = len(enemy.pending_attack_names)
+        elif enemy.pending_attack_names:
+            preferred_attack_name = enemy.pending_attack_names.pop(0)
+            enemy.attacks_remaining = len(enemy.pending_attack_names)
+        elif enemy.attacks_remaining == 0:
             if enemy.actions_remaining <= 0:
                 raise RuntimeError("No Action remains to make an attack.")
             self._consume_action(allow_magic=False)
@@ -256,6 +300,7 @@ def apply_creature_action(
             items_by_id=self.item_templates,
             attacker_position=enemy.position,
             nearby_opponent_positions=nearby_opponent_positions,
+            preferred_attack_name=preferred_attack_name,
             attack_roll_mode_override=self._attack_roll_mode_for(
                 decision.creature_ref,
                 target_ref,
@@ -282,6 +327,7 @@ def apply_creature_action(
                     "attacker_label": attacker_label,
                     "target_ref": target_ref,
                     "target_label": target_label,
+                    "attack_name": preferred_attack_name,
                     "attack_roll": attack.attack_roll,
                     "attack_roll_detail": attack.attack_roll_detail,
                     "hit": attack.hit,

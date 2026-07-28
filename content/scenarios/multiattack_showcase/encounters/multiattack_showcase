@@ -1,0 +1,63 @@
+{
+  "id": "multiattack_showcase",
+  "grid": {
+    "width": 11,
+    "height": 9
+  },
+  "creatures": [
+    {
+      "id": "player",
+      "name": "Frostwing",
+      "stat_block": {
+        "name": "Adult White Dragon",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 2,
+        "y": 3
+      },
+      "team_id": "alliance",
+      "controller": "user"
+    },
+    {
+      "id": "air_elemental",
+      "name": "Gale",
+      "stat_block": {
+        "name": "Air Elemental",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 2,
+        "y": 5
+      },
+      "team_id": "alliance",
+      "controller": "user"
+    },
+    {
+      "id": "aboleth",
+      "name": "The Deep One",
+      "stat_block": {
+        "name": "Aboleth",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 7,
+        "y": 4
+      },
+      "team_id": "deep",
+      "controller": "user"
+    }
+  ],
+  "teams": [
+    {
+      "id": "alliance",
+      "name": "Elemental Alliance",
+      "controller": "user"
+    },
+    {
+      "id": "deep",
+      "name": "Creatures of the Deep",
+      "controller": "user"
+    }
+  ]
+}

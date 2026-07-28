@@ -35,6 +35,7 @@ from srd_arena.domain.creatures import (
 from srd_arena.domain.creatures import Spellcasting
 from srd_arena.domain.effects.triggered import TriggeredEffect
 from .monster_attacks import build_monster_attacks
+from .multiattacks import build_multiattack
 from .creature_attributes import build_creature_attributes, build_creature_size
 from .creature_features import build_combat_profile, build_feature_uses_remaining
 from .creature_spellcasting import (
@@ -109,6 +110,20 @@ def build_creature(
         spells,
     )
 
+    monster_attacks = build_monster_attacks(stat_block)
+    multiattack_action = (
+        next(
+            (
+                action
+                for action in stat_block.action
+                if action.mechanics is not None
+                and action.mechanics.type == "multiattack"
+            ),
+            None,
+        )
+        if stat_block is not None
+        else None
+    )
     return Creature(
         id=schema.id,
         name=schema.name or _stat_block_name(stat_block),
@@ -137,7 +152,12 @@ def build_creature(
         triggered_effects=triggered_effects,
         combat_profile=combat_profile,
         feature_uses_remaining=build_feature_uses_remaining(combat_profile),
-        monster_attacks=build_monster_attacks(stat_block),
+        monster_attacks=monster_attacks,
+        multiattack=build_multiattack(
+            multiattack_action.mechanics
+            if multiattack_action is not None
+            else None
+        ),
         spellcasting=spellcasting,
         statistics=build_creature_statistics(stat_block),
         max_health_override=(
