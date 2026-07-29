@@ -32,6 +32,24 @@ def test_tactical_fixture_loads_explicit_teams():
     assert encounter.teams[1].members == ["goblin_1", "goblin_2", "goblin_3"]
 
 
+def test_session_accepts_multiple_externally_controlled_creatures():
+    scenario = ScenarioLoader().load(
+        TACTICAL_SCENARIO_DIR,
+        start_scene="goblin_encounter",
+    )
+    scenario.encounters["goblin_encounter"].teams[1].controller = "external"
+
+    session = scenario.create_session().start_encounter()
+    state = session.encounter_state
+
+    assert state is not None
+    assert {
+        combatant.actor_id
+        for combatant in state.combatants.values()
+        if combatant.controller == "external"
+    } == {"player", "goblin_1", "goblin_2", "goblin_3"}
+
+
 def test_all_external_mode_pauses_for_each_goblin_turn():
     session = (
         ScenarioLoader()

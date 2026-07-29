@@ -78,10 +78,10 @@ class LoadedScenario:
             if team.controller == "external"
             for actor_id in team.members
         ]
-        if len(external_actor_ids) != 1:
+        if not external_actor_ids:
             raise ValueError(
-                f"Starting encounter '{encounter.id}' must configure exactly one "
-                "externally controlled primary creature."
+                f"Starting encounter '{encounter.id}' must configure at least one "
+                "externally controlled creature."
             )
         return Session(
             encounters=self.encounters,

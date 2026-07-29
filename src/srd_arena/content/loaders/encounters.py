@@ -35,19 +35,6 @@ def _build_position(position: PositionSchema) -> Position:
 
 
 def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
-    external_team_ids = {
-        team.id for team in schema.teams if team.controller == "external"
-    }
-    external_creatures = [
-        creature
-        for creature in schema.creatures
-        if creature.team_id in external_team_ids
-    ]
-    if len(external_creatures) != 1:
-        raise ValueError(
-            f"Encounter '{schema.id}' must define exactly one externally controlled "
-            "primary creature."
-        )
     team_ids = {team.id for team in schema.teams}
     unknown_team_ids = sorted(
         {creature.team_id for creature in schema.creatures} - team_ids
