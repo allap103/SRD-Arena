@@ -35,3 +35,8 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[[tool.mypy.overrides]]
+module = "srd_arena.*"
+check_untyped_defs = true
+disallow_untyped_defs = true

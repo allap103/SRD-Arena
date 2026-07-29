@@ -1,4 +1,6 @@
 import logging
+from typing import Any
+from collections.abc import MutableMapping
 
 LOGGER_NAME = "cyoa.game"
 CHANNEL_SCENE = "scene"
@@ -29,9 +31,14 @@ def configure_game_logging(level: int = logging.INFO) -> logging.Logger:
 
 
 class GameChannelAdapter(logging.LoggerAdapter):
-    def process(self, msg, kwargs):
+    def process(
+        self,
+        msg: object,
+        kwargs: MutableMapping[str, Any],
+    ) -> tuple[object, MutableMapping[str, Any]]:
         extra = kwargs.setdefault("extra", {})
-        extra.setdefault("game_channel", self.extra["game_channel"])
+        if isinstance(extra, MutableMapping) and self.extra is not None:
+            extra.setdefault("game_channel", self.extra["game_channel"])
         return msg, kwargs
 
 

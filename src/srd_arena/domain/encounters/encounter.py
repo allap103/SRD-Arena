@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from typing import Any
 
 from .behaviors import (
     build_behavior as _build_behavior,
@@ -23,6 +24,7 @@ from ..actions.options import (
     targets_in_area as _targets_in_area_impl,
 )
 from ..effects.application import apply_effects
+from ..effects.results import EffectResult
 from .serialization import (
     export_decision as _export_decision_impl,
     export_pending_action as _export_pending_action_impl,
@@ -353,7 +355,7 @@ class EncounterState(EncounterStateData):
             for condition in self.conditions_for(actor_ref)
         )
 
-    def _attack_roll_mode_for(self, *args) -> D20RollMode:
+    def _attack_roll_mode_for(self, *args: Any) -> D20RollMode:
         if len(args) == 6:
             _player, attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions = args
         elif len(args) == 5:
@@ -439,7 +441,10 @@ class EncounterState(EncounterStateData):
 
     _spell_target_context = _spell_target_context_impl
 
-    def _apply_effects(self, effects) -> list[tuple[str, str]]:
+    def _apply_effects(
+        self,
+        effects: list[EffectResult],
+    ) -> list[tuple[str, str]]:
         return apply_effects(
             effects,
             apply_status=self._apply_status,
@@ -452,7 +457,7 @@ class EncounterState(EncounterStateData):
     _creature_team_id = _creature_team_id_impl
     _actors_are_opponents = _actors_are_opponents_impl
 
-    def _open_damage_reroll_decision(self, **kwargs) -> None:
+    def _open_damage_reroll_decision(self, **kwargs: Any) -> None:
         self.reaction_engine.open_damage_reroll_decision(self, **kwargs)
 
     def _reroll_damage_actions(self) -> list[EncounterAction]:

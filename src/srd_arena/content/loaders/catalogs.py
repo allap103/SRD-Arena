@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from ..schemas import CreatureSchema
+from ..schemas.creature import SubclassReferenceSchema
 from .source_data import SOURCE_PRIORITY, _load_json
 from .types import (
     ClassCatalog,
@@ -205,10 +206,10 @@ def _find_class_block(
 
 
 def _find_subclass_block(
-    reference,
+    reference: SubclassReferenceSchema,
     subclass_blocks: SubclassCatalog | None,
-    class_block: dict | None,
-) -> dict:
+    class_block: dict[str, object] | None,
+) -> dict[str, object]:
     if subclass_blocks is None:
         raise ValueError(
             f"Creature references subclass '{reference.name}', but no subclass catalog was loaded."

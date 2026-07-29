@@ -2,6 +2,7 @@ from __future__ import annotations
 # mypy: disable-error-code="misc,no-redef"
 
 import json
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from ...domain.geometry import (
     build_radius_area,
     serialize_area,
 )
+from ...domain.actions.spells.definitions import Spell
 from ...domain.actions.spells.rules import (
     parse_spell_action_value,
     spell_action_value,
@@ -22,11 +24,13 @@ from ...domain.actions.spells.rules import (
 from ...runtime.scenario import DEFAULT_SCENARIO_DIR, Scenario
 from ..shared.dice import build_roll_views, without_roll_details
 from ..shared.session import (
+    InitiativeTrackEntryView,
     MOVE_DIRECTIONS,
+    ResourceSummaryView,
     SessionPresentation,
     build_session_presentation,
 )
-from ..shared.models import ActionView
+from ..shared.models import ActionView, TurnResult
 from ...runtime.session import (
     EXIT_CHOICE_TEXT,
     LOAD_CHOICE_TEXT,
@@ -47,7 +51,7 @@ from .ui.encounter import (
 
 try:
     from PySide6.QtCore import QSize, Qt, QTimer, Signal
-    from PySide6.QtGui import QFont
+    from PySide6.QtGui import QFont, QResizeEvent
     from PySide6.QtWidgets import (
         QApplication,
         QFrame,
@@ -74,6 +78,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     Qt = object  # type: ignore[assignment]
     QTimer = object  # type: ignore[assignment]
     QFont = object  # type: ignore[assignment]
+    QResizeEvent = object  # type: ignore[assignment]
     QFrame = object  # type: ignore[assignment]
     QFileDialog = object  # type: ignore[assignment]
     QGridLayout = object  # type: ignore[assignment]
@@ -454,7 +459,11 @@ class GameWindow(QMainWindow):
             text.setMaximumHeight(maximum_height)
         return text
 
-    def _sidebar_button(self, label: str, callback) -> QPushButton:
+    def _sidebar_button(
+        self,
+        label: str,
+        callback: Callable[..., object],
+    ) -> QPushButton:
         button = QPushButton(label)
         button.setObjectName("sidebarButton")
         button.clicked.connect(callback)
@@ -717,7 +726,7 @@ class GameWindow(QMainWindow):
         column_layout.addStretch(1)
         self.encounter_actions_layout.addWidget(column, stretch=1)
 
-    def _render_status_column(self, resources) -> None:
+    def _render_status_column(self, resources: ResourceSummaryView) -> None:
         column = QWidget()
         column_layout = QVBoxLayout(column)
         column_layout.setContentsMargins(0, 0, 0, 0)
@@ -745,7 +754,7 @@ class GameWindow(QMainWindow):
         column_layout.addStretch(1)
         self.encounter_actions_layout.addWidget(column, stretch=1)
 
-    def _render_movement_status(self, resources) -> None:
+    def _render_movement_status(self, resources: ResourceSummaryView) -> None:
         clear_layout(self.movement_status_layout)
         self.movement_status_layout.addWidget(
             self._build_resource_bar(
@@ -757,7 +766,7 @@ class GameWindow(QMainWindow):
             )
         )
 
-    def _render_initiative_rail(self, resources) -> None:
+    def _render_initiative_rail(self, resources: ResourceSummaryView) -> None:
         clear_layout(self.initiative_layout)
         if not resources.initiative:
             empty = QLabel("No initiative order.")
@@ -771,7 +780,11 @@ class GameWindow(QMainWindow):
             )
         self.initiative_layout.addStretch(1)
 
-    def _build_initiative_entry_widget(self, index: int, entry) -> QWidget:
+    def _build_initiative_entry_widget(
+        self,
+        index: int,
+        entry: InitiativeTrackEntryView,
+    ) -> QWidget:
         card = QFrame()
         card.setObjectName("initiativeCard")
         card.setProperty("active", entry.is_active)
@@ -886,7 +899,7 @@ class GameWindow(QMainWindow):
         layout.addWidget(bar)
         return container
 
-    def _build_spell_slot_section(self, resources) -> QWidget:
+    def _build_spell_slot_section(self, resources: ResourceSummaryView) -> QWidget:
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1200,7 +1213,7 @@ class GameWindow(QMainWindow):
             return True
         return self._pending_area_spell_action(actions) is not None
 
-    def _apply_turn_result(self, result) -> None:
+    def _apply_turn_result(self, result: TurnResult) -> None:
         encounter_state = self.session.encounter_state
         was_in_encounter = (
             self._presentation is not None and self._presentation.encounter is not None
@@ -1280,7 +1293,7 @@ class GameWindow(QMainWindow):
             )
         )
 
-    def _spell_by_id(self, spell_id: str):
+    def _spell_by_id(self, spell_id: str) -> Spell | None:
         session = getattr(self, "session", None)
         if session is None or session.player.spellcasting is None:
             return None
@@ -1358,7 +1371,7 @@ class GameWindow(QMainWindow):
         item = self._items_by_id.get(item_id)
         return item.name if item else item_id
 
-    def resizeEvent(self, event) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         self._update_victory_overlay_geometry()
 

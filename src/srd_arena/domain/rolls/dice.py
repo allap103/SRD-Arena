@@ -75,14 +75,14 @@ class RollResolution(Generic[RollResultT]):
         return self.attempts[self.selected_attempt]
 
 
-def roll_dice(num_dice, sides):
+def roll_dice(num_dice: int, sides: int) -> int:
     total = 0
     for _ in range(num_dice):
         total += roll_die(sides)
     return total
 
 
-def roll_die(sides):
+def roll_die(sides: int) -> int:
     """Roll a dice with the given number of sides."""
     return random.randint(1, sides)
 

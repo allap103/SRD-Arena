@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Callable, Iterable
 import math
 
 from .primitives import Grid, Position
@@ -414,7 +415,7 @@ def normalize_vector(vector: Vector2D) -> Vector2D:
 
 def _rasterize_cells(
     grid: Grid,
-    includes_cell,
+    includes_cell: Callable[[Position], bool],
 ) -> tuple[Position, ...]:
     return _sorted_positions(
         Position(x, y)
@@ -424,7 +425,7 @@ def _rasterize_cells(
     )
 
 
-def _sorted_positions(positions) -> tuple[Position, ...]:
+def _sorted_positions(positions: Iterable[Position]) -> tuple[Position, ...]:
     return tuple(sorted(positions, key=lambda position: (position.y, position.x)))
 
 
@@ -558,8 +559,8 @@ def _clip_polygon_to_cell(
 def _clip_polygon_against_boundary(
     polygon: list[Point2D],
     *,
-    inside,
-    intersect,
+    inside: Callable[[Point2D], bool],
+    intersect: Callable[[Point2D, Point2D], Point2D],
 ) -> list[Point2D]:
     if not polygon:
         return []

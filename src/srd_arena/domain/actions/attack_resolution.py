@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
@@ -18,6 +19,7 @@ from ..effects.triggered import (
 )
 from ..encounters.behaviors import is_adjacent as _is_adjacent
 from ..encounters.models import AttackOutcome, AttackSource
+from ..creatures.monster_attack import MonsterAttack
 
 
 def resolve_attack(
@@ -31,8 +33,8 @@ def resolve_attack(
     nearby_opponent_positions: tuple[Position, ...] = (),
     preferred_attack_type: str | None = None,
     attack_roll_mode_override: D20RollMode | None = None,
-    d20_roller=roll_die,
-    dice_roller=roll_dice,
+    d20_roller: Callable[[int], int] = roll_die,
+    dice_roller: Callable[[int, int], int] = roll_dice,
 ) -> AttackOutcome:
     attack_source = select_attack_source(
         attacker,
@@ -272,7 +274,7 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
     )
 
 
-def monster_attack_source(attack) -> AttackSource:
+def monster_attack_source(attack: MonsterAttack) -> AttackSource:
     return AttackSource(
         name=attack.name,
         damage_dice=attack.damage_dice,

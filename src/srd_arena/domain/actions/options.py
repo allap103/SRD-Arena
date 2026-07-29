@@ -27,6 +27,7 @@ from .spells.rules import (
     spell_range_squares,
     spell_targets_self_only,
 )
+from .feature_actions import FeatureActionDefinition
 
 if TYPE_CHECKING:
     from ..encounters.encounter import EncounterState
@@ -199,7 +200,11 @@ def available_spell_actions(
     return actions
 
 
-def feature_action_available(self: EncounterState, player: Creature, definition) -> bool:
+def feature_action_available(
+    self: EncounterState,
+    player: Creature,
+    definition: FeatureActionDefinition,
+) -> bool:
     if definition.economy == "bonus_action" and not self.player_bonus_action_available:
         return False
     if definition.economy == "action" and self.player_actions_remaining <= 0:

@@ -2,10 +2,12 @@ from __future__ import annotations
 # mypy: disable-error-code="misc,no-redef"
 
 from pathlib import Path
+from collections.abc import Callable
 
 from .....content.paths import IMAGES_ROOT
 from ....shared.dice import RollView
 from .....domain.geometry import (
+    ContinuousArea,
     Grid,
     Position,
     Vector2D,
@@ -19,14 +21,24 @@ from .....runtime.scenario import DEFAULT_SCENARIO_DIR
 from ....shared.session import BattlefieldView
 
 try:
-    from PySide6.QtCore import QPointF, QSize, Qt, Signal
-    from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap, QPolygonF
+    from PySide6.QtCore import QEvent, QPointF, QSize, Qt, Signal
+    from PySide6.QtGui import (
+        QColor,
+        QFont,
+        QMouseEvent,
+        QPainter,
+        QPaintEvent,
+        QPen,
+        QPixmap,
+        QPolygonF,
+    )
     from PySide6.QtSvg import QSvgRenderer
     from PySide6.QtWidgets import (
         QFrame,
         QGridLayout,
         QHBoxLayout,
         QLabel,
+        QLayout,
         QScrollArea,
         QSizePolicy,
         QVBoxLayout,
@@ -37,10 +49,13 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
         return None
 
     QPointF = object  # type: ignore[assignment]
+    QEvent = object  # type: ignore[assignment]
     QSize = object  # type: ignore[assignment]
     Qt = object  # type: ignore[assignment]
     QColor = object  # type: ignore[assignment]
     QFont = object  # type: ignore[assignment]
+    QMouseEvent = object  # type: ignore[assignment]
+    QPaintEvent = object  # type: ignore[assignment]
     QPainter = object  # type: ignore[assignment]
     QPen = object  # type: ignore[assignment]
     QPixmap = object  # type: ignore[assignment]
@@ -50,15 +65,18 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QGridLayout = object  # type: ignore[assignment]
     QHBoxLayout = object  # type: ignore[assignment]
     QLabel = object  # type: ignore[assignment]
+    QLayout = object  # type: ignore[assignment]
     QScrollArea = object  # type: ignore[assignment]
     QSizePolicy = object  # type: ignore[assignment]
     QVBoxLayout = object  # type: ignore[assignment]
     QWidget = object  # type: ignore[assignment]
 
 
-def clear_layout(layout) -> None:
+def clear_layout(layout: QLayout) -> None:
     while layout.count():
         item = layout.takeAt(0)
+        if item is None:
+            continue
         widget = item.widget()
         child_layout = item.layout()
         if widget is not None:
@@ -89,7 +107,7 @@ class DieSvgWidget(QWidget):
         if action_id is not None:
             self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-    def paintEvent(self, event) -> None:
+    def paintEvent(self, event: QPaintEvent) -> None:
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -109,14 +127,17 @@ class DieSvgWidget(QWidget):
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, str(self._value))
         painter.end()
 
-    def mousePressEvent(self, event) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if self.isEnabled() and self._action_id is not None:
             self.clicked.emit(self._action_id)
         super().mousePressEvent(event)
 
 
 class DiceRollPanel(QWidget):
-    def __init__(self, action_callback=None):
+    def __init__(
+        self,
+        action_callback: Callable[[str], None] | None = None,
+    ) -> None:
         super().__init__()
         self.setObjectName("dicePanel")
         self._action_callback = action_callback
@@ -348,7 +369,7 @@ class BattlefieldWidget(QWidget):
             Qt.CursorShape.CrossCursor if enabled else Qt.CursorShape.ArrowCursor
         )
 
-    def paintEvent(self, event) -> None:  # pragma: no cover - GUI painting
+    def paintEvent(self, event: QPaintEvent) -> None:  # pragma: no cover - GUI painting
         if self._battlefield is None:
             return
 
@@ -580,7 +601,10 @@ class BattlefieldWidget(QWidget):
             return None
         return (x, y)
 
-    def _continuous_area(self, area: dict[str, object] | None):
+    def _continuous_area(
+        self,
+        area: dict[str, object] | None,
+    ) -> ContinuousArea | None:
         if not isinstance(area, dict):
             return None
         return deserialize_continuous_area(area.get("continuous_area"))
@@ -674,7 +698,7 @@ class BattlefieldWidget(QWidget):
             )
         return self._image_cache[image_reference]
 
-    def mousePressEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+    def mousePressEvent(self, event: QMouseEvent) -> None:  # pragma: no cover - GUI interaction
         point = self._point_at_pixel(event.position().x(), event.position().y())
         if self._cell_targeting_enabled and point is not None:
             self.point_clicked.emit(point[0], point[1])
@@ -690,7 +714,7 @@ class BattlefieldWidget(QWidget):
                 break
         super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:  # pragma: no cover - GUI interaction
         previous_hover = self._hover_cell
         previous_point = self._hover_point
         self._hover_cell = self._cell_at_point(event.position().x(), event.position().y())
@@ -699,7 +723,7 @@ class BattlefieldWidget(QWidget):
             self.update()
         super().mouseMoveEvent(event)
 
-    def leaveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+    def leaveEvent(self, event: QEvent) -> None:  # pragma: no cover - GUI interaction
         if self._hover_cell is not None or self._hover_point is not None:
             self._hover_cell = None
             self._hover_point = None

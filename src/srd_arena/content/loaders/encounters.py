@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..schemas import CreatureSchema, EncounterDefinitionSchema
+from ..schemas.encounter import PositionSchema
 from ...domain.creatures import Creature
 from ...domain.encounters import (
     EncounterBehavior,
@@ -29,7 +30,7 @@ class LoadedEncounter:
     creatures: tuple[Creature, ...]
 
 
-def _build_position(position) -> Position:
+def _build_position(position: PositionSchema) -> Position:
     return Position(x=position.x, y=position.y)
 
 
