@@ -28,18 +28,15 @@ def test_game_start_creates_runtime_session_from_loaded_scenario() -> None:
     assert game.encounter_state is not None
 
 
-def test_game_is_the_command_entrypoint_for_scene_choices() -> None:
+def test_game_supports_headless_action_discovery_and_execution() -> None:
     game = Game.start(ScenarioLoader().load(FIXTURE_ENCOUNTER_DIR))
-    view = game.view()
     if game.encounter_state is not None and game.encounter_state.needs_ai_advance():
         game.advance_ai()
-        view = game.view()
-    action = next(
-        action
-        for action in view.action_details
-        if not action.kind.startswith("system_")
-    )
+    assert game.encounter_state is not None
+    actions = game.encounter_state.actions.available(game.player)
+    action = next(action for action in actions if action.kind == "wait")
 
-    result = game.choose(action.index)
+    result = game.perform(action)
 
     assert result.selected_action_id == action.id
+    assert any(event.type == "action_declared" for event in result.events)

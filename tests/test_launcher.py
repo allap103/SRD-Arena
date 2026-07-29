@@ -6,7 +6,6 @@ import pytest
 
 from srd_arena import main as launcher
 from srd_arena.content.scenarios import resolve_scenario_directory
-from srd_arena.frontends.cli.scenario_selection import select_scenario_directory
 
 
 def _make_scenario_dir(path: Path) -> Path:
@@ -86,7 +85,7 @@ def test_launch_runs_gui_frontend(monkeypatch, tmp_path: Path) -> None:
         ),
     )
 
-    launcher.launch(frontend="gui", scenario_dir=scenario_dir, show_encounter_json=True)
+    launcher.launch(scenario_dir=scenario_dir, show_encounter_json=True)
 
     assert launched == [(scenario_dir, True)]
 
@@ -111,7 +110,6 @@ def test_main_launches_gui_by_default(
 
     assert launched == [
         {
-            "frontend": "gui",
             "scenario_dir": scenario_dir.resolve(),
             "control_mode": "default",
             "start_scene": None,
@@ -120,7 +118,7 @@ def test_main_launches_gui_by_default(
     ]
 
 
-def test_main_without_scenario_launches_picker_for_default_frontend(
+def test_main_without_scenario_launches_gui_scenario_picker(
     monkeypatch,
 ) -> None:
     launched = []
@@ -133,73 +131,12 @@ def test_main_without_scenario_launches_picker_for_default_frontend(
 
     assert launched == [
         {
-            "frontend": "gui",
             "scenario_dir": None,
             "control_mode": "default",
             "start_scene": None,
             "show_encounter_json": False,
         }
     ]
-
-
-def test_select_scenario_directory_lists_only_display_names(
-    monkeypatch,
-    tmp_path: Path,
-    capsys,
-) -> None:
-    first = _make_scenario_dir(tmp_path / "alpha")
-    _make_scenario_dir(tmp_path / "beta")
-    monkeypatch.setattr("builtins.input", lambda _prompt: "1")
-
-    resolved = select_scenario_directory(tmp_path)
-
-    assert resolved == first.resolve()
-    output = capsys.readouterr().out
-    assert "1. Alpha" in output
-    assert "2. Beta" in output
-    assert "(alpha)" not in output
-    assert "(beta)" not in output
-
-
-def test_main_with_cli_frontend_selects_cli_mode(monkeypatch, tmp_path: Path) -> None:
-    scenario_dir = _make_scenario_dir(tmp_path / "game")
-    launched = []
-
-    monkeypatch.setattr(
-        launcher,
-        "resolve_scenario_directory",
-        lambda scenario: scenario_dir.resolve(),
-    )
-    monkeypatch.setattr(
-        launcher, "launch", lambda *args, **kwargs: launched.append(kwargs)
-    )
-
-    launcher.main(["--frontend", "cli", str(scenario_dir)])
-
-    assert launched == [
-        {
-            "frontend": "cli",
-            "scenario_dir": scenario_dir.resolve(),
-            "control_mode": "default",
-            "start_scene": None,
-            "show_encounter_json": False,
-        }
-    ]
-
-
-def test_parser_rejects_textual_frontend() -> None:
-    parser = launcher.build_parser()
-
-    with pytest.raises(SystemExit):
-        parser.parse_args(["--frontend", "textual"])
-
-
-def test_parser_accepts_frontend_flag() -> None:
-    parser = launcher.build_parser()
-
-    args = parser.parse_args(["--frontend", "cli"])
-
-    assert args.frontend == "cli"
 
 
 def test_parser_accepts_encounter_json_flag() -> None:

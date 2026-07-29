@@ -33,7 +33,6 @@ RULES = (
     DependencyRule(
         package="srd_arena.runtime",
         forbidden=(
-            "srd_arena.frontends.cli",
             "srd_arena.frontends.qt",
         ),
     ),
