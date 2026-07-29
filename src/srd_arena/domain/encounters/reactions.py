@@ -574,7 +574,7 @@ class ReactionEngine:
             mover.movement_remaining = pending_action.remaining_movement_after
             return
         mover.movement_remaining = pending_action.remaining_movement_after
-        if state.ai_action_limit is not None:
+        if state.automatic_action_limit is not None:
             return
         completed_turn, resumed, _ = state.turn_engine.run_creature_turn(
             state,

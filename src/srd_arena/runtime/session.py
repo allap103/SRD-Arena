@@ -27,9 +27,7 @@ class Session:
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
         start_scene_id: str = "goblin_encounter",
-        control_mode: str = "default",
-        controllers_by_creature: dict[str, str] | None = None,
-        ai_action_limit: int | None = None,
+        automatic_action_limit: int | None = None,
         geometry_config: GeometryConfig | None = None,
         background_image: str | None = None,
         grid_color: str = "#d3d3d3",
@@ -42,9 +40,7 @@ class Session:
         self.start_scene_id = start_scene_id
         self.current_scene_id = start_scene_id
         self._initial_creature_templates = deepcopy(creature_templates)
-        self.control_mode = control_mode
-        self.controllers_by_creature = dict(controllers_by_creature or {})
-        self.ai_action_limit = ai_action_limit
+        self.automatic_action_limit = automatic_action_limit
         self.geometry_config = geometry_config or GeometryConfig()
         self.background_image = background_image
         self.grid_color = grid_color
@@ -230,11 +226,11 @@ class Session:
             combat_state=combat_state,
         )
 
-    def advance_ai(self) -> TurnResult:
+    def advance_until_input_required(self) -> TurnResult:
         self._ensure_encounter_state()
         if self.encounter_state is None:
             raise RuntimeError("AI advancement requested without an active encounter.")
-        if not self.encounter_state.needs_ai_advance():
+        if not self.encounter_state.requires_automatic_advance():
             raise RuntimeError("AI advancement requested while no AI creature is active.")
 
         progress = self.encounter_state.advance_until_next_decision(
@@ -289,11 +285,9 @@ class Session:
             self.primary_creature,
             self.creature_templates,
             self.item_templates,
-            self.control_mode,
-            self.controllers_by_creature,
             self.geometry_config,
         )
-        self.encounter_state.ai_action_limit = self.ai_action_limit
+        self.encounter_state.automatic_action_limit = self.automatic_action_limit
         self._encounter_actions = []
 
     def _clear_encounter_if_scene_changed(self, previous_scene_id: str, next_scene_id: str) -> None:

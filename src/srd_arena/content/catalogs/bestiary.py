@@ -12,13 +12,13 @@ BestiaryCatalog = SourceCatalog[BestiaryMonsterSchema]
 
 def load_bestiary_catalog(directory: str | Path) -> BestiaryCatalog:
     system_dir = Path(directory)
+    bestiary_dir = system_dir / "bestiary"
+    if not bestiary_dir.is_dir():
+        bestiary_dir = system_dir
     records: list[BestiaryMonsterSchema] = []
-    for bestiary_dir in (system_dir, system_dir / "bestiary"):
-        if not bestiary_dir.is_dir():
-            continue
-        for path in sorted(bestiary_dir.glob("bestiary-*.json")):
-            source_file = BestiaryFileSchema.model_validate(load_json(path))
-            records.extend(source_file.monster)
+    for path in sorted(bestiary_dir.glob("bestiary-*.json")):
+        source_file = BestiaryFileSchema.model_validate(load_json(path))
+        records.extend(source_file.monster)
     return SourceCatalog(
         records,
         name_of=lambda monster: monster.public_name,

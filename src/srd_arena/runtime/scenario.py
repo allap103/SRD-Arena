@@ -48,7 +48,6 @@ class Scenario:
         directory: str | Path = DEFAULT_SCENARIO_DIR,
         start_scene: str | None = None,
         system_directory: str | Path = DEFAULT_SYSTEM_CONTENT_DIR,
-        control_mode: str = "default",
     ):
         self.directory = Path(directory)
         self.system_directory = Path(system_directory)
@@ -73,7 +72,6 @@ class Scenario:
         self._link_encounters()
         self.items = load_system_items(self.system_directory)
         self.start_scene = start_scene or self.encounter_order[0]
-        self.control_mode = control_mode
 
     def load_encounters_from_directory(
         self, directory: str | Path
@@ -130,20 +128,33 @@ class Scenario:
                 return creature
         raise KeyError(f"Creature '{creature_id}' not found.")
 
-    def create_session(
-        self,
-        player_creature_id: str = "player",
-        control_mode: str | None = None,
-        controllers_by_creature: dict[str, str] | None = None,
-    ) -> Session:
+    def create_session(self) -> Session:
+        encounter = self.encounters[self.start_scene]
+        team_by_creature = {
+            creature_id: team
+            for team in encounter.teams
+            for creature_id in team.members
+        }
+        externally_controlled = [
+            participant.creature_id
+            for participant in encounter.participants
+            if (
+                participant.controller
+                or team_by_creature[participant.creature_id].controller
+            )
+            == "user"
+        ]
+        if not externally_controlled:
+            raise ValueError(
+                f"Starting encounter '{encounter.id}' must configure at least one "
+                "user-controlled creature."
+            )
         return Session(
             encounters=self.encounters,
-            primary_creature_id=player_creature_id,
+            primary_creature_id=externally_controlled[0],
             creature_templates={creature.id: creature for creature in self.creatures},
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
-            control_mode=control_mode or self.control_mode,
-            controllers_by_creature=controllers_by_creature,
             geometry_config=self.geometry_config,
             background_image=self.background_image,
             grid_color=self.grid_color,

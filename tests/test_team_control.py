@@ -30,6 +30,17 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
+def _all_user_session():
+    scenario = Scenario(
+        TACTICAL_SCENARIO_DIR,
+        start_scene="goblin_encounter",
+    )
+    encounter = scenario.encounters["goblin_encounter"]
+    for team in encounter.teams:
+        team.controller = "user"
+    return scenario.create_session()
+
+
 def test_tactical_fixture_loads_explicit_teams():
     game = Scenario(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter")
     encounter = game.encounters["goblin_encounter"]
@@ -42,70 +53,8 @@ def test_tactical_fixture_loads_explicit_teams():
     assert encounter.teams[1].members == ["goblin_1", "goblin_2", "goblin_3"]
 
 
-def test_session_can_override_controller_for_one_creature():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-    ).create_session(controllers_by_creature={"goblin_1": "user"})
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    assert session.encounter_state._creature_controller("participant:0") == "user"
-    assert session.encounter_state._creature_controller("participant:1") == "ai"
-
-
-def test_runtime_override_pauses_only_for_assigned_creature():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-    ).create_session(controllers_by_creature={"goblin_1": "user"})
-    session.get_scene_view()
-
-    result = session.choose(session.get_scene_view().choices.index("Wait"))
-
-    assert session.encounter_state is not None
-    assert session.encounter_state.current_decision().creature_ref == "participant:0"
-    assert result.decision is not None
-    assert result.decision["creature_ref"] == "participant:0"
-    assert {
-        action.creature_ref
-        for action in session.encounter_state.available_actions(session.primary_creature)
-    } == {"participant:0"}
-
-
-def test_primary_creature_can_be_ai_controlled() -> None:
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-    ).create_session(
-        controllers_by_creature={
-            "player": "ai",
-            "goblin_1": "user",
-        }
-    )
-    session.get_scene_view()
-    assert session.encounter_state is not None
-
-    progress = session.encounter_state.advance_until_next_decision(
-        session.primary_creature
-    )
-
-    assert session.encounter_state.current_decision().creature_ref == "participant:0"
-    assert progress.paused_for_decision is True
-    assert any(
-        event.type == "action_resolved"
-        and event.creature_ref == "player"
-        and event.data["kind"] == "wait"
-        for event in progress.events
-    )
-
-
 def test_resource_summary_uses_active_creature_movement():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = _all_user_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     session.encounter_state.active_movement_remaining = 2
@@ -119,11 +68,7 @@ def test_resource_summary_uses_active_creature_movement():
 
 
 def test_all_user_mode_pauses_for_each_goblin_turn():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = _all_user_session()
     session.get_scene_view()
     state = session.encounter_state
     assert state is not None
@@ -143,11 +88,7 @@ def test_all_user_mode_pauses_for_each_goblin_turn():
 
 
 def test_user_controlled_goblin_can_move_then_end_turn():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = _all_user_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -177,11 +118,7 @@ def test_user_controlled_goblin_can_move_then_end_turn():
 
 
 def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = _all_user_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -493,11 +430,7 @@ def test_brynn_can_take_an_opportunity_attack(monkeypatch) -> None:
 
 
 def test_team_members_are_not_valid_attack_targets():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = _all_user_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -519,11 +452,7 @@ def test_team_members_are_not_valid_attack_targets():
 
 
 def test_user_controlled_teammate_can_target_opposing_team():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = _all_user_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -554,7 +483,7 @@ def test_paced_ai_resolves_one_visible_action_per_step():
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     ).create_session()
-    session.ai_action_limit = 1
+    session.automatic_action_limit = 1
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -565,9 +494,9 @@ def test_paced_ai_resolves_one_visible_action_per_step():
     assert len(
         [event for event in first.events if event.type == "movement_resolved"]
     ) == 1
-    assert state.needs_ai_advance() is True
+    assert state.requires_automatic_advance() is True
 
-    second = session.advance_ai()
+    second = session.advance_until_input_required()
 
     assert len(
         [event for event in second.events if event.type == "movement_resolved"]

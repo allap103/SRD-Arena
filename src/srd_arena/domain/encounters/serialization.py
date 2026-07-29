@@ -47,7 +47,6 @@ def export_state(self: EncounterState, _player: Creature) -> dict[str, object]:
             }
             for entry in self.initiative_entries
         ],
-        "control_mode": self.control_mode,
         "active_creature_ref": active_creature_ref,
         "active_controller": self._creature_controller(active_creature_ref),
         "primary_creature_ref": self.primary_creature_ref,

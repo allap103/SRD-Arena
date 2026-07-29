@@ -9,7 +9,7 @@ from srd_arena.domain.encounters.actions.hit_effects import (
     apply_attack_hit_effects,
 )
 from srd_arena.domain.encounters.models import EncounterProgress
-from srd_arena.frontends.cli.combat import render_encounter_text
+from srd_arena.frontends.shared.combat import render_encounter_text
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.frontends.qt.app import GameWindow
 from srd_arena.domain.effects import EffectResult

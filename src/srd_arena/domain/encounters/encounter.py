@@ -230,8 +230,6 @@ class EncounterState(EncounterStateData):
         player: Creature,
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
-        control_mode: str = "default",
-        controllers_by_creature: dict[str, str] | None = None,
         geometry_config: GeometryConfig | None = None,
     ) -> EncounterState:
         player_participants = [
@@ -274,8 +272,6 @@ class EncounterState(EncounterStateData):
             encounter_id=encounter_id,
             definition=definition,
             creatures=creatures,
-            control_mode=control_mode,
-            controllers_by_creature=dict(controllers_by_creature or {}),
             round=RoundState(),
             turn=TurnState(),
             interrupts=InterruptState(),
@@ -396,7 +392,7 @@ class EncounterState(EncounterStateData):
     def active_creature(self) -> CreatureRef:
         return self.current_decision().creature_ref
 
-    def needs_ai_advance(self) -> bool:
+    def requires_automatic_advance(self) -> bool:
         return self._creature_controller(self.current_decision().creature_ref) == "ai"
 
     apply_action = _apply_action_impl
@@ -595,7 +591,9 @@ class EncounterState(EncounterStateData):
         if source.transition is not None:
             target.transition = source.transition
         target.paused_for_decision = target.paused_for_decision or source.paused_for_decision
-        target.paused_for_ai = target.paused_for_ai or source.paused_for_ai
+        target.paused_for_pacing = (
+            target.paused_for_pacing or source.paused_for_pacing
+        )
 
     _export_pending_action = _export_pending_action_impl
 

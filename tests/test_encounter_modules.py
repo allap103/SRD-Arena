@@ -96,8 +96,6 @@ def test_defeated_creature_releases_all_relational_grapples() -> None:
 
 def test_participant_queries_use_authored_teams_and_controllers() -> None:
     state = SimpleNamespace(
-        control_mode="default",
-        controllers_by_creature={},
         creatures={
             "player": SimpleNamespace(creature_id="player"),
             "participant:0": SimpleNamespace(creature_id="goblin"),
@@ -115,32 +113,8 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
     assert creature_team_id(state, "participant:0") == "monsters"
     assert creature_controller(state, "participant:0") == "ai"
     assert creatures_are_opponents(state, "player", "participant:0") is True
-
-
-def test_all_user_control_mode_overrides_authored_controller() -> None:
-    state = SimpleNamespace(control_mode="all-user")
-
-    assert creature_controller(state, "participant:0") == "user"
-
-
-def test_creature_controller_assignment_overrides_team_default() -> None:
-    state = SimpleNamespace(
-        control_mode="default",
-        controllers_by_creature={"goblin": "user"},
-        creatures={"participant:0": SimpleNamespace(creature_id="goblin")},
-        definition=SimpleNamespace(
-            participants=[],
-            teams=[EncounterTeam("monsters", "Monsters", ["goblin"], "ai")],
-        ),
-    )
-
-    assert creature_controller(state, "participant:0") == "user"
-
-
 def test_authored_creature_controller_overrides_team_default() -> None:
     state = SimpleNamespace(
-        control_mode="default",
-        controllers_by_creature={},
         creatures={"participant:0": SimpleNamespace(creature_id="goblin")},
         definition=SimpleNamespace(
             participants=[

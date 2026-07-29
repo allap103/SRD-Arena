@@ -10,12 +10,7 @@ if TYPE_CHECKING:
 
 
 def creature_controller(state: EncounterState, creature_ref: CreatureRef) -> str:
-    if state.control_mode == "all-user":
-        return "user"
     creature_id = creature_id_for_ref(state, creature_ref)
-    assigned = state.controllers_by_creature.get(creature_id)
-    if assigned is not None:
-        return assigned
     participant = next(
         (
             participant

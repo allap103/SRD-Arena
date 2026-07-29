@@ -22,18 +22,9 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
 
 
 class ScenarioPickerWindow(QMainWindow):
-    def __init__(
-        self,
-        start_scene_override: str | None = None,
-        *,
-        control_mode: str = "default",
-        show_encounter_json: bool = False,
-    ):
+    def __init__(self) -> None:
         _require_pyside6()
         super().__init__()
-        self._start_scene_override = start_scene_override
-        self._control_mode = control_mode
-        self._show_encounter_json = show_encounter_json
         self._game_window: GameWindow | None = None
         self.setWindowTitle("Choose Scenario")
         self.resize(520, 420)
@@ -77,12 +68,7 @@ class ScenarioPickerWindow(QMainWindow):
 
     def _open_scenario(self, scenario: ScenarioInfo) -> None:
         self._game_window = GameWindow(
-            create_scenario(
-                scenario.directory,
-                start_scene_override=self._start_scene_override,
-                control_mode=self._control_mode,
-            ),
-            show_encounter_json=self._show_encounter_json,
+            create_scenario(scenario.directory),
         )
         self._game_window.show()
         self.close()
@@ -90,37 +76,14 @@ class ScenarioPickerWindow(QMainWindow):
 
 def create_scenario(
     scenario_dir: str | Path,
-    *,
-    start_scene_override: str | None,
-    control_mode: str,
 ) -> Scenario:
-    return Scenario(str(scenario_dir), start_scene=start_scene_override, control_mode=control_mode)
+    return Scenario(str(scenario_dir))
 
 
-def run_pyside6_app(
-    scenario_dir: str | Path | None = None,
-    start_scene_override: str | None = None,
-    control_mode: str = "default",
-    show_encounter_json: bool = False,
-) -> None:
+def run_pyside6_app() -> None:
     _require_pyside6()
     app = QApplication.instance() or QApplication(sys.argv)
     apply_fantasy_theme(app)
-    window = (
-        GameWindow(
-            game=create_scenario(
-                scenario_dir,
-                start_scene_override=start_scene_override,
-                control_mode=control_mode,
-            ),
-            show_encounter_json=show_encounter_json,
-        )
-        if scenario_dir is not None
-        else ScenarioPickerWindow(
-            start_scene_override=start_scene_override,
-            control_mode=control_mode,
-            show_encounter_json=show_encounter_json,
-        )
-    )
+    window = ScenarioPickerWindow()
     window.show()
     app.exec()

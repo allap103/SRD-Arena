@@ -47,7 +47,7 @@ class TurnEngine:
         player: Creature,
     ) -> EncounterProgress:
         progress = EncounterProgress()
-        ai_actions_resolved = 0
+        automatic_actions_resolved = 0
         while True:
             if player.get_health() <= 0:
                 break
@@ -62,8 +62,8 @@ class TurnEngine:
                 break
             remaining_limit = (
                 None
-                if state.ai_action_limit is None
-                else state.ai_action_limit - ai_actions_resolved
+                if state.automatic_action_limit is None
+                else state.automatic_action_limit - automatic_actions_resolved
             )
             completed_turn, enemy_progress, actions_resolved = self.run_creature_turn(
                 state,
@@ -71,7 +71,7 @@ class TurnEngine:
                 creature_ref,
                 action_limit=remaining_limit,
             )
-            ai_actions_resolved += actions_resolved
+            automatic_actions_resolved += actions_resolved
             state._merge_progress(progress, enemy_progress)
             if progress.transition is not None or progress.paused_for_decision:
                 break
@@ -82,10 +82,10 @@ class TurnEngine:
                 if progress.transition is not None:
                     break
             if (
-                state.ai_action_limit is not None
-                and ai_actions_resolved >= state.ai_action_limit
+                state.automatic_action_limit is not None
+                and automatic_actions_resolved >= state.automatic_action_limit
             ):
-                progress.paused_for_ai = True
+                progress.paused_for_pacing = True
                 break
         return progress
 
