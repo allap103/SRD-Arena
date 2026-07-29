@@ -6,13 +6,20 @@ from pathlib import Path
 from typing import cast
 
 from ...content.scenarios import ScenarioInfo, list_scenarios
-from ...runtime.scenario import Scenario
+from ...runtime.scenario import LoadedScenario, ScenarioLoader
 from .app import GameWindow, _require_pyside6
 from .theme import apply_fantasy_theme
 
 try:
     from PySide6.QtGui import QFont
-    from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+    from PySide6.QtWidgets import (
+        QApplication,
+        QLabel,
+        QMainWindow,
+        QPushButton,
+        QVBoxLayout,
+        QWidget,
+    )
 except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QApplication = None  # type: ignore[assignment]
     QFont = object  # type: ignore[assignment]
@@ -79,7 +86,7 @@ class ScenarioPickerWindow(QMainWindow):
 
     def _open_scenario(self, scenario: ScenarioInfo) -> None:
         self._game_window = GameWindow(
-            create_scenario(
+            scenario=create_scenario(
                 scenario.directory,
                 start_scene_override=self._start_scene_override,
                 control_mode=self._control_mode,
@@ -95,8 +102,12 @@ def create_scenario(
     *,
     start_scene_override: str | None,
     control_mode: str,
-) -> Scenario:
-    return Scenario(str(scenario_dir), start_scene=start_scene_override, control_mode=control_mode)
+) -> LoadedScenario:
+    return ScenarioLoader().load(
+        scenario_dir,
+        start_scene=start_scene_override,
+        control_mode=control_mode,
+    )
 
 
 def run_pyside6_app(
@@ -106,11 +117,15 @@ def run_pyside6_app(
     show_encounter_json: bool = False,
 ) -> None:
     _require_pyside6()
-    app = cast(QApplication, QApplication.instance()) if QApplication.instance() else QApplication(sys.argv)
+    app = (
+        cast(QApplication, QApplication.instance())
+        if QApplication.instance()
+        else QApplication(sys.argv)
+    )
     apply_fantasy_theme(app)
     window = (
         GameWindow(
-            game=create_scenario(
+            scenario=create_scenario(
                 scenario_dir,
                 start_scene_override=start_scene_override,
                 control_mode=control_mode,

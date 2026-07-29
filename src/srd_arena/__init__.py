@@ -1,28 +1,15 @@
 from .frontends.shared.models import SceneView, TurnResult
 from .frontends.cli.runner import CliRunner
-from .runtime.scenario import Scenario
-from .runtime.save import (
-    SaveGame,
-    create_save,
-    load_from_file,
-    load_from_slot,
-    restore_save,
-    save_to_file,
-    save_to_slot,
-)
+from .runtime.game import Game
+from .runtime.scenario import LoadedScenario, ScenarioLoader
 from .runtime.session import Session
 
 __all__ = [
     "CliRunner",
-    "Scenario",
+    "Game",
+    "LoadedScenario",
+    "ScenarioLoader",
     "Session",
     "SceneView",
-    "SaveGame",
     "TurnResult",
-    "create_save",
-    "load_from_file",
-    "load_from_slot",
-    "restore_save",
-    "save_to_file",
-    "save_to_slot",
 ]

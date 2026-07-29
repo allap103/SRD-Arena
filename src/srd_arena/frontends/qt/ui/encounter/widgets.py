@@ -45,6 +45,7 @@ try:
         QWidget,
     )
 except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
+
     def Signal(*args, **kwargs):  # type: ignore[no-untyped-def]
         return None
 
@@ -396,8 +397,12 @@ class BattlefieldWidget(QWidget):
                 fill = QColor("#f4ecd8") if (x + y) % 2 == 0 else QColor("#eadfbe")
                 cell_x = origin_x + x * cell_size
                 cell_y = origin_y + y * cell_size
-                painter.fillRect(int(cell_x), int(cell_y), int(cell_size), int(cell_size), fill)
-                painter.drawRect(int(cell_x), int(cell_y), int(cell_size), int(cell_size))
+                painter.fillRect(
+                    int(cell_x), int(cell_y), int(cell_size), int(cell_size), fill
+                )
+                painter.drawRect(
+                    int(cell_x), int(cell_y), int(cell_size), int(cell_size)
+                )
 
         overlay_cells = self._overlay_cells(display_overlay)
         overlay_origin = self._overlay_origin(display_overlay)
@@ -644,9 +649,7 @@ class BattlefieldWidget(QWidget):
         if not isinstance(origin_x, int) or not isinstance(origin_y, int):
             return None
         continuous_area = deserialize_continuous_area(area.get("continuous_area"))
-        if (
-            continuous_area is None
-        ):
+        if continuous_area is None:
             return None
         if int(hover_point[0]) == origin_x and int(hover_point[1]) == origin_y:
             return None
@@ -698,7 +701,9 @@ class BattlefieldWidget(QWidget):
             )
         return self._image_cache[image_reference]
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:  # pragma: no cover - GUI interaction
+    def mousePressEvent(
+        self, event: QMouseEvent
+    ) -> None:  # pragma: no cover - GUI interaction
         point = self._point_at_pixel(event.position().x(), event.position().y())
         if self._cell_targeting_enabled and point is not None:
             self.point_clicked.emit(point[0], point[1])
@@ -714,11 +719,17 @@ class BattlefieldWidget(QWidget):
                 break
         super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:  # pragma: no cover - GUI interaction
+    def mouseMoveEvent(
+        self, event: QMouseEvent
+    ) -> None:  # pragma: no cover - GUI interaction
         previous_hover = self._hover_cell
         previous_point = self._hover_point
-        self._hover_cell = self._cell_at_point(event.position().x(), event.position().y())
-        self._hover_point = self._point_at_pixel(event.position().x(), event.position().y())
+        self._hover_cell = self._cell_at_point(
+            event.position().x(), event.position().y()
+        )
+        self._hover_point = self._point_at_pixel(
+            event.position().x(), event.position().y()
+        )
         if self._hover_cell != previous_hover or self._hover_point != previous_point:
             self.update()
         super().mouseMoveEvent(event)

@@ -1,16 +1,23 @@
 from pathlib import Path
+
 # mypy: disable-error-code="assignment,method-assign,return-value,index,arg-type"
 from types import SimpleNamespace
 
 import pytest
 
-from srd_arena.domain.encounters.encounter import ActionCost, EncounterAction, EncounterState
-from srd_arena.runtime.scenario import Scenario
+from srd_arena.domain.encounters.encounter import (
+    ActionCost,
+    EncounterAction,
+    EncounterState,
+)
+from srd_arena.runtime.scenario import ScenarioLoader
 from srd_arena.frontends.qt.app import CyoaPySide6Window
 from srd_arena.domain.effects import EffectResult
-from srd_arena.frontends.shared.session import SpellSlotTrackView, build_session_presentation
+from srd_arena.frontends.shared.session import (
+    SpellSlotTrackView,
+    build_session_presentation,
+)
 from srd_arena.frontends.shared.models import ActionView
-from srd_arena.runtime.save import load_from_file, save_to_file
 from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
 from srd_arena.frontends.qt.ui.encounter.config import TargetSelectionMode
 
@@ -41,7 +48,9 @@ def _action_index_by_prefix(session, prefix: str) -> int:
 
 def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
     scene_view = session.get_scene_view()
-    action = next(detail for detail in scene_view.action_details if detail.label == label)
+    action = next(
+        detail for detail in scene_view.action_details if detail.label == label
+    )
     return session.choose_encounter_action(
         EncounterAction(
             label=action.label,
@@ -61,7 +70,7 @@ def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
 
 
 def test_goblin_encounter_scene_generates_runtime_actions_and_grid() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
 
     scene_view = session.get_scene_view()
@@ -79,17 +88,23 @@ def test_goblin_encounter_scene_generates_runtime_actions_and_grid() -> None:
     assert "Retreat until the encounter system is ready." not in scene_view.choices
 
 
-def test_initiative_is_rolled_for_all_combatants_at_encounter_start(monkeypatch) -> None:
+def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(EncounterState, "_roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls))
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls)
+    )
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
 
     session.get_scene_view()
 
     assert session.encounter_state is not None
-    assert [entry.actor_ref for entry in session.encounter_state.initiative_entries] == [
+    assert [
+        entry.actor_ref for entry in session.encounter_state.initiative_entries
+    ] == [
         "enemy:0",
         "enemy:2",
         "player",
@@ -107,15 +122,18 @@ def test_initiative_is_rolled_for_all_combatants_at_encounter_start(monkeypatch)
 def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
     monkeypatch.setattr(EncounterState, "_roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls))
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls)
+    )
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
 
     presentation = build_session_presentation(session)
 
     assert presentation.encounter is not None
     assert [
-        creature.token_image for creature in presentation.encounter.battlefield.creatures
+        creature.token_image
+        for creature in presentation.encounter.battlefield.creatures
     ] == [
         "tokens/traveler.png",
         "tokens/goblin.png",
@@ -134,7 +152,7 @@ def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
 
 
 def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
 
     scene_view = session.get_scene_view()
@@ -157,7 +175,7 @@ def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> N
 
 
 def test_goblin_encounter_allows_diagonal_movement() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
 
     move_index = session.get_scene_view().choices.index("Move up-right")
@@ -170,7 +188,11 @@ def test_goblin_encounter_allows_diagonal_movement() -> None:
 
 
 def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -233,7 +255,11 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
 
 
 def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -244,10 +270,16 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
     state.enemies[0].position.y = 3
 
     rolls = iter([20, 1])
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls))
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls)
+    )
 
     scene_view = session.get_scene_view()
-    grapple_index = next(index for index, choice in enumerate(scene_view.choices) if choice.startswith("Grapple enemy 1"))
+    grapple_index = next(
+        index
+        for index, choice in enumerate(scene_view.choices)
+        if choice.startswith("Grapple enemy 1")
+    )
     result = session.choose(grapple_index)
 
     assert ("system", "Traveler grapples Enemy 1 (Goblin Warrior).") in result.messages
@@ -257,7 +289,11 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
 
 
 def test_grappling_moves_target_and_costs_extra_movement() -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -305,7 +341,7 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
 
 
 def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
 
     for _ in range(6):
@@ -321,7 +357,7 @@ def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
 
 
 def test_goblin_encounter_wait_advances_enemy_turns() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
 
     move_up_index = session.get_scene_view().choices.index("Move up")
@@ -342,7 +378,11 @@ def test_goblin_encounter_wait_advances_enemy_turns() -> None:
 
 
 def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -357,7 +397,11 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
 
 
 def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -369,8 +413,14 @@ def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
     assert "Cast Burning Hands" in session.get_scene_view().choices
 
 
-def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+def test_presentation_derives_spell_slot_rows_from_player_spellcasting(
+    monkeypatch,
+) -> None:
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -378,7 +428,9 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypat
     session.encounter_state.player_position.y = 3
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
+    )
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     presentation = build_session_presentation(session)
@@ -392,7 +444,11 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypat
 
 
 def test_lesser_restoration_appears_when_player_has_removable_condition() -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -416,8 +472,14 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
     assert "Cast Lesser Restoration" in session.get_scene_view().choices
 
 
-def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
+    monkeypatch,
+) -> None:
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -427,12 +489,20 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatc
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
+    )
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
 
-    assert ("system", "Traveler casts Color Spray on Enemy 1 (Goblin Warrior).") in result.messages
-    assert any("is blinded until the end of your next turn" in message for _, message in result.messages)
+    assert (
+        "system",
+        "Traveler casts Color Spray on Enemy 1 (Goblin Warrior).",
+    ) in result.messages
+    assert any(
+        "is blinded until the end of your next turn" in message
+        for _, message in result.messages
+    )
     assert session.encounter_state.player_action_available is False
     assert session.player.spellcasting.spell_slots_remaining[1] == 3
     assert session.encounter_state.has_condition("enemy:0", "blinded") is True
@@ -444,7 +514,11 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatc
 
 
 def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -458,7 +532,9 @@ def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
     state.enemies[1].position.y = 2
     state.enemies[2].creature.current_health = 0
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
+    )
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
 
@@ -478,7 +554,11 @@ def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
 
 
 def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -491,7 +571,9 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
     state.enemies[1].position.y = 4
     state.enemies[2].creature.current_health = 0
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
+    )
 
     result = _choose_directional_spell(session, "Cast Color Spray", (5, 3))
 
@@ -506,7 +588,11 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
 
 
 def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -520,7 +606,9 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
     state.enemies[2].creature.current_health = 0
 
     rolls = iter([5, 1, 2, 3, 16, 4, 5, 6])
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls))
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls)
+    )
 
     result = _choose_directional_spell(session, "Cast Burning Hands", (4, 3))
 
@@ -533,12 +621,22 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
     assert state.enemies[0].creature.get_health() == 4
     assert state.enemies[1].creature.get_health() == 3
     assert any("takes 6 fire damage." in message for _, message in result.messages)
-    assert any("takes 7 fire damage on a successful save." in message for _, message in result.messages)
-    assert not any("Enemy 2 (Goblin Warrior) is defeated." == message for _, message in result.messages)
+    assert any(
+        "takes 7 fire damage on a successful save." in message
+        for _, message in result.messages
+    )
+    assert not any(
+        "Enemy 2 (Goblin Warrior) is defeated." == message
+        for _, message in result.messages
+    )
 
 
 def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -555,7 +653,9 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
     starting_healths = [enemy.creature.get_health() for enemy in state.enemies]
 
     rolls = iter([1, 2, 3, 4, 5, 6, 1, 2, 5, 16, 3])
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls))
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls)
+    )
 
     result = _choose_directional_spell(session, "Cast Fireball", (5, 2))
 
@@ -568,11 +668,17 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
     assert spell_event.data["damage_roll_details"][0]["dice"] == "8d6"
     assert spell_event.data["damage_roll_details"][0]["dice_total"] == 24
     assert spell_event.data["damage_roll_details"][0]["final_damage"] == 24
-    assert spell_event.data["damage_roll_details"][0]["applied_damage"] == min(24, starting_healths[0])
+    assert spell_event.data["damage_roll_details"][0]["applied_damage"] == min(
+        24, starting_healths[0]
+    )
     assert spell_event.data["damage_roll_details"][1]["final_damage"] == 12
-    assert spell_event.data["damage_roll_details"][1]["applied_damage"] == min(12, starting_healths[1])
+    assert spell_event.data["damage_roll_details"][1]["applied_damage"] == min(
+        12, starting_healths[1]
+    )
     assert spell_event.data["damage_roll_details"][2]["final_damage"] == 24
-    assert spell_event.data["damage_roll_details"][2]["applied_damage"] == min(24, starting_healths[2])
+    assert spell_event.data["damage_roll_details"][2]["applied_damage"] == min(
+        24, starting_healths[2]
+    )
     assert session.player.spellcasting.spell_slots_remaining[3] == 1
     assert state.enemies[0].creature.get_health() == 0
     assert state.enemies[1].creature.get_health() == 0
@@ -580,7 +686,11 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
 
 
 def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -593,13 +703,13 @@ def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
     state.enemies[1].position.y = 2
     state.enemies[2].creature.current_health = 0
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
+    )
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
     area = next(
-        event.data["area"]
-        for event in result.events
-        if event.type == "spell_cast"
+        event.data["area"] for event in result.events if event.type == "spell_cast"
     )
 
     assert area is not None
@@ -611,7 +721,11 @@ def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
 
 
 def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -623,7 +737,9 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
     state.enemies[1].creature.current_health = 0
     state.enemies[2].creature.current_health = 0
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
+    )
     monkeypatch.setattr(
         "srd_arena.frontends.qt.app.QTimer",
         SimpleNamespace(singleShot=lambda _delay, callback: callback()),
@@ -632,7 +748,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
 
     window = CyoaPySide6Window.__new__(CyoaPySide6Window)
-    window.session = session
+    window.game = SimpleNamespace(encounter_state=session.encounter_state)
     window._presentation = SimpleNamespace(encounter=object())
     window._combat_log_scene_id = state.encounter_id
     window.dice_roll_panel = SimpleNamespace(
@@ -647,8 +763,14 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
     assert not hasattr(window, "_resolved_area_overlay")
 
 
-def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+def test_battlefield_widget_preview_overlay_reaims_directional_area(
+    monkeypatch,
+) -> None:
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -661,16 +783,16 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch)
     state.enemies[1].position.y = 2
     state.enemies[2].creature.current_health = 0
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
+    )
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
     presentation = build_session_presentation(session)
 
     assert presentation.encounter is not None
     original_area = next(
-        event.data["area"]
-        for event in result.events
-        if event.type == "spell_cast"
+        event.data["area"] for event in result.events if event.type == "spell_cast"
     )
     preview = BattlefieldWidget._preview_area_overlay(
         original_area,
@@ -681,12 +803,19 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch)
     assert preview is not None
     assert preview["shape"] == "cone"
     assert preview["origin"] == {"x": 4, "y": 4}
-    assert preview["continuous_area"]["direction"] != original_area["continuous_area"]["direction"]
+    assert (
+        preview["continuous_area"]["direction"]
+        != original_area["continuous_area"]["direction"]
+    )
     assert preview["cells"] != original_area["cells"]
 
 
 def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -699,8 +828,12 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
     state.enemies[1].creature.current_health = 0
     state.enemies[2].creature.current_health = 0
     rolls = iter([5, 17, 4, 1])
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls, 3))
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls, 3)
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1
+    )
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     result = session.choose(session.get_scene_view().choices.index("Wait"))
@@ -715,7 +848,11 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
 
 
 def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -724,7 +861,9 @@ def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
     state.player_position.y = 2
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
+    )
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
 
@@ -739,8 +878,14 @@ def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
     assert attack_mode == "advantage"
 
 
-def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(
+    monkeypatch,
+) -> None:
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -752,8 +897,12 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatc
     state.enemies[1].creature.current_health = 0
     state.enemies[2].creature.current_health = 0
     rolls = iter([5, 3, 3])
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls, 3))
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls, 3)
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1
+    )
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     session.choose(session.get_scene_view().choices.index("Wait"))
@@ -766,7 +915,11 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatc
 
 
 def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -777,8 +930,12 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
     state.enemies[0].position.y = 1
     state.enemies[1].creature.current_health = 0
     state.enemies[2].creature.current_health = 0
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1
+    )
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
     session.choose(session.get_scene_view().choices.index("Wait"))
@@ -795,7 +952,11 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
 
 
 def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -819,13 +980,16 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
         ]
     )
     assert state.has_condition("enemy:0", "blinded") is True
-    assert state._attack_roll_mode_for(
-        "player",
-        "enemy:0",
-        "melee",
-        state.player_position,
-        (state.enemies[0].position,),
-    ) == "advantage"
+    assert (
+        state._attack_roll_mode_for(
+            "player",
+            "enemy:0",
+            "melee",
+            state.player_position,
+            (state.enemies[0].position,),
+        )
+        == "advantage"
+    )
 
     messages = state._apply_effects(
         [
@@ -844,41 +1008,24 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
 
     assert messages == [("system", "Status removed.")]
     assert state.has_condition("enemy:0", "blinded") is False
-    assert state._attack_roll_mode_for(
-        "player",
-        "enemy:0",
-        "melee",
-        state.player_position,
-        (state.enemies[0].position,),
-    ) == "normal"
-
-
-def test_save_and_load_preserve_color_spray_condition_and_slots(tmp_path: Path, monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    assert session.player.spellcasting is not None
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
-
-    _choose_directional_spell(session, "Cast Color Spray", (4, 2))
-    save_path = tmp_path / "color_spray_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, TACTICAL_SCENARIO_DIR)
-
-    assert loaded.encounter_state is not None
-    assert loaded.player.spellcasting is not None
-    assert loaded.player.spellcasting.spell_slots_remaining[1] == 3
-    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
+    assert (
+        state._attack_roll_mode_for(
+            "player",
+            "enemy:0",
+            "melee",
+            state.player_position,
+            (state.enemies[0].position,),
+        )
+        == "normal"
+    )
 
 
 def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -902,7 +1049,10 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
 
     result = session.choose(_action_index_by_prefix(session, "Cast Lesser Restoration"))
 
-    assert ("system", "Traveler casts Lesser Restoration on Traveler.") in result.messages
+    assert (
+        "system",
+        "Traveler casts Lesser Restoration on Traveler.",
+    ) in result.messages
     assert ("system", "Traveler is no longer blinded.") in result.messages
     assert state.has_condition("player", "blinded") is False
     assert state.player_bonus_action_available is False
@@ -932,41 +1082,8 @@ def test_lesser_restoration_uses_magic_menu_bucket() -> None:
     assert bucket == "magic"
 
 
-def test_save_and_load_preserve_refreshed_blinded_duration(tmp_path: Path, monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    state = session.encounter_state
-    state.player_position.x = 1
-    state.player_position.y = 1
-    state.enemies[0].position.x = 4
-    state.enemies[0].position.y = 1
-    state.enemies[1].creature.current_health = 0
-    state.enemies[2].creature.current_health = 0
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
-
-    _choose_directional_spell(session, "Cast Color Spray", (4, 1))
-    session.choose(session.get_scene_view().choices.index("Wait"))
-    _choose_directional_spell(session, "Cast Color Spray", (4, 1))
-    save_path = tmp_path / "refreshed_blind_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, TACTICAL_SCENARIO_DIR)
-
-    assert loaded.encounter_state is not None
-    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
-
-    loaded.choose(loaded.get_scene_view().choices.index("Wait"))
-    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is True
-
-    loaded.choose(loaded.get_scene_view().choices.index("Wait"))
-    assert loaded.encounter_state.has_condition("enemy:0", "blinded") is False
-
-
 def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
@@ -981,8 +1098,10 @@ def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> Non
     assert session.encounter_state.round_number == 2
 
 
-def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
+    monkeypatch,
+) -> None:
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
@@ -998,8 +1117,12 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch
     session.encounter_state.player_position.y = 6
     session.encounter_state.turn_index = 1
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 4)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 4
+    )
 
     progress = session.encounter_state.advance_until_next_decision(session.player)
 
@@ -1015,7 +1138,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch
 
 
 def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
@@ -1027,7 +1150,9 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
     session.encounter_state.enemies[0].creature.attributes.base_armor_class = 0
     starting_health = session.encounter_state.enemies[0].creature.get_health()
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1
+    )
 
     attack_index = next(
         index
@@ -1037,7 +1162,9 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
     result = session.choose(attack_index)
 
     assert ("system", "Traveler misses Enemy 1 (Goblin Warrior).") in result.messages
-    attack_event = next(event for event in result.events if event.type == "attack_resolved")
+    attack_event = next(
+        event for event in result.events if event.type == "attack_resolved"
+    )
     assert attack_event.data["hit"] is False
     assert attack_event.data["critical_hit"] is False
     assert attack_event.data["damage"] == 0
@@ -1047,7 +1174,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
 
 
 def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
@@ -1059,8 +1186,12 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     session.encounter_state.enemies[0].position.y = 2
     session.encounter_state.enemies[0].creature.current_health = 20
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1
+    )
 
     attack_index = next(
         index
@@ -1069,7 +1200,9 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     )
     first_result = session.choose(attack_index)
 
-    attack_events = [event for event in first_result.events if event.type == "attack_resolved"]
+    attack_events = [
+        event for event in first_result.events if event.type == "attack_resolved"
+    ]
     assert len(attack_events) == 1
     assert attack_events[0].data["attacks_remaining"] == 1
     assert session.encounter_state.enemies[0].creature.get_health() == 15
@@ -1091,23 +1224,26 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     )
     second_result = session.choose(second_attack_index)
 
-    second_attack_events = [event for event in second_result.events if event.type == "attack_resolved"]
+    second_attack_events = [
+        event for event in second_result.events if event.type == "attack_resolved"
+    ]
     assert len(second_attack_events) == 1
     assert second_attack_events[0].data["attacks_remaining"] == 0
     assert session.encounter_state.enemies[0].creature.get_health() == 10
     assert session.encounter_state.player_attacks_remaining == 0
     assert not any(
-        choice.startswith("Attack enemy")
-        for choice in session.get_scene_view().choices
+        choice.startswith("Attack enemy") for choice in session.get_scene_view().choices
     )
 
 
 def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
     session.player.current_health = 10
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5
+    )
 
     scene_view = session.get_scene_view()
     second_wind_index = scene_view.choices.index("Second Wind")
@@ -1128,12 +1264,16 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
     assert event.data["healing_roll_detail"]["applied_healing"] == 7
 
 
-def test_second_wind_stays_visible_in_feature_column_when_unavailable(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+def test_second_wind_stays_visible_in_feature_column_when_unavailable(
+    monkeypatch,
+) -> None:
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
     session.player.current_health = 10
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5
+    )
 
     second_wind_index = session.get_scene_view().choices.index("Second Wind")
     session.choose(second_wind_index)
@@ -1142,14 +1282,16 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable(monkeypatc
 
     assert presentation.encounter is not None
     assert "Second Wind" not in session.get_scene_view().choices
-    feature_actions = {action.label: action for action in presentation.encounter.feature_actions}
+    feature_actions = {
+        action.label: action for action in presentation.encounter.feature_actions
+    }
     assert set(feature_actions) == {"Second Wind", "Action Surge"}
     assert feature_actions["Second Wind"].index == -1
     assert feature_actions["Second Wind"].cost["bonus_action"] == 1
 
 
 def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
     assert session.encounter_state is not None
@@ -1163,7 +1305,9 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
         return 18 if sides == 20 else 6
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", fixed_roll)
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 6)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 6
+    )
 
     first_attack_index = next(
         index
@@ -1191,7 +1335,11 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
 
 
 def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> None:
-    session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     assert session.encounter_state is not None
@@ -1200,7 +1348,9 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
     state.player_position.y = 3
     state.enemies[0].position.x = 4
     state.enemies[0].position.y = 2
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
+    )
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     presentation = build_session_presentation(session)
@@ -1248,7 +1398,9 @@ def test_grapple_actions_map_to_attack_menu_bucket() -> None:
     assert bucket == "attack"
 
 
-def test_directional_spell_target_mode_stays_available_without_creature_target_map() -> None:
+def test_directional_spell_target_mode_stays_available_without_creature_target_map() -> (
+    None
+):
     window = CyoaPySide6Window.__new__(CyoaPySide6Window)
     window._pending_target_mode = TargetSelectionMode(
         kind="spell",
@@ -1270,7 +1422,7 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
 
 
 def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
@@ -1284,12 +1436,18 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None
     session.encounter_state.enemies[1].creature.current_health = 0
     session.encounter_state.enemies[2].creature.current_health = 0
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20)
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 4)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 4
+    )
 
     scene_view = session.get_scene_view()
     attack_index = next(
-        index for index, choice in enumerate(scene_view.choices) if choice.startswith("Attack enemy 1")
+        index
+        for index, choice in enumerate(scene_view.choices)
+        if choice.startswith("Attack enemy 1")
     )
     result = session.choose(attack_index)
 
@@ -1303,7 +1461,7 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None
 
 
 def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
 
@@ -1314,7 +1472,9 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
     session.encounter_state.enemies[0].position.x = 4
     session.encounter_state.enemies[0].position.y = 2
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1
+    )
 
     attack_index = next(
         index
@@ -1325,8 +1485,7 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
 
     assert session.encounter_state.player_action_available is False
     assert not any(
-        choice.startswith("Attack enemy")
-        for choice in session.get_scene_view().choices
+        choice.startswith("Attack enemy") for choice in session.get_scene_view().choices
     )
 
     wait_index = session.get_scene_view().choices.index("Wait")
@@ -1334,68 +1493,16 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
 
     assert session.encounter_state.player_action_available is True
     assert any(
-        choice.startswith("Attack enemy")
-        for choice in session.get_scene_view().choices
-    )
-
-
-def test_save_and_load_preserve_encounter_progress(tmp_path: Path) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    move_up_index = session.get_scene_view().choices.index("Move up")
-    session.choose(move_up_index)
-    save_path = tmp_path / "encounter_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, FIXTURE_ENCOUNTER_DIR)
-
-    assert loaded.encounter_state is not None
-    assert loaded.current_scene_id == "goblin_encounter"
-    assert loaded.encounter_state.player_position.x == 1
-    assert loaded.encounter_state.player_position.y == 5
-    assert loaded.encounter_state.enemies[0].position.x == 5
-    assert loaded.encounter_state.enemies[0].position.y == 2
-    assert loaded.encounter_state.turn_index == 0
-    assert loaded.encounter_state.round_number == 1
-    assert loaded.encounter_state.player_movement_remaining == 5
-    assert loaded.encounter_state.player_action_available is True
-
-
-def test_save_and_load_preserve_spent_action(tmp_path: Path, monkeypatch) -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    session.get_scene_view()
-
-    assert session.encounter_state is not None
-    session.player.combat_profile.attacks_per_attack_action = 1
-    session.encounter_state.player_position.x = 4
-    session.encounter_state.player_position.y = 3
-    session.encounter_state.enemies[0].position.x = 4
-    session.encounter_state.enemies[0].position.y = 2
-
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1)
-
-    attack_index = next(
-        index
-        for index, choice in enumerate(session.get_scene_view().choices)
-        if choice.startswith("Attack enemy 1")
-    )
-    session.choose(attack_index)
-    save_path = tmp_path / "spent_action_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, FIXTURE_ENCOUNTER_DIR)
-
-    assert loaded.encounter_state is not None
-    assert loaded.encounter_state.player_action_available is False
-    assert not any(
-        choice.startswith("Attack enemy")
-        for choice in loaded.get_scene_view().choices
+        choice.startswith("Attack enemy") for choice in session.get_scene_view().choices
     )
 
 
 def test_encounter_victory_waits_for_continue_before_restart() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR), start_scene="goblin_encounter").create_session()
+    session = (
+        ScenarioLoader()
+        .load(str(FIXTURE_ENCOUNTER_DIR), start_scene="goblin_encounter")
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
     assert session.encounter_state is not None
     for enemy in session.encounter_state.enemies:
@@ -1410,7 +1517,10 @@ def test_encounter_victory_waits_for_continue_before_restart() -> None:
     assert session.encounter_state is not None
     assert ("system", "Victory! Press continue to proceed.") in result.messages
     assert result.scene.scene_text == "Victory! Press continue to proceed."
-    assert session.pending_scene_transition.message == "Victory! Press continue to proceed."
+    assert (
+        session.pending_scene_transition.message
+        == "Victory! Press continue to proceed."
+    )
     assert result.scene.choices[0] == "Continue"
 
     continue_result = session.choose(0)
@@ -1419,4 +1529,6 @@ def test_encounter_victory_waits_for_continue_before_restart() -> None:
     assert session.pending_scene_transition is None
     assert session.current_scene_id == "goblin_encounter"
     assert session.encounter_state is not None
-    assert all(enemy.creature.get_health() > 0 for enemy in session.encounter_state.enemies)
+    assert all(
+        enemy.creature.get_health() > 0 for enemy in session.encounter_state.enemies
+    )

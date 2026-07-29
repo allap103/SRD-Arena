@@ -19,10 +19,16 @@ def build_creature_attributes(
         )
 
     return Attributes(
-        base_health=int(stat_block.get("hp", {}).get("average", schema.attributes.base_health)),
+        base_health=int(
+            stat_block.get("hp", {}).get("average", schema.attributes.base_health)
+        ),
         level=schema.attributes.level,
         movement=Movement(
-            speed_feet=int(stat_block.get("speed", {}).get("walk", schema.attributes.movement.speed_feet)),
+            speed_feet=int(
+                stat_block.get("speed", {}).get(
+                    "walk", schema.attributes.movement.speed_feet
+                )
+            ),
             feet_per_square=schema.attributes.movement.feet_per_square,
         ),
         strength=int(stat_block.get("str", schema.attributes.strength)),
@@ -31,7 +37,9 @@ def build_creature_attributes(
         wisdom=int(stat_block.get("wis", schema.attributes.wisdom)),
         intelligence=int(stat_block.get("int", schema.attributes.intelligence)),
         charisma=int(stat_block.get("cha", schema.attributes.charisma)),
-        base_armor_class=_stat_block_base_ac(stat_block, schema.attributes.base_armor_class),
+        base_armor_class=_stat_block_base_ac(
+            stat_block, schema.attributes.base_armor_class
+        ),
         proficiencies=_merge_proficiencies(
             schema.attributes.proficiencies, _class_proficiencies(class_block)
         ),
@@ -76,8 +84,12 @@ def _class_proficiencies(class_block: dict | None) -> dict[str, object]:
     saving_throws = class_block.get("proficiency", [])
     if isinstance(saving_throws, list):
         ability_names = {
-            "str": "strength", "dex": "dexterity", "con": "constitution",
-            "int": "intelligence", "wis": "wisdom", "cha": "charisma",
+            "str": "strength",
+            "dex": "dexterity",
+            "con": "constitution",
+            "int": "intelligence",
+            "wis": "wisdom",
+            "cha": "charisma",
         }
         proficiencies["saving_throws"] = [
             ability_names.get(str(value).casefold(), str(value).casefold())

@@ -15,9 +15,7 @@ class SpellActionEconomy:
 
 def spell_action_economy(spell: Spell) -> SpellActionEconomy:
     units = {
-        entry.get("unit")
-        for entry in spell.casting_time
-        if isinstance(entry, dict)
+        entry.get("unit") for entry in spell.casting_time if isinstance(entry, dict)
     }
     return SpellActionEconomy(
         action=1 if "action" in units else 0,
@@ -93,7 +91,9 @@ def spell_action_value(
     return f"{spell_id}:{target_ref}"
 
 
-def parse_spell_action_value(value: str) -> tuple[str, str | None, tuple[float, float] | None]:
+def parse_spell_action_value(
+    value: str,
+) -> tuple[str, str | None, tuple[float, float] | None]:
     if "@" in value:
         spell_id, _, aim = value.partition("@")
         x_text, _, y_text = aim.partition(",")

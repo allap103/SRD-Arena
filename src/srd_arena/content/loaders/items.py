@@ -30,7 +30,9 @@ def _build_system_item(raw_item: dict) -> Item:
                 slot=["left_hand", "right_hand"],
                 damage=str(raw_item.get("dmg1", "1d4")),
                 damage_type=_damage_type(str(raw_item.get("dmgType", ""))),
-                properties=[_property_name(str(prop)) for prop in raw_item.get("property", [])],
+                properties=[
+                    _property_name(str(prop)) for prop in raw_item.get("property", [])
+                ],
                 attack_type=_attack_type(item_type),
                 range_normal=_weapon_range(raw_item)[0],
                 range_long=_weapon_range(raw_item)[1],

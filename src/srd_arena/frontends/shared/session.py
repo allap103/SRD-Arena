@@ -7,7 +7,7 @@ from ...domain.actions.feature_actions import FeatureActionDefinition
 from .models import ActionView, SceneView
 from ...runtime.session import Session
 
-SYSTEM_ACTION_COUNT = 3
+SYSTEM_ACTION_COUNT = 1
 MOVE_DIRECTIONS = (
     "up-left",
     "up",
@@ -133,7 +133,7 @@ def build_session_presentation(
             system_actions=system_actions,
         )
 
-    combat_state = session.encounter_state.export_state(session.player)
+    combat_state = session.encounter_state.read_model.state_for(session.player)
     resources = _build_resource_summary(combat_state)
     movement_actions = {
         str(action.value): action
@@ -179,7 +179,11 @@ def build_session_presentation(
             ),
             transition_action=(
                 next(
-                    (action for action in story_actions if action.kind == "system_continue_transition"),
+                    (
+                        action
+                        for action in story_actions
+                        if action.kind == "system_continue_transition"
+                    ),
                     None,
                 )
                 if session.pending_scene_transition is not None
@@ -213,7 +217,9 @@ def _build_feature_actions(
     return feature_actions
 
 
-def _build_unavailable_feature_action(definition: FeatureActionDefinition) -> ActionView:
+def _build_unavailable_feature_action(
+    definition: FeatureActionDefinition,
+) -> ActionView:
     cost = {definition.economy: 1} if definition.economy else {}
     return ActionView(
         index=-1,
@@ -246,10 +252,7 @@ def _build_resource_summary(combat_state: dict[str, Any]) -> ResourceSummaryView
         action_status=(
             "Ready"
             if normal_turn
-            and (
-                actor_ref != "player"
-                or player_state["action_available"]
-            )
+            and (actor_ref != "player" or player_state["action_available"])
             else f"{player_state['attacks_remaining']} attack left"
             if normal_turn and player_state["attacks_remaining"] == 1
             else f"{player_state['attacks_remaining']} attacks left"
@@ -409,7 +412,9 @@ def _condition_text(conditions: tuple[str, ...]) -> str:
 def _condition_suffix(conditions: object) -> str:
     if not isinstance(conditions, (list, tuple)):
         return ""
-    labels = [condition.capitalize() for condition in conditions if isinstance(condition, str)]
+    labels = [
+        condition.capitalize() for condition in conditions if isinstance(condition, str)
+    ]
     if not labels:
         return ""
     return f" [{', '.join(labels)}]"
@@ -421,9 +426,7 @@ def _build_initiative_track(
     initiative = combat_state.get("initiative", [])
     decision = combat_state.get("decision", {})
     active_creature_ref = (
-        decision.get("actor_ref")
-        if isinstance(decision, dict)
-        else None
+        decision.get("actor_ref") if isinstance(decision, dict) else None
     )
     if not isinstance(initiative, list):
         return ()
@@ -435,7 +438,11 @@ def _build_initiative_track(
         actor_ref = entry.get("actor_ref")
         label = entry.get("label")
         total = entry.get("total")
-        if not isinstance(actor_ref, str) or not isinstance(label, str) or not isinstance(total, int):
+        if (
+            not isinstance(actor_ref, str)
+            or not isinstance(label, str)
+            or not isinstance(total, int)
+        ):
             continue
         entries.append(
             InitiativeTrackEntryView(
@@ -448,7 +455,9 @@ def _build_initiative_track(
     return tuple(entries)
 
 
-def _build_spell_slot_tracks(player_state: dict[str, object]) -> tuple[SpellSlotTrackView, ...]:
+def _build_spell_slot_tracks(
+    player_state: dict[str, object],
+) -> tuple[SpellSlotTrackView, ...]:
     slot_max = player_state.get("spell_slots_max", {})
     slot_remaining = player_state.get("spell_slots_remaining", {})
     if not isinstance(slot_max, dict) or not isinstance(slot_remaining, dict):
@@ -458,7 +467,7 @@ def _build_spell_slot_tracks(player_state: dict[str, object]) -> tuple[SpellSlot
     for key, maximum in sorted(slot_max.items(), key=lambda item: int(item[0])):
         try:
             level = int(key)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             continue
         if not isinstance(maximum, int) or maximum <= 0:
             continue

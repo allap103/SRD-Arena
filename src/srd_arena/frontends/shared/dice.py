@@ -31,7 +31,8 @@ def build_roll_views(events: list[CombatEvent]) -> list[RollView]:
     resolved_roll_ids = {
         event.data.get("roll_id")
         for event in events
-        if event.type == "attack_resolved" and isinstance(event.data.get("roll_id"), str)
+        if event.type == "attack_resolved"
+        and isinstance(event.data.get("roll_id"), str)
     }
     for event in events:
         if event.type in {"attack_resolved", "attack_pending"}:
@@ -128,7 +129,9 @@ def _attack_roll_view(event: CombatEvent) -> RollView | None:
         modifier=modifier,
         total=total,
         target=target if isinstance(target, int) else None,
-        success=event.data.get("hit") if isinstance(event.data.get("hit"), bool) else None,
+        success=event.data.get("hit")
+        if isinstance(event.data.get("hit"), bool)
+        else None,
     )
 
 

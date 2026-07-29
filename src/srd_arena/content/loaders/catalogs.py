@@ -67,7 +67,9 @@ def load_bestiary_stat_blocks(directory: str | Path) -> StatBlockCatalog:
         for path in bestiary_dir.glob("bestiary-*.json"):
             data = _load_json(path)
             for monster in data.get("monster", []):
-                if not isinstance(monster, dict) or not isinstance(monster.get("name"), str):
+                if not isinstance(monster, dict) or not isinstance(
+                    monster.get("name"), str
+                ):
                     continue
                 source = monster.get("source")
                 source_key = source if isinstance(source, str) else None
@@ -86,11 +88,15 @@ def load_class_blocks(directory: str | Path) -> ClassCatalog:
         data = _load_json(path)
         feature_entries = data.get("classFeature", [])
         for class_block in data.get("class", []):
-            if not isinstance(class_block, dict) or not isinstance(class_block.get("name"), str):
+            if not isinstance(class_block, dict) or not isinstance(
+                class_block.get("name"), str
+            ):
                 continue
             class_block = {
                 **class_block,
-                "__classFeatureEntries": feature_entries if isinstance(feature_entries, list) else [],
+                "__classFeatureEntries": feature_entries
+                if isinstance(feature_entries, list)
+                else [],
             }
             source = class_block.get("source")
             source_key = source if isinstance(source, str) else None
@@ -109,17 +115,23 @@ def load_subclass_blocks(directory: str | Path) -> SubclassCatalog:
         data = _load_json(path)
         feature_entries = data.get("subclassFeature", [])
         for subclass_block in data.get("subclass", []):
-            if not isinstance(subclass_block, dict) or not isinstance(subclass_block.get("name"), str):
+            if not isinstance(subclass_block, dict) or not isinstance(
+                subclass_block.get("name"), str
+            ):
                 continue
             subclass_block = {
                 **subclass_block,
-                "__subclassFeatureEntries": feature_entries if isinstance(feature_entries, list) else [],
+                "__subclassFeatureEntries": feature_entries
+                if isinstance(feature_entries, list)
+                else [],
             }
             source = subclass_block.get("source")
             source_key = source if isinstance(source, str) else None
             class_name = subclass_block.get("className")
             class_source = subclass_block.get("classSource")
-            class_name_key = class_name.casefold() if isinstance(class_name, str) else None
+            class_name_key = (
+                class_name.casefold() if isinstance(class_name, str) else None
+            )
             class_source_key = class_source if isinstance(class_source, str) else None
             key = (
                 subclass_block["name"].casefold(),
@@ -155,7 +167,9 @@ def load_spell_catalog(directory: str | Path) -> SpellCatalog:
             catalog[(spell["name"].casefold(), source_key)] = spell
             fallback_key = (spell["name"].casefold(), None)
             current = catalog.get(fallback_key)
-            if current is None or SOURCE_PRIORITY.get(str(source), 0) >= SOURCE_PRIORITY.get(
+            if current is None or SOURCE_PRIORITY.get(
+                str(source), 0
+            ) >= SOURCE_PRIORITY.get(
                 str(current.get("source", "")),
                 0,
             ):
@@ -169,7 +183,9 @@ def _find_stat_block(
     stat_blocks: StatBlockCatalog | None,
 ) -> dict:
     if stat_blocks is None:
-        raise ValueError(f"Creature references stat block '{name}', but no stat block catalog was loaded.")
+        raise ValueError(
+            f"Creature references stat block '{name}', but no stat block catalog was loaded."
+        )
     key = (name.casefold(), source)
     if key in stat_blocks:
         return stat_blocks[key]
@@ -190,7 +206,9 @@ def _find_class_block(
     class_blocks: ClassCatalog | None,
 ) -> dict:
     if class_blocks is None:
-        raise ValueError(f"Creature references class '{name}', but no class catalog was loaded.")
+        raise ValueError(
+            f"Creature references class '{name}', but no class catalog was loaded."
+        )
     key = (name.casefold(), source)
     if key in class_blocks:
         return class_blocks[key]
@@ -214,18 +232,13 @@ def _find_subclass_block(
         raise ValueError(
             f"Creature references subclass '{reference.name}', but no subclass catalog was loaded."
         )
-    class_name = (
-        reference.class_name
-        or (str(class_block.get("name")) if class_block is not None else None)
+    class_name = reference.class_name or (
+        str(class_block.get("name")) if class_block is not None else None
     )
-    class_source = (
-        reference.class_source
-        or (
-            class_block.get("source")
-            if isinstance(class_block, dict)
-            and isinstance(class_block.get("source"), str)
-            else None
-        )
+    class_source = reference.class_source or (
+        class_block.get("source")
+        if isinstance(class_block, dict) and isinstance(class_block.get("source"), str)
+        else None
     )
     for key in (
         (
@@ -256,19 +269,26 @@ def _find_subclass_block(
 def load_system_item_catalog(directory: str | Path) -> SystemItemCatalog:
     system_dir = Path(directory)
     catalog: SystemItemCatalog = {}
-    for path, key in ((system_dir / "items-base.json", "baseitem"), (system_dir / "items.json", "item")):
+    for path, key in (
+        (system_dir / "items-base.json", "baseitem"),
+        (system_dir / "items.json", "item"),
+    ):
         if not path.is_file():
             continue
         data = _load_json(path)
         for raw_item in data.get(key, []):
-            if not isinstance(raw_item, dict) or not isinstance(raw_item.get("name"), str):
+            if not isinstance(raw_item, dict) or not isinstance(
+                raw_item.get("name"), str
+            ):
                 continue
             source = raw_item.get("source")
             source_key = source if isinstance(source, str) else None
             catalog[(raw_item["name"].casefold(), source_key)] = raw_item
             fallback_key = (raw_item["name"].casefold(), None)
             current = catalog.get(fallback_key)
-            if current is None or SOURCE_PRIORITY.get(str(source), 0) >= SOURCE_PRIORITY.get(
+            if current is None or SOURCE_PRIORITY.get(
+                str(source), 0
+            ) >= SOURCE_PRIORITY.get(
                 str(current.get("source", "")),
                 0,
             ):

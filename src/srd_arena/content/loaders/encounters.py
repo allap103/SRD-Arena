@@ -37,7 +37,9 @@ def _build_position(position: PositionSchema) -> Position:
 def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
     players = [creature for creature in schema.creatures if creature.id == "player"]
     if len(players) != 1:
-        raise ValueError(f"Encounter '{schema.id}' must define exactly one player creature.")
+        raise ValueError(
+            f"Encounter '{schema.id}' must define exactly one player creature."
+        )
     team_ids = {team.id for team in schema.teams}
     unknown_team_ids = sorted(
         {creature.team_id for creature in schema.creatures} - team_ids

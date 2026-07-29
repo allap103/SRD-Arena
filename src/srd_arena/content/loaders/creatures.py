@@ -95,7 +95,9 @@ def build_creature(
             **Equipment().equipped_items,
             **{
                 slot: _creature_item_id(item)
-                for slot, item in cast(dict[str, object], dict(schema.equipment)).items()
+                for slot, item in cast(
+                    dict[str, object], dict(schema.equipment)
+                ).items()
             },
         }
     )
@@ -123,7 +125,9 @@ def build_creature(
         name=schema.name or _stat_block_name(stat_block),
         description=schema.description,
         token_image=schema.token_image,
-        inventory=Inventory(items=[_creature_item_id(item) for item in schema.inventory]),
+        inventory=Inventory(
+            items=[_creature_item_id(item) for item in schema.inventory]
+        ),
         attributes=attributes,
         equipment=equipment,
         size=build_creature_size(schema, stat_block),
@@ -310,8 +314,12 @@ def _resolve_subclass_features(
     return class_features
 
 
-def _parse_class_feature_reference(feature_ref: str | dict[str, object]) -> tuple[str, int] | None:
-    raw_ref = feature_ref if isinstance(feature_ref, str) else feature_ref.get("classFeature")
+def _parse_class_feature_reference(
+    feature_ref: str | dict[str, object],
+) -> tuple[str, int] | None:
+    raw_ref = (
+        feature_ref if isinstance(feature_ref, str) else feature_ref.get("classFeature")
+    )
     if not isinstance(raw_ref, str):
         return None
     parts = raw_ref.split("|")
@@ -348,7 +356,9 @@ def _normalize_class_feature(
                 source_subclass=source_subclass,
                 data={
                     "uses": _second_wind_uses(class_block, creature_level),
-                    **_second_wind_healing_dice(class_block, feature_name, feature_level),
+                    **_second_wind_healing_dice(
+                        class_block, feature_name, feature_level
+                    ),
                 },
             )
         if feature_name == "Action Surge":
@@ -404,7 +414,8 @@ def _build_spellcasting(
         attack_bonus=attributes.proficiency_bonus + ability_modifier,
         caster_progression=caster_progression,
         preparation_mode=_spell_preparation_mode(source_block),
-        cantrips_known=_progression_value(source_block.get("cantripProgression"), level) or 0,
+        cantrips_known=_progression_value(source_block.get("cantripProgression"), level)
+        or 0,
         spell_count=_spell_count_progression(source_block, level),
         spell_slots_max=spell_slots_max,
         spell_slots_remaining=dict(spell_slots_max),
@@ -442,7 +453,9 @@ def _build_spell(
         casting_time=tuple(
             entry for entry in raw.get("time", []) if isinstance(entry, dict)
         ),
-        range_data=dict(raw.get("range", {})) if isinstance(raw.get("range"), dict) else {},
+        range_data=dict(raw.get("range", {}))
+        if isinstance(raw.get("range"), dict)
+        else {},
         duration_data=tuple(
             entry for entry in raw.get("duration", []) if isinstance(entry, dict)
         ),
@@ -511,8 +524,7 @@ def _spell_removable_conditions(raw: dict) -> tuple[str, ...]:
     if "end one condition on it:" not in text.casefold():
         return ()
     return tuple(
-        match.casefold()
-        for match in re.findall(r"\{@condition ([^|}]+)", text)
+        match.casefold() for match in re.findall(r"\{@condition ([^|}]+)", text)
     )
 
 

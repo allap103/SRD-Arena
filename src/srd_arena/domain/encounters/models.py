@@ -7,7 +7,7 @@ from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
 from .definitions import EncounterBehavior, EncounterDefinition
-from ..effects.conditions import Status, StatusSnapshot
+from ..effects.conditions import Status
 from ..geometry import GeometryConfig
 from ..rolls.dice import CheckResult, DicePoolResult
 from ..effects.triggered import TriggeredEffect
@@ -133,111 +133,11 @@ class EncounterEnemyState:
 
 
 @dataclass
-class EncounterSnapshotEnemy:
-    actor_id: str
-    current_health: int
-    position: Position
-    patrol_index: int = 0
-    reaction_available: bool = True
-    movement_remaining: int | None = None
-
-
-@dataclass
 class InitiativeEntry:
     actor_ref: CreatureRef
     roll: int
     modifier: int
     total: int
-
-
-@dataclass
-class InitiativeEntrySnapshot:
-    actor_ref: CreatureRef
-    roll: int
-    modifier: int
-    total: int
-
-
-@dataclass
-class DecisionFrameSnapshot:
-    id: str
-    actor_ref: CreatureRef
-    kind: str
-    reason: str
-    parent_frame_id: str | None = None
-    parent_action_id: str | None = None
-    can_pass: bool = False
-
-
-@dataclass
-class PendingActionSnapshot:
-    id: str
-    kind: str
-    actor_ref: CreatureRef
-    direction: str
-    from_position: Position
-    to_position: Position
-    resume_enemy_index: int | None = None
-    remaining_movement_after: int | None = None
-    trigger_id: str | None = None
-
-
-@dataclass
-class PendingAttackSnapshot:
-    action_id: str
-    attacker_ref: CreatureRef
-    target_ref: CreatureRef
-    target_index: int
-    attacker_label: str
-    target_label: str
-    attacks_remaining: int
-    attack_roll: int
-    attack_roll_detail: dict[str, object]
-    damage_dice: str
-    damage_die_rolls: list[list[int]]
-    damage_die_sides: list[int]
-    damage_modifier: int
-    damage_modifier_label: str
-    attack_type: str
-    damage_type: str
-    critical_hit: bool
-    weapon_id: str | None
-    weapon_name: str | None
-    continuation: str
-    reaction: bool
-    triggered_effect_id: str
-    triggered_effect_source_type: str
-    triggered_effect_source_id: str
-    triggered_effect_trigger: str
-    triggered_effect_operation: str
-    triggered_effect_conditions: dict[str, object]
-    triggered_effect_parameters: dict[str, object]
-
-
-@dataclass
-class EncounterSnapshot:
-    encounter_id: str
-    player_position: Position
-    control_mode: str = "default"
-    turn_index: int = 0
-    round_number: int = 1
-    player_movement_remaining: int | None = None
-    player_actions_remaining: int = 1
-    player_magic_actions_remaining: int = 1
-    player_action_available: bool = True
-    player_attacks_remaining: int = 0
-    player_bonus_action_available: bool = True
-    player_reaction_available: bool = True
-    action_sequence: int = 1
-    frame_sequence: int = 1
-    event_sequence: int = 1
-    initiative_order: list[CreatureRef] = field(default_factory=lambda: ["player"])
-    initiative_entries: list[InitiativeEntrySnapshot] = field(default_factory=list)
-    decision_stack: list[DecisionFrameSnapshot] = field(default_factory=list)
-    pending_action: PendingActionSnapshot | None = None
-    pending_attack: PendingAttackSnapshot | None = None
-    conditions: list[StatusSnapshot] = field(default_factory=list)
-    enemies: list[EncounterSnapshotEnemy] = field(default_factory=list)
 
 
 @dataclass

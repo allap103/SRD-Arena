@@ -161,9 +161,15 @@ def deserialize_continuous_area(payload: object) -> ContinuousArea | None:
         shape=shape,
         origin=Point2D(float(origin["x"]), float(origin["y"])),
         direction=direction,
-        length=float(payload["length"]) if isinstance(payload.get("length"), (int, float)) else None,
-        width=float(payload["width"]) if isinstance(payload.get("width"), (int, float)) else None,
-        radius=float(payload["radius"]) if isinstance(payload.get("radius"), (int, float)) else None,
+        length=float(payload["length"])
+        if isinstance(payload.get("length"), (int, float))
+        else None,
+        width=float(payload["width"])
+        if isinstance(payload.get("width"), (int, float))
+        else None,
+        radius=float(payload["radius"])
+        if isinstance(payload.get("radius"), (int, float))
+        else None,
         rasterization_policy=(
             str(payload["rasterization_policy"])
             if isinstance(payload.get("rasterization_policy"), str)
@@ -433,11 +439,7 @@ def _filter_origin_cell(
     origin: Position,
     cells: tuple[Position, ...],
 ) -> tuple[Position, ...]:
-    return tuple(
-        cell
-        for cell in cells
-        if cell.x != origin.x or cell.y != origin.y
-    )
+    return tuple(cell for cell in cells if cell.x != origin.x or cell.y != origin.y)
 
 
 def _cone_polygon(
@@ -479,10 +481,18 @@ def _cube_polygon(
     perpendicular = _perpendicular(direction)
     center = _translate(origin, direction, (size / 2.0) + BOUNDARY_SHRINK)
     half_size = size / 2.0
-    near_left = _translate(_translate(center, direction, -half_size), perpendicular, half_size)
-    near_right = _translate(_translate(center, direction, -half_size), perpendicular, -half_size)
-    far_right = _translate(_translate(center, direction, half_size), perpendicular, -half_size)
-    far_left = _translate(_translate(center, direction, half_size), perpendicular, half_size)
+    near_left = _translate(
+        _translate(center, direction, -half_size), perpendicular, half_size
+    )
+    near_right = _translate(
+        _translate(center, direction, -half_size), perpendicular, -half_size
+    )
+    far_right = _translate(
+        _translate(center, direction, half_size), perpendicular, -half_size
+    )
+    far_left = _translate(
+        _translate(center, direction, half_size), perpendicular, half_size
+    )
     return (near_left, near_right, far_right, far_left)
 
 
@@ -505,7 +515,10 @@ def _cell_intersects_circle(
     min_x, max_x, min_y, max_y = _cell_bounds(cell)
     closest_x = min(max(center.x, min_x), max_x)
     closest_y = min(max(center.y, min_y), max_y)
-    return _distance_squared(center, Point2D(closest_x, closest_y)) <= (radius * radius) + EPSILON
+    return (
+        _distance_squared(center, Point2D(closest_x, closest_y))
+        <= (radius * radius) + EPSILON
+    )
 
 
 def _cell_meets_polygon_coverage_threshold(
@@ -536,22 +549,30 @@ def _clip_polygon_to_cell(
     clipped = _clip_polygon_against_boundary(
         clipped,
         inside=lambda point: point.x >= min_x - EPSILON,
-        intersect=lambda start, end: _intersect_with_vertical_boundary(start, end, min_x),
+        intersect=lambda start, end: _intersect_with_vertical_boundary(
+            start, end, min_x
+        ),
     )
     clipped = _clip_polygon_against_boundary(
         clipped,
         inside=lambda point: point.x <= max_x + EPSILON,
-        intersect=lambda start, end: _intersect_with_vertical_boundary(start, end, max_x),
+        intersect=lambda start, end: _intersect_with_vertical_boundary(
+            start, end, max_x
+        ),
     )
     clipped = _clip_polygon_against_boundary(
         clipped,
         inside=lambda point: point.y >= min_y - EPSILON,
-        intersect=lambda start, end: _intersect_with_horizontal_boundary(start, end, min_y),
+        intersect=lambda start, end: _intersect_with_horizontal_boundary(
+            start, end, min_y
+        ),
     )
     clipped = _clip_polygon_against_boundary(
         clipped,
         inside=lambda point: point.y <= max_y + EPSILON,
-        intersect=lambda start, end: _intersect_with_horizontal_boundary(start, end, max_y),
+        intersect=lambda start, end: _intersect_with_horizontal_boundary(
+            start, end, max_y
+        ),
     )
     return tuple(clipped)
 

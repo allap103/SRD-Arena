@@ -13,12 +13,16 @@ if TYPE_CHECKING:
 
 def apply_status(state: EncounterState, status: Status) -> None:
     state.conditions = [
-        existing for existing in state.conditions if not status_replaces(existing, status)
+        existing
+        for existing in state.conditions
+        if not status_replaces(existing, status)
     ]
     state.conditions.append(status)
 
 
-def remove_status(state: EncounterState, target_ref: CreatureRef, status_name: str) -> None:
+def remove_status(
+    state: EncounterState, target_ref: CreatureRef, status_name: str
+) -> None:
     removed = [
         condition
         for condition in state.conditions
@@ -55,11 +59,15 @@ def condition_sources_for(
     )
 
 
-def grappled_sources_for(state: EncounterState, actor_ref: CreatureRef) -> tuple[CreatureRef, ...]:
+def grappled_sources_for(
+    state: EncounterState, actor_ref: CreatureRef
+) -> tuple[CreatureRef, ...]:
     return condition_sources_for(state, actor_ref, "grappled")
 
 
-def grappling_targets_for(state: EncounterState, actor_ref: CreatureRef) -> tuple[CreatureRef, ...]:
+def grappling_targets_for(
+    state: EncounterState, actor_ref: CreatureRef
+) -> tuple[CreatureRef, ...]:
     return condition_sources_for(state, actor_ref, "grappling")
 
 
@@ -67,7 +75,9 @@ def is_grappled(state: EncounterState, actor_ref: CreatureRef) -> bool:
     return bool(grappled_sources_for(state, actor_ref))
 
 
-def movement_cost_for(state: EncounterState, player: Creature, actor_ref: CreatureRef) -> int | None:
+def movement_cost_for(
+    state: EncounterState, player: Creature, actor_ref: CreatureRef
+) -> int | None:
     if is_grappled(state, actor_ref):
         return None
     cost = 1

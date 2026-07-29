@@ -3,9 +3,12 @@ from ...domain.creatures import Attributes
 
 def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
     ability_map = {
-        "str": attributes.strength, "dex": attributes.dexterity,
-        "con": attributes.constitution, "int": attributes.intelligence,
-        "wis": attributes.wisdom, "cha": attributes.charisma,
+        "str": attributes.strength,
+        "dex": attributes.dexterity,
+        "con": attributes.constitution,
+        "int": attributes.intelligence,
+        "wis": attributes.wisdom,
+        "cha": attributes.charisma,
     }
     return ability_map.get(ability.casefold(), 10)
 
@@ -60,10 +63,15 @@ def spell_count_progression(block: dict, level: int) -> int | None:
         labels, rows = group.get("colLabels"), group.get("rows")
         if not isinstance(labels, list) or not isinstance(rows, list):
             continue
-        if not any(
-            isinstance(label, str) and ("Spells Known" in label or "Spells Prepared" in label)
-            for label in labels
-        ) or row_index < 0 or row_index >= len(rows):
+        if (
+            not any(
+                isinstance(label, str)
+                and ("Spells Known" in label or "Spells Prepared" in label)
+                for label in labels
+            )
+            or row_index < 0
+            or row_index >= len(rows)
+        ):
             continue
         row = rows[row_index]
         if isinstance(row, list) and row:

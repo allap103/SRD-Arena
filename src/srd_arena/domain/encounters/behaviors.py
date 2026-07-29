@@ -41,7 +41,11 @@ def _chase_behavior(
             context = yield EncounterAction("Attack", "attack", "melee")
             continue
         direction = step_toward(context.enemy_position, context.player_position)
-        command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+        command = (
+            EncounterAction("Move", "move", direction)
+            if direction
+            else EncounterAction("Wait", "wait")
+        )
         context = yield command
 
 
@@ -52,14 +56,22 @@ def _archer_behavior(
     context = yield None
     while True:
         range_squares = weapon_normal_range_squares(enemy.creature, items_by_id)
-        if range_squares is not None and chebyshev_distance(
-            context.enemy_position,
-            context.player_position,
-        ) <= range_squares:
+        if (
+            range_squares is not None
+            and chebyshev_distance(
+                context.enemy_position,
+                context.player_position,
+            )
+            <= range_squares
+        ):
             context = yield EncounterAction("Attack", "attack", "ranged")
             continue
         direction = step_toward(context.enemy_position, context.player_position)
-        command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+        command = (
+            EncounterAction("Move", "move", direction)
+            if direction
+            else EncounterAction("Wait", "wait")
+        )
         context = yield command
 
 
@@ -71,19 +83,28 @@ def _guard_behavior(
         anchor = enemy.behavior.anchor or enemy.position
         within_radius = (
             enemy.behavior.radius is not None
-            and manhattan_distance(context.player_position, anchor) <= enemy.behavior.radius
+            and manhattan_distance(context.player_position, anchor)
+            <= enemy.behavior.radius
         )
         if context.can_attack:
             context = yield EncounterAction("Attack", "attack", "melee")
             continue
         if within_radius:
             direction = step_toward(context.enemy_position, context.player_position)
-            command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+            command = (
+                EncounterAction("Move", "move", direction)
+                if direction
+                else EncounterAction("Wait", "wait")
+            )
             context = yield command
             continue
         if context.enemy_position.x != anchor.x or context.enemy_position.y != anchor.y:
             direction = step_toward(context.enemy_position, anchor)
-            command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+            command = (
+                EncounterAction("Move", "move", direction)
+                if direction
+                else EncounterAction("Wait", "wait")
+            )
             context = yield command
             continue
         context = yield EncounterAction("Wait", "wait")
@@ -103,7 +124,11 @@ def _patrol_behavior(
         enemy.patrol_index = (enemy.patrol_index + 1) % len(enemy.behavior.path)
         target = enemy.behavior.path[enemy.patrol_index]
         direction = step_toward(context.enemy_position, target)
-        command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+        command = (
+            EncounterAction("Move", "move", direction)
+            if direction
+            else EncounterAction("Wait", "wait")
+        )
         context = yield command
 
 
@@ -140,7 +165,9 @@ def movement_squares(creature: Creature) -> int:
     return creature.attributes.movement.squares_per_turn
 
 
-def weapon_normal_range_squares(attacker: Creature, items_by_id: dict[str, Item]) -> int | None:
+def weapon_normal_range_squares(
+    attacker: Creature, items_by_id: dict[str, Item]
+) -> int | None:
     for slot in ("right_hand", "left_hand"):
         item_id = attacker.equipment.equipped_items.get(slot)
         if item_id is None:
@@ -150,9 +177,15 @@ def weapon_normal_range_squares(attacker: Creature, items_by_id: dict[str, Item]
             continue
         if weapon.weapon_stat.range_normal is None:
             return None
-        return max(1, weapon.weapon_stat.range_normal // attacker.attributes.movement.feet_per_square)
+        return max(
+            1,
+            weapon.weapon_stat.range_normal
+            // attacker.attributes.movement.feet_per_square,
+        )
     for attack in attacker.monster_attacks:
         if "ranged" not in attack.attack_modes or attack.range_normal is None:
             continue
-        return max(1, attack.range_normal // attacker.attributes.movement.feet_per_square)
+        return max(
+            1, attack.range_normal // attacker.attributes.movement.feet_per_square
+        )
     return None

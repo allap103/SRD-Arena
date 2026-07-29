@@ -41,7 +41,14 @@ def resolve_spell_action(
         )
         return
     spell_id, target_ref, aim_point = parse_spell_action_value(spell_value)
-    spell = next((candidate for candidate in spellcasting.learned_spells if candidate.id == spell_id), None)
+    spell = next(
+        (
+            candidate
+            for candidate in spellcasting.learned_spells
+            if candidate.id == spell_id
+        ),
+        None,
+    )
     if spell is None:
         progress.messages.append(("system", "That spell is not available."))
         progress.events.append(
@@ -53,8 +60,8 @@ def resolve_spell_action(
             )
         )
         return
-    cost = self._spell_action_cost(spell)
-    block_reason = self._spell_cast_block_reason(spellcasting, spell, cost)
+    cost = self.actions.spell_cost(spell)
+    block_reason = self.actions.spell_block_reason(spellcasting, spell, cost)
     if block_reason is not None:
         progress.messages.append(("system", block_reason))
         progress.events.append(
@@ -66,10 +73,12 @@ def resolve_spell_action(
             )
         )
         return
-    area = self._spell_area(player, spell, target_ref=target_ref, aim_point=aim_point)
-    targets = self._spell_area_targets(player, spell, target_ref=target_ref, aim_point=aim_point)
+    area = self.actions.spell_area(player, spell, target_ref=target_ref, aim_point=aim_point)
+    targets = self.actions.spell_area_targets(
+        player, spell, target_ref=target_ref, aim_point=aim_point
+    )
     target = (
-        self._spell_target_context(player, target_ref)
+        self.actions.spell_target(player, target_ref)
         if target_ref is not None
         else targets[0]
         if targets
@@ -110,7 +119,7 @@ def resolve_spell_action(
         )
         return
 
-    self._spend_spell_resources(spellcasting, spell, cost)
+    self.actions.spend_spell_resources(spellcasting, spell, cost)
     progress.messages.extend(result.messages)
     progress.messages.extend(self._apply_effects(result.effects))
     progress.events.append(

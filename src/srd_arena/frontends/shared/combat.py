@@ -11,7 +11,7 @@ def render_encounter_text(encounter: EncounterState, player: Creature) -> str:
             if encounter.player_position.x == x and encounter.player_position.y == y:
                 cells.append("P")
             else:
-                cells.append("E" if encounter.living_enemy_at(x, y) else ".")
+                cells.append("E" if encounter.queries.living_enemy_at(x, y) else ".")
         rows.append(" ".join(cells))
 
     enemies = [
@@ -20,7 +20,7 @@ def render_encounter_text(encounter: EncounterState, player: Creature) -> str:
         for index, enemy in enumerate(encounter.enemies)
         if enemy.is_alive
     ] or ["- No enemies remaining."]
-    movement = encounter.player_movement_remaining_for(player)
+    movement = encounter.queries.movement_remaining(player)
     return "\n".join(
         [
             *rows,

@@ -63,9 +63,7 @@ def resolve_player_attack_action(
         self.player_attacks_remaining -= 1
 
     nearby_opponents = tuple(
-        other_enemy.position
-        for other_enemy in self.enemies
-        if other_enemy.is_alive
+        other_enemy.position for other_enemy in self.enemies if other_enemy.is_alive
     )
     attack = resolve_attack(
         player,

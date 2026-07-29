@@ -1,16 +1,21 @@
 from pathlib import Path
 
-from srd_arena.runtime.scenario import Scenario
-from srd_arena.domain.actions.feature_rules import CapabilityActionResult, resolve_feature_action
+from srd_arena.runtime.scenario import ScenarioLoader
+from srd_arena.domain.actions.feature_rules import (
+    CapabilityActionResult,
+    resolve_feature_action,
+)
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 
 
 def test_second_wind_returns_healing_effect_result() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
     session.player.current_health = 10
 
-    result = resolve_feature_action(session.player, "second_wind", lambda num_dice, sides: 5)
+    result = resolve_feature_action(
+        session.player, "second_wind", lambda num_dice, sides: 5
+    )
 
     assert isinstance(result, CapabilityActionResult)
     assert result.capability_id == "second_wind"
@@ -32,9 +37,11 @@ def test_second_wind_returns_healing_effect_result() -> None:
 
 
 def test_action_surge_returns_extra_action_result() -> None:
-    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR)).create_session().start_encounter()
 
-    result = resolve_feature_action(session.player, "action_surge", lambda num_dice, sides: 0)
+    result = resolve_feature_action(
+        session.player, "action_surge", lambda num_dice, sides: 0
+    )
 
     assert isinstance(result, CapabilityActionResult)
     assert result.capability_id == "action_surge"

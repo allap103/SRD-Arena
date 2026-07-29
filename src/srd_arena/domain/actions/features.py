@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .feature_rules.actions import resolve_feature_action as _resolve_feature_action_impl
+from .feature_rules.actions import (
+    resolve_feature_action as _resolve_feature_action_impl,
+)
 from ..creatures import Creature
 from ..encounters.models import EncounterProgress
 
@@ -35,7 +37,10 @@ def resolve_feature_action(
             )
         )
         return
-    if feature_action.economy == "bonus_action" and not self.player_bonus_action_available:
+    if (
+        feature_action.economy == "bonus_action"
+        and not self.player_bonus_action_available
+    ):
         progress.messages.append(("system", "You have already used your Bonus Action."))
         progress.events.append(
             self._event(
@@ -71,7 +76,9 @@ def resolve_feature_action(
 
     uses_remaining = player.feature_uses_remaining.get(feature_id, 0)
     if uses_remaining <= 0:
-        progress.messages.append(("system", f"You have no uses of {feature_action.label} remaining."))
+        progress.messages.append(
+            ("system", f"You have no uses of {feature_action.label} remaining.")
+        )
         progress.events.append(
             self._event(
                 "action_resolved",
@@ -84,7 +91,9 @@ def resolve_feature_action(
 
     result = _resolve_feature_action_impl(player, feature_id, _roll_dice)
     if result is None:
-        progress.messages.append(("system", f"{feature_action.label} is not implemented yet."))
+        progress.messages.append(
+            ("system", f"{feature_action.label} is not implemented yet.")
+        )
         progress.events.append(
             self._event(
                 "action_resolved",
@@ -107,7 +116,9 @@ def resolve_feature_action(
     granted_actions = result.details.get("grant_actions", 0)
     if isinstance(granted_actions, int) and granted_actions > 0:
         self.player_actions_remaining += granted_actions
-    healing_effect = next((effect for effect in result.effects if effect.kind == "healing"), None)
+    healing_effect = next(
+        (effect for effect in result.effects if effect.kind == "healing"), None
+    )
     healing_data = healing_effect.data if healing_effect is not None else {}
     healing_roll_detail = healing_data.get("roll", {})
     target_ref = healing_effect.target_ref if healing_effect is not None else "player"
@@ -128,7 +139,9 @@ def resolve_feature_action(
                 "healing": healing,
                 "healing_roll_detail": healing_roll_detail,
                 "uses_remaining": result.resource_updates.get(feature_id),
-                "granted_actions": granted_actions if isinstance(granted_actions, int) else 0,
+                "granted_actions": granted_actions
+                if isinstance(granted_actions, int)
+                else 0,
                 "effects": [
                     {
                         "kind": effect.kind,

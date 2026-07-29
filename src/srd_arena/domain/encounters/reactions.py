@@ -23,7 +23,11 @@ from .models import (
     PendingAction,
     PendingAttack,
 )
-from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref, reroll_die_action_id as _reroll_die_action_id
+from .refs import (
+    enemy_index as _enemy_index,
+    enemy_ref as _enemy_ref,
+    reroll_die_action_id as _reroll_die_action_id,
+)
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -157,7 +161,9 @@ class ReactionEngine:
                 pending.attack.damage_roll,
             )
             if action.value not in eligible:
-                raise ValueError(f"Damage die {action.value} is not eligible for reroll.")
+                raise ValueError(
+                    f"Damage die {action.value} is not eligible for reroll."
+                )
             previous = pending.attack.damage_roll.dice[action.value].result
             pending.attack.damage_roll = reroll_dice(
                 pending.attack.damage_roll,
@@ -487,7 +493,7 @@ class ReactionEngine:
 
         if pending_action.resume_enemy_index is None:
             return
-        if state._creature_controller(pending_action.actor_ref) == "user":
+        if state.rules.controller(pending_action.actor_ref) == "user":
             enemy.movement_remaining = pending_action.remaining_movement_after
             return
         enemy.movement_remaining = pending_action.remaining_movement_after
@@ -513,13 +519,15 @@ class ReactionEngine:
     ) -> list[tuple[str, str]]:
         dx, dy = DIRECTION_DELTAS[direction]
         origin = Position(state.player_position.x, state.player_position.y)
-        destination = Position(state.player_position.x + dx, state.player_position.y + dy)
+        destination = Position(
+            state.player_position.x + dx, state.player_position.y + dy
+        )
         messages: list[tuple[str, str]] = []
         threatened_by = [
             (index, enemy)
             for index, enemy in enumerate(state.enemies)
             if enemy.is_alive
-            and state._actors_are_opponents(_enemy_ref(index), "player")
+            and state.rules.are_opponents(_enemy_ref(index), "player")
             and enemy.reaction_available
             and can_make_opportunity_attack(enemy.creature, state.item_templates)
             and _is_adjacent(origin, enemy.position)
@@ -599,7 +607,7 @@ class ReactionEngine:
         remaining_movement_after: int,
         progress: EncounterProgress,
     ) -> bool:
-        if not state._actors_are_opponents("player", _enemy_ref(enemy_index)):
+        if not state.rules.are_opponents("player", _enemy_ref(enemy_index)):
             return False
         if not state.player_reaction_available:
             return False

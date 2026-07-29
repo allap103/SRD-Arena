@@ -3,8 +3,7 @@ from pathlib import Path
 import pytest
 
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.runtime.scenario import Scenario
-from srd_arena.runtime.save import create_save, restore_save
+from srd_arena.runtime.scenario import ScenarioLoader
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
@@ -22,7 +21,7 @@ def _player_first_initiative(monkeypatch):
 
 
 def test_tactical_fixture_loads_explicit_teams():
-    game = Scenario(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter")
+    game = ScenarioLoader().load(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter")
     encounter = game.encounters["goblin_encounter"]
 
     assert encounter is not None
@@ -34,11 +33,15 @@ def test_tactical_fixture_loads_explicit_teams():
 
 
 def test_all_user_mode_pauses_for_each_goblin_turn():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = (
+        ScenarioLoader()
+        .load(
+            TACTICAL_SCENARIO_DIR,
+            start_scene="goblin_encounter",
+            control_mode="all-user",
+        )
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
     state = session.encounter_state
     assert state is not None
@@ -49,8 +52,11 @@ def test_all_user_mode_pauses_for_each_goblin_turn():
     assert state.current_decision().actor_ref == "enemy:0"
     assert result.decision is not None
     assert result.decision["actor_ref"] == "enemy:0"
-    assert (state.enemies[0].position.x, state.enemies[0].position.y) == starting_position
-    actions = state.available_actions(session.player)
+    assert (
+        state.enemies[0].position.x,
+        state.enemies[0].position.y,
+    ) == starting_position
+    actions = state.actions.available(session.player)
     assert actions
     assert {action.actor_ref for action in actions} == {"enemy:0"}
     assert "Wait" in [action.label for action in actions]
@@ -58,11 +64,15 @@ def test_all_user_mode_pauses_for_each_goblin_turn():
 
 
 def test_user_controlled_goblin_can_move_then_end_turn():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = (
+        ScenarioLoader()
+        .load(
+            TACTICAL_SCENARIO_DIR,
+            start_scene="goblin_encounter",
+            control_mode="all-user",
+        )
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -70,7 +80,7 @@ def test_user_controlled_goblin_can_move_then_end_turn():
     start = (state.enemies[0].position.x, state.enemies[0].position.y)
     move = next(
         action
-        for action in state.available_actions(session.player)
+        for action in state.actions.available(session.player)
         if action.kind == "move"
     )
 
@@ -92,11 +102,15 @@ def test_user_controlled_goblin_can_move_then_end_turn():
 
 
 def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = (
+        ScenarioLoader()
+        .load(
+            TACTICAL_SCENARIO_DIR,
+            start_scene="goblin_encounter",
+            control_mode="all-user",
+        )
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -104,13 +118,17 @@ def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
     state.player_position.y = 2
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20)
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1
+    )
     session.choose(session.get_scene_view().choices.index("Wait"))
 
     attack = next(
         action
-        for action in state.available_actions(session.player)
+        for action in state.actions.available(session.player)
         if action.kind == "attack"
     )
 
@@ -133,11 +151,15 @@ def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
 
 
 def test_team_members_are_not_valid_attack_targets():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = (
+        ScenarioLoader()
+        .load(
+            TACTICAL_SCENARIO_DIR,
+            start_scene="goblin_encounter",
+            control_mode="all-user",
+        )
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -150,20 +172,23 @@ def test_team_members_are_not_valid_attack_targets():
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2
 
-    player_actions = state.available_actions(session.player)
+    player_actions = state.actions.available(session.player)
 
     assert not any(
-        action.kind == "attack" and action.value == 0
-        for action in player_actions
+        action.kind == "attack" and action.value == 0 for action in player_actions
     )
 
 
 def test_user_controlled_teammate_can_target_opposing_team():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
+    session = (
+        ScenarioLoader()
+        .load(
+            TACTICAL_SCENARIO_DIR,
+            start_scene="goblin_encounter",
+            control_mode="all-user",
+        )
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -177,40 +202,25 @@ def test_user_controlled_teammate_can_target_opposing_team():
     state.enemies[1].position.x = 4
     state.enemies[1].position.y = 2
 
-    actions = state.available_actions(session.player)
+    actions = state.actions.available(session.player)
 
     assert any(
-        action.kind == "attack" and action.value == "enemy:1"
-        for action in actions
+        action.kind == "attack" and action.value == "enemy:1" for action in actions
     )
     assert not any(
-        action.kind == "attack" and action.value == "player"
-        for action in actions
+        action.kind == "attack" and action.value == "player" for action in actions
     )
-
-
-def test_all_user_mode_is_preserved_in_save_games():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-        control_mode="all-user",
-    ).create_session()
-    session.get_scene_view()
-
-    save = create_save(session)
-    restored = restore_save(save, TACTICAL_SCENARIO_DIR)
-
-    assert save.control_mode == "all-user"
-    assert restored.control_mode == "all-user"
-    assert restored.encounter_state is not None
-    assert restored.encounter_state.control_mode == "all-user"
 
 
 def test_paced_ai_resolves_one_visible_action_per_step():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = (
+        ScenarioLoader()
+        .load(
+            TACTICAL_SCENARIO_DIR,
+            start_scene="goblin_encounter",
+        )
+        .create_session().start_encounter()
+    )
     session.ai_action_limit = 1
     session.get_scene_view()
     assert session.encounter_state is not None
@@ -219,30 +229,35 @@ def test_paced_ai_resolves_one_visible_action_per_step():
     first = session.choose(session.get_scene_view().choices.index("Wait"))
 
     assert state.current_decision().actor_ref == "enemy:0"
-    assert len(
-        [event for event in first.events if event.type == "movement_resolved"]
-    ) == 1
+    assert (
+        len([event for event in first.events if event.type == "movement_resolved"]) == 1
+    )
     assert state.needs_ai_advance() is True
 
     second = session.advance_ai()
 
-    assert len(
-        [event for event in second.events if event.type == "movement_resolved"]
-    ) == 1
+    assert (
+        len([event for event in second.events if event.type == "movement_resolved"])
+        == 1
+    )
     assert state.current_decision().actor_ref == "enemy:0"
 
 
 def test_default_ai_still_resolves_until_the_next_user_decision():
-    session = Scenario(
-        TACTICAL_SCENARIO_DIR,
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = (
+        ScenarioLoader()
+        .load(
+            TACTICAL_SCENARIO_DIR,
+            start_scene="goblin_encounter",
+        )
+        .create_session().start_encounter()
+    )
     session.get_scene_view()
 
     result = session.choose(session.get_scene_view().choices.index("Wait"))
 
     assert session.encounter_state is not None
     assert session.encounter_state.current_decision().actor_ref == "player"
-    assert len(
-        [event for event in result.events if event.type == "movement_resolved"]
-    ) > 1
+    assert (
+        len([event for event in result.events if event.type == "movement_resolved"]) > 1
+    )

@@ -2,15 +2,15 @@ import json
 from pathlib import Path
 
 from srd_arena.content.loaders import load_creature
-from srd_arena.runtime.save import load_from_file, save_to_file
-from srd_arena.runtime.scenario import Scenario
+from srd_arena.runtime.scenario import LoadedScenario, ScenarioLoader
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
 
 def test_load_encounter_parses_definition() -> None:
-    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR))
+    assert isinstance(scenario, LoadedScenario)
     encounter = scenario.encounters["goblin_encounter"]
 
     assert encounter.id == "goblin_encounter"
@@ -38,7 +38,7 @@ def test_load_encounter_parses_definition() -> None:
 
 
 def test_nested_creature_can_reference_system_stat_block() -> None:
-    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR))
     creature = scenario.get_creature("goblin_1")
 
     assert creature.id == "goblin_1"
@@ -48,14 +48,19 @@ def test_nested_creature_can_reference_system_stat_block() -> None:
     assert creature.attributes.strength == 8
     assert creature.attributes.dexterity == 15
     assert creature.attributes.movement.speed_feet == 30
-    assert [attack.name for attack in creature.monster_attacks] == ["Scimitar", "Shortbow"]
+    assert [attack.name for attack in creature.monster_attacks] == [
+        "Scimitar",
+        "Shortbow",
+    ]
     assert creature.monster_attacks[0].attack_modes == ("melee",)
     assert creature.monster_attacks[1].attack_modes == ("ranged",)
     assert creature.monster_attacks[1].range_normal == 80
     assert creature.token_image == "tokens/goblin.png"
 
 
-def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: Path) -> None:
+def test_game_uses_first_encounter_from_settings_when_not_overridden(
+    tmp_path: Path,
+) -> None:
     scenario_dir = tmp_path / "encounter_start"
     for subdir in ("encounters", "player_characters"):
         (scenario_dir / subdir).mkdir(parents=True, exist_ok=True)
@@ -64,11 +69,15 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
         encoding="utf-8",
     )
     (scenario_dir / "player_characters" / "player").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "player_characters" / "player").read_text(encoding="utf-8"),
+        (FIXTURE_ENCOUNTER_DIR / "player_characters" / "player").read_text(
+            encoding="utf-8"
+        ),
         encoding="utf-8",
     )
     (scenario_dir / "encounters" / "arena").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter").read_text(encoding="utf-8").replace(
+        (FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter")
+        .read_text(encoding="utf-8")
+        .replace(
             '"id":  "goblin_encounter"',
             '"id":  "arena"',
         ),
@@ -81,7 +90,7 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
         encoding="utf-8",
     )
 
-    scenario = Scenario(str(scenario_dir))
+    scenario = ScenarioLoader().load(str(scenario_dir))
 
     assert scenario.start_scene == "arena"
     assert scenario.encounter_order == ("arena", "arena_two")
@@ -92,14 +101,14 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
 
 
 def test_game_loads_geometry_settings_from_config_json() -> None:
-    scenario = Scenario(str(TACTICAL_SCENARIO_DIR))
+    scenario = ScenarioLoader().load(str(TACTICAL_SCENARIO_DIR))
 
     assert scenario.display_name == "Tactical Test Game"
     assert scenario.geometry_config.directional_area_cell_coverage_threshold == 0.1
 
 
 def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
-    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR))
     actor_path = tmp_path / "fighter_level_five.json"
     actor_path.write_text(
         json.dumps(
@@ -130,14 +139,15 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
     )
 
     assert any(
-        class_feature.id == "extra_attack"
-        for class_feature in upgraded.class_features
+        class_feature.id == "extra_attack" for class_feature in upgraded.class_features
     )
     assert upgraded.combat_profile.attacks_per_attack_action == 2
 
 
-def test_creature_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Path) -> None:
-    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
+def test_creature_can_load_subclass_and_spellcasting_from_game_data(
+    tmp_path: Path,
+) -> None:
+    scenario = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR))
     actor_path = tmp_path / "eldritch_knight.json"
     actor_path.write_text(
         json.dumps(
@@ -211,7 +221,7 @@ def test_creature_can_load_subclass_and_spellcasting_from_game_data(tmp_path: Pa
 
 
 def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) -> None:
-    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = ScenarioLoader().load(str(FIXTURE_ENCOUNTER_DIR))
     actor_path = tmp_path / "geometry_spells.json"
     actor_path.write_text(
         json.dumps(
@@ -267,18 +277,3 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
     assert spells["Fireball"].saving_throw_abilities == ("dexterity",)
     assert spells["Fireball"].damage_dice == "8d6"
     assert spells["Fireball"].damage_inflict == ("fire",)
-
-
-def test_save_and_load_preserve_spell_slots(tmp_path: Path) -> None:
-    session = Scenario(TACTICAL_SCENARIO_DIR).create_session()
-
-    assert session.player.spellcasting is not None
-    session.player.spellcasting.spell_slots_remaining[1] = 1
-    save_path = tmp_path / "spell_slots_save.json"
-
-    save_to_file(session, save_path)
-    loaded = load_from_file(save_path, TACTICAL_SCENARIO_DIR)
-
-    assert loaded.player.spellcasting is not None
-    assert loaded.player.spellcasting.spell_slots_max == {1: 4, 2: 3, 3: 2}
-    assert loaded.player.spellcasting.spell_slots_remaining == {1: 1, 2: 3, 3: 2}

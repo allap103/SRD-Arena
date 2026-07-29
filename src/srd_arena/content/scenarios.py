@@ -38,3 +38,47 @@ def list_scenarios(root: Path = SCENARIOS_ROOT) -> list[ScenarioInfo]:
                 )
             )
     return scenarios
+
+
+def resolve_scenario_directory(
+    scenario: str | None,
+    *,
+    current_directory: Path | None = None,
+    scenarios_root: Path = SCENARIOS_ROOT,
+) -> Path:
+    """Resolve and validate an explicit scenario name or directory."""
+    if scenario is None:
+        raise FileNotFoundError("No scenario directory provided.")
+
+    requested = Path(scenario).expanduser()
+    if requested.is_absolute():
+        candidates = [requested]
+    else:
+        candidates = [
+            ((current_directory or Path.cwd()) / requested).resolve(),
+            (scenarios_root / requested).resolve(),
+        ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return validate_scenario_directory(candidate)
+
+    raise FileNotFoundError(
+        "Could not find a scenario directory for "
+        f"'{scenario}'. Tried the current working directory and content/scenarios/."
+    )
+
+
+def validate_scenario_directory(path: Path) -> Path:
+    """Ensure a path has the minimum directory structure of a scenario."""
+    if not path.is_dir():
+        raise NotADirectoryError(f"'{path}' is not a directory.")
+
+    missing = [
+        subdir for subdir in VALID_SCENARIO_SUBDIRS if not (path / subdir).is_dir()
+    ]
+    if missing:
+        raise FileNotFoundError(
+            f"'{path}' is not a valid scenario directory. Missing: {', '.join(missing)}."
+        )
+    return path

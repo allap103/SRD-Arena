@@ -7,28 +7,13 @@ from .behaviors import (
     build_behavior as _build_behavior,
     is_adjacent as _is_adjacent,
 )
-from ..actions.options import (
-    available_actions as _available_actions_impl,
-    available_feature_actions as _available_feature_actions_impl,
-    available_spell_actions as _available_spell_actions_impl,
-    feature_action_available as _feature_action_available_impl,
-    spell_action_cost as _spell_action_cost_impl,
-    spell_action_targets as _spell_action_targets_impl,
-    spell_area as _spell_area_impl,
-    spell_area_targets as _spell_area_targets_impl,
-    spell_cast_block_reason_for as _spell_cast_block_reason_impl,
-    spell_range_squares_for as _spell_range_squares_impl,
-    spell_target_context as _spell_target_context_impl,
-    spell_targets_self_only_for as _spell_targets_self_only_impl,
-    spend_spell_resources as _spend_spell_resources_impl,
-    targets_in_area as _targets_in_area_impl,
-)
 from ..effects.application import apply_effects
 from ..effects.results import EffectResult
-from .serialization import (
-    export_decision as _export_decision_impl,
-    export_pending_action as _export_pending_action_impl,
-    export_state as _export_state_impl,
+from .facades import (
+    EncounterActions,
+    EncounterQueries,
+    EncounterReadModel,
+    EncounterRules,
 )
 from .models import (
     ActionCost,
@@ -38,7 +23,6 @@ from .models import (
     EncounterAction,
     EncounterEnemyState,
     EncounterProgress,
-    EncounterSnapshot,
     EncounterStateData,
     InitiativeEntry,
     InterruptState,
@@ -46,18 +30,6 @@ from .models import (
     RoundState,
     TurnState,
     PendingAction,
-)
-from ..actions.player import (
-    apply_action as _apply_action_impl,
-    apply_player_move as _apply_player_move_impl,
-    apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
-    resolve_grapple_action as _resolve_grapple_action_impl,
-    resolve_feature_action as _resolve_feature_action_impl,
-    resolve_player_attack_action as _resolve_player_attack_action_impl,
-    resolve_spell_action as _resolve_spell_action_impl,
-    resolve_utilize_action as _resolve_utilize_action_impl,
-    resolve_wait_action as _resolve_wait_action_impl,
-    user_controlled_enemy_actions as _user_controlled_enemy_actions_impl,
 )
 from .reactions import REACTION_ENGINE, ReactionEngine
 from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
@@ -70,27 +42,10 @@ from ..geometry import GeometryConfig
 from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
 from ..effects.triggered import TriggeredEffect, matching_effects
 from .turn_flow import TURN_ENGINE, TurnEngine
-from .conditions import (
-    apply_status as _apply_status_impl,
-    condition_sources_for as _condition_sources_for_impl,
-    grappled_sources_for as _grappled_sources_for_impl,
-    grappling_targets_for as _grappling_targets_for_impl,
-    is_grappled as _is_grappled_impl,
-    movement_cost_for as _movement_cost_for_impl,
-    remove_status as _remove_status_impl,
-    status_replaces as _status_replaces_impl,
-)
-from .participants import (
-    actors_are_opponents as _actors_are_opponents_impl,
-    creature_controller as _creature_controller_impl,
-    creature_for_ref as _creature_for_ref_impl,
-    creature_team_id as _creature_team_id_impl,
-)
 from .queries import (
     living_enemy_at as _living_enemy_at_impl,
     player_movement_remaining as _player_movement_remaining_query,
 )
-from .snapshots import create_snapshot, restore_snapshot
 
 # Keep these module-level names for tests and helpers that monkeypatch
 # `srd_arena.domain.encounters.encounter.roll_die` / `roll_dice`.
@@ -98,7 +53,24 @@ roll_die = _roll_die
 roll_dice = _roll_dice
 __all__ = ["ActionCost", "EncounterAction", "EncounterState", "roll_die", "roll_dice"]
 
+
 class EncounterState(EncounterStateData):
+    @property
+    def actions(self) -> EncounterActions:
+        return EncounterActions(self)
+
+    @property
+    def read_model(self) -> EncounterReadModel:
+        return EncounterReadModel(self)
+
+    @property
+    def queries(self) -> EncounterQueries:
+        return EncounterQueries(self)
+
+    @property
+    def rules(self) -> EncounterRules:
+        return EncounterRules(self)
+
     @property
     def reaction_engine(self) -> ReactionEngine:
         return REACTION_ENGINE
@@ -162,7 +134,9 @@ class EncounterState(EncounterStateData):
     @player_action_available.setter
     def player_action_available(self, value: bool) -> None:
         if value:
-            self.turn.player_actions_remaining = max(1, self.turn.player_actions_remaining)
+            self.turn.player_actions_remaining = max(
+                1, self.turn.player_actions_remaining
+            )
         else:
             self.turn.player_actions_remaining = 0
 
@@ -263,26 +237,6 @@ class EncounterState(EncounterStateData):
         state._initialize_behaviors()
         return state
 
-    @classmethod
-    def from_snapshot(
-        cls,
-        definition: EncounterDefinition,
-        snapshot: EncounterSnapshot,
-        creature_templates: dict[str, Creature],
-        item_templates: dict[str, Item] | None = None,
-        geometry_config: GeometryConfig | None = None,
-    ) -> EncounterState:
-        return restore_snapshot(
-            cls,
-            definition,
-            snapshot,
-            creature_templates,
-            item_templates,
-            geometry_config,
-        )
-    def snapshot(self) -> EncounterSnapshot:
-        return create_snapshot(self)
-
     def _initialize_behaviors(self) -> None:
         self._behaviors = []
         for enemy in self.enemies:
@@ -304,7 +258,9 @@ class EncounterState(EncounterStateData):
                 InitiativeEntry(
                     actor_ref=_enemy_ref(index),
                     roll=roll_die(20),
-                    modifier=enemy.creature.get_modifier(enemy.creature.attributes.dexterity),
+                    modifier=enemy.creature.get_modifier(
+                        enemy.creature.attributes.dexterity
+                    ),
                     total=0,
                 )
             )
@@ -347,7 +303,11 @@ class EncounterState(EncounterStateData):
         )
 
     def conditions_for(self, actor_ref: CreatureRef) -> tuple[Status, ...]:
-        return tuple(condition for condition in self.conditions if condition.target_ref == actor_ref)
+        return tuple(
+            condition
+            for condition in self.conditions
+            if condition.target_ref == actor_ref
+        )
 
     def has_condition(self, actor_ref: CreatureRef, condition_name: str) -> bool:
         return any(
@@ -357,9 +317,22 @@ class EncounterState(EncounterStateData):
 
     def _attack_roll_mode_for(self, *args: Any) -> D20RollMode:
         if len(args) == 6:
-            _player, attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions = args
+            (
+                _player,
+                attacker_ref,
+                target_ref,
+                attack_type,
+                attacker_position,
+                nearby_opponent_positions,
+            ) = args
         elif len(args) == 5:
-            attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions = args
+            (
+                attacker_ref,
+                target_ref,
+                attack_type,
+                attacker_position,
+                nearby_opponent_positions,
+            ) = args
         else:
             raise TypeError(
                 "_attack_roll_mode_for expects either "
@@ -399,9 +372,7 @@ class EncounterState(EncounterStateData):
 
     def _active_status_effects(self) -> list[TriggeredEffect]:
         return [
-            effect
-            for status in self.conditions
-            for effect in status.triggered_effects
+            effect for status in self.conditions for effect in status.triggered_effects
         ]
 
     def active_creature(self) -> tuple[str, int | None]:
@@ -411,35 +382,8 @@ class EncounterState(EncounterStateData):
         return ("enemy", _enemy_index(actor_ref))
 
     def needs_ai_advance(self) -> bool:
-        return self._creature_controller(self.current_decision().actor_ref) == "ai"
+        return self.rules.controller(self.current_decision().actor_ref) == "ai"
 
-    apply_action = _apply_action_impl
-    export_decision = _export_decision_impl
-    export_state = _export_state_impl
-    available_actions = _available_actions_impl
-    _available_feature_actions = _available_feature_actions_impl
-    _available_spell_actions = _available_spell_actions_impl
-    _feature_action_available = _feature_action_available_impl
-    _spell_action_cost = _spell_action_cost_impl
-    _spell_cast_block_reason = _spell_cast_block_reason_impl
-    _spell_targets_self_only = _spell_targets_self_only_impl
-    _spell_range_squares = _spell_range_squares_impl
-    _spell_action_targets = _spell_action_targets_impl
-    _spell_area_targets = _spell_area_targets_impl
-    _spend_spell_resources = _spend_spell_resources_impl
-    _spell_area = _spell_area_impl
-    _targets_in_area = _targets_in_area_impl
-    _user_controlled_enemy_actions = _user_controlled_enemy_actions_impl
-    _apply_user_controlled_enemy_action = _apply_user_controlled_enemy_action_impl
-    _resolve_player_attack_action = _resolve_player_attack_action_impl
-    _resolve_wait_action = _resolve_wait_action_impl
-    _resolve_utilize_action = _resolve_utilize_action_impl
-    _resolve_feature_action = _resolve_feature_action_impl
-    _resolve_spell_action = _resolve_spell_action_impl
-    _resolve_grapple_action = _resolve_grapple_action_impl
-    _apply_player_move = _apply_player_move_impl
-
-    _spell_target_context = _spell_target_context_impl
 
     def _apply_effects(
         self,
@@ -447,15 +391,10 @@ class EncounterState(EncounterStateData):
     ) -> list[tuple[str, str]]:
         return apply_effects(
             effects,
-            apply_status=self._apply_status,
-            remove_status=self._remove_status,
+            apply_status=self.rules.apply_status,
+            remove_status=self.rules.remove_status,
         )
 
-    _apply_status = _apply_status_impl
-    _remove_status = _remove_status_impl
-    _creature_controller = _creature_controller_impl
-    _creature_team_id = _creature_team_id_impl
-    _actors_are_opponents = _actors_are_opponents_impl
 
     def _open_damage_reroll_decision(self, **kwargs: Any) -> None:
         self.reaction_engine.open_damage_reroll_decision(self, **kwargs)
@@ -616,17 +555,13 @@ class EncounterState(EncounterStateData):
         self.turn_engine.normalize_turn(self)
 
     def _player_movement_remaining(self, player: Creature) -> int:
-        return self.player_movement_remaining_for(player)
-
-    player_movement_remaining_for = _player_movement_remaining_query
+        return _player_movement_remaining_query(self, player)
 
     def _turn_count(self) -> int:
         return self.turn_engine.turn_count(self)
 
     def _live_enemy_at(self, x: int, y: int) -> EncounterEnemyState | None:
-        return self.living_enemy_at(x, y)
-
-    living_enemy_at = _living_enemy_at_impl
+        return _living_enemy_at_impl(self, x, y)
 
     def _is_free_for_enemy(self, x: int, y: int) -> bool:
         return self.turn_engine.is_free_for_enemy(self, x, y)
@@ -663,15 +598,18 @@ class EncounterState(EncounterStateData):
         self.event_sequence += 1
         return event
 
-    def _merge_progress(self, target: EncounterProgress, source: EncounterProgress) -> None:
+    def _merge_progress(
+        self, target: EncounterProgress, source: EncounterProgress
+    ) -> None:
         target.messages.extend(source.messages)
         target.events.extend(source.events)
         if source.transition is not None:
             target.transition = source.transition
-        target.paused_for_decision = target.paused_for_decision or source.paused_for_decision
+        target.paused_for_decision = (
+            target.paused_for_decision or source.paused_for_decision
+        )
         target.paused_for_ai = target.paused_for_ai or source.paused_for_ai
 
-    _export_pending_action = _export_pending_action_impl
 
     def _creature_label(self, actor_ref: CreatureRef) -> str:
         if actor_ref == "player":
@@ -703,9 +641,18 @@ class EncounterState(EncounterStateData):
         *,
         ignored_refs: set[CreatureRef] | frozenset[CreatureRef] = frozenset(),
     ) -> bool:
-        if x < 0 or y < 0 or x >= self.definition.grid.width or y >= self.definition.grid.height:
+        if (
+            x < 0
+            or y < 0
+            or x >= self.definition.grid.width
+            or y >= self.definition.grid.height
+        ):
             return False
-        if "player" not in ignored_refs and self.player_position.x == x and self.player_position.y == y:
+        if (
+            "player" not in ignored_refs
+            and self.player_position.x == x
+            and self.player_position.y == y
+        ):
             return False
         for index, enemy in enumerate(self.enemies):
             actor_ref = _enemy_ref(index)
@@ -716,15 +663,9 @@ class EncounterState(EncounterStateData):
         return True
 
     def _creature_size(self, player: Creature, actor_ref: CreatureRef) -> str:
-        return self._creature_for_ref(player, actor_ref).size
+        return self.rules.creature(player, actor_ref).size
 
-    _condition_sources_for = _condition_sources_for_impl
-    _grappled_sources_for = _grappled_sources_for_impl
-    _grappling_targets_for = _grappling_targets_for_impl
-    _is_grappled = _is_grappled_impl
-    _movement_cost_for = _movement_cost_for_impl
-    _creature_for_ref = _creature_for_ref_impl
-    _status_replaces = staticmethod(_status_replaces_impl)
+
 
 def _attack_roll_mode(
     attack_type: str,
@@ -733,7 +674,10 @@ def _attack_roll_mode(
 ) -> D20RollMode:
     if attack_type != "ranged" or attacker_position is None:
         return "normal"
-    if any(_is_adjacent(attacker_position, position) for position in nearby_opponent_positions):
+    if any(
+        _is_adjacent(attacker_position, position)
+        for position in nearby_opponent_positions
+    ):
         return "disadvantage"
     return "normal"
 

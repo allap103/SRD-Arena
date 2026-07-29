@@ -14,6 +14,8 @@ def player_movement_remaining(state: EncounterState, player: Creature) -> int:
     return state.turn_engine.player_movement_remaining(state, player)
 
 
-def living_enemy_at(state: EncounterState, x: int, y: int) -> EncounterEnemyState | None:
+def living_enemy_at(
+    state: EncounterState, x: int, y: int
+) -> EncounterEnemyState | None:
     """Return the living enemy occupying a grid cell, if any."""
     return state.turn_engine.live_enemy_at(state, x, y)

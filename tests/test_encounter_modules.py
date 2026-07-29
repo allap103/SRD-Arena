@@ -2,7 +2,11 @@ from types import SimpleNamespace
 from typing import cast
 
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.conditions import apply_status, remove_status, status_replaces
+from srd_arena.domain.encounters.conditions import (
+    apply_status,
+    remove_status,
+    status_replaces,
+)
 from srd_arena.domain.encounters.participants import (
     actors_are_opponents,
     creature_controller,
@@ -59,16 +63,19 @@ def test_removing_grappled_also_removes_matching_grappling_status() -> None:
 
 
 def test_participant_queries_use_authored_teams_and_controllers() -> None:
-    state = cast(EncounterState, SimpleNamespace(
-        control_mode="default",
-        enemies=[SimpleNamespace(actor_id="goblin")],
-        definition=SimpleNamespace(
-            teams=[
-                EncounterTeam("heroes", "Heroes", ["player"], "user"),
-                EncounterTeam("monsters", "Monsters", ["goblin"], "ai"),
-            ]
+    state = cast(
+        EncounterState,
+        SimpleNamespace(
+            control_mode="default",
+            enemies=[SimpleNamespace(actor_id="goblin")],
+            definition=SimpleNamespace(
+                teams=[
+                    EncounterTeam("heroes", "Heroes", ["player"], "user"),
+                    EncounterTeam("monsters", "Monsters", ["goblin"], "ai"),
+                ]
+            ),
         ),
-    ))
+    )
 
     assert creature_team_id(state, "player") == "heroes"
     assert creature_team_id(state, "enemy:0") == "monsters"

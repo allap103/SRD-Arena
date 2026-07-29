@@ -176,8 +176,7 @@ def reroll_dice_pool(
 ) -> DicePoolResult:
     """Create a fresh attempt with the same dice and modifier as a pool."""
     dice = tuple(
-        DieRollResult(sides=die.sides, rolls=(roller(die.sides),))
-        for die in pool.dice
+        DieRollResult(sides=die.sides, rolls=(roller(die.sides),)) for die in pool.dice
     )
     return _dice_pool_result(dice, modifier=pool.modifier)
 

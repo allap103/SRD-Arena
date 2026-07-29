@@ -13,7 +13,13 @@ from ..encounters.behaviors import (
     is_adjacent as _is_adjacent,
 )
 from .consumables import healing_potions_in_inventory
-from ..geometry import AreaOfEffect, Vector2D, build_directional_area, build_radius_area, vector_between_positions
+from ..geometry import (
+    AreaOfEffect,
+    Vector2D,
+    build_directional_area,
+    build_radius_area,
+    vector_between_positions,
+)
 from ..encounters.models import ActionCost, EncounterAction
 from ..encounters.refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 from .spells.definitions import Spell
@@ -28,6 +34,7 @@ from .spells.rules import (
     spell_targets_self_only,
 )
 from .feature_actions import FeatureActionDefinition
+from .eligibility import evaluate_action
 
 if TYPE_CHECKING:
     from ..encounters.encounter import EncounterState
@@ -35,19 +42,22 @@ if TYPE_CHECKING:
 
 def available_actions(self: EncounterState, player: Creature) -> list[EncounterAction]:
     decision = self.current_decision()
-    if self._creature_controller(decision.actor_ref) != "user":
+    if self.rules.controller(decision.actor_ref) != "user":
         return []
     if decision.actor_ref != "player":
-        return self._user_controlled_enemy_actions(player, decision.actor_ref)
+        return self.actions.available_for_controlled_enemy(player, decision.actor_ref)
     if decision.kind == "reroll_dice":
         return self._reroll_damage_actions()
     if decision.kind == "reaction":
         return self._reaction_actions()
 
     actions = []
-    movement_cost = self._movement_cost_for(player, "player")
-    if movement_cost is not None and self._player_movement_remaining(player) >= movement_cost:
-        moving_refs = {"player", *self._grappling_targets_for("player")}
+    movement_cost = self.rules.movement_cost(player, "player")
+    if (
+        movement_cost is not None
+        and self._player_movement_remaining(player) >= movement_cost
+    ):
+        moving_refs = {"player", *self.rules.grappling_targets("player")}
         for direction, (dx, dy) in DIRECTION_DELTAS.items():
             target_x = self.player_position.x + dx
             target_y = self.player_position.y + dy
@@ -69,7 +79,7 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
         if (
             can_attack
             and enemy.is_alive
-            and self._actors_are_opponents("player", _enemy_ref(index))
+            and self.rules.are_opponents("player", _enemy_ref(index))
             and _is_adjacent(self.player_position, enemy.position)
         ):
             actions.append(
@@ -79,13 +89,15 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
                     index,
                     id=f"player-attack-{index}",
                     actor_ref="player",
-                    cost=ActionCost(action=1 if self.player_attacks_remaining == 0 else 0),
+                    cost=ActionCost(
+                        action=1 if self.player_attacks_remaining == 0 else 0
+                    ),
                 )
             )
         if (
             self.player_actions_remaining > 0
             and enemy.is_alive
-            and self._actors_are_opponents("player", _enemy_ref(index))
+            and self.rules.are_opponents("player", _enemy_ref(index))
             and _is_adjacent(self.player_position, enemy.position)
             and has_free_hand(player)
             and can_grapple(enemy.creature.size, player.size)
@@ -101,8 +113,8 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
                 )
             )
 
-    actions.extend(self._available_feature_actions(player))
-    actions.extend(self._available_spell_actions(player))
+    actions.extend(self.actions.available_features(player))
+    actions.extend(self.actions.available_spells(player))
 
     if self.player_bonus_action_available:
         for item in healing_potions_in_inventory(player, self.item_templates):
@@ -126,7 +138,11 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
         )
     )
 
-    return actions
+    return [
+        action
+        for action in actions
+        if evaluate_action(self, player, action).allowed
+    ]
 
 
 def available_feature_actions(
@@ -135,7 +151,7 @@ def available_feature_actions(
 ) -> list[EncounterAction]:
     actions: list[EncounterAction] = []
     for feature_id, definition in player.combat_profile.feature_actions.items():
-        if not self._feature_action_available(player, definition):
+        if not self.actions.feature_is_available(player, definition):
             continue
         action_cost = ActionCost(
             bonus_action=1 if definition.economy == "bonus_action" else 0,
@@ -164,11 +180,11 @@ def available_spell_actions(
         return []
     actions: list[EncounterAction] = []
     for spell in spellcasting.learned_spells:
-        cost = self._spell_action_cost(spell)
-        if self._spell_cast_block_reason(spellcasting, spell, cost) is not None:
+        cost = self.actions.spell_cost(spell)
+        if self.actions.spell_block_reason(spellcasting, spell, cost) is not None:
             continue
         if spell.geometry_mode in {"directional_area", "point_area"}:
-            if not self._spell_action_targets(player, spell):
+            if not self.actions.spell_targets(player, spell):
                 if spell.geometry_mode == "directional_area":
                     continue
             actions.append(
@@ -182,7 +198,7 @@ def available_spell_actions(
                 )
             )
             continue
-        for target in self._spell_action_targets(player, spell):
+        for target in self.actions.spell_targets(player, spell):
             actions.append(
                 EncounterAction(
                     spell_action_label(
@@ -243,7 +259,9 @@ def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
     return spell.geometry_mode == "self_only" or spell_targets_self_only(spell)
 
 
-def spell_range_squares_for(self: EncounterState, spell: Spell, creature: Creature) -> int | None:
+def spell_range_squares_for(
+    self: EncounterState, spell: Spell, creature: Creature
+) -> int | None:
     return spell_range_squares(spell, creature)
 
 
@@ -253,34 +271,41 @@ def spell_action_targets(
     spell: Spell,
 ) -> list[SpellTargetContext]:
     if spell.geometry_mode == "point_area":
-        max_range = self._spell_range_squares(spell, player)
+        max_range = self.actions.spell_range(spell, player)
         if max_range is None:
             return []
         return [
             target
             for index, enemy in enumerate(self.enemies)
             if enemy.is_alive
-            and self._actors_are_opponents("player", _enemy_ref(index))
+            and self.rules.are_opponents("player", _enemy_ref(index))
             and _chebyshev_distance(self.player_position, enemy.position) <= max_range
-            and (target := self._spell_target_context(player, _enemy_ref(index))) is not None
+            and (target := self.actions.spell_target(player, _enemy_ref(index)))
+            is not None
         ]
-    if self._spell_targets_self_only(spell):
-        target = self._spell_target_context(player, "player")
+    if self.actions.spell_targets_self_only(spell):
+        target = self.actions.spell_target(player, "player")
         if target is None:
             return []
-        if any(condition in spell.removable_conditions for condition in target.target_conditions):
+        if any(
+            condition in spell.removable_conditions
+            for condition in target.target_conditions
+        ):
             return [target]
         return []
 
-    max_range = self._spell_range_squares(spell, player)
+    max_range = self.actions.spell_range(spell, player)
     targets: list[SpellTargetContext] = []
     for index, enemy in enumerate(self.enemies):
         target_ref = _enemy_ref(index)
-        if not enemy.is_alive or not self._actors_are_opponents("player", target_ref):
+        if not enemy.is_alive or not self.rules.are_opponents("player", target_ref):
             continue
-        if max_range is not None and _chebyshev_distance(self.player_position, enemy.position) > max_range:
+        if (
+            max_range is not None
+            and _chebyshev_distance(self.player_position, enemy.position) > max_range
+        ):
             continue
-        target = self._spell_target_context(player, target_ref)
+        target = self.actions.spell_target(player, target_ref)
         if target is not None:
             targets.append(target)
     return targets
@@ -293,13 +318,13 @@ def spell_area_targets(
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
 ) -> tuple[SpellTargetContext, ...]:
-    area = self._spell_area(player, spell, target_ref=target_ref, aim_point=aim_point)
+    area = self.actions.spell_area(player, spell, target_ref=target_ref, aim_point=aim_point)
     if area is None:
         if target_ref is None:
             return ()
-        target = self._spell_target_context(player, target_ref)
+        target = self.actions.spell_target(player, target_ref)
         return (target,) if target is not None else ()
-    return tuple(self._targets_in_area(player, area))
+    return tuple(self.actions.targets_in_area(player, area))
 
 
 def spend_spell_resources(
@@ -332,15 +357,18 @@ def spell_area(
         radius_feet = spell.area_size_feet
         if radius_feet is None:
             return None
-        radius_squares = max(1, radius_feet // player.attributes.movement.feet_per_square)
+        radius_squares = max(
+            1, radius_feet // player.attributes.movement.feet_per_square
+        )
         origin = Position(int(aim_point[0]), int(aim_point[1]))
         return build_radius_area(origin, radius_squares, self.definition.grid)
     if spell.geometry_mode != "directional_area":
         return None
     if aim_point is not None:
-        if abs(aim_point[0] - (self.player_position.x + 0.5)) < 1e-9 and abs(
-            aim_point[1] - (self.player_position.y + 0.5)
-        ) < 1e-9:
+        if (
+            abs(aim_point[0] - (self.player_position.x + 0.5)) < 1e-9
+            and abs(aim_point[1] - (self.player_position.y + 0.5)) < 1e-9
+        ):
             return None
         direction = Vector2D(
             aim_point[0] - (self.player_position.x + 0.5),
@@ -349,16 +377,16 @@ def spell_area(
     else:
         if target_ref is None:
             return None
-        target = self._spell_target_context(player, target_ref)
+        target = self.actions.spell_target(player, target_ref)
         if target is None or target_ref == "player":
             return None
-        direction = vector_between_positions(self.player_position, self._creature_position(target_ref))
-    length = self._spell_range_squares(spell, player)
+        direction = vector_between_positions(
+            self.player_position, self._creature_position(target_ref)
+        )
+    length = self.actions.spell_range(spell, player)
     if length is None:
         return None
-    coverage_threshold = (
-        self.geometry_config.directional_area_cell_coverage_threshold
-    )
+    coverage_threshold = self.geometry_config.directional_area_cell_coverage_threshold
     return build_directional_area(
         spell.range_data.get("type"),
         self.player_position,
@@ -377,7 +405,7 @@ def targets_in_area(
     occupied_cells = {(cell.x, cell.y) for cell in area.cells}
     targets: list[SpellTargetContext] = []
     if (self.player_position.x, self.player_position.y) in occupied_cells:
-        target = self._spell_target_context(player, "player")
+        target = self.actions.spell_target(player, "player")
         if target is not None:
             targets.append(target)
     for index, enemy in enumerate(self.enemies):
@@ -385,7 +413,7 @@ def targets_in_area(
             continue
         if (enemy.position.x, enemy.position.y) not in occupied_cells:
             continue
-        target = self._spell_target_context(player, _enemy_ref(index))
+        target = self.actions.spell_target(player, _enemy_ref(index))
         if target is not None:
             targets.append(target)
     return targets

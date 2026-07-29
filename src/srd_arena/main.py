@@ -3,11 +3,16 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .content.scenarios import VALID_SCENARIO_SUBDIRS, list_scenarios
-from .content.paths import SCENARIOS_ROOT
+from .content.scenarios import resolve_scenario_directory
 from .frontends.cli.runner import CliRunner
-from .infrastructure.logging import CHANNEL_ENGINE, configure_game_logging, get_game_logger
-from .runtime.scenario import Scenario
+from .frontends.cli.scenario_selection import select_scenario_directory
+from .infrastructure.logging import (
+    CHANNEL_ENGINE,
+    configure_game_logging,
+    get_game_logger,
+)
+from .runtime.game import Game
+from .runtime.scenario import LoadedScenario, ScenarioLoader
 
 LOGGER = get_game_logger(CHANNEL_ENGINE)
 
@@ -45,28 +50,6 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def resolve_scenario_directory(scenario: str | None) -> Path:
-    if scenario is None:
-        raise FileNotFoundError("No scenario directory provided.")
-
-    requested = Path(scenario).expanduser()
-    candidates = []
-    if requested.is_absolute():
-        candidates.append(requested)
-    else:
-        candidates.append((Path.cwd() / requested).resolve())
-        candidates.append((SCENARIOS_ROOT / scenario).resolve())
-
-    for candidate in candidates:
-        if candidate.exists():
-            return _validate_scenario_directory(candidate)
-
-    raise FileNotFoundError(
-        "Could not find a scenario directory for "
-        f"'{scenario}'. Tried the current working directory and content/scenarios/."
-    )
-
-
 def launch(
     *,
     frontend: str,
@@ -89,7 +72,11 @@ def launch(
             if scenario_dir is None:
                 scenario_dir = select_scenario_directory()
             configure_game_logging()
-            scenario = Scenario(str(scenario_dir), start_scene=start_scene, control_mode=control_mode)
+            scenario = ScenarioLoader().load(
+                scenario_dir,
+                start_scene=start_scene,
+                control_mode=control_mode,
+            )
             run_cli(scenario)
         case _:
             raise ValueError(f"Unsupported frontend: {frontend}")
@@ -114,47 +101,14 @@ def main(argv: list[str] | None = None) -> None:
     )
 
 
-def select_scenario_directory() -> Path:
-    scenarios = list_scenarios(SCENARIOS_ROOT)
-    if not scenarios:
-        raise FileNotFoundError("No scenarios are available in content/scenarios/.")
-    print("Available scenarios:")
-    for index, scenario in enumerate(scenarios, start=1):
-        print(f"{index}. {scenario.label}")
-    while True:
-        choice = input("Choose a scenario: ")
-        try:
-            selected_index = int(choice) - 1
-        except ValueError:
-            print("Please enter a valid number.")
-            continue
-        if 0 <= selected_index < len(scenarios):
-            return scenarios[selected_index].directory
-        print("Please choose one of the listed scenarios.")
-
-
-def run_cli(scenario: Scenario) -> None:
-    session = scenario.create_session()
+def run_cli(scenario: LoadedScenario) -> None:
+    game = Game.start(scenario)
     runner = CliRunner()
     try:
-        while runner.run(session):
+        while runner.run(game):
             pass
-    except (KeyboardInterrupt, EOFError):
+    except KeyboardInterrupt, EOFError:
         LOGGER.info("You set the story aside for now. Thanks for playing.")
-
-
-def _validate_scenario_directory(path: Path) -> Path:
-    if not path.is_dir():
-        raise NotADirectoryError(f"'{path}' is not a directory.")
-
-    missing = [
-        subdir for subdir in VALID_SCENARIO_SUBDIRS if not (path / subdir).is_dir()
-    ]
-    if missing:
-        raise FileNotFoundError(
-            f"'{path}' is not a valid scenario directory. Missing: {', '.join(missing)}."
-        )
-    return path
 
 
 if __name__ == "__main__":

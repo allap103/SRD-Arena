@@ -21,7 +21,8 @@ from ...domain.actions.spells.rules import (
     spell_action_value,
     spell_range_squares,
 )
-from ...runtime.scenario import DEFAULT_SCENARIO_DIR, Scenario
+from ...runtime.scenario import DEFAULT_SCENARIO_DIR, LoadedScenario, ScenarioLoader
+from ...runtime.game import Game
 from ..shared.dice import build_roll_views, without_roll_details
 from ..shared.session import (
     InitiativeTrackEntryView,
@@ -31,12 +32,7 @@ from ..shared.session import (
     build_session_presentation,
 )
 from ..shared.models import ActionView, TurnResult
-from ...runtime.session import (
-    EXIT_CHOICE_TEXT,
-    LOAD_CHOICE_TEXT,
-    SAVE_CHOICE_TEXT,
-    Session,
-)
+from ...runtime.session import EXIT_CHOICE_TEXT
 from .ui.encounter import (
     ARROW_LABELS,
     ENCOUNTER_BUTTON_HEIGHT,
@@ -70,6 +66,7 @@ try:
         QWidget,
     )
 except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
+
     def Signal(*args, **kwargs):  # type: ignore[no-untyped-def]
         return None
 
@@ -106,16 +103,16 @@ def _require_pyside6() -> None:
 class GameWindow(QMainWindow):
     def __init__(
         self,
-        game: Scenario | None = None,
+        scenario: LoadedScenario | None = None,
         *,
         show_encounter_json: bool = False,
     ):
         _require_pyside6()
         super().__init__()
-        self.game = game or Scenario(DEFAULT_SCENARIO_DIR)
-        self.session: Session = self.game.create_session()
-        self.session.ai_action_limit = 1
-        self._items_by_id = {item.id: item for item in self.game.items}
+        self.scenario = scenario or ScenarioLoader().load(DEFAULT_SCENARIO_DIR)
+        self.game = Game.start(self.scenario)
+        self.game.ai_action_limit = 1
+        self._items_by_id = {item.id: item for item in self.scenario.items}
         self._presentation: SessionPresentation | None = None
         self._pending_target_mode: TargetSelectionMode | None = None
         self._action_menu_scope: ActionMenuScope | None = None
@@ -172,11 +169,17 @@ class GameWindow(QMainWindow):
         battlefield_layout.setContentsMargins(0, 0, 0, 0)
         battlefield_layout.setSpacing(10)
 
-        self.battlefield_widget = BattlefieldWidget(self.game.directory)
+        self.battlefield_widget = BattlefieldWidget(self.scenario.directory)
         self.battlefield_widget.setObjectName("combatBoard")
-        self.battlefield_widget.actor_clicked.connect(self._handle_battlefield_creature_clicked)
-        self.battlefield_widget.cell_clicked.connect(self._handle_battlefield_cell_clicked)
-        self.battlefield_widget.point_clicked.connect(self._handle_battlefield_point_clicked)
+        self.battlefield_widget.actor_clicked.connect(
+            self._handle_battlefield_creature_clicked
+        )
+        self.battlefield_widget.cell_clicked.connect(
+            self._handle_battlefield_cell_clicked
+        )
+        self.battlefield_widget.point_clicked.connect(
+            self._handle_battlefield_point_clicked
+        )
         battlefield_layout.addWidget(self.battlefield_widget, stretch=1)
 
         self.initiative_rail = QFrame()
@@ -225,13 +228,17 @@ class GameWindow(QMainWindow):
 
         encounter_controls = QWidget()
         encounter_controls.setFixedHeight(280)
-        encounter_controls.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        encounter_controls.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
         encounter_controls_layout = QHBoxLayout(encounter_controls)
         encounter_controls_layout.setContentsMargins(0, 0, 0, 0)
         encounter_controls_layout.setSpacing(10)
 
         self.movement_group = QWidget()
-        self.movement_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        self.movement_group.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding
+        )
         movement_layout = QVBoxLayout(self.movement_group)
         movement_layout.setContentsMargins(0, 0, 0, 0)
         movement_layout.setSpacing(8)
@@ -261,7 +268,9 @@ class GameWindow(QMainWindow):
             button.setObjectName("movementButton")
             button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
             button.clicked.connect(
-                lambda _checked=False, move_direction=direction: self._trigger_move(move_direction)
+                lambda _checked=False, move_direction=direction: self._trigger_move(
+                    move_direction
+                )
             )
             self.movement_buttons[direction] = button
             row, col = positions[direction]
@@ -329,7 +338,9 @@ class GameWindow(QMainWindow):
         overlay_card_layout.addWidget(self.victory_overlay_message)
         self.victory_overlay_button = QPushButton("Continue")
         self.victory_overlay_button.clicked.connect(self._continue_pending_transition)
-        overlay_card_layout.addWidget(self.victory_overlay_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        overlay_card_layout.addWidget(
+            self.victory_overlay_button, alignment=Qt.AlignmentFlag.AlignCenter
+        )
         overlay_layout.addWidget(overlay_card, alignment=Qt.AlignmentFlag.AlignCenter)
         overlay_layout.addStretch(1)
 
@@ -384,8 +395,6 @@ class GameWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.addWidget(self._sidebar_button("Back", self.show_menu_root))
-        layout.addWidget(self._sidebar_button(SAVE_CHOICE_TEXT, self._system_save))
-        layout.addWidget(self._sidebar_button(LOAD_CHOICE_TEXT, self._system_load))
         if self._show_encounter_json:
             layout.addWidget(
                 self._sidebar_button("Encounter JSON", self.show_encounter_json)
@@ -470,7 +479,7 @@ class GameWindow(QMainWindow):
         return button
 
     def refresh_view(self) -> None:
-        presentation = build_session_presentation(self.session)
+        presentation = build_session_presentation(self.game.session)
         self._presentation = presentation
         if presentation.encounter is None:
             self._pending_target_mode = None
@@ -500,7 +509,9 @@ class GameWindow(QMainWindow):
         for action in actions:
             button = QPushButton(action.label)
             button.clicked.connect(
-                lambda _checked=False, action_index=action.index: self._select_action(action_index)
+                lambda _checked=False, action_index=action.index: self._select_action(
+                    action_index
+                )
             )
             self.story_choices_layout.addWidget(button)
         self.story_choices_layout.addStretch(1)
@@ -511,7 +522,9 @@ class GameWindow(QMainWindow):
         self.battlefield_widget.set_battlefield(encounter.battlefield)
 
         target_modes = self._target_selection_modes(encounter.non_movement_actions)
-        if not self._target_mode_is_available(encounter.non_movement_actions, target_modes):
+        if not self._target_mode_is_available(
+            encounter.non_movement_actions, target_modes
+        ):
             self._pending_target_mode = None
         self.battlefield_widget.set_cell_targeting_enabled(
             self._pending_area_spell_action(encounter.non_movement_actions) is not None
@@ -520,7 +533,9 @@ class GameWindow(QMainWindow):
             self._pending_spell_overlay(encounter.non_movement_actions)
         )
         selected_targetable_actions = (
-            target_modes.get(self._pending_target_mode, {}) if self._pending_target_mode is not None else {}
+            target_modes.get(self._pending_target_mode, {})
+            if self._pending_target_mode is not None
+            else {}
         )
         targetable_refs = {
             target_ref
@@ -537,13 +552,15 @@ class GameWindow(QMainWindow):
         self._render_initiative_rail(encounter.resources)
 
         action_groups = self._action_groups(encounter.non_movement_actions)
-        if self._action_menu_scope is not None and encounter.action_pane_title != "Actions":
-            self._action_menu_scope = None
         if (
             self._action_menu_scope is not None
-            and not action_groups.get(self._action_menu_scope.economy, {}).get(
-                self._action_menu_scope.bucket,
-            )
+            and encounter.action_pane_title != "Actions"
+        ):
+            self._action_menu_scope = None
+        if self._action_menu_scope is not None and not action_groups.get(
+            self._action_menu_scope.economy, {}
+        ).get(
+            self._action_menu_scope.bucket,
         ):
             self._action_menu_scope = None
 
@@ -578,7 +595,9 @@ class GameWindow(QMainWindow):
                 rendered_target_modes=rendered_target_modes,
                 indicator_color="#c9a227",
             )
-            self._render_feature_column(encounter.feature_actions, rendered_target_modes)
+            self._render_feature_column(
+                encounter.feature_actions, rendered_target_modes
+            )
             self._render_status_column(encounter.resources)
 
         if encounter.end_turn_action is None:
@@ -587,7 +606,9 @@ class GameWindow(QMainWindow):
         else:
             self.end_turn_button.setEnabled(True)
             self.end_turn_button.setText(
-                "Pass Reaction" if encounter.end_turn_action.kind == "pass" else "End Turn"
+                "Pass Reaction"
+                if encounter.end_turn_action.kind == "pass"
+                else "End Turn"
             )
 
     def _sync_victory_overlay(self, presentation: SessionPresentation) -> None:
@@ -622,7 +643,10 @@ class GameWindow(QMainWindow):
         rendered_target_modes: set[TargetSelectionMode],
         indicator_color: str,
     ) -> None:
-        if self._action_menu_scope is not None and self._action_menu_scope.economy == economy:
+        if (
+            self._action_menu_scope is not None
+            and self._action_menu_scope.economy == economy
+        ):
             self._render_action_detail_column(
                 self._action_scope_title(self._action_menu_scope),
                 bucket_actions[self._action_menu_scope.bucket],
@@ -630,7 +654,9 @@ class GameWindow(QMainWindow):
                 scope=self._action_menu_scope,
             )
             return
-        self._render_action_menu_column(title, economy, bucket_actions, available, indicator_color)
+        self._render_action_menu_column(
+            title, economy, bucket_actions, available, indicator_color
+        )
 
     def _render_action_menu_column(
         self,
@@ -644,7 +670,9 @@ class GameWindow(QMainWindow):
         column_layout = QVBoxLayout(column)
         column_layout.setContentsMargins(0, 0, 0, 0)
         column_layout.setSpacing(8)
-        column_layout.addWidget(self._build_action_header(title, available, indicator_color))
+        column_layout.addWidget(
+            self._build_action_header(title, available, indicator_color)
+        )
 
         for bucket_key, bucket_title in self._action_buckets():
             actions = bucket_actions[bucket_key]
@@ -690,7 +718,11 @@ class GameWindow(QMainWindow):
         if scope is not None:
             back = QPushButton("Back")
             back.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
-            back.clicked.connect(lambda _checked=False, selected_scope=scope: self._close_action_menu(selected_scope))
+            back.clicked.connect(
+                lambda _checked=False, selected_scope=scope: self._close_action_menu(
+                    selected_scope
+                )
+            )
             column_layout.addWidget(back)
         self.encounter_actions_layout.addWidget(column, stretch=1)
 
@@ -719,7 +751,9 @@ class GameWindow(QMainWindow):
             column_layout.addWidget(empty)
         else:
             for action in feature_actions:
-                widget = self._build_feature_action_widget(action, rendered_target_modes)
+                widget = self._build_feature_action_widget(
+                    action, rendered_target_modes
+                )
                 if widget is not None:
                     column_layout.addWidget(widget)
 
@@ -748,7 +782,9 @@ class GameWindow(QMainWindow):
         )
         if resources.spell_slots:
             column_layout.addWidget(self._build_spell_slot_section(resources))
-        conditions = QLabel(f"Conditions: {', '.join(condition.capitalize() for condition in resources.conditions) if resources.conditions else 'None'}")
+        conditions = QLabel(
+            f"Conditions: {', '.join(condition.capitalize() for condition in resources.conditions) if resources.conditions else 'None'}"
+        )
         conditions.setWordWrap(True)
         column_layout.addWidget(conditions)
         column_layout.addStretch(1)
@@ -873,11 +909,7 @@ class GameWindow(QMainWindow):
         bar.setMinimumHeight(height)
         bar.setMaximumHeight(height)
         bar.setStyleSheet(
-            "QFrame {"
-            "border: 1px solid #9c8b68;"
-            "background: #efe4c8;"
-            "border-radius: 4px;"
-            "}"
+            "QFrame {border: 1px solid #9c8b68;background: #efe4c8;border-radius: 4px;}"
         )
         bar_layout = QGridLayout(bar)
         bar_layout.setContentsMargins(0, 0, 0, 0)
@@ -894,7 +926,9 @@ class GameWindow(QMainWindow):
         bar_layout.setColumnStretch(1, max(empty_units, 1 if maximum == 0 else 0))
         value = QLabel(value_text, bar)
         value.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        value.setStyleSheet("QLabel { color: white; font-weight: bold; background: transparent; }")
+        value.setStyleSheet(
+            "QLabel { color: white; font-weight: bold; background: transparent; }"
+        )
         bar_layout.addWidget(value, 0, 0, 1, 2)
         layout.addWidget(bar)
         return container
@@ -908,7 +942,9 @@ class GameWindow(QMainWindow):
         title.setStyleSheet("QLabel { font-weight: 600; }")
         layout.addWidget(title)
         for track in resources.spell_slots:
-            row = QLabel(spell_slot_rich_text(track.level, track.remaining, track.maximum))
+            row = QLabel(
+                spell_slot_rich_text(track.level, track.remaining, track.maximum)
+            )
             row.setTextFormat(Qt.TextFormat.RichText)
             row.setStyleSheet("QLabel { font-family: Menlo, Monaco, monospace; }")
             layout.addWidget(row)
@@ -932,7 +968,9 @@ class GameWindow(QMainWindow):
                 button.setEnabled(False)
                 return button
             button.clicked.connect(
-                lambda _checked=False, mode=target_mode: self._toggle_target_action(mode)
+                lambda _checked=False, mode=target_mode: self._toggle_target_action(
+                    mode
+                )
             )
             return button
 
@@ -942,7 +980,9 @@ class GameWindow(QMainWindow):
             button.setEnabled(False)
             return button
         button.clicked.connect(
-            lambda _checked=False, action_index=action.index: self._select_action(action_index)
+            lambda _checked=False, action_index=action.index: self._select_action(
+                action_index
+            )
         )
         return button
 
@@ -978,7 +1018,9 @@ class GameWindow(QMainWindow):
             for economy in ("action", "bonus_action", "reaction")
         }
         for action in actions:
-            groups[self._action_economy_key(action)][self._action_bucket_key(action)].append(action)
+            groups[self._action_economy_key(action)][
+                self._action_bucket_key(action)
+            ].append(action)
         return groups
 
     def _action_buckets(self) -> tuple[tuple[str, str], ...]:
@@ -1003,14 +1045,19 @@ class GameWindow(QMainWindow):
         self.refresh_view()
 
     def _action_scope_title(self, scope: ActionMenuScope) -> str:
-        economy_title = "Bonus Actions" if scope.economy == "bonus_action" else "Actions"
+        economy_title = (
+            "Bonus Actions" if scope.economy == "bonus_action" else "Actions"
+        )
         bucket_title = dict(self._action_buckets())[scope.bucket]
         return f"{economy_title} / {bucket_title}"
 
     def _action_economy_key(self, action: ActionView) -> str:
         if action.cost.get("bonus_action", 0) > 0:
             return "bonus_action"
-        if action.cost.get("reaction", 0) > 0 or action.kind in {"opportunity_attack", "pass"}:
+        if action.cost.get("reaction", 0) > 0 or action.kind in {
+            "opportunity_attack",
+            "pass",
+        }:
             return "reaction"
         return "action"
 
@@ -1043,20 +1090,10 @@ class GameWindow(QMainWindow):
         if action is not None:
             self._select_action(action.index)
 
-    def _system_save(self) -> None:
-        if self._presentation is None:
-            return
-        self._select_action(self._presentation.system_actions[0].index)
-
-    def _system_load(self) -> None:
-        if self._presentation is None:
-            return
-        self._select_action(self._presentation.system_actions[1].index)
-
     def _select_action(self, index: int) -> None:
         self._pending_target_mode = None
         self._action_menu_scope = None
-        result = self.session.choose(index)
+        result = self.game.choose(index)
         self._apply_turn_result(result)
 
     def _select_action_by_id(self, action_id: str) -> None:
@@ -1082,11 +1119,15 @@ class GameWindow(QMainWindow):
             return
         if self._pending_target_mode is None:
             return
-        action = self._target_selection_modes(self._presentation.encounter.non_movement_actions).get(
-            self._pending_target_mode,
-            {},
-        ).get(
-            actor_ref
+        action = (
+            self._target_selection_modes(
+                self._presentation.encounter.non_movement_actions
+            )
+            .get(
+                self._pending_target_mode,
+                {},
+            )
+            .get(actor_ref)
         )
         if action is None:
             return
@@ -1098,10 +1139,12 @@ class GameWindow(QMainWindow):
     def _handle_battlefield_point_clicked(self, x: float, y: float) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
-        action = self._pending_area_spell_action(self._presentation.encounter.non_movement_actions)
+        action = self._pending_area_spell_action(
+            self._presentation.encounter.non_movement_actions
+        )
         if action is None:
             return
-        if self.session.encounter_state is None:
+        if self.game.encounter_state is None:
             return
         payload = spell_action_value(
             parse_spell_action_value(str(action.value))[0],
@@ -1123,7 +1166,7 @@ class GameWindow(QMainWindow):
         )
         self._pending_target_mode = None
         self._action_menu_scope = None
-        result = self.session.choose_encounter_action(encounter_action)
+        result = self.game.perform(encounter_action)
         self._apply_turn_result(result)
 
     def _target_selection_modes(
@@ -1153,7 +1196,11 @@ class GameWindow(QMainWindow):
         )
 
     def _target_mode_label(self, mode: TargetSelectionMode) -> str:
-        if mode.kind == "spell" and self._presentation is not None and self._presentation.encounter is not None:
+        if (
+            mode.kind == "spell"
+            and self._presentation is not None
+            and self._presentation.encounter is not None
+        ):
             action = self._pending_area_spell_action(
                 self._presentation.encounter.non_movement_actions,
                 mode=mode,
@@ -1180,7 +1227,10 @@ class GameWindow(QMainWindow):
         spell = self._spell_by_id(spell_id)
         if spell is None:
             return True
-        return spell is not None and spell.geometry_mode in {"directional_area", "point_area"}
+        return spell is not None and spell.geometry_mode in {
+            "directional_area",
+            "point_area",
+        }
 
     def _pending_area_spell_action(
         self,
@@ -1214,7 +1264,7 @@ class GameWindow(QMainWindow):
         return self._pending_area_spell_action(actions) is not None
 
     def _apply_turn_result(self, result: TurnResult) -> None:
-        encounter_state = self.session.encounter_state
+        encounter_state = self.game.encounter_state
         was_in_encounter = (
             self._presentation is not None and self._presentation.encounter is not None
         )
@@ -1237,7 +1287,7 @@ class GameWindow(QMainWindow):
         self.refresh_view()
 
     def _sync_combat_log_round(self, scene_id: str) -> None:
-        encounter_state = self.session.encounter_state
+        encounter_state = self.game.encounter_state
         if encounter_state is None:
             return
         if self._combat_log_scene_id != scene_id:
@@ -1250,17 +1300,23 @@ class GameWindow(QMainWindow):
         self._logged_round_number = encounter_state.round_number
         QTimer.singleShot(20, self._scroll_roll_log_to_bottom)
 
-    def _pending_spell_overlay(self, actions: list[ActionView]) -> dict[str, object] | None:
+    def _pending_spell_overlay(
+        self, actions: list[ActionView]
+    ) -> dict[str, object] | None:
         action = self._pending_area_spell_action(actions)
-        if action is None or self.session.encounter_state is None or self.session.player.spellcasting is None:
+        if (
+            action is None
+            or self.game.encounter_state is None
+            or self.game.player.spellcasting is None
+        ):
             return None
         spell_id, _, _ = parse_spell_action_value(str(action.value))
         spell = self._spell_by_id(spell_id)
         if spell is None:
             return None
         grid = Grid(
-            width=self.session.encounter_state.definition.grid.width,
-            height=self.session.encounter_state.definition.grid.height,
+            width=self.game.encounter_state.definition.grid.width,
+            height=self.game.encounter_state.definition.grid.height,
         )
         if spell.geometry_mode == "point_area":
             radius_feet = spell.area_size_feet
@@ -1268,20 +1324,20 @@ class GameWindow(QMainWindow):
                 return None
             radius_squares = max(
                 1,
-                radius_feet // self.session.player.attributes.movement.feet_per_square,
+                radius_feet // self.game.player.attributes.movement.feet_per_square,
             )
-            return serialize_area(build_radius_area(Position(0, 0), radius_squares, grid))
-        length = spell_range_squares(spell, self.session.player)
+            return serialize_area(
+                build_radius_area(Position(0, 0), radius_squares, grid)
+            )
+        length = spell_range_squares(spell, self.game.player)
         if length is None:
             return None
         origin = Position(
-            self.session.encounter_state.player_position.x,
-            self.session.encounter_state.player_position.y,
+            self.game.encounter_state.player_position.x,
+            self.game.encounter_state.player_position.y,
         )
         default_direction = Vector2D(1.0, 0.0)
-        coverage_threshold = (
-            self.session.encounter_state.geometry_config.directional_area_cell_coverage_threshold
-        )
+        coverage_threshold = self.game.encounter_state.geometry_config.directional_area_cell_coverage_threshold
         return serialize_area(
             build_directional_area(
                 spell.range_data.get("type"),
@@ -1298,7 +1354,11 @@ class GameWindow(QMainWindow):
         if session is None or session.player.spellcasting is None:
             return None
         return next(
-            (spell for spell in session.player.spellcasting.learned_spells if spell.id == spell_id),
+            (
+                spell
+                for spell in session.player.spellcasting.learned_spells
+                if spell.id == spell_id
+            ),
             None,
         )
 
@@ -1307,11 +1367,11 @@ class GameWindow(QMainWindow):
         scrollbar.setValue(scrollbar.maximum())
 
     def _schedule_ai_step_if_needed(self) -> None:
-        state = self.session.encounter_state
+        state = self.game.encounter_state
         if (
             self._ai_step_scheduled
             or state is None
-            or self.session.pending_scene_transition is not None
+            or self.game.pending_scene_transition is not None
             or not state.needs_ai_advance()
         ):
             return
@@ -1320,16 +1380,16 @@ class GameWindow(QMainWindow):
 
     def _advance_ai_step(self) -> None:
         self._ai_step_scheduled = False
-        state = self.session.encounter_state
+        state = self.game.encounter_state
         if state is None or not state.needs_ai_advance():
             return
-        self._apply_turn_result(self.session.advance_ai())
+        self._apply_turn_result(self.game.advance_ai())
 
     def show_menu_root(self) -> None:
         self.sidebar_stack.setCurrentIndex(0)
 
     def show_inventory(self) -> None:
-        items = self.session.player.inventory.items
+        items = self.game.player.inventory.items
         inventory_text = (
             "Inventory is empty."
             if not items
@@ -1339,7 +1399,7 @@ class GameWindow(QMainWindow):
         self.sidebar_stack.setCurrentIndex(1)
 
     def show_attributes(self) -> None:
-        player = self.session.player
+        player = self.game.player
         attributes = player.attributes
         attributes_text = "\n".join(
             [
@@ -1389,15 +1449,15 @@ class GameWindow(QMainWindow):
         self.encounter_json_export_button.setEnabled(bool(payload))
 
     def _encounter_json_payload(self) -> dict[str, object]:
-        encounter_state = self.session.encounter_state
+        encounter_state = self.game.encounter_state
         if encounter_state is None:
             return {
                 "encounter_active": False,
-                "scene_id": self.session.current_scene_id,
+                "scene_id": self.game.current_scene_id,
             }
         return {
             "encounter_active": True,
-            "encounter": encounter_state.export_state(self.session.player),
+            "encounter": encounter_state.read_model.state_for(self.game.player),
         }
 
     def _export_encounter_json(self) -> None:
@@ -1414,7 +1474,9 @@ class GameWindow(QMainWindow):
         with open(target_path, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2, sort_keys=True)
             handle.write("\n")
-        QMessageBox.information(self, "Export Complete", f"Saved JSON to:\n{target_path}")
+        QMessageBox.information(
+            self, "Export Complete", f"Saved JSON to:\n{target_path}"
+        )
 
     def _default_encounter_json_export_name(self, payload: dict[str, object]) -> str:
         encounter = payload.get("encounter")

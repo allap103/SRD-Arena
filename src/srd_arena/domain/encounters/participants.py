@@ -26,7 +26,9 @@ def creature_team_id(state: EncounterState, actor_ref: CreatureRef) -> str:
         if actor_ref == "player"
         else state.enemies[enemy_index(actor_ref)].actor_id
     )
-    team = next((team for team in state.definition.teams if actor_id in team.members), None)
+    team = next(
+        (team for team in state.definition.teams if actor_id in team.members), None
+    )
     return team.id if team is not None else actor_id
 
 

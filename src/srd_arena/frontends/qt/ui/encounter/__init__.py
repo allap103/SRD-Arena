@@ -5,7 +5,12 @@ from .config import (
     ActionMenuScope,
     TargetSelectionMode,
 )
-from .widgets import BattlefieldWidget, DiceRollPanel, clear_layout, spell_slot_rich_text
+from .widgets import (
+    BattlefieldWidget,
+    DiceRollPanel,
+    clear_layout,
+    spell_slot_rich_text,
+)
 
 __all__ = [
     "ARROW_LABELS",

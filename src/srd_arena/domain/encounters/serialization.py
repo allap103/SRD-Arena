@@ -50,7 +50,7 @@ def export_state(self: EncounterState, player: Creature) -> dict[str, Any]:
         ],
         "control_mode": self.control_mode,
         "active_creature_ref": active_creature_ref,
-        "active_controller": self._creature_controller(active_creature_ref),
+        "active_controller": self.rules.controller(active_creature_ref),
         "player": {
             "actor_id": player.id,
             "name": player.name,
@@ -89,8 +89,8 @@ def export_state(self: EncounterState, player: Creature) -> dict[str, Any]:
                 if player.spellcasting is not None
                 else {}
             ),
-            "team_id": self._creature_team_id("player"),
-            "controller": self._creature_controller("player"),
+            "team_id": self.rules.team_id("player"),
+            "controller": self.rules.controller("player"),
         },
         "enemies": [
             {
@@ -121,14 +121,14 @@ def export_state(self: EncounterState, player: Creature) -> dict[str, Any]:
                 ),
                 "movement_total_feet": enemy.creature.attributes.movement.speed_feet,
                 "max_health": enemy.creature.get_max_health(),
-                "team_id": self._creature_team_id(_enemy_ref(index)),
-                "controller": self._creature_controller(_enemy_ref(index)),
+                "team_id": self.rules.team_id(_enemy_ref(index)),
+                "controller": self.rules.controller(_enemy_ref(index)),
                 "is_alive": enemy.is_alive,
             }
             for index, enemy in enumerate(self.enemies)
         ],
-        "decision": self.export_decision(),
-        "pending_action": self._export_pending_action(),
+        "decision": export_decision(self),
+        "pending_action": self.read_model.pending_action(),
     }
 
 

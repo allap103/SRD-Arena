@@ -53,7 +53,9 @@ def resolve_utilize_action(
         return
     healing_dice = healing_potion_dice(item)
     if healing_dice is None:
-        progress.messages.append(("system", f"{item.name} cannot be used that way yet."))
+        progress.messages.append(
+            ("system", f"{item.name} cannot be used that way yet.")
+        )
         progress.events.append(
             self._event(
                 "action_resolved",

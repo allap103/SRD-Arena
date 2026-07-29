@@ -4,9 +4,23 @@ from typing import TYPE_CHECKING
 
 from ..creatures import Creature
 from ..geometry import Position
-from ..actions.attack_resolution import apply_attack_damage, resolve_attack, selected_attack_type
-from .behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent, movement_squares as _movement_squares
-from .models import ActionCost, CreatureRef, DecisionFrame, EncounterAction, EncounterProgress
+from ..actions.attack_resolution import (
+    apply_attack_damage,
+    resolve_attack,
+    selected_attack_type,
+)
+from .behaviors import (
+    DIRECTION_DELTAS,
+    is_adjacent as _is_adjacent,
+    movement_squares as _movement_squares,
+)
+from .models import (
+    ActionCost,
+    CreatureRef,
+    DecisionFrame,
+    EncounterAction,
+    EncounterProgress,
+)
 from .refs import enemy_index as _enemy_index
 
 if TYPE_CHECKING:
@@ -32,12 +46,12 @@ def user_controlled_enemy_actions(
 ) -> list[EncounterAction]:
     enemy_index = _enemy_index(actor_ref)
     enemy = self.enemies[enemy_index]
-    movement_cost = self._movement_cost_for(player, actor_ref)
+    movement_cost = self.rules.movement_cost(player, actor_ref)
     if enemy.movement_remaining is None:
         enemy.movement_remaining = _movement_squares(enemy.creature)
     actions: list[EncounterAction] = []
     if movement_cost is not None and enemy.movement_remaining >= movement_cost:
-        moving_refs = {actor_ref, *self._grappling_targets_for(actor_ref)}
+        moving_refs = {actor_ref, *self.rules.grappling_targets(actor_ref)}
         for direction, (dx, dy) in DIRECTION_DELTAS.items():
             target_x = enemy.position.x + dx
             target_y = enemy.position.y + dy
@@ -54,7 +68,9 @@ def user_controlled_enemy_actions(
                 )
             )
     for target_ref in self._living_creature_refs(player):
-        if target_ref == actor_ref or not self._actors_are_opponents(actor_ref, target_ref):
+        if target_ref == actor_ref or not self.rules.are_opponents(
+            actor_ref, target_ref
+        ):
             continue
         if not _is_adjacent(enemy.position, self._creature_position(target_ref)):
             continue
@@ -144,9 +160,9 @@ def apply_user_controlled_enemy_action(
         if not isinstance(action.value, str):
             raise ValueError("Attack action requires an creature reference.")
         target_ref = action.value
-        if not self._actors_are_opponents(decision.actor_ref, target_ref):
+        if not self.rules.are_opponents(decision.actor_ref, target_ref):
             raise ValueError("Attack target must belong to an opposing team.")
-        defender = self._creature_for_ref(player, target_ref)
+        defender = self.rules.creature(player, target_ref)
         target_label = self._creature_label(target_ref)
         attacker_label = self._creature_label(decision.actor_ref)
         attack = resolve_attack(
@@ -214,7 +230,11 @@ def apply_user_controlled_enemy_action(
         raise ValueError(f"Unsupported user-controlled enemy action: {action.kind}")
 
     progress.transition = self._check_transition()
-    if progress.transition is not None or player.get_health() <= 0 or not action_ends_turn:
+    if (
+        progress.transition is not None
+        or player.get_health() <= 0
+        or not action_ends_turn
+    ):
         return progress
     self._advance_turn()
     self._maybe_reset_reactions()

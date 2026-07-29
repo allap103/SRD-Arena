@@ -74,7 +74,9 @@ def test_package_dependencies_follow_architecture() -> None:
                         f"({forbidden})"
                     )
 
-    assert not violations, "Architecture dependency violations:\n" + "\n".join(violations)
+    assert not violations, "Architecture dependency violations:\n" + "\n".join(
+        violations
+    )
 
 
 def test_relative_import_resolution() -> None:
@@ -132,6 +134,41 @@ def test_domain_root_is_namespace_only() -> None:
     assert not violations, "Domain-root imports hide concept ownership:\n" + "\n".join(
         violations
     )
+
+
+def test_encounter_state_has_no_imported_method_aliases() -> None:
+    encounter_path = (
+        PACKAGE_ROOT / "domain" / "encounters" / "encounter.py"
+    )
+    tree = ast.parse(encounter_path.read_text(encoding="utf-8"))
+    encounter_state = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "EncounterState"
+    )
+    aliases = [
+        target.id
+        for statement in encounter_state.body
+        if isinstance(statement, ast.Assign)
+        and (
+            (
+                isinstance(statement.value, ast.Name)
+                and statement.value.id.startswith("_")
+            )
+            or (
+                isinstance(statement.value, ast.Call)
+                and isinstance(statement.value.func, ast.Name)
+                and statement.value.func.id == "staticmethod"
+                and statement.value.args
+                and isinstance(statement.value.args[0], ast.Name)
+                and statement.value.args[0].id.startswith("_")
+            )
+        )
+        for target in statement.targets
+        if isinstance(target, ast.Name)
+    ]
+
+    assert aliases == []
 
 
 def _imports(path: Path, module: str) -> list[tuple[int, str]]:

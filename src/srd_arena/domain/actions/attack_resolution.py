@@ -314,7 +314,9 @@ def select_attack_source(
     return None
 
 
-def attack_sources(attacker: Creature, items_by_id: dict[str, Item]) -> list[AttackSource]:
+def attack_sources(
+    attacker: Creature, items_by_id: dict[str, Item]
+) -> list[AttackSource]:
     weapon = equipped_weapon(attacker, items_by_id)
     if weapon is not None:
         return [weapon_attack_source(attacker, weapon)]
@@ -348,7 +350,10 @@ def attack_roll_mode(
 ) -> D20RollMode:
     if attack_type != "ranged" or attacker_position is None:
         return "normal"
-    if any(_is_adjacent(attacker_position, position) for position in nearby_opponent_positions):
+    if any(
+        _is_adjacent(attacker_position, position)
+        for position in nearby_opponent_positions
+    ):
         return "disadvantage"
     return "normal"
 
@@ -373,7 +378,9 @@ def can_make_opportunity_attack(
     attacker: Creature,
     items_by_id: dict[str, Item],
 ) -> bool:
-    attack_source = select_attack_source(attacker, items_by_id, preferred_attack_type="melee")
+    attack_source = select_attack_source(
+        attacker, items_by_id, preferred_attack_type="melee"
+    )
     return attack_source is not None and "melee" in attack_source.attack_modes
 
 
@@ -384,9 +391,7 @@ def matching_damage_reroll_rule(
     if attack.damage_roll is None:
         return None
     wielded_with = (
-        "two_hands"
-        if "two-handed" in attack.weapon_properties
-        else "one_hand"
+        "two_hands" if "two-handed" in attack.weapon_properties else "one_hand"
     )
     context = {
         "attack_type": attack.attack_type,
@@ -416,7 +421,8 @@ def weapon_proficiency_bonus(attacker: Creature, weapon: Item | None) -> int:
     category = weapon.weapon_stat.weapon_category
     is_proficient = (
         weapon.id in weapon_proficiencies
-        or weapon.name.casefold() in {str(item).casefold() for item in weapon_proficiencies}
+        or weapon.name.casefold()
+        in {str(item).casefold() for item in weapon_proficiencies}
         or category in weapon_proficiencies
     )
     return attacker.attributes.proficiency_bonus if is_proficient else 0
