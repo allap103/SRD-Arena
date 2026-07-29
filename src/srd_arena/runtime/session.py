@@ -55,7 +55,6 @@ class Session:
         if self.pending_scene_transition is not None:
             action_details = [
                 ActionView(
-                    index=0,
                     id="system-continue-scene-transition",
                     label=CONTINUE_CHOICE_TEXT,
                     kind="system_continue_transition",
@@ -63,11 +62,10 @@ class Session:
                     value=None,
                 )
             ]
-            system_action_details = self._system_action_details(1)
+            system_action_details = self._system_action_details()
             return SceneView(
                 scene_id=self.current_encounter.id,
                 scene_text=self.pending_scene_transition.message,
-                choices=[CONTINUE_CHOICE_TEXT, EXIT_CHOICE_TEXT],
                 action_details=action_details + system_action_details,
             )
 
@@ -75,9 +73,11 @@ class Session:
         encounter = self.current_encounter
         assert self.encounter_state is not None
         self._encounter_actions = self.encounter_state.available_actions()
+        action_ids = [action.id for action in self._encounter_actions]
+        if len(action_ids) != len(set(action_ids)):
+            raise ValueError("Available encounter action IDs must be unique.")
         action_details = [
                 ActionView(
-                    index=index,
                     id=action.id,
                     label=action.label,
                     kind=action.kind,
@@ -93,37 +93,29 @@ class Session:
                     preferred_attack_type=action.preferred_attack_type,
                     preferred_attack_name=action.preferred_attack_name,
                 )
-            for index, action in enumerate(self._encounter_actions)
+            for action in self._encounter_actions
         ]
 
-        choices = [action.label for action in action_details]
-        system_action_details = self._system_action_details(len(choices))
+        system_action_details = self._system_action_details()
         return SceneView(
             scene_id=encounter.id,
             scene_text=None,
-            choices=choices + [EXIT_CHOICE_TEXT],
             action_details=action_details + system_action_details,
         )
 
-    def choose(self, choice_index: int) -> TurnResult:
+    def choose(self, action_id: str) -> TurnResult:
         if self.pending_scene_transition is not None:
-            if choice_index == 0:
+            if action_id == "system-continue-scene-transition":
                 return self._continue_scene_transition()
-            if choice_index == 1:
+            if action_id == "system-exit":
                 return self._exit_game()
-            raise IndexError("Choice index is out of range for the transition prompt.")
+            raise KeyError(f"Action '{action_id}' is unavailable for the transition prompt.")
 
         self._ensure_encounter_state()
-        action_count = len(self._encounter_actions)
-        if choice_index == action_count:
+        if action_id == "system-exit":
             return self._exit_game()
         if self.encounter_state is not None:
-            return self._choose_encounter(choice_index)
-        if not 0 <= choice_index < action_count:
-            raise IndexError(
-                f"Choice index {choice_index} is out of range for encounter "
-                f"'{self.current_encounter.id}'."
-            )
+            return self._choose_encounter(action_id)
         raise RuntimeError("No encounter is active.")
 
     def reset(self) -> None:
@@ -136,7 +128,6 @@ class Session:
     def _exit_game(self) -> TurnResult:
         return TurnResult(
             scene=self.get_scene_view(),
-            selected_index=len(self.get_scene_view().choices) - 1,
             selected_choice_text=EXIT_CHOICE_TEXT,
             selected_action_id="system-exit",
             messages=[("system", "Exiting srd_arena.")],
@@ -145,18 +136,20 @@ class Session:
             should_exit=True,
         )
 
-    def _choose_encounter(self, choice_index: int) -> TurnResult:
-        if not 0 <= choice_index < len(self._encounter_actions):
-            raise IndexError(
-                f"Choice index {choice_index} is out of range for encounter "
-                f"'{self.current_encounter.id}'."
-            )
+    def _choose_encounter(self, action_id: str) -> TurnResult:
         if self.encounter_state is None:
             raise RuntimeError("Encounter action requested without an active encounter.")
-        action = self._encounter_actions[choice_index]
+        action = next(
+            (action for action in self._encounter_actions if action.id == action_id),
+            None,
+        )
+        if action is None:
+            raise KeyError(
+                f"Action '{action_id}' is unavailable for encounter "
+                f"'{self.current_encounter.id}'."
+            )
         return self._apply_encounter_action(
             action,
-            selected_index=choice_index,
             selected_choice_text=action.label,
         )
 
@@ -171,7 +164,6 @@ class Session:
             raise RuntimeError("Encounter action requested without an active encounter.")
         return self._apply_encounter_action(
             action,
-            selected_index=None,
             selected_choice_text=selected_choice_text or action.label,
         )
 
@@ -179,7 +171,6 @@ class Session:
         self,
         action: EncounterAction,
         *,
-        selected_index: int | None,
         selected_choice_text: str,
     ) -> TurnResult:
         assert self.encounter_state is not None
@@ -205,7 +196,6 @@ class Session:
         )
         return TurnResult(
             scene=self.get_scene_view(),
-            selected_index=selected_index,
             selected_choice_text=selected_choice_text,
             selected_action_id=action.id,
             messages=messages,
@@ -288,7 +278,6 @@ class Session:
         self._encounter_actions = []
         return TurnResult(
             scene=self.get_scene_view(),
-            selected_index=0,
             selected_choice_text=CONTINUE_CHOICE_TEXT,
             selected_action_id="system-continue-scene-transition",
             next_scene_id=self.current_scene_id,
@@ -316,10 +305,9 @@ class Session:
         self._encounter_actions = []
         return previous_scene_id != self.current_scene_id
 
-    def _system_action_details(self, start_index: int) -> list[ActionView]:
+    def _system_action_details(self) -> list[ActionView]:
         return [
             ActionView(
-                index=start_index,
                 id="system-exit",
                 label=EXIT_CHOICE_TEXT,
                 kind="system_exit",

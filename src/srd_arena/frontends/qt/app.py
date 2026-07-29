@@ -643,7 +643,7 @@ class GameWindow(QMainWindow):
         for action in actions:
             button = QPushButton(action.label)
             button.clicked.connect(
-                lambda _checked=False, action_index=action.index: self._select_action(action_index)
+                lambda _checked=False, action_id=action.id: self._select_action(action_id)
             )
             self.story_choices_layout.addWidget(button)
         self.story_choices_layout.addStretch(1)
@@ -771,7 +771,7 @@ class GameWindow(QMainWindow):
             return
         action = self._presentation.encounter.transition_action
         if action is not None:
-            self._select_action(action.index)
+            self._select_action(action.id)
 
     def _render_action_economy_column(
         self,
@@ -1167,8 +1167,9 @@ class GameWindow(QMainWindow):
             button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
             button.setCheckable(True)
             button.setChecked(target_mode == self._pending_target_mode)
-            if action.index < 0:
+            if not action.enabled:
                 button.setEnabled(False)
+                button.setToolTip(action.unavailable_reason or "")
                 return button
             button.clicked.connect(
                 lambda _checked=False, mode=target_mode: self._toggle_target_action(mode)
@@ -1177,11 +1178,12 @@ class GameWindow(QMainWindow):
 
         button = QPushButton(action.label)
         self._set_compact_button_text(button, action.label)
-        if action.index < 0:
+        if not action.enabled:
             button.setEnabled(False)
+            button.setToolTip(action.unavailable_reason or "")
             return button
         button.clicked.connect(
-            lambda _checked=False, action_index=action.index: self._select_action(action_index)
+            lambda _checked=False, action_id=action.id: self._select_action(action_id)
         )
         return button
 
@@ -1283,16 +1285,16 @@ class GameWindow(QMainWindow):
         self._action_menu_scope = None
         action = self._presentation.encounter.end_turn_action
         if action is not None:
-            self._select_action(action.index)
+            self._select_action(action.id)
 
-    def _select_action(self, index: int) -> None:
+    def _select_action(self, action_id: str) -> None:
         self._clear_movement_plan()
         selected_action = (
             next(
                 (
                     action
                     for action in self._presentation.encounter.non_movement_actions
-                    if action.index == index
+                    if action.id == action_id
                 ),
                 None,
             )
@@ -1302,7 +1304,7 @@ class GameWindow(QMainWindow):
         )
         self._pending_target_mode = None
         self._action_menu_scope = None
-        result = self.session.choose(index)
+        result = self.session.choose(action_id)
         self._apply_turn_result(
             result,
             queue_follow_up_attack=(
@@ -1323,7 +1325,7 @@ class GameWindow(QMainWindow):
             None,
         )
         if action is not None:
-            self._select_action(action.index)
+            self._select_action(action.id)
 
     def _toggle_target_action(self, mode: TargetSelectionMode) -> None:
         self._clear_movement_plan()
@@ -1344,7 +1346,7 @@ class GameWindow(QMainWindow):
         )
         if action is None:
             return
-        self._select_action(action.index)
+        self._select_action(action.id)
 
     def _handle_battlefield_cell_clicked(self, x: int, y: int) -> None:
         path = self._movement_plan.get((x, y))
@@ -1440,7 +1442,7 @@ class GameWindow(QMainWindow):
             action = encounter.movement_actions.get(direction)
             if action is None or action.creature_ref != planner_ref:
                 break
-            self._apply_turn_result(self.session.choose(action.index))
+            self._apply_turn_result(self.session.choose(action.id))
 
     def _clear_movement_plan(self) -> None:
         self._movement_plan = {}

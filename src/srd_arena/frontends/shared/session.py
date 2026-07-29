@@ -240,13 +240,14 @@ def _build_unavailable_feature_action(
 ) -> ActionView:
     cost = {definition.economy: 1} if definition.economy else {}
     return ActionView(
-        index=-1,
-        id=f"unavailable-feature-{definition.feature_id}",
+        id=f"{creature_ref}-feature-{definition.feature_id.replace('_', '-')}",
         label=definition.label,
         kind="feature",
         creature_ref=creature_ref,
         value=definition.feature_id,
         cost=cost,
+        enabled=False,
+        unavailable_reason="This feature is not currently available.",
     )
 
 

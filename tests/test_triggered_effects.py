@@ -107,13 +107,13 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
     session.decision_creature.equipment.equipped_items["right_hand"] = "longsword"
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1)
-    attack_index = next(
-        action.index
+    attack_id = next(
+        action.id
         for action in session.get_scene_view().action_details
         if action.kind == "attack" and action.value == "goblin_1"
     )
 
-    result = session.choose(attack_index)
+    result = session.choose(attack_id)
 
     assert session.encounter_state is not None
     assert session.encounter_state.pending_attack is None

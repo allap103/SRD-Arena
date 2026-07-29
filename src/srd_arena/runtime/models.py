@@ -9,7 +9,6 @@ class SceneView:
 
     scene_id: str
     scene_text: str | None
-    choices: list[str] = field(default_factory=list)
     action_details: list["ActionView"] = field(default_factory=list)
 
 
@@ -17,13 +16,14 @@ class SceneView:
 class ActionView:
     """Runtime description of an action available to a caller."""
 
-    index: int
     id: str
     label: str
     kind: str
     creature_ref: str
     value: str | int | None = None
     cost: dict[str, int] = field(default_factory=dict)
+    enabled: bool = True
+    unavailable_reason: str | None = None
     source_trigger_id: str | None = None
     preferred_attack_type: str | None = None
     preferred_attack_name: str | None = None
@@ -34,7 +34,6 @@ class TurnResult:
     """Outcome of applying one selected action or choice."""
 
     scene: SceneView
-    selected_index: int | None = None
     selected_choice_text: str | None = None
     selected_action_id: str | None = None
     messages: list[tuple[str, str]] = field(default_factory=list)

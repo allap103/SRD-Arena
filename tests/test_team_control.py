@@ -46,6 +46,14 @@ def _all_external_session():
     return scenario.create_session()
 
 
+def _action_id_by_label(session, label: str) -> str:
+    return next(
+        action.id
+        for action in session.get_scene_view().action_details
+        if action.label == label
+    )
+
+
 def test_tactical_fixture_loads_explicit_teams():
     game = Scenario(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter")
     encounter = game.encounters["goblin_encounter"]
@@ -64,7 +72,7 @@ def test_resource_summary_uses_active_creature_movement():
     assert session.encounter_state is not None
     session.encounter_state.active_movement_remaining = 2
 
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
     presentation = build_session_presentation(session)
 
     assert presentation.encounter is not None
@@ -79,7 +87,7 @@ def test_external_control_pauses_for_each_goblin_turn():
     assert state is not None
     starting_position = (state.creatures["goblin_1"].position.x, state.creatures["goblin_1"].position.y)
 
-    result = session.choose(session.get_scene_view().choices.index("Wait"))
+    result = session.choose(_action_id_by_label(session, "Wait"))
 
     assert state.current_decision().creature_ref == "goblin_1"
     assert result.decision is not None
@@ -97,7 +105,7 @@ def test_externally_controlled_goblin_can_move_then_end_turn():
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
     start = (state.creatures["goblin_1"].position.x, state.creatures["goblin_1"].position.y)
     move = next(
         action
@@ -107,8 +115,8 @@ def test_externally_controlled_goblin_can_move_then_end_turn():
 
     session.choose(
         next(
-            index
-            for index, action in enumerate(session.get_scene_view().action_details)
+            action.id
+            for action in session.get_scene_view().action_details
             if action.id == move.id
         )
     )
@@ -117,7 +125,7 @@ def test_externally_controlled_goblin_can_move_then_end_turn():
     assert (state.creatures["goblin_1"].position.x, state.creatures["goblin_1"].position.y) != start
     assert state.creatures["goblin_1"].movement_remaining == 5
 
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
 
     assert state.current_decision().creature_ref == "goblin_2"
 
@@ -133,7 +141,7 @@ def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
     state.creatures["goblin_1"].position.y = 2
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1)
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
 
     attack = next(
         action
@@ -147,8 +155,8 @@ def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
     health_before = target.get_health()
     result = session.choose(
         next(
-            index
-            for index, action in enumerate(session.get_scene_view().action_details)
+            action.id
+            for action in session.get_scene_view().action_details
             if action.id == attack.id
         )
     )
@@ -167,7 +175,7 @@ def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
     assert event.creature_ref == "goblin_1"
     assert event.data["target_ref"] == "player"
 
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
 
     assert state.current_decision().creature_ref == "goblin_2"
 
@@ -187,7 +195,7 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends(monkeypatch):
         "srd_arena.domain.encounters.encounter.roll_die",
         lambda _sides: 1,
     )
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
 
     first_attack = next(
         action
@@ -239,7 +247,7 @@ def test_secondary_champion_can_use_class_feature() -> None:
     assert session.encounter_state is not None
     brynn = session.encounter_state.creatures["champion_2"].creature
     brynn.current_health = 10
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
 
     second_wind = next(
         action
@@ -492,7 +500,7 @@ def test_paced_ai_resolves_one_visible_action_per_step():
     assert session.encounter_state is not None
     state = session.encounter_state
 
-    first = session.choose(session.get_scene_view().choices.index("Wait"))
+    first = session.choose(_action_id_by_label(session, "Wait"))
 
     assert state.current_decision().creature_ref == "goblin_1"
     assert len(
@@ -515,7 +523,7 @@ def test_default_ai_still_resolves_until_the_next_user_decision():
     ).create_session()
     session.get_scene_view()
 
-    result = session.choose(session.get_scene_view().choices.index("Wait"))
+    result = session.choose(_action_id_by_label(session, "Wait"))
 
     assert session.encounter_state is not None
     assert session.encounter_state.current_decision().creature_ref == "player"

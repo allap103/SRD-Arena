@@ -53,13 +53,29 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
-def _action_index_by_prefix(session, prefix: str) -> int:
-    return next(index for index, choice in enumerate(session.get_scene_view().choices) if choice.startswith(prefix))
-
-
-def _action_index(session, kind: str, value: object) -> int:
+def _action_id_by_label(session, label: str) -> str:
     return next(
-        action.index
+        action.id
+        for action in session.get_scene_view().action_details
+        if action.label == label
+    )
+
+
+def _action_labels(session) -> list[str]:
+    return [action.label for action in session.get_scene_view().action_details]
+
+
+def _action_id_by_prefix(session, prefix: str) -> str:
+    return next(
+        action.id
+        for action in session.get_scene_view().action_details
+        if action.label.startswith(prefix)
+    )
+
+
+def _action_id(session, kind: str, value: object) -> str:
+    return next(
+        action.id
         for action in session.get_scene_view().action_details
         if action.kind == kind and action.value == value
     )
@@ -92,14 +108,15 @@ def test_goblin_encounter_scene_generates_runtime_actions() -> None:
 
     scene_view = session.get_scene_view()
     assert scene_view.scene_text is None
-    assert "Move up" in scene_view.choices
-    assert "Move up-right" in scene_view.choices
-    assert "Wait" in scene_view.choices
-    assert "Flee encounter" not in scene_view.choices
-    assert "Retreat until the encounter system is ready." not in scene_view.choices
-    assert "Save game" not in scene_view.choices
-    assert "Load game" not in scene_view.choices
-    assert scene_view.choices[-1] == "Exit game"
+    labels = [action.label for action in scene_view.action_details]
+    assert "Move up" in labels
+    assert "Move up-right" in labels
+    assert "Wait" in labels
+    assert "Flee encounter" not in labels
+    assert "Retreat until the encounter system is ready." not in labels
+    assert "Save game" not in labels
+    assert "Load game" not in labels
+    assert labels[-1] == "Exit game"
 
 
 def test_action_eligibility_exposes_structured_failures() -> None:
@@ -246,8 +263,7 @@ def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> N
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
 
-    scene_view = session.get_scene_view()
-    move_up_index = scene_view.choices.index("Move up")
+    move_up_index = _action_id_by_label(session, "Move up")
     result = session.choose(move_up_index)
 
     assert ("system", "Traveler moves up to (1, 5).") in result.messages
@@ -269,7 +285,7 @@ def test_goblin_encounter_allows_diagonal_movement() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
 
-    move_index = session.get_scene_view().choices.index("Move up-right")
+    move_index = _action_id_by_label(session, "Move up-right")
     result = session.choose(move_index)
 
     assert ("system", "Traveler moves up-right to (2, 5).") in result.messages
@@ -567,8 +583,8 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
         ]
     )
 
-    choices = session.get_scene_view().choices
-    assert not any(choice.startswith("Move ") for choice in choices)
+    labels = _action_labels(session)
+    assert not any(label.startswith("Move ") for label in labels)
     assert (
         state._attack_roll_mode_for(
             "player",
@@ -614,7 +630,7 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls))
 
     scene_view = session.get_scene_view()
-    grapple_index = _action_index(session, "grapple", "goblin_1")
+    grapple_index = _action_id(session, "grapple", "goblin_1")
     result = session.choose(grapple_index)
 
     assert (
@@ -645,7 +661,7 @@ def test_grapple_replaces_only_one_attack_in_multiattack(monkeypatch) -> None:
         lambda _sides: 10,
     )
 
-    session.choose(_action_index(session, "grapple", "goblin_1"))
+    session.choose(_action_id(session, "grapple", "goblin_1"))
 
     assert state.active_action_available is False
     assert state.active_attacks_remaining == 1
@@ -674,10 +690,10 @@ def test_grapple_can_replace_remaining_attack_after_weapon_attack(
         lambda _sides: 1,
     )
 
-    session.choose(_action_index(session, "attack", "goblin_1"))
+    session.choose(_action_id(session, "attack", "goblin_1"))
     assert state.active_attacks_remaining == 1
 
-    session.choose(_action_index(session, "grapple", "goblin_1"))
+    session.choose(_action_id(session, "grapple", "goblin_1"))
 
     assert state.active_attacks_remaining == 0
     assert not any(action.kind in {"attack", "grapple"} for action in state.available_actions())
@@ -720,7 +736,7 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
         ]
     )
 
-    move_up_index = session.get_scene_view().choices.index("Move up")
+    move_up_index = _action_id_by_label(session, "Move up")
     result = session.choose(move_up_index)
 
     assert ("system", "Traveler moves up to (4, 3).") in result.messages
@@ -738,24 +754,23 @@ def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
     session.current_scene_id = "goblin_encounter"
 
     for _ in range(6):
-        scene_view = session.get_scene_view()
-        move_right_index = scene_view.choices.index("Move right")
+        move_right_index = _action_id_by_label(session, "Move right")
         result = session.choose(move_right_index)
 
     assert ("system", "Traveler moves right to (7, 6).") in result.messages
     assert session.encounter_state is not None
     assert session.encounter_state.turn_index == 0
     assert session.encounter_state.round_number == 1
-    assert session.get_scene_view().choices.count("Wait") == 1
+    assert _action_labels(session).count("Wait") == 1
 
 
 def test_goblin_encounter_wait_advances_enemy_turns() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
 
-    move_up_index = session.get_scene_view().choices.index("Move up")
+    move_up_index = _action_id_by_label(session, "Move up")
     session.choose(move_up_index)
-    wait_index = session.get_scene_view().choices.index("Wait")
+    wait_index = _action_id_by_label(session, "Wait")
     result = session.choose(wait_index)
 
     assert ("system", "Traveler waits.") in result.messages
@@ -782,7 +797,7 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
     session.encounter_state.creatures["goblin_1"].creature.current_health = 30
     session.encounter_state.creatures["goblin_1"].creature.current_health = 30
 
-    assert "Cast Color Spray" in session.get_scene_view().choices
+    assert "Cast Color Spray" in _action_labels(session)
 
 
 def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
@@ -795,7 +810,7 @@ def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
     session.encounter_state.creatures["goblin_1"].position.x = 4
     session.encounter_state.creatures["goblin_1"].position.y = 2
 
-    assert "Cast Burning Hands" in session.get_scene_view().choices
+    assert "Cast Burning Hands" in _action_labels(session)
 
 
 def test_presentation_derives_spell_slot_rows_from_player_spellcasting(
@@ -844,7 +859,7 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
         ]
     )
 
-    assert "Cast Lesser Restoration" in session.get_scene_view().choices
+    assert "Cast Lesser Restoration" in _action_labels(session)
 
 
 def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
@@ -1137,7 +1152,7 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
-    result = session.choose(session.get_scene_view().choices.index("Wait"))
+    result = session.choose(_action_id_by_label(session, "Wait"))
 
     attack_event = next(
         event for event in result.events if event.type == "attack_resolved" and event.creature_ref == "goblin_1"
@@ -1190,11 +1205,11 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
 
     assert state.has_condition("goblin_1", "blinded") is True
 
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
 
     assert state.has_condition("goblin_1", "blinded") is False
 
@@ -1215,16 +1230,16 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
 
     assert state.has_condition("goblin_1", "blinded") is True
     assert len(state.conditions_for("goblin_1")) == 1
 
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
     assert state.has_condition("goblin_1", "blinded") is True
 
-    session.choose(session.get_scene_view().choices.index("Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
     assert state.has_condition("goblin_1", "blinded") is False
 
 
@@ -1316,7 +1331,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
         ]
     )
 
-    result = session.choose(_action_index_by_prefix(session, "Cast Lesser Restoration"))
+    result = session.choose(_action_id_by_prefix(session, "Cast Lesser Restoration"))
 
     assert (
         "system",
@@ -1338,7 +1353,6 @@ def test_lesser_restoration_uses_magic_menu_bucket() -> None:
     bucket = GameWindow._action_bucket_key(
         None,
         ActionView(
-            index=0,
             id="spell-lesser-restoration-player",
             label="Cast Lesser Restoration",
             kind="spell",
@@ -1415,7 +1429,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1)
 
-    attack_index = _action_index(session, "attack", "goblin_1")
+    attack_index = _action_id(session, "attack", "goblin_1")
     result = session.choose(attack_index)
 
     assert (
@@ -1447,7 +1461,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1)
 
-    attack_index = _action_index(session, "attack", "goblin_1")
+    attack_index = _action_id(session, "attack", "goblin_1")
     first_result = session.choose(attack_index)
 
     attack_events = [event for event in first_result.events if event.type == "attack_resolved"]
@@ -1457,7 +1471,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     assert session.encounter_state.active_action_available is False
     assert session.encounter_state.active_attacks_remaining == 1
 
-    move_index = session.get_scene_view().choices.index("Move left")
+    move_index = _action_id_by_label(session, "Move left")
     move_result = session.choose(move_index)
 
     assert ("system", "Traveler moves left to (3, 3).") in move_result.messages
@@ -1465,7 +1479,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     assert session.encounter_state.active_position.y == 3
     assert session.encounter_state.active_attacks_remaining == 1
 
-    second_attack_index = _action_index(session, "attack", "goblin_1")
+    second_attack_index = _action_id(session, "attack", "goblin_1")
     second_result = session.choose(second_attack_index)
 
     second_attack_events = [event for event in second_result.events if event.type == "attack_resolved"]
@@ -1473,7 +1487,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     assert second_attack_events[0].data["attacks_remaining"] == 0
     assert session.encounter_state.creatures["goblin_1"].creature.get_health() == 10
     assert session.encounter_state.active_attacks_remaining == 0
-    assert not any(choice.startswith("Attack enemy") for choice in session.get_scene_view().choices)
+    assert not any(label.startswith("Attack enemy") for label in _action_labels(session))
 
 
 def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
@@ -1483,8 +1497,7 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5)
 
-    scene_view = session.get_scene_view()
-    second_wind_index = scene_view.choices.index("Second Wind")
+    second_wind_index = _action_id_by_label(session, "Second Wind")
     result = session.choose(second_wind_index)
 
     assert ("system", "Traveler uses Second Wind.") in result.messages
@@ -1493,7 +1506,7 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
     assert session.encounter_state is not None
     assert session.encounter_state.active_bonus_action_available is False
     assert session.decision_creature.feature_uses_remaining["second_wind"] == 1
-    assert "Second Wind" not in session.get_scene_view().choices
+    assert "Second Wind" not in _action_labels(session)
     event = next(event for event in result.events if event.type == "feature_used")
     assert event.data["feature_id"] == "second_wind"
     assert event.data["feature_name"] == "Second Wind"
@@ -1511,16 +1524,17 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable(
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5)
 
-    second_wind_index = session.get_scene_view().choices.index("Second Wind")
+    second_wind_index = _action_id_by_label(session, "Second Wind")
     session.choose(second_wind_index)
 
     presentation = build_session_presentation(session)
 
     assert presentation.encounter is not None
-    assert "Second Wind" not in session.get_scene_view().choices
+    assert "Second Wind" not in _action_labels(session)
     feature_actions = {action.label: action for action in presentation.encounter.feature_actions}
     assert set(feature_actions) == {"Second Wind", "Action Surge"}
-    assert feature_actions["Second Wind"].index == -1
+    assert feature_actions["Second Wind"].enabled is False
+    assert feature_actions["Second Wind"].unavailable_reason is not None
     assert feature_actions["Second Wind"].cost["bonus_action"] == 1
 
 
@@ -1541,13 +1555,12 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", fixed_roll)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 6)
 
-    first_attack_index = _action_index(session, "attack", "goblin_1")
+    first_attack_index = _action_id(session, "attack", "goblin_1")
     session.choose(first_attack_index)
 
     assert session.encounter_state.active_actions_remaining == 0
 
-    scene_view = session.get_scene_view()
-    action_surge_index = scene_view.choices.index("Action Surge")
+    action_surge_index = _action_id_by_label(session, "Action Surge")
     result = session.choose(action_surge_index)
 
     assert ("system", "Traveler uses Action Surge.") in result.messages
@@ -1589,7 +1602,6 @@ def test_spell_actions_map_to_magic_menu_bucket() -> None:
     bucket = GameWindow._action_bucket_key(
         None,
         ActionView(
-            index=0,
             id="spell-color_spray",
             label="Cast Color Spray",
             kind="spell",
@@ -1606,7 +1618,6 @@ def test_grapple_actions_map_to_attack_menu_bucket() -> None:
     bucket = GameWindow._action_bucket_key(
         None,
         ActionView(
-            index=0,
             id="player-grapple-0",
             label="Grapple enemy 1 (Goblin Warrior)",
             kind="grapple",
@@ -1623,7 +1634,6 @@ def test_grapple_actions_share_one_board_targeting_mode() -> None:
     window = GameWindow.__new__(GameWindow)
     actions = [
         ActionView(
-            index=index,
             id=f"player-grapple-{index}",
             label=f"Grapple target {index}",
             kind="grapple",
@@ -1649,7 +1659,6 @@ def test_grapple_actions_share_one_board_targeting_mode() -> None:
             1,
             [
                 ActionView(
-                    index=0,
                     id="attack-goblin",
                     label="Attack Goblin",
                     kind="attack",
@@ -1694,7 +1703,6 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
     )
     actions = [
         ActionView(
-            index=0,
             id="spell-color_spray",
             label="Cast Color Spray",
             kind="spell",
@@ -1725,7 +1733,7 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 4)
 
-    attack_index = _action_index(session, "attack", "goblin_1")
+    attack_index = _action_id(session, "attack", "goblin_1")
     result = session.choose(attack_index)
 
     assert result.selected_choice_text is not None
@@ -1734,7 +1742,7 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None
     assert session.pending_scene_transition is not None
     assert session.encounter_state is not None
     assert result.scene_changed is False
-    assert result.scene.choices[0] == "Continue"
+    assert result.scene.action_details[0].id == "system-continue-scene-transition"
 
 
 def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
@@ -1751,16 +1759,16 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
 
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1)
 
-    attack_index = _action_index(session, "attack", "goblin_1")
+    attack_index = _action_id(session, "attack", "goblin_1")
     session.choose(attack_index)
 
     assert session.encounter_state.active_action_available is False
     assert not any(action.kind == "attack" for action in session.get_scene_view().action_details)
 
-    wait_index = session.get_scene_view().choices.index("Wait")
+    wait_index = _action_id_by_label(session, "Wait")
     session.choose(wait_index)
     while session.encounter_state.current_decision().kind == "reaction":
-        session.choose(session.get_scene_view().choices.index("Pass reaction"))
+        session.choose(_action_id_by_label(session, "Pass reaction"))
 
     assert session.encounter_state.creatures["player"].actions_remaining == 1
     assert any(action.kind == "attack" for action in session.get_scene_view().action_details)
@@ -1774,7 +1782,7 @@ def test_encounter_victory_waits_for_continue_before_restart() -> None:
         if creature_ref != session.encounter_state.current_decision().creature_ref:
             creature_state.creature.current_health = 0
 
-    wait_index = session.get_scene_view().choices.index("Wait")
+    wait_index = _action_id_by_label(session, "Wait")
     result = session.choose(wait_index)
 
     assert result.scene_changed is False
@@ -1784,9 +1792,9 @@ def test_encounter_victory_waits_for_continue_before_restart() -> None:
     assert ("system", "Victory! Press continue to proceed.") in result.messages
     assert result.scene.scene_text == "Victory! Press continue to proceed."
     assert session.pending_scene_transition.message == "Victory! Press continue to proceed."
-    assert result.scene.choices[0] == "Continue"
+    assert result.scene.action_details[0].id == "system-continue-scene-transition"
 
-    continue_result = session.choose(0)
+    continue_result = session.choose("system-continue-scene-transition")
 
     assert continue_result.scene_changed is False
     assert session.pending_scene_transition is None
