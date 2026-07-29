@@ -148,7 +148,6 @@ class EncounterState(EncounterStateData):
         player: Creature,
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
-        control_mode: str = "default",
         geometry_config: GeometryConfig | None = None,
     ) -> EncounterState:
         player_participants = [
@@ -201,11 +200,7 @@ class EncounterState(EncounterStateData):
                     actor_id=participant.actor_id,
                     creature=deepcopy(creature_templates[participant.actor_id]),
                     position=Position(participant.start.x, participant.start.y),
-                    controller=(
-                        "external"
-                        if control_mode == "all-external"
-                        else team.controller if team is not None else "scripted"
-                    ),
+                    controller=team.controller if team is not None else "scripted",
                     team_id=team.id if team is not None else participant.actor_id,
                     behavior=deepcopy(participant.behavior),
                 )
@@ -213,7 +208,6 @@ class EncounterState(EncounterStateData):
             encounter_id=encounter_id,
             definition=definition,
             combatants=combatants,
-            control_mode=control_mode,
             round=RoundState(),
             turn=TurnState(),
             interrupts=InterruptState(),

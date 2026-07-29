@@ -21,14 +21,10 @@ class Game:
     def start(
         cls,
         scenario: LoadedScenario,
-        *,
-        control_mode: str | None = None,
     ) -> Game:
         game = cls(
             scenario=scenario,
-            session=scenario.create_session(
-                control_mode=control_mode,
-            ),
+            session=scenario.create_session(),
         )
         game.session.start_encounter()
         return game

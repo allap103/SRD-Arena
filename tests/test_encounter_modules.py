@@ -77,14 +77,3 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
     assert creature_team_id(state, "enemy:0") == "monsters"
     assert creature_controller(state, "enemy:0") == "scripted"
     assert actors_are_opponents(state, "player", "enemy:0") is True
-
-
-def test_all_external_control_mode_overrides_authored_controller() -> None:
-    state = cast(
-        EncounterState,
-        SimpleNamespace(
-            combatant=lambda _actor_ref: SimpleNamespace(controller="external"),
-        ),
-    )
-
-    assert creature_controller(state, "enemy:0") == "external"

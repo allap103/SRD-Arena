@@ -226,7 +226,6 @@ class EncounterStateData:
     encounter_id: str
     definition: EncounterDefinition
     combatants: dict[CreatureRef, Combatant]
-    control_mode: str = "default"
     automatic_action_limit: int | None = None
     round: RoundState = field(default_factory=RoundState)
     turn: TurnState = field(default_factory=TurnState)

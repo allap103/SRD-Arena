@@ -20,6 +20,16 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
+def _all_external_session():
+    scenario = ScenarioLoader().load(
+        TACTICAL_SCENARIO_DIR,
+        start_scene="goblin_encounter",
+    )
+    for team in scenario.encounters["goblin_encounter"].teams:
+        team.controller = "external"
+    return scenario.create_session().start_encounter()
+
+
 def test_tactical_fixture_loads_explicit_teams():
     game = ScenarioLoader().load(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter")
     encounter = game.encounters["goblin_encounter"]
@@ -50,16 +60,8 @@ def test_session_accepts_multiple_externally_controlled_creatures():
     } == {"player", "goblin_1", "goblin_2", "goblin_3"}
 
 
-def test_all_external_mode_pauses_for_each_goblin_turn():
-    session = (
-        ScenarioLoader()
-        .load(
-            TACTICAL_SCENARIO_DIR,
-            start_scene="goblin_encounter",
-            control_mode="all-external",
-        )
-        .create_session().start_encounter()
-    )
+def test_external_controller_pauses_for_each_goblin_turn():
+    session = _all_external_session()
     session.get_scene_view()
     state = session.encounter_state
     assert state is not None
@@ -82,15 +84,7 @@ def test_all_external_mode_pauses_for_each_goblin_turn():
 
 
 def test_externally_controlled_goblin_can_move_then_end_turn():
-    session = (
-        ScenarioLoader()
-        .load(
-            TACTICAL_SCENARIO_DIR,
-            start_scene="goblin_encounter",
-            control_mode="all-external",
-        )
-        .create_session().start_encounter()
-    )
+    session = _all_external_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -120,15 +114,7 @@ def test_externally_controlled_goblin_can_move_then_end_turn():
 
 
 def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
-    session = (
-        ScenarioLoader()
-        .load(
-            TACTICAL_SCENARIO_DIR,
-            start_scene="goblin_encounter",
-            control_mode="all-external",
-        )
-        .create_session().start_encounter()
-    )
+    session = _all_external_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -169,15 +155,7 @@ def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
 
 
 def test_team_members_are_not_valid_attack_targets():
-    session = (
-        ScenarioLoader()
-        .load(
-            TACTICAL_SCENARIO_DIR,
-            start_scene="goblin_encounter",
-            control_mode="all-external",
-        )
-        .create_session().start_encounter()
-    )
+    session = _all_external_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -195,15 +173,7 @@ def test_team_members_are_not_valid_attack_targets():
 
 
 def test_externally_controlled_teammate_can_target_opposing_team():
-    session = (
-        ScenarioLoader()
-        .load(
-            TACTICAL_SCENARIO_DIR,
-            start_scene="goblin_encounter",
-            control_mode="all-external",
-        )
-        .create_session().start_encounter()
-    )
+    session = _all_external_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state

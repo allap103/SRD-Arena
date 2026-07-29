@@ -59,7 +59,6 @@ class LoadedScenario:
     encounter_order: tuple[str, ...]
     items: list[Item]
     start_scene: str
-    control_mode: str
 
     def get_creature(self, actor_id: str) -> Creature:
         for creature in self.creatures:
@@ -67,10 +66,7 @@ class LoadedScenario:
                 return creature
         raise KeyError(f"Creature '{actor_id}' not found.")
 
-    def create_session(
-        self,
-        control_mode: str | None = None,
-    ) -> Session:
+    def create_session(self) -> Session:
         encounter = self.encounters[self.start_scene]
         external_actor_ids = [
             actor_id
@@ -89,7 +85,6 @@ class LoadedScenario:
             creature_templates={creature.id: creature for creature in self.creatures},
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
-            control_mode=control_mode or self.control_mode,
             geometry_config=self.geometry_config,
         )
 
@@ -108,7 +103,6 @@ class ScenarioLoader:
         directory: str | Path = DEFAULT_SCENARIO_DIR,
         *,
         start_scene: str | None = None,
-        control_mode: str = "default",
     ) -> LoadedScenario:
         scenario_directory = Path(directory)
         config = self._load_config(scenario_directory / "config.json")
@@ -146,7 +140,6 @@ class ScenarioLoader:
             encounter_order=config.encounters,
             items=load_system_items(self.system_directory),
             start_scene=start_scene or config.encounters[0],
-            control_mode=control_mode,
         )
 
     def _load_encounters_from_directory(

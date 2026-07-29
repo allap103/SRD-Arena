@@ -28,7 +28,6 @@ class Session:
         creature_templates: dict[str, Creature] | None = None,
         item_templates: dict[str, Item] | None = None,
         start_scene_id: str = "goblin_encounter",
-        control_mode: str = "default",
         automatic_action_limit: int | None = None,
         geometry_config: GeometryConfig | None = None,
     ):
@@ -39,7 +38,6 @@ class Session:
         self.start_scene_id = start_scene_id
         self.current_scene_id = start_scene_id
         self._initial_player = deepcopy(player)
-        self.control_mode = control_mode
         self._automatic_action_limit = automatic_action_limit
         self.geometry_config = geometry_config or GeometryConfig()
         self.encounter_state: EncounterState | None = None
@@ -74,7 +72,6 @@ class Session:
             self.player,
             self.creature_templates,
             self.item_templates,
-            self.control_mode,
             self.geometry_config,
         )
         self.encounter_state.automatic_action_limit = self.automatic_action_limit
