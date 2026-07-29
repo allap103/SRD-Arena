@@ -1,10 +1,7 @@
 from __future__ import annotations
 # mypy: disable-error-code="misc,no-redef"
 
-import json
 from collections.abc import Callable
-from datetime import datetime, timezone
-from pathlib import Path
 
 from ...domain.encounters.models import ActionCost, EncounterAction
 from ...domain.geometry import (
@@ -21,7 +18,7 @@ from ...domain.actions.spells.rules import (
     spell_action_value,
     spell_range_squares,
 )
-from ...runtime.scenario import DEFAULT_SCENARIO_DIR, LoadedScenario, ScenarioLoader
+from ...runtime.scenario import LoadedScenario
 from ...runtime.game import Game
 from ..shared.dice import build_roll_views, without_roll_details
 from ..shared.session import (
@@ -51,12 +48,10 @@ try:
     from PySide6.QtWidgets import (
         QApplication,
         QFrame,
-        QFileDialog,
         QGridLayout,
         QHBoxLayout,
         QLabel,
         QMainWindow,
-        QMessageBox,
         QPushButton,
         QScrollArea,
         QSizePolicy,
@@ -77,12 +72,10 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QFont = object  # type: ignore[assignment]
     QResizeEvent = object  # type: ignore[assignment]
     QFrame = object  # type: ignore[assignment]
-    QFileDialog = object  # type: ignore[assignment]
     QGridLayout = object  # type: ignore[assignment]
     QHBoxLayout = object  # type: ignore[assignment]
     QLabel = object  # type: ignore[assignment]
     QMainWindow = object  # type: ignore[assignment]
-    QMessageBox = object  # type: ignore[assignment]
     QPushButton = object  # type: ignore[assignment]
     QScrollArea = object  # type: ignore[assignment]
     QSizePolicy = object  # type: ignore[assignment]
@@ -101,15 +94,10 @@ def _require_pyside6() -> None:
 
 
 class GameWindow(QMainWindow):
-    def __init__(
-        self,
-        scenario: LoadedScenario | None = None,
-        *,
-        show_encounter_json: bool = False,
-    ):
+    def __init__(self, scenario: LoadedScenario):
         _require_pyside6()
         super().__init__()
-        self.scenario = scenario or ScenarioLoader().load(DEFAULT_SCENARIO_DIR)
+        self.scenario = scenario
         self.game = Game.start(self.scenario)
         self.game.ai_action_limit = 1
         self._items_by_id = {item.id: item for item in self.scenario.items}
@@ -119,7 +107,6 @@ class GameWindow(QMainWindow):
         self._combat_log_scene_id: str | None = None
         self._logged_round_number: int | None = None
         self._ai_step_scheduled = False
-        self._show_encounter_json = show_encounter_json
 
         self.setWindowTitle("SRD Arena")
         self.resize(1400, 900)
@@ -361,8 +348,6 @@ class GameWindow(QMainWindow):
         self.sidebar_stack.addWidget(self._build_inventory_page())
         self.sidebar_stack.addWidget(self._build_attributes_page())
         self.sidebar_stack.addWidget(self._build_system_page())
-        if self._show_encounter_json:
-            self.sidebar_stack.addWidget(self._build_encounter_json_page())
         layout.addWidget(self.sidebar_stack)
         return sidebar
 
@@ -395,30 +380,10 @@ class GameWindow(QMainWindow):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.addWidget(self._sidebar_button("Back", self.show_menu_root))
-        if self._show_encounter_json:
-            layout.addWidget(
-                self._sidebar_button("Encounter JSON", self.show_encounter_json)
-            )
         layout.addWidget(self._sidebar_button(EXIT_CHOICE_TEXT, self.close))
         layout.addStretch(1)
         return page
 
-    def _build_encounter_json_page(self) -> QWidget:
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.addWidget(self._sidebar_button("Back", self.show_system_menu))
-        self.encounter_json_status = QLabel("Waiting for encounter data.")
-        self.encounter_json_status.setWordWrap(True)
-        layout.addWidget(self.encounter_json_status)
-        self.encounter_json_text = self._build_readonly_text(minimum_height=400)
-        self.encounter_json_text.setObjectName("encounterJsonText")
-        layout.addWidget(self.encounter_json_text, stretch=1)
-        self.encounter_json_export_button = self._sidebar_button(
-            "Export JSON",
-            self._export_encounter_json,
-        )
-        layout.addWidget(self.encounter_json_export_button)
-        return page
 
     def _build_group(self, title: str) -> QFrame:
         group = QFrame()
@@ -501,7 +466,6 @@ class GameWindow(QMainWindow):
             self._sync_combat_log_round(presentation.scene_id)
             self._render_encounter(presentation)
         self._sync_victory_overlay(presentation)
-        self._sync_encounter_json_view()
         self._schedule_ai_step_if_needed()
 
     def _render_story_actions(self, actions: list[ActionView]) -> None:
@@ -1422,11 +1386,6 @@ class GameWindow(QMainWindow):
     def show_system_menu(self) -> None:
         self.sidebar_stack.setCurrentIndex(3)
 
-    def show_encounter_json(self) -> None:
-        if not self._show_encounter_json:
-            return
-        self.sidebar_stack.setCurrentIndex(4)
-
     def display_item_name(self, item_id: str) -> str:
         item = self._items_by_id.get(item_id)
         return item.name if item else item_id
@@ -1434,68 +1393,6 @@ class GameWindow(QMainWindow):
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         self._update_victory_overlay_geometry()
-
-    def _sync_encounter_json_view(self) -> None:
-        if not self._show_encounter_json or not hasattr(self, "encounter_json_text"):
-            return
-        payload = self._encounter_json_payload()
-        encounter_active = bool(payload.get("encounter_active"))
-        self.encounter_json_status.setText(
-            "Live encounter state." if encounter_active else "No active encounter."
-        )
-        self.encounter_json_text.setPlainText(
-            json.dumps(payload, indent=2, sort_keys=True)
-        )
-        self.encounter_json_export_button.setEnabled(bool(payload))
-
-    def _encounter_json_payload(self) -> dict[str, object]:
-        encounter_state = self.game.encounter_state
-        if encounter_state is None:
-            return {
-                "encounter_active": False,
-                "scene_id": self.game.current_scene_id,
-            }
-        return {
-            "encounter_active": True,
-            "encounter": encounter_state.read_model.state_for(self.game.player),
-        }
-
-    def _export_encounter_json(self) -> None:
-        payload = self._encounter_json_payload()
-        default_name = self._default_encounter_json_export_name(payload)
-        target_path, _selected_filter = QFileDialog.getSaveFileName(
-            self,
-            "Export Encounter JSON",
-            default_name,
-            "JSON Files (*.json);;All Files (*)",
-        )
-        if not target_path:
-            return
-        with open(target_path, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle, indent=2, sort_keys=True)
-            handle.write("\n")
-        QMessageBox.information(
-            self, "Export Complete", f"Saved JSON to:\n{target_path}"
-        )
-
-    def _default_encounter_json_export_name(self, payload: dict[str, object]) -> str:
-        encounter = payload.get("encounter")
-        scene_id = encounter.get("scene_id") if isinstance(encounter, dict) else None
-        suffix = scene_id if isinstance(scene_id, str) and scene_id else "no-encounter"
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        return f"encounter-{suffix}-{timestamp}.json"
-
-
-def run_pyside6_app(
-    scenario_dir: str | Path | None = None,
-    start_scene_override: str | None = None,
-    control_mode: str = "default",
-    show_encounter_json: bool = False,
-) -> None:
-    # Compatibility entry point; new code can import this from ``qt.launcher``.
-    from .launcher import run_pyside6_app as launch
-
-    launch(scenario_dir, start_scene_override, control_mode, show_encounter_json)
 
 
 CyoaPySide6Window = GameWindow
