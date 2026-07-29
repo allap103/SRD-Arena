@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..geometry import Position
+from .actions.attack_resolution import attack_sources
 from .actions.consumables import healing_potions_in_inventory
 from .actions.eligibility import action_eligibility, require_action_eligible
 from .actions.grappling import available_escape_actions, resolve_escape_action
@@ -34,6 +35,8 @@ def _lower_initial(label: str) -> str:
 def available_creature_actions(
     self: EncounterState,
     creature_ref: CreatureRef,
+    *,
+    include_attack_alternatives: bool = False,
 ) -> list[EncounterAction]:
     enemy = self.creatures[creature_ref]
     movement_cost = self._movement_cost_for(creature_ref)
@@ -66,22 +69,49 @@ def available_creature_actions(
     for target_ref in self._living_creature_refs():
         if target_ref == creature_ref:
             continue
-        if multiattack_sequence is None or enemy.pending_multiattack:
-            actions.append(
-                EncounterAction(
-                    (
-                        f"{enemy.pending_multiattack[0].name} {_lower_initial(self._creature_label(target_ref))}"
-                        if enemy.pending_multiattack
-                        else f"Attack {_lower_initial(self._creature_label(target_ref))}"
-                    ),
-                    "attack",
-                    target_ref,
-                    id=f"{creature_ref}-attack-{target_ref.replace(':', '-')}",
-                    creature_ref=creature_ref,
-                    cost=ActionCost(action=1 if enemy.attacks_remaining == 0 else 0),
-                    source_trigger_id=(enemy.pending_multiattack[0].name if enemy.pending_multiattack else None),
-                )
+        available_sources = (
+            attack_sources(enemy.creature, self.item_templates)
+            if (
+                multiattack_sequence is None
+                or enemy.pending_multiattack
+                or include_attack_alternatives
             )
+            else []
+        )
+        if enemy.pending_multiattack:
+            available_sources = [
+                source
+                for source in available_sources
+                if source.name == enemy.pending_multiattack[0].name
+            ]
+        for source in available_sources:
+            for attack_type in source.attack_modes:
+                source_slug = source.name.lower().replace(" ", "-")
+                actions.append(
+                    EncounterAction(
+                        (
+                            f"{source.name} "
+                            f"{_lower_initial(self._creature_label(target_ref))}"
+                        ),
+                        "attack",
+                        target_ref,
+                        id=(
+                            f"{creature_ref}-attack-{source_slug}-{attack_type}-"
+                            f"{target_ref.replace(':', '-')}"
+                        ),
+                        creature_ref=creature_ref,
+                        cost=ActionCost(
+                            action=1 if enemy.attacks_remaining == 0 else 0
+                        ),
+                        source_trigger_id=(
+                            enemy.pending_multiattack[0].name
+                            if enemy.pending_multiattack
+                            else None
+                        ),
+                        preferred_attack_type=attack_type,
+                        preferred_attack_name=source.name,
+                    )
+                )
         actions.append(
             EncounterAction(
                 f"Grapple {_lower_initial(self._creature_label(target_ref))}",

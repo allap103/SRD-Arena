@@ -3,8 +3,6 @@ from __future__ import annotations
 from typing import Generator
 
 from ..creatures import Creature
-from ..creatures.stat_block_actions import AttackActionDefinition
-from ..equipment import Item
 from ..geometry import Position
 from .models import BehaviorContext, EncounterAction, EncounterCreatureState
 
@@ -22,12 +20,11 @@ DIRECTION_DELTAS = {
 
 def build_behavior(
     participant: EncounterCreatureState,
-    items_by_id: dict[str, Item],
 ) -> Generator[EncounterAction | None, BehaviorContext, None]:
     if participant.behavior.type == "wait":
         return _wait_behavior()
     if participant.behavior.type == "archer":
-        return _archer_behavior(participant, items_by_id)
+        return _archer_behavior(participant)
     if participant.behavior.type == "guard":
         return _guard_behavior(participant)
     if participant.behavior.type == "patrol":
@@ -56,15 +53,10 @@ def _chase_behavior(
 
 def _archer_behavior(
     participant: EncounterCreatureState,
-    items_by_id: dict[str, Item],
 ) -> Generator[EncounterAction | None, BehaviorContext, None]:
     context = yield None
     while True:
-        range_squares = weapon_normal_range_squares(participant.creature, items_by_id)
-        if range_squares is not None and chebyshev_distance(
-            context.actor_position,
-            context.target_position,
-        ) <= range_squares:
+        if context.can_attack:
             context = yield EncounterAction("Attack", "attack", "ranged")
             continue
         direction = step_toward(context.actor_position, context.target_position)
@@ -147,29 +139,3 @@ def manhattan_distance(a: Position, b: Position) -> int:
 
 def movement_squares(creature: Creature) -> int:
     return creature.attributes.movement.squares_per_turn
-
-
-def weapon_normal_range_squares(attacker: Creature, items_by_id: dict[str, Item]) -> int | None:
-    for slot in ("right_hand", "left_hand"):
-        item_id = attacker.equipment.equipped_items.get(slot)
-        if item_id is None:
-            continue
-        weapon = items_by_id.get(item_id)
-        if weapon is None or weapon.weapon_stat is None:
-            continue
-        if weapon.weapon_stat.range_normal is None:
-            return None
-        return max(1, weapon.weapon_stat.range_normal // attacker.attributes.movement.feet_per_square)
-    for attack in attacker.stat_block_actions.values():
-        if (
-            not isinstance(attack, AttackActionDefinition)
-            or "ranged" not in attack.attack_modes
-            or attack.range_normal_feet is None
-        ):
-            continue
-        return max(
-            1,
-            attack.range_normal_feet
-            // attacker.attributes.movement.feet_per_square,
-        )
-    return None

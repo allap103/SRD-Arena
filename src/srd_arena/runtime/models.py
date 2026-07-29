@@ -25,6 +25,8 @@ class ActionView:
     value: str | int | None = None
     cost: dict[str, int] = field(default_factory=dict)
     source_trigger_id: str | None = None
+    preferred_attack_type: str | None = None
+    preferred_attack_name: str | None = None
 
 
 @dataclass

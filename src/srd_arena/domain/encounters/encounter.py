@@ -2,10 +2,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from .behaviors import (
-    build_behavior as _build_behavior,
-    is_adjacent as _is_adjacent,
-)
+from .action_selection import build_action_selector
+from .behaviors import is_adjacent as _is_adjacent
 from .actions.options import (
     available_actions as _available_actions_impl,
     available_feature_actions as _available_feature_actions_impl,
@@ -244,15 +242,16 @@ class EncounterState(EncounterStateData):
             geometry_config=geometry_config or GeometryConfig(),
         )
         state._roll_initiative()
-        state._initialize_behaviors()
+        state._initialize_action_selectors()
         return state
 
-    def _initialize_behaviors(self) -> None:
-        self._behaviors = {}
+    def _initialize_action_selectors(self) -> None:
+        self._action_selectors = {}
         for creature_ref, creature_state in self.creatures.items():
-            behavior = _build_behavior(creature_state, self.item_templates)
-            next(behavior)
-            self._behaviors[creature_ref] = behavior
+            self._action_selectors[creature_ref] = build_action_selector(
+                self._creature_controller(creature_ref),
+                creature_state,
+            )
 
     def _roll_initiative(self) -> None:
         entries = [

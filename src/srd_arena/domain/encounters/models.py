@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Generator
+from typing import TYPE_CHECKING
 
 from ..creatures import Creature
 from ..equipment import Item
@@ -15,6 +15,9 @@ from ..creatures.stat_block_actions import ActionEffect
 from ..creatures.multiattack import MultiattackInvocation
 
 CreatureRef = str
+
+if TYPE_CHECKING:
+    from .action_selection import ActionSelector
 
 
 @dataclass
@@ -34,6 +37,7 @@ class EncounterAction:
     creature_ref: CreatureRef | None = None
     source_trigger_id: str | None = None
     preferred_attack_type: str | None = None
+    preferred_attack_name: str | None = None
     cost: ActionCost = field(default_factory=ActionCost)
 
 
@@ -217,10 +221,7 @@ class EncounterStateData:
     conditions: list[Status] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
-    _behaviors: dict[
-        CreatureRef,
-        Generator[EncounterAction | None, BehaviorContext, None],
-    ] = field(
+    _action_selectors: dict[CreatureRef, ActionSelector] = field(
         default_factory=dict,
         repr=False,
     )

@@ -172,7 +172,9 @@ class AttackRule:
             return target_failure
         assert isinstance(action.value, str)
         preferred_attack_name = (
-            actor.pending_multiattack[0].name if actor.pending_multiattack else None
+            actor.pending_multiattack[0].name
+            if actor.pending_multiattack
+            else action.preferred_attack_name
         )
         reach = attack_range_squares(
             actor.creature,

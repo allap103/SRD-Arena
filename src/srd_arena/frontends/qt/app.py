@@ -1478,6 +1478,8 @@ class GameWindow(QMainWindow):
                 reaction=action.cost.get("reaction", 0),
             ),
             source_trigger_id=action.source_trigger_id,
+            preferred_attack_type=action.preferred_attack_type,
+            preferred_attack_name=action.preferred_attack_name,
         )
         self._pending_target_mode = None
         self._action_menu_scope = None

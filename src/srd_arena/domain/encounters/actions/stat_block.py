@@ -81,7 +81,7 @@ def resolve_attack_action(
 ) -> None:
     creature_ref = state.current_decision().creature_ref
     creature_state = state.creatures[creature_ref]
-    preferred_attack_name = None
+    preferred_attack_name = action.preferred_attack_name
     if creature_state.pending_multiattack:
         preferred_attack_name = creature_state.pending_multiattack.pop(0).name
         creature_state.attacks_remaining = len(

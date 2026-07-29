@@ -1377,7 +1377,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
     assert session.encounter_state is not None
     enemy = session.encounter_state.creatures["goblin_1"]
     enemy.behavior.type = "archer"
-    session.encounter_state._initialize_behaviors()
+    session.encounter_state._initialize_action_selectors()
     session.encounter_state.creatures["goblin_2"].creature.current_health = 0
     session.encounter_state.creatures["goblin_3"].creature.current_health = 0
     enemy.position.x = 5

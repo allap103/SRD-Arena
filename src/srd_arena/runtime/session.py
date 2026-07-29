@@ -90,6 +90,8 @@ class Session:
                         "reaction": action.cost.reaction,
                     },
                     source_trigger_id=action.source_trigger_id,
+                    preferred_attack_type=action.preferred_attack_type,
+                    preferred_attack_name=action.preferred_attack_name,
                 )
             for index, action in enumerate(self._encounter_actions)
         ]

@@ -2,16 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..geometry import Position
-from .actions.attack_resolution import (
-    attack_range_squares,
-)
-from .behaviors import (
-    chebyshev_distance as _chebyshev_distance,
-    movement_squares as _movement_squares,
-)
+from .behaviors import movement_squares as _movement_squares
 from .models import (
-    BehaviorContext,
     CreatureRef,
     DecisionFrame,
     EncounterAction,
@@ -34,13 +26,21 @@ class TurnEngine:
             if transition is not None:
                 progress.transition = transition
                 break
-            if state.decision_stack and state._creature_controller(
-                state.current_decision().creature_ref
-            ) == "external":
+            if state.decision_stack:
                 progress.paused_for_decision = True
                 break
             creature_ref = self.active_turn_creature(state)
-            if state._creature_controller(creature_ref) == "external":
+            selected_action = state._action_selectors[creature_ref].select_action(
+                state,
+                creature_ref,
+                tuple(
+                    state._available_creature_actions(
+                        creature_ref,
+                        include_attack_alternatives=True,
+                    )
+                ),
+            )
+            if selected_action is None:
                 progress.paused_for_decision = True
                 break
             remaining_limit = (
@@ -51,6 +51,7 @@ class TurnEngine:
             completed_turn, enemy_progress, actions_resolved = self.run_creature_turn(
                 state,
                 creature_ref,
+                initial_action=selected_action,
                 action_limit=remaining_limit,
             )
             automatic_actions_resolved += actions_resolved
@@ -76,69 +77,31 @@ class TurnEngine:
         state: EncounterState,
         creature_ref: CreatureRef,
         *,
+        initial_action: EncounterAction | None = None,
         action_limit: int | None = None,
     ) -> tuple[bool, EncounterProgress, int]:
         actor = state.creatures[creature_ref]
         progress = EncounterProgress()
         if not actor.is_alive:
             return True, progress, 0
-        target_refs = [
-            target_ref
-            for target_ref in state._living_creature_refs()
-            if state._creatures_are_opponents(creature_ref, target_ref)
-        ]
-        if not target_refs:
-            return True, progress, 0
-        target_ref = min(
-            target_refs,
-            key=lambda ref: (
-                abs(state._creature_position(ref).x - actor.position.x)
-                + abs(state._creature_position(ref).y - actor.position.y)
-            ),
-        )
-        target_state = state.creatures[target_ref]
         if actor.movement_remaining is None:
             actor.movement_remaining = _movement_squares(actor.creature)
 
-        behavior = state._behaviors[creature_ref]
-        actions_resolved = 0
-        while actor.is_alive and target_state.is_alive:
-            command = behavior.send(
-                BehaviorContext(
-                    target_position=Position(
-                        target_state.position.x,
-                        target_state.position.y,
-                    ),
-                    actor_position=Position(actor.position.x, actor.position.y),
-                    can_attack=(
-                        _chebyshev_distance(
-                            target_state.position,
-                            actor.position,
-                        )
-                        <= attack_range_squares(
-                            actor.creature,
-                            state.item_templates,
-                            preferred_attack_type=(
-                                "ranged"
-                                if actor.behavior.type == "archer"
-                                else "melee"
-                            ),
-                        )
-                        and state._creatures_are_opponents(
-                            creature_ref,
-                            target_ref,
-                        )
-                    ),
+        selector = state._action_selectors[creature_ref]
+        action = initial_action or selector.select_action(
+            state,
+            creature_ref,
+            tuple(
+                state._available_creature_actions(
+                    creature_ref,
+                    include_attack_alternatives=True,
                 )
-            )
-            if command is None:
-                break
-            action = self._select_behavior_action(
-                state,
-                command,
-                creature_ref=creature_ref,
-                target_ref=target_ref,
-            )
+            ),
+        )
+        if action is None:
+            return False, progress, 0
+        actions_resolved = 0
+        while actor.is_alive:
             resolved = state._apply_creature_action(
                 action,
                 DecisionFrame(
@@ -163,67 +126,19 @@ class TurnEngine:
                 return True, progress, actions_resolved
             if action_limit is not None and actions_resolved >= action_limit:
                 return False, progress, actions_resolved
-        return True, progress, actions_resolved
-
-    def _select_behavior_action(
-        self,
-        state: EncounterState,
-        command: EncounterAction,
-        *,
-        creature_ref: CreatureRef,
-        target_ref: CreatureRef,
-    ) -> EncounterAction:
-        available_actions = state._available_creature_actions(creature_ref)
-        if command.kind == "attack":
-            multiattack = next(
-                (
-                    action
-                    for action in available_actions
-                    if action.kind == "multiattack"
-                ),
-                None,
-            )
-            if multiattack is not None:
-                return multiattack
-        matching_action = next(
-            (
-                action
-                for action in available_actions
-                if action.kind == command.kind
-                and (
-                    action.value == command.value
-                    or (
-                        command.kind == "attack"
-                        and action.value == target_ref
+            action = selector.select_action(
+                state,
+                creature_ref,
+                tuple(
+                    state._available_creature_actions(
+                        creature_ref,
+                        include_attack_alternatives=True,
                     )
-                )
-            ),
-            None,
-        )
-        preferred_attack_type = (
-            str(command.value)
-            if command.kind == "attack"
-            and command.value in {"melee", "ranged"}
-            else None
-        )
-        if matching_action is not None:
-            matching_action.preferred_attack_type = preferred_attack_type
-            return matching_action
-        if command.kind != "attack":
-            return next(
-                action
-                for action in available_actions
-                if action.kind == "wait"
+                ),
             )
-        return EncounterAction(
-            label=command.label,
-            kind=command.kind,
-            value=target_ref if command.kind == "attack" else command.value,
-            id=f"{creature_ref}-scripted-{command.kind}",
-            creature_ref=creature_ref,
-            preferred_attack_type=preferred_attack_type,
-            cost=command.cost,
-        )
+            if action is None:
+                return False, progress, actions_resolved
+        return True, progress, actions_resolved
 
     def active_turn_creature(self, state: EncounterState) -> CreatureRef:
         self.normalize_turn(state)
