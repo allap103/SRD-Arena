@@ -227,37 +227,47 @@ class EncounterState(EncounterStateData):
         cls,
         encounter_id: str,
         definition: EncounterDefinition,
-        player: Creature,
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
         geometry_config: GeometryConfig | None = None,
     ) -> EncounterState:
-        player_participants = [
+        team_by_creature = {
+            creature_id: team
+            for team in definition.teams
+            for creature_id in team.members
+        }
+        external_participants = [
             participant
             for participant in definition.participants
-            if participant.creature_id == player.id
-        ]
-        if len(player_participants) != 1:
-            raise ValueError(
-                f"Encounter '{definition.id}' must place player '{player.id}' exactly once."
+            if (
+                participant.controller
+                or team_by_creature[participant.creature_id].controller
             )
-        player_participant = player_participants[0]
+            == "external"
+        ]
+        if not external_participants:
+            raise ValueError(
+                f"Encounter '{definition.id}' must configure at least one "
+                "externally controlled creature."
+            )
+        primary_participant = external_participants[0]
+        primary_creature = creature_templates[primary_participant.creature_id]
         creatures = {
             "player": EncounterCreatureState(
-                creature_id=player.id,
-                creature=player,
+                creature_id=primary_creature.id,
+                creature=primary_creature,
                 position=Position(
-                    player_participant.start.x,
-                    player_participant.start.y,
+                    primary_participant.start.x,
+                    primary_participant.start.y,
                 ),
                 behavior=deepcopy(
-                    player_participant.behavior or EncounterBehavior(type="wait")
+                    primary_participant.behavior or EncounterBehavior(type="wait")
                 ),
             )
         }
         participant_index = 0
         for participant in definition.participants:
-            if participant.creature_id == player.id:
+            if participant is primary_participant:
                 continue
             creatures[_participant_ref(participant_index)] = EncounterCreatureState(
                 creature_id=participant.creature_id,
@@ -278,7 +288,7 @@ class EncounterState(EncounterStateData):
             item_templates=item_templates or {},
             geometry_config=geometry_config or GeometryConfig(),
         )
-        state._roll_initiative(player)
+        state._roll_initiative()
         state._initialize_behaviors()
         return state
 
@@ -289,7 +299,7 @@ class EncounterState(EncounterStateData):
             next(behavior)
             self._behaviors[creature_ref] = behavior
 
-    def _roll_initiative(self, _player: Creature) -> None:
+    def _roll_initiative(self) -> None:
         entries = [
             InitiativeEntry(
                 creature_ref=creature_ref,

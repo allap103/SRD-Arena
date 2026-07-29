@@ -23,7 +23,6 @@ class Session:
     def __init__(
         self,
         encounters: dict[str, EncounterDefinition],
-        primary_creature_id: str,
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
         start_scene_id: str = "goblin_encounter",
@@ -34,7 +33,6 @@ class Session:
         grid_opacity: float = 1.0,
     ):
         self.encounters = encounters
-        self.primary_creature_id = primary_creature_id
         self.creature_templates = creature_templates
         self.item_templates = item_templates or {}
         self.start_scene_id = start_scene_id
@@ -51,9 +49,9 @@ class Session:
 
     @property
     def primary_creature(self) -> Creature:
-        if self.encounter_state is not None:
-            return self.encounter_state.primary_creature_state.creature
-        return self.creature_templates[self.primary_creature_id]
+        self._ensure_encounter_state()
+        assert self.encounter_state is not None
+        return self.encounter_state.primary_creature_state.creature
 
     @property
     def current_encounter(self) -> EncounterDefinition:
@@ -282,7 +280,6 @@ class Session:
         self.encounter_state = EncounterState.from_definition(
             encounter.id,
             encounter,
-            self.primary_creature,
             self.creature_templates,
             self.item_templates,
             self.geometry_config,

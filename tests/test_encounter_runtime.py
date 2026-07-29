@@ -36,7 +36,7 @@ _ROLL_INITIATIVE = EncounterState._roll_initiative
 
 @pytest.fixture(autouse=True)
 def _player_first_initiative(monkeypatch):
-    def _fixed_initiative(self, player):
+    def _fixed_initiative(self):
         self.initiative_entries = []
         self.initiative_order = [
             self.primary_creature_ref,

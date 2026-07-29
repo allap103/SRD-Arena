@@ -129,29 +129,8 @@ class Scenario:
         raise KeyError(f"Creature '{creature_id}' not found.")
 
     def create_session(self) -> Session:
-        encounter = self.encounters[self.start_scene]
-        team_by_creature = {
-            creature_id: team
-            for team in encounter.teams
-            for creature_id in team.members
-        }
-        externally_controlled = [
-            participant.creature_id
-            for participant in encounter.participants
-            if (
-                participant.controller
-                or team_by_creature[participant.creature_id].controller
-            )
-            == "external"
-        ]
-        if not externally_controlled:
-            raise ValueError(
-                f"Starting encounter '{encounter.id}' must configure at least one "
-                "externally controlled creature."
-            )
         return Session(
             encounters=self.encounters,
-            primary_creature_id=externally_controlled[0],
             creature_templates={creature.id: creature for creature in self.creatures},
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
