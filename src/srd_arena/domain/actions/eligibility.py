@@ -124,11 +124,11 @@ def _economy_rule(
 ) -> str | None:
     if action.actor_ref != "player":
         return None
-    if action.cost.action > state.player_actions_remaining:
+    if action.cost.action > state.player_combatant.turn.actions_remaining:
         return "You have already used your Action."
-    if action.cost.bonus_action > 0 and not state.player_bonus_action_available:
+    if action.cost.bonus_action > 0 and not state.player_combatant.turn.bonus_action_available:
         return "You have already used your Bonus Action."
-    if action.cost.reaction > 0 and not state.player_reaction_available:
+    if action.cost.reaction > 0 and not state.player_combatant.turn.reaction_available:
         return "You have already used your Reaction."
     return None
 
@@ -143,7 +143,7 @@ def _move_rule(
     movement_cost = state.rules.movement_cost(player, "player")
     if movement_cost is None:
         return "You cannot move while grappled."
-    if state._player_movement_remaining(player) < movement_cost:
+    if state.queries.movement_remaining("player") < movement_cost:
         return "You do not have enough movement remaining."
 
     dx, dy = DIRECTION_DELTAS[action.value]

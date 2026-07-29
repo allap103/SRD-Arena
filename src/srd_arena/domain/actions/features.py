@@ -39,7 +39,7 @@ def resolve_feature_action(
         return
     if (
         feature_action.economy == "bonus_action"
-        and not self.player_bonus_action_available
+        and not self.player_combatant.turn.bonus_action_available
     ):
         progress.messages.append(("system", "You have already used your Bonus Action."))
         progress.events.append(
@@ -51,7 +51,7 @@ def resolve_feature_action(
             )
         )
         return
-    if feature_action.economy == "action" and self.player_actions_remaining <= 0:
+    if feature_action.economy == "action" and self.player_combatant.turn.actions_remaining <= 0:
         progress.messages.append(("system", "You have already used your Action."))
         progress.events.append(
             self._event(
@@ -62,7 +62,7 @@ def resolve_feature_action(
             )
         )
         return
-    if feature_action.economy == "reaction" and not self.player_reaction_available:
+    if feature_action.economy == "reaction" and not self.player_combatant.turn.reaction_available:
         progress.messages.append(("system", "You have already used your Reaction."))
         progress.events.append(
             self._event(
@@ -105,17 +105,17 @@ def resolve_feature_action(
         return
 
     if feature_action.economy == "bonus_action":
-        self.player_bonus_action_available = False
+        self.player_combatant.turn.bonus_action_available = False
     elif feature_action.economy == "action":
         self._consume_action(allow_magic=False)
-        self.player_attacks_remaining = 0
+        self.player_combatant.turn.attacks_remaining = 0
     elif feature_action.economy == "reaction":
-        self.player_reaction_available = False
+        self.player_combatant.turn.reaction_available = False
 
     progress.messages.extend(result.messages)
     granted_actions = result.details.get("grant_actions", 0)
     if isinstance(granted_actions, int) and granted_actions > 0:
-        self.player_actions_remaining += granted_actions
+        self.player_combatant.turn.actions_remaining += granted_actions
     healing_effect = next(
         (effect for effect in result.effects if effect.kind == "healing"), None
     )

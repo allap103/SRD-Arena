@@ -20,7 +20,7 @@ def render_encounter_text(encounter: EncounterState, player: Creature) -> str:
         for index, enemy in enumerate(encounter.enemies)
         if enemy.is_alive
     ] or ["- No enemies remaining."]
-    movement = encounter.queries.movement_remaining(player)
+    movement = encounter.queries.movement_remaining("player")
     return "\n".join(
         [
             *rows,
@@ -29,9 +29,9 @@ def render_encounter_text(encounter: EncounterState, player: Creature) -> str:
             f"Movement remaining: {movement}/{movement_squares(player)} squares",
             f"Player HP: {player.get_health()}/{player.get_max_health()} "
             f"at ({encounter.player_position.x}, {encounter.player_position.y})",
-            f"Actions remaining: {encounter.player_actions_remaining}",
-            f"Attacks remaining in action: {encounter.player_attacks_remaining}",
-            f"Reaction available: {'yes' if encounter.player_reaction_available else 'no'}",
+            f"Actions remaining: {encounter.player_combatant.turn.actions_remaining}",
+            f"Attacks remaining in action: {encounter.player_combatant.turn.attacks_remaining}",
+            f"Reaction available: {'yes' if encounter.player_combatant.turn.reaction_available else 'no'}",
             "Enemies:",
             *enemies,
         ]

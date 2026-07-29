@@ -42,7 +42,7 @@ def _roll_dice(count: int, sides: int) -> int:
 
 
 @dataclass
-class EnemyActionResolution:
+class AutomaticActionResolution:
     actions_resolved: int = 0
     completes_turn: bool = False
     paused_for_decision: bool = False
@@ -62,7 +62,7 @@ class TurnEngine:
             if (
                 state.decision_stack
                 and state.rules.controller(state.current_decision().actor_ref)
-                == "user"
+                == "external"
             ):
                 progress.paused_for_decision = True
                 break
@@ -72,7 +72,7 @@ class TurnEngine:
                 if creature_type == "player"
                 else _enemy_ref(enemy_index if enemy_index is not None else 0)
             )
-            if state.rules.controller(actor_ref) == "user":
+            if state.rules.controller(actor_ref) == "external":
                 progress.paused_for_decision = True
                 break
             if creature_type == "player":
@@ -83,14 +83,14 @@ class TurnEngine:
                 if state.automatic_action_limit is None
                 else state.automatic_action_limit - automatic_actions_resolved
             )
-            completed_turn, enemy_progress, actions_resolved = self.run_enemy_turn(
+            completed_turn, automatic_progress, actions_resolved = self.run_automatic_turn(
                 state,
                 player,
                 enemy_index,
                 action_limit=remaining_limit,
             )
             automatic_actions_resolved += actions_resolved
-            state._merge_progress(progress, enemy_progress)
+            state._merge_progress(progress, automatic_progress)
             if progress.transition is not None or progress.paused_for_decision:
                 break
             if completed_turn:
@@ -107,7 +107,7 @@ class TurnEngine:
                 break
         return progress
 
-    def run_enemy_turn(
+    def run_automatic_turn(
         self,
         state: EncounterState,
         player: Creature,
@@ -151,12 +151,12 @@ class TurnEngine:
                 id=f"{_enemy_ref(enemy_index)}-{command.kind}",
                 actor_ref=_enemy_ref(enemy_index),
             )
-            resolution = EnemyActionResolution()
+            resolution = AutomaticActionResolution()
             action_progress = ACTION_PIPELINE.execute(
                 state,
                 player,
                 action,
-                lambda context: self.resolve_enemy_action(
+                lambda context: self.resolve_automatic_action(
                     context,
                     enemy_index,
                     resolution,
@@ -177,11 +177,11 @@ class TurnEngine:
                 return False, progress, actions_resolved
         return True, progress, actions_resolved
 
-    def resolve_enemy_action(
+    def resolve_automatic_action(
         self,
         context: ActionExecutionContext,
         enemy_index: int,
-        resolution: EnemyActionResolution,
+        resolution: AutomaticActionResolution,
     ) -> None:
         state = context.state
         player = context.player
@@ -362,11 +362,11 @@ class TurnEngine:
         self.normalize_turn(state)
         actor_ref = state.initiative_order[state.turn_index]
         if actor_ref == "player":
-            state.player_movement_remaining = None
-            state.player_actions_remaining = 1
-            state.player_magic_actions_remaining = 1
-            state.player_attacks_remaining = 0
-            state.player_bonus_action_available = True
+            state.player_combatant.turn.movement_remaining = None
+            state.player_combatant.turn.actions_remaining = 1
+            state.player_combatant.turn.magic_actions_remaining = 1
+            state.player_combatant.turn.attacks_remaining = 0
+            state.player_combatant.turn.bonus_action_available = True
         else:
             state.enemies[_enemy_index(actor_ref)].movement_remaining = None
 
@@ -388,7 +388,7 @@ class TurnEngine:
     def maybe_reset_reactions(self, state: EncounterState) -> None:
         if state.turn_index != 0:
             return
-        state.player_reaction_available = True
+        state.player_combatant.turn.reaction_available = True
         for enemy in state.enemies:
             enemy.reaction_available = True
 
@@ -408,12 +408,15 @@ class TurnEngine:
                 state.turn_index = 0
                 state.round.advance()
 
-    def player_movement_remaining(self, state: EncounterState, player: Creature) -> int:
-        if state.rules.is_grappled("player"):
+    def movement_remaining(
+        self, state: EncounterState, actor_ref: CreatureRef
+    ) -> int:
+        combatant = state.combatant(actor_ref)
+        if state.rules.is_grappled(actor_ref):
             return 0
-        if state.player_movement_remaining is None:
-            state.player_movement_remaining = _movement_squares(player)
-        return state.player_movement_remaining
+        if combatant.turn.movement_remaining is None:
+            combatant.turn.movement_remaining = _movement_squares(combatant.creature)
+        return combatant.turn.movement_remaining
 
     def turn_count(self, state: EncounterState) -> int:
         return len(state.initiative_order)

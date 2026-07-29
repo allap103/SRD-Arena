@@ -41,7 +41,7 @@ class EncounterTeamSchema(BaseModel):
 
     id: str
     name: str
-    controller: Literal["user", "ai"]
+    controller: Literal["external", "scripted"]
 
 
 class EncounterDefinitionSchema(BaseModel):

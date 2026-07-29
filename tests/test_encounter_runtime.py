@@ -163,7 +163,7 @@ def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> N
     assert session.encounter_state is not None
     assert session.encounter_state.player_position.x == 1
     assert session.encounter_state.player_position.y == 5
-    assert session.encounter_state.player_movement_remaining == 5
+    assert session.encounter_state.player_combatant.turn.movement_remaining == 5
     assert session.encounter_state.enemies[0].position.x == 5
     assert session.encounter_state.enemies[0].position.y == 2
     assert session.encounter_state.enemies[1].position.x == 6
@@ -337,7 +337,7 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
     assert state.player_position.y == 3
     assert state.enemies[0].position.x == 4
     assert state.enemies[0].position.y == 2
-    assert state.player_movement_remaining == 4
+    assert state.player_combatant.turn.movement_remaining == 4
 
 
 def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
@@ -503,7 +503,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
         "is blinded until the end of your next turn" in message
         for _, message in result.messages
     )
-    assert session.encounter_state.player_action_available is False
+    assert session.encounter_state.player_combatant.turn.actions_remaining == 0
     assert session.player.spellcasting.spell_slots_remaining[1] == 3
     assert session.encounter_state.has_condition("enemy:0", "blinded") is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
@@ -1055,8 +1055,8 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     ) in result.messages
     assert ("system", "Traveler is no longer blinded.") in result.messages
     assert state.has_condition("player", "blinded") is False
-    assert state.player_bonus_action_available is False
-    assert state.player_action_available is True
+    assert state.player_combatant.turn.bonus_action_available is False
+    assert state.player_combatant.turn.actions_remaining > 0
     assert session.player.spellcasting.spell_slots_remaining[2] == 0
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Lesser Restoration"
@@ -1094,7 +1094,7 @@ def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> Non
 
     assert progress.transition is None
     assert ("system", "Goblin Warrior moves down-left to (4, 3).") in progress.messages
-    assert session.encounter_state.active_creature() == ("player", None)
+    assert session.encounter_state.current_decision().actor_ref == "player"
     assert session.encounter_state.round_number == 2
 
 
@@ -1206,8 +1206,8 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     assert len(attack_events) == 1
     assert attack_events[0].data["attacks_remaining"] == 1
     assert session.encounter_state.enemies[0].creature.get_health() == 15
-    assert session.encounter_state.player_action_available is False
-    assert session.encounter_state.player_attacks_remaining == 1
+    assert session.encounter_state.player_combatant.turn.actions_remaining == 0
+    assert session.encounter_state.player_combatant.turn.attacks_remaining == 1
 
     move_index = session.get_scene_view().choices.index("Move left")
     move_result = session.choose(move_index)
@@ -1215,7 +1215,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     assert ("system", "You move left. Movement remaining: 5.") in move_result.messages
     assert session.encounter_state.player_position.x == 3
     assert session.encounter_state.player_position.y == 3
-    assert session.encounter_state.player_attacks_remaining == 1
+    assert session.encounter_state.player_combatant.turn.attacks_remaining == 1
 
     second_attack_index = next(
         index
@@ -1230,7 +1230,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     assert len(second_attack_events) == 1
     assert second_attack_events[0].data["attacks_remaining"] == 0
     assert session.encounter_state.enemies[0].creature.get_health() == 10
-    assert session.encounter_state.player_attacks_remaining == 0
+    assert session.encounter_state.player_combatant.turn.attacks_remaining == 0
     assert not any(
         choice.startswith("Attack enemy") for choice in session.get_scene_view().choices
     )
@@ -1253,7 +1253,7 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
     assert ("system", "Healing: 1d10=5 + level 2 = 7; applied 7.") in result.messages
     assert session.player.get_health() == 17
     assert session.encounter_state is not None
-    assert session.encounter_state.player_bonus_action_available is False
+    assert session.encounter_state.player_combatant.turn.bonus_action_available is False
     assert session.player.feature_uses_remaining["second_wind"] == 1
     assert "Second Wind" not in session.get_scene_view().choices
     event = next(event for event in result.events if event.type == "feature_used")
@@ -1316,15 +1316,15 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
     )
     session.choose(first_attack_index)
 
-    assert session.encounter_state.player_actions_remaining == 0
+    assert session.encounter_state.player_combatant.turn.actions_remaining == 0
 
     scene_view = session.get_scene_view()
     action_surge_index = scene_view.choices.index("Action Surge")
     result = session.choose(action_surge_index)
 
     assert ("system", "Traveler uses Action Surge.") in result.messages
-    assert session.encounter_state.player_actions_remaining == 1
-    assert session.encounter_state.player_magic_actions_remaining == 0
+    assert session.encounter_state.player_combatant.turn.actions_remaining == 1
+    assert session.encounter_state.player_combatant.turn.magic_actions_remaining == 0
     assert session.player.feature_uses_remaining["action_surge"] == 0
     updated_choices = session.get_scene_view().choices
     assert any(choice.startswith("Attack enemy ") for choice in updated_choices)
@@ -1483,7 +1483,7 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
     )
     session.choose(attack_index)
 
-    assert session.encounter_state.player_action_available is False
+    assert session.encounter_state.player_combatant.turn.actions_remaining == 0
     assert not any(
         choice.startswith("Attack enemy") for choice in session.get_scene_view().choices
     )
@@ -1491,7 +1491,7 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
     wait_index = session.get_scene_view().choices.index("Wait")
     session.choose(wait_index)
 
-    assert session.encounter_state.player_action_available is True
+    assert session.encounter_state.player_combatant.turn.actions_remaining > 0
     assert any(
         choice.startswith("Attack enemy") for choice in session.get_scene_view().choices
     )

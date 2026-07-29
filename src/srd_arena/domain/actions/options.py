@@ -48,7 +48,7 @@ def available_actions(
         return []
     actor = self.combatant(actor_ref).creature
     if actor_ref != "player":
-        return self.actions.available_for_controlled_enemy(actor_ref)
+        return self.actions.available_for_actor(actor_ref)
     if decision.kind == "reroll_dice":
         return self._reroll_damage_actions()
     if decision.kind == "reaction":
@@ -58,7 +58,7 @@ def available_actions(
     movement_cost = self.rules.movement_cost(actor, "player")
     if (
         movement_cost is not None
-        and self._player_movement_remaining(actor) >= movement_cost
+        and self.queries.movement_remaining("player") >= movement_cost
     ):
         moving_refs = {"player", *self.rules.grappling_targets("player")}
         for direction, (dx, dy) in DIRECTION_DELTAS.items():
@@ -77,7 +77,7 @@ def available_actions(
                 )
             )
 
-    can_attack = self.player_actions_remaining > 0 or self.player_attacks_remaining > 0
+    can_attack = self.player_combatant.turn.actions_remaining > 0 or self.player_combatant.turn.attacks_remaining > 0
     for index, enemy in enumerate(self.enemies):
         if (
             can_attack
@@ -93,12 +93,12 @@ def available_actions(
                     id=f"player-attack-{index}",
                     actor_ref="player",
                     cost=ActionCost(
-                        action=1 if self.player_attacks_remaining == 0 else 0
+                        action=1 if self.player_combatant.turn.attacks_remaining == 0 else 0
                     ),
                 )
             )
         if (
-            self.player_actions_remaining > 0
+            self.player_combatant.turn.actions_remaining > 0
             and enemy.is_alive
             and self.rules.are_opponents("player", _enemy_ref(index))
             and _is_adjacent(self.player_position, enemy.position)
@@ -119,7 +119,7 @@ def available_actions(
     actions.extend(self.actions.available_features(actor))
     actions.extend(self.actions.available_spells(actor))
 
-    if self.player_bonus_action_available:
+    if self.player_combatant.turn.bonus_action_available:
         for item in healing_potions_in_inventory(actor, self.item_templates):
             actions.append(
                 EncounterAction(
@@ -224,11 +224,11 @@ def feature_action_available(
     player: Creature,
     definition: FeatureActionDefinition,
 ) -> bool:
-    if definition.economy == "bonus_action" and not self.player_bonus_action_available:
+    if definition.economy == "bonus_action" and not self.player_combatant.turn.bonus_action_available:
         return False
-    if definition.economy == "action" and self.player_actions_remaining <= 0:
+    if definition.economy == "action" and self.player_combatant.turn.actions_remaining <= 0:
         return False
-    if definition.economy == "reaction" and not self.player_reaction_available:
+    if definition.economy == "reaction" and not self.player_combatant.turn.reaction_available:
         return False
     return player.feature_uses_remaining.get(definition.feature_id, 0) > 0
 
@@ -252,9 +252,9 @@ def spell_cast_block_reason_for(
         spellcasting,
         spell,
         spell_action_economy(spell),
-        action_available=self.player_magic_actions_remaining > 0,
-        bonus_action_available=self.player_bonus_action_available,
-        reaction_available=self.player_reaction_available,
+        action_available=self.player_combatant.turn.magic_actions_remaining > 0,
+        bonus_action_available=self.player_combatant.turn.bonus_action_available,
+        reaction_available=self.player_combatant.turn.reaction_available,
     )
 
 
@@ -338,11 +338,11 @@ def spend_spell_resources(
 ) -> None:
     if cost.action > 0:
         self._consume_action(allow_magic=True)
-        self.player_attacks_remaining = 0
+        self.player_combatant.turn.attacks_remaining = 0
     if cost.bonus_action > 0:
-        self.player_bonus_action_available = False
+        self.player_combatant.turn.bonus_action_available = False
     if cost.reaction > 0:
-        self.player_reaction_available = False
+        self.player_combatant.turn.reaction_available = False
     if spell.level > 0:
         spellcasting.spell_slots_remaining[spell.level] -= 1
 

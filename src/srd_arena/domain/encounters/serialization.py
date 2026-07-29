@@ -58,18 +58,18 @@ def export_state(self: EncounterState, player: Creature) -> dict[str, Any]:
             "position": {"x": self.player_position.x, "y": self.player_position.y},
             "health": player.get_health(),
             "max_health": player.get_max_health(),
-            "movement_remaining": self._player_movement_remaining(player),
+            "movement_remaining": self.queries.movement_remaining("player"),
             "movement_total": _movement_squares(player),
             "movement_remaining_feet": (
-                self._player_movement_remaining(player)
+                self.queries.movement_remaining("player")
                 * player.attributes.movement.feet_per_square
             ),
             "movement_total_feet": player.attributes.movement.speed_feet,
-            "action_available": self.player_action_available,
-            "actions_remaining": self.player_actions_remaining,
-            "attacks_remaining": self.player_attacks_remaining,
-            "bonus_action_available": self.player_bonus_action_available,
-            "reaction_available": self.player_reaction_available,
+            "action_available": self.player_combatant.turn.actions_remaining > 0,
+            "actions_remaining": self.player_combatant.turn.actions_remaining,
+            "attacks_remaining": self.player_combatant.turn.attacks_remaining,
+            "bonus_action_available": self.player_combatant.turn.bonus_action_available,
+            "reaction_available": self.player_combatant.turn.reaction_available,
             "conditions": [
                 condition.name for condition in self.conditions_for("player")
             ],

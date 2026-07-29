@@ -43,10 +43,7 @@ from ..geometry import GeometryConfig
 from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
 from ..effects.triggered import TriggeredEffect, matching_effects
 from .turn_flow import TURN_ENGINE, TurnEngine
-from .queries import (
-    living_enemy_at as _living_enemy_at_impl,
-    player_movement_remaining as _player_movement_remaining_query,
-)
+from .queries import living_enemy_at as _living_enemy_at_impl
 
 # Keep these module-level names for tests and helpers that monkeypatch
 # `srd_arena.domain.encounters.encounter.roll_die` / `roll_dice`.
@@ -143,67 +140,6 @@ class EncounterState(EncounterStateData):
     def round_number(self, value: int) -> None:
         self.round.number = value
 
-    @property
-    def player_movement_remaining(self) -> int | None:
-        return self.player_combatant.turn.movement_remaining
-
-    @player_movement_remaining.setter
-    def player_movement_remaining(self, value: int | None) -> None:
-        self.player_combatant.turn.movement_remaining = value
-
-    @property
-    def player_action_available(self) -> bool:
-        return self.player_combatant.turn.actions_remaining > 0
-
-    @player_action_available.setter
-    def player_action_available(self, value: bool) -> None:
-        if value:
-            self.player_combatant.turn.actions_remaining = max(
-                1, self.player_combatant.turn.actions_remaining
-            )
-        else:
-            self.player_combatant.turn.actions_remaining = 0
-
-    @property
-    def player_actions_remaining(self) -> int:
-        return self.player_combatant.turn.actions_remaining
-
-    @player_actions_remaining.setter
-    def player_actions_remaining(self, value: int) -> None:
-        self.player_combatant.turn.actions_remaining = max(0, value)
-
-    @property
-    def player_magic_actions_remaining(self) -> int:
-        return self.player_combatant.turn.magic_actions_remaining
-
-    @player_magic_actions_remaining.setter
-    def player_magic_actions_remaining(self, value: int) -> None:
-        self.player_combatant.turn.magic_actions_remaining = max(0, value)
-
-    @property
-    def player_attacks_remaining(self) -> int:
-        return self.player_combatant.turn.attacks_remaining
-
-    @player_attacks_remaining.setter
-    def player_attacks_remaining(self, value: int) -> None:
-        self.player_combatant.turn.attacks_remaining = value
-
-    @property
-    def player_bonus_action_available(self) -> bool:
-        return self.player_combatant.turn.bonus_action_available
-
-    @player_bonus_action_available.setter
-    def player_bonus_action_available(self, value: bool) -> None:
-        self.player_combatant.turn.bonus_action_available = value
-
-    @property
-    def player_reaction_available(self) -> bool:
-        return self.player_combatant.turn.reaction_available
-
-    @player_reaction_available.setter
-    def player_reaction_available(self, value: bool) -> None:
-        self.player_combatant.turn.reaction_available = value
-
     @classmethod
     def from_definition(
         cls,
@@ -240,7 +176,7 @@ class EncounterState(EncounterStateData):
                     player_participant.start.x,
                     player_participant.start.y,
                 ),
-                controller="user",
+                controller="external",
                 team_id=player_team.id if player_team is not None else player.id,
                 behavior=EncounterBehavior(type="external"),
                 turn=TurnResources(),
@@ -266,9 +202,9 @@ class EncounterState(EncounterStateData):
                     creature=deepcopy(creature_templates[participant.actor_id]),
                     position=Position(participant.start.x, participant.start.y),
                     controller=(
-                        "user"
-                        if control_mode == "all-user"
-                        else team.controller if team is not None else "ai"
+                        "external"
+                        if control_mode == "all-external"
+                        else team.controller if team is not None else "scripted"
                     ),
                     team_id=team.id if team is not None else participant.actor_id,
                     behavior=deepcopy(participant.behavior),
@@ -426,14 +362,8 @@ class EncounterState(EncounterStateData):
             effect for status in self.conditions for effect in status.triggered_effects
         ]
 
-    def active_creature(self) -> tuple[str, int | None]:
-        actor_ref = self.current_decision().actor_ref
-        if actor_ref == "player":
-            return ("player", None)
-        return ("enemy", _enemy_index(actor_ref))
-
     def requires_automatic_advance(self) -> bool:
-        return self.rules.controller(self.current_decision().actor_ref) == "ai"
+        return self.rules.controller(self.current_decision().actor_ref) == "scripted"
 
 
     def _apply_effects(
@@ -491,36 +421,23 @@ class EncounterState(EncounterStateData):
         return self.reaction_engine.pending_attack_event_data(self)
 
     def _consume_action(self, *, allow_magic: bool) -> None:
-        if self.player_actions_remaining <= 0:
+        resources = self.player_combatant.turn
+        if resources.actions_remaining <= 0:
             raise RuntimeError("No Action remains to consume.")
         non_magic_only_actions = max(
             0,
-            self.player_actions_remaining - self.player_magic_actions_remaining,
+            resources.actions_remaining - resources.magic_actions_remaining,
         )
         if allow_magic:
-            if self.player_magic_actions_remaining <= 0:
+            if resources.magic_actions_remaining <= 0:
                 raise RuntimeError("No spell-capable Action remains to consume.")
-            self.player_magic_actions_remaining -= 1
-        elif non_magic_only_actions <= 0 and self.player_magic_actions_remaining > 0:
-            self.player_magic_actions_remaining -= 1
-        self.player_actions_remaining -= 1
+            resources.magic_actions_remaining -= 1
+        elif non_magic_only_actions <= 0 and resources.magic_actions_remaining > 0:
+            resources.magic_actions_remaining -= 1
+        resources.actions_remaining -= 1
 
     def advance_until_next_decision(self, player: Creature) -> EncounterProgress:
         return self.turn_engine.advance_until_next_decision(self, player)
-
-    def _run_enemy_turn(
-        self,
-        player: Creature,
-        enemy_index: int,
-        *,
-        action_limit: int | None = None,
-    ) -> tuple[bool, EncounterProgress, int]:
-        return self.turn_engine.run_enemy_turn(
-            self,
-            player,
-            enemy_index,
-            action_limit=action_limit,
-        )
 
     def _apply_reaction_action(
         self,
@@ -604,9 +521,6 @@ class EncounterState(EncounterStateData):
 
     def _normalize_turn(self) -> None:
         self.turn_engine.normalize_turn(self)
-
-    def _player_movement_remaining(self, player: Creature) -> int:
-        return _player_movement_remaining_query(self, player)
 
     def _turn_count(self) -> int:
         return self.turn_engine.turn_count(self)

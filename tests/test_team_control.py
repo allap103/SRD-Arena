@@ -26,19 +26,19 @@ def test_tactical_fixture_loads_explicit_teams():
 
     assert encounter is not None
     assert [(team.id, team.controller) for team in encounter.teams] == [
-        ("heroes", "user"),
-        ("goblins", "ai"),
+        ("heroes", "external"),
+        ("goblins", "scripted"),
     ]
     assert encounter.teams[1].members == ["goblin_1", "goblin_2", "goblin_3"]
 
 
-def test_all_user_mode_pauses_for_each_goblin_turn():
+def test_all_external_mode_pauses_for_each_goblin_turn():
     session = (
         ScenarioLoader()
         .load(
             TACTICAL_SCENARIO_DIR,
             start_scene="goblin_encounter",
-            control_mode="all-user",
+            control_mode="all-external",
         )
         .create_session().start_encounter()
     )
@@ -63,13 +63,13 @@ def test_all_user_mode_pauses_for_each_goblin_turn():
     assert any(action.kind == "move" for action in actions)
 
 
-def test_user_controlled_goblin_can_move_then_end_turn():
+def test_externally_controlled_goblin_can_move_then_end_turn():
     session = (
         ScenarioLoader()
         .load(
             TACTICAL_SCENARIO_DIR,
             start_scene="goblin_encounter",
-            control_mode="all-user",
+            control_mode="all-external",
         )
         .create_session().start_encounter()
     )
@@ -101,13 +101,13 @@ def test_user_controlled_goblin_can_move_then_end_turn():
     assert state.current_decision().actor_ref == "enemy:1"
 
 
-def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
+def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
     session = (
         ScenarioLoader()
         .load(
             TACTICAL_SCENARIO_DIR,
             start_scene="goblin_encounter",
-            control_mode="all-user",
+            control_mode="all-external",
         )
         .create_session().start_encounter()
     )
@@ -156,7 +156,7 @@ def test_team_members_are_not_valid_attack_targets():
         .load(
             TACTICAL_SCENARIO_DIR,
             start_scene="goblin_encounter",
-            control_mode="all-user",
+            control_mode="all-external",
         )
         .create_session().start_encounter()
     )
@@ -176,13 +176,13 @@ def test_team_members_are_not_valid_attack_targets():
     )
 
 
-def test_user_controlled_teammate_can_target_opposing_team():
+def test_externally_controlled_teammate_can_target_opposing_team():
     session = (
         ScenarioLoader()
         .load(
             TACTICAL_SCENARIO_DIR,
             start_scene="goblin_encounter",
-            control_mode="all-user",
+            control_mode="all-external",
         )
         .create_session().start_encounter()
     )
@@ -206,7 +206,7 @@ def test_user_controlled_teammate_can_target_opposing_team():
     )
 
 
-def test_paced_ai_resolves_one_visible_action_per_step():
+def test_paced_automation_resolves_one_visible_action_per_step():
     session = (
         ScenarioLoader()
         .load(
@@ -237,7 +237,7 @@ def test_paced_ai_resolves_one_visible_action_per_step():
     assert state.current_decision().actor_ref == "enemy:0"
 
 
-def test_default_ai_still_resolves_until_the_next_user_decision():
+def test_default_automation_resolves_until_the_next_external_decision():
     session = (
         ScenarioLoader()
         .load(

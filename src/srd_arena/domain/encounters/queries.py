@@ -6,12 +6,11 @@ from .models import Combatant
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
-    from ..creatures import Creature
 
 
-def player_movement_remaining(state: EncounterState, player: Creature) -> int:
-    """Return the movement the player can still spend on the current turn."""
-    return state.turn_engine.player_movement_remaining(state, player)
+def movement_remaining(state: EncounterState, actor_ref: str) -> int:
+    """Return the movement an actor can still spend on the current turn."""
+    return state.turn_engine.movement_remaining(state, actor_ref)
 
 
 def living_enemy_at(

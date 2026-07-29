@@ -35,7 +35,7 @@ def resolve_player_attack_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    if self.player_actions_remaining <= 0 and self.player_attacks_remaining <= 0:
+    if self.player_combatant.turn.actions_remaining <= 0 and self.player_combatant.turn.attacks_remaining <= 0:
         progress.messages.append(("system", "You have already used your Action."))
         progress.events.append(
             self._event(
@@ -53,14 +53,14 @@ def resolve_player_attack_action(
     enemy_index = action.value
     enemy = self.enemies[enemy_index]
     target_label = f"Enemy {enemy_index + 1} ({enemy.creature.name})"
-    if self.player_attacks_remaining == 0 and self.player_actions_remaining > 0:
+    if self.player_combatant.turn.attacks_remaining == 0 and self.player_combatant.turn.actions_remaining > 0:
         self._consume_action(allow_magic=False)
-        self.player_attacks_remaining = max(
+        self.player_combatant.turn.attacks_remaining = max(
             0,
             player.combat_profile.attacks_per_attack_action - 1,
         )
-    elif self.player_attacks_remaining > 0:
-        self.player_attacks_remaining -= 1
+    elif self.player_combatant.turn.attacks_remaining > 0:
+        self.player_combatant.turn.attacks_remaining -= 1
 
     nearby_opponents = tuple(
         other_enemy.position for other_enemy in self.enemies if other_enemy.is_alive
@@ -112,7 +112,7 @@ def resolve_player_attack_action(
                 "attacker_label": player.name,
                 "target_ref": _enemy_ref(enemy_index),
                 "target_label": target_label,
-                "attacks_remaining": self.player_attacks_remaining,
+                "attacks_remaining": self.player_combatant.turn.attacks_remaining,
                 "attack_roll": attack.attack_roll,
                 "attack_roll_detail": attack.attack_roll_detail,
                 "hit": attack.hit,

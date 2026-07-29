@@ -23,14 +23,12 @@ from ..actions.options import (
 from ..actions.player import (
     apply_action,
     apply_player_move,
-    apply_user_controlled_enemy_action,
     resolve_feature_action,
     resolve_grapple_action,
     resolve_player_attack_action,
     resolve_spell_action,
     resolve_utilize_action,
     resolve_wait_action,
-    user_controlled_enemy_actions,
 )
 from ..actions.spells.definitions import Spell
 from ..actions.spells.resolution import SpellTargetContext
@@ -47,6 +45,10 @@ from .conditions import (
     remove_status,
     status_replaces,
 )
+from .combatant_actions import (
+    available_combatant_actions,
+    resolve_controlled_combatant_action,
+)
 from .models import (
     ActionCost,
     CreatureRef,
@@ -61,7 +63,7 @@ from .participants import (
     creature_for_ref,
     creature_team_id,
 )
-from .queries import living_enemy_at, player_movement_remaining
+from .queries import living_enemy_at, movement_remaining
 from .serialization import export_decision, export_pending_action, export_state
 
 if TYPE_CHECKING:
@@ -162,18 +164,18 @@ class EncounterActions:
     ) -> SpellTargetContext | None:
         return spell_target_context(self.state, player, target_ref)
 
-    def available_for_controlled_enemy(
+    def available_for_actor(
         self, actor_ref: CreatureRef
     ) -> list[EncounterAction]:
-        return user_controlled_enemy_actions(self.state, actor_ref)
+        return available_combatant_actions(self.state, actor_ref)
 
-    def perform_for_controlled_enemy(
+    def perform_for_actor(
         self,
         player: Creature,
         action: EncounterAction,
         decision: DecisionFrame,
     ) -> EncounterProgress:
-        return apply_user_controlled_enemy_action(
+        return resolve_controlled_combatant_action(
             self.state, player, action, decision
         )
 
@@ -322,8 +324,8 @@ class EncounterQueries:
 
     state: EncounterState
 
-    def movement_remaining(self, player: Creature) -> int:
-        return player_movement_remaining(self.state, player)
+    def movement_remaining(self, actor_ref: CreatureRef) -> int:
+        return movement_remaining(self.state, actor_ref)
 
     def living_enemy_at(self, x: int, y: int) -> Combatant | None:
         return living_enemy_at(self.state, x, y)

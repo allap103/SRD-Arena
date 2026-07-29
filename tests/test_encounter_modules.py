@@ -63,8 +63,8 @@ def test_removing_grappled_also_removes_matching_grappling_status() -> None:
 
 def test_participant_queries_use_authored_teams_and_controllers() -> None:
     combatants = {
-        "player": SimpleNamespace(team_id="heroes", controller="user"),
-        "enemy:0": SimpleNamespace(team_id="monsters", controller="ai"),
+        "player": SimpleNamespace(team_id="heroes", controller="external"),
+        "enemy:0": SimpleNamespace(team_id="monsters", controller="scripted"),
     }
     state = cast(
         EncounterState,
@@ -75,16 +75,16 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
 
     assert creature_team_id(state, "player") == "heroes"
     assert creature_team_id(state, "enemy:0") == "monsters"
-    assert creature_controller(state, "enemy:0") == "ai"
+    assert creature_controller(state, "enemy:0") == "scripted"
     assert actors_are_opponents(state, "player", "enemy:0") is True
 
 
-def test_all_user_control_mode_overrides_authored_controller() -> None:
+def test_all_external_control_mode_overrides_authored_controller() -> None:
     state = cast(
         EncounterState,
         SimpleNamespace(
-            combatant=lambda _actor_ref: SimpleNamespace(controller="user"),
+            combatant=lambda _actor_ref: SimpleNamespace(controller="external"),
         ),
     )
 
-    assert creature_controller(state, "enemy:0") == "user"
+    assert creature_controller(state, "enemy:0") == "external"

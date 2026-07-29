@@ -69,7 +69,7 @@ class ReactionEngine:
             target_index=target_index,
             attacker_label=attacker_label,
             target_label=target_label,
-            attacks_remaining=state.player_attacks_remaining,
+            attacks_remaining=state.player_combatant.turn.attacks_remaining,
             attack=attack,
             triggered_effect=triggered_effect,
             continuation=continuation,
@@ -344,7 +344,7 @@ class ReactionEngine:
         )
 
         if action.kind == "opportunity_attack":
-            state.player_reaction_available = False
+            state.player_combatant.turn.reaction_available = False
             target_index = _enemy_index(pending_action.actor_ref)
             target = state.enemies[target_index]
             target_label = f"Enemy {target_index + 1} ({target.creature.name})"
@@ -493,13 +493,13 @@ class ReactionEngine:
 
         if pending_action.resume_enemy_index is None:
             return
-        if state.rules.controller(pending_action.actor_ref) == "user":
+        if state.rules.controller(pending_action.actor_ref) == "external":
             enemy.movement_remaining = pending_action.remaining_movement_after
             return
         enemy.movement_remaining = pending_action.remaining_movement_after
         if state.automatic_action_limit is not None:
             return
-        completed_turn, resumed, _ = state.turn_engine.run_enemy_turn(
+        completed_turn, resumed, _ = state.turn_engine.run_automatic_turn(
             state,
             player,
             pending_action.resume_enemy_index,
@@ -609,7 +609,7 @@ class ReactionEngine:
     ) -> bool:
         if not state.rules.are_opponents("player", _enemy_ref(enemy_index)):
             return False
-        if not state.player_reaction_available:
+        if not state.player_combatant.turn.reaction_available:
             return False
         if not can_make_opportunity_attack(player, state.item_templates):
             return False
@@ -674,7 +674,7 @@ class ReactionEngine:
         target_index = _enemy_index(pending_action.actor_ref)
         target = state.enemies[target_index]
         actions: list[EncounterAction] = []
-        if state.player_reaction_available and target.is_alive:
+        if state.player_combatant.turn.reaction_available and target.is_alive:
             actions.append(
                 EncounterAction(
                     f"Opportunity attack {target.creature.name}",

@@ -16,10 +16,6 @@ from .attack_resolution import has_free_hand
 from .pipeline import ACTION_PIPELINE, ActionExecutionContext
 from ..encounters.behaviors import DIRECTION_DELTAS, is_adjacent as _is_adjacent
 from ..encounters.models import EncounterAction, EncounterProgress
-from ..encounters.enemy_control import (
-    apply_user_controlled_enemy_action as _apply_user_controlled_enemy_action_impl,
-    user_controlled_enemy_actions as _user_controlled_enemy_actions_impl,
-)
 
 if TYPE_CHECKING:
     from ..encounters.encounter import EncounterState
@@ -44,7 +40,7 @@ def apply_action(
 
     def resolve(context: ActionExecutionContext) -> None:
         if decision.actor_ref != "player":
-            resolved = self.actions.perform_for_controlled_enemy(
+            resolved = self.actions.perform_for_actor(
                 player, context.action, decision
             )
         elif decision.kind == "reroll_dice":
@@ -130,7 +126,7 @@ def apply_player_move(
     if movement_cost is None:
         progress.messages.append(("system", "You cannot move while grappled."))
         return
-    if self._player_movement_remaining(player) < movement_cost:
+    if self.queries.movement_remaining("player") < movement_cost:
         progress.messages.append(
             ("system", "You do not have enough movement remaining.")
         )
@@ -166,13 +162,13 @@ def apply_player_move(
             continue
         if target_ref.startswith("enemy:"):
             self.enemies[int(target_ref.split(":", 1)[1])].position = target_position
-    self.player_movement_remaining = (
-        self._player_movement_remaining(player) - movement_cost
+    self.player_combatant.turn.movement_remaining = (
+        self.queries.movement_remaining("player") - movement_cost
     )
     progress.messages.append(
         (
             "system",
-            f"You move {direction}. Movement remaining: {self.player_movement_remaining}.",
+            f"You move {direction}. Movement remaining: {self.player_combatant.turn.movement_remaining}.",
         )
     )
     progress.events.append(
@@ -195,7 +191,7 @@ def resolve_grapple_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    if self.player_actions_remaining <= 0:
+    if self.player_combatant.turn.actions_remaining <= 0:
         progress.messages.append(("system", "You have already used your Action."))
         progress.events.append(
             self._event(
@@ -317,8 +313,6 @@ def resolve_grapple_action(
 
 resolve_player_attack_action = _resolve_player_attack_action_impl
 resolve_wait_action = _resolve_wait_action_impl
-user_controlled_enemy_actions = _user_controlled_enemy_actions_impl
-apply_user_controlled_enemy_action = _apply_user_controlled_enemy_action_impl
 resolve_utilize_action = _resolve_utilize_action_impl
 resolve_feature_action = _resolve_feature_action_impl
 resolve_spell_action = _resolve_spell_action_impl

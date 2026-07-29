@@ -6,7 +6,7 @@ from typing import Any, Generator
 from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
-from .definitions import EncounterBehavior, EncounterDefinition
+from .definitions import ControllerKind, EncounterBehavior, EncounterDefinition
 from ..effects.conditions import Status
 from ..geometry import GeometryConfig
 from ..rolls.dice import CheckResult, DicePoolResult
@@ -130,7 +130,7 @@ class Combatant:
     actor_id: str
     creature: Creature
     position: Position
-    controller: str
+    controller: ControllerKind
     team_id: str
     behavior: EncounterBehavior
     turn: TurnResources = field(default_factory=TurnResources)

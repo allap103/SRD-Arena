@@ -39,7 +39,7 @@ def _roll_dice(count: int, sides: int) -> int:
     return encounter_module.roll_dice(count, sides)
 
 
-def user_controlled_enemy_actions(
+def available_combatant_actions(
     self: EncounterState,
     actor_ref: CreatureRef,
 ) -> list[EncounterAction]:
@@ -95,7 +95,7 @@ def user_controlled_enemy_actions(
     return actions
 
 
-def apply_user_controlled_enemy_action(
+def resolve_controlled_combatant_action(
     self: EncounterState,
     player: Creature,
     action: EncounterAction,
@@ -227,7 +227,7 @@ def apply_user_controlled_enemy_action(
             )
         )
     else:
-        raise ValueError(f"Unsupported user-controlled enemy action: {action.kind}")
+        raise ValueError(f"Unsupported externally controlled action: {action.kind}")
 
     progress.transition = self._check_transition()
     if (

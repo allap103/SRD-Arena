@@ -1,6 +1,10 @@
 from dataclasses import dataclass, field
+from typing import Literal, TypeAlias
 
 from ..geometry import Grid, Position
+
+
+ControllerKind: TypeAlias = Literal["external", "scripted"]
 
 
 @dataclass
@@ -23,7 +27,7 @@ class EncounterTeam:
     id: str
     name: str
     members: list[str]
-    controller: str
+    controller: ControllerKind
 
 
 @dataclass

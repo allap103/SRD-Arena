@@ -107,11 +107,12 @@ def test_pipeline_declares_action_before_calling_resolver() -> None:
     assert result.events[0].action_id == result.events[1].action_id
 
 
-def test_ai_action_uses_same_declare_then_resolve_pipeline() -> None:
+def test_scripted_action_uses_same_declare_then_resolve_pipeline() -> None:
     session, state = _player_session()
     state.turn_index = state.initiative_order.index("enemy:0")
 
-    _completed, progress, actions_resolved = state._run_enemy_turn(
+    _completed, progress, actions_resolved = state.turn_engine.run_automatic_turn(
+        state,
         session.player,
         0,
         action_limit=1,

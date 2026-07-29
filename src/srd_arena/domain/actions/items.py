@@ -35,7 +35,7 @@ def resolve_utilize_action(
             )
         )
         return
-    if not self.player_bonus_action_available:
+    if not self.player_combatant.turn.bonus_action_available:
         progress.messages.append(("system", "You have already used your Bonus Action."))
         progress.events.append(
             self._event(
@@ -78,7 +78,7 @@ def resolve_utilize_action(
     consumed = item.has_misc_tag("CNS")
     if consumed:
         player.inventory.remove_item(item.id)
-    self.player_bonus_action_available = False
+    self.player_combatant.turn.bonus_action_available = False
 
     modifier_text = f" + {modifier}" if modifier else ""
     progress.messages.extend(
