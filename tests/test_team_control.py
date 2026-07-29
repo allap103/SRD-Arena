@@ -85,7 +85,7 @@ def test_external_control_pauses_for_each_goblin_turn():
     assert result.decision is not None
     assert result.decision["creature_ref"] == "goblin_1"
     assert (state.creatures["goblin_1"].position.x, state.creatures["goblin_1"].position.y) == starting_position
-    actions = state.available_actions(session.decision_creature)
+    actions = state.available_actions()
     assert actions
     assert {action.creature_ref for action in actions} == {"goblin_1"}
     assert "Wait" in [action.label for action in actions]
@@ -101,7 +101,7 @@ def test_externally_controlled_goblin_can_move_then_end_turn():
     start = (state.creatures["goblin_1"].position.x, state.creatures["goblin_1"].position.y)
     move = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "move"
     )
 
@@ -137,7 +137,7 @@ def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
 
     attack = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "attack"
     )
 
@@ -157,11 +157,11 @@ def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
     assert state.current_decision().creature_ref == "goblin_1"
     assert not any(
         action.kind == "attack"
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
     )
     assert any(
         action.kind == "move"
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
     )
     event = next(event for event in result.events if event.type == "attack_resolved")
     assert event.creature_ref == "goblin_1"
@@ -191,7 +191,7 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends(monkeypatch):
 
     first_attack = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "attack" and action.value == "red_blade"
     )
     session.choose_encounter_action(first_attack)
@@ -201,7 +201,7 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends(monkeypatch):
 
     second_attack = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "attack" and action.value == "red_blade"
     )
     session.choose_encounter_action(second_attack)
@@ -210,11 +210,11 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends(monkeypatch):
     assert brynn.attacks_remaining == 0
     assert not any(
         action.kind == "attack"
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
     )
     assert any(
         action.kind == "move"
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
     )
 
 
@@ -243,9 +243,7 @@ def test_secondary_champion_can_use_class_feature() -> None:
 
     second_wind = next(
         action
-        for action in session.encounter_state.available_actions(
-            session.decision_creature
-        )
+        for action in session.encounter_state.available_actions()
         if action.kind == "feature" and action.value == "second_wind"
     )
     session.choose_encounter_action(second_wind)
@@ -270,7 +268,7 @@ def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
 
     move = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
     session.choose_encounter_action(move)
@@ -279,7 +277,7 @@ def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
     assert state.current_decision().kind == "reaction"
     opportunity_attack = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
     session.choose_encounter_action(opportunity_attack)
@@ -301,7 +299,7 @@ def test_user_controlled_goblin_chooses_reaction_to_primary_movement() -> None:
 
     move = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
     session.choose_encounter_action(move)
@@ -309,7 +307,7 @@ def test_user_controlled_goblin_chooses_reaction_to_primary_movement() -> None:
     assert state.current_decision().creature_ref == "red_blade"
     opportunity_attack = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
     session.choose_encounter_action(opportunity_attack)
@@ -353,7 +351,7 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
 
     move = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
     session.choose_encounter_action(move)
@@ -385,7 +383,7 @@ def test_ai_controlled_creature_resolves_opportunity_attack_automatically(
 
     move = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
     result = session.choose_encounter_action(move)
@@ -417,7 +415,7 @@ def test_brynn_can_take_an_opportunity_attack(monkeypatch) -> None:
 
     move = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
     session.choose_encounter_action(move)
@@ -425,7 +423,7 @@ def test_brynn_can_take_an_opportunity_attack(monkeypatch) -> None:
     assert state.current_decision().creature_ref == "champion_2"
     opportunity_attack = next(
         action
-        for action in state.available_actions(session.decision_creature)
+        for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
     session.choose_encounter_action(opportunity_attack)
@@ -449,7 +447,7 @@ def test_team_members_are_not_valid_attack_targets():
     state.creatures["goblin_1"].position.x = 3
     state.creatures["goblin_1"].position.y = 2
 
-    player_actions = state.available_actions(session.decision_creature)
+    player_actions = state.available_actions()
 
     assert not any(
         action.kind == "attack" and action.value == 0
@@ -472,7 +470,7 @@ def test_externally_controlled_teammate_can_target_opposing_team():
     state.creatures["goblin_2"].position.x = 4
     state.creatures["goblin_2"].position.y = 2
 
-    actions = state.available_actions(session.decision_creature)
+    actions = state.available_actions()
 
     assert any(
         action.kind == "attack" and action.value == "goblin_2"

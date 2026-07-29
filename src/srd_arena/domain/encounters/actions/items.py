@@ -18,14 +18,14 @@ def _roll_dice(count: int, sides: int) -> int:
 
 def resolve_utilize_action(
     self: EncounterState,
-    player: Creature,
+    actor: Creature,
     item_id: str,
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
     creature_ref = self.current_decision().creature_ref
     item = self.item_templates.get(item_id)
-    if item is None or not player.inventory.has_item(item_id):
+    if item is None or not actor.inventory.has_item(item_id):
         progress.messages.append(("system", "You do not have that item."))
         progress.events.append(
             self._event(
@@ -73,16 +73,16 @@ def resolve_utilize_action(
     dice_count, dice_sides, modifier = healing_dice
     dice_total = _roll_dice(dice_count, dice_sides)
     healing_total = dice_total + modifier
-    applied_healing = player.heal(healing_total)
+    applied_healing = actor.heal(healing_total)
     consumed = item.has_misc_tag("CNS")
     if consumed:
-        player.inventory.remove_item(item.id)
+        actor.inventory.remove_item(item.id)
     self.active_bonus_action_available = False
 
     modifier_text = f" + {modifier}" if modifier else ""
     progress.messages.extend(
         [
-            ("system", f"{player.name} drinks {item.name}."),
+            ("system", f"{actor.name} drinks {item.name}."),
             (
                 "system",
                 f"Healing: {dice_count}d{dice_sides}={dice_total}{modifier_text} "
@@ -103,7 +103,7 @@ def resolve_utilize_action(
                 "item_id": item.id,
                 "item_name": item.name,
                 "target_ref": creature_ref,
-                "target_label": player.name,
+                "target_label": actor.name,
                 "success": True,
                 "consumed": consumed,
                 "effect": "healing",

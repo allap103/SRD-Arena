@@ -51,7 +51,5 @@ def creatures_are_opponents(
     )
 
 
-def creature_for_ref(
-    state: EncounterState, player: Creature, creature_ref: CreatureRef
-) -> Creature:
+def creature_for_ref(state: EncounterState, creature_ref: CreatureRef) -> Creature:
     return state.creatures[creature_ref].creature

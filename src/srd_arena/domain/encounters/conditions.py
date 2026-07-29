@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .models import CreatureRef
-from ..creatures import Creature
 from ..creatures import is_two_sizes_smaller
 from ..effects.conditions import Status
 
@@ -99,14 +98,14 @@ def is_grappled(state: EncounterState, creature_ref: CreatureRef) -> bool:
     return bool(grappled_sources_for(state, creature_ref))
 
 
-def movement_cost_for(state: EncounterState, player: Creature, creature_ref: CreatureRef) -> int | None:
+def movement_cost_for(state: EncounterState, creature_ref: CreatureRef) -> int | None:
     if is_grappled(state, creature_ref):
         return None
     cost = 1
-    grappler_size = state._creature_size(player, creature_ref)
+    grappler_size = state._creature_size(creature_ref)
     for target_ref in grappling_targets_for(state, creature_ref):
         if not is_two_sizes_smaller(
-            state._creature_size(player, target_ref), grappler_size
+            state._creature_size(target_ref), grappler_size
         ):
             cost += 1
     return cost

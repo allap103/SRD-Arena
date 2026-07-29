@@ -74,9 +74,7 @@ class Session:
         self._ensure_encounter_state()
         encounter = self.current_encounter
         assert self.encounter_state is not None
-        self._encounter_actions = self.encounter_state.available_actions(
-            self.decision_creature
-        )
+        self._encounter_actions = self.encounter_state.available_actions()
         action_details = [
                 ActionView(
                     index=index,
@@ -183,7 +181,7 @@ class Session:
         selected_choice_text: str,
     ) -> TurnResult:
         assert self.encounter_state is not None
-        progress = self.encounter_state.apply_action(self.decision_creature, action)
+        progress = self.encounter_state.apply_action(action)
         messages = progress.messages
         transition = progress.transition
 
@@ -223,9 +221,7 @@ class Session:
         if not self.encounter_state.requires_automatic_advance():
             raise RuntimeError("AI advancement requested while no AI creature is active.")
 
-        progress = self.encounter_state.advance_until_next_decision(
-            self.decision_creature
-        )
+        progress = self.encounter_state.advance_until_next_decision()
         transition = progress.transition
 
         scene_changed = False

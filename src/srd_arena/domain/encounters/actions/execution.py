@@ -22,24 +22,28 @@ def _roll_die(sides: int) -> int:
 
 def apply_action(
     self: EncounterState,
-    player: Creature,
     action: EncounterAction,
 ) -> EncounterProgress:
     decision = self.current_decision()
+    actor = self.creatures[decision.creature_ref].creature
+    if action.creature_ref != decision.creature_ref:
+        raise ValueError(
+            f"Action '{action.id}' belongs to '{action.creature_ref}', "
+            f"not current decision actor '{decision.creature_ref}'."
+        )
     if self._creature_controller(decision.creature_ref) != "external":
         raise RuntimeError(
             "External action requested for a scripted-controlled creature."
         )
     if decision.kind == "reroll_dice":
-        return self._apply_damage_reroll_action(player, action, decision)
+        return self._apply_damage_reroll_action(actor, action, decision)
     if decision.kind == "reaction":
-        return self._apply_reaction_action(player, action, decision)
-    creature = self.creatures[decision.creature_ref].creature
-    return self._apply_creature_action(creature, action, decision)
+        return self._apply_reaction_action(actor, action, decision)
+    return self._apply_creature_action(action, decision)
 
 def resolve_grapple_action(
     self: EncounterState,
-    player: Creature,
+    actor: Creature,
     action: EncounterAction,
     progress: EncounterProgress,
     action_id: str,
@@ -73,7 +77,7 @@ def resolve_grapple_action(
     if not _is_adjacent(creature_state.position, target.position):
         progress.messages.append(("system", "The target is out of reach."))
         return
-    if not has_free_hand(player):
+    if not has_free_hand(actor):
         progress.messages.append(("system", "You need a free hand to grapple."))
         progress.events.append(
             self._event(
@@ -84,7 +88,7 @@ def resolve_grapple_action(
             )
         )
         return
-    if not can_grapple(target.creature.size, player.size):
+    if not can_grapple(target.creature.size, actor.size):
         progress.messages.append(("system", "The target is too large to grapple."))
         return
 
@@ -92,12 +96,12 @@ def resolve_grapple_action(
         self._consume_action(allow_magic=False)
         creature_state.attacks_remaining = max(
             0,
-            player.combat_profile.attacks_per_attack_action - 1,
+            actor.combat_profile.attacks_per_attack_action - 1,
         )
     else:
         creature_state.attacks_remaining -= 1
 
-    player_roll = resolve_d20(modifier=player.get_modifier(player.attributes.strength), roller=_roll_die)
+    player_roll = resolve_d20(modifier=actor.get_modifier(actor.attributes.strength), roller=_roll_die)
     target_roll = resolve_d20(modifier=target.creature.get_modifier(target.creature.attributes.strength), roller=_roll_die)
     success = player_roll.total >= target_roll.total
     target_label = self._creature_label(target_ref)
@@ -120,7 +124,7 @@ def resolve_grapple_action(
     )
 
     if not success:
-        progress.messages.append(("system", f"{player.name} fails to grapple {target_label}."))
+        progress.messages.append(("system", f"{actor.name} fails to grapple {target_label}."))
         progress.events.append(
             self._event(
                 "action_resolved",
@@ -131,7 +135,7 @@ def resolve_grapple_action(
         )
         return
 
-    progress.messages.append(("system", f"{player.name} grapples {target_label}."))
+    progress.messages.append(("system", f"{actor.name} grapples {target_label}."))
     progress.messages.append(("system", f"{target_label} is grappled."))
     self._apply_effects(
         [
@@ -141,7 +145,7 @@ def resolve_grapple_action(
                 data={
                     "condition": "grappled",
                     "source_ref": creature_ref,
-                    "source_label": player.name,
+                    "source_label": actor.name,
                 },
             ),
             EffectResult(

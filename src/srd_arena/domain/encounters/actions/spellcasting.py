@@ -23,13 +23,13 @@ def _roll_die(sides: int) -> int:
 
 def resolve_spell_action(
     self: EncounterState,
-    player: Creature,
+    actor: Creature,
     spell_value: str,
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
     creature_ref = self.current_decision().creature_ref
-    spellcasting = player.spellcasting
+    spellcasting = actor.spellcasting
     if spellcasting is None:
         progress.messages.append(("system", "You cannot cast spells."))
         progress.events.append(
@@ -67,10 +67,10 @@ def resolve_spell_action(
             )
         )
         return
-    area = self._spell_area(player, spell, target_ref=target_ref, aim_point=aim_point)
-    targets = self._spell_area_targets(player, spell, target_ref=target_ref, aim_point=aim_point)
+    area = self._spell_area(actor, spell, target_ref=target_ref, aim_point=aim_point)
+    targets = self._spell_area_targets(actor, spell, target_ref=target_ref, aim_point=aim_point)
     target = (
-        self._spell_target_context(player, target_ref)
+        self._spell_target_context(actor, target_ref)
         if target_ref is not None
         else targets[0]
         if targets
@@ -89,7 +89,7 @@ def resolve_spell_action(
         return
     result = _resolve_spell_action_impl(
         SpellActionContext(
-            creature=player,
+            creature=actor,
             spell=spell,
             target=target,
             current_round=self.round_number,

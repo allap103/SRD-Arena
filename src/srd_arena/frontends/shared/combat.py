@@ -1,10 +1,10 @@
-from ...domain.creatures import Creature
 from ...domain.encounters.behaviors import movement_squares
 from ...domain.encounters.encounter import EncounterState
 
 
-def render_encounter_text(encounter: EncounterState, actor: Creature) -> str:
+def render_encounter_text(encounter: EncounterState) -> str:
     actor_ref = encounter.current_decision().creature_ref
+    actor = encounter.active_creature_state.creature
     actor_position = encounter.active_position
     rows: list[str] = []
     for y in range(encounter.definition.grid.height):
@@ -34,7 +34,7 @@ def render_encounter_text(encounter: EncounterState, actor: Creature) -> str:
         if creature_ref != actor_ref
         and creature_state.is_alive
     ] or ["- No other creatures remaining."]
-    movement = encounter.active_movement_remaining_for(actor)
+    movement = encounter._active_movement_remaining()
     return "\n".join(
         [
             *rows,

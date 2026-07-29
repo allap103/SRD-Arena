@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creatures import Creature, can_grapple
+from ..creatures import can_grapple
 from ..geometry import Position
 from .actions.attack_resolution import attack_range_squares, has_free_hand
 from .actions.consumables import healing_potions_in_inventory
@@ -29,11 +29,10 @@ def _lower_initial(label: str) -> str:
 
 def available_creature_actions(
     self: EncounterState,
-    player: Creature,
     creature_ref: CreatureRef,
 ) -> list[EncounterAction]:
     enemy = self.creatures[creature_ref]
-    movement_cost = self._movement_cost_for(player, creature_ref)
+    movement_cost = self._movement_cost_for(creature_ref)
     if enemy.movement_remaining is None:
         enemy.movement_remaining = _movement_squares(enemy.creature)
     actions: list[EncounterAction] = []
@@ -71,7 +70,7 @@ def available_creature_actions(
                     cost=ActionCost(action=1),
                 )
             )
-        for target_ref in self._living_creature_refs(player):
+        for target_ref in self._living_creature_refs():
             if target_ref == creature_ref or not self._creatures_are_opponents(creature_ref, target_ref):
                 continue
             attack_reach_squares = attack_range_squares(
@@ -161,7 +160,6 @@ def available_creature_actions(
 
 def apply_creature_action(
     self: EncounterState,
-    player: Creature,
     action: EncounterAction,
     decision: DecisionFrame,
 ) -> EncounterProgress:
@@ -186,10 +184,7 @@ def apply_creature_action(
         direction = str(action.value)
         dx, dy = DIRECTION_DELTAS[direction]
         destination = Position(enemy.position.x + dx, enemy.position.y + dy)
-        movement_cost = self._movement_cost_for(
-            enemy.creature,
-            decision.creature_ref,
-        )
+        movement_cost = self._movement_cost_for(decision.creature_ref)
         if movement_cost is None:
             raise RuntimeError("Movement is unavailable for this creature.")
         remaining = max(
@@ -328,6 +323,6 @@ def apply_creature_action(
         return progress
     self._advance_turn()
     self._maybe_reset_reactions()
-    follow_up = self.advance_until_next_decision(player)
+    follow_up = self.advance_until_next_decision()
     self._merge_progress(progress, follow_up)
     return progress

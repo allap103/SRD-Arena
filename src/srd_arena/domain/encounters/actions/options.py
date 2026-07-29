@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from ..encounter import EncounterState
 
 
-def available_actions(self: EncounterState, player: Creature) -> list[EncounterAction]:
+def available_actions(self: EncounterState) -> list[EncounterAction]:
     decision = self.current_decision()
     if self._creature_controller(decision.creature_ref) != "external":
         return []
@@ -34,7 +34,7 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
         return self._reroll_damage_actions()
     if decision.kind == "reaction":
         return self._reaction_actions()
-    return self._available_creature_actions(player, decision.creature_ref)
+    return self._available_creature_actions(decision.creature_ref)
 
 def available_feature_actions(
     self: EncounterState,
@@ -65,9 +65,9 @@ def available_feature_actions(
 
 def available_spell_actions(
     self: EncounterState,
-    player: Creature,
+    actor: Creature,
 ) -> list[EncounterAction]:
-    spellcasting = player.spellcasting
+    spellcasting = actor.spellcasting
     creature_ref = self.current_decision().creature_ref
     if spellcasting is None:
         return []
@@ -77,7 +77,7 @@ def available_spell_actions(
         if self._spell_cast_block_reason(spellcasting, spell, cost) is not None:
             continue
         if spell.geometry_mode in {"directional_area", "point_area"}:
-            if not self._spell_action_targets(player, spell):
+            if not self._spell_action_targets(actor, spell):
                 if spell.geometry_mode == "directional_area":
                     continue
             actions.append(
@@ -91,7 +91,7 @@ def available_spell_actions(
                 )
             )
             continue
-        for target in self._spell_action_targets(player, spell):
+        for target in self._spell_action_targets(actor, spell):
             actions.append(
                 EncounterAction(
                     spell_action_label(
@@ -110,14 +110,14 @@ def available_spell_actions(
     return actions
 
 
-def feature_action_available(self: EncounterState, player: Creature, definition) -> bool:
+def feature_action_available(self: EncounterState, actor: Creature, definition) -> bool:
     if definition.economy == "bonus_action" and not self.active_bonus_action_available:
         return False
     if definition.economy == "action" and self.active_actions_remaining <= 0:
         return False
     if definition.economy == "reaction" and not self.active_reaction_available:
         return False
-    return player.feature_uses_remaining.get(definition.feature_id, 0) > 0
+    return actor.feature_uses_remaining.get(definition.feature_id, 0) > 0
 
 
 def spell_action_cost(self: EncounterState, spell: Spell) -> ActionCost:
@@ -155,13 +155,13 @@ def spell_range_squares_for(self: EncounterState, spell: Spell, creature: Creatu
 
 def spell_action_targets(
     self: EncounterState,
-    player: Creature,
+    actor: Creature,
     spell: Spell,
 ) -> list[SpellTargetContext]:
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
     if spell.geometry_mode == "point_area":
-        max_range = self._spell_range_squares(spell, player)
+        max_range = self._spell_range_squares(spell, actor)
         if max_range is None:
             return []
         return [
@@ -170,17 +170,17 @@ def spell_action_targets(
             if target_state.is_alive
             and self._creatures_are_opponents(creature_ref, target_ref)
             and _chebyshev_distance(creature_position, target_state.position) <= max_range
-            and (target := self._spell_target_context(player, target_ref)) is not None
+            and (target := self._spell_target_context(actor, target_ref)) is not None
         ]
     if self._spell_targets_self_only(spell):
-        target = self._spell_target_context(player, creature_ref)
+        target = self._spell_target_context(actor, creature_ref)
         if target is None:
             return []
         if any(condition in spell.removable_conditions for condition in target.target_conditions):
             return [target]
         return []
 
-    max_range = self._spell_range_squares(spell, player)
+    max_range = self._spell_range_squares(spell, actor)
     targets: list[SpellTargetContext] = []
     for target_ref, target_state in self.creatures.items():
         if not target_state.is_alive or not self._creatures_are_opponents(
@@ -193,7 +193,7 @@ def spell_action_targets(
             target_state.position,
         ) > max_range:
             continue
-        target = self._spell_target_context(player, target_ref)
+        target = self._spell_target_context(actor, target_ref)
         if target is not None:
             targets.append(target)
     return targets
@@ -201,18 +201,18 @@ def spell_action_targets(
 
 def spell_area_targets(
     self: EncounterState,
-    player: Creature,
+    actor: Creature,
     spell: Spell,
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
 ) -> tuple[SpellTargetContext, ...]:
-    area = self._spell_area(player, spell, target_ref=target_ref, aim_point=aim_point)
+    area = self._spell_area(actor, spell, target_ref=target_ref, aim_point=aim_point)
     if area is None:
         if target_ref is None:
             return ()
-        target = self._spell_target_context(player, target_ref)
+        target = self._spell_target_context(actor, target_ref)
         return (target,) if target is not None else ()
-    return tuple(self._targets_in_area(player, area))
+    return tuple(self._targets_in_area(actor, area))
 
 
 def spend_spell_resources(
@@ -234,7 +234,7 @@ def spend_spell_resources(
 
 def spell_area(
     self: EncounterState,
-    player: Creature,
+    actor: Creature,
     spell: Spell,
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
@@ -247,7 +247,7 @@ def spell_area(
         radius_feet = spell.area_size_feet
         if radius_feet is None:
             return None
-        radius_squares = max(1, radius_feet // player.attributes.movement.feet_per_square)
+        radius_squares = max(1, radius_feet // actor.attributes.movement.feet_per_square)
         origin = Position(int(aim_point[0]), int(aim_point[1]))
         return build_radius_area(origin, radius_squares, self.definition.grid)
     if spell.geometry_mode != "directional_area":
@@ -264,14 +264,14 @@ def spell_area(
     else:
         if target_ref is None:
             return None
-        target = self._spell_target_context(player, target_ref)
+        target = self._spell_target_context(actor, target_ref)
         if target is None or target_ref == creature_ref:
             return None
         direction = vector_between_positions(
             creature_position,
             self._creature_position(target_ref),
         )
-    length = self._spell_range_squares(spell, player)
+    length = self._spell_range_squares(spell, actor)
     if length is None:
         return None
     coverage_threshold = (
@@ -289,7 +289,7 @@ def spell_area(
 
 def targets_in_area(
     self: EncounterState,
-    player: Creature,
+    actor: Creature,
     area: AreaOfEffect,
 ) -> list[SpellTargetContext]:
     occupied_cells = {(cell.x, cell.y) for cell in area.cells}
@@ -299,7 +299,7 @@ def targets_in_area(
             continue
         if (target_state.position.x, target_state.position.y) not in occupied_cells:
             continue
-        target = self._spell_target_context(player, target_ref)
+        target = self._spell_target_context(actor, target_ref)
         if target is not None:
             targets.append(target)
     return targets
@@ -307,7 +307,7 @@ def targets_in_area(
 
 def spell_target_context(
     self: EncounterState,
-    player: Creature,
+    actor: Creature,
     target_ref: str,
 ) -> SpellTargetContext | None:
     target_state = self.creatures.get(target_ref)

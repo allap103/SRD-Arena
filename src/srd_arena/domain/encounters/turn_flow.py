@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creatures import Creature
 from ..creatures.stat_block_actions import AttackActionDefinition
 from ..geometry import Position
 from .actions.attack_resolution import (
@@ -43,7 +42,6 @@ class TurnEngine:
     def advance_until_next_decision(
         self,
         state: EncounterState,
-        player: Creature,
     ) -> EncounterProgress:
         progress = EncounterProgress()
         automatic_actions_resolved = 0
@@ -68,7 +66,6 @@ class TurnEngine:
             )
             completed_turn, enemy_progress, actions_resolved = self.run_creature_turn(
                 state,
-                player,
                 creature_ref,
                 action_limit=remaining_limit,
             )
@@ -93,7 +90,6 @@ class TurnEngine:
     def run_creature_turn(
         self,
         state: EncounterState,
-        player: Creature,
         creature_ref: CreatureRef,
         *,
         action_limit: int | None = None,
@@ -104,7 +100,7 @@ class TurnEngine:
             return True, progress, 0
         target_refs = [
             target_ref
-            for target_ref in state._living_creature_refs(player)
+            for target_ref in state._living_creature_refs()
             if state._creatures_are_opponents(creature_ref, target_ref)
         ]
         if not target_refs:
@@ -166,7 +162,7 @@ class TurnEngine:
             )
 
             if command.kind == "move":
-                movement_cost = state._movement_cost_for(player, creature_ref)
+                movement_cost = state._movement_cost_for(creature_ref)
                 if movement_cost is None or enemy.movement_remaining < movement_cost:
                     break
                 direction = str(command.value)
@@ -432,12 +428,13 @@ class TurnEngine:
                 state.turn_index = 0
                 state.round.advance()
 
-    def active_movement_remaining(self, state: EncounterState, player: Creature) -> int:
+    def active_movement_remaining(self, state: EncounterState) -> int:
         creature_ref = state.current_decision().creature_ref
         if state._is_grappled(creature_ref):
             return 0
         if state.active_movement_remaining is None:
-            state.active_movement_remaining = _movement_squares(player)
+            actor = state.creatures[creature_ref].creature
+            state.active_movement_remaining = _movement_squares(actor)
         return state.active_movement_remaining
 
     def turn_count(self, state: EncounterState) -> int:

@@ -44,7 +44,7 @@ from .models import (
     TurnState,
     PendingAction,
 )
-from .actions.player import (
+from .actions.execution import (
     apply_action as _apply_action_impl,
     resolve_grapple_action as _resolve_grapple_action_impl,
 )
@@ -301,17 +301,14 @@ class EncounterState(EncounterStateData):
             for condition in self.conditions_for(creature_ref)
         )
 
-    def _attack_roll_mode_for(self, *args) -> D20RollMode:
-        if len(args) == 6:
-            _player, attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions = args
-        elif len(args) == 5:
-            attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions = args
-        else:
-            raise TypeError(
-                "_attack_roll_mode_for expects either "
-                "(player, attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions) "
-                "or (attacker_ref, target_ref, attack_type, attacker_position, nearby_opponent_positions)."
-            )
+    def _attack_roll_mode_for(
+        self,
+        attacker_ref: CreatureRef,
+        target_ref: CreatureRef,
+        attack_type: str,
+        attacker_position: Position | None,
+        nearby_opponent_positions: tuple[Position, ...],
+    ) -> D20RollMode:
         modes: list[D20RollMode] = []
         base_mode = _attack_roll_mode(
             attack_type,
@@ -409,34 +406,34 @@ class EncounterState(EncounterStateData):
 
     def _apply_damage_reroll_action(
         self,
-        player: Creature,
+        actor: Creature,
         action: EncounterAction,
         decision: DecisionFrame,
     ) -> EncounterProgress:
         return self.reaction_engine.apply_damage_reroll_action(
             self,
-            player,
+            actor,
             action,
             decision,
         )
 
     def _finalize_pending_attack(
         self,
-        player: Creature,
+        actor: Creature,
         progress: EncounterProgress,
         decision: DecisionFrame,
     ) -> None:
-        self.reaction_engine.finalize_pending_attack(self, player, progress, decision)
+        self.reaction_engine.finalize_pending_attack(self, actor, progress, decision)
 
     def _complete_parent_reaction(
         self,
-        player: Creature,
+        actor: Creature,
         progress: EncounterProgress,
         action_id: str,
     ) -> None:
         self.reaction_engine.complete_parent_reaction(
             self,
-            player,
+            actor,
             progress,
             action_id,
         )
@@ -459,28 +456,28 @@ class EncounterState(EncounterStateData):
             self.active_magic_actions_remaining -= 1
         self.active_actions_remaining -= 1
 
-    def advance_until_next_decision(self, player: Creature) -> EncounterProgress:
-        return self.turn_engine.advance_until_next_decision(self, player)
+    def advance_until_next_decision(self) -> EncounterProgress:
+        return self.turn_engine.advance_until_next_decision(self)
 
     def _apply_reaction_action(
         self,
-        player: Creature,
+        actor: Creature,
         action: EncounterAction,
         decision: DecisionFrame,
     ) -> EncounterProgress:
         return self.reaction_engine.apply_reaction_action(
             self,
-            player,
+            actor,
             action,
             decision,
         )
 
     def _resume_pending_action(
         self,
-        player: Creature,
+        actor: Creature,
         progress: EncounterProgress,
     ) -> None:
-        self.reaction_engine.resume_pending_action(self, player, progress)
+        self.reaction_engine.resume_pending_action(self, actor, progress)
 
     def _reaction_actions(self) -> list[EncounterAction]:
         return self.reaction_engine.reaction_actions(self)
@@ -507,8 +504,8 @@ class EncounterState(EncounterStateData):
     def _normalize_turn(self) -> None:
         self.turn_engine.normalize_turn(self)
 
-    def _active_movement_remaining(self, player: Creature) -> int:
-        return self.active_movement_remaining_for(player)
+    def _active_movement_remaining(self) -> int:
+        return self.active_movement_remaining_for()
 
     active_movement_remaining_for = _active_movement_remaining_query
 
@@ -567,7 +564,7 @@ class EncounterState(EncounterStateData):
             f"({creature_state.creature_id})"
         )
 
-    def _living_creature_refs(self, player: Creature) -> list[CreatureRef]:
+    def _living_creature_refs(self) -> list[CreatureRef]:
         return [
             creature_ref
             for creature_ref, creature_state in self.creatures.items()
@@ -593,7 +590,7 @@ class EncounterState(EncounterStateData):
                 return False
         return True
 
-    def _creature_size(self, player: Creature, creature_ref: CreatureRef) -> str:
+    def _creature_size(self, creature_ref: CreatureRef) -> str:
         return self.creatures[creature_ref].creature.size
 
     _condition_sources_for = _condition_sources_for_impl

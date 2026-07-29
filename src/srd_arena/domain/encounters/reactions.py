@@ -213,7 +213,7 @@ class ReactionEngine:
     def apply_damage_reroll_action(
         self,
         state: EncounterState,
-        player: Creature,
+        actor: Creature,
         action: EncounterAction,
         decision: DecisionFrame,
     ) -> EncounterProgress:
@@ -272,13 +272,13 @@ class ReactionEngine:
         elif action.kind != "accept_roll":
             raise ValueError(f"Unsupported damage reroll action: {action.kind}")
 
-        self.finalize_pending_attack(state, player, progress, decision)
+        self.finalize_pending_attack(state, actor, progress, decision)
         return progress
 
     def finalize_pending_attack(
         self,
         state: EncounterState,
-        player: Creature,
+        actor: Creature,
         progress: EncounterProgress,
         decision: DecisionFrame,
     ) -> None:
@@ -335,12 +335,12 @@ class ReactionEngine:
             pending.continuation == "complete_reaction"
             and progress.transition is None
         ):
-            self.complete_parent_reaction(state, player, progress, pending.action_id)
+            self.complete_parent_reaction(state, actor, progress, pending.action_id)
 
     def complete_parent_reaction(
         self,
         state: EncounterState,
-        player: Creature,
+        actor: Creature,
         progress: EncounterProgress,
         action_id: str,
     ) -> None:
@@ -359,11 +359,11 @@ class ReactionEngine:
                 action_id=action_id,
             )
         )
-        self.resume_pending_action(state, player, progress)
+        self.resume_pending_action(state, actor, progress)
         progress.transition = state.turn_engine.check_transition(state)
         if progress.transition is not None:
             return
-        follow_up = state.turn_engine.advance_until_next_decision(state, player)
+        follow_up = state.turn_engine.advance_until_next_decision(state)
         state._merge_progress(progress, follow_up)
 
     def pending_attack_event_data(self, state: EncounterState) -> dict[str, object]:
@@ -399,7 +399,7 @@ class ReactionEngine:
     def apply_reaction_action(
         self,
         state: EncounterState,
-        player: Creature,
+        actor: Creature,
         action: EncounterAction,
         decision: DecisionFrame,
     ) -> EncounterProgress:
@@ -512,19 +512,19 @@ class ReactionEngine:
             )
         )
 
-        self.resume_pending_action(state, player, progress)
+        self.resume_pending_action(state, actor, progress)
         progress.transition = state.turn_engine.check_transition(state)
         if progress.transition is not None:
             return progress
 
-        follow_up = state.turn_engine.advance_until_next_decision(state, player)
+        follow_up = state.turn_engine.advance_until_next_decision(state)
         state._merge_progress(progress, follow_up)
         return progress
 
     def resume_pending_action(
         self,
         state: EncounterState,
-        player: Creature,
+        actor: Creature,
         progress: EncounterProgress,
     ) -> None:
         pending_action = state.pending_action
@@ -574,7 +574,6 @@ class ReactionEngine:
             return
         completed_turn, resumed, _ = state.turn_engine.run_creature_turn(
             state,
-            player,
             pending_action.creature_ref,
         )
         state._merge_progress(progress, resumed)
