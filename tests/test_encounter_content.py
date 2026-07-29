@@ -202,6 +202,33 @@ def test_encounter_schema_rejects_more_than_five_teams() -> None:
         )
 
 
+def test_encounter_schema_rejects_duplicate_creature_ids() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="Encounter creature IDs must be unique: duplicate",
+    ):
+        EncounterDefinitionSchema.model_validate(
+            {
+                "id": "duplicate_creatures",
+                "grid": {"width": 1, "height": 1},
+                "creatures": [
+                    {
+                        "id": "duplicate",
+                        "name": "First",
+                        "start": {"x": 0, "y": 0},
+                        "team_id": "team",
+                    },
+                    {
+                        "id": "duplicate",
+                        "name": "Second",
+                        "start": {"x": 0, "y": 0},
+                        "team_id": "team",
+                    },
+                ],
+            }
+        )
+
+
 def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
     scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
     creature_path = tmp_path / "fighter_level_five.json"

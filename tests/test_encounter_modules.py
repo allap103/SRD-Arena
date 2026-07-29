@@ -27,7 +27,7 @@ def _status(name: str, source: str, target: str) -> Status:
 
 
 def test_apply_status_refreshes_matching_condition_without_duplication() -> None:
-    original = _status("blinded", "participant:0", "player")
+    original = _status("blinded", "goblin_1", "player")
     refreshed = Status(
         **{
             **original.__dict__,
@@ -42,16 +42,16 @@ def test_apply_status_refreshes_matching_condition_without_duplication() -> None
 
 
 def test_relational_statuses_from_different_sources_do_not_replace_each_other() -> None:
-    first = _status("grappled", "participant:0", "player")
-    second = _status("grappled", "participant:1", "player")
+    first = _status("grappled", "goblin_1", "player")
+    second = _status("grappled", "goblin_2", "player")
 
     assert status_replaces(first, second) is False
 
 
 def test_removing_grappled_also_removes_matching_grappling_status() -> None:
-    grappled = _status("grappled", "participant:0", "player")
-    grappling = _status("grappling", "player", "participant:0")
-    unrelated = _status("blinded", "participant:1", "player")
+    grappled = _status("grappled", "goblin_1", "player")
+    grappling = _status("grappling", "player", "goblin_1")
+    unrelated = _status("blinded", "goblin_2", "player")
     state = SimpleNamespace(conditions=[grappled, grappling, unrelated])
 
     remove_status(state, "player", "grappled")
@@ -60,10 +60,10 @@ def test_removing_grappled_also_removes_matching_grappling_status() -> None:
 
 
 def test_removing_one_grapple_source_preserves_other_grapples() -> None:
-    first_grappled = _status("grappled", "participant:0", "player")
-    first_grappling = _status("grappling", "player", "participant:0")
-    second_grappled = _status("grappled", "participant:1", "player")
-    second_grappling = _status("grappling", "player", "participant:1")
+    first_grappled = _status("grappled", "goblin_1", "player")
+    first_grappling = _status("grappling", "player", "goblin_1")
+    second_grappled = _status("grappled", "goblin_2", "player")
+    second_grappling = _status("grappling", "player", "goblin_2")
     state = SimpleNamespace(
         conditions=[
             first_grappled,
@@ -77,7 +77,7 @@ def test_removing_one_grapple_source_preserves_other_grapples() -> None:
         state,
         "player",
         "grappled",
-        "participant:0",
+        "goblin_1",
     )
 
     assert state.conditions == [second_grappled, second_grappling]
@@ -86,7 +86,7 @@ def test_removing_one_grapple_source_preserves_other_grapples() -> None:
 def test_defeated_creature_releases_all_relational_grapples() -> None:
     grappled = _status("grappled", "aboleth", "player")
     grappling = _status("grappling", "player", "aboleth")
-    unrelated = _status("blinded", "participant:1", "player")
+    unrelated = _status("blinded", "goblin_2", "player")
     state = SimpleNamespace(conditions=[grappled, grappling, unrelated])
 
     remove_relational_statuses_for_creature(state, "aboleth")
@@ -98,7 +98,7 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
     state = SimpleNamespace(
         creatures={
             "player": SimpleNamespace(creature_id="player"),
-            "participant:0": SimpleNamespace(creature_id="goblin"),
+            "goblin_1": SimpleNamespace(creature_id="goblin"),
         },
         definition=SimpleNamespace(
             participants=[],
@@ -110,12 +110,12 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
     )
 
     assert creature_team_id(state, "player") == "heroes"
-    assert creature_team_id(state, "participant:0") == "monsters"
-    assert creature_controller(state, "participant:0") == "scripted"
-    assert creatures_are_opponents(state, "player", "participant:0") is True
+    assert creature_team_id(state, "goblin_1") == "monsters"
+    assert creature_controller(state, "goblin_1") == "scripted"
+    assert creatures_are_opponents(state, "player", "goblin_1") is True
 def test_authored_creature_controller_overrides_team_default() -> None:
     state = SimpleNamespace(
-        creatures={"participant:0": SimpleNamespace(creature_id="goblin")},
+        creatures={"goblin_1": SimpleNamespace(creature_id="goblin")},
         definition=SimpleNamespace(
             participants=[
                 SimpleNamespace(creature_id="goblin", controller="external"),
@@ -126,4 +126,4 @@ def test_authored_creature_controller_overrides_team_default() -> None:
         ),
     )
 
-    assert creature_controller(state, "participant:0") == "external"
+    assert creature_controller(state, "goblin_1") == "external"

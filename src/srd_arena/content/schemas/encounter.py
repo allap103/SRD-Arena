@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .creature import CreatureSchema
 
@@ -52,6 +52,21 @@ class EncounterDefinitionSchema(BaseModel):
     grid: GridSchema
     creatures: list[EncounterCreatureSchema] = Field(default_factory=list)
     teams: list[EncounterTeamSchema] = Field(default_factory=list, max_length=5)
+
+    @model_validator(mode="after")
+    def require_unique_creature_ids(self) -> "EncounterDefinitionSchema":
+        creature_ids = [creature.id for creature in self.creatures]
+        duplicate_ids = sorted(
+            creature_id
+            for creature_id in set(creature_ids)
+            if creature_ids.count(creature_id) > 1
+        )
+        if duplicate_ids:
+            raise ValueError(
+                "Encounter creature IDs must be unique: "
+                + ", ".join(duplicate_ids)
+            )
+        return self
 
 
 EncounterDefinitionSchema.model_rebuild()

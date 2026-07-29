@@ -31,7 +31,7 @@ class EncounterAction:
     kind: str
     value: str | int | None = None
     id: str = ""
-    creature_ref: CreatureRef = "player"
+    creature_ref: CreatureRef | None = None
     source_trigger_id: str | None = None
     cost: ActionCost = field(default_factory=ActionCost)
 
@@ -204,7 +204,7 @@ class EncounterStateData:
     encounter_id: str
     definition: EncounterDefinition
     creatures: dict[CreatureRef, EncounterCreatureState]
-    primary_creature_ref: CreatureRef = "player"
+    primary_creature_ref: CreatureRef
     automatic_action_limit: int | None = None
     round: RoundState = field(default_factory=RoundState)
     turn: TurnState = field(default_factory=TurnState)
@@ -212,7 +212,7 @@ class EncounterStateData:
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
-    initiative_order: list[CreatureRef] = field(default_factory=lambda: ["player"])
+    initiative_order: list[CreatureRef] = field(default_factory=list)
     initiative_entries: list[InitiativeEntry] = field(default_factory=list)
     conditions: list[Status] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)

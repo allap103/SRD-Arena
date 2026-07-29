@@ -56,7 +56,6 @@ from .creature_control import (
     available_creature_actions as _available_creature_actions_impl,
 )
 from .reactions import REACTION_ENGINE, ReactionEngine
-from .refs import participant_ref as _participant_ref
 from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
@@ -251,37 +250,26 @@ class EncounterState(EncounterStateData):
                 "externally controlled creature."
             )
         primary_participant = external_participants[0]
-        primary_creature = creature_templates[primary_participant.creature_id]
-        creatures = {
-            "player": EncounterCreatureState(
-                creature_id=primary_creature.id,
-                creature=primary_creature,
-                position=Position(
-                    primary_participant.start.x,
-                    primary_participant.start.y,
-                ),
-                behavior=deepcopy(
-                    primary_participant.behavior or EncounterBehavior(type="wait")
-                ),
-            )
-        }
-        participant_index = 0
+        creatures: dict[CreatureRef, EncounterCreatureState] = {}
         for participant in definition.participants:
-            if participant is primary_participant:
-                continue
-            creatures[_participant_ref(participant_index)] = EncounterCreatureState(
+            creature = creature_templates[participant.creature_id]
+            creatures[participant.creature_id] = EncounterCreatureState(
                 creature_id=participant.creature_id,
-                creature=deepcopy(creature_templates[participant.creature_id]),
+                creature=(
+                    creature
+                    if participant is primary_participant
+                    else deepcopy(creature)
+                ),
                 position=Position(participant.start.x, participant.start.y),
                 behavior=deepcopy(
                     participant.behavior or EncounterBehavior(type="wait")
                 ),
             )
-            participant_index += 1
         state = cls(
             encounter_id=encounter_id,
             definition=definition,
             creatures=creatures,
+            primary_creature_ref=primary_participant.creature_id,
             round=RoundState(),
             turn=TurnState(),
             interrupts=InterruptState(),

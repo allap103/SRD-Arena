@@ -105,7 +105,7 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
     attack_index = next(
         action.index
         for action in session.get_scene_view().action_details
-        if action.kind == "attack" and action.value == "participant:0"
+        if action.kind == "attack" and action.value == "goblin_1"
     )
 
     result = session.choose(attack_index)
@@ -122,6 +122,6 @@ def _adjacent_tactical_encounter():
     assert session.encounter_state is not None
     session.encounter_state.primary_position.x = 4
     session.encounter_state.primary_position.y = 3
-    session.encounter_state.creatures["participant:0"].position.x = 4
-    session.encounter_state.creatures["participant:0"].position.y = 2
+    session.encounter_state.creatures["goblin_1"].position.x = 4
+    session.encounter_state.creatures["goblin_1"].position.y = 2
     return session
