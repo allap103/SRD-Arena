@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Generator
+from typing import Any, Generator
 
 from ..creatures import Creature
 from ..equipment import Item
@@ -52,7 +52,7 @@ class CombatEvent:
     actor_ref: CreatureRef | None = None
     frame_id: str | None = None
     action_id: str | None = None
-    data: dict[str, object] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from .dice import (
     CheckResult,
@@ -23,7 +23,7 @@ Ability = Literal[
 
 
 class SavingThrowCreature(Protocol):
-    attributes: object
+    attributes: Any
 
     def get_modifier(self, attribute_value: int) -> int: ...
 

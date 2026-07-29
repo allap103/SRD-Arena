@@ -1,4 +1,5 @@
 from pathlib import Path
+# mypy: disable-error-code="assignment,method-assign,return-value,index,arg-type"
 from types import SimpleNamespace
 
 import pytest

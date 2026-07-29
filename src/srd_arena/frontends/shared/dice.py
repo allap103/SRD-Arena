@@ -106,7 +106,11 @@ def _attack_roll_view(event: CombatEvent) -> RollView | None:
     modifier = detail.get("modifier")
     total = detail.get("total")
     target = detail.get("target_ac")
-    if not all(isinstance(value, int) for value in (die, modifier, total)):
+    if (
+        not isinstance(die, int)
+        or not isinstance(modifier, int)
+        or not isinstance(total, int)
+    ):
         return None
     attacker = event.data.get("attacker_label")
     target_label = event.data.get("target_label")
@@ -157,7 +161,11 @@ def _saving_throw_roll_view(
     success = detail.get("success")
     target_label = detail.get("target_label")
     ability = detail.get("ability")
-    if not all(isinstance(value, int) for value in (die, modifier, total)):
+    if (
+        not isinstance(die, int)
+        or not isinstance(modifier, int)
+        or not isinstance(total, int)
+    ):
         return None
     label = "Saving Throw"
     if isinstance(target_label, str) and isinstance(ability, str):

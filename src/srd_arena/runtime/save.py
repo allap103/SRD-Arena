@@ -524,9 +524,9 @@ def _restore_encounter_state(
         initiative_entries=[
             InitiativeEntrySnapshot(
                 actor_ref=str(entry["actor_ref"]),
-                roll=int(entry["roll"]),
-                modifier=int(entry["modifier"]),
-                total=int(entry["total"]),
+                roll=_required_int(entry, "roll"),
+                modifier=_required_int(entry, "modifier"),
+                total=_required_int(entry, "total"),
             )
             for entry in state.initiative_entries
         ],
@@ -641,3 +641,10 @@ def _write_json_atomically(path: Path, data: dict[str, JsonValue]) -> None:
     except Exception:
         temp_path.unlink(missing_ok=True)
         raise
+
+
+def _required_int(payload: dict[str, object], key: str) -> int:
+    value = payload.get(key)
+    if not isinstance(value, int):
+        raise ValueError(f"{key} must be an integer.")
+    return value

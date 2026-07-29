@@ -3,12 +3,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 import re
+from typing import Any, cast
 
 from ...creatures import Creature
 from ...effects.results import EffectResult
 from ...geometry import AreaOfEffect, serialize_area
 from ...rolls.dice import resolve_dice
-from ...rolls.saving_throws import resolve_saving_throw
+from ...rolls.saving_throws import Ability, resolve_saving_throw
 from ..feature_rules.types import CapabilityActionResult
 from .definitions import Spell
 
@@ -55,11 +56,11 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
     spell = context.spell
     assert creature.spellcasting is not None
     assert context.roller is not None
-    ability = (
+    ability = cast(Ability, (
         spell.saving_throw_abilities[0]
         if spell.saving_throw_abilities
         else "constitution"
-    )
+    ))
     targets = context.targets or (context.target,)
     messages = [("system", f"{creature.name} casts {spell.name} on {context.target.target_label}.")]
     effects: list[EffectResult] = []
@@ -197,16 +198,16 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
     assert context.roller is not None
     damage_dice = spell.damage_dice or "3d6"
     damage_count, damage_sides = _parse_damage_dice(damage_dice)
-    ability = (
+    ability = cast(Ability, (
         spell.saving_throw_abilities[0]
         if spell.saving_throw_abilities
         else "dexterity"
-    )
+    ))
     damage_type = spell.damage_inflict[0] if spell.damage_inflict else "damage"
     targets = context.targets or (context.target,)
     messages = [("system", f"{creature.name} casts {spell.name}.")]
     save_details: list[dict[str, object]] = []
-    damage_details: list[dict[str, object]] = []
+    damage_details: list[dict[str, Any]] = []
 
     for target in targets:
         save_result = resolve_saving_throw(
@@ -311,16 +312,16 @@ def _resolve_fireball(context: SpellActionContext) -> CapabilityActionResult:
     assert context.roller is not None
     damage_dice = spell.damage_dice or "8d6"
     damage_count, damage_sides = _parse_damage_dice(damage_dice)
-    ability = (
+    ability = cast(Ability, (
         spell.saving_throw_abilities[0]
         if spell.saving_throw_abilities
         else "dexterity"
-    )
+    ))
     damage_type = spell.damage_inflict[0] if spell.damage_inflict else "damage"
     targets = context.targets or (context.target,)
     messages = [("system", f"{creature.name} casts {spell.name}.")]
     save_details: list[dict[str, object]] = []
-    damage_details: list[dict[str, object]] = []
+    damage_details: list[dict[str, Any]] = []
     damage_roll = resolve_dice(
         damage_count,
         damage_sides,

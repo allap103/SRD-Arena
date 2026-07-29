@@ -1,7 +1,9 @@
 from __future__ import annotations
+# mypy: disable-error-code="misc"
 
 import sys
 from pathlib import Path
+from typing import cast
 
 from ...content.scenarios import ScenarioInfo, list_scenarios
 from ...runtime.scenario import Scenario
@@ -104,7 +106,7 @@ def run_pyside6_app(
     show_encounter_json: bool = False,
 ) -> None:
     _require_pyside6()
-    app = QApplication.instance() or QApplication(sys.argv)
+    app = cast(QApplication, QApplication.instance()) if QApplication.instance() else QApplication(sys.argv)
     apply_fantasy_theme(app)
     window = (
         GameWindow(

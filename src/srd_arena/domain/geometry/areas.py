@@ -82,13 +82,18 @@ def build_directional_area(
     *,
     coverage_threshold: float | None = None,
 ) -> AreaOfEffect | None:
+    threshold = (
+        DEFAULT_CELL_COVERAGE_THRESHOLD
+        if coverage_threshold is None
+        else coverage_threshold
+    )
     if shape == "cone":
         return build_cone_area_from_vector(
             origin,
             direction,
             size_squares,
             grid,
-            coverage_threshold=coverage_threshold,
+            coverage_threshold=threshold,
         )
     if shape == "line":
         return build_line_area_from_vector(
@@ -96,7 +101,7 @@ def build_directional_area(
             direction,
             size_squares,
             grid,
-            coverage_threshold=coverage_threshold,
+            coverage_threshold=threshold,
         )
     if shape == "cube":
         return build_cube_area_from_vector(
@@ -104,7 +109,7 @@ def build_directional_area(
             direction,
             size_squares,
             grid,
-            coverage_threshold=coverage_threshold,
+            coverage_threshold=threshold,
         )
     return None
 

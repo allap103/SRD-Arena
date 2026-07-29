@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from ..creatures import Creature
 from ..effects.conditions import Status
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .encounter import EncounterState
 
 
-def export_decision(self: EncounterState) -> dict[str, object]:
+def export_decision(self: EncounterState) -> dict[str, Any]:
     decision = self.current_decision()
     payload: dict[str, object] = {
         "frame_id": decision.id,
@@ -27,7 +27,7 @@ def export_decision(self: EncounterState) -> dict[str, object]:
     return payload
 
 
-def export_state(self: EncounterState, player: Creature) -> dict[str, object]:
+def export_state(self: EncounterState, player: Creature) -> dict[str, Any]:
     active_creature_ref = self.current_decision().actor_ref
     return {
         "encounter_id": self.encounter_id,

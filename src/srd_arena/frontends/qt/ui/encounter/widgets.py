@@ -1,4 +1,5 @@
 from __future__ import annotations
+# mypy: disable-error-code="misc,no-redef"
 
 from pathlib import Path
 

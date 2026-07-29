@@ -452,9 +452,9 @@ def _build_spell(
             else {}
         ),
         saving_throw_abilities=tuple(
-            _normalize_save_ability(value)
+            ability
             for value in raw.get("savingThrow", [])
-            if _normalize_save_ability(value) is not None
+            if (ability := _normalize_save_ability(value)) is not None
         ),
         condition_inflict=tuple(
             value for value in raw.get("conditionInflict", []) if isinstance(value, str)

@@ -107,6 +107,8 @@ class Scenario:
                 else encounter_id
             )
             encounter = self.encounters[encounter_id]
+            assert encounter.victory is not None
+            assert encounter.defeat is not None
             encounter.victory.next_encounter_id = next_encounter_id
             encounter.defeat.next_encounter_id = encounter_id
 

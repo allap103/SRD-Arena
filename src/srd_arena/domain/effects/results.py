@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -8,4 +9,4 @@ class EffectResult:
     kind: str
     target_ref: str
     success: bool = True
-    data: dict[str, object] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)

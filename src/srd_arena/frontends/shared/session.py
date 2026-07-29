@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from ...domain.actions.feature_actions import FeatureActionDefinition
 from .models import ActionView, SceneView
@@ -225,7 +226,7 @@ def _build_unavailable_feature_action(definition: FeatureActionDefinition) -> Ac
     )
 
 
-def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryView:
+def _build_resource_summary(combat_state: dict[str, Any]) -> ResourceSummaryView:
     player_state = combat_state["player"]
     decision = combat_state["decision"]
     actor_ref = decision["actor_ref"]
@@ -281,7 +282,7 @@ def _build_resource_summary(combat_state: dict[str, object]) -> ResourceSummaryV
     )
 
 
-def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
+def _build_battlefield_view(combat_state: dict[str, Any]) -> BattlefieldView:
     decision = combat_state["decision"]
     creatures = [
         BattlefieldCreatureView(
@@ -332,7 +333,7 @@ def _build_battlefield_view(combat_state: dict[str, object]) -> BattlefieldView:
     )
 
 
-def _render_battlefield_text(combat_state: dict[str, object]) -> str:
+def _render_battlefield_text(combat_state: dict[str, Any]) -> str:
     width = combat_state["grid"]["width"]
     height = combat_state["grid"]["height"]
     player_state = combat_state["player"]
@@ -386,7 +387,7 @@ def _render_battlefield_text(combat_state: dict[str, object]) -> str:
     )
 
 
-def _turn_label(combat_state: dict[str, object]) -> str:
+def _turn_label(combat_state: dict[str, Any]) -> str:
     decision = combat_state["decision"]
     actor_ref = decision["actor_ref"]
     if actor_ref == "player":

@@ -1,4 +1,5 @@
 from __future__ import annotations
+# mypy: disable-error-code="misc,no-redef"
 
 import json
 from datetime import datetime, timezone
@@ -142,14 +143,18 @@ class GameWindow(QMainWindow):
         self.scene_group = self._build_group("Scene")
         self.scene_group.setObjectName("scenePanel")
         self.scene_text = self._build_readonly_text(minimum_height=180)
-        self.scene_group.layout().addWidget(self.scene_text)
+        scene_group_layout = self.scene_group.layout()
+        assert scene_group_layout is not None
+        scene_group_layout.addWidget(self.scene_text)
 
         self.story_choices_group = self._build_group("Choices")
         self.story_choices_group.setObjectName("choicesPanel")
         self.story_choices_layout = QVBoxLayout()
         self.story_choices_layout.setSpacing(8)
         story_scroll = self._wrap_in_scroll(self.story_choices_layout)
-        self.story_choices_group.layout().addWidget(story_scroll)
+        story_choices_group_layout = self.story_choices_group.layout()
+        assert story_choices_group_layout is not None
+        story_choices_group_layout.addWidget(story_scroll)
 
         self.encounter_panel = QWidget()
         self.encounter_panel.setObjectName("encounterPanel")
@@ -266,7 +271,9 @@ class GameWindow(QMainWindow):
         self.encounter_actions_group = self._build_untitled_panel()
         self.encounter_actions_layout = QHBoxLayout()
         self.encounter_actions_layout.setSpacing(12)
-        self.encounter_actions_group.layout().addWidget(
+        encounter_actions_group_layout = self.encounter_actions_group.layout()
+        assert encounter_actions_group_layout is not None
+        encounter_actions_group_layout.addWidget(
             self._wrap_in_scroll(self.encounter_actions_layout)
         )
         actions_footer = QWidget()
@@ -278,7 +285,7 @@ class GameWindow(QMainWindow):
         self.end_turn_button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
         self.end_turn_button.clicked.connect(self._end_turn)
         actions_footer_layout.addWidget(self.end_turn_button)
-        self.encounter_actions_group.layout().addWidget(actions_footer)
+        encounter_actions_group_layout.addWidget(actions_footer)
         encounter_controls_layout.addWidget(self.encounter_actions_group, stretch=1)
 
         encounter_layout.addWidget(encounter_controls)
@@ -331,6 +338,7 @@ class GameWindow(QMainWindow):
         sidebar.setObjectName("sidebarPanel")
         sidebar.setFixedWidth(SIDEBAR_WIDTH)
         layout = sidebar.layout()
+        assert layout is not None
 
         self.sidebar_stack = QStackedWidget()
         self.sidebar_stack.addWidget(self._build_sidebar_root())
@@ -422,7 +430,10 @@ class GameWindow(QMainWindow):
         layout.setSpacing(6)
         return panel
 
-    def _wrap_in_scroll(self, content_layout: QVBoxLayout) -> QScrollArea:
+    def _wrap_in_scroll(
+        self,
+        content_layout: QVBoxLayout | QHBoxLayout,
+    ) -> QScrollArea:
         container = QWidget()
         container.setLayout(content_layout)
         scroll = QScrollArea()
@@ -949,7 +960,7 @@ class GameWindow(QMainWindow):
         self,
         actions: list[ActionView],
     ) -> dict[str, dict[str, list[ActionView]]]:
-        groups = {
+        groups: dict[str, dict[str, list[ActionView]]] = {
             economy: {bucket: [] for bucket, _ in self._action_buckets()}
             for economy in ("action", "bonus_action", "reaction")
         }
@@ -1393,10 +1404,8 @@ class GameWindow(QMainWindow):
         QMessageBox.information(self, "Export Complete", f"Saved JSON to:\n{target_path}")
 
     def _default_encounter_json_export_name(self, payload: dict[str, object]) -> str:
-        scene_id = payload.get("encounter", {}).get("scene_id") if isinstance(
-            payload.get("encounter"),
-            dict,
-        ) else None
+        encounter = payload.get("encounter")
+        scene_id = encounter.get("scene_id") if isinstance(encounter, dict) else None
         suffix = scene_id if isinstance(scene_id, str) and scene_id else "no-encounter"
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         return f"encounter-{suffix}-{timestamp}.json"

@@ -24,6 +24,11 @@ def test_load_encounter_parses_definition() -> None:
         "goblin_2",
         "goblin_3",
     ]
+    assert encounter.participants[1].behavior is not None
+    assert encounter.participants[2].behavior is not None
+    assert encounter.participants[3].behavior is not None
+    assert encounter.victory is not None
+    assert encounter.defeat is not None
     assert encounter.participants[1].behavior.type == "chase"
     assert encounter.participants[2].behavior.anchor is not None
     assert encounter.participants[2].behavior.radius == 2
@@ -80,6 +85,8 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
 
     assert scenario.start_scene == "arena"
     assert scenario.encounter_order == ("arena", "arena_two")
+    assert scenario.encounters["arena"].victory is not None
+    assert scenario.encounters["arena_two"].victory is not None
     assert scenario.encounters["arena"].victory.next_encounter_id == "arena_two"
     assert scenario.encounters["arena_two"].victory.next_encounter_id == "arena_two"
 

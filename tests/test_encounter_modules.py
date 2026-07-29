@@ -1,5 +1,7 @@
 from types import SimpleNamespace
+from typing import cast
 
+from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.conditions import apply_status, remove_status, status_replaces
 from srd_arena.domain.encounters.participants import (
     actors_are_opponents,
@@ -28,7 +30,7 @@ def test_apply_status_refreshes_matching_condition_without_duplication() -> None
             "expires_on_round": 3,
         }
     )
-    state = SimpleNamespace(conditions=[original])
+    state = cast(EncounterState, SimpleNamespace(conditions=[original]))
 
     apply_status(state, refreshed)
 
@@ -46,7 +48,10 @@ def test_removing_grappled_also_removes_matching_grappling_status() -> None:
     grappled = _status("grappled", "enemy:0", "player")
     grappling = _status("grappling", "player", "enemy:0")
     unrelated = _status("blinded", "enemy:1", "player")
-    state = SimpleNamespace(conditions=[grappled, grappling, unrelated])
+    state = cast(
+        EncounterState,
+        SimpleNamespace(conditions=[grappled, grappling, unrelated]),
+    )
 
     remove_status(state, "player", "grappled")
 
@@ -54,7 +59,7 @@ def test_removing_grappled_also_removes_matching_grappling_status() -> None:
 
 
 def test_participant_queries_use_authored_teams_and_controllers() -> None:
-    state = SimpleNamespace(
+    state = cast(EncounterState, SimpleNamespace(
         control_mode="default",
         enemies=[SimpleNamespace(actor_id="goblin")],
         definition=SimpleNamespace(
@@ -63,7 +68,7 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
                 EncounterTeam("monsters", "Monsters", ["goblin"], "ai"),
             ]
         ),
-    )
+    ))
 
     assert creature_team_id(state, "player") == "heroes"
     assert creature_team_id(state, "enemy:0") == "monsters"
@@ -72,6 +77,6 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
 
 
 def test_all_user_control_mode_overrides_authored_controller() -> None:
-    state = SimpleNamespace(control_mode="all-user")
+    state = cast(EncounterState, SimpleNamespace(control_mode="all-user"))
 
     assert creature_controller(state, "enemy:0") == "user"
