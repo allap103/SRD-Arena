@@ -54,7 +54,7 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
             encoding="utf-8"
         )
     )
-    encounter_data["creatures"][1]["controller"] = "user"
+    encounter_data["creatures"][1]["controller"] = "external"
     encounter_data["creatures"][1].pop("behavior")
     (scenario_dir / "encounters" / "goblin_encounter").write_text(
         json.dumps(encounter_data),
@@ -67,11 +67,11 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
     session.get_scene_view()
 
     assert participant.creature_id == "goblin_1"
-    assert participant.controller == "user"
+    assert participant.controller == "external"
     assert session.encounter_state is not None
 
 
-def test_goblin_skirmish_gives_user_control_to_every_creature() -> None:
+def test_goblin_skirmish_gives_external_control_to_every_creature() -> None:
     scenario = Scenario(GOBLIN_SKIRMISH_DIR)
     encounter = scenario.encounters["goblin_skirmish"]
     session = scenario.create_session()
@@ -89,13 +89,13 @@ def test_goblin_skirmish_gives_user_control_to_every_creature() -> None:
     assert scenario.get_creature("champion_2").subclass_ref is not None
     assert scenario.get_creature("champion_2").subclass_ref.name == "Champion"
     assert all(
-        participant.controller == "user"
+        participant.controller == "external"
         for participant in encounter.participants
     )
-    assert all(team.controller == "user" for team in encounter.teams)
+    assert all(team.controller == "external" for team in encounter.teams)
     assert session.encounter_state is not None
     assert all(
-        session.encounter_state._creature_controller(creature_ref) == "user"
+        session.encounter_state._creature_controller(creature_ref) == "external"
         for creature_ref in session.encounter_state.initiative_order
     )
 
@@ -189,7 +189,11 @@ def test_encounter_schema_rejects_more_than_five_teams() -> None:
                 "id": "too_many_teams",
                 "grid": {"width": 1, "height": 1},
                 "teams": [
-                    {"id": f"team_{index}", "name": "Team", "controller": "ai"}
+                    {
+                        "id": f"team_{index}",
+                        "name": "Team",
+                        "controller": "scripted",
+                    }
                     for index in range(6)
                 ],
             }

@@ -103,25 +103,27 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
         definition=SimpleNamespace(
             participants=[],
             teams=[
-                EncounterTeam("heroes", "Heroes", ["player"], "user"),
-                EncounterTeam("monsters", "Monsters", ["goblin"], "ai"),
+                EncounterTeam("heroes", "Heroes", ["player"], "external"),
+                EncounterTeam("monsters", "Monsters", ["goblin"], "scripted"),
             ]
         ),
     )
 
     assert creature_team_id(state, "player") == "heroes"
     assert creature_team_id(state, "participant:0") == "monsters"
-    assert creature_controller(state, "participant:0") == "ai"
+    assert creature_controller(state, "participant:0") == "scripted"
     assert creatures_are_opponents(state, "player", "participant:0") is True
 def test_authored_creature_controller_overrides_team_default() -> None:
     state = SimpleNamespace(
         creatures={"participant:0": SimpleNamespace(creature_id="goblin")},
         definition=SimpleNamespace(
             participants=[
-                SimpleNamespace(creature_id="goblin", controller="user"),
+                SimpleNamespace(creature_id="goblin", controller="external"),
             ],
-            teams=[EncounterTeam("monsters", "Monsters", ["goblin"], "ai")],
+            teams=[
+                EncounterTeam("monsters", "Monsters", ["goblin"], "scripted")
+            ],
         ),
     )
 
-    assert creature_controller(state, "participant:0") == "user"
+    assert creature_controller(state, "participant:0") == "external"

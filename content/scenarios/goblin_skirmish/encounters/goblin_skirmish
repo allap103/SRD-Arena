@@ -14,7 +14,7 @@
         "y": 3
       },
       "team_id": "heroes",
-      "controller": "user"
+      "controller": "external"
     },
     {
       "id": "champion_2",
@@ -25,7 +25,7 @@
         "y": 5
       },
       "team_id": "heroes",
-      "controller": "user"
+      "controller": "external"
     },
     {
       "id": "red_blade",
@@ -40,7 +40,7 @@
         "y": 2
       },
       "team_id": "goblins",
-      "controller": "user"
+      "controller": "external"
     },
     {
       "id": "red_archer",
@@ -55,7 +55,7 @@
         "y": 2
       },
       "team_id": "goblins",
-      "controller": "user"
+      "controller": "external"
     },
     {
       "id": "blue_blade",
@@ -70,7 +70,7 @@
         "y": 3
       },
       "team_id": "goblins",
-      "controller": "user"
+      "controller": "external"
     },
     {
       "id": "blue_archer",
@@ -85,19 +85,19 @@
         "y": 5
       },
       "team_id": "goblins",
-      "controller": "user"
+      "controller": "external"
     }
   ],
   "teams": [
     {
       "id": "heroes",
       "name": "Champion Fighters",
-      "controller": "user"
+      "controller": "external"
     },
     {
       "id": "goblins",
       "name": "Goblins",
-      "controller": "user"
+      "controller": "external"
     }
   ]
 }

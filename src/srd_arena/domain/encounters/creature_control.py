@@ -213,7 +213,7 @@ def apply_creature_action(
             to_position=destination,
             remaining_movement_after=remaining,
             progress=progress,
-            user_controlled_only=True,
+            external_only=True,
             excluded_reactor_refs=grappled_refs,
         ):
             progress.paused_for_decision = True
@@ -321,7 +321,7 @@ def apply_creature_action(
             )
         )
     else:
-        raise ValueError(f"Unsupported user-controlled enemy action: {action.kind}")
+        raise ValueError(f"Unsupported externally controlled action: {action.kind}")
 
     progress.transition = self._check_transition()
     if progress.transition is not None or player.get_health() <= 0 or not action_ends_turn:

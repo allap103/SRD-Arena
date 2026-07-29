@@ -33,7 +33,7 @@ class EncounterCreatureSchema(CreatureSchema):
 
     start: PositionSchema
     team_id: str
-    controller: Literal["user", "ai"] | None = None
+    controller: Literal["external", "scripted"] | None = None
     behavior: BehaviorSchema | None = None
 
 
@@ -42,7 +42,7 @@ class EncounterTeamSchema(BaseModel):
 
     id: str
     name: str
-    controller: Literal["user", "ai"]
+    controller: Literal["external", "scripted"]
 
 
 class EncounterDefinitionSchema(BaseModel):

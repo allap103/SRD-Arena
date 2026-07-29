@@ -17,7 +17,7 @@
         "y": 3
       },
       "team_id": "alliance",
-      "controller": "user"
+      "controller": "external"
     },
     {
       "id": "air_elemental",
@@ -31,7 +31,7 @@
         "y": 5
       },
       "team_id": "alliance",
-      "controller": "user"
+      "controller": "external"
     },
     {
       "id": "aboleth",
@@ -45,19 +45,19 @@
         "y": 4
       },
       "team_id": "deep",
-      "controller": "user"
+      "controller": "external"
     }
   ],
   "teams": [
     {
       "id": "alliance",
       "name": "Elemental Alliance",
-      "controller": "user"
+      "controller": "external"
     },
     {
       "id": "deep",
       "name": "Creatures of the Deep",
-      "controller": "user"
+      "controller": "external"
     }
   ]
 }

@@ -26,8 +26,10 @@ def apply_action(
     action: EncounterAction,
 ) -> EncounterProgress:
     decision = self.current_decision()
-    if self._creature_controller(decision.creature_ref) != "user":
-        raise RuntimeError("User action requested for an AI-controlled creature.")
+    if self._creature_controller(decision.creature_ref) != "external":
+        raise RuntimeError(
+            "External action requested for a scripted-controlled creature."
+        )
     if decision.kind == "reroll_dice":
         return self._apply_damage_reroll_action(player, action, decision)
     if decision.kind == "reaction":

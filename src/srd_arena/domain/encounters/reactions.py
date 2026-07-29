@@ -63,7 +63,7 @@ class ReactionEngine:
             and reactor_ref not in excluded_reactor_refs
             and reactor.is_alive
             and state._creatures_are_opponents(reactor_ref, mover_ref)
-            and state._creature_controller(reactor_ref) == "ai"
+            and state._creature_controller(reactor_ref) == "scripted"
             and reactor.reaction_available
             and can_make_opportunity_attack(
                 reactor.creature,
@@ -570,7 +570,7 @@ class ReactionEngine:
         if pending_action.creature_ref == state.primary_creature_ref:
             mover.movement_remaining = pending_action.remaining_movement_after
             return
-        if state._creature_controller(pending_action.creature_ref) == "user":
+        if state._creature_controller(pending_action.creature_ref) == "external":
             mover.movement_remaining = pending_action.remaining_movement_after
             return
         mover.movement_remaining = pending_action.remaining_movement_after
@@ -597,7 +597,7 @@ class ReactionEngine:
         to_position: Position,
         remaining_movement_after: int,
         progress: EncounterProgress,
-        user_controlled_only: bool,
+        external_only: bool,
         excluded_reactor_refs: Collection[str] = (),
     ) -> bool:
         reactors = [
@@ -608,8 +608,8 @@ class ReactionEngine:
             and creature_state.is_alive
             and state._creatures_are_opponents(creature_ref, mover_ref)
             and (
-                not user_controlled_only
-                or state._creature_controller(creature_ref) == "user"
+                not external_only
+                or state._creature_controller(creature_ref) == "external"
             )
             and creature_state.reaction_available
             and can_make_opportunity_attack(

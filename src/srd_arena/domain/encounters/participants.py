@@ -25,7 +25,7 @@ def creature_controller(state: EncounterState, creature_ref: CreatureRef) -> str
     team = next((team for team in state.definition.teams if team.id == team_id), None)
     if team is not None:
         return team.controller
-    return "user" if creature_ref == state.primary_creature_ref else "ai"
+    return "external" if creature_ref == state.primary_creature_ref else "scripted"
 
 
 def creature_id_for_ref(state: EncounterState, creature_ref: CreatureRef) -> str:

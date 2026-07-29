@@ -87,12 +87,12 @@
                   {
                       "id":  "player",
                       "name":  "Player",
-                      "controller":  "user"
+                      "controller":  "external"
                   },
                   {
                       "id":  "enemies",
                       "name":  "Enemies",
-                      "controller":  "ai"
+                      "controller":  "scripted"
                   }
               ]
 }

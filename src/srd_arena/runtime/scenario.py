@@ -142,12 +142,12 @@ class Scenario:
                 participant.controller
                 or team_by_creature[participant.creature_id].controller
             )
-            == "user"
+            == "external"
         ]
         if not externally_controlled:
             raise ValueError(
                 f"Starting encounter '{encounter.id}' must configure at least one "
-                "user-controlled creature."
+                "externally controlled creature."
             )
         return Session(
             encounters=self.encounters,

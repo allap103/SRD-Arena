@@ -383,7 +383,7 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
     assert runtime_creatures["participant:1"]["movement_total_feet"] == 10
     assert {
         creature["controller"] for creature in runtime_creatures.values()
-    } == {"user"}
+    } == {"external"}
 
 
 def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(

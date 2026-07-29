@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 def available_actions(self: EncounterState, player: Creature) -> list[EncounterAction]:
     decision = self.current_decision()
-    if self._creature_controller(decision.creature_ref) != "user":
+    if self._creature_controller(decision.creature_ref) != "external":
         return []
     if decision.kind == "reroll_dice":
         return self._reroll_damage_actions()

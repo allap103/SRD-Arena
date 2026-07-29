@@ -30,14 +30,14 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
-def _all_user_session():
+def _all_external_session():
     scenario = Scenario(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     )
     encounter = scenario.encounters["goblin_encounter"]
     for team in encounter.teams:
-        team.controller = "user"
+        team.controller = "external"
     return scenario.create_session()
 
 
@@ -47,14 +47,14 @@ def test_tactical_fixture_loads_explicit_teams():
 
     assert encounter is not None
     assert [(team.id, team.controller) for team in encounter.teams] == [
-        ("heroes", "user"),
-        ("goblins", "ai"),
+        ("heroes", "external"),
+        ("goblins", "scripted"),
     ]
     assert encounter.teams[1].members == ["goblin_1", "goblin_2", "goblin_3"]
 
 
 def test_resource_summary_uses_active_creature_movement():
-    session = _all_user_session()
+    session = _all_external_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     session.encounter_state.active_movement_remaining = 2
@@ -67,8 +67,8 @@ def test_resource_summary_uses_active_creature_movement():
     assert presentation.encounter.resources.movement_remaining_feet == 30
 
 
-def test_all_user_mode_pauses_for_each_goblin_turn():
-    session = _all_user_session()
+def test_external_control_pauses_for_each_goblin_turn():
+    session = _all_external_session()
     session.get_scene_view()
     state = session.encounter_state
     assert state is not None
@@ -87,8 +87,8 @@ def test_all_user_mode_pauses_for_each_goblin_turn():
     assert any(action.kind == "move" for action in actions)
 
 
-def test_user_controlled_goblin_can_move_then_end_turn():
-    session = _all_user_session()
+def test_externally_controlled_goblin_can_move_then_end_turn():
+    session = _all_external_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -117,8 +117,8 @@ def test_user_controlled_goblin_can_move_then_end_turn():
     assert state.current_decision().creature_ref == "participant:1"
 
 
-def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
-    session = _all_user_session()
+def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
+    session = _all_external_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -430,7 +430,7 @@ def test_brynn_can_take_an_opportunity_attack(monkeypatch) -> None:
 
 
 def test_team_members_are_not_valid_attack_targets():
-    session = _all_user_session()
+    session = _all_external_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -451,8 +451,8 @@ def test_team_members_are_not_valid_attack_targets():
     )
 
 
-def test_user_controlled_teammate_can_target_opposing_team():
-    session = _all_user_session()
+def test_externally_controlled_teammate_can_target_opposing_team():
+    session = _all_external_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state

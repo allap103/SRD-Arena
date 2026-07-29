@@ -53,11 +53,11 @@ class TurnEngine:
                 break
             if state.decision_stack and state._creature_controller(
                 state.current_decision().creature_ref
-            ) == "user":
+            ) == "external":
                 progress.paused_for_decision = True
                 break
             creature_ref = self.active_turn_creature(state)
-            if state._creature_controller(creature_ref) == "user":
+            if state._creature_controller(creature_ref) == "external":
                 progress.paused_for_decision = True
                 break
             remaining_limit = (
@@ -202,7 +202,7 @@ class TurnEngine:
                     to_position=Position(target_x, target_y),
                     remaining_movement_after=enemy.movement_remaining - movement_cost,
                     progress=progress,
-                    user_controlled_only=True,
+                    external_only=True,
                     excluded_reactor_refs=grappling_targets,
                 ):
                     progress.paused_for_decision = True

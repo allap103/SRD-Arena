@@ -73,12 +73,12 @@
                   {
                       "id":  "heroes",
                       "name":  "Heroes",
-                      "controller":  "user"
+                      "controller":  "external"
                   },
                   {
                       "id":  "goblins",
                       "name":  "Goblins",
-                      "controller":  "ai"
+                      "controller":  "scripted"
                   }
               ]
 }

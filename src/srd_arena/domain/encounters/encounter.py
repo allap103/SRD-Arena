@@ -393,7 +393,10 @@ class EncounterState(EncounterStateData):
         return self.current_decision().creature_ref
 
     def requires_automatic_advance(self) -> bool:
-        return self._creature_controller(self.current_decision().creature_ref) == "ai"
+        return (
+            self._creature_controller(self.current_decision().creature_ref)
+            == "scripted"
+        )
 
     apply_action = _apply_action_impl
     export_decision = _export_decision_impl
