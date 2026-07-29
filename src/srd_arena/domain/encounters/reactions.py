@@ -334,7 +334,6 @@ class ReactionEngine:
         if (
             pending.continuation == "complete_reaction"
             and progress.transition is None
-            and player.get_health() > 0
         ):
             self.complete_parent_reaction(state, player, progress, pending.action_id)
 
@@ -362,7 +361,7 @@ class ReactionEngine:
         )
         self.resume_pending_action(state, player, progress)
         progress.transition = state.turn_engine.check_transition(state)
-        if progress.transition is not None or player.get_health() <= 0:
+        if progress.transition is not None:
             return
         follow_up = state.turn_engine.advance_until_next_decision(state, player)
         state._merge_progress(progress, follow_up)
@@ -515,7 +514,7 @@ class ReactionEngine:
 
         self.resume_pending_action(state, player, progress)
         progress.transition = state.turn_engine.check_transition(state)
-        if progress.transition is not None or player.get_health() <= 0:
+        if progress.transition is not None:
             return progress
 
         follow_up = state.turn_engine.advance_until_next_decision(state, player)
@@ -567,9 +566,6 @@ class ReactionEngine:
                 )
             )
 
-        if pending_action.creature_ref == state.primary_creature_ref:
-            mover.movement_remaining = pending_action.remaining_movement_after
-            return
         if state._creature_controller(pending_action.creature_ref) == "external":
             mover.movement_remaining = pending_action.remaining_movement_after
             return

@@ -18,12 +18,17 @@ TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 def _player_first_initiative(monkeypatch):
     def _fixed_initiative(self):
         self.initiative_entries = []
+        first_external_ref = next(
+            creature_ref
+            for creature_ref in self.creatures
+            if self._creature_controller(creature_ref) == "external"
+        )
         self.initiative_order = [
-            self.primary_creature_ref,
+            first_external_ref,
             *(
                 creature_ref
                 for creature_ref in self.creatures
-                if creature_ref != self.primary_creature_ref
+                if creature_ref != first_external_ref
             ),
         ]
 
@@ -84,7 +89,7 @@ def test_reroll_matching_dice_enforces_maximum_per_die():
 def test_tactical_fighter_loads_great_weapon_fighting_effect():
     player = Scenario(
         TACTICAL_SCENARIO_DIR
-    ).create_session().primary_creature
+    ).create_session().decision_creature
 
     [effect] = [
         effect
@@ -99,7 +104,7 @@ def test_tactical_fighter_loads_great_weapon_fighting_effect():
 
 def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatch):
     session = _adjacent_tactical_encounter()
-    session.primary_creature.equipment.equipped_items["right_hand"] = "longsword"
+    session.decision_creature.equipment.equipped_items["right_hand"] = "longsword"
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 15)
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1)
     attack_index = next(
@@ -120,8 +125,8 @@ def _adjacent_tactical_encounter():
     session = Scenario(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter").create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
-    session.encounter_state.primary_position.x = 4
-    session.encounter_state.primary_position.y = 3
+    session.encounter_state.active_position.x = 4
+    session.encounter_state.active_position.y = 3
     session.encounter_state.creatures["goblin_1"].position.x = 4
     session.encounter_state.creatures["goblin_1"].position.y = 2
     return session

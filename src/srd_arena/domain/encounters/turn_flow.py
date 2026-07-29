@@ -20,7 +20,6 @@ from .behaviors import (
 from .models import (
     BehaviorContext,
     CreatureRef,
-    EncounterCreatureState,
     EncounterProgress,
 )
 
@@ -49,7 +48,9 @@ class TurnEngine:
         progress = EncounterProgress()
         automatic_actions_resolved = 0
         while True:
-            if player.get_health() <= 0:
+            transition = self.check_transition(state)
+            if transition is not None:
+                progress.transition = transition
                 break
             if state.decision_stack and state._creature_controller(
                 state.current_decision().creature_ref
@@ -362,15 +363,16 @@ class TurnEngine:
         return state.initiative_order[state.turn_index]
 
     def check_transition(self, state: EncounterState) -> str | None:
-        opponents = [
-            creature_state
+        configured_teams = {
+            state._creature_team_id(creature_ref)
+            for creature_ref in state.creatures
+        }
+        living_teams = {
+            state._creature_team_id(creature_ref)
             for creature_ref, creature_state in state.creatures.items()
-            if state._creatures_are_opponents(
-                state.primary_creature_ref,
-                creature_ref,
-            )
-        ]
-        if opponents and all(not enemy.is_alive for enemy in opponents):
+            if creature_state.is_alive
+        }
+        if len(configured_teams) > 1 and len(living_teams) <= 1:
             return (
                 state.definition.victory.next_encounter_id
                 if state.definition.victory
@@ -440,24 +442,6 @@ class TurnEngine:
 
     def turn_count(self, state: EncounterState) -> int:
         return len(state.initiative_order)
-
-    def living_non_primary_creature_at(
-        self,
-        state: EncounterState,
-        x: int,
-        y: int,
-    ) -> EncounterCreatureState | None:
-        return next(
-            (
-                creature_state
-                for creature_ref, creature_state in state.creatures.items()
-                if creature_ref != state.primary_creature_ref
-                and creature_state.is_alive
-                and creature_state.position.x == x
-                and creature_state.position.y == y
-            ),
-            None,
-        )
 
     def is_within_bounds(self, state: EncounterState, x: int, y: int) -> bool:
         return 0 <= x < state.definition.grid.width and 0 <= y < state.definition.grid.height

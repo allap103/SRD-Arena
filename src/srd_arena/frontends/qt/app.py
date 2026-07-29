@@ -1652,7 +1652,7 @@ class GameWindow(QMainWindow):
 
     def _pending_spell_overlay(self, actions: list[ActionView]) -> dict[str, object] | None:
         action = self._pending_area_spell_action(actions)
-        if action is None or self.session.encounter_state is None or self.session.primary_creature.spellcasting is None:
+        if action is None or self.session.encounter_state is None or self.session.decision_creature.spellcasting is None:
             return None
         spell_id, _, _ = parse_spell_action_value(str(action.value))
         spell = self._spell_by_id(spell_id)
@@ -1668,15 +1668,15 @@ class GameWindow(QMainWindow):
                 return None
             radius_squares = max(
                 1,
-                radius_feet // self.session.primary_creature.attributes.movement.feet_per_square,
+                radius_feet // self.session.decision_creature.attributes.movement.feet_per_square,
             )
             return serialize_area(build_radius_area(Position(0, 0), radius_squares, grid))
-        length = spell_range_squares(spell, self.session.primary_creature)
+        length = spell_range_squares(spell, self.session.decision_creature)
         if length is None:
             return None
         origin = Position(
-            self.session.encounter_state.primary_position.x,
-            self.session.encounter_state.primary_position.y,
+            self.session.encounter_state.active_position.x,
+            self.session.encounter_state.active_position.y,
         )
         default_direction = Vector2D(1.0, 0.0)
         coverage_threshold = (
@@ -1695,10 +1695,10 @@ class GameWindow(QMainWindow):
 
     def _spell_by_id(self, spell_id: str):
         session = getattr(self, "session", None)
-        if session is None or session.primary_creature.spellcasting is None:
+        if session is None or session.decision_creature.spellcasting is None:
             return None
         return next(
-            (spell for spell in session.primary_creature.spellcasting.learned_spells if spell.id == spell_id),
+            (spell for spell in session.decision_creature.spellcasting.learned_spells if spell.id == spell_id),
             None,
         )
 
@@ -1744,19 +1744,19 @@ class GameWindow(QMainWindow):
         self.combat_inventory_text.setPlainText(self._inventory_text())
 
     def _inventory_text(self) -> str:
-        items = self.session.primary_creature.inventory.items
+        items = self.session.decision_creature.inventory.items
         if not items:
             return "Inventory is empty."
         return "\n".join(self.display_item_name(item_id) for item_id in items)
 
     def _attributes_text(self) -> str:
-        player = self.session.primary_creature
-        attributes = player.attributes
+        actor = self.session.decision_creature
+        attributes = actor.attributes
         return "\n".join(
             [
-                f"Name: {player.name}",
-                f"HP: {player.get_health()}/{player.get_max_health()}",
-                f"AC: {player.get_armor_class()}",
+                f"Name: {actor.name}",
+                f"HP: {actor.get_health()}/{actor.get_max_health()}",
+                f"AC: {actor.get_armor_class()}",
                 f"Level: {attributes.level}",
                 f"STR: {attributes.strength}",
                 f"DEX: {attributes.dexterity}",
@@ -1806,7 +1806,7 @@ class GameWindow(QMainWindow):
             }
         return {
             "encounter_active": True,
-            "encounter": encounter_state.export_state(self.session.primary_creature),
+            "encounter": encounter_state.export_state(),
         }
 
     def _export_encounter_json(self) -> None:

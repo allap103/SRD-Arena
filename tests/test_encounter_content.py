@@ -101,6 +101,23 @@ def test_goblin_skirmish_gives_external_control_to_every_creature() -> None:
     )
 
 
+def test_encounter_can_be_fully_scripted() -> None:
+    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
+    encounter = scenario.encounters["goblin_encounter"]
+    for team in encounter.teams:
+        team.controller = "scripted"
+
+    session = scenario.create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    assert session.encounter_state.requires_automatic_advance() is True
+    assert all(
+        session.encounter_state._creature_controller(creature_ref) == "scripted"
+        for creature_ref in session.encounter_state.initiative_order
+    )
+
+
 def test_nested_creature_can_reference_system_stat_block() -> None:
     scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
     creature = scenario.get_creature("goblin_1")

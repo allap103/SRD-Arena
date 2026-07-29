@@ -87,7 +87,6 @@ class BattlefieldCreatureView:
     position: GridPositionView
     health: int
     conditions: tuple[str, ...] = ()
-    is_player: bool = False
     is_active: bool = False
 
 
@@ -145,7 +144,7 @@ def build_session_presentation(
 
     combat_state = cast(
         dict[str, Any],
-        session.encounter_state.export_state(session.primary_creature),
+        session.encounter_state.export_state(),
     )
     resources = _build_resource_summary(combat_state)
     movement_actions = {
@@ -315,7 +314,6 @@ def _build_battlefield_view(
         zip(team_ids, TEAM_COLORS[: len(team_ids)], strict=True)
     )
     decision = combat_state["decision"]
-    primary_ref = combat_state["primary_creature_ref"]
     creatures = [
         BattlefieldCreatureView(
             creature_ref=creature_ref,
@@ -334,7 +332,6 @@ def _build_battlefield_view(
                 for condition in creature.get("conditions", [])
                 if isinstance(condition, str)
             ),
-            is_player=creature_ref == primary_ref,
             is_active=decision["creature_ref"] == creature_ref,
         )
         for creature_ref, creature in combat_state["creatures"].items()
@@ -354,22 +351,22 @@ def _build_battlefield_view(
 def _render_battlefield_text(combat_state: dict[str, Any]) -> str:
     width = combat_state["grid"]["width"]
     height = combat_state["grid"]["height"]
-    primary_ref = combat_state["primary_creature_ref"]
     creatures = combat_state["creatures"]
-    primary_state = creatures[primary_ref]
-    primary_position = primary_state["position"]
+    actor_ref = combat_state["decision"]["creature_ref"]
+    actor_state = creatures[actor_ref]
+    actor_position = actor_state["position"]
     live_others = [
         creature
         for creature_ref, creature in creatures.items()
-        if creature_ref != primary_ref and creature["is_alive"]
+        if creature_ref != actor_ref and creature["is_alive"]
     ]
 
     rows: list[str] = []
     for y in range(height):
         row: list[str] = []
         for x in range(width):
-            if primary_position["x"] == x and primary_position["y"] == y:
-                row.append("P")
+            if actor_position["x"] == x and actor_position["y"] == y:
+                row.append("A")
                 continue
             creature_here = next(
                 (
@@ -402,10 +399,10 @@ def _render_battlefield_text(combat_state: dict[str, Any]) -> str:
             "",
             f"Round {combat_state['round_number']} - Turn: {turn_label}",
             (
-                f"{primary_state['name']} HP: "
-                f"{primary_state['health']}/{primary_state['max_health']} "
-                f"at ({primary_position['x']}, {primary_position['y']})"
-                f"{_condition_suffix(primary_state.get('conditions', []))}"
+                f"{actor_state['name']} HP: "
+                f"{actor_state['health']}/{actor_state['max_health']} "
+                f"at ({actor_position['x']}, {actor_position['y']})"
+                f"{_condition_suffix(actor_state.get('conditions', []))}"
             ),
             "Other creatures:",
             *creature_lines,

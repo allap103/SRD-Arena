@@ -11,9 +11,12 @@ FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 
 def test_second_wind_returns_healing_effect_result() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.primary_creature.current_health = 10
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    creature = session.encounter_state.creatures["player"].creature
+    creature.current_health = 10
 
-    result = resolve_feature_action(session.primary_creature, "second_wind", lambda num_dice, sides: 5)
+    result = resolve_feature_action(creature, "second_wind", lambda num_dice, sides: 5)
 
     assert isinstance(result, CapabilityActionResult)
     assert result.capability_id == "second_wind"
@@ -36,8 +39,11 @@ def test_second_wind_returns_healing_effect_result() -> None:
 
 def test_action_surge_returns_extra_action_result() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    creature = session.encounter_state.creatures["player"].creature
 
-    result = resolve_feature_action(session.primary_creature, "action_surge", lambda num_dice, sides: 0)
+    result = resolve_feature_action(creature, "action_surge", lambda num_dice, sides: 0)
 
     assert isinstance(result, CapabilityActionResult)
     assert result.capability_id == "action_surge"

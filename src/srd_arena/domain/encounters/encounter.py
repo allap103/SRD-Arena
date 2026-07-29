@@ -83,10 +83,7 @@ from .participants import (
     creature_for_ref as _creature_for_ref_impl,
     creature_team_id as _creature_team_id_impl,
 )
-from .queries import (
-    living_non_primary_creature_at as _living_non_primary_creature_at_impl,
-    active_movement_remaining as _active_movement_remaining_query,
-)
+from .queries import active_movement_remaining as _active_movement_remaining_query
 
 # Keep these module-level names for tests and helpers that monkeypatch
 # `srd_arena.domain.encounters.encounter.roll_die` / `roll_dice`.
@@ -144,20 +141,12 @@ class EncounterState(EncounterStateData):
         self.round.number = value
 
     @property
-    def primary_creature_state(self) -> EncounterCreatureState:
-        return self.creatures[self.primary_creature_ref]
-
-    @property
     def active_creature_state(self) -> EncounterCreatureState:
         return self.creatures[self.current_decision().creature_ref]
 
     @property
-    def primary_position(self) -> Position:
-        return self.primary_creature_state.position
-
-    @primary_position.setter
-    def primary_position(self, value: Position) -> None:
-        self.primary_creature_state.position = value
+    def active_position(self) -> Position:
+        return self.active_creature_state.position
 
     @property
     def active_movement_remaining(self) -> int | None:
@@ -230,36 +219,12 @@ class EncounterState(EncounterStateData):
         item_templates: dict[str, Item] | None = None,
         geometry_config: GeometryConfig | None = None,
     ) -> EncounterState:
-        team_by_creature = {
-            creature_id: team
-            for team in definition.teams
-            for creature_id in team.members
-        }
-        external_participants = [
-            participant
-            for participant in definition.participants
-            if (
-                participant.controller
-                or team_by_creature[participant.creature_id].controller
-            )
-            == "external"
-        ]
-        if not external_participants:
-            raise ValueError(
-                f"Encounter '{definition.id}' must configure at least one "
-                "externally controlled creature."
-            )
-        primary_participant = external_participants[0]
         creatures: dict[CreatureRef, EncounterCreatureState] = {}
         for participant in definition.participants:
             creature = creature_templates[participant.creature_id]
             creatures[participant.creature_id] = EncounterCreatureState(
                 creature_id=participant.creature_id,
-                creature=(
-                    creature
-                    if participant is primary_participant
-                    else deepcopy(creature)
-                ),
+                creature=deepcopy(creature),
                 position=Position(participant.start.x, participant.start.y),
                 behavior=deepcopy(
                     participant.behavior or EncounterBehavior(type="wait")
@@ -269,7 +234,6 @@ class EncounterState(EncounterStateData):
             encounter_id=encounter_id,
             definition=definition,
             creatures=creatures,
-            primary_creature_ref=primary_participant.creature_id,
             round=RoundState(),
             turn=TurnState(),
             interrupts=InterruptState(),
@@ -305,7 +269,6 @@ class EncounterState(EncounterStateData):
             key=lambda entry: (
                 -entry.total,
                 -entry.modifier,
-                0 if entry.creature_ref == self.primary_creature_ref else 1,
                 entry.creature_ref,
             )
         )
@@ -552,7 +515,6 @@ class EncounterState(EncounterStateData):
     def _turn_count(self) -> int:
         return self.turn_engine.turn_count(self)
 
-    living_non_primary_creature_at = _living_non_primary_creature_at_impl
 
     def _is_within_bounds(self, x: int, y: int) -> bool:
         return self.turn_engine.is_within_bounds(self, x, y)

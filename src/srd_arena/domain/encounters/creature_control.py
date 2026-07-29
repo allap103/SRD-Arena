@@ -324,7 +324,7 @@ def apply_creature_action(
         raise ValueError(f"Unsupported externally controlled action: {action.kind}")
 
     progress.transition = self._check_transition()
-    if progress.transition is not None or player.get_health() <= 0 or not action_ends_turn:
+    if progress.transition is not None or not action_ends_turn:
         return progress
     self._advance_turn()
     self._maybe_reset_reactions()

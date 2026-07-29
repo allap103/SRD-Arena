@@ -204,7 +204,6 @@ class EncounterStateData:
     encounter_id: str
     definition: EncounterDefinition
     creatures: dict[CreatureRef, EncounterCreatureState]
-    primary_creature_ref: CreatureRef
     automatic_action_limit: int | None = None
     round: RoundState = field(default_factory=RoundState)
     turn: TurnState = field(default_factory=TurnState)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creatures import Creature
 from ..effects.conditions import Status
 from .behaviors import movement_squares as _movement_squares
 
@@ -26,7 +25,7 @@ def export_decision(self: EncounterState) -> dict[str, object]:
     return payload
 
 
-def export_state(self: EncounterState, _player: Creature) -> dict[str, object]:
+def export_state(self: EncounterState) -> dict[str, object]:
     active_creature_ref = self.current_decision().creature_ref
     return {
         "encounter_id": self.encounter_id,
@@ -49,7 +48,6 @@ def export_state(self: EncounterState, _player: Creature) -> dict[str, object]:
         ],
         "active_creature_ref": active_creature_ref,
         "active_controller": self._creature_controller(active_creature_ref),
-        "primary_creature_ref": self.primary_creature_ref,
         "creatures": {
             creature_ref: _export_creature(self, creature_ref)
             for creature_ref in self.creatures
@@ -134,7 +132,6 @@ def _export_creature(
         "team_id": state._creature_team_id(creature_ref),
         "controller": state._creature_controller(creature_ref),
         "is_alive": creature_state.is_alive,
-        "is_primary": creature_ref == state.primary_creature_ref,
     }
 
 

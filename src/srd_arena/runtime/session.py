@@ -42,10 +42,10 @@ class Session:
         self.pending_scene_transition: PendingSceneTransition | None = None
 
     @property
-    def primary_creature(self) -> Creature:
+    def decision_creature(self) -> Creature:
         self._ensure_encounter_state()
         assert self.encounter_state is not None
-        return self.encounter_state.primary_creature_state.creature
+        return self.encounter_state.active_creature_state.creature
 
     @property
     def current_encounter(self) -> EncounterDefinition:
@@ -59,7 +59,7 @@ class Session:
                     id="system-continue-scene-transition",
                     label=CONTINUE_CHOICE_TEXT,
                     kind="system_continue_transition",
-                    creature_ref="player",
+                    creature_ref=self._system_action_creature_ref(),
                     value=None,
                 )
             ]
@@ -75,7 +75,7 @@ class Session:
         encounter = self.current_encounter
         assert self.encounter_state is not None
         self._encounter_actions = self.encounter_state.available_actions(
-            self.primary_creature
+            self.decision_creature
         )
         action_details = [
                 ActionView(
@@ -183,11 +183,9 @@ class Session:
         selected_choice_text: str,
     ) -> TurnResult:
         assert self.encounter_state is not None
-        progress = self.encounter_state.apply_action(self.primary_creature, action)
+        progress = self.encounter_state.apply_action(self.decision_creature, action)
         messages = progress.messages
         transition = progress.transition
-        if self.primary_creature.get_health() <= 0 and self.current_encounter.defeat:
-            transition = self.current_encounter.defeat.next_encounter_id
 
         scene_changed = False
         if transition is not None:
@@ -196,7 +194,7 @@ class Session:
                 messages = [*messages, ("system", self.pending_scene_transition.message)]
 
         combat_state = (
-            self.encounter_state.export_state(self.primary_creature)
+            self.encounter_state.export_state()
             if self.encounter_state is not None
             else None
         )
@@ -226,14 +224,9 @@ class Session:
             raise RuntimeError("AI advancement requested while no AI creature is active.")
 
         progress = self.encounter_state.advance_until_next_decision(
-            self.primary_creature
+            self.decision_creature
         )
         transition = progress.transition
-        if (
-            self.primary_creature.get_health() <= 0
-            and self.current_encounter.defeat
-        ):
-            transition = self.current_encounter.defeat.next_encounter_id
 
         scene_changed = False
         if transition is not None:
@@ -245,7 +238,7 @@ class Session:
                 ]
 
         combat_state = (
-            self.encounter_state.export_state(self.primary_creature)
+            self.encounter_state.export_state()
             if self.encounter_state is not None
             else None
         )
@@ -310,7 +303,6 @@ class Session:
             encounter is not None
             and encounter.victory is not None
             and transition == encounter.victory.next_encounter_id
-            and self.primary_creature.get_health() > 0
         ):
             self.pending_scene_transition = PendingSceneTransition(
                 next_scene_id=transition,
@@ -333,7 +325,12 @@ class Session:
                 id="system-exit",
                 label=EXIT_CHOICE_TEXT,
                 kind="system_exit",
-                creature_ref="player",
+                creature_ref=self._system_action_creature_ref(),
                 value=None,
             ),
         ]
+
+    def _system_action_creature_ref(self) -> str:
+        if self.encounter_state is None:
+            return ""
+        return self.encounter_state.current_decision().creature_ref
