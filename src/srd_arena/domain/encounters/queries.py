@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .models import EncounterEnemyState
+from .models import Combatant
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -16,6 +16,6 @@ def player_movement_remaining(state: EncounterState, player: Creature) -> int:
 
 def living_enemy_at(
     state: EncounterState, x: int, y: int
-) -> EncounterEnemyState | None:
+) -> Combatant | None:
     """Return the living enemy occupying a grid cell, if any."""
     return state.turn_engine.live_enemy_at(state, x, y)

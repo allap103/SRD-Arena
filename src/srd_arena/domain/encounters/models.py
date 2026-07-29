@@ -78,16 +78,23 @@ class RoundState:
 @dataclass
 class TurnState:
     index: int = 0
-    player_movement_remaining: int | None = None
-    player_actions_remaining: int = 1
-    player_magic_actions_remaining: int = 1
-    player_attacks_remaining: int = 0
-    player_bonus_action_available: bool = True
-    player_reaction_available: bool = True
 
-    @property
-    def player_action_available(self) -> bool:
-        return self.player_actions_remaining > 0
+
+@dataclass
+class TurnResources:
+    movement_remaining: int | None = None
+    actions_remaining: int = 1
+    magic_actions_remaining: int = 1
+    attacks_remaining: int = 0
+    bonus_action_available: bool = True
+    reaction_available: bool = True
+
+    def reset(self) -> None:
+        self.movement_remaining = None
+        self.actions_remaining = 1
+        self.magic_actions_remaining = 1
+        self.attacks_remaining = 0
+        self.bonus_action_available = True
 
 
 @dataclass
@@ -118,18 +125,36 @@ class PendingAction:
 
 
 @dataclass
-class EncounterEnemyState:
+class Combatant:
+    ref: CreatureRef
     actor_id: str
     creature: Creature
     position: Position
+    controller: str
+    team_id: str
     behavior: EncounterBehavior
+    turn: TurnResources = field(default_factory=TurnResources)
     patrol_index: int = 0
-    reaction_available: bool = True
-    movement_remaining: int | None = None
 
     @property
     def is_alive(self) -> bool:
         return self.creature.get_health() > 0
+
+    @property
+    def reaction_available(self) -> bool:
+        return self.turn.reaction_available
+
+    @reaction_available.setter
+    def reaction_available(self, value: bool) -> None:
+        self.turn.reaction_available = value
+
+    @property
+    def movement_remaining(self) -> int | None:
+        return self.turn.movement_remaining
+
+    @movement_remaining.setter
+    def movement_remaining(self, value: int | None) -> None:
+        self.turn.movement_remaining = value
 
 
 @dataclass
@@ -200,8 +225,7 @@ class AttackSource:
 class EncounterStateData:
     encounter_id: str
     definition: EncounterDefinition
-    player_position: Position
-    enemies: list[EncounterEnemyState]
+    combatants: dict[CreatureRef, Combatant]
     control_mode: str = "default"
     automatic_action_limit: int | None = None
     round: RoundState = field(default_factory=RoundState)

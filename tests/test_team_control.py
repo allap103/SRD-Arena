@@ -163,10 +163,7 @@ def test_team_members_are_not_valid_attack_targets():
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
-    heroes = next(team for team in state.definition.teams if team.id == "heroes")
-    goblins = next(team for team in state.definition.teams if team.id == "goblins")
-    heroes.members.append("goblin_1")
-    goblins.members.remove("goblin_1")
+    state.combatant("enemy:0").team_id = "heroes"
     state.player_position.x = 2
     state.player_position.y = 2
     state.enemies[0].position.x = 3
@@ -192,10 +189,7 @@ def test_user_controlled_teammate_can_target_opposing_team():
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
-    heroes = next(team for team in state.definition.teams if team.id == "heroes")
-    goblins = next(team for team in state.definition.teams if team.id == "goblins")
-    heroes.members.append("goblin_1")
-    goblins.members.remove("goblin_1")
+    state.combatant("enemy:0").team_id = "heroes"
     state.turn_index = 1
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2

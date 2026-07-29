@@ -5,7 +5,7 @@ from typing import Generator
 from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
-from .models import BehaviorContext, EncounterAction, EncounterEnemyState
+from .models import BehaviorContext, EncounterAction, Combatant
 
 DIRECTION_DELTAS = {
     "up": (0, -1),
@@ -20,20 +20,21 @@ DIRECTION_DELTAS = {
 
 
 def build_behavior(
-    enemy: EncounterEnemyState,
+    enemy: Combatant,
     items_by_id: dict[str, Item],
 ) -> Generator[EncounterAction | None, BehaviorContext, None]:
-    if enemy.behavior.type == "archer":
+    behavior = enemy.behavior
+    if behavior.type == "archer":
         return _archer_behavior(enemy, items_by_id)
-    if enemy.behavior.type == "guard":
+    if behavior.type == "guard":
         return _guard_behavior(enemy)
-    if enemy.behavior.type == "patrol":
+    if behavior.type == "patrol":
         return _patrol_behavior(enemy)
     return _chase_behavior(enemy)
 
 
 def _chase_behavior(
-    enemy: EncounterEnemyState,
+    enemy: Combatant,
 ) -> Generator[EncounterAction | None, BehaviorContext, None]:
     context = yield None
     while True:
@@ -50,7 +51,7 @@ def _chase_behavior(
 
 
 def _archer_behavior(
-    enemy: EncounterEnemyState,
+    enemy: Combatant,
     items_by_id: dict[str, Item],
 ) -> Generator[EncounterAction | None, BehaviorContext, None]:
     context = yield None
@@ -76,15 +77,16 @@ def _archer_behavior(
 
 
 def _guard_behavior(
-    enemy: EncounterEnemyState,
+    enemy: Combatant,
 ) -> Generator[EncounterAction | None, BehaviorContext, None]:
+    behavior = enemy.behavior
     context = yield None
     while True:
-        anchor = enemy.behavior.anchor or enemy.position
+        anchor = behavior.anchor or enemy.position
         within_radius = (
-            enemy.behavior.radius is not None
+            behavior.radius is not None
             and manhattan_distance(context.player_position, anchor)
-            <= enemy.behavior.radius
+            <= behavior.radius
         )
         if context.can_attack:
             context = yield EncounterAction("Attack", "attack", "melee")
@@ -111,18 +113,19 @@ def _guard_behavior(
 
 
 def _patrol_behavior(
-    enemy: EncounterEnemyState,
+    enemy: Combatant,
 ) -> Generator[EncounterAction | None, BehaviorContext, None]:
+    behavior = enemy.behavior
     context = yield None
     while True:
         if context.can_attack:
             context = yield EncounterAction("Attack", "attack", "melee")
             continue
-        if not enemy.behavior.path:
+        if not behavior.path:
             context = yield EncounterAction("Wait", "wait")
             continue
-        enemy.patrol_index = (enemy.patrol_index + 1) % len(enemy.behavior.path)
-        target = enemy.behavior.path[enemy.patrol_index]
+        enemy.patrol_index = (enemy.patrol_index + 1) % len(behavior.path)
+        target = behavior.path[enemy.patrol_index]
         direction = step_toward(context.enemy_position, target)
         command = (
             EncounterAction("Move", "move", direction)

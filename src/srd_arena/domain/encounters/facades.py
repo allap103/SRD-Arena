@@ -52,7 +52,7 @@ from .models import (
     CreatureRef,
     DecisionFrame,
     EncounterAction,
-    EncounterEnemyState,
+    Combatant,
     EncounterProgress,
 )
 from .participants import (
@@ -322,5 +322,5 @@ class EncounterQueries:
     def movement_remaining(self, player: Creature) -> int:
         return player_movement_remaining(self.state, player)
 
-    def living_enemy_at(self, x: int, y: int) -> EncounterEnemyState | None:
+    def living_enemy_at(self, x: int, y: int) -> Combatant | None:
         return living_enemy_at(self.state, x, y)

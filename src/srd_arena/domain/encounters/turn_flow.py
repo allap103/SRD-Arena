@@ -20,7 +20,7 @@ from .models import (
     CreatureRef,
     BehaviorContext,
     EncounterAction,
-    EncounterEnemyState,
+    Combatant,
     EncounterProgress,
 )
 from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
@@ -424,7 +424,7 @@ class TurnEngine:
         state: EncounterState,
         x: int,
         y: int,
-    ) -> EncounterEnemyState | None:
+    ) -> Combatant | None:
         return next(
             (
                 enemy

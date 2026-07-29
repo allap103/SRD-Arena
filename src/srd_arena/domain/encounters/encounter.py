@@ -21,7 +21,7 @@ from .models import (
     CombatEvent,
     DecisionFrame,
     EncounterAction,
-    EncounterEnemyState,
+    Combatant,
     EncounterProgress,
     EncounterStateData,
     InitiativeEntry,
@@ -29,6 +29,7 @@ from .models import (
     PendingAttack,
     RoundState,
     TurnState,
+    TurnResources,
     PendingAction,
 )
 from .reactions import REACTION_ENGINE, ReactionEngine
@@ -36,7 +37,7 @@ from .refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
-from .definitions import EncounterDefinition
+from .definitions import EncounterBehavior, EncounterDefinition
 from ..effects.conditions import Status
 from ..geometry import GeometryConfig
 from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
@@ -55,6 +56,29 @@ __all__ = ["ActionCost", "EncounterAction", "EncounterState", "roll_die", "roll_
 
 
 class EncounterState(EncounterStateData):
+    @property
+    def player_combatant(self) -> Combatant:
+        return self.combatants["player"]
+
+    @property
+    def player_position(self) -> Position:
+        return self.player_combatant.position
+
+    @player_position.setter
+    def player_position(self, value: Position) -> None:
+        self.player_combatant.position = value
+
+    @property
+    def enemies(self) -> list[Combatant]:
+        return [
+            combatant
+            for actor_ref, combatant in self.combatants.items()
+            if actor_ref != "player"
+        ]
+
+    def combatant(self, actor_ref: CreatureRef) -> Combatant:
+        return self.combatants[actor_ref]
+
     @property
     def actions(self) -> EncounterActions:
         return EncounterActions(self)
@@ -121,64 +145,64 @@ class EncounterState(EncounterStateData):
 
     @property
     def player_movement_remaining(self) -> int | None:
-        return self.turn.player_movement_remaining
+        return self.player_combatant.turn.movement_remaining
 
     @player_movement_remaining.setter
     def player_movement_remaining(self, value: int | None) -> None:
-        self.turn.player_movement_remaining = value
+        self.player_combatant.turn.movement_remaining = value
 
     @property
     def player_action_available(self) -> bool:
-        return self.turn.player_action_available
+        return self.player_combatant.turn.actions_remaining > 0
 
     @player_action_available.setter
     def player_action_available(self, value: bool) -> None:
         if value:
-            self.turn.player_actions_remaining = max(
-                1, self.turn.player_actions_remaining
+            self.player_combatant.turn.actions_remaining = max(
+                1, self.player_combatant.turn.actions_remaining
             )
         else:
-            self.turn.player_actions_remaining = 0
+            self.player_combatant.turn.actions_remaining = 0
 
     @property
     def player_actions_remaining(self) -> int:
-        return self.turn.player_actions_remaining
+        return self.player_combatant.turn.actions_remaining
 
     @player_actions_remaining.setter
     def player_actions_remaining(self, value: int) -> None:
-        self.turn.player_actions_remaining = max(0, value)
+        self.player_combatant.turn.actions_remaining = max(0, value)
 
     @property
     def player_magic_actions_remaining(self) -> int:
-        return self.turn.player_magic_actions_remaining
+        return self.player_combatant.turn.magic_actions_remaining
 
     @player_magic_actions_remaining.setter
     def player_magic_actions_remaining(self, value: int) -> None:
-        self.turn.player_magic_actions_remaining = max(0, value)
+        self.player_combatant.turn.magic_actions_remaining = max(0, value)
 
     @property
     def player_attacks_remaining(self) -> int:
-        return self.turn.player_attacks_remaining
+        return self.player_combatant.turn.attacks_remaining
 
     @player_attacks_remaining.setter
     def player_attacks_remaining(self, value: int) -> None:
-        self.turn.player_attacks_remaining = value
+        self.player_combatant.turn.attacks_remaining = value
 
     @property
     def player_bonus_action_available(self) -> bool:
-        return self.turn.player_bonus_action_available
+        return self.player_combatant.turn.bonus_action_available
 
     @player_bonus_action_available.setter
     def player_bonus_action_available(self, value: bool) -> None:
-        self.turn.player_bonus_action_available = value
+        self.player_combatant.turn.bonus_action_available = value
 
     @property
     def player_reaction_available(self) -> bool:
-        return self.turn.player_reaction_available
+        return self.player_combatant.turn.reaction_available
 
     @player_reaction_available.setter
     def player_reaction_available(self, value: bool) -> None:
-        self.turn.player_reaction_available = value
+        self.player_combatant.turn.reaction_available = value
 
     @classmethod
     def from_definition(
@@ -201,8 +225,32 @@ class EncounterState(EncounterStateData):
                 f"Encounter '{definition.id}' must place player '{player.id}' exactly once."
             )
         player_participant = player_participants[0]
-        enemies = []
-        for participant in definition.participants:
+        team_by_actor = {
+            actor_id: team
+            for team in definition.teams
+            for actor_id in team.members
+        }
+        player_team = team_by_actor.get(player.id)
+        combatants = {
+            "player": Combatant(
+                ref="player",
+                actor_id=player.id,
+                creature=player,
+                position=Position(
+                    player_participant.start.x,
+                    player_participant.start.y,
+                ),
+                controller="user",
+                team_id=player_team.id if player_team is not None else player.id,
+                behavior=EncounterBehavior(type="external"),
+                turn=TurnResources(),
+            )
+        }
+        for index, participant in enumerate(
+            participant
+            for participant in definition.participants
+            if participant.actor_id != player.id
+        ):
             if participant.actor_id == player.id:
                 continue
             if participant.behavior is None:
@@ -210,22 +258,25 @@ class EncounterState(EncounterStateData):
                     f"Encounter '{definition.id}' participant "
                     f"'{participant.actor_id}' requires a behavior."
                 )
-            enemies.append(
-                EncounterEnemyState(
+            actor_ref = _enemy_ref(index)
+            team = team_by_actor.get(participant.actor_id)
+            combatants[actor_ref] = Combatant(
+                    ref=actor_ref,
                     actor_id=participant.actor_id,
                     creature=deepcopy(creature_templates[participant.actor_id]),
                     position=Position(participant.start.x, participant.start.y),
+                    controller=(
+                        "user"
+                        if control_mode == "all-user"
+                        else team.controller if team is not None else "ai"
+                    ),
+                    team_id=team.id if team is not None else participant.actor_id,
                     behavior=deepcopy(participant.behavior),
                 )
-            )
         state = cls(
             encounter_id=encounter_id,
             definition=definition,
-            player_position=Position(
-                player_participant.start.x,
-                player_participant.start.y,
-            ),
-            enemies=enemies,
+            combatants=combatants,
             control_mode=control_mode,
             round=RoundState(),
             turn=TurnState(),
@@ -560,7 +611,7 @@ class EncounterState(EncounterStateData):
     def _turn_count(self) -> int:
         return self.turn_engine.turn_count(self)
 
-    def _live_enemy_at(self, x: int, y: int) -> EncounterEnemyState | None:
+    def _live_enemy_at(self, x: int, y: int) -> Combatant | None:
         return _living_enemy_at_impl(self, x, y)
 
     def _is_free_for_enemy(self, x: int, y: int) -> bool:

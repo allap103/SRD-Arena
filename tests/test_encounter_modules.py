@@ -12,7 +12,6 @@ from srd_arena.domain.encounters.participants import (
     creature_controller,
     creature_team_id,
 )
-from srd_arena.domain.encounters import EncounterTeam
 from srd_arena.domain.effects.conditions import Status
 
 
@@ -63,17 +62,14 @@ def test_removing_grappled_also_removes_matching_grappling_status() -> None:
 
 
 def test_participant_queries_use_authored_teams_and_controllers() -> None:
+    combatants = {
+        "player": SimpleNamespace(team_id="heroes", controller="user"),
+        "enemy:0": SimpleNamespace(team_id="monsters", controller="ai"),
+    }
     state = cast(
         EncounterState,
         SimpleNamespace(
-            control_mode="default",
-            enemies=[SimpleNamespace(actor_id="goblin")],
-            definition=SimpleNamespace(
-                teams=[
-                    EncounterTeam("heroes", "Heroes", ["player"], "user"),
-                    EncounterTeam("monsters", "Monsters", ["goblin"], "ai"),
-                ]
-            ),
+            combatant=lambda actor_ref: combatants[actor_ref],
         ),
     )
 
@@ -84,6 +80,11 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
 
 
 def test_all_user_control_mode_overrides_authored_controller() -> None:
-    state = cast(EncounterState, SimpleNamespace(control_mode="all-user"))
+    state = cast(
+        EncounterState,
+        SimpleNamespace(
+            combatant=lambda _actor_ref: SimpleNamespace(controller="user"),
+        ),
+    )
 
     assert creature_controller(state, "enemy:0") == "user"
