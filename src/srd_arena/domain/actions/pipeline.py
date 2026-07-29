@@ -34,6 +34,7 @@ class ActionPipeline:
         action: EncounterAction,
         resolver: ActionResolver,
         *,
+        declare: bool = True,
         check_transition: bool = True,
         complete: bool = True,
     ) -> EncounterProgress:
@@ -48,7 +49,8 @@ class ActionPipeline:
             self.reject(context, eligibility)
             return context.progress
 
-        self.declare(context)
+        if declare:
+            self.declare(context)
         resolver(context)
         if check_transition:
             self.check_transition(context)

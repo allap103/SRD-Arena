@@ -79,10 +79,13 @@ class EncounterActions:
 
     def perform(
         self,
-        player: Creature,
         action: EncounterAction,
     ) -> EncounterProgress:
-        return apply_action(self.state, player, action)
+        return apply_action(
+            self.state,
+            self.state.player_combatant.creature,
+            action,
+        )
 
     def available_features(self, player: Creature) -> list[EncounterAction]:
         return available_feature_actions(self.state, player)

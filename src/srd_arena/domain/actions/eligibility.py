@@ -75,10 +75,12 @@ def evaluate_action(
 
 
 def _supported_action_rule(
-    _state: EncounterState,
+    state: EncounterState,
     _player: Creature,
     action: EncounterAction,
 ) -> str | None:
+    if state.current_decision().kind in {"reaction", "reroll_dice"}:
+        return None
     supported_kinds = {
         *(ACTION_RULES if action.actor_ref == "player" else ENEMY_ACTION_RULES),
         "wait",

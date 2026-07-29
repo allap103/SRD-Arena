@@ -37,16 +37,38 @@ def apply_action(
     action: EncounterAction,
 ) -> EncounterProgress:
     decision = self.current_decision()
-    if self.rules.controller(decision.actor_ref) != "user":
-        raise RuntimeError("User action requested for an AI-controlled creature.")
-    if decision.actor_ref != "player":
-        return self.actions.perform_for_controlled_enemy(player, action, decision)
-    if decision.kind == "reroll_dice":
-        return self._apply_damage_reroll_action(player, action, decision)
-    if decision.kind == "reaction":
-        return self._apply_reaction_action(player, action, decision)
+    manages_own_lifecycle = (
+        decision.actor_ref != "player"
+        or decision.kind in {"reroll_dice", "reaction"}
+    )
 
-    return ACTION_PIPELINE.execute(self, player, action, _resolve_normal_action)
+    def resolve(context: ActionExecutionContext) -> None:
+        if decision.actor_ref != "player":
+            resolved = self.actions.perform_for_controlled_enemy(
+                player, context.action, decision
+            )
+        elif decision.kind == "reroll_dice":
+            resolved = self._apply_damage_reroll_action(
+                player, context.action, decision
+            )
+        elif decision.kind == "reaction":
+            resolved = self._apply_reaction_action(
+                player, context.action, decision
+            )
+        else:
+            _resolve_normal_action(context)
+            return
+        self._merge_progress(context.progress, resolved)
+
+    return ACTION_PIPELINE.execute(
+        self,
+        player,
+        action,
+        resolve,
+        declare=not manages_own_lifecycle,
+        check_transition=not manages_own_lifecycle,
+        complete=not manages_own_lifecycle,
+    )
 
 
 def _resolve_normal_action(context: ActionExecutionContext) -> None:

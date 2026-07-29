@@ -223,7 +223,7 @@ class Session:
         selected_choice_text: str,
     ) -> TurnResult:
         assert self.encounter_state is not None
-        progress = self.encounter_state.actions.perform(self.player, action)
+        progress = self.encounter_state.actions.perform(action)
         messages = progress.messages
         transition = progress.transition
         if self.player.get_health() <= 0 and self.current_encounter.defeat:
