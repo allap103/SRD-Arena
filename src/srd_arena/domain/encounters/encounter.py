@@ -48,6 +48,10 @@ from .actions.execution import (
     apply_action as _apply_action_impl,
     resolve_grapple_action as _resolve_grapple_action_impl,
 )
+from .actions.eligibility import (
+    ActionEligibility,
+    action_eligibility as _action_eligibility_impl,
+)
 from .actions.features import resolve_feature_action as _resolve_feature_action_impl
 from .actions.items import resolve_utilize_action as _resolve_utilize_action_impl
 from .actions.spellcasting import resolve_spell_action as _resolve_spell_action_impl
@@ -90,6 +94,7 @@ from .queries import active_movement_remaining as _active_movement_remaining_que
 roll_die = _roll_die
 roll_dice = _roll_dice
 __all__ = ["ActionCost", "EncounterAction", "EncounterState", "roll_die", "roll_dice"]
+
 
 class EncounterState(EncounterStateData):
     @property
@@ -226,9 +231,7 @@ class EncounterState(EncounterStateData):
                 creature_id=participant.creature_id,
                 creature=deepcopy(creature),
                 position=Position(participant.start.x, participant.start.y),
-                behavior=deepcopy(
-                    participant.behavior or EncounterBehavior(type="wait")
-                ),
+                behavior=deepcopy(participant.behavior or EncounterBehavior(type="wait")),
             )
         state = cls(
             encounter_id=encounter_id,
@@ -256,9 +259,7 @@ class EncounterState(EncounterStateData):
             InitiativeEntry(
                 creature_ref=creature_ref,
                 roll=roll_die(20),
-                modifier=creature_state.creature.get_modifier(
-                    creature_state.creature.attributes.dexterity
-                ),
+                modifier=creature_state.creature.get_modifier(creature_state.creature.attributes.dexterity),
                 total=0,
             )
             for creature_ref, creature_state in self.creatures.items()
@@ -296,10 +297,7 @@ class EncounterState(EncounterStateData):
         return tuple(condition for condition in self.conditions if condition.target_ref == creature_ref)
 
     def has_condition(self, creature_ref: CreatureRef, condition_name: str) -> bool:
-        return any(
-            condition.name == condition_name
-            for condition in self.conditions_for(creature_ref)
-        )
+        return any(condition.name == condition_name for condition in self.conditions_for(creature_ref))
 
     def _attack_roll_mode_for(
         self,
@@ -323,9 +321,7 @@ class EncounterState(EncounterStateData):
             "attack_type": attack_type,
         }
         if any(
-            status.name == "grappled"
-            and status.target_ref == attacker_ref
-            and status.source_ref != target_ref
+            status.name == "grappled" and status.target_ref == attacker_ref and status.source_ref != target_ref
             for status in self.conditions
         ):
             modes.append("disadvantage")
@@ -341,19 +337,22 @@ class EncounterState(EncounterStateData):
         return _combine_roll_modes(modes)
 
     def _active_status_effects(self) -> list[TriggeredEffect]:
-        return [
-            effect
-            for status in self.conditions
-            for effect in status.triggered_effects
-        ]
+        return [effect for status in self.conditions for effect in status.triggered_effects]
 
     def active_creature(self) -> CreatureRef:
         return self.current_decision().creature_ref
 
     def requires_automatic_advance(self) -> bool:
-        return (
-            self._creature_controller(self.current_decision().creature_ref)
-            == "scripted"
+        return self._creature_controller(self.current_decision().creature_ref) == "scripted"
+
+    def action_eligibility(
+        self,
+        action: EncounterAction,
+    ) -> ActionEligibility:
+        return _action_eligibility_impl(
+            self,
+            self.current_decision().creature_ref,
+            action,
         )
 
     apply_action = _apply_action_impl
@@ -391,9 +390,7 @@ class EncounterState(EncounterStateData):
     _apply_status = _apply_status_impl
     _remove_status = _remove_status_impl
     _remove_status_from_source = _remove_status_from_source_impl
-    _remove_relational_statuses_for_creature = (
-        _remove_relational_statuses_for_creature_impl
-    )
+    _remove_relational_statuses_for_creature = _remove_relational_statuses_for_creature_impl
     _creature_controller = _creature_controller_impl
     _creature_team_id = _creature_team_id_impl
     _creatures_are_opponents = _creatures_are_opponents_impl
@@ -512,7 +509,6 @@ class EncounterState(EncounterStateData):
     def _turn_count(self) -> int:
         return self.turn_engine.turn_count(self)
 
-
     def _is_within_bounds(self, x: int, y: int) -> bool:
         return self.turn_engine.is_within_bounds(self, x, y)
 
@@ -551,25 +547,16 @@ class EncounterState(EncounterStateData):
         if source.transition is not None:
             target.transition = source.transition
         target.paused_for_decision = target.paused_for_decision or source.paused_for_decision
-        target.paused_for_pacing = (
-            target.paused_for_pacing or source.paused_for_pacing
-        )
+        target.paused_for_pacing = target.paused_for_pacing or source.paused_for_pacing
 
     _export_pending_action = _export_pending_action_impl
 
     def _creature_label(self, creature_ref: CreatureRef) -> str:
         creature_state = self.creatures[creature_ref]
-        return (
-            f"{creature_state.creature.name} "
-            f"({creature_state.creature_id})"
-        )
+        return f"{creature_state.creature.name} ({creature_state.creature_id})"
 
     def _living_creature_refs(self) -> list[CreatureRef]:
-        return [
-            creature_ref
-            for creature_ref, creature_state in self.creatures.items()
-            if creature_state.is_alive
-        ]
+        return [creature_ref for creature_ref, creature_state in self.creatures.items() if creature_state.is_alive]
 
     def _creature_position(self, creature_ref: CreatureRef) -> Position:
         return self.creatures[creature_ref].position
@@ -600,6 +587,7 @@ class EncounterState(EncounterStateData):
     _movement_cost_for = _movement_cost_for_impl
     _creature_for_ref = _creature_for_ref_impl
     _status_replaces = staticmethod(_status_replaces_impl)
+
 
 def _attack_roll_mode(
     attack_type: str,

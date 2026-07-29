@@ -4,7 +4,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from srd_arena.domain.encounters.encounter import ActionCost, EncounterAction, EncounterState
+from srd_arena.domain.encounters.encounter import (
+    ActionCost,
+    EncounterAction,
+    EncounterState,
+)
 from srd_arena.domain.encounters.actions.hit_effects import (
     apply_attack_hit_effects,
 )
@@ -13,8 +17,13 @@ from srd_arena.frontends.shared.combat import render_encounter_text
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.frontends.qt.app import GameWindow
 from srd_arena.domain.effects import EffectResult
+from srd_arena.domain.effects.conditions import build_named_status
+from srd_arena.domain.geometry import Position
 from srd_arena.domain.creatures import AttackActionDefinition
-from srd_arena.frontends.shared.session import SpellSlotTrackView, build_session_presentation
+from srd_arena.frontends.shared.session import (
+    SpellSlotTrackView,
+    build_session_presentation,
+)
 from srd_arena.runtime.models import ActionView
 from srd_arena.content.catalogs import load_bestiary_catalog
 from srd_arena.content.loaders.creatures import build_creature
@@ -25,12 +34,7 @@ from srd_arena.frontends.qt.ui.encounter.config import TargetSelectionMode
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
-MULTIATTACK_SCENARIO_DIR = (
-    Path(__file__).parents[1]
-    / "content"
-    / "scenarios"
-    / "multiattack_showcase"
-)
+MULTIATTACK_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "multiattack_showcase"
 _ROLL_INITIATIVE = EncounterState._roll_initiative
 
 
@@ -39,28 +43,18 @@ def _player_first_initiative(monkeypatch):
     def _fixed_initiative(self):
         self.initiative_entries = []
         first_external_ref = next(
-            creature_ref
-            for creature_ref in self.creatures
-            if self._creature_controller(creature_ref) == "external"
+            creature_ref for creature_ref in self.creatures if self._creature_controller(creature_ref) == "external"
         )
         self.initiative_order = [
             first_external_ref,
-            *(
-                creature_ref
-                for creature_ref in self.creatures
-                if creature_ref != first_external_ref
-            ),
+            *(creature_ref for creature_ref in self.creatures if creature_ref != first_external_ref),
         ]
 
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
 def _action_index_by_prefix(session, prefix: str) -> int:
-    return next(
-        index
-        for index, choice in enumerate(session.get_scene_view().choices)
-        if choice.startswith(prefix)
-    )
+    return next(index for index, choice in enumerate(session.get_scene_view().choices) if choice.startswith(prefix))
 
 
 def _action_index(session, kind: str, value: object) -> int:
@@ -108,6 +102,52 @@ def test_goblin_encounter_scene_generates_runtime_actions() -> None:
     assert scene_view.choices[-1] == "Exit game"
 
 
+def test_action_eligibility_exposes_structured_failures() -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    actor_ref = state.current_decision().creature_ref
+    state.conditions.append(
+        build_named_status(
+            name="stunned",
+            source_ref="goblin_1",
+            source_label="Goblin Warrior",
+            target_ref=actor_ref,
+        )
+    )
+    move = EncounterAction(
+        "Move right",
+        "move",
+        "right",
+        id=f"{actor_ref}-move-right",
+        creature_ref=actor_ref,
+        cost=ActionCost(movement=1),
+    )
+
+    eligibility = state.action_eligibility(move)
+
+    assert eligibility.allowed is False
+    assert {failure.code for failure in eligibility.failures} == {"actor_incapacitated"}
+    assert all(action.kind == "wait" for action in state.available_actions())
+
+
+def test_execution_rechecks_action_eligibility() -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    move = next(action for action in state.available_actions() if action.kind == "move" and action.value == "right")
+    actor = state.creatures[state.current_decision().creature_ref]
+    blocker = state.creatures["goblin_1"]
+    blocker.position = Position(actor.position.x + 1, actor.position.y)
+
+    with pytest.raises(ValueError, match="destination is not free"):
+        state.apply_action(move)
+
+
 def test_cli_encounter_renderer_generates_grid_text() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -145,7 +185,9 @@ def test_movement_preview_uses_shortest_paths_around_occupied_cells() -> None:
     assert (3, 3) not in movement_paths
 
 
-def test_initiative_is_rolled_for_all_combatants_at_encounter_start(monkeypatch) -> None:
+def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
+    monkeypatch,
+) -> None:
     monkeypatch.setattr(EncounterState, "_roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls))
@@ -180,31 +222,23 @@ def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
     presentation = build_session_presentation(session)
 
     assert presentation.encounter is not None
-    assert [
-        creature.token_image for creature in presentation.encounter.battlefield.creatures
-    ] == [
+    assert [creature.token_image for creature in presentation.encounter.battlefield.creatures] == [
         "tokens/traveler.png",
         "tokens/goblin.png",
         "tokens/goblin.png",
         "tokens/goblin.png",
     ]
-    assert [
-        creature.team_color
-        for creature in presentation.encounter.battlefield.creatures
-    ] == [
+    assert [creature.team_color for creature in presentation.encounter.battlefield.creatures] == [
         "#3f7fd5",
         "#d64545",
         "#d64545",
         "#d64545",
     ]
-    assert [
-        (entry.name, entry.total, entry.is_active)
-        for entry in presentation.encounter.resources.initiative
-    ] == [
-            ("Goblin Warrior", 20, True),
-            ("Goblin Warrior", 16, False),
-            ("Traveler", 13, False),
-            ("Goblin Warrior", 9, False),
+    assert [(entry.name, entry.total, entry.is_active) for entry in presentation.encounter.resources.initiative] == [
+        ("Goblin Warrior", 20, True),
+        ("Goblin Warrior", 16, False),
+        ("Traveler", 13, False),
+        ("Goblin Warrior", 9, False),
     ]
 
 
@@ -248,11 +282,7 @@ def test_action_must_belong_to_current_decision_actor() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
-    action = next(
-        action
-        for action in session.encounter_state.available_actions()
-        if action.kind == "move"
-    )
+    action = next(action for action in session.encounter_state.available_actions() if action.kind == "move")
     action.creature_ref = "goblin_1"
 
     with pytest.raises(
@@ -289,11 +319,7 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
         lambda _sides: 1,
     )
 
-    multiattack = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "multiattack"
-    )
+    multiattack = next(action for action in state.available_actions() if action.kind == "multiattack")
     initial_actions = state.available_actions()
     assert multiattack.value is None
     assert not any(action.kind == "attack" for action in initial_actions)
@@ -302,48 +328,34 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
 
     assert state.active_creature_state.actions_remaining == 0
     assert state.active_creature_state.attacks_remaining == 2
-    assert [
-        invocation.name
-        for invocation in state.active_creature_state.pending_multiattack
-    ] == [
+    assert [invocation.name for invocation in state.active_creature_state.pending_multiattack] == [
         "Thunderous Slam",
         "Thunderous Slam",
     ]
     assert not any(event.type == "attack_resolved" for event in started.events)
 
     invocation = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "attack" and action.value == "goblin_1"
+        action for action in state.available_actions() if action.kind == "attack" and action.value == "goblin_1"
     )
     assert invocation.source_trigger_id == "Thunderous Slam"
     first = state.apply_action(invocation)
 
     assert state.active_creature_state.attacks_remaining == 1
-    assert [
-        invocation.name
-        for invocation in state.active_creature_state.pending_multiattack
-    ] == ["Thunderous Slam"]
-    assert [
-        event.data["attack_name"]
-        for event in first.events
-        if event.type == "attack_resolved"
-    ] == ["Thunderous Slam"]
+    assert [invocation.name for invocation in state.active_creature_state.pending_multiattack] == ["Thunderous Slam"]
+    assert [event.data["attack_name"] for event in first.events if event.type == "attack_resolved"] == [
+        "Thunderous Slam"
+    ]
 
     second_invocation = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "attack" and action.value == "goblin_1"
+        action for action in state.available_actions() if action.kind == "attack" and action.value == "goblin_1"
     )
     second = state.apply_action(second_invocation)
 
     assert state.active_creature_state.attacks_remaining == 0
     assert state.active_creature_state.pending_multiattack == []
-    assert [
-        event.data["attack_name"]
-        for event in second.events
-        if event.type == "attack_resolved"
-    ] == ["Thunderous Slam"]
+    assert [event.data["attack_name"] for event in second.events if event.type == "attack_resolved"] == [
+        "Thunderous Slam"
+    ]
 
 
 def test_multiattack_showcase_loads_enriched_creatures() -> None:
@@ -353,10 +365,7 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
 
     assert scenario.display_name == "Multiattack Showcase"
     assert session.encounter_state is not None
-    creatures = {
-        state.creature.id: state.creature
-        for state in session.encounter_state.creatures.values()
-    }
+    creatures = {state.creature.id: state.creature for state in session.encounter_state.creatures.values()}
     assert set(creatures) == {"player", "air_elemental", "aboleth"}
     assert creatures["player"].multiattack is not None
     player_sequence = creatures["player"].multiattack.executable_sequence(
@@ -402,9 +411,7 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
     assert runtime_creatures["player"]["movement_total_feet"] == 80
     assert runtime_creatures["air_elemental"]["movement_total_feet"] == 90
     assert runtime_creatures["aboleth"]["movement_total_feet"] == 10
-    assert {
-        creature["controller"] for creature in runtime_creatures.values()
-    } == {"external"}
+    assert {creature["controller"] for creature in runtime_creatures.values()} == {"external"}
 
 
 def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
@@ -431,34 +438,20 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
         lambda count, _sides: count,
     )
 
-    multiattack = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "multiattack"
-    )
+    multiattack = next(action for action in state.available_actions() if action.kind == "multiattack")
     state.apply_action(multiattack)
     tentacle = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "attack" and action.value == "air_elemental"
+        action for action in state.available_actions() if action.kind == "attack" and action.value == "air_elemental"
     )
     state.apply_action(tentacle)
 
-    grapple = next(
-        status
-        for status in state.conditions_for("air_elemental")
-        if status.name == "grappled"
-    )
+    grapple = next(status for status in state.conditions_for("air_elemental") if status.name == "grappled")
     assert grapple.source_ref == "aboleth"
     assert grapple.metadata["escape_dc"] == 14
-    assert state._grappling_targets_for("aboleth") == (
-        "air_elemental",
-    )
+    assert state._grappling_targets_for("aboleth") == ("air_elemental",)
 
     huge_target_tentacle = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "attack" and action.value == "player"
+        action for action in state.available_actions() if action.kind == "attack" and action.value == "player"
     )
     state.apply_action(huge_target_tentacle)
     assert state.has_condition("player", "grappled") is False
@@ -466,11 +459,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
     state.initiative_order = ["air_elemental", "aboleth", "player"]
     state.turn_index = 0
     state.creatures["air_elemental"].actions_remaining = 1
-    failed_escape = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "escape_grapple"
-    )
+    failed_escape = next(action for action in state.available_actions() if action.kind == "escape_grapple")
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_die",
         lambda _sides: 1,
@@ -485,11 +474,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
         "srd_arena.domain.encounters.encounter.roll_die",
         lambda _sides: 20,
     )
-    escape = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "escape_grapple"
-    )
+    escape = next(action for action in state.available_actions() if action.kind == "escape_grapple")
     result = state.apply_action(escape)
 
     assert escape.label == "Escape The Deep One (DC 14)"
@@ -507,9 +492,7 @@ def test_tentacle_grapple_enforces_capacity_without_counting_duplicates() -> Non
     template = state.creatures["air_elemental"]
     for index in range(4):
         state.creatures[f"tentacle-target:{index}"] = deepcopy(template)
-    tentacle = state.creatures[aboleth_ref].creature.stat_block_actions[
-        "Tentacle"
-    ]
+    tentacle = state.creatures[aboleth_ref].creature.stat_block_actions["Tentacle"]
     assert isinstance(tentacle, AttackActionDefinition)
     [_, grapple_effect] = tentacle.hit
 
@@ -539,9 +522,7 @@ def test_tentacle_grapple_enforces_capacity_without_counting_duplicates() -> Non
 
 
 def test_fallback_tokens_use_team_colors() -> None:
-    blue_fill, blue_border = BattlefieldWidget._fallback_token_colors(
-        "#3f7fd5"
-    )
+    blue_fill, blue_border = BattlefieldWidget._fallback_token_colors("#3f7fd5")
     red_fill, red_border = BattlefieldWidget._fallback_token_colors("#d64545")
 
     assert blue_fill.name() == "#3f7fd5"
@@ -589,29 +570,29 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
     choices = session.get_scene_view().choices
     assert not any(choice.startswith("Move ") for choice in choices)
     assert (
-        state._attack_roll_mode_for("player",
+        state._attack_roll_mode_for(
+            "player",
             "goblin_2",
             "melee",
             state.active_position,
             tuple(
                 creature_state.position
                 for creature_ref, creature_state in state.creatures.items()
-                if creature_ref != state.current_decision().creature_ref
-                and creature_state.is_alive
+                if creature_ref != state.current_decision().creature_ref and creature_state.is_alive
             ),
         )
         == "disadvantage"
     )
     assert (
-        state._attack_roll_mode_for("player",
+        state._attack_roll_mode_for(
+            "player",
             "goblin_1",
             "melee",
             state.active_position,
             tuple(
                 creature_state.position
                 for creature_ref, creature_state in state.creatures.items()
-                if creature_ref != state.current_decision().creature_ref
-                and creature_state.is_alive
+                if creature_ref != state.current_decision().creature_ref and creature_state.is_alive
             ),
         )
         == "normal"
@@ -642,10 +623,7 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
     ) in result.messages
     assert session.encounter_state.has_condition("goblin_1", "grappled") is True
     assert session.encounter_state.has_condition("player", "grappling") is True
-    assert any(
-        action.kind == "grapple" and action.value == "goblin_1"
-        for action in scene_view.action_details
-    )
+    assert any(action.kind == "grapple" and action.value == "goblin_1" for action in scene_view.action_details)
 
 
 def test_grapple_replaces_only_one_attack_in_multiattack(monkeypatch) -> None:
@@ -671,10 +649,7 @@ def test_grapple_replaces_only_one_attack_in_multiattack(monkeypatch) -> None:
 
     assert state.active_action_available is False
     assert state.active_attacks_remaining == 1
-    assert any(
-        action.kind == "attack"
-        for action in state.available_actions()
-    )
+    assert any(action.kind == "attack" for action in state.available_actions())
 
 
 def test_grapple_can_replace_remaining_attack_after_weapon_attack(
@@ -705,10 +680,7 @@ def test_grapple_can_replace_remaining_attack_after_weapon_attack(
     session.choose(_action_index(session, "grapple", "goblin_1"))
 
     assert state.active_attacks_remaining == 0
-    assert not any(
-        action.kind in {"attack", "grapple"}
-        for action in state.available_actions()
-    )
+    assert not any(action.kind in {"attack", "grapple"} for action in state.available_actions())
 
 
 def test_grappling_moves_target_and_costs_extra_movement() -> None:
@@ -826,7 +798,9 @@ def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
     assert "Cast Burning Hands" in session.get_scene_view().choices
 
 
-def test_presentation_derives_spell_slot_rows_from_player_spellcasting(monkeypatch) -> None:
+def test_presentation_derives_spell_slot_rows_from_player_spellcasting(
+    monkeypatch,
+) -> None:
     session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
@@ -873,7 +847,9 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
     assert "Cast Lesser Restoration" in session.get_scene_view().choices
 
 
-def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatch) -> None:
+def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
+    monkeypatch,
+) -> None:
     session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
@@ -888,7 +864,10 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(monkeypatc
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
 
-    assert ("system", "Traveler casts Color Spray on Goblin Warrior.") in result.messages
+    assert (
+        "system",
+        "Traveler casts Color Spray on Goblin Warrior.",
+    ) in result.messages
     assert any("is blinded until the end of your next turn" in message for _, message in result.messages)
     assert session.encounter_state.active_action_available is False
     assert session.decision_creature.spellcasting.spell_slots_remaining[1] == 3
@@ -1057,11 +1036,7 @@ def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
-    area = next(
-        event.data["area"]
-        for event in result.events
-        if event.type == "spell_cast"
-    )
+    area = next(event.data["area"] for event in result.events if event.type == "spell_cast")
 
     assert area is not None
     assert area["shape"] == "cone"
@@ -1108,7 +1083,9 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
     assert not hasattr(window, "_resolved_area_overlay")
 
 
-def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch) -> None:
+def test_battlefield_widget_preview_overlay_reaims_directional_area(
+    monkeypatch,
+) -> None:
     session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
@@ -1128,11 +1105,7 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(monkeypatch)
     presentation = build_session_presentation(session)
 
     assert presentation.encounter is not None
-    original_area = next(
-        event.data["area"]
-        for event in result.events
-        if event.type == "spell_cast"
-    )
+    original_area = next(event.data["area"] for event in result.events if event.type == "spell_cast")
     preview = BattlefieldWidget._preview_area_overlay(
         original_area,
         (6, 4),
@@ -1167,9 +1140,7 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
     result = session.choose(session.get_scene_view().choices.index("Wait"))
 
     attack_event = next(
-        event
-        for event in result.events
-        if event.type == "attack_resolved" and event.creature_ref == "goblin_1"
+        event for event in result.events if event.type == "attack_resolved" and event.creature_ref == "goblin_1"
     )
     assert attack_event.data["attack_roll_detail"]["mode"] == "disadvantage"
     assert attack_event.data["attack_roll_detail"]["dice"] == [17, 4]
@@ -1200,7 +1171,9 @@ def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
     assert attack_mode == "advantage"
 
 
-def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(monkeypatch) -> None:
+def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(
+    monkeypatch,
+) -> None:
     session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
@@ -1280,13 +1253,16 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
         ]
     )
     assert state.has_condition("goblin_1", "blinded") is True
-    assert state._attack_roll_mode_for(
-        "player",
-        "goblin_1",
-        "melee",
-        state.active_position,
-        (state.creatures["goblin_1"].position,),
-    ) == "advantage"
+    assert (
+        state._attack_roll_mode_for(
+            "player",
+            "goblin_1",
+            "melee",
+            state.active_position,
+            (state.creatures["goblin_1"].position,),
+        )
+        == "advantage"
+    )
 
     messages = state._apply_effects(
         [
@@ -1305,13 +1281,16 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
 
     assert messages == [("system", "Status removed.")]
     assert state.has_condition("goblin_1", "blinded") is False
-    assert state._attack_roll_mode_for(
-        "player",
-        "goblin_1",
-        "melee",
-        state.active_position,
-        (state.creatures["goblin_1"].position,),
-    ) == "normal"
+    assert (
+        state._attack_roll_mode_for(
+            "player",
+            "goblin_1",
+            "melee",
+            state.active_position,
+            (state.creatures["goblin_1"].position,),
+        )
+        == "normal"
+    )
 
 
 def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> None:
@@ -1339,7 +1318,10 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
 
     result = session.choose(_action_index_by_prefix(session, "Cast Lesser Restoration"))
 
-    assert ("system", "Traveler casts Lesser Restoration on Traveler.") in result.messages
+    assert (
+        "system",
+        "Traveler casts Lesser Restoration on Traveler.",
+    ) in result.messages
     assert ("system", "Traveler is no longer blinded.") in result.messages
     assert state.has_condition("player", "blinded") is False
     assert state.active_bonus_action_available is False
@@ -1385,7 +1367,9 @@ def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> Non
     assert session.encounter_state.round_number == 2
 
 
-def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch) -> None:
+def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
+    monkeypatch,
+) -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
@@ -1408,9 +1392,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(monkeypatch
     progress = session.encounter_state.advance_until_next_decision()
 
     attack_event = next(
-        event
-        for event in progress.events
-        if event.type == "attack_resolved" and event.creature_ref == "goblin_1"
+        event for event in progress.events if event.type == "attack_resolved" and event.creature_ref == "goblin_1"
     )
     assert enemy.position.x == 5
     assert enemy.position.y == 2
@@ -1491,10 +1473,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     assert second_attack_events[0].data["attacks_remaining"] == 0
     assert session.encounter_state.creatures["goblin_1"].creature.get_health() == 10
     assert session.encounter_state.active_attacks_remaining == 0
-    assert not any(
-        choice.startswith("Attack enemy")
-        for choice in session.get_scene_view().choices
-    )
+    assert not any(choice.startswith("Attack enemy") for choice in session.get_scene_view().choices)
 
 
 def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
@@ -1523,7 +1502,9 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
     assert event.data["healing_roll_detail"]["applied_healing"] == 7
 
 
-def test_second_wind_stays_visible_in_feature_column_when_unavailable(monkeypatch) -> None:
+def test_second_wind_stays_visible_in_feature_column_when_unavailable(
+    monkeypatch,
+) -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.decision_creature.current_health = 10
@@ -1573,14 +1554,8 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
     assert session.encounter_state.active_actions_remaining == 1
     assert session.encounter_state.active_magic_actions_remaining == 0
     assert session.decision_creature.feature_uses_remaining["action_surge"] == 0
-    assert any(
-        action.kind == "attack"
-        for action in session.get_scene_view().action_details
-    )
-    assert not any(
-        action.kind == "spell"
-        for action in session.get_scene_view().action_details
-    )
+    assert any(action.kind == "attack" for action in session.get_scene_view().action_details)
+    assert not any(action.kind == "spell" for action in session.get_scene_view().action_details)
     event = next(event for event in result.events if event.type == "feature_used")
     assert event.data["feature_id"] == "action_surge"
     assert event.data["granted_actions"] == 1
@@ -1780,10 +1755,7 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
     session.choose(attack_index)
 
     assert session.encounter_state.active_action_available is False
-    assert not any(
-        action.kind == "attack"
-        for action in session.get_scene_view().action_details
-    )
+    assert not any(action.kind == "attack" for action in session.get_scene_view().action_details)
 
     wait_index = session.get_scene_view().choices.index("Wait")
     session.choose(wait_index)
@@ -1791,10 +1763,7 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
         session.choose(session.get_scene_view().choices.index("Pass reaction"))
 
     assert session.encounter_state.creatures["player"].actions_remaining == 1
-    assert any(
-        action.kind == "attack"
-        for action in session.get_scene_view().action_details
-    )
+    assert any(action.kind == "attack" for action in session.get_scene_view().action_details)
 
 
 def test_encounter_victory_waits_for_continue_before_restart() -> None:

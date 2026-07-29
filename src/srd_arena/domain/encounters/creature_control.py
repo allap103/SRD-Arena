@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creatures import can_grapple
 from ..geometry import Position
-from .actions.attack_resolution import attack_range_squares, has_free_hand
 from .actions.consumables import healing_potions_in_inventory
+from .actions.eligibility import action_eligibility, require_action_eligible
 from .actions.grappling import available_escape_actions, resolve_escape_action
 from .actions.stat_block import (
     executable_multiattack_sequence,
@@ -14,10 +13,15 @@ from .actions.stat_block import (
 )
 from .behaviors import (
     DIRECTION_DELTAS,
-    chebyshev_distance as _chebyshev_distance,
     movement_squares as _movement_squares,
 )
-from .models import ActionCost, CreatureRef, DecisionFrame, EncounterAction, EncounterProgress
+from .models import (
+    ActionCost,
+    CreatureRef,
+    DecisionFrame,
+    EncounterAction,
+    EncounterProgress,
+)
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -36,13 +40,8 @@ def available_creature_actions(
     if enemy.movement_remaining is None:
         enemy.movement_remaining = _movement_squares(enemy.creature)
     actions: list[EncounterAction] = []
-    if movement_cost is not None and enemy.movement_remaining >= movement_cost:
-        moving_refs = {creature_ref, *self._grappling_targets_for(creature_ref)}
-        for direction, (dx, dy) in DIRECTION_DELTAS.items():
-            target_x = enemy.position.x + dx
-            target_y = enemy.position.y + dy
-            if not self._position_is_free(target_x, target_y, ignored_refs=moving_refs):
-                continue
+    if movement_cost is not None:
+        for direction in DIRECTION_DELTAS:
             actions.append(
                 EncounterAction(
                     f"Move {direction}",
@@ -53,82 +52,46 @@ def available_creature_actions(
                     cost=ActionCost(movement=movement_cost),
                 )
             )
-    can_attack = enemy.actions_remaining > 0 or enemy.attacks_remaining > 0
-    if can_attack:
-        multiattack_sequence = (
-            executable_multiattack_sequence(enemy.creature)
-            if enemy.actions_remaining > 0 and enemy.attacks_remaining == 0
-            else None
+    multiattack_sequence = executable_multiattack_sequence(enemy.creature)
+    if multiattack_sequence is not None:
+        actions.append(
+            EncounterAction(
+                "Multiattack",
+                "multiattack",
+                id=f"{creature_ref}-multiattack",
+                creature_ref=creature_ref,
+                cost=ActionCost(action=1),
+            )
         )
-        if multiattack_sequence is not None:
+    for target_ref in self._living_creature_refs():
+        if target_ref == creature_ref:
+            continue
+        if multiattack_sequence is None or enemy.pending_multiattack:
             actions.append(
                 EncounterAction(
-                    "Multiattack",
-                    "multiattack",
-                    id=f"{creature_ref}-multiattack",
+                    (
+                        f"{enemy.pending_multiattack[0].name} {_lower_initial(self._creature_label(target_ref))}"
+                        if enemy.pending_multiattack
+                        else f"Attack {_lower_initial(self._creature_label(target_ref))}"
+                    ),
+                    "attack",
+                    target_ref,
+                    id=f"{creature_ref}-attack-{target_ref.replace(':', '-')}",
                     creature_ref=creature_ref,
-                    cost=ActionCost(action=1),
+                    cost=ActionCost(action=1 if enemy.attacks_remaining == 0 else 0),
+                    source_trigger_id=(enemy.pending_multiattack[0].name if enemy.pending_multiattack else None),
                 )
             )
-        for target_ref in self._living_creature_refs():
-            if target_ref == creature_ref or not self._creatures_are_opponents(creature_ref, target_ref):
-                continue
-            attack_reach_squares = attack_range_squares(
-                enemy.creature,
-                self.item_templates,
-                preferred_attack_name=(
-                    enemy.pending_multiattack[0].name
-                    if enemy.pending_multiattack
-                    else None
-                ),
+        actions.append(
+            EncounterAction(
+                f"Grapple {_lower_initial(self._creature_label(target_ref))}",
+                "grapple",
+                target_ref,
+                id=f"{creature_ref}-grapple-{target_ref.replace(':', '-')}",
+                creature_ref=creature_ref,
+                cost=ActionCost(action=1 if enemy.attacks_remaining == 0 else 0),
             )
-            if _chebyshev_distance(
-                enemy.position,
-                self._creature_position(target_ref),
-            ) > attack_reach_squares:
-                continue
-            if multiattack_sequence is None or enemy.pending_multiattack:
-                actions.append(
-                    EncounterAction(
-                        (
-                            f"{enemy.pending_multiattack[0].name} "
-                            f"{_lower_initial(self._creature_label(target_ref))}"
-                            if enemy.pending_multiattack
-                            else f"Attack {_lower_initial(self._creature_label(target_ref))}"
-                        ),
-                        "attack",
-                        target_ref,
-                        id=f"{creature_ref}-attack-{target_ref.replace(':', '-')}",
-                        creature_ref=creature_ref,
-                        cost=ActionCost(
-                            action=1 if enemy.attacks_remaining == 0 else 0
-                        ),
-                        source_trigger_id=(
-                            enemy.pending_multiattack[0].name
-                            if enemy.pending_multiattack
-                            else None
-                        ),
-                    )
-                )
-            if (
-                has_free_hand(enemy.creature)
-                and can_grapple(
-                    self.creatures[target_ref].creature.size,
-                    enemy.creature.size,
-                )
-            ):
-                actions.append(
-                    EncounterAction(
-                        f"Grapple {_lower_initial(self._creature_label(target_ref))}",
-                        "grapple",
-                        target_ref,
-                        id=f"{creature_ref}-grapple-{target_ref.replace(':', '-')}",
-                        creature_ref=creature_ref,
-                        cost=ActionCost(
-                            action=1 if enemy.attacks_remaining == 0 else 0
-                        ),
-                    )
-                )
+        )
     actions.extend(self._available_feature_actions(enemy.creature))
     actions.extend(self._available_spell_actions(enemy.creature))
     actions.extend(available_escape_actions(self, creature_ref))
@@ -155,7 +118,7 @@ def available_creature_actions(
             creature_ref=creature_ref,
         )
     )
-    return actions
+    return [action for action in actions if action_eligibility(self, creature_ref, action).allowed]
 
 
 def apply_creature_action(
@@ -166,6 +129,7 @@ def apply_creature_action(
     continue_encounter: bool = True,
 ) -> EncounterProgress:
     enemy = self.creatures[decision.creature_ref]
+    require_action_eligible(self, decision.creature_ref, action)
     progress = EncounterProgress()
     action_id = self._next_action_id()
     progress.events.append(
@@ -235,8 +199,7 @@ def apply_creature_action(
         progress.messages.append(
             (
                 "system",
-                f"{enemy.creature.name} moves {direction} to "
-                f"({destination.x}, {destination.y}).",
+                f"{enemy.creature.name} moves {direction} to ({destination.x}, {destination.y}).",
             )
         )
         progress.events.append(
@@ -321,11 +284,7 @@ def apply_creature_action(
         raise ValueError(f"Unsupported creature action: {action.kind}")
 
     progress.transition = self._check_transition()
-    if (
-        progress.transition is not None
-        or not action_ends_turn
-        or not continue_encounter
-    ):
+    if progress.transition is not None or not action_ends_turn or not continue_encounter:
         return progress
     self._advance_turn()
     self._maybe_reset_reactions()
