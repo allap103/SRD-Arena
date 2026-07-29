@@ -381,7 +381,7 @@ class EncounterState(EncounterStateData):
             return ("player", None)
         return ("enemy", _enemy_index(actor_ref))
 
-    def needs_ai_advance(self) -> bool:
+    def requires_automatic_advance(self) -> bool:
         return self.rules.controller(self.current_decision().actor_ref) == "ai"
 
 
@@ -608,7 +608,7 @@ class EncounterState(EncounterStateData):
         target.paused_for_decision = (
             target.paused_for_decision or source.paused_for_decision
         )
-        target.paused_for_ai = target.paused_for_ai or source.paused_for_ai
+        target.paused_for_pacing = target.paused_for_pacing or source.paused_for_pacing
 
 
     def _creature_label(self, actor_ref: CreatureRef) -> str:

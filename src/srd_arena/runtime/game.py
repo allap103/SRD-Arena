@@ -52,12 +52,12 @@ class Game:
         return self.session.current_scene_id
 
     @property
-    def ai_action_limit(self) -> int | None:
-        return self.session.ai_action_limit
+    def automatic_action_limit(self) -> int | None:
+        return self.session.automatic_action_limit
 
-    @ai_action_limit.setter
-    def ai_action_limit(self, value: int | None) -> None:
-        self.session.ai_action_limit = value
+    @automatic_action_limit.setter
+    def automatic_action_limit(self, value: int | None) -> None:
+        self.session.automatic_action_limit = value
 
     def view(self) -> SceneView:
         return self.session.get_scene_view()
@@ -68,8 +68,8 @@ class Game:
     def perform(self, action: EncounterAction) -> TurnResult:
         return self.session.choose_encounter_action(action)
 
-    def advance_ai(self) -> TurnResult:
-        return self.session.advance_ai()
+    def advance_until_input_required(self) -> TurnResult:
+        return self.session.advance_until_input_required()
 
     def reset(self) -> None:
         self.session.reset()

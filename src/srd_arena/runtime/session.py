@@ -29,7 +29,7 @@ class Session:
         item_templates: dict[str, Item] | None = None,
         start_scene_id: str = "goblin_encounter",
         control_mode: str = "default",
-        ai_action_limit: int | None = None,
+        automatic_action_limit: int | None = None,
         geometry_config: GeometryConfig | None = None,
     ):
         self.encounters = encounters
@@ -40,7 +40,7 @@ class Session:
         self.current_scene_id = start_scene_id
         self._initial_player = deepcopy(player)
         self.control_mode = control_mode
-        self._ai_action_limit = ai_action_limit
+        self._automatic_action_limit = automatic_action_limit
         self.geometry_config = geometry_config or GeometryConfig()
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
@@ -51,14 +51,14 @@ class Session:
         return self.encounters[self.current_scene_id]
 
     @property
-    def ai_action_limit(self) -> int | None:
-        return self._ai_action_limit
+    def automatic_action_limit(self) -> int | None:
+        return self._automatic_action_limit
 
-    @ai_action_limit.setter
-    def ai_action_limit(self, value: int | None) -> None:
-        self._ai_action_limit = value
+    @automatic_action_limit.setter
+    def automatic_action_limit(self, value: int | None) -> None:
+        self._automatic_action_limit = value
         if self.encounter_state is not None:
-            self.encounter_state.ai_action_limit = value
+            self.encounter_state.automatic_action_limit = value
 
     def start_encounter(self) -> Session:
         """Start the current encounter, including initiative and behavior setup."""
@@ -77,7 +77,7 @@ class Session:
             self.control_mode,
             self.geometry_config,
         )
-        self.encounter_state.ai_action_limit = self.ai_action_limit
+        self.encounter_state.automatic_action_limit = self.automatic_action_limit
         self._encounter_actions = []
         return self
 
@@ -259,14 +259,12 @@ class Session:
             combat_state=combat_state,
         )
 
-    def advance_ai(self) -> TurnResult:
+    def advance_until_input_required(self) -> TurnResult:
         if self.encounter_state is None:
-            raise RuntimeError("Cannot advance AI before starting the encounter.")
-        if self.encounter_state is None:
-            raise RuntimeError("AI advancement requested without an active encounter.")
-        if not self.encounter_state.needs_ai_advance():
+            raise RuntimeError("Cannot advance automatically before starting the encounter.")
+        if not self.encounter_state.requires_automatic_advance():
             raise RuntimeError(
-                "AI advancement requested while no AI creature is active."
+                "Automatic advancement requested while external input is required."
             )
 
         progress = self.encounter_state.advance_until_next_decision(self.player)

@@ -61,7 +61,7 @@ class EncounterProgress:
     transition: str | None = None
     events: list[CombatEvent] = field(default_factory=list)
     paused_for_decision: bool = False
-    paused_for_ai: bool = False
+    paused_for_pacing: bool = False
 
 
 @dataclass
@@ -203,7 +203,7 @@ class EncounterStateData:
     player_position: Position
     enemies: list[EncounterEnemyState]
     control_mode: str = "default"
-    ai_action_limit: int | None = None
+    automatic_action_limit: int | None = None
     round: RoundState = field(default_factory=RoundState)
     turn: TurnState = field(default_factory=TurnState)
     interrupts: InterruptState = field(default_factory=InterruptState)

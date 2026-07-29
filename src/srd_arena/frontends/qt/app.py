@@ -99,14 +99,14 @@ class GameWindow(QMainWindow):
         super().__init__()
         self.scenario = scenario
         self.game = Game.start(self.scenario)
-        self.game.ai_action_limit = 1
+        self.game.automatic_action_limit = 1
         self._items_by_id = {item.id: item for item in self.scenario.items}
         self._presentation: SessionPresentation | None = None
         self._pending_target_mode: TargetSelectionMode | None = None
         self._action_menu_scope: ActionMenuScope | None = None
         self._combat_log_scene_id: str | None = None
         self._logged_round_number: int | None = None
-        self._ai_step_scheduled = False
+        self._automatic_step_scheduled = False
 
         self.setWindowTitle("SRD Arena")
         self.resize(1400, 900)
@@ -466,7 +466,7 @@ class GameWindow(QMainWindow):
             self._sync_combat_log_round(presentation.scene_id)
             self._render_encounter(presentation)
         self._sync_victory_overlay(presentation)
-        self._schedule_ai_step_if_needed()
+        self._schedule_automatic_step_if_needed()
 
     def _render_story_actions(self, actions: list[ActionView]) -> None:
         clear_layout(self.story_choices_layout)
@@ -1330,24 +1330,24 @@ class GameWindow(QMainWindow):
         scrollbar = self.roll_scroll.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-    def _schedule_ai_step_if_needed(self) -> None:
+    def _schedule_automatic_step_if_needed(self) -> None:
         state = self.game.encounter_state
         if (
-            self._ai_step_scheduled
+            self._automatic_step_scheduled
             or state is None
             or self.game.pending_scene_transition is not None
-            or not state.needs_ai_advance()
+            or not state.requires_automatic_advance()
         ):
             return
-        self._ai_step_scheduled = True
-        QTimer.singleShot(500, self._advance_ai_step)
+        self._automatic_step_scheduled = True
+        QTimer.singleShot(500, self._advance_until_input_required_step)
 
-    def _advance_ai_step(self) -> None:
-        self._ai_step_scheduled = False
+    def _advance_until_input_required_step(self) -> None:
+        self._automatic_step_scheduled = False
         state = self.game.encounter_state
-        if state is None or not state.needs_ai_advance():
+        if state is None or not state.requires_automatic_advance():
             return
-        self._apply_turn_result(self.game.advance_ai())
+        self._apply_turn_result(self.game.advance_until_input_required())
 
     def show_menu_root(self) -> None:
         self.sidebar_stack.setCurrentIndex(0)

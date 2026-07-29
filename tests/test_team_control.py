@@ -221,7 +221,7 @@ def test_paced_ai_resolves_one_visible_action_per_step():
         )
         .create_session().start_encounter()
     )
-    session.ai_action_limit = 1
+    session.automatic_action_limit = 1
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -232,9 +232,9 @@ def test_paced_ai_resolves_one_visible_action_per_step():
     assert (
         len([event for event in first.events if event.type == "movement_resolved"]) == 1
     )
-    assert state.needs_ai_advance() is True
+    assert state.requires_automatic_advance() is True
 
-    second = session.advance_ai()
+    second = session.advance_until_input_required()
 
     assert (
         len([event for event in second.events if event.type == "movement_resolved"])

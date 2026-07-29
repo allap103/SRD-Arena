@@ -30,8 +30,8 @@ def test_game_start_creates_runtime_session_from_loaded_scenario() -> None:
 
 def test_game_supports_headless_action_discovery_and_execution() -> None:
     game = Game.start(ScenarioLoader().load(FIXTURE_ENCOUNTER_DIR))
-    if game.encounter_state is not None and game.encounter_state.needs_ai_advance():
-        game.advance_ai()
+    if game.encounter_state is not None and game.encounter_state.requires_automatic_advance():
+        game.advance_until_input_required()
     assert game.encounter_state is not None
     actions = game.encounter_state.actions.available(game.player)
     action = next(action for action in actions if action.kind == "wait")
