@@ -47,9 +47,9 @@ def test_incapacitating_condition_uses_shared_eligibility_rule() -> None:
         id="test-attack",
         actor_ref="player",
     )
-    result = evaluate_action(state, session.player, attack)
+    result = evaluate_action(state, attack)
     available_kinds = {
-        action.kind for action in state.actions.available(session.player)
+        action.kind for action in state.actions.available(state.current_decision().actor_ref)
     }
 
     assert result.allowed is False
@@ -61,7 +61,7 @@ def test_execution_revalidates_action_after_state_changes() -> None:
     session, state = _player_session()
     move = next(
         action
-        for action in state.actions.available(session.player)
+        for action in state.actions.available(state.current_decision().actor_ref)
         if action.kind == "move"
     )
     assert isinstance(move.value, str)
@@ -81,7 +81,7 @@ def test_pipeline_declares_action_before_calling_resolver() -> None:
     session, state = _player_session()
     move = next(
         action
-        for action in state.actions.available(session.player)
+        for action in state.actions.available(state.current_decision().actor_ref)
         if action.kind == "move"
     )
     observed_events: list[str] = []

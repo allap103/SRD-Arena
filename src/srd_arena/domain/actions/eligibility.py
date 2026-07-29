@@ -9,7 +9,7 @@ from ..encounters.behaviors import (
     DIRECTION_DELTAS,
     is_adjacent,
 )
-from ..encounters.models import EncounterAction, EncounterEnemyState
+from ..encounters.models import EncounterAction, Combatant
 from ..encounters.refs import enemy_ref
 from ..geometry import Position
 from .attack_resolution import has_free_hand
@@ -46,12 +46,10 @@ EligibilityRule = Callable[
 
 def evaluate_action(
     state: EncounterState,
-    player: Creature,
     action: EncounterAction,
-    *,
-    expected_controller: str = "user",
 ) -> ActionEligibility:
     """Evaluate the rules shared by action discovery and action execution."""
+    actor = state.combatant(action.actor_ref).creature
     action_rules = (
         ACTION_RULES.get(action.kind, ())
         if action.actor_ref == "player"
@@ -60,15 +58,10 @@ def evaluate_action(
     reasons = [
         reason
         for reason in (
-            _supported_action_rule(state, player, action),
-            _actor_rule(
-                state,
-                player,
-                action,
-                expected_controller=expected_controller,
-            ),
+            _supported_action_rule(state, actor, action),
+            _actor_rule(state, actor, action),
             *(
-                rule(state, player, action)
+                rule(state, actor, action)
                 for rule in (
                 _condition_rule,
                 _economy_rule,
@@ -97,14 +90,10 @@ def _actor_rule(
     state: EncounterState,
     _player: Creature,
     action: EncounterAction,
-    *,
-    expected_controller: str,
 ) -> str | None:
     decision = state.current_decision()
     if decision.actor_ref != action.actor_ref:
         return "That creature is not the current actor."
-    if state.rules.controller(decision.actor_ref) != expected_controller:
-        return f"That creature is not {expected_controller}-controlled."
     return None
 
 
@@ -294,7 +283,7 @@ def _spell_rule(
 def _target_enemy(
     state: EncounterState,
     action: EncounterAction,
-) -> tuple[int, EncounterEnemyState] | None:
+) -> tuple[int, Combatant] | None:
     if (
         not isinstance(action.value, int)
         or action.value < 0

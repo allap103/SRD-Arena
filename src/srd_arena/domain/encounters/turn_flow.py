@@ -161,7 +161,6 @@ class TurnEngine:
                     enemy_index,
                     resolution,
                 ),
-                expected_controller="ai",
                 check_transition=False,
                 complete=False,
             )

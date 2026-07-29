@@ -56,7 +56,7 @@ def test_all_user_mode_pauses_for_each_goblin_turn():
         state.enemies[0].position.x,
         state.enemies[0].position.y,
     ) == starting_position
-    actions = state.actions.available(session.player)
+    actions = state.actions.available(state.current_decision().actor_ref)
     assert actions
     assert {action.actor_ref for action in actions} == {"enemy:0"}
     assert "Wait" in [action.label for action in actions]
@@ -80,7 +80,7 @@ def test_user_controlled_goblin_can_move_then_end_turn():
     start = (state.enemies[0].position.x, state.enemies[0].position.y)
     move = next(
         action
-        for action in state.actions.available(session.player)
+        for action in state.actions.available(state.current_decision().actor_ref)
         if action.kind == "move"
     )
 
@@ -128,7 +128,7 @@ def test_user_controlled_goblin_can_attack_opposing_player(monkeypatch):
 
     attack = next(
         action
-        for action in state.actions.available(session.player)
+        for action in state.actions.available(state.current_decision().actor_ref)
         if action.kind == "attack"
     )
 
@@ -169,7 +169,7 @@ def test_team_members_are_not_valid_attack_targets():
     state.enemies[0].position.x = 3
     state.enemies[0].position.y = 2
 
-    player_actions = state.actions.available(session.player)
+    player_actions = state.actions.available(state.current_decision().actor_ref)
 
     assert not any(
         action.kind == "attack" and action.value == 0 for action in player_actions
@@ -196,7 +196,7 @@ def test_user_controlled_teammate_can_target_opposing_team():
     state.enemies[1].position.x = 4
     state.enemies[1].position.y = 2
 
-    actions = state.actions.available(session.player)
+    actions = state.actions.available(state.current_decision().actor_ref)
 
     assert any(
         action.kind == "attack" and action.value == "enemy:1" for action in actions

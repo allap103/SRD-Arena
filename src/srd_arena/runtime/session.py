@@ -108,7 +108,9 @@ class Session:
             raise RuntimeError("Cannot build an encounter view before starting the encounter.")
         encounter = self.current_encounter
         scene_text = render_encounter_text(self.encounter_state, self.player)
-        self._encounter_actions = self.encounter_state.actions.available(self.player)
+        self._encounter_actions = self.encounter_state.actions.available(
+            self.encounter_state.current_decision().actor_ref
+        )
         action_details = [
             ActionView(
                 index=index,

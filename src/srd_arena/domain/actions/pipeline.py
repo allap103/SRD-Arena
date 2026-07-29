@@ -34,7 +34,6 @@ class ActionPipeline:
         action: EncounterAction,
         resolver: ActionResolver,
         *,
-        expected_controller: str = "user",
         check_transition: bool = True,
         complete: bool = True,
     ) -> EncounterProgress:
@@ -44,10 +43,7 @@ class ActionPipeline:
             action=action,
             progress=EncounterProgress(),
         )
-        eligibility = self.validate(
-            context,
-            expected_controller=expected_controller,
-        )
+        eligibility = self.validate(context)
         if not eligibility.allowed:
             self.reject(context, eligibility)
             return context.progress
@@ -63,15 +59,8 @@ class ActionPipeline:
     def validate(
         self,
         context: ActionExecutionContext,
-        *,
-        expected_controller: str = "user",
     ) -> ActionEligibility:
-        return evaluate_action(
-            context.state,
-            context.player,
-            context.action,
-            expected_controller=expected_controller,
-        )
+        return evaluate_action(context.state, context.action)
 
     def reject(
         self,

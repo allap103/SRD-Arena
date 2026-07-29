@@ -74,8 +74,8 @@ class EncounterActions:
 
     state: EncounterState
 
-    def available(self, player: Creature) -> list[EncounterAction]:
-        return available_actions(self.state, player)
+    def available(self, actor_ref: CreatureRef) -> list[EncounterAction]:
+        return available_actions(self.state, actor_ref)
 
     def perform(
         self,
@@ -160,9 +160,9 @@ class EncounterActions:
         return spell_target_context(self.state, player, target_ref)
 
     def available_for_controlled_enemy(
-        self, player: Creature, actor_ref: CreatureRef
+        self, actor_ref: CreatureRef
     ) -> list[EncounterAction]:
-        return user_controlled_enemy_actions(self.state, player, actor_ref)
+        return user_controlled_enemy_actions(self.state, actor_ref)
 
     def perform_for_controlled_enemy(
         self,

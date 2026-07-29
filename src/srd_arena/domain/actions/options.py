@@ -20,7 +20,7 @@ from ..geometry import (
     build_radius_area,
     vector_between_positions,
 )
-from ..encounters.models import ActionCost, EncounterAction
+from ..encounters.models import ActionCost, CreatureRef, EncounterAction
 from ..encounters.refs import enemy_index as _enemy_index, enemy_ref as _enemy_ref
 from .spells.definitions import Spell
 from .spells.resolution import SpellTargetContext
@@ -40,22 +40,25 @@ if TYPE_CHECKING:
     from ..encounters.encounter import EncounterState
 
 
-def available_actions(self: EncounterState, player: Creature) -> list[EncounterAction]:
+def available_actions(
+    self: EncounterState, actor_ref: CreatureRef
+) -> list[EncounterAction]:
     decision = self.current_decision()
-    if self.rules.controller(decision.actor_ref) != "user":
+    if decision.actor_ref != actor_ref:
         return []
-    if decision.actor_ref != "player":
-        return self.actions.available_for_controlled_enemy(player, decision.actor_ref)
+    actor = self.combatant(actor_ref).creature
+    if actor_ref != "player":
+        return self.actions.available_for_controlled_enemy(actor_ref)
     if decision.kind == "reroll_dice":
         return self._reroll_damage_actions()
     if decision.kind == "reaction":
         return self._reaction_actions()
 
     actions = []
-    movement_cost = self.rules.movement_cost(player, "player")
+    movement_cost = self.rules.movement_cost(actor, "player")
     if (
         movement_cost is not None
-        and self._player_movement_remaining(player) >= movement_cost
+        and self._player_movement_remaining(actor) >= movement_cost
     ):
         moving_refs = {"player", *self.rules.grappling_targets("player")}
         for direction, (dx, dy) in DIRECTION_DELTAS.items():
@@ -99,8 +102,8 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
             and enemy.is_alive
             and self.rules.are_opponents("player", _enemy_ref(index))
             and _is_adjacent(self.player_position, enemy.position)
-            and has_free_hand(player)
-            and can_grapple(enemy.creature.size, player.size)
+            and has_free_hand(actor)
+            and can_grapple(enemy.creature.size, actor.size)
         ):
             actions.append(
                 EncounterAction(
@@ -113,11 +116,11 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
                 )
             )
 
-    actions.extend(self.actions.available_features(player))
-    actions.extend(self.actions.available_spells(player))
+    actions.extend(self.actions.available_features(actor))
+    actions.extend(self.actions.available_spells(actor))
 
     if self.player_bonus_action_available:
-        for item in healing_potions_in_inventory(player, self.item_templates):
+        for item in healing_potions_in_inventory(actor, self.item_templates):
             actions.append(
                 EncounterAction(
                     f"Drink {item.name}",
@@ -141,7 +144,7 @@ def available_actions(self: EncounterState, player: Creature) -> list[EncounterA
     return [
         action
         for action in actions
-        if evaluate_action(self, player, action).allowed
+        if evaluate_action(self, action).allowed
     ]
 
 

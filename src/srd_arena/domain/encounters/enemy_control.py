@@ -41,12 +41,12 @@ def _roll_dice(count: int, sides: int) -> int:
 
 def user_controlled_enemy_actions(
     self: EncounterState,
-    player: Creature,
     actor_ref: CreatureRef,
 ) -> list[EncounterAction]:
     enemy_index = _enemy_index(actor_ref)
     enemy = self.enemies[enemy_index]
-    movement_cost = self.rules.movement_cost(player, actor_ref)
+    actor = enemy.creature
+    movement_cost = self.rules.movement_cost(actor, actor_ref)
     if enemy.movement_remaining is None:
         enemy.movement_remaining = _movement_squares(enemy.creature)
     actions: list[EncounterAction] = []
@@ -67,7 +67,7 @@ def user_controlled_enemy_actions(
                     cost=ActionCost(movement=1),
                 )
             )
-    for target_ref in self._living_creature_refs(player):
+    for target_ref in self._living_creature_refs(self.player_combatant.creature):
         if target_ref == actor_ref or not self.rules.are_opponents(
             actor_ref, target_ref
         ):

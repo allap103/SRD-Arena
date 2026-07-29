@@ -33,7 +33,7 @@ def test_game_supports_headless_action_discovery_and_execution() -> None:
     if game.encounter_state is not None and game.encounter_state.requires_automatic_advance():
         game.advance_until_input_required()
     assert game.encounter_state is not None
-    actions = game.encounter_state.actions.available(game.player)
+    actions = game.encounter_state.actions.available(game.encounter_state.current_decision().actor_ref)
     action = next(action for action in actions if action.kind == "wait")
 
     result = game.perform(action)
