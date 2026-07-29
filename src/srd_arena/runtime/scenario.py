@@ -24,17 +24,11 @@ from .session import Session
 
 DEFAULT_SCENARIO_DIR = SCENARIOS_ROOT / "sample_game"
 DEFAULT_SYSTEM_CONTENT_DIR = SYSTEM_CONTENT_ROOT
-DEFAULT_GRID_COLOR = "#d3d3d3"
-
-
 @dataclass(frozen=True)
 class ScenarioConfig:
     display_name: str = "Unnamed Scenario"
     encounters: tuple[str, ...] = ("goblin_encounter",)
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
-    background_image: str | None = None
-    grid_color: str = DEFAULT_GRID_COLOR
-    grid_opacity: float = 1.0
 
 
 class Scenario:
@@ -54,9 +48,6 @@ class Scenario:
         config = self._load_config(self.directory / "config.json")
         self.display_name = config.display_name
         self.geometry_config = config.geometry_config
-        self.background_image = config.background_image
-        self.grid_color = config.grid_color
-        self.grid_opacity = config.grid_opacity
         self.bestiary = load_bestiary_catalog(self.system_directory)
         self.classes = load_class_catalog(self.system_directory)
         self.subclasses = load_subclass_catalog(self.system_directory)
@@ -135,9 +126,6 @@ class Scenario:
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
             geometry_config=self.geometry_config,
-            background_image=self.background_image,
-            grid_color=self.grid_color,
-            grid_opacity=self.grid_opacity,
         )
 
     def _load_config(self, path: Path) -> ScenarioConfig:
@@ -147,12 +135,6 @@ class Scenario:
             payload = json.load(config_file)
         encounters = payload.get("encounters")
         geometry = payload.get("geometry", {})
-        configured_grid_opacity = payload.get("grid_opacity", 1.0)
-        grid_opacity = (
-            min(max(float(configured_grid_opacity), 0.0), 1.0)
-            if isinstance(configured_grid_opacity, (int, float))
-            else 1.0
-        )
         threshold = GeometryConfig().directional_area_cell_coverage_threshold
         if isinstance(geometry, dict):
             configured = geometry.get("directional_area_cell_coverage_threshold")
@@ -168,17 +150,4 @@ class Scenario:
             geometry_config=GeometryConfig(
                 directional_area_cell_coverage_threshold=threshold
             ),
-            background_image=(
-                str(payload["background_image"])
-                if isinstance(payload.get("background_image"), str)
-                and payload["background_image"]
-                else None
-            ),
-            grid_color=(
-                str(payload["grid_color"])
-                if isinstance(payload.get("grid_color"), str)
-                and payload["grid_color"]
-                else DEFAULT_GRID_COLOR
-            ),
-            grid_opacity=grid_opacity,
         )

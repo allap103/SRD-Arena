@@ -28,9 +28,6 @@ class Session:
         start_scene_id: str = "goblin_encounter",
         automatic_action_limit: int | None = None,
         geometry_config: GeometryConfig | None = None,
-        background_image: str | None = None,
-        grid_color: str = "#d3d3d3",
-        grid_opacity: float = 1.0,
     ):
         self.encounters = encounters
         self.creature_templates = creature_templates
@@ -40,9 +37,6 @@ class Session:
         self._initial_creature_templates = deepcopy(creature_templates)
         self.automatic_action_limit = automatic_action_limit
         self.geometry_config = geometry_config or GeometryConfig()
-        self.background_image = background_image
-        self.grid_color = grid_color
-        self.grid_opacity = grid_opacity
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
         self.pending_scene_transition: PendingSceneTransition | None = None

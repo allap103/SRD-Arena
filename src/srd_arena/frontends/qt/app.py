@@ -20,6 +20,7 @@ from ...domain.spells.rules import (
 )
 from ...runtime.scenario import DEFAULT_SCENARIO_DIR, Scenario
 from ..shared.dice import build_roll_views, without_roll_details
+from ..shared.config import load_encounter_presentation_config
 from ..shared.session import (
     SessionPresentation,
     build_session_presentation,
@@ -132,6 +133,9 @@ class GameWindow(QMainWindow):
         super().__init__()
         self.game = game or Scenario(DEFAULT_SCENARIO_DIR)
         self.session: Session = self.game.create_session()
+        self._encounter_presentation_config = load_encounter_presentation_config(
+            self.game.directory
+        )
         self.session.automatic_action_limit = 1
         self._items_by_id = {item.id: item for item in self.game.items}
         self._presentation: SessionPresentation | None = None
@@ -605,7 +609,7 @@ class GameWindow(QMainWindow):
         return button
 
     def refresh_view(self) -> None:
-        presentation = build_session_presentation(self.session)
+        presentation = self._build_session_presentation()
         self._presentation = presentation
         if presentation.encounter is None:
             self._pending_target_mode = None
@@ -1429,7 +1433,7 @@ class GameWindow(QMainWindow):
         if planner_ref is None:
             return
         for direction in path:
-            presentation = build_session_presentation(self.session)
+            presentation = self._build_session_presentation()
             encounter = presentation.encounter
             if encounter is None:
                 break
@@ -1615,7 +1619,7 @@ class GameWindow(QMainWindow):
         self.refresh_view()
 
     def _available_follow_up_attack_mode(self) -> TargetSelectionMode | None:
-        presentation = build_session_presentation(self.session)
+        presentation = self._build_session_presentation()
         encounter = presentation.encounter
         if encounter is None or encounter.resources.attacks_available <= 0:
             return None
@@ -1625,6 +1629,12 @@ class GameWindow(QMainWindow):
         )
         target_modes = self._target_selection_modes(encounter.non_movement_actions)
         return attack_mode if target_modes.get(attack_mode) else None
+
+    def _build_session_presentation(self) -> SessionPresentation:
+        config = getattr(self, "_encounter_presentation_config", None)
+        if config is None:
+            return build_session_presentation(self.session)
+        return build_session_presentation(self.session, config=config)
 
     def _sync_combat_log_round(self, scene_id: str) -> None:
         encounter_state = self.session.encounter_state

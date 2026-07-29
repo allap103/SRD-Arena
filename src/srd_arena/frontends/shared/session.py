@@ -6,6 +6,7 @@ from typing import Any, cast
 from ...domain.creatures.feature_actions import FeatureActionDefinition
 from ...runtime.models import ActionView, SceneView
 from ...runtime.session import Session
+from .config import EncounterPresentationConfig
 
 SYSTEM_ACTION_COUNT = 1
 MOVE_DIRECTIONS = (
@@ -127,7 +128,9 @@ class SessionPresentation:
 def build_session_presentation(
     session: Session,
     scene_view: SceneView | None = None,
+    config: EncounterPresentationConfig | None = None,
 ) -> SessionPresentation:
+    presentation_config = config or EncounterPresentationConfig()
     view = scene_view or session.get_scene_view()
     story_actions = view.action_details[:-SYSTEM_ACTION_COUNT]
     system_actions = view.action_details[-SYSTEM_ACTION_COUNT:]
@@ -177,9 +180,9 @@ def build_session_presentation(
             narrative_text="",
             battlefield=_build_battlefield_view(
                 combat_state,
-                background_image=session.background_image,
-                grid_color=session.grid_color,
-                grid_opacity=session.grid_opacity,
+                background_image=presentation_config.background_image,
+                grid_color=presentation_config.grid_color,
+                grid_opacity=presentation_config.grid_opacity,
                 team_ids=tuple(
                     team.id for team in session.current_encounter.teams
                 ),

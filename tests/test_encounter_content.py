@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 from srd_arena.content.loaders import load_creature
 from srd_arena.content.schemas import EncounterDefinitionSchema
+from srd_arena.frontends.shared.config import load_encounter_presentation_config
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.domain.creatures import AttackActionDefinition
 
@@ -159,27 +160,28 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
 
 def test_game_loads_geometry_settings_from_config_json() -> None:
     scenario = Scenario(str(TACTICAL_SCENARIO_DIR))
+    presentation = load_encounter_presentation_config(TACTICAL_SCENARIO_DIR)
 
     assert scenario.display_name == "Tactical Test Game"
     assert scenario.geometry_config.directional_area_cell_coverage_threshold == 0.1
-    assert scenario.background_image == "maps/tactical-test.png"
-    assert scenario.grid_color == "#8fa3ad"
-    assert scenario.grid_opacity == 0.65
+    assert presentation.background_image == "maps/tactical-test.png"
+    assert presentation.grid_color == "#8fa3ad"
+    assert presentation.grid_opacity == 0.65
 
     session = scenario.create_session()
     session.get_scene_view()
 
-    assert session.background_image == "maps/tactical-test.png"
-    assert session.grid_color == "#8fa3ad"
-    assert session.grid_opacity == 0.65
+    assert not hasattr(session, "background_image")
+    assert not hasattr(session, "grid_color")
+    assert not hasattr(session, "grid_opacity")
 
 
 def test_game_uses_default_board_presentation_settings() -> None:
-    scenario = Scenario(str(FIXTURE_ENCOUNTER_DIR))
+    presentation = load_encounter_presentation_config(FIXTURE_ENCOUNTER_DIR)
 
-    assert scenario.background_image is None
-    assert scenario.grid_color == "#d3d3d3"
-    assert scenario.grid_opacity == 1.0
+    assert presentation.background_image is None
+    assert presentation.grid_color == "#d3d3d3"
+    assert presentation.grid_opacity == 1.0
 
 
 def test_encounter_schema_rejects_more_than_five_teams() -> None:
