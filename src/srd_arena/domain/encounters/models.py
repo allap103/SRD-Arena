@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from ..creatures import Creature
@@ -69,6 +70,33 @@ class EncounterProgress:
     events: list[CombatEvent] = field(default_factory=list)
     paused_for_decision: bool = False
     paused_for_pacing: bool = False
+
+
+class ActionExecutionOutcome(str, Enum):
+    CONTINUE_TURN = "continue_turn"
+    END_TURN = "end_turn"
+    PAUSE_FOR_REACTION = "pause_for_reaction"
+    ENCOUNTER_COMPLETE = "encounter_complete"
+
+
+@dataclass
+class ActionExecutionContext:
+    actor_ref: CreatureRef
+    actor: EncounterCreatureState
+    decision: DecisionFrame
+    action: EncounterAction
+    action_id: str
+    progress: EncounterProgress = field(default_factory=EncounterProgress)
+
+
+@dataclass
+class ActionExecutionResult:
+    context: ActionExecutionContext
+    outcome: ActionExecutionOutcome
+
+    @property
+    def progress(self) -> EncounterProgress:
+        return self.context.progress
 
 
 @dataclass

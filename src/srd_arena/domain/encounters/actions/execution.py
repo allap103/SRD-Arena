@@ -36,10 +36,16 @@ def apply_action(
             "External action requested for a scripted-controlled creature."
         )
     if decision.kind == "reroll_dice":
-        return self._apply_damage_reroll_action(actor, action, decision)
+        progress = self._apply_damage_reroll_action(actor, action, decision)
+        return self.turn_engine.continue_after_interrupt(self, progress)
     if decision.kind == "reaction":
-        return self._apply_reaction_action(actor, action, decision)
-    return self._apply_creature_action(action, decision)
+        progress = self._apply_reaction_action(actor, action, decision)
+        return self.turn_engine.continue_after_interrupt(self, progress)
+    return self.turn_engine.apply_selected_action(
+        self,
+        action,
+        decision,
+    )
 
 def resolve_grapple_action(
     self: EncounterState,

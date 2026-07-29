@@ -54,7 +54,7 @@ from .actions.features import resolve_feature_action as _resolve_feature_action_
 from .actions.items import resolve_utilize_action as _resolve_utilize_action_impl
 from .actions.spellcasting import resolve_spell_action as _resolve_spell_action_impl
 from .creature_control import (
-    apply_creature_action as _apply_creature_action_impl,
+    execute_creature_action as _execute_creature_action_impl,
     available_creature_actions as _available_creature_actions_impl,
 )
 from .reactions import REACTION_ENGINE, ReactionEngine
@@ -371,7 +371,7 @@ class EncounterState(EncounterStateData):
     _spell_area = _spell_area_impl
     _targets_in_area = _targets_in_area_impl
     _available_creature_actions = _available_creature_actions_impl
-    _apply_creature_action = _apply_creature_action_impl
+    _execute_creature_action = _execute_creature_action_impl
     _resolve_utilize_action = _resolve_utilize_action_impl
     _resolve_feature_action = _resolve_feature_action_impl
     _resolve_spell_action = _resolve_spell_action_impl

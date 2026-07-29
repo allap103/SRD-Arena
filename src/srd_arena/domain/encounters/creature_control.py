@@ -18,10 +18,12 @@ from .behaviors import (
 )
 from .models import (
     ActionCost,
+    ActionExecutionContext,
+    ActionExecutionOutcome,
+    ActionExecutionResult,
     CreatureRef,
     DecisionFrame,
     EncounterAction,
-    EncounterProgress,
 )
 
 if TYPE_CHECKING:
@@ -151,29 +153,15 @@ def available_creature_actions(
     return [action for action in actions if action_eligibility(self, creature_ref, action).allowed]
 
 
-def apply_creature_action(
+def execute_creature_action(
     self: EncounterState,
     action: EncounterAction,
     decision: DecisionFrame,
-    *,
-    continue_encounter: bool = True,
-) -> EncounterProgress:
-    enemy = self.creatures[decision.creature_ref]
-    require_action_eligible(self, decision.creature_ref, action)
-    progress = EncounterProgress()
-    action_id = self._next_action_id()
-    progress.events.append(
-        self._event(
-            "action_declared",
-            creature_ref=decision.creature_ref,
-            action_id=action_id,
-            data={
-                "kind": action.kind,
-                "value": action.value,
-                "selected_action_id": action.id,
-            },
-        )
-    )
+) -> ActionExecutionResult:
+    context = begin_action_execution(self, action, decision)
+    enemy = self.creatures[context.actor_ref]
+    progress = context.progress
+    action_id = context.action_id
     action_ends_turn = action.kind == "wait"
 
     if action.kind == "move":
@@ -208,7 +196,10 @@ def apply_creature_action(
             excluded_reactor_refs=grappled_refs,
         ):
             progress.paused_for_decision = True
-            return progress
+            return ActionExecutionResult(
+                context,
+                ActionExecutionOutcome.PAUSE_FOR_REACTION,
+            )
         progress.messages.extend(
             self.reaction_engine.resolve_automatic_opportunity_attacks(
                 self,
@@ -221,7 +212,10 @@ def apply_creature_action(
             )
         )
         if not enemy.is_alive:
-            return progress
+            return ActionExecutionResult(
+                context,
+                ActionExecutionOutcome.CONTINUE_TURN,
+            )
         enemy.position = destination
         for target_ref, target_position in grappled_positions.items():
             self.creatures[target_ref].position = target_position
@@ -314,10 +308,50 @@ def apply_creature_action(
         raise ValueError(f"Unsupported creature action: {action.kind}")
 
     progress.transition = self._check_transition()
-    if progress.transition is not None or not action_ends_turn or not continue_encounter:
-        return progress
-    self._advance_turn()
-    self._maybe_reset_reactions()
-    follow_up = self.advance_until_next_decision()
-    self._merge_progress(progress, follow_up)
-    return progress
+    return finish_action_execution(
+        context,
+        action_ends_turn=action_ends_turn,
+    )
+
+
+def begin_action_execution(
+    state: EncounterState,
+    action: EncounterAction,
+    decision: DecisionFrame,
+) -> ActionExecutionContext:
+    require_action_eligible(state, decision.creature_ref, action)
+    actor = state.creatures[decision.creature_ref]
+    context = ActionExecutionContext(
+        actor_ref=decision.creature_ref,
+        actor=actor,
+        decision=decision,
+        action=action,
+        action_id=state._next_action_id(),
+    )
+    context.progress.events.append(
+        state._event(
+            "action_declared",
+            creature_ref=context.actor_ref,
+            action_id=context.action_id,
+            data={
+                "kind": action.kind,
+                "value": action.value,
+                "selected_action_id": action.id,
+            },
+        )
+    )
+    return context
+
+
+def finish_action_execution(
+    context: ActionExecutionContext,
+    *,
+    action_ends_turn: bool,
+) -> ActionExecutionResult:
+    if context.progress.transition is not None:
+        outcome = ActionExecutionOutcome.ENCOUNTER_COMPLETE
+    elif action_ends_turn:
+        outcome = ActionExecutionOutcome.END_TURN
+    else:
+        outcome = ActionExecutionOutcome.CONTINUE_TURN
+    return ActionExecutionResult(context, outcome)

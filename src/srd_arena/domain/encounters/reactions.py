@@ -361,10 +361,6 @@ class ReactionEngine:
         )
         self.resume_pending_action(state, actor, progress)
         progress.transition = state.turn_engine.check_transition(state)
-        if progress.transition is not None:
-            return
-        follow_up = state.turn_engine.advance_until_next_decision(state)
-        state._merge_progress(progress, follow_up)
 
     def pending_attack_event_data(self, state: EncounterState) -> dict[str, object]:
         pending = state.pending_attack
@@ -514,11 +510,6 @@ class ReactionEngine:
 
         self.resume_pending_action(state, actor, progress)
         progress.transition = state.turn_engine.check_transition(state)
-        if progress.transition is not None:
-            return progress
-
-        follow_up = state.turn_engine.advance_until_next_decision(state)
-        state._merge_progress(progress, follow_up)
         return progress
 
     def resume_pending_action(

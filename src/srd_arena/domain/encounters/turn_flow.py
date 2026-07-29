@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from .behaviors import movement_squares as _movement_squares
 from .models import (
+    ActionExecutionOutcome,
     CreatureRef,
     DecisionFrame,
     EncounterAction,
@@ -15,6 +16,37 @@ if TYPE_CHECKING:
 
 
 class TurnEngine:
+    def continue_after_interrupt(
+        self,
+        state: EncounterState,
+        progress: EncounterProgress,
+    ) -> EncounterProgress:
+        if (
+            progress.transition is not None
+            or progress.paused_for_decision
+            or state.decision_stack
+        ):
+            return progress
+        follow_up = self.advance_until_next_decision(state)
+        state._merge_progress(progress, follow_up)
+        return progress
+
+    def apply_selected_action(
+        self,
+        state: EncounterState,
+        action: EncounterAction,
+        decision: DecisionFrame,
+    ) -> EncounterProgress:
+        result = state._execute_creature_action(action, decision)
+        progress = result.progress
+        if result.outcome is not ActionExecutionOutcome.END_TURN:
+            return progress
+        self.advance_turn(state)
+        self.maybe_reset_reactions(state)
+        follow_up = self.advance_until_next_decision(state)
+        state._merge_progress(progress, follow_up)
+        return progress
+
     def advance_until_next_decision(
         self,
         state: EncounterState,
@@ -102,7 +134,7 @@ class TurnEngine:
             return False, progress, 0
         actions_resolved = 0
         while actor.is_alive:
-            resolved = state._apply_creature_action(
+            result = state._execute_creature_action(
                 action,
                 DecisionFrame(
                     id=f"turn-{creature_ref.replace(':', '-')}",
@@ -110,15 +142,14 @@ class TurnEngine:
                     kind="turn",
                     reason="scripted_turn",
                 ),
-                continue_encounter=False,
             )
-            state._merge_progress(progress, resolved)
+            state._merge_progress(progress, result.progress)
             actions_resolved += 1
-            if progress.transition is not None:
+            if result.outcome is ActionExecutionOutcome.ENCOUNTER_COMPLETE:
                 return True, progress, actions_resolved
-            if progress.paused_for_decision:
+            if result.outcome is ActionExecutionOutcome.PAUSE_FOR_REACTION:
                 return False, progress, actions_resolved
-            if action.kind == "wait" or (
+            if result.outcome is ActionExecutionOutcome.END_TURN or (
                 action.kind == "attack"
                 and actor.attacks_remaining == 0
                 and not actor.pending_multiattack
