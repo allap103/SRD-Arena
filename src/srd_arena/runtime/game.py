@@ -22,13 +22,11 @@ class Game:
         cls,
         scenario: LoadedScenario,
         *,
-        player_creature_id: str = "player",
         control_mode: str | None = None,
     ) -> Game:
         game = cls(
             scenario=scenario,
             session=scenario.create_session(
-                player_creature_id=player_creature_id,
                 control_mode=control_mode,
             ),
         )

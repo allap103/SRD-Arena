@@ -69,12 +69,23 @@ class LoadedScenario:
 
     def create_session(
         self,
-        player_creature_id: str = "player",
         control_mode: str | None = None,
     ) -> Session:
+        encounter = self.encounters[self.start_scene]
+        external_actor_ids = [
+            actor_id
+            for team in encounter.teams
+            if team.controller == "external"
+            for actor_id in team.members
+        ]
+        if len(external_actor_ids) != 1:
+            raise ValueError(
+                f"Starting encounter '{encounter.id}' must configure exactly one "
+                "externally controlled primary creature."
+            )
         return Session(
             encounters=self.encounters,
-            player=self.get_creature(player_creature_id),
+            player=self.get_creature(external_actor_ids[0]),
             creature_templates={creature.id: creature for creature in self.creatures},
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
