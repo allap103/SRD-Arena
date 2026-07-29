@@ -33,6 +33,7 @@ class EncounterAction:
     id: str = ""
     creature_ref: CreatureRef | None = None
     source_trigger_id: str | None = None
+    preferred_attack_type: str | None = None
     cost: ActionCost = field(default_factory=ActionCost)
 
 

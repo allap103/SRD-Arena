@@ -119,10 +119,15 @@ def resolve_attack_action(
         attacker_position=creature_state.position,
         nearby_opponent_positions=nearby_opponent_positions,
         preferred_attack_name=preferred_attack_name,
+        preferred_attack_type=action.preferred_attack_type,
         attack_roll_mode_override=state._attack_roll_mode_for(
             creature_ref,
             target_ref,
-            selected_attack_type(creature, state.item_templates),
+            selected_attack_type(
+                creature,
+                state.item_templates,
+                preferred_attack_type=action.preferred_attack_type,
+            ),
             creature_state.position,
             nearby_opponent_positions,
         ),

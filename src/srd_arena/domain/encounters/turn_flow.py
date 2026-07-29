@@ -2,40 +2,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creatures.stat_block_actions import AttackActionDefinition
 from ..geometry import Position
 from .actions.attack_resolution import (
-    apply_attack_damage,
     attack_range_squares,
-    resolve_attack,
-    selected_attack_type,
 )
-from .actions.hit_effects import apply_attack_hit_effects
 from .behaviors import (
-    DIRECTION_DELTAS,
     chebyshev_distance as _chebyshev_distance,
     movement_squares as _movement_squares,
 )
 from .models import (
     BehaviorContext,
     CreatureRef,
+    DecisionFrame,
+    EncounterAction,
     EncounterProgress,
 )
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
-
-
-def _roll_die(sides: int) -> int:
-    from . import encounter as encounter_module
-
-    return encounter_module.roll_die(sides)
-
-
-def _roll_dice(count: int, sides: int) -> int:
-    from . import encounter as encounter_module
-
-    return encounter_module.roll_dice(count, sides)
 
 
 class TurnEngine:
@@ -94,9 +78,9 @@ class TurnEngine:
         *,
         action_limit: int | None = None,
     ) -> tuple[bool, EncounterProgress, int]:
-        enemy = state.creatures[creature_ref]
+        actor = state.creatures[creature_ref]
         progress = EncounterProgress()
-        if not enemy.is_alive:
+        if not actor.is_alive:
             return True, progress, 0
         target_refs = [
             target_ref
@@ -108,36 +92,35 @@ class TurnEngine:
         target_ref = min(
             target_refs,
             key=lambda ref: (
-                abs(state._creature_position(ref).x - enemy.position.x)
-                + abs(state._creature_position(ref).y - enemy.position.y)
+                abs(state._creature_position(ref).x - actor.position.x)
+                + abs(state._creature_position(ref).y - actor.position.y)
             ),
         )
         target_state = state.creatures[target_ref]
-        target = target_state.creature
-        if enemy.movement_remaining is None:
-            enemy.movement_remaining = _movement_squares(enemy.creature)
+        if actor.movement_remaining is None:
+            actor.movement_remaining = _movement_squares(actor.creature)
 
         behavior = state._behaviors[creature_ref]
         actions_resolved = 0
-        while enemy.is_alive and target_state.is_alive:
+        while actor.is_alive and target_state.is_alive:
             command = behavior.send(
                 BehaviorContext(
                     target_position=Position(
                         target_state.position.x,
                         target_state.position.y,
                     ),
-                    actor_position=Position(enemy.position.x, enemy.position.y),
+                    actor_position=Position(actor.position.x, actor.position.y),
                     can_attack=(
                         _chebyshev_distance(
                             target_state.position,
-                            enemy.position,
+                            actor.position,
                         )
                         <= attack_range_squares(
-                            enemy.creature,
+                            actor.creature,
                             state.item_templates,
                             preferred_attack_type=(
                                 "ranged"
-                                if enemy.behavior.type == "archer"
+                                if actor.behavior.type == "archer"
                                 else "melee"
                             ),
                         )
@@ -150,209 +133,97 @@ class TurnEngine:
             )
             if command is None:
                 break
-
-            action_id = state._next_action_id()
-            progress.events.append(
-                state._event(
-                    "action_declared",
-                    creature_ref=creature_ref,
-                    action_id=action_id,
-                    data={"kind": command.kind, "value": command.value},
-                )
+            action = self._select_behavior_action(
+                state,
+                command,
+                creature_ref=creature_ref,
+                target_ref=target_ref,
             )
-
-            if command.kind == "move":
-                movement_cost = state._movement_cost_for(creature_ref)
-                if movement_cost is None or enemy.movement_remaining < movement_cost:
-                    break
-                direction = str(command.value)
-                dx, dy = DIRECTION_DELTAS[direction]
-                target_x = enemy.position.x + dx
-                target_y = enemy.position.y + dy
-                grappling_targets = state._grappling_targets_for(creature_ref)
-                moving_refs = {creature_ref, *grappling_targets}
-                target_positions = {
-                    creature_ref: Position(target_x, target_y),
-                    **{
-                        target_ref: Position(
-                            state._creature_position(target_ref).x + dx,
-                            state._creature_position(target_ref).y + dy,
-                        )
-                        for target_ref in grappling_targets
-                    },
-                }
-                if not state._position_is_free(target_x, target_y, ignored_refs=moving_refs) or any(
-                    not state._position_is_free(
-                        target_position.x,
-                        target_position.y,
-                        ignored_refs=moving_refs,
-                    )
-                    for target_position in target_positions.values()
-                ):
-                    break
-                if state.reaction_engine.queue_opportunity_attack(
-                    state,
-                    mover_ref=creature_ref,
-                    action_id=action_id,
-                    direction=direction,
-                    from_position=Position(enemy.position.x, enemy.position.y),
-                    to_position=Position(target_x, target_y),
-                    remaining_movement_after=enemy.movement_remaining - movement_cost,
-                    progress=progress,
-                    external_only=True,
-                    excluded_reactor_refs=grappling_targets,
-                ):
-                    progress.paused_for_decision = True
-                    return False, progress, actions_resolved
-                progress.messages.extend(
-                    state.reaction_engine.resolve_automatic_opportunity_attacks(
-                        state,
-                        mover_ref=creature_ref,
-                        from_position=Position(
-                            enemy.position.x,
-                            enemy.position.y,
-                        ),
-                        to_position=Position(target_x, target_y),
-                        action_id=action_id,
-                        progress=progress,
-                        excluded_reactor_refs=grappling_targets,
-                    )
-                )
-                if not enemy.is_alive:
-                    return True, progress, actions_resolved
-                enemy.position = Position(target_x, target_y)
-                for target_ref, target_position in target_positions.items():
-                    if target_ref == creature_ref:
-                        continue
-                    state.creatures[target_ref].position = target_position
-                enemy.movement_remaining -= movement_cost
-                actions_resolved += 1
-                progress.messages.append(
-                    (
-                        "system",
-                        f"{enemy.creature.name} moves {direction} to ({target_x}, {target_y}).",
-                    )
-                )
-                progress.events.append(
-                    state._event(
-                        "movement_resolved",
-                        creature_ref=creature_ref,
-                        action_id=action_id,
-                        data={
-                            "direction": direction,
-                            "to": {"x": target_x, "y": target_y},
-                        },
-                    )
-                )
-                if action_limit is not None and actions_resolved >= action_limit:
-                    return False, progress, actions_resolved
-                continue
-
-            if command.kind == "attack":
-                preferred_attack_type = (
-                    str(command.value)
-                    if isinstance(command.value, str)
-                    and command.value in {"melee", "ranged"}
-                    else None
-                )
-                multiattack_sequence = (
-                    enemy.creature.multiattack.executable_sequence(
-                        {
-                            action.name
-                            for action in enemy.creature.stat_block_actions.values()
-                            if isinstance(action, AttackActionDefinition)
-                        }
-                    )
-                    if enemy.creature.multiattack is not None
-                    else None
-                )
-                attack_names: tuple[str | None, ...] = (
-                    tuple(
-                        invocation.name
-                        for invocation in multiattack_sequence
-                    )
-                    if multiattack_sequence is not None
-                    else (None,)
-                )
-                for attack_name in attack_names:
-                    attack = resolve_attack(
-                        enemy.creature,
-                        target,
-                        attacker_label=enemy.creature.name,
-                        target_label=state._creature_label(target_ref),
-                        items_by_id=state.item_templates,
-                        attacker_position=enemy.position,
-                        nearby_opponent_positions=(target_state.position,),
-                        preferred_attack_type=preferred_attack_type,
-                        preferred_attack_name=attack_name,
-                        attack_roll_mode_override=state._attack_roll_mode_for(
-                            creature_ref,
-                            target_ref,
-                            selected_attack_type(
-                                enemy.creature,
-                                state.item_templates,
-                                preferred_attack_type=preferred_attack_type,
-                            ),
-                            enemy.position,
-                            (target_state.position,),
-                        ),
-                        d20_roller=_roll_die,
-                        dice_roller=_roll_dice,
-                    )
-                    apply_attack_damage(
-                        attack,
-                        target,
-                        attacker_label=enemy.creature.name,
-                        target_label=state._creature_label(target_ref),
-                    )
-                    if attack.hit and target.get_health() > 0:
-                        apply_attack_hit_effects(
-                            state,
-                            attacker_ref=creature_ref,
-                            target_ref=target_ref,
-                            effects=attack.hit_effects,
-                            progress=progress,
-                        )
-                    progress.messages.extend(attack.messages)
-                    progress.events.append(
-                        state._event(
-                            "attack_resolved",
-                            creature_ref=creature_ref,
-                            action_id=action_id,
-                            data={
-                                "attacker_label": enemy.creature.name,
-                                "target_ref": target_ref,
-                                "target_label": state._creature_label(target_ref),
-                                "attack_name": attack_name,
-                                "attack_roll": attack.attack_roll,
-                                "attack_roll_detail": attack.attack_roll_detail,
-                                "hit": attack.hit,
-                                "critical_hit": attack.critical_hit,
-                                "damage": attack.damage,
-                                "damage_roll_detail": attack.damage_roll_detail,
-                            },
-                        )
-                    )
-                    if not target_state.is_alive:
-                        state._remove_relational_statuses_for_creature(
-                            target_ref
-                        )
-                        break
-                actions_resolved += len(attack_names)
-                return True, progress, actions_resolved
-
-            progress.messages.append(("system", f"{enemy.creature.name} waits."))
-            progress.events.append(
-                state._event(
-                    "action_resolved",
+            resolved = state._apply_creature_action(
+                action,
+                DecisionFrame(
+                    id=f"turn-{creature_ref.replace(':', '-')}",
                     creature_ref=creature_ref,
-                    action_id=action_id,
-                    data={"kind": "wait"},
-                )
+                    kind="turn",
+                    reason="scripted_turn",
+                ),
+                continue_encounter=False,
             )
+            state._merge_progress(progress, resolved)
             actions_resolved += 1
-            return True, progress, actions_resolved
+            if progress.transition is not None:
+                return True, progress, actions_resolved
+            if progress.paused_for_decision:
+                return False, progress, actions_resolved
+            if action.kind == "wait" or (
+                action.kind == "attack"
+                and actor.attacks_remaining == 0
+                and not actor.pending_multiattack
+            ):
+                return True, progress, actions_resolved
+            if action_limit is not None and actions_resolved >= action_limit:
+                return False, progress, actions_resolved
         return True, progress, actions_resolved
+
+    def _select_behavior_action(
+        self,
+        state: EncounterState,
+        command: EncounterAction,
+        *,
+        creature_ref: CreatureRef,
+        target_ref: CreatureRef,
+    ) -> EncounterAction:
+        available_actions = state._available_creature_actions(creature_ref)
+        if command.kind == "attack":
+            multiattack = next(
+                (
+                    action
+                    for action in available_actions
+                    if action.kind == "multiattack"
+                ),
+                None,
+            )
+            if multiattack is not None:
+                return multiattack
+        matching_action = next(
+            (
+                action
+                for action in available_actions
+                if action.kind == command.kind
+                and (
+                    action.value == command.value
+                    or (
+                        command.kind == "attack"
+                        and action.value == target_ref
+                    )
+                )
+            ),
+            None,
+        )
+        preferred_attack_type = (
+            str(command.value)
+            if command.kind == "attack"
+            and command.value in {"melee", "ranged"}
+            else None
+        )
+        if matching_action is not None:
+            matching_action.preferred_attack_type = preferred_attack_type
+            return matching_action
+        if command.kind != "attack":
+            return next(
+                action
+                for action in available_actions
+                if action.kind == "wait"
+            )
+        return EncounterAction(
+            label=command.label,
+            kind=command.kind,
+            value=target_ref if command.kind == "attack" else command.value,
+            id=f"{creature_ref}-scripted-{command.kind}",
+            creature_ref=creature_ref,
+            preferred_attack_type=preferred_attack_type,
+            cost=command.cost,
+        )
 
     def active_turn_creature(self, state: EncounterState) -> CreatureRef:
         self.normalize_turn(state)

@@ -162,6 +162,8 @@ def apply_creature_action(
     self: EncounterState,
     action: EncounterAction,
     decision: DecisionFrame,
+    *,
+    continue_encounter: bool = True,
 ) -> EncounterProgress:
     enemy = self.creatures[decision.creature_ref]
     progress = EncounterProgress()
@@ -316,10 +318,14 @@ def apply_creature_action(
             )
         )
     else:
-        raise ValueError(f"Unsupported externally controlled action: {action.kind}")
+        raise ValueError(f"Unsupported creature action: {action.kind}")
 
     progress.transition = self._check_transition()
-    if progress.transition is not None or not action_ends_turn:
+    if (
+        progress.transition is not None
+        or not action_ends_turn
+        or not continue_encounter
+    ):
         return progress
     self._advance_turn()
     self._maybe_reset_reactions()
