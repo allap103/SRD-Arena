@@ -1,0 +1,25 @@
+{
+  "name": "Greatsword",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 6,
+  "value": 5000,
+  "weaponCategory": "martial",
+  "property": [
+    "H|XPHB",
+    "2H|XPHB"
+  ],
+  "mastery": [
+    "Graze|XPHB"
+  ],
+  "dmg1": "2d6",
+  "dmgType": "S",
+  "sword": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

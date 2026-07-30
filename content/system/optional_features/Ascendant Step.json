@@ -1,0 +1,33 @@
+{
+  "name": "Ascendant Step",
+  "source": "XPHB",
+  "page": 155,
+  "srd52": true,
+  "featureType": [
+    "EI"
+  ],
+  "prerequisite": [
+    {
+      "level": {
+        "level": 5,
+        "class": {
+          "name": "Warlock",
+          "source": "XPHB",
+          "visibleStats": true
+        }
+      }
+    }
+  ],
+  "additionalSpells": [
+    {
+      "innate": {
+        "_": [
+          "levitate|xphb"
+        ]
+      }
+    }
+  ],
+  "entries": [
+    "You can cast {@spell Levitate|XPHB} on yourself without expending a spell slot."
+  ]
+}

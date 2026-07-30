@@ -1,0 +1,43 @@
+{
+  "name": "Jeweler's Tools",
+  "source": "XPHB",
+  "page": 220,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TFV"
+  ],
+  "type": "AT|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 2500,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Intelligence"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Discern a gem's value ({@dc 15})"
+          ]
+        },
+        {
+          "name": "Craft:",
+          "type": "item",
+          "entries": [
+            "{@item Arcane Focus|XPHB}, {@item Holy Symbol|XPHB}"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Elixir of Health",
+  "source": "XDMG",
+  "page": 257,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "type": "P|XPHB",
+  "rarity": "rare",
+  "weight": 0.5,
+  "entries": [
+    "When you drink this potion, you are cured of all magical contagions. In addition, the following conditions end on you: {@condition Blinded|XPHB}, {@condition Deafened|XPHB}, {@condition Paralyzed|XPHB}, and {@condition Poisoned|XPHB}.",
+    "The clear, red liquid has tiny bubbles of light in it."
+  ],
+  "lootTables": [
+    "Relics - Rare|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Ball Bearings",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "HotB"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 100,
+  "entries": [
+    "As a {@action Utilize|XPHB} action, you can spill Ball Bearings from their pouch. They spread to cover a level, 10-foot-square area within 10 feet of yourself. A creature that enters this area for the first time on a turn must succeed on a {@dc 10} Dexterity saving throw or have the {@condition Prone|XPHB} condition. It takes 10 minutes to recover the Ball Bearings."
+  ]
+}

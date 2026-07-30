@@ -1,0 +1,77 @@
+{
+  "name": "Warhorse Skeleton",
+  "source": "XMM",
+  "page": 282,
+  "srd52": true,
+  "size": [
+    "L"
+  ],
+  "type": "undead",
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "3d10 + 6"
+  },
+  "speed": {
+    "walk": 60
+  },
+  "str": 18,
+  "dex": 12,
+  "con": 15,
+  "int": 2,
+  "wis": 8,
+  "cha": 5,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 9,
+  "immune": [
+    "poison"
+  ],
+  "vulnerable": [
+    "bludgeoning"
+  ],
+  "conditionImmune": [
+    "exhaustion",
+    "poisoned"
+  ],
+  "cr": "1/2",
+  "action": [
+    {
+      "name": "Hooves",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}7 ({@damage 1d6 + 4}) Bludgeoning damage. If the target is a Large or smaller creature and the skeleton moved 20+ feet straight toward it immediately before the hit, the target has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, shadowfell",
+    "underdark",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/warhorse-skeleton.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

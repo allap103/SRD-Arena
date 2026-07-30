@@ -1,0 +1,50 @@
+{
+  "name": "Mass Cure Wounds",
+  "source": "XPHB",
+  "page": 296,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 5,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "A wave of healing energy washes out from a point you can see within range. Choose up to six creatures in a 30-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} centered on that point. Each target regains {@variantrule Hit Points|XPHB} equal to {@dice 5d8} plus your spellcasting ability modifier."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The healing increases by {@scaledice 5d8|5-9|1d8} for each spell slot level above 5."
+      ]
+    }
+  ],
+  "miscTags": [
+    "HL"
+  ],
+  "areaTags": [
+    "MT",
+    "S"
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "name": "Hunter Shark",
+  "source": "XMM",
+  "page": 363,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 45,
+    "formula": "6d10 + 12"
+  },
+  "speed": {
+    "walk": 5,
+    "swim": 40
+  },
+  "str": 18,
+  "dex": 14,
+  "con": 15,
+  "int": 1,
+  "wis": 10,
+  "cha": 4,
+  "skill": {
+    "perception": "+2"
+  },
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 12,
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Water Breathing",
+      "entries": [
+        "The shark can breathe only underwater."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 6} (with {@variantrule Advantage|XPHB} if the target doesn't have all its {@variantrule Hit Points|XPHB}), reach 5 ft. {@h}14 ({@damage 3d6 + 4}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "underwater"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/hunter-shark.opus"
+  },
+  "traitTags": [
+    "Water Breathing"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

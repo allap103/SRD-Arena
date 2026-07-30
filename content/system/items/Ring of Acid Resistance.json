@@ -1,0 +1,20 @@
+{
+  "name": "Ring of Acid Resistance",
+  "source": "XDMG",
+  "page": 294,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BtS"
+  ],
+  "type": "RG|XDMG",
+  "resist": [
+    "acid"
+  ],
+  "detail1": "pearl",
+  "rarity": "rare",
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Ring of Resistance|XDMG}"
+  ]
+}

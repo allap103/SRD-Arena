@@ -1,0 +1,140 @@
+{
+  "name": "Young Green Dragon",
+  "group": [
+    "Chromatic Dragons"
+  ],
+  "source": "XMM",
+  "page": 152,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "chromatic"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 136,
+    "formula": "16d10 + 48"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 80,
+    "swim": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 19,
+  "dex": 12,
+  "con": 17,
+  "int": 16,
+  "wis": 13,
+  "cha": 15,
+  "save": {
+    "dex": "+4",
+    "wis": "+4"
+  },
+  "skill": {
+    "deception": "+5",
+    "perception": "+7",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Blindsight 30 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 17,
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "poisoned"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": "8",
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The dragon can breathe air and water."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 10 ft. {@h}11 ({@damage 2d6 + 4}) Slashing damage plus 7 ({@damage 2d6}) Poison damage."
+      ]
+    },
+    {
+      "name": "Poison Breath {@recharge 5}",
+      "entries": [
+        "{@actSave con} {@dc 14}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 42 ({@damage 12d6}) Poison damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "dragonAge": "young",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/green-dragon.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "I",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

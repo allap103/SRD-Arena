@@ -1,0 +1,19 @@
+{
+  "name": "Torpor",
+  "source": "XDMG",
+  "page": 91,
+  "srd52": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 60000,
+  "poison": true,
+  "entries": [
+    "A creature subjected to Torpor poison must succeed on a {@dc 15} Constitution saving throw or have the {@condition Poisoned|XPHB} condition for {@dice 4d6} hours. The creature's {@variantrule Speed|XPHB} is halved while the creature is {@condition Poisoned|XPHB} in this way."
+  ],
+  "poisonTypes": [
+    "ingested"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

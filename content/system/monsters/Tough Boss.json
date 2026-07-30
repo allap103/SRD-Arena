@@ -1,0 +1,113 @@
+{
+  "name": "Tough Boss",
+  "source": "XMM",
+  "page": 307,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "ABH",
+    "DrDe",
+    "DrDe-TFV",
+    "EFA",
+    "FRAiF",
+    "NF",
+    "RHW",
+    "ScoEE"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    16
+  ],
+  "hp": {
+    "average": 82,
+    "formula": "11d8 + 33"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 17,
+  "dex": 14,
+  "con": 16,
+  "int": 11,
+  "wis": 10,
+  "cha": 11,
+  "save": {
+    "str": "+5",
+    "con": "+5",
+    "cha": "+2"
+  },
+  "passive": 10,
+  "languages": [
+    "Common plus one other language"
+  ],
+  "cr": "4",
+  "gear": [
+    "chain mail|xphb",
+    "heavy crossbow|xphb",
+    "warhammer|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The tough has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the tough's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The tough makes two attacks, using Warhammer or Heavy Crossbow in any combination."
+      ]
+    },
+    {
+      "name": "Warhammer",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}12 ({@damage 2d8 + 3}) Bludgeoning damage. If the target is a Large or smaller creature, the tough pushes the target up to 10 feet straight away from itself."
+      ]
+    },
+    {
+      "name": "Heavy Crossbow",
+      "entries": [
+        "{@atkr r} {@hit 4}, range 100/400 ft. {@h}13 ({@damage 2d10 + 2}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RNG"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

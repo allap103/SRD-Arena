@@ -1,0 +1,16 @@
+{
+  "name": "Bell",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 100,
+  "entries": [
+    "When rung as a {@action Utilize|XPHB} action, a Bell produces a sound that can be heard up to 60 feet away."
+  ]
+}

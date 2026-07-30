@@ -1,0 +1,49 @@
+{
+  "name": "Protection from Poison",
+  "source": "XPHB",
+  "page": 310,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 2,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      }
+    }
+  ],
+  "entries": [
+    "You touch a creature and end the {@condition Poisoned|XPHB} condition on it. For the duration, the target has {@variantrule Advantage|XPHB} on saving throws to avoid or end the {@condition Poisoned|XPHB} condition, and it has {@variantrule Resistance|XPHB} to Poison damage."
+  ],
+  "damageResist": [
+    "poison"
+  ],
+  "miscTags": [
+    "ADV"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

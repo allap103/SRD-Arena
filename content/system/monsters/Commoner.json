@@ -1,0 +1,94 @@
+{
+  "name": "Commoner",
+  "source": "XMM",
+  "page": 77,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "ABH",
+    "BQDD",
+    "DrDe",
+    "DrDe-ACfaS",
+    "DrDe-BD",
+    "DrDe-BtS",
+    "DrDe-DaS",
+    "DrDe-TDoN",
+    "DrDe-TWoO",
+    "FRAiF",
+    "HotB",
+    "LFL",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 4,
+    "formula": "1d8"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 10,
+  "dex": 10,
+  "con": 10,
+  "int": 10,
+  "wis": 10,
+  "cha": 10,
+  "passive": 10,
+  "languages": [
+    "Common"
+  ],
+  "cr": "0",
+  "gear": [
+    "club|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Training",
+      "entries": [
+        "The commoner has proficiency in one skill of the DM's choice and has {@variantrule Advantage|XPHB} whenever it makes an ability check using that skill."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Club",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}2 ({@damage 1d4}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/commoner.opus"
+  },
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,122 @@
+{
+  "name": "Gibbering Mouther",
+  "source": "XMM",
+  "page": 133,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "aberration",
+  "alignment": [
+    "C",
+    "N"
+  ],
+  "ac": [
+    9
+  ],
+  "hp": {
+    "average": 52,
+    "formula": "7d8 + 21"
+  },
+  "speed": {
+    "walk": 20,
+    "swim": 20
+  },
+  "str": 10,
+  "dex": 8,
+  "con": 16,
+  "int": 3,
+  "wis": 10,
+  "cha": 6,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "conditionImmune": [
+    "prone"
+  ],
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Aberrant Ground",
+      "entries": [
+        "The ground in a 10-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the mouther is {@variantrule Difficult Terrain|XPHB}."
+      ]
+    },
+    {
+      "name": "Gibbering",
+      "entries": [
+        "The mouther babbles incoherently while it doesn't have the {@condition Incapacitated|XPHB} condition. {@actSave wis} {@dc 10}, any creature that starts its turn within 20 feet of the mouther while it is babbling. {@actSaveFail} The target rolls {@dice 1d8} to determine what it does during the current turn:",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "1-4",
+              "entry": "The target does nothing."
+            },
+            {
+              "type": "item",
+              "name": "5-6",
+              "entry": "The target takes no action or {@variantrule Bonus Action|XPHB} and uses all its movement to move in a random direction."
+            },
+            {
+              "type": "item",
+              "name": "7-8",
+              "entry": "The target makes a melee attack against a randomly determined creature within its reach or does nothing if it can't make such an attack."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}7 ({@damage 2d6}) Piercing damage. If the target is a Medium or smaller creature, it has the {@condition Prone|XPHB} condition. The target dies if it is reduced to 0 {@variantrule Hit Points|XPHB} by this attack. Its body is then absorbed into the mouther, leaving only equipment behind."
+      ]
+    },
+    {
+      "name": "Blinding Spittle {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 10}, each creature in a 10-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} centered on a point within 30 feet. {@actSaveFail} 7 ({@damage 2d6}) Radiant damage, and the target has the {@condition Blinded|XPHB} condition until the end of the mouther's next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/gibbering-mouther.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P",
+    "R"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA"
+  ],
+  "conditionInflict": [
+    "blinded",
+    "prone"
+  ],
+  "savingThrowForced": [
+    "dexterity",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,25 @@
+{
+  "name": "Alert",
+  "source": "XPHB",
+  "page": 200,
+  "srd52": true,
+  "basicRules2024": true,
+  "category": "O",
+  "entries": [
+    "You gain the following benefits.",
+    {
+      "type": "entries",
+      "name": "Initiative Proficiency",
+      "entries": [
+        "When you roll {@variantrule Initiative|XPHB}, you can add your {@variantrule Proficiency|XPHB|Proficiency Bonus} to the roll."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Initiative Swap",
+      "entries": [
+        "Immediately after you roll {@variantrule Initiative|XPHB}, you can swap your {@variantrule Initiative|XPHB} with the {@variantrule Initiative|XPHB} of one willing ally in the same combat. You can't make this swap if you or the ally has the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ]
+}

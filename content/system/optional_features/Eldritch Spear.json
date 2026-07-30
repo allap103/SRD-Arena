@@ -1,0 +1,43 @@
+{
+  "name": "Eldritch Spear",
+  "source": "XPHB",
+  "page": 155,
+  "srd52": true,
+  "featureType": [
+    "EI"
+  ],
+  "prerequisite": [
+    {
+      "spell": [
+        {
+          "choose": "level=0|class=Warlock",
+          "entry": "a Warlock Cantrip That Deals Damage",
+          "entrySummary": "Warlock Cantrip That Deals Damage"
+        }
+      ],
+      "level": {
+        "level": 2,
+        "class": {
+          "name": "Warlock",
+          "source": "XPHB",
+          "visibleStats": true
+        }
+      }
+    }
+  ],
+  "entries": [
+    "Choose one of your known {@filter Warlock cantrips|spells|level=0|class=Warlock|damage type=acid;bludgeoning;cold;fire;force;lightning;necrotic;piercing;poison;psychic;radiant;slashing;thunder|range=point} that deals damage and has a range of 10+ feet. When you cast that spell, its range increases by a number of feet equal to 30 times your Warlock level.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Repeatable",
+          "entries": [
+            "You can gain this invocation more than once. Each time you do so, choose a different eligible cantrip."
+          ]
+        }
+      ]
+    }
+  ]
+}

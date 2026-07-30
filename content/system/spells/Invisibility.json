@@ -1,0 +1,62 @@
+{
+  "name": "Invisibility",
+  "source": "XPHB",
+  "page": 289,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN",
+    "DrDe-TFV",
+    "UtHftLH"
+  ],
+  "level": 2,
+  "school": "I",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "an eyelash in gum arabic"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "A creature you touch has the {@condition Invisible|XPHB} condition until the spell ends. The spell ends early immediately after the target makes an attack roll, deals damage, or casts a spell."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "You can target one additional creature for each spell slot level above 2."
+      ]
+    }
+  ],
+  "conditionInflict": [
+    "invisible"
+  ],
+  "miscTags": [
+    "SCT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

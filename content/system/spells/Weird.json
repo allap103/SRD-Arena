@@ -1,0 +1,52 @@
+{
+  "name": "Weird",
+  "source": "XPHB",
+  "page": 341,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 9,
+  "school": "I",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 120
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You try to create illusory terrors in others' minds. Each creature of your choice in a 30-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} centered on a point within range makes a Wisdom saving throw. On a failed save, a target takes {@damage 10d10} Psychic damage and has the {@condition Frightened|XPHB} condition for the duration. On a successful save, a target takes half as much damage only.",
+    "A {@condition Frightened|XPHB} target makes a Wisdom saving throw at the end of each of its turns. On a failed save, it takes {@damage 5d10} Psychic damage. On a successful save, the spell ends on that target."
+  ],
+  "damageInflict": [
+    "psychic"
+  ],
+  "conditionInflict": [
+    "frightened"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "areaTags": [
+    "S"
+  ]
+}

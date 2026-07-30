@@ -1,0 +1,44 @@
+{
+  "name": "Regenerate",
+  "source": "XPHB",
+  "page": 311,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 7,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "minute"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a prayer wheel"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      }
+    }
+  ],
+  "entries": [
+    "A creature you touch regains {@dice 4d8 + 15} {@variantrule Hit Points|XPHB}. For the duration, the target regains 1 {@variantrule Hit Points|XPHB|Hit Point} at the start of each of its turns, and any severed body parts regrow after 2 minutes."
+  ],
+  "miscTags": [
+    "HL"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

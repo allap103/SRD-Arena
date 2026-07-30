@@ -1,0 +1,17 @@
+{
+  "name": "Ladder",
+  "source": "XPHB",
+  "page": 226,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TWoO"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 25,
+  "value": 10,
+  "entries": [
+    "A Ladder is 10 feet tall. You must climb to move up or down it."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Block and Tackle",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "value": 100,
+  "entries": [
+    "A {@item Block and Tackle|XPHB} allows you to hoist up to four times the weight you can normally lift."
+  ]
+}

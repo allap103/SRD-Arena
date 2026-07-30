@@ -1,0 +1,59 @@
+{
+  "name": "Conjure Woodland Beings",
+  "source": "XPHB",
+  "page": 255,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 4,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "emanation",
+    "distance": {
+      "type": "feet",
+      "amount": 10
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You conjure nature spirits that flit around you in a 10-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} for the duration. Whenever the {@variantrule Emanation [Area of Effect]|XPHB|Emanation} enters the space of a creature you can see and whenever a creature you can see enters the {@variantrule Emanation [Area of Effect]|XPHB|Emanation} or ends its turn there, you can force that creature to make a Wisdom saving throw. The creature takes {@damage 5d8} Force damage on a failed save or half as much damage on a successful one. A creature makes this save only once per turn.",
+    "In addition, you can take the {@action Disengage|XPHB} action as a {@variantrule Bonus Action|XPHB} for the spell's duration."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 5d8|4-9|1d8} for each spell slot level above 4."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "force"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "miscTags": [
+    "SGT",
+    "UBA"
+  ]
+}

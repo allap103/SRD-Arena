@@ -1,0 +1,23 @@
+{
+  "name": "Ring of Evasion",
+  "source": "XDMG",
+  "page": 293,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BtS"
+  ],
+  "type": "RG|XDMG",
+  "rarity": "rare",
+  "reqAttune": true,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d3}",
+  "charges": 3,
+  "entries": [
+    "This ring has 3 charges, and it regains {@dice 1d3} expended charges daily at dawn. When you fail a Dexterity saving throw while wearing the ring, you can take a {@variantrule Reaction|XPHB} to expend 1 charge to succeed on that save instead."
+  ],
+  "lootTables": [
+    "Implements - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

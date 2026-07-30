@@ -1,0 +1,21 @@
+{
+  "name": "Morningstar",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 4,
+  "value": 1500,
+  "weaponCategory": "martial",
+  "mastery": [
+    "Sap|XPHB"
+  ],
+  "dmg1": "1d8",
+  "dmgType": "P",
+  "mace": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

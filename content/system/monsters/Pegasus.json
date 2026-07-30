@@ -1,0 +1,88 @@
+{
+  "name": "Pegasus",
+  "source": "XMM",
+  "page": 235,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "NF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "celestial",
+  "alignment": [
+    "C",
+    "G"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 59,
+    "formula": "7d10 + 21"
+  },
+  "speed": {
+    "walk": 60,
+    "fly": 90
+  },
+  "str": 18,
+  "dex": 15,
+  "con": 16,
+  "int": 10,
+  "wis": 15,
+  "cha": 13,
+  "save": {
+    "dex": "+4",
+    "con": "+5",
+    "wis": "+4",
+    "cha": "+3"
+  },
+  "skill": {
+    "perception": "+6"
+  },
+  "passive": 16,
+  "languages": [
+    "understands Celestial",
+    "Common",
+    "Elvish",
+    "and Sylvan but can't speak"
+  ],
+  "cr": "2",
+  "action": [
+    {
+      "name": "Hooves",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}7 ({@damage 1d6 + 4}) Bludgeoning damage plus 5 ({@damage 2d4}) Radiant damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "hill",
+    "planar, upper"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/pegasus.opus"
+  },
+  "languageTags": [
+    "C",
+    "CE",
+    "CS",
+    "E",
+    "S"
+  ],
+  "damageTags": [
+    "B",
+    "R"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

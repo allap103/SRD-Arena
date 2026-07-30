@@ -1,0 +1,44 @@
+{
+  "name": "Darkvision",
+  "source": "XPHB",
+  "page": 260,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "level": 2,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a dried carrot"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 8
+      }
+    }
+  ],
+  "entries": [
+    "For the duration, a willing creature you touch has {@sense Darkvision|XPHB} with a range of 150 feet."
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

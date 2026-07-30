@@ -1,0 +1,161 @@
+{
+  "name": "Drider",
+  "source": "XMM",
+  "page": 105,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    19
+  ],
+  "hp": {
+    "average": 123,
+    "formula": "13d10 + 52"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 16,
+  "dex": 19,
+  "con": 18,
+  "int": 13,
+  "wis": 16,
+  "cha": 12,
+  "skill": {
+    "perception": "+6",
+    "stealth": "+10"
+  },
+  "senses": [
+    "Darkvision 120 ft."
+  ],
+  "passive": 16,
+  "languages": [
+    "Elvish",
+    "Undercommon"
+  ],
+  "cr": "6",
+  "spellcasting": [
+    {
+      "name": "Magic of the Spider Queen {@recharge 5}",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The drider casts {@spell Darkness|XPHB}, {@spell Faerie Fire|XPHB}, or {@spell Web|XPHB}, requiring no Material components and using Wisdom as the spellcasting ability (spell save {@dc 14})."
+      ],
+      "recharge": {
+        "5": [
+          "{@spell Darkness|XPHB}",
+          "{@spell Faerie Fire|XPHB}",
+          "{@spell Web|XPHB}"
+        ]
+      },
+      "ability": "wis",
+      "displayAs": "bonus",
+      "hidden": [
+        "recharge"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The drider can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    },
+    {
+      "name": "Sunlight Sensitivity",
+      "entries": [
+        "While in sunlight, the drider has {@variantrule Disadvantage|XPHB} on ability checks and attack rolls."
+      ]
+    },
+    {
+      "name": "Web Walker",
+      "entries": [
+        "The drider ignores movement restrictions caused by webs, and the drider knows the location of any other creature in contact with the same web."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The drider makes three attacks, using Foreleg or Poison Burst in any combination."
+      ]
+    },
+    {
+      "name": "Foreleg",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 10 ft. {@h}13 ({@damage 2d8 + 4}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Poison Burst",
+      "entries": [
+        "{@atkr r} {@hit 6}, range 120 ft. {@h}13 ({@damage 3d6 + 3}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "underdark"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/drider.opus"
+  },
+  "traitTags": [
+    "Spider Climb",
+    "Sunlight Sensitivity",
+    "Web Walker"
+  ],
+  "senseTags": [
+    "SD"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "E",
+    "U"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "damageTagsSpell": [
+    "F"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RA",
+    "RCH"
+  ],
+  "conditionInflictSpell": [
+    "restrained"
+  ],
+  "savingThrowForcedSpell": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

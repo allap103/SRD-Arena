@@ -1,0 +1,25 @@
+{
+  "name": "Stone of Good Luck",
+  "alias": [
+    "Luckstone"
+  ],
+  "source": "XDMG",
+  "page": 312,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BtS"
+  ],
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "bonusSavingThrow": "+1",
+  "bonusAbilityCheck": "+1",
+  "entries": [
+    "While this polished agate is on your person, you gain a +1 bonus to ability checks and saving throws."
+  ],
+  "lootTables": [
+    "Implements - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

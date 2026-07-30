@@ -1,0 +1,117 @@
+{
+  "name": "Steam Mephit",
+  "source": "XMM",
+  "page": 208,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "HotB"
+  ],
+  "size": [
+    "S"
+  ],
+  "type": "elemental",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 17,
+    "formula": "5d6"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 30
+  },
+  "str": 5,
+  "dex": 11,
+  "con": 10,
+  "int": 11,
+  "wis": 10,
+  "cha": 12,
+  "skill": {
+    "stealth": "+2"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "immune": [
+    "fire",
+    "poison"
+  ],
+  "conditionImmune": [
+    "exhaustion",
+    "poisoned"
+  ],
+  "languages": [
+    "Primordial (Aquan, Ignan)"
+  ],
+  "cr": "1/4",
+  "trait": [
+    {
+      "name": "Blurred Form",
+      "entries": [
+        "Attack rolls against the mephit are made with {@variantrule Disadvantage|XPHB} unless the mephit has the {@condition Incapacitated|XPHB} condition."
+      ]
+    },
+    {
+      "name": "Death Burst",
+      "entries": [
+        "The mephit explodes when it dies. {@actSave dex} {@dc 10}, each creature in a 5-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the mephit. {@actSaveFail} 5 ({@damage 2d4}) Fire damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}2 ({@damage 1d4}) Slashing damage plus 2 ({@damage 1d4}) Fire damage."
+      ]
+    },
+    {
+      "name": "Steam Breath {@recharge}",
+      "entries": [
+        "{@actSave con} {@dc 10}, each creature in a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 5 ({@damage 2d4}) Fire damage, and the target's {@variantrule Speed|XPHB} decreases by 10 feet until the end of the mephit's next turn. {@actSaveSuccess} Half damage only. {@actSaveSuccessOrFail} Being underwater doesn't grant {@variantrule Resistance|XPHB} to this Fire damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, elemental"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/steam-mephit.opus"
+  },
+  "traitTags": [
+    "Death Burst"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Breath Weapon"
+  ],
+  "languageTags": [
+    "AQ",
+    "IG",
+    "P"
+  ],
+  "damageTags": [
+    "F",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

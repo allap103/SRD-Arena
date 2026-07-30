@@ -1,0 +1,13 @@
+{
+  "name": "Sealing Wax",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "KftGV"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "value": 50
+}

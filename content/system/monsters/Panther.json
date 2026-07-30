@@ -1,0 +1,87 @@
+{
+  "name": "Panther",
+  "source": "XMM",
+  "page": 366,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 354
+    }
+  ],
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 13,
+    "formula": "3d8"
+  },
+  "speed": {
+    "walk": 50,
+    "climb": 40
+  },
+  "str": 14,
+  "dex": 16,
+  "con": 10,
+  "int": 3,
+  "wis": 14,
+  "cha": 7,
+  "skill": {
+    "perception": "+4",
+    "stealth": "+7"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}6 ({@damage 1d6 + 3}) Slashing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Nimble Escape",
+      "entries": [
+        "The panther takes the {@action Disengage|XPHB} or {@action Hide|XPHB} action."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/panther.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

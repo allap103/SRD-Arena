@@ -1,0 +1,25 @@
+{
+  "name": "Archery",
+  "source": "PHB",
+  "page": 72,
+  "srd": true,
+  "otherSources": [
+    {
+      "source": "PHB",
+      "page": 91
+    }
+  ],
+  "reprintedAs": [
+    {
+      "uid": "Archery|XPHB",
+      "tag": "feat"
+    }
+  ],
+  "featureType": [
+    "FS:F",
+    "FS:R"
+  ],
+  "entries": [
+    "You gain a +2 bonus to attack rolls you make with ranged weapons."
+  ]
+}

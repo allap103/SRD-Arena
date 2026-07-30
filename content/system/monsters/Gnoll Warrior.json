@@ -1,0 +1,91 @@
+{
+  "name": "Gnoll Warrior",
+  "source": "XMM",
+  "page": 140,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "HotB"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "fiend",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 27,
+    "formula": "6d8"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 14,
+  "dex": 12,
+  "con": 11,
+  "int": 6,
+  "wis": 10,
+  "cha": 7,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "languages": [
+    "Gnoll"
+  ],
+  "cr": "1/2",
+  "action": [
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Bone Bow",
+      "entries": [
+        "{@atkr r} {@hit 3}, range 150/600 ft. {@h}6 ({@damage 1d10 + 1}) Piercing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Rampage (1/Day)",
+      "entries": [
+        "Immediately after dealing damage to a creature that is already {@status Bloodied|XPHB}, the gnoll moves up to half its {@variantrule Speed|XPHB}, and it makes one Rend attack."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "treasure": [
+    "armaments",
+    "individual"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "OTH"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

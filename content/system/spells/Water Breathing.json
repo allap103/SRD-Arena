@@ -1,0 +1,46 @@
+{
+  "name": "Water Breathing",
+  "source": "XPHB",
+  "page": 340,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 3,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a short reed"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 24
+      }
+    }
+  ],
+  "meta": {
+    "ritual": true
+  },
+  "entries": [
+    "This spell grants up to ten willing creatures of your choice within range the ability to breathe underwater until the spell ends. Affected creatures also retain their normal mode of respiration."
+  ],
+  "areaTags": [
+    "MT"
+  ],
+  "hasFluffImages": true
+}

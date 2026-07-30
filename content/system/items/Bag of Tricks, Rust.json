@@ -1,0 +1,62 @@
+{
+  "name": "Bag of Tricks, Rust",
+  "source": "XDMG",
+  "page": 234,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "wondrous": true,
+  "recharge": "dawn",
+  "entries": [
+    "This bag made from rust cloth appears empty. Reaching inside the bag, however, reveals the presence of a small, fuzzy object.",
+    "You can take a {@action Magic|XPHB} action to pull the fuzzy object from the bag and throw it up to 20 feet. When the object lands, it transforms into a creature you determine by rolling on the table below. See the {@book Monster Manual|XMM} for the creature's stat block. The creature vanishes at the next dawn or when it is reduced to 0 {@variantrule Hit Points|XPHB}.",
+    "The creature is {@variantrule Friendly [Attitude]|XPHB|Friendly} to you and your allies, and it acts immediately after you on your {@variantrule Initiative|XPHB} count. You can take a {@variantrule Bonus Action|XPHB} to command how the creature moves and what action it takes on its next turn, such as attacking an enemy. In the absence of such orders, the creature acts in a fashion appropriate to its nature.",
+    "Once three fuzzy objects have been pulled from the bag, the bag can't be used again until the next dawn.",
+    {
+      "type": "table",
+      "colStyles": [
+        "col-2 text-center",
+        "col-10"
+      ],
+      "colLabels": [
+        "1d8",
+        "Creature"
+      ],
+      "rows": [
+        [
+          "1",
+          "{@creature Rat|XMM}"
+        ],
+        [
+          "2",
+          "{@creature Owl|XMM}"
+        ],
+        [
+          "3",
+          "{@creature Mastiff|XMM}"
+        ],
+        [
+          "4",
+          "{@creature Goat|XMM}"
+        ],
+        [
+          "5",
+          "{@creature Giant Goat|XMM}"
+        ],
+        [
+          "6",
+          "{@creature Giant Boar|XMM}"
+        ],
+        [
+          "7",
+          "{@creature Lion|XMM}"
+        ],
+        [
+          "8",
+          "{@creature Brown Bear|XMM}"
+        ]
+      ]
+    }
+  ],
+  "hasFluffImages": true
+}

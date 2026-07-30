@@ -1,0 +1,176 @@
+{
+  "name": "Deva",
+  "group": [
+    "Angels"
+  ],
+  "source": "XMM",
+  "page": 97,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "celestial",
+    "tags": [
+      "angel"
+    ]
+  },
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 229,
+    "formula": "27d8 + 108"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": {
+      "number": 90,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "str": 18,
+  "dex": 18,
+  "con": 18,
+  "int": 17,
+  "wis": 20,
+  "cha": 20,
+  "save": {
+    "wis": "+9",
+    "cha": "+9"
+  },
+  "skill": {
+    "insight": "+9",
+    "perception": "+9"
+  },
+  "senses": [
+    "Darkvision 120 ft."
+  ],
+  "passive": 19,
+  "resist": [
+    "radiant"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "exhaustion",
+    "frightened"
+  ],
+  "languages": [
+    "all; telepathy 120 ft."
+  ],
+  "cr": "10",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The deva casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 17}):"
+      ],
+      "will": [
+        "{@spell Detect Evil and Good|XPHB}",
+        "{@spell Shapechange|XPHB} (Beast or Humanoid form only, no {@variantrule Temporary Hit Points|XPHB} gained from the spell, and no {@status Concentration|XPHB} or {@variantrule Temporary Hit Points|XPHB} required to maintain the spell)"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Commune|XPHB}",
+          "{@spell Raise Dead|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    },
+    {
+      "name": "Divine Aid (2/Day)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The deva casts {@spell Cure Wounds|XPHB}, {@spell Lesser Restoration|XPHB}, or {@spell Remove Curse|XPHB}, using the same spellcasting ability as Spellcasting."
+      ],
+      "daily": {
+        "2": [
+          "{@spell Cure Wounds|XPHB}",
+          "{@spell Lesser Restoration|XPHB}",
+          "{@spell Remove Curse|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "bonus",
+      "hidden": [
+        "daily"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Exalted Restoration",
+      "entries": [
+        "If the deva dies outside Mount Celestia, its body disappears, and it gains a new body instantly, reviving with all its {@variantrule Hit Points|XPHB} somewhere in Mount Celestia."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The deva has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The deva makes two Holy Mace attacks."
+      ]
+    },
+    {
+      "name": "Holy Mace",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 5 ft. {@h}7 ({@damage 1d6 + 4}) Bludgeoning damage plus 18 ({@damage 4d8}) Radiant damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, upper"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/deva.opus"
+  },
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "SD"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "TP",
+    "XX"
+  ],
+  "damageTags": [
+    "B",
+    "R"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

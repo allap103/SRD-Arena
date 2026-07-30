@@ -1,0 +1,17 @@
+{
+  "name": "Ring of Necrotic Resistance",
+  "source": "XDMG",
+  "page": 294,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "resist": [
+    "necrotic"
+  ],
+  "detail1": "jet",
+  "rarity": "rare",
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Ring of Resistance|XDMG}"
+  ]
+}

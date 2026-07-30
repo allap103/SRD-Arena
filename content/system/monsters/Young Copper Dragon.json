@@ -1,0 +1,134 @@
+{
+  "name": "Young Copper Dragon",
+  "group": [
+    "Metallic Dragons"
+  ],
+  "source": "XMM",
+  "page": 78,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "metallic"
+    ]
+  },
+  "alignment": [
+    "C",
+    "G"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 119,
+    "formula": "14d10 + 42"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 40,
+    "fly": 80
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 19,
+  "dex": 12,
+  "con": 17,
+  "int": 16,
+  "wis": 13,
+  "cha": 15,
+  "save": {
+    "dex": "+4",
+    "wis": "+4"
+  },
+  "skill": {
+    "deception": "+5",
+    "perception": "+7",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Blindsight 30 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 17,
+  "immune": [
+    "acid"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": "7",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of Slowing Breath."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 10 ft. {@h}15 ({@damage 2d10 + 4}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Acid Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 14}, each creature in a 40-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 40 ({@damage 9d8}) Acid damage. {@actSaveSuccess} Half damage."
+      ]
+    },
+    {
+      "name": "Slowing Breath",
+      "entries": [
+        "{@actSave con} {@dc 14}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target can't take Reactions; its {@variantrule Speed|XPHB} is halved; and it can take either an action or a {@variantrule Bonus Action|XPHB} on its turn, not both. This effect lasts until the end of its next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "hill"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "dragonAge": "young",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/copper-dragon.opus"
+  },
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "A",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

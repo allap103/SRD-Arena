@@ -1,0 +1,63 @@
+{
+  "name": "Dwarf",
+  "source": "XPHB",
+  "page": 188,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "creatureTypes": [
+    "humanoid"
+  ],
+  "size": [
+    "M"
+  ],
+  "speed": 30,
+  "darkvision": 120,
+  "resist": [
+    "poison"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "races/dwarf.opus"
+  },
+  "sizeEntry": {
+    "type": "item",
+    "name": "Size:",
+    "entries": [
+      "Medium (about 4-5 feet tall)"
+    ]
+  },
+  "entries": [
+    {
+      "type": "entries",
+      "name": "Darkvision",
+      "entries": [
+        "You have {@sense Darkvision|XPHB} with a range of 120 feet."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Dwarven Resilience",
+      "entries": [
+        "You have {@variantrule Resistance|XPHB} to Poison damage. You also have {@variantrule Advantage|XPHB} on saving throws you make to avoid or end the {@condition Poisoned|XPHB} condition."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Dwarven Toughness",
+      "entries": [
+        "Your {@variantrule Hit Points|XPHB|Hit Point} maximum increases by 1, and it increases by 1 again whenever you gain a level."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Stonecunning",
+      "entries": [
+        "As a {@variantrule Bonus Action|XPHB}, you gain {@sense Tremorsense|XPHB} with a range of 60 feet for 10 minutes. You must be on a stone surface or touching a stone surface to use this {@sense Tremorsense|XPHB}. The stone can be natural or worked.",
+        "You can use this {@variantrule Bonus Action|XPHB} a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}."
+      ]
+    }
+  ],
+  "hasFluff": true,
+  "hasFluffImages": true
+}

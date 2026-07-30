@@ -1,0 +1,37 @@
+{
+  "name": "Blur",
+  "source": "XPHB",
+  "page": 248,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 2,
+  "school": "I",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "Your body becomes blurred. For the duration, any creature has {@variantrule Disadvantage|XPHB} on attack rolls against you. An attacker is immune to this effect if it perceives you with {@sense Blindsight|XPHB} or {@sense Truesight|XPHB}."
+  ]
+}

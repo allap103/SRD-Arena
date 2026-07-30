@@ -1,0 +1,89 @@
+{
+  "name": "Guard",
+  "source": "XMM",
+  "page": 162,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-DaS",
+    "DrDe-TFV",
+    "EFA",
+    "FRAiF",
+    "FRHoF",
+    "HotB",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    16
+  ],
+  "hp": {
+    "average": 11,
+    "formula": "2d8 + 2"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 13,
+  "dex": 12,
+  "con": 12,
+  "int": 10,
+  "wis": 11,
+  "cha": 10,
+  "skill": {
+    "perception": "+2"
+  },
+  "passive": 12,
+  "languages": [
+    "Common"
+  ],
+  "cr": "1/8",
+  "gear": [
+    "chain shirt|xphb",
+    "shield|xphb",
+    "spear|xphb"
+  ],
+  "action": [
+    {
+      "name": "Spear",
+      "entries": [
+        "{@atkr m,r} {@hit 3}, reach 5 ft. or range 20/60 ft. {@h}4 ({@damage 1d6 + 1}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "armaments",
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/guard.opus"
+  },
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "THW"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

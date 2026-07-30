@@ -1,0 +1,14 @@
+{
+  "name": "Costume Clothes",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Costume|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 4,
+  "value": 500
+}

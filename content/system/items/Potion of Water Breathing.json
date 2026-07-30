@@ -1,0 +1,22 @@
+{
+  "name": "Potion of Water Breathing",
+  "source": "XDMG",
+  "page": 289,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "P|XPHB",
+  "rarity": "uncommon",
+  "weight": 0.5,
+  "entries": [
+    "You can breathe underwater for 24 hours after drinking this potion.",
+    "This potion's cloudy green fluid smells of the sea and has a jellyfish-like bubble floating in it."
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG",
+    "Implements - Uncommon|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ],
+  "hasFluffImages": true
+}

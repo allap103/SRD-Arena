@@ -1,0 +1,100 @@
+{
+  "name": "Tyrannosaurus Rex",
+  "group": [
+    "Dinosaurs"
+  ],
+  "source": "XMM",
+  "page": 372,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": {
+    "type": "beast",
+    "tags": [
+      "dinosaur"
+    ]
+  },
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 136,
+    "formula": "13d12 + 52"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 25,
+  "dex": 10,
+  "con": 19,
+  "int": 2,
+  "wis": 12,
+  "cha": 9,
+  "save": {
+    "str": "+10",
+    "wis": "+4"
+  },
+  "skill": {
+    "perception": "+4"
+  },
+  "passive": 14,
+  "cr": "8",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The tyrannosaurus makes one Bite attack and one Tail attack."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 10}, reach 10 ft. {@h}33 ({@damage 4d12 + 7}) Piercing damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 17}). While {@condition Grappled|XPHB}, the target has the {@condition Restrained|XPHB} condition and can't be targeted by the tyrannosaurus's Tail."
+      ]
+    },
+    {
+      "name": "Tail",
+      "entries": [
+        "{@atkr m} {@hit 10}, reach 15 ft. {@h}25 ({@damage 4d8 + 7}) Bludgeoning damage. If the target is a Huge or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "grassland"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/tyrannosaurus-rex.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled",
+    "prone",
+    "restrained"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Lantern of Revealing",
+  "source": "XDMG",
+  "page": 275,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "wondrous": true,
+  "entries": [
+    "While lit, this hooded lantern burns for 6 hours on 1 pint of oil, shedding {@variantrule Bright Light|XPHB} in a 30-foot radius and {@variantrule Dim Light|XPHB} for an additional 30 feet. {@condition Invisible|XPHB} creatures and objects are visible as long as they are in the lantern's {@variantrule Bright Light|XPHB}. You can take a {@action Utilize|XPHB} action to lower the hood, reducing the lantern's light to {@variantrule Dim Light|XPHB} in a 5-foot radius."
+  ],
+  "light": [
+    {
+      "bright": 30,
+      "dim": 60
+    },
+    {
+      "dim": 5
+    }
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG",
+    "Implements - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

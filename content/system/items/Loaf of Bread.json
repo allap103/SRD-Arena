@@ -1,0 +1,19 @@
+{
+  "name": "Loaf of Bread",
+  "source": "PHB",
+  "page": 158,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "CRCotN"
+  ],
+  "reprintedAs": [
+    "Bread (loaf)|XPHB"
+  ],
+  "type": "FD",
+  "rarity": "none",
+  "value": 2,
+  "miscTags": [
+    "CNS"
+  ]
+}

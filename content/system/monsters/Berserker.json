@@ -1,0 +1,89 @@
+{
+  "name": "Berserker",
+  "source": "XMM",
+  "page": 37,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TFV",
+    "EFA",
+    "FRAiF",
+    "FRHoF",
+    "RHW",
+    "ScoEE"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 67,
+    "formula": "9d8 + 27"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 16,
+  "dex": 12,
+  "con": 17,
+  "int": 9,
+  "wis": 11,
+  "cha": 9,
+  "passive": 10,
+  "languages": [
+    "Common"
+  ],
+  "cr": "2",
+  "gear": [
+    "greataxe|xphb",
+    "hide armor|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Bloodied Frenzy",
+      "entries": [
+        "While {@status Bloodied|XPHB}, the berserker has {@variantrule Advantage|XPHB} on attack rolls and saving throws."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Greataxe",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}9 ({@damage 1d12 + 3}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "armaments",
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/berserker.opus"
+  },
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

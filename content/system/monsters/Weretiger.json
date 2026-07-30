@@ -1,0 +1,144 @@
+{
+  "name": "Weretiger",
+  "group": [
+    "Lycanthropes"
+  ],
+  "source": "XMM",
+  "page": 326,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": {
+    "type": "monstrosity",
+    "tags": [
+      "lycanthrope"
+    ]
+  },
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 120,
+    "formula": "16d8 + 48"
+  },
+  "speed": {
+    "walk": 30,
+    "alternate": {
+      "walk": [
+        {
+          "number": 40,
+          "condition": "(tiger form only)"
+        }
+      ]
+    }
+  },
+  "str": 17,
+  "dex": 15,
+  "con": 16,
+  "int": 10,
+  "wis": 13,
+  "cha": 11,
+  "skill": {
+    "perception": "+5",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "languages": [
+    "Common (can't speak in tiger form)"
+  ],
+  "cr": "4",
+  "gear": [
+    "longbow|xphb"
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The weretiger makes two attacks, using Scratch or Longbow in any combination. It can replace one attack with a Bite attack."
+      ]
+    },
+    {
+      "name": "Bite (Tiger or Hybrid Form Only)",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}12 ({@damage 2d8 + 3}) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. {@actSave con} {@dc 13}. {@actSaveFail} The target is cursed. If the cursed target drops to 0 {@variantrule Hit Points|XPHB}, it instead becomes a Weretiger under the DM's control and has 10 {@variantrule Hit Points|XPHB}. {@actSaveSuccess} The target is immune to this weretiger's curse for 24 hours."
+      ]
+    },
+    {
+      "name": "Scratch",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Longbow (Humanoid or Hybrid Form Only)",
+      "entries": [
+        "{@atkr r} {@hit 4}, range 150/600 ft. {@h}11 ({@damage 2d8 + 2}) Piercing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Prowl (Tiger or Hybrid Form Only)",
+      "entries": [
+        "The weretiger moves up to its {@variantrule Speed|XPHB} without provoking {@action Opportunity Attack|XPHB|Opportunity Attacks}. At the end of this movement, the weretiger can take the {@action Hide|XPHB} action."
+      ]
+    },
+    {
+      "name": "Shape-Shift",
+      "entries": [
+        "The weretiger shape-shifts into a Large tiger-humanoid hybrid or a Large tiger, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "grassland"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/weretiger.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "CS"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "CUR",
+    "MA",
+    "RA",
+    "RNG"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

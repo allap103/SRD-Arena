@@ -1,0 +1,26 @@
+{
+  "name": "Amulet of Health",
+  "source": "XDMG",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "weight": 1,
+  "ability": {
+    "static": {
+      "con": 19
+    }
+  },
+  "entries": [
+    "Your Constitution score is 19 while you wear this amulet. It has no effect on you if your Constitution is already 19 or higher without it."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Relics - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

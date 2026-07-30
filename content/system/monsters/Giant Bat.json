@@ -1,0 +1,65 @@
+{
+  "name": "Giant Bat",
+  "source": "XMM",
+  "page": 355,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "4d10"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 60
+  },
+  "str": 15,
+  "dex": 16,
+  "con": 11,
+  "int": 2,
+  "wis": 12,
+  "cha": 6,
+  "senses": [
+    "Blindsight 120 ft."
+  ],
+  "passive": 11,
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}6 ({@damage 1d6 + 3}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "mountain",
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-bat.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

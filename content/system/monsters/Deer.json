@@ -1,0 +1,78 @@
+{
+  "name": "Deer",
+  "source": "XMM",
+  "page": 352,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 4,
+    "formula": "1d8"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 11,
+  "dex": 16,
+  "con": 11,
+  "int": 2,
+  "wis": 14,
+  "cha": 5,
+  "skill": {
+    "perception": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Agile",
+      "entries": [
+        "The deer doesn't provoke an {@action Opportunity Attack|XPHB} when it moves out of an enemy's reach."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Ram",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}2 ({@damage 1d4}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/deer.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

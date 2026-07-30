@@ -1,0 +1,184 @@
+{
+  "name": "Mage",
+  "source": "XMM",
+  "page": 199,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-BtS",
+    "DrDe-DotSC",
+    "EFA",
+    "FRAiF",
+    "FRHoF",
+    "LFL",
+    "NF",
+    "RHW",
+    "UtHftLH"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": {
+    "type": "humanoid",
+    "tags": [
+      "wizard"
+    ]
+  },
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 81,
+    "formula": "18d8"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 9,
+  "dex": 14,
+  "con": 11,
+  "int": 17,
+  "wis": 12,
+  "cha": 11,
+  "save": {
+    "int": "+6",
+    "wis": "+4"
+  },
+  "skill": {
+    "arcana": "+6",
+    "history": "+6",
+    "perception": "+4"
+  },
+  "passive": 14,
+  "languages": [
+    "Common plus three other languages"
+  ],
+  "cr": "6",
+  "gear": [
+    "wand|xphb"
+  ],
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The mage casts one of the following spells, using Intelligence as the spellcasting ability (spell save {@dc 14}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Light|XPHB}",
+        "{@spell Mage Armor|XPHB} (included in AC)",
+        "{@spell Mage Hand|XPHB}",
+        "{@spell Prestidigitation|XPHB}"
+      ],
+      "daily": {
+        "2e": [
+          "{@spell Fireball|XPHB} (level 4 version)",
+          "{@spell Invisibility|XPHB}"
+        ],
+        "1e": [
+          "{@spell Cone of Cold|XPHB}",
+          "{@spell Fly|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "action"
+    },
+    {
+      "name": "Misty Step (3/Day)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The mage casts {@spell Misty Step|XPHB}, using the same spellcasting ability as Spellcasting."
+      ],
+      "daily": {
+        "3": [
+          "{@spell Misty Step|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "bonus",
+      "hidden": [
+        "daily"
+      ]
+    },
+    {
+      "name": "Protective Magic (3/Day)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The mage casts {@spell Counterspell|XPHB} or {@spell Shield|XPHB} in response to the spell's trigger, using the same spellcasting ability as Spellcasting."
+      ],
+      "daily": {
+        "3": [
+          "{@spell Counterspell|XPHB}",
+          "{@spell Shield|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "reaction",
+      "hidden": [
+        "daily"
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The mage makes three Arcane Burst attacks."
+      ]
+    },
+    {
+      "name": "Arcane Burst",
+      "entries": [
+        "{@atkr m,r} {@hit 6}, reach 5 ft. or range 120 ft. {@h}16 ({@damage 3d8 + 3}) Force damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "arcana",
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/mage.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "O"
+  ],
+  "damageTagsSpell": [
+    "C",
+    "F"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RA"
+  ],
+  "conditionInflictSpell": [
+    "invisible"
+  ],
+  "savingThrowForcedSpell": [
+    "constitution",
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

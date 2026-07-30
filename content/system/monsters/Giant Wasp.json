@@ -1,0 +1,71 @@
+{
+  "name": "Giant Wasp",
+  "source": "XMM",
+  "page": 361,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "5d8"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 50
+  },
+  "str": 10,
+  "dex": 14,
+  "con": 10,
+  "int": 1,
+  "wis": 10,
+  "cha": 3,
+  "passive": 10,
+  "cr": "1/2",
+  "trait": [
+    {
+      "name": "Flyby",
+      "entries": [
+        "The wasp doesn't provoke an {@action Opportunity Attack|XPHB} when it flies out of an enemy's reach."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Sting",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Piercing damage plus 5 ({@damage 2d4}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-wasp.opus"
+  },
+  "traitTags": [
+    "Flyby"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

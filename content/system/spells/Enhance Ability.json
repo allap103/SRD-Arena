@@ -1,0 +1,55 @@
+{
+  "name": "Enhance Ability",
+  "source": "XPHB",
+  "page": 268,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 2,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "fur or a feather"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You touch a creature and choose Strength, Dexterity, Intelligence, Wisdom, or Charisma. For the duration, the target has {@variantrule Advantage|XPHB} on ability checks using the chosen ability."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "You can target one additional creature for each spell slot level above 2. You can choose a different ability for each target."
+      ]
+    }
+  ],
+  "miscTags": [
+    "ADV",
+    "SCT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

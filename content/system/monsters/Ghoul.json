@@ -1,0 +1,111 @@
+{
+  "name": "Ghoul",
+  "source": "XMM",
+  "page": 132,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TWoO",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "undead",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "5d8"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 13,
+  "dex": 15,
+  "con": 10,
+  "int": 7,
+  "wis": 10,
+  "cha": 6,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "exhaustion",
+    "poisoned"
+  ],
+  "languages": [
+    "Common"
+  ],
+  "cr": "1",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The ghoul makes two Bite attacks."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Piercing damage plus 3 ({@damage 1d6}) Necrotic damage."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}4 ({@damage 1d4 + 2}) Slashing damage. If the target is a creature that isn't an Undead or elf, it is subjected to the following effect. {@actSave con} {@dc 10}. {@actSaveFail} The target has the {@condition Paralyzed|XPHB} condition until the end of its next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "swamp",
+    "underdark",
+    "urban"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/ghoul.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "N",
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "paralyzed"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

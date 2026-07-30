@@ -1,0 +1,165 @@
+{
+  "name": "Incubus",
+  "source": "XMM",
+  "page": 178,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "RHW",
+    "ScoEE"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "fiend",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 66,
+    "formula": "12d8 + 12"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 60
+  },
+  "str": 8,
+  "dex": 17,
+  "con": 13,
+  "int": 15,
+  "wis": 12,
+  "cha": 20,
+  "skill": {
+    "deception": "+9",
+    "insight": "+5",
+    "perception": "+5",
+    "persuasion": "+9",
+    "stealth": "+7"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "resist": [
+    "cold",
+    "fire",
+    "poison",
+    "psychic"
+  ],
+  "languages": [
+    "Abyssal",
+    "Common",
+    "Infernal; telepathy 60 ft."
+  ],
+  "cr": "4",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The incubus casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 15}):"
+      ],
+      "will": [
+        "{@spell Disguise Self|XPHB}",
+        "{@spell Etherealness|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Dream|XPHB}",
+          "{@spell Hypnotic Pattern|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Succubus Form",
+      "entries": [
+        "When the incubus finishes a {@variantrule Long Rest|XPHB}, it can shape-shift into a {@creature Succubus|XMM}, using that stat block instead of this one. Any equipment it's wearing or carrying isn't transformed."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The incubus makes two Restless Touch attacks."
+      ]
+    },
+    {
+      "name": "Restless Touch",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}15 ({@damage 3d6 + 5}) Psychic damage, and the target is cursed for 24 hours or until the incubus dies. Until the curse ends, the target gains no benefit from finishing Short Rests."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Nightmare {@recharge}",
+      "entries": [
+        "{@actSave wis} {@dc 15}, one creature the incubus can see within 60 feet. {@actSaveFail} If the target has 20 {@variantrule Hit Points|XPHB} or fewer, it has the {@condition Unconscious|XPHB} condition for 1 hour, until it takes damage, or until a creature within 5 feet of it takes an action to wake it. Otherwise, the target takes 18 ({@damage 4d8}) Psychic damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, lower",
+    "urban"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/succubus-incubus.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "AB",
+    "C",
+    "I",
+    "TP"
+  ],
+  "damageTags": [
+    "Y"
+  ],
+  "damageTagsSpell": [
+    "O",
+    "Y"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "CUR",
+    "MA"
+  ],
+  "conditionInflict": [
+    "unconscious"
+  ],
+  "conditionInflictSpell": [
+    "charmed",
+    "incapacitated"
+  ],
+  "savingThrowForced": [
+    "wisdom"
+  ],
+  "savingThrowForcedSpell": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

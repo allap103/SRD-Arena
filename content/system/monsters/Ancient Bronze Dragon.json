@@ -1,0 +1,311 @@
+{
+  "name": "Ancient Bronze Dragon",
+  "group": [
+    "Metallic Dragons"
+  ],
+  "source": "XMM",
+  "page": 60,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "G"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "metallic"
+    ]
+  },
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    22
+  ],
+  "hp": {
+    "average": 444,
+    "formula": "24d20 + 192"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 80,
+    "swim": 40
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 29,
+  "dex": 10,
+  "con": 27,
+  "int": 18,
+  "wis": 17,
+  "cha": 25,
+  "save": {
+    "dex": "+7",
+    "wis": "+10"
+  },
+  "skill": {
+    "insight": "+10",
+    "perception": "+17",
+    "stealth": "+7"
+  },
+  "senses": [
+    "Blindsight 60 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 27,
+  "immune": [
+    "lightning"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": {
+    "cr": "22",
+    "xpLair": 50000
+  },
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 22}, {@hit 14} to hit with spell attacks):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Guiding Bolt|XPHB} (level 2 version)",
+        "{@spell Shapechange|XPHB} (Beast or Humanoid form only, no {@variantrule Temporary Hit Points|XPHB} gained from the spell, and no {@status Concentration|XPHB} or {@variantrule Temporary Hit Points|XPHB} required to maintain the spell)",
+        "{@spell Speak with Animals|XPHB}",
+        "{@spell Thaumaturgy|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Detect Thoughts|XPHB}",
+          "{@spell Control Water|XPHB}",
+          "{@spell Scrying|XPHB}",
+          "{@spell Water Breathing|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The dragon can breathe air and water."
+      ]
+    },
+    {
+      "name": "Legendary Resistance (4/Day, or 5/Day in Lair)",
+      "entries": [
+        "If the dragon fails a saving throw, it can choose to succeed instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Repulsion Breath or (B) Spellcasting to cast {@spell Guiding Bolt|XPHB} (level 2 version)."
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                },
+                "times": 3
+              }
+            ],
+            "replacements": [
+              {
+                "target": {
+                  "type": "action",
+                  "name": "Rend"
+                },
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Repulsion Breath"
+                  },
+                  {
+                    "type": "cast_spell",
+                    "spell": {
+                      "name": "Guiding Bolt",
+                      "source": "XPHB"
+                    },
+                    "cast_level": 2
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 16}, reach 15 ft. {@h}18 ({@damage 2d8 + 9}) Slashing damage plus 9 ({@damage 2d8}) Lightning damage."
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 16,
+        "target": {
+          "type": "creature",
+          "range_feet": 15
+        },
+        "reach_feet": 15,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "bonus": 9,
+            "damage_type": "slashing"
+          },
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "bonus": 0,
+            "damage_type": "lightning"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lightning Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 23}, each creature in a 120-foot-long, 10-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 82 ({@damage 15d10}) Lightning damage. {@actSaveSuccess} Half damage."
+      ]
+    },
+    {
+      "name": "Repulsion Breath",
+      "entries": [
+        "{@actSave str} {@dc 23}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target is pushed up to 60 feet straight away from the dragon and has the {@condition Prone|XPHB} condition."
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "str",
+        "dc": 23,
+        "target": {
+          "type": "area",
+          "shape": "cone",
+          "size_feet": 30
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "forced_movement",
+                "direction": "away",
+                "distance_feet": 60,
+                "up_to": true
+              },
+              {
+                "type": "condition",
+                "condition": "prone"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Guiding Light",
+      "entries": [
+        "The dragon uses Spellcasting to cast {@spell Guiding Bolt|XPHB} (level 2 version)."
+      ]
+    },
+    {
+      "name": "Pounce",
+      "entries": [
+        "The dragon moves up to half its {@variantrule Speed|XPHB}, and it makes one Rend attack."
+      ]
+    },
+    {
+      "name": "Thunderclap",
+      "entries": [
+        "{@actSave con} {@dc 22}, each creature in a 20-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} centered on a point the dragon can see within 120 feet. {@actSaveFail} 13 ({@damage 3d8}) Thunder damage, and the target has the {@condition Deafened|XPHB} condition until the end of its next turn."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Bronze Dragon",
+    "source": "XMM"
+  },
+  "environment": [
+    "coastal"
+  ],
+  "treasure": [
+    "implements"
+  ],
+  "dragonAge": "ancient",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/bronze-dragon.opus"
+  },
+  "traitTags": [
+    "Amphibious",
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "L",
+    "S",
+    "T"
+  ],
+  "damageTagsSpell": [
+    "B",
+    "R"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "deafened",
+    "prone"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "dexterity",
+    "strength"
+  ],
+  "savingThrowForcedSpell": [
+    "strength",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

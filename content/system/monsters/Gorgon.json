@@ -1,0 +1,104 @@
+{
+  "name": "Gorgon",
+  "source": "XMM",
+  "page": 148,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "construct",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    19
+  ],
+  "hp": {
+    "average": 114,
+    "formula": "12d10 + 48"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 20,
+  "dex": 11,
+  "con": 18,
+  "int": 2,
+  "wis": 12,
+  "cha": 7,
+  "skill": {
+    "perception": "+7"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 17,
+  "conditionImmune": [
+    "exhaustion",
+    "petrified"
+  ],
+  "cr": "5",
+  "action": [
+    {
+      "name": "Gore",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 5 ft. {@h}18 ({@damage 2d12 + 5}) Piercing damage. If the target is a Large or smaller creature and the gorgon moved 20+ feet straight toward it immediately before the hit, the target has the {@condition Prone|XPHB} condition."
+      ]
+    },
+    {
+      "name": "Petrifying Breath {@recharge 5}",
+      "entries": [
+        "{@actSave con} {@dc 15}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail 1} The target has the {@condition Restrained|XPHB} condition and repeats the save at the end of its next turn if it is still {@condition Restrained|XPHB}, ending the effect on itself on a success. {@actSaveFail 2} The target has the {@condition Petrified|XPHB} condition instead of the {@condition Restrained|XPHB} condition."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Trample",
+      "entries": [
+        "{@actSave dex} {@dc 16}, one creature within 5 feet that has the {@condition Prone|XPHB} condition. {@actSaveFail} 16 ({@damage 2d10 + 5}) Bludgeoning damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/gorgon.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Breath Weapon"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "petrified",
+    "prone",
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

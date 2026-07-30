@@ -1,0 +1,68 @@
+{
+  "name": "Hold Person",
+  "source": "XPHB",
+  "page": 286,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 2,
+  "school": "E",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a straight piece of iron"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "Choose a Humanoid that you can see within range. The target must succeed on a Wisdom saving throw or have the {@condition Paralyzed|XPHB} condition for the duration. At the end of each of its turns, the target repeats the save, ending the spell on itself on a success."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "You can target one additional Humanoid for each spell slot level above 2."
+      ]
+    }
+  ],
+  "conditionInflict": [
+    "paralyzed"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "affectsCreatureType": [
+    "humanoid"
+  ],
+  "miscTags": [
+    "SCT",
+    "SGT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "name": "Owlbear",
+  "source": "XMM",
+  "page": 234,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TFV",
+    "FRAiF",
+    "FRHoF",
+    "HotB"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 59,
+    "formula": "7d10 + 21"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 40
+  },
+  "str": 20,
+  "dex": 12,
+  "con": 17,
+  "int": 3,
+  "wis": 12,
+  "cha": 7,
+  "skill": {
+    "perception": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "cr": "3",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The owlbear makes two Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}14 ({@damage 2d8 + 5}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/owlbear.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,99 @@
+{
+  "name": "Giant Ape",
+  "source": "XMM",
+  "page": 354,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "RHW"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 168,
+    "formula": "16d12 + 64"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 23,
+  "dex": 14,
+  "con": 18,
+  "int": 5,
+  "wis": 12,
+  "cha": 7,
+  "skill": {
+    "athletics": "+9",
+    "perception": "+4",
+    "survival": "+4"
+  },
+  "passive": 14,
+  "cr": "7",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The ape makes two Fist attacks."
+      ]
+    },
+    {
+      "name": "Fist",
+      "entries": [
+        "{@atkr m} {@hit 9}, reach 10 ft. {@h}22 ({@damage 3d10 + 6}) Bludgeoning damage."
+      ]
+    },
+    {
+      "name": "Boulder Toss {@recharge}",
+      "entries": [
+        "The ape hurls a boulder at a point it can see within 90 feet. {@actSave dex} {@dc 17}, each creature in a 5-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} centered on that point. {@actSaveFail} 24 ({@damage 7d6}) Bludgeoning damage. If the target is a Large or smaller creature, it has the {@condition Prone|XPHB} condition. {@actSaveSuccess} Half damage only."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Leap",
+      "entries": [
+        "The ape jumps up to 30 feet by spending 10 feet of movement."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-ape.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

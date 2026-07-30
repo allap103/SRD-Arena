@@ -1,0 +1,50 @@
+{
+  "name": "Reverse Gravity",
+  "source": "XPHB",
+  "page": 312,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 7,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 100
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a lodestone and iron filings"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "This spell reverses gravity in a 50-foot-radius, 100-foot high {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} centered on a point within range. All creatures and objects in that area that aren't anchored to the ground fall upward and reach the top of the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder}. A creature can make a Dexterity saving throw to grab a fixed object it can reach, thus avoiding the fall upward.",
+    "If a ceiling or an anchored object is encountered in this upward fall, creatures and objects strike it just as they would during a downward fall. If an affected creature or object reaches the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder}'s top without striking anything, it hovers there for the duration. When the spell ends, affected objects and creatures fall downward."
+  ],
+  "savingThrow": [
+    "dexterity"
+  ],
+  "miscTags": [
+    "OBJ"
+  ],
+  "areaTags": [
+    "Y"
+  ]
+}

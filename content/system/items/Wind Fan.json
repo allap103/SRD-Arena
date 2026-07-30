@@ -1,0 +1,23 @@
+{
+  "name": "Wind Fan",
+  "source": "XDMG",
+  "page": 213,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "wondrous": true,
+  "entries": [
+    "While holding this fan, you can cast {@spell Gust of Wind|XPHB} (save {@dc 13}) from it. Each subsequent time the fan is used before the next dawn, it has a cumulative {@chance 20} chance of not working; if the fan fails to work, it tears into useless, nonmagical tatters."
+  ],
+  "attachedSpells": {
+    "daily": {
+      "1e": [
+        "gust of wind|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

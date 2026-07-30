@@ -1,0 +1,33 @@
+{
+  "name": "Otherworldly Leap",
+  "source": "XPHB",
+  "page": 156,
+  "srd52": true,
+  "featureType": [
+    "EI"
+  ],
+  "prerequisite": [
+    {
+      "level": {
+        "level": 2,
+        "class": {
+          "name": "Warlock",
+          "source": "XPHB",
+          "visibleStats": true
+        }
+      }
+    }
+  ],
+  "additionalSpells": [
+    {
+      "innate": {
+        "_": [
+          "jump|xphb"
+        ]
+      }
+    }
+  ],
+  "entries": [
+    "You can cast {@spell Jump|XPHB} on yourself without expending a spell slot."
+  ]
+}

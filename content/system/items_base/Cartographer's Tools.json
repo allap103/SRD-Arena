@@ -1,0 +1,40 @@
+{
+  "name": "Cartographer's Tools",
+  "source": "XPHB",
+  "page": 220,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "AT|XPHB",
+  "rarity": "none",
+  "weight": 6,
+  "value": 1500,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Wisdom"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Draft a map of a small area ({@dc 15})"
+          ]
+        },
+        {
+          "name": "Craft:",
+          "type": "item",
+          "entries": [
+            "{@item Map|XPHB}"
+          ]
+        }
+      ]
+    }
+  ]
+}

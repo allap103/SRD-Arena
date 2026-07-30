@@ -1,0 +1,14 @@
+{
+  "name": "Soap",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "WDH",
+    "WDMM"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "value": 2
+}

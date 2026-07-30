@@ -1,0 +1,28 @@
+{
+  "name": "Maul",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "HotB"
+  ],
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 10,
+  "value": 1000,
+  "weaponCategory": "martial",
+  "property": [
+    "H|XPHB",
+    "2H|XPHB"
+  ],
+  "mastery": [
+    "Topple|XPHB"
+  ],
+  "dmg1": "2d6",
+  "dmgType": "B",
+  "hammer": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

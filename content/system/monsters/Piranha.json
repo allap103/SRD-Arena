@@ -1,0 +1,71 @@
+{
+  "name": "Piranha",
+  "source": "XMM",
+  "page": 366,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 1,
+    "formula": "1d4 - 1"
+  },
+  "speed": {
+    "walk": 5,
+    "swim": 40
+  },
+  "str": 2,
+  "dex": 16,
+  "con": 9,
+  "int": 1,
+  "wis": 7,
+  "cha": 2,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 8,
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Water Breathing",
+      "entries": [
+        "The piranha can breathe only underwater."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5} (with {@variantrule Advantage|XPHB} if the target doesn't have all its {@variantrule Hit Points|XPHB}), reach 5 ft. {@h}1 Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "underwater"
+  ],
+  "familiar": true,
+  "traitTags": [
+    "Water Breathing"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

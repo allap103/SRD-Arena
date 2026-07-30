@@ -1,0 +1,31 @@
+{
+  "name": "Dagger",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TFV",
+    "DrDe-TWoO"
+  ],
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 200,
+  "weaponCategory": "simple",
+  "property": [
+    "F|XPHB",
+    "L|XPHB",
+    "T|XPHB"
+  ],
+  "mastery": [
+    "Nick|XPHB"
+  ],
+  "range": "20/60",
+  "dmg1": "1d4",
+  "dmgType": "P",
+  "dagger": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

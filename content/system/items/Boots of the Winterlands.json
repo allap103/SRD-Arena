@@ -1,0 +1,40 @@
+{
+  "name": "Boots of the Winterlands",
+  "source": "XDMG",
+  "page": 240,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-SD"
+  ],
+  "resist": [
+    "cold"
+  ],
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "entries": [
+    "These furred boots are snug and feel warm. While wearing them, you gain the following benefits.",
+    {
+      "type": "entries",
+      "name": "Cold Resistance",
+      "entries": [
+        "You have {@variantrule Resistance|XPHB} to Cold damage and can tolerate temperatures of 0 degrees Fahrenheit or lower without any additional protection."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Winter Strider",
+      "entries": [
+        "You ignore {@variantrule Difficult Terrain|XPHB} created by ice or snow."
+      ]
+    }
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Implements - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

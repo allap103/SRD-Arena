@@ -1,0 +1,82 @@
+{
+  "name": "Giant Fire Beetle",
+  "source": "XMM",
+  "page": 357,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "HotB"
+  ],
+  "size": [
+    "S"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 4,
+    "formula": "1d6 + 1"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 8,
+  "dex": 10,
+  "con": 12,
+  "int": 1,
+  "wis": 7,
+  "cha": 3,
+  "senses": [
+    "Blindsight 30 ft."
+  ],
+  "passive": 8,
+  "resist": [
+    "fire"
+  ],
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Illumination",
+      "entries": [
+        "The beetle sheds {@variantrule Bright Light|XPHB} in a 10-foot radius and {@variantrule Dim Light|XPHB} for an additional 10 feet."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 1}, reach 5 ft. {@h}1 Fire damage."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-fire-beetle.opus"
+  },
+  "traitTags": [
+    "Illumination"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "F"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

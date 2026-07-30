@@ -1,0 +1,12 @@
+{
+  "name": "Mule",
+  "source": "XPHB",
+  "page": 229,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "MNT|XPHB",
+  "rarity": "none",
+  "value": 800,
+  "carryingCapacity": 420,
+  "speed": 40
+}

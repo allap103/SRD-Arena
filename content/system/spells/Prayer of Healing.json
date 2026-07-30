@@ -1,0 +1,51 @@
+{
+  "name": "Prayer of Healing",
+  "source": "XPHB",
+  "page": 307,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 2,
+  "school": "A",
+  "time": [
+    {
+      "number": 10,
+      "unit": "minute"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "Up to five creatures of your choice who remain within range for the spell's entire casting gain the benefits of a {@variantrule Short Rest|XPHB} and also regain {@dice 2d8} {@variantrule Hit Points|XPHB}. A creature can't be affected by this spell again until that creature finishes a {@variantrule Long Rest|XPHB}."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The healing increases by {@scaledice 2d8|2-9|1d8} for each spell slot level above 2."
+      ]
+    }
+  ],
+  "miscTags": [
+    "HL"
+  ],
+  "areaTags": [
+    "MT"
+  ]
+}

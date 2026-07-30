@@ -1,0 +1,25 @@
+{
+  "name": "Candle",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 1,
+  "entries": [
+    "For 1 hour, a lit Candle sheds {@variantrule Bright Light|XPHB} in a 5-foot radius and {@variantrule Dim Light|XPHB} for an additional 5 feet."
+  ],
+  "light": [
+    {
+      "bright": 5,
+      "dim": 10
+    }
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "name": "Blink Dog",
+  "source": "XMM",
+  "page": 46,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "UtHftLH"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "fey",
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "4d8 + 4"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 12,
+  "dex": 17,
+  "con": 12,
+  "int": 10,
+  "wis": 13,
+  "cha": 11,
+  "skill": {
+    "perception": "+5",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "languages": [
+    "Blink Dog",
+    "understands Elvish and Sylvan but can't speak them"
+  ],
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Piercing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Teleport {@recharge 4}",
+      "entries": [
+        "The dog teleports up to 40 feet to an unoccupied space it can see."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "planar, feywild"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/blink-dog.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Teleport"
+  ],
+  "languageTags": [
+    "CS",
+    "E",
+    "OTH",
+    "S"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

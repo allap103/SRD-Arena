@@ -1,0 +1,19 @@
+{
+  "name": "Ioun Stone, Awareness",
+  "source": "XDMG",
+  "page": 273,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Ioun Stone|XDMG}",
+    "While this dark-blue rhomboid orbits your head, you have {@variantrule Advantage|XPHB} on {@variantrule Initiative|XPHB} rolls and Wisdom ({@skill Perception|XPHB}) checks."
+  ],
+  "lootTables": [
+    "Implements - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

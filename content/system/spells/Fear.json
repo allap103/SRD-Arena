@@ -1,0 +1,50 @@
+{
+  "name": "Fear",
+  "source": "XPHB",
+  "page": 271,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 3,
+  "school": "I",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "cone",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a white feather"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "Each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone} must succeed on a Wisdom saving throw or drop whatever it is holding and have the {@condition Frightened|XPHB} condition for the duration.",
+    "A {@condition Frightened|XPHB} creature takes the {@action Dash|XPHB} action and moves away from you by the safest route on each of its turns unless there is nowhere to move. If the creature ends its turn in a space where it doesn't have line of sight to you, the creature makes a Wisdom saving throw. On a successful save, the spell ends on that creature."
+  ],
+  "conditionInflict": [
+    "frightened"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "areaTags": [
+    "N"
+  ]
+}

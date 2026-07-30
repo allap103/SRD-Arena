@@ -1,0 +1,24 @@
+{
+  "name": "Whip",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 3,
+  "value": 200,
+  "weaponCategory": "martial",
+  "property": [
+    "F|XPHB",
+    "R|XPHB"
+  ],
+  "mastery": [
+    "Slow|XPHB"
+  ],
+  "dmg1": "1d4",
+  "dmgType": "S",
+  "weapon": true,
+  "hasFluffImages": true
+}

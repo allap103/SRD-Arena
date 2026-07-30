@@ -1,0 +1,45 @@
+{
+  "name": "Gentle Repose",
+  "source": "XPHB",
+  "page": 278,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 2,
+  "school": "N",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "2 Copper Pieces, which the spell consumes",
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "day",
+        "amount": 10
+      }
+    }
+  ],
+  "meta": {
+    "ritual": true
+  },
+  "entries": [
+    "You touch a corpse or other remains. For the duration, the target is protected from decay and can't become Undead.",
+    "The spell also effectively extends the time limit on raising the target from the dead, since days spent under the influence of this spell don't count against the time limit of spells such as {@spell Raise Dead|XPHB}."
+  ]
+}

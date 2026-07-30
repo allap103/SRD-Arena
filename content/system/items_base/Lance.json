@@ -1,0 +1,32 @@
+{
+  "name": "Lance",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 6,
+  "value": 1000,
+  "weaponCategory": "martial",
+  "property": [
+    "H|XPHB",
+    "R|XPHB",
+    {
+      "uid": "2H|XPHB",
+      "note": "unless mounted"
+    }
+  ],
+  "mastery": [
+    "Topple|XPHB"
+  ],
+  "dmg1": "1d10",
+  "dmgType": "P",
+  "lance": true,
+  "weapon": true,
+  "entries": [
+    "A Lance requires two hands to wield when you aren't mounted."
+  ],
+  "hasFluffImages": true
+}

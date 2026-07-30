@@ -1,0 +1,25 @@
+{
+  "name": "Pipes of Haunting",
+  "source": "XDMG",
+  "page": 285,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "wondrous": true,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d3}",
+  "charges": 3,
+  "entries": [
+    "These pipes have 3 charges and regain {@dice 1d3} expended charges daily at dawn. You can take a {@action Magic|XPHB} action to play them and expend 1 charge to create an eerie, spellbinding tune. Each creature of your choice within 30 feet of you must succeed on a {@dc 15} Wisdom saving throw or have the {@condition Frightened|XPHB} condition for 1 minute. A creature that fails the save repeats it at the end of each of its turns, ending the effect on itself on a success. A creature that succeeds on its save is immune to the effect of these pipes for 24 hours."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Implements - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

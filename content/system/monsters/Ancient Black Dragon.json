@@ -1,0 +1,272 @@
+{
+  "name": "Ancient Black Dragon",
+  "group": [
+    "Chromatic Dragons"
+  ],
+  "source": "XMM",
+  "page": 40,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "LFL"
+  ],
+  "size": [
+    "G"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "chromatic"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    22
+  ],
+  "hp": {
+    "average": 367,
+    "formula": "21d20 + 147"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 80,
+    "swim": 40
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 27,
+  "dex": 14,
+  "con": 25,
+  "int": 16,
+  "wis": 15,
+  "cha": 22,
+  "save": {
+    "dex": "+9",
+    "wis": "+9"
+  },
+  "skill": {
+    "perception": "+16",
+    "stealth": "+9"
+  },
+  "senses": [
+    "Blindsight 60 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 26,
+  "immune": [
+    "acid"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": {
+    "cr": "21",
+    "xpLair": 41000
+  },
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 21}, {@hit 13} to hit with spell attacks):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Fear|XPHB}",
+        "{@spell Acid Arrow|XPHB} (level 4 version)"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Create Undead|XPHB}",
+          "{@spell Speak with Dead|XPHB}",
+          "{@spell Vitriolic Sphere|XPHB} (level 5 version)"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The dragon can breathe air and water."
+      ]
+    },
+    {
+      "name": "Legendary Resistance (4/Day, or 5/Day in Lair)",
+      "entries": [
+        "If the dragon fails a saving throw, it can choose to succeed instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Acid Arrow|XPHB} (level 4 version)."
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                },
+                "times": 3
+              }
+            ],
+            "replacements": [
+              {
+                "target": {
+                  "type": "action",
+                  "name": "Rend"
+                },
+                "options": [
+                  {
+                    "type": "cast_spell",
+                    "spell": {
+                      "name": "Acid Arrow",
+                      "source": "XPHB"
+                    },
+                    "cast_level": 4
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 15}, reach 15 ft. {@h}17 ({@damage 2d8 + 8}) Slashing damage plus 9 ({@damage 2d8}) Acid damage."
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 15,
+        "target": {
+          "type": "creature",
+          "range_feet": 15
+        },
+        "reach_feet": 15,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "bonus": 8,
+            "damage_type": "slashing"
+          },
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "bonus": 0,
+            "damage_type": "acid"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Acid Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 22}, each creature in a 90-foot-long, 10-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 67 ({@damage 15d8}) Acid damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Cloud of Insects",
+      "entries": [
+        "{@actSave dex} {@dc 21}, one creature the dragon can see within 120 feet. {@actSaveFail} 33 ({@damage 6d10}) Poison damage, and the target has {@variantrule Disadvantage|XPHB} on saving throws to maintain {@status Concentration|XPHB} until the end of its next turn. {@actSaveSuccessOrFail} The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Frightful Presence",
+      "entries": [
+        "The dragon uses Spellcasting to cast {@spell Fear|XPHB}. The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Pounce",
+      "entries": [
+        "The dragon moves up to half its {@variantrule Speed|XPHB}, and it makes one Rend attack."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Black Dragon",
+    "source": "XMM"
+  },
+  "environment": [
+    "swamp"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "dragonAge": "ancient",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/black-dragon.opus"
+  },
+  "traitTags": [
+    "Amphibious",
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "A",
+    "I",
+    "S"
+  ],
+  "damageTagsSpell": [
+    "A"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflictSpell": [
+    "frightened"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "savingThrowForcedLegendary": [
+    "constitution"
+  ],
+  "savingThrowForcedSpell": [
+    "dexterity",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

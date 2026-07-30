@@ -1,0 +1,26 @@
+{
+  "name": "Blowgun",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "R|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 1000,
+  "weaponCategory": "martial",
+  "property": [
+    "A|XPHB",
+    "LD|XPHB"
+  ],
+  "mastery": [
+    "Vex|XPHB"
+  ],
+  "range": "25/100",
+  "dmg1": "1",
+  "dmgType": "P",
+  "weapon": true,
+  "ammoType": "needle|xphb",
+  "hasFluffImages": true
+}

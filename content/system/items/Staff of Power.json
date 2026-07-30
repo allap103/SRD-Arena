@@ -1,0 +1,138 @@
+{
+  "name": "Staff of Power",
+  "source": "XDMG",
+  "page": 308,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "M|XPHB",
+  "rarity": "very rare",
+  "reqAttune": "by a sorcerer, warlock, or wizard",
+  "reqAttuneTags": [
+    {
+      "class": "sorcerer"
+    },
+    {
+      "class": "warlock"
+    },
+    {
+      "class": "wizard"
+    }
+  ],
+  "weight": 4,
+  "weaponCategory": "simple",
+  "property": [
+    "V|XPHB"
+  ],
+  "mastery": [
+    "Topple|XPHB"
+  ],
+  "dmg1": "1d6",
+  "dmgType": "B",
+  "dmg2": "1d8",
+  "bonusWeapon": "+2",
+  "bonusSpellAttack": "+2",
+  "bonusAc": "+2",
+  "bonusSavingThrow": "+2",
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 2d8 + 4}",
+  "charges": 20,
+  "staff": true,
+  "entries": [
+    "This staff has 20 charges and can be wielded as a magic Quarterstaff that grants a +2 bonus to attack rolls and damage rolls made with it. While holding it, you gain a +2 bonus to {@variantrule Armor Class|XPHB}, saving throws, and spell attack rolls.",
+    {
+      "type": "entries",
+      "name": "Spells",
+      "entries": [
+        "While holding the staff , you can cast one of the spells on the following table from it, using your spell save DC. The table indicates how many charges you must expend to cast the spell.",
+        {
+          "type": "table",
+          "colStyles": [
+            "col-10",
+            "col-2 text-center"
+          ],
+          "colLabels": [
+            "Spell",
+            "Charge Cost"
+          ],
+          "rows": [
+            [
+              "{@spell Cone of Cold|XPHB}",
+              "5"
+            ],
+            [
+              "{@spell Fireball|XPHB} (level 5 version)",
+              "5"
+            ],
+            [
+              "{@spell Globe of Invulnerability|XPHB}",
+              "6"
+            ],
+            [
+              "{@spell Hold Monster|XPHB}",
+              "5"
+            ],
+            [
+              "{@spell Levitate|XPHB}",
+              "2"
+            ],
+            [
+              "{@spell Lightning Bolt|XPHB} (level 5 version)",
+              "5"
+            ],
+            [
+              "{@spell Magic Missile|XPHB}",
+              "1"
+            ],
+            [
+              "{@spell Ray of Enfeeblement|XPHB}",
+              "1"
+            ],
+            [
+              "{@spell Wall of Force|XPHB}",
+              "5"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Regaining Charges",
+      "entries": [
+        "The staff regains {@dice 2d8 + 4} expended charges daily at dawn. If you expend the last charge, roll {@dice 1d20}. On a 1, the staff retains its +2 bonus to attack rolls and damage rolls but loses all other properties. On a 20, the staff regains {@dice 1d8 + 2} charges."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Retributive Strike",
+      "entries": [
+        "You can take a {@action Magic|XPHB} action to break the staff over your knee or against a solid surface. The staff is destroyed and releases its magic in an explosion that fills a 30-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from itself. You have a {@chance 50} chance to instantly travel to a random plane of existence, avoiding the explosion. If you fail to avoid the effect, you take Force damage equal to 16 times the number of charges in the staff. Each other creature in the area makes a {@dc 17} Dexterity saving throw. On a failed save, a creature takes Force damage equal to 4 times the number of charges in the staff. On a successful save, a creature takes half as much damage."
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "magic missile|xphb",
+        "ray of enfeeblement|xphb"
+      ],
+      "2": [
+        "levitate|xphb"
+      ],
+      "5": [
+        "cone of cold|xphb",
+        "fireball|xphb",
+        "hold monster|xphb",
+        "lightning bolt|xphb",
+        "wall of force|xphb"
+      ],
+      "6": [
+        "globe of invulnerability|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Very Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

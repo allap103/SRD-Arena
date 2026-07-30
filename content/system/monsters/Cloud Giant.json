@@ -1,0 +1,155 @@
+{
+  "name": "Cloud Giant",
+  "source": "XMM",
+  "page": 74,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "giant",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 200,
+    "formula": "16d12 + 96"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": {
+      "number": 20,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 27,
+  "dex": 10,
+  "con": 22,
+  "int": 12,
+  "wis": 16,
+  "cha": 16,
+  "save": {
+    "con": "+10",
+    "wis": "+7"
+  },
+  "skill": {
+    "insight": "+7",
+    "perception": "+11"
+  },
+  "passive": 21,
+  "languages": [
+    "Common",
+    "Giant"
+  ],
+  "cr": "9",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The giant casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 15}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Fog Cloud|XPHB}",
+        "{@spell Light|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Control Weather|XPHB}",
+          "{@spell Gaseous Form|XPHB}",
+          "{@spell Telekinesis|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    },
+    {
+      "name": "Misty Step",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The giant casts the {@spell Misty Step|XPHB} spell, using the same spellcasting ability as Spellcasting."
+      ],
+      "will": [
+        "{@spell Misty Step|XPHB}"
+      ],
+      "ability": "cha",
+      "displayAs": "bonus",
+      "hidden": [
+        "will"
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The giant makes two attacks, using Thunderous Mace or Thundercloud in any combination. It can replace one attack with a use of Spellcasting to cast {@spell Fog Cloud|XPHB}."
+      ]
+    },
+    {
+      "name": "Thunderous Mace",
+      "entries": [
+        "{@atkr m} {@hit 12}, reach 10 ft. {@h}21 ({@damage 3d8 + 8}) Bludgeoning damage plus 7 ({@damage 2d6}) Thunder damage."
+      ]
+    },
+    {
+      "name": "Thundercloud",
+      "entries": [
+        "{@atkr r} {@hit 12}, range 240 ft. {@h}18 ({@damage 3d6 + 8}) Thunder damage, and the target has the {@condition Incapacitated|XPHB} condition until the end of its next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "mountain"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/cloud-giant.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "GI"
+  ],
+  "damageTags": [
+    "B",
+    "T"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "incapacitated"
+  ],
+  "conditionInflictSpell": [
+    "restrained"
+  ],
+  "savingThrowForcedSpell": [
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

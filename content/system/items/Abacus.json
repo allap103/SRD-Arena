@@ -1,0 +1,11 @@
+{
+  "name": "Abacus",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "type": "G",
+  "rarity": "none",
+  "weight": 2,
+  "value": 200
+}

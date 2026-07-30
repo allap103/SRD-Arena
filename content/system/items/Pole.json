@@ -1,0 +1,14 @@
+{
+  "name": "Pole",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 7,
+  "value": 5,
+  "entries": [
+    "A Pole is 10 feet long. You can use it to touch something up to 10 feet away. If you must make a Strength ({@skill Athletics|XPHB}) check as part of a High or {@variantrule Long Jump|XPHB}, you can use the Pole to vault, giving yourself {@variantrule Advantage|XPHB} on the check."
+  ]
+}

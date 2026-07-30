@@ -1,0 +1,99 @@
+{
+  "name": "Manticore",
+  "source": "XMM",
+  "page": 202,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TFV",
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 68,
+    "formula": "8d10 + 24"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 50
+  },
+  "str": 17,
+  "dex": 16,
+  "con": 17,
+  "int": 7,
+  "wis": 12,
+  "cha": 8,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 11,
+  "languages": [
+    "Common"
+  ],
+  "cr": "3",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The manticore makes three attacks, using Rend or Tail Spike in any combination."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Tail Spike",
+      "entries": [
+        "{@atkr r} {@hit 5}, range 100/200 ft. {@h}7 ({@damage 1d8 + 3}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "coastal",
+    "grassland",
+    "hill",
+    "mountain"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/manticore.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,153 @@
+{
+  "name": "Cloaker",
+  "source": "XMM",
+  "page": 73,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-BtS",
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "aberration",
+  "alignment": [
+    "C",
+    "N"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 91,
+    "formula": "14d10 + 14"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 17,
+  "dex": 15,
+  "con": 12,
+  "int": 13,
+  "wis": 14,
+  "cha": 7,
+  "skill": {
+    "stealth": "+5"
+  },
+  "senses": [
+    "Darkvision 120 ft."
+  ],
+  "passive": 12,
+  "conditionImmune": [
+    "frightened"
+  ],
+  "languages": [
+    "Deep Speech",
+    "Undercommon"
+  ],
+  "cr": "8",
+  "spellcasting": [
+    {
+      "name": "Phantasms (Recharge after a Short or Long Rest)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The cloaker casts the {@spell Mirror Image|XPHB} spell, requiring no spell components and using Wisdom as the spellcasting ability. The spell ends early if the cloaker starts or ends its turn in {@variantrule Bright Light|XPHB}."
+      ],
+      "will": [
+        "{@spell Mirror Image|XPHB}"
+      ],
+      "ability": "wis",
+      "displayAs": "bonus",
+      "hidden": [
+        "will"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Light Sensitivity",
+      "entries": [
+        "While in {@variantrule Bright Light|XPHB}, the cloaker has {@variantrule Disadvantage|XPHB} on attack rolls."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The cloaker makes one Attach attack and two Tail attacks."
+      ]
+    },
+    {
+      "name": "Attach",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}13 ({@damage 3d6 + 3}) Piercing damage. If the target is a Large or smaller creature, the cloaker attaches to it. While the cloaker is attached, the target has the {@condition Blinded|XPHB} condition, and the cloaker can't make Attach attacks against other targets. In addition, the cloaker halves the damage it takes (round down), and the target takes the same amount of damage.",
+        "The cloaker can detach itself by spending 5 feet of movement. The target or a creature within 5 feet of it can take an action to try to detach the cloaker, doing so by succeeding on a {@dc 14} Strength ({@skill Athletics|XPHB}) check."
+      ]
+    },
+    {
+      "name": "Tail",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 10 ft. {@h}8 ({@damage 1d10 + 3}) Slashing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Moan",
+      "entries": [
+        "{@actSave wis} {@dc 13}, each creature in a 60-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the cloaker. {@actSaveFail} The target has the {@condition Frightened|XPHB} condition until the end of the cloaker's next turn. {@actSaveSuccess} The target is immune to this cloaker's Moan for the next 24 hours."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "treasure": [
+    "implements"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/cloaker.opus"
+  },
+  "traitTags": [
+    "Light Sensitivity"
+  ],
+  "senseTags": [
+    "SD"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "DS",
+    "U"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "blinded",
+    "frightened"
+  ],
+  "savingThrowForced": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

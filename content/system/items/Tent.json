@@ -1,0 +1,14 @@
+{
+  "name": "Tent",
+  "source": "XPHB",
+  "page": 229,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 20,
+  "value": 200,
+  "entries": [
+    "A Tent sleeps up to two Small or Medium creatures."
+  ]
+}

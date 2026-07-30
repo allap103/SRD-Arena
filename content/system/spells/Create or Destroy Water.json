@@ -1,0 +1,74 @@
+{
+  "name": "Create or Destroy Water",
+  "source": "XPHB",
+  "page": 258,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BD",
+    "DrDe-BtS"
+  ],
+  "level": 1,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a mix of water and sand"
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You do one of the following:",
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "type": "item",
+          "name": "Create Water",
+          "entries": [
+            "You create up to 10 gallons of clean water within range in an open container. Alternatively, the water falls as rain in a 30-foot {@variantrule Cube [Area of Effect]|XPHB|Cube} within range, extinguishing exposed flames there."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Destroy Water",
+          "entries": [
+            "You destroy up to 10 gallons of water in an open container within range. Alternatively, you destroy fog in a 30-foot {@variantrule Cube [Area of Effect]|XPHB|Cube} within range."
+          ]
+        }
+      ]
+    }
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "You create or destroy 10 additional gallons of water, or the size of the {@variantrule Cube [Area of Effect]|XPHB|Cube} increases by 5 feet, for each spell slot level above 1."
+      ]
+    }
+  ],
+  "miscTags": [
+    "PRM"
+  ],
+  "areaTags": [
+    "C"
+  ]
+}

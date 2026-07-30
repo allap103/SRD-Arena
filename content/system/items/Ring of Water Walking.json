@@ -1,0 +1,27 @@
+{
+  "name": "Ring of Water Walking",
+  "source": "XDMG",
+  "page": 296,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "rarity": "uncommon",
+  "entries": [
+    "While wearing this ring, you cast {@spell Water Walk|XPHB} from it, targeting only yourself."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "attachedSpells": {
+    "will": [
+      "water walk|xphb"
+    ]
+  },
+  "lootTables": [
+    "Relics - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

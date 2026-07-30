@@ -1,0 +1,13 @@
+{
+  "name": "Bread (loaf)",
+  "source": "XPHB",
+  "page": 231,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "FD|XPHB",
+  "rarity": "none",
+  "value": 2,
+  "miscTags": [
+    "CNS"
+  ]
+}

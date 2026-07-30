@@ -1,0 +1,63 @@
+{
+  "name": "Conjure Animals",
+  "source": "XPHB",
+  "page": 254,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 3,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You conjure nature spirits that appear as a Large pack of spectral, intangible animals in an unoccupied space you can see within range. The pack lasts for the duration, and you choose the spirits' animal form, such as wolves, serpents, or birds.",
+    "You have {@variantrule Advantage|XPHB} on Strength saving throws while you're within 5 feet of the pack, and when you move on your turn, you can also move the pack up to 30 feet to an unoccupied space you can see.",
+    "Whenever the pack moves within 10 feet of a creature you can see and whenever a creature you can see enters a space within 10 feet of the pack or ends its turn there, you can force that creature to make a Dexterity saving throw. On a failed save, the creature takes {@damage 3d10} Slashing damage. A creature makes this save only once per turn."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 3d10|3-9|1d10} for each spell slot level above 3."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "slashing"
+  ],
+  "savingThrow": [
+    "dexterity"
+  ],
+  "miscTags": [
+    "ADV",
+    "SGT"
+  ],
+  "areaTags": [
+    "C"
+  ]
+}

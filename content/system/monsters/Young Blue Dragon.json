@@ -1,0 +1,128 @@
+{
+  "name": "Young Blue Dragon",
+  "group": [
+    "Chromatic Dragons"
+  ],
+  "source": "XMM",
+  "page": 48,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FFotR",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "chromatic"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 152,
+    "formula": "16d10 + 64"
+  },
+  "speed": {
+    "walk": 40,
+    "burrow": 20,
+    "fly": 80
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 21,
+  "dex": 10,
+  "con": 19,
+  "int": 14,
+  "wis": 13,
+  "cha": 17,
+  "save": {
+    "dex": "+4",
+    "wis": "+5"
+  },
+  "skill": {
+    "perception": "+9",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Blindsight 30 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 19,
+  "immune": [
+    "lightning"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": "9",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 9}, reach 10 ft. {@h}12 ({@damage 2d6 + 5}) Slashing damage plus 5 ({@damage 1d10}) Lightning damage."
+      ]
+    },
+    {
+      "name": "Lightning Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 16}, each creature in a 60-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 55 ({@damage 10d10}) Lightning damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "desert"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "dragonAge": "young",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/blue-dragon.opus"
+  },
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "L",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

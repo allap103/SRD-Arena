@@ -1,0 +1,21 @@
+{
+  "name": "Sentinel Shield",
+  "source": "XDMG",
+  "page": 303,
+  "srd52": true,
+  "basicRules2024": true,
+  "baseItem": "shield|xphb",
+  "type": "S|XPHB",
+  "rarity": "uncommon",
+  "weight": 6,
+  "ac": 2,
+  "entries": [
+    "While holding this Shield, you have {@variantrule Advantage|XPHB} on {@variantrule Initiative|XPHB} rolls and Wisdom ({@skill Perception|XPHB}) checks. The Shield is emblazoned with a symbol of an eye."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "lootTables": [
+    "Armaments - Uncommon|XDMG"
+  ]
+}

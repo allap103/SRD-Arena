@@ -1,0 +1,17 @@
+{
+  "name": "Cloak of Displacement",
+  "source": "XDMG",
+  "page": 244,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "entries": [
+    "While you wear this cloak, it magically projects an illusion that makes you appear to be standing in a place near your actual location, causing any creature to have {@variantrule Disadvantage|XPHB} on attack rolls against you. If you take damage, the property ceases to function until the start of your next turn. This property is suppressed while your {@variantrule Speed|XPHB} is 0."
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

@@ -1,0 +1,103 @@
+{
+  "name": "Prismatic Spray",
+  "source": "XPHB",
+  "page": 307,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 7,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "cone",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "Eight rays of light flash from you in a 60-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. Each creature in the {@variantrule Cone [Area of Effect]|XPHB|Cone} makes a Dexterity saving throw. For each target, roll {@dice 1d8} to determine which color ray affects it, consulting the Prismatic Rays table.",
+    {
+      "type": "table",
+      "caption": "Prismatic Rays",
+      "colStyles": [
+        "col-2 text-center",
+        "col-10"
+      ],
+      "colLabels": [
+        "1d8",
+        "Ray"
+      ],
+      "rows": [
+        [
+          "1",
+          "{@b Red.} {@i Failed Save:} {@damage 12d6} Fire damage. {@i Successful Save:} Half as much damage."
+        ],
+        [
+          "2",
+          "{@b Orange.} {@i Failed Save:} {@damage 12d6} Acid damage. {@i Successful Save:} Half as much damage."
+        ],
+        [
+          "3",
+          "{@b Yellow.} {@i Failed Save:} {@damage 12d6} Lightning damage. {@i Successful Save:} Half as much damage."
+        ],
+        [
+          "4",
+          "{@b Green.} {@i Failed Save:} {@damage 12d6} Poison damage. {@i Successful Save:} Half as much damage."
+        ],
+        [
+          "5",
+          "{@b Blue.} {@i Failed Save:} {@damage 12d6} Cold damage. {@i Successful Save:} Half as much damage."
+        ],
+        [
+          "6",
+          "{@b Indigo.} {@i Failed Save:} The target has the {@condition Restrained|XPHB} condition and makes a Constitution saving throw at the end of each of its turns. If it successfully saves three times, the condition ends. If it fails three times, it has the {@condition Petrified|XPHB} condition until it is freed by an effect like the {@spell Greater Restoration|XPHB} spell. The successes and failures needn't be consecutive; keep track of both until the target collects three of a kind."
+        ],
+        [
+          "7",
+          "{@b Violet.} {@i Failed Save:} The target has the {@condition Blinded|XPHB} condition and makes a Wisdom saving throw at the start of your next turn. On a successful save, the condition ends. On a failed save, the condition ends, and the creature teleports to another plane of existence (DM's choice)."
+        ],
+        [
+          "8",
+          "{@b Special.} The target is struck by two rays. Roll twice, rerolling any 8."
+        ]
+      ]
+    }
+  ],
+  "damageInflict": [
+    "acid",
+    "cold",
+    "fire",
+    "lightning",
+    "poison"
+  ],
+  "conditionInflict": [
+    "blinded",
+    "petrified",
+    "restrained"
+  ],
+  "savingThrow": [
+    "dexterity",
+    "constitution",
+    "wisdom"
+  ],
+  "miscTags": [
+    "PRM"
+  ],
+  "areaTags": [
+    "N"
+  ]
+}

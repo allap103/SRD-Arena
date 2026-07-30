@@ -1,0 +1,99 @@
+{
+  "name": "Giant Crocodile",
+  "source": "XMM",
+  "page": 356,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-BtS",
+    "RHW"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 85,
+    "formula": "9d12 + 27"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 50
+  },
+  "str": 21,
+  "dex": 9,
+  "con": 17,
+  "int": 2,
+  "wis": 10,
+  "cha": 7,
+  "skill": {
+    "stealth": "+5"
+  },
+  "passive": 10,
+  "cr": "5",
+  "trait": [
+    {
+      "name": "Hold Breath",
+      "entries": [
+        "The crocodile can hold its breath for 1 hour."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The crocodile makes one Bite attack and one Tail attack."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 5 ft. {@h}21 ({@damage 3d10 + 5}) Piercing damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 15}). While {@condition Grappled|XPHB}, the target has the {@condition Restrained|XPHB} condition and can't be targeted by the crocodile's Tail."
+      ]
+    },
+    {
+      "name": "Tail",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 10 ft. {@h}18 ({@damage 3d8 + 5}) Bludgeoning damage. If the target is a Large or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "swamp"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-crocodile.opus"
+  },
+  "traitTags": [
+    "Hold Breath"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled",
+    "prone",
+    "restrained"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

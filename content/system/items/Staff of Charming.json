@@ -1,0 +1,96 @@
+{
+  "name": "Staff of Charming",
+  "source": "XDMG",
+  "page": 307,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "M|XPHB",
+  "rarity": "rare",
+  "reqAttune": "by a bard, cleric, druid, sorcerer, warlock, or wizard",
+  "reqAttuneTags": [
+    {
+      "class": "bard"
+    },
+    {
+      "class": "cleric"
+    },
+    {
+      "class": "druid"
+    },
+    {
+      "class": "sorcerer"
+    },
+    {
+      "class": "warlock"
+    },
+    {
+      "class": "wizard"
+    }
+  ],
+  "weight": 4,
+  "weaponCategory": "simple",
+  "property": [
+    "V|XPHB"
+  ],
+  "mastery": [
+    "Topple|XPHB"
+  ],
+  "dmg1": "1d6",
+  "dmgType": "B",
+  "dmg2": "1d8",
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d8 + 2}",
+  "charges": 10,
+  "staff": true,
+  "entries": [
+    "This staff has 10 charges. While holding the staff, you can use any of its properties:",
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "type": "item",
+          "name": "Cast Spell",
+          "entries": [
+            "You can expend 1 of the staff's charges to cast {@spell Charm Person|XPHB}, {@spell Command|XPHB}, or {@spell Comprehend Languages|XPHB} from it using your spell save DC."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Reflect Enchantment",
+          "entries": [
+            "If you succeed on a saving throw against an Enchantment spell that targets only you, you can take a {@variantrule Reaction|XPHB} to expend 1 charge from the staff and turn the spell back on its caster as if you had cast the spell."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Resist Enchantment",
+          "entries": [
+            "If you fail a saving throw against an Enchantment spell that targets only you, you can turn your failed save into a successful one. You can't use this property of the staff again until the next dawn."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Regaining Charges",
+      "entries": [
+        "The staff regains {@dice 1d8 + 2} expended charges daily at dawn. If you expend the last charge, roll {@dice 1d20}. On a 1, the staff crumbles to dust and is destroyed."
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "charm person|xphb",
+        "command|xphb",
+        "comprehend languages|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Rare|XDMG",
+    "Relics - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

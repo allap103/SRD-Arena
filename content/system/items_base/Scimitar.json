@@ -1,0 +1,28 @@
+{
+  "name": "Scimitar",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-DaS"
+  ],
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 3,
+  "value": 2500,
+  "weaponCategory": "martial",
+  "property": [
+    "F|XPHB",
+    "L|XPHB"
+  ],
+  "mastery": [
+    "Nick|XPHB"
+  ],
+  "dmg1": "1d6",
+  "dmgType": "S",
+  "sword": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

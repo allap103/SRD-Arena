@@ -1,0 +1,59 @@
+{
+  "name": "Mind Spike",
+  "source": "XPHB",
+  "page": 298,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 2,
+  "school": "D",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 120
+    }
+  },
+  "components": {
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You drive a spike of psionic energy into the mind of one creature you can see within range. The target makes a Wisdom saving throw, taking {@damage 3d8} Psychic damage on a failed save or half as much damage on a successful one. On a failed save, you also always know the target's location until the spell ends, but only while the two of you are on the same plane of existence. While you have this knowledge, the target can't become hidden from you, and if it has the {@condition Invisible|XPHB} condition, it gains no benefit from that condition against you."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 3d8|2-9|1d8} for each spell slot level above 2."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "psychic"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "miscTags": [
+    "SGT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

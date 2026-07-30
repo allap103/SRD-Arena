@@ -1,0 +1,56 @@
+{
+  "name": "Eldritch Blast",
+  "source": "XPHB",
+  "page": 267,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 0,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 120
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You hurl a beam of crackling energy. Make a ranged spell attack against one creature or object in range. On a hit, the target takes {@damage 1d10} Force damage."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Cantrip Upgrade",
+      "entries": [
+        "The spell creates two beams at level 5, three beams at level 11, and four beams at level 17. You can direct the beams at the same target or at different ones. Make a separate attack roll for each beam."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "force"
+  ],
+  "spellAttack": [
+    "R"
+  ],
+  "miscTags": [
+    "SCL"
+  ],
+  "areaTags": [
+    "MT",
+    "ST"
+  ]
+}

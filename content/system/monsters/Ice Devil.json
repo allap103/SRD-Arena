@@ -1,0 +1,173 @@
+{
+  "name": "Ice Devil",
+  "group": [
+    "Devils"
+  ],
+  "source": "XMM",
+  "page": 176,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "fiend",
+    "tags": [
+      "devil"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 228,
+    "formula": "24d10 + 96"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 21,
+  "dex": 14,
+  "con": 18,
+  "int": 18,
+  "wis": 15,
+  "cha": 18,
+  "save": {
+    "dex": "+7",
+    "con": "+9",
+    "wis": "+7",
+    "cha": "+9"
+  },
+  "skill": {
+    "insight": "+7",
+    "perception": "+7",
+    "persuasion": "+9"
+  },
+  "senses": [
+    "Blindsight 120 ft."
+  ],
+  "passive": 17,
+  "immune": [
+    "cold",
+    "fire",
+    "poison"
+  ],
+  "conditionImmune": [
+    "poisoned"
+  ],
+  "languages": [
+    "Infernal; telepathy 120 ft."
+  ],
+  "cr": "14",
+  "spellcasting": [
+    {
+      "name": "Ice Wall {@recharge}",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The devil casts {@spell Wall of Ice|XPHB} (level 8 version), requiring no spell components and using Intelligence as the spellcasting ability (spell save {@dc 17})."
+      ],
+      "recharge": {
+        "6": [
+          "{@spell Wall of Ice|XPHB} (level 8 version)"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "action",
+      "hidden": [
+        "recharge"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Diabolical Restoration",
+      "entries": [
+        "If the devil dies outside the Nine Hells, its body disappears in sulfurous smoke, and it gains a new body instantly, reviving with all its {@variantrule Hit Points|XPHB} somewhere in the Nine Hells."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The devil has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The devil makes three Ice Spear attacks. It can replace one attack with a Tail attack."
+      ]
+    },
+    {
+      "name": "Ice Spear",
+      "entries": [
+        "{@atkr m,r} {@hit 10}, reach 5 ft. or range 30/120 ft. {@h}14 ({@damage 2d8 + 5}) Piercing damage plus 10 ({@damage 3d6}) Cold damage. Until the end of its next turn, the target can't take a {@variantrule Bonus Action|XPHB} or {@variantrule Reaction|XPHB}, its {@variantrule Speed|XPHB} decreases by 10 feet, and it can move or take one action on its turn, not both. {@hom}The spear magically returns to the devil's hand immediately after a ranged attack."
+      ]
+    },
+    {
+      "name": "Tail",
+      "entries": [
+        "{@atkr m} {@hit 10}, reach 10 ft. {@h}15 ({@damage 3d6 + 5}) Bludgeoning damage plus 18 ({@damage 4d8}) Cold damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, nine hells"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/ice-devil.opus"
+  },
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "I",
+    "TP"
+  ],
+  "damageTags": [
+    "B",
+    "C",
+    "P"
+  ],
+  "damageTagsSpell": [
+    "C"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RCH",
+    "THW"
+  ],
+  "savingThrowForcedSpell": [
+    "constitution",
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Riding Horse",
+  "source": "XPHB",
+  "page": 229,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "MNT|XPHB",
+  "rarity": "none",
+  "value": 7500,
+  "carryingCapacity": 480,
+  "speed": 60
+}

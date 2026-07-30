@@ -1,0 +1,262 @@
+{
+  "name": "Adult Red Dragon",
+  "group": [
+    "Chromatic Dragons"
+  ],
+  "source": "XMM",
+  "page": 255,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "chromatic"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    19
+  ],
+  "hp": {
+    "average": 256,
+    "formula": "19d12 + 133"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 40,
+    "fly": 80
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 27,
+  "dex": 10,
+  "con": 25,
+  "int": 16,
+  "wis": 13,
+  "cha": 23,
+  "save": {
+    "dex": "+6",
+    "wis": "+7"
+  },
+  "skill": {
+    "perception": "+13",
+    "stealth": "+6"
+  },
+  "senses": [
+    "Blindsight 60 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 23,
+  "immune": [
+    "fire"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": {
+    "cr": "17",
+    "xpLair": 20000
+  },
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 20}, {@hit 12} to hit with spell attacks):"
+      ],
+      "will": [
+        "{@spell Command|XPHB} (level 2 version)",
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Scorching Ray|XPHB}"
+      ],
+      "daily": {
+        "1": [
+          "{@spell Fireball|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Legendary Resistance (3/Day, or 4/Day in Lair)",
+      "entries": [
+        "If the dragon fails a saving throw, it can choose to succeed instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Scorching Ray|XPHB}."
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                },
+                "times": 3
+              }
+            ],
+            "replacements": [
+              {
+                "target": {
+                  "type": "action",
+                  "name": "Rend"
+                },
+                "options": [
+                  {
+                    "type": "cast_spell",
+                    "spell": {
+                      "name": "Scorching Ray",
+                      "source": "XPHB"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 14}, reach 10 ft. {@h}13 ({@damage 1d10 + 8}) Slashing damage plus 5 ({@damage 2d4}) Fire damage."
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 14,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "reach_feet": 10,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d10",
+            "bonus": 8,
+            "damage_type": "slashing"
+          },
+          {
+            "type": "damage",
+            "dice": "2d4",
+            "bonus": 0,
+            "damage_type": "fire"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Fire Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 21}, each creature in a 60-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 59 ({@damage 17d6}) Fire damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Commanding Presence",
+      "entries": [
+        "The dragon uses Spellcasting to cast {@spell Command|XPHB} (level 2 version). The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Fiery Rays",
+      "entries": [
+        "The dragon uses Spellcasting to cast {@spell Scorching Ray|XPHB}. The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Pounce",
+      "entries": [
+        "The dragon moves up to half its {@variantrule Speed|XPHB}, and it makes one Rend attack."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Red Dragon",
+    "source": "XMM"
+  },
+  "environment": [
+    "hill",
+    "mountain"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "dragonAge": "adult",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/red-dragon.opus"
+  },
+  "traitTags": [
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "F",
+    "S"
+  ],
+  "damageTagsSpell": [
+    "F"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflictSpell": [
+    "prone"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "savingThrowForcedLegendary": [
+    "constitution"
+  ],
+  "savingThrowForcedSpell": [
+    "dexterity",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

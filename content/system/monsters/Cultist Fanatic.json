@@ -1,0 +1,137 @@
+{
+  "name": "Cultist Fanatic",
+  "source": "XMM",
+  "page": 85,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TWoO",
+    "FRAiF",
+    "FRHoF",
+    "RHW",
+    "ScoEE"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 44,
+    "formula": "8d8 + 8"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 11,
+  "dex": 14,
+  "con": 12,
+  "int": 10,
+  "wis": 14,
+  "cha": 13,
+  "save": {
+    "wis": "+4"
+  },
+  "skill": {
+    "deception": "+3",
+    "persuasion": "+3",
+    "religion": "+2"
+  },
+  "passive": 12,
+  "languages": [
+    "Common"
+  ],
+  "cr": "2",
+  "gear": [
+    "holy symbol|xphb",
+    "leather armor|xphb"
+  ],
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The cultist casts one of the following spells, using Wisdom as the spellcasting ability (spell save {@dc 12}, {@hit 4} to hit with spell attacks):"
+      ],
+      "will": [
+        "{@spell Light|XPHB}",
+        "{@spell Thaumaturgy|XPHB}"
+      ],
+      "daily": {
+        "1": [
+          "{@spell Hold Person|XPHB}"
+        ],
+        "2": [
+          "{@spell Command|XPHB}"
+        ]
+      },
+      "ability": "wis",
+      "displayAs": "action"
+    },
+    {
+      "name": "Spiritual Weapon (2/Day)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The cultist casts the {@spell Spiritual Weapon|XPHB} spell, using the same spellcasting ability as Spellcasting."
+      ],
+      "daily": {
+        "2": [
+          "{@spell Spiritual Weapon|XPHB}"
+        ]
+      },
+      "ability": "wis",
+      "displayAs": "bonus",
+      "hidden": [
+        "daily"
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Pact Blade",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}6 ({@damage 1d8 + 2}) Slashing damage plus 7 ({@damage 2d6}) Necrotic damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "individual",
+    "relics"
+  ],
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "N",
+    "S"
+  ],
+  "damageTagsSpell": [
+    "O"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflictSpell": [
+    "paralyzed",
+    "prone"
+  ],
+  "savingThrowForcedSpell": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

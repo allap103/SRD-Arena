@@ -1,0 +1,14 @@
+{
+  "name": "Climber's Kit",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 12,
+  "value": 2500,
+  "entries": [
+    "A Climber's Kit includes boot tips, gloves, pitons, and a harness. As a {@action Utilize|XPHB} action, you can use the Climber's Kit to anchor yourself; when you do, you can't fall more than 25 feet from the anchor point, and you can't move more than 25 feet from there without undoing the anchor as a {@variantrule Bonus Action|XPHB}."
+  ]
+}

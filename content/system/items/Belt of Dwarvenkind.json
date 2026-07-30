@@ -1,0 +1,67 @@
+{
+  "name": "Belt of Dwarvenkind",
+  "source": "XDMG",
+  "page": 235,
+  "srd52": true,
+  "basicRules2024": true,
+  "resist": [
+    "poison"
+  ],
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "ability": {
+    "con": 2
+  },
+  "grantsLanguage": true,
+  "entries": [
+    "While wearing this belt, you gain the following benefits:",
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "type": "item",
+          "name": "Dwarvish",
+          "entries": [
+            "You know Dwarvish."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Friend of Dwarvenkind",
+          "entries": [
+            "You have {@variantrule Advantage|XPHB} on Charisma ({@skill Persuasion|XPHB}) checks made to interact with dwarves and duergar."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Toughness",
+          "entries": [
+            "Your Constitution increases by 2, to a maximum of 20.",
+            "In addition, while attuned to the belt, you have a {@chance 50} chance each day at dawn of growing a full beard if you can grow one, or a thicker beard if you already have one.",
+            "If you aren't a dwarf or duergar, you gain the following additional benefits while wearing the belt:"
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Darkvision",
+          "entries": [
+            "You have {@sense Darkvision|XPHB} with a range of 60 feet."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Resilience",
+          "entries": [
+            "You have {@variantrule Resistance|XPHB} to Poison damage. You also have {@variantrule Advantage|XPHB} on saving throws you make to avoid or end the {@condition Poisoned|XPHB} condition."
+          ]
+        }
+      ]
+    }
+  ],
+  "lootTables": [
+    "Implements - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

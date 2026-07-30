@@ -1,0 +1,73 @@
+{
+  "name": "Eyebite",
+  "source": "XPHB",
+  "page": 270,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 6,
+  "school": "N",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "For the duration, your eyes become an inky void. One creature of your choice within 60 feet of you that you can see must succeed on a Wisdom saving throw or be affected by one of the following effects of your choice for the duration.",
+    "On each of your turns until the spell ends, you can take a {@action Magic|XPHB} action to target another creature but can't target a creature again if it has succeeded on a save against this casting of the spell.",
+    {
+      "type": "entries",
+      "name": "Asleep",
+      "entries": [
+        "The target has the {@condition Unconscious|XPHB} condition. It wakes up if it takes any damage or if another creature takes an action to shake it awake."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Panicked",
+      "entries": [
+        "The target has the {@condition Frightened|XPHB} condition. On each of its turns, the {@condition Frightened|XPHB} target must take the {@action Dash|XPHB} action and move away from you by the safest and shortest route available. If the target moves to a space at least 60 feet away from you where it can't see you, this effect ends."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Sickened",
+      "entries": [
+        "The target has the {@condition Poisoned|XPHB} condition."
+      ]
+    }
+  ],
+  "conditionInflict": [
+    "frightened",
+    "unconscious"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "miscTags": [
+    "SGT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

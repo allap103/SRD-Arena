@@ -1,0 +1,19 @@
+{
+  "name": "Essence of Ether",
+  "source": "XDMG",
+  "page": 90,
+  "srd52": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 30000,
+  "poison": true,
+  "entries": [
+    "A creature subjected to Essence of Ether must succeed on a {@dc 15} Constitution saving throw or have the {@condition Poisoned|XPHB} condition for 8 hours. The creature also has the {@condition Unconscious|XPHB} condition while {@condition Poisoned|XPHB} in this way. The creature wakes up if it takes damage or if another creature takes an action to shake it awake."
+  ],
+  "poisonTypes": [
+    "inhaled"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

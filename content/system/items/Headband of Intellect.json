@@ -1,0 +1,25 @@
+{
+  "name": "Headband of Intellect",
+  "source": "XDMG",
+  "page": 268,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "ability": {
+    "static": {
+      "int": 19
+    }
+  },
+  "entries": [
+    "Your Intelligence score is 19 while you wear this headband. It has no effect on you if your Intelligence is 19 or higher without it."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

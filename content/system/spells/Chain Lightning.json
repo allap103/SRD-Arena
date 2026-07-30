@@ -1,0 +1,60 @@
+{
+  "name": "Chain Lightning",
+  "source": "XPHB",
+  "page": 249,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 6,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 150
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "three silver pins"
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You launch a lightning bolt toward a target you can see within range. Three bolts then leap from that target to as many as three other targets of your choice, each of which must be within 30 feet of the first target. A target can be a creature or an object and can be targeted by only one of the bolts.",
+    "Each target makes a Dexterity saving throw, taking {@damage 10d8} Lightning damage on a failed save or half as much damage on a successful one."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "One additional bolt leaps from the first target to another target for each spell slot level above 6."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "lightning"
+  ],
+  "savingThrow": [
+    "dexterity"
+  ],
+  "miscTags": [
+    "OBJ",
+    "SCT",
+    "SGT"
+  ],
+  "areaTags": [
+    "MT",
+    "ST"
+  ]
+}

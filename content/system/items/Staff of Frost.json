@@ -1,0 +1,107 @@
+{
+  "name": "Staff of Frost",
+  "source": "XDMG",
+  "page": 308,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "M|XPHB",
+  "resist": [
+    "cold"
+  ],
+  "rarity": "very rare",
+  "reqAttune": "by a druid, sorcerer, warlock, or wizard",
+  "reqAttuneTags": [
+    {
+      "class": "druid"
+    },
+    {
+      "class": "sorcerer"
+    },
+    {
+      "class": "warlock"
+    },
+    {
+      "class": "wizard"
+    }
+  ],
+  "weight": 4,
+  "weaponCategory": "simple",
+  "property": [
+    "V|XPHB"
+  ],
+  "mastery": [
+    "Topple|XPHB"
+  ],
+  "dmg1": "1d6",
+  "dmgType": "B",
+  "dmg2": "1d8",
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d6 + 4}",
+  "charges": 10,
+  "staff": true,
+  "entries": [
+    "You have {@variantrule Resistance|XPHB} to Cold damage while you hold this staff.",
+    {
+      "type": "entries",
+      "name": "Spells",
+      "entries": [
+        "The staff has 10 charges. While holding the staff, you can cast one of the spells on the following table from it, using your spell save DC. The table indicates how many charges you must expend to cast the spell.",
+        {
+          "type": "table",
+          "colStyles": [
+            "col-10",
+            "col-2 text-center"
+          ],
+          "colLabels": [
+            "Spell",
+            "Charge Cost"
+          ],
+          "rows": [
+            [
+              "{@spell Cone of Cold|XPHB}",
+              "5"
+            ],
+            [
+              "{@spell Fog Cloud|XPHB}",
+              "1"
+            ],
+            [
+              "{@spell Ice Storm|XPHB}",
+              "4"
+            ],
+            [
+              "{@spell Wall of Ice|XPHB}",
+              "4"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Regaining Charges",
+      "entries": [
+        "The staff regains {@dice 1d6 + 4} expended charges daily at dawn. If you expend the last charge, roll {@dice 1d20}. On a 1, the staff turns to water and is destroyed."
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "fog cloud|xphb"
+      ],
+      "4": [
+        "ice storm|xphb",
+        "wall of ice|xphb"
+      ],
+      "5": [
+        "cone of cold|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Very Rare|XDMG",
+    "Relics - Very Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

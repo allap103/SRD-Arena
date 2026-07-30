@@ -1,0 +1,73 @@
+{
+  "name": "Grimlock",
+  "source": "XMM",
+  "page": 160,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "aberration",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 11,
+    "formula": "2d8 + 2"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 16,
+  "dex": 12,
+  "con": 12,
+  "int": 9,
+  "wis": 8,
+  "cha": 6,
+  "skill": {
+    "athletics": "+5",
+    "perception": "+3",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Blindsight 30 ft."
+  ],
+  "passive": 13,
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Bone Cudgel",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}6 ({@damage 1d6 + 3}) Bludgeoning damage plus 2 ({@damage 1d4}) Psychic damage."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/grimlock.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "B",
+    "Y"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

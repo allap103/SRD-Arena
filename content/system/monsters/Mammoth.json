@@ -1,0 +1,94 @@
+{
+  "name": "Mammoth",
+  "source": "XMM",
+  "page": 365,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-SD",
+    "FRAiF",
+    "NF"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 126,
+    "formula": "11d12 + 55"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 24,
+  "dex": 9,
+  "con": 21,
+  "int": 3,
+  "wis": 11,
+  "cha": 6,
+  "save": {
+    "str": "+10",
+    "con": "+8"
+  },
+  "passive": 10,
+  "cr": "6",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The mammoth makes two Gore attacks."
+      ]
+    },
+    {
+      "name": "Gore",
+      "entries": [
+        "{@atkr m} {@hit 10}, reach 10 ft. {@h}18 ({@damage 2d10 + 7}) Piercing damage. If the target is a Huge or smaller creature and the mammoth moved 20+ feet straight toward it immediately before the hit, the target has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Trample",
+      "entries": [
+        "{@actSave dex} {@dc 18}, one creature within 5 feet that has the {@condition Prone|XPHB} condition. {@actSaveFail} 29 ({@damage 4d10 + 7}) Bludgeoning damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/mammoth.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

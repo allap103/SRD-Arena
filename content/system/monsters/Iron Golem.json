@@ -1,0 +1,146 @@
+{
+  "name": "Iron Golem",
+  "source": "XMM",
+  "page": 181,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "construct",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    20
+  ],
+  "hp": {
+    "average": 252,
+    "formula": "24d10 + 120"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 24,
+  "dex": 9,
+  "con": 20,
+  "int": 3,
+  "wis": 11,
+  "cha": 1,
+  "senses": [
+    "Darkvision 120 ft."
+  ],
+  "passive": 10,
+  "immune": [
+    "fire",
+    "poison",
+    "psychic"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "exhaustion",
+    "frightened",
+    "paralyzed",
+    "petrified",
+    "poisoned"
+  ],
+  "languages": [
+    "understands Common plus two other languages but can't speak"
+  ],
+  "cr": "16",
+  "trait": [
+    {
+      "name": "Fire Absorption",
+      "entries": [
+        "Whenever the golem is subjected to Fire damage, it regains a number of {@variantrule Hit Points|XPHB} equal to the Fire damage dealt."
+      ]
+    },
+    {
+      "name": "Immutable Form",
+      "entries": [
+        "The golem can't shape-shift."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The golem has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The golem makes two attacks, using Bladed Arm or Fiery Bolt in any combination."
+      ]
+    },
+    {
+      "name": "Bladed Arm",
+      "entries": [
+        "{@atkr m} {@hit 12}, reach 10 ft. {@h}20 ({@damage 3d8 + 7}) Slashing damage plus 10 ({@damage 3d6}) Fire damage."
+      ]
+    },
+    {
+      "name": "Fiery Bolt",
+      "entries": [
+        "{@atkr r} {@hit 10}, range 120 ft. {@h}36 ({@damage 8d8}) Fire damage."
+      ]
+    },
+    {
+      "name": "Poison Breath {@recharge}",
+      "entries": [
+        "{@actSave con} {@dc 18}, each creature in a 60-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 55 ({@damage 10d10}) Poison damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/iron-golem.opus"
+  },
+  "traitTags": [
+    "Damage Absorption",
+    "Immutable Form",
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "CS",
+    "X"
+  ],
+  "damageTags": [
+    "F",
+    "I",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RA",
+    "RCH"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

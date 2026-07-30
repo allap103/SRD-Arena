@@ -1,0 +1,108 @@
+{
+  "name": "Prismatic Wall",
+  "source": "XPHB",
+  "page": 308,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 9,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      }
+    }
+  ],
+  "entries": [
+    "A shimmering, multicolored plane of light forms a vertical opaque wall\u2014up to 90 feet long, 30 feet high, and 1 inch thick\u2014centered on a point within range. Alternatively, you shape the wall into a globe up to 30 feet in diameter centered on a point within range. The wall lasts for the duration. If you position the wall in a space occupied by a creature, the spell ends instantly without effect.",
+    "The wall sheds {@variantrule Bright Light|XPHB} within 100 feet and {@variantrule Dim Light|XPHB} for an additional 100 feet. You and creatures you designate when you cast the spell can pass through and be near the wall without harm. If another creature that can see the wall moves within 20 feet of it or starts its turn there, the creature must succeed on a Constitution saving throw or have the {@condition Blinded|XPHB} condition for 1 minute.",
+    "The wall consists of seven layers, each with a different color. When a creature reaches into or passes through the wall, it does so one layer at a time through all the layers. Each layer forces the creature to make a Dexterity saving throw or be affected by that layer's properties as described in the Prismatic Layers table.",
+    "The wall, which has AC 10, can be destroyed one layer at a time, in order from red to violet, by means specific to each layer. If a layer is destroyed, it is gone for the duration. {@spell Antimagic Field|XPHB} has no effect on the wall, and {@spell Dispel Magic|XPHB} can affect only the violet layer.",
+    {
+      "type": "table",
+      "caption": "Prismatic Layers",
+      "colStyles": [
+        "col-2 text-center",
+        "col-10"
+      ],
+      "colLabels": [
+        "Order",
+        "Effects"
+      ],
+      "rows": [
+        [
+          "1",
+          "{@b Red.} {@i Failed Save:} {@damage 12d6} Fire damage. {@i Successful Save:} Half as much damage. {@i Additional Effects}: Nonmagical ranged attacks can't pass through this layer, which is destroyed if it takes at least 25 Cold damage."
+        ],
+        [
+          "2",
+          "{@b Orange.} {@i Failed Save:} {@damage 12d6} Acid damage. {@i Successful Save:} Half as much damage. {@i Additional Effects:} Magical ranged attacks can't pass through this layer, which is destroyed by a strong wind (such as the one created by {@spell Gust of Wind|XPHB})."
+        ],
+        [
+          "3",
+          "{@b Yellow.} {@i Failed Save:} {@damage 12d6} Lightning damage. {@i Successful Save:} Half as much damage. {@i Additional Effects:} The layer is destroyed if it takes at least 60 Force damage."
+        ],
+        [
+          "4",
+          "{@b Green.} {@i Failed Save:} {@damage 12d6} Poison damage. {@i Successful Save:} Half as much damage. {@i Additional Effects:} A {@spell Passwall|XPHB} spell, or another spell of equal or greater level that can open a portal on a solid surface, destroys this layer."
+        ],
+        [
+          "5",
+          "{@b Blue.} {@i Failed Save:} {@damage 12d6} Cold damage. {@i Successful Save:} Half as much damage. {@i Additional Effects:} The layer is destroyed if it takes at least 25 Fire damage."
+        ],
+        [
+          "6",
+          "{@b Indigo.} {@i Failed Save:} The target has the {@condition Restrained|XPHB} condition and makes a Constitution saving throw at the end of each of its turns. If it successfully saves three times, the condition ends. If it fails three times, it has the {@condition Petrified|XPHB} condition until it is freed by an effect like the {@spell Greater Restoration|XPHB} spell. The successes and failures needn't be consecutive; keep track of both until the target collects three of a kind. {@i Additional Effects:} Spells can't be cast through this layer, which is destroyed by {@variantrule Bright Light|XPHB} shed by the {@spell Daylight|XPHB} spell."
+        ],
+        [
+          "7",
+          "{@b Violet.} {@i Failed Save:} The target has the {@condition Blinded|XPHB} condition and makes a Wisdom saving throw at the start of your next turn. On a successful save, the condition ends. On a failed save, the condition ends, and the creature teleports to another plane of existence (DM's choice). {@i Additional Effects:} This layer is destroyed by {@spell Dispel Magic|XPHB}."
+        ]
+      ]
+    }
+  ],
+  "damageInflict": [
+    "acid",
+    "cold",
+    "fire",
+    "force",
+    "lightning",
+    "poison"
+  ],
+  "conditionInflict": [
+    "blinded",
+    "petrified",
+    "restrained"
+  ],
+  "savingThrow": [
+    "constitution",
+    "dexterity",
+    "wisdom"
+  ],
+  "miscTags": [
+    "LGT",
+    "PRM"
+  ],
+  "areaTags": [
+    "W"
+  ]
+}

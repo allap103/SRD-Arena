@@ -1,0 +1,62 @@
+{
+  "name": "Bless",
+  "source": "XPHB",
+  "page": 247,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN",
+    "UtHftLH"
+  ],
+  "level": 1,
+  "school": "E",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "a Holy Symbol worth 5+ GP",
+      "cost": 500
+    }
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You bless up to three creatures within range. Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds {@dice 1d4} to the attack roll or save."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "You can target one additional creature for each spell slot level above 1."
+      ]
+    }
+  ],
+  "miscTags": [
+    "SCT"
+  ],
+  "areaTags": [
+    "MT"
+  ]
+}

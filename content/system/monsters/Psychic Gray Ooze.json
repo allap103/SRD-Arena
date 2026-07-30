@@ -1,0 +1,106 @@
+{
+  "name": "Psychic Gray Ooze",
+  "source": "XMM",
+  "page": 151,
+  "srd52": true,
+  "size": [
+    "M"
+  ],
+  "type": "ooze",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    9
+  ],
+  "hp": {
+    "average": 37,
+    "formula": "5d8 + 15"
+  },
+  "speed": {
+    "walk": 10,
+    "climb": 10
+  },
+  "str": 12,
+  "dex": 8,
+  "con": 16,
+  "int": 10,
+  "wis": 6,
+  "cha": 2,
+  "skill": {
+    "stealth": "+3"
+  },
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 8,
+  "resist": [
+    "acid",
+    "cold",
+    "fire",
+    "psychic"
+  ],
+  "conditionImmune": [
+    "blinded",
+    "charmed",
+    "deafened",
+    "exhaustion",
+    "frightened",
+    "grappled",
+    "prone",
+    "restrained"
+  ],
+  "cr": "1",
+  "trait": [
+    {
+      "name": "Amorphous",
+      "entries": [
+        "The ooze can move through a space as narrow as 1 inch without expending extra movement to do so."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Pseudopod",
+      "entries": [
+        "{@atkr m} {@hit 3}, reach 5 ft. {@h}11 ({@damage 3d6 + 1}) Acid damage, and the target has {@variantrule Disadvantage|XPHB} on Intelligence saving throws until the end of the ooze's next turn."
+      ]
+    },
+    {
+      "name": "Psychic Crush",
+      "entries": [
+        "{@actSave int} {@dc 10}, one creature the ooze can see within 60 feet. {@actSaveFail} 13 ({@damage 3d8}) Psychic damage."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Mind Corrosion",
+      "entries": [
+        "{@actTrigger} The ooze fails a saving throw against a spell or another magical effect created by a creature. {@actResponse} The triggering creature takes 3 ({@damage 1d6}) Psychic damage."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "traitTags": [
+    "Amorphous"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "A",
+    "Y"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "savingThrowForced": [
+    "intelligence"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

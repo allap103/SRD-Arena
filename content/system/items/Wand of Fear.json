@@ -1,0 +1,66 @@
+{
+  "name": "Wand of Fear",
+  "source": "XDMG",
+  "page": 319,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "WD|XDMG",
+  "rarity": "rare",
+  "reqAttune": true,
+  "weight": 1,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d6 + 1}",
+  "charges": 7,
+  "entries": [
+    "This wand has 7 charges.",
+    {
+      "type": "entries",
+      "name": "Spells",
+      "entries": [
+        "While holding the wand, you can cast one of the spells (save {@dc 15}) on the following table from it. The table indicates how many charges you must expend to cast the spell.",
+        {
+          "type": "table",
+          "colStyles": [
+            "col-10",
+            "col-2 text-center"
+          ],
+          "colLabels": [
+            "Spell",
+            "Charge Cost"
+          ],
+          "rows": [
+            [
+              "{@spell Command|XPHB} (\"flee\" or \"grovel\" only)",
+              "1"
+            ],
+            [
+              "{@spell Fear|XPHB} (60-foot {@variantrule Cone [Area of Effect]|XPHB|Cone})",
+              "3"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Regaining Charges",
+      "entries": [
+        "The wand regains {@dice 1d6 + 1} expended charges daily at dawn. If you expend the wand's last charge, roll {@dice 1d20}. On a 1, the wand crumbles into ashes and is destroyed."
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "command|xphb"
+      ],
+      "3": [
+        "fear|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

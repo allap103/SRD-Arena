@@ -1,0 +1,51 @@
+{
+  "name": "Cure Wounds",
+  "source": "XPHB",
+  "page": 259,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 1,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "A creature you touch regains a number of {@variantrule Hit Points|XPHB} equal to {@dice 2d8} plus your spellcasting ability modifier."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The healing increases by {@scaledice 2d8|1-9|2d8} for each spell slot level above 1."
+      ]
+    }
+  ],
+  "miscTags": [
+    "HL"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

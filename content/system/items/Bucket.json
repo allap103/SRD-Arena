@@ -1,0 +1,19 @@
+{
+  "name": "Bucket",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 5,
+  "entries": [
+    "A Bucket holds up to half a cubic foot of contents."
+  ],
+  "containerCapacity": {
+    "volume": [
+      0.5
+    ]
+  }
+}

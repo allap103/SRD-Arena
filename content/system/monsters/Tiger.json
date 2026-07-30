@@ -1,0 +1,84 @@
+{
+  "name": "Tiger",
+  "source": "XMM",
+  "page": 371,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 358
+    }
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 30,
+    "formula": "4d10 + 8"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 17,
+  "dex": 16,
+  "con": 14,
+  "int": 3,
+  "wis": 12,
+  "cha": 8,
+  "skill": {
+    "perception": "+3",
+    "stealth": "+7"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "cr": "1",
+  "action": [
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Slashing damage. If the target is a Large or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Nimble Escape",
+      "entries": [
+        "The tiger takes the {@action Disengage|XPHB} or {@action Hide|XPHB} action."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/tiger.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,133 @@
+{
+  "name": "Young Silver Dragon",
+  "group": [
+    "Metallic Dragons"
+  ],
+  "source": "XMM",
+  "page": 278,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "metallic"
+    ]
+  },
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 168,
+    "formula": "16d10 + 80"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 80
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 23,
+  "dex": 10,
+  "con": 21,
+  "int": 14,
+  "wis": 11,
+  "cha": 19,
+  "save": {
+    "dex": "+4",
+    "wis": "+4"
+  },
+  "skill": {
+    "history": "+6",
+    "perception": "+8",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Blindsight 30 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 18,
+  "immune": [
+    "cold"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": "9",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of Paralyzing Breath."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 10}, reach 10 ft. {@h}15 ({@damage 2d8 + 6}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Cold Breath {@recharge 5}",
+      "entries": [
+        "{@actSave con} {@dc 17}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 49 ({@damage 11d8}) Cold damage. {@actSaveSuccess} Half damage."
+      ]
+    },
+    {
+      "name": "Paralyzing Breath",
+      "entries": [
+        "{@actSave con} {@dc 17}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail 1} The target has the {@condition Incapacitated|XPHB} condition until the end of its next turn, when it repeats the save. {@actSaveFail 2} The target has the {@condition Paralyzed|XPHB} condition, and it repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
+      ]
+    }
+  ],
+  "environment": [
+    "mountain",
+    "urban"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "dragonAge": "young",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/silver-dragon.opus"
+  },
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "C",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "incapacitated",
+    "paralyzed"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

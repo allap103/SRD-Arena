@@ -1,0 +1,63 @@
+{
+  "name": "Banishment",
+  "source": "XPHB",
+  "page": 245,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 4,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a pentacle"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "One creature that you can see within range must succeed on a Charisma saving throw or be transported to a harmless demiplane for the duration. While there, the target has the {@condition Incapacitated|XPHB} condition. When the spell ends, the target reappears in the space it left or in the nearest unoccupied space if that space is occupied.",
+    "If the target is an Aberration, a Celestial, an Elemental, a Fey, or a Fiend, the target doesn't return if the spell lasts for 1 minute. The target is instead transported to a random location on a plane (DM's choice) associated with its creature type."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "You can target one additional creature for each spell slot level above 4."
+      ]
+    }
+  ],
+  "conditionInflict": [
+    "incapacitated"
+  ],
+  "savingThrow": [
+    "charisma"
+  ],
+  "miscTags": [
+    "SCT",
+    "SGT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "Locate Animals or Plants",
+  "source": "XPHB",
+  "page": 292,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 2,
+  "school": "D",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "fur from a bloodhound"
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "meta": {
+    "ritual": true
+  },
+  "entries": [
+    "Describe or name a specific kind of Beast, Plant creature, or nonmagical plant. You learn the direction and distance to the closest creature or plant of that kind within 5 miles, if any are present."
+  ],
+  "affectsCreatureType": [
+    "beast",
+    "plant"
+  ]
+}

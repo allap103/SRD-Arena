@@ -1,0 +1,15 @@
+{
+  "name": "Leather Armor",
+  "source": "XPHB",
+  "page": 219,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "LA|XPHB",
+  "rarity": "none",
+  "weight": 10,
+  "value": 1000,
+  "ac": 11,
+  "armor": true,
+  "hasFluffImages": true
+}

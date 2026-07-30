@@ -1,0 +1,86 @@
+{
+  "name": "Ape",
+  "source": "XMM",
+  "page": 348,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 346
+    }
+  ],
+  "referenceSources": [
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 19,
+    "formula": "3d8 + 6"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 16,
+  "dex": 14,
+  "con": 14,
+  "int": 6,
+  "wis": 12,
+  "cha": 7,
+  "skill": {
+    "athletics": "+5",
+    "perception": "+3"
+  },
+  "passive": 13,
+  "cr": "1/2",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The ape makes two Fist attacks."
+      ]
+    },
+    {
+      "name": "Fist",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Bludgeoning damage."
+      ]
+    },
+    {
+      "name": "Rock {@recharge}",
+      "entries": [
+        "{@atkr r} {@hit 5}, range 25/50 ft. {@h}10 ({@damage 2d6 + 3}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/ape.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA",
+    "RA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

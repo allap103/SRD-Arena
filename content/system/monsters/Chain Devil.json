@@ -1,0 +1,158 @@
+{
+  "name": "Chain Devil",
+  "group": [
+    "Devils"
+  ],
+  "source": "XMM",
+  "page": 68,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "fiend",
+    "tags": [
+      "devil"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 85,
+    "formula": "10d8 + 40"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 18,
+  "dex": 15,
+  "con": 18,
+  "int": 11,
+  "wis": 12,
+  "cha": 14,
+  "save": {
+    "con": "+7",
+    "wis": "+4"
+  },
+  "senses": [
+    "Darkvision 120 ft. (unimpeded by magical {@variantrule Darkness|XPHB})"
+  ],
+  "passive": 11,
+  "resist": [
+    "bludgeoning",
+    "cold",
+    "piercing",
+    "slashing"
+  ],
+  "immune": [
+    "fire",
+    "poison"
+  ],
+  "conditionImmune": [
+    "poisoned"
+  ],
+  "languages": [
+    "Infernal; telepathy 120 ft."
+  ],
+  "cr": "8",
+  "trait": [
+    {
+      "name": "Diabolical Restoration",
+      "entries": [
+        "If the devil dies outside the Nine Hells, its body disappears in sulfurous smoke, and it gains a new body instantly, reviving with all its {@variantrule Hit Points|XPHB} somewhere in the Nine Hells."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The devil has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The devil makes two Chain attacks and uses Conjure Infernal Chain."
+      ]
+    },
+    {
+      "name": "Chain",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 10 ft. {@h}11 ({@damage 2d6 + 4}) Slashing damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 14}) from one of two chains, and it has the {@condition Restrained|XPHB} condition until the grapple ends."
+      ]
+    },
+    {
+      "name": "Conjure Infernal Chain",
+      "entries": [
+        "The devil conjures a fiery chain to bind a creature. {@actSave dex} {@dc 15}, one creature the devil can see within 60 feet. {@actSaveFail} 9 ({@damage 2d4 + 4}) Fire damage, and the target has the {@condition Restrained|XPHB} condition until the end of the devil's next turn, at which point the chain disappears. If the target is Large or smaller, the devil moves the target up to 30 feet straight toward itself. {@actSaveSuccess} The chain disappears."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Unnerving Gaze",
+      "entries": [
+        "{@actTrigger} A creature the devil can see starts its turn within 30 feet of the devil and can see the devil. {@actResponse d}{@actSave wis} {@dc 15}, the triggering creature. {@actSaveFail} The target has the {@condition Frightened|XPHB} condition until the end of its turn. {@actSaveSuccess} The target is immune to this devil's Unnerving Gaze for 24 hours."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, nine hells"
+  ],
+  "treasure": [
+    "implements"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/chain-devil.opus"
+  },
+  "traitTags": [
+    "Devil's Sight",
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "SD"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "I",
+    "TP"
+  ],
+  "damageTags": [
+    "F",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "frightened",
+    "grappled",
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "dexterity",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

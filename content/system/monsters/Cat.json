@@ -1,0 +1,91 @@
+{
+  "name": "Cat",
+  "source": "XMM",
+  "page": 351,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 347
+    }
+  ],
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 2,
+    "formula": "1d4"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 40
+  },
+  "str": 3,
+  "dex": 15,
+  "con": 10,
+  "int": 3,
+  "wis": 12,
+  "cha": 7,
+  "save": {
+    "dex": "+4"
+  },
+  "skill": {
+    "perception": "+3",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Jumper",
+      "entries": [
+        "The cat's jump distance is determined using its Dexterity rather than its Strength."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Scratch",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}1 Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "grassland",
+    "urban"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/cat.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

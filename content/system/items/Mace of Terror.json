@@ -1,0 +1,28 @@
+{
+  "name": "Mace of Terror",
+  "source": "XDMG",
+  "page": 276,
+  "srd52": true,
+  "baseItem": "mace|xphb",
+  "type": "M|XPHB",
+  "rarity": "rare",
+  "reqAttune": true,
+  "weight": 4,
+  "weaponCategory": "simple",
+  "mastery": [
+    "Sap|XPHB"
+  ],
+  "dmg1": "1d6",
+  "dmgType": "B",
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d3}",
+  "charges": 3,
+  "entries": [
+    "This magic weapon has 3 charges and regains {@dice 1d3} expended charges daily at dawn. While holding the weapon, you can take a {@action Magic|XPHB} action and expend 1 charge to release a wave of terror from it. Each creature of your choice within 30 feet of you must succeed on a {@dc 15} Wisdom saving throw or have the {@condition Frightened|XPHB} condition for 1 minute. While {@condition Frightened|XPHB} in this way, a creature must spend its turns trying to move as far away from you as it can, and it can't make {@action Opportunity Attack|XPHB|Opportunity Attacks}. For its action, it can use only the {@action Dash|XPHB} action or try to escape from an effect that prevents it from moving. If it has nowhere it can move, the creature can take the {@action Dodge|XPHB} action. At the end of each of its turns, a creature repeats the save, ending the effect on itself on a success."
+  ],
+  "lootTables": [
+    "Armaments - Rare|XDMG",
+    "Relics - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

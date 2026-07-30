@@ -1,0 +1,43 @@
+{
+  "name": "Weaver's Tools",
+  "source": "XPHB",
+  "page": 221,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "type": "AT|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "value": 100,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Dexterity"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Mend a tear in clothing ({@dc 10}), or sew a Tiny design ({@dc 10})"
+          ]
+        },
+        {
+          "name": "Craft:",
+          "type": "item",
+          "entries": [
+            "{@item Padded Armor|XPHB}, {@item Basket|XPHB}, {@item Bedroll|XPHB}, {@item Blanket|XPHB}, {@item Fine Clothes|XPHB}, {@item Net|XPHB}, {@item Robe|XPHB}, {@item Rope|XPHB}, {@item Sack|XPHB}, {@item String|XPHB}, {@item Tent|XPHB}, {@item Traveler's Clothes|XPHB}"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "name": "Awakened Tree",
+  "source": "XMM",
+  "page": 23,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "RHW"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "plant",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 59,
+    "formula": "7d12 + 14"
+  },
+  "speed": {
+    "walk": 20
+  },
+  "str": 19,
+  "dex": 6,
+  "con": 15,
+  "int": 10,
+  "wis": 10,
+  "cha": 7,
+  "passive": 10,
+  "resist": [
+    "bludgeoning",
+    "piercing"
+  ],
+  "vulnerable": [
+    "fire"
+  ],
+  "languages": [
+    "Common plus one other language"
+  ],
+  "cr": "2",
+  "action": [
+    {
+      "name": "Slam",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 10 ft. {@h}13 ({@damage 2d8 + 4}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/awakened-tree.opus"
+  },
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

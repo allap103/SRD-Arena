@@ -1,0 +1,136 @@
+{
+  "name": "Young Black Dragon",
+  "group": [
+    "Chromatic Dragons"
+  ],
+  "source": "XMM",
+  "page": 38,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "chromatic"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 127,
+    "formula": "15d10 + 45"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 80,
+    "swim": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 19,
+  "dex": 14,
+  "con": 17,
+  "int": 12,
+  "wis": 11,
+  "cha": 15,
+  "save": {
+    "dex": "+5",
+    "wis": "+3"
+  },
+  "skill": {
+    "perception": "+6",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Blindsight 30 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 16,
+  "immune": [
+    "acid"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": "7",
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The dragon can breathe air and water."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 10 ft. {@h}9 ({@damage 2d4 + 4}) Slashing damage plus 3 ({@damage 1d6}) Acid damage."
+      ]
+    },
+    {
+      "name": "Acid Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 14}, each creature in a 30-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 49 ({@damage 14d6}) Acid damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "swamp"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "dragonAge": "young",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/black-dragon.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "A",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

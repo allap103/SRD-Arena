@@ -1,0 +1,161 @@
+{
+  "name": "Nalfeshnee",
+  "group": [
+    "Demons"
+  ],
+  "source": "XMM",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "fiend",
+    "tags": [
+      "demon"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 184,
+    "formula": "16d10 + 96"
+  },
+  "speed": {
+    "walk": 20,
+    "fly": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 21,
+  "dex": 10,
+  "con": 22,
+  "int": 19,
+  "wis": 12,
+  "cha": 15,
+  "save": {
+    "con": "+11",
+    "int": "+9",
+    "wis": "+6",
+    "cha": "+7"
+  },
+  "senses": [
+    "Truesight 120 ft."
+  ],
+  "passive": 11,
+  "resist": [
+    "cold",
+    "fire",
+    "lightning"
+  ],
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "frightened",
+    "poisoned"
+  ],
+  "languages": [
+    "Abyssal; telepathy 120 ft."
+  ],
+  "cr": "13",
+  "trait": [
+    {
+      "name": "Demonic Restoration",
+      "entries": [
+        "If the nalfeshnee dies outside the Abyss, its body dissolves into ichor, and it gains a new body instantly, reviving with all its {@variantrule Hit Points|XPHB} somewhere in the Abyss."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The nalfeshnee has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The nalfeshnee makes three Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 10}, reach 10 ft. {@h}16 ({@damage 2d10 + 5}) Slashing damage plus 11 ({@damage 2d10}) Force damage."
+      ]
+    },
+    {
+      "name": "Teleport",
+      "entries": [
+        "The nalfeshnee teleports up to 120 feet to an unoccupied space it can see."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Horror Nimbus {@recharge 5}",
+      "entries": [
+        "{@actSave wis} {@dc 15}, each creature in a 15-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the nalfeshnee. {@actSaveFail} 28 ({@damage 8d6}) Psychic damage, and the target has the {@condition Frightened|XPHB} condition for 1 minute, until it takes damage, or until it ends its turn with the nalfeshnee out of line of sight. {@actSaveSuccess} The target is immune to this nalfeshnee's Horror Nimbus for 24 hours."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Pursuit",
+      "entries": [
+        "{@actTrigger} Another creature the nalfeshnee can see ends its move within 120 feet of the nalfeshnee. {@actResponse} The nalfeshnee uses Teleport, but its destination space must be within 10 feet of the triggering creature."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, abyss"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/nalfeshnee.opus"
+  },
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "U"
+  ],
+  "actionTags": [
+    "Multiattack",
+    "Teleport"
+  ],
+  "languageTags": [
+    "AB",
+    "TP"
+  ],
+  "damageTags": [
+    "O",
+    "S",
+    "Y"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "frightened"
+  ],
+  "savingThrowForced": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Pole (10-foot)",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "TTP"
+  ],
+  "reprintedAs": [
+    "Pole|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 7,
+  "value": 5
+}

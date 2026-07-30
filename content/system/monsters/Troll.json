@@ -1,0 +1,120 @@
+{
+  "name": "Troll",
+  "source": "XMM",
+  "page": 310,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-SD",
+    "DrDe-TFV",
+    "FRAiF",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "giant",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 94,
+    "formula": "9d10 + 45"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 18,
+  "dex": 13,
+  "con": 20,
+  "int": 7,
+  "wis": 9,
+  "cha": 7,
+  "skill": {
+    "perception": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "languages": [
+    "Giant"
+  ],
+  "cr": "5",
+  "trait": [
+    {
+      "name": "Loathsome Limbs (4/Day)",
+      "entries": [
+        "If the troll ends any turn {@status Bloodied|XPHB} and took 15+ Slashing damage during that turn, one of the troll's limbs is severed, falls into the troll's space, and becomes a {@creature Troll Limb|XMM}. The limb acts immediately after the troll's turn. The troll has 1 {@condition Exhaustion|XPHB} level for each missing limb, and it grows replacement limbs the next time it regains {@variantrule Hit Points|XPHB}."
+      ]
+    },
+    {
+      "name": "Regeneration",
+      "entries": [
+        "The troll regains 15 {@variantrule Hit Points|XPHB} at the start of each of its turns. If the troll takes Acid or Fire damage, this trait doesn't function on the troll's next turn. The troll dies only if it starts its turn with 0 {@variantrule Hit Points|XPHB} and doesn't regenerate."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The troll makes three Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 10 ft. {@h}11 ({@damage 2d6 + 4}) Slashing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Charge",
+      "entries": [
+        "The troll moves up to half its {@variantrule Speed|XPHB} straight toward an enemy it can see."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "forest",
+    "hill",
+    "mountain",
+    "swamp",
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/troll.opus"
+  },
+  "traitTags": [
+    "Regeneration"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "GI"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

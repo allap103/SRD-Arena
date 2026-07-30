@@ -1,0 +1,12 @@
+{
+  "name": "Mastiff",
+  "source": "XPHB",
+  "page": 229,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "MNT|XPHB",
+  "rarity": "none",
+  "value": 2500,
+  "carryingCapacity": 195,
+  "speed": 40
+}

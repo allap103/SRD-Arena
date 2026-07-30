@@ -1,0 +1,50 @@
+{
+  "name": "Hypnotic Pattern",
+  "source": "XPHB",
+  "page": 287,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 3,
+  "school": "I",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 120
+    }
+  },
+  "components": {
+    "s": true,
+    "m": "a pinch of confetti"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You create a twisting pattern of colors in a 30-foot {@variantrule Cube [Area of Effect]|XPHB|Cube} within range. The pattern appears for a moment and vanishes. Each creature in the area who can see the pattern must succeed on a Wisdom saving throw or have the {@condition Charmed|XPHB} condition for the duration. While {@condition Charmed|XPHB}, the creature has the {@condition Incapacitated|XPHB} condition and a {@variantrule Speed|XPHB} of 0.",
+    "The spell ends for an affected creature if it takes any damage or if someone else uses an action to shake the creature out of its stupor."
+  ],
+  "conditionInflict": [
+    "charmed",
+    "incapacitated"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "areaTags": [
+    "C"
+  ]
+}

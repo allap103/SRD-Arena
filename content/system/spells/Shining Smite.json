@@ -1,0 +1,58 @@
+{
+  "name": "Shining Smite",
+  "source": "XPHB",
+  "page": 316,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 2,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus",
+      "condition": "which you take immediately after hitting a creature with a Melee weapon or an {@variantrule Unarmed Strike|XPHB}"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "The target hit by the strike takes an extra {@damage 2d6} Radiant damage from the attack. Until the spell ends, the target sheds {@variantrule Bright Light|XPHB} in a 5-foot radius, attack rolls against it have {@variantrule Advantage|XPHB}, and it can't benefit from the {@condition Invisible|XPHB} condition."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 2d6|2-9|1d6} for each spell slot level above 2."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "radiant"
+  ],
+  "miscTags": [
+    "AAD",
+    "ADV",
+    "LGT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

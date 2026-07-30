@@ -1,0 +1,96 @@
+{
+  "name": "Tough",
+  "source": "XMM",
+  "page": 307,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "ABH",
+    "DrDe",
+    "DrDe-BD",
+    "DrDe-BtS",
+    "EFA",
+    "FRAiF"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 32,
+    "formula": "5d8 + 10"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 15,
+  "dex": 12,
+  "con": 14,
+  "int": 10,
+  "wis": 10,
+  "cha": 11,
+  "passive": 10,
+  "languages": [
+    "Common"
+  ],
+  "cr": "1/2",
+  "gear": [
+    "heavy crossbow|xphb",
+    "leather armor|xphb",
+    "mace|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The tough has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the tough's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Mace",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Bludgeoning damage."
+      ]
+    },
+    {
+      "name": "Heavy Crossbow",
+      "entries": [
+        "{@atkr r} {@hit 3}, range 100/400 ft. {@h}6 ({@damage 1d10 + 1}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RNG"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

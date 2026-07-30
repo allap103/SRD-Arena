@@ -1,0 +1,33 @@
+{
+  "name": "Mask of Many Faces",
+  "source": "XPHB",
+  "page": 156,
+  "srd52": true,
+  "featureType": [
+    "EI"
+  ],
+  "prerequisite": [
+    {
+      "level": {
+        "level": 2,
+        "class": {
+          "name": "Warlock",
+          "source": "XPHB",
+          "visibleStats": true
+        }
+      }
+    }
+  ],
+  "additionalSpells": [
+    {
+      "innate": {
+        "_": [
+          "disguise self|xphb"
+        ]
+      }
+    }
+  ],
+  "entries": [
+    "You can cast {@spell Disguise Self|XPHB} without expending a spell slot."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "Helm of Teleportation",
+  "source": "XDMG",
+  "page": 268,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d3}",
+  "charges": 3,
+  "entries": [
+    "This helm has 3 charges. While wearing it, you can expend 1 charge to cast {@spell Teleport|XPHB} from it. The helm regains {@dice 1d3} expended charges daily at dawn."
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "teleport|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

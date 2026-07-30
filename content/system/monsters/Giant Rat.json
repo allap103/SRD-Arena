@@ -1,0 +1,87 @@
+{
+  "name": "Giant Rat",
+  "source": "XMM",
+  "page": 358,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF"
+  ],
+  "size": [
+    "S"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 7,
+    "formula": "2d6"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 7,
+  "dex": 16,
+  "con": 11,
+  "int": 2,
+  "wis": 10,
+  "cha": 4,
+  "save": {
+    "dex": "+5"
+  },
+  "skill": {
+    "perception": "+2"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 12,
+  "cr": "1/8",
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The rat has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the rat's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 feet. {@h}5 ({@damage 1d4 + 3}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "swamp",
+    "underdark",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-rat.opus"
+  },
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

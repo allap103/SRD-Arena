@@ -1,0 +1,102 @@
+{
+  "name": "Octopus",
+  "source": "XMM",
+  "page": 365,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 353
+    }
+  ],
+  "size": [
+    "S"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 3,
+    "formula": "1d6"
+  },
+  "speed": {
+    "walk": 5,
+    "swim": 30
+  },
+  "str": 4,
+  "dex": 15,
+  "con": 11,
+  "int": 3,
+  "wis": 10,
+  "cha": 4,
+  "skill": {
+    "perception": "+2",
+    "stealth": "+6"
+  },
+  "senses": [
+    "Darkvision 30 ft."
+  ],
+  "passive": 12,
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Compression",
+      "entries": [
+        "The octopus can move through a space as narrow as 1 inch without expending extra movement to do so."
+      ]
+    },
+    {
+      "name": "Water Breathing",
+      "entries": [
+        "The octopus can breathe only underwater."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Tentacles",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}1 Bludgeoning damage."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Ink Cloud (1/Day)",
+      "entries": [
+        "{@actTrigger} A creature ends its turn within 5 feet of the octopus while underwater. {@actResponse} The octopus releases ink that fills a 5-foot {@variantrule Cube [Area of Effect]|XPHB|Cube} centered on itself, and the octopus moves up to its {@variantrule Swim Speed|XPHB}. The {@variantrule Cube [Area of Effect]|XPHB|Cube} is {@variantrule Heavily Obscured|XPHB} for 1 minute or until a strong current or similar effect disperses the ink."
+      ]
+    }
+  ],
+  "environment": [
+    "underwater"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/octopus.opus"
+  },
+  "traitTags": [
+    "Water Breathing"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Tentacles"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

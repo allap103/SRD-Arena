@@ -1,0 +1,58 @@
+{
+  "name": "Halfling",
+  "source": "XPHB",
+  "page": 193,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "creatureTypes": [
+    "humanoid"
+  ],
+  "size": [
+    "S"
+  ],
+  "speed": 30,
+  "soundClip": {
+    "type": "internal",
+    "path": "races/halfling.opus"
+  },
+  "sizeEntry": {
+    "type": "item",
+    "name": "Size:",
+    "entries": [
+      "Small (about 2-3 feet tall)"
+    ]
+  },
+  "entries": [
+    {
+      "type": "entries",
+      "name": "Brave",
+      "entries": [
+        "You have {@variantrule Advantage|XPHB} on saving throws you make to avoid or end the {@condition Frightened|XPHB} condition."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Halfling Nimbleness",
+      "entries": [
+        "You can move through the space of any creature that is a size larger than you, but you can't stop in the same space."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Luck",
+      "entries": [
+        "When you roll a 1 on the {@dice d20} of a {@variantrule D20 Test|XPHB}, you can reroll the die, and you must use the new roll."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Naturally Stealthy",
+      "entries": [
+        "You can take the {@action Hide|XPHB} action even when you are obscured only by a creature that is at least one size larger than you."
+      ]
+    }
+  ],
+  "hasFluff": true,
+  "hasFluffImages": true
+}

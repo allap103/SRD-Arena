@@ -1,0 +1,31 @@
+{
+  "name": "Boots of Elvenkind",
+  "source": "XDMG",
+  "page": 239,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "ScoEE"
+    }
+  ],
+  "referenceSources": [
+    "HotB",
+    "ScoEE"
+  ],
+  "rarity": "uncommon",
+  "wondrous": true,
+  "entries": [
+    "While you wear these boots, your steps make no sound, regardless of the surface you are moving across. You also have {@variantrule Advantage|XPHB} on Dexterity ({@skill Stealth|XPHB}) checks."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Implements - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

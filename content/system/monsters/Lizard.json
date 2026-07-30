@@ -1,0 +1,85 @@
+{
+  "name": "Lizard",
+  "source": "XMM",
+  "page": 364,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 353
+    }
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 2,
+    "formula": "1d4"
+  },
+  "speed": {
+    "walk": 20,
+    "climb": 20
+  },
+  "str": 2,
+  "dex": 11,
+  "con": 10,
+  "int": 1,
+  "wis": 8,
+  "cha": 3,
+  "senses": [
+    "Darkvision 30 ft."
+  ],
+  "passive": 9,
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The lizard can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}1 Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "desert",
+    "forest",
+    "swamp",
+    "underdark"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/lizard.opus"
+  },
+  "traitTags": [
+    "Spider Climb"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,120 @@
+{
+  "name": "Hobgoblin Warrior",
+  "group": [
+    "Goblinoids"
+  ],
+  "source": "XMM",
+  "page": 170,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "HotB"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "fey",
+    "tags": [
+      "goblinoid"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 11,
+    "formula": "2d8 + 2"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 13,
+  "dex": 12,
+  "con": 12,
+  "int": 10,
+  "wis": 10,
+  "cha": 9,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "languages": [
+    "Common",
+    "Goblin"
+  ],
+  "cr": "1/2",
+  "gear": [
+    "half plate armor|xphb",
+    "longbow|xphb",
+    "longsword|xphb",
+    "shield|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The hobgoblin has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the hobgoblin's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Longsword",
+      "entries": [
+        "{@atkr m} {@hit 3}, reach 5 ft. {@h}12 ({@damage 2d10 + 1}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Longbow",
+      "entries": [
+        "{@atkr r} {@hit 3}, range 150/600 ft. {@h}5 ({@damage 1d8 + 1}) Piercing damage plus 7 ({@damage 3d4}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "grassland",
+    "hill",
+    "mountain",
+    "planar, acheron",
+    "underdark"
+  ],
+  "treasure": [
+    "armaments",
+    "individual"
+  ],
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "C",
+    "GO"
+  ],
+  "damageTags": [
+    "I",
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RNG"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

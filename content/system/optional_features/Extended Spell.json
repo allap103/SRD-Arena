@@ -1,0 +1,17 @@
+{
+  "name": "Extended Spell",
+  "source": "XPHB",
+  "page": 142,
+  "srd52": true,
+  "featureType": [
+    "MM"
+  ],
+  "consumes": {
+    "name": "Sorcery Point",
+    "amount": 1
+  },
+  "entries": [
+    "When you cast a spell that has a duration of 1 minute or longer, you can spend 1 Sorcery Point to double its duration to a maximum duration of 24 hours.",
+    "If the affected spell requires {@status Concentration|XPHB}, you have {@variantrule Advantage|XPHB} on any saving throw you make to maintain that {@status Concentration|XPHB}."
+  ]
+}

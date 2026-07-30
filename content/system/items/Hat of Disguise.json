@@ -1,0 +1,25 @@
+{
+  "name": "Hat of Disguise",
+  "source": "XDMG",
+  "page": 266,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "entries": [
+    "While wearing this hat, you can cast the {@spell Disguise Self|XPHB} spell. The spell ends if the hat is removed."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "attachedSpells": {
+    "will": [
+      "disguise self|xphb"
+    ]
+  },
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Crossbow Bolt",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "TTP"
+  ],
+  "reprintedAs": [
+    "Bolt|XPHB"
+  ],
+  "edition": "classic",
+  "type": "A",
+  "rarity": "none",
+  "weight": 0.075,
+  "value": 5,
+  "bolt": true
+}

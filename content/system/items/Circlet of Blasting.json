@@ -1,0 +1,23 @@
+{
+  "name": "Circlet of Blasting",
+  "source": "XDMG",
+  "page": 244,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "wondrous": true,
+  "entries": [
+    "While wearing this circlet, you can cast {@spell Scorching Ray|XPHB} with it ({@hit 5} to hit). The circlet can't cast this spell again until the next dawn."
+  ],
+  "attachedSpells": {
+    "daily": {
+      "1e": [
+        "scorching ray|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

@@ -1,0 +1,101 @@
+{
+  "name": "Lemure",
+  "group": [
+    "Devils"
+  ],
+  "source": "XMM",
+  "page": 194,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "fiend",
+    "tags": [
+      "devil"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    9
+  ],
+  "hp": {
+    "average": 9,
+    "formula": "2d8"
+  },
+  "speed": {
+    "walk": 20
+  },
+  "str": 10,
+  "dex": 5,
+  "con": 11,
+  "int": 1,
+  "wis": 11,
+  "cha": 3,
+  "senses": [
+    "Darkvision 120 ft. (unimpeded by magical {@variantrule Darkness|XPHB})"
+  ],
+  "passive": 10,
+  "resist": [
+    "cold"
+  ],
+  "immune": [
+    "fire",
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "frightened",
+    "poisoned"
+  ],
+  "languages": [
+    "understands Infernal but can't speak"
+  ],
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Hellish Restoration",
+      "entries": [
+        "If the lemure dies in the Nine Hells, it revives with all its {@variantrule Hit Points|XPHB} in {@dice 1d10} days unless it is killed by a creature under the effects of a {@spell Bless|XPHB} spell or its remains are sprinkled with {@item Holy Water|XPHB}."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Vile Slime",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}2 ({@damage 1d4}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, nine hells"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/lemure.opus"
+  },
+  "traitTags": [
+    "Devil's Sight"
+  ],
+  "senseTags": [
+    "SD"
+  ],
+  "languageTags": [
+    "CS",
+    "I"
+  ],
+  "damageTags": [
+    "I"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

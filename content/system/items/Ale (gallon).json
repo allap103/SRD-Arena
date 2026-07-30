@@ -1,0 +1,13 @@
+{
+  "name": "Ale (gallon)",
+  "source": "PHB",
+  "page": 158,
+  "srd": true,
+  "basicRules": true,
+  "type": "FD",
+  "rarity": "none",
+  "value": 20,
+  "miscTags": [
+    "CNS"
+  ]
+}

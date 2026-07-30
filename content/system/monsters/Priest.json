@@ -1,0 +1,161 @@
+{
+  "name": "Priest",
+  "source": "XMM",
+  "page": 248,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-SD",
+    "DrDe-TDoN",
+    "EFA",
+    "FRAiF",
+    "FRHoF",
+    "LFL",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": {
+    "type": "humanoid",
+    "tags": [
+      "cleric"
+    ]
+  },
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 38,
+    "formula": "7d8 + 7"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 16,
+  "dex": 10,
+  "con": 12,
+  "int": 13,
+  "wis": 16,
+  "cha": 13,
+  "skill": {
+    "medicine": "+7",
+    "perception": "+5",
+    "religion": "+5"
+  },
+  "passive": 15,
+  "languages": [
+    "Common plus one other language"
+  ],
+  "cr": "2",
+  "gear": [
+    "chain shirt|xphb",
+    "holy symbol|xphb",
+    "mace|xphb"
+  ],
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The priest casts one of the following spells, using Wisdom as the spellcasting ability:"
+      ],
+      "will": [
+        "{@spell Light|XPHB}",
+        "{@spell Thaumaturgy|XPHB}"
+      ],
+      "daily": {
+        "1": [
+          "{@spell Spirit Guardians|XPHB}"
+        ]
+      },
+      "ability": "wis",
+      "displayAs": "action"
+    },
+    {
+      "name": "Divine Aid (3/Day)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The priest casts {@spell Bless|XPHB}, {@spell Dispel Magic|XPHB}, {@spell Healing Word|XPHB}, or {@spell Lesser Restoration|XPHB}, using the same spellcasting ability as Spellcasting."
+      ],
+      "daily": {
+        "3": [
+          "{@spell Bless|XPHB}",
+          "{@spell Dispel Magic|XPHB}",
+          "{@spell Healing Word|XPHB}",
+          "{@spell Lesser Restoration|XPHB}"
+        ]
+      },
+      "ability": "wis",
+      "displayAs": "bonus",
+      "hidden": [
+        "daily"
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The priest makes two attacks, using Mace or Radiant Flame in any combination."
+      ]
+    },
+    {
+      "name": "Mace",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}6 ({@damage 1d6 + 3}) Bludgeoning damage plus 5 ({@damage 2d4}) Radiant damage."
+      ]
+    },
+    {
+      "name": "Radiant Flame",
+      "entries": [
+        "{@atkr r} {@hit 5}, range 60 ft. {@h}11 ({@damage 2d10}) Radiant damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "individual",
+    "relics"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/priest.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "B",
+    "R"
+  ],
+  "damageTagsSpell": [
+    "N",
+    "R"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA"
+  ],
+  "savingThrowForcedSpell": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

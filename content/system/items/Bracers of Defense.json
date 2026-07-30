@@ -1,0 +1,21 @@
+{
+  "name": "Bracers of Defense",
+  "source": "XDMG",
+  "page": 241,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "bonusAc": "+2",
+  "entries": [
+    "While wearing these bracers, you gain a +2 bonus to {@variantrule Armor Class|XPHB} if you are wearing no armor and using no {@item Shield|XPHB}."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

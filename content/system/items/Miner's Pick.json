@@ -1,0 +1,15 @@
+{
+  "name": "Miner's Pick",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "IDRotF",
+    "PaBTSO"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 10,
+  "value": 200
+}

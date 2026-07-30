@@ -1,0 +1,48 @@
+{
+  "name": "Detect Evil and Good",
+  "source": "XPHB",
+  "page": 261,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 1,
+  "school": "D",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "sphere",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "For the duration, you sense the location of any Aberration, Celestial, Elemental, Fey, Fiend, or Undead within 30 feet of yourself. You also sense whether the {@spell Hallow|XPHB} spell is active there and, if so, where.",
+    "The spell is blocked by 1 foot of stone, dirt, or wood; 1 inch of metal; or a thin sheet of lead."
+  ],
+  "affectsCreatureType": [
+    "aberration",
+    "celestial",
+    "elemental",
+    "fey",
+    "fiend",
+    "undead"
+  ]
+}

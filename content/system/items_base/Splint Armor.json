@@ -1,0 +1,20 @@
+{
+  "name": "Splint Armor",
+  "source": "XPHB",
+  "page": 219,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "HotB"
+  ],
+  "edition": "one",
+  "type": "HA|XPHB",
+  "rarity": "none",
+  "weight": 60,
+  "value": 20000,
+  "ac": 17,
+  "strength": "15",
+  "armor": true,
+  "stealth": true,
+  "hasFluffImages": true
+}

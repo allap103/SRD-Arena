@@ -1,0 +1,13 @@
+{
+  "name": "Signal Whistle",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 5,
+  "entries": [
+    "When blown as a {@action Utilize|XPHB} action, a Signal Whistle produces a sound that can be heard up to 600 feet away."
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "name": "Iron Flask",
+  "source": "XDMG",
+  "page": 274,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "legendary",
+  "wondrous": true,
+  "entries": [
+    "While holding this brass-stoppered iron flask, you can take a {@action Magic|XPHB} action to target a creature that you can see within 60 feet of yourself. If the flask is empty and the target is native to a plane of existence other than the one you're on, the target must succeed on a {@dc 17} Wisdom saving throw or be trapped in the flask. If the target has been trapped by the flask before, it has {@variantrule Advantage|XPHB} on the save. Once trapped, a creature remains in the flask until released. The flask can hold only one creature at a time. A creature trapped in the flask doesn't age and doesn't need to breathe, eat, or drink.",
+    "You can take a {@action Magic|XPHB} action to remove the flask's stopper and release the creature in the flask. The creature then obeys your commands for 1 hour, understanding those commands even if it doesn't know the language in which the commands are given. If you issue no commands or give the creature a command that is likely to result in its death or imprisonment, it defends itself but otherwise takes no actions. At the end of the duration, the creature acts in accordance with its normal disposition and alignment.",
+    "An {@spell Identify|XPHB} spell reveals if the flask contains a creature, but the only way to determine the type of creature is to open the flask. A newly discovered Iron Flask might already contain a creature chosen by the DM or determined randomly by rolling on the following table (see the {@book Monster Manual|XMM} for the creature's stat block).",
+    {
+      "type": "table",
+      "colStyles": [
+        "col-2 text-center",
+        "col-10"
+      ],
+      "colLabels": [
+        "1d100",
+        "Contents"
+      ],
+      "rows": [
+        [
+          "01-50",
+          "No creature"
+        ],
+        [
+          "51",
+          "{@creature Arcanaloth|XMM}"
+        ],
+        [
+          "52-54",
+          "{@creature Bone Devil|XMM}"
+        ],
+        [
+          "55-56",
+          "{@creature Cambion|XMM}"
+        ],
+        [
+          "57-58",
+          "{@creature Dao|XMM}"
+        ],
+        [
+          "59",
+          "{@creature Deva|XMM}"
+        ],
+        [
+          "60-61",
+          "{@creature Djinni|XMM}"
+        ],
+        [
+          "62-63",
+          "{@creature Efreeti|XMM}"
+        ],
+        [
+          "64-65",
+          "{@creature Erinyes|XMM}"
+        ],
+        [
+          "66-67",
+          "{@creature Fomorian|XMM}"
+        ],
+        [
+          "68",
+          "{@creature Githyanki Knight|XMM}"
+        ],
+        [
+          "69",
+          "{@creature Githzerai Zerth|XMM}"
+        ],
+        [
+          "70-71",
+          "{@creature Glabrezu|XMM}"
+        ],
+        [
+          "72-74",
+          "{@creature Hezrou|XMM}"
+        ],
+        [
+          "75",
+          "{@creature Incubus|XMM}"
+        ],
+        [
+          "76-77",
+          "{@creature Invisible Stalker|XMM}"
+        ],
+        [
+          "78-79",
+          "{@creature Marid|XMM}"
+        ],
+        [
+          "80",
+          "{@creature Marilith|XMM}"
+        ],
+        [
+          "81-82",
+          "{@creature Mezzoloth|XMM}"
+        ],
+        [
+          "83-84",
+          "{@creature Nalfeshnee|XMM}"
+        ],
+        [
+          "85-86",
+          "{@creature Night Hag|XMM}"
+        ],
+        [
+          "87-88",
+          "{@creature Nycaloth|XMM}"
+        ],
+        [
+          "89",
+          "{@creature Planetar|XMM}"
+        ],
+        [
+          "90-91",
+          "{@creature Red Slaad|XMM}"
+        ],
+        [
+          "92-93",
+          "{@creature Salamander|XMM}"
+        ],
+        [
+          "94",
+          "{@creature Solar|XMM}"
+        ],
+        [
+          "95",
+          "{@creature Succubus|XMM}"
+        ],
+        [
+          "96",
+          "{@creature Ultroloth|XMM}"
+        ],
+        [
+          "97-99",
+          "{@creature Vrock|XMM}"
+        ],
+        [
+          "00",
+          "{@creature Xorn|XMM}"
+        ]
+      ]
+    }
+  ],
+  "lootTables": [
+    "Arcana - Legendary|XDMG"
+  ],
+  "hasFluffImages": true
+}

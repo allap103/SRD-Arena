@@ -1,0 +1,38 @@
+{
+  "name": "Cubic Gate",
+  "source": "XDMG",
+  "page": 247,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "legendary",
+  "wondrous": true,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d3}",
+  "charges": 3,
+  "entries": [
+    "This cube is 3 inches across and radiates palpable magical energy. The six sides of the cube are each keyed to a different plane of existence, one of which is the Material Plane. The other sides are linked to planes determined by the DM.",
+    "The cube has 3 charges and regains {@dice 1d3} expended charges daily at dawn. As a {@action Magic|XPHB} action, you can expend 1 of the cube's charges to cast one of the following spells using the cube.",
+    {
+      "type": "entries",
+      "name": "Gate",
+      "entries": [
+        "Pressing one side of the cube, you cast {@spell Gate|XPHB}, opening a portal to the plane of existence keyed to that side."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Plane Shift",
+      "entries": [
+        "Pressing one side of the cube twice, you cast {@spell Plane Shift|XPHB}, transporting the targets to the plane of existence keyed to that side."
+      ]
+    }
+  ],
+  "attachedSpells": [
+    "gate|xphb",
+    "plane shift|xphb"
+  ],
+  "lootTables": [
+    "Arcana - Legendary|XDMG"
+  ],
+  "hasFluffImages": true
+}

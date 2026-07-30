@@ -1,0 +1,33 @@
+{
+  "name": "Crossbow Bolts (20)",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "CM",
+    "CoS",
+    "CRCotN",
+    "GoS",
+    "IDRotF",
+    "KftGV",
+    "PaBTSO",
+    "SCC-ARiR",
+    "VEoR"
+  ],
+  "reprintedAs": [
+    "Bolts (20)|XPHB"
+  ],
+  "edition": "classic",
+  "type": "A",
+  "rarity": "none",
+  "weight": 1.5,
+  "value": 100,
+  "bolt": true,
+  "packContents": [
+    {
+      "item": "crossbow bolt|phb",
+      "quantity": 20
+    }
+  ]
+}

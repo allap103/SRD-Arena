@@ -1,0 +1,130 @@
+{
+  "name": "Black Dragon Wyrmling",
+  "group": [
+    "Chromatic Dragons"
+  ],
+  "source": "XMM",
+  "page": 38,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "chromatic"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 33,
+    "formula": "6d8 + 6"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 60,
+    "swim": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 15,
+  "dex": 14,
+  "con": 13,
+  "int": 10,
+  "wis": 11,
+  "cha": 13,
+  "save": {
+    "dex": "+4",
+    "wis": "+2"
+  },
+  "skill": {
+    "perception": "+4",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Blindsight 10 ft.",
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "immune": [
+    "acid"
+  ],
+  "languages": [
+    "Draconic"
+  ],
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The dragon can breathe air and water."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes two Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Slashing damage plus 2 ({@damage 1d4}) Acid damage."
+      ]
+    },
+    {
+      "name": "Acid Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 11}, each creature in a 15-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 22 ({@damage 5d8}) Acid damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "swamp"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "dragonAge": "wyrmling",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/black-dragon-wyrmling.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "B",
+    "D"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "DR"
+  ],
+  "damageTags": [
+    "A",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

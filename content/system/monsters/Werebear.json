@@ -1,0 +1,150 @@
+{
+  "name": "Werebear",
+  "group": [
+    "Lycanthropes"
+  ],
+  "source": "XMM",
+  "page": 324,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": {
+    "type": "monstrosity",
+    "tags": [
+      "lycanthrope"
+    ]
+  },
+  "alignment": [
+    "N",
+    "G"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 135,
+    "formula": "18d8 + 54"
+  },
+  "speed": {
+    "walk": 30,
+    "alternate": {
+      "walk": [
+        {
+          "number": 40,
+          "condition": "(bear form only)"
+        }
+      ]
+    },
+    "climb": {
+      "number": 30,
+      "condition": "(bear form only)"
+    }
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 19,
+  "dex": 10,
+  "con": 17,
+  "int": 11,
+  "wis": 12,
+  "cha": 12,
+  "skill": {
+    "perception": "+7"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 17,
+  "languages": [
+    "Common (can't speak in bear form)"
+  ],
+  "cr": "5",
+  "gear": [
+    {
+      "item": "handaxe|xphb",
+      "quantity": 4
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The werebear makes two attacks, using Handaxe or Rend in any combination. It can replace one attack with a Bite attack."
+      ]
+    },
+    {
+      "name": "Bite (Bear or Hybrid Form Only)",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}17 ({@damage 2d12 + 4}) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. {@actSave con} {@dc 14}. {@actSaveFail} The target is cursed. If the cursed target drops to 0 {@variantrule Hit Points|XPHB}, it instead becomes a Werebear under the DM's control and has 10 {@variantrule Hit Points|XPHB}. {@actSaveSuccess} The target is immune to this werebear's curse for 24 hours."
+      ]
+    },
+    {
+      "name": "Handaxe (Humanoid or Hybrid Form Only)",
+      "entries": [
+        "{@atkr m,r} {@hit 7}, reach 5 ft or range 20/60 ft. {@h}14 ({@damage 3d6 + 4}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Rend (Bear or Hybrid Form Only)",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}13 ({@damage 2d8 + 4}) Slashing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Shape-Shift",
+      "entries": [
+        "The werebear shape-shifts into a Large bear-humanoid hybrid form or a Large bear, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "forest",
+    "hill"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/werebear.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "CS"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "CUR",
+    "MA",
+    "MLW",
+    "RA",
+    "THW"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,24 @@
+{
+  "name": "Gold Dragon Scale Mail",
+  "source": "XDMG",
+  "page": 254,
+  "srd52": true,
+  "basicRules2024": true,
+  "baseItem": "scale mail|xphb",
+  "type": "MA|XPHB",
+  "resist": [
+    "fire"
+  ],
+  "detail1": "gold",
+  "rarity": "very rare",
+  "reqAttune": true,
+  "weight": 45,
+  "ac": 14,
+  "bonusAc": "+1",
+  "stealth": true,
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Dragon Scale Mail|XDMG}"
+  ],
+  "hasFluffImages": true
+}

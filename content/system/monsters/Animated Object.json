@@ -1,0 +1,106 @@
+{
+  "name": "Animated Object",
+  "source": "XPHB",
+  "page": 240,
+  "srd52": true,
+  "summonedBySpell": "Animate Objects|XPHB",
+  "summonedBySpellLevel": 5,
+  "size": [
+    "T",
+    "S",
+    "M",
+    "L",
+    "H"
+  ],
+  "type": "construct",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "special": "10 (Medium or smaller), 20 (Large), 40 (Huge)"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 16,
+  "dex": 10,
+  "con": 10,
+  "int": 3,
+  "wis": 3,
+  "cha": 1,
+  "senses": [
+    "Blindsight 30 ft."
+  ],
+  "passive": 6,
+  "languages": [
+    "understands the languages you know"
+  ],
+  "pbNote": "equals your Proficiency Bonus",
+  "action": [
+    {
+      "name": "Slam",
+      "entries": [
+        "{@atkr m} {@hitYourSpellAttack Bonus equals your spell attack modifier}, reach 5 ft. {@h}Force damage equal to {@damage (summonSpellLevel - 4)d4 + 3|1d4 + 3}, {@damage (summonSpellLevel - 3)d6 + 3|2d6 + 3} + your spellcasting ability modifier (Large), or {@damage (summonSpellLevel - 3)d12 + 3|2d12 + 3} + your spellcasting ability modifier (Huge)."
+      ]
+    }
+  ],
+  "foundryTokenScale": 1.3,
+  "senseTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluffImages": true,
+  "_versions": [
+    {
+      "name": "Animated Object (Huge)",
+      "source": "XPHB",
+      "hp": {
+        "special": "40"
+      },
+      "action": [
+        {
+          "name": "Slam",
+          "entries": [
+            "{@atkr m} {@hitYourSpellAttack Bonus equals your spell attack modifier}, reach 5 ft. {@h}Force damage equal to {@damage (summonSpellLevel - 3)d12 + 3|2d12 + 3} + your spellcasting ability modifier."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Animated Object (Large)",
+      "source": "XPHB",
+      "hp": {
+        "special": "20"
+      },
+      "action": [
+        {
+          "name": "Slam",
+          "entries": [
+            "{@atkr m} {@hitYourSpellAttack Bonus equals your spell attack modifier}, reach 5 ft. {@h}Force damage equal to {@damage (summonSpellLevel - 3)d6 + 3|2d6 + 3} + your spellcasting ability modifier."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Animated Object (Medium or Smaller)",
+      "source": "XPHB",
+      "hp": {
+        "special": "10"
+      },
+      "action": [
+        {
+          "name": "Slam",
+          "entries": [
+            "{@atkr m} {@hitYourSpellAttack Bonus equals your spell attack modifier}, reach 5 ft. {@h}Force damage equal to {@damage (summonSpellLevel - 4)d4 + 3|1d4 + 3} + your spellcasting ability modifier."
+          ]
+        }
+      ]
+    }
+  ]
+}

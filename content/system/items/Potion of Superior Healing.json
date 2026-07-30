@@ -1,0 +1,20 @@
+{
+  "name": "Potion of Superior Healing",
+  "source": "XDMG",
+  "page": 288,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "P|XPHB",
+  "rarity": "rare",
+  "weight": 0.5,
+  "entries": [
+    "You regain {@dice 8d4 + 8} {@variantrule Hit Points|XPHB} when you drink this potion. The potion's red liquid glimmers when agitated."
+  ],
+  "lootTables": [
+    "Implements - Rare|XDMG",
+    "Relics - Rare|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

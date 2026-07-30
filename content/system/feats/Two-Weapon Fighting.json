@@ -1,0 +1,19 @@
+{
+  "name": "Two-Weapon Fighting",
+  "source": "XPHB",
+  "page": 210,
+  "srd52": true,
+  "basicRules2024": true,
+  "category": "FS",
+  "prerequisite": [
+    {
+      "feature": [
+        "Fighting Style"
+      ]
+    }
+  ],
+  "entries": [
+    "When you make an extra attack as a result of using a weapon that has the {@itemProperty L|XPHB|Light} property, you can add your ability modifier to the damage of that attack if you aren't already adding it to the damage."
+  ],
+  "hasFluffImages": true
+}

@@ -1,0 +1,40 @@
+{
+  "name": "Disguise Kit",
+  "source": "XPHB",
+  "page": 221,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "T|XPHB",
+  "rarity": "none",
+  "weight": 3,
+  "value": 2500,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Charisma"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Apply makeup ({@dc 10})"
+          ]
+        },
+        {
+          "name": "Craft:",
+          "type": "item",
+          "entries": [
+            "{@item Costume|XPHB}"
+          ]
+        }
+      ]
+    }
+  ]
+}

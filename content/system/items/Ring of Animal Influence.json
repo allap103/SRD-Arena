@@ -1,0 +1,36 @@
+{
+  "name": "Ring of Animal Influence",
+  "source": "XDMG",
+  "page": 292,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "rarity": "rare",
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d3}",
+  "charges": 3,
+  "entries": [
+    "This ring has 3 charges, and it regains {@dice 1d3} expended charges daily at dawn. While wearing the ring, you can expend 1 charge to cast one of the following spells (save {@dc 13}) from it:",
+    {
+      "type": "list",
+      "items": [
+        "{@spell Animal Friendship|XPHB}",
+        "{@spell Fear|XPHB} (affects Beasts only)",
+        "{@spell Speak with Animals|XPHB}"
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "animal friendship|xphb",
+        "fear|xphb",
+        "speak with animals|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Relics - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

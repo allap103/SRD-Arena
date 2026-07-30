@@ -1,0 +1,178 @@
+{
+  "name": "Glabrezu",
+  "group": [
+    "Demons"
+  ],
+  "source": "XMM",
+  "page": 138,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "fiend",
+    "tags": [
+      "demon"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 189,
+    "formula": "18d10 + 90"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 20,
+  "dex": 15,
+  "con": 21,
+  "int": 19,
+  "wis": 17,
+  "cha": 16,
+  "save": {
+    "str": "+9",
+    "con": "+9",
+    "wis": "+7",
+    "cha": "+7"
+  },
+  "skill": {
+    "deception": "+7",
+    "perception": "+7"
+  },
+  "senses": [
+    "Truesight 120 ft."
+  ],
+  "passive": 17,
+  "resist": [
+    "cold",
+    "fire",
+    "lightning"
+  ],
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "poisoned"
+  ],
+  "languages": [
+    "Abyssal; telepathy 120 ft."
+  ],
+  "cr": "9",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The glabrezu casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save {@dc 16}):"
+      ],
+      "will": [
+        "{@spell Darkness|XPHB}",
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Dispel Magic|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Confusion|XPHB}",
+          "{@spell Fly|XPHB}",
+          "{@spell Power Word Stun|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Demonic Restoration",
+      "entries": [
+        "If the glabrezu dies outside the Abyss, its body dissolves into ichor, and it gains a new body instantly, reviving with all its {@variantrule Hit Points|XPHB} somewhere in the Abyss."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The glabrezu has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The glabrezu makes two Pincer attacks and uses Pummel or Spellcasting."
+      ]
+    },
+    {
+      "name": "Pincer",
+      "entries": [
+        "{@atkr m} {@hit 9}, reach 10 ft. {@h}16 ({@damage 2d10 + 5}) Slashing damage. If the target is a Medium or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 15}) from one of two pincers."
+      ]
+    },
+    {
+      "name": "Pummel",
+      "entries": [
+        "{@actSave dex} {@dc 17}, one creature {@condition Grappled|XPHB} by the glabrezu. {@actSaveFail} 15 ({@damage 3d6 + 5}) Bludgeoning damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, abyss"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/glabrezu.opus"
+  },
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "U"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "AB",
+    "TP"
+  ],
+  "damageTags": [
+    "B",
+    "S"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "conditionInflictSpell": [
+    "stunned"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "savingThrowForcedSpell": [
+    "constitution",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

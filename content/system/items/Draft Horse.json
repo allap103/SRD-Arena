@@ -1,0 +1,12 @@
+{
+  "name": "Draft Horse",
+  "source": "XPHB",
+  "page": 229,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "MNT|XPHB",
+  "rarity": "none",
+  "value": 5000,
+  "carryingCapacity": 540,
+  "speed": 40
+}

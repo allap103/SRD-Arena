@@ -1,0 +1,93 @@
+{
+  "name": "Giant Vulture",
+  "source": "XMM",
+  "page": 361,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 25,
+    "formula": "3d10 + 9"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 60
+  },
+  "str": 15,
+  "dex": 10,
+  "con": 16,
+  "int": 6,
+  "wis": 12,
+  "cha": 7,
+  "skill": {
+    "perception": "+3"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "resist": [
+    "necrotic"
+  ],
+  "languages": [
+    "understands Common but can't speak"
+  ],
+  "cr": "1",
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The vulture has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the vulture's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Gouge",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}9 ({@damage 2d6 + 2}) Piercing damage, and the target has the {@condition Poisoned|XPHB} condition until the end of its next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "grassland",
+    "hill"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-vulture.opus"
+  },
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "C",
+    "CS"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "poisoned"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

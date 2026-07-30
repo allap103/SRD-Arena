@@ -1,0 +1,19 @@
+{
+  "name": "Oil of Taggit",
+  "source": "XDMG",
+  "page": 91,
+  "srd52": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 40000,
+  "poison": true,
+  "entries": [
+    "A creature subjected to Oil of Taggit must succeed on a {@dc 13} Constitution saving throw or have the {@condition Poisoned|XPHB} condition for 24 hours. The creature also has the {@condition Unconscious|XPHB} condition while {@condition Poisoned|XPHB} in this way. It wakes up if it takes damage."
+  ],
+  "poisonTypes": [
+    "contact"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

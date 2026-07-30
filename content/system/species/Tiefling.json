@@ -1,0 +1,367 @@
+{
+  "name": "Tiefling",
+  "source": "XPHB",
+  "page": 197,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "creatureTypes": [
+    "humanoid"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "speed": 30,
+  "darkvision": 60,
+  "resist": [
+    {
+      "choose": {
+        "from": [
+          "poison",
+          "necrotic",
+          "fire"
+        ]
+      }
+    }
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "races/tiefling.opus"
+  },
+  "additionalSpells": [
+    {
+      "name": "Abyssal",
+      "ability": {
+        "choose": [
+          "int",
+          "wis",
+          "cha"
+        ]
+      },
+      "known": {
+        "1": [
+          "thaumaturgy|xphb#c",
+          "poison spray|xphb#c"
+        ]
+      },
+      "innate": {
+        "3": {
+          "daily": {
+            "1": [
+              "ray of sickness|xphb"
+            ]
+          }
+        },
+        "5": {
+          "daily": {
+            "1": [
+              "hold person|xphb"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Chthonic",
+      "ability": {
+        "choose": [
+          "int",
+          "wis",
+          "cha"
+        ]
+      },
+      "known": {
+        "1": [
+          "thaumaturgy|xphb#c",
+          "chill touch|xphb#c"
+        ]
+      },
+      "innate": {
+        "3": {
+          "daily": {
+            "1": [
+              "false life|xphb"
+            ]
+          }
+        },
+        "5": {
+          "daily": {
+            "1": [
+              "ray of enfeeblement|xphb"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Infernal",
+      "ability": {
+        "choose": [
+          "int",
+          "wis",
+          "cha"
+        ]
+      },
+      "known": {
+        "1": [
+          "thaumaturgy|xphb#c",
+          "fire bolt|xphb#c"
+        ]
+      },
+      "innate": {
+        "3": {
+          "daily": {
+            "1": [
+              "hellish rebuke|xphb"
+            ]
+          }
+        },
+        "5": {
+          "daily": {
+            "1": [
+              "darkness|xphb"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "sizeEntry": {
+    "type": "item",
+    "name": "Size:",
+    "entries": [
+      "Medium (about 4-7 feet tall) or Small (about 3-4 feet tall), chosen when you select this species"
+    ]
+  },
+  "entries": [
+    {
+      "type": "entries",
+      "name": "Darkvision",
+      "entries": [
+        "You have {@sense Darkvision|XPHB} with a range of 60 feet."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Fiendish Legacy",
+      "entries": [
+        "You are the recipient of a legacy that grants you supernatural abilities. Choose a legacy from the Fiendish Legacies table. You gain the level 1 benefit of the chosen legacy.",
+        "When you reach character levels 3 and 5, you learn a higher-level spell, as shown on the table. You always have that spell prepared. You can cast it once without a spell slot, and you regain the ability to cast it in that way when you finish a {@variantrule Long Rest|XPHB}. You can also cast the spell using any spell slots you have of the appropriate level. Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the legacy).",
+        {
+          "type": "table",
+          "caption": "Fiendish Legacies",
+          "colLabels": [
+            "Legacy",
+            "Level 1",
+            "Level 3",
+            "Level 5"
+          ],
+          "colStyles": [
+            "col-2",
+            "col-6",
+            "col-2",
+            "col-2"
+          ],
+          "rows": [
+            [
+              "Abyssal",
+              "You have {@variantrule Resistance|XPHB} to Poison damage. You also know the {@spell Poison Spray|XPHB} cantrip.",
+              "{@spell Ray of Sickness|XPHB}",
+              "{@spell Hold Person|XPHB}"
+            ],
+            [
+              "Chthonic",
+              "You have {@variantrule Resistance|XPHB} to Necrotic damage. You also know the {@spell Chill Touch|XPHB} cantrip.",
+              "{@spell False Life|XPHB}",
+              "{@spell Ray of Enfeeblement|XPHB}"
+            ],
+            [
+              "Infernal",
+              "You have {@variantrule Resistance|XPHB} to Fire damage. You also know the {@spell Fire Bolt|XPHB} cantrip.",
+              "{@spell Hellish Rebuke|XPHB}",
+              "{@spell Darkness|XPHB}"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Otherworldly Presence",
+      "entries": [
+        "You know the {@spell Thaumaturgy|XPHB} cantrip. When you cast it with this trait, the spell uses the same spellcasting ability you use for your Fiendish Legacy Trait."
+      ]
+    }
+  ],
+  "hasFluff": true,
+  "hasFluffImages": true,
+  "_versions": [
+    {
+      "name": "Tiefling; Abyssal Legacy",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Fiendish Legacy",
+          "items": {
+            "name": "Fiendish Legacy (Abyssal)",
+            "type": "entries",
+            "entries": [
+              "You are the recipient of a legacy that grants you supernatural abilities. You have {@variantrule Resistance|XPHB} to Poison damage. You also know the {@spell Poison Spray|XPHB} cantrip.",
+              "When you reach character level 3, you learn the {@spell Ray of Sickness|XPHB} spell. When you reach character level 5, you also learn the {@spell Hold Person|XPHB} spell. You always have these spells prepared, and you can cast each spell once without a spell slot. Once you cast either of these spells with this trait, you can't cast that spell with it again until you finish a {@variantrule Long Rest|XPHB}. You can also cast the spell using any spell slots you have of the appropriate level.",
+              "Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the legacy)."
+            ]
+          }
+        }
+      },
+      "darkvision": 120,
+      "resist": [
+        "poison"
+      ],
+      "additionalSpells": [
+        {
+          "innate": {
+            "3": {
+              "daily": {
+                "1": [
+                  "ray of sickness|xphb"
+                ]
+              }
+            },
+            "5": {
+              "daily": {
+                "1": [
+                  "hold person|xphb"
+                ]
+              }
+            }
+          },
+          "ability": {
+            "choose": [
+              "int",
+              "wis",
+              "cha"
+            ]
+          },
+          "known": {
+            "1": [
+              "thaumaturgy|xphb#c",
+              "poison spray|xphb#c"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tiefling; Chthonic Legacy",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Fiendish Legacy",
+          "items": {
+            "name": "Fiendish Legacy (Chthonic)",
+            "type": "entries",
+            "entries": [
+              "You are the recipient of a legacy that grants you supernatural abilities. You have {@variantrule Resistance|XPHB} to Necrotic damage. You also know the {@spell Chill Touch|XPHB} cantrip.",
+              "When you reach character level 3, you learn the {@spell False Life|XPHB} spell. When you reach character level 5, you also learn the {@spell Ray of Enfeeblement|XPHB} spell. You always have these spells prepared, and you can cast each spell once without a spell slot. Once you cast either of these spells with this trait, you can't cast that spell with it again until you finish a {@variantrule Long Rest|XPHB}. You can also cast the spell using any spell slots you have of the appropriate level.",
+              "Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the legacy)."
+            ]
+          }
+        }
+      },
+      "resist": [
+        "necrotic"
+      ],
+      "additionalSpells": [
+        {
+          "innate": {
+            "3": {
+              "daily": {
+                "1": [
+                  "false life|xphb"
+                ]
+              }
+            },
+            "5": {
+              "daily": {
+                "1": [
+                  "ray of enfeeblement|xphb"
+                ]
+              }
+            }
+          },
+          "ability": {
+            "choose": [
+              "int",
+              "wis",
+              "cha"
+            ]
+          },
+          "known": {
+            "1": [
+              "thaumaturgy|xphb#c",
+              "chill touch|xphb#c"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tiefling; Infernal Legacy",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Fiendish Legacy",
+          "items": {
+            "name": "Fiendish Legacy (Infernal)",
+            "type": "entries",
+            "entries": [
+              "You are the recipient of a legacy that grants you supernatural abilities. You have {@variantrule Resistance|XPHB} to Fire damage. You also know the {@spell Fire Bolt|XPHB} cantrip.",
+              "When you reach character level 3, you learn the {@spell Hellish Rebuke|XPHB} spell. When you reach character level 5, you also learn the {@spell Darkness|XPHB} spell. You always have these spells prepared, and you can cast each spell once without a spell slot. Once you cast either of these spells with this trait, you can't cast that spell with it again until you finish a {@variantrule Long Rest|XPHB}. You can also cast the spell using any spell slots you have of the appropriate level.",
+              "Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the legacy)."
+            ]
+          }
+        }
+      },
+      "resist": [
+        "fire"
+      ],
+      "additionalSpells": [
+        {
+          "innate": {
+            "3": {
+              "daily": {
+                "1": [
+                  "hellish rebuke|xphb"
+                ]
+              }
+            },
+            "5": {
+              "daily": {
+                "1": [
+                  "darkness|xphb"
+                ]
+              }
+            }
+          },
+          "ability": {
+            "choose": [
+              "int",
+              "wis",
+              "cha"
+            ]
+          },
+          "known": {
+            "1": [
+              "thaumaturgy|xphb#c",
+              "fire bolt|xphb#c"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Signet Ring",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "CoS"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "value": 500
+}

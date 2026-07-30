@@ -1,0 +1,14 @@
+{
+  "name": "Riding Saddle",
+  "source": "XPHB",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "TAH|XPHB",
+  "rarity": "none",
+  "weight": 25,
+  "value": 1000,
+  "entries": [
+    "A saddle comes with a bit, a bridle, reins, and any other equipment needed to use the saddle."
+  ]
+}

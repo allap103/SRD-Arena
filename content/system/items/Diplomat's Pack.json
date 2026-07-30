@@ -1,0 +1,42 @@
+{
+  "name": "Diplomat's Pack",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 39,
+  "value": 3900,
+  "entries": [
+    "A Diplomat's Pack contains the following items: {@item Chest|XPHB}, {@item Fine Clothes|XPHB}, {@item Ink|XPHB}, 5 {@item Ink Pen|XPHB|Ink Pens}, {@item Lamp|XPHB}, 2 {@item Map or Scroll Case|XPHB|Map or Scroll Cases}, 4 flasks of {@item Oil|XPHB}, 5 sheets of {@item Paper|XPHB}, 5 sheets of {@item Parchment|XPHB}, {@item Perfume|XPHB}, and {@item Tinderbox|XPHB}."
+  ],
+  "packContents": [
+    "chest|xphb",
+    "fine clothes|xphb",
+    "ink|xphb",
+    {
+      "item": "ink pen|xphb",
+      "quantity": 5
+    },
+    "lamp|xphb",
+    {
+      "item": "map or scroll case|xphb",
+      "quantity": 2
+    },
+    {
+      "item": "oil|xphb",
+      "quantity": 4
+    },
+    {
+      "item": "paper|xphb",
+      "quantity": 5
+    },
+    {
+      "item": "parchment|xphb",
+      "quantity": 5
+    },
+    "perfume|xphb",
+    "tinderbox|xphb"
+  ]
+}

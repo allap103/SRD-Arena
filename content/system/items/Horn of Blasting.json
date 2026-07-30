@@ -1,0 +1,26 @@
+{
+  "name": "Horn of Blasting",
+  "source": "XDMG",
+  "page": 270,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TFV"
+  ],
+  "baseItem": "horn|xphb",
+  "type": "INS|XPHB",
+  "rarity": "rare",
+  "wondrous": true,
+  "entries": [
+    "You can take a {@action Magic|XPHB} action to blow the horn, which emits a thunderous blast in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone} that is audible out to 600 feet. Each creature in the {@variantrule Cone [Area of Effect]|XPHB|Cone} makes a {@dc 15} Constitution saving throw. On a failed save, a creature takes {@damage 5d8} Thunder damage and has the {@condition Deafened|XPHB} condition for 1 minute. On a successful save, a creature takes half as much damage only. Glass or crystal objects in the {@variantrule Cone [Area of Effect]|XPHB|Cone} that aren't being worn or carried take {@damage 10d8} Thunder damage.",
+    "Each use of the horn's magic has a {@chance 20} chance of causing the horn to explode. The explosion deals {@damage 10d6} Force damage to the user and destroys the horn."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Armaments - Rare|XDMG",
+    "Relics - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

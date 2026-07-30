@@ -1,0 +1,38 @@
+{
+  "name": "Boon of Combat Prowess",
+  "source": "XPHB",
+  "page": 210,
+  "srd52": true,
+  "basicRules2024": true,
+  "category": "EB",
+  "prerequisite": [
+    {
+      "level": 19
+    }
+  ],
+  "ability": [
+    {
+      "choose": {
+        "from": [
+          "str",
+          "dex",
+          "con",
+          "int",
+          "wis",
+          "cha"
+        ]
+      },
+      "max": 30
+    }
+  ],
+  "entries": [
+    "You gain the following benefits.",
+    {
+      "type": "entries",
+      "name": "Peerless Aim",
+      "entries": [
+        "When you miss with an attack roll, you can hit instead. Once you use this benefit, you can't use it again until the start of your next turn."
+      ]
+    }
+  ]
+}

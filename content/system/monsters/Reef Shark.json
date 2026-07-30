@@ -1,0 +1,93 @@
+{
+  "name": "Reef Shark",
+  "source": "XMM",
+  "page": 368,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 356
+    }
+  ],
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "4d8 + 4"
+  },
+  "speed": {
+    "walk": 5,
+    "swim": 30
+  },
+  "str": 14,
+  "dex": 15,
+  "con": 13,
+  "int": 1,
+  "wis": 10,
+  "cha": 4,
+  "skill": {
+    "perception": "+2"
+  },
+  "senses": [
+    "Blindsight 30 ft."
+  ],
+  "passive": 12,
+  "cr": "1/2",
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The shark has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the shark's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    },
+    {
+      "name": "Water Breathing",
+      "entries": [
+        "The shark can breathe only underwater."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}7 ({@damage 2d4 + 2}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "underwater"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/reef-shark.opus"
+  },
+  "traitTags": [
+    "Pack Tactics",
+    "Water Breathing"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

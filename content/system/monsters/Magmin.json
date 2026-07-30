@@ -1,0 +1,96 @@
+{
+  "name": "Magmin",
+  "source": "XMM",
+  "page": 200,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "S"
+  ],
+  "type": "elemental",
+  "alignment": [
+    "C",
+    "N"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 13,
+    "formula": "3d6 + 3"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 7,
+  "dex": 15,
+  "con": 12,
+  "int": 8,
+  "wis": 11,
+  "cha": 10,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "immune": [
+    "fire"
+  ],
+  "languages": [
+    "Primordial (Ignan)"
+  ],
+  "cr": "1/2",
+  "trait": [
+    {
+      "name": "Death Burst",
+      "entries": [
+        "The magmin explodes when it dies. {@actSave dex} {@dc 11}, each creature in a 10-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the magmin. {@actSaveFail} 7 ({@damage 2d6}) Fire damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Touch",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}7 ({@damage 2d4 + 2}) Fire damage. If the target is a creature or a flammable object that isn't being worn or carried, it starts {@hazard burning|XPHB}."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Ignited Illumination",
+      "entries": [
+        "The magmin sets itself ablaze or extinguishes its flames. While ablaze, the magmin sheds {@variantrule Bright Light|XPHB} in a 10-foot radius and {@variantrule Dim Light|XPHB} for an additional 10 feet."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, fire"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/magmin.opus"
+  },
+  "traitTags": [
+    "Death Burst"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "IG",
+    "P"
+  ],
+  "damageTags": [
+    "F"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

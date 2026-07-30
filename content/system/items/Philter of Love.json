@@ -1,0 +1,20 @@
+{
+  "name": "Philter of Love",
+  "source": "XDMG",
+  "page": 285,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "P|XPHB",
+  "rarity": "uncommon",
+  "weight": 0.5,
+  "entries": [
+    "The next time you see a creature within 10 minutes after drinking this philter, you are {@condition charmed|XPHB} by that creature and have the {@condition Charmed|XPHB} condition for 1 hour.",
+    "This rose-hued, effervescent liquid contains one easy-to-miss bubble shaped like a heart."
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

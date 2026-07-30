@@ -1,0 +1,58 @@
+{
+  "name": "Stinking Cloud",
+  "source": "XPHB",
+  "page": 321,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BD",
+    "DrDe-TFV",
+    "UtHftLH"
+  ],
+  "level": 3,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 90
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a rotten egg"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You create a 20-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} of yellow, nauseating gas centered on a point within range. The cloud is {@variantrule Heavily Obscured|XPHB}. The cloud lingers in the air for the duration or until a strong wind (such as the one created by {@spell Gust of Wind|XPHB}) disperses it.",
+    "Each creature that starts its turn in the {@variantrule Sphere [Area of Effect]|XPHB|Sphere} must succeed on a Constitution saving throw or have the {@condition Poisoned|XPHB} condition until the end of the current turn. While {@condition Poisoned|XPHB} in this way, the creature can't take an action or a {@variantrule Bonus Action|XPHB}."
+  ],
+  "conditionInflict": [
+    "poisoned"
+  ],
+  "savingThrow": [
+    "constitution"
+  ],
+  "miscTags": [
+    "OBS"
+  ],
+  "areaTags": [
+    "S"
+  ]
+}

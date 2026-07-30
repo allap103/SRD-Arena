@@ -1,0 +1,106 @@
+{
+  "name": "Guard Captain",
+  "source": "XMM",
+  "page": 162,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FFotR",
+    "FRAiF",
+    "HotB",
+    "LFL",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 75,
+    "formula": "10d8 + 30"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 18,
+  "dex": 14,
+  "con": 16,
+  "int": 12,
+  "wis": 14,
+  "cha": 13,
+  "skill": {
+    "athletics": "+6",
+    "perception": "+4"
+  },
+  "passive": 14,
+  "languages": [
+    "Common"
+  ],
+  "cr": "4",
+  "gear": [
+    "breastplate|xphb",
+    {
+      "item": "javelin|xphb",
+      "quantity": 6
+    },
+    "longsword|xphb",
+    "shield|xphb"
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The guard makes two attacks, using Javelin or Longsword in any combination."
+      ]
+    },
+    {
+      "name": "Javelin",
+      "entries": [
+        "{@atkr m,r} {@hit 6}, reach 5 ft. or range 30/120 ft. {@h}14 ({@damage 3d6 + 4}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Longsword",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}15 ({@damage 2d10 + 4}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "armaments",
+    "individual"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "THW"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

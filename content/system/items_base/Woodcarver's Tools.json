@@ -1,0 +1,43 @@
+{
+  "name": "Woodcarver's Tools",
+  "source": "XPHB",
+  "page": 221,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "type": "AT|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "value": 100,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Dexterity"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Carve a pattern in wood ({@dc 10})"
+          ]
+        },
+        {
+          "name": "Craft:",
+          "type": "item",
+          "entries": [
+            "{@item Club|XPHB}, {@item Greatclub|XPHB}, {@item Quarterstaff|XPHB}, Ranged weapons (except {@item Pistol|XPHB}, {@item Musket|XPHB}, and {@item Sling|XPHB}), {@item Arcane Focus|XPHB}, {@item Arrows (20)|XPHB|Arrows}, {@item Bolts (20)|XPHB|Bolts}, {@item Druidic Focus|XPHB}, {@item Ink Pen|XPHB}, {@item Needles (50)|XPHB|Needles}"
+          ]
+        }
+      ]
+    }
+  ]
+}

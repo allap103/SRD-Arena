@@ -1,0 +1,48 @@
+{
+  "name": "Protection from Energy",
+  "source": "XPHB",
+  "page": 309,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 3,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "For the duration, the willing creature you touch has {@variantrule Resistance|XPHB} to one damage type of your choice: Acid, Cold, Fire, Lightning, or Thunder."
+  ],
+  "damageResist": [
+    "acid",
+    "cold",
+    "fire",
+    "lightning",
+    "thunder"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "name": "Wererat",
+  "group": [
+    "Lycanthropes"
+  ],
+  "source": "XMM",
+  "page": 325,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": {
+    "type": "monstrosity",
+    "tags": [
+      "lycanthrope"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 60,
+    "formula": "11d8 + 11"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 10,
+  "dex": 16,
+  "con": 12,
+  "int": 11,
+  "wis": 10,
+  "cha": 8,
+  "skill": {
+    "perception": "+4",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "languages": [
+    "Common (can't speak in rat form)"
+  ],
+  "cr": "2",
+  "gear": [
+    "hand crossbow|xphb"
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The wererat makes two attacks, using Scratch or Hand Crossbow in any combination. It can replace one attack with a Bite attack."
+      ]
+    },
+    {
+      "name": "Bite (Rat or Hybrid Form Only)",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}8 ({@damage 2d4 + 3}) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. {@actSave con} {@dc 11}. {@actSaveFail} The target is cursed. If the cursed target drops to 0 {@variantrule Hit Points|XPHB}, it instead becomes a Wererat under the DM's control and has 10 {@variantrule Hit Points|XPHB}. {@actSaveSuccess} The target is immune to this wererat's curse for 24 hours."
+      ]
+    },
+    {
+      "name": "Scratch",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}6 ({@damage 1d6 + 3}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Hand Crossbow (Humanoid or Hybrid Form Only)",
+      "entries": [
+        "{@atkr r} {@hit 5}, range 30/120 ft. {@h}6 ({@damage 1d6 + 3}) Piercing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Shape-Shift",
+      "entries": [
+        "The wererat shape-shifts into a Medium rat-humanoid hybrid or a Small rat, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "urban"
+  ],
+  "treasure": [
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/wererat.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "CS"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "CUR",
+    "MA",
+    "RA",
+    "RNG"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

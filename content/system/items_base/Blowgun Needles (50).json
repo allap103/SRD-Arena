@@ -1,0 +1,22 @@
+{
+  "name": "Blowgun Needles (50)",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Needles (50)|XPHB"
+  ],
+  "edition": "classic",
+  "type": "A",
+  "rarity": "none",
+  "weight": 1,
+  "value": 100,
+  "needleBlowgun": true,
+  "packContents": [
+    {
+      "item": "blowgun needle|phb",
+      "quantity": 50
+    }
+  ]
+}

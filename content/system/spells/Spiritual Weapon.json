@@ -1,0 +1,65 @@
+{
+  "name": "Spiritual Weapon",
+  "source": "XPHB",
+  "page": 319,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 2,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You create a floating, spectral force that resembles a weapon of your choice and lasts for the duration. The force appears within range in a space of your choice, and you can immediately make one melee spell attack against one creature within 5 feet of the force. On a hit, the target takes Force damage equal to {@damage 1d8} plus your spellcasting ability modifier.",
+    "As a {@variantrule Bonus Action|XPHB} on your later turns, you can move the force up to 20 feet and repeat the attack against a creature within 5 feet of it."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 1d8|2-9|1d8} for every slot level above 2."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "force"
+  ],
+  "spellAttack": [
+    "M"
+  ],
+  "miscTags": [
+    "UBA"
+  ],
+  "areaTags": [
+    "ST"
+  ],
+  "hasFluffImages": true
+}

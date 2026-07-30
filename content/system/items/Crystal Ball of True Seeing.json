@@ -1,0 +1,20 @@
+{
+  "name": "Crystal Ball of True Seeing",
+  "source": "XDMG",
+  "page": 246,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "legendary",
+  "reqAttune": true,
+  "wondrous": true,
+  "weight": 3,
+  "entries": [
+    "While touching this crystal orb, you can cast {@spell Scrying|XPHB} (save {@dc 17}) with it. In addition, you have {@sense Truesight|XPHB} with a range of 120 feet centered on the spell's sensor."
+  ],
+  "attachedSpells": [
+    "scrying|xphb"
+  ],
+  "lootTables": [
+    "Arcana - Legendary|XDMG"
+  ]
+}

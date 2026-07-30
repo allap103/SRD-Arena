@@ -1,0 +1,57 @@
+{
+  "name": "Cone of Cold",
+  "source": "XPHB",
+  "page": 253,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 5,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "cone",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a small crystal or glass cone"
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You unleash a blast of cold air. Each creature in a 60-foot {@variantrule Cone [Area of Effect]|XPHB|Cone} originating from you makes a Constitution saving throw, taking {@damage 8d8} Cold damage on a failed save or half as much damage on a successful one. A creature killed by this spell becomes a frozen statue until it thaws."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 8d8|5-9|1d8} for each spell slot level above 5."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "cold"
+  ],
+  "savingThrow": [
+    "constitution"
+  ],
+  "areaTags": [
+    "N"
+  ],
+  "hasFluffImages": true
+}

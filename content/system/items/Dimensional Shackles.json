@@ -1,0 +1,20 @@
+{
+  "name": "Dimensional Shackles",
+  "source": "XDMG",
+  "page": 254,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "wondrous": true,
+  "entries": [
+    "You can take a {@action Utilize|XPHB} action to place these shackles on a creature that has the {@condition Incapacitated|XPHB} condition. The shackles adjust to fit a creature of Small to Large size. The shackles prevent a creature bound by them from using any method of extradimensional movement, including teleportation or travel to a different plane of existence. They don't prevent the creature from passing through an interdimensional portal.",
+    "You and any creature you designate when you use the shackles can take a {@action Utilize|XPHB} action to remove them. Once every 30 days, the bound creature can make a {@dc 30} Strength ({@skill Athletics|XPHB}) check. On a successful check, the creature breaks free and destroys the shackles."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Implements - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

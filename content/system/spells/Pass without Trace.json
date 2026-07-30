@@ -1,0 +1,43 @@
+{
+  "name": "Pass without Trace",
+  "source": "XPHB",
+  "page": 303,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 2,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "emanation",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "ashes from burned mistletoe"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You radiate a concealing aura in a 30-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} for the duration. While in the aura, you and each creature you choose have a +10 bonus to Dexterity ({@skill Stealth|XPHB}) checks and leave no tracks."
+  ],
+  "areaTags": [
+    "MT"
+  ]
+}

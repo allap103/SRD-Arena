@@ -1,0 +1,53 @@
+{
+  "name": "Sunburst",
+  "source": "XPHB",
+  "page": 329,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 8,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 150
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a piece of sunstone"
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "Brilliant sunlight flashes in a 60-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} centered on a point you choose within range. Each creature in the {@variantrule Sphere [Area of Effect]|XPHB|Sphere} makes a Constitution saving throw. On a failed save, a creature takes {@damage 12d6} Radiant damage and has the {@condition Blinded|XPHB} condition for 1 minute. On a successful save, it takes half as much damage only.",
+    "A creature {@condition Blinded|XPHB} by this spell makes another Constitution saving throw at the end of each of its turns, ending the effect on itself on a success.",
+    "This spell dispels {@variantrule Darkness|XPHB} in its area that was created by any spell."
+  ],
+  "damageInflict": [
+    "radiant"
+  ],
+  "conditionInflict": [
+    "blinded"
+  ],
+  "savingThrow": [
+    "constitution"
+  ],
+  "miscTags": [
+    "LGT",
+    "LGTS"
+  ],
+  "areaTags": [
+    "S"
+  ]
+}

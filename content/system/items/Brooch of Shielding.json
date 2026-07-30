@@ -1,0 +1,23 @@
+{
+  "name": "Brooch of Shielding",
+  "source": "XDMG",
+  "page": 241,
+  "srd52": true,
+  "basicRules2024": true,
+  "resist": [
+    "force"
+  ],
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "entries": [
+    "While wearing this brooch, you have {@variantrule Resistance|XPHB} to Force damage, and you have {@variantrule Immunity|XPHB} to damage from the {@spell Magic Missile|XPHB} spell."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

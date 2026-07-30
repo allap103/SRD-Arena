@@ -1,0 +1,28 @@
+{
+  "name": "Hooded Lantern",
+  "source": "XPHB",
+  "page": 226,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-DaS",
+    "DrDe-TDoN",
+    "HotB"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 500,
+  "entries": [
+    "A Hooded Lantern burns Oil as fuel to cast {@variantrule Bright Light|XPHB} in a 30-foot radius and {@variantrule Dim Light|XPHB} for an additional 30 feet. As a {@variantrule Bonus Action|XPHB}, you can lower the hood, reducing the light to {@variantrule Dim Light|XPHB} in a 5-foot radius, or raise it again."
+  ],
+  "light": [
+    {
+      "bright": 30,
+      "dim": 60
+    },
+    {
+      "dim": 5
+    }
+  ]
+}

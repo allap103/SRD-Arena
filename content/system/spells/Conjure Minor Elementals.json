@@ -1,0 +1,62 @@
+{
+  "name": "Conjure Minor Elementals",
+  "source": "XPHB",
+  "page": 255,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 4,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "emanation",
+    "distance": {
+      "type": "feet",
+      "amount": 15
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You conjure spirits from the Elemental Planes that flit around you in a 15-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} for the duration. Until the spell ends, any attack you make deals an extra {@damage 2d8} damage when you hit a creature in the {@variantrule Emanation [Area of Effect]|XPHB|Emanation}. This damage is Acid, Cold, Fire, or Lightning (your choice when you make the attack).",
+    "In addition, the ground in the {@variantrule Emanation [Area of Effect]|XPHB|Emanation} is {@variantrule Difficult Terrain|XPHB} for your enemies."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 2d8|4-9|1d8} for each spell slot level above 4."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "acid",
+    "cold",
+    "fire",
+    "lightning"
+  ],
+  "miscTags": [
+    "AAD",
+    "DFT"
+  ],
+  "areaTags": [
+    "S"
+  ]
+}

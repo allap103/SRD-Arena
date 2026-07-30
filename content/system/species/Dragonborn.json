@@ -1,0 +1,265 @@
+{
+  "name": "Dragonborn",
+  "source": "XPHB",
+  "page": 187,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "creatureTypes": [
+    "humanoid"
+  ],
+  "size": [
+    "M"
+  ],
+  "speed": 30,
+  "darkvision": 60,
+  "resist": [
+    {
+      "choose": {
+        "from": [
+          "acid",
+          "lightning",
+          "fire",
+          "poison",
+          "cold"
+        ]
+      }
+    }
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "races/dragonborn.opus"
+  },
+  "sizeEntry": {
+    "type": "item",
+    "name": "Size:",
+    "entries": [
+      "Medium (about 5-7 feet tall)"
+    ]
+  },
+  "entries": [
+    {
+      "type": "entries",
+      "name": "Draconic Ancestry",
+      "entries": [
+        "Your lineage stems from a dragon progenitor. Choose the kind of dragon from the Draconic Ancestors table. Your choice affects your Breath Weapon and {@variantrule Damage|XPHB} {@variantrule Resistance|XPHB} traits as well as your appearance.",
+        {
+          "type": "table",
+          "caption": "Draconic Ancestors",
+          "colLabels": [
+            "Dragon",
+            "Damage Type"
+          ],
+          "colStyles": [
+            "col-6",
+            "col-6"
+          ],
+          "rows": [
+            [
+              "Black",
+              "Acid"
+            ],
+            [
+              "Blue",
+              "Lightning"
+            ],
+            [
+              "Brass",
+              "Fire"
+            ],
+            [
+              "Bronze",
+              "Lightning"
+            ],
+            [
+              "Copper",
+              "Acid"
+            ],
+            [
+              "Gold",
+              "Fire"
+            ],
+            [
+              "Green",
+              "Poison"
+            ],
+            [
+              "Red",
+              "Fire"
+            ],
+            [
+              "Silver",
+              "Cold"
+            ],
+            [
+              "White",
+              "Cold"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Breath Weapon",
+      "entries": [
+        "When you take the {@action Attack|XPHB} action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone} or a 30-foot {@variantrule Line [Area of Effect]|XPHB|Line} that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw ({@dc 8} plus your Constitution modifier and {@variantrule Proficiency|XPHB|Proficiency Bonus}). On a failed save, a creature takes {@damage 1d10} damage of the type determined by your Draconic Ancestry trait. On a successful save, a creature takes half as much damage. This damage increases by {@damage 1d10} when you reach character levels 5 ({@damage 2d10}), 11 ({@damage 3d10}), and 17 ({@damage 4d10}).",
+        "You can use this Breath Weapon a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Damage Resistance",
+      "entries": [
+        "You have {@variantrule Resistance|XPHB} to the damage type determined by your Draconic Ancestry trait."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Darkvision",
+      "entries": [
+        "You have {@sense Darkvision|XPHB} with a range of 60 feet."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Draconic Flight",
+      "entries": [
+        "When you reach character level 5, you can channel draconic magic to give yourself temporary flight. As a {@variantrule Bonus Action|XPHB}, you sprout spectral wings on your back that last for 10 minutes or until you retract the wings (no action required) or have the {@condition Incapacitated|XPHB} condition. During that time, you have a {@variantrule Fly Speed|XPHB} equal to your {@variantrule Speed|XPHB}. Your wings appear to be made of the same energy as your Breath Weapon. Once you use this trait, you can't use it again until you finish a {@variantrule Long Rest|XPHB}."
+      ]
+    }
+  ],
+  "hasFluff": true,
+  "hasFluffImages": true,
+  "_versions": [
+    {
+      "_abstract": {
+        "name": "Dragonborn ({{color}})",
+        "source": "XPHB",
+        "_mod": {
+          "entries": [
+            {
+              "mode": "removeArr",
+              "names": "Draconic Ancestry"
+            },
+            {
+              "mode": "replaceArr",
+              "replace": "Breath Weapon",
+              "items": {
+                "type": "entries",
+                "name": "Breath Weapon",
+                "entries": [
+                  "When you take the {@action Attack|XPHB} action on your turn, you can replace one of your attacks with an exhalation of magical energy in either a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone} or a 30-foot {@variantrule Line [Area of Effect]|XPHB|Line} that is 5 feet wide (choose the shape each time). Each creature in that area must make a Dexterity saving throw ({@dc 8} plus your Constitution modifier and {@variantrule Proficiency|XPHB|Proficiency Bonus}). On a failed save, a creature takes {@damage 1d10} {{damageType}} damage. On a successful save, a creature takes half as much damage. This damage increases by {@damage 1d10} when you reach character levels 5 ({@damage 2d10}), 11 ({@damage 3d10}), and 17 ({@damage 4d10}).",
+                  "You can use this Breath Weapon a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}."
+                ]
+              }
+            },
+            {
+              "mode": "replaceArr",
+              "replace": "Damage Resistance",
+              "items": {
+                "type": "entries",
+                "name": "Damage Resistance",
+                "entries": [
+                  "You have {@variantrule Resistance|XPHB} to {{damageType}} damage."
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "_implementations": [
+        {
+          "_variables": {
+            "color": "Black",
+            "damageType": "Acid"
+          },
+          "resist": [
+            "acid"
+          ]
+        },
+        {
+          "_variables": {
+            "color": "Blue",
+            "damageType": "Lightning"
+          },
+          "resist": [
+            "lightning"
+          ]
+        },
+        {
+          "_variables": {
+            "color": "Brass",
+            "damageType": "Fire"
+          },
+          "resist": [
+            "fire"
+          ]
+        },
+        {
+          "_variables": {
+            "color": "Bronze",
+            "damageType": "Lightning"
+          },
+          "resist": [
+            "lightning"
+          ]
+        },
+        {
+          "_variables": {
+            "color": "Copper",
+            "damageType": "Acid"
+          },
+          "resist": [
+            "acid"
+          ]
+        },
+        {
+          "_variables": {
+            "color": "Gold",
+            "damageType": "Fire"
+          },
+          "resist": [
+            "fire"
+          ]
+        },
+        {
+          "_variables": {
+            "color": "Green",
+            "damageType": "Poison"
+          },
+          "resist": [
+            "poison"
+          ]
+        },
+        {
+          "_variables": {
+            "color": "Red",
+            "damageType": "Fire"
+          },
+          "resist": [
+            "fire"
+          ]
+        },
+        {
+          "_variables": {
+            "color": "Silver",
+            "damageType": "Cold"
+          },
+          "resist": [
+            "cold"
+          ]
+        },
+        {
+          "_variables": {
+            "color": "White",
+            "damageType": "Cold"
+          },
+          "resist": [
+            "cold"
+          ]
+        }
+      ]
+    }
+  ]
+}

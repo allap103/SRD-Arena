@@ -1,0 +1,139 @@
+{
+  "name": "Succubus",
+  "source": "XMM",
+  "page": 303,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "RHW",
+    "ScoEE"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "fiend",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 71,
+    "formula": "13d8 + 13"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 60
+  },
+  "str": 8,
+  "dex": 17,
+  "con": 13,
+  "int": 15,
+  "wis": 12,
+  "cha": 20,
+  "skill": {
+    "deception": "+9",
+    "insight": "+5",
+    "perception": "+5",
+    "persuasion": "+9",
+    "stealth": "+7"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "resist": [
+    "cold",
+    "fire",
+    "poison",
+    "psychic"
+  ],
+  "languages": [
+    "Abyssal",
+    "Common",
+    "Infernal; telepathy 60 ft."
+  ],
+  "cr": "4",
+  "trait": [
+    {
+      "name": "Incubus Form",
+      "entries": [
+        "When the succubus finishes a {@variantrule Long Rest|XPHB}, it can shape-shift into an {@creature Incubus|XMM}, using that stat block instead of this one."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The succubus makes one Fiendish Touch attack and uses Charm or Draining Kiss."
+      ]
+    },
+    {
+      "name": "Fiendish Touch",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}16 ({@damage 2d10 + 5}) Psychic damage."
+      ]
+    },
+    {
+      "name": "Charm",
+      "entries": [
+        "The succubus casts {@spell Dominate Person|XPHB} (level 8 version), requiring no spell components and using Charisma as the spellcasting ability (spell save {@dc 15})."
+      ]
+    },
+    {
+      "name": "Draining Kiss",
+      "entries": [
+        "{@actSave con} {@dc 15}, one creature {@condition Charmed|XPHB} by the succubus within 5 feet. {@actSaveFail} 13 ({@damage 3d8}) Psychic damage. {@actSaveSuccess} Half damage. {@actSaveSuccessOrFail} The target's {@variantrule Hit Points|XPHB|Hit Point} maximum decreases by an amount equal to the damage taken."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Shape-Shift",
+      "entries": [
+        "The succubus shape-shifts to resemble a Medium or Small Humanoid or back into its true form. Its game statistics are the same in each form, except its {@variantrule Fly Speed|XPHB} is available only in its true form. Any equipment it's wearing or carrying isn't transformed."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, lower",
+    "urban"
+  ],
+  "treasure": [
+    "implements"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/succubus-incubus.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "AB",
+    "C",
+    "I",
+    "TP"
+  ],
+  "damageTags": [
+    "Y"
+  ],
+  "miscTags": [
+    "HPR",
+    "MA"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

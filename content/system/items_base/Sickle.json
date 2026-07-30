@@ -1,0 +1,23 @@
+{
+  "name": "Sickle",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 100,
+  "weaponCategory": "simple",
+  "property": [
+    "L|XPHB"
+  ],
+  "mastery": [
+    "Nick|XPHB"
+  ],
+  "dmg1": "1d4",
+  "dmgType": "S",
+  "weapon": true,
+  "hasFluffImages": true
+}

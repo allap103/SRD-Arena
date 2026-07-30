@@ -1,0 +1,38 @@
+{
+  "name": "Thieves' Tools",
+  "source": "XPHB",
+  "page": 221,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BtS",
+    "DrDe-TDoN",
+    "WttHC"
+  ],
+  "type": "T|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 2500,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Dexterity"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Pick a lock ({@dc 15}), or disarm a trap ({@dc 15})"
+          ]
+        }
+      ]
+    }
+  ]
+}

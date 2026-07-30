@@ -1,0 +1,45 @@
+{
+  "name": "Boon of the Night Spirit",
+  "source": "XPHB",
+  "page": 211,
+  "srd52": true,
+  "basicRules2024": true,
+  "category": "EB",
+  "prerequisite": [
+    {
+      "level": 19
+    }
+  ],
+  "ability": [
+    {
+      "choose": {
+        "from": [
+          "str",
+          "dex",
+          "con",
+          "int",
+          "wis",
+          "cha"
+        ]
+      },
+      "max": 30
+    }
+  ],
+  "entries": [
+    "You gain the following benefits.",
+    {
+      "type": "entries",
+      "name": "Merge with Shadows",
+      "entries": [
+        "While within {@variantrule Dim Light|XPHB} or {@variantrule Darkness|XPHB}, you can give yourself the {@condition Invisible|XPHB} condition as a {@variantrule Bonus Action|XPHB}. The condition ends on you immediately after you take an action, a {@variantrule Bonus Action|XPHB}, or a {@variantrule Reaction|XPHB}."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Shadowy Form",
+      "entries": [
+        "While within {@variantrule Dim Light|XPHB} or {@variantrule Darkness|XPHB}, you have {@variantrule Resistance|XPHB} to all damage except Psychic and Radiant."
+      ]
+    }
+  ]
+}

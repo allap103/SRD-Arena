@@ -1,0 +1,19 @@
+{
+  "name": "Midnight Tears",
+  "source": "XDMG",
+  "page": 91,
+  "srd52": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 150000,
+  "poison": true,
+  "entries": [
+    "A creature that ingests Midnight Tears suffers no effect until the stroke of midnight. Any effect that ends the {@condition Poisoned|XPHB} condition neutralizes this poison. If the poison hasn't been neutralized before midnight, the creature makes a {@dc 17} Constitution saving throw, taking 31 ({@damage 9d6}) Poison damage on a failed save or half as much damage on a successful one."
+  ],
+  "poisonTypes": [
+    "ingested"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

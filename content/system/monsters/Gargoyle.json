@@ -1,0 +1,115 @@
+{
+  "name": "Gargoyle",
+  "source": "XMM",
+  "page": 128,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-DotSC",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "elemental",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 67,
+    "formula": "9d8 + 27"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 60
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 15,
+  "dex": 11,
+  "con": 16,
+  "int": 6,
+  "wis": 11,
+  "cha": 7,
+  "skill": {
+    "stealth": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "exhaustion",
+    "petrified",
+    "poisoned"
+  ],
+  "languages": [
+    "Primordial (Terran)"
+  ],
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Flyby",
+      "entries": [
+        "The gargoyle doesn't provoke an {@action Opportunity Attack|XPHB} when it flies out of an enemy's reach."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The gargoyle makes two Claw attacks."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}7 ({@damage 2d4 + 2}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark",
+    "urban"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/gargoyle.opus"
+  },
+  "traitTags": [
+    "Flyby"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "P",
+    "T"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

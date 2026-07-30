@@ -1,0 +1,118 @@
+{
+  "name": "Roper",
+  "source": "XMM",
+  "page": 262,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-BtS",
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "aberration",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    20
+  ],
+  "hp": {
+    "average": 93,
+    "formula": "11d10 + 33"
+  },
+  "speed": {
+    "walk": 10,
+    "climb": 20
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 18,
+  "dex": 8,
+  "con": 17,
+  "int": 7,
+  "wis": 16,
+  "cha": 6,
+  "skill": {
+    "perception": "+6",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 16,
+  "cr": "5",
+  "trait": [
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The roper can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The roper makes two Tentacle attacks, uses Reel, and makes two Bite attacks."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}17 ({@damage 3d8 + 4}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Tentacle",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 60 ft. {@h}The target has the {@condition Grappled|XPHB} condition (escape {@dc 14}) from one of six tentacles, and the target has the {@condition Poisoned|XPHB} condition until the grapple ends.",
+        "The tentacle can be damaged, freeing a creature it has {@condition Grappled|XPHB} when destroyed (AC 20, HP 10, {@variantrule Immunity|XPHB} to Poison and Psychic damage). Damaging the tentacle deals no damage to the roper, and a destroyed tentacle regrows at the start of the roper's next turn."
+      ]
+    },
+    {
+      "name": "Reel",
+      "entries": [
+        "The roper pulls each creature {@condition Grappled|XPHB} by it up to 30 feet straight toward it."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/roper.opus"
+  },
+  "traitTags": [
+    "Spider Climb"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack",
+    "Tentacles"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled",
+    "poisoned"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

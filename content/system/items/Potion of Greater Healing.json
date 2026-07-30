@@ -1,0 +1,25 @@
+{
+  "name": "Potion of Greater Healing",
+  "source": "XDMG",
+  "page": 288,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BtS",
+    "FFotR",
+    "HotB"
+  ],
+  "type": "P|XPHB",
+  "rarity": "uncommon",
+  "weight": 0.5,
+  "entries": [
+    "You regain {@dice 4d4 + 4} {@variantrule Hit Points|XPHB} when you drink this potion. The potion's red liquid glimmers when agitated."
+  ],
+  "lootTables": [
+    "Implements - Uncommon|XDMG",
+    "Relics - Uncommon|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "name": "Ettercap",
+  "source": "XMM",
+  "page": 115,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 44,
+    "formula": "8d8 + 8"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 14,
+  "dex": 15,
+  "con": 13,
+  "int": 7,
+  "wis": 12,
+  "cha": 8,
+  "skill": {
+    "perception": "+3",
+    "stealth": "+4",
+    "survival": "+3"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The ettercap can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    },
+    {
+      "name": "Web Walker",
+      "entries": [
+        "The ettercap ignores movement restrictions caused by webs, and the ettercap knows the location of any other creature in contact with the same web."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The ettercap makes one Bite attack and one Claw attack."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Piercing damage plus 2 ({@damage 1d4}) Poison damage, and the target has the {@condition Poisoned|XPHB} condition until the start of the ettercap's next turn."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}7 ({@damage 2d4 + 2}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Web Strand {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 12}, one Large or smaller creature the ettercap can see within 30 feet. {@actSaveFail} The target has the {@condition Restrained|XPHB} condition until the web is destroyed (AC 10; HP 5; {@variantrule Vulnerability|XPHB} to Fire damage; {@variantrule Immunity|XPHB} to Bludgeoning, Poison, and Psychic damage)."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Reel",
+      "entries": [
+        "The ettercap pulls one creature within 30 feet of itself that is {@condition Restrained|XPHB} by its Web Strand up to 25 feet straight toward itself."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "treasure": [
+    "implements"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/ettercap.opus"
+  },
+  "traitTags": [
+    "Spider Climb",
+    "Web Walker"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "I",
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "poisoned",
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

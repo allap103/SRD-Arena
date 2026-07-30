@@ -1,0 +1,40 @@
+{
+  "name": "Calligrapher's Supplies",
+  "source": "XPHB",
+  "page": 220,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "AT|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "value": 1000,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Dexterity"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Write text with impressive flourishes that guard against forgery ({@dc 15})"
+          ]
+        },
+        {
+          "name": "Craft:",
+          "type": "item",
+          "entries": [
+            "{@item Ink|XPHB}, {@item Spell Scroll|XDMG}"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "name": "Weasel",
+  "source": "XMM",
+  "page": 372,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 359
+    }
+  ],
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 1,
+    "formula": "1d4 - 1"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 3,
+  "dex": 16,
+  "con": 8,
+  "int": 2,
+  "wis": 12,
+  "cha": 3,
+  "skill": {
+    "acrobatics": "+5",
+    "perception": "+3",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "cr": "0",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}1 Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/weasel.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

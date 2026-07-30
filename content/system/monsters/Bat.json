@@ -1,0 +1,73 @@
+{
+  "name": "Bat",
+  "source": "XMM",
+  "page": 349,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 346
+    }
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 1,
+    "formula": "1d4 - 1"
+  },
+  "speed": {
+    "walk": 5,
+    "fly": 30
+  },
+  "str": 2,
+  "dex": 15,
+  "con": 8,
+  "int": 2,
+  "wis": 12,
+  "cha": 4,
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 11,
+  "cr": "0",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4} to hit, reach 5 ft. {@h}1 Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "mountain",
+    "underdark",
+    "urban"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/bat.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

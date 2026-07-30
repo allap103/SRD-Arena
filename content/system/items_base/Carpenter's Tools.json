@@ -1,0 +1,40 @@
+{
+  "name": "Carpenter's Tools",
+  "source": "XPHB",
+  "page": 220,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "AT|XPHB",
+  "rarity": "none",
+  "weight": 6,
+  "value": 800,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Strength"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Seal or pry open a door or container ({@dc 20})"
+          ]
+        },
+        {
+          "name": "Craft:",
+          "type": "item",
+          "entries": [
+            "{@item Club|XPHB}, {@item Greatclub|XPHB}, {@item Quarterstaff|XPHB}, {@item Barrel|XPHB}, {@item Chest|XPHB}, {@item Ladder|XPHB}, {@item Pole|XPHB}, {@item Portable Ram|XPHB}, {@item Torch|XPHB}"
+          ]
+        }
+      ]
+    }
+  ]
+}

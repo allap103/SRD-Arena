@@ -1,0 +1,24 @@
+{
+  "name": "Quiver",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TWoO"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 100,
+  "entries": [
+    "A Quiver holds up to 20 Arrows."
+  ],
+  "containerCapacity": {
+    "item": [
+      {
+        "arrow|xphb": 20
+      }
+    ]
+  }
+}

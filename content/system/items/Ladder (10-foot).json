@@ -1,0 +1,20 @@
+{
+  "name": "Ladder (10-foot)",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "CoS"
+  ],
+  "reprintedAs": [
+    "Ladder|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 25,
+  "value": 10,
+  "entries": [
+    "Ladder (10-foot)"
+  ]
+}

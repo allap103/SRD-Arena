@@ -1,0 +1,92 @@
+{
+  "name": "Giant Constrictor Snake",
+  "source": "XMM",
+  "page": 355,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "H"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 60,
+    "formula": "8d12 + 8"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 30
+  },
+  "str": 19,
+  "dex": 14,
+  "con": 12,
+  "int": 1,
+  "wis": 10,
+  "cha": 3,
+  "skill": {
+    "perception": "+2"
+  },
+  "senses": [
+    "Blindsight 10 ft."
+  ],
+  "passive": 12,
+  "cr": "2",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The snake makes one Bite attack and uses Constrict."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 10 ft. {@h}11 ({@damage 2d6 + 4}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Constrict",
+      "entries": [
+        "{@actSave str} {@dc 14}, one Large or smaller creature the snake can see within 10 feet. {@actSaveFail} 13 ({@damage 2d8 + 4}) Bludgeoning damage, and the target has the {@condition Grappled|XPHB} condition (escape {@dc 14})."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "swamp",
+    "underwater"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-constrictor-snake.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "savingThrowForced": [
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

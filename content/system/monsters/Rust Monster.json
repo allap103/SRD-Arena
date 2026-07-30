@@ -1,0 +1,106 @@
+{
+  "name": "Rust Monster",
+  "source": "XMM",
+  "page": 263,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 33,
+    "formula": "6d8 + 6"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 13,
+  "dex": 12,
+  "con": 13,
+  "int": 2,
+  "wis": 13,
+  "cha": 6,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 11,
+  "cr": "1/2",
+  "trait": [
+    {
+      "name": "Iron Scent",
+      "entries": [
+        "The rust monster can pinpoint the location of ferrous metal within 30 feet of itself."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The rust monster makes one Bite attack and uses Antennae twice."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 3}, reach 5 ft. {@h}5 ({@damage 1d8 + 1}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Antennae",
+      "entries": [
+        "The rust monster targets one nonmagical metal object\u2014armor or a weapon\u2014worn or carried by a creature within 5 feet of itself. {@actSave dex} {@dc 11}, the creature with the object. {@actSaveFail} The object takes a -1 penalty to the AC it offers (armor) or to its attack rolls (weapon). Armor is destroyed if the penalty reduces its AC to 10, and a weapon is destroyed if its penalty reaches -5. The penalty can be removed by casting the {@spell Mending|XPHB} spell on the armor or weapon."
+      ]
+    },
+    {
+      "name": "Destroy Metal",
+      "entries": [
+        "The rust monster touches a nonmagical metal object within 5 feet of itself that isn't being worn or carried. The touch destroys a 1-foot {@variantrule Cube [Area of Effect]|XPHB|Cube} of the object."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Reflexive Antennae",
+      "entries": [
+        "{@actTrigger} An attack roll hits the rust monster. {@actResponse} The rust monster uses Antennae."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/rust-monster.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

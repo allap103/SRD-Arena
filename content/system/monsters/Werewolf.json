@@ -1,0 +1,152 @@
+{
+  "name": "Werewolf",
+  "group": [
+    "Lycanthropes"
+  ],
+  "source": "XMM",
+  "page": 327,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": {
+    "type": "monstrosity",
+    "tags": [
+      "lycanthrope"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 71,
+    "formula": "11d8 + 22"
+  },
+  "speed": {
+    "walk": 30,
+    "alternate": {
+      "walk": [
+        {
+          "number": 40,
+          "condition": "(wolf form only)"
+        }
+      ]
+    }
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 16,
+  "dex": 14,
+  "con": 14,
+  "int": 10,
+  "wis": 11,
+  "cha": 10,
+  "skill": {
+    "perception": "+4",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "languages": [
+    "Common (can't speak in wolf form)"
+  ],
+  "cr": "3",
+  "gear": [
+    "longbow|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The werewolf has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the werewolf's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The werewolf makes two attacks, using Scratch or Longbow in any combination. It can replace one attack with a Bite attack."
+      ]
+    },
+    {
+      "name": "Bite (Wolf or Hybrid Form Only)",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}12 ({@damage 2d8 + 3}) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. {@actSave con} {@dc 12}. {@actSaveFail} The target is cursed. If the cursed target drops to 0 {@variantrule Hit Points|XPHB}, it instead becomes a Werewolf under the DM's control and has 10 {@variantrule Hit Points|XPHB}. {@actSaveSuccess} The target is immune to this werewolf's curse for 24 hours."
+      ]
+    },
+    {
+      "name": "Scratch",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Longbow (Humanoid or Hybrid Form Only)",
+      "entries": [
+        "{@atkr r} {@hit 4}, range 150/600 ft. {@h}11 ({@damage 2d8 + 2}) Piercing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Shape-Shift",
+      "entries": [
+        "The werewolf shape-shifts into a Large wolf-humanoid hybrid or a Medium wolf, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "hill"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/werewolf.opus"
+  },
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "CS"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "CUR",
+    "MA",
+    "RA",
+    "RNG"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

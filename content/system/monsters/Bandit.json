@@ -1,0 +1,94 @@
+{
+  "name": "Bandit",
+  "source": "XMM",
+  "page": 27,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "ABH",
+    "BQGT",
+    "DrDe",
+    "DrDe-BD",
+    "DrDe-DotSC",
+    "EFA",
+    "FRAiF",
+    "HotB",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 11,
+    "formula": "2d8 + 2"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 11,
+  "dex": 12,
+  "con": 12,
+  "int": 10,
+  "wis": 10,
+  "cha": 10,
+  "passive": 10,
+  "languages": [
+    "Common",
+    "Thieves' cant"
+  ],
+  "cr": "1/8",
+  "gear": [
+    "leather armor|xphb",
+    "light crossbow|xphb",
+    "scimitar|xphb"
+  ],
+  "action": [
+    {
+      "name": "Scimitar",
+      "entries": [
+        "{@atkr m} {@hit 3}, reach 5 ft. {@h}4 ({@damage 1d6 + 1}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Light Crossbow",
+      "entries": [
+        "{@atkr r} {@hit 3}, range 80/320 ft. {@h}5 ({@damage 1d8 + 1}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/bandit.opus"
+  },
+  "languageTags": [
+    "C",
+    "TC"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RNG"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

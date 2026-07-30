@@ -1,0 +1,105 @@
+{
+  "name": "Scout",
+  "source": "XMM",
+  "page": 270,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-DaS",
+    "DrDe-TDoN",
+    "FRAiF",
+    "FRHoF",
+    "HBTD"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 16,
+    "formula": "3d8 + 3"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 11,
+  "dex": 14,
+  "con": 12,
+  "int": 11,
+  "wis": 13,
+  "cha": 11,
+  "skill": {
+    "nature": "+4",
+    "perception": "+5",
+    "stealth": "+6",
+    "survival": "+5"
+  },
+  "passive": 15,
+  "languages": [
+    "Common plus one other language"
+  ],
+  "cr": "1/2",
+  "gear": [
+    "leather armor|xphb",
+    "longbow|xphb",
+    "shortsword|xphb"
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The scout makes two attacks, using Shortsword and Longbow in any combination."
+      ]
+    },
+    {
+      "name": "Shortsword",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Longbow",
+      "entries": [
+        "{@atkr r} {@hit 4}, range 150/600 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "implements",
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/scout.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RNG"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Feed (per day)",
+  "source": "XPHB",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "TAH|XPHB",
+  "rarity": "none",
+  "weight": 10,
+  "value": 5
+}

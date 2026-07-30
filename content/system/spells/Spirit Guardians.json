@@ -1,0 +1,63 @@
+{
+  "name": "Spirit Guardians",
+  "source": "XPHB",
+  "page": 319,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FFotR"
+  ],
+  "level": 3,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "emanation",
+    "distance": {
+      "type": "feet",
+      "amount": 15
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a prayer scroll"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "Protective spirits flit around you in a 15-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} for the duration. If you are good or neutral, their spectral form appears angelic or fey (your choice). If you are evil, they appear fiendish.",
+    "When you cast this spell, you can designate creatures to be unaffected by it. Any other creature's {@variantrule Speed|XPHB} is halved in the {@variantrule Emanation [Area of Effect]|XPHB|Emanation}, and whenever the {@variantrule Emanation [Area of Effect]|XPHB|Emanation} enters a creature's space and whenever a creature enters the {@variantrule Emanation [Area of Effect]|XPHB|Emanation} or ends its turn there, the creature must make a Wisdom saving throw. On a failed save, the creature takes {@damage 3d8} Radiant damage (if you are good or neutral) or {@damage 3d8} Necrotic damage (if you are evil). On a successful save, the creature takes half as much damage. A creature makes this save only once per turn."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 3d8|3-9|1d8} for each spell slot level above 3."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "necrotic",
+    "radiant"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "areaTags": [
+    "S"
+  ]
+}

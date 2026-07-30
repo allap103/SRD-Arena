@@ -1,0 +1,75 @@
+{
+  "name": "Camel",
+  "source": "XMM",
+  "page": 351,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 347
+    }
+  ],
+  "referenceSources": [
+    "FRAiF",
+    "HBTD"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 17,
+    "formula": "2d10 + 6"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 15,
+  "dex": 8,
+  "con": 17,
+  "int": 2,
+  "wis": 11,
+  "cha": 5,
+  "save": {
+    "con": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "cr": "1/8",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}4 ({@damage 1d4 + 2}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/camel.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

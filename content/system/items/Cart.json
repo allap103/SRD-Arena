@@ -1,0 +1,11 @@
+{
+  "name": "Cart",
+  "source": "XPHB",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "VEH|XPHB",
+  "rarity": "none",
+  "weight": 200,
+  "value": 1500
+}

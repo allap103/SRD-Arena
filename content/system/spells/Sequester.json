@@ -1,0 +1,57 @@
+{
+  "name": "Sequester",
+  "source": "XPHB",
+  "page": 315,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-ACfaS",
+    "DrDe-TFV"
+  ],
+  "level": 7,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "gem dust worth 5,000+ GP, which the spell consumes",
+      "cost": 500000,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "permanent",
+      "ends": [
+        "dispel"
+      ]
+    }
+  ],
+  "entries": [
+    "With a touch, you magically sequester an object or a willing creature. For the duration, the target has the {@condition Invisible|XPHB} condition and can't be targeted by Divination spells, detected by magic, or viewed remotely with magic.",
+    "If the target is a creature, it enters a state of suspended animation; it has the {@condition Unconscious|XPHB} condition, doesn't age, and doesn't need food, water, or air.",
+    "You can set a condition for the spell to end early. The condition can be anything you choose, but it must occur or be visible within 1 mile of the target. Examples include \"after 1,000 years\" or \"when the tarrasque awakens.\" This spell also ends if the target takes any damage."
+  ],
+  "conditionInflict": [
+    "invisible",
+    "unconscious"
+  ],
+  "miscTags": [
+    "OBJ"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

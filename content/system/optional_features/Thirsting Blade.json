@@ -1,0 +1,27 @@
+{
+  "name": "Thirsting Blade",
+  "source": "XPHB",
+  "page": 157,
+  "srd52": true,
+  "featureType": [
+    "EI"
+  ],
+  "prerequisite": [
+    {
+      "level": {
+        "level": 5,
+        "class": {
+          "name": "Warlock",
+          "source": "XPHB",
+          "visibleStats": true
+        }
+      },
+      "optionalfeature": [
+        "pact of the blade|xphb"
+      ]
+    }
+  ],
+  "entries": [
+    "You gain the Extra Attack feature for your pact weapon only. With that feature, you can attack twice with the weapon instead of once when you take the {@action Attack|XPHB} action on your turn."
+  ]
+}

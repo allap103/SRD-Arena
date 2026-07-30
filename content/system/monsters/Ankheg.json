@@ -1,0 +1,93 @@
+{
+  "name": "Ankheg",
+  "source": "XMM",
+  "page": 18,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 45,
+    "formula": "6d10 + 12"
+  },
+  "speed": {
+    "walk": 30,
+    "burrow": 10
+  },
+  "str": 17,
+  "dex": 11,
+  "con": 14,
+  "int": 1,
+  "wis": 13,
+  "cha": 6,
+  "senses": [
+    "Darkvision 60 ft.",
+    "Tremorsense 60 ft."
+  ],
+  "passive": 11,
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Tunneler",
+      "entries": [
+        "The ankheg can burrow through solid rock at half its {@variantrule Burrow Speed|XPHB} and leaves a 10-foot-diameter tunnel in its wake."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5} (with {@variantrule Advantage|XPHB} if the target is {@condition Grappled|XPHB} by the ankheg), reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Slashing damage plus 3 ({@damage 1d6}) Acid damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 13})."
+      ]
+    },
+    {
+      "name": "Acid Spray {@recharge}",
+      "entries": [
+        "{@actSave dex} {@dc 12}, each creature in a 30-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 14 ({@damage 4d6}) Acid damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/ankheg.opus"
+  },
+  "traitTags": [
+    "Tunneler"
+  ],
+  "senseTags": [
+    "D",
+    "T"
+  ],
+  "damageTags": [
+    "A",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

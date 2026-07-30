@@ -1,0 +1,70 @@
+{
+  "name": "Dispel Evil and Good",
+  "source": "XPHB",
+  "page": 263,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 5,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "powdered silver and iron"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "For the duration, Celestials, Elementals, Fey, Fiends, and Undead have {@variantrule Disadvantage|XPHB} on attack rolls against you. You can end the spell early by using either of the following special functions.",
+    {
+      "type": "entries",
+      "name": "Break Enchantment",
+      "entries": [
+        "As a {@action Magic|XPHB} action, you touch a creature that is possessed by or has the {@condition Charmed|XPHB} or {@condition Frightened|XPHB} condition from one or more creatures of the types above. The target is no longer possessed, {@condition Charmed|XPHB}, or {@condition Frightened|XPHB} by such creatures."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Dismissal",
+      "entries": [
+        "As a {@action Magic|XPHB} action, you target one creature you can see within 5 feet of you that has one of the creature types above. The target must succeed on a Charisma saving throw or be sent back to its home plane if it isn't there already. If they aren't on their home plane, Undead are sent to the Shadowfell, and Fey are sent to the Feywild."
+      ]
+    }
+  ],
+  "savingThrow": [
+    "charisma"
+  ],
+  "affectsCreatureType": [
+    "celestial",
+    "elemental",
+    "fey",
+    "fiend",
+    "undead"
+  ],
+  "miscTags": [
+    "SGT"
+  ],
+  "areaTags": [
+    "ST"
+  ],
+  "hasFluffImages": true
+}

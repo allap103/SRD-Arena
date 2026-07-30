@@ -1,0 +1,81 @@
+{
+  "name": "Mule",
+  "source": "XMM",
+  "page": 365,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 353
+    }
+  ],
+  "referenceSources": [
+    "HBTD"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 11,
+    "formula": "2d8 + 2"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 14,
+  "dex": 10,
+  "con": 13,
+  "int": 2,
+  "wis": 10,
+  "cha": 5,
+  "save": {
+    "str": "+4"
+  },
+  "passive": 10,
+  "cr": "1/8",
+  "trait": [
+    {
+      "name": "Beast of Burden",
+      "entries": [
+        "The mule counts as one size larger for the purpose of determining its carrying capacity."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Hooves",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}4 ({@damage 1d4 + 2}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "hill",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/mule.opus"
+  },
+  "traitTags": [
+    "Beast of Burden"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

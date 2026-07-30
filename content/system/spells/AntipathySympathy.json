@@ -1,0 +1,79 @@
+{
+  "name": "Antipathy/Sympathy",
+  "source": "XPHB",
+  "page": 242,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 8,
+  "school": "E",
+  "time": [
+    {
+      "number": 1,
+      "unit": "hour"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a mix of vinegar and honey"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "day",
+        "amount": 10
+      }
+    }
+  ],
+  "entries": [
+    "As you cast the spell, choose whether it creates antipathy or sympathy, and target one creature or object that is Huge or smaller. Then specify a kind of creature, such as red dragons, goblins, or vampires. A creature of the chosen kind makes a Wisdom saving throw when it comes within 120 feet of the target. Your choice of antipathy or sympathy determines what happens to a creature when it fails that save:",
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "type": "item",
+          "name": "Antipathy",
+          "entries": [
+            "The creature has the {@condition Frightened|XPHB} condition. The {@condition Frightened|XPHB} creature must use its movement on its turns to get as far away as possible from the target, moving by the safest route."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Sympathy",
+          "entries": [
+            "The creature has the {@condition Charmed|XPHB} condition. The {@condition Charmed|XPHB} creature must use its movement on its turns to get as close as possible to the target, moving by the safest route. If the creature is within 5 feet of the target, the creature can't willingly move away. If the target damages the {@condition Charmed|XPHB} creature, that creature can make a Wisdom saving throw to end the effect, as described below."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Ending the Effect",
+      "entries": [
+        "If the {@condition Frightened|XPHB} or {@condition Charmed|XPHB} creature ends its turn more than 120 feet away from the target, the creature makes a Wisdom saving throw. On a successful save, the creature is no longer affected by the target. A creature that successfully saves against this effect is immune to it for 1 minute, after which it can be affected again."
+      ]
+    }
+  ],
+  "conditionInflict": [
+    "frightened",
+    "charmed"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "miscTags": [
+    "OBJ"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "name": "Remorhaz",
+  "source": "XMM",
+  "page": 258,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 195,
+    "formula": "17d12 + 85"
+  },
+  "speed": {
+    "walk": 40,
+    "burrow": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 24,
+  "dex": 13,
+  "con": 21,
+  "int": 4,
+  "wis": 10,
+  "cha": 5,
+  "senses": [
+    "Darkvision 60 ft.",
+    "Tremorsense 60 ft."
+  ],
+  "passive": 10,
+  "immune": [
+    "cold",
+    "fire"
+  ],
+  "cr": "11",
+  "trait": [
+    {
+      "name": "Heat Aura",
+      "entries": [
+        "At the end of each of the remorhaz's turns, each creature in a 5-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the remorhaz takes 16 ({@damage 3d10}) Fire damage."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 11}, reach 10 ft. {@h}18 ({@damage 2d10 + 7}) Piercing damage plus 14 ({@damage 4d6}) Fire damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 17}), and it has the {@condition Restrained|XPHB} condition until the grapple ends."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Swallow",
+      "entries": [
+        "{@actSave str} {@dc 19}, one Large or smaller creature {@condition Grappled|XPHB} by the remorhaz (it can have up to two creatures swallowed at a time). {@actSaveFail} The target is swallowed by the remorhaz, and the {@condition Grappled|XPHB} condition ends. A swallowed creature has the {@condition Blinded|XPHB} and {@condition Restrained|XPHB} conditions, it has {@variantrule Cover|XPHB|Total Cover} against attacks and other effects outside the remorhaz, and it takes 10 ({@damage 3d6}) Acid damage plus 10 ({@damage 3d6}) Fire damage at the start of each of the remorhaz's turns.",
+        "If the remorhaz takes 30 damage or more on a single turn from a creature inside it, the remorhaz must succeed on a {@dc 15} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 5 feet of the remorhaz and has the {@condition Prone|XPHB} condition. If the remorhaz dies, any swallowed creature no longer has the {@condition Restrained|XPHB} condition and can escape from the corpse by using 15 feet of movement, exiting {@condition Prone|XPHB}."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/remorhaz.opus"
+  },
+  "senseTags": [
+    "D",
+    "T"
+  ],
+  "actionTags": [
+    "Swallow"
+  ],
+  "damageTags": [
+    "A",
+    "F",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled",
+    "prone",
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

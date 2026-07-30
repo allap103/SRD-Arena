@@ -1,0 +1,27 @@
+{
+  "name": "Pistol",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "R|XPHB",
+  "rarity": "none",
+  "weight": 3,
+  "value": 25000,
+  "weaponCategory": "martial",
+  "property": [
+    "A|XPHB",
+    "LD|XPHB"
+  ],
+  "mastery": [
+    "Vex|XPHB"
+  ],
+  "range": "30/90",
+  "dmg1": "1d10",
+  "dmgType": "P",
+  "firearm": true,
+  "weapon": true,
+  "ammoType": "firearm bullet|xphb",
+  "hasFluffImages": true
+}

@@ -1,0 +1,25 @@
+{
+  "name": "Javelin",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 50,
+  "weaponCategory": "simple",
+  "property": [
+    "T|XPHB"
+  ],
+  "mastery": [
+    "Slow|XPHB"
+  ],
+  "range": "30/120",
+  "dmg1": "1d6",
+  "dmgType": "P",
+  "spear": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

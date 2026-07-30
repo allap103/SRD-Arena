@@ -1,0 +1,148 @@
+{
+  "name": "Young Bronze Dragon",
+  "group": [
+    "Metallic Dragons"
+  ],
+  "source": "XMM",
+  "page": 58,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TDoN"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "metallic"
+    ]
+  },
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 142,
+    "formula": "15d10 + 60"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 80,
+    "swim": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 21,
+  "dex": 10,
+  "con": 19,
+  "int": 14,
+  "wis": 13,
+  "cha": 17,
+  "save": {
+    "dex": "+3",
+    "wis": "+4"
+  },
+  "skill": {
+    "insight": "+4",
+    "perception": "+7",
+    "stealth": "+3"
+  },
+  "senses": [
+    "Blindsight 30 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 17,
+  "immune": [
+    "lightning"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": "8",
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The dragon can breathe air and water."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of Repulsion Breath."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 10 ft. {@h}16 ({@damage 2d10 + 5}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Lightning Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 15}, each creature in a 60-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 49 ({@damage 9d10}) Lightning damage. {@actSaveSuccess} Half damage."
+      ]
+    },
+    {
+      "name": "Repulsion Breath",
+      "entries": [
+        "{@actSave str} {@dc 15}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target is pushed up to 40 feet straight away from the dragon and has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal"
+  ],
+  "treasure": [
+    "implements"
+  ],
+  "dragonAge": "young",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/bronze-dragon.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "L",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "savingThrowForced": [
+    "dexterity",
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

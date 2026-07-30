@@ -1,0 +1,76 @@
+{
+  "name": "Triceratops",
+  "group": [
+    "Dinosaurs"
+  ],
+  "source": "XMM",
+  "page": 372,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "H"
+  ],
+  "type": {
+    "type": "beast",
+    "tags": [
+      "dinosaur"
+    ]
+  },
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 114,
+    "formula": "12d12 + 36"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 22,
+  "dex": 9,
+  "con": 17,
+  "int": 2,
+  "wis": 11,
+  "cha": 5,
+  "passive": 10,
+  "cr": "5",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The triceratops makes two Gore attacks."
+      ]
+    },
+    {
+      "name": "Gore",
+      "entries": [
+        "{@atkr m} {@hit 9}, reach 5 ft. {@h}19 ({@damage 2d12 + 6}) Piercing damage. If the target is Huge or smaller and the triceratops moved 20+ feet straight toward it immediately before the hit, the target takes an extra 9 ({@damage 2d8}) Piercing damage and has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "grassland"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/triceratops.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,79 @@
+{
+  "name": "Giant Hyena",
+  "source": "XMM",
+  "page": 357,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 45,
+    "formula": "6d10 + 12"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 16,
+  "dex": 14,
+  "con": 14,
+  "int": 2,
+  "wis": 12,
+  "cha": 7,
+  "skill": {
+    "perception": "+3"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "cr": "1",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Piercing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Rampage (1/Day)",
+      "entries": [
+        "Immediately after dealing damage to a creature that was already {@status Bloodied|XPHB}, the hyena can move up to half its {@variantrule Speed|XPHB}, and it makes one Bite attack."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-hyena.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

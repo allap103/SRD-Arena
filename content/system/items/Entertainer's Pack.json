@@ -1,0 +1,35 @@
+{
+  "name": "Entertainer's Pack",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 58.5,
+  "value": 4000,
+  "entries": [
+    "An Entertainer's Pack contains the following items: {@item Backpack|XPHB}, {@item Bedroll|XPHB}, {@item Bell|XPHB}, {@item Bullseye Lantern|XPHB}, 3 {@item Costume|XPHB|Costumes}, {@item Mirror|XPHB}, 8 flasks of {@item Oil|XPHB}, 9 days of {@item Rations|XPHB}, {@item Tinderbox|XPHB}, and {@item Waterskin|XPHB}."
+  ],
+  "packContents": [
+    "backpack|xphb",
+    "bedroll|xphb",
+    "bell|xphb",
+    "bullseye lantern|xphb",
+    {
+      "item": "costume|xphb",
+      "quantity": 3
+    },
+    "mirror|xphb",
+    {
+      "item": "oil|xphb",
+      "quantity": 8
+    },
+    {
+      "item": "rations|xphb",
+      "quantity": 9
+    },
+    "tinderbox|xphb",
+    "waterskin|xphb"
+  ]
+}

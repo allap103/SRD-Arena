@@ -1,0 +1,60 @@
+{
+  "name": "Protection from Evil and Good",
+  "source": "XPHB",
+  "page": 309,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "level": 1,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "a flask of Holy Water worth 25+ GP, which the spell consumes",
+      "cost": 2500,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "Until the spell ends, one willing creature you touch is protected against creatures that are Aberrations, Celestials, Elementals, Fey, Fiends, or Undead. The protection grants several benefits. Creatures of those types have {@variantrule Disadvantage|XPHB} on attack rolls against the target. The target also can't be possessed by or gain the {@condition Charmed|XPHB} or {@condition Frightened|XPHB} conditions from them. If the target is already possessed, {@condition Charmed|XPHB}, or {@condition Frightened|XPHB} by such a creature, the target has {@variantrule Advantage|XPHB} on any new saving throw against the relevant effect."
+  ],
+  "affectsCreatureType": [
+    "aberration",
+    "celestial",
+    "elemental",
+    "fey",
+    "fiend",
+    "undead"
+  ],
+  "miscTags": [
+    "ADV"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

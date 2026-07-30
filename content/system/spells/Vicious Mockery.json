@@ -1,0 +1,65 @@
+{
+  "name": "Vicious Mockery",
+  "source": "XPHB",
+  "page": 337,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 0,
+  "school": "E",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You unleash a string of insults laced with subtle enchantments at one creature you can see or hear within range. The target must succeed on a Wisdom saving throw or take {@damage 1d6} Psychic damage and have {@variantrule Disadvantage|XPHB} on the next attack roll it makes before the end of its next turn."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Cantrip Upgrade",
+      "entries": [
+        "The damage increases by {@damage 1d6} when you reach levels 5 ({@damage 2d6}), 11 ({@damage 3d6}), and 17 ({@damage 4d6})."
+      ]
+    }
+  ],
+  "scalingLevelDice": {
+    "label": "Psychic damage",
+    "scaling": {
+      "1": "1d6",
+      "5": "2d6",
+      "11": "3d6",
+      "17": "4d6"
+    }
+  },
+  "damageInflict": [
+    "psychic"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "miscTags": [
+    "SCL",
+    "SGT"
+  ],
+  "areaTags": [
+    "ST"
+  ],
+  "hasFluffImages": true
+}

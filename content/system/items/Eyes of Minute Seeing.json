@@ -1,0 +1,19 @@
+{
+  "name": "Eyes of Minute Seeing",
+  "source": "XDMG",
+  "page": 261,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "wondrous": true,
+  "entries": [
+    "These crystal lenses fit over the eyes. While wearing them, your vision improves significantly out to a range of 1 foot, granting you {@sense Darkvision|XPHB} within that range and {@variantrule Advantage|XPHB} on Intelligence ({@skill Investigation|XPHB}) checks made to examine something within that range."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG",
+    "Implements - Uncommon|XDMG"
+  ]
+}

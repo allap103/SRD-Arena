@@ -1,0 +1,94 @@
+{
+  "name": "Swarm of Piranhas",
+  "source": "XMM",
+  "page": 370,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "beast",
+    "swarmSize": "T"
+  },
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 28,
+    "formula": "8d8 - 8"
+  },
+  "speed": {
+    "walk": 5,
+    "swim": 40
+  },
+  "str": 13,
+  "dex": 16,
+  "con": 9,
+  "int": 1,
+  "wis": 7,
+  "cha": 2,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 8,
+  "resist": [
+    "bludgeoning",
+    "piercing",
+    "slashing"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "frightened",
+    "grappled",
+    "paralyzed",
+    "petrified",
+    "prone",
+    "restrained",
+    "stunned"
+  ],
+  "cr": "1",
+  "trait": [
+    {
+      "name": "Swarm",
+      "entries": [
+        "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny piranha. The swarm can't regain {@variantrule Hit Points|XPHB} or gain {@variantrule Temporary Hit Points|XPHB}."
+      ]
+    },
+    {
+      "name": "Water Breathing",
+      "entries": [
+        "The swarm can breathe only underwater."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bites",
+      "entries": [
+        "{@atkr m} {@hit 5} (with {@variantrule Advantage|XPHB} if the target doesn't have all its {@variantrule Hit Points|XPHB}), reach 5 ft. {@h}8 ({@damage 2d4 + 3}) Piercing damage, or 5 ({@damage 1d4 + 3}) Piercing damage if the swarm is {@status Bloodied|XPHB}."
+      ]
+    }
+  ],
+  "environment": [
+    "underwater"
+  ],
+  "traitTags": [
+    "Water Breathing"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

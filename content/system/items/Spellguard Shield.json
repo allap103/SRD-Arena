@@ -1,0 +1,20 @@
+{
+  "name": "Spellguard Shield",
+  "source": "XDMG",
+  "page": 305,
+  "srd52": true,
+  "basicRules2024": true,
+  "baseItem": "shield|xphb",
+  "type": "S|XPHB",
+  "rarity": "very rare",
+  "reqAttune": true,
+  "weight": 6,
+  "ac": 2,
+  "entries": [
+    "While holding this Shield, you have {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects, and spell attack rolls have {@variantrule Disadvantage|XPHB} against you."
+  ],
+  "lootTables": [
+    "Armaments - Very Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

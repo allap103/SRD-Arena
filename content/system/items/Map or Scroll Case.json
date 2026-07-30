@@ -1,0 +1,22 @@
+{
+  "name": "Map or Scroll Case",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 100,
+  "entries": [
+    "A {@item Map or Scroll Case|XPHB} holds up to 10 sheets of paper or 5 sheets of parchment."
+  ],
+  "containerCapacity": {
+    "item": [
+      {
+        "parchment|xphb": 5,
+        "paper|xphb": 10
+      }
+    ]
+  }
+}

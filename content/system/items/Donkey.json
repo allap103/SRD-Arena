@@ -1,0 +1,12 @@
+{
+  "name": "Donkey",
+  "source": "PHB",
+  "page": 157,
+  "srd": true,
+  "basicRules": true,
+  "type": "MNT",
+  "rarity": "none",
+  "value": 800,
+  "carryingCapacity": 420,
+  "speed": 40
+}

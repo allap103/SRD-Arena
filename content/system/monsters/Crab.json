@@ -1,0 +1,85 @@
+{
+  "name": "Crab",
+  "source": "XMM",
+  "page": 351,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 348
+    }
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 3,
+    "formula": "1d4 + 1"
+  },
+  "speed": {
+    "walk": 20,
+    "swim": 20
+  },
+  "str": 6,
+  "dex": 11,
+  "con": 12,
+  "int": 1,
+  "wis": 8,
+  "cha": 2,
+  "skill": {
+    "stealth": "+2"
+  },
+  "senses": [
+    "Blindsight 30 ft."
+  ],
+  "passive": 9,
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The crab can breathe air and water."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}1 Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "underwater"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/crab.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

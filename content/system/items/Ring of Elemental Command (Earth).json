@@ -1,0 +1,83 @@
+{
+  "name": "Ring of Elemental Command (Earth)",
+  "source": "XDMG",
+  "page": 292,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "resist": [
+    "acid"
+  ],
+  "rarity": "legendary",
+  "reqAttune": true,
+  "grantsLanguage": true,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d4 + 1}",
+  "charges": 5,
+  "entries": [
+    "The Ring of Elemental Command (earth) is linked to the Elemental Plane of Earth. Every Ring of Elemental Command has the following two properties:",
+    {
+      "type": "list",
+      "items": [
+        {
+          "type": "item",
+          "name": "Elemental Bane",
+          "entries": [
+            "While wearing the ring, you have {@variantrule Advantage|XPHB} on attack rolls against Elementals and they have {@variantrule Disadvantage|XPHB} on attack rolls against you."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Elemental Compulsion",
+          "entries": [
+            "While wearing the ring, you can take a {@action Magic|XPHB} action to try to compel an Elemental you see within 60 feet of yourself. The Elemental makes a {@dc 18} Wisdom saving throw. On a failed save, the Elemental has the {@condition Charmed|XPHB} condition until the start your next turn, and you determine what it does with its move and action on its next turn."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Elemental Focus",
+      "entries": [
+        "While wearing the ring, you benefit from additional properties corresponding to the ring's linked Elemental Plane:",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "Earth",
+              "entries": [
+                "You know Terran, and you have {@variantrule Resistance|XPHB} to Acid damage. Terrain composed of rubble, rocks, or dirt isn't {@variantrule Difficult Terrain|XPHB} for you. In addition, you can move through solid earth or rock as if those areas were {@variantrule Difficult Terrain|XPHB} without disturbing the matter through which you pass. If you end your turn in solid earth or rock, you are shunted out to the nearest unoccupied space you last occupied."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Spellcasting",
+      "entries": [
+        "The ring has 5 charges and regains {@dice 1d4 + 1} expended charges daily at dawn. While wearing the ring, you can cast a spell from it. A spell cast from the ring has a save DC of 18. Choose the spell from the following list: {@spell Earthquake|XPHB} (5 charges), {@spell Stone Shape|XPHB} (2 charges), {@spell Stoneskin|XPHB} (3 charges), {@spell Wall of Stone|XPHB} (3 charges)"
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "2": [
+        "stone shape|xphb"
+      ],
+      "3": [
+        "stoneskin|xphb",
+        "wall of stone|xphb"
+      ],
+      "5": [
+        "earthquake|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Legendary|XDMG"
+  ]
+}

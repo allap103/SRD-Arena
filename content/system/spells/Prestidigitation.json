@@ -1,0 +1,86 @@
+{
+  "name": "Prestidigitation",
+  "source": "XPHB",
+  "page": 307,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 0,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 10
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      }
+    }
+  ],
+  "entries": [
+    "You create a magical effect within range. Choose the effect from the options below. If you cast this spell multiple times, you can have up to three of its non-instantaneous effects active at a time.",
+    {
+      "type": "entries",
+      "name": "Sensory Effect",
+      "entries": [
+        "You create an instantaneous, harmless sensory effect, such as a shower of sparks, a puff of wind, faint musical notes, or an odd odor."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Fire Play",
+      "entries": [
+        "You instantaneously light or snuff out a candle, a torch, or a small campfire."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Clean or Soil",
+      "entries": [
+        "You instantaneously clean or soil an object no larger than 1 cubic foot."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Minor Sensation",
+      "entries": [
+        "You chill, warm, or flavor up to 1 cubic foot of nonliving material for 1 hour."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Magic Mark",
+      "entries": [
+        "You make a color, a small mark, or a symbol appear on an object or a surface for 1 hour."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Minor Creation",
+      "entries": [
+        "You create a nonmagical trinket or an illusory image that can fit in your hand. It lasts until the end of your next turn. A trinket can deal no damage and has no monetary worth."
+      ]
+    }
+  ],
+  "miscTags": [
+    "OBJ"
+  ]
+}

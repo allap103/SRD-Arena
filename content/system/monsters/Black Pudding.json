@@ -1,0 +1,119 @@
+{
+  "name": "Black Pudding",
+  "source": "XMM",
+  "page": 42,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TWoO",
+    "FRAiF",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "ooze",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    7
+  ],
+  "hp": {
+    "average": 68,
+    "formula": "8d10 + 24"
+  },
+  "speed": {
+    "walk": 20,
+    "climb": 20
+  },
+  "str": 16,
+  "dex": 5,
+  "con": 16,
+  "int": 1,
+  "wis": 6,
+  "cha": 1,
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 8,
+  "immune": [
+    "acid",
+    "cold",
+    "lightning",
+    "slashing"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "deafened",
+    "exhaustion",
+    "frightened",
+    "grappled",
+    "prone",
+    "restrained"
+  ],
+  "cr": "4",
+  "trait": [
+    {
+      "name": "Amorphous",
+      "entries": [
+        "The pudding can move through a space as narrow as 1 inch without expending extra movement to do so."
+      ]
+    },
+    {
+      "name": "Corrosive Form",
+      "entries": [
+        "A creature that hits the pudding with a melee attack roll takes 4 ({@damage 1d8}) Acid damage. Nonmagical ammunition is destroyed immediately after hitting the pudding and dealing any damage. Any nonmagical weapon takes a cumulative -1 penalty to attack rolls immediately after dealing damage to the pudding and coming into contact with it. The weapon is destroyed if the penalty reaches -5. The penalty can be removed by casting the {@spell Mending|XPHB} spell on the weapon.",
+        "In 1 minute, the pudding can eat through 2 feet of nonmagical wood or metal."
+      ]
+    },
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The pudding can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Dissolving Pseudopod",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 10 ft. {@h}17 ({@damage 4d6 + 3}) Acid damage. Nonmagical armor worn by the target takes a -1 penalty to the AC it offers. The armor is destroyed if the penalty reduces its AC to 10. The penalty can be removed by casting the {@spell Mending|XPHB} spell on the armor."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Split",
+      "entries": [
+        "{@actTrigger} While the pudding is Large or Medium and has 10+ {@variantrule Hit Points|XPHB}, it becomes {@status Bloodied|XPHB} or is subjected to Lightning or Slashing damage. {@actResponse} The pudding splits into two new Black Puddings. Each new pudding is one size smaller than the original pudding and acts on its {@variantrule Initiative|XPHB}. The original pudding's {@variantrule Hit Points|XPHB} are divided evenly between the new puddings (round down)."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/black-pudding.opus"
+  },
+  "traitTags": [
+    "Amorphous",
+    "Spider Climb"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "A"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

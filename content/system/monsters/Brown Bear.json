@@ -1,0 +1,96 @@
+{
+  "name": "Brown Bear",
+  "source": "XMM",
+  "page": 350,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 347
+    }
+  ],
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "3d10 + 6"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 30
+  },
+  "str": 17,
+  "dex": 12,
+  "con": 15,
+  "int": 2,
+  "wis": 13,
+  "cha": 7,
+  "skill": {
+    "perception": "+3"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "cr": "1",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The bear makes one Bite attack and one Claw attack."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Slashing damage. If the target is a Large or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "forest",
+    "hill"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/brown-bear.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

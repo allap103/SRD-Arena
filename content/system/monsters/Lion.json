@@ -1,0 +1,117 @@
+{
+  "name": "Lion",
+  "source": "XMM",
+  "page": 364,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 352
+    }
+  ],
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "4d10"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 17,
+  "dex": 15,
+  "con": 11,
+  "int": 3,
+  "wis": 12,
+  "cha": 8,
+  "skill": {
+    "perception": "+3",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "cr": "1",
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The lion has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the lion's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    },
+    {
+      "name": "Running Leap",
+      "entries": [
+        "With a 10-foot running start, the lion can {@variantrule Long Jump|XPHB} up to 25 feet."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The lion makes two Rend attacks. It can replace one attack with a use of Roar."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Roar",
+      "entries": [
+        "{@actSave wis} {@dc 11}, one creature within 15 feet. {@actSaveFail} The target has the {@condition Frightened|XPHB} condition until the start of the lion's next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "grassland",
+    "hill",
+    "mountain"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/lion.opus"
+  },
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "frightened"
+  ],
+  "savingThrowForced": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

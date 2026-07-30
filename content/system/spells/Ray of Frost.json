@@ -1,0 +1,67 @@
+{
+  "name": "Ray of Frost",
+  "source": "XPHB",
+  "page": 311,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 0,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "A frigid beam of blue-white light streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, it takes {@damage 1d8} Cold damage, and its {@variantrule Speed|XPHB} is reduced by 10 feet until the start of your next turn."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Cantrip Upgrade",
+      "entries": [
+        "The damage increases by {@damage 1d8} when you reach levels 5 ({@damage 2d8}), 11 ({@damage 3d8}), and 17 ({@damage 4d8})."
+      ]
+    }
+  ],
+  "scalingLevelDice": {
+    "label": "Cold damage",
+    "scaling": {
+      "1": "1d8",
+      "5": "2d8",
+      "11": "3d8",
+      "17": "4d8"
+    }
+  },
+  "damageInflict": [
+    "cold"
+  ],
+  "spellAttack": [
+    "R"
+  ],
+  "miscTags": [
+    "SCL"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

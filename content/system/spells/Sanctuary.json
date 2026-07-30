@@ -1,0 +1,46 @@
+{
+  "name": "Sanctuary",
+  "source": "XPHB",
+  "page": 313,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 1,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a shard of glass from a mirror"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      }
+    }
+  ],
+  "entries": [
+    "You ward a creature within range. Until the spell ends, any creature who targets the warded creature with an attack roll or a damaging spell must succeed on a Wisdom saving throw or either choose a new target or lose the attack or spell. This spell doesn't protect the warded creature from areas of effect.",
+    "The spell ends if the warded creature makes an attack roll, casts a spell, or deals damage."
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

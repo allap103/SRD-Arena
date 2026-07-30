@@ -1,0 +1,100 @@
+{
+  "name": "Saber-Toothed Tiger",
+  "source": "XMM",
+  "page": 369,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "NF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 52,
+    "formula": "7d10 + 14"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 18,
+  "dex": 17,
+  "con": 15,
+  "int": 3,
+  "wis": 12,
+  "cha": 8,
+  "save": {
+    "str": "+6",
+    "dex": "+5"
+  },
+  "skill": {
+    "perception": "+5",
+    "stealth": "+7"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Running Leap",
+      "entries": [
+        "With a 10-foot running start, the tiger can {@variantrule Long Jump|XPHB} up to 25 feet."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The tiger makes two Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}11 ({@damage 2d6 + 4}) Slashing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Nimble Escape",
+      "entries": [
+        "The tiger takes the {@action Disengage|XPHB} or {@action Hide|XPHB} action."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "hill",
+    "mountain"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/saber-toothed-tiger.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

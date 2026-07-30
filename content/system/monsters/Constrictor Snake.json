@@ -1,0 +1,94 @@
+{
+  "name": "Constrictor Snake",
+  "source": "XMM",
+  "page": 351,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 348
+    }
+  ],
+  "referenceSources": [
+    "DrDe",
+    "DrDe-DaS",
+    "HBTD"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 13,
+    "formula": "2d10 + 2"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 30
+  },
+  "str": 15,
+  "dex": 14,
+  "con": 12,
+  "int": 1,
+  "wis": 10,
+  "cha": 3,
+  "skill": {
+    "perception": "+2",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Blindsight 10 ft."
+  ],
+  "passive": 12,
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Constrict",
+      "entries": [
+        "{@actSave str} {@dc 12}, one Medium or smaller creature the snake can see within 5 feet. {@actSaveFail} 7 ({@damage 3d4}) Bludgeoning damage, and the target has the {@condition Grappled|XPHB} condition (escape {@dc 12})."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "swamp",
+    "underwater"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/constrictor-snake.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "savingThrowForced": [
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

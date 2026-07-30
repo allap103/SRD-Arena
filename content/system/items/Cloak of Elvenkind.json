@@ -1,0 +1,26 @@
+{
+  "name": "Cloak of Elvenkind",
+  "source": "XDMG",
+  "page": 244,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "HotB"
+  ],
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "entries": [
+    "While you wear this cloak, Wisdom ({@skill Perception|XPHB}) checks made to perceive you have {@variantrule Disadvantage|XPHB}, and you have {@variantrule Advantage|XPHB} on Dexterity ({@skill Stealth|XPHB}) checks."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Implements - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

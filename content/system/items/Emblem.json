@@ -1,0 +1,17 @@
+{
+  "name": "Emblem",
+  "group": [
+    "Holy Symbol"
+  ],
+  "source": "XPHB",
+  "page": 226,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "SCF|XPHB",
+  "scfType": "holy",
+  "rarity": "none",
+  "value": 500,
+  "entries": [
+    "For an Emblem to be an effective Holy Symbol, it must be borne on fabric (such as a tabard or banner) or a {@item Shield|XPHB}."
+  ]
+}

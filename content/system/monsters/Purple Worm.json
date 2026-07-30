@@ -1,0 +1,126 @@
+{
+  "name": "Purple Worm",
+  "source": "XMM",
+  "page": 250,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-ACfaS",
+    "RHW"
+  ],
+  "size": [
+    "G"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 247,
+    "formula": "15d20 + 90"
+  },
+  "speed": {
+    "walk": 50,
+    "burrow": 50
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 28,
+  "dex": 7,
+  "con": 22,
+  "int": 1,
+  "wis": 8,
+  "cha": 4,
+  "save": {
+    "con": "+11",
+    "wis": "+4"
+  },
+  "senses": [
+    "Blindsight 30 ft.",
+    "Tremorsense 60 ft."
+  ],
+  "passive": 9,
+  "cr": "15",
+  "trait": [
+    {
+      "name": "Tunneler",
+      "entries": [
+        "The worm can burrow through solid rock at half its {@variantrule Burrow Speed|XPHB} and leaves a 10-foot-diameter tunnel in its wake."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The worm makes one Bite attack and one Tail Stinger attack."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 14}, reach 10 ft. {@h}22 ({@damage 3d8 + 9}) Piercing damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 19}), and it has the {@condition Restrained|XPHB} condition until the grapple ends."
+      ]
+    },
+    {
+      "name": "Tail Stinger",
+      "entries": [
+        "{@atkr m} {@hit 14}, reach 10 ft. {@h}16 ({@damage 2d6 + 9}) Piercing damage plus 35 ({@damage 10d6}) Poison damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Swallow",
+      "entries": [
+        "{@actSave str} {@dc 19}, one Large or smaller creature {@condition Grappled|XPHB} by the worm (it can have up to three creatures swallowed at a time). {@actSaveFail} The target is swallowed by the worm, and the {@condition Grappled|XPHB} condition ends. A swallowed creature has the {@condition Blinded|XPHB} and {@condition Restrained|XPHB} conditions, has {@variantrule Cover|XPHB|Total Cover} against attacks and other effects outside the worm, and takes 17 ({@damage 5d6}) Acid damage at the start of each of the worm's turns.",
+        "If the worm takes 30 damage or more on a single turn from a creature inside it, the worm must succeed on a {@dc 21} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 5 feet of the worm and has the {@condition Prone|XPHB} condition. If the worm dies, any swallowed creature no longer has the {@condition Restrained|XPHB} condition and can escape from the corpse using 20 feet of movement, exiting {@condition Prone|XPHB}."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/purple-worm.opus"
+  },
+  "traitTags": [
+    "Tunneler"
+  ],
+  "senseTags": [
+    "B",
+    "T"
+  ],
+  "actionTags": [
+    "Multiattack",
+    "Swallow"
+  ],
+  "damageTags": [
+    "A",
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled",
+    "prone",
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

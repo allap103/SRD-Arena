@@ -1,0 +1,61 @@
+{
+  "name": "Speak with Dead",
+  "source": "XPHB",
+  "page": 318,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-ACfaS",
+    "DrDe-BtS",
+    "DrDe-TDoN",
+    "DrDe-TFV"
+  ],
+  "level": 3,
+  "school": "N",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 10
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "burning incense"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      }
+    }
+  ],
+  "entries": [
+    "You grant the semblance of life to a corpse of your choice within range, allowing it to answer questions you pose. The corpse must have a mouth, and this spell fails if the deceased creature was Undead when it died. The spell also fails if the corpse was the target of this spell within the past 10 days.",
+    "Until the spell ends, you can ask the corpse up to five questions. The corpse knows only what it knew in life, including the languages it knew. Answers are usually brief, cryptic, or repetitive, and the corpse is under no compulsion to offer a truthful answer if you are antagonistic toward it or it recognizes you as an enemy. This spell doesn't return the creature's soul to its body, only its animating spirit. Thus, the corpse can't learn new information, doesn't comprehend anything that has happened since it died, and can't speculate about future events."
+  ],
+  "affectsCreatureType": [
+    "aberration",
+    "beast",
+    "celestial",
+    "construct",
+    "dragon",
+    "elemental",
+    "fey",
+    "fiend",
+    "giant",
+    "humanoid",
+    "monstrosity",
+    "ooze",
+    "plant"
+  ]
+}

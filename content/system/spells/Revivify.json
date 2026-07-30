@@ -1,0 +1,44 @@
+{
+  "name": "Revivify",
+  "source": "XPHB",
+  "page": 312,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 3,
+  "school": "N",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "a diamond worth 300+ GP, which the spell consumes",
+      "cost": 30000,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You touch a creature that has died within the last minute. That creature revives with 1 {@variantrule Hit Points|XPHB|Hit Point}. This spell can't revive a creature that has died of old age, nor does it restore any missing body parts."
+  ],
+  "miscTags": [
+    "HL"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "name": "Wand of Binding",
+  "source": "XDMG",
+  "page": 318,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "WD|XDMG",
+  "rarity": "rare",
+  "reqAttune": true,
+  "weight": 1,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d6 + 1}",
+  "charges": 7,
+  "entries": [
+    "This wand has 7 charges.",
+    {
+      "type": "entries",
+      "name": "Spells",
+      "entries": [
+        "While holding the wand, you can cast one of the spells (save {@dc 17}) on the following table from it. The table indicates how many charges you must expend to cast the spell.",
+        {
+          "type": "table",
+          "colStyles": [
+            "col-10",
+            "col-2 text-center"
+          ],
+          "colLabels": [
+            "Spell",
+            "Charge Cost"
+          ],
+          "rows": [
+            [
+              "{@spell Hold Monster|XPHB}",
+              "5"
+            ],
+            [
+              "{@spell Hold Person|XPHB}",
+              "2"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Regaining Charges",
+      "entries": [
+        "The wand regains {@dice 1d6 + 1} expended charges daily at dawn. If you expend the wand's last charge, roll {@dice 1d20}. On a 1, the wand crumbles into ashes and is destroyed."
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "2": [
+        "hold person|xphb"
+      ],
+      "5": [
+        "hold monster|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Potion of Hill Giant Strength",
+  "source": "XDMG",
+  "page": 288,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "P|XPHB",
+  "rarity": "uncommon",
+  "weight": 0.5,
+  "ability": {
+    "static": {
+      "str": 21
+    }
+  },
+  "entries": [
+    "When you drink this potion, your Strength score changes to 21 for 1 hour. The potion has no effect on you if your Strength is equal to or greater than that score.",
+    "This potion's transparent liquid has floating in it a sliver of fingernail from a hill giant."
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG",
+    "Armaments - Uncommon|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

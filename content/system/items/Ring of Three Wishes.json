@@ -1,0 +1,23 @@
+{
+  "name": "Ring of Three Wishes",
+  "source": "XDMG",
+  "page": 296,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "rarity": "legendary",
+  "entries": [
+    "While wearing this ring, you can expend 1 of its 3 charges to cast {@spell Wish|XPHB} from it. The ring becomes nonmagical when you use the last charge."
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "wish|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Legendary|XDMG"
+  ],
+  "hasFluffImages": true
+}

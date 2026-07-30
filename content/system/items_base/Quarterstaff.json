@@ -1,0 +1,24 @@
+{
+  "name": "Quarterstaff",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 4,
+  "value": 20,
+  "weaponCategory": "simple",
+  "property": [
+    "V|XPHB"
+  ],
+  "mastery": [
+    "Topple|XPHB"
+  ],
+  "dmg1": "1d6",
+  "dmgType": "B",
+  "dmg2": "1d8",
+  "weapon": true,
+  "hasFluffImages": true
+}

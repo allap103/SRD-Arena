@@ -1,0 +1,169 @@
+{
+  "name": "Giant Insect",
+  "source": "XPHB",
+  "page": 279,
+  "srd52": true,
+  "summonedBySpell": "Giant Insect|XPHB",
+  "summonedBySpellLevel": 4,
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    {
+      "special": "11 + the spell's level"
+    }
+  ],
+  "hp": {
+    "special": "30 + 10 for each spell level above 4"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 40,
+    "fly": {
+      "number": 40,
+      "condition": "(Wasp only)"
+    }
+  },
+  "str": 17,
+  "dex": 13,
+  "con": 15,
+  "int": 4,
+  "wis": 14,
+  "cha": 3,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 12,
+  "languages": [
+    "understands the languages you know"
+  ],
+  "pbNote": "equals your Proficiency Bonus",
+  "trait": [
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The insect can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The insect makes a number of attacks equal to half this spell's level (round down)."
+      ]
+    },
+    {
+      "name": "Poison Jab",
+      "entries": [
+        "{@atkr m} {@hitYourSpellAttack Bonus equals your spell attack modifier}, reach 10 ft. {@h}{@damage 1d6 + 3 + summonSpellLevel} Piercing damage plus {@damage 1d4} Poison damage."
+      ]
+    },
+    {
+      "name": "Web Bolt (Spider Only)",
+      "entries": [
+        "{@atkr r} {@hitYourSpellAttack Bonus equals your spell attack modifier}, range 60 ft. {@h}{@damage 1d10 + 3 + summonSpellLevel} Bludgeoning damage, and the target's {@variantrule Speed|XPHB} is reduced to 0 until the start of the insect's next turn."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Venomous Spew (Centipede Only)",
+      "entries": [
+        "{@actSave con} Your spell save DC, one creature the insect can see within 10 feet. {@actSaveFail} The target has the {@condition Poisoned|XPHB} condition until the start of the insect's next turn."
+      ]
+    }
+  ],
+  "foundryTokenScale": 1.1,
+  "traitTags": [
+    "Spider Climb"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "poisoned"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluffImages": true,
+  "_versions": [
+    {
+      "name": "Giant Insect (Centipede)",
+      "source": "XPHB",
+      "_mod": {
+        "action": [
+          {
+            "mode": "removeArr",
+            "names": [
+              "Web Bolt (Spider Only)"
+            ]
+          }
+        ]
+      },
+      "speed": {
+        "walk": 40,
+        "climb": 40
+      },
+      "foundryTokenScale": 1.1,
+      "hasToken": true
+    },
+    {
+      "name": "Giant Insect (Spider)",
+      "source": "XPHB",
+      "_mod": {
+        "action": [
+          {
+            "mode": "renameArr",
+            "renames": {
+              "rename": "Web Bolt (Spider Only)",
+              "with": "Web Bolt"
+            }
+          }
+        ]
+      },
+      "speed": {
+        "walk": 40,
+        "climb": 40
+      },
+      "bonus": null,
+      "hasToken": true
+    },
+    {
+      "name": "Giant Insect (Wasp)",
+      "source": "XPHB",
+      "_mod": {
+        "action": [
+          {
+            "mode": "removeArr",
+            "names": [
+              "Web Bolt (Spider Only)"
+            ]
+          }
+        ]
+      },
+      "speed": {
+        "walk": 40,
+        "climb": 40,
+        "fly": 40
+      },
+      "bonus": null,
+      "hasToken": true
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Musket",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "R|XPHB",
+  "rarity": "none",
+  "weight": 10,
+  "value": 50000,
+  "weaponCategory": "martial",
+  "property": [
+    "A|XPHB",
+    "LD|XPHB",
+    "2H|XPHB"
+  ],
+  "mastery": [
+    "Slow|XPHB"
+  ],
+  "range": "40/120",
+  "dmg1": "1d12",
+  "dmgType": "P",
+  "firearm": true,
+  "weapon": true,
+  "ammoType": "firearm bullet|xphb",
+  "hasFluffImages": true
+}

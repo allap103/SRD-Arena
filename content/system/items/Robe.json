@@ -1,0 +1,14 @@
+{
+  "name": "Robe",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 4,
+  "value": 100,
+  "entries": [
+    "A Robe has vocational or ceremonial significance. Some events and locations admit only people wearing a Robe bearing certain colors or symbols."
+  ]
+}

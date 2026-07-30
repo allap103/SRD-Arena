@@ -1,0 +1,143 @@
+{
+  "name": "Young Gold Dragon",
+  "group": [
+    "Metallic Dragons"
+  ],
+  "source": "XMM",
+  "page": 144,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "metallic"
+    ]
+  },
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 178,
+    "formula": "17d10 + 85"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 80,
+    "swim": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 23,
+  "dex": 14,
+  "con": 21,
+  "int": 16,
+  "wis": 13,
+  "cha": 20,
+  "save": {
+    "dex": "+6",
+    "wis": "+5"
+  },
+  "skill": {
+    "insight": "+5",
+    "perception": "+9",
+    "persuasion": "+9",
+    "stealth": "+6"
+  },
+  "senses": [
+    "Blindsight 30 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 19,
+  "immune": [
+    "fire"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": "10",
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The dragon can breathe air and water."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of Weakening Breath."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 10}, reach 10 ft. {@h}17 ({@damage 2d10 + 6}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Fire Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 17}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 55 ({@damage 10d10}) Fire damage. {@actSaveSuccess} Half damage."
+      ]
+    },
+    {
+      "name": "Weakening Breath",
+      "entries": [
+        "{@actSave str} {@dc 17}, each creature that isn't currently affected by this breath in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target has {@variantrule Disadvantage|XPHB} on Strength-based {@variantrule D20 Test|XPHB|D20 Tests} and subtracts 3 ({@dice 1d6}) from its damage rolls. It repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "dragonAge": "young",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/gold-dragon.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "F",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "savingThrowForced": [
+    "dexterity",
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,139 @@
+{
+  "name": "Wand of Wonder",
+  "source": "XDMG",
+  "page": 322,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-SD"
+  ],
+  "type": "WD|XDMG",
+  "rarity": "rare",
+  "reqAttune": true,
+  "weight": 1,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d6 + 1}",
+  "charges": 7,
+  "entries": [
+    "This wand has 7 charges. While holding it, you can take a {@action Magic|XPHB} action to expend 1 charge while choosing a point within 120 feet of yourself. That location becomes the point of origin of a spell or other magical effect determined by rolling on the Wand of Wonder Effects table. Spells cast from the wand have a save DC of 15. If a spell's maximum range is normally less than 120 feet, it becomes 120 feet when cast from the wand. If an effect has multiple possible subjects, the DM determines randomly which among them are affected.",
+    {
+      "type": "entries",
+      "name": "Regaining Charges",
+      "entries": [
+        "The wand regains {@dice 1d6 + 1} expended charges daily at dawn. If you expend the wand's last charge, roll {@dice 1d20}. On a 1, the wand crumbles into dust and is destroyed."
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "Wand of Wonder Effects",
+      "colStyles": [
+        "col-2 text-center",
+        "col-10"
+      ],
+      "colLabels": [
+        "1d100",
+        "Effect"
+      ],
+      "rows": [
+        [
+          "01-20",
+          "You cast a spell originating from the chosen point. Roll {@dice 1d10} to determine the spell: on a {@b 1-2}, {@spell Darkness|XPHB}; on a {@b 3-4}, {@spell Faerie Fire|XPHB}; on a {@b 5-6}, {@spell Fireball|XPHB}; on a {@b 7-8}, {@spell Slow|XPHB}; on a {@b 9-10}, {@spell Stinking Cloud|XPHB}."
+        ],
+        [
+          "21-25",
+          "Nothing happens at the chosen point of origin. Instead, you have the {@condition Stunned|XPHB} condition until the start of your next turn, believing something awesome just happened."
+        ],
+        [
+          "26-30",
+          "You cast {@spell Gust of Wind|XPHB}. The {@variantrule Line [Area of Effect]|XPHB|Line} created by the spell extends from you to the chosen point of origin."
+        ],
+        [
+          "31-35",
+          "Nothing happens at the chosen point of origin. Instead, you take {@damage 1d6} Psychic damage."
+        ],
+        [
+          "36-40",
+          "Heavy rain falls for 1 minute in a 120-foot-high, 60-foot-radius {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} centered on the chosen point of origin. During that time, the area of effect is {@variantrule Lightly Obscured|XPHB}."
+        ],
+        [
+          "41-45",
+          "A cloud of 600 oversized butterflies fills a 60-foot-high, 30-foot-radius {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} centered on the chosen point of origin. The butterflies remain for 10 minutes, during which time the area of effect is {@variantrule Heavily Obscured|XPHB}."
+        ],
+        [
+          "46-50",
+          "You cast {@spell Lightning Bolt|XPHB}. The {@variantrule Line [Area of Effect]|XPHB|Line} created by the spell extends from you to the chosen point of origin."
+        ],
+        [
+          "51-55",
+          "The creature closest to the chosen point of origin is enlarged as if you had cast {@spell Enlarge/Reduce|XPHB} on it. If the target isn't you and can't be affected by that spell, you become the target instead."
+        ],
+        [
+          "56-60",
+          "A magically formed creature appears in an unoccupied space as close to the chosen point of origin as possible. The creature isn't under your control, acts as it normally would, and disappears after 1 hour or when it drops to 0 {@variantrule Hit Points|XPHB}. Roll {@dice 1d4} to determine which creature appears. On a {@b 1}, a {@creature Rhinoceros|XMM} appears; on a {@b 2}, an {@creature Elephant|XMM} appears; and on a {@b 3-4}, a {@creature Rat|XMM} appears."
+        ],
+        [
+          "61-64",
+          "Grass covers a 60-foot-radius circle of ground, with the center of that circle as close to the chosen point of origin as possible. Grass that's already there grows to ten times its normal size and remains overgrown for 1 minute."
+        ],
+        [
+          "65-68",
+          "An object of the DM's choice disappears into the Ethereal Plane. The object must be neither worn nor carried, within 120 feet of the chosen point of origin, and no larger than 10 feet in any dimension. If there are no such objects in range, nothing happens."
+        ],
+        [
+          "69-72",
+          "Nothing happens at the chosen point of origin. Instead, you shrink as if you had cast {@spell Enlarge/Reduce|XPHB} on yourself and remain in that state for 1 minute."
+        ],
+        [
+          "73-77",
+          "Leaves grow from the creature nearest to the chosen point of origin. Unless they are picked off, the leaves turn brown and fall off after 24 hours."
+        ],
+        [
+          "78-82",
+          "Nothing happens at the chosen point of origin. Instead, a burst of colorful, shimmering light extends from you in a 30-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation}. Each creature in the area must succeed on a {@dc 15} Constitution saving throw or have the {@condition Blinded|XPHB} condition for 1 minute. A creature repeats the save at the end of each of its turns, ending the effect on itself on a success."
+        ],
+        [
+          "83-87",
+          "Nothing happens at the chosen point of origin. Instead, you cast {@spell Invisibility|XPHB} on yourself."
+        ],
+        [
+          "88-92",
+          "Nothing happens at the chosen point of origin. Instead, a stream of {@dice 1d4 \u00d7 10} gems, each worth 1 GP, shoots from the wand's tip in a {@variantrule Line [Area of Effect]|XPHB|Line} 30 feet long and 5 feet wide toward the chosen point of origin. Each gem deals 1 Bludgeoning damage, and the total damage of the gems is divided equally among all creatures in the {@variantrule Line [Area of Effect]|XPHB|Line}."
+        ],
+        [
+          "93-97",
+          "You cast {@spell Polymorph|XPHB}, targeting the creature closest to the chosen point of origin. Roll {@dice 1d4} to determine the target's new form. On a {@b 1}, the new form is a {@creature Black Bear|XMM}; on a {@b 2}, the new form is a {@creature Giant Wasp|XMM}; on a {@b 3-4}, the new form is a {@creature Frog|XMM}."
+        ],
+        [
+          "98-00",
+          "The creature closest to the chosen point of origin makes a {@dc 15} Constitution saving throw. On a failed save, the creature has the {@condition Restrained|XPHB} condition and begins to turn to stone. While {@condition Restrained|XPHB} in this way, the creature repeats the save at the end of its next turn. On a successful save, the effect ends. On a failed save, the creature has the {@condition Petrified|XPHB} condition instead of the {@condition Restrained|XPHB} condition. The petrification lasts until the creature is freed by the {@spell Greater Restoration|XPHB} spell or similar magic."
+        ]
+      ],
+      "data": {
+        "genTables": {
+          "tableInclude": true
+        }
+      }
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "darkness|xphb",
+        "enlarge/reduce|xphb",
+        "faerie fire|xphb",
+        "fireball|xphb",
+        "greater restoration|xphb",
+        "gust of wind|xphb",
+        "invisibility|xphb",
+        "lightning bolt|xphb",
+        "polymorph|xphb",
+        "slow|xphb",
+        "stinking cloud|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

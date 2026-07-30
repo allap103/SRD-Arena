@@ -1,0 +1,19 @@
+{
+  "name": "Healer's Kit",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-DaS",
+    "DrDe-TDoN",
+    "HotB"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 3,
+  "value": 500,
+  "entries": [
+    "A Healer's Kit has ten uses. As a {@action Utilize|XPHB} action, you can expend one of its uses to stabilize an {@condition Unconscious|XPHB} creature that has 0 {@variantrule Hit Points|XPHB} without needing to make a Wisdom ({@skill Medicine|XPHB}) check."
+  ]
+}

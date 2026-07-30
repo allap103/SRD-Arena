@@ -1,0 +1,120 @@
+{
+  "name": "Blue Dragon Wyrmling",
+  "group": [
+    "Chromatic Dragons"
+  ],
+  "source": "XMM",
+  "page": 48,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "chromatic"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 65,
+    "formula": "10d8 + 20"
+  },
+  "speed": {
+    "walk": 30,
+    "burrow": 15,
+    "fly": 60
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 17,
+  "dex": 10,
+  "con": 15,
+  "int": 12,
+  "wis": 11,
+  "cha": 15,
+  "save": {
+    "dex": "+2",
+    "wis": "+2"
+  },
+  "skill": {
+    "perception": "+4",
+    "stealth": "+2"
+  },
+  "senses": [
+    "Blindsight 10 ft.",
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "immune": [
+    "lightning"
+  ],
+  "languages": [
+    "Draconic"
+  ],
+  "cr": "3",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes two Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}8 ({@damage 1d10 + 3}) Slashing damage plus 3 ({@damage 1d6}) Lightning damage."
+      ]
+    },
+    {
+      "name": "Lightning Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 12}, each creature in a 30-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 21 ({@damage 6d6}) Lightning damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "desert"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "dragonAge": "wyrmling",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/blue-dragon-wyrmling.opus"
+  },
+  "senseTags": [
+    "B",
+    "D"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "DR"
+  ],
+  "damageTags": [
+    "L",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

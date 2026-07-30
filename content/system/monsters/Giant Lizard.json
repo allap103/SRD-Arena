@@ -1,0 +1,81 @@
+{
+  "name": "Giant Lizard",
+  "source": "XMM",
+  "page": 358,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 19,
+    "formula": "3d10 + 3"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 40
+  },
+  "str": 15,
+  "dex": 12,
+  "con": 13,
+  "int": 2,
+  "wis": 10,
+  "cha": 5,
+  "save": {
+    "dex": "+3"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "cr": "1/4",
+  "trait": [
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The lizard can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "desert",
+    "forest",
+    "swamp",
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-lizard.opus"
+  },
+  "traitTags": [
+    "Spider Climb"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

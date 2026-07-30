@@ -1,0 +1,51 @@
+{
+  "name": "Stoneskin",
+  "source": "XPHB",
+  "page": 321,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 4,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "diamond dust worth 100+ GP, which the spell consumes",
+      "cost": 10000,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "Until the spell ends, one willing creature you touch has {@variantrule Resistance|XPHB} to Bludgeoning, Piercing, and Slashing damage."
+  ],
+  "damageResist": [
+    "bludgeoning",
+    "piercing",
+    "slashing"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

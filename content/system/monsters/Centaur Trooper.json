@@ -1,0 +1,113 @@
+{
+  "name": "Centaur Trooper",
+  "source": "XMM",
+  "page": 67,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "fey",
+  "alignment": [
+    "N",
+    "G"
+  ],
+  "ac": [
+    16
+  ],
+  "hp": {
+    "average": 45,
+    "formula": "6d10 + 12"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 18,
+  "dex": 14,
+  "con": 14,
+  "int": 9,
+  "wis": 13,
+  "cha": 11,
+  "skill": {
+    "athletics": "+6",
+    "perception": "+3"
+  },
+  "passive": 13,
+  "languages": [
+    "Elvish",
+    "Sylvan"
+  ],
+  "cr": "2",
+  "gear": [
+    "breastplate|xphb",
+    "longbow|xphb",
+    "pike|xphb"
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The centaur makes two attacks, using Pike or Longbow in any combination."
+      ]
+    },
+    {
+      "name": "Pike",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 10 ft. {@h}9 ({@damage 1d10 + 4}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Longbow",
+      "entries": [
+        "{@atkr r} {@hit 4}, range 150/600 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Trampling Charge {@recharge 5}",
+      "entries": [
+        "The centaur moves up to its {@variantrule Speed|XPHB} without provoking {@action Opportunity Attack|XPHB|Opportunity Attacks} and can move through the spaces of Medium or smaller creatures. Each creature whose space the centaur enters is targeted once by the following effect. {@actSave str} {@dc 14}. {@actSaveFail} 7 ({@damage 1d6 + 4}) Bludgeoning damage, and the target has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "planar, feywild"
+  ],
+  "treasure": [
+    "armaments",
+    "individual"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "E",
+    "S"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RCH",
+    "RNG"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "savingThrowForced": [
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

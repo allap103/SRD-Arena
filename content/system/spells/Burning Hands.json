@@ -1,0 +1,59 @@
+{
+  "name": "Burning Hands",
+  "source": "XPHB",
+  "page": 248,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 1,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "cone",
+    "distance": {
+      "type": "feet",
+      "amount": 15
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "A thin sheet of flames shoots forth from you. Each creature in a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone} makes a Dexterity saving throw, taking {@damage 3d6} Fire damage on a failed save or half as much damage on a successful one.",
+    "Flammable objects in the {@variantrule Cone [Area of Effect]|XPHB|Cone} that aren't being worn or carried start {@hazard burning|XPHB}."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 3d6|1-9|1d6} for each spell slot level above 1."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "fire"
+  ],
+  "savingThrow": [
+    "dexterity"
+  ],
+  "miscTags": [
+    "OBJ"
+  ],
+  "areaTags": [
+    "N"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "Goodberry",
+  "source": "XPHB",
+  "page": 280,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-SD"
+  ],
+  "level": 1,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a sprig of mistletoe"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 24
+      }
+    }
+  ],
+  "entries": [
+    "Ten berries appear in your hand and are infused with magic for the duration. A creature can take a {@variantrule Bonus Action|XPHB} to eat one berry. Eating a berry restores 1 {@variantrule Hit Points|XPHB|Hit Point}, and the berry provides enough nourishment to sustain a creature for one day.",
+    "Uneaten berries disappear when the spell ends."
+  ],
+  "miscTags": [
+    "HL"
+  ]
+}

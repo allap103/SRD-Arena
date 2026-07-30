@@ -1,0 +1,18 @@
+{
+  "name": "Ring of Fire Resistance",
+  "source": "XDMG",
+  "page": 294,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "resist": [
+    "fire"
+  ],
+  "detail1": "garnet",
+  "rarity": "rare",
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Ring of Resistance|XDMG}"
+  ],
+  "hasFluffImages": true
+}

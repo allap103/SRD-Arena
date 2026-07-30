@@ -1,0 +1,51 @@
+{
+  "name": "Clairvoyance",
+  "source": "XPHB",
+  "page": 250,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TFV"
+  ],
+  "level": 3,
+  "school": "D",
+  "time": [
+    {
+      "number": 10,
+      "unit": "minute"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "miles",
+      "amount": 1
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "a focus worth 100+ GP, either a jeweled horn for hearing or a glass eye for seeing",
+      "cost": 10000
+    }
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You create an {@condition Invisible|XPHB} sensor within range in a location familiar to you (a place you have visited or seen before) or in an obvious location that is unfamiliar to you (such as behind a door, around a corner, or in a grove of trees). The intangible, invulnerable sensor remains in place for the duration.",
+    "When you cast the spell, choose seeing or hearing. You can use the chosen sense through the sensor as if you were in its space. As a {@variantrule Bonus Action|XPHB}, you can switch between seeing and hearing.",
+    "A creature that sees the sensor (such as a creature benefiting from {@spell See Invisibility|XPHB} or {@sense Truesight|XPHB}) sees a luminous orb about the size of your fist."
+  ],
+  "miscTags": [
+    "UBA"
+  ]
+}

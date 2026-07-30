@@ -1,0 +1,64 @@
+{
+  "name": "Poison Spray",
+  "source": "XPHB",
+  "page": 306,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 0,
+  "school": "N",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You spray toxic mist at a creature within range. Make a ranged spell attack against the target. On a hit, the target takes {@damage 1d12} Poison damage."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Cantrip Upgrade",
+      "entries": [
+        "The damage increases by {@damage 1d12} when you reach levels 5 ({@damage 2d12}), 11 ({@damage 3d12}), and 17 ({@damage 4d12})."
+      ]
+    }
+  ],
+  "scalingLevelDice": {
+    "label": "Poison damage",
+    "scaling": {
+      "1": "1d12",
+      "5": "2d12",
+      "11": "3d12",
+      "17": "4d12"
+    }
+  },
+  "damageInflict": [
+    "poison"
+  ],
+  "spellAttack": [
+    "R"
+  ],
+  "miscTags": [
+    "SCL"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

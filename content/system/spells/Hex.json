@@ -1,0 +1,61 @@
+{
+  "name": "Hex",
+  "source": "XPHB",
+  "page": 285,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 1,
+  "school": "E",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 90
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "the petrified eye of a newt"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You place a curse on a creature that you can see within range. Until the spell ends, you deal an extra {@damage 1d6} Necrotic damage to the target whenever you hit it with an attack roll. Also, choose one ability when you cast the spell. The target has {@variantrule Disadvantage|XPHB} on ability checks made with the chosen ability.",
+    "If the target drops to 0 {@variantrule Hit Points|XPHB} before this spell ends, you can take a {@variantrule Bonus Action|XPHB} on a later turn to curse a new creature."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "Your {@status Concentration|XPHB} can last longer with a spell slot of level 2 (up to 4 hours), 3-4 (up to 8 hours), or 5+ (24 hours)."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "necrotic"
+  ],
+  "miscTags": [
+    "AAD",
+    "SGT",
+    "UBA"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

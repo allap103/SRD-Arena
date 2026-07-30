@@ -1,0 +1,23 @@
+{
+  "name": "Cloak of Protection",
+  "source": "XDMG",
+  "page": 245,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "bonusAc": "+1",
+  "bonusSavingThrow": "+1",
+  "entries": [
+    "You gain a +1 bonus to {@variantrule Armor Class|XPHB} and saving throws while you wear this cloak."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG",
+    "Implements - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

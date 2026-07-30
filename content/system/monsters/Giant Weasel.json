@@ -1,0 +1,76 @@
+{
+  "name": "Giant Weasel",
+  "source": "XMM",
+  "page": 361,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 351
+    }
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 9,
+    "formula": "2d8"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 30
+  },
+  "str": 11,
+  "dex": 17,
+  "con": 10,
+  "int": 4,
+  "wis": 12,
+  "cha": 5,
+  "skill": {
+    "acrobatics": "+5",
+    "perception": "+3",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "cr": "1/8",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-weasel.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

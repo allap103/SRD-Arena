@@ -1,0 +1,21 @@
+{
+  "name": "Rod of Rulership",
+  "source": "XDMG",
+  "page": 301,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-DotSC"
+  ],
+  "type": "RD|XDMG",
+  "rarity": "rare",
+  "reqAttune": true,
+  "weight": 2,
+  "entries": [
+    "You can take a {@action Magic|XPHB} action to present the rod and command obedience from each creature of your choice that you can see within 120 feet of yourself. Each target must succeed on a {@dc 15} Wisdom saving throw or have the {@condition Charmed|XPHB} condition for 8 hours. While {@condition Charmed|XPHB} in this way, the creature regards you as its trusted leader. If harmed by you or your allies or commanded to do something contrary to its nature, a target ceases to be {@condition Charmed|XPHB} in this way. Once used, this property can't be used again until the next dawn."
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

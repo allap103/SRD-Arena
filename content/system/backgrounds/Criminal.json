@@ -1,0 +1,123 @@
+{
+  "name": "Criminal",
+  "source": "XPHB",
+  "page": 180,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "ability": [
+    {
+      "choose": {
+        "weighted": {
+          "from": [
+            "dex",
+            "con",
+            "int"
+          ],
+          "weights": [
+            2,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "choose": {
+        "weighted": {
+          "from": [
+            "dex",
+            "con",
+            "int"
+          ],
+          "weights": [
+            1,
+            1,
+            1
+          ]
+        }
+      }
+    }
+  ],
+  "feats": [
+    {
+      "alert|xphb": true
+    }
+  ],
+  "skillProficiencies": [
+    {
+      "sleight of hand": true,
+      "stealth": true
+    }
+  ],
+  "toolProficiencies": [
+    {
+      "thieves' tools": true
+    }
+  ],
+  "startingEquipment": [
+    {
+      "A": [
+        {
+          "item": "dagger|xphb",
+          "quantity": 2
+        },
+        {
+          "item": "thieves' tools|xphb"
+        },
+        {
+          "item": "crowbar|xphb"
+        },
+        {
+          "item": "pouch|xphb",
+          "quantity": 2
+        },
+        {
+          "item": "traveler's clothes|xphb"
+        },
+        {
+          "value": 1600
+        }
+      ],
+      "B": [
+        {
+          "value": 5000
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "type": "item",
+          "name": "Ability Scores:",
+          "entry": "Dexterity, Constitution, Intelligence"
+        },
+        {
+          "type": "item",
+          "name": "Feat:",
+          "entry": "{@feat Alert|XPHB}"
+        },
+        {
+          "type": "item",
+          "name": "Skill Proficiencies:",
+          "entry": "{@skill Sleight of Hand|XPHB}, {@skill Stealth|XPHB}"
+        },
+        {
+          "type": "item",
+          "name": "Tool Proficiency:",
+          "entry": "{@item Thieves' Tools|XPHB}"
+        },
+        {
+          "type": "item",
+          "name": "Equipment:",
+          "entry": "Choose A or B: (A) {@item Dagger|XPHB|2 Daggers}, {@item Thieves' Tools|XPHB}, {@item Crowbar|XPHB}, {@item Pouch|XPHB|2 Pouches}, {@item Traveler's Clothes|XPHB}, 16 GP; or (B) 50 GP"
+        }
+      ]
+    }
+  ],
+  "hasFluff": true,
+  "hasFluffImages": true
+}

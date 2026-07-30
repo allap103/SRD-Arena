@@ -1,0 +1,30 @@
+{
+  "name": "Ring of Jumping",
+  "source": "XDMG",
+  "page": 293,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-FWtVC"
+  ],
+  "type": "RG|XDMG",
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "entries": [
+    "While wearing this ring, you can cast {@spell Jump|XPHB} from it, but can target only yourself when you do so."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "attachedSpells": {
+    "will": [
+      "jump|xphb"
+    ]
+  },
+  "lootTables": [
+    "Implements - Uncommon|XDMG"
+  ]
+}

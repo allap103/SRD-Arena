@@ -1,0 +1,37 @@
+{
+  "name": "Viol",
+  "source": "XPHB",
+  "page": 221,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "HotB"
+  ],
+  "edition": "one",
+  "type": "INS|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 3000,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Charisma"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Play a known tune ({@dc 10}), or improvise a song ({@dc 15})"
+          ]
+        }
+      ]
+    }
+  ]
+}

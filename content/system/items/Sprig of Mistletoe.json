@@ -1,0 +1,14 @@
+{
+  "name": "Sprig of Mistletoe",
+  "group": [
+    "Druidic Focus"
+  ],
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "SCF|XPHB",
+  "scfType": "druid",
+  "rarity": "none",
+  "value": 100
+}

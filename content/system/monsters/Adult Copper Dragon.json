@@ -1,0 +1,322 @@
+{
+  "name": "Adult Copper Dragon",
+  "group": [
+    "Metallic Dragons"
+  ],
+  "source": "XMM",
+  "page": 79,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-ACfaS",
+    "FRAiF"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "metallic"
+    ]
+  },
+  "alignment": [
+    "C",
+    "G"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 184,
+    "formula": "16d12 + 80"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 40,
+    "fly": 80
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 23,
+  "dex": 12,
+  "con": 21,
+  "int": 18,
+  "wis": 15,
+  "cha": 18,
+  "save": {
+    "dex": "+6",
+    "wis": "+7"
+  },
+  "skill": {
+    "deception": "+9",
+    "perception": "+12",
+    "stealth": "+6"
+  },
+  "senses": [
+    "Blindsight 60 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 22,
+  "immune": [
+    "acid"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": {
+    "cr": "14",
+    "xpLair": 13000
+  },
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 17}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Mind Spike|XPHB} (level 4 version)",
+        "{@spell Minor Illusion|XPHB}",
+        "{@spell Shapechange|XPHB} (Beast or Humanoid form only, no {@variantrule Temporary Hit Points|XPHB} gained from the spell, and no {@status Concentration|XPHB} or {@variantrule Temporary Hit Points|XPHB} required to maintain the spell)"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Greater Restoration|XPHB}",
+          "{@spell Major Image|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Legendary Resistance (3/Day, or 4/Day in Lair)",
+      "entries": [
+        "If the dragon fails a saving throw, it can choose to succeed instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Slowing Breath or (B) Spellcasting to cast {@spell Mind Spike|XPHB} (level 4 version)."
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                },
+                "times": 3
+              }
+            ],
+            "replacements": [
+              {
+                "target": {
+                  "type": "action",
+                  "name": "Rend"
+                },
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Slowing Breath"
+                  },
+                  {
+                    "type": "cast_spell",
+                    "spell": {
+                      "name": "Mind Spike",
+                      "source": "XPHB"
+                    },
+                    "cast_level": 4
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 11}, reach 10 ft. {@h}17 ({@damage 2d10 + 6}) Slashing damage plus 4 ({@damage 1d8}) Acid damage."
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 11,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "reach_feet": 10,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d10",
+            "bonus": 6,
+            "damage_type": "slashing"
+          },
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "bonus": 0,
+            "damage_type": "acid"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Acid Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 18}, each creature in an 60-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 54 ({@damage 12d8}) Acid damage. {@actSaveSuccess} Half damage."
+      ]
+    },
+    {
+      "name": "Slowing Breath",
+      "entries": [
+        "{@actSave con} {@dc 18}, each creature in a 60-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target can't take Reactions; its {@variantrule Speed|XPHB} is halved; and it can take either an action or a {@variantrule Bonus Action|XPHB} on its turn, not both. This effect lasts until the end of its next turn."
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "con",
+        "dc": 18,
+        "target": {
+          "type": "area",
+          "shape": "cone",
+          "size_feet": 60
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "prohibit_reactions",
+                "duration": {
+                  "type": "end_of_turn",
+                  "creature": "target",
+                  "turn_offset": 1
+                }
+              },
+              {
+                "type": "speed_multiplier",
+                "numerator": 1,
+                "denominator": 2,
+                "duration": {
+                  "type": "end_of_turn",
+                  "creature": "target",
+                  "turn_offset": 1
+                }
+              },
+              {
+                "type": "turn_economy_restriction",
+                "choose_between": [
+                  "action",
+                  "bonus_action"
+                ],
+                "duration": {
+                  "type": "end_of_turn",
+                  "creature": "target",
+                  "turn_offset": 1
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Giggling Magic",
+      "entries": [
+        "{@actSave cha} {@dc 17}, one creature the dragon can see within 90 feet. {@actSaveFail} 24 ({@damage 7d6}) Psychic damage. Until the end of its next turn, the target rolls {@dice 1d6} whenever it makes an ability check or attack roll and subtracts the number rolled from the {@variantrule D20 Test|XPHB}. {@actSaveSuccessOrFail} The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Mind Jolt",
+      "entries": [
+        "The dragon uses Spellcasting to cast {@spell Mind Spike|XPHB} (level 4 version). The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Pounce",
+      "entries": [
+        "The dragon moves up to half its {@variantrule Speed|XPHB}, and it makes one Rend attack."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Copper Dragon",
+    "source": "XMM"
+  },
+  "environment": [
+    "hill"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "dragonAge": "adult",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/copper-dragon.opus"
+  },
+  "traitTags": [
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "A",
+    "S",
+    "Y"
+  ],
+  "damageTagsSpell": [
+    "Y"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "savingThrowForced": [
+    "charisma",
+    "constitution",
+    "dexterity"
+  ],
+  "savingThrowForcedLegendary": [
+    "wisdom"
+  ],
+  "savingThrowForcedSpell": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

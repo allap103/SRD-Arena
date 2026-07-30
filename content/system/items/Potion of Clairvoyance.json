@@ -1,0 +1,23 @@
+{
+  "name": "Potion of Clairvoyance",
+  "source": "XDMG",
+  "page": 287,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "P|XPHB",
+  "rarity": "rare",
+  "weight": 0.5,
+  "entries": [
+    "When you drink this potion, you gain the effect of the {@spell Clairvoyance|XPHB} spell (no {@status Concentration|XPHB} required).",
+    "An eyeball bobs in this potion's yellowish liquid but vanishes when the potion is opened."
+  ],
+  "attachedSpells": [
+    "clairvoyance|xphb"
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

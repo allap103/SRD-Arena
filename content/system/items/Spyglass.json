@@ -1,0 +1,17 @@
+{
+  "name": "Spyglass",
+  "source": "XPHB",
+  "page": 229,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 100000,
+  "entries": [
+    "Objects viewed through a Spyglass are magnified to twice their size."
+  ]
+}

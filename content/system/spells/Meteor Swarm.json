@@ -1,0 +1,49 @@
+{
+  "name": "Meteor Swarm",
+  "source": "XPHB",
+  "page": 298,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 9,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "miles",
+      "amount": 1
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "Blazing orbs of fire plummet to the ground at four different points you can see within range. Each creature in a 40-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} centered on each of those points makes a Dexterity saving throw. A creature takes {@damage 20d6} Fire damage and {@damage 20d6} Bludgeoning damage on a failed save or half as much damage on a successful one. A creature in the area of more than one fiery {@variantrule Sphere [Area of Effect]|XPHB|Sphere} is affected only once.",
+    "A nonmagical object that isn't being worn or carried also takes the damage if it's in the spell's area, and the object starts {@hazard burning|XPHB} if it's flammable."
+  ],
+  "damageInflict": [
+    "bludgeoning",
+    "fire"
+  ],
+  "savingThrow": [
+    "dexterity"
+  ],
+  "miscTags": [
+    "OBJ",
+    "SGT"
+  ],
+  "areaTags": [
+    "S"
+  ]
+}

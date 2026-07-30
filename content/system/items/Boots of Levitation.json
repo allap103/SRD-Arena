@@ -1,0 +1,24 @@
+{
+  "name": "Boots of Levitation",
+  "source": "XDMG",
+  "page": 239,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "entries": [
+    "While you wear these boots, you can cast {@spell Levitate|XPHB} on yourself."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "attachedSpells": {
+    "will": [
+      "levitate|xphb"
+    ]
+  },
+  "lootTables": [
+    "Implements - Rare|XDMG"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "Greataxe",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 7,
+  "value": 3000,
+  "weaponCategory": "martial",
+  "property": [
+    "H|XPHB",
+    "2H|XPHB"
+  ],
+  "mastery": [
+    "Cleave|XPHB"
+  ],
+  "dmg1": "1d12",
+  "dmgType": "S",
+  "axe": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

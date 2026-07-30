@@ -1,0 +1,16 @@
+{
+  "name": "Padded Armor",
+  "source": "XPHB",
+  "page": 219,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "LA|XPHB",
+  "rarity": "none",
+  "weight": 8,
+  "value": 500,
+  "ac": 11,
+  "armor": true,
+  "stealth": true,
+  "hasFluffImages": true
+}

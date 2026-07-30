@@ -1,0 +1,119 @@
+{
+  "name": "Salamander",
+  "source": "XMM",
+  "page": 267,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "elemental",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 90,
+    "formula": "12d10 + 24"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 18,
+  "dex": 14,
+  "con": 15,
+  "int": 11,
+  "wis": 10,
+  "cha": 12,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "immune": [
+    "fire"
+  ],
+  "vulnerable": [
+    "cold"
+  ],
+  "languages": [
+    "Primordial (Ignan)"
+  ],
+  "cr": "5",
+  "trait": [
+    {
+      "name": "Fire Aura",
+      "entries": [
+        "At the end of each of the salamander's turns, each creature of the salamander's choice in a 5-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the salamander takes 7 ({@damage 2d6}) Fire damage."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The salamander makes two Flame Spear attacks. It can replace one attack with a use of Constrict."
+      ]
+    },
+    {
+      "name": "Flame Spear",
+      "entries": [
+        "{@atkr m,r} {@hit 7}, reach 5 ft. or range 20/60 ft. {@h}13 ({@damage 2d8 + 4}) Piercing damage plus 7 ({@damage 2d6}) Fire damage. {@hom}The spear magically returns to the salamander's hand immediately after a ranged attack."
+      ]
+    },
+    {
+      "name": "Constrict",
+      "entries": [
+        "{@actSave str} {@dc 15}, one Large or smaller creature the salamander can see within 10 feet. {@actSaveFail} 11 ({@damage 2d6 + 4}) Bludgeoning damage plus 7 ({@damage 2d6}) Fire damage. The target has the {@condition Grappled|XPHB} condition (escape {@dc 14}), and it has the {@condition Restrained|XPHB} condition until the grapple ends."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, fire",
+    "underdark"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/salamander.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "IG",
+    "P"
+  ],
+  "damageTags": [
+    "B",
+    "F",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "THW"
+  ],
+  "conditionInflict": [
+    "grappled",
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

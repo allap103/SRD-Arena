@@ -1,0 +1,110 @@
+{
+  "name": "Swarm of Crawling Claws",
+  "source": "XMM",
+  "page": 83,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TWoO",
+    "FRAiF",
+    "HBTD",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "undead",
+    "swarmSize": "T"
+  },
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 49,
+    "formula": "11d8"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 14,
+  "dex": 14,
+  "con": 11,
+  "int": 5,
+  "wis": 10,
+  "cha": 4,
+  "senses": [
+    "Blindsight 30 ft."
+  ],
+  "passive": 10,
+  "resist": [
+    "bludgeoning",
+    "piercing",
+    "slashing"
+  ],
+  "immune": [
+    "necrotic",
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "exhaustion",
+    "frightened",
+    "grappled",
+    "incapacitated",
+    "paralyzed",
+    "petrified",
+    "poisoned",
+    "prone",
+    "restrained",
+    "stunned"
+  ],
+  "languages": [
+    "understands Common but can't speak"
+  ],
+  "cr": "3",
+  "trait": [
+    {
+      "name": "Swarm",
+      "entries": [
+        "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny creature. The swarm can't regain {@variantrule Hit Points|XPHB} or gain {@variantrule Temporary Hit Points|XPHB}."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Swarm of Grasping Hands",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}20 ({@damage 4d8 + 2}) Necrotic damage, or 11 ({@damage 2d8 + 2}) Necrotic damage if the swarm is {@status Bloodied|XPHB}. If the target is a Medium or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "languageTags": [
+    "C",
+    "CS"
+  ],
+  "damageTags": [
+    "N"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

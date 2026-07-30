@@ -1,0 +1,31 @@
+{
+  "name": "Light Crossbow",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-DaS"
+  ],
+  "edition": "one",
+  "type": "R|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "value": 2500,
+  "weaponCategory": "simple",
+  "property": [
+    "A|XPHB",
+    "LD|XPHB",
+    "2H|XPHB"
+  ],
+  "mastery": [
+    "Slow|XPHB"
+  ],
+  "range": "80/320",
+  "dmg1": "1d8",
+  "dmgType": "P",
+  "crossbow": true,
+  "weapon": true,
+  "ammoType": "bolt|xphb",
+  "hasFluffImages": true
+}

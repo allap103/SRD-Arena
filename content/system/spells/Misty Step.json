@@ -1,0 +1,39 @@
+{
+  "name": "Misty Step",
+  "source": "XPHB",
+  "page": 299,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 2,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "Briefly surrounded by silvery mist, you teleport up to 30 feet to an unoccupied space you can see."
+  ],
+  "miscTags": [
+    "SGT",
+    "TP"
+  ]
+}

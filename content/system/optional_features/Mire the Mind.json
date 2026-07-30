@@ -1,0 +1,35 @@
+{
+  "name": "Mire the Mind",
+  "source": "PHB",
+  "page": 111,
+  "srd": true,
+  "featureType": [
+    "EI"
+  ],
+  "prerequisite": [
+    {
+      "level": {
+        "level": 5,
+        "class": {
+          "name": "Warlock"
+        }
+      }
+    }
+  ],
+  "additionalSpells": [
+    {
+      "innate": {
+        "_": {
+          "daily": {
+            "1e": [
+              "slow"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "entries": [
+    "You can cast {@spell slow} once using a warlock spell slot. You can't do so again until you finish a long rest."
+  ]
+}

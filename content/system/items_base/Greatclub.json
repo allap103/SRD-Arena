@@ -1,0 +1,27 @@
+{
+  "name": "Greatclub",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BD"
+  ],
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 10,
+  "value": 20,
+  "weaponCategory": "simple",
+  "property": [
+    "2H|XPHB"
+  ],
+  "mastery": [
+    "Push|XPHB"
+  ],
+  "dmg1": "1d8",
+  "dmgType": "B",
+  "club": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

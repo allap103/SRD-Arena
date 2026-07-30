@@ -1,0 +1,17 @@
+{
+  "name": "Shovel",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-DaS"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "value": 200,
+  "entries": [
+    "Working for 1 hour, you can use a Shovel to dig a hole that is 5 feet on each side in soil or similar material."
+  ]
+}

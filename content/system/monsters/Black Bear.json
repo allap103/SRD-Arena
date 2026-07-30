@@ -1,0 +1,82 @@
+{
+  "name": "Black Bear",
+  "source": "XMM",
+  "page": 349,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 346
+    }
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 19,
+    "formula": "3d8 + 6"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30,
+    "swim": 30
+  },
+  "str": 15,
+  "dex": 12,
+  "con": 14,
+  "int": 2,
+  "wis": 12,
+  "cha": 7,
+  "skill": {
+    "perception": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "cr": "1/2",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The bear makes two Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/black-bear.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

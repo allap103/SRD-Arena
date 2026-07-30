@@ -1,0 +1,28 @@
+{
+  "name": "Rapier",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "HotB"
+  ],
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 2500,
+  "weaponCategory": "martial",
+  "property": [
+    "F|XPHB"
+  ],
+  "mastery": [
+    "Vex|XPHB"
+  ],
+  "dmg1": "1d8",
+  "dmgType": "P",
+  "rapier": true,
+  "sword": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,87 @@
+{
+  "name": "Cultist",
+  "source": "XMM",
+  "page": 84,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "BQDD",
+    "FRAiF",
+    "FRHoF",
+    "HotB",
+    "ScoEE"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 9,
+    "formula": "2d8"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 11,
+  "dex": 12,
+  "con": 10,
+  "int": 10,
+  "wis": 11,
+  "cha": 10,
+  "save": {
+    "wis": "+2"
+  },
+  "skill": {
+    "deception": "+2",
+    "religion": "+2"
+  },
+  "passive": 10,
+  "languages": [
+    "Common"
+  ],
+  "cr": "1/8",
+  "gear": [
+    "leather armor|xphb",
+    "sickle|xphb"
+  ],
+  "action": [
+    {
+      "name": "Ritual Sickle",
+      "entries": [
+        "{@atkr m} {@hit 3}, reach 5 ft. {@h}3 ({@damage 1d4 + 1}) Slashing damage plus 1 Necrotic damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "individual",
+    "relics"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/cultist.opus"
+  },
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "N",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

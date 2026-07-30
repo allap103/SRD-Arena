@@ -1,0 +1,31 @@
+{
+  "name": "Medallion of Thoughts",
+  "source": "XDMG",
+  "page": 278,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "weight": 1,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d4}",
+  "charges": 5,
+  "entries": [
+    "The medallion has 5 charges. While wearing it, you can expend 1 charge to cast {@spell Detect Thoughts|XPHB} (save {@dc 13}) from it. The medallion regains {@dice 1d4} expended charges daily at dawn."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "detect thoughts|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

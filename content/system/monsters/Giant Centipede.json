@@ -1,0 +1,73 @@
+{
+  "name": "Giant Centipede",
+  "source": "XMM",
+  "page": 355,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "BQGT",
+    "DrDe",
+    "DrDe-DaS",
+    "HotB"
+  ],
+  "size": [
+    "S"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 9,
+    "formula": "2d6 + 2"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 5,
+  "dex": 14,
+  "con": 12,
+  "int": 1,
+  "wis": 7,
+  "cha": 3,
+  "senses": [
+    "Blindsight 30 ft."
+  ],
+  "passive": 8,
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}4 ({@damage 1d4 + 2}) Piercing damage, and the target has the {@condition Poisoned|XPHB} condition until the start of the centipede's next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-centipede.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "poisoned"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

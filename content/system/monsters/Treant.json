@@ -1,0 +1,121 @@
+{
+  "name": "Treant",
+  "source": "XMM",
+  "page": 308,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TFV",
+    "FRAiF",
+    "FRHoF",
+    "LFL",
+    "RHW"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "plant",
+  "alignment": [
+    "C",
+    "G"
+  ],
+  "ac": [
+    16
+  ],
+  "hp": {
+    "average": 138,
+    "formula": "12d12 + 60"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 23,
+  "dex": 8,
+  "con": 21,
+  "int": 12,
+  "wis": 16,
+  "cha": 12,
+  "passive": 13,
+  "resist": [
+    "bludgeoning",
+    "piercing"
+  ],
+  "vulnerable": [
+    "fire"
+  ],
+  "languages": [
+    "Common",
+    "Druidic",
+    "Elvish",
+    "Sylvan"
+  ],
+  "cr": "9",
+  "trait": [
+    {
+      "name": "Siege Monster",
+      "entries": [
+        "The treant deals double damage to objects and structures."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The treant makes two Slam attacks."
+      ]
+    },
+    {
+      "name": "Slam",
+      "entries": [
+        "{@atkr m} {@hit 10}, reach 5 ft. {@h}16 ({@damage 3d6 + 6}) Bludgeoning damage."
+      ]
+    },
+    {
+      "name": "Hail of Bark",
+      "entries": [
+        "{@atkr r} {@hit 10}, range 180 ft. {@h}28 ({@damage 4d10 + 6}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Animate Trees (1/Day)",
+      "entries": [
+        "The treant magically animates up to two trees it can see within 60 feet of itself. Each tree uses the Treant stat block, except it has Intelligence and Charisma scores of 1, it can't speak, and it lacks this action. The tree takes its turn immediately after the treant on the same {@variantrule Initiative|XPHB} count, and it obeys the treant. A tree remains animate for 1 day or until it dies, the treant dies, or it is more than 120 feet from the treant. The tree then takes root if possible."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/treant.opus"
+  },
+  "traitTags": [
+    "Siege Monster"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DU",
+    "E",
+    "S"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

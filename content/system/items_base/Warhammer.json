@@ -1,0 +1,25 @@
+{
+  "name": "Warhammer",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "value": 1500,
+  "weaponCategory": "martial",
+  "property": [
+    "V|XPHB"
+  ],
+  "mastery": [
+    "Push|XPHB"
+  ],
+  "dmg1": "1d8",
+  "dmgType": "B",
+  "dmg2": "1d10",
+  "hammer": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

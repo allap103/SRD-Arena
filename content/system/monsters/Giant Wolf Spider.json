@@ -1,0 +1,88 @@
+{
+  "name": "Giant Wolf Spider",
+  "source": "XMM",
+  "page": 362,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 11,
+    "formula": "2d8 + 2"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 40
+  },
+  "str": 12,
+  "dex": 16,
+  "con": 13,
+  "int": 3,
+  "wis": 12,
+  "cha": 4,
+  "skill": {
+    "perception": "+3",
+    "stealth": "+7"
+  },
+  "senses": [
+    "Blindsight 10 ft.",
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "cr": "1/4",
+  "trait": [
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The spider can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Piercing damage plus 5 ({@damage 2d4}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "desert",
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-wolf-spider.opus"
+  },
+  "traitTags": [
+    "Spider Climb"
+  ],
+  "senseTags": [
+    "B",
+    "D"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

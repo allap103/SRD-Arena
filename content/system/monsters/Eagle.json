@@ -1,0 +1,64 @@
+{
+  "name": "Eagle",
+  "source": "XMM",
+  "page": 353,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "S"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 4,
+    "formula": "1d6 + 1"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 60
+  },
+  "str": 6,
+  "dex": 15,
+  "con": 12,
+  "int": 2,
+  "wis": 14,
+  "cha": 7,
+  "skill": {
+    "perception": "+6"
+  },
+  "passive": 16,
+  "cr": "0",
+  "action": [
+    {
+      "name": "Talons",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 feet. {@h}4 ({@damage 1d4 + 2}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "grassland",
+    "hill",
+    "mountain"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/eagle.opus"
+  },
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

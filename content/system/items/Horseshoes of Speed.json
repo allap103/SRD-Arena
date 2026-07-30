@@ -1,0 +1,17 @@
+{
+  "name": "Horseshoes of Speed",
+  "source": "XDMG",
+  "page": 270,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "wondrous": true,
+  "entries": [
+    "These horseshoes come in a set of four. As a {@action Magic|XPHB} action, you can touch one of the horseshoes to the hoof of a horse or similar creature, whereupon the horseshoe affixes itself to the hoof. Removing a horseshoe also takes a {@action Magic|XPHB} action.",
+    "While all four horseshoes are attached to the same creature, its {@variantrule Speed|XPHB} is increased by 30 feet."
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG",
+    "Implements - Rare|XDMG"
+  ]
+}

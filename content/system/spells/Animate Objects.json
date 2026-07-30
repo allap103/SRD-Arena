@@ -1,0 +1,64 @@
+{
+  "name": "Animate Objects",
+  "source": "XPHB",
+  "page": 240,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 5,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 120
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "Objects animate at your command. Choose a number of nonmagical objects within range that aren't being worn or carried, aren't fixed to a surface, and aren't Gargantuan. The maximum number of objects is equal to your spellcasting ability modifier; for this number, a Medium or smaller target counts as one object, a Large target counts as two, and a Huge target counts as three.",
+    "Each target animates, sprouts legs, and becomes a Construct that uses the {@creature Animated Object|XPHB} stat block; this creature is under your control until the spell ends or until it is reduced to 0 {@variantrule Hit Points|XPHB}. Each creature you make with this spell is an ally to you and your allies. In combat, it shares your {@variantrule Initiative|XPHB} count and takes its turn immediately after yours.",
+    "Until the spell ends, you can take a {@variantrule Bonus Action|XPHB} to mentally command any creature you made with this spell if the creature is within 500 feet of you (if you control multiple creatures, you can command any of them at the same time, issuing the same command to each one). If you issue no commands, the creature takes the {@action Dodge|XPHB} action and moves only to avoid harm. When the creature drops to 0 {@variantrule Hit Points|XPHB}, it reverts to its object form, and any remaining damage carries over to that form."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The creature's Slam damage increases by {@damage 1d4} (Medium or smaller), {@damage 1d6} (Large), or {@damage 1d12} (Huge) for each spell slot level above 5."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "bludgeoning",
+    "piercing",
+    "slashing"
+  ],
+  "miscTags": [
+    "OBJ",
+    "SMN",
+    "UBA"
+  ],
+  "areaTags": [
+    "MT"
+  ],
+  "hasFluffImages": true
+}

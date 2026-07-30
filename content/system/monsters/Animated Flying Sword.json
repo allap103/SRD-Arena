@@ -1,0 +1,88 @@
+{
+  "name": "Animated Flying Sword",
+  "source": "XMM",
+  "page": 17,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "BQDD",
+    "EFA",
+    "HotB",
+    "RHW"
+  ],
+  "size": [
+    "S"
+  ],
+  "type": "construct",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 14,
+    "formula": "4d6"
+  },
+  "speed": {
+    "walk": 5,
+    "fly": {
+      "number": 50,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 12,
+  "dex": 15,
+  "con": 11,
+  "int": 1,
+  "wis": 5,
+  "cha": 1,
+  "save": {
+    "dex": "+4"
+  },
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 7,
+  "immune": [
+    "poison",
+    "psychic"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "deafened",
+    "exhaustion",
+    "frightened",
+    "paralyzed",
+    "petrified",
+    "poisoned"
+  ],
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Slash",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}6 ({@damage 1d8 + 2}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "urban"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Crawler Mucus (Contact)",
+  "source": "XDMG",
+  "page": 90,
+  "srd52": "Crawler Mucus (Contact)",
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 20000,
+  "poison": true,
+  "entries": [
+    "A creature subjected to Crawler Mucus (Contact) must succeed on a {@dc 13} Constitution saving throw or have the {@condition Poisoned|XPHB} condition for 1 minute. The creature also has the {@condition Paralyzed|XPHB} condition while {@condition Poisoned|XPHB} in this way. The creature repeats the save at the end of each of its turns, ending the effect on itself on a success."
+  ],
+  "poisonTypes": [
+    "contact"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "name": "Ring of Elemental Command (Fire)",
+  "source": "XDMG",
+  "page": 292,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "immune": [
+    "fire"
+  ],
+  "resist": [
+    "fire"
+  ],
+  "rarity": "legendary",
+  "reqAttune": true,
+  "grantsLanguage": true,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d4 + 1}",
+  "charges": 5,
+  "entries": [
+    "The Ring of Elemental Command (fire) is linked to the Elemental Plane of Fire. Every Ring of Elemental Command has the following two properties:",
+    {
+      "type": "list",
+      "items": [
+        {
+          "type": "item",
+          "name": "Elemental Bane",
+          "entries": [
+            "While wearing the ring, you have {@variantrule Advantage|XPHB} on attack rolls against Elementals and they have {@variantrule Disadvantage|XPHB} on attack rolls against you."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Elemental Compulsion",
+          "entries": [
+            "While wearing the ring, you can take a {@action Magic|XPHB} action to try to compel an Elemental you see within 60 feet of yourself. The Elemental makes a {@dc 18} Wisdom saving throw. On a failed save, the Elemental has the {@condition Charmed|XPHB} condition until the start your next turn, and you determine what it does with its move and action on its next turn."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Elemental Focus",
+      "entries": [
+        "While wearing the ring, you benefit from additional properties corresponding to the ring's linked Elemental Plane:",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "Fire",
+              "entries": [
+                "You know Ignan, and you have {@variantrule Immunity|XPHB} to Fire damage."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Spellcasting",
+      "entries": [
+        "The ring has 5 charges and regains {@dice 1d4 + 1} expended charges daily at dawn. While wearing the ring, you can cast a spell from it. A spell cast from the ring has a save DC of 18. Choose the spell from the following list: {@spell Burning Hands|XPHB} (1 charge), {@spell Fireball|XPHB} (2 charges), {@spell Fire Storm|XPHB} (4 charges), {@spell Wall of Fire|XPHB} (3 charges)"
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "burning hands|xphb"
+      ],
+      "2": [
+        "fireball|xphb"
+      ],
+      "3": [
+        "wall of fire|xphb"
+      ],
+      "4": [
+        "fire storm|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Legendary|XDMG"
+  ]
+}

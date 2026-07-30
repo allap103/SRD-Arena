@@ -1,0 +1,52 @@
+{
+  "name": "Sun Blade",
+  "source": "XDMG",
+  "page": 312,
+  "srd52": true,
+  "basicRules2024": true,
+  "baseItem": "longsword|xphb",
+  "type": "M|XPHB",
+  "rarity": "rare",
+  "reqAttune": true,
+  "weight": 3,
+  "weaponCategory": "martial",
+  "property": [
+    "F|XPHB",
+    "V|XPHB"
+  ],
+  "mastery": [
+    "Sap|XPHB"
+  ],
+  "dmg1": "1d8",
+  "dmgType": "R",
+  "dmg2": "1d10",
+  "bonusWeapon": "+2",
+  "entries": [
+    "This item appears to be a sword hilt.",
+    {
+      "type": "entries",
+      "name": "Blade of Radiance",
+      "entries": [
+        "While grasping the hilt, you can take a {@variantrule Bonus Action|XPHB} to cause a blade of pure radiance to spring into existence or make the blade disappear. While the blade exists, this magic weapon functions as a Longsword with {@itemProperty F|XPHB|Finesse}. If you are proficient with Longswords or Shortswords, you are proficient with the Sun Blade.",
+        "You gain a +2 bonus to attack rolls and damage rolls made with this weapon, which deals Radiant damage instead of Slashing damage. When you hit an Undead with it, that target takes an extra {@damage 1d8} Radiant damage."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Sunlight",
+      "entries": [
+        "The sword's luminous blade emits {@variantrule Bright Light|XPHB} in a 15-foot radius and {@variantrule Dim Light|XPHB} for an additional 15 feet. The light is sunlight. While the blade persists, you can take a {@action Magic|XPHB} action to expand or reduce its radius of {@variantrule Bright Light|XPHB} and {@variantrule Dim Light|XPHB} by 5 feet each, to a maximum of 30 feet each or a minimum of 10 feet each."
+      ]
+    }
+  ],
+  "light": [
+    {
+      "bright": 15,
+      "dim": 30
+    }
+  ],
+  "lootTables": [
+    "Armaments - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

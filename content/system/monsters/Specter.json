@@ -1,0 +1,129 @@
+{
+  "name": "Specter",
+  "source": "XMM",
+  "page": 290,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TWoO",
+    "FRAiF",
+    "HBTD",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "undead",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "5d8"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": {
+      "number": 50,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "str": 1,
+  "dex": 14,
+  "con": 11,
+  "int": 10,
+  "wis": 10,
+  "cha": 11,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "resist": [
+    "acid",
+    "bludgeoning",
+    "cold",
+    "fire",
+    "lightning",
+    "piercing",
+    "slashing",
+    "thunder"
+  ],
+  "immune": [
+    "necrotic",
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "exhaustion",
+    "grappled",
+    "paralyzed",
+    "petrified",
+    "poisoned",
+    "prone",
+    "restrained",
+    "unconscious"
+  ],
+  "languages": [
+    "understands Common plus one other language but can't speak"
+  ],
+  "cr": "1",
+  "trait": [
+    {
+      "name": "Incorporeal Movement",
+      "entries": [
+        "The specter can move through other creatures and objects as if they were {@variantrule Difficult Terrain|XPHB}. It takes 5 ({@damage 1d10}) Force damage if it ends its turn inside an object."
+      ]
+    },
+    {
+      "name": "Sunlight Sensitivity",
+      "entries": [
+        "While in sunlight, the specter has {@variantrule Disadvantage|XPHB} on ability checks and attack rolls."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Life Drain",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}7 ({@damage 2d6}) Necrotic damage. If the target is a creature, its {@variantrule Hit Points|XPHB|Hit Point} maximum decreases by an amount equal to the damage taken."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/specter.opus"
+  },
+  "traitTags": [
+    "Incorporeal Movement",
+    "Sunlight Sensitivity"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "C",
+    "CS",
+    "X"
+  ],
+  "damageTags": [
+    "N",
+    "O"
+  ],
+  "miscTags": [
+    "HPR",
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

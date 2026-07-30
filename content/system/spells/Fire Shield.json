@@ -1,0 +1,51 @@
+{
+  "name": "Fire Shield",
+  "source": "XPHB",
+  "page": 274,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 4,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a bit of phosphorus or a firefly"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      }
+    }
+  ],
+  "entries": [
+    "Wispy flames wreathe your body for the duration, shedding {@variantrule Bright Light|XPHB} in a 10-foot radius and {@variantrule Dim Light|XPHB} for an additional 10 feet.",
+    "The flames provide you with a warm shield or a chill shield, as you choose. The warm shield grants you {@variantrule Resistance|XPHB} to Cold damage, and the chill shield grants you {@variantrule Resistance|XPHB} to Fire damage.",
+    "In addition, whenever a creature within 5 feet of you hits you with a melee attack roll, the shield erupts with flame. The attacker takes {@damage 2d8} Fire damage from a warm shield or {@damage 2d8} Cold damage from a chill shield."
+  ],
+  "damageResist": [
+    "cold",
+    "fire"
+  ],
+  "damageInflict": [
+    "cold",
+    "fire"
+  ],
+  "miscTags": [
+    "LGT"
+  ]
+}

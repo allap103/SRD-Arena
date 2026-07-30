@@ -1,0 +1,112 @@
+{
+  "name": "Skeleton",
+  "source": "XMM",
+  "page": 282,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 356
+    }
+  ],
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TWoO",
+    "EFA",
+    "FRAiF",
+    "HBTD",
+    "HotB",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "undead",
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 13,
+    "formula": "2d8 + 4"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 10,
+  "dex": 16,
+  "con": 15,
+  "int": 6,
+  "wis": 8,
+  "cha": 5,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 9,
+  "immune": [
+    "poison"
+  ],
+  "vulnerable": [
+    "bludgeoning"
+  ],
+  "conditionImmune": [
+    "exhaustion",
+    "poisoned"
+  ],
+  "languages": [
+    "understands Common plus one other language but can't speak"
+  ],
+  "cr": "1/4",
+  "gear": [
+    "shortbow|xphb",
+    "shortsword|xphb"
+  ],
+  "action": [
+    {
+      "name": "Shortsword",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}6 ({@damage 1d6 + 3}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Shortbow",
+      "entries": [
+        "{@atkr r} {@hit 5}, range 80/320 ft. {@h}6 ({@damage 1d6 + 3}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, shadowfell",
+    "underdark",
+    "urban"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/skeleton.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "C",
+    "CS",
+    "X"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RNG"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,50 @@
+{
+  "name": "Heal",
+  "source": "XPHB",
+  "page": 284,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 6,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "Choose a creature that you can see within range. Positive energy washes through the target, restoring 70 {@variantrule Hit Points|XPHB}. This spell also ends the {@condition Blinded|XPHB}, {@condition Deafened|XPHB}, and {@condition Poisoned|XPHB} conditions on the target."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The healing increases by {@scaledice 70|6-9|10} for each spell slot level above 6."
+      ]
+    }
+  ],
+  "miscTags": [
+    "HL",
+    "SGT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

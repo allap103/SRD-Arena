@@ -1,0 +1,57 @@
+{
+  "name": "Aid",
+  "source": "XPHB",
+  "page": 239,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 2,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a strip of white cloth"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 8
+      }
+    }
+  ],
+  "entries": [
+    "Choose up to three creatures within range. Each target's {@variantrule Hit Points|XPHB|Hit Point} maximum and current {@variantrule Hit Points|XPHB} increase by 5 for the duration."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "Each target's {@variantrule Hit Points|XPHB} increase by 5 for each spell slot level above 2."
+      ]
+    }
+  ],
+  "miscTags": [
+    "HL"
+  ],
+  "areaTags": [
+    "MT"
+  ]
+}

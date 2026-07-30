@@ -1,0 +1,49 @@
+{
+  "name": "Mage Armor",
+  "source": "XPHB",
+  "page": 293,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN",
+    "UtHftLH"
+  ],
+  "level": 1,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a piece of cured leather"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 8
+      }
+    }
+  ],
+  "entries": [
+    "You touch a willing creature who isn't wearing armor. Until the spell ends, the target's base AC becomes 13 plus its Dexterity modifier. The spell ends early if the target dons armor."
+  ],
+  "miscTags": [
+    "MAC"
+  ],
+  "areaTags": [
+    "ST"
+  ],
+  "hasFluffImages": true
+}

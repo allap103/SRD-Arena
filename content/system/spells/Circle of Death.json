@@ -1,0 +1,56 @@
+{
+  "name": "Circle of Death",
+  "source": "XPHB",
+  "page": 250,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 6,
+  "school": "N",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 150
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "the powder of a crushed black pearl worth 500+ GP",
+      "cost": 50000
+    }
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "Negative energy ripples out in a 60-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} from a point you choose within range. Each creature in that area makes a Constitution saving throw, taking {@damage 8d8} Necrotic damage on a failed save or half as much damage on a successful one."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 8d8|6-9|2d8} for each spell slot level above 6."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "necrotic"
+  ],
+  "savingThrow": [
+    "constitution"
+  ],
+  "areaTags": [
+    "S"
+  ]
+}

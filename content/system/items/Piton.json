@@ -1,0 +1,14 @@
+{
+  "name": "Piton",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "SjA"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 0.25,
+  "value": 5
+}

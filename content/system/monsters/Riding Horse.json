@@ -1,0 +1,66 @@
+{
+  "name": "Riding Horse",
+  "source": "XMM",
+  "page": 368,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 356
+    }
+  ],
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 13,
+    "formula": "2d10 + 2"
+  },
+  "speed": {
+    "walk": 60
+  },
+  "str": 16,
+  "dex": 13,
+  "con": 12,
+  "int": 2,
+  "wis": 11,
+  "cha": 7,
+  "passive": 10,
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Hooves",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "grassland",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/riding-horse.opus"
+  },
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

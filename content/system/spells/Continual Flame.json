@@ -1,0 +1,48 @@
+{
+  "name": "Continual Flame",
+  "source": "XPHB",
+  "page": 256,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "BQGT"
+  ],
+  "level": 2,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "ruby dust worth 50+ GP, which the spell consumes",
+      "cost": 5000,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "permanent",
+      "ends": [
+        "dispel"
+      ]
+    }
+  ],
+  "entries": [
+    "A flame springs from an object that you touch. The effect casts {@variantrule Bright Light|XPHB} in a 20-foot radius and {@variantrule Dim Light|XPHB} for an additional 20 feet. It looks like a regular flame, but it creates no heat and consumes no fuel. The flame can be covered or hidden but not smothered or quenched."
+  ],
+  "miscTags": [
+    "LGT",
+    "OBJ"
+  ]
+}

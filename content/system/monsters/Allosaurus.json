@@ -1,0 +1,80 @@
+{
+  "name": "Allosaurus",
+  "group": [
+    "Dinosaurs"
+  ],
+  "source": "XMM",
+  "page": 348,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "beast",
+    "tags": [
+      "dinosaur"
+    ]
+  },
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 51,
+    "formula": "6d10 + 18"
+  },
+  "speed": {
+    "walk": 60
+  },
+  "str": 19,
+  "dex": 13,
+  "con": 17,
+  "int": 2,
+  "wis": 12,
+  "cha": 5,
+  "skill": {
+    "perception": "+5"
+  },
+  "passive": 15,
+  "cr": "2",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}15 ({@damage 2d10 + 4}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Claws",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}8 ({@damage 1d8 + 4}) Slashing damage. If the target is a Large or smaller creature and the allosaurus moved 30+ feet straight toward it immediately before the hit, the target has the {@condition Prone|XPHB} condition, and the allosaurus can make one Bite attack against it."
+      ]
+    }
+  ],
+  "environment": [
+    "grassland"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/allosaurus.opus"
+  },
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

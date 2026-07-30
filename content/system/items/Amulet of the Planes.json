@@ -1,0 +1,53 @@
+{
+  "name": "Amulet of the Planes",
+  "source": "XDMG",
+  "page": 150,
+  "srd52": true,
+  "rarity": "very rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "weight": 1,
+  "entries": [
+    "While wearing this amulet, you can take a {@action Magic|XPHB} action to name a location that you are familiar with on another plane of existence. Then make a {@dc 15} Intelligence ({@skill Arcana|XPHB}) check. On a successful check, you cast {@spell Plane Shift|XPHB}. On a failed check, you and each creature and object within 15 feet of you travel to a random destination determined by rolling {@dice 1d100} and consulting the following table.",
+    {
+      "type": "table",
+      "colStyles": [
+        "col-2 text-center",
+        "col-10"
+      ],
+      "colLabels": [
+        "1d100",
+        "Destination"
+      ],
+      "rows": [
+        [
+          "01-60",
+          "Random location on the plane you named"
+        ],
+        [
+          "61-70",
+          "Random location on an Inner Plane determined by rolling {@dice 1d6}: on a {@b 1}, the Plane of Air; on a {@b 2}, the Plane of Earth; on a {@b 3}, the Plane of Fire; on a {@b 4}, the Plane of Water; on a {@b 5}, the Feywild; on a {@b 6}, the Shadowfell"
+        ],
+        [
+          "71-80",
+          "Random location on an Outer Plane determined by rolling 1d8: on a {@b 1}, Arborea; on a {@b 2}, Arcadia; on a {@b 3}, the Beastlands; on a {@b 4}, Bytopia; on a {@b 5}, Elysium; on a {@b 6}, Mechanus; on a {@b 7}, Mount Celestia; on an {@b 8}, Ysgard"
+        ],
+        [
+          "81-90",
+          "Random location on an Outer Plane determined by rolling {@dice 1d8}: on a {@b 1}, the Abyss; on a {@b 2}, Acheron; on a {@b 3}, Carceri; on a {@b 4}, Gehenna; on a {@b 5}, Hades; on a {@b 6}, Limbo; on a {@b 7}, the Nine Hells; on an {@b 8}, Pandemonium"
+        ],
+        [
+          "91-00",
+          "Random location on the Astral Plane"
+        ]
+      ]
+    }
+  ],
+  "attachedSpells": [
+    "plane shift|xphb"
+  ],
+  "lootTables": [
+    "Arcana - Very Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

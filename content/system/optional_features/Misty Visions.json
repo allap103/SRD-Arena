@@ -1,0 +1,33 @@
+{
+  "name": "Misty Visions",
+  "source": "XPHB",
+  "page": 156,
+  "srd52": true,
+  "featureType": [
+    "EI"
+  ],
+  "prerequisite": [
+    {
+      "level": {
+        "level": 2,
+        "class": {
+          "name": "Warlock",
+          "source": "XPHB",
+          "visibleStats": true
+        }
+      }
+    }
+  ],
+  "additionalSpells": [
+    {
+      "innate": {
+        "_": [
+          "silent image|xphb"
+        ]
+      }
+    }
+  ],
+  "entries": [
+    "You can cast {@spell Silent Image|XPHB} without expending a spell slot."
+  ]
+}

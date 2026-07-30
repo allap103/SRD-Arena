@@ -1,0 +1,80 @@
+{
+  "name": "Ankylosaurus",
+  "group": [
+    "Dinosaurs"
+  ],
+  "source": "XMM",
+  "page": 348,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "H"
+  ],
+  "type": {
+    "type": "beast",
+    "tags": [
+      "dinosaur"
+    ]
+  },
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 68,
+    "formula": "8d12 + 16"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 19,
+  "dex": 11,
+  "con": 15,
+  "int": 2,
+  "wis": 12,
+  "cha": 5,
+  "save": {
+    "str": "+6"
+  },
+  "passive": 11,
+  "cr": "3",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The ankylosaurus makes two Tail attacks."
+      ]
+    },
+    {
+      "name": "Tail",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 10 ft. {@h}9 ({@damage 1d10 + 4}) Bludgeoning damage. If the target is a Huge or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "grassland"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/ankylosaurus.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

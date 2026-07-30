@@ -1,0 +1,122 @@
+{
+  "name": "Chimera",
+  "source": "XMM",
+  "page": 70,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TFV",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 114,
+    "formula": "12d10 + 48"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 60
+  },
+  "str": 19,
+  "dex": 11,
+  "con": 19,
+  "int": 3,
+  "wis": 14,
+  "cha": 10,
+  "skill": {
+    "perception": "+8"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 18,
+  "languages": [
+    "understands Draconic but can't speak"
+  ],
+  "cr": "6",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The chimera makes one Ram attack, one Bite attack, and one Claw attack. It can replace the Claw attack with a use of Fire Breath if available."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}11 ({@damage 2d6 + 4}) Piercing damage, or 18 ({@damage 4d6 + 4}) Piercing damage if the chimera had {@variantrule Advantage|XPHB} on the attack roll."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}7 ({@damage 1d6 + 4}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Ram",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}10 ({@damage 1d12 + 4}) Bludgeoning damage. If the target is a Medium or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    },
+    {
+      "name": "Fire Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 15}, each creature in a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 31 ({@damage 7d8}) Fire damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "grassland",
+    "hill",
+    "mountain"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/chimera.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "CS",
+    "DR"
+  ],
+  "damageTags": [
+    "B",
+    "F",
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

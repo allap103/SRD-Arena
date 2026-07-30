@@ -1,0 +1,20 @@
+{
+  "name": "Potion of Cold Resistance",
+  "source": "XDMG",
+  "page": 289,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "P|XPHB",
+  "resist": [
+    "cold"
+  ],
+  "rarity": "uncommon",
+  "weight": 0.5,
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Potion of Resistance|XDMG}"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

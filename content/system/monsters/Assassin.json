@@ -1,0 +1,137 @@
+{
+  "name": "Assassin",
+  "source": "XMM",
+  "page": 22,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "ABH",
+    "DrDe",
+    "DrDe-BtS",
+    "DrDe-TDoN",
+    "EFA",
+    "FRAiF",
+    "LFL",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    16
+  ],
+  "hp": {
+    "average": 97,
+    "formula": "15d8 + 30"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 11,
+  "dex": 18,
+  "con": 14,
+  "int": 16,
+  "wis": 11,
+  "cha": 10,
+  "save": {
+    "dex": "+7",
+    "int": "+6"
+  },
+  "skill": {
+    "acrobatics": "+7",
+    "perception": "+6",
+    "stealth": "+10"
+  },
+  "passive": 16,
+  "resist": [
+    "poison"
+  ],
+  "languages": [
+    "Common",
+    "Thieves' cant"
+  ],
+  "cr": "8",
+  "gear": [
+    "light crossbow|xphb",
+    "shortsword|xphb",
+    "studded leather armor|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Evasion",
+      "entries": [
+        "If the assassin is subjected to an effect that allows it to make a Dexterity saving throw to take only half damage, the assassin instead takes no damage if it succeeds on the save and only half damage if it fails. It can't use this trait if it has the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The assassin makes three attacks, using Shortsword or Light Crossbow in any combination."
+      ]
+    },
+    {
+      "name": "Shortsword",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}7 ({@damage 1d6 + 4}) Piercing damage plus 17 ({@damage 5d6}) Poison damage, and the target has the {@condition Poisoned|XPHB} condition until the start of the assassin's next turn."
+      ]
+    },
+    {
+      "name": "Light Crossbow",
+      "entries": [
+        "{@atkr r} {@hit 7}, range 80/320 ft. {@h}8 ({@damage 1d8 + 4}) Piercing damage plus 21 ({@damage 6d6}) Poison damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Cunning Action",
+      "entries": [
+        "The assassin takes the {@action Dash|XPHB}, {@action Disengage|XPHB}, or {@action Hide|XPHB} action."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "implements",
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/assassin.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "TC"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RNG"
+  ],
+  "conditionInflict": [
+    "poisoned"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

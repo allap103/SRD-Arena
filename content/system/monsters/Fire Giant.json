@@ -1,0 +1,104 @@
+{
+  "name": "Fire Giant",
+  "source": "XMM",
+  "page": 119,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "giant",
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 162,
+    "formula": "13d12 + 78"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 25,
+  "dex": 9,
+  "con": 23,
+  "int": 10,
+  "wis": 14,
+  "cha": 13,
+  "save": {
+    "dex": "+3",
+    "con": "+10",
+    "cha": "+5"
+  },
+  "skill": {
+    "athletics": "+11",
+    "perception": "+6"
+  },
+  "passive": 16,
+  "immune": [
+    "fire"
+  ],
+  "languages": [
+    "Giant"
+  ],
+  "cr": "9",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The giant makes two attacks, using Flame Sword or Hammer Throw in any combination."
+      ]
+    },
+    {
+      "name": "Flame Sword",
+      "entries": [
+        "{@atkr m} {@hit 11}, reach 10 ft. {@h}21 ({@damage 4d6 + 7}) Slashing damage plus 10 ({@damage 3d6}) Fire damage."
+      ]
+    },
+    {
+      "name": "Hammer Throw",
+      "entries": [
+        "{@atkr r} {@hit 11}, range 60/240 ft. {@h}23 ({@damage 3d10 + 7}) Bludgeoning damage plus 4 ({@damage 1d8}) Fire damage, and the target is pushed up to 15 feet straight away from the giant and has {@variantrule Disadvantage|XPHB} on the next attack roll it makes before the end of its next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "mountain",
+    "underdark"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/fire-giant.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "GI"
+  ],
+  "damageTags": [
+    "B",
+    "F",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RA",
+    "RCH"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

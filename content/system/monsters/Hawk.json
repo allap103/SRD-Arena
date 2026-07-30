@@ -1,0 +1,75 @@
+{
+  "name": "Hawk",
+  "source": "XMM",
+  "page": 362,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 352
+    }
+  ],
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 1,
+    "formula": "1d4 - 1"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 60
+  },
+  "str": 5,
+  "dex": 16,
+  "con": 8,
+  "int": 2,
+  "wis": 14,
+  "cha": 6,
+  "skill": {
+    "perception": "+6"
+  },
+  "passive": 16,
+  "cr": "0",
+  "action": [
+    {
+      "name": "Talons",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}1 Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "coastal",
+    "forest",
+    "grassland",
+    "hill",
+    "mountain"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/hawk.opus"
+  },
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

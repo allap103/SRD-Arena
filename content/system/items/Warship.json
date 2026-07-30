@@ -1,0 +1,20 @@
+{
+  "name": "Warship",
+  "source": "XPHB",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "SHP|XPHB",
+  "rarity": "none",
+  "value": 2500000,
+  "crew": 60,
+  "vehAc": 15,
+  "vehHp": 500,
+  "vehDmgThresh": 20,
+  "vehSpeed": 2.5,
+  "capPassenger": 60,
+  "capCargo": 200,
+  "seeAlsoVehicle": [
+    "Warship"
+  ]
+}

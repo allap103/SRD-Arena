@@ -1,0 +1,18 @@
+{
+  "name": "Rope of Entanglement",
+  "source": "XDMG",
+  "page": 301,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "wondrous": true,
+  "entries": [
+    "This rope is 30 feet long. While holding one end of the rope, you can take a {@action Magic|XPHB} action to command the other end to dart forward and entangle one creature you can see within 20 feet of yourself. The target must succeed on a {@dc 15} Dexterity saving throw or have the {@condition Restrained|XPHB} condition. You can release the target by letting go of your end of the rope (causing the rope to coil up in the target's space) or by using a {@variantrule Bonus Action|XPHB} to repeat the command (causing the rope to coil up in your hand).",
+    "A target {@condition Restrained|XPHB} by the rope can take an action to make its choice of a {@dc 15} Strength ({@skill Athletics|XPHB}) or Dexterity ({@skill Acrobatics|XPHB}) check. On a successful check, the target is no longer {@condition Restrained|XPHB} by the rope. If you're still holding onto the rope when a target escapes from it, you can take a {@variantrule Reaction|XPHB} to command the rope to coil up in your hand; otherwise, the rope coils up in the target's space.",
+    "The rope has AC 20, HP 20, and {@variantrule Immunity|XPHB} to Poison and Psychic damage. It regains 1 {@variantrule Hit Points|XPHB|Hit Point} every 5 minutes as long as it has at least 1 {@variantrule Hit Points|XPHB|Hit Point}. If the rope drops to 0 {@variantrule Hit Points|XPHB}, it is destroyed."
+  ],
+  "lootTables": [
+    "Implements - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

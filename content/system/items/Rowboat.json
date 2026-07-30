@@ -1,0 +1,22 @@
+{
+  "name": "Rowboat",
+  "source": "XPHB",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "type": "SHP|XPHB",
+  "rarity": "none",
+  "weight": 100,
+  "value": 5000,
+  "crew": 1,
+  "vehAc": 11,
+  "vehHp": 50,
+  "vehSpeed": 1.5,
+  "capPassenger": 3,
+  "seeAlsoVehicle": [
+    "Rowboat"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Silk (1 sq. yd.)",
+  "source": "PHB",
+  "page": 157,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Silk|XDMG"
+  ],
+  "type": "TG",
+  "rarity": "none",
+  "value": 1000
+}

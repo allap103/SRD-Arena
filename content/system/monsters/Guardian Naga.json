@@ -1,0 +1,172 @@
+{
+  "name": "Guardian Naga",
+  "source": "XMM",
+  "page": 161,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "celestial",
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 136,
+    "formula": "16d10 + 48"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 40,
+    "swim": 40
+  },
+  "str": 19,
+  "dex": 18,
+  "con": 16,
+  "int": 16,
+  "wis": 19,
+  "cha": 18,
+  "save": {
+    "dex": "+8",
+    "con": "+7",
+    "int": "+7",
+    "wis": "+8",
+    "cha": "+8"
+  },
+  "skill": {
+    "arcana": "+11",
+    "history": "+11",
+    "religion": "+11"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "paralyzed",
+    "poisoned",
+    "restrained"
+  ],
+  "languages": [
+    "Celestial",
+    "Common"
+  ],
+  "cr": "10",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The naga casts one of the following spells, requiring no Somatic or Material components and using Wisdom as the spellcasting ability (spell save {@dc 16}):"
+      ],
+      "will": [
+        "{@spell Thaumaturgy|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Clairvoyance|XPHB}",
+          "{@spell Cure Wounds|XPHB} (level 6 version)",
+          "{@spell Flame Strike|XPHB} (level 6 version)",
+          "{@spell Geas|XPHB}",
+          "{@spell True Seeing|XPHB}"
+        ]
+      },
+      "ability": "wis",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Celestial Restoration",
+      "entries": [
+        "If the naga dies, it returns to life in {@dice 1d6} days and regains all its {@variantrule Hit Points|XPHB} unless {@spell Dispel Evil and Good|XPHB} is cast on its remains."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The naga makes two Bite attacks. It can replace any attack with a use of Poisonous Spittle."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 10 ft. {@h}17 ({@damage 2d12 + 4}) Piercing damage plus 22 ({@damage 4d10}) Poison damage."
+      ]
+    },
+    {
+      "name": "Poisonous Spittle",
+      "entries": [
+        "{@actSave con} {@dc 16}, one creature the naga can see within 60 feet. {@actSaveFail} 31 ({@damage 7d8}) Poison damage, and the target has the {@condition Blinded|XPHB} condition until the start of the naga's next turn. {@actSaveSuccess} Half damage only."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "planar, upper"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/guardian-naga.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "CE"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "damageTagsSpell": [
+    "F",
+    "R",
+    "Y"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "blinded"
+  ],
+  "conditionInflictSpell": [
+    "charmed"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "savingThrowForcedSpell": [
+    "dexterity",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,68 @@
+{
+  "name": "Bestow Curse",
+  "source": "XPHB",
+  "page": 246,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 3,
+  "school": "N",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You touch a creature, which must succeed on a Wisdom saving throw or become cursed for the duration. Until the curse ends, the target suffers one of the following effects of your choice:",
+    {
+      "type": "list",
+      "items": [
+        "Choose one ability. The target has {@variantrule Disadvantage|XPHB} on ability checks and saving throws made with that ability.",
+        "The target has {@variantrule Disadvantage|XPHB} on attack rolls against you.",
+        "In combat, the target must succeed on a Wisdom saving throw at the start of each of its turns or be forced to take the {@action Dodge|XPHB} action on that turn.",
+        "If you deal damage to the target with an attack roll or a spell, the target takes an extra {@damage 1d8} Necrotic damage."
+      ]
+    }
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "If you cast this spell using a level 4 spell slot, you can maintain {@status Concentration|XPHB} on it for up to 10 minutes. If you use a level 5+ spell slot, the spell doesn't require {@status Concentration|XPHB}, and the duration becomes 8 hours (level 5-6 slot) or 24 hours (level 7-8 slot). If you use a level 9 spell slot, the spell lasts until dispelled."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "necrotic"
+  ],
+  "savingThrow": [
+    "wisdom"
+  ],
+  "miscTags": [
+    "PRM"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

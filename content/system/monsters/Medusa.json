@@ -1,0 +1,127 @@
+{
+  "name": "Medusa",
+  "source": "XMM",
+  "page": 205,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 127,
+    "formula": "17d8 + 51"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 10,
+  "dex": 17,
+  "con": 16,
+  "int": 12,
+  "wis": 13,
+  "cha": 15,
+  "save": {
+    "wis": "+4"
+  },
+  "skill": {
+    "deception": "+5",
+    "perception": "+4",
+    "stealth": "+6"
+  },
+  "senses": [
+    "Darkvision 150 ft."
+  ],
+  "passive": 14,
+  "languages": [
+    "Common plus one other language"
+  ],
+  "cr": "6",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The medusa makes two Claw attacks and one Snake Hair attack, or it makes three Poison Ray attacks."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Snake Hair",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Piercing damage plus 14 ({@damage 4d6}) Poison damage."
+      ]
+    },
+    {
+      "name": "Poison Ray",
+      "entries": [
+        "{@atkr r} {@hit 5}, range 150 ft. {@h}11 ({@damage 2d8 + 2}) Poison damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Petrifying Gaze {@recharge 5}",
+      "entries": [
+        "{@actSave con} {@dc 13}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. If the medusa sees its reflection in the {@variantrule Cone [Area of Effect]|XPHB|Cone}, the medusa must make this save. {@actSaveFail 1} The target has the {@condition Restrained|XPHB} condition and repeats the save at the end of its next turn if it is still {@condition Restrained|XPHB}, ending the effect on itself on a success. {@actSaveFail 2} The target has the {@condition Petrified|XPHB} condition instead of the {@condition Restrained|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "desert"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/medusa.opus"
+  },
+  "senseTags": [
+    "SD"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "I",
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RA"
+  ],
+  "conditionInflict": [
+    "petrified",
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

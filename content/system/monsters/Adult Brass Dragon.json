@@ -1,0 +1,318 @@
+{
+  "name": "Adult Brass Dragon",
+  "group": [
+    "Metallic Dragons"
+  ],
+  "source": "XMM",
+  "page": 55,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "H"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "metallic"
+    ]
+  },
+  "alignment": [
+    "C",
+    "G"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 172,
+    "formula": "15d12 + 75"
+  },
+  "speed": {
+    "walk": 40,
+    "burrow": 30,
+    "fly": 80
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 23,
+  "dex": 10,
+  "con": 21,
+  "int": 14,
+  "wis": 13,
+  "cha": 17,
+  "save": {
+    "dex": "+5",
+    "wis": "+6"
+  },
+  "skill": {
+    "history": "+7",
+    "perception": "+11",
+    "persuasion": "+8",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Blindsight 60 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 21,
+  "immune": [
+    "fire"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": {
+    "cr": "13",
+    "xpLair": 11500
+  },
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 16}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Minor Illusion|XPHB}",
+        "{@spell Scorching Ray|XPHB}",
+        "{@spell Shapechange|XPHB} (Beast or Humanoid form only, no {@variantrule Temporary Hit Points|XPHB} gained from the spell, and no {@status Concentration|XPHB} or {@variantrule Temporary Hit Points|XPHB} required to maintain the spell)",
+        "{@spell Speak with Animals|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Detect Thoughts|XPHB}",
+          "{@spell Control Weather|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Legendary Resistance (3/Day, or 4/Day in Lair)",
+      "entries": [
+        "If the dragon fails a saving throw, it can choose to succeed instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Sleep Breath or (B) Spellcasting to cast {@spell Scorching Ray|XPHB}."
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                },
+                "times": 3
+              }
+            ],
+            "replacements": [
+              {
+                "target": {
+                  "type": "action",
+                  "name": "Rend"
+                },
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Sleep Breath"
+                  },
+                  {
+                    "type": "cast_spell",
+                    "spell": {
+                      "name": "Scorching Ray",
+                      "source": "XPHB"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 11}, reach 10 ft. {@h}17 ({@damage 2d10 + 6}) Slashing damage plus 4 ({@damage 1d8}) Fire damage."
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 11,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "reach_feet": 10,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d10",
+            "bonus": 6,
+            "damage_type": "slashing"
+          },
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "bonus": 0,
+            "damage_type": "fire"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Fire Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 18}, each creature in a 60-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 45 ({@damage 10d8}) Fire damage. {@actSaveSuccess} Half damage."
+      ]
+    },
+    {
+      "name": "Sleep Breath",
+      "entries": [
+        "{@actSave con} {@dc 18}, each creature in a 60-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target has the {@condition Incapacitated|XPHB} condition until the end of its next turn, at which point it repeats the save. {@actSaveFail 2} The target has the {@condition Unconscious|XPHB} condition for 10 minutes. This effect ends for the target if it takes damage or a creature within 5 feet of it takes an action to wake it."
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "con",
+        "dc": 18,
+        "target": {
+          "type": "area",
+          "shape": "cone",
+          "size_feet": 60
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "condition",
+                "condition": "incapacitated",
+                "duration": {
+                  "type": "end_of_turn",
+                  "creature": "target",
+                  "turn_offset": 1
+                }
+              }
+            ],
+            "repeat_saves": [
+              {
+                "trigger": "end_of_turn"
+              }
+            ]
+          },
+          {
+            "effects": [
+              {
+                "type": "condition",
+                "condition": "unconscious",
+                "duration": {
+                  "type": "timed",
+                  "amount": 10,
+                  "unit": "minute"
+                },
+                "ends_on": [
+                  "target_takes_damage",
+                  "adjacent_creature_wakes_target"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Blazing Light",
+      "entries": [
+        "The dragon uses Spellcasting to cast {@spell Scorching Ray|XPHB}."
+      ]
+    },
+    {
+      "name": "Pounce",
+      "entries": [
+        "The dragon moves up to half its {@variantrule Speed|XPHB}, and it makes one Rend attack."
+      ]
+    },
+    {
+      "name": "Scorching Sands",
+      "entries": [
+        "{@actSave dex} {@dc 16}, one creature the dragon can see within 120 feet. {@actSaveFail} 27 ({@damage 6d8}) Fire damage, and the target's {@variantrule Speed|XPHB} is halved until the end of its next turn. {@actSaveSuccessOrFail} The dragon can't take this action again until the start of its next turn."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Brass Dragon",
+    "source": "XMM"
+  },
+  "environment": [
+    "desert"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "dragonAge": "adult",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/brass-dragon.opus"
+  },
+  "traitTags": [
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "F",
+    "S"
+  ],
+  "damageTagsSpell": [
+    "F"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "incapacitated",
+    "unconscious"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "dexterity"
+  ],
+  "savingThrowForcedSpell": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

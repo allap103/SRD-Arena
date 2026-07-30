@@ -1,0 +1,16 @@
+{
+  "name": "Common Wine (pitcher)",
+  "source": "PHB",
+  "page": 158,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Common Wine (bottle)|XPHB"
+  ],
+  "type": "FD",
+  "rarity": "none",
+  "value": 20,
+  "miscTags": [
+    "CNS"
+  ]
+}

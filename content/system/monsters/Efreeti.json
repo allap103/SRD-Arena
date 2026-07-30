@@ -1,0 +1,174 @@
+{
+  "name": "Efreeti",
+  "group": [
+    "Genies"
+  ],
+  "source": "XMM",
+  "page": 109,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "elemental",
+    "tags": [
+      "genie"
+    ]
+  },
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 212,
+    "formula": "17d10 + 119"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": {
+      "number": 60,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "str": 22,
+  "dex": 12,
+  "con": 24,
+  "int": 16,
+  "wis": 15,
+  "cha": 19,
+  "save": {
+    "wis": "+6",
+    "cha": "+8"
+  },
+  "senses": [
+    "Darkvision 120 ft."
+  ],
+  "passive": 12,
+  "immune": [
+    "fire"
+  ],
+  "languages": [
+    "Primordial (Ignan)"
+  ],
+  "cr": "11",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The efreeti casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 16}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Elementalism|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Gaseous Form|XPHB}",
+          "{@spell Invisibility|XPHB}",
+          "{@spell Major Image|XPHB}",
+          "{@spell Plane Shift|XPHB}",
+          "{@spell Tongues|XPHB}",
+          "{@spell Wall of Fire|XPHB} (level 7 version)"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Elemental Restoration",
+      "entries": [
+        "If the efreeti dies outside the Elemental Plane of Fire, its body dissolves into ash, and it gains a new body in {@dice 1d4} days, reviving with all its {@variantrule Hit Points|XPHB} somewhere on the Plane of Fire."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The efreeti has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    },
+    {
+      "name": "Wishes",
+      "entries": [
+        "The efreeti has a 30 percent chance of knowing the {@spell Wish|XPHB} spell. If the efreeti knows it, the efreeti can cast it only on behalf of a non-genie creature who communicates a wish in a way the efreeti can understand. If the efreeti casts the spell for the creature, the efreeti suffers none of the spell's stress. Once the efreeti has cast it three times, the efreeti can't do so again for 365 days."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The efreeti makes three attacks, using Heated Blade or Hurl Flame in any combination."
+      ]
+    },
+    {
+      "name": "Heated Blade",
+      "entries": [
+        "{@atkr m} {@hit 10}, reach 5 ft. {@h}13 ({@damage 2d6 + 6}) Slashing damage plus 13 ({@damage 2d12}) Fire damage."
+      ]
+    },
+    {
+      "name": "Hurl Flame",
+      "entries": [
+        "{@atkr r} {@hit 8}, range 120 ft. {@h}24 ({@damage 7d6}) Fire damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "planar, fire"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/efreeti.opus"
+  },
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "SD"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "IG",
+    "P"
+  ],
+  "damageTags": [
+    "F",
+    "S"
+  ],
+  "damageTagsSpell": [
+    "F"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RA"
+  ],
+  "conditionInflictSpell": [
+    "invisible"
+  ],
+  "savingThrowForcedSpell": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

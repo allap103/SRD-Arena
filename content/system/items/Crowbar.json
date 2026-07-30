@@ -1,0 +1,17 @@
+{
+  "name": "Crowbar",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TFV"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "value": 200,
+  "entries": [
+    "Using a Crowbar gives you {@variantrule Advantage|XPHB} on Strength checks where the Crowbar's leverage can be applied."
+  ]
+}

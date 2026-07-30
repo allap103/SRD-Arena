@@ -1,0 +1,19 @@
+{
+  "name": "Chest",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 25,
+  "value": 500,
+  "entries": [
+    "A Chest holds up to 12 cubic feet of contents."
+  ],
+  "containerCapacity": {
+    "volume": [
+      12
+    ]
+  }
+}

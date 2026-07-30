@@ -1,0 +1,57 @@
+{
+  "name": "Heroism",
+  "source": "XPHB",
+  "page": 285,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 1,
+  "school": "E",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "A willing creature you touch is imbued with bravery. Until the spell ends, the creature is immune to the {@condition Frightened|XPHB} condition and gains {@variantrule Temporary Hit Points|XPHB} equal to your spellcasting ability modifier at the start of each of its turns."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "You can target one additional creature for each spell slot level above 1."
+      ]
+    }
+  ],
+  "conditionImmune": [
+    "frightened"
+  ],
+  "miscTags": [
+    "SCT",
+    "THP"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

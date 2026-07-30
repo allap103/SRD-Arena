@@ -1,0 +1,47 @@
+{
+  "name": "Arcane Lock",
+  "source": "XPHB",
+  "page": 242,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "level": 2,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "gold dust worth 25+ GP, which the spell consumes",
+      "cost": 2500,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "permanent",
+      "ends": [
+        "dispel"
+      ]
+    }
+  ],
+  "entries": [
+    "You touch a closed door, window, gate, container, or hatch and magically lock it for the duration. This lock can't be unlocked by any nonmagical means. You and any creatures you designate when you cast the spell can open and close the object despite the lock. You can also set a password that, when spoken within 5 feet of the object, unlocks it for 1 minute."
+  ],
+  "miscTags": [
+    "OBJ"
+  ]
+}

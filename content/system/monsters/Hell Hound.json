@@ -1,0 +1,113 @@
+{
+  "name": "Hell Hound",
+  "source": "XMM",
+  "page": 165,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "fiend",
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 58,
+    "formula": "9d8 + 18"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 17,
+  "dex": 12,
+  "con": 14,
+  "int": 6,
+  "wis": 13,
+  "cha": 6,
+  "skill": {
+    "perception": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "immune": [
+    "fire"
+  ],
+  "languages": [
+    "understands Infernal but can't speak"
+  ],
+  "cr": "3",
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The hound has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the hound's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The hound makes two Bite attacks."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Piercing damage plus 3 ({@damage 1d6}) Fire damage."
+      ]
+    },
+    {
+      "name": "Fire Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 12}, each creature in a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 17 ({@damage 5d6}) Fire damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "mountain",
+    "planar, lower",
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/hell-hound.opus"
+  },
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "CS",
+    "I"
+  ],
+  "damageTags": [
+    "F",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

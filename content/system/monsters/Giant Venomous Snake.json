@@ -1,0 +1,73 @@
+{
+  "name": "Giant Venomous Snake",
+  "source": "XMM",
+  "page": 361,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-DaS"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 11,
+    "formula": "2d8 + 2"
+  },
+  "speed": {
+    "walk": 40,
+    "swim": 40
+  },
+  "str": 10,
+  "dex": 18,
+  "con": 13,
+  "int": 2,
+  "wis": 10,
+  "cha": 3,
+  "skill": {
+    "perception": "+2"
+  },
+  "senses": [
+    "Blindsight 10 ft."
+  ],
+  "passive": 12,
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 10 ft. {@h}6 ({@damage 1d4 + 4}) Piercing damage plus 4 ({@damage 1d8}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "desert",
+    "forest",
+    "grassland",
+    "hill",
+    "swamp"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

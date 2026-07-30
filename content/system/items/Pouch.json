@@ -1,0 +1,26 @@
+{
+  "name": "Pouch",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 50,
+  "entries": [
+    "A Pouch holds up to 6 pounds within one-fifth of a cubic foot."
+  ],
+  "containerCapacity": {
+    "weight": [
+      6
+    ],
+    "item": [
+      {
+        "firearm bullet|xphb": 10,
+        "sling bullet|xphb": 20,
+        "needle|xphb": 50
+      }
+    ]
+  }
+}

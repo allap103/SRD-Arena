@@ -1,0 +1,191 @@
+{
+  "name": "Sphinx of Lore",
+  "source": "XMM",
+  "page": 293,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-DotSC",
+    "EFA",
+    "FRHoF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "celestial",
+  "alignment": [
+    "L",
+    "N"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 170,
+    "formula": "20d10 + 60"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 60
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 18,
+  "dex": 15,
+  "con": 16,
+  "int": 18,
+  "wis": 18,
+  "cha": 18,
+  "skill": {
+    "arcana": "+12",
+    "history": "+12",
+    "perception": "+8",
+    "religion": "+12"
+  },
+  "senses": [
+    "Truesight 120 ft."
+  ],
+  "passive": 18,
+  "resist": [
+    "necrotic",
+    "radiant"
+  ],
+  "immune": [
+    "psychic"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "frightened"
+  ],
+  "languages": [
+    "Celestial",
+    "Common"
+  ],
+  "cr": {
+    "cr": "11",
+    "xpLair": 8400
+  },
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The sphinx casts one of the following spells, requiring no Material components and using Intelligence as the spellcasting ability (spell save {@dc 16}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Identify|XPHB}",
+        "{@spell Mage Hand|XPHB}",
+        "{@spell Minor Illusion|XPHB}",
+        "{@spell Prestidigitation|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Dispel Magic|XPHB}",
+          "{@spell Legend Lore|XPHB}",
+          "{@spell Locate Object|XPHB}",
+          "{@spell Plane Shift|XPHB}",
+          "{@spell Remove Curse|XPHB}",
+          "{@spell Tongues|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Inscrutable",
+      "entries": [
+        "No magic can observe the sphinx remotely or detect its thoughts without its permission. Wisdom ({@skill Insight|XPHB}) checks made to ascertain its intentions or sincerity are made with {@variantrule Disadvantage|XPHB}."
+      ]
+    },
+    {
+      "name": "Legendary Resistance (3/Day, or 4/Day in Lair)",
+      "entries": [
+        "If the sphinx fails a saving throw, it can choose to succeed instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The sphinx makes three Claw attacks."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 5 ft. {@h}14 ({@damage 3d6 + 4}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Mind-Rending Roar {@recharge 5}",
+      "entries": [
+        "{@actSave wis} {@dc 16}, each enemy in a 300-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the sphinx. {@actSaveFail} 35 ({@damage 10d6}) Psychic damage, and the target has the {@condition Incapacitated|XPHB} condition until the start of the sphinx's next turn."
+      ]
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Arcane Prowl",
+      "entries": [
+        "The sphinx can teleport up to 30 feet to an unoccupied space it can see, and it makes one Claw attack."
+      ]
+    },
+    {
+      "name": "Weight of Years",
+      "entries": [
+        "{@actSave con} {@dc 16}, one creature the sphinx can see within 120 feet. {@actSaveFail} The target gains 1 {@condition Exhaustion|XPHB} level. While the target has any {@condition Exhaustion|XPHB} levels, it appears {@dice 3d10} years older. {@actSaveSuccessOrFail} The sphinx can't take this action again until the start of its next turn."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Sphinx",
+    "source": "XMM"
+  },
+  "environment": [
+    "desert",
+    "planar, upper"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "traitTags": [
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "U"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "CE"
+  ],
+  "damageTags": [
+    "S",
+    "Y"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "incapacitated"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

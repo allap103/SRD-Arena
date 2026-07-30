@@ -1,0 +1,61 @@
+{
+  "name": "Shrieker Fungus",
+  "source": "XMM",
+  "page": 125,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "M"
+  ],
+  "type": "plant",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    5
+  ],
+  "hp": {
+    "average": 13,
+    "formula": "3d8"
+  },
+  "speed": {
+    "walk": 5
+  },
+  "str": 1,
+  "dex": 1,
+  "con": 10,
+  "int": 1,
+  "wis": 3,
+  "cha": 1,
+  "senses": [
+    "Blindsight 30 ft."
+  ],
+  "passive": 6,
+  "conditionImmune": [
+    "blinded",
+    "charmed",
+    "deafened",
+    "frightened"
+  ],
+  "cr": {
+    "cr": "0",
+    "xp": 0
+  },
+  "reaction": [
+    {
+      "name": "Shriek",
+      "entries": [
+        "{@actTrigger} A creature or a source of {@variantrule Bright Light|XPHB} moves within 30 feet of the shrieker. {@actResponse} The shrieker emits a shriek audible within 300 feet of itself for 1 minute or until the shrieker dies."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

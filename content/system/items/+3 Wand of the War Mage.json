@@ -1,0 +1,24 @@
+{
+  "name": "+3 Wand of the War Mage",
+  "source": "XDMG",
+  "page": 322,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "WD|XDMG",
+  "rarity": "very rare",
+  "reqAttune": "by a spellcaster",
+  "reqAttuneTags": [
+    {
+      "spellcasting": true
+    }
+  ],
+  "weight": 1,
+  "bonusSpellAttack": "+3",
+  "entries": [
+    "While holding this wand, you gain a +3 bonus to spell attack rolls. In addition, you ignore {@variantrule Cover|XPHB|Half Cover} when making a spell attack roll."
+  ],
+  "lootTables": [
+    "Arcana - Very Rare|XDMG",
+    "Relics - Very Rare|XDMG"
+  ]
+}

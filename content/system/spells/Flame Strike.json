@@ -1,0 +1,54 @@
+{
+  "name": "Flame Strike",
+  "source": "XPHB",
+  "page": 275,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 5,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a pinch of sulfur"
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "A vertical column of brilliant fire roars down from above. Each creature in a 10-foot-radius, 40-foot-high {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} centered on a point within range makes a Dexterity saving throw, taking {@damage 5d6} Fire damage and {@damage 5d6} Radiant damage on a failed save or half as much damage on a successful one."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The Fire damage and the Radiant damage increase by {@scaledamage 5d6|5-9|1d6} for each spell slot level above 5."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "fire",
+    "radiant"
+  ],
+  "savingThrow": [
+    "dexterity"
+  ],
+  "areaTags": [
+    "Y"
+  ]
+}

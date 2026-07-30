@@ -1,0 +1,85 @@
+{
+  "name": "Warrior Infantry",
+  "source": "XMM",
+  "page": 320,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 9,
+    "formula": "2d8"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 13,
+  "dex": 11,
+  "con": 11,
+  "int": 8,
+  "wis": 11,
+  "cha": 8,
+  "passive": 10,
+  "languages": [
+    "Common"
+  ],
+  "cr": "1/8",
+  "gear": [
+    "chain shirt|xphb",
+    "spear|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The warrior has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the warrior's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Spear",
+      "entries": [
+        "{@atkr m,r} {@hit 3}, reach 5 ft. or range 20/60 ft. {@h}4 ({@damage 1d6 + 1}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "THW"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

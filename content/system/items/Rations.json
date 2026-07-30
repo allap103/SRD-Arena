@@ -1,0 +1,20 @@
+{
+  "name": "Rations",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 50,
+  "entries": [
+    "Rations consist of travel-ready food, including jerky, dried fruit, hardtack, and nuts. See \"{@hazard Malnutrition|XPHB}\" for the risks of not eating."
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

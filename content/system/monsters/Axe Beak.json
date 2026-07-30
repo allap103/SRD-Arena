@@ -1,0 +1,61 @@
+{
+  "name": "Axe Beak",
+  "source": "XMM",
+  "page": 24,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 19,
+    "formula": "3d10 + 3"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 14,
+  "dex": 12,
+  "con": 12,
+  "int": 2,
+  "wis": 10,
+  "cha": 5,
+  "passive": 10,
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Beak",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "grassland",
+    "hill"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/axe-beak.opus"
+  },
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

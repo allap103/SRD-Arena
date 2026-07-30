@@ -1,0 +1,44 @@
+{
+  "name": "Scarab of Protection",
+  "source": "XDMG",
+  "page": 302,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "legendary",
+  "reqAttune": true,
+  "wondrous": true,
+  "weight": 1,
+  "bonusAc": "+1",
+  "charges": 12,
+  "entries": [
+    "This beetle-shaped medallion provides three benefits while it is on your person.",
+    {
+      "type": "entries",
+      "name": "Defense",
+      "entries": [
+        "You gain a +1 bonus to {@variantrule Armor Class|XPHB}."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Preservation",
+      "entries": [
+        "The scarab has 12 charges. If you fail a saving throw against a Necromancy spell or a harmful effect originating from an Undead, you can take a {@variantrule Reaction|XPHB} to expend 1 charge and turn the failed save into a successful one. The scarab crumbles into powder and is destroyed when its last charge is expended."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Spell Resistance",
+      "entries": [
+        "You have {@variantrule Advantage|XPHB} on saving throws against spells."
+      ]
+    }
+  ],
+  "lootTables": [
+    "Relics - Legendary|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ],
+  "hasFluffImages": true
+}

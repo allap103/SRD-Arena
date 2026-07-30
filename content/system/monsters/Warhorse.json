@@ -1,0 +1,72 @@
+{
+  "name": "Warhorse",
+  "source": "XMM",
+  "page": 373,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 359
+    }
+  ],
+  "referenceSources": [
+    "FRAiF",
+    "UtHftLH"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 19,
+    "formula": "3d10 + 3"
+  },
+  "speed": {
+    "walk": 60
+  },
+  "str": 18,
+  "dex": 12,
+  "con": 13,
+  "int": 2,
+  "wis": 12,
+  "cha": 7,
+  "save": {
+    "wis": "+3"
+  },
+  "passive": 11,
+  "cr": "1/2",
+  "action": [
+    {
+      "name": "Hooves",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}9 ({@damage 2d4 + 4}) Bludgeoning damage. If the target is a Large or smaller creature and the horse moved 20+ feet straight toward it immediately before the hit, the target takes an extra 5 ({@damage 2d4}) Bludgeoning damage and has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/war-horse.opus"
+  },
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

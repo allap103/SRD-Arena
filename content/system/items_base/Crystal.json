@@ -1,0 +1,15 @@
+{
+  "name": "Crystal",
+  "group": [
+    "Arcane Focus"
+  ],
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "edition": "one",
+  "type": "SCF|XPHB",
+  "scfType": "arcane",
+  "rarity": "none",
+  "weight": 1,
+  "value": 1000
+}

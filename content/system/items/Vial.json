@@ -1,0 +1,22 @@
+{
+  "name": "Vial",
+  "source": "XPHB",
+  "page": 229,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-DaS",
+    "DrDe-TDoN"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 100,
+  "entries": [
+    "A Vial holds up to 4 ounces."
+  ],
+  "containerCapacity": {
+    "weight": [
+      0.25
+    ]
+  }
+}

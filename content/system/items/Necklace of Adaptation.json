@@ -1,0 +1,24 @@
+{
+  "name": "Necklace of Adaptation",
+  "source": "XDMG",
+  "page": 280,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "weight": 1,
+  "entries": [
+    "While wearing this necklace, you can breathe normally in any environment, and you have {@variantrule Advantage|XPHB} on saving throws made to avoid or end the {@condition Poisoned|XPHB} condition."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

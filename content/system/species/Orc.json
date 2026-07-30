@@ -1,0 +1,53 @@
+{
+  "name": "Orc",
+  "source": "XPHB",
+  "page": 195,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "creatureTypes": [
+    "humanoid"
+  ],
+  "size": [
+    "M"
+  ],
+  "speed": 30,
+  "darkvision": 120,
+  "soundClip": {
+    "type": "internal",
+    "path": "races/orc.opus"
+  },
+  "sizeEntry": {
+    "type": "item",
+    "name": "Size:",
+    "entries": [
+      "Medium (about 6-7 feet tall)"
+    ]
+  },
+  "entries": [
+    {
+      "type": "entries",
+      "name": "Adrenaline Rush",
+      "entries": [
+        "You can take the {@action Dash|XPHB} action as a {@variantrule Bonus Action|XPHB}. When you do so, you gain a number of {@variantrule Temporary Hit Points|XPHB} equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}.",
+        "You can use this trait a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Short Rest|XPHB|Short} or {@variantrule Long Rest|XPHB}."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Darkvision",
+      "entries": [
+        "You have {@sense Darkvision|XPHB} with a range of 120 feet."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Relentless Endurance",
+      "entries": [
+        "When you are reduced to 0 {@variantrule Hit Points|XPHB} but not killed outright, you can drop to 1 {@variantrule Hit Points|XPHB|Hit Point} instead. Once you use this trait, you can't do so again until you finish a {@variantrule Long Rest|XPHB}."
+      ]
+    }
+  ],
+  "hasFluff": true,
+  "hasFluffImages": true
+}

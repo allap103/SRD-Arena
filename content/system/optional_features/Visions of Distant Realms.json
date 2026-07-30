@@ -1,0 +1,33 @@
+{
+  "name": "Visions of Distant Realms",
+  "source": "XPHB",
+  "page": 157,
+  "srd52": true,
+  "featureType": [
+    "EI"
+  ],
+  "prerequisite": [
+    {
+      "level": {
+        "level": 9,
+        "class": {
+          "name": "Warlock",
+          "source": "XPHB",
+          "visibleStats": true
+        }
+      }
+    }
+  ],
+  "additionalSpells": [
+    {
+      "innate": {
+        "_": [
+          "arcane eye|xphb"
+        ]
+      }
+    }
+  ],
+  "entries": [
+    "You can cast {@spell Arcane Eye|XPHB} without expending a spell slot."
+  ]
+}

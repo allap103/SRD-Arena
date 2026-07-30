@@ -1,0 +1,109 @@
+{
+  "name": "Roc",
+  "source": "XMM",
+  "page": 261,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TFV",
+    "EFA",
+    "RHW"
+  ],
+  "size": [
+    "G"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 248,
+    "formula": "16d20 + 80"
+  },
+  "speed": {
+    "walk": 20,
+    "fly": 120
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 28,
+  "dex": 10,
+  "con": 20,
+  "int": 3,
+  "wis": 10,
+  "cha": 9,
+  "save": {
+    "dex": "+4",
+    "wis": "+4"
+  },
+  "skill": {
+    "perception": "+8"
+  },
+  "passive": 18,
+  "cr": "11",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The roc makes two Beak attacks. It can replace one attack with a Talons attack."
+      ]
+    },
+    {
+      "name": "Beak",
+      "entries": [
+        "{@atkr m} {@hit 13}, reach 10 ft. {@h}28 ({@damage 3d12 + 9}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Talons",
+      "entries": [
+        "{@atkr m} {@hit 13}, reach 5 ft. {@h}23 ({@damage 4d6 + 9}) Slashing damage. If the target is a Huge or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 19}) from both talons, and it has the {@condition Restrained|XPHB} condition until the grapple ends."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Swoop {@recharge 5}",
+      "entries": [
+        "If the roc has a creature {@condition Grappled|XPHB}, the roc flies up to half its {@variantrule Fly Speed|XPHB} without provoking {@action Opportunity Attack|XPHB|Opportunity Attacks} and drops that creature."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "coastal",
+    "desert",
+    "hill",
+    "mountain"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/roc.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled",
+    "restrained"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

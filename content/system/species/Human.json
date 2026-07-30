@@ -1,0 +1,67 @@
+{
+  "name": "Human",
+  "source": "XPHB",
+  "page": 194,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "creatureTypes": [
+    "humanoid"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "speed": 30,
+  "feats": [
+    {
+      "anyFromCategory": {
+        "category": [
+          "O"
+        ],
+        "count": 1
+      }
+    }
+  ],
+  "skillProficiencies": [
+    {
+      "any": 1
+    }
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "races/human.opus"
+  },
+  "sizeEntry": {
+    "type": "item",
+    "name": "Size:",
+    "entries": [
+      "Medium (about 4-7 feet tall) or Small (about 2-4 feet tall), chosen when you select this species"
+    ]
+  },
+  "entries": [
+    {
+      "type": "entries",
+      "name": "Resourceful",
+      "entries": [
+        "You gain {@variantrule Heroic Inspiration|XPHB} whenever you finish a {@variantrule Long Rest|XPHB}."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Skillful",
+      "entries": [
+        "You gain proficiency in one skill of your choice."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Versatile",
+      "entries": [
+        "You gain an {@filter Origin feat|feats|category=o} of your choice."
+      ]
+    }
+  ],
+  "hasFluff": true,
+  "hasFluffImages": true
+}

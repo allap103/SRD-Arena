@@ -1,0 +1,24 @@
+{
+  "name": "Waterskin",
+  "source": "XPHB",
+  "page": 229,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "BQGT",
+    "DrDe-ACfaS"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "weightNote": "(full)",
+  "value": 20,
+  "entries": [
+    "A Waterskin holds up to 4 pints. If you don't drink sufficient water, you risk dehydration."
+  ],
+  "containerCapacity": {
+    "volume": [
+      0.08
+    ]
+  }
+}

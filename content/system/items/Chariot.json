@@ -1,0 +1,11 @@
+{
+  "name": "Chariot",
+  "source": "XPHB",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "VEH|XPHB",
+  "rarity": "none",
+  "weight": 100,
+  "value": 25000
+}

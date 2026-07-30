@@ -1,0 +1,75 @@
+{
+  "name": "Giant Badger",
+  "source": "XMM",
+  "page": 354,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 350
+    }
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 15,
+    "formula": "2d8 + 6"
+  },
+  "speed": {
+    "walk": 30,
+    "burrow": 10
+  },
+  "str": 13,
+  "dex": 10,
+  "con": 17,
+  "int": 2,
+  "wis": 12,
+  "cha": 5,
+  "skill": {
+    "perception": "+3"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "resist": [
+    "poison"
+  ],
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 3}, reach 5 ft. {@h}6 ({@damage 2d4 + 1}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-badger.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

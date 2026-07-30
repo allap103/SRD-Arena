@@ -1,0 +1,127 @@
+{
+  "name": "Staff of the Woodlands",
+  "source": "XDMG",
+  "page": 311,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "M|XPHB",
+  "rarity": "rare",
+  "reqAttune": "by a druid",
+  "reqAttuneTags": [
+    {
+      "class": "druid"
+    }
+  ],
+  "weight": 4,
+  "weaponCategory": "simple",
+  "property": [
+    "V|XPHB"
+  ],
+  "mastery": [
+    "Topple|XPHB"
+  ],
+  "dmg1": "1d6",
+  "dmgType": "B",
+  "dmg2": "1d8",
+  "bonusWeapon": "+2",
+  "bonusSpellAttack": "+2",
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d6}",
+  "charges": 6,
+  "staff": true,
+  "entries": [
+    "This staff has 6 charges and can be wielded as a magic Quarterstaff that grants a +2 bonus to attack rolls and damage rolls made with it. While holding it, you have a +2 bonus to spell attack rolls.",
+    {
+      "type": "entries",
+      "name": "Spells",
+      "entries": [
+        "While holding the staff, you can cast one of the spells on the following table from it, using your spell save DC. The table indicates how many charges you must expend to cast the spell.",
+        {
+          "type": "table",
+          "colStyles": [
+            "col-10",
+            "col-2 text-center"
+          ],
+          "colLabels": [
+            "Spell",
+            "Charge Cost"
+          ],
+          "rows": [
+            [
+              "{@spell Animal Friendship|XPHB}",
+              "1"
+            ],
+            [
+              "{@spell Awaken|XPHB}",
+              "5"
+            ],
+            [
+              "{@spell Barkskin|XPHB}",
+              "2"
+            ],
+            [
+              "{@spell Locate Animals or Plants|XPHB}",
+              "2"
+            ],
+            [
+              "{@spell Pass without Trace|XPHB}",
+              "2"
+            ],
+            [
+              "{@spell Speak with Animals|XPHB}",
+              "1"
+            ],
+            [
+              "{@spell Speak with Plants|XPHB}",
+              "3"
+            ],
+            [
+              "{@spell Wall of Thorns|XPHB}",
+              "6"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Tree Form",
+      "entries": [
+        "You can take a {@action Magic|XPHB} action to plant one end of the staff in earth in an unoccupied space and expend 1 charge to transform the staff into a healthy tree. The tree is 60 feet tall and has a 5-foot-diameter trunk, and its branches at the top spread out in a 20-foot radius. The tree appears ordinary but radiates a faint aura of Transmutation magic that can be discerned with the {@spell Detect Magic|XPHB} spell. While touching the tree and using a {@action Magic|XPHB} action, you return the staff to its normal form. Any creature in the tree falls when the tree reverts to a staff."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Regaining Charges",
+      "entries": [
+        "The staff regains {@dice 1d6} expended charges daily at dawn. If you expend the last charge, roll {@dice 1d20}. On a 1, the staff loses its properties and becomes a nonmagical Quarterstaff."
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "animal friendship|xphb",
+        "speak with animals|xphb"
+      ],
+      "2": [
+        "barkskin|xphb",
+        "locate animals or plants|xphb",
+        "pass without trace|xphb"
+      ],
+      "3": [
+        "speak with plants|xphb"
+      ],
+      "5": [
+        "awaken|xphb"
+      ],
+      "6": [
+        "wall of thorns|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Relics - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

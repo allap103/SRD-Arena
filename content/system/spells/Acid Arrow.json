@@ -1,0 +1,57 @@
+{
+  "name": "Acid Arrow",
+  "source": "XPHB",
+  "page": 297,
+  "srd52": "Acid Arrow",
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "level": 2,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 90
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "powdered rhubarb leaf"
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "A shimmering green arrow streaks toward a target within range and bursts in a spray of acid. Make a ranged spell attack against the target. On a hit, the target takes {@damage 4d4} Acid damage and {@damage 2d4} Acid damage at the end of its next turn. On a miss, the arrow splashes the target with acid for half as much of the initial damage only."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage (both initial and later) increases by {@scaledamage 4d4;2d4|2-9|1d4} for each spell slot level above 2."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "acid"
+  ],
+  "spellAttack": [
+    "R"
+  ],
+  "areaTags": [
+    "ST"
+  ],
+  "hasFluffImages": true
+}

@@ -1,0 +1,110 @@
+{
+  "name": "Warrior Veteran",
+  "source": "XMM",
+  "page": 320,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-ACfaS",
+    "FFotR",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 65,
+    "formula": "10d8 + 20"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 16,
+  "dex": 13,
+  "con": 14,
+  "int": 10,
+  "wis": 11,
+  "cha": 10,
+  "skill": {
+    "athletics": "+5",
+    "perception": "+2"
+  },
+  "passive": 12,
+  "languages": [
+    "Common plus one other language"
+  ],
+  "cr": "3",
+  "gear": [
+    "greatsword|xphb",
+    "heavy crossbow|xphb",
+    "splint armor|xphb"
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The warrior makes two Greatsword or Heavy Crossbow attacks."
+      ]
+    },
+    {
+      "name": "Greatsword",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Heavy Crossbow",
+      "entries": [
+        "{@atkr r} {@hit 3}, range 100/400 ft. {@h}12 ({@damage 2d10 + 1}) Piercing damage."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Parry",
+      "entries": [
+        "{@actTrigger} The warrior is hit by a melee attack roll while holding a weapon. {@actResponse} The warrior adds 2 to its AC against that attack, possibly causing it to miss."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "actionTags": [
+    "Multiattack",
+    "Parry"
+  ],
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RNG"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

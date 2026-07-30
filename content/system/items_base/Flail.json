@@ -1,0 +1,20 @@
+{
+  "name": "Flail",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 1000,
+  "weaponCategory": "martial",
+  "mastery": [
+    "Sap|XPHB"
+  ],
+  "dmg1": "1d8",
+  "dmgType": "B",
+  "weapon": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,218 @@
+{
+  "name": "Sphinx of Valor",
+  "source": "XMM",
+  "page": 294,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": "celestial",
+  "alignment": [
+    "L",
+    "N"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 199,
+    "formula": "19d10 + 95"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 60
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 22,
+  "dex": 10,
+  "con": 20,
+  "int": 16,
+  "wis": 23,
+  "cha": 18,
+  "save": {
+    "dex": "+6",
+    "con": "+11",
+    "int": "+9",
+    "wis": "+12"
+  },
+  "skill": {
+    "arcana": "+9",
+    "perception": "+12",
+    "religion": "+15"
+  },
+  "senses": [
+    "Truesight 120 ft."
+  ],
+  "passive": 22,
+  "resist": [
+    "necrotic",
+    "radiant"
+  ],
+  "immune": [
+    "psychic"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "frightened"
+  ],
+  "languages": [
+    "Celestial",
+    "Common"
+  ],
+  "cr": {
+    "cr": "17",
+    "xpLair": 20000
+  },
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The sphinx casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save {@dc 20}):"
+      ],
+      "will": [
+        "{@spell Detect Evil and Good|XPHB}",
+        "{@spell Thaumaturgy|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Detect Magic|XPHB}",
+          "{@spell Dispel Magic|XPHB}",
+          "{@spell Greater Restoration|XPHB}",
+          "{@spell Heroes' Feast|XPHB}",
+          "{@spell Zone of Truth|XPHB}"
+        ]
+      },
+      "ability": "wis",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Inscrutable",
+      "entries": [
+        "No magic can observe the sphinx remotely or detect its thoughts without its permission. Wisdom ({@skill Insight|XPHB}) checks made to ascertain its intentions or sincerity are made with {@variantrule Disadvantage|XPHB}."
+      ]
+    },
+    {
+      "name": "Legendary Resistance (3/Day, or 4/Day in Lair)",
+      "entries": [
+        "If the sphinx fails a saving throw, it can choose to succeed instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The sphinx makes two Claw attacks and uses Roar."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 12}, reach 5 ft. {@h}20 ({@damage 4d6 + 6}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Roar (3/Day)",
+      "entries": [
+        "The sphinx emits a magical roar. Whenever it roars, the roar has a different effect, as detailed below (the sequence resets when it takes a {@variantrule Long Rest|XPHB}):",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "First Roar",
+              "entries": [
+                "{@actSave wis} {@dc 20}, each enemy in a 500-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the sphinx. {@actSaveFail} The target has the {@condition Frightened|XPHB} condition for 1 minute."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Second Roar",
+              "entries": [
+                "{@actSave wis} {@dc 20}, each enemy in a 500-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the sphinx. {@actSaveFail} The target has the {@condition Paralyzed|XPHB} condition, and it repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Third Roar",
+              "entries": [
+                "{@actSave con} {@dc 20}, each enemy in a 500-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the sphinx. {@actSaveFail} 44 ({@damage 8d10}) Thunder damage, and the target has the {@condition Prone|XPHB} condition. {@actSaveSuccess} Half damage only."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Arcane Prowl",
+      "entries": [
+        "The sphinx can teleport up to 30 feet to an unoccupied space it can see, and it makes one Claw attack."
+      ]
+    },
+    {
+      "name": "Weight of Years",
+      "entries": [
+        "{@actSave con} {@dc 16}, one creature the sphinx can see within 120 feet. {@actSaveFail} The target gains 1 {@condition Exhaustion|XPHB} level. While the target has any {@condition Exhaustion|XPHB} levels, it appears {@dice 3d10} years older. {@actSaveSuccessOrFail} The sphinx can't take this action again until the start of its next turn."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Sphinx",
+    "source": "XMM"
+  },
+  "environment": [
+    "desert",
+    "planar, upper"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "traitTags": [
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "U"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "CE"
+  ],
+  "damageTags": [
+    "S",
+    "T"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "frightened",
+    "paralyzed",
+    "prone"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "wisdom"
+  ],
+  "savingThrowForcedSpell": [
+    "charisma"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

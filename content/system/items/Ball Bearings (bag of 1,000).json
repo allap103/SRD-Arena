@@ -1,0 +1,24 @@
+{
+  "name": "Ball Bearings (bag of 1,000)",
+  "source": "PHB",
+  "page": 151,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Ball Bearings|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 2,
+  "value": 100,
+  "entries": [
+    "As an action, you can spill these tiny metal balls from their pouch to cover a level area 10 feet square. A creature moving across the covered area must succeed on a {@dc 10} Dexterity saving throw or fall {@condition prone}. A creature moving through the area at half speed doesn't need to make the saving throw."
+  ],
+  "packContents": [
+    {
+      "item": "ball bearing|phb",
+      "quantity": 1000
+    }
+  ],
+  "atomicPackContents": true
+}

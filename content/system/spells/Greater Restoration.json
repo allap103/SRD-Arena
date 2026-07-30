@@ -1,0 +1,55 @@
+{
+  "name": "Greater Restoration",
+  "source": "XPHB",
+  "page": 281,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BD",
+    "DrDe-DotSC"
+  ],
+  "level": 5,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "diamond dust worth 100+ GP, which the spell consumes",
+      "cost": 10000,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You touch a creature and magically remove one of the following effects from it:",
+    {
+      "type": "list",
+      "items": [
+        "1 {@condition Exhaustion|XPHB} level",
+        "The {@condition Charmed|XPHB} or {@condition Petrified|XPHB} condition",
+        "A curse, including the target's {@variantrule Attunement|XPHB} to a cursed magic item",
+        "Any reduction to one of the target's ability scores",
+        "Any reduction to the target's {@variantrule Hit Points|XPHB|Hit Point} maximum"
+      ]
+    }
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

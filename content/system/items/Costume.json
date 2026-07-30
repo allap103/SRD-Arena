@@ -1,0 +1,14 @@
+{
+  "name": "Costume",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 4,
+  "value": 500,
+  "entries": [
+    "While wearing a Costume, you have {@variantrule Advantage|XPHB} on any ability check you make to impersonate the person or type of person it represents."
+  ]
+}

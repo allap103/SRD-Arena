@@ -1,0 +1,105 @@
+{
+  "name": "Ochre Jelly",
+  "source": "XMM",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": "ooze",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    8
+  ],
+  "hp": {
+    "average": 52,
+    "formula": "7d10 + 14"
+  },
+  "speed": {
+    "walk": 20,
+    "climb": 20
+  },
+  "str": 15,
+  "dex": 6,
+  "con": 14,
+  "int": 2,
+  "wis": 6,
+  "cha": 1,
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 8,
+  "resist": [
+    "acid"
+  ],
+  "immune": [
+    "lightning",
+    "slashing"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "deafened",
+    "exhaustion",
+    "frightened",
+    "grappled",
+    "prone",
+    "restrained"
+  ],
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Amorphous",
+      "entries": [
+        "The jelly can move through a space as narrow as 1 inch without expending extra movement to do so."
+      ]
+    },
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The jelly can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Pseudopod",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}12 ({@damage 3d6 + 2}) Acid damage."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Split",
+      "entries": [
+        "{@actTrigger} While the jelly is Large or Medium and has 10+ {@variantrule Hit Points|XPHB}, it becomes {@status Bloodied|XPHB} or is subjected to Lightning or Slashing damage. {@actResponse} The jelly splits into two new Ochre Jellies. Each new jelly is one size smaller than the original jelly and acts on its {@variantrule Initiative|XPHB}. The original jelly's {@variantrule Hit Points|XPHB} are divided evenly between the new jellies (round down)."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/ochre-jelly.opus"
+  },
+  "traitTags": [
+    "Amorphous",
+    "Spider Climb"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "A"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

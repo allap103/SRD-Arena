@@ -1,0 +1,20 @@
+{
+  "name": "Ioun Stone, Mastery",
+  "source": "XDMG",
+  "page": 273,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "legendary",
+  "reqAttune": true,
+  "wondrous": true,
+  "bonusProficiencyBonus": "+1",
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Ioun Stone|XDMG}",
+    "Your {@variantrule Proficiency|XPHB|Proficiency Bonus} increases by 1 while this pale green prism orbits your head."
+  ],
+  "lootTables": [
+    "Arcana - Legendary|XDMG"
+  ],
+  "hasFluffImages": true
+}

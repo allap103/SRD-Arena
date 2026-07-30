@@ -1,0 +1,89 @@
+{
+  "name": "Staff of Healing",
+  "source": "XDMG",
+  "page": 308,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "M|XPHB",
+  "rarity": "rare",
+  "reqAttune": "by a bard, cleric, or druid",
+  "reqAttuneTags": [
+    {
+      "class": "bard"
+    },
+    {
+      "class": "cleric"
+    },
+    {
+      "class": "druid"
+    }
+  ],
+  "weight": 4,
+  "weaponCategory": "simple",
+  "property": [
+    "V|XPHB"
+  ],
+  "mastery": [
+    "Topple|XPHB"
+  ],
+  "dmg1": "1d6",
+  "dmgType": "B",
+  "dmg2": "1d8",
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d6 + 4}",
+  "charges": 10,
+  "staff": true,
+  "entries": [
+    "This staff has 10 charges. While holding the staff, you can cast one of the spells on the following table from it, using your spellcasting ability modifier. The table indicates how many charges you must expend to cast the spell.",
+    {
+      "type": "table",
+      "colStyles": [
+        "col-10",
+        "col-2 text-center"
+      ],
+      "colLabels": [
+        "Spell",
+        "Charge Cost"
+      ],
+      "rows": [
+        [
+          "{@spell Cure Wounds|XPHB}",
+          "1 charge per spell level (maximum 4 for a level 4 spell)"
+        ],
+        [
+          "{@spell Lesser Restoration|XPHB}",
+          "2"
+        ],
+        [
+          "{@spell Mass Cure Wounds|XPHB}",
+          "5"
+        ]
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Regaining Charges",
+      "entries": [
+        "The staff regains {@dice 1d6 + 4} expended charges daily at dawn. If you expend the last charge, roll {@dice 1d20}. On a 1, the staff vanishes in a flash of light, lost forever."
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "will": [
+      "cure wounds|xphb"
+    ],
+    "charges": {
+      "2": [
+        "lesser restoration|xphb"
+      ],
+      "5": [
+        "mass cure wounds|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Implements - Rare|XDMG",
+    "Relics - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

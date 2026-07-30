@@ -1,0 +1,120 @@
+{
+  "name": "Hydra",
+  "source": "XMM",
+  "page": 175,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TFV",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 184,
+    "formula": "16d12 + 80"
+  },
+  "speed": {
+    "walk": 40,
+    "swim": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 20,
+  "dex": 12,
+  "con": 20,
+  "int": 2,
+  "wis": 10,
+  "cha": 7,
+  "skill": {
+    "perception": "+6"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 16,
+  "conditionImmune": [
+    "blinded",
+    "charmed",
+    "deafened",
+    "frightened",
+    "stunned",
+    "unconscious"
+  ],
+  "cr": "8",
+  "trait": [
+    {
+      "name": "Hold Breath",
+      "entries": [
+        "The hydra can hold its breath for 1 hour."
+      ]
+    },
+    {
+      "name": "Multiple Heads",
+      "entries": [
+        "The hydra has five heads. Whenever the hydra takes 25 damage or more on a single turn, one of its heads dies. The hydra dies if all its heads are dead. At the end of each of its turns when it has at least one living head, the hydra grows two heads for each of its heads that died since its last turn, unless it has taken Fire damage since its last turn. The hydra regains 20 {@variantrule Hit Points|XPHB} when it grows new heads."
+      ]
+    },
+    {
+      "name": "Reactive Heads",
+      "entries": [
+        "For each head the hydra has beyond one, it gets an extra {@variantrule Reaction|XPHB} that can be used only for {@action Opportunity Attack|XPHB|Opportunity Attacks}."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The hydra makes as many Bite attacks as it has heads."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 10 ft. {@h}10 ({@damage 1d10 + 5}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "swamp"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/hydra.opus"
+  },
+  "traitTags": [
+    "Hold Breath"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Crossbow Bolt Case",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 100,
+  "entries": [
+    "A {@item Crossbow Bolt Case|XPHB} holds up to 20 Bolts."
+  ],
+  "containerCapacity": {
+    "item": [
+      {
+        "bolt|xphb": 20
+      }
+    ]
+  }
+}

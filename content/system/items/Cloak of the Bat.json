@@ -1,0 +1,27 @@
+{
+  "name": "Cloak of the Bat",
+  "source": "XDMG",
+  "page": 245,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "entries": [
+    "While wearing this cloak, you have {@variantrule Advantage|XPHB} on Dexterity ({@skill Stealth|XPHB}) checks. In an area of {@variantrule Dim Light|XPHB} or {@variantrule Darkness|XPHB}, you can grip the edges of the cloak and use it to gain a {@variantrule Fly Speed|XPHB} of 40 feet. If you ever fail to grip the cloak's edges while flying in this way, or if you are no longer in {@variantrule Dim Light|XPHB} or {@variantrule Darkness|XPHB}, you lose this {@variantrule Fly Speed|XPHB}.",
+    "While wearing the cloak in an area of {@variantrule Dim Light|XPHB} or {@variantrule Darkness|XPHB}, you can cast {@spell Polymorph|XPHB} on yourself, shape-shifting into a {@creature Bat|XMM}. While in that form, you retain your Intelligence, Wisdom, and Charisma scores. The cloak can't be used this way again until the next dawn."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "attachedSpells": {
+    "daily": {
+      "1e": [
+        "polymorph|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "name": "Hippopotamus",
+  "source": "XMM",
+  "page": 362,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 82,
+    "formula": "11d10 + 22"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 30
+  },
+  "str": 21,
+  "dex": 7,
+  "con": 15,
+  "int": 2,
+  "wis": 12,
+  "cha": 4,
+  "save": {
+    "str": "+7"
+  },
+  "skill": {
+    "perception": "+3"
+  },
+  "passive": 13,
+  "cr": "4",
+  "trait": [
+    {
+      "name": "Hold Breath",
+      "entries": [
+        "The hippopotamus can hold its breath for 10 minutes."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The hippopotamus makes two Bite attacks."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}16 ({@damage 2d10 + 5}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "swamp"
+  ],
+  "traitTags": [
+    "Hold Breath"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

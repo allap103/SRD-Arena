@@ -1,0 +1,66 @@
+{
+  "name": "Shocking Grasp",
+  "source": "XPHB",
+  "page": 316,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FFotR"
+  ],
+  "level": 0,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "Lightning springs from you to a creature that you try to touch. Make a melee spell attack against the target. On a hit, the target takes {@damage 1d8} Lightning damage, and it can't make {@action Opportunity Attack|XPHB|Opportunity Attacks} until the start of its next turn."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Cantrip Upgrade",
+      "entries": [
+        "The damage increases by {@damage 1d8} when you reach levels 5 ({@damage 2d8}), 11 ({@damage 3d8}), and 17 ({@damage 4d8})."
+      ]
+    }
+  ],
+  "scalingLevelDice": {
+    "label": "Lightning damage",
+    "scaling": {
+      "1": "1d8",
+      "5": "2d8",
+      "11": "3d8",
+      "17": "4d8"
+    }
+  },
+  "damageInflict": [
+    "lightning"
+  ],
+  "spellAttack": [
+    "M"
+  ],
+  "miscTags": [
+    "SCL"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

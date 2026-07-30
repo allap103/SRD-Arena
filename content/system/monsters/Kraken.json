@@ -1,0 +1,207 @@
+{
+  "name": "Kraken",
+  "group": [
+    "Titans"
+  ],
+  "source": "XMM",
+  "page": 187,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "FRAiF",
+    "FRHoF"
+  ],
+  "size": [
+    "G"
+  ],
+  "type": {
+    "type": "monstrosity",
+    "tags": [
+      "titan"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 481,
+    "formula": "26d20 + 208"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 120
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 30,
+  "dex": 11,
+  "con": 26,
+  "int": 22,
+  "wis": 18,
+  "cha": 20,
+  "save": {
+    "str": "+17",
+    "dex": "+7",
+    "con": "+15",
+    "wis": "+11"
+  },
+  "skill": {
+    "history": "+13",
+    "perception": "+11"
+  },
+  "senses": [
+    "Truesight 120 ft."
+  ],
+  "passive": 21,
+  "immune": [
+    "cold",
+    "lightning"
+  ],
+  "conditionImmune": [
+    "frightened",
+    "grappled",
+    "paralyzed",
+    "restrained"
+  ],
+  "languages": [
+    "understands Abyssal",
+    "Celestial",
+    "Infernal",
+    "and Primordial but can't speak; telepathy 120 ft."
+  ],
+  "cr": {
+    "cr": "23",
+    "xpLair": 62000
+  },
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The kraken can breathe air and water."
+      ]
+    },
+    {
+      "name": "Legendary Resistance (4/Day, or 5/Day in Lair)",
+      "entries": [
+        "If the kraken fails a saving throw, it can choose to succeed instead."
+      ]
+    },
+    {
+      "name": "Siege Monster",
+      "entries": [
+        "The kraken deals double damage to objects and structures."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The kraken makes two Tentacle attacks and uses Fling, Lightning Strike, or Swallow."
+      ]
+    },
+    {
+      "name": "Tentacle",
+      "entries": [
+        "{@atkr m} {@hit 17}, reach 30 ft. {@h}24 ({@damage 4d6 + 10}) Bludgeoning damage. The target has the {@condition Grappled|XPHB} condition (escape {@dc 20}) from one of ten tentacles, and it has the {@condition Restrained|XPHB} condition until the grapple ends."
+      ]
+    },
+    {
+      "name": "Fling",
+      "entries": [
+        "The kraken throws a Large or smaller creature {@condition Grappled|XPHB} by it to a space it can see within 60 feet of itself that isn't in the air. {@actSave dex} {@dc 25}, the creature thrown and each creature in the destination space. {@actSaveFail} 18 ({@damage 4d8}) Bludgeoning damage, and the target has the {@condition Prone|XPHB} condition. {@actSaveSuccess} Half damage only."
+      ]
+    },
+    {
+      "name": "Lightning Strike",
+      "entries": [
+        "{@actSave dex} {@dc 23}, one creature the kraken can see within 120 feet. {@actSaveFail} 33 ({@damage 6d10}) Lightning damage. {@actSaveSuccess} Half damage."
+      ]
+    },
+    {
+      "name": "Swallow",
+      "entries": [
+        "{@actSave dex} {@dc 25}, one creature {@condition Grappled|XPHB} by the kraken (it can have up to four creatures swallowed at a time). {@actSaveFail} 23 ({@damage 3d8 + 10}) Piercing damage. If the target is Large or smaller, it is swallowed and no longer {@condition Grappled|XPHB}. A swallowed creature has the {@condition Restrained|XPHB} condition, has {@variantrule Cover|XPHB|Total Cover} against attacks and other effects outside the kraken, and takes 24 ({@damage 7d6}) Acid damage at the start of each of its turns.",
+        "If the kraken takes 50 damage or more on a single turn from a creature inside it, the kraken must succeed on a {@dc 25} Constitution saving throw at the end of that turn or regurgitate all swallowed creatures, each of which falls in a space within 10 feet of the kraken with the {@condition Prone|XPHB} condition. If the kraken dies, any swallowed creature no longer has the {@condition Restrained|XPHB} condition and can escape from the corpse using 15 feet of movement, exiting {@condition Prone|XPHB}."
+      ]
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Storm Bolt",
+      "entries": [
+        "The kraken uses Lightning Strike."
+      ]
+    },
+    {
+      "name": "Toxic Ink",
+      "entries": [
+        "{@actSave con} {@dc 23}, each creature in a 15-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the kraken while it is underwater. {@actSaveFail} The target has the {@condition Blinded|XPHB} and {@condition Poisoned|XPHB} conditions until the end of the kraken's next turn. The kraken then moves up to its {@variantrule Speed|XPHB}. {@actSaveSuccessOrFail} The kraken can't take this action again until the start of its next turn."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Kraken",
+    "source": "XMM"
+  },
+  "environment": [
+    "underwater"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/kraken.opus"
+  },
+  "traitTags": [
+    "Amphibious",
+    "Legendary Resistances",
+    "Siege Monster"
+  ],
+  "senseTags": [
+    "U"
+  ],
+  "actionTags": [
+    "Multiattack",
+    "Swallow",
+    "Tentacles"
+  ],
+  "languageTags": [
+    "AB",
+    "CE",
+    "CS",
+    "I",
+    "P",
+    "TP"
+  ],
+  "damageTags": [
+    "A",
+    "B",
+    "L",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled",
+    "prone",
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

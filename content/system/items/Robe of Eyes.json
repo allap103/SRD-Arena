@@ -1,0 +1,44 @@
+{
+  "name": "Robe of Eyes",
+  "source": "XDMG",
+  "page": 297,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "entries": [
+    "This robe is adorned with eyelike patterns. While you wear the robe, you gain the following benefits:",
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "type": "item",
+          "name": "All-Around Vision",
+          "entries": [
+            "The robe gives you {@variantrule Advantage|XPHB} on Wisdom ({@skill Perception|XPHB}) checks that rely on sight."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Special Senses",
+          "entries": [
+            "You have {@sense Darkvision|XPHB} and {@sense Truesight|XPHB}, both with a range of 120 feet."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Drawbacks",
+      "entries": [
+        "A {@spell Light|XPHB} spell cast on the robe or a {@spell Daylight|XPHB} spell cast within 5 feet of the robe gives you the {@condition Blinded|XPHB} condition for 1 minute. At the end of each of your turns, you make a Constitution saving throw ({@dc 11} for Light or {@dc 15} for Daylight), ending the condition on yourself on a success."
+      ]
+    }
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

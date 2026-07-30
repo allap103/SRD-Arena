@@ -1,0 +1,62 @@
+{
+  "name": "Moonbeam",
+  "source": "XPHB",
+  "page": 300,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 2,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 120
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a moonseed leaf"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "A silvery beam of pale light shines down in a 5-foot-radius, 40-foot-high {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} centered on a point within range. Until the spell ends, {@variantrule Dim Light|XPHB} fills the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder}, and you can take a {@action Magic|XPHB} action on later turns to move the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} up to 60 feet.",
+    "When the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} appears, each creature in it makes a Constitution saving throw. On a failed save, a creature takes {@damage 2d10} Radiant damage, and if the creature is shape-shifted (as a result of the {@spell Polymorph|XPHB} spell, for example), it reverts to its true form and can't shape-shift until it leaves the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder}. On a successful save, a creature takes half as much damage only. A creature also makes this save when the spell's area moves into its space and when it enters the spell's area or ends its turn there. A creature makes this save only once per turn."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 2d10|2-9|1d10} for each spell slot level above 2."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "radiant"
+  ],
+  "savingThrow": [
+    "constitution"
+  ],
+  "miscTags": [
+    "LGT"
+  ],
+  "areaTags": [
+    "Y"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Plate Armor",
+  "source": "XPHB",
+  "page": 219,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "HA|XPHB",
+  "rarity": "none",
+  "weight": 65,
+  "value": 150000,
+  "ac": 18,
+  "strength": "15",
+  "armor": true,
+  "stealth": true,
+  "hasFluffImages": true
+}

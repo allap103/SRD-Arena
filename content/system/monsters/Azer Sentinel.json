@@ -1,0 +1,97 @@
+{
+  "name": "Azer Sentinel",
+  "source": "XMM",
+  "page": 25,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "elemental",
+  "alignment": [
+    "L",
+    "N"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 39,
+    "formula": "6d8 + 12"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 17,
+  "dex": 12,
+  "con": 15,
+  "int": 12,
+  "wis": 13,
+  "cha": 10,
+  "save": {
+    "con": "+4"
+  },
+  "passive": 11,
+  "immune": [
+    "fire",
+    "poison"
+  ],
+  "conditionImmune": [
+    "poisoned"
+  ],
+  "languages": [
+    "Primordial (Ignan)"
+  ],
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Fire Aura",
+      "entries": [
+        "At the end of each of the azer's turns, each creature of the azer's choice in a 5-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the azer takes 5 ({@damage 1d10}) Fire damage unless the azer has the {@condition Incapacitated|XPHB} condition."
+      ]
+    },
+    {
+      "name": "Illumination",
+      "entries": [
+        "The azer sheds {@variantrule Bright Light|XPHB} in a 10-foot radius and {@variantrule Dim Light|XPHB} for an additional 10 feet."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Burning Hammer",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}8 ({@damage 1d10 + 3}) Bludgeoning damage plus 3 ({@damage 1d6}) Fire damage."
+      ]
+    }
+  ],
+  "environment": [
+    "mountain",
+    "planar, fire"
+  ],
+  "treasure": [
+    "armaments",
+    "individual"
+  ],
+  "traitTags": [
+    "Illumination"
+  ],
+  "languageTags": [
+    "IG",
+    "P"
+  ],
+  "damageTags": [
+    "B",
+    "F"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,43 @@
+{
+  "name": "Divine Favor",
+  "source": "XPHB",
+  "page": 265,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 1,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      }
+    }
+  ],
+  "entries": [
+    "Until the spell ends, your attacks with weapons deal an extra {@damage 1d4} Radiant damage on a hit."
+  ],
+  "damageInflict": [
+    "radiant"
+  ],
+  "miscTags": [
+    "AAD"
+  ]
+}

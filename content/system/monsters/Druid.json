@@ -1,0 +1,146 @@
+{
+  "name": "Druid",
+  "source": "XMM",
+  "page": 106,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-ACfaS",
+    "DrDe-TFV",
+    "EFA",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 44,
+    "formula": "8d8 + 8"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 10,
+  "dex": 12,
+  "con": 13,
+  "int": 12,
+  "wis": 16,
+  "cha": 11,
+  "skill": {
+    "medicine": "+5",
+    "nature": "+3",
+    "perception": "+5"
+  },
+  "passive": 15,
+  "languages": [
+    "Common",
+    "Druidic",
+    "Sylvan"
+  ],
+  "cr": "2",
+  "gear": [
+    "studded leather armor|xphb"
+  ],
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The druid casts one of the following spells, using Wisdom as the spellcasting ability (spell save {@dc 13}):"
+      ],
+      "will": [
+        "{@spell Druidcraft|XPHB}",
+        "{@spell Speak with Animals|XPHB}"
+      ],
+      "daily": {
+        "2e": [
+          "{@spell Entangle|XPHB}",
+          "{@spell Thunderwave|XPHB}"
+        ],
+        "1e": [
+          "{@spell Animal Messenger|XPHB}",
+          "{@spell Longstrider|XPHB}",
+          "{@spell Moonbeam|XPHB}"
+        ]
+      },
+      "ability": "wis",
+      "displayAs": "action"
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The druid makes two attacks, using Vine Staff or Verdant Wisp in any combination."
+      ]
+    },
+    {
+      "name": "Vine Staff",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Bludgeoning damage plus 2 ({@damage 1d4}) Poison damage."
+      ]
+    },
+    {
+      "name": "Verdant Wisp",
+      "entries": [
+        "{@atkr r} {@hit 5}, range 90 ft. {@h}10 ({@damage 3d6}) Radiant damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "individual",
+    "relics"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/druid.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DU",
+    "S"
+  ],
+  "damageTags": [
+    "B",
+    "I",
+    "R"
+  ],
+  "damageTagsSpell": [
+    "R",
+    "T"
+  ],
+  "spellcastingTags": [
+    "CD"
+  ],
+  "miscTags": [
+    "MA",
+    "RA"
+  ],
+  "conditionInflictSpell": [
+    "restrained"
+  ],
+  "savingThrowForcedSpell": [
+    "charisma",
+    "constitution",
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

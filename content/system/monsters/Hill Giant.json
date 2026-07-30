@@ -1,0 +1,100 @@
+{
+  "name": "Hill Giant",
+  "source": "XMM",
+  "page": 168,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-ACfaS",
+    "DrDe-TFV",
+    "FRAiF"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "giant",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 105,
+    "formula": "10d12 + 40"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 21,
+  "dex": 8,
+  "con": 19,
+  "int": 5,
+  "wis": 9,
+  "cha": 6,
+  "skill": {
+    "perception": "+2"
+  },
+  "passive": 12,
+  "languages": [
+    "Giant"
+  ],
+  "cr": "5",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The giant makes two attacks, using Tree Club or Trash Lob in any combination."
+      ]
+    },
+    {
+      "name": "Tree Club",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 10 ft. {@h}18 ({@damage 3d8 + 5}) Bludgeoning damage. If the target is a Large or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    },
+    {
+      "name": "Trash Lob",
+      "entries": [
+        "{@atkr r} {@hit 8}, range 60/240 ft. {@h}16 ({@damage 2d10 + 5}) Bludgeoning damage, and the target has the {@condition Poisoned|XPHB} condition until the end of its next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "hill"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/hill-giant.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "GI"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "poisoned",
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

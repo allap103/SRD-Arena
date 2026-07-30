@@ -1,0 +1,11 @@
+{
+  "name": "Sledgehammer",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "type": "G",
+  "rarity": "none",
+  "weight": 10,
+  "value": 200
+}

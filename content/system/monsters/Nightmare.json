@@ -1,0 +1,106 @@
+{
+  "name": "Nightmare",
+  "source": "XMM",
+  "page": 226,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "fiend",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 68,
+    "formula": "8d10 + 24"
+  },
+  "speed": {
+    "walk": 60,
+    "fly": {
+      "number": 90,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "str": 18,
+  "dex": 15,
+  "con": 16,
+  "int": 10,
+  "wis": 13,
+  "cha": 15,
+  "passive": 11,
+  "immune": [
+    "fire"
+  ],
+  "languages": [
+    "understands Abyssal",
+    "Common",
+    "and Infernal but can't speak"
+  ],
+  "cr": "3",
+  "trait": [
+    {
+      "name": "Confer Fire Resistance",
+      "entries": [
+        "The nightmare can grant {@variantrule Resistance|XPHB} to Fire damage to a rider while it is on the nightmare."
+      ]
+    },
+    {
+      "name": "Illumination",
+      "entries": [
+        "The nightmare sheds {@variantrule Bright Light|XPHB} in a 10-foot radius and {@variantrule Dim Light|XPHB} for an additional 10 feet."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Hooves",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}13 ({@damage 2d8 + 4}) Bludgeoning damage plus 10 ({@damage 3d6}) Fire damage."
+      ]
+    },
+    {
+      "name": "Ethereal Stride",
+      "entries": [
+        "The nightmare and up to three willing creatures within 5 feet of it teleport to the Ethereal Plane from the Material Plane or vice versa."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, lower"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/nightmare.opus"
+  },
+  "traitTags": [
+    "Illumination"
+  ],
+  "languageTags": [
+    "AB",
+    "C",
+    "CS",
+    "I"
+  ],
+  "damageTags": [
+    "B",
+    "F"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

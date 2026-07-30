@@ -1,0 +1,19 @@
+{
+  "name": "Wyvern Poison",
+  "source": "XDMG",
+  "page": 91,
+  "srd52": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 120000,
+  "poison": true,
+  "entries": [
+    "A creature subjected to Wyvern Poison makes a {@dc 14} Constitution saving throw, taking 24 ({@damage 7d6}) Poison damage on a failed save or half as much damage on a successful one."
+  ],
+  "poisonTypes": [
+    "injury"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

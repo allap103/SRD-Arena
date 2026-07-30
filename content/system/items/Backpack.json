@@ -1,0 +1,23 @@
+{
+  "name": "Backpack",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "BQGT",
+    "FFotR"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "value": 200,
+  "entries": [
+    "A Backpack holds up to 30 pounds within 1 cubic foot. It can also serve as a saddlebag."
+  ],
+  "containerCapacity": {
+    "weight": [
+      30
+    ]
+  }
+}

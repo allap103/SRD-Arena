@@ -1,0 +1,16 @@
+{
+  "name": "Paper (one sheet)",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "WDH"
+  ],
+  "reprintedAs": [
+    "Paper|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "value": 20
+}

@@ -1,0 +1,99 @@
+{
+  "name": "Reincarnate",
+  "source": "XPHB",
+  "page": 311,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 5,
+  "school": "N",
+  "time": [
+    {
+      "number": 1,
+      "unit": "hour"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "rare oils worth 1,000+ GP, which the spell consumes",
+      "cost": 100000,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You touch a dead Humanoid or a piece of one. If the creature has been dead no longer than 10 days, the spell forms a new body for it and calls the soul to enter that body. Roll {@dice 1d10} and consult the table below to determine the body's species, or the DM chooses another playable species.",
+    {
+      "type": "table",
+      "colStyles": [
+        "col-2 text-center",
+        "col-10"
+      ],
+      "colLabels": [
+        "1d10",
+        "Species"
+      ],
+      "rows": [
+        [
+          "1",
+          "{@race Aasimar|XPHB}"
+        ],
+        [
+          "2",
+          "{@race Dragonborn|XPHB}"
+        ],
+        [
+          "3",
+          "{@race Dwarf|XPHB}"
+        ],
+        [
+          "4",
+          "{@race Elf|XPHB}"
+        ],
+        [
+          "5",
+          "{@race Gnome|XPHB}"
+        ],
+        [
+          "6",
+          "{@race Goliath|XPHB}"
+        ],
+        [
+          "7",
+          "{@race Halfling|XPHB}"
+        ],
+        [
+          "8",
+          "{@race Human|XPHB}"
+        ],
+        [
+          "9",
+          "{@race Orc|XPHB}"
+        ],
+        [
+          "10",
+          "{@race Tiefling|XPHB}"
+        ]
+      ]
+    },
+    "The reincarnated creature makes any choices that a species' description offers, and the creature recalls its former life. It retains the capabilities it had in its original form, except it loses the traits of its previous species and gains the traits of its new one."
+  ],
+  "affectsCreatureType": [
+    "humanoid"
+  ],
+  "miscTags": [
+    "HL",
+    "RO"
+  ]
+}

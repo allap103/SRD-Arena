@@ -1,0 +1,169 @@
+{
+  "name": "Air Elemental",
+  "source": "XMM",
+  "page": 13,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "FFotR",
+    "FRAiF",
+    "FRHoF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "elemental",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 90,
+    "formula": "12d10 + 24"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": {
+      "number": 90,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "str": 14,
+  "dex": 20,
+  "con": 14,
+  "int": 6,
+  "wis": 10,
+  "cha": 6,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "resist": [
+    "bludgeoning",
+    "lightning",
+    "piercing",
+    "slashing"
+  ],
+  "immune": [
+    "poison",
+    "thunder"
+  ],
+  "conditionImmune": [
+    "exhaustion",
+    "grappled",
+    "paralyzed",
+    "petrified",
+    "poisoned",
+    "prone",
+    "restrained",
+    "unconscious"
+  ],
+  "languages": [
+    "Primordial (Auran)"
+  ],
+  "cr": "5",
+  "trait": [
+    {
+      "name": "Air Form",
+      "entries": [
+        "The elemental can enter a creature's space and stop there. It can move through a space as narrow as 1 inch without expending extra movement to do so."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The elemental makes two Thunderous Slam attacks."
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Thunderous Slam"
+                },
+                "times": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Thunderous Slam",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 10 ft. {@h}14 ({@damage 2d8 + 5}) Thunder damage."
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 8,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "reach_feet": 10,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "bonus": 5,
+            "damage_type": "thunder"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Whirlwind {@recharge 4}",
+      "entries": [
+        "{@actSave str} {@dc 13}, one Medium or smaller creature in the elemental's space. {@actSaveFail} 24 ({@damage 4d10 + 2}) Thunder damage, and the target is pushed up to 20 feet straight away from the elemental and has the {@condition Prone|XPHB} condition. {@actSaveSuccess} Half damage only."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "mountain",
+    "planar, air"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/air-elemental.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "AU",
+    "P"
+  ],
+  "damageTags": [
+    "T"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "savingThrowForced": [
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

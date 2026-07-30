@@ -1,0 +1,134 @@
+{
+  "name": "Wraith",
+  "source": "XMM",
+  "page": 336,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TWoO",
+    "FRAiF",
+    "FRHoF",
+    "HBTD",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "undead",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 67,
+    "formula": "9d8 + 27"
+  },
+  "speed": {
+    "walk": 5,
+    "fly": {
+      "number": 60,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "str": 6,
+  "dex": 16,
+  "con": 16,
+  "int": 12,
+  "wis": 14,
+  "cha": 15,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 12,
+  "resist": [
+    "acid",
+    "bludgeoning",
+    "cold",
+    "fire",
+    "piercing",
+    "slashing"
+  ],
+  "immune": [
+    "necrotic",
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "exhaustion",
+    "grappled",
+    "paralyzed",
+    "petrified",
+    "poisoned",
+    "prone",
+    "restrained",
+    "unconscious"
+  ],
+  "languages": [
+    "Common plus two other languages"
+  ],
+  "cr": "5",
+  "trait": [
+    {
+      "name": "Incorporeal Movement",
+      "entries": [
+        "The wraith can move through other creatures and objects as if they were {@variantrule Difficult Terrain|XPHB}. It takes 5 ({@damage 1d10}) Force damage if it ends its turn inside an object."
+      ]
+    },
+    {
+      "name": "Sunlight Sensitivity",
+      "entries": [
+        "While in sunlight, the wraith has {@variantrule Disadvantage|XPHB} on ability checks and attack rolls."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Life Drain",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}21 ({@damage 4d8 + 3}) Necrotic damage. If the target is a creature, its {@variantrule Hit Points|XPHB|Hit Point} maximum decreases by an amount equal to the damage taken."
+      ]
+    },
+    {
+      "name": "Create Specter",
+      "entries": [
+        "The wraith targets a Humanoid corpse within 10 feet of itself that has been dead for no longer than 1 minute. The target's spirit rises as a {@creature Specter|XMM} in the space of its corpse or in the nearest unoccupied space. The specter is under the wraith's control. The wraith can have no more than seven specters under its control at a time."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, shadowfell",
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/wraith.opus"
+  },
+  "traitTags": [
+    "Incorporeal Movement",
+    "Sunlight Sensitivity"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "N",
+    "O"
+  ],
+  "miscTags": [
+    "HPR",
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Hunk of Cheese",
+  "source": "PHB",
+  "page": 158,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Cheese (wedge)|XPHB"
+  ],
+  "type": "FD",
+  "rarity": "none",
+  "value": 10,
+  "miscTags": [
+    "CNS"
+  ]
+}

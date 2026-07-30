@@ -1,0 +1,197 @@
+{
+  "name": "Unicorn",
+  "source": "XMM",
+  "page": 313,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "celestial",
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 97,
+    "formula": "13d10 + 26"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 18,
+  "dex": 14,
+  "con": 15,
+  "int": 11,
+  "wis": 17,
+  "cha": 16,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "paralyzed",
+    "poisoned"
+  ],
+  "languages": [
+    "Celestial",
+    "Elvish",
+    "Sylvan; telepathy 120 ft."
+  ],
+  "cr": "5",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The unicorn casts one of the following spells, requiring no spell components and using Charisma as the spellcasting ability (spell save {@dc 14}):"
+      ],
+      "will": [
+        "{@spell Detect Evil and Good|XPHB}",
+        "{@spell Druidcraft|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Calm Emotions|XPHB}",
+          "{@spell Dispel Evil and Good|XPHB}",
+          "{@spell Entangle|XPHB}",
+          "{@spell Pass without Trace|XPHB}",
+          "{@spell Word of Recall|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    },
+    {
+      "name": "Unicorn's Blessing (3/Day)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The unicorn touches another creature with its horn and casts {@spell Cure Wounds|XPHB} or {@spell Lesser Restoration|XPHB} on that creature, using the same spellcasting ability as Spellcasting."
+      ],
+      "daily": {
+        "3": [
+          "{@spell Cure Wounds|XPHB}",
+          "{@spell Lesser Restoration|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "bonus",
+      "hidden": [
+        "daily"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Legendary Resistance (3/Day)",
+      "entries": [
+        "If the unicorn fails a saving throw, it can choose to succeed instead."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The unicorn has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The unicorn makes one Hooves attack and one Radiant Horn attack."
+      ]
+    },
+    {
+      "name": "Hooves",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}11 ({@damage 2d6 + 4}) Bludgeoning damage."
+      ]
+    },
+    {
+      "name": "Radiant Horn",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}9 ({@damage 1d10 + 4}) Radiant damage."
+      ]
+    }
+  ],
+  "legendary": [
+    {
+      "name": "Charging Horn",
+      "entries": [
+        "The unicorn moves up to half its {@variantrule Speed|XPHB} without provoking {@action Opportunity Attack|XPHB|Opportunity Attacks}, and it makes one Radiant Horn attack."
+      ]
+    },
+    {
+      "name": "Shimmering Shield",
+      "entries": [
+        "The unicorn targets itself or one creature it can see within 60 feet of itself. The target gains 10 ({@dice 3d6}) {@variantrule Temporary Hit Points|XPHB}, and its AC increases by 2 until the end of the unicorn's next turn. The unicorn can't take this action again until the start of its next turn."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Unicorn",
+    "source": "XMM"
+  },
+  "environment": [
+    "forest",
+    "planar, feywild"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/unicorn.opus"
+  },
+  "traitTags": [
+    "Legendary Resistances",
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "CE",
+    "E",
+    "S",
+    "TP"
+  ],
+  "damageTags": [
+    "B",
+    "R"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflictSpell": [
+    "restrained"
+  ],
+  "savingThrowForcedSpell": [
+    "charisma",
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,62 @@
+{
+  "name": "Draft Horse",
+  "source": "XMM",
+  "page": 352,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 349
+    }
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 15,
+    "formula": "2d10 + 4"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 18,
+  "dex": 10,
+  "con": 15,
+  "int": 2,
+  "wis": 11,
+  "cha": 7,
+  "passive": 10,
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Hooves",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}6 ({@damage 1d4 + 4}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/draft-horse.opus"
+  },
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

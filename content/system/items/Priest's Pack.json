@@ -1,0 +1,26 @@
+{
+  "name": "Priest's Pack",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 29,
+  "value": 3300,
+  "entries": [
+    "A Priest's Pack contains the following items: {@item Backpack|XPHB}, {@item Blanket|XPHB}, {@item Holy Water|XPHB}, {@item Lamp|XPHB}, 7 days of {@item Rations|XPHB}, {@item Robe|XPHB}, and {@item Tinderbox|XPHB}."
+  ],
+  "packContents": [
+    "backpack|xphb",
+    "blanket|xphb",
+    "holy water|xphb",
+    "lamp|xphb",
+    {
+      "item": "rations|xphb",
+      "quantity": 7
+    },
+    "robe|xphb",
+    "tinderbox|xphb"
+  ]
+}

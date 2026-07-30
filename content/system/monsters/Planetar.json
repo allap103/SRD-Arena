@@ -1,0 +1,204 @@
+{
+  "name": "Planetar",
+  "group": [
+    "Angels"
+  ],
+  "source": "XMM",
+  "page": 245,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "celestial",
+    "tags": [
+      "angel"
+    ]
+  },
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    19
+  ],
+  "hp": {
+    "average": 262,
+    "formula": "21d10 + 147"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": {
+      "number": 120,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 24,
+  "dex": 20,
+  "con": 24,
+  "int": 19,
+  "wis": 22,
+  "cha": 25,
+  "save": {
+    "str": "+12",
+    "con": "+12",
+    "wis": "+11",
+    "cha": "+12"
+  },
+  "skill": {
+    "perception": "+11"
+  },
+  "senses": [
+    "Truesight 120 ft."
+  ],
+  "passive": 21,
+  "resist": [
+    "radiant"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "exhaustion",
+    "frightened"
+  ],
+  "languages": [
+    "all; telepathy 120 ft."
+  ],
+  "cr": "16",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The planetar casts one of the following spells, requiring no Material components and using Charisma as spellcasting ability (spell save {@dc 20}):"
+      ],
+      "will": [
+        "{@spell Detect Evil and Good|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Commune|XPHB}",
+          "{@spell Control Weather|XPHB}",
+          "{@spell Dispel Evil and Good|XPHB}",
+          "{@spell Raise Dead|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    },
+    {
+      "name": "Divine Aid (2/Day)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The planetar casts {@spell Cure Wounds|XPHB}, {@spell Invisibility|XPHB}, {@spell Lesser Restoration|XPHB}, or {@spell Remove Curse|XPHB}, using the same spellcasting ability as Spellcasting."
+      ],
+      "daily": {
+        "2": [
+          "{@spell Cure Wounds|XPHB}",
+          "{@spell Invisibility|XPHB}",
+          "{@spell Lesser Restoration|XPHB}",
+          "{@spell Remove Curse|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "bonus",
+      "hidden": [
+        "daily"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Divine Awareness",
+      "entries": [
+        "The planetar knows if it hears a lie."
+      ]
+    },
+    {
+      "name": "Exalted Restoration",
+      "entries": [
+        "If the planetar dies outside Mount Celestia, its body disappears, and it gains a new body instantly, reviving with all its {@variantrule Hit Points|XPHB} somewhere in Mount Celestia."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The planetar has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The planetar makes three Radiant Sword attacks or uses Holy Burst twice."
+      ]
+    },
+    {
+      "name": "Radiant Sword",
+      "entries": [
+        "{@atkr m} {@hit 12}, reach 10 ft. {@h}14 ({@damage 2d6 + 7}) Slashing damage plus 18 ({@damage 4d8}) Radiant damage."
+      ]
+    },
+    {
+      "name": "Holy Burst",
+      "entries": [
+        "{@actSave dex} {@dc 20}, each enemy in a 20-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} centered on a point the planetar can see within 120 feet. {@actSaveFail} 24 ({@damage 7d6}) Radiant damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, upper"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/planetar.opus"
+  },
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "U"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "TP",
+    "XX"
+  ],
+  "damageTags": [
+    "R",
+    "S"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA",
+    "RCH"
+  ],
+  "conditionInflictSpell": [
+    "invisible"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "savingThrowForcedSpell": [
+    "charisma"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

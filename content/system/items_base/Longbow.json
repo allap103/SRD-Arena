@@ -1,0 +1,28 @@
+{
+  "name": "Longbow",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "R|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 5000,
+  "weaponCategory": "martial",
+  "property": [
+    "A|XPHB",
+    "H|XPHB",
+    "2H|XPHB"
+  ],
+  "mastery": [
+    "Slow|XPHB"
+  ],
+  "range": "150/600",
+  "dmg1": "1d8",
+  "dmgType": "P",
+  "bow": true,
+  "weapon": true,
+  "ammoType": "arrow|xphb",
+  "hasFluffImages": true
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Flask",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 2,
+  "entries": [
+    "A Flask holds up to 1 pint."
+  ],
+  "containerCapacity": {
+    "volume": [
+      0.02
+    ]
+  }
+}

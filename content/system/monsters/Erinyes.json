@@ -1,0 +1,163 @@
+{
+  "name": "Erinyes",
+  "group": [
+    "Devils"
+  ],
+  "source": "XMM",
+  "page": 114,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "fiend",
+    "tags": [
+      "devil"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 178,
+    "formula": "21d8 + 84"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 60
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 18,
+  "dex": 16,
+  "con": 18,
+  "int": 14,
+  "wis": 14,
+  "cha": 18,
+  "save": {
+    "dex": "+7",
+    "con": "+8",
+    "cha": "+8"
+  },
+  "skill": {
+    "perception": "+6",
+    "persuasion": "+8"
+  },
+  "senses": [
+    "Truesight 120 ft."
+  ],
+  "passive": 16,
+  "resist": [
+    "cold"
+  ],
+  "immune": [
+    "fire",
+    "poison"
+  ],
+  "conditionImmune": [
+    "poisoned"
+  ],
+  "languages": [
+    "Infernal; telepathy 120 ft."
+  ],
+  "cr": "12",
+  "trait": [
+    {
+      "name": "Diabolical Restoration",
+      "entries": [
+        "If the erinyes dies outside the Nine Hells, its body disappears in sulfurous smoke, and it gains a new body instantly, reviving with all its {@variantrule Hit Points|XPHB} somewhere in the Nine Hells."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The erinyes has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    },
+    {
+      "name": "Magic Rope",
+      "entries": [
+        "The erinyes has a magic rope. While bearing it, the erinyes can use the Entangling Rope action. The rope has AC 20, HP 90, and {@variantrule Immunity|XPHB} to Poison and Psychic damage. The rope turns to dust if reduced to 0 {@variantrule Hit Points|XPHB}, if it is 5+ feet away from the erinyes for 1 hour or more, or if the erinyes dies. If the rope is damaged or destroyed, the erinyes can fully restore it when finishing a {@variantrule Short Rest|XPHB|Short} or {@variantrule Long Rest|XPHB}."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The erinyes makes three Withering Sword attacks and can use Entangling Rope."
+      ]
+    },
+    {
+      "name": "Withering Sword",
+      "entries": [
+        "{@atkr m} {@hit 8}, reach 5 ft. {@h}13 ({@damage 2d8 + 4}) Slashing damage plus 11 ({@damage 2d10}) Necrotic damage."
+      ]
+    },
+    {
+      "name": "Entangling Rope (Requires Magic Rope)",
+      "entries": [
+        "{@actSave str} {@dc 16}, one creature the erinyes can see within 120 feet. {@actSaveFail} 14 ({@damage 4d6}) Force damage, and the target has the {@condition Restrained|XPHB} condition until the rope is destroyed, the erinyes uses a {@variantrule Bonus Action|XPHB} to release the target, or the erinyes uses Entangling Rope again."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Parry",
+      "entries": [
+        "{@actTrigger} The erinyes is hit by a melee attack roll while holding a weapon. {@actResponse} The erinyes adds 4 to its AC against that attack, possibly causing it to miss."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, nine hells"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/erinyes.opus"
+  },
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "U"
+  ],
+  "actionTags": [
+    "Multiattack",
+    "Parry"
+  ],
+  "languageTags": [
+    "I",
+    "TP"
+  ],
+  "damageTags": [
+    "N",
+    "O",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

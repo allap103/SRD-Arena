@@ -1,0 +1,13 @@
+{
+  "name": "Fine Wine (bottle)",
+  "source": "XPHB",
+  "page": 231,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "FD|XPHB",
+  "rarity": "none",
+  "value": 1000,
+  "miscTags": [
+    "CNS"
+  ]
+}

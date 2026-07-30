@@ -1,0 +1,95 @@
+{
+  "name": "Swarm of Rats",
+  "source": "XMM",
+  "page": 370,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "beast",
+    "swarmSize": "T"
+  },
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 14,
+    "formula": "4d8 - 4"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 9,
+  "dex": 11,
+  "con": 9,
+  "int": 2,
+  "wis": 10,
+  "cha": 3,
+  "senses": [
+    "Darkvision 30 ft."
+  ],
+  "passive": 10,
+  "resist": [
+    "bludgeoning",
+    "piercing",
+    "slashing"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "frightened",
+    "grappled",
+    "paralyzed",
+    "petrified",
+    "prone",
+    "restrained",
+    "stunned"
+  ],
+  "cr": "1/4",
+  "trait": [
+    {
+      "name": "Swarm",
+      "entries": [
+        "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny rat. The swarm can't regain {@variantrule Hit Points|XPHB} or gain {@variantrule Temporary Hit Points|XPHB}."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bites",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}5 ({@damage 2d4}) Piercing damage, or 2 ({@damage 1d4}) Piercing damage if the swarm is {@status Bloodied|XPHB}."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "swamp",
+    "underdark",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/swarm-of-rats.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

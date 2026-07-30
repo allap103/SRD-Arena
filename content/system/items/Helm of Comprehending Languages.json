@@ -1,0 +1,22 @@
+{
+  "name": "Helm of Comprehending Languages",
+  "source": "XDMG",
+  "page": 268,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "wondrous": true,
+  "entries": [
+    "While wearing this helm, you can cast {@spell Comprehend Languages|XPHB} from it."
+  ],
+  "attachedSpells": {
+    "will": [
+      "comprehend languages|xphb"
+    ]
+  },
+  "lootTables": [
+    "Arcana - Uncommon|XDMG",
+    "Implements - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

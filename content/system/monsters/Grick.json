@@ -1,0 +1,93 @@
+{
+  "name": "Grick",
+  "source": "XMM",
+  "page": 158,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "aberration",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 54,
+    "formula": "12d8"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 14,
+  "dex": 14,
+  "con": 11,
+  "int": 3,
+  "wis": 14,
+  "cha": 5,
+  "skill": {
+    "stealth": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 12,
+  "cr": "2",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The grick makes one Beak attack and one Tentacles attack."
+      ]
+    },
+    {
+      "name": "Beak",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}9 ({@damage 2d6 + 2}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Tentacles",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}7 ({@damage 1d10 + 2}) Slashing damage. If the target is a Medium or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 12}) from all four tentacles."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "underdark"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/grick.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack",
+    "Tentacles"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,140 @@
+{
+  "name": "Wereboar",
+  "group": [
+    "Lycanthropes"
+  ],
+  "source": "XMM",
+  "page": 325,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": {
+    "type": "monstrosity",
+    "tags": [
+      "lycanthrope"
+    ]
+  },
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 97,
+    "formula": "15d8 + 30"
+  },
+  "speed": {
+    "walk": 30,
+    "alternate": {
+      "walk": [
+        {
+          "number": 40,
+          "condition": "(boar form only)"
+        }
+      ]
+    }
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 17,
+  "dex": 10,
+  "con": 15,
+  "int": 10,
+  "wis": 11,
+  "cha": 8,
+  "skill": {
+    "perception": "+2"
+  },
+  "passive": 12,
+  "languages": [
+    "Common (can't speak in boar form)"
+  ],
+  "cr": "4",
+  "gear": [
+    {
+      "item": "javelin|xphb",
+      "quantity": 6
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The wereboar makes two attacks, using Javelin or Tusk in any combination. It can replace one attack with a Gore attack."
+      ]
+    },
+    {
+      "name": "Gore (Boar or Hybrid Form Only)",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}12 ({@damage 2d8 + 3}) Piercing damage. If the target is a Humanoid, it is subjected to the following effect. {@actSave con} {@dc 12}. {@actSaveFail} The target is cursed. If the cursed target drops to 0 {@variantrule Hit Points|XPHB}, it instead becomes a Wereboar under the DM's control and has 10 {@variantrule Hit Points|XPHB}. {@actSaveSuccess} The target is immune to this wereboar's curse for 24 hours."
+      ]
+    },
+    {
+      "name": "Javelin (Humanoid or Hybrid Form Only)",
+      "entries": [
+        "{@atkr m,r} {@hit 5}, reach 5 ft. or range 30/120 ft. {@h}13 ({@damage 3d6 + 3}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Tusk (Boar or Hybrid Form Only)",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Piercing damage. If the target is a Medium or smaller creature and the wereboar moved 20+ feet straight toward it immediately before the hit, the target takes an extra 7 ({@damage 2d6}) Piercing damage and has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Shape-Shift",
+      "entries": [
+        "The wereboar shape-shifts into a Medium boar-humanoid hybrid or a Small boar, or it returns to its true humanoid form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "treasure": [
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/wereboar.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "CS"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "CUR",
+    "MA",
+    "MLW",
+    "RA",
+    "THW"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

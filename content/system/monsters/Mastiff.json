@@ -1,0 +1,82 @@
+{
+  "name": "Mastiff",
+  "source": "XMM",
+  "page": 365,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 353
+    }
+  ],
+  "referenceSources": [
+    "DrDe",
+    "DrDe-DaS",
+    "FRAiF",
+    "FRHoF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 5,
+    "formula": "1d8 + 1"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 13,
+  "dex": 14,
+  "con": 12,
+  "int": 3,
+  "wis": 12,
+  "cha": 7,
+  "skill": {
+    "perception": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "cr": "1/8",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 3}, reach 5 ft. {@h}4 ({@damage 1d6 + 1}) Piercing damage. If the target is a Medium or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "hill",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/mastiff.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

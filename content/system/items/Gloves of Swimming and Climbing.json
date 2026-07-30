@@ -1,0 +1,19 @@
+{
+  "name": "Gloves of Swimming and Climbing",
+  "source": "XDMG",
+  "page": 265,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "entries": [
+    "While wearing these gloves, climbing and swimming don't cost you extra movement, and you gain a +5 bonus to Strength ({@skill Athletics|XPHB}) checks made to climb or swim."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Implements - Uncommon|XDMG"
+  ]
+}

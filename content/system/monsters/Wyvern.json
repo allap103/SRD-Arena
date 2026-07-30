@@ -1,0 +1,96 @@
+{
+  "name": "Wyvern",
+  "source": "XMM",
+  "page": 337,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-SD",
+    "EFA",
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "dragon",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 127,
+    "formula": "15d10 + 45"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 80
+  },
+  "str": 19,
+  "dex": 10,
+  "con": 16,
+  "int": 5,
+  "wis": 12,
+  "cha": 6,
+  "skill": {
+    "perception": "+4"
+  },
+  "senses": [
+    "Darkvision 120 ft."
+  ],
+  "passive": 14,
+  "cr": "6",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The wyvern makes one Bite attack and one Sting attack."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}13 ({@damage 2d8 + 4}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Sting",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 10 ft. {@h}11 ({@damage 2d6 + 4}) Piercing damage plus 24 ({@damage 7d6}) Poison damage, and the target has the {@condition Poisoned|XPHB} condition until the start of the wyvern's next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "hill",
+    "mountain"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/wyvern.opus"
+  },
+  "senseTags": [
+    "SD"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "poisoned"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

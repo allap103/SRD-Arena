@@ -1,0 +1,29 @@
+{
+  "name": "Cloak of the Manta Ray",
+  "source": "XDMG",
+  "page": 245,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "modifySpeed": {
+    "static": {
+      "swim": 60
+    }
+  },
+  "entries": [
+    "While wearing this cloak, you can breathe underwater, and you have a {@variantrule Swim Speed|XPHB} of 60 feet."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG",
+    "Implements - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

@@ -1,0 +1,82 @@
+{
+  "name": "Hippogriff",
+  "source": "XMM",
+  "page": 169,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 26,
+    "formula": "4d10 + 4"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 60
+  },
+  "str": 17,
+  "dex": 13,
+  "con": 13,
+  "int": 2,
+  "wis": 12,
+  "cha": 8,
+  "skill": {
+    "perception": "+5"
+  },
+  "passive": 15,
+  "cr": "1",
+  "trait": [
+    {
+      "name": "Flyby",
+      "entries": [
+        "The hippogriff doesn't provoke an {@action Opportunity Attack|XPHB} when it flies out of an enemy's reach."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The hippogriff makes two Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "grassland",
+    "hill",
+    "mountain"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/hippogriff.opus"
+  },
+  "traitTags": [
+    "Flyby"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

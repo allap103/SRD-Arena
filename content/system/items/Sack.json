@@ -1,0 +1,19 @@
+{
+  "name": "Sack",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 0.5,
+  "value": 1,
+  "entries": [
+    "A Sack holds up to 30 pounds within 1 cubic foot."
+  ],
+  "containerCapacity": {
+    "weight": [
+      30
+    ]
+  }
+}

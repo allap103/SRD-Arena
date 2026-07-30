@@ -1,0 +1,23 @@
+{
+  "name": "Potion of Acid Resistance",
+  "source": "XDMG",
+  "page": 289,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "WttHC"
+  ],
+  "type": "P|XPHB",
+  "resist": [
+    "acid"
+  ],
+  "rarity": "uncommon",
+  "weight": 0.5,
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Potion of Resistance|XDMG}"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

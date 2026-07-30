@@ -1,0 +1,170 @@
+{
+  "name": "Storm Giant",
+  "source": "XMM",
+  "page": 302,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "giant",
+  "alignment": [
+    "C",
+    "G"
+  ],
+  "ac": [
+    16
+  ],
+  "hp": {
+    "average": 230,
+    "formula": "20d12 + 100"
+  },
+  "speed": {
+    "walk": 50,
+    "fly": {
+      "number": 25,
+      "condition": "(hover)"
+    },
+    "swim": 50,
+    "canHover": true
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 29,
+  "dex": 14,
+  "con": 20,
+  "int": 16,
+  "wis": 20,
+  "cha": 18,
+  "save": {
+    "str": "+14",
+    "con": "+10",
+    "wis": "+10",
+    "cha": "+9"
+  },
+  "skill": {
+    "arcana": "+8",
+    "athletics": "+14",
+    "history": "+8",
+    "perception": "+10"
+  },
+  "senses": [
+    "Darkvision 120 ft.",
+    "Truesight 30 ft."
+  ],
+  "passive": 20,
+  "resist": [
+    "cold"
+  ],
+  "immune": [
+    "lightning",
+    "thunder"
+  ],
+  "languages": [
+    "Common",
+    "Giant"
+  ],
+  "cr": "13",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The giant casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save {@dc 18}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Light|XPHB}"
+      ],
+      "daily": {
+        "1": [
+          "{@spell Control Weather|XPHB}"
+        ]
+      },
+      "ability": "wis",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The giant can breathe air and water."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The giant makes two attacks, using Storm Sword or Thunderbolt in any combination."
+      ]
+    },
+    {
+      "name": "Storm Sword",
+      "entries": [
+        "{@atkr m} {@hit 14}, reach 10 ft. {@h}23 ({@damage 4d6 + 9}) Slashing damage plus 13 ({@damage 3d8}) Lightning damage."
+      ]
+    },
+    {
+      "name": "Thunderbolt",
+      "entries": [
+        "{@atkr r} {@hit 14}, range 500 ft. {@h}22 ({@damage 2d12 + 9}) Lightning damage, and the target has the {@condition Blinded|XPHB} and {@condition Deafened|XPHB} conditions until the start of the giant's next turn."
+      ]
+    },
+    {
+      "name": "Lightning Storm {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 18}, each creature in a 10-foot-radius, 40-foot-high {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} originating from a point the giant can see within 500 feet. {@actSaveFail} 55 ({@damage 10d10}) Lightning damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "underwater"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/storm-giant.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "SD",
+    "U"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "GI"
+  ],
+  "damageTags": [
+    "L",
+    "S"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA",
+    "RA",
+    "RCH"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

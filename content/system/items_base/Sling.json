@@ -1,0 +1,24 @@
+{
+  "name": "Sling",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "R|XPHB",
+  "rarity": "none",
+  "value": 10,
+  "weaponCategory": "simple",
+  "property": [
+    "A|XPHB"
+  ],
+  "mastery": [
+    "Slow|XPHB"
+  ],
+  "range": "30/120",
+  "dmg1": "1d4",
+  "dmgType": "B",
+  "weapon": true,
+  "ammoType": "sling bullet|xphb",
+  "hasFluffImages": true
+}

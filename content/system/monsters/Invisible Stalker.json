@@ -1,0 +1,145 @@
+{
+  "name": "Invisible Stalker",
+  "source": "XMM",
+  "page": 180,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-FWtVC",
+    "LFL",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "elemental",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 97,
+    "formula": "13d10 + 26"
+  },
+  "speed": {
+    "walk": 50,
+    "fly": {
+      "number": 50,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 16,
+  "dex": 19,
+  "con": 14,
+  "int": 10,
+  "wis": 15,
+  "cha": 11,
+  "skill": {
+    "perception": "+8",
+    "stealth": "+10"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 18,
+  "resist": [
+    "bludgeoning",
+    "piercing",
+    "slashing"
+  ],
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "exhaustion",
+    "grappled",
+    "paralyzed",
+    "petrified",
+    "poisoned",
+    "prone",
+    "restrained",
+    "unconscious"
+  ],
+  "languages": [
+    "Common",
+    "Primordial (Auran)"
+  ],
+  "cr": "6",
+  "trait": [
+    {
+      "name": "Air Form",
+      "entries": [
+        "The stalker can enter an enemy's space and stop there. It can move through a space as narrow as 1 inch without expending extra movement to do so."
+      ]
+    },
+    {
+      "name": "Invisibility",
+      "entries": [
+        "The stalker has the {@condition Invisible|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The stalker makes three Wind Swipe attacks. It can replace one attack with a use of Vortex."
+      ]
+    },
+    {
+      "name": "Wind Swipe",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}11 ({@damage 2d6 + 4}) Force damage."
+      ]
+    },
+    {
+      "name": "Vortex",
+      "entries": [
+        "{@actSave con} {@dc 14}, one Large or smaller creature in the stalker's space. {@actSaveFail} 7 ({@damage 1d8 + 3}) Thunder damage, and the target has the {@condition Grappled|XPHB} condition (escape {@dc 13}). Until the grapple ends, the target can't cast spells with a Verbal component and takes 7 ({@damage 2d6}) Thunder damage at the start of each of the stalker's turns."
+      ]
+    }
+  ],
+  "environment": [
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/invisible-stalker.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "AU",
+    "C",
+    "P"
+  ],
+  "damageTags": [
+    "O",
+    "T"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "grappled",
+    "invisible"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

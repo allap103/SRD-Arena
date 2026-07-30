@@ -1,0 +1,132 @@
+{
+  "name": "Shield Guardian",
+  "source": "XMM",
+  "page": 277,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-SD",
+    "EFA",
+    "FRAiF",
+    "FRHoF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "construct",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 142,
+    "formula": "15d10 + 60"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 18,
+  "dex": 8,
+  "con": 18,
+  "int": 7,
+  "wis": 10,
+  "cha": 3,
+  "senses": [
+    "Blindsight 10 ft.",
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "exhaustion",
+    "frightened",
+    "paralyzed",
+    "petrified",
+    "poisoned"
+  ],
+  "languages": [
+    "understands commands given in any language but can't speak"
+  ],
+  "cr": "7",
+  "trait": [
+    {
+      "name": "Bound",
+      "entries": [
+        "The guardian is magically bound to an amulet. While the guardian and its amulet are on the same plane of existence, the amulet's wearer can telepathically call the guardian to travel to it, and the guardian knows the distance and direction to the amulet. If the guardian is within 60 feet of the amulet's wearer, half of any damage the wearer takes (round up) is transferred to the guardian."
+      ]
+    },
+    {
+      "name": "Regeneration",
+      "entries": [
+        "The guardian regains 10 {@variantrule Hit Points|XPHB} at the start of each of its turns if it has at least 1 {@variantrule Hit Points|XPHB|Hit Point}."
+      ]
+    },
+    {
+      "name": "Spell Storing",
+      "entries": [
+        "A spellcaster who wears the guardian's amulet can cause the guardian to store one spell of level 4 or lower. To do so, the wearer must cast the spell on the guardian while within 5 feet of it. The spell has no effect but is stored within the guardian. Any previously stored spell is lost when a new spell is stored. The guardian can cast the spell stored with any parameters set by the original caster, requiring no spell components and using the caster's spellcasting ability. The stored spell is then lost."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The guardian makes two Fist attacks."
+      ]
+    },
+    {
+      "name": "Fist",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 10 ft. {@h}11 ({@damage 2d6 + 4}) Bludgeoning damage plus 7 ({@damage 2d6}) Force damage."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Protection",
+      "entries": [
+        "{@actTrigger} An attack roll hits the wearer of the guardian's amulet while the wearer is within 5 feet of the guardian. {@actResponse} The wearer gains a +5 bonus to AC, including against the triggering attack and possibly causing it to miss, until the start of the guardian's next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/shield-guardian.opus"
+  },
+  "traitTags": [
+    "Regeneration"
+  ],
+  "senseTags": [
+    "B",
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "CS",
+    "X"
+  ],
+  "damageTags": [
+    "B",
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

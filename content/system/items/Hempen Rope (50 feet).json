@@ -1,0 +1,24 @@
+{
+  "name": "Hempen Rope (50 feet)",
+  "source": "PHB",
+  "page": 153,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "CoS",
+    "CRCotN",
+    "DSotDQ",
+    "GoS",
+    "TTP"
+  ],
+  "reprintedAs": [
+    "Rope|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 10,
+  "value": 100,
+  "entries": [
+    "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a {@dc 17} Strength check."
+  ]
+}

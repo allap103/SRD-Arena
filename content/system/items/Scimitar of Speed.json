@@ -1,0 +1,30 @@
+{
+  "name": "Scimitar of Speed",
+  "source": "XDMG",
+  "page": 302,
+  "srd52": true,
+  "basicRules2024": true,
+  "baseItem": "scimitar|xphb",
+  "type": "M|XPHB",
+  "rarity": "very rare",
+  "reqAttune": true,
+  "weight": 3,
+  "weaponCategory": "martial",
+  "property": [
+    "F|XPHB",
+    "L|XPHB"
+  ],
+  "mastery": [
+    "Nick|XPHB"
+  ],
+  "dmg1": "1d6",
+  "dmgType": "S",
+  "bonusWeapon": "+2",
+  "entries": [
+    "You gain a +2 bonus to attack rolls and damage rolls made with this magic weapon. In addition, you can make one attack with it as a {@variantrule Bonus Action|XPHB} on each of your turns."
+  ],
+  "lootTables": [
+    "Armaments - Very Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

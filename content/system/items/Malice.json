@@ -1,0 +1,19 @@
+{
+  "name": "Malice",
+  "source": "XDMG",
+  "page": 91,
+  "srd52": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 25000,
+  "poison": true,
+  "entries": [
+    "A creature subjected to Malice must succeed on a {@dc 15} Constitution saving throw or have the {@condition Poisoned|XPHB} condition for 1 hour. The creature also has the {@condition Blinded|XPHB} condition while {@condition Poisoned|XPHB} in this way."
+  ],
+  "poisonTypes": [
+    "inhaled"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

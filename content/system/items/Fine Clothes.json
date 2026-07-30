@@ -1,0 +1,14 @@
+{
+  "name": "Fine Clothes",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 6,
+  "value": 1500,
+  "entries": [
+    "Fine Clothes are made of expensive fabrics and adorned with expertly crafted details. Some events and locations admit only people wearing these clothes."
+  ]
+}

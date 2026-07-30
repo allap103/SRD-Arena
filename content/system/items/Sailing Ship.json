@@ -1,0 +1,23 @@
+{
+  "name": "Sailing Ship",
+  "source": "XPHB",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "type": "SHP|XPHB",
+  "rarity": "none",
+  "value": 1000000,
+  "crew": 20,
+  "vehAc": 15,
+  "vehHp": 300,
+  "vehDmgThresh": 15,
+  "vehSpeed": 2,
+  "capPassenger": 20,
+  "capCargo": 100,
+  "seeAlsoVehicle": [
+    "Sailing Ship"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "name": "Gaseous Form",
+  "source": "XPHB",
+  "page": 277,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 3,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a bit of gauze"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "A willing creature you touch shape-shifts, along with everything it's wearing and carrying, into a misty cloud for the duration. The spell ends on the target if it drops to 0 {@variantrule Hit Points|XPHB} or if it takes a {@action Magic|XPHB} action to end the spell on itself.",
+    "While in this form, the target's only method of movement is a {@variantrule Fly Speed|XPHB} of 10 feet, and it can hover. The target can enter and occupy the space of another creature. The target has {@variantrule Resistance|XPHB} to Bludgeoning, Piercing, and Slashing damage; it has {@variantrule Immunity|XPHB} to the {@condition Prone|XPHB} condition; and it has {@variantrule Advantage|XPHB} on Strength, Dexterity, and Constitution saving throws. The target can pass through narrow openings, but it treats liquids as though they were solid surfaces.",
+    "The target can't talk or manipulate objects, and any objects it was carrying or holding can't be dropped, used, or otherwise interacted with. Finally, the target can't attack or cast spells."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "You can target one additional creature for each spell slot level above 3."
+      ]
+    }
+  ],
+  "conditionImmune": [
+    "prone"
+  ],
+  "miscTags": [
+    "ADV",
+    "SCT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

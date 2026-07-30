@@ -1,0 +1,14 @@
+{
+  "name": "Component Pouch",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 2500,
+  "entries": [
+    "A Component Pouch is watertight and filled with compartments that hold all the free Material components of your spells."
+  ]
+}

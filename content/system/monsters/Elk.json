@@ -1,0 +1,79 @@
+{
+  "name": "Elk",
+  "source": "XMM",
+  "page": 353,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 349
+    }
+  ],
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 11,
+    "formula": "2d10"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 16,
+  "dex": 10,
+  "con": 11,
+  "int": 2,
+  "wis": 10,
+  "cha": 6,
+  "skill": {
+    "perception": "+2"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 12,
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Ram",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}6 ({@damage 1d6 + 3}) Bludgeoning damage. If the target is a Large or smaller creature and the elk moved 20+ feet straight toward it immediately before the hit, the target takes an extra 3 ({@damage 1d6}) Bludgeoning damage and has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/elk.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,150 @@
+{
+  "name": "Gnome",
+  "source": "XPHB",
+  "page": 191,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "creatureTypes": [
+    "humanoid"
+  ],
+  "size": [
+    "S"
+  ],
+  "speed": 30,
+  "darkvision": 60,
+  "soundClip": {
+    "type": "internal",
+    "path": "races/gnome.opus"
+  },
+  "sizeEntry": {
+    "type": "item",
+    "name": "Size:",
+    "entries": [
+      "Small (about 3-4 feet tall)"
+    ]
+  },
+  "entries": [
+    {
+      "type": "entries",
+      "name": "Darkvision",
+      "entries": [
+        "You have {@sense Darkvision|XPHB} with a range of 60 feet."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Gnomish Cunning",
+      "entries": [
+        "You have {@variantrule Advantage|XPHB} on Intelligence, Wisdom, and Charisma saving throws."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Gnomish Lineage",
+      "entries": [
+        "You are part of a lineage that grants you supernatural abilities. Choose one of the following options; whichever one you choose, Intelligence, Wisdom, or Charisma is your spellcasting ability for the spells you cast with this trait (choose the ability when you select the lineage):",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "Forest Gnome",
+              "entries": [
+                "You know the {@spell Minor Illusion|XPHB} cantrip. You also always have the {@spell Speak with Animals|XPHB} spell prepared. You can cast it without a spell slot a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}. You can also use any spell slots you have to cast the spell."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Rock Gnome",
+              "entries": [
+                "You know the {@spell Mending|XPHB} and {@spell Prestidigitation|XPHB} cantrips. In addition, you can spend 10 minutes casting {@spell Prestidigitation|XPHB} to create a Tiny clockwork device (AC 5, 1 HP), such as a toy, fire starter, or music box. When you create the device, you determine its function by choosing one effect from {@spell Prestidigitation|XPHB}; the device produces that effect whenever you or another creature takes a {@variantrule Bonus Action|XPHB} to activate it with a touch. If the chosen effect has options within it, you choose one of those options for the device when you create it. For example, if you choose the spell's ignite-extinguish effect, you determine whether the device ignites or extinguishes fire; the device doesn't do both. You can have three such devices in existence at a time, and each falls apart 8 hours after its creation or when you dismantle it with a touch as a {@action Utilize|XPHB} action."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hasFluff": true,
+  "hasFluffImages": true,
+  "_versions": [
+    {
+      "name": "Gnome; Forest Gnome Lineage",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Gnomish Lineage",
+          "items": {
+            "name": "Gnomish Lineage (Forest Gnome)",
+            "type": "entries",
+            "entries": [
+              "You know the {@spell Minor Illusion|XPHB} cantrip. You also always have the {@spell Speak with Animals|XPHB} spell prepared. You can cast it without a spell slot a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}. You can also use any spell slots you have to cast the spell."
+            ]
+          }
+        }
+      },
+      "additionalSpells": [
+        {
+          "innate": {
+            "3": {
+              "daily": {
+                "pb": [
+                  "speak with animals|xphb"
+                ]
+              }
+            }
+          },
+          "ability": {
+            "choose": [
+              "int",
+              "wis",
+              "cha"
+            ]
+          },
+          "known": {
+            "1": [
+              "minor illusion|xphb#c"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gnome; Rock Gnome Lineage",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Gnomish Lineage",
+          "items": {
+            "name": "Gnomish Lineage (Rock Gnome)",
+            "type": "entries",
+            "entries": [
+              "You know the {@spell Mending|XPHB} and {@spell Prestidigitation|XPHB} cantrips. In addition, you can spend 10 minutes casting {@spell Prestidigitation|XPHB} to create a Tiny clockwork device (AC 5, 1 HP), such as a toy, fire starter, or music box. When you create the device, you determine its function by choosing one effect from {@spell Prestidigitation|XPHB}; the device produces that effect whenever you or another creature takes a {@variantrule Bonus Action|XPHB} to activate it with a touch. If the chosen effect has options within it, you choose one of those options for the device when you create it. For example, if you choose the spell's ignite-extinguish effect, you determine whether the device ignites or extinguishes fire; the device doesn't do both. You can have three such devices in existence at a time, and each falls apart 8 hours after its creation or when you dismantle it with a touch as a {@action Utilize|XPHB} action."
+            ]
+          }
+        }
+      },
+      "additionalSpells": [
+        {
+          "ability": {
+            "choose": [
+              "int",
+              "wis",
+              "cha"
+            ]
+          },
+          "known": {
+            "1": [
+              "mending|xphb#c",
+              "prestidigitation|xphb#c"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

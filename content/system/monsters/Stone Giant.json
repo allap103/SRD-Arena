@@ -1,0 +1,122 @@
+{
+  "name": "Stone Giant",
+  "source": "XMM",
+  "page": 300,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "giant",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 126,
+    "formula": "11d12 + 55"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 23,
+  "dex": 15,
+  "con": 20,
+  "int": 10,
+  "wis": 12,
+  "cha": 9,
+  "save": {
+    "dex": "+5",
+    "con": "+8",
+    "wis": "+4"
+  },
+  "skill": {
+    "athletics": "+12",
+    "perception": "+4",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "languages": [
+    "Giant"
+  ],
+  "cr": "7",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The giant makes two attacks, using Stone Club or Boulder in any combination."
+      ]
+    },
+    {
+      "name": "Stone Club",
+      "entries": [
+        "{@atkr m} {@hit 9}, reach 15 ft. {@h}22 ({@damage 3d10 + 6}) Bludgeoning damage."
+      ]
+    },
+    {
+      "name": "Boulder",
+      "entries": [
+        "{@atkr r} {@hit 9}, range 60/240 ft. {@h}15 ({@damage 2d8 + 6}) Bludgeoning damage. If the target is a Large or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Deflect Missile {@recharge 5}",
+      "entries": [
+        "{@actTrigger} The giant is hit by a ranged attack roll and takes Bludgeoning, Piercing, or Slashing damage from it. {@actResponse} The giant reduces the damage it takes from the attack by 11 ({@dice 1d10 + 6}), and if that damage is reduced to 0, the giant can redirect some of the attack's force. {@actSave dex} {@dc 17}, one creature the giant can see within 60 feet. {@actSaveFail} 11 ({@damage 1d10 + 6}) Force damage."
+      ]
+    }
+  ],
+  "environment": [
+    "mountain",
+    "underdark"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/stone-giant.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "GI"
+  ],
+  "damageTags": [
+    "B",
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

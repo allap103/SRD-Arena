@@ -1,0 +1,124 @@
+{
+  "name": "Shadow",
+  "source": "XMM",
+  "page": 272,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "HBTD",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "undead",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 27,
+    "formula": "5d8 + 5"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 6,
+  "dex": 14,
+  "con": 13,
+  "int": 6,
+  "wis": 10,
+  "cha": 8,
+  "skill": {
+    "stealth": "+6"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "resist": [
+    "acid",
+    "cold",
+    "fire",
+    "lightning",
+    "thunder"
+  ],
+  "immune": [
+    "necrotic",
+    "poison"
+  ],
+  "vulnerable": [
+    "radiant"
+  ],
+  "conditionImmune": [
+    "exhaustion",
+    "frightened",
+    "grappled",
+    "paralyzed",
+    "petrified",
+    "poisoned",
+    "prone",
+    "restrained",
+    "unconscious"
+  ],
+  "cr": "1/2",
+  "trait": [
+    {
+      "name": "Amorphous",
+      "entries": [
+        "The shadow can move through a space as narrow as 1 inch without expending extra movement to do so."
+      ]
+    },
+    {
+      "name": "Sunlight Weakness",
+      "entries": [
+        "While in sunlight, the shadow has {@variantrule Disadvantage|XPHB} on {@variantrule D20 Test|XPHB|D20 Tests}."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Draining Swipe",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Necrotic damage, and the target's Strength score decreases by {@dice 1d4}. The target dies if this reduces that score to 0. If a Humanoid is slain by this attack, a Shadow rises from the corpse {@dice 1d4} hours later."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Shadow Stealth",
+      "entries": [
+        "While in {@variantrule Dim Light|XPHB} or {@variantrule Darkness|XPHB}, the shadow takes the {@action Hide|XPHB} action."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, shadowfell",
+    "underdark",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/shadow.opus"
+  },
+  "traitTags": [
+    "Amorphous"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "N"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

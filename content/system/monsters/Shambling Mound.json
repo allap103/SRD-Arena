@@ -1,0 +1,118 @@
+{
+  "name": "Shambling Mound",
+  "source": "XMM",
+  "page": 276,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-FWtVC",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "plant",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 110,
+    "formula": "13d10 + 39"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 20
+  },
+  "str": 18,
+  "dex": 8,
+  "con": 16,
+  "int": 5,
+  "wis": 10,
+  "cha": 5,
+  "skill": {
+    "stealth": "+3"
+  },
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 10,
+  "resist": [
+    "cold",
+    "fire"
+  ],
+  "immune": [
+    "lightning"
+  ],
+  "conditionImmune": [
+    "deafened",
+    "exhaustion"
+  ],
+  "cr": "5",
+  "trait": [
+    {
+      "name": "Lightning Absorption",
+      "entries": [
+        "Whenever the shambling mound is subjected to Lightning damage, it regains a number of {@variantrule Hit Points|XPHB} equal to the Lightning damage dealt."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The shambling mound makes three Charged Tendril attacks. It can replace one attack with a use of Engulf."
+      ]
+    },
+    {
+      "name": "Charged Tendril",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 10 ft. {@h}7 ({@damage 1d6 + 4}) Bludgeoning damage plus 5 ({@damage 2d4}) Lightning damage. If the target is a Medium or smaller creature, the shambling mound pulls the target 5 feet straight toward itself."
+      ]
+    },
+    {
+      "name": "Engulf",
+      "entries": [
+        "{@actSave str} {@dc 15}, one Medium or smaller creature within 5 feet. {@actSaveFail} The target is pulled into the shambling mound's space and has the {@condition Grappled|XPHB} condition (escape {@dc 14}). Until the grapple ends, the target has the {@condition Blinded|XPHB} and {@condition Restrained|XPHB} conditions, and it takes 10 ({@damage 3d6}) Lightning damage at the start of each of its turns. When the shambling mound moves, the {@condition Grappled|XPHB} target moves with it, costing it no extra movement. The shambling mound can have only one creature {@condition Grappled|XPHB} by this action at a time."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "swamp"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/shambling-mound.opus"
+  },
+  "traitTags": [
+    "Damage Absorption"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "B",
+    "L"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "savingThrowForced": [
+    "strength"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

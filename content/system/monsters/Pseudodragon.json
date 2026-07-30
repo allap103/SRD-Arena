@@ -1,0 +1,127 @@
+{
+  "name": "Pseudodragon",
+  "source": "XMM",
+  "page": 249,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 354
+    }
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "dragon",
+  "alignment": [
+    "N",
+    "G"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 10,
+    "formula": "3d4 + 3"
+  },
+  "speed": {
+    "walk": 15,
+    "fly": 60
+  },
+  "str": 6,
+  "dex": 15,
+  "con": 13,
+  "int": 10,
+  "wis": 12,
+  "cha": 10,
+  "skill": {
+    "perception": "+5",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Blindsight 10 ft.",
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "languages": [
+    "understands Common and Draconic but can't speak"
+  ],
+  "cr": "1/4",
+  "trait": [
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The pseudodragon has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The pseudodragon makes two Bite attacks."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}4 ({@damage 1d4 + 2}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Sting",
+      "entries": [
+        "{@actSave con} {@dc 12}, one creature the pseudodragon can see within 5 feet. {@actSaveFail} 5 ({@damage 2d4}) Poison damage, and the target has the {@condition Poisoned|XPHB} condition for 1 hour. While {@condition Poisoned|XPHB}, the target also has the {@condition Unconscious|XPHB} condition, which ends early if the target takes damage or a creature within 5 feet of it takes an action to wake it."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "desert",
+    "forest",
+    "hill",
+    "mountain",
+    "urban"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/pseudodragon.opus"
+  },
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "B",
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "CS",
+    "DR"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "poisoned",
+    "unconscious"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

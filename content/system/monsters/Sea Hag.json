@@ -1,0 +1,156 @@
+{
+  "name": "Sea Hag",
+  "source": "XMM",
+  "page": 271,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "fey",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 52,
+    "formula": "7d8 + 21"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 40
+  },
+  "str": 16,
+  "dex": 13,
+  "con": 16,
+  "int": 12,
+  "wis": 12,
+  "cha": 13,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 11,
+  "languages": [
+    "Common",
+    "Giant",
+    "Primordial (Aquan)"
+  ],
+  "cr": "2",
+  "spellcasting": [
+    {
+      "name": "Coven Magic",
+      "type": "spellcasting",
+      "headerEntries": [
+        "While within 30 feet of at least two hag allies, the hag can cast one of the following spells, requiring no Material components, using the spell's normal casting time, and using Intelligence as the spellcasting ability (spell save {@dc 11}): {@spell Augury|XPHB}, {@spell Find Familiar|XPHB}, {@spell Identify|XPHB}, {@spell Locate Object|XPHB}, {@spell Scrying|XPHB}, or {@spell Unseen Servant|XPHB}. The hag must finish a {@variantrule Long Rest|XPHB} before using this trait to cast that spell again."
+      ],
+      "restLong": {
+        "1": [
+          "{@spell Augury|XPHB}",
+          "{@spell Find Familiar|XPHB}",
+          "{@spell Identify|XPHB}",
+          "{@spell Locate Object|XPHB}",
+          "{@spell Scrying|XPHB}",
+          "{@spell Unseen Servant|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "hidden": [
+        "restLong"
+      ]
+    },
+    {
+      "name": "Illusory Appearance",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The hag casts {@spell Disguise Self|XPHB}, using Constitution as the spellcasting ability (spell save {@dc 13}). The spell's duration is 24 hours."
+      ],
+      "will": [
+        "{@spell Disguise Self|XPHB}"
+      ],
+      "ability": "con",
+      "displayAs": "action",
+      "hidden": [
+        "will"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The hag can breathe air and water."
+      ]
+    },
+    {
+      "name": "Vile Appearance",
+      "entries": [
+        "{@actSave wis} {@dc 11}, any Beast or Humanoid that starts its turn within 30 feet of the hag and can see the hag's true form. {@actSaveFail} The target has the {@condition Frightened|XPHB} condition until the start of its next turn. {@actSaveSuccess} The target is immune to this hag's Vile Appearance for 24 hours."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Death Glare {@recharge 5}",
+      "entries": [
+        "{@actSave wis} {@dc 11}, one {@condition Frightened|XPHB} creature the hag can see within 30 feet. {@actSaveFail} If the target has 20 {@variantrule Hit Points|XPHB} or fewer, it drops to 0 {@variantrule Hit Points|XPHB}. Otherwise, the target takes 13 ({@damage 3d8}) Psychic damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "underwater"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/sea-hag.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "AQ",
+    "C",
+    "GI",
+    "P"
+  ],
+  "damageTags": [
+    "S",
+    "Y"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "frightened"
+  ],
+  "savingThrowForced": [
+    "wisdom"
+  ],
+  "savingThrowForcedSpell": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

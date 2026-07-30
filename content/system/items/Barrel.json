@@ -1,0 +1,19 @@
+{
+  "name": "Barrel",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 70,
+  "value": 200,
+  "entries": [
+    "A Barrel holds up to 40 gallons of liquid or up to 4 cubic feet of dry goods."
+  ],
+  "containerCapacity": {
+    "volume": [
+      4
+    ]
+  }
+}

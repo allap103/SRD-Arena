@@ -1,0 +1,86 @@
+{
+  "name": "Griffon",
+  "source": "XMM",
+  "page": 159,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "NF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 59,
+    "formula": "7d10 + 21"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 80
+  },
+  "str": 18,
+  "dex": 15,
+  "con": 16,
+  "int": 2,
+  "wis": 13,
+  "cha": 8,
+  "skill": {
+    "perception": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "cr": "2",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The griffon makes two Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}8 ({@damage 1d8 + 4}) Piercing damage. If the target is a Medium or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 14}) from both of the griffon's front claws."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "coastal",
+    "grassland",
+    "hill",
+    "mountain"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/griffon.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

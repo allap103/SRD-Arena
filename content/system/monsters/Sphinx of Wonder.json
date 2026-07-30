@@ -1,0 +1,112 @@
+{
+  "name": "Sphinx of Wonder",
+  "source": "XMM",
+  "page": 291,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 357
+    }
+  ],
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "celestial",
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 24,
+    "formula": "7d4 + 7"
+  },
+  "speed": {
+    "walk": 20,
+    "fly": 40
+  },
+  "str": 6,
+  "dex": 17,
+  "con": 13,
+  "int": 15,
+  "wis": 12,
+  "cha": 11,
+  "skill": {
+    "arcana": "+4",
+    "religion": "+4",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 11,
+  "resist": [
+    "necrotic",
+    "psychic",
+    "radiant"
+  ],
+  "languages": [
+    "Celestial",
+    "Common"
+  ],
+  "cr": "1",
+  "trait": [
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The sphinx has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Slashing damage plus 7 ({@damage 2d6}) Radiant damage."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Burst of Ingenuity (2/Day)",
+      "entries": [
+        "{@actTrigger} The sphinx or another creature within 30 feet makes an ability check or a saving throw. {@actResponse} The sphinx adds 2 to the roll."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "planar, upper"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "familiar": true,
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "C",
+    "CE"
+  ],
+  "damageTags": [
+    "R",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

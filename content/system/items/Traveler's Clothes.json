@@ -1,0 +1,14 @@
+{
+  "name": "Traveler's Clothes",
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 4,
+  "value": 200,
+  "entries": [
+    "Traveler's Clothes are resilient garments designed for travel in various environments."
+  ]
+}

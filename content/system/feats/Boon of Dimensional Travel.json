@@ -1,0 +1,38 @@
+{
+  "name": "Boon of Dimensional Travel",
+  "source": "XPHB",
+  "page": 210,
+  "srd52": true,
+  "basicRules2024": true,
+  "category": "EB",
+  "prerequisite": [
+    {
+      "level": 19
+    }
+  ],
+  "ability": [
+    {
+      "choose": {
+        "from": [
+          "str",
+          "dex",
+          "con",
+          "int",
+          "wis",
+          "cha"
+        ]
+      },
+      "max": 30
+    }
+  ],
+  "entries": [
+    "You gain the following benefits.",
+    {
+      "type": "entries",
+      "name": "Blink Steps",
+      "entries": [
+        "Immediately after you take the {@action Attack|XPHB} action or the {@action Magic|XPHB} action, you can teleport up to 30 feet to an unoccupied space you can see."
+      ]
+    }
+  ]
+}

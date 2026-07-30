@@ -1,0 +1,14 @@
+{
+  "name": "Portable Ram",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 35,
+  "value": 400,
+  "entries": [
+    "You can use a Portable Ram to break down doors. When doing so, you gain a +4 bonus to the Strength check. One other character can help you use the ram, giving you {@variantrule Advantage|XPHB} on this check."
+  ]
+}

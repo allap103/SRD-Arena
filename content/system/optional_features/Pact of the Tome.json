@@ -1,0 +1,52 @@
+{
+  "name": "Pact of the Tome",
+  "source": "XPHB",
+  "page": 157,
+  "srd52": true,
+  "featureType": [
+    "EI"
+  ],
+  "additionalSpells": [
+    {
+      "ability": "cha",
+      "known": {
+        "_": [
+          {
+            "choose": "level=0",
+            "count": 3
+          }
+        ]
+      },
+      "prepared": {
+        "_": [
+          {
+            "choose": "level=1|components & miscellaneous=ritual",
+            "count": 2
+          }
+        ]
+      }
+    }
+  ],
+  "entries": [
+    "Stitching together strands of shadow, you conjure forth a book in your hand at the end of a {@variantrule Short Rest|XPHB|Short} or {@variantrule Long Rest|XPHB}. This Book of Shadows (you determine its appearance) contains eldritch magic that only you can access, granting you the benefits below. The book disappears if you conjure another book with this feature or if you die.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Cantrips and Rituals",
+          "entries": [
+            "When the book appears, choose three {@filter cantrips|spells|level=0}, and choose two {@filter level 1 spells|spells|level=1|components & miscellaneous=ritual} that have the {@variantrule Ritual|XPHB} tag. The spells can be from any class's spell list, and they must be spells you don't already have prepared. While the book is on your person, you have the chosen spells prepared, and they function as Warlock spells for you."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spellcasting Focus",
+          "entries": [
+            "You can use the book as a {@variantrule Spellcasting Focus|XPHB}."
+          ]
+        }
+      ]
+    }
+  ]
+}

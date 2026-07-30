@@ -1,0 +1,100 @@
+{
+  "name": "Homunculus",
+  "source": "XMM",
+  "page": 172,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "RHW"
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "construct",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 4,
+    "formula": "1d4 + 2"
+  },
+  "speed": {
+    "walk": 20,
+    "fly": 40
+  },
+  "str": 4,
+  "dex": 15,
+  "con": 14,
+  "int": 10,
+  "wis": 10,
+  "cha": 7,
+  "save": {
+    "wis": "+2",
+    "cha": "+0"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "poisoned"
+  ],
+  "languages": [
+    "understands Common plus one other language but can't speak"
+  ],
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Telepathic Bond",
+      "entries": [
+        "While the homunculus is on the same plane of existence as its master, the two of them can communicate telepathically with each other."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}1 Piercing damage, and the target is subjected to the following effect. {@actSave con} {@dc 12}. {@actSaveFail} The target has the {@condition Poisoned|XPHB} condition until the end of the homunculus's next turn. {@actSaveFailBy 5} The target has the {@condition Poisoned|XPHB} condition for 1 minute. While {@condition Poisoned|XPHB}, the target has the {@condition Unconscious|XPHB} condition, which ends early if the target takes any damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/homunculus.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "C",
+    "CS",
+    "X"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "poisoned",
+    "unconscious"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

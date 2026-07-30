@@ -1,0 +1,20 @@
+{
+  "name": "Keelboat",
+  "source": "XPHB",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "SHP|XPHB",
+  "rarity": "none",
+  "value": 300000,
+  "crew": 1,
+  "vehAc": 15,
+  "vehHp": 100,
+  "vehDmgThresh": 10,
+  "vehSpeed": 1,
+  "capPassenger": 6,
+  "capCargo": 0.5,
+  "seeAlsoVehicle": [
+    "Keelboat"
+  ]
+}

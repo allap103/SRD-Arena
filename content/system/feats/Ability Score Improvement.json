@@ -1,0 +1,55 @@
+{
+  "name": "Ability Score Improvement",
+  "source": "XPHB",
+  "page": 202,
+  "srd52": true,
+  "basicRules2024": true,
+  "category": "G",
+  "prerequisite": [
+    {
+      "level": 4
+    }
+  ],
+  "repeatable": true,
+  "repeatableHidden": true,
+  "ability": [
+    {
+      "choose": {
+        "from": [
+          "str",
+          "dex",
+          "con",
+          "int",
+          "wis",
+          "cha"
+        ],
+        "amount": 2
+      },
+      "hidden": true
+    },
+    {
+      "choose": {
+        "from": [
+          "str",
+          "dex",
+          "con",
+          "int",
+          "wis",
+          "cha"
+        ],
+        "count": 2
+      },
+      "hidden": true
+    }
+  ],
+  "entries": [
+    "Increase one ability score of your choice by 2, or increase two ability scores of your choice by 1. This feat can't increase an ability score above 20.",
+    {
+      "type": "entries",
+      "name": "Repeatable",
+      "entries": [
+        "You can take this feat more than once."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "Alchemist's Fire (flask)",
+  "source": "PHB",
+  "page": 148,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "BGDIA",
+    "CoS",
+    "DSotDQ",
+    "IDRotF",
+    "KftGV",
+    "OoW",
+    "QftIS",
+    "SCC-ARiR",
+    "SDW",
+    "SLW",
+    "TftYP-TFoF",
+    "TftYP-TSC",
+    "TTP",
+    "WDMM"
+  ],
+  "reprintedAs": [
+    "Alchemist's Fire|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 1,
+  "value": 5000,
+  "entries": [
+    "This sticky, adhesive fluid ignites when exposed to air. As an action, you can throw this flask up to 20 feet, shattering it on impact. Make a ranged attack against a creature or object, treating the alchemist's fire as an improvised weapon. On a hit, the target takes {@damage 1d4} fire damage at the start of each of its turns. A creature can end this damage by using its action to make a {@dc 10} Dexterity check to extinguish the flames."
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

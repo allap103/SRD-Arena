@@ -1,0 +1,284 @@
+{
+  "name": "Goliath",
+  "source": "XPHB",
+  "page": 192,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "creatureTypes": [
+    "humanoid"
+  ],
+  "size": [
+    "M"
+  ],
+  "speed": 35,
+  "traitTags": [
+    "Powerful Build"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "races/goliath.opus"
+  },
+  "sizeEntry": {
+    "type": "item",
+    "name": "Size:",
+    "entries": [
+      "Medium (about 7-8 feet tall)"
+    ]
+  },
+  "entries": [
+    {
+      "type": "entries",
+      "name": "Giant Ancestry",
+      "entries": [
+        "You are descended from Giants. Choose one of the following benefits\u2014a supernatural boon from your ancestry; you can use the chosen benefit a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}:",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "Cloud's Jaunt (Cloud Giant)",
+              "entries": [
+                "As a {@variantrule Bonus Action|XPHB}, you magically teleport up to 30 feet to an unoccupied space you can see."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Fire's Burn (Fire Giant)",
+              "entries": [
+                "When you hit a target with an attack roll and deal damage to it, you can also deal {@damage 1d10} Fire damage to that target."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Frost's Chill (Frost Giant)",
+              "entries": [
+                "When you hit a target with an attack roll and deal damage to it, you can also deal {@damage 1d6} Cold damage to that target and reduce its {@variantrule Speed|XPHB} by 10 feet until the start of your next turn."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Hill's Tumble (Hill Giant)",
+              "entries": [
+                "When you hit a Large or smaller creature with an attack roll and deal damage to it, you can give that target the {@condition Prone|XPHB} condition."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Stone's Endurance (Stone Giant)",
+              "entries": [
+                "When you take damage, you can take a {@variantrule Reaction|XPHB} to roll {@dice 1d12}. Add your Constitution modifier to the number rolled and reduce the damage by that total."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Storm's Thunder (Storm Giant)",
+              "entries": [
+                "When you take damage from a creature within 60 feet of you, you can take a {@variantrule Reaction|XPHB} to deal {@damage 1d8} Thunder damage to that creature."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Large Form",
+      "entries": [
+        "Starting at character level 5, you can change your size to Large as a {@variantrule Bonus Action|XPHB} if you're in a big enough space. This transformation lasts for 10 minutes or until you end it (no action required). For that duration, you have {@variantrule Advantage|XPHB} on Strength checks, and your {@variantrule Speed|XPHB} increases by 10 feet. Once you use this trait, you can't use it again until you finish a {@variantrule Long Rest|XPHB}."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Powerful Build",
+      "entries": [
+        "You have {@variantrule Advantage|XPHB} on any ability check you make to end the {@condition Grappled|XPHB} condition. You also count as one size larger when determining your carrying capacity."
+      ]
+    }
+  ],
+  "hasFluff": true,
+  "hasFluffImages": true,
+  "_versions": [
+    {
+      "name": "Goliath; Cloud Giant Ancestry",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Giant Ancestry",
+          "items": {
+            "name": "Giant Ancestry (Cloud)",
+            "type": "entries",
+            "entries": [
+              "You are descended from Giants, granting you a supernatural boon; you can use this boon a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}:",
+              {
+                "type": "list",
+                "style": "list-hang-notitle",
+                "items": [
+                  {
+                    "type": "item",
+                    "name": "Cloud's Jaunt",
+                    "entries": [
+                      "As a {@variantrule Bonus Action|XPHB}, you magically teleport up to 30 feet to an unoccupied space you can see."
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Goliath; Fire Giant Ancestry",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Giant Ancestry",
+          "items": {
+            "name": "Giant Ancestry (Fire)",
+            "type": "entries",
+            "entries": [
+              "You are descended from Giants, granting you a supernatural boon; you can use this boon a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}:",
+              {
+                "type": "list",
+                "style": "list-hang-notitle",
+                "items": [
+                  {
+                    "type": "item",
+                    "name": "Fire's Burn",
+                    "entries": [
+                      "When you hit a target with an attack roll and deal damage to it, you can also deal {@damage 1d10} Fire damage to that target."
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Goliath; Frost Giant Ancestry",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Giant Ancestry",
+          "items": {
+            "name": "Giant Ancestry (Frost)",
+            "type": "entries",
+            "entries": [
+              "You are descended from Giants, granting you a supernatural boon; you can use this boon a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}:",
+              {
+                "type": "list",
+                "style": "list-hang-notitle",
+                "items": [
+                  {
+                    "type": "item",
+                    "name": "Frost's Chill",
+                    "entries": [
+                      "When you hit a target with an attack roll and deal damage to it, you can also deal {@damage 1d6} Cold damage to that target and reduce its {@variantrule Speed|XPHB} by 10 feet until the start of your next turn."
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Goliath; Hill Giant Ancestry",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Giant Ancestry",
+          "items": {
+            "name": "Giant Ancestry (Hill)",
+            "type": "entries",
+            "entries": [
+              "You are descended from Giants, granting you a supernatural boon; you can use this boon a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}:",
+              {
+                "type": "list",
+                "style": "list-hang-notitle",
+                "items": [
+                  {
+                    "type": "item",
+                    "name": "Hill's Tumble",
+                    "entries": [
+                      "When you hit a Large or smaller creature with an attack roll and deal damage to it, you can give that target the {@condition Prone|XPHB} condition."
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Goliath; Stone Giant Ancestry",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Giant Ancestry",
+          "items": {
+            "name": "Giant Ancestry (Stone)",
+            "type": "entries",
+            "entries": [
+              "You are descended from Giants, granting you a supernatural boon; you can use this boon a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}:",
+              {
+                "type": "list",
+                "style": "list-hang-notitle",
+                "items": [
+                  {
+                    "type": "item",
+                    "name": "Stone's Endurance",
+                    "entries": [
+                      "When you take damage, you can take a {@variantrule Reaction|XPHB} to roll {@dice 1d12}. Add your Constitution modifier to the number rolled and reduce the damage by that total."
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Goliath; Storm Giant Ancestry",
+      "source": "XPHB",
+      "_mod": {
+        "entries": {
+          "mode": "replaceArr",
+          "replace": "Giant Ancestry",
+          "items": {
+            "name": "Giant Ancestry (Storm)",
+            "type": "entries",
+            "entries": [
+              "You are descended from Giants, granting you a supernatural boon; you can use this boon a number of times equal to your {@variantrule Proficiency|XPHB|Proficiency Bonus}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}:",
+              {
+                "type": "list",
+                "style": "list-hang-notitle",
+                "items": [
+                  {
+                    "type": "item",
+                    "name": "Storm's Thunder",
+                    "entries": [
+                      "When you take damage from a creature within 60 feet of you, you can take a {@variantrule Reaction|XPHB} to deal {@damage 1d8} Thunder damage to that creature."
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

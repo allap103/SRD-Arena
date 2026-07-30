@@ -1,0 +1,99 @@
+{
+  "name": "Spider",
+  "source": "XMM",
+  "page": 369,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 357
+    }
+  ],
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 1,
+    "formula": "1d4 - 1"
+  },
+  "speed": {
+    "walk": 20,
+    "climb": 20
+  },
+  "str": 2,
+  "dex": 14,
+  "con": 8,
+  "int": 1,
+  "wis": 10,
+  "cha": 2,
+  "skill": {
+    "stealth": "+4"
+  },
+  "senses": [
+    "Darkvision 30 ft."
+  ],
+  "passive": 10,
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The spider can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    },
+    {
+      "name": "Web Walker",
+      "entries": [
+        "The spider ignores movement restrictions caused by webs, and the spider knows the location of any other creature in contact with the same web."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}1 Piercing damage plus 2 ({@damage 1d4}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "swamp",
+    "underdark",
+    "urban"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/spider.opus"
+  },
+  "traitTags": [
+    "Spider Climb",
+    "Web Walker"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,267 @@
+{
+  "name": "Ancient Blue Dragon",
+  "group": [
+    "Chromatic Dragons"
+  ],
+  "source": "XMM",
+  "page": 50,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-DotSC",
+    "FRAiF"
+  ],
+  "size": [
+    "G"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "chromatic"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    22
+  ],
+  "hp": {
+    "average": 481,
+    "formula": "26d20 + 208"
+  },
+  "speed": {
+    "walk": 40,
+    "burrow": 40,
+    "fly": 80
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 29,
+  "dex": 10,
+  "con": 27,
+  "int": 18,
+  "wis": 17,
+  "cha": 25,
+  "save": {
+    "dex": "+7",
+    "wis": "+10"
+  },
+  "skill": {
+    "perception": "+17",
+    "stealth": "+7"
+  },
+  "senses": [
+    "Blindsight 60 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 27,
+  "immune": [
+    "lightning"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": {
+    "cr": "23",
+    "xpLair": 62000
+  },
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 22}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Invisibility|XPHB}",
+        "{@spell Mage Hand|XPHB}",
+        "{@spell Shatter|XPHB} (level 3 version)"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Scrying|XPHB}",
+          "{@spell Sending|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Legendary Resistance (4/Day, or 5/Day in Lair)",
+      "entries": [
+        "If the dragon fails a saving throw, it can choose to succeed instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Shatter|XPHB} (level 3 version)."
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                },
+                "times": 3
+              }
+            ],
+            "replacements": [
+              {
+                "target": {
+                  "type": "action",
+                  "name": "Rend"
+                },
+                "options": [
+                  {
+                    "type": "cast_spell",
+                    "spell": {
+                      "name": "Shatter",
+                      "source": "XPHB"
+                    },
+                    "cast_level": 3
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 16}, reach 15 ft. {@h}18 ({@damage 2d8 + 9}) Slashing damage plus 11 ({@damage 2d10}) Lightning damage."
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 16,
+        "target": {
+          "type": "creature",
+          "range_feet": 15
+        },
+        "reach_feet": 15,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "bonus": 9,
+            "damage_type": "slashing"
+          },
+          {
+            "type": "damage",
+            "dice": "2d10",
+            "bonus": 0,
+            "damage_type": "lightning"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lightning Breath {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 23}, each creature in a 120-foot-long, 10-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 88 ({@damage 16d10}) Lightning damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Cloaked Flight",
+      "entries": [
+        "The dragon uses Spellcasting to cast {@spell Invisibility|XPHB} on itself, and it can fly up to half its {@variantrule Fly Speed|XPHB}. The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Sonic Boom",
+      "entries": [
+        "The dragon uses Spellcasting to cast {@spell Shatter|XPHB} (level 3 version). The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Tail Swipe",
+      "entries": [
+        "The dragon makes one Rend attack."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Blue Dragon",
+    "source": "XMM"
+  },
+  "environment": [
+    "coastal",
+    "desert"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "dragonAge": "ancient",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/blue-dragon.opus"
+  },
+  "traitTags": [
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "L",
+    "S"
+  ],
+  "damageTagsSpell": [
+    "T"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflictSpell": [
+    "invisible"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "savingThrowForcedLegendary": [
+    "dexterity"
+  ],
+  "savingThrowForcedSpell": [
+    "constitution",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,139 @@
+{
+  "name": "Doppelganger",
+  "source": "XMM",
+  "page": 100,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TDoN",
+    "FRAiF",
+    "FRHoF",
+    "HBTD",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 52,
+    "formula": "8d8 + 16"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 11,
+  "dex": 18,
+  "con": 14,
+  "int": 11,
+  "wis": 12,
+  "cha": 14,
+  "skill": {
+    "deception": "+6",
+    "insight": "+3"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 11,
+  "conditionImmune": [
+    "charmed"
+  ],
+  "languages": [
+    "Common plus three other languages"
+  ],
+  "cr": "3",
+  "spellcasting": [
+    {
+      "name": "Read Thoughts",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The doppelganger casts {@spell Detect Thoughts|XPHB}, requiring no spell components and using Charisma as the spellcasting ability (spell save {@dc 12})."
+      ],
+      "will": [
+        "{@spell Detect Thoughts|XPHB}"
+      ],
+      "ability": "cha",
+      "displayAs": "action",
+      "hidden": [
+        "will"
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The doppelganger makes two Slam attacks and uses Unsettling Visage if available."
+      ]
+    },
+    {
+      "name": "Slam",
+      "entries": [
+        "{@atkr m} {@hit 6} (with {@variantrule Advantage|XPHB} during the first round of each combat), reach 5 ft. {@h}11 ({@damage 2d6 + 4}) Bludgeoning damage."
+      ]
+    },
+    {
+      "name": "Unsettling Visage {@recharge}",
+      "entries": [
+        "{@actSave wis} {@dc 12}, each creature in a 15-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the doppelganger that can see the doppelganger. {@actSaveFail} The target has the {@condition Frightened|XPHB} condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Shape-Shift",
+      "entries": [
+        "The doppelganger shape-shifts into a Medium or Small Humanoid, or it returns to its true form. Its game statistics, other than its size, are the same in each form. Any equipment it is wearing or carrying isn't transformed."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark",
+    "urban"
+  ],
+  "treasure": [
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/doppelganger.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "frightened"
+  ],
+  "savingThrowForced": [
+    "wisdom"
+  ],
+  "savingThrowForcedSpell": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Periapt of Wound Closure",
+  "source": "XDMG",
+  "page": 284,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BtS"
+  ],
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "weight": 1,
+  "entries": [
+    "While wearing this pendant, you gain the following benefits.",
+    {
+      "type": "entries",
+      "name": "Life Preservation",
+      "entries": [
+        "Whenever you make a {@variantrule Death Saving Throw|XPHB}, you can change a roll of 9 or lower to a 10, turning a failed save into a successful one."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Natural Healing Boost",
+      "entries": [
+        "Whenever you roll a {@variantrule Hit Point Dice|XPHB|Hit Point Die} to regain {@variantrule Hit Points|XPHB}, double the number of {@variantrule Hit Points|XPHB} it restores."
+      ]
+    }
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Relics - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

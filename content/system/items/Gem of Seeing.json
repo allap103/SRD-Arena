@@ -1,0 +1,24 @@
+{
+  "name": "Gem of Seeing",
+  "source": "XDMG",
+  "page": 264,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d3}",
+  "charges": 3,
+  "entries": [
+    "This gem has 3 charges. As a {@action Magic|XPHB} action, you can expend 1 charge. For the next 10 minutes, you have {@sense Truesight|XPHB} out to 120 feet when you peer through the gem.",
+    "The gem regains {@dice 1d3} expended charges daily at dawn."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

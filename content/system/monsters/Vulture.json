@@ -1,0 +1,78 @@
+{
+  "name": "Vulture",
+  "source": "XMM",
+  "page": 372,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 5,
+    "formula": "1d8 + 1"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 50
+  },
+  "str": 7,
+  "dex": 10,
+  "con": 13,
+  "int": 2,
+  "wis": 12,
+  "cha": 4,
+  "skill": {
+    "perception": "+3"
+  },
+  "passive": 13,
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The vulture has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the vulture's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Beak",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}2 ({@damage 1d4}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "grassland",
+    "hill"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/vulture.opus"
+  },
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

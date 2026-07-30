@@ -1,0 +1,14 @@
+{
+  "name": "Robes",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Robe|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 4,
+  "value": 100
+}

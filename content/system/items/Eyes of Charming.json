@@ -1,0 +1,33 @@
+{
+  "name": "Eyes of Charming",
+  "source": "XDMG",
+  "page": 261,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "recharge": "dawn",
+  "rechargeAmount": 3,
+  "charges": 3,
+  "entries": [
+    "These crystal lenses fit over the eyes. They have 3 charges. While wearing them, you can expend 1 or more charges to cast {@spell Charm Person|XPHB} (save {@dc 13}). For 1 charge, you cast the level 1 version of the spell. You increase the spell's level by one for each additional charge you expend. The lenses regain all expended charges daily at dawn."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "charm person|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

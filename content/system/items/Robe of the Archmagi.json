@@ -1,0 +1,52 @@
+{
+  "name": "Robe of the Archmagi",
+  "source": "XDMG",
+  "page": 298,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "legendary",
+  "reqAttune": "by a sorcerer, warlock, or wizard",
+  "reqAttuneTags": [
+    {
+      "class": "sorcerer"
+    },
+    {
+      "class": "warlock"
+    },
+    {
+      "class": "wizard"
+    }
+  ],
+  "wondrous": true,
+  "bonusSpellAttack": "+2",
+  "bonusSpellSaveDc": "+2",
+  "entries": [
+    "This elegant garment is made from exquisite cloth and adorned with runes.",
+    "You gain these benefits while wearing the robe.",
+    {
+      "type": "entries",
+      "name": "Armor",
+      "entries": [
+        "If you aren't wearing armor, your base {@variantrule Armor Class|XPHB} is 15 plus your Dexterity modifier."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Magic Resistance",
+      "entries": [
+        "You have {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "War Mage",
+      "entries": [
+        "Your spell save DC and spell attack bonus each increase by 2."
+      ]
+    }
+  ],
+  "lootTables": [
+    "Arcana - Legendary|XDMG"
+  ],
+  "hasFluffImages": true
+}

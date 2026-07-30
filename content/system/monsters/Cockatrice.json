@@ -1,0 +1,77 @@
+{
+  "name": "Cockatrice",
+  "source": "XMM",
+  "page": 75,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-BD"
+  ],
+  "size": [
+    "S"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "5d6 + 5"
+  },
+  "speed": {
+    "walk": 20,
+    "fly": 40
+  },
+  "str": 6,
+  "dex": 12,
+  "con": 12,
+  "int": 2,
+  "wis": 13,
+  "cha": 5,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 11,
+  "conditionImmune": [
+    "petrified"
+  ],
+  "cr": "1/2",
+  "action": [
+    {
+      "name": "Petrifying Bite",
+      "entries": [
+        "{@atkr m} {@hit 3}, reach 5 ft. {@h}3 ({@damage 1d4 + 1}) Piercing damage. If the target is a creature, it is subjected to the following effect. {@actSave con} {@dc 11}. {@actSaveFail 1} The target has the {@condition Restrained|XPHB} condition. The target repeats the save at the end of its next turn if it is still {@condition Restrained|XPHB}, ending the effect on itself on a success. {@actSaveFail 2} The target has the {@condition Petrified|XPHB} condition, instead of the {@condition Restrained|XPHB} condition, for 24 hours."
+      ]
+    }
+  ],
+  "environment": [
+    "grassland"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/cockatrice.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "petrified",
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,30 @@
+{
+  "name": "Scholar's Pack",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 22,
+  "value": 4000,
+  "entries": [
+    "A Scholar's Pack contains the following items: {@item Backpack|XPHB}, {@item Book|XPHB}, {@item Ink|XPHB}, {@item Ink Pen|XPHB}, {@item Lamp|XPHB}, 10 flasks of {@item Oil|XPHB}, 10 sheets of {@item Parchment|XPHB}, and {@item Tinderbox|XPHB}."
+  ],
+  "packContents": [
+    "backpack|xphb",
+    "book|xphb",
+    "ink|xphb",
+    "ink pen|xphb",
+    "lamp|xphb",
+    {
+      "item": "oil|xphb",
+      "quantity": 10
+    },
+    {
+      "item": "parchment|xphb",
+      "quantity": 10
+    },
+    "tinderbox|xphb"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "Potion of Speed",
+  "source": "XDMG",
+  "page": 289,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-DotSC"
+  ],
+  "type": "P|XPHB",
+  "rarity": "very rare",
+  "weight": 0.5,
+  "entries": [
+    "When you drink this potion, you gain the effect of the {@spell Haste|XPHB} spell for 1 minute (no {@status Concentration|XPHB} required) without suffering the wave of lethargy that typically occurs when the effect ends.",
+    "This potion's yellow fluid is streaked with black and swirls on its own."
+  ],
+  "attachedSpells": [
+    "haste|xphb"
+  ],
+  "lootTables": [
+    "Arcana - Very Rare|XDMG",
+    "Implements - Very Rare|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

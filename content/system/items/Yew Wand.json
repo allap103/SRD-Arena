@@ -1,0 +1,15 @@
+{
+  "name": "Yew Wand",
+  "group": [
+    "Druidic Focus"
+  ],
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "SCF|XPHB",
+  "scfType": "druid",
+  "rarity": "none",
+  "weight": 1,
+  "value": 1000
+}

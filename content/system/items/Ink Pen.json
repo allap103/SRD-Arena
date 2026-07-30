@@ -1,0 +1,17 @@
+{
+  "name": "Ink Pen",
+  "source": "XPHB",
+  "page": 226,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-SD",
+    "DrDe-TDoN"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 2,
+  "entries": [
+    "Using {@item Ink|XPHB}, an Ink Pen is used to write or draw."
+  ]
+}

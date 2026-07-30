@@ -1,0 +1,19 @@
+{
+  "name": "Perfume (vial)",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "PaBTSO"
+  ],
+  "reprintedAs": [
+    "Perfume|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "value": 500,
+  "miscTags": [
+    "CNS"
+  ]
+}

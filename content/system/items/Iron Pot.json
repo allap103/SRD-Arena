@@ -1,0 +1,19 @@
+{
+  "name": "Iron Pot",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 10,
+  "value": 200,
+  "entries": [
+    "An Iron Pot holds up to 1 gallon."
+  ],
+  "containerCapacity": {
+    "volume": [
+      0.1
+    ]
+  }
+}

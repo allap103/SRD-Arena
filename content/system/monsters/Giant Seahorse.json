@@ -1,0 +1,78 @@
+{
+  "name": "Giant Seahorse",
+  "source": "XMM",
+  "page": 359,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 350
+    }
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 16,
+    "formula": "3d10"
+  },
+  "speed": {
+    "walk": 5,
+    "swim": 40
+  },
+  "str": 15,
+  "dex": 12,
+  "con": 11,
+  "int": 2,
+  "wis": 12,
+  "cha": 5,
+  "passive": 11,
+  "cr": "1/2",
+  "trait": [
+    {
+      "name": "Water Breathing",
+      "entries": [
+        "The seahorse can breathe only underwater."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Ram",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}9 ({@damage 2d6 + 2}) Bludgeoning damage, or 11 ({@damage 2d8 + 2}) Bludgeoning damage if the seahorse moved 20+ feet straight toward the target immediately before the hit."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Bubble Dash",
+      "entries": [
+        "While underwater, the seahorse moves up to half its {@variantrule Swim Speed|XPHB} without provoking {@action Opportunity Attack|XPHB|Opportunity Attacks}."
+      ]
+    }
+  ],
+  "environment": [
+    "underwater"
+  ],
+  "traitTags": [
+    "Water Breathing"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

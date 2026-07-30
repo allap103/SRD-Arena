@@ -1,0 +1,23 @@
+{
+  "name": "Bead of Nourishment",
+  "source": "XDMG",
+  "page": 235,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "rarity": "common",
+  "wondrous": true,
+  "entries": [
+    "This flavorless, gelatinous bead dissolves on your tongue and provides as much nourishment as 1 day of Rations."
+  ],
+  "lootTables": [
+    "Arcana - Common|XDMG",
+    "Implements - Common|XDMG"
+  ],
+  "miscTags": [
+    "CF/W",
+    "CNS"
+  ]
+}

@@ -1,0 +1,167 @@
+{
+  "name": "Hallow",
+  "source": "XPHB",
+  "page": 283,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 5,
+  "school": "A",
+  "time": [
+    {
+      "number": 24,
+      "unit": "hour"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "incense worth 1,000+ GP, which the spell consumes",
+      "cost": 100000,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "permanent",
+      "ends": [
+        "dispel"
+      ]
+    }
+  ],
+  "entries": [
+    "You touch a point and infuse an area around it with holy or unholy power. The area can have a radius up to 60 feet, and the spell fails if the radius includes an area already under the effect of Hallow. The affected area has the following effects.",
+    {
+      "type": "entries",
+      "name": "Hallowed Ward",
+      "entries": [
+        "Choose any of these creature types: Aberration, Celestial, Elemental, Fey, Fiend, or Undead. Creatures of the chosen types can't willingly enter the area, and any creature that is possessed by or that has the {@condition Charmed|XPHB} or {@condition Frightened|XPHB} condition from such creatures isn't possessed, {@condition Charmed|XPHB}, or {@condition Frightened|XPHB} by them while in the area."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Extra Effect",
+      "entries": [
+        "You bind an extra effect to the area from the list below:",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "Courage",
+              "entries": [
+                "Creatures of any types you choose can't gain the {@condition Frightened|XPHB} condition while in the area."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Darkness",
+              "entries": [
+                "{@variantrule Darkness|XPHB} fills the area. Normal light, as well as magical light created by spells of a level lower than this spell, can't illuminate the area."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Daylight",
+              "entries": [
+                "Bright light fills the area. Magical {@variantrule Darkness|XPHB} created by spells of a level lower than this spell can't extinguish the light."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Peaceful Rest",
+              "entries": [
+                "{@variantrule Dead|XPHB} bodies interred in the area can't be turned into Undead."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Extradimensional Interference",
+              "entries": [
+                "Creatures of any types you choose can't enter or exit the area using teleportation or interplanar travel."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Fear",
+              "entries": [
+                "Creatures of any types you choose have the {@condition Frightened|XPHB} condition while in the area."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Resistance",
+              "entries": [
+                "Creatures of any types you choose have {@variantrule Resistance|XPHB} to one damage type of your choice while in the area."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Silence",
+              "entries": [
+                "No sound can emanate from within the area, and no sound can reach into it."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Tongues",
+              "entries": [
+                "Creatures of any types you choose can communicate with any other creature in the area even if they don't share a common language."
+              ]
+            },
+            {
+              "type": "item",
+              "name": "Vulnerability",
+              "entries": [
+                "Creatures of any types you choose have {@variantrule Vulnerability|XPHB} to one damage type of your choice while in the area."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "damageResist": [
+    "acid",
+    "cold",
+    "fire",
+    "force",
+    "lightning",
+    "necrotic",
+    "poison",
+    "psychic",
+    "radiant",
+    "thunder"
+  ],
+  "damageVulnerable": [
+    "acid",
+    "cold",
+    "fire",
+    "force",
+    "lightning",
+    "necrotic",
+    "poison",
+    "psychic",
+    "radiant",
+    "thunder"
+  ],
+  "affectsCreatureType": [
+    "aberration",
+    "celestial",
+    "elemental",
+    "fey",
+    "fiend",
+    "undead"
+  ],
+  "miscTags": [
+    "LGT",
+    "OBS"
+  ]
+}

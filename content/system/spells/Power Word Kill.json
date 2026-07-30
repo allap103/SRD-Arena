@@ -1,0 +1,42 @@
+{
+  "name": "Power Word Kill",
+  "source": "XPHB",
+  "page": 306,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 9,
+  "school": "E",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You compel one creature you can see within range to die. If the target has 100 {@variantrule Hit Points|XPHB} or fewer, it dies. Otherwise, it takes {@damage 12d12} Psychic damage."
+  ],
+  "damageInflict": [
+    "psychic"
+  ],
+  "miscTags": [
+    "SGT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

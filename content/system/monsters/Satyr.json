@@ -1,0 +1,102 @@
+{
+  "name": "Satyr",
+  "source": "XMM",
+  "page": 268,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "fey",
+  "alignment": [
+    "C",
+    "N"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 31,
+    "formula": "7d8"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 12,
+  "dex": 16,
+  "con": 11,
+  "int": 12,
+  "wis": 10,
+  "cha": 14,
+  "skill": {
+    "perception": "+2",
+    "performance": "+6",
+    "stealth": "+5"
+  },
+  "passive": 12,
+  "languages": [
+    "Common",
+    "Elvish",
+    "Sylvan"
+  ],
+  "cr": "1/2",
+  "trait": [
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The satyr has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Hooves",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Bludgeoning damage. If the target is a Medium or smaller creature, the satyr pushes the target up to 10 feet straight away from itself."
+      ]
+    },
+    {
+      "name": "Mockery",
+      "entries": [
+        "{@actSave wis} {@dc 12}, one creature the satyr can see within 90 feet. {@actSaveFail} 5 ({@damage 1d6 + 2}) Psychic damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "planar, feywild"
+  ],
+  "treasure": [
+    "implements"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/satyr.opus"
+  },
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "languageTags": [
+    "C",
+    "E",
+    "S"
+  ],
+  "damageTags": [
+    "B",
+    "Y"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "savingThrowForced": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

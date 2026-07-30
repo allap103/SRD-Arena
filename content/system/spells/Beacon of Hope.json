@@ -1,0 +1,46 @@
+{
+  "name": "Beacon of Hope",
+  "source": "XPHB",
+  "page": 245,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 3,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "Choose any number of creatures within range. For the duration, each target has {@variantrule Advantage|XPHB} on Wisdom saving throws and {@variantrule Death Saving Throw|XPHB|Death Saving Throws} and regains the maximum number of {@variantrule Hit Points|XPHB} possible from any healing."
+  ],
+  "miscTags": [
+    "ADV",
+    "HL"
+  ],
+  "areaTags": [
+    "MT"
+  ]
+}

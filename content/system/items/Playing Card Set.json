@@ -1,0 +1,16 @@
+{
+  "name": "Playing Card Set",
+  "source": "PHB",
+  "page": 154,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "CoS"
+  ],
+  "reprintedAs": [
+    "Playing Cards|XPHB"
+  ],
+  "type": "GS",
+  "rarity": "none",
+  "value": 50
+}

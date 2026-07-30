@@ -1,0 +1,84 @@
+{
+  "name": "Pteranodon",
+  "group": [
+    "Dinosaurs"
+  ],
+  "source": "XMM",
+  "page": 367,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "beast",
+    "tags": [
+      "dinosaur"
+    ]
+  },
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 13,
+    "formula": "3d8"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 60
+  },
+  "str": 12,
+  "dex": 15,
+  "con": 10,
+  "int": 2,
+  "wis": 9,
+  "cha": 5,
+  "skill": {
+    "perception": "+1"
+  },
+  "passive": 11,
+  "cr": "1/4",
+  "trait": [
+    {
+      "name": "Flyby",
+      "entries": [
+        "The pteranodon doesn't provoke an {@action Opportunity Attack|XPHB} when it flies out of an enemy's reach."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "grassland",
+    "mountain"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/pteranodon.opus"
+  },
+  "traitTags": [
+    "Flyby"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

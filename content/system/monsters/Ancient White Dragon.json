@@ -1,0 +1,194 @@
+{
+  "name": "Ancient White Dragon",
+  "group": [
+    "Chromatic Dragons"
+  ],
+  "source": "XMM",
+  "page": 330,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "G"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "chromatic"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    20
+  ],
+  "hp": {
+    "average": 333,
+    "formula": "18d20 + 144"
+  },
+  "speed": {
+    "walk": 40,
+    "burrow": 40,
+    "fly": 80,
+    "swim": 40
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 26,
+  "dex": 10,
+  "con": 26,
+  "int": 10,
+  "wis": 13,
+  "cha": 18,
+  "save": {
+    "dex": "+6",
+    "wis": "+7"
+  },
+  "skill": {
+    "perception": "+13",
+    "stealth": "+6"
+  },
+  "senses": [
+    "Blindsight 60 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 23,
+  "immune": [
+    "cold"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": {
+    "cr": "20",
+    "xpLair": 33000
+  },
+  "spellcasting": [
+    {
+      "name": "Frightful Presence",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The dragon casts {@spell Fear|XPHB}, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 18}). The dragon can't take this action again until the start of its next turn."
+      ],
+      "legendary": {
+        "1": [
+          "{@spell Fear|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "legendary",
+      "hidden": [
+        "legendary"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Ice Walk",
+      "entries": [
+        "The dragon can move across and climb icy surfaces without needing to make an ability check. Additionally, {@variantrule Difficult Terrain|XPHB} composed of ice or snow doesn't cost it extra movement."
+      ]
+    },
+    {
+      "name": "Legendary Resistance (4/Day, or 5/Day in Lair)",
+      "entries": [
+        "If the dragon fails a saving throw, it can choose to succeed instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 14}, reach 15 ft. {@h}17 ({@damage 2d8 + 8}) Slashing damage plus 7 ({@damage 2d6}) Cold damage."
+      ]
+    },
+    {
+      "name": "Cold Breath {@recharge 5}",
+      "entries": [
+        "{@actSave con} {@dc 22}, each creature in a 90-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 63 ({@damage 14d8}) Cold damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Freezing Burst",
+      "entries": [
+        "{@actSave con} {@dc 20}, each creature in a 30-foot-radius {@variantrule Sphere [Area of Effect]|XPHB|Sphere} centered on a point the dragon can see within 120 feet. {@actSaveFail} 14 ({@damage 4d6}) Cold damage, and the target's {@variantrule Speed|XPHB} is 0 until the end of the target's next turn. {@actSaveSuccessOrFail} The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Pounce",
+      "entries": [
+        "The dragon moves up to half its {@variantrule Speed|XPHB}, and it makes one Rend attack."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "White Dragon",
+    "source": "XMM"
+  },
+  "environment": [
+    "arctic"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "dragonAge": "ancient",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/white-dragon.opus"
+  },
+  "traitTags": [
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "C",
+    "S"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA",
+    "RCH"
+  ],
+  "conditionInflictSpell": [
+    "frightened"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "savingThrowForcedLegendary": [
+    "constitution"
+  ],
+  "savingThrowForcedSpell": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

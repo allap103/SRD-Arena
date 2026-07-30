@@ -1,0 +1,44 @@
+{
+  "name": "Barkskin",
+  "source": "XPHB",
+  "page": 245,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 2,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a handful of oak bark"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      }
+    }
+  ],
+  "entries": [
+    "You touch a willing creature. Until the spell ends, the target's skin assumes a bark-like appearance, and the target has an {@variantrule Armor Class|XPHB} of 17 if its AC is lower than that."
+  ],
+  "miscTags": [
+    "MAC"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "name": "Trident of Fish Command",
+  "source": "XDMG",
+  "page": 317,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BtS"
+  ],
+  "baseItem": "trident|xphb",
+  "type": "M|XPHB",
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "weight": 4,
+  "weaponCategory": "martial",
+  "property": [
+    "T|XPHB",
+    "V|XPHB"
+  ],
+  "mastery": [
+    "Topple|XPHB"
+  ],
+  "range": "20/60",
+  "dmg1": "1d8",
+  "dmgType": "P",
+  "dmg2": "1d10",
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d3}",
+  "charges": 3,
+  "entries": [
+    "This magic weapon has 3 charges, and it regains {@dice 1d3} expended charges daily at dawn. While you carry it, you can expend 1 charge to cast {@spell Dominate Beast|XPHB} (save {@dc 15}) from it on a Beast that has a {@variantrule Swim Speed|XPHB}."
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "dominate beast|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Armaments - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

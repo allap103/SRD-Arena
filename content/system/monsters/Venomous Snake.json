@@ -1,0 +1,76 @@
+{
+  "name": "Venomous Snake",
+  "source": "XMM",
+  "page": 372,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 358
+    }
+  ],
+  "referenceSources": [
+    "DrDe",
+    "DrDe-DaS"
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 5,
+    "formula": "2d4"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 30
+  },
+  "str": 2,
+  "dex": 15,
+  "con": 11,
+  "int": 1,
+  "wis": 10,
+  "cha": 3,
+  "senses": [
+    "Blindsight 10 ft."
+  ],
+  "passive": 10,
+  "cr": "1/8",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}4 ({@damage 1d4 + 2}) Piercing damage plus 3 ({@damage 1d6}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "desert",
+    "forest",
+    "grassland",
+    "hill",
+    "swamp"
+  ],
+  "familiar": true,
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

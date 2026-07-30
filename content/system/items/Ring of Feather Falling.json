@@ -1,0 +1,20 @@
+{
+  "name": "Ring of Feather Falling",
+  "source": "XDMG",
+  "page": 293,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "rarity": "rare",
+  "reqAttune": true,
+  "entries": [
+    "When you fall while wearing this ring, you descend 60 feet per round and take no damage from falling."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

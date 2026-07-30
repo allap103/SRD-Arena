@@ -1,0 +1,57 @@
+{
+  "name": "Gust of Wind",
+  "source": "XPHB",
+  "page": 282,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-ACfaS",
+    "DrDe-SD",
+    "UtHftLH"
+  ],
+  "level": 2,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a legume seed"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "A {@variantrule Line [Area of Effect]|XPHB|Line} of strong wind 60 feet long and 10 feet wide blasts from you in a direction you choose for the duration. Each creature in the {@variantrule Line [Area of Effect]|XPHB|Line} must succeed on a Strength saving throw or be pushed 15 feet away from you in a direction following the {@variantrule Line [Area of Effect]|XPHB|Line}. A creature that ends its turn in the {@variantrule Line [Area of Effect]|XPHB|Line} must make the same save.",
+    "Any creature in the {@variantrule Line [Area of Effect]|XPHB|Line} must spend 2 feet of movement for every 1 foot it moves when moving closer to you.",
+    "The gust disperses gas or vapor, and it extinguishes candles and similar unprotected flames in the area. It causes protected flames, such as those of lanterns, to dance wildly and has a {@chance 50|||Extinguished!|No effect} chance to extinguish them.",
+    "As a {@variantrule Bonus Action|XPHB} on your later turns, you can change the direction in which the {@variantrule Line [Area of Effect]|XPHB|Line} blasts from you."
+  ],
+  "savingThrow": [
+    "strength"
+  ],
+  "miscTags": [
+    "FMV",
+    "UBA"
+  ],
+  "areaTags": [
+    "L"
+  ]
+}

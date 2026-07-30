@@ -1,0 +1,63 @@
+{
+  "name": "Ensnaring Strike",
+  "source": "XPHB",
+  "page": 268,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 1,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus",
+      "condition": "which you take immediately after hitting a creature with a weapon"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "As you hit the target, grasping vines appear on it, and it makes a Strength saving throw. A Large or larger creature has {@variantrule Advantage|XPHB} on this save. On a failed save, the target has the {@condition Restrained|XPHB} condition until the spell ends. On a successful save, the vines shrivel away, and the spell ends.",
+    "While {@condition Restrained|XPHB}, the target takes {@damage 1d6} Piercing damage at the start of each of its turns. The target or a creature within reach of it can take an action to make a Strength ({@skill Athletics|XPHB}) check against your spell save DC. On a success, the spell ends."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 1d6|1-9|1d6} for each spell slot level above 1."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "piercing"
+  ],
+  "conditionInflict": [
+    "restrained"
+  ],
+  "savingThrow": [
+    "strength"
+  ],
+  "abilityCheck": [
+    "strength"
+  ]
+}

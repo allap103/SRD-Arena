@@ -1,0 +1,19 @@
+{
+  "name": "Truth Serum",
+  "source": "XDMG",
+  "page": 91,
+  "srd52": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "value": 15000,
+  "poison": true,
+  "entries": [
+    "A creature subjected to Truth Serum must succeed on a {@dc 11} Constitution saving throw or have the {@condition Poisoned|XPHB} condition for 1 hour. The {@condition Poisoned|XPHB} creature can't knowingly communicate a lie."
+  ],
+  "poisonTypes": [
+    "ingested"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

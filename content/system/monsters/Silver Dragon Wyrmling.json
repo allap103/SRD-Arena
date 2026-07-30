@@ -1,0 +1,133 @@
+{
+  "name": "Silver Dragon Wyrmling",
+  "group": [
+    "Metallic Dragons"
+  ],
+  "source": "XMM",
+  "page": 278,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TWoO"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "metallic"
+    ]
+  },
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 45,
+    "formula": "6d8 + 18"
+  },
+  "speed": {
+    "walk": 30,
+    "fly": 60
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 19,
+  "dex": 10,
+  "con": 17,
+  "int": 12,
+  "wis": 11,
+  "cha": 15,
+  "save": {
+    "dex": "+2",
+    "wis": "+2"
+  },
+  "skill": {
+    "perception": "+4",
+    "stealth": "+2"
+  },
+  "senses": [
+    "Blindsight 10 ft.",
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "immune": [
+    "cold"
+  ],
+  "languages": [
+    "Draconic"
+  ],
+  "cr": "2",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes two Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}9 ({@damage 1d10 + 4}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Cold Breath {@recharge 5}",
+      "entries": [
+        "{@actSave con} {@dc 13}, each creature in a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 18 ({@damage 4d8}) Cold damage. {@actSaveSuccess} Half damage."
+      ]
+    },
+    {
+      "name": "Paralyzing Breath",
+      "entries": [
+        "{@actSave con} {@dc 13}, each creature in a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail 1} The target has the {@condition Incapacitated|XPHB} condition until the end of its next turn, when it repeats the save. {@actSaveFail 2} The target has the {@condition Paralyzed|XPHB} condition, and it repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
+      ]
+    }
+  ],
+  "environment": [
+    "mountain",
+    "urban"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "dragonAge": "wyrmling",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/silver-dragon-wyrmling.opus"
+  },
+  "senseTags": [
+    "B",
+    "D"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "DR"
+  ],
+  "damageTags": [
+    "C",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "incapacitated",
+    "paralyzed"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

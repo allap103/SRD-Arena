@@ -1,0 +1,87 @@
+{
+  "name": "Giant Scorpion",
+  "source": "XMM",
+  "page": 359,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 52,
+    "formula": "7d10 + 14"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 16,
+  "dex": 13,
+  "con": 15,
+  "int": 1,
+  "wis": 9,
+  "cha": 3,
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 9,
+  "cr": "3",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The scorpion makes two Claw attacks and one Sting attack."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}6 ({@damage 1d6 + 3}) Bludgeoning damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 13}) from one of two claws."
+      ]
+    },
+    {
+      "name": "Sting",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Piercing damage plus 11 ({@damage 2d10}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-scorpion.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "B",
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

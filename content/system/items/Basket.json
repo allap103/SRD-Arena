@@ -1,0 +1,19 @@
+{
+  "name": "Basket",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 40,
+  "entries": [
+    "A Basket holds up to 40 pounds within 2 cubic feet."
+  ],
+  "containerCapacity": {
+    "weight": [
+      40
+    ]
+  }
+}

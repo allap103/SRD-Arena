@@ -1,0 +1,13 @@
+{
+  "name": "Ale (mug)",
+  "source": "XPHB",
+  "page": 231,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "FD|XPHB",
+  "rarity": "none",
+  "value": 4,
+  "miscTags": [
+    "CNS"
+  ]
+}

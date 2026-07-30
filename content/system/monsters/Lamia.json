@@ -1,0 +1,143 @@
+{
+  "name": "Lamia",
+  "source": "XMM",
+  "page": 192,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "fiend",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 97,
+    "formula": "13d10 + 26"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 16,
+  "dex": 13,
+  "con": 15,
+  "int": 14,
+  "wis": 15,
+  "cha": 16,
+  "skill": {
+    "deception": "+7",
+    "insight": "+4",
+    "stealth": "+5"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 12,
+  "languages": [
+    "Abyssal",
+    "Common"
+  ],
+  "cr": "4",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The lamia casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 13}):"
+      ],
+      "will": [
+        "{@spell Disguise Self|XPHB} (can appear as a Large or Medium biped)",
+        "{@spell Minor Illusion|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Geas|XPHB}",
+          "{@spell Major Image|XPHB}",
+          "{@spell Scrying|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The lamia makes two Claw attacks. It can replace one attack with a use of Corrupting Touch."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Slashing damage plus 7 ({@damage 2d6}) Psychic damage."
+      ]
+    },
+    {
+      "name": "Corrupting Touch",
+      "entries": [
+        "{@actSave wis} {@dc 13}, one creature the lamia can see within 5 feet. {@actSaveFail} 13 ({@damage 3d8}) Psychic damage, and the target is cursed for 1 hour. Until the curse ends, the target has the {@condition Charmed|XPHB} and {@condition Poisoned|XPHB} conditions."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Leap",
+      "entries": [
+        "The lamia jumps up to 30 feet by spending 10 feet of movement."
+      ]
+    }
+  ],
+  "environment": [
+    "desert"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/lamia.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "AB",
+    "C"
+  ],
+  "damageTags": [
+    "S",
+    "Y"
+  ],
+  "damageTagsSpell": [
+    "Y"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflictSpell": [
+    "charmed"
+  ],
+  "savingThrowForced": [
+    "wisdom"
+  ],
+  "savingThrowForcedSpell": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

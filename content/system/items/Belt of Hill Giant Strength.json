@@ -1,0 +1,24 @@
+{
+  "name": "Belt of Hill Giant Strength",
+  "source": "XDMG",
+  "page": 236,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "ability": {
+    "static": {
+      "str": 21
+    }
+  },
+  "entries": [
+    "While wearing this belt, your Strength score changes to 21. The item has no effect on you if your Strength without the belt is equal to or greater than the belt's score."
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Armaments - Rare|XDMG"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Orb",
+  "group": [
+    "Arcane Focus"
+  ],
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "edition": "one",
+  "type": "SCF|XPHB",
+  "scfType": "arcane",
+  "rarity": "none",
+  "weight": 3,
+  "value": 2000
+}

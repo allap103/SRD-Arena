@@ -1,0 +1,17 @@
+{
+  "name": "Chain (10 feet)",
+  "source": "PHB",
+  "page": 151,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Chain|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 10,
+  "value": 500,
+  "entries": [
+    "A chain has 10 hit points. It can be burst with a successful {@dc 20} Strength check."
+  ]
+}

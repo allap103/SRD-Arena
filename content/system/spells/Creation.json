@@ -1,0 +1,79 @@
+{
+  "name": "Creation",
+  "source": "XPHB",
+  "page": 259,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 5,
+  "school": "I",
+  "time": [
+    {
+      "number": 1,
+      "unit": "minute"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a paintbrush"
+  },
+  "duration": [
+    {
+      "type": "special"
+    }
+  ],
+  "entries": [
+    "You pull wisps of shadow material from the Shadowfell to create an object within range. It is either an object of vegetable matter (soft goods, rope, wood, and the like) or mineral matter (stone, crystal, metal, and the like). The object must be no larger than a 5-foot {@variantrule Cube [Area of Effect]|XPHB|Cube}, and the object must be of a form and material that you have seen.",
+    "The spell's duration depends on the object's material, as shown in the Materials table. If the object is composed of multiple materials, use the shortest duration. Using any object created by this spell as another spell's Material component causes the other spell to fail.",
+    {
+      "type": "table",
+      "caption": "Materials",
+      "colStyles": [
+        "col-6",
+        "col-6"
+      ],
+      "colLabels": [
+        "Material",
+        "Duration"
+      ],
+      "rows": [
+        [
+          "Vegetable matter",
+          "24 hours"
+        ],
+        [
+          "Stone or crystal",
+          "12 hours"
+        ],
+        [
+          "Precious metals",
+          "1 hour"
+        ],
+        [
+          "Gems",
+          "10 minutes"
+        ],
+        [
+          "Adamantine or mithral",
+          "1 minute"
+        ]
+      ]
+    }
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The {@variantrule Cube [Area of Effect]|XPHB|Cube} increases by 5 feet for each spell slot level above 5."
+      ]
+    }
+  ]
+}

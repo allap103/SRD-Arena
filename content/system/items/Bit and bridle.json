@@ -1,0 +1,11 @@
+{
+  "name": "Bit and bridle",
+  "source": "PHB",
+  "page": 157,
+  "srd": true,
+  "basicRules": true,
+  "type": "TAH",
+  "rarity": "none",
+  "weight": 1,
+  "value": 200
+}

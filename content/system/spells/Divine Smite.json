@@ -1,0 +1,49 @@
+{
+  "name": "Divine Smite",
+  "source": "XPHB",
+  "page": 265,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 1,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus",
+      "condition": "which you take immediately after hitting a target with a Melee weapon or an {@variantrule Unarmed Strike|XPHB}"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "The target takes an extra {@damage 2d8} Radiant damage from the attack. The damage increases by {@damage 1d8} if the target is a Fiend or an Undead."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The damage increases by {@scaledamage 2d8|1-9|1d8} for each spell slot level above 1."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "radiant"
+  ],
+  "miscTags": [
+    "AAD"
+  ],
+  "hasFluffImages": true
+}

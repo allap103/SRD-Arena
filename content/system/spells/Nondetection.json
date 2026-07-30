@@ -1,0 +1,48 @@
+{
+  "name": "Nondetection",
+  "source": "XPHB",
+  "page": 302,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 3,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "a pinch of diamond dust worth 25+ GP, which the spell consumes",
+      "cost": 2500,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 8
+      }
+    }
+  ],
+  "entries": [
+    "For the duration, you hide a target that you touch from Divination spells. The target can be a willing creature, or it can be a place or an object no larger than 10 feet in any dimension. The target can't be targeted by any Divination spell or perceived through magical scrying sensors."
+  ],
+  "miscTags": [
+    "OBJ"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

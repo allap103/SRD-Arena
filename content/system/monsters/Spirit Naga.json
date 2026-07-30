@@ -1,0 +1,159 @@
+{
+  "name": "Spirit Naga",
+  "source": "XMM",
+  "page": 297,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TFV",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "fiend",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 135,
+    "formula": "18d10 + 36"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 18,
+  "dex": 17,
+  "con": 14,
+  "int": 16,
+  "wis": 15,
+  "cha": 16,
+  "save": {
+    "dex": "+6",
+    "con": "+5",
+    "wis": "+5",
+    "cha": "+6"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 12,
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "poisoned"
+  ],
+  "languages": [
+    "Abyssal",
+    "Common"
+  ],
+  "cr": "8",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The naga casts one of the following spells, requiring no Somatic or Material components and using Intelligence as the spellcasting ability (spell save {@dc 14}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Mage Hand|XPHB}",
+        "{@spell Minor Illusion|XPHB}",
+        "{@spell Water Breathing|XPHB}"
+      ],
+      "daily": {
+        "2e": [
+          "{@spell Detect Thoughts|XPHB}",
+          "{@spell Dimension Door|XPHB}",
+          "{@spell Hold Person|XPHB} (level 3 version)",
+          "{@spell Lightning Bolt|XPHB} (level 4 version)"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Fiendish Restoration",
+      "entries": [
+        "If it dies, the naga returns to life in {@dice 1d6} days and regains all its {@variantrule Hit Points|XPHB}. Only a {@spell Wish|XPHB} spell can prevent this trait from functioning."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The naga makes three attacks, using Bite or Necrotic Ray in any combination."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 10 ft. {@h}7 ({@damage 1d6 + 4}) Piercing damage plus 14 ({@damage 4d6}) Poison damage."
+      ]
+    },
+    {
+      "name": "Necrotic Ray",
+      "entries": [
+        "{@atkr r} {@hit 6}, range 60 ft. {@h}21 ({@damage 6d6}) Necrotic damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, lower",
+    "underdark"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/spirit-naga.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "AB",
+    "C"
+  ],
+  "damageTags": [
+    "I",
+    "N",
+    "P"
+  ],
+  "damageTagsSpell": [
+    "L",
+    "O"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RA",
+    "RCH"
+  ],
+  "conditionInflictSpell": [
+    "paralyzed"
+  ],
+  "savingThrowForcedSpell": [
+    "dexterity",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

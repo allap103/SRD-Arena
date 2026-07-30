@@ -1,0 +1,172 @@
+{
+  "name": "Green Hag",
+  "source": "XMM",
+  "page": 156,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-BD",
+    "DrDe-TFV",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "fey",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 82,
+    "formula": "11d8 + 33"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 30
+  },
+  "str": 18,
+  "dex": 12,
+  "con": 16,
+  "int": 13,
+  "wis": 14,
+  "cha": 14,
+  "skill": {
+    "arcana": "+5",
+    "deception": "+4",
+    "perception": "+4",
+    "stealth": "+3"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "languages": [
+    "Common",
+    "Elvish",
+    "Sylvan"
+  ],
+  "cr": "3",
+  "spellcasting": [
+    {
+      "name": "Coven Magic",
+      "type": "spellcasting",
+      "headerEntries": [
+        "While within 30 feet of at least two hag allies, the hag can cast one of the following spells, requiring no Material components, using the spell's normal casting time, and using Intelligence as the spellcasting ability (spell save {@dc 11}): {@spell Augury|XPHB}, {@spell Find Familiar|XPHB}, {@spell Identify|XPHB}, {@spell Locate Object|XPHB}, {@spell Scrying|XPHB}, or {@spell Unseen Servant|XPHB}. The hag must finish a {@variantrule Long Rest|XPHB} before using this trait to cast that spell again."
+      ],
+      "restLong": {
+        "1": [
+          "{@spell Augury|XPHB}",
+          "{@spell Find Familiar|XPHB}",
+          "{@spell Identify|XPHB}",
+          "{@spell Locate Object|XPHB}",
+          "{@spell Scrying|XPHB}",
+          "{@spell Unseen Servant|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "hidden": [
+        "restLong"
+      ]
+    },
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The hag casts one of the following spells, requiring no Material components and using Wisdom as the spellcasting ability (spell save {@dc 12}, {@hit 4} to hit with spell attacks):"
+      ],
+      "will": [
+        "{@spell Dancing Lights|XPHB}",
+        "{@spell Disguise Self|XPHB} (24-hour duration)",
+        "{@spell Invisibility|XPHB} (self only, and the hag leaves no tracks while {@condition Invisible|XPHB})",
+        "{@spell Minor Illusion|XPHB}",
+        "{@spell Ray of Sickness|XPHB} (level 3 version)"
+      ],
+      "ability": "wis",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The hag can breathe air and water."
+      ]
+    },
+    {
+      "name": "Mimicry",
+      "entries": [
+        "The hag can mimic animal sounds and humanoid voices. A creature that hears the sounds can tell they are imitations only with a successful {@dc 14} Wisdom ({@skill Insight|XPHB}) check."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The hag makes two Claw attacks."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}8 ({@damage 1d8 + 4}) Slashing damage plus 3 ({@damage 1d6}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "hill",
+    "swamp"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/green-hag.opus"
+  },
+  "traitTags": [
+    "Amphibious",
+    "Mimicry"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "E",
+    "S"
+  ],
+  "damageTags": [
+    "I",
+    "S"
+  ],
+  "damageTagsSpell": [
+    "I"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflictSpell": [
+    "invisible",
+    "poisoned"
+  ],
+  "savingThrowForcedSpell": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,36 @@
+{
+  "name": "Boon of Spell Recall",
+  "source": "XPHB",
+  "page": 211,
+  "srd52": true,
+  "basicRules2024": true,
+  "category": "EB",
+  "prerequisite": [
+    {
+      "level": 19,
+      "spellcasting2020": true
+    }
+  ],
+  "ability": [
+    {
+      "choose": {
+        "from": [
+          "int",
+          "wis",
+          "cha"
+        ]
+      },
+      "max": 30
+    }
+  ],
+  "entries": [
+    "You gain the following benefits.",
+    {
+      "type": "entries",
+      "name": "Free Casting",
+      "entries": [
+        "Whenever you cast a spell with a level 1-4 spell slot, roll {@dice 1d4}. If the number you roll is the same as the slot's level, the slot isn't expended."
+      ]
+    }
+  ]
+}

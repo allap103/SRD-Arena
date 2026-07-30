@@ -1,0 +1,72 @@
+{
+  "name": "Awakened Shrub",
+  "source": "XMM",
+  "page": 23,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRHoF"
+  ],
+  "size": [
+    "S"
+  ],
+  "type": "plant",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    9
+  ],
+  "hp": {
+    "average": 10,
+    "formula": "3d6"
+  },
+  "speed": {
+    "walk": 20
+  },
+  "str": 3,
+  "dex": 8,
+  "con": 11,
+  "int": 10,
+  "wis": 10,
+  "cha": 6,
+  "passive": 10,
+  "resist": [
+    "piercing"
+  ],
+  "vulnerable": [
+    "fire"
+  ],
+  "languages": [
+    "Common plus one other language"
+  ],
+  "cr": "0",
+  "action": [
+    {
+      "name": "Rake",
+      "entries": [
+        "{@atkr m} {@hit 1}, reach 5 ft. {@h}1 Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/awakened-shrub.opus"
+  },
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

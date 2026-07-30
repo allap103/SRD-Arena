@@ -1,0 +1,25 @@
+{
+  "name": "Necklace of Fireballs",
+  "source": "XDMG",
+  "page": 280,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "wondrous": true,
+  "weight": 1,
+  "entries": [
+    "This necklace has {@dice 1d6 + 3} beads hanging from it. You can take a {@action Magic|XPHB} action to detach a bead and throw it up to 60 feet away. When it reaches the end of its trajectory, the bead detonates as a level 3 {@spell Fireball|XPHB} (save {@dc 15}).",
+    "You can hurl multiple beads, or even the whole necklace, at one time. When you do so, increase the damage of the Fireball by {@damage 1d6} for each bead after the first (maximum {@dice 12d6})."
+  ],
+  "attachedSpells": {
+    "limited": {
+      "9": [
+        "fireball|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

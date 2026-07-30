@@ -1,0 +1,26 @@
+{
+  "name": "Handaxe",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 500,
+  "weaponCategory": "simple",
+  "property": [
+    "L|XPHB",
+    "T|XPHB"
+  ],
+  "mastery": [
+    "Vex|XPHB"
+  ],
+  "range": "20/60",
+  "dmg1": "1d6",
+  "dmgType": "S",
+  "axe": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

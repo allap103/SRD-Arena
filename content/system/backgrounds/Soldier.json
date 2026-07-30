@@ -1,0 +1,127 @@
+{
+  "name": "Soldier",
+  "source": "XPHB",
+  "page": 185,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "ability": [
+    {
+      "choose": {
+        "weighted": {
+          "from": [
+            "str",
+            "dex",
+            "con"
+          ],
+          "weights": [
+            2,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "choose": {
+        "weighted": {
+          "from": [
+            "str",
+            "dex",
+            "con"
+          ],
+          "weights": [
+            1,
+            1,
+            1
+          ]
+        }
+      }
+    }
+  ],
+  "feats": [
+    {
+      "savage attacker|xphb": true
+    }
+  ],
+  "skillProficiencies": [
+    {
+      "athletics": true,
+      "intimidation": true
+    }
+  ],
+  "toolProficiencies": [
+    {
+      "anyGamingSet": 1
+    }
+  ],
+  "startingEquipment": [
+    {
+      "A": [
+        {
+          "item": "spear|xphb"
+        },
+        {
+          "item": "shortbow|xphb"
+        },
+        {
+          "item": "arrows (20)|xphb"
+        },
+        {
+          "equipmentType": "setGaming"
+        },
+        {
+          "item": "healer's kit|xphb"
+        },
+        {
+          "item": "quiver|xphb"
+        },
+        {
+          "item": "traveler's clothes|xphb"
+        },
+        {
+          "value": 1400
+        }
+      ],
+      "B": [
+        {
+          "value": 5000
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "type": "item",
+          "name": "Ability Scores:",
+          "entry": "Strength, Dexterity, Constitution"
+        },
+        {
+          "type": "item",
+          "name": "Feat:",
+          "entry": "{@feat Savage Attacker|XPHB}"
+        },
+        {
+          "type": "item",
+          "name": "Skill Proficiencies:",
+          "entry": "{@skill Athletics|XPHB}, {@skill Intimidation|XPHB}"
+        },
+        {
+          "type": "item",
+          "name": "Tool Proficiency:",
+          "entry": "Choose one kind of {@item Gaming Set|XPHB}"
+        },
+        {
+          "type": "item",
+          "name": "Equipment:",
+          "entry": "Choose A or B: (A) {@item Spear|XPHB}, {@item Shortbow|XPHB}, {@item Arrow|XPHB|20 Arrows}, {@item Gaming Set|XPHB} (same as above), {@item Healer's Kit|XPHB}, {@item Quiver|XPHB}, {@item Traveler's Clothes|XPHB}, 14 GP; or (B) 50 GP"
+        }
+      ]
+    }
+  ],
+  "hasFluff": true,
+  "hasFluffImages": true
+}

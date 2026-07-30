@@ -1,0 +1,49 @@
+{
+  "name": "Befuddlement",
+  "source": "XPHB",
+  "page": 245,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 8,
+  "school": "E",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 150
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a key ring with no keys"
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You blast the mind of a creature that you can see within range. The target makes an Intelligence saving throw.",
+    "On a failed save, the target takes {@damage 10d12} Psychic damage and can't cast spells or take the {@action Magic|XPHB} action. At the end of every 30 days, the target repeats the save, ending the effect on a success. The effect can also be ended by the {@spell Greater Restoration|XPHB}, {@spell Heal|XPHB}, or {@spell Wish|XPHB} spell.",
+    "On a successful save, the target takes half as much damage only."
+  ],
+  "damageInflict": [
+    "psychic"
+  ],
+  "savingThrow": [
+    "intelligence"
+  ],
+  "miscTags": [
+    "SGT"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

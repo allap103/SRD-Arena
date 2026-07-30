@@ -1,0 +1,44 @@
+{
+  "name": "Greater Invisibility",
+  "source": "XPHB",
+  "page": 281,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 4,
+  "school": "I",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 1
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "A creature you touch has the {@condition Invisible|XPHB} condition until the spell ends."
+  ],
+  "conditionInflict": [
+    "invisible"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

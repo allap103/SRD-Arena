@@ -1,0 +1,49 @@
+{
+  "name": "Shield of Faith",
+  "source": "XPHB",
+  "page": 316,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 1,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a prayer scroll"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "A shimmering field surrounds a creature of your choice within range, granting it a +2 bonus to AC for the duration."
+  ],
+  "miscTags": [
+    "MAC"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

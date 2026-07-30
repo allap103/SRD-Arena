@@ -1,0 +1,10 @@
+{
+  "name": "Stabling (per day)",
+  "source": "XPHB",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "TAH|XPHB",
+  "rarity": "none",
+  "value": 5
+}

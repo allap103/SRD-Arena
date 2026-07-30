@@ -1,0 +1,24 @@
+{
+  "name": "Potion of Gaseous Form",
+  "source": "XDMG",
+  "page": 287,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "P|XPHB",
+  "rarity": "rare",
+  "weight": 0.5,
+  "entries": [
+    "When you drink this potion, you gain the effect of the {@spell Gaseous Form|XPHB} spell for 1 hour (no {@status Concentration|XPHB} required) or until you end the effect as a {@variantrule Bonus Action|XPHB}.",
+    "This potion's container seems to hold fog that moves and pours like water."
+  ],
+  "attachedSpells": [
+    "gaseous form|xphb"
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG",
+    "Implements - Rare|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

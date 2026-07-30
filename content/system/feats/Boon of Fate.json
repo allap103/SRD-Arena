@@ -1,0 +1,39 @@
+{
+  "name": "Boon of Fate",
+  "source": "XPHB",
+  "page": 210,
+  "srd52": true,
+  "basicRules2024": true,
+  "category": "EB",
+  "prerequisite": [
+    {
+      "level": 19
+    }
+  ],
+  "ability": [
+    {
+      "choose": {
+        "from": [
+          "str",
+          "dex",
+          "con",
+          "int",
+          "wis",
+          "cha"
+        ]
+      },
+      "max": 30
+    }
+  ],
+  "entries": [
+    "You gain the following benefits.",
+    {
+      "type": "entries",
+      "name": "Improve Fate",
+      "entries": [
+        "When you or another creature within 60 feet of you succeeds on or fails a {@variantrule D20 Test|XPHB}, you can roll {@dice 2d4} and apply the total rolled as a bonus or penalty to the {@dice d20} roll. Once you use this benefit, you can't use it again until you roll {@variantrule Initiative|XPHB} or finish a {@variantrule Short Rest|XPHB|Short} or {@variantrule Long Rest|XPHB}."
+      ]
+    }
+  ],
+  "hasFluffImages": true
+}

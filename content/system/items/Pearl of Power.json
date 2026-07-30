@@ -1,0 +1,22 @@
+{
+  "name": "Pearl of Power",
+  "source": "XDMG",
+  "page": 284,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "reqAttune": "by a spellcaster",
+  "reqAttuneTags": [
+    {
+      "spellcasting": true
+    }
+  ],
+  "wondrous": true,
+  "entries": [
+    "While this pearl is on your person, you can take a {@action Magic|XPHB} action to regain one expended spell slot of level 3 or lower. Once you use the pearl, it can't be used again until the next dawn."
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG",
+    "Relics - Uncommon|XDMG"
+  ]
+}

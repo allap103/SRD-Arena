@@ -1,0 +1,33 @@
+{
+  "name": "Navigator's Tools",
+  "source": "XPHB",
+  "page": 221,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "T|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 2500,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Wisdom"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Plot a course ({@dc 10}), or determine position by stargazing ({@dc 15})"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "Glaive",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "M|XPHB",
+  "rarity": "none",
+  "weight": 6,
+  "value": 2000,
+  "weaponCategory": "martial",
+  "property": [
+    "H|XPHB",
+    "R|XPHB",
+    "2H|XPHB"
+  ],
+  "mastery": [
+    "Graze|XPHB"
+  ],
+  "dmg1": "1d10",
+  "dmgType": "S",
+  "polearm": true,
+  "weapon": true,
+  "hasFluffImages": true
+}

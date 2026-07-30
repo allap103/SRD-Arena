@@ -1,0 +1,19 @@
+{
+  "name": "Jug",
+  "source": "XPHB",
+  "page": 226,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 4,
+  "value": 2,
+  "entries": [
+    "A Jug holds up to 1 gallon."
+  ],
+  "containerCapacity": {
+    "volume": [
+      0.1
+    ]
+  }
+}

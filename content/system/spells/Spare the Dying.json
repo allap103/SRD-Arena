@@ -1,0 +1,49 @@
+{
+  "name": "Spare the Dying",
+  "source": "XPHB",
+  "page": 318,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 0,
+  "school": "N",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 15
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "Choose a creature within range that has 0 {@variantrule Hit Points|XPHB} and isn't dead. The creature becomes {@variantrule Stable|XPHB}."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Cantrip Upgrade",
+      "entries": [
+        "The range doubles when you reach levels 5 (30 feet), 11 (60 feet), and 17 (120 feet)."
+      ]
+    }
+  ],
+  "miscTags": [
+    "SCL"
+  ],
+  "areaTags": [
+    "ST"
+  ]
+}

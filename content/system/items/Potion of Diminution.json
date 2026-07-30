@@ -1,0 +1,24 @@
+{
+  "name": "Potion of Diminution",
+  "source": "XDMG",
+  "page": 287,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "P|XPHB",
+  "rarity": "rare",
+  "weight": 0.5,
+  "entries": [
+    "When you drink this potion, you gain the \"reduce\" effect of the {@spell Enlarge/Reduce|XPHB} spell for {@dice 1d4} hours (no {@status Concentration|XPHB} required).",
+    "The red in the potion's liquid continuously contracts to a tiny bead and then expands to color the clear liquid around it. Shaking the bottle fails to interrupt this process."
+  ],
+  "attachedSpells": [
+    "enlarge/reduce|xphb"
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG",
+    "Implements - Rare|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "name": "Goat",
+  "source": "XMM",
+  "page": 362,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 351
+    }
+  ],
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TDoN"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    10
+  ],
+  "hp": {
+    "average": 4,
+    "formula": "1d8"
+  },
+  "speed": {
+    "walk": 40,
+    "climb": 30
+  },
+  "str": 11,
+  "dex": 10,
+  "con": 11,
+  "int": 2,
+  "wis": 10,
+  "cha": 5,
+  "save": {
+    "str": "+2"
+  },
+  "skill": {
+    "perception": "+2"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 12,
+  "cr": "0",
+  "action": [
+    {
+      "name": "Ram",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}1 Bludgeoning damage, or 2 ({@damage 1d4}) Bludgeoning damage if the goat moved 20+ feet straight toward the target immediately before the hit."
+      ]
+    }
+  ],
+  "environment": [
+    "grassland",
+    "hill",
+    "mountain",
+    "urban"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/goat.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,88 @@
+{
+  "name": "Giant Eagle",
+  "source": "XMM",
+  "page": 356,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": "celestial",
+  "alignment": [
+    "N",
+    "G"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 26,
+    "formula": "4d10 + 4"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 80
+  },
+  "str": 16,
+  "dex": 17,
+  "con": 13,
+  "int": 8,
+  "wis": 14,
+  "cha": 10,
+  "skill": {
+    "perception": "+6"
+  },
+  "passive": 16,
+  "resist": [
+    "necrotic",
+    "radiant"
+  ],
+  "languages": [
+    "Celestial; understands Common and Primordial (Auran) but can't speak them"
+  ],
+  "cr": "1",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The eagle makes two Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Slashing damage plus 3 ({@damage 1d6}) Radiant damage."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "grassland",
+    "hill",
+    "mountain"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-eagle.opus"
+  },
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "AU",
+    "C",
+    "CE",
+    "CS",
+    "P"
+  ],
+  "damageTags": [
+    "R",
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

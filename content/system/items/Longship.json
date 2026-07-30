@@ -1,0 +1,20 @@
+{
+  "name": "Longship",
+  "source": "XPHB",
+  "page": 230,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "SHP|XPHB",
+  "rarity": "none",
+  "value": 1000000,
+  "crew": 40,
+  "vehAc": 15,
+  "vehHp": 300,
+  "vehDmgThresh": 15,
+  "vehSpeed": 3,
+  "capPassenger": 150,
+  "capCargo": 10,
+  "seeAlsoVehicle": [
+    "Longship"
+  ]
+}

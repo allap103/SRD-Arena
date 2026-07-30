@@ -1,0 +1,141 @@
+{
+  "name": "Wight",
+  "source": "XMM",
+  "page": 332,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "undead",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 82,
+    "formula": "11d8 + 33"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 15,
+  "dex": 14,
+  "con": 16,
+  "int": 10,
+  "wis": 13,
+  "cha": 15,
+  "skill": {
+    "perception": "+3",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "resist": [
+    "necrotic"
+  ],
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "exhaustion",
+    "poisoned"
+  ],
+  "languages": [
+    "Common plus one other language"
+  ],
+  "cr": "3",
+  "gear": [
+    "studded leather armor|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Sunlight Sensitivity",
+      "entries": [
+        "While in sunlight, the wight has {@variantrule Disadvantage|XPHB} on ability checks and attack rolls."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The wight makes two attacks, using Necrotic Sword or Necrotic Bow in any combination. It can replace one attack with a use of Life Drain."
+      ]
+    },
+    {
+      "name": "Necrotic Sword",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}6 ({@damage 1d8 + 2}) Slashing damage plus 4 ({@damage 1d8}) Necrotic damage."
+      ]
+    },
+    {
+      "name": "Necrotic Bow",
+      "entries": [
+        "{@atkr r} {@hit 4}, range 150/600 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage plus 4 ({@damage 1d8}) Necrotic damage."
+      ]
+    },
+    {
+      "name": "Life Drain",
+      "entries": [
+        "{@actSave con} {@dc 13}, one creature within 5 feet. {@actSaveFail} 6 ({@damage 1d8 + 2}) Necrotic damage, and the target's {@variantrule Hit Points|XPHB|Hit Point} maximum decreases by an amount equal to the damage taken.",
+        "A Humanoid slain by this attack rises 24 hours later as a {@creature Zombie|XMM} under the wight's control, unless the Humanoid is restored to life or its body is destroyed. The wight can have no more than twelve zombies under its control at a time."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "planar, shadowfell",
+    "swamp",
+    "underdark",
+    "urban"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/wight.opus"
+  },
+  "traitTags": [
+    "Sunlight Sensitivity"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "N",
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "HPR",
+    "MA",
+    "RA"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

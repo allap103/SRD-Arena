@@ -1,0 +1,25 @@
+{
+  "name": "Robe of Scintillating Colors",
+  "source": "XDMG",
+  "page": 297,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "very rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d3}",
+  "charges": 3,
+  "entries": [
+    "This robe has 3 charges, and it regains {@dice 1d3} expended charges daily at dawn. While you wear it, you can take a {@action Magic|XPHB} action and expend 1 charge to cause the garment to display a shifting pattern of dazzling hues until the end of your next turn. During this time, the robe sheds {@variantrule Bright Light|XPHB} in a 30-foot radius and {@variantrule Dim Light|XPHB} for an additional 30 feet, and creatures that can see you have {@variantrule Disadvantage|XPHB} on attack rolls against you. Any creature in the {@variantrule Bright Light|XPHB} that can see you when the robe's power is activated must succeed on a {@dc 15} Wisdom saving throw or have the {@condition Stunned|XPHB} condition until the effect ends."
+  ],
+  "light": [
+    {
+      "bright": 30,
+      "dim": 60
+    }
+  ],
+  "lootTables": [
+    "Arcana - Very Rare|XDMG"
+  ]
+}

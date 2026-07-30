@@ -1,0 +1,15 @@
+{
+  "name": "Hide Armor",
+  "source": "XPHB",
+  "page": 219,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "MA|XPHB",
+  "rarity": "none",
+  "weight": 12,
+  "value": 1000,
+  "ac": 12,
+  "armor": true,
+  "hasFluffImages": true
+}

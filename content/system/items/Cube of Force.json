@@ -1,0 +1,77 @@
+{
+  "name": "Cube of Force",
+  "source": "XDMG",
+  "page": 246,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d6}",
+  "charges": 10,
+  "entries": [
+    "This cube is about an inch across. Each face has a distinct marking on it. You can press one of those faces, expend the number of charges required for it, and thereby cast the spell associated with it (save {@dc 17}), as shown in the Cube of Force Faces table.",
+    "The cube starts with 10 charges, and it regains {@dice 1d6} expended charges daily at dawn.",
+    {
+      "type": "table",
+      "caption": "Cube of Force Faces",
+      "colStyles": [
+        "col-10",
+        "col-2 text-center"
+      ],
+      "colLabels": [
+        "Spell",
+        "Charge Cost"
+      ],
+      "rows": [
+        [
+          "{@spell Mage Armor|XPHB}",
+          "1"
+        ],
+        [
+          "{@spell Shield|XPHB}",
+          "1"
+        ],
+        [
+          "{@spell Tiny Hut|XPHB}",
+          "3"
+        ],
+        [
+          "{@spell Private Sanctum|XPHB}",
+          "4"
+        ],
+        [
+          "{@spell Resilient Sphere|XPHB}",
+          "4"
+        ],
+        [
+          "{@spell Wall of Force|XPHB}",
+          "5"
+        ]
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "mage armor|xphb",
+        "shield|xphb"
+      ],
+      "3": [
+        "tiny hut|xphb"
+      ],
+      "4": [
+        "private sanctum|xphb",
+        "resilient sphere|xphb"
+      ],
+      "5": [
+        "wall of force|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

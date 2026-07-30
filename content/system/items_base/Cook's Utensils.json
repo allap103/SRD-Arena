@@ -1,0 +1,43 @@
+{
+  "name": "Cook's Utensils",
+  "source": "XPHB",
+  "page": 220,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "type": "AT|XPHB",
+  "rarity": "none",
+  "weight": 8,
+  "value": 100,
+  "entries": [
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "name": "Ability:",
+          "type": "item",
+          "entries": [
+            "Wisdom"
+          ]
+        },
+        {
+          "name": "Utilize:",
+          "type": "item",
+          "entries": [
+            "Improve food's flavor ({@dc 10}), or detect spoiled or poisoned food ({@dc 15})"
+          ]
+        },
+        {
+          "name": "Craft:",
+          "type": "item",
+          "entries": [
+            "{@item Rations|XPHB}"
+          ]
+        }
+      ]
+    }
+  ]
+}

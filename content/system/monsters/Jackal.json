@@ -1,0 +1,68 @@
+{
+  "name": "Jackal",
+  "source": "XMM",
+  "page": 364,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "S"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 3,
+    "formula": "1d6"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 8,
+  "dex": 15,
+  "con": 11,
+  "int": 3,
+  "wis": 12,
+  "cha": 6,
+  "skill": {
+    "perception": "+5",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Darkvision 90 ft."
+  ],
+  "passive": 15,
+  "cr": "0",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 1}, reach 5 ft. {@h}1 ({@damage 1d4 - 1}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "grassland"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/jackal.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

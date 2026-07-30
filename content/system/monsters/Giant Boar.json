@@ -1,0 +1,76 @@
+{
+  "name": "Giant Boar",
+  "source": "XMM",
+  "page": 355,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 42,
+    "formula": "5d10 + 15"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 17,
+  "dex": 10,
+  "con": 16,
+  "int": 2,
+  "wis": 7,
+  "cha": 5,
+  "save": {
+    "str": "+5"
+  },
+  "passive": 8,
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Bloodied Fury",
+      "entries": [
+        "The boar has {@variantrule Advantage|XPHB} on melee attack rolls while it is {@status Bloodied|XPHB}."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Gore",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Piercing damage. If the target is a Large or smaller creature and the boar moved 20+ feet straight toward it immediately before the hit, the target takes an extra 7 ({@damage 2d6}) Piercing damage and has the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-boar.opus"
+  },
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Chain Mail",
+  "source": "XPHB",
+  "page": 219,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "HA|XPHB",
+  "rarity": "none",
+  "weight": 55,
+  "value": 7500,
+  "ac": 16,
+  "strength": "13",
+  "armor": true,
+  "stealth": true,
+  "hasFluffImages": true
+}

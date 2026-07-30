@@ -1,0 +1,29 @@
+{
+  "name": "Heavy Crossbow",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "R|XPHB",
+  "rarity": "none",
+  "weight": 18,
+  "value": 5000,
+  "weaponCategory": "martial",
+  "property": [
+    "A|XPHB",
+    "H|XPHB",
+    "LD|XPHB",
+    "2H|XPHB"
+  ],
+  "mastery": [
+    "Push|XPHB"
+  ],
+  "range": "100/400",
+  "dmg1": "1d10",
+  "dmgType": "P",
+  "crossbow": true,
+  "weapon": true,
+  "ammoType": "bolt|xphb",
+  "hasFluffImages": true
+}

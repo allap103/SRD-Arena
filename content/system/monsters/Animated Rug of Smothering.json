@@ -1,0 +1,82 @@
+{
+  "name": "Animated Rug of Smothering",
+  "source": "XMM",
+  "page": 17,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-BD",
+    "EFA",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "construct",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 27,
+    "formula": "5d10"
+  },
+  "speed": {
+    "walk": 10
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 17,
+  "dex": 14,
+  "con": 10,
+  "int": 1,
+  "wis": 3,
+  "cha": 1,
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 6,
+  "immune": [
+    "poison",
+    "psychic"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "deafened",
+    "exhaustion",
+    "frightened",
+    "paralyzed",
+    "petrified",
+    "poisoned"
+  ],
+  "cr": "2",
+  "action": [
+    {
+      "name": "Smother",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Bludgeoning damage. If the target is a Medium or smaller creature, the rug can give it the {@condition Grappled|XPHB} condition (escape {@dc 13}) instead of dealing damage. Until the grapple ends, the target has the {@condition Blinded|XPHB} and {@condition Restrained|XPHB} conditions, is suffocating, and takes 10 ({@damage 2d6 + 3}) Bludgeoning damage at the start of each of its turns. The rug can smother only one creature at a time.",
+        "While grappling the target, the rug can't take this action, the rug halves the damage it takes (round down), and the target takes the same amount of damage."
+      ]
+    }
+  ],
+  "environment": [
+    "urban"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

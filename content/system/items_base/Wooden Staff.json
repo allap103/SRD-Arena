@@ -1,0 +1,25 @@
+{
+  "name": "Wooden Staff",
+  "group": [
+    "Druidic Focus"
+  ],
+  "source": "XPHB",
+  "page": 225,
+  "srd52": true,
+  "edition": "one",
+  "type": "SCF|XPHB",
+  "scfType": "druid",
+  "rarity": "none",
+  "weight": 4,
+  "value": 500,
+  "weaponCategory": "simple",
+  "property": [
+    "V"
+  ],
+  "mastery": [
+    "Topple|XPHB"
+  ],
+  "dmg1": "1d6",
+  "dmgType": "B",
+  "dmg2": "1d8"
+}

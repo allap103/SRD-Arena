@@ -1,0 +1,22 @@
+{
+  "name": "Ring of Telekinesis",
+  "source": "XDMG",
+  "page": 295,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "rarity": "very rare",
+  "reqAttune": true,
+  "entries": [
+    "While wearing this ring, you can cast {@spell Telekinesis|XPHB} from it."
+  ],
+  "attachedSpells": {
+    "will": [
+      "telekinesis|xphb"
+    ]
+  },
+  "lootTables": [
+    "Arcana - Very Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

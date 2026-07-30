@@ -1,0 +1,100 @@
+{
+  "name": "Giant Toad",
+  "source": "XMM",
+  "page": 360,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 39,
+    "formula": "6d10 + 6"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 30
+  },
+  "str": 15,
+  "dex": 13,
+  "con": 13,
+  "int": 2,
+  "wis": 10,
+  "cha": 3,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "cr": "1",
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The toad can breathe air and water."
+      ]
+    },
+    {
+      "name": "Standing Leap",
+      "entries": [
+        "The toad's {@variantrule Long Jump|XPHB} is up to 20 feet and its {@variantrule High Jump|XPHB} is up to 10 feet with or without a running start."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Piercing damage plus 5 ({@damage 2d4}) Poison damage. If the target is a Medium or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 12})."
+      ]
+    },
+    {
+      "name": "Swallow",
+      "entries": [
+        "The toad swallows a Medium or smaller target it is grappling. While swallowed, the target isn't {@condition Grappled|XPHB} but has the {@condition Blinded|XPHB} and {@condition Restrained|XPHB} conditions, and it has {@variantrule Cover|XPHB|Total Cover} against attacks and other effects outside the toad. In addition, the target takes 10 ({@damage 3d6}) Acid damage at the end of each of the toad's turns. The toad can have only one target swallowed at a time, and it can't use Bite while it has a swallowed target. If the toad dies, a swallowed creature is no longer {@condition Restrained|XPHB} and can escape from the corpse using 5 feet of movement, exiting with the {@condition Prone|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "forest",
+    "swamp",
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-toad.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Swallow"
+  ],
+  "damageTags": [
+    "A",
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

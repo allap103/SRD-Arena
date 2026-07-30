@@ -1,0 +1,20 @@
+{
+  "name": "Iron Spikes",
+  "source": "XPHB",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 5,
+  "value": 100,
+  "entries": [
+    "Iron Spikes come in bundles of ten. As a {@action Utilize|XPHB} action, you can use a blunt object, such as a {@item Light Hammer|XPHB}, to hammer a spike into wood, earth, or a similar material. You can do so to jam a door shut or to then tie a {@item Rope|XPHB} or {@item Chain|XPHB} to the Spike."
+  ],
+  "packContents": [
+    {
+      "item": "iron spike|xphb",
+      "quantity": 10
+    }
+  ]
+}

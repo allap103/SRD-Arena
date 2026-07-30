@@ -1,0 +1,13 @@
+{
+  "name": "Common Wine (bottle)",
+  "source": "XPHB",
+  "page": 231,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "FD|XPHB",
+  "rarity": "none",
+  "value": 20,
+  "miscTags": [
+    "CNS"
+  ]
+}

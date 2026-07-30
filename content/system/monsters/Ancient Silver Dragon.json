@@ -1,0 +1,328 @@
+{
+  "name": "Ancient Silver Dragon",
+  "group": [
+    "Metallic Dragons"
+  ],
+  "source": "XMM",
+  "page": 280,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "G"
+  ],
+  "type": {
+    "type": "dragon",
+    "tags": [
+      "metallic"
+    ]
+  },
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    22
+  ],
+  "hp": {
+    "average": 468,
+    "formula": "24d20 + 216"
+  },
+  "speed": {
+    "walk": 40,
+    "fly": 80
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 30,
+  "dex": 10,
+  "con": 29,
+  "int": 18,
+  "wis": 15,
+  "cha": 26,
+  "save": {
+    "dex": "+7",
+    "wis": "+9"
+  },
+  "skill": {
+    "history": "+11",
+    "perception": "+16",
+    "stealth": "+7"
+  },
+  "senses": [
+    "Blindsight 60 ft.",
+    "Darkvision 120 ft."
+  ],
+  "passive": 26,
+  "immune": [
+    "cold"
+  ],
+  "languages": [
+    "Common",
+    "Draconic"
+  ],
+  "cr": {
+    "cr": "23",
+    "xpLair": 62000
+  },
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The dragon casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 23}, {@hit 15} to hit with spell attacks):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Hold Monster|XPHB}",
+        "{@spell Ice Knife|XPHB} (level 2 version)",
+        "{@spell Shapechange|XPHB} (Beast or Humanoid form only, no {@variantrule Temporary Hit Points|XPHB} gained from the spell, and no {@status Concentration|XPHB} or {@variantrule Temporary Hit Points|XPHB} required to maintain the spell)"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Control Weather|XPHB}",
+          "{@spell Ice Storm|XPHB} (level 7 version)",
+          "{@spell Teleport|XPHB}",
+          "{@spell Zone of Truth|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Legendary Resistance (4/Day, or 5/Day in Lair)",
+      "entries": [
+        "If the dragon fails a saving throw, it can choose to succeed instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Paralyzing Breath or (B) Spellcasting to cast {@spell Ice Knife|XPHB} (level 2 version)."
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                },
+                "times": 3
+              }
+            ],
+            "replacements": [
+              {
+                "target": {
+                  "type": "action",
+                  "name": "Rend"
+                },
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Paralyzing Breath"
+                  },
+                  {
+                    "type": "cast_spell",
+                    "spell": {
+                      "name": "Ice Knife",
+                      "source": "XPHB"
+                    },
+                    "cast_level": 2
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 17}, reach 15 ft. {@h}19 ({@damage 2d8 + 10}) Slashing damage plus 9 ({@damage 2d8}) Cold damage."
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 17,
+        "target": {
+          "type": "creature",
+          "range_feet": 15
+        },
+        "reach_feet": 15,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "bonus": 10,
+            "damage_type": "slashing"
+          },
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "bonus": 0,
+            "damage_type": "cold"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Cold Breath {@recharge 5}",
+      "entries": [
+        "{@actSave con} {@dc 24}, each creature in a 90-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 67 ({@damage 15d8}) Cold damage. {@actSaveSuccess} Half damage."
+      ]
+    },
+    {
+      "name": "Paralyzing Breath",
+      "entries": [
+        "{@actSave con} {@dc 24}, each creature in a 90-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail 1} The target has the {@condition Incapacitated|XPHB} condition until the end of its next turn, when it repeats the save. {@actSaveFail 2} The target has the {@condition Paralyzed|XPHB} condition, and it repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "con",
+        "dc": 24,
+        "target": {
+          "type": "area",
+          "shape": "cone",
+          "size_feet": 90
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "condition",
+                "condition": "incapacitated",
+                "duration": {
+                  "type": "end_of_turn",
+                  "creature": "target",
+                  "turn_offset": 1
+                }
+              }
+            ],
+            "repeat_saves": [
+              {
+                "trigger": "end_of_turn"
+              }
+            ]
+          },
+          {
+            "effects": [
+              {
+                "type": "condition",
+                "condition": "paralyzed"
+              }
+            ],
+            "repeat_saves": [
+              {
+                "trigger": "end_of_turn",
+                "automatic_success_after": {
+                  "type": "timed",
+                  "amount": 1,
+                  "unit": "minute"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Chill",
+      "entries": [
+        "The dragon uses Spellcasting to cast {@spell Hold Monster|XPHB}. The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Cold Gale",
+      "entries": [
+        "{@actSave dex} {@dc 23}, each creature in a 60-foot-long, 10-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 14 ({@damage 4d6}) Cold damage, and the target is pushed up to 30 feet straight away from the dragon. {@actSaveSuccess} Half damage only. {@actSaveSuccessOrFail} The dragon can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Pounce",
+      "entries": [
+        "The dragon moves up to half its {@variantrule Speed|XPHB}, and it makes one Rend attack."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Silver Dragon",
+    "source": "XMM"
+  },
+  "environment": [
+    "mountain",
+    "urban"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "dragonAge": "ancient",
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/silver-dragon.opus"
+  },
+  "traitTags": [
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "B",
+    "SD"
+  ],
+  "actionTags": [
+    "Breath Weapon",
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "DR"
+  ],
+  "damageTags": [
+    "C",
+    "S"
+  ],
+  "damageTagsSpell": [
+    "B",
+    "C",
+    "O",
+    "P"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "incapacitated",
+    "paralyzed"
+  ],
+  "conditionInflictSpell": [
+    "paralyzed"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "dexterity"
+  ],
+  "savingThrowForcedSpell": [
+    "charisma",
+    "dexterity",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Horn of Valhalla, Bronze",
+  "source": "XDMG",
+  "page": 270,
+  "srd52": true,
+  "basicRules2024": true,
+  "baseItem": "horn|xphb",
+  "type": "INS|XPHB",
+  "rarity": "very rare",
+  "wondrous": true,
+  "entries": [
+    "You can take a {@action Magic|XPHB} action to blow this horn. In response, warrior spirits from the plane of Ysgard appear in unoccupied spaces within 60 feet of you. Each spirit uses the {@creature Berserker|XMM} stat block and returns to Ysgard after 1 hour or when it drops to 0 {@variantrule Hit Points|XPHB}. The spirits look like living, breathing warriors, and they have {@variantrule Immunity|XPHB} to the {@condition Charmed|XPHB} and {@condition Frightened|XPHB} conditions. Once you use the horn, it can't be used again until 7 days have passed.",
+    "A bronze horn summons 4 {@creature Berserker|XMM|Berserkers}. To use the bronze horn, you must have training with all Medium armor.",
+    "If you blow the horn without meeting its requirement, the summoned {@creature Berserker|XMM|Berserkers} attack you. If you meet the requirement, they are {@variantrule Friendly [Attitude]|XPHB|Friendly} to you and your allies and follow your commands."
+  ],
+  "lootTables": [
+    "Armaments - Very Rare|XDMG",
+    "Relics - Very Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

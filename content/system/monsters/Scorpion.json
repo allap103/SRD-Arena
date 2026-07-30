@@ -1,0 +1,70 @@
+{
+  "name": "Scorpion",
+  "source": "XMM",
+  "page": 369,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 356
+    }
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 1,
+    "formula": "1d4 - 1"
+  },
+  "speed": {
+    "walk": 10
+  },
+  "str": 2,
+  "dex": 11,
+  "con": 8,
+  "int": 1,
+  "wis": 8,
+  "cha": 2,
+  "senses": [
+    "Blindsight 10 ft."
+  ],
+  "passive": 9,
+  "cr": "0",
+  "action": [
+    {
+      "name": "Sting",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}1 Piercing damage plus 3 ({@damage 1d6}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/scorpion.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

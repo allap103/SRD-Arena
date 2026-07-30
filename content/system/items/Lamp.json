@@ -1,0 +1,21 @@
+{
+  "name": "Lamp",
+  "source": "XPHB",
+  "page": 226,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 1,
+  "value": 50,
+  "entries": [
+    "A Lamp burns {@item Oil|XPHB} as fuel to cast {@variantrule Bright Light|XPHB} in a 15-foot radius and {@variantrule Dim Light|XPHB} for an additional 30 feet."
+  ],
+  "light": [
+    {
+      "bright": 15,
+      "dim": 45
+    }
+  ],
+  "hasFluffImages": true
+}

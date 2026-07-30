@@ -1,0 +1,119 @@
+{
+  "name": "Sahuagin Warrior",
+  "source": "XMM",
+  "page": 264,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "FRAiF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "fiend",
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 22,
+    "formula": "4d8 + 4"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 40
+  },
+  "str": 13,
+  "dex": 11,
+  "con": 12,
+  "int": 12,
+  "wis": 13,
+  "cha": 9,
+  "skill": {
+    "perception": "+5"
+  },
+  "senses": [
+    "Darkvision 120 ft."
+  ],
+  "passive": 15,
+  "resist": [
+    "acid",
+    "cold"
+  ],
+  "languages": [
+    "Sahuagin"
+  ],
+  "cr": "1/2",
+  "trait": [
+    {
+      "name": "Blood Frenzy",
+      "entries": [
+        "The sahuagin has {@variantrule Advantage|XPHB} on attack rolls against any creature that doesn't have all its {@variantrule Hit Points|XPHB}."
+      ]
+    },
+    {
+      "name": "Limited Amphibiousness",
+      "entries": [
+        "The sahuagin can breathe air and water, but it must be submerged at least once every 4 hours to avoid suffocating outside water."
+      ]
+    },
+    {
+      "name": "Shark Telepathy",
+      "entries": [
+        "The sahuagin can magically control sharks within 120 feet of itself, using a special telepathy."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The sahuagin makes two Claw attacks."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 3}, reach 5 ft. {@h}4 ({@damage 1d6 + 1}) Slashing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Aquatic Charge",
+      "entries": [
+        "The sahuagin swims up to its {@variantrule Swim Speed|XPHB} straight toward an enemy it can see."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "underwater"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "senseTags": [
+    "SD"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "OTH"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

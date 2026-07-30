@@ -1,0 +1,17 @@
+{
+  "name": "Mantle of Spell Resistance",
+  "source": "XDMG",
+  "page": 276,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "entries": [
+    "You have {@variantrule Advantage|XPHB} on saving throws against spells while you wear this cloak."
+  ],
+  "lootTables": [
+    "Arcana - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

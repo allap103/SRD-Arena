@@ -1,0 +1,21 @@
+{
+  "name": "Amulet of Proof against Detection and Location",
+  "source": "XDMG",
+  "page": 228,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TFV"
+  ],
+  "rarity": "uncommon",
+  "reqAttune": true,
+  "wondrous": true,
+  "weight": 1,
+  "entries": [
+    "While wearing this amulet, you can't be targeted by Divination spells or perceived through magical scrying sensors unless you allow it."
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

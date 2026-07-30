@@ -1,0 +1,31 @@
+{
+  "name": "Hand Crossbow",
+  "source": "XPHB",
+  "page": 215,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "HotB"
+  ],
+  "edition": "one",
+  "type": "R|XPHB",
+  "rarity": "none",
+  "weight": 3,
+  "value": 7500,
+  "weaponCategory": "martial",
+  "property": [
+    "A|XPHB",
+    "L|XPHB",
+    "LD|XPHB"
+  ],
+  "mastery": [
+    "Vex|XPHB"
+  ],
+  "range": "30/120",
+  "dmg1": "1d6",
+  "dmgType": "P",
+  "crossbow": true,
+  "weapon": true,
+  "ammoType": "bolt|xphb",
+  "hasFluffImages": true
+}

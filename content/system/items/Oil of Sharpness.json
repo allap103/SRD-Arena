@@ -1,0 +1,25 @@
+{
+  "name": "Oil of Sharpness",
+  "source": "XDMG",
+  "page": 282,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-BtS"
+  ],
+  "type": "P|XPHB",
+  "rarity": "very rare",
+  "weight": 0.5,
+  "bonusWeapon": "+3",
+  "entries": [
+    "One vial of this oil can coat one Melee weapon or twenty pieces of ammunition, but only ammunition and Melee weapons that are nonmagical and deal Slashing or Piercing damage are affected. Applying the oil takes 1 minute, after which the oil magically seeps into whatever it coats, turning the coated weapon into a +3 Weapon or the coated ammunition into +3 Ammunition.",
+    "This clear, gelatinous oil sparkles with tiny, ultrathin silver shards."
+  ],
+  "lootTables": [
+    "Arcana - Very Rare|XDMG",
+    "Armaments - Very Rare|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

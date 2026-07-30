@@ -1,0 +1,111 @@
+{
+  "name": "Pirate",
+  "source": "XMM",
+  "page": 241,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "ABH",
+    "DrDe",
+    "DrDe-BtS",
+    "EFA",
+    "FRAiF",
+    "RHW",
+    "ScoEE"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 33,
+    "formula": "6d8 + 6"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 10,
+  "dex": 16,
+  "con": 12,
+  "int": 8,
+  "wis": 12,
+  "cha": 14,
+  "save": {
+    "dex": "+5",
+    "cha": "+4"
+  },
+  "passive": 11,
+  "languages": [
+    "Common plus one other language"
+  ],
+  "cr": "1",
+  "gear": [
+    {
+      "item": "dagger|xphb",
+      "quantity": 6
+    },
+    "leather armor|xphb"
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The pirate makes two Dagger attacks. It can replace one attack with a use of Enthralling Panache."
+      ]
+    },
+    {
+      "name": "Dagger",
+      "entries": [
+        "{@atkr m,r} {@hit 5}, reach 5 ft. or range 20/60 ft. {@h}5 ({@damage 1d4 + 3}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Enthralling Panache",
+      "entries": [
+        "{@actSave wis} {@dc 12}, one creature the pirate can see within 30 feet. {@actSaveFail} The target has the {@condition Charmed|XPHB} condition until the start of the pirate's next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "implements",
+    "individual"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "THW"
+  ],
+  "conditionInflict": [
+    "charmed"
+  ],
+  "savingThrowForced": [
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

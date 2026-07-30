@@ -1,0 +1,87 @@
+{
+  "name": "Archelon",
+  "group": [
+    "Dinosaurs"
+  ],
+  "source": "XMM",
+  "page": 349,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": {
+    "type": "beast",
+    "tags": [
+      "dinosaur"
+    ]
+  },
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 90,
+    "formula": "12d12 + 12"
+  },
+  "speed": {
+    "walk": 20,
+    "swim": 80
+  },
+  "str": 18,
+  "dex": 16,
+  "con": 13,
+  "int": 4,
+  "wis": 14,
+  "cha": 6,
+  "skill": {
+    "stealth": "+5"
+  },
+  "passive": 12,
+  "cr": "4",
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The archelon can breathe air and water."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The archelon makes two Bite attacks."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}14 ({@damage 3d6 + 4}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "underwater"
+  ],
+  "traitTags": [
+    "Amphibious"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

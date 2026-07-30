@@ -1,0 +1,95 @@
+{
+  "name": "Swarm of Bats",
+  "source": "XMM",
+  "page": 370,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "HBTD"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "beast",
+    "swarmSize": "T"
+  },
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 11,
+    "formula": "2d10"
+  },
+  "speed": {
+    "walk": 5,
+    "fly": 30
+  },
+  "str": 5,
+  "dex": 15,
+  "con": 10,
+  "int": 2,
+  "wis": 12,
+  "cha": 4,
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 11,
+  "resist": [
+    "bludgeoning",
+    "piercing",
+    "slashing"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "frightened",
+    "grappled",
+    "paralyzed",
+    "petrified",
+    "prone",
+    "restrained",
+    "stunned"
+  ],
+  "cr": "1/4",
+  "trait": [
+    {
+      "name": "Swarm",
+      "entries": [
+        "The swarm can occupy another creature's space and vice versa, and the swarm can move through any opening large enough for a Tiny bat. The swarm can't regain {@variantrule Hit Points|XPHB} or gain {@variantrule Temporary Hit Points|XPHB}."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bites",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 2d4}) Piercing damage, or 2 ({@damage 1d4}) Piercing damage if the swarm is {@status Bloodied|XPHB}."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "mountain",
+    "underdark",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/swarm-of-bats.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

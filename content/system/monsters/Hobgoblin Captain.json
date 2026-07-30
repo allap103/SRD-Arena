@@ -1,0 +1,129 @@
+{
+  "name": "Hobgoblin Captain",
+  "group": [
+    "Goblinoids"
+  ],
+  "source": "XMM",
+  "page": 171,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "fey",
+    "tags": [
+      "goblinoid"
+    ]
+  },
+  "alignment": [
+    "L",
+    "E"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 58,
+    "formula": "9d8 + 18"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 15,
+  "dex": 14,
+  "con": 14,
+  "int": 12,
+  "wis": 10,
+  "cha": 13,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "languages": [
+    "Common",
+    "Goblin"
+  ],
+  "cr": "3",
+  "gear": [
+    "greatsword|xphb",
+    "half plate armor|xphb",
+    "longbow|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Aura of Authority",
+      "entries": [
+        "While in a 10-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the hobgoblin, the hobgoblin and its allies have {@variantrule Advantage|XPHB} on attack rolls and saving throws, provided the hobgoblin doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The hobgoblin makes two attacks, using Greatsword or Longbow in any combination."
+      ]
+    },
+    {
+      "name": "Greatsword",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}9 ({@damage 2d6 + 2}) Slashing damage plus 3 ({@damage 1d6}) Poison damage."
+      ]
+    },
+    {
+      "name": "Longbow",
+      "entries": [
+        "{@atkr r} {@hit 4}, range 150/600 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage plus 5 ({@damage 2d4}) Poison damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "grassland",
+    "hill",
+    "mountain",
+    "planar, acheron",
+    "underdark"
+  ],
+  "treasure": [
+    "armaments",
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/hobgoblin-captain.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "GO"
+  ],
+  "damageTags": [
+    "I",
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RNG"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

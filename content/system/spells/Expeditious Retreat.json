@@ -1,0 +1,41 @@
+{
+  "name": "Expeditious Retreat",
+  "source": "XPHB",
+  "page": 270,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 1,
+  "school": "T",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You take the {@action Dash|XPHB} action, and until the spell ends, you can take that action again as a {@variantrule Bonus Action|XPHB}."
+  ],
+  "miscTags": [
+    "UBA"
+  ]
+}

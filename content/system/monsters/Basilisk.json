@@ -1,0 +1,88 @@
+{
+  "name": "Basilisk",
+  "source": "XMM",
+  "page": 32,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-DotSC",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 52,
+    "formula": "8d8 + 16"
+  },
+  "speed": {
+    "walk": 20
+  },
+  "str": 16,
+  "dex": 8,
+  "con": 15,
+  "int": 2,
+  "wis": 8,
+  "cha": 7,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 9,
+  "cr": "3",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Piercing damage plus 7 ({@damage 2d6}) Poison damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Petrifying Gaze {@recharge 4}",
+      "entries": [
+        "{@actSave con} {@dc 12}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. If the basilisk sees its reflection within the {@variantrule Cone [Area of Effect]|XPHB|Cone}, the basilisk must make this save. {@actSaveFail 1} The target has the {@condition Restrained|XPHB} condition and repeats the save at the end of its next turn if it is still {@condition Restrained|XPHB}, ending the effect on itself on a success. {@actSaveFail 2} The target has the {@condition Petrified|XPHB} condition instead of the {@condition Restrained|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "mountain",
+    "underdark"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/basilisk.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "petrified",
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

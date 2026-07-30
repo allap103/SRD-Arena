@@ -1,0 +1,118 @@
+{
+  "name": "Merrow",
+  "source": "XMM",
+  "page": 210,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "LFL"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 45,
+    "formula": "6d10 + 12"
+  },
+  "speed": {
+    "walk": 10,
+    "swim": 40
+  },
+  "str": 18,
+  "dex": 15,
+  "con": 15,
+  "int": 8,
+  "wis": 10,
+  "cha": 9,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "languages": [
+    "Abyssal",
+    "Primordial (Aquan)"
+  ],
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The merrow can breathe air and water."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The merrow makes two attacks, using Bite, Claw, or Harpoon in any combination."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}6 ({@damage 1d4 + 4}) Piercing damage, and the target has the {@condition Poisoned|XPHB} condition until the end of the merrow's next turn."
+      ]
+    },
+    {
+      "name": "Claw",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}9 ({@damage 2d4 + 4}) Slashing damage."
+      ]
+    },
+    {
+      "name": "Harpoon",
+      "entries": [
+        "{@atkr m,r} {@hit 6}, reach 5 ft. or range 20/60 ft. {@h}11 ({@damage 2d6 + 4}) Piercing damage. If the target is a Large or smaller creature, the merrow pulls the target up to 15 feet straight toward itself."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "underwater"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/merrow.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "AB",
+    "AQ",
+    "P"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "RA"
+  ],
+  "conditionInflict": [
+    "poisoned"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

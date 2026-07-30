@@ -1,0 +1,22 @@
+{
+  "name": "Glass Bottle",
+  "source": "XPHB",
+  "page": 224,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe-TDoN"
+  ],
+  "type": "G|XPHB",
+  "rarity": "none",
+  "weight": 2,
+  "value": 200,
+  "entries": [
+    "A Glass Bottle holds up to 1\u00bd pints."
+  ],
+  "containerCapacity": {
+    "volume": [
+      0.03
+    ]
+  }
+}

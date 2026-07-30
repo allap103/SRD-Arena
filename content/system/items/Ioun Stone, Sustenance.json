@@ -1,0 +1,19 @@
+{
+  "name": "Ioun Stone, Sustenance",
+  "source": "XDMG",
+  "page": 273,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Ioun Stone|XDMG}",
+    "You don't need to eat or drink while this clear spindle orbits your head."
+  ],
+  "lootTables": [
+    "Relics - Rare|XDMG"
+  ],
+  "hasFluffImages": true
+}

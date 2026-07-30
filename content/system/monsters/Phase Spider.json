@@ -1,0 +1,126 @@
+{
+  "name": "Phase Spider",
+  "source": "XMM",
+  "page": 239,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 45,
+    "formula": "7d10 + 7"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 15,
+  "dex": 16,
+  "con": 12,
+  "int": 6,
+  "wis": 10,
+  "cha": 6,
+  "skill": {
+    "stealth": "+7"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "cr": "3",
+  "trait": [
+    {
+      "name": "Ethereal Sight",
+      "entries": [
+        "The spider can see 60 feet into the Ethereal Plane while on the Material Plane and vice versa."
+      ]
+    },
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The spider can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    },
+    {
+      "name": "Web Walker",
+      "entries": [
+        "The spider ignores movement restrictions caused by webs, and the spider knows the location of any other creature in contact with the same web."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The spider makes two Bite attacks."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}8 ({@damage 1d10 + 3}) Piercing damage plus 9 ({@damage 2d8}) Poison damage. If this damage reduces the target to 0 {@variantrule Hit Points|XPHB}, the target becomes {@variantrule Stable|XPHB}, and it has the {@condition Poisoned|XPHB} condition for 1 hour. While {@condition Poisoned|XPHB}, the target also has the {@condition Paralyzed|XPHB} condition."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Ethereal Jaunt",
+      "entries": [
+        "The spider teleports from the Material Plane to the Ethereal Plane or vice versa."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "grassland",
+    "hill",
+    "planar, ethereal",
+    "underdark",
+    "urban"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/phase-spider.opus"
+  },
+  "traitTags": [
+    "Ethereal Sight",
+    "Spider Climb",
+    "Web Walker"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "paralyzed",
+    "poisoned"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

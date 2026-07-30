@@ -1,0 +1,15 @@
+{
+  "name": "Chain Shirt",
+  "source": "XPHB",
+  "page": 219,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "type": "MA|XPHB",
+  "rarity": "none",
+  "weight": 20,
+  "value": 5000,
+  "ac": 13,
+  "armor": true,
+  "hasFluffImages": true
+}

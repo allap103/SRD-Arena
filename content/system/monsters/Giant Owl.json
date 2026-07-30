@@ -1,0 +1,125 @@
+{
+  "name": "Giant Owl",
+  "source": "XMM",
+  "page": 358,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "celestial",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 19,
+    "formula": "3d10 + 3"
+  },
+  "speed": {
+    "walk": 5,
+    "fly": 60
+  },
+  "str": 13,
+  "dex": 15,
+  "con": 12,
+  "int": 10,
+  "wis": 14,
+  "cha": 10,
+  "save": {
+    "wis": "+4"
+  },
+  "skill": {
+    "perception": "+6",
+    "stealth": "+6"
+  },
+  "senses": [
+    "Darkvision 120 ft."
+  ],
+  "passive": 16,
+  "resist": [
+    "necrotic",
+    "radiant"
+  ],
+  "languages": [
+    "Celestial; understands Common",
+    "Elvish",
+    "and Sylvan but can't speak them"
+  ],
+  "cr": "1/4",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The owl casts one of the following spells, requiring no spell components and using Wisdom as the spellcasting ability:"
+      ],
+      "will": [
+        "{@spell Detect Evil and Good|XPHB}",
+        "{@spell Detect Magic|XPHB}"
+      ],
+      "daily": {
+        "1": [
+          "{@spell Clairvoyance|XPHB}"
+        ]
+      },
+      "ability": "wis",
+      "displayAs": "action"
+    }
+  ],
+  "trait": [
+    {
+      "name": "Flyby",
+      "entries": [
+        "The owl doesn't provoke an {@action Opportunity Attack|XPHB} when it flies out of an enemy's reach."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Talons",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}7 ({@damage 1d10 + 2}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "forest",
+    "hill"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-owl.opus"
+  },
+  "traitTags": [
+    "Flyby"
+  ],
+  "senseTags": [
+    "SD"
+  ],
+  "languageTags": [
+    "C",
+    "CE",
+    "CS",
+    "E",
+    "S"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Goggles of Night",
+  "source": "XDMG",
+  "page": 265,
+  "srd52": true,
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "wondrous": true,
+  "entries": [
+    "While wearing these dark lenses, you have {@sense Darkvision|XPHB} out to 60 feet. If you already have {@sense Darkvision|XPHB}, wearing the goggles increases its range by 60 feet."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Implements - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

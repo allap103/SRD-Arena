@@ -1,0 +1,76 @@
+{
+  "name": "Blood Hawk",
+  "source": "XMM",
+  "page": 350,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "S"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 7,
+    "formula": "2d6"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 60
+  },
+  "str": 6,
+  "dex": 14,
+  "con": 10,
+  "int": 3,
+  "wis": 14,
+  "cha": 5,
+  "skill": {
+    "perception": "+6"
+  },
+  "passive": 16,
+  "cr": "1/8",
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The hawk has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the hawk's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Beak",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}4 ({@damage 1d4 + 2}) Piercing damage, or 6 ({@damage 1d8 + 2}) Piercing damage if the target is {@status Bloodied|XPHB}."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "coastal",
+    "forest",
+    "grassland",
+    "hill",
+    "mountain"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/blood-hawk.opus"
+  },
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

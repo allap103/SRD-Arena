@@ -1,0 +1,219 @@
+{
+  "name": "Solar",
+  "group": [
+    "Angels"
+  ],
+  "source": "XMM",
+  "page": 288,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "L"
+  ],
+  "type": {
+    "type": "celestial",
+    "tags": [
+      "angel"
+    ]
+  },
+  "alignment": [
+    "L",
+    "G"
+  ],
+  "ac": [
+    21
+  ],
+  "hp": {
+    "average": 297,
+    "formula": "22d10 + 176"
+  },
+  "speed": {
+    "walk": 50,
+    "fly": {
+      "number": 150,
+      "condition": "(hover)"
+    },
+    "canHover": true
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 26,
+  "dex": 22,
+  "con": 26,
+  "int": 25,
+  "wis": 25,
+  "cha": 30,
+  "skill": {
+    "perception": "+14"
+  },
+  "senses": [
+    "Truesight 120 ft."
+  ],
+  "passive": 24,
+  "immune": [
+    "poison",
+    "radiant"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "exhaustion",
+    "frightened",
+    "poisoned"
+  ],
+  "languages": [
+    "all; telepathy 120 ft."
+  ],
+  "cr": "21",
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The solar casts one of the following spells, requiring no Material components and using Charisma as the spellcasting ability (spell save {@dc 25}):"
+      ],
+      "will": [
+        "{@spell Detect Evil and Good|XPHB}"
+      ],
+      "daily": {
+        "1e": [
+          "{@spell Commune|XPHB}",
+          "{@spell Control Weather|XPHB}",
+          "{@spell Dispel Evil and Good|XPHB}",
+          "{@spell Resurrection|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "action"
+    },
+    {
+      "name": "Divine Aid (3/Day)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The solar casts {@spell Cure Wounds|XPHB} (level 2 version), {@spell Lesser Restoration|XPHB}, or {@spell Remove Curse|XPHB}, using the same spellcasting ability as Spellcasting."
+      ],
+      "daily": {
+        "3": [
+          "{@spell Cure Wounds|XPHB} (level 2 version)",
+          "{@spell Lesser Restoration|XPHB}",
+          "{@spell Remove Curse|XPHB}"
+        ]
+      },
+      "ability": "cha",
+      "displayAs": "bonus",
+      "hidden": [
+        "daily"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Divine Awareness",
+      "entries": [
+        "The solar knows if it hears a lie."
+      ]
+    },
+    {
+      "name": "Exalted Restoration",
+      "entries": [
+        "If the solar dies outside Mount Celestia, its body disappears, and it gains a new body instantly, reviving with all its {@variantrule Hit Points|XPHB} somewhere in Mount Celestia."
+      ]
+    },
+    {
+      "name": "Legendary Resistance (4/Day)",
+      "entries": [
+        "If the solar fails a saving throw, it can choose to succeed instead."
+      ]
+    },
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The solar has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The solar makes two Flying Sword attacks. It can replace one attack with a use of Slaying Bow."
+      ]
+    },
+    {
+      "name": "Flying Sword",
+      "entries": [
+        "{@atkr m,r} {@hit 15}, reach 10 ft. or range 120 ft. {@h}22 ({@damage 4d6 + 8}) Slashing damage plus 36 ({@damage 8d8}) Radiant damage. {@hom}The sword magically returns to the solar's hand or hovers within 5 feet of the solar immediately after a ranged attack."
+      ]
+    },
+    {
+      "name": "Slaying Bow",
+      "entries": [
+        "{@actSave dex} {@dc 21}, one creature the solar can see within 600 feet. {@actSaveFail} If the creature has 100 {@variantrule Hit Points|XPHB} or fewer, it dies. It otherwise takes 24 ({@damage 4d8 + 6}) Piercing damage plus 36 ({@damage 8d8}) Radiant damage."
+      ]
+    }
+  ],
+  "legendary": [
+    {
+      "name": "Blinding Gaze",
+      "entries": [
+        "{@actSave con} {@dc 25}, one creature the solar can see within 120 feet. {@actSaveFail} The target has the {@condition Blinded|XPHB} condition for 1 minute. {@actSaveSuccessOrFail} The solar can't take this action again until the start of its next turn."
+      ]
+    },
+    {
+      "name": "Radiant Teleport",
+      "entries": [
+        "The solar teleports up to 60 feet to an unoccupied space it can see. {@actSave dex} {@dc 25}, each creature in a 10-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the solar at its destination space. {@actSaveFail} 11 ({@damage 2d10}) Radiant damage. {@actSaveSuccess} Half damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, upper"
+  ],
+  "treasure": [
+    "any"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/solar.opus"
+  },
+  "traitTags": [
+    "Legendary Resistances",
+    "Magic Resistance"
+  ],
+  "senseTags": [
+    "U"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "TP",
+    "XX"
+  ],
+  "damageTags": [
+    "P",
+    "R",
+    "S"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "blinded"
+  ],
+  "savingThrowForced": [
+    "constitution",
+    "dexterity"
+  ],
+  "savingThrowForcedSpell": [
+    "charisma"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

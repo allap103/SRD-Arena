@@ -1,0 +1,17 @@
+{
+  "name": "Silk Rope (50 feet)",
+  "source": "PHB",
+  "page": 153,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "PaBTSO"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 5,
+  "value": 1000,
+  "entries": [
+    "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a {@dc 17} Strength check."
+  ]
+}

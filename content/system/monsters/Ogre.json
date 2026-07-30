@@ -1,0 +1,106 @@
+{
+  "name": "Ogre",
+  "source": "XMM",
+  "page": 231,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-BD",
+    "EFA",
+    "FRAiF",
+    "HotB",
+    "ScoEE"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "giant",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 68,
+    "formula": "8d10 + 24"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 19,
+  "dex": 8,
+  "con": 16,
+  "int": 5,
+  "wis": 7,
+  "cha": 7,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 8,
+  "languages": [
+    "Common",
+    "Giant"
+  ],
+  "cr": "2",
+  "gear": [
+    "greatclub|xphb",
+    {
+      "item": "javelin|xphb",
+      "quantity": 3
+    }
+  ],
+  "action": [
+    {
+      "name": "Greatclub",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}13 ({@damage 2d8 + 4}) Bludgeoning damage."
+      ]
+    },
+    {
+      "name": "Javelin",
+      "entries": [
+        "{@atkr m,r} {@hit 6}, reach 5 ft. or range 30/120 ft. {@h}11 ({@damage 2d6 + 4}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "desert",
+    "forest",
+    "grassland",
+    "hill",
+    "mountain",
+    "swamp",
+    "underdark"
+  ],
+  "treasure": [
+    "armaments"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/ogre.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "C",
+    "GI"
+  ],
+  "damageTags": [
+    "B",
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "THW"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

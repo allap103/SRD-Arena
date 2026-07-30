@@ -1,0 +1,42 @@
+{
+  "name": "True Seeing",
+  "source": "XPHB",
+  "page": 336,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 6,
+  "school": "D",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "touch"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": {
+      "text": "mushroom powder worth 25+ GP, which the spell consumes",
+      "cost": 2500,
+      "consume": true
+    }
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      }
+    }
+  ],
+  "entries": [
+    "For the duration, the willing creature you touch has {@sense Truesight|XPHB} with a range of 120 feet."
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "name": "Fire Elemental",
+  "source": "XMM",
+  "page": 118,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TFV",
+    "FRAiF",
+    "ScoEE"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "elemental",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 93,
+    "formula": "11d10 + 33"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 10,
+  "dex": 17,
+  "con": 16,
+  "int": 6,
+  "wis": 10,
+  "cha": 7,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "resist": [
+    "bludgeoning",
+    "piercing",
+    "slashing"
+  ],
+  "immune": [
+    "fire",
+    "poison"
+  ],
+  "conditionImmune": [
+    "exhaustion",
+    "grappled",
+    "paralyzed",
+    "petrified",
+    "poisoned",
+    "prone",
+    "restrained",
+    "unconscious"
+  ],
+  "languages": [
+    "Primordial (Ignan)"
+  ],
+  "cr": "5",
+  "trait": [
+    {
+      "name": "Fire Aura",
+      "entries": [
+        "At the end of each of the elemental's turns, each creature in a 10-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the elemental takes 5 ({@damage 1d10}) Fire damage. Creatures and flammable objects in the {@variantrule Emanation [Area of Effect]|XPHB|Emanation} start {@hazard burning|XPHB}."
+      ]
+    },
+    {
+      "name": "Fire Form",
+      "entries": [
+        "The elemental can move through a space as narrow as 1 inch without expending extra movement to do so, and it can enter a creature's space and stop there. The first time it enters a creature's space on a turn, that creature takes 5 ({@damage 1d10}) Fire damage."
+      ]
+    },
+    {
+      "name": "Illumination",
+      "entries": [
+        "The elemental sheds {@variantrule Bright Light|XPHB} in a 30-foot radius and {@variantrule Dim Light|XPHB} for an additional 30 feet."
+      ]
+    },
+    {
+      "name": "Water Susceptibility",
+      "entries": [
+        "The elemental takes 3 ({@damage 1d6}) Cold damage for every 5 feet the elemental moves in water or for every gallon of water splashed on it."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The elemental makes two Burn attacks."
+      ]
+    },
+    {
+      "name": "Burn",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Fire damage. If the target is a creature or a flammable object, it starts {@hazard burning|XPHB}."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "planar, fire"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/fire-elemental.opus"
+  },
+  "traitTags": [
+    "Illumination"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "IG",
+    "P"
+  ],
+  "damageTags": [
+    "C",
+    "F"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

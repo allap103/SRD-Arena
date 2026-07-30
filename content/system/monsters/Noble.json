@@ -1,0 +1,101 @@
+{
+  "name": "Noble",
+  "source": "XMM",
+  "page": 227,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-BtS",
+    "DrDe-DaS",
+    "DrDe-TDoN",
+    "DrDe-TFV",
+    "EFA",
+    "FRAiF",
+    "HotB",
+    "LFL",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": "humanoid",
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 9,
+    "formula": "2d8"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 11,
+  "dex": 12,
+  "con": 11,
+  "int": 12,
+  "wis": 14,
+  "cha": 16,
+  "skill": {
+    "deception": "+5",
+    "insight": "+4",
+    "persuasion": "+5"
+  },
+  "passive": 12,
+  "languages": [
+    "Common plus two other languages"
+  ],
+  "cr": "1/8",
+  "gear": [
+    "breastplate|xphb",
+    "rapier|xphb"
+  ],
+  "action": [
+    {
+      "name": "Rapier",
+      "entries": [
+        "{@atkr m} {@hit 3}, reach 5 ft. {@h}5 ({@damage 1d8 + 1}) Piercing damage."
+      ]
+    }
+  ],
+  "reaction": [
+    {
+      "name": "Parry",
+      "entries": [
+        "{@actTrigger} The noble is hit by a melee attack roll while holding a weapon. {@actResponse} The noble adds 2 to its AC against that attack, possibly causing it to miss."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/noble.opus"
+  },
+  "actionTags": [
+    "Parry"
+  ],
+  "languageTags": [
+    "C",
+    "X"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,77 @@
+{
+  "name": "Stirge",
+  "source": "XMM",
+  "page": 299,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "HotB",
+    "RHW"
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "monstrosity",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 5,
+    "formula": "2d4"
+  },
+  "speed": {
+    "walk": 10,
+    "fly": 40
+  },
+  "str": 4,
+  "dex": 16,
+  "con": 11,
+  "int": 2,
+  "wis": 8,
+  "cha": 6,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 9,
+  "cr": "1/8",
+  "action": [
+    {
+      "name": "Proboscis",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}6 ({@damage 1d6 + 3}) Piercing damage, and the stirge attaches to the target. While attached, the stirge can't make Proboscis attacks, and the target takes 5 ({@damage 2d4}) Necrotic damage at the start of each of the stirge's turns.",
+        "The stirge can detach itself by spending 5 feet of its movement. The target or a creature within 5 feet of it can detach the stirge as an action."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "grassland",
+    "hill",
+    "mountain",
+    "swamp",
+    "underdark",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/stirge.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "N",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

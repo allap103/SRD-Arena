@@ -1,0 +1,210 @@
+{
+  "name": "Archmage",
+  "source": "XMM",
+  "page": 199,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "FRAiF",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "S",
+    "M"
+  ],
+  "type": {
+    "type": "humanoid",
+    "tags": [
+      "wizard"
+    ]
+  },
+  "alignment": [
+    "N"
+  ],
+  "ac": [
+    17
+  ],
+  "hp": {
+    "average": 170,
+    "formula": "31d8 + 31"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 10,
+  "dex": 14,
+  "con": 12,
+  "int": 20,
+  "wis": 15,
+  "cha": 16,
+  "save": {
+    "int": "+9",
+    "wis": "+6"
+  },
+  "skill": {
+    "arcana": "+13",
+    "history": "+9",
+    "perception": "+6"
+  },
+  "passive": 16,
+  "immune": [
+    "psychic"
+  ],
+  "conditionImmune": [
+    {
+      "conditionImmune": [
+        "charmed"
+      ],
+      "note": "(with Mind Blank)",
+      "cond": true
+    }
+  ],
+  "languages": [
+    "Common plus five other languages"
+  ],
+  "cr": "12",
+  "gear": [
+    "wand|xphb"
+  ],
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The archmage casts one of the following spells, using Intelligence as the spellcasting ability (spell save {@dc 17}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Detect Thoughts|XPHB}",
+        "{@spell Disguise Self|XPHB}",
+        "{@spell Invisibility|XPHB}",
+        "{@spell Light|XPHB}",
+        "{@spell Mage Armor|XPHB} (included in AC)",
+        "{@spell Mage Hand|XPHB}",
+        "{@spell Prestidigitation|XPHB}"
+      ],
+      "daily": {
+        "2e": [
+          "{@spell Fly|XPHB}",
+          "{@spell Lightning Bolt|XPHB} (level 7 version)"
+        ],
+        "1e": [
+          "{@spell Cone of Cold|XPHB} (level 9 version)",
+          "{@spell Mind Blank|XPHB} (cast before combat)",
+          "{@spell Scrying|XPHB}",
+          "{@spell Teleport|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "action"
+    },
+    {
+      "name": "Misty Step (3/Day)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The mage casts {@spell Misty Step|XPHB}, using the same spellcasting ability as Spellcasting."
+      ],
+      "daily": {
+        "3": [
+          "{@spell Misty Step|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "bonus",
+      "hidden": [
+        "daily"
+      ]
+    },
+    {
+      "name": "Protective Magic (3/Day)",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The archmage casts {@spell Counterspell|XPHB} or {@spell Shield|XPHB} in response to the spell's trigger, using the same spellcasting ability as Spellcasting."
+      ],
+      "daily": {
+        "3": [
+          "{@spell Counterspell|XPHB}",
+          "{@spell Shield|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "reaction",
+      "hidden": [
+        "daily"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Magic Resistance",
+      "entries": [
+        "The archmage has {@variantrule Advantage|XPHB} on saving throws against spells and other magical effects."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The archmage makes four Arcane Burst attacks."
+      ]
+    },
+    {
+      "name": "Arcane Burst",
+      "entries": [
+        "{@atkr m,r} {@hit 9}, reach 5 ft. or range 150 ft. {@h}27 ({@damage 4d10 + 5}) Force damage."
+      ]
+    }
+  ],
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "arcana",
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/archmage.opus"
+  },
+  "traitTags": [
+    "Magic Resistance"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C"
+  ],
+  "damageTags": [
+    "O"
+  ],
+  "damageTagsSpell": [
+    "C",
+    "L",
+    "O"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "MA",
+    "RA"
+  ],
+  "conditionInflictSpell": [
+    "invisible"
+  ],
+  "savingThrowForcedSpell": [
+    "constitution",
+    "dexterity",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

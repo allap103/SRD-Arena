@@ -1,0 +1,76 @@
+{
+  "name": "Badger",
+  "source": "XMM",
+  "page": 349,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 346
+    }
+  ],
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 5,
+    "formula": "1d4 + 3"
+  },
+  "speed": {
+    "walk": 20,
+    "burrow": 5
+  },
+  "str": 10,
+  "dex": 11,
+  "con": 16,
+  "int": 2,
+  "wis": 12,
+  "cha": 5,
+  "skill": {
+    "perception": "+3"
+  },
+  "senses": [
+    "Darkvision 30 ft."
+  ],
+  "passive": 13,
+  "resist": [
+    "poison"
+  ],
+  "cr": "0",
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}1 Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/badger.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

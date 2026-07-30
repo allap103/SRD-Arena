@@ -1,0 +1,83 @@
+{
+  "name": "Polar Bear",
+  "source": "XMM",
+  "page": 367,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 42,
+    "formula": "5d10 + 15"
+  },
+  "speed": {
+    "walk": 40,
+    "swim": 40
+  },
+  "str": 20,
+  "dex": 14,
+  "con": 16,
+  "int": 2,
+  "wis": 13,
+  "cha": 7,
+  "skill": {
+    "perception": "+5",
+    "stealth": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 15,
+  "resist": [
+    "cold"
+  ],
+  "cr": "2",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The bear makes two Rend attacks."
+      ]
+    },
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}9 ({@damage 1d8 + 5}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/polar-bear.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

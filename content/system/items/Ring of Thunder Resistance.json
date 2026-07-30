@@ -1,0 +1,17 @@
+{
+  "name": "Ring of Thunder Resistance",
+  "source": "XDMG",
+  "page": 294,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "resist": [
+    "thunder"
+  ],
+  "detail1": "spinel",
+  "rarity": "rare",
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Ring of Resistance|XDMG}"
+  ]
+}

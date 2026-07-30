@@ -1,0 +1,129 @@
+{
+  "name": "Chuul",
+  "source": "XMM",
+  "page": 71,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "aberration",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    16
+  ],
+  "hp": {
+    "average": 76,
+    "formula": "9d10 + 27"
+  },
+  "speed": {
+    "walk": 30,
+    "swim": 30
+  },
+  "str": 19,
+  "dex": 10,
+  "con": 16,
+  "int": 5,
+  "wis": 11,
+  "cha": 5,
+  "skill": {
+    "perception": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "poisoned"
+  ],
+  "languages": [
+    "understands Deep Speech but can't speak"
+  ],
+  "cr": "4",
+  "trait": [
+    {
+      "name": "Amphibious",
+      "entries": [
+        "The chuul can breathe air and water."
+      ]
+    },
+    {
+      "name": "Sense Magic",
+      "entries": [
+        "The chuul senses magic within 120 feet of itself. This trait otherwise works like the {@spell Detect Magic|XPHB} spell but isn't itself magical."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The chuul makes two Pincer attacks and uses Paralyzing Tentacles."
+      ]
+    },
+    {
+      "name": "Pincer",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 10 ft. {@h}9 ({@damage 1d10 + 4}) Bludgeoning damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 14}) from one of two pincers."
+      ]
+    },
+    {
+      "name": "Paralyzing Tentacles",
+      "entries": [
+        "{@actSave con} {@dc 13}, one creature {@condition Grappled|XPHB} by the chuul. {@actSaveFail} The target has the {@condition Poisoned|XPHB} condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically. While {@condition Poisoned|XPHB}, the target has the {@condition Paralyzed|XPHB} condition."
+      ]
+    }
+  ],
+  "environment": [
+    "coastal",
+    "swamp",
+    "underdark"
+  ],
+  "treasure": [
+    "relics"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/chuul.opus"
+  },
+  "traitTags": [
+    "Amphibious"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "CS",
+    "DS"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "conditionInflict": [
+    "grappled",
+    "paralyzed",
+    "poisoned"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

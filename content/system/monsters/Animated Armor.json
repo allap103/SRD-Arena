@@ -1,0 +1,93 @@
+{
+  "name": "Animated Armor",
+  "source": "XMM",
+  "page": 16,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "EFA",
+    "FRAiF",
+    "LFL",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "construct",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    18
+  ],
+  "hp": {
+    "average": 33,
+    "formula": "6d8 + 6"
+  },
+  "speed": {
+    "walk": 25
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 14,
+  "dex": 11,
+  "con": 13,
+  "int": 1,
+  "wis": 3,
+  "cha": 1,
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 6,
+  "immune": [
+    "poison",
+    "psychic"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "deafened",
+    "exhaustion",
+    "frightened",
+    "paralyzed",
+    "petrified",
+    "poisoned"
+  ],
+  "cr": "1",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The armor makes two Slam attacks."
+      ]
+    },
+    {
+      "name": "Slam",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/animated-armor.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

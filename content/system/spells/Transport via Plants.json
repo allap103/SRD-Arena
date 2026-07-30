@@ -1,0 +1,42 @@
+{
+  "name": "Transport via Plants",
+  "source": "XPHB",
+  "page": 334,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 6,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 10
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      }
+    }
+  ],
+  "entries": [
+    "This spell creates a magical link between a Large or larger inanimate plant within range and another plant, at any distance, on the same plane of existence. You must have seen or touched the destination plant at least once before. For the duration, any creature can step into the target plant and exit from the destination plant by using 5 feet of movement."
+  ],
+  "miscTags": [
+    "TP"
+  ],
+  "hasFluffImages": true
+}

@@ -1,0 +1,80 @@
+{
+  "name": "Hyena",
+  "source": "XMM",
+  "page": 363,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "M"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    11
+  ],
+  "hp": {
+    "average": 5,
+    "formula": "1d8 + 1"
+  },
+  "speed": {
+    "walk": 50
+  },
+  "str": 11,
+  "dex": 13,
+  "con": 12,
+  "int": 2,
+  "wis": 12,
+  "cha": 5,
+  "skill": {
+    "perception": "+3"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 13,
+  "cr": "0",
+  "trait": [
+    {
+      "name": "Pack Tactics",
+      "entries": [
+        "The hyena has {@variantrule Advantage|XPHB} on an attack roll against a creature if at least one of the hyena's allies is within 5 feet of the creature and the ally doesn't have the {@condition Incapacitated|XPHB} condition."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 5 ft. {@h}3 ({@damage 1d6}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "grassland",
+    "hill"
+  ],
+  "familiar": true,
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/hyena.opus"
+  },
+  "traitTags": [
+    "Pack Tactics"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

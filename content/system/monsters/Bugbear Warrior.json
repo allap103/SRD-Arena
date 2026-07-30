@@ -1,0 +1,122 @@
+{
+  "name": "Bugbear Warrior",
+  "group": [
+    "Goblinoids"
+  ],
+  "source": "XMM",
+  "page": 62,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "BQDD",
+    "DrDe",
+    "DrDe-BD",
+    "FRAiF",
+    "HotB",
+    "UtHftLH"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "fey",
+    "tags": [
+      "goblinoid"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 33,
+    "formula": "6d8 + 6"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 15,
+  "dex": 14,
+  "con": 13,
+  "int": 8,
+  "wis": 11,
+  "cha": 9,
+  "skill": {
+    "stealth": "+6",
+    "survival": "+2"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 10,
+  "languages": [
+    "Common",
+    "Goblin"
+  ],
+  "cr": "1",
+  "gear": [
+    "hide armor|xphb",
+    {
+      "item": "light hammer|xphb",
+      "quantity": 3
+    }
+  ],
+  "trait": [
+    {
+      "name": "Abduct",
+      "entries": [
+        "The bugbear needn't spend extra movement to move a creature it is grappling."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Grab",
+      "entries": [
+        "{@atkr m} {@hit 4}, reach 10 ft. {@h}9 ({@damage 2d6 + 2}) Bludgeoning damage. If the target is a Medium or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 12})."
+      ]
+    },
+    {
+      "name": "Light Hammer",
+      "entries": [
+        "{@atkr m,r} {@hit 4} (with {@variantrule Advantage|XPHB} if the target is {@condition Grappled|XPHB} by the bugbear), reach 10 ft. or range 20/60 ft. {@h}9 ({@damage 3d4 + 2}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "planar, feywild",
+    "underdark"
+  ],
+  "treasure": [
+    "armaments",
+    "individual"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "C",
+    "GO"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RCH",
+    "THW"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

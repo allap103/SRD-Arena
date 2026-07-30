@@ -1,0 +1,116 @@
+{
+  "name": "Hat of Many Spells",
+  "source": "XDMG",
+  "page": 266,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "UtHftLH"
+    },
+    {
+      "source": "HBTD"
+    }
+  ],
+  "type": "SCF|XPHB",
+  "rarity": "very rare",
+  "reqAttune": "by a wizard",
+  "reqAttuneTags": [
+    {
+      "class": "wizard"
+    }
+  ],
+  "wondrous": true,
+  "focus": [
+    "Wizard"
+  ],
+  "entries": [
+    "This pointed hat has the following properties.",
+    {
+      "type": "entries",
+      "name": "Spellcasting Focus",
+      "entries": [
+        "While holding the hat, you can use it as a {@variantrule Spellcasting Focus|XPHB} for your Wizard spells. Any spell you cast using the hat gains a special Somatic component: you must reach into the hat and \"pull\" the spell out of it."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Unknown Spell",
+      "entries": [
+        "While holding the hat, you can try to cast a level 1+ spell you don't know. The spell must be on the Wizard spell list, it must be of a level you can cast, and it can't have Material components costing more than 1,000 GP. Once you decide on the spell, you must expend a spell slot of the spell's level. Then, to determine whether you cast the spell, make an Intelligence ({@skill Arcana|XPHB}) check ({@dc 10} plus the spell's level). On a successful check, you cast the spell using its normal casting time, and you can't use this property again until you finish a {@variantrule Short Rest|XPHB|Short} or {@variantrule Long Rest|XPHB}. On a failed check, you fail to cast the spell and a random effect occurs instead, determined by rolling on the following table.",
+        "Any spell you cast from the hat uses your spell save DC and spell attack bonus.",
+        {
+          "type": "table",
+          "colStyles": [
+            "col-2 text-center",
+            "col-10"
+          ],
+          "colLabels": [
+            "1d100",
+            "Effect"
+          ],
+          "rows": [
+            [
+              "01-50",
+              "You cast a random spell determined by rolling {@dice 1d10}: on a {@b 1}, {@spell Enlarge/Reduce|XPHB} (enlarge effect); on a {@b 2}, {@spell Enlarge/Reduce|XPHB} (reduce effect); on a {@b 3}, {@spell Faerie Fire|XPHB}; on a {@b 4}, {@spell Fireball|XPHB}; on a {@b 5}, {@spell Gust of Wind|XPHB}; on a {@b 6}, {@spell Invisibility|XPHB} (cast on yourself); on a {@b 7}, {@spell Lightning Bolt|XPHB}; on an {@b 8}, {@spell Phantasmal Force|XPHB}; on a {@b 9}, {@spell Polymorph|XPHB}; on a {@b 10}, {@spell Stinking Cloud|XPHB}."
+            ],
+            [
+              "51-55",
+              "You have the {@condition Stunned|XPHB} condition until the end of your next turn, believing something awesome just happened."
+            ],
+            [
+              "56-60",
+              "A harmless swarm of butterflies fills a 10-foot {@variantrule Cube [Area of Effect]|XPHB|Cube} within 30 feet of yourself. The swarm disperses after 1 minute."
+            ],
+            [
+              "61-65",
+              "You pull a nonmagical object out of the hat. Roll {@dice 1d4} to determine the object: on a {@b 1}, a vial of Acid; on a {@b 2}, a flask of Alchemist's Fire; on a {@b 3}, a Crowbar; on a {@b 4}, a lit Torch."
+            ],
+            [
+              "66-70",
+              "You suffer a bout of \"magic sickness\" and have the {@condition Poisoned|XPHB} condition for 1 hour."
+            ],
+            [
+              "71-75",
+              "You have the {@condition Petrified|XPHB} condition until the end of your next turn."
+            ],
+            [
+              "76-80",
+              "You pull a nonmagical object out of the hat. Roll {@dice 1d4} to determine the object: on a {@b 1}, a {@item Dagger|XPHB}; on a {@b 2}, a {@item Rope|XPHB} with a {@item Grappling Hook|XPHB} tied to one end; on a {@b 3}, a bag of {@item Caltrops|XPHB}; on a {@b 4}, a gem worth 50 GP."
+            ],
+            [
+              "81-85",
+              "A creature appears in an unoccupied space as close to you as possible. The creature isn't under your control and acts as it normally would, and it disappears after 1 hour or when it drops to 0 {@variantrule Hit Points|XPHB}. Roll {@dice 1d4} to determine the creature: on a {@b 1}, a {@creature Camel|XMM}; on a {@b 2}, a {@creature Constrictor Snake|XMM}; on a {@b 3}, an {@creature Elephant|XMM}; on a {@b 4}, a {@creature Mule|XMM}."
+            ],
+            [
+              "86-90",
+              "A {@variantrule Hostile [Attitude]|XPHB|Hostile} {@creature Swarm of Bats|XMM} flies out of the hat, occupies your space, and attacks you."
+            ],
+            [
+              "91-95",
+              "A vertical, 10-foot-diameter, two-way portal to another plane of existence opens in an unoccupied space within 30 feet of you and remains open until the end of your next turn. The DM determines where it leads."
+            ],
+            [
+              "96-00",
+              "You pull a magic item out of the hat. Roll {@dice 1d6} to determine the item's rarity: on a {@b 1-3}, {@filter Common|items|rarity=Common}; on a {@b 4-5}, {@filter Uncommon|items|rarity=Uncommon}; on a {@b 6}, {@filter Rare|items|rarity=Rare}. The DM chooses the item, which disappears after 1 hour if it's not consumed or destroyed before then."
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "attachedSpells": [
+    "enlarge/reduce|xphb",
+    "faerie fire|xphb",
+    "fireball|xphb",
+    "gust of wind|xphb",
+    "invisibility|xphb",
+    "lightning bolt|xphb",
+    "phantasmal force|xphb",
+    "polymorph|xphb",
+    "stinking cloud|xphb"
+  ],
+  "lootTables": [
+    "Arcana - Very Rare|XDMG"
+  ]
+}

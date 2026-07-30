@@ -1,0 +1,56 @@
+{
+  "name": "Scorching Ray",
+  "source": "XPHB",
+  "page": 313,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "UtHftLH"
+  ],
+  "level": 2,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 120
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You hurl three fiery rays. You can hurl them at one target within range or at several. Make a ranged spell attack for each ray. On a hit, the target takes {@damage 2d6} Fire damage."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "You create one additional ray for each spell slot level above 2."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "fire"
+  ],
+  "spellAttack": [
+    "R"
+  ],
+  "areaTags": [
+    "MT",
+    "ST"
+  ]
+}

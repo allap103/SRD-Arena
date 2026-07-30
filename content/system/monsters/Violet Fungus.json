@@ -1,0 +1,81 @@
+{
+  "name": "Violet Fungus",
+  "source": "XMM",
+  "page": 126,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": "plant",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    5
+  ],
+  "hp": {
+    "average": 18,
+    "formula": "4d8"
+  },
+  "speed": {
+    "walk": 5
+  },
+  "str": 3,
+  "dex": 1,
+  "con": 10,
+  "int": 1,
+  "wis": 3,
+  "cha": 1,
+  "senses": [
+    "Blindsight 30 ft."
+  ],
+  "passive": 6,
+  "conditionImmune": [
+    "blinded",
+    "charmed",
+    "deafened",
+    "frightened"
+  ],
+  "cr": "1/4",
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The fungus makes two Rotting Touch attacks."
+      ]
+    },
+    {
+      "name": "Rotting Touch",
+      "entries": [
+        "{@atkr m} {@hit 2}, reach 10 ft. {@h}4 ({@damage 1d8}) Necrotic damage."
+      ]
+    }
+  ],
+  "environment": [
+    "underdark"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/violet-fungus.opus"
+  },
+  "senseTags": [
+    "B"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "N"
+  ],
+  "miscTags": [
+    "MA",
+    "RCH"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

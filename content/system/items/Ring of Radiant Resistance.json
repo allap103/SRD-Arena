@@ -1,0 +1,17 @@
+{
+  "name": "Ring of Radiant Resistance",
+  "source": "XDMG",
+  "page": 294,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "resist": [
+    "radiant"
+  ],
+  "detail1": "topaz",
+  "rarity": "rare",
+  "hasRefs": true,
+  "entries": [
+    "{#itemEntry Ring of Resistance|XDMG}"
+  ]
+}

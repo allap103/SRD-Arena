@@ -1,0 +1,66 @@
+{
+  "name": "Seahorse",
+  "source": "XMM",
+  "page": 369,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "T"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 1,
+    "formula": "1d4 - 1"
+  },
+  "speed": {
+    "walk": 5,
+    "swim": 20
+  },
+  "str": 1,
+  "dex": 12,
+  "con": 8,
+  "int": 1,
+  "wis": 10,
+  "cha": 2,
+  "skill": {
+    "perception": "+2",
+    "stealth": "+5"
+  },
+  "passive": 12,
+  "cr": {
+    "cr": "0",
+    "xp": 0
+  },
+  "trait": [
+    {
+      "name": "Water Breathing",
+      "entries": [
+        "The seahorse can breathe only underwater."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bubble Dash",
+      "entries": [
+        "While underwater, the seahorse moves up to its {@variantrule Swim Speed|XPHB} without provoking {@action Opportunity Attack|XPHB|Opportunity Attacks}."
+      ]
+    }
+  ],
+  "environment": [
+    "underwater"
+  ],
+  "familiar": true,
+  "traitTags": [
+    "Water Breathing"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

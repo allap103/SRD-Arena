@@ -1,0 +1,114 @@
+{
+  "name": "Giant Spider",
+  "source": "XMM",
+  "page": 359,
+  "srd52": true,
+  "basicRules2024": true,
+  "otherSources": [
+    {
+      "source": "XPHB",
+      "page": 351
+    }
+  ],
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "HotB",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    14
+  ],
+  "hp": {
+    "average": 26,
+    "formula": "4d10 + 4"
+  },
+  "speed": {
+    "walk": 30,
+    "climb": 30
+  },
+  "str": 14,
+  "dex": 16,
+  "con": 12,
+  "int": 2,
+  "wis": 11,
+  "cha": 4,
+  "skill": {
+    "perception": "+4",
+    "stealth": "+7"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "cr": "1",
+  "trait": [
+    {
+      "name": "Spider Climb",
+      "entries": [
+        "The spider can climb difficult surfaces, including along ceilings, without needing to make an ability check."
+      ]
+    },
+    {
+      "name": "Web Walker",
+      "entries": [
+        "The spider ignores movement restrictions caused by webs, and it knows the location of any other creature in contact with the same web."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Piercing damage plus 7 ({@damage 2d6}) Poison damage."
+      ]
+    },
+    {
+      "name": "Web {@recharge 5}",
+      "entries": [
+        "{@actSave dex} {@dc 13}, one creature the spider can see within 60 feet. {@actSaveFail} The target has the {@condition Restrained|XPHB} condition until the web is destroyed (AC 10; HP 5; {@variantrule Vulnerability|XPHB} to Fire damage; {@variantrule Immunity|XPHB} to Poison and Psychic damage)."
+      ]
+    }
+  ],
+  "environment": [
+    "desert",
+    "forest",
+    "swamp",
+    "underdark",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-spider.opus"
+  },
+  "traitTags": [
+    "Spider Climb",
+    "Web Walker"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "I",
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "conditionInflict": [
+    "restrained"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,74 @@
+{
+  "name": "Divine Word",
+  "source": "XPHB",
+  "page": 265,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 7,
+  "school": "V",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "type": "instant"
+    }
+  ],
+  "entries": [
+    "You utter a word imbued with power from the Upper Planes. Each creature of your choice in range makes a Charisma saving throw. On a failed save, a target that has 50 {@variantrule Hit Points|XPHB} or fewer suffers an effect based on its current {@variantrule Hit Points|XPHB}, as shown in the Divine Word Effects table. Regardless of its {@variantrule Hit Points|XPHB}, a Celestial, an Elemental, a Fey, or a Fiend target that fails its save is forced back to its plane of origin (if it isn't there already) and can't return to the current plane for 24 hours by any means short of a {@spell Wish|XPHB} spell.",
+    {
+      "type": "table",
+      "caption": "Divine Word Effects",
+      "colStyles": [
+        "col-2 text-center",
+        "col-10"
+      ],
+      "colLabels": [
+        "Hit Points",
+        "Effect"
+      ],
+      "rows": [
+        [
+          "0-20",
+          "The target dies."
+        ],
+        [
+          "21-30",
+          "The target has the {@condition Blinded|XPHB}, {@condition Deafened|XPHB}, and {@condition Stunned|XPHB} conditions for 1 hour."
+        ],
+        [
+          "31-40",
+          "The target has the {@condition Blinded|XPHB} and {@condition Deafened|XPHB} conditions for 10 minutes."
+        ],
+        [
+          "41-50",
+          "The target has the {@condition Deafened|XPHB} condition for 1 minute."
+        ]
+      ]
+    }
+  ],
+  "conditionInflict": [
+    "blinded",
+    "deafened",
+    "stunned"
+  ],
+  "savingThrow": [
+    "charisma"
+  ],
+  "areaTags": [
+    "MT"
+  ]
+}

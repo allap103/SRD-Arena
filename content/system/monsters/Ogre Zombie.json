@@ -1,0 +1,101 @@
+{
+  "name": "Ogre Zombie",
+  "source": "XMM",
+  "page": 346,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TWoO",
+    "HBTD",
+    "HotB",
+    "RHW"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "undead",
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    8
+  ],
+  "hp": {
+    "average": 85,
+    "formula": "9d10 + 36"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 19,
+  "dex": 6,
+  "con": 18,
+  "int": 3,
+  "wis": 6,
+  "cha": 5,
+  "save": {
+    "wis": "+0"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 8,
+  "immune": [
+    "poison"
+  ],
+  "conditionImmune": [
+    "exhaustion",
+    "poisoned"
+  ],
+  "languages": [
+    "understands Common and Giant but can't speak"
+  ],
+  "cr": "2",
+  "trait": [
+    {
+      "name": "Undead Fortitude",
+      "entries": [
+        "If damage reduces the zombie to 0 {@variantrule Hit Points|XPHB}, it makes a Constitution saving throw ({@dc 5} plus the damage taken) unless the damage is Radiant or from a {@variantrule Critical Hit|XPHB}. On a successful save, the zombie drops to 1 {@variantrule Hit Points|XPHB|Hit Point} instead."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Slam",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}13 ({@damage 2d8 + 4}) Bludgeoning damage."
+      ]
+    }
+  ],
+  "environment": [
+    "planar, shadowfell",
+    "underdark",
+    "urban"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/ogre-zombie.opus"
+  },
+  "traitTags": [
+    "Undead Fortitude"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "languageTags": [
+    "C",
+    "CS",
+    "GI"
+  ],
+  "damageTags": [
+    "B"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

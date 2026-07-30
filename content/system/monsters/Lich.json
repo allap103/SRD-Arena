@@ -1,0 +1,267 @@
+{
+  "name": "Lich",
+  "source": "XMM",
+  "page": 196,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "DrDe",
+    "DrDe-TWoO",
+    "FRAiF",
+    "NF",
+    "RHW"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "undead",
+    "tags": [
+      "wizard"
+    ]
+  },
+  "alignment": [
+    "N",
+    "E"
+  ],
+  "ac": [
+    20
+  ],
+  "hp": {
+    "average": 315,
+    "formula": "42d8 + 126"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "initiative": {
+    "proficiency": 2
+  },
+  "str": 11,
+  "dex": 16,
+  "con": 16,
+  "int": 21,
+  "wis": 14,
+  "cha": 16,
+  "save": {
+    "dex": "+10",
+    "con": "+10",
+    "int": "+12",
+    "wis": "+9"
+  },
+  "skill": {
+    "arcana": "+19",
+    "history": "+12",
+    "insight": "+9",
+    "perception": "+9"
+  },
+  "senses": [
+    "Truesight 120 ft."
+  ],
+  "passive": 19,
+  "resist": [
+    "cold",
+    "lightning"
+  ],
+  "immune": [
+    "necrotic",
+    "poison"
+  ],
+  "conditionImmune": [
+    "charmed",
+    "exhaustion",
+    "frightened",
+    "paralyzed",
+    "poisoned"
+  ],
+  "languages": [
+    "all"
+  ],
+  "cr": {
+    "cr": "21",
+    "xpLair": 41000
+  },
+  "gear": [
+    "component pouch|xphb"
+  ],
+  "spellcasting": [
+    {
+      "name": "Spellcasting",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The lich casts one of the following spells, using Intelligence as the spellcasting ability (spell save {@dc 20}):"
+      ],
+      "will": [
+        "{@spell Detect Magic|XPHB}",
+        "{@spell Detect Thoughts|XPHB}",
+        "{@spell Dispel Magic|XPHB}",
+        "{@spell Fireball|XPHB} (level 5 version)",
+        "{@spell Invisibility|XPHB}",
+        "{@spell Lightning Bolt|XPHB} (level 5 version)",
+        "{@spell Mage Hand|XPHB}",
+        "{@spell Prestidigitation|XPHB}"
+      ],
+      "daily": {
+        "2e": [
+          "{@spell Animate Dead|XPHB}",
+          "{@spell Dimension Door|XPHB}",
+          "{@spell Plane Shift|XPHB}"
+        ],
+        "1e": [
+          "{@spell Chain Lightning|XPHB}",
+          "{@spell Finger of Death|XPHB}",
+          "{@spell Power Word Kill|XPHB}",
+          "{@spell Scrying|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "action"
+    },
+    {
+      "name": "Protective Magic",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The lich casts {@spell Counterspell|XPHB} or {@spell Shield|XPHB} in response to the spell's trigger, using the same spellcasting ability as Spellcasting."
+      ],
+      "will": [
+        "{@spell Counterspell|XPHB}",
+        "{@spell Shield|XPHB}"
+      ],
+      "ability": "int",
+      "displayAs": "reaction",
+      "hidden": [
+        "will"
+      ]
+    },
+    {
+      "name": "Frightening Gaze",
+      "type": "spellcasting",
+      "headerEntries": [
+        "The lich casts {@spell Fear|XPHB}, using the same spellcasting ability as Spellcasting. The lich can't take this action again until the start of its next turn."
+      ],
+      "legendary": {
+        "1": [
+          "{@spell Fear|XPHB}"
+        ]
+      },
+      "ability": "int",
+      "displayAs": "legendary",
+      "hidden": [
+        "legendary"
+      ]
+    }
+  ],
+  "trait": [
+    {
+      "name": "Legendary Resistance (4/Day, or 5/Day in Lair)",
+      "entries": [
+        "If the lich fails a saving throw, it can choose to succeed instead."
+      ]
+    },
+    {
+      "name": "Spirit Jar",
+      "entries": [
+        "If destroyed, the lich reforms in {@dice 1d10} days if it has a spirit jar, reviving with all its {@variantrule Hit Points|XPHB}. The new body appears in an unoccupied space within the lich's lair."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The lich makes three attacks, using Eldritch Burst or Paralyzing Touch in any combination."
+      ]
+    },
+    {
+      "name": "Eldritch Burst",
+      "entries": [
+        "{@atkr m,r} {@hit 12}, reach 5 ft. or range 120 ft. {@h}31 ({@damage 4d12 + 5}) Force damage."
+      ]
+    },
+    {
+      "name": "Paralyzing Touch",
+      "entries": [
+        "{@atkr m} {@hit 12}, reach 5 ft. {@h}15 ({@damage 3d6 + 5}) Cold damage, and the target has the {@condition Paralyzed|XPHB} condition until the start of the lich's next turn."
+      ]
+    }
+  ],
+  "legendaryActionsLair": 4,
+  "legendary": [
+    {
+      "name": "Deathly Teleport",
+      "entries": [
+        "The lich teleports up to 60 feet to an unoccupied space it can see, and each creature within 10 feet of the space it left takes 11 ({@damage 2d10}) Necrotic damage."
+      ]
+    },
+    {
+      "name": "Disrupt Life",
+      "entries": [
+        "{@actSave con} {@dc 20}, each creature that isn't an Undead in a 20-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation} originating from the lich. {@actSaveFail} 31 ({@damage 9d6}) Necrotic damage. {@actSaveSuccess} Half damage. {@actSaveSuccessOrFail} The lich can't take this action again until the start of its next turn."
+      ]
+    }
+  ],
+  "legendaryGroup": {
+    "name": "Lich",
+    "source": "XMM"
+  },
+  "environment": [
+    "any"
+  ],
+  "treasure": [
+    "arcana"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/lich.opus"
+  },
+  "traitTags": [
+    "Legendary Resistances"
+  ],
+  "senseTags": [
+    "U"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "XX"
+  ],
+  "damageTags": [
+    "C",
+    "N",
+    "O"
+  ],
+  "damageTagsSpell": [
+    "F",
+    "L",
+    "N",
+    "O",
+    "Y"
+  ],
+  "spellcastingTags": [
+    "O"
+  ],
+  "miscTags": [
+    "AOE",
+    "MA",
+    "RA"
+  ],
+  "conditionInflict": [
+    "paralyzed"
+  ],
+  "conditionInflictSpell": [
+    "frightened",
+    "invisible"
+  ],
+  "savingThrowForced": [
+    "constitution"
+  ],
+  "savingThrowForcedSpell": [
+    "constitution",
+    "dexterity",
+    "wisdom"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

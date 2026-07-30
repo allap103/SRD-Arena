@@ -1,0 +1,39 @@
+{
+  "name": "Efficient Quiver",
+  "source": "XDMG",
+  "page": 189,
+  "srd52": "Efficient Quiver",
+  "basicRules2024": true,
+  "rarity": "uncommon",
+  "wondrous": true,
+  "weight": 2,
+  "entries": [
+    "Each of the quiver's three compartments connects to an extradimensional space that allows the quiver to hold numerous items while never weighing more than 2 pounds. The shortest compartment can hold up to 60 {@item Arrow|XPHB|Arrows}, {@item Bolt|XPHB|Bolts}, or similar objects. The midsize compartment holds up to 18 {@item Javelin|XPHB|Javelins} or similar objects. The longest compartment holds up to 6 long objects, such as bows, {@item Quarterstaff|XPHB|Quarterstaff's}, or {@item Spear|XPHB|Spears}.",
+    "You can draw any item the quiver contains as if doing so from a regular quiver or scabbard."
+  ],
+  "containerCapacity": {
+    "item": [
+      {
+        "bolt|xphb": 60,
+        "arrow|xphb": 60
+      },
+      {
+        "javelin|xphb": 18
+      },
+      {
+        "longbow|xphb": 6,
+        "shortbow|xphb": 6,
+        "quarterstaff|xphb": 6,
+        "spear|xphb": 6
+      }
+    ],
+    "weightless": true
+  },
+  "optionalfeatures": [
+    "replicate magic item|tce"
+  ],
+  "lootTables": [
+    "Armaments - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

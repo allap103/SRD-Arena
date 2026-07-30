@@ -1,0 +1,83 @@
+{
+  "name": "Conjure Celestial",
+  "source": "XPHB",
+  "page": 254,
+  "srd52": true,
+  "basicRules2024": true,
+  "level": 7,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 90
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "minute",
+        "amount": 10
+      },
+      "concentration": true
+    }
+  ],
+  "entries": [
+    "You conjure a spirit from the Upper Planes, which manifests as a pillar of light in a 10-foot-radius, 40-foot-high {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} centered on a point within range. For each creature you can see in the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder}, choose which of these lights shines on it:",
+    {
+      "type": "list",
+      "style": "list-hang-notitle",
+      "items": [
+        {
+          "type": "item",
+          "name": "Healing Light",
+          "entries": [
+            "The target regains {@variantrule Hit Points|XPHB} equal to {@dice 4d12} plus your spellcasting ability modifier."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Searing Light",
+          "entries": [
+            "The target makes a Dexterity saving throw, taking {@damage 6d12} Radiant damage on a failed save or half as much damage on a successful one."
+          ]
+        }
+      ]
+    },
+    "Until the spell ends, {@variantrule Bright Light|XPHB} fills the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder}, and when you move on your turn, you can also move the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} up to 30 feet.",
+    "Whenever the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} moves into the space of a creature you can see and whenever a creature you can see enters the {@variantrule Cylinder [Area of Effect]|XPHB|Cylinder} or ends its turn there, you can bathe it in one of the lights. A creature can be affected by this spell only once per turn."
+  ],
+  "entriesHigherLevel": [
+    {
+      "type": "entries",
+      "name": "Using a Higher-Level Spell Slot",
+      "entries": [
+        "The healing and damage increase by {@scaledamage 6d12|7-9|1d12} for each spell slot level above 7."
+      ]
+    }
+  ],
+  "damageInflict": [
+    "radiant"
+  ],
+  "savingThrow": [
+    "dexterity"
+  ],
+  "miscTags": [
+    "HL",
+    "SGT"
+  ],
+  "areaTags": [
+    "Y"
+  ]
+}

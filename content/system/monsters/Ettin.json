@@ -1,0 +1,113 @@
+{
+  "name": "Ettin",
+  "source": "XMM",
+  "page": 116,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "NF"
+  ],
+  "size": [
+    "L"
+  ],
+  "type": "giant",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    12
+  ],
+  "hp": {
+    "average": 85,
+    "formula": "10d10 + 30"
+  },
+  "speed": {
+    "walk": 40
+  },
+  "str": 21,
+  "dex": 8,
+  "con": 17,
+  "int": 6,
+  "wis": 10,
+  "cha": 8,
+  "skill": {
+    "perception": "+4"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 14,
+  "conditionImmune": [
+    "blinded",
+    "charmed",
+    "deafened",
+    "frightened",
+    "stunned",
+    "unconscious"
+  ],
+  "languages": [
+    "Giant"
+  ],
+  "cr": "4",
+  "gear": [
+    "battleaxe|xphb",
+    "morningstar|xphb"
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The ettin makes one Battleaxe attack and one Morningstar attack."
+      ]
+    },
+    {
+      "name": "Battleaxe",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}14 ({@damage 2d8 + 5}) Slashing damage. If the target is a Large or smaller creature, it has the {@condition Prone|XPHB} condition."
+      ]
+    },
+    {
+      "name": "Morningstar",
+      "entries": [
+        "{@atkr m} {@hit 7}, reach 5 ft. {@h}14 ({@damage 2d8 + 5}) Piercing damage, and the target has {@variantrule Disadvantage|XPHB} on the next attack roll it makes before the end of its next turn."
+      ]
+    }
+  ],
+  "environment": [
+    "hill",
+    "mountain",
+    "underdark"
+  ],
+  "treasure": [
+    "individual"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/ettin.opus"
+  },
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "GI"
+  ],
+  "damageTags": [
+    "P",
+    "S"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW"
+  ],
+  "conditionInflict": [
+    "prone"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

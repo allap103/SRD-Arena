@@ -1,0 +1,19 @@
+{
+  "name": "Ink (1-ounce bottle)",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "KftGV"
+  ],
+  "reprintedAs": [
+    "Ink|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "value": 1000,
+  "miscTags": [
+    "CNS"
+  ]
+}

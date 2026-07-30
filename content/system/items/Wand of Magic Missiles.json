@@ -1,0 +1,37 @@
+{
+  "name": "Wand of Magic Missiles",
+  "source": "XDMG",
+  "page": 320,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "WD|XDMG",
+  "rarity": "uncommon",
+  "weight": 1,
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d6 + 1}",
+  "charges": 7,
+  "entries": [
+    "This wand has 7 charges. While holding it, you can expend no more than 3 charges to cast {@spell Magic Missile|XPHB} from it. For 1 charge, you cast the level 1 version of the spell. You can increase the spell's level by 1 for each additional charge you expend.",
+    {
+      "type": "entries",
+      "name": "Regaining Charges",
+      "entries": [
+        "The wand regains {@dice 1d6 + 1} expended charges daily at dawn. If you expend the wand's last charge, roll {@dice 1d20}. On a 1, the wand crumbles into ashes and is destroyed."
+      ]
+    }
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "attachedSpells": {
+    "charges": {
+      "1": [
+        "magic missile|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Uncommon|XDMG"
+  ],
+  "hasFluffImages": true
+}

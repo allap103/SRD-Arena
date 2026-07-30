@@ -1,0 +1,26 @@
+{
+  "name": "Potion of Flying",
+  "source": "XDMG",
+  "page": 287,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "P|XPHB",
+  "rarity": "very rare",
+  "weight": 0.5,
+  "modifySpeed": {
+    "equal": {
+      "fly": "walk"
+    }
+  },
+  "entries": [
+    "When you drink this potion, you gain a {@variantrule Fly Speed|XPHB} equal to your {@variantrule Speed|XPHB} for 1 hour and can hover. If you're in the air when the potion wears off, you fall unless you have some other means of staying aloft.",
+    "This potion's clear liquid floats at the top of its container and has cloudy white impurities drifting in it."
+  ],
+  "lootTables": [
+    "Arcana - Very Rare|XDMG",
+    "Implements - Very Rare|XDMG"
+  ],
+  "miscTags": [
+    "CNS"
+  ]
+}

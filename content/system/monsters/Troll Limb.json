@@ -1,0 +1,81 @@
+{
+  "name": "Troll Limb",
+  "source": "XMM",
+  "page": 310,
+  "srd52": true,
+  "basicRules2024": true,
+  "size": [
+    "S"
+  ],
+  "type": "giant",
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 14,
+    "formula": "4d6"
+  },
+  "speed": {
+    "walk": 20
+  },
+  "str": 18,
+  "dex": 12,
+  "con": 10,
+  "int": 1,
+  "wis": 9,
+  "cha": 1,
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 9,
+  "cr": "1/2",
+  "trait": [
+    {
+      "name": "Regeneration",
+      "entries": [
+        "The limb regains 5 {@variantrule Hit Points|XPHB} at the start of each of its turns. If the limb takes Acid or Fire damage, this trait doesn't function on the limb's next turn. The limb dies only if it starts its turn with 0 {@variantrule Hit Points|XPHB} and doesn't regenerate."
+      ]
+    },
+    {
+      "name": "Troll Spawn",
+      "entries": [
+        "The limb uncannily has the same senses as a whole troll. If the limb isn't destroyed within 24 hours, roll {@dice 1d12}. On a 12, the limb turns into a {@creature Troll|XMM}. Otherwise, the limb withers away."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Rend",
+      "entries": [
+        "{@atkr m} {@hit 6}, reach 5 ft. {@h}9 ({@damage 2d4 + 4}) Slashing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "arctic",
+    "forest",
+    "hill",
+    "mountain",
+    "swamp",
+    "underdark"
+  ],
+  "traitTags": [
+    "Regeneration"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "damageTags": [
+    "S"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,60 @@
+{
+  "name": "Grappler",
+  "source": "XPHB",
+  "page": 204,
+  "srd52": true,
+  "basicRules2024": true,
+  "category": "G",
+  "prerequisite": [
+    {
+      "level": 4,
+      "ability": [
+        {
+          "str": 13
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "ability": [
+        {
+          "dex": 13
+        }
+      ]
+    }
+  ],
+  "ability": [
+    {
+      "choose": {
+        "from": [
+          "str",
+          "dex"
+        ]
+      }
+    }
+  ],
+  "entries": [
+    "You gain the following benefits.",
+    {
+      "type": "entries",
+      "name": "Punch and Grab",
+      "entries": [
+        "When you hit a creature with an {@variantrule Unarmed Strike|XPHB} as part of the {@action Attack|XPHB} action on your turn, you can use both the Damage and the Grapple option. You can use this benefit only once per turn."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Attack Advantage",
+      "entries": [
+        "You have {@variantrule Advantage|XPHB} on attack rolls against a creature {@condition Grappled|XPHB} by you."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Fast Wrestler",
+      "entries": [
+        "You don't have to spend extra movement to move a creature {@condition Grappled|XPHB} by you if the creature is your size or smaller."
+      ]
+    }
+  ]
+}

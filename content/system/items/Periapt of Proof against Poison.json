@@ -1,0 +1,20 @@
+{
+  "name": "Periapt of Proof against Poison",
+  "source": "XDMG",
+  "page": 284,
+  "srd52": true,
+  "basicRules2024": true,
+  "immune": [
+    "poison"
+  ],
+  "rarity": "rare",
+  "reqAttune": true,
+  "wondrous": true,
+  "weight": 1,
+  "entries": [
+    "This delicate silver chain has a brilliant-cut black gem pendant. While you wear it, you have {@variantrule Immunity|XPHB} to the {@condition Poisoned|XPHB} condition and Poison damage."
+  ],
+  "lootTables": [
+    "Relics - Rare|XDMG"
+  ]
+}

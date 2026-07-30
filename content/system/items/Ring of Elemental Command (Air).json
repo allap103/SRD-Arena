@@ -1,0 +1,91 @@
+{
+  "name": "Ring of Elemental Command (Air)",
+  "source": "XDMG",
+  "page": 292,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "RG|XDMG",
+  "resist": [
+    "lightning"
+  ],
+  "rarity": "legendary",
+  "reqAttune": true,
+  "grantsLanguage": true,
+  "modifySpeed": {
+    "equal": {
+      "fly": "walk"
+    }
+  },
+  "recharge": "dawn",
+  "rechargeAmount": "{@dice 1d4 + 1}",
+  "charges": 5,
+  "entries": [
+    "The Ring of Elemental Command (air) is linked to the Elemental Plane of Air. Every Ring of Elemental Command has the following two properties:",
+    {
+      "type": "list",
+      "items": [
+        {
+          "type": "item",
+          "name": "Elemental Bane",
+          "entries": [
+            "While wearing the ring, you have {@variantrule Advantage|XPHB} on attack rolls against Elementals and they have {@variantrule Disadvantage|XPHB} on attack rolls against you."
+          ]
+        },
+        {
+          "type": "item",
+          "name": "Elemental Compulsion",
+          "entries": [
+            "While wearing the ring, you can take a {@action Magic|XPHB} action to try to compel an Elemental you see within 60 feet of yourself. The Elemental makes a {@dc 18} Wisdom saving throw. On a failed save, the Elemental has the {@condition Charmed|XPHB} condition until the start your next turn, and you determine what it does with its move and action on its next turn."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Elemental Focus",
+      "entries": [
+        "While wearing the ring, you benefit from additional properties corresponding to the ring's linked Elemental Plane:",
+        {
+          "type": "list",
+          "style": "list-hang-notitle",
+          "items": [
+            {
+              "type": "item",
+              "name": "Air",
+              "entries": [
+                "You know Auran, you have {@variantrule Resistance|XPHB} to Lightning damage, and you have a {@variantrule Fly Speed|XPHB} equal to your {@variantrule Speed|XPHB} and can hover."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Spellcasting",
+      "entries": [
+        "The ring has 5 charges and regains {@dice 1d4 + 1} expended charges daily at dawn. While wearing the ring, you can cast a spell from it. A spell cast from the ring has a save DC of 18. Choose the spell from the following list: {@spell Chain Lightning|XPHB} (3 charges), {@spell Feather Fall|XPHB} (0 charges), {@spell Gust of Wind|XPHB} (2 charges), {@spell Wind Wall|XPHB} (1 charge)"
+      ]
+    }
+  ],
+  "attachedSpells": {
+    "charges": {
+      "0": [
+        "feather fall|xphb"
+      ],
+      "1": [
+        "wind wall|xphb"
+      ],
+      "2": [
+        "gust of wind|xphb"
+      ],
+      "3": [
+        "chain lightning|xphb"
+      ]
+    }
+  },
+  "lootTables": [
+    "Arcana - Legendary|XDMG"
+  ],
+  "hasFluffImages": true
+}

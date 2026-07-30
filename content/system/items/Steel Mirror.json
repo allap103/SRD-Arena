@@ -1,0 +1,17 @@
+{
+  "name": "Steel Mirror",
+  "source": "PHB",
+  "page": 150,
+  "srd": true,
+  "basicRules": true,
+  "referenceSources": [
+    "CoS"
+  ],
+  "reprintedAs": [
+    "Mirror|XPHB"
+  ],
+  "type": "G",
+  "rarity": "none",
+  "weight": 0.5,
+  "value": 500
+}

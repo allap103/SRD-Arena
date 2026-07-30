@@ -1,0 +1,51 @@
+{
+  "name": "Faithful Hound",
+  "source": "XPHB",
+  "page": 300,
+  "srd52": "Faithful Hound",
+  "basicRules2024": true,
+  "level": 4,
+  "school": "C",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 30
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a silver whistle"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 8
+      }
+    }
+  ],
+  "entries": [
+    "You conjure a phantom watchdog in an unoccupied space that you can see within range. The hound remains for the duration or until the two of you are more than 300 feet apart from each other.",
+    "No one but you can see the hound, and it is intangible and invulnerable. When a Small or larger creature comes within 30 feet of it without first speaking the password that you specify when you cast this spell, the hound starts barking loudly. The hound has {@sense Truesight|XPHB} with a range of 30 feet.",
+    "At the start of each of your turns, the hound attempts to bite one enemy within 5 feet of it. That enemy must succeed on a Dexterity saving throw or take {@damage 4d8} Force damage.",
+    "On your later turns, you can take a {@action Magic|XPHB} action to move the hound up to 30 feet."
+  ],
+  "damageInflict": [
+    "force"
+  ],
+  "savingThrow": [
+    "dexterity"
+  ],
+  "miscTags": [
+    "SGT"
+  ]
+}

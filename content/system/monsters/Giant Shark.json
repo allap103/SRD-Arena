@@ -1,0 +1,94 @@
+{
+  "name": "Giant Shark",
+  "source": "XMM",
+  "page": 359,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF",
+    "FRHoF",
+    "RHW"
+  ],
+  "size": [
+    "H"
+  ],
+  "type": "beast",
+  "alignment": [
+    "U"
+  ],
+  "ac": [
+    13
+  ],
+  "hp": {
+    "average": 92,
+    "formula": "8d12 + 40"
+  },
+  "speed": {
+    "walk": 5,
+    "swim": 60
+  },
+  "initiative": {
+    "proficiency": 1
+  },
+  "str": 23,
+  "dex": 11,
+  "con": 21,
+  "int": 1,
+  "wis": 10,
+  "cha": 5,
+  "skill": {
+    "perception": "+3"
+  },
+  "senses": [
+    "Blindsight 60 ft."
+  ],
+  "passive": 13,
+  "cr": "5",
+  "trait": [
+    {
+      "name": "Water Breathing",
+      "entries": [
+        "The shark can breathe only underwater."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The shark makes two Bite attacks."
+      ]
+    },
+    {
+      "name": "Bite",
+      "entries": [
+        "{@atkr m} {@hit 9} (with {@variantrule Advantage|XPHB} if the target doesn't have all its {@variantrule Hit Points|XPHB}), reach 5 ft. {@h}22 ({@damage 3d10 + 6}) Piercing damage."
+      ]
+    }
+  ],
+  "environment": [
+    "underwater"
+  ],
+  "soundClip": {
+    "type": "internal",
+    "path": "bestiary/giant-shark.opus"
+  },
+  "traitTags": [
+    "Water Breathing"
+  ],
+  "senseTags": [
+    "B"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}

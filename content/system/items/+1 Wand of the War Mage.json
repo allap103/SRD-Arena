@@ -1,0 +1,27 @@
+{
+  "name": "+1 Wand of the War Mage",
+  "source": "XDMG",
+  "page": 322,
+  "srd52": true,
+  "basicRules2024": true,
+  "type": "WD|XDMG",
+  "rarity": "uncommon",
+  "reqAttune": "by a spellcaster",
+  "reqAttuneTags": [
+    {
+      "spellcasting": true
+    }
+  ],
+  "weight": 1,
+  "bonusSpellAttack": "+1",
+  "entries": [
+    "While holding this wand, you gain a +1 bonus to spell attack rolls. In addition, you ignore {@variantrule Cover|XPHB|Half Cover} when making a spell attack roll."
+  ],
+  "classFeatures": [
+    "replicate magic item|artificer|efa|2|efa"
+  ],
+  "lootTables": [
+    "Arcana - Uncommon|XDMG",
+    "Relics - Uncommon|XDMG"
+  ]
+}

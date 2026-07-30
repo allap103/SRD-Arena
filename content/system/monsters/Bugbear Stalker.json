@@ -1,0 +1,142 @@
+{
+  "name": "Bugbear Stalker",
+  "group": [
+    "Goblinoids"
+  ],
+  "source": "XMM",
+  "page": 62,
+  "srd52": true,
+  "basicRules2024": true,
+  "referenceSources": [
+    "FRAiF"
+  ],
+  "size": [
+    "M"
+  ],
+  "type": {
+    "type": "fey",
+    "tags": [
+      "goblinoid"
+    ]
+  },
+  "alignment": [
+    "C",
+    "E"
+  ],
+  "ac": [
+    15
+  ],
+  "hp": {
+    "average": 65,
+    "formula": "10d8 + 20"
+  },
+  "speed": {
+    "walk": 30
+  },
+  "str": 17,
+  "dex": 14,
+  "con": 14,
+  "int": 11,
+  "wis": 12,
+  "cha": 11,
+  "save": {
+    "con": "+4",
+    "wis": "+3"
+  },
+  "skill": {
+    "stealth": "+6",
+    "survival": "+3"
+  },
+  "senses": [
+    "Darkvision 60 ft."
+  ],
+  "passive": 11,
+  "languages": [
+    "Common",
+    "Goblin"
+  ],
+  "cr": "3",
+  "gear": [
+    "chain shirt|xphb",
+    {
+      "item": "javelin|xphb",
+      "quantity": 6
+    },
+    "morningstar|xphb"
+  ],
+  "trait": [
+    {
+      "name": "Abduct",
+      "entries": [
+        "The bugbear needn't spend extra movement to move a creature it is grappling."
+      ]
+    }
+  ],
+  "action": [
+    {
+      "name": "Multiattack",
+      "entries": [
+        "The bugbear makes two Javelin or Morningstar attacks."
+      ]
+    },
+    {
+      "name": "Javelin",
+      "entries": [
+        "{@atkr m,r} {@hit 5}, reach 10 ft. or range 30/120 ft. {@h}13 ({@damage 3d6 + 3}) Piercing damage."
+      ]
+    },
+    {
+      "name": "Morningstar",
+      "entries": [
+        "{@atkr m} {@hit 5} (with {@variantrule Advantage|XPHB} if the target is {@condition Grappled|XPHB} by the bugbear), reach 10 ft. {@h}12 ({@damage 2d8 + 3}) Piercing damage."
+      ]
+    }
+  ],
+  "bonus": [
+    {
+      "name": "Quick Grapple",
+      "entries": [
+        "{@actSave dex} {@dc 13}, one Medium or smaller creature the bugbear can see within 10 feet. {@actSaveFail} The target has the {@condition Grappled|XPHB} condition (escape {@dc 13})."
+      ]
+    }
+  ],
+  "environment": [
+    "forest",
+    "grassland",
+    "planar, feywild",
+    "underdark"
+  ],
+  "treasure": [
+    "armaments",
+    "individual"
+  ],
+  "senseTags": [
+    "D"
+  ],
+  "actionTags": [
+    "Multiattack"
+  ],
+  "languageTags": [
+    "C",
+    "GO"
+  ],
+  "damageTags": [
+    "P"
+  ],
+  "miscTags": [
+    "MA",
+    "MLW",
+    "RA",
+    "RCH",
+    "THW"
+  ],
+  "conditionInflict": [
+    "grappled"
+  ],
+  "savingThrowForced": [
+    "dexterity"
+  ],
+  "hasToken": true,
+  "hasFluff": true,
+  "hasFluffImages": true
+}
