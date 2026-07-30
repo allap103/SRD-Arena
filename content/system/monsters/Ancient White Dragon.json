@@ -104,19 +104,58 @@
       "name": "Multiattack",
       "entries": [
         "The dragon makes three Rend attacks."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                },
+                "times": 3
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Rend",
       "entries": [
         "{@atkr m} {@hit 14}, reach 15 ft. {@h}17 ({@damage 2d8 + 8}) Slashing damage plus 7 ({@damage 2d6}) Cold damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": ["melee"],
+        "attack_bonus": 14,
+        "target": {"type": "creature", "range_feet": 15},
+        "reach_feet": 15,
+        "hit": [
+          {"type": "damage", "dice": "2d8", "bonus": 8, "damage_type": "slashing"},
+          {"type": "damage", "dice": "2d6", "damage_type": "cold"}
+        ]
+      }
     },
     {
       "name": "Cold Breath {@recharge 5}",
       "entries": [
         "{@actSave con} {@dc 22}, each creature in a 90-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 63 ({@damage 14d8}) Cold damage. {@actSaveSuccess} Half damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "con",
+        "dc": 22,
+        "target": {"type": "area", "shape": "cone", "size_feet": 90},
+        "failure": [
+          {"effects": [{"type": "damage", "dice": "14d8", "damage_type": "cold"}]}
+        ],
+        "success_damage": "half",
+        "resource": {"type": "recharge", "minimum": 5}
+      }
     }
   ],
   "legendaryActionsLair": 4,

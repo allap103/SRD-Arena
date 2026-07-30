@@ -45,13 +45,28 @@
       "name": "Multiattack",
       "entries": [
         "The ankylosaurus makes two Tail attacks."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [{"steps": [{"type": "invoke", "invocation": {"type": "stat_block_action", "name": "Tail"}, "times": 2}]}]
+      }
     },
     {
       "name": "Tail",
       "entries": [
         "{@atkr m} {@hit 6}, reach 10 ft. {@h}9 ({@damage 1d10 + 4}) Bludgeoning damage. If the target is a Huge or smaller creature, it has the {@condition Prone|XPHB} condition."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": ["melee"],
+        "attack_bonus": 6,
+        "target": {"type": "creature", "range_feet": 10},
+        "reach_feet": 10,
+        "hit": [
+          {"type": "damage", "dice": "1d10", "bonus": 4, "damage_type": "bludgeoning"},
+          {"type": "condition", "condition": "prone", "requirements": [{"type": "size", "maximum": "H"}]}
+        ]
+      }
     }
   ],
   "environment": [

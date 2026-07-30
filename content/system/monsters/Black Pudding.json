@@ -81,7 +81,27 @@
       "name": "Dissolving Pseudopod",
       "entries": [
         "{@atkr m} {@hit 5}, reach 10 ft. {@h}17 ({@damage 4d6 + 3}) Acid damage. Nonmagical armor worn by the target takes a -1 penalty to the AC it offers. The armor is destroyed if the penalty reduces its AC to 10. The penalty can be removed by casting the {@spell Mending|XPHB} spell on the armor."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "4d6",
+            "damage_type": "acid",
+            "bonus": 3
+          }
+        ],
+        "reach_feet": 10
+      }
     }
   ],
   "reaction": [

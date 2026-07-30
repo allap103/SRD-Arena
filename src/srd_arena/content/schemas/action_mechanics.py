@@ -89,6 +89,12 @@ class EndOfTurnDurationSchema(ActionMechanicsSchemaModel):
     turn_offset: NonNegativeInt = 0
 
 
+class StartOfTurnDurationSchema(ActionMechanicsSchemaModel):
+    type: Literal["start_of_turn"]
+    creature: Literal["source", "target"]
+    turn_offset: NonNegativeInt = 0
+
+
 class TimedDurationSchema(ActionMechanicsSchemaModel):
     type: Literal["timed"]
     amount: PositiveInt
@@ -114,6 +120,7 @@ class PermanentDurationSchema(ActionMechanicsSchemaModel):
 
 EffectDurationSchema = Annotated[
     EndOfTurnDurationSchema
+    | StartOfTurnDurationSchema
     | TimedDurationSchema
     | UntilEventDurationSchema
     | PermanentDurationSchema,

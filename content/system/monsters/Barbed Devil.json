@@ -94,25 +94,131 @@
       "name": "Multiattack",
       "entries": [
         "The devil makes one Claws attack and one Tail attack, or it makes two Hurl Flame attacks."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Claws"
+                }
+              },
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Tail"
+                }
+              }
+            ]
+          },
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Hurl Flame"
+                },
+                "times": 2
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Claws",
       "entries": [
         "{@atkr m} {@hit 6}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Piercing damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 13}) from both claws."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 6,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "damage_type": "piercing",
+            "bonus": 3
+          },
+          {
+            "type": "condition",
+            "condition": "grappled",
+            "requirements": [
+              {
+                "type": "size",
+                "maximum": "L"
+              }
+            ],
+            "escape_dc": 13,
+            "source_capacity": 1
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Tail",
       "entries": [
         "{@atkr m} {@hit 6}, reach 10 ft. {@h}14 ({@damage 2d10 + 3}) Slashing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 6,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d10",
+            "damage_type": "slashing",
+            "bonus": 3
+          }
+        ],
+        "reach_feet": 10
+      }
     },
     {
       "name": "Hurl Flame",
       "entries": [
         "{@atkr r} {@hit 5}, range 150 ft. {@h}17 ({@damage 5d6}) Fire damage. If the target is a flammable object that isn't being worn or carried, it starts {@hazard burning|XPHB}."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "ranged"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 150
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "5d6",
+            "damage_type": "fire"
+          }
+        ],
+        "range_normal_feet": 150
+      }
     }
   ],
   "environment": [

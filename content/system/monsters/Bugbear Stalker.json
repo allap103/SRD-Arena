@@ -77,19 +77,85 @@
       "name": "Multiattack",
       "entries": [
         "The bugbear makes two Javelin or Morningstar attacks."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "choose",
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Javelin"
+                  },
+                  {
+                    "type": "stat_block_action",
+                    "name": "Morningstar"
+                  }
+                ],
+                "times": 2
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Javelin",
       "entries": [
         "{@atkr m,r} {@hit 5}, reach 10 ft. or range 30/120 ft. {@h}13 ({@damage 3d6 + 3}) Piercing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee",
+          "ranged"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 30
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "3d6",
+            "damage_type": "piercing",
+            "bonus": 3
+          }
+        ],
+        "reach_feet": 10,
+        "range_normal_feet": 30,
+        "range_long_feet": 120
+      }
     },
     {
       "name": "Morningstar",
       "entries": [
         "{@atkr m} {@hit 5} (with {@variantrule Advantage|XPHB} if the target is {@condition Grappled|XPHB} by the bugbear), reach 10 ft. {@h}12 ({@damage 2d8 + 3}) Piercing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "damage_type": "piercing",
+            "bonus": 3
+          }
+        ],
+        "reach_feet": 10
+      }
     }
   ],
   "bonus": [

@@ -55,13 +55,54 @@
       "name": "Scimitar",
       "entries": [
         "{@atkr m} {@hit 3}, reach 5 ft. {@h}4 ({@damage 1d6 + 1}) Slashing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 3,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d6",
+            "damage_type": "slashing",
+            "bonus": 1
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Light Crossbow",
       "entries": [
         "{@atkr r} {@hit 3}, range 80/320 ft. {@h}5 ({@damage 1d8 + 1}) Piercing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "ranged"
+        ],
+        "attack_bonus": 3,
+        "target": {
+          "type": "creature",
+          "range_feet": 80
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "piercing",
+            "bonus": 1
+          }
+        ],
+        "range_normal_feet": 80,
+        "range_long_feet": 320
+      }
     }
   ],
   "environment": [

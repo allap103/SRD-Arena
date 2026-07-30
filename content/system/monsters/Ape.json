@@ -48,19 +48,41 @@
       "name": "Multiattack",
       "entries": [
         "The ape makes two Fist attacks."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [{"steps": [{"type": "invoke", "invocation": {"type": "stat_block_action", "name": "Fist"}, "times": 2}]}]
+      }
     },
     {
       "name": "Fist",
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Bludgeoning damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": ["melee"],
+        "attack_bonus": 5,
+        "target": {"type": "creature", "range_feet": 5},
+        "reach_feet": 5,
+        "hit": [{"type": "damage", "dice": "1d4", "bonus": 3, "damage_type": "bludgeoning"}]
+      }
     },
     {
       "name": "Rock {@recharge}",
       "entries": [
         "{@atkr r} {@hit 5}, range 25/50 ft. {@h}10 ({@damage 2d6 + 3}) Bludgeoning damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": ["ranged"],
+        "attack_bonus": 5,
+        "target": {"type": "creature", "range_feet": 25},
+        "range_normal_feet": 25,
+        "range_long_feet": 50,
+        "hit": [{"type": "damage", "dice": "2d6", "bonus": 3, "damage_type": "bludgeoning"}],
+        "resource": {"type": "recharge", "minimum": 6}
+      }
     }
   ],
   "environment": [

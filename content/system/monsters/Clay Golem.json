@@ -87,13 +87,71 @@
       "name": "Multiattack",
       "entries": [
         "The golem makes two Slam attacks, or it makes three Slam attacks if it used Hasten this turn."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Slam"
+                },
+                "times": 2
+              }
+            ]
+          },
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Slam"
+                },
+                "times": 3
+              }
+            ],
+            "requirement": {
+              "type": "action_used_this_turn",
+              "action": "Hasten"
+            }
+          }
+        ]
+      }
     },
     {
       "name": "Slam",
       "entries": [
         "{@atkr m} {@hit 9}, reach 5 ft. {@h}10 ({@damage 1d10 + 5}) Bludgeoning damage plus 6 ({@damage 1d12}) Acid damage, and the target's {@variantrule Hit Points|XPHB|Hit Point} maximum decreases by an amount equal to the Acid damage taken."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 9,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d10",
+            "damage_type": "bludgeoning",
+            "bonus": 5
+          },
+          {
+            "type": "damage",
+            "dice": "1d12",
+            "damage_type": "acid"
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "bonus": [

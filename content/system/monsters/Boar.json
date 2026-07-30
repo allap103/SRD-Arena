@@ -48,7 +48,27 @@
       "name": "Gore",
       "entries": [
         "{@atkr m} {@hit 3}, reach 5 ft. {@h}4 ({@damage 1d6 + 1}) Piercing damage. If the target is a Medium or smaller creature and the boar moved 20+ feet straight toward it immediately before the hit, the target takes an extra 3 ({@damage 1d6}) Piercing damage and has the {@condition Prone|XPHB} condition."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 3,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d6",
+            "damage_type": "piercing",
+            "bonus": 1
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "environment": [

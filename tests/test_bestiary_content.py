@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -234,7 +235,7 @@ def test_bestiary_core_statistics_build_a_domain_creature() -> None:
     assert air_elemental.attributes.movement.squares_per_turn == 18
 
 
-def test_first_twenty_one_xmm_multiattacks_are_enriched() -> None:
+def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
     catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
     names = [
         "Aboleth",
@@ -258,6 +259,13 @@ def test_first_twenty_one_xmm_multiattacks_are_enriched() -> None:
         "Ancient Green Dragon",
         "Ancient Red Dragon",
         "Ancient Silver Dragon",
+        "Ancient White Dragon",
+        "Animated Armor",
+        "Ankylosaurus",
+        "Ape",
+        "Archelon",
+        "Archmage",
+        "Assassin",
     ]
 
     for name in names:
@@ -276,13 +284,22 @@ def test_first_twenty_one_xmm_multiattacks_are_enriched() -> None:
             bestiary=catalog,
         )
         assert creature.multiattack is not None
-        assert creature.multiattack.executable_sequence(
-            {
-                action.name
-                for action in creature.stat_block_actions.values()
-                if isinstance(action, AttackActionDefinition)
-            }
-        )
+        if name != "Assassin":
+            assert creature.multiattack.executable_sequence(
+                {
+                    action.name
+                    for action in creature.stat_block_actions.values()
+                    if isinstance(action, AttackActionDefinition)
+                }
+            )
+
+    assassin = catalog.find("Assassin", "XMM")
+    assassin_step = assassin.action[0].mechanics.plans[0].steps[0]
+    assert isinstance(assassin_step, ChoiceStepSchema)
+    assert [option.name for option in assassin_step.options] == [
+        "Shortsword",
+        "Light Crossbow",
+    ]
 
     black_dragon = catalog.find("Adult Black Dragon", "XMM")
     black_replacement = (
@@ -369,7 +386,12 @@ def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
                     referenced = next(
                         action
                         for action in monster.action
-                        if action.name == invocation.name
+                        if re.sub(
+                            r"\s*\{@[^}]+\}",
+                            "",
+                            action.name,
+                        ).strip().casefold()
+                        == invocation.name.casefold()
                     )
                     referenced_actions.append(referenced)
                     assert isinstance(
@@ -380,7 +402,7 @@ def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
                         ),
                     )
 
-    assert len(referenced_actions) == 33
+    assert len(referenced_actions) == 79
 
     aboleth = catalog.find("Aboleth", "XMM")
     tentacle = next(action for action in aboleth.action if action.name == "Tentacle")
@@ -408,6 +430,20 @@ def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
     )
     assert weakening.mechanics.dc == 24
     assert weakening.mechanics.failure[0].effects[1].dice == "1d10"
+
+
+def test_b_and_c_monster_actions_have_typed_mechanics() -> None:
+    catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
+
+    actions = [
+        action
+        for monster in catalog
+        if monster.name.startswith(("B", "C"))
+        for action in monster.action
+    ]
+
+    assert len(actions) == 94
+    assert all(action.mechanics is not None for action in actions)
 
 
 def test_bestiary_schema_preserves_unknown_source_fields() -> None:

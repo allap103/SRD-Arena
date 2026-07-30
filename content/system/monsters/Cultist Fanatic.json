@@ -98,7 +98,32 @@
       "name": "Pact Blade",
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}6 ({@damage 1d8 + 2}) Slashing damage plus 7 ({@damage 2d6}) Necrotic damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "slashing",
+            "bonus": 2
+          },
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "damage_type": "necrotic"
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "environment": [

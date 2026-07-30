@@ -43,7 +43,32 @@
       "name": "Bite",
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Piercing damage plus 7 ({@damage 2d6}) Poison damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "damage_type": "piercing",
+            "bonus": 3
+          },
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "damage_type": "poison"
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "bonus": [

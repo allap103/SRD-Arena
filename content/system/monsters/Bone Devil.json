@@ -90,19 +90,97 @@
       "name": "Multiattack",
       "entries": [
         "The devil makes two Claw attacks and one Infernal Sting attack."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Claw"
+                },
+                "times": 2
+              },
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Infernal Sting"
+                }
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Claw",
       "entries": [
         "{@atkr m} {@hit 8}, reach 10 ft. {@h}13 ({@damage 2d8 + 4}) Slashing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 8,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "damage_type": "slashing",
+            "bonus": 4
+          }
+        ],
+        "reach_feet": 10
+      }
     },
     {
       "name": "Infernal Sting",
       "entries": [
         "{@atkr m} {@hit 8}, reach 10 ft. {@h}15 ({@damage 2d10 + 4}) Piercing damage plus 18 ({@damage 4d8}) Poison damage, and the target has the {@condition Poisoned|XPHB} condition until the start of the devil's next turn. While {@condition Poisoned|XPHB}, the target can't regain {@variantrule Hit Points|XPHB}."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 8,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d10",
+            "damage_type": "piercing",
+            "bonus": 4
+          },
+          {
+            "type": "damage",
+            "dice": "4d8",
+            "damage_type": "poison"
+          },
+          {
+            "type": "condition",
+            "condition": "poisoned",
+            "duration": {
+              "type": "start_of_turn",
+              "creature": "source",
+              "turn_offset": 1
+            }
+          }
+        ],
+        "reach_feet": 10
+      }
     }
   ],
   "environment": [

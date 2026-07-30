@@ -99,19 +99,115 @@
       "name": "Multiattack",
       "entries": [
         "The balor makes one Flame Whip attack and one Lightning Blade attack."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Flame Whip"
+                }
+              },
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Lightning Blade"
+                }
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Flame Whip",
       "entries": [
         "{@atkr m} {@hit 14}, reach 30 ft. {@h}18 ({@damage 3d6 + 8}) Force damage plus 17 ({@damage 5d6}) Fire damage. If the target is a Huge or smaller creature, the balor pulls the target up to 25 feet straight toward itself, and the target has the {@condition Prone|XPHB} condition."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 14,
+        "target": {
+          "type": "creature",
+          "range_feet": 30
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "3d6",
+            "damage_type": "force",
+            "bonus": 8
+          },
+          {
+            "type": "damage",
+            "dice": "5d6",
+            "damage_type": "fire"
+          },
+          {
+            "type": "forced_movement",
+            "direction": "toward",
+            "distance_feet": 25
+          },
+          {
+            "type": "condition",
+            "condition": "prone",
+            "requirements": [
+              {
+                "type": "size",
+                "maximum": "H"
+              }
+            ]
+          }
+        ],
+        "reach_feet": 30
+      }
     },
     {
       "name": "Lightning Blade",
       "entries": [
         "{@atkr m} {@hit 14}, reach 10 ft. {@h}21 ({@damage 3d8 + 8}) Force damage plus 22 ({@damage 4d10}) Lightning damage, and the target can't take Reactions until the start of the balor's next turn."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 14,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "3d8",
+            "damage_type": "force",
+            "bonus": 8
+          },
+          {
+            "type": "damage",
+            "dice": "4d10",
+            "damage_type": "lightning"
+          },
+          {
+            "type": "prohibit_reactions",
+            "duration": {
+              "type": "start_of_turn",
+              "creature": "source",
+              "turn_offset": 1
+            }
+          }
+        ],
+        "reach_feet": 10
+      }
     }
   ],
   "bonus": [

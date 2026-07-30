@@ -51,19 +51,83 @@
       "name": "Multiattack",
       "entries": [
         "The centaur makes two attacks, using Pike or Longbow in any combination."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "choose",
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Pike"
+                  },
+                  {
+                    "type": "stat_block_action",
+                    "name": "Longbow"
+                  }
+                ],
+                "times": 2
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Pike",
       "entries": [
         "{@atkr m} {@hit 6}, reach 10 ft. {@h}9 ({@damage 1d10 + 4}) Piercing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 6,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d10",
+            "damage_type": "piercing",
+            "bonus": 4
+          }
+        ],
+        "reach_feet": 10
+      }
     },
     {
       "name": "Longbow",
       "entries": [
         "{@atkr r} {@hit 4}, range 150/600 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "ranged"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 150
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "piercing",
+            "bonus": 2
+          }
+        ],
+        "range_normal_feet": 150,
+        "range_long_feet": 600
+      }
     }
   ],
   "bonus": [

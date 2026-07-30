@@ -95,19 +95,112 @@
       "name": "Multiattack",
       "entries": [
         "The giant makes two attacks, using Thunderous Mace or Thundercloud in any combination. It can replace one attack with a use of Spellcasting to cast {@spell Fog Cloud|XPHB}."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "choose",
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Thunderous Mace"
+                  },
+                  {
+                    "type": "stat_block_action",
+                    "name": "Thundercloud"
+                  }
+                ],
+                "times": 2
+              }
+            ],
+            "replacements": [
+              {
+                "target": {
+                  "type": "any_attack"
+                },
+                "options": [
+                  {
+                    "type": "cast_spell",
+                    "spell": {
+                      "name": "Fog Cloud",
+                      "source": "XPHB"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Thunderous Mace",
       "entries": [
         "{@atkr m} {@hit 12}, reach 10 ft. {@h}21 ({@damage 3d8 + 8}) Bludgeoning damage plus 7 ({@damage 2d6}) Thunder damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 12,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "3d8",
+            "damage_type": "bludgeoning",
+            "bonus": 8
+          },
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "damage_type": "thunder"
+          }
+        ],
+        "reach_feet": 10
+      }
     },
     {
       "name": "Thundercloud",
       "entries": [
         "{@atkr r} {@hit 12}, range 240 ft. {@h}18 ({@damage 3d6 + 8}) Thunder damage, and the target has the {@condition Incapacitated|XPHB} condition until the end of its next turn."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "ranged"
+        ],
+        "attack_bonus": 12,
+        "target": {
+          "type": "creature",
+          "range_feet": 240
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "3d6",
+            "damage_type": "thunder",
+            "bonus": 8
+          },
+          {
+            "type": "condition",
+            "condition": "incapacitated",
+            "duration": {
+              "type": "end_of_turn",
+              "creature": "target",
+              "turn_offset": 1
+            }
+          }
+        ],
+        "range_normal_feet": 240
+      }
     }
   ],
   "environment": [

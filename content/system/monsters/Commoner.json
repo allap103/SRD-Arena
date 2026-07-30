@@ -65,7 +65,26 @@
       "name": "Club",
       "entries": [
         "{@atkr m} {@hit 2}, reach 5 ft. {@h}2 ({@damage 1d4}) Bludgeoning damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 2,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d4",
+            "damage_type": "bludgeoning"
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "environment": [

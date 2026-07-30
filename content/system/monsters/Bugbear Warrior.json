@@ -77,13 +77,68 @@
       "name": "Grab",
       "entries": [
         "{@atkr m} {@hit 4}, reach 10 ft. {@h}9 ({@damage 2d6 + 2}) Bludgeoning damage. If the target is a Medium or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 12})."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "damage_type": "bludgeoning",
+            "bonus": 2
+          },
+          {
+            "type": "condition",
+            "condition": "grappled",
+            "requirements": [
+              {
+                "type": "size",
+                "maximum": "M"
+              }
+            ],
+            "escape_dc": 12,
+            "source_capacity": 1
+          }
+        ],
+        "reach_feet": 10
+      }
     },
     {
       "name": "Light Hammer",
       "entries": [
         "{@atkr m,r} {@hit 4} (with {@variantrule Advantage|XPHB} if the target is {@condition Grappled|XPHB} by the bugbear), reach 10 ft. or range 20/60 ft. {@h}9 ({@damage 3d4 + 2}) Bludgeoning damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee",
+          "ranged"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 20
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "3d4",
+            "damage_type": "bludgeoning",
+            "bonus": 2
+          }
+        ],
+        "reach_feet": 10,
+        "range_normal_feet": 20,
+        "range_long_feet": 60
+      }
     }
   ],
   "environment": [

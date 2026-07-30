@@ -82,20 +82,84 @@
       "name": "Multiattack",
       "entries": [
         "The cloaker makes one Attach attack and two Tail attacks."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Attach"
+                }
+              },
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Tail"
+                },
+                "times": 2
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Attach",
       "entries": [
         "{@atkr m} {@hit 6}, reach 5 ft. {@h}13 ({@damage 3d6 + 3}) Piercing damage. If the target is a Large or smaller creature, the cloaker attaches to it. While the cloaker is attached, the target has the {@condition Blinded|XPHB} condition, and the cloaker can't make Attach attacks against other targets. In addition, the cloaker halves the damage it takes (round down), and the target takes the same amount of damage.",
         "The cloaker can detach itself by spending 5 feet of movement. The target or a creature within 5 feet of it can take an action to try to detach the cloaker, doing so by succeeding on a {@dc 14} Strength ({@skill Athletics|XPHB}) check."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 6,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "3d6",
+            "damage_type": "piercing",
+            "bonus": 3
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Tail",
       "entries": [
         "{@atkr m} {@hit 6}, reach 10 ft. {@h}8 ({@damage 1d10 + 3}) Slashing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 6,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d10",
+            "damage_type": "slashing",
+            "bonus": 3
+          }
+        ],
+        "reach_feet": 10
+      }
     }
   ],
   "bonus": [

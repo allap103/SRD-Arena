@@ -67,7 +67,15 @@
       "name": "Slash",
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}6 ({@damage 1d8 + 2}) Slashing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": ["melee"],
+        "attack_bonus": 4,
+        "target": {"type": "creature", "range_feet": 5},
+        "reach_feet": 5,
+        "hit": [{"type": "damage", "dice": "1d8", "bonus": 2, "damage_type": "slashing"}]
+      }
     }
   ],
   "environment": [

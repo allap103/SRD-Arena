@@ -77,19 +77,68 @@
       "name": "Multiattack",
       "entries": [
         "The assassin makes three attacks, using Shortsword or Light Crossbow in any combination."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "choose",
+                "options": [
+                  {"type": "stat_block_action", "name": "Shortsword"},
+                  {"type": "stat_block_action", "name": "Light Crossbow"}
+                ],
+                "times": 3
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Shortsword",
       "entries": [
         "{@atkr m} {@hit 7}, reach 5 ft. {@h}7 ({@damage 1d6 + 4}) Piercing damage plus 17 ({@damage 5d6}) Poison damage, and the target has the {@condition Poisoned|XPHB} condition until the start of the assassin's next turn."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": ["melee"],
+        "attack_bonus": 7,
+        "target": {"type": "creature", "range_feet": 5},
+        "reach_feet": 5,
+        "hit": [
+          {"type": "damage", "dice": "1d6", "bonus": 4, "damage_type": "piercing"},
+          {"type": "damage", "dice": "5d6", "damage_type": "poison"},
+          {
+            "type": "condition",
+            "condition": "poisoned",
+            "duration": {
+              "type": "start_of_turn",
+              "creature": "source",
+              "turn_offset": 1
+            }
+          }
+        ]
+      }
     },
     {
       "name": "Light Crossbow",
       "entries": [
         "{@atkr r} {@hit 7}, range 80/320 ft. {@h}8 ({@damage 1d8 + 4}) Piercing damage plus 21 ({@damage 6d6}) Poison damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": ["ranged"],
+        "attack_bonus": 7,
+        "target": {"type": "creature", "range_feet": 80},
+        "range_normal_feet": 80,
+        "range_long_feet": 320,
+        "hit": [
+          {"type": "damage", "dice": "1d8", "bonus": 4, "damage_type": "piercing"},
+          {"type": "damage", "dice": "6d6", "damage_type": "poison"}
+        ]
+      }
     }
   ],
   "bonus": [

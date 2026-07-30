@@ -57,13 +57,25 @@
       "name": "Multiattack",
       "entries": [
         "The archelon makes two Bite attacks."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [{"steps": [{"type": "invoke", "invocation": {"type": "stat_block_action", "name": "Bite"}, "times": 2}]}]
+      }
     },
     {
       "name": "Bite",
       "entries": [
         "{@atkr m} {@hit 6}, reach 5 ft. {@h}14 ({@damage 3d6 + 4}) Piercing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": ["melee"],
+        "attack_bonus": 6,
+        "target": {"type": "creature", "range_feet": 5},
+        "reach_feet": 5,
+        "hit": [{"type": "damage", "dice": "3d6", "bonus": 4, "damage_type": "piercing"}]
+      }
     }
   ],
   "environment": [

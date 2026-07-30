@@ -59,13 +59,25 @@
       "name": "Multiattack",
       "entries": [
         "The armor makes two Slam attacks."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [{"steps": [{"type": "invoke", "invocation": {"type": "stat_block_action", "name": "Slam"}, "times": 2}]}]
+      }
     },
     {
       "name": "Slam",
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Bludgeoning damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": ["melee"],
+        "attack_bonus": 4,
+        "target": {"type": "creature", "range_feet": 5},
+        "reach_feet": 5,
+        "hit": [{"type": "damage", "dice": "1d6", "bonus": 2, "damage_type": "bludgeoning"}]
+      }
     }
   ],
   "environment": [

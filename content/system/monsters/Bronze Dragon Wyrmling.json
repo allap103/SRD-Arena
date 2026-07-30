@@ -74,25 +74,114 @@
       "name": "Multiattack",
       "entries": [
         "The dragon makes two Rend attacks."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                },
+                "times": 2
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Rend",
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}8 ({@damage 1d10 + 3}) Slashing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d10",
+            "damage_type": "slashing",
+            "bonus": 3
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Lightning Breath {@recharge 5}",
       "entries": [
         "{@actSave dex} {@dc 12}, each creature in a 40-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 16 ({@damage 3d10}) Lightning damage. {@actSaveSuccess} Half damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "dex",
+        "dc": 12,
+        "target": {
+          "type": "area",
+          "shape": "line",
+          "size_feet": 40,
+          "width_feet": 5
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "damage",
+                "dice": "3d10",
+                "damage_type": "lightning"
+              }
+            ]
+          }
+        ],
+        "success_damage": "half",
+        "resource": {
+          "type": "recharge",
+          "minimum": 5
+        }
+      }
     },
     {
       "name": "Repulsion Breath",
       "entries": [
         "{@actSave str} {@dc 12}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target is pushed up to 30 feet straight away from the dragon and has the {@condition Prone|XPHB} condition."
-      ]
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "str",
+        "dc": 12,
+        "target": {
+          "type": "area",
+          "shape": "cone",
+          "size_feet": 30
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "forced_movement",
+                "direction": "away",
+                "distance_feet": 30
+              },
+              {
+                "type": "condition",
+                "condition": "prone"
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "environment": [

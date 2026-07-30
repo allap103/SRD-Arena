@@ -55,7 +55,52 @@
       "name": "Bite",
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage. If the target is a Medium or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 12}). While {@condition Grappled|XPHB}, the target has the {@condition Restrained|XPHB} condition."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "piercing",
+            "bonus": 2
+          },
+          {
+            "type": "condition",
+            "condition": "grappled",
+            "requirements": [
+              {
+                "type": "size",
+                "maximum": "M"
+              }
+            ],
+            "escape_dc": 12,
+            "source_capacity": 1
+          },
+          {
+            "type": "condition",
+            "condition": "restrained",
+            "requirements": [
+              {
+                "type": "condition",
+                "conditions": [
+                  "grappled"
+                ],
+                "applied_by": "source"
+              }
+            ]
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "environment": [

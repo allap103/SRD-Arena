@@ -65,7 +65,18 @@
       "name": "Burning Hammer",
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}8 ({@damage 1d10 + 3}) Bludgeoning damage plus 3 ({@damage 1d6}) Fire damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": ["melee"],
+        "attack_bonus": 5,
+        "target": {"type": "creature", "range_feet": 5},
+        "reach_feet": 5,
+        "hit": [
+          {"type": "damage", "dice": "1d10", "bonus": 3, "damage_type": "bludgeoning"},
+          {"type": "damage", "dice": "1d6", "damage_type": "fire"}
+        ]
+      }
     }
   ],
   "environment": [

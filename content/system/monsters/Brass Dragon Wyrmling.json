@@ -66,19 +66,94 @@
       "name": "Rend",
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}7 ({@damage 1d10 + 2}) Slashing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d10",
+            "damage_type": "slashing",
+            "bonus": 2
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Fire Breath {@recharge 5}",
       "entries": [
         "{@actSave dex} {@dc 11}, each creature in a 20-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 14 ({@damage 4d6}) Fire damage. {@actSaveSuccess} Half damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "dex",
+        "dc": 11,
+        "target": {
+          "type": "area",
+          "shape": "line",
+          "size_feet": 20,
+          "width_feet": 5
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "damage",
+                "dice": "4d6",
+                "damage_type": "fire"
+              }
+            ]
+          }
+        ],
+        "success_damage": "half",
+        "resource": {
+          "type": "recharge",
+          "minimum": 5
+        }
+      }
     },
     {
       "name": "Sleep Breath",
       "entries": [
         "{@actSave con} {@dc 11}, each creature in a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target has the {@condition Incapacitated|XPHB} condition until the end of its next turn, at which point it repeats the save. {@actSaveFail 2} The target has the {@condition Unconscious|XPHB} condition for 1 minute. This effect ends for the target if it takes damage or a creature within 5 feet of it takes an action to wake it."
-      ]
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "con",
+        "dc": 11,
+        "target": {"type": "area", "shape": "cone", "size_feet": 15},
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "condition",
+                "condition": "incapacitated",
+                "duration": {"type": "end_of_turn", "creature": "target", "turn_offset": 1}
+              }
+            ],
+            "repeat_saves": [{"trigger": "end_of_turn"}]
+          },
+          {
+            "effects": [
+              {
+                "type": "condition",
+                "condition": "unconscious",
+                "duration": {"type": "timed", "amount": 1, "unit": "minute"},
+                "ends_on": ["target_takes_damage", "adjacent_creature_wakes_target"]
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "environment": [

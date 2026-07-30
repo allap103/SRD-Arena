@@ -43,7 +43,27 @@
       "name": "Bite",
       "entries": [
         "{@atkr m} {@hit 1}, reach 5 ft. {@h}1 ({@damage 1d4 - 1}) Piercing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 1,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d4",
+            "damage_type": "piercing",
+            "bonus": -1
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "environment": [

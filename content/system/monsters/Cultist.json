@@ -56,7 +56,27 @@
       "name": "Ritual Sickle",
       "entries": [
         "{@atkr m} {@hit 3}, reach 5 ft. {@h}3 ({@damage 1d4 + 1}) Slashing damage plus 1 Necrotic damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 3,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d4",
+            "damage_type": "slashing",
+            "bonus": 1
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "environment": [

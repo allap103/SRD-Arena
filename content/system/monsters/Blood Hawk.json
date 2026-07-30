@@ -46,7 +46,27 @@
       "name": "Beak",
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}4 ({@damage 1d4 + 2}) Piercing damage, or 6 ({@damage 1d8 + 2}) Piercing damage if the target is {@status Bloodied|XPHB}."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d4",
+            "damage_type": "piercing",
+            "bonus": 2
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "environment": [

@@ -51,31 +51,182 @@
       "name": "Multiattack",
       "entries": [
         "The chimera makes one Ram attack, one Bite attack, and one Claw attack. It can replace the Claw attack with a use of Fire Breath if available."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Ram"
+                }
+              },
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Bite"
+                }
+              },
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Claw"
+                }
+              }
+            ],
+            "replacements": [
+              {
+                "target": {
+                  "type": "action",
+                  "name": "Claw"
+                },
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Fire Breath"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Bite",
       "entries": [
         "{@atkr m} {@hit 7}, reach 5 ft. {@h}11 ({@damage 2d6 + 4}) Piercing damage, or 18 ({@damage 4d6 + 4}) Piercing damage if the chimera had {@variantrule Advantage|XPHB} on the attack roll."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 7,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "damage_type": "piercing",
+            "bonus": 4
+          },
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "damage_type": "piercing",
+            "requirements": [
+              {
+                "type": "attack_roll_mode",
+                "mode": "advantage"
+              }
+            ]
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Claw",
       "entries": [
         "{@atkr m} {@hit 7}, reach 5 ft. {@h}7 ({@damage 1d6 + 4}) Slashing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 7,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d6",
+            "damage_type": "slashing",
+            "bonus": 4
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Ram",
       "entries": [
         "{@atkr m} {@hit 7}, reach 5 ft. {@h}10 ({@damage 1d12 + 4}) Bludgeoning damage. If the target is a Medium or smaller creature, it has the {@condition Prone|XPHB} condition."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 7,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d12",
+            "damage_type": "bludgeoning",
+            "bonus": 4
+          },
+          {
+            "type": "condition",
+            "condition": "prone",
+            "requirements": [
+              {
+                "type": "size",
+                "maximum": "M"
+              }
+            ]
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Fire Breath {@recharge 5}",
       "entries": [
         "{@actSave dex} {@dc 15}, each creature in a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 31 ({@damage 7d8}) Fire damage. {@actSaveSuccess} Half damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "dex",
+        "dc": 15,
+        "target": {
+          "type": "area",
+          "shape": "cone",
+          "size_feet": 15
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "damage",
+                "dice": "7d8",
+                "damage_type": "fire"
+              }
+            ]
+          }
+        ],
+        "success_damage": "half",
+        "resource": {
+          "type": "recharge",
+          "minimum": 5
+        }
+      }
     }
   ],
   "environment": [

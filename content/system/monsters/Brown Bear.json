@@ -50,19 +50,92 @@
       "name": "Multiattack",
       "entries": [
         "The bear makes one Bite attack and one Claw attack."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Bite"
+                }
+              },
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Claw"
+                }
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Bite",
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}7 ({@damage 1d8 + 3}) Piercing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "piercing",
+            "bonus": 3
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Claw",
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Slashing damage. If the target is a Large or smaller creature, it has the {@condition Prone|XPHB} condition."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d4",
+            "damage_type": "slashing",
+            "bonus": 3
+          },
+          {
+            "type": "condition",
+            "condition": "prone",
+            "requirements": [
+              {
+                "type": "size",
+                "maximum": "L"
+              }
+            ]
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "environment": [

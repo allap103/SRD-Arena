@@ -88,19 +88,109 @@
       "name": "Multiattack",
       "entries": [
         "The devil makes two Chain attacks and uses Conjure Infernal Chain."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Chain"
+                },
+                "times": 2
+              },
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Conjure Infernal Chain"
+                }
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Chain",
       "entries": [
         "{@atkr m} {@hit 7}, reach 10 ft. {@h}11 ({@damage 2d6 + 4}) Slashing damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 14}) from one of two chains, and it has the {@condition Restrained|XPHB} condition until the grapple ends."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 7,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "damage_type": "slashing",
+            "bonus": 4
+          },
+          {
+            "type": "condition",
+            "condition": "grappled",
+            "requirements": [
+              {
+                "type": "size",
+                "maximum": "L"
+              }
+            ],
+            "escape_dc": 14,
+            "source_capacity": 2
+          },
+          {
+            "type": "condition",
+            "condition": "restrained",
+            "requirements": [
+              {
+                "type": "condition",
+                "conditions": [
+                  "grappled"
+                ],
+                "applied_by": "source"
+              }
+            ]
+          }
+        ],
+        "reach_feet": 10
+      }
     },
     {
       "name": "Conjure Infernal Chain",
       "entries": [
         "The devil conjures a fiery chain to bind a creature. {@actSave dex} {@dc 15}, one creature the devil can see within 60 feet. {@actSaveFail} 9 ({@damage 2d4 + 4}) Fire damage, and the target has the {@condition Restrained|XPHB} condition until the end of the devil's next turn, at which point the chain disappears. If the target is Large or smaller, the devil moves the target up to 30 feet straight toward itself. {@actSaveSuccess} The chain disappears."
-      ]
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "dex",
+        "dc": 15,
+        "target": {
+          "type": "creature",
+          "range_feet": 60
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "damage",
+                "dice": "2d4",
+                "damage_type": "fire",
+                "bonus": 4
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "reaction": [

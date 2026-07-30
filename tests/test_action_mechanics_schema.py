@@ -184,6 +184,30 @@ def test_save_action_supports_staged_failures_and_repeat_saves() -> None:
     assert action.failure[1].repeat_saves[0].automatic_success_after.amount == 1
 
 
+def test_condition_duration_can_end_at_start_of_source_turn() -> None:
+    action = AttackActionMechanicsSchema.model_validate(
+        {
+            "attack_modes": ["melee"],
+            "attack_bonus": 7,
+            "target": {"type": "creature", "range_feet": 5},
+            "reach_feet": 5,
+            "hit": [
+                {
+                    "type": "condition",
+                    "condition": "poisoned",
+                    "duration": {
+                        "type": "start_of_turn",
+                        "creature": "source",
+                        "turn_offset": 1,
+                    },
+                }
+            ],
+        }
+    )
+
+    assert action.hit[0].duration.type == "start_of_turn"
+
+
 def test_spellcasting_action_is_distinct_from_save_and_attack_actions() -> None:
     action = SpellcastingActionMechanicsSchema.model_validate(
         {

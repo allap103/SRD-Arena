@@ -112,13 +112,82 @@
       "name": "Bite",
       "entries": [
         "{@atkr m} {@hit 7}, reach 5 ft. {@h}11 ({@damage 1d12 + 5}) Piercing damage, and the target has the {@condition Poisoned|XPHB} condition until the end of the couatl's next turn."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 7,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d12",
+            "damage_type": "piercing",
+            "bonus": 5
+          },
+          {
+            "type": "condition",
+            "condition": "poisoned",
+            "duration": {
+              "type": "end_of_turn",
+              "creature": "source",
+              "turn_offset": 1
+            }
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Constrict",
       "entries": [
         "{@actSave str} {@dc 15}, one Medium or smaller creature the couatl can see within 5 feet. {@actSaveFail} 8 ({@damage 1d6 + 5}) Bludgeoning damage. The target has the {@condition Grappled|XPHB} condition (escape {@dc 13}), and it has the {@condition Restrained|XPHB} condition until the grapple ends."
-      ]
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "str",
+        "dc": 15,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "damage",
+                "dice": "1d6",
+                "damage_type": "bludgeoning",
+                "bonus": 5
+              },
+              {
+                "type": "condition",
+                "condition": "grappled",
+                "escape_dc": 13,
+                "source_capacity": 1
+              },
+              {
+                "type": "condition",
+                "condition": "restrained",
+                "requirements": [
+                  {
+                    "type": "condition",
+                    "conditions": [
+                      "grappled"
+                    ],
+                    "applied_by": "source"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "environment": [

@@ -66,19 +66,88 @@
       "name": "Multiattack",
       "entries": [
         "The dragon makes two Rend attacks."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                },
+                "times": 2
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Rend",
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}8 ({@damage 1d10 + 3}) Slashing damage plus 3 ({@damage 1d6}) Lightning damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d10",
+            "damage_type": "slashing",
+            "bonus": 3
+          },
+          {
+            "type": "damage",
+            "dice": "1d6",
+            "damage_type": "lightning"
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Lightning Breath {@recharge 5}",
       "entries": [
         "{@actSave dex} {@dc 12}, each creature in a 30-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 21 ({@damage 6d6}) Lightning damage. {@actSaveSuccess} Half damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "dex",
+        "dc": 12,
+        "target": {
+          "type": "area",
+          "shape": "line",
+          "size_feet": 30,
+          "width_feet": 5
+        },
+        "failure": [
+          {
+            "effects": [
+              {
+                "type": "damage",
+                "dice": "6d6",
+                "damage_type": "lightning"
+              }
+            ]
+          }
+        ],
+        "success_damage": "half",
+        "resource": {
+          "type": "recharge",
+          "minimum": 5
+        }
+      }
     }
   ],
   "environment": [

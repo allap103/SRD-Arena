@@ -25,7 +25,8 @@ targets can have typed eligibility requirements.
 
 Effects are a discriminated union covering damage, conditions, forced
 movement, speed and action-economy changes, roll modifiers, control, and
-special memory acquisition. Effects may carry explicit durations.
+special memory acquisition. Effects may carry explicit durations. Turn-relative
+durations can end at the start or end of the source's or target's turn.
 
 Damage hit effects may declare typed `requirements`. An
 `attack_roll_mode` requirement applies that damage only when the resolved

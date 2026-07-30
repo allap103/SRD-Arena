@@ -68,19 +68,105 @@
       "name": "Multiattack",
       "entries": [
         "The chuul makes two Pincer attacks and uses Paralyzing Tentacles."
-      ]
+      ],
+      "mechanics": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Pincer"
+                },
+                "times": 2
+              },
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Paralyzing Tentacles"
+                }
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Pincer",
       "entries": [
         "{@atkr m} {@hit 6}, reach 10 ft. {@h}9 ({@damage 1d10 + 4}) Bludgeoning damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 14}) from one of two pincers."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 6,
+        "target": {
+          "type": "creature",
+          "range_feet": 10
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d10",
+            "damage_type": "bludgeoning",
+            "bonus": 4
+          },
+          {
+            "type": "condition",
+            "condition": "grappled",
+            "requirements": [
+              {
+                "type": "size",
+                "maximum": "L"
+              }
+            ],
+            "escape_dc": 14,
+            "source_capacity": 2
+          }
+        ],
+        "reach_feet": 10
+      }
     },
     {
       "name": "Paralyzing Tentacles",
       "entries": [
         "{@actSave con} {@dc 13}, one creature {@condition Grappled|XPHB} by the chuul. {@actSaveFail} The target has the {@condition Poisoned|XPHB} condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically. While {@condition Poisoned|XPHB}, the target has the {@condition Paralyzed|XPHB} condition."
-      ]
+      ],
+      "mechanics": {
+        "type": "saving_throw",
+        "ability": "con",
+        "dc": 13,
+        "target": {
+          "type": "creature",
+          "range_feet": 10,
+          "requirements": [
+            {"type": "condition", "conditions": ["grappled"], "applied_by": "source"}
+          ]
+        },
+        "failure": [
+          {
+            "effects": [
+              {"type": "condition", "condition": "poisoned"},
+              {
+                "type": "condition",
+                "condition": "paralyzed",
+                "requirements": [{"type": "condition", "conditions": ["poisoned"]}]
+              }
+            ],
+            "repeat_saves": [
+              {
+                "trigger": "end_of_turn",
+                "automatic_success_after": {"type": "timed", "amount": 1, "unit": "minute"}
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "environment": [

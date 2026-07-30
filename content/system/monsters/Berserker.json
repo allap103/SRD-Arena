@@ -59,7 +59,27 @@
       "name": "Greataxe",
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}9 ({@damage 1d12 + 3}) Slashing damage."
-      ]
+      ],
+      "mechanics": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d12",
+            "damage_type": "slashing",
+            "bonus": 3
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "environment": [
