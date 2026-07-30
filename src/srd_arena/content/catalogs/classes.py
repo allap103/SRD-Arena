@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TypeVar
+from typing import Iterable, TypeVar
 
 from srd_arena.content.schemas.classes import (
     ClassFeatureSchema,
@@ -83,9 +83,13 @@ class SubclassCatalog:
 
 def load_class_catalog(directory: str | Path) -> ClassCatalog:
     system_dir = Path(directory)
-    definitions = _load_records(system_dir / "classes", ClassSchema)
-    features = _load_records(
-        system_dir / "class_features",
+    class_dir = system_dir / "classes"
+    definitions = _load_paths(
+        class_dir.glob("*/class.json"),
+        ClassSchema,
+    )
+    features = _load_paths(
+        class_dir.glob("*/features/*.json"),
         ClassFeatureSchema,
     )
     records = [
@@ -136,7 +140,11 @@ def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
 
 
 def _load_records(directory: Path, schema: type[T]) -> list[T]:
+    return _load_paths(directory.glob("*.json"), schema)
+
+
+def _load_paths(paths: Iterable[Path], schema: type[T]) -> list[T]:
     return [
         schema.model_validate(load_json(path))
-        for path in sorted(directory.glob("*.json"))
+        for path in sorted(paths)
     ]

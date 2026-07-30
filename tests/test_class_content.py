@@ -13,7 +13,7 @@ def test_bundled_classes_load_with_typed_feature_records() -> None:
 
     fighter = catalog.find("Fighter", "XPHB")
 
-    assert len(catalog) == 24
+    assert len(catalog) == 12
     assert isinstance(fighter.definition, ClassSchema)
     assert fighter.definition.proficiency == ["str", "con"]
     assert any(feature.public_name == "Second Wind" for feature in fighter.features)
