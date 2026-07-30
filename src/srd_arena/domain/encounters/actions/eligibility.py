@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from ...creatures import can_grapple
+from ...creatures import AutomaticActionDefinition, can_grapple
 from ...geometry import Position
 from ..behaviors import DIRECTION_DELTAS, chebyshev_distance
 from ..models import CreatureRef, EncounterAction
@@ -223,6 +223,49 @@ class GrappleRule:
         return None
 
 
+class StatBlockActionRule:
+    def check(
+        self,
+        state: EncounterState,
+        actor_ref: CreatureRef,
+        action: EncounterAction,
+    ) -> EligibilityFailure | None:
+        if action.kind != "stat_block":
+            return None
+        actor = state.creatures[actor_ref]
+        name = action.preferred_attack_name
+        definition = actor.creature.stat_block_actions.get(name or "")
+        if not isinstance(definition, AutomaticActionDefinition):
+            return EligibilityFailure(
+                "stat_block_action_unavailable",
+                "The stat-block action is not executable.",
+            )
+        if not isinstance(action.value, str):
+            return EligibilityFailure(
+                "target_required",
+                "A creature target is required.",
+            )
+        if definition.target.kind == "self":
+            if action.value != actor_ref:
+                return EligibilityFailure(
+                    "invalid_self_target",
+                    "This action targets only its user.",
+                )
+            return None
+        target_failure = _opposing_target_failure(state, actor_ref, action)
+        if target_failure is not None:
+            return target_failure
+        target = state.creatures[action.value]
+        range_feet = definition.target.range_feet or 0
+        range_squares = (range_feet + 4) // 5
+        if chebyshev_distance(actor.position, target.position) > range_squares:
+            return EligibilityFailure(
+                "target_out_of_range",
+                "The target is out of range.",
+            )
+        return None
+
+
 ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
     ActorOwnershipRule(),
     ActorReadyRule(),
@@ -230,6 +273,7 @@ ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
     MovementRule(),
     AttackRule(),
     GrappleRule(),
+    StatBlockActionRule(),
 )
 
 

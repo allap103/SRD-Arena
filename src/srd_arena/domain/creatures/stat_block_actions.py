@@ -178,6 +178,7 @@ class AttackActionDefinition:
     range_normal_feet: int | None
     range_long_feet: int | None
     hit: tuple[ActionEffect, ...]
+    resource: ActionResource | None = None
 
 
 @dataclass(frozen=True)
@@ -193,4 +194,33 @@ class SavingThrowActionDefinition:
     resource: ActionResource | None = None
 
 
-StatBlockActionDefinition = AttackActionDefinition | SavingThrowActionDefinition
+@dataclass(frozen=True)
+class AutomaticActionDefinition:
+    name: str
+    target: ActionTarget
+    effects: tuple[ActionEffect, ...]
+    resource: ActionResource | None = None
+
+
+@dataclass(frozen=True)
+class SpellOption:
+    name: str
+    source: str | None = None
+    cast_level: int | None = None
+    uses: int | Literal["at_will"] | None = None
+
+
+@dataclass(frozen=True)
+class SpellcastingActionDefinition:
+    name: str
+    ability: str
+    spells: tuple[SpellOption, ...]
+    shared_resource: ActionResource | None = None
+
+
+StatBlockActionDefinition = (
+    AttackActionDefinition
+    | SavingThrowActionDefinition
+    | AutomaticActionDefinition
+    | SpellcastingActionDefinition
+)

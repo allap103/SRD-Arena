@@ -5,6 +5,9 @@ import pytest
 
 from srd_arena.content.catalogs import SourceCatalog, load_bestiary_catalog
 from srd_arena.content.loaders.creatures import build_creature
+from srd_arena.content.loaders.stat_block_actions import (
+    build_stat_block_actions,
+)
 from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.schemas import (
     AttackActionMechanicsSchema,
@@ -19,11 +22,13 @@ from srd_arena.content.schemas.multiattack import (
 )
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.domain.creatures import (
+    AutomaticActionDefinition,
     AttackActionDefinition,
     AttackRollModeRequirement,
     ActionResource,
     DamageEffect,
     SavingThrowActionDefinition,
+    SpellcastingActionDefinition,
 )
 from srd_arena.domain.encounters.actions.attack_resolution import resolve_attack
 
@@ -444,6 +449,53 @@ def test_b_and_c_monster_actions_have_typed_mechanics() -> None:
 
     assert len(actions) == 94
     assert all(action.mechanics is not None for action in actions)
+
+
+def test_all_typed_stat_block_action_variants_survive_loading() -> None:
+    catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
+
+    avatar = build_creature(
+        CreatureSchema.model_validate(
+            {
+                "id": "avatar",
+                "stat_block": {"name": "Avatar of Death", "source": "DMG"},
+            }
+        ),
+        bestiary=catalog,
+    )
+
+    assert isinstance(
+        avatar.stat_block_actions["Reaping Scythe"],
+        AutomaticActionDefinition,
+    )
+
+    monster = BestiaryMonsterSchema.model_validate(
+        {
+            "name": "Test Caster",
+            "source": "TEST",
+            "action": [
+                {
+                    "name": "Innate Spellcasting",
+                    "entries": ["The creature casts a spell."],
+                    "mechanics": {
+                        "type": "spellcasting",
+                        "ability": "cha",
+                        "spells": [
+                            {
+                                "name": "Scorching Ray",
+                                "source": "XPHB",
+                                "cast_level": 3,
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+    )
+    spellcasting = build_stat_block_actions(monster)["Innate Spellcasting"]
+    assert isinstance(spellcasting, SpellcastingActionDefinition)
+    assert spellcasting.spells[0].name == "Scorching Ray"
+    assert spellcasting.spells[0].cast_level == 3
 
 
 def test_bestiary_schema_preserves_unknown_source_fields() -> None:

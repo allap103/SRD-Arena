@@ -39,6 +39,28 @@ def build_stat_block_actions(
                 always=tuple(_effect(effect) for effect in mechanics.always),
                 resource=_resource(mechanics.resource),
             )
+        elif isinstance(mechanics, schema.AutomaticActionMechanicsSchema):
+            definitions[action.name] = domain.AutomaticActionDefinition(
+                name=action.name,
+                target=_target(mechanics.target),
+                effects=tuple(_effect(effect) for effect in mechanics.effects),
+                resource=_resource(mechanics.resource),
+            )
+        elif isinstance(mechanics, schema.SpellcastingActionMechanicsSchema):
+            definitions[action.name] = domain.SpellcastingActionDefinition(
+                name=action.name,
+                ability=mechanics.ability,
+                spells=tuple(
+                    domain.SpellOption(
+                        name=spell.name,
+                        source=spell.source,
+                        cast_level=spell.cast_level,
+                        uses=spell.uses,
+                    )
+                    for spell in mechanics.spells
+                ),
+                shared_resource=_resource(mechanics.shared_resource),
+            )
         else:
             fallback = _parse_tagged_attack(action)
             if fallback is not None:
@@ -59,6 +81,7 @@ def _attack_definition(
         range_normal_feet=mechanics.range_normal_feet,
         range_long_feet=mechanics.range_long_feet,
         hit=tuple(_effect(effect) for effect in mechanics.hit),
+        resource=_resource(mechanics.resource),
     )
 
 
@@ -160,6 +183,13 @@ def _duration(value) -> domain.EffectDuration | None:
     )
 
 
+def _required_duration(value) -> domain.EffectDuration:
+    duration = _duration(value)
+    if duration is None:
+        raise ValueError("This action effect requires a duration.")
+    return duration
+
+
 def _effect(value: schema.ActionEffectSchema) -> domain.ActionEffect:
     if isinstance(value, schema.DamageEffectSchema):
         return domain.DamageEffect(
@@ -194,14 +224,16 @@ def _effect(value: schema.ActionEffectSchema) -> domain.ActionEffect:
         return domain.SpeedMultiplierEffect(
             value.numerator,
             value.denominator,
-            _duration(value.duration),
+            _required_duration(value.duration),
         )
     if isinstance(value, schema.ProhibitReactionEffectSchema):
-        return domain.ProhibitReactionsEffect(_duration(value.duration))
+        return domain.ProhibitReactionsEffect(
+            _required_duration(value.duration)
+        )
     if isinstance(value, schema.TurnEconomyRestrictionEffectSchema):
         return domain.TurnEconomyRestrictionEffect(
             tuple(value.choose_between),
-            _duration(value.duration),
+            _required_duration(value.duration),
         )
     if isinstance(value, schema.RollModifierEffectSchema):
         return domain.RollModifierEffect(
@@ -217,7 +249,7 @@ def _effect(value: schema.ActionEffectSchema) -> domain.ActionEffect:
             value.communication,
             value.communication_range_feet,
             value.control_range_feet,
-            _duration(value.duration),
+            _required_duration(value.duration),
         )
     return domain.GainMemoriesEffect(
         domain.CreatureTypeRequirement(

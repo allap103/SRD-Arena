@@ -19,7 +19,12 @@ from srd_arena.frontends.qt.app import GameWindow
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.conditions import build_named_status
 from srd_arena.domain.geometry import Position
-from srd_arena.domain.creatures import AttackActionDefinition
+from srd_arena.domain.creatures import (
+    ActionTarget,
+    AutomaticActionDefinition,
+    AttackActionDefinition,
+    DamageEffect,
+)
 from srd_arena.frontends.shared.session import (
     SpellSlotTrackView,
     build_session_presentation,
@@ -117,6 +122,55 @@ def test_goblin_encounter_scene_generates_runtime_actions() -> None:
     assert "Save game" not in labels
     assert "Load game" not in labels
     assert labels[-1] == "Exit game"
+
+
+def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
+    monkeypatch,
+) -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    actor_ref = state.current_decision().creature_ref
+    target_ref = next(
+        creature_ref
+        for creature_ref in state.creatures
+        if state._creatures_are_opponents(actor_ref, creature_ref)
+    )
+    actor = state.creatures[actor_ref]
+    target = state.creatures[target_ref]
+    actor.position = Position(0, 0)
+    target.position = Position(1, 0)
+    actor.creature.stat_block_actions["Reaping Scythe"] = (
+        AutomaticActionDefinition(
+            name="Reaping Scythe",
+            target=ActionTarget(kind="creature", range_feet=5),
+            effects=(DamageEffect("1d8", 3, "slashing"),),
+        )
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda count, sides: count * sides,
+    )
+    action = next(
+        action
+        for action in state._available_creature_actions(actor_ref)
+        if action.preferred_attack_name == "Reaping Scythe"
+    )
+    health_before = target.creature.get_health()
+
+    result = state._execute_creature_action(
+        action,
+        state.current_decision(),
+    )
+
+    assert target.creature.get_health() == max(0, health_before - 11)
+    assert actor.actions_remaining == 0
+    assert any(
+        event.type == "stat_block_action_resolved"
+        for event in result.progress.events
+    )
 
 
 def test_action_eligibility_exposes_structured_failures() -> None:

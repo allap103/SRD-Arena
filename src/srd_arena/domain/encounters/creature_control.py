@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..geometry import Position
+from ..creatures import AutomaticActionDefinition
 from .actions.attack_resolution import attack_sources
 from .actions.consumables import healing_potions_in_inventory
 from .actions.eligibility import action_eligibility, require_action_eligible
@@ -124,6 +125,41 @@ def available_creature_actions(
                 cost=ActionCost(action=1 if enemy.attacks_remaining == 0 else 0),
             )
         )
+    for definition in enemy.creature.stat_block_actions.values():
+        if not isinstance(definition, AutomaticActionDefinition):
+            continue
+        target_refs = (
+            [creature_ref]
+            if definition.target.kind == "self"
+            else [
+                target_ref
+                for target_ref in self._living_creature_refs()
+                if self._creatures_are_opponents(creature_ref, target_ref)
+            ]
+            if definition.target.kind == "creature"
+            else []
+        )
+        for target_ref in target_refs:
+            target_suffix = (
+                ""
+                if target_ref == creature_ref
+                else f" {_lower_initial(self._creature_label(target_ref))}"
+            )
+            source_slug = definition.name.lower().replace(" ", "-")
+            actions.append(
+                EncounterAction(
+                    f"{definition.name}{target_suffix}",
+                    "stat_block",
+                    target_ref,
+                    id=(
+                        f"{creature_ref}-stat-block-{source_slug}-"
+                        f"{target_ref.replace(':', '-')}"
+                    ),
+                    creature_ref=creature_ref,
+                    preferred_attack_name=definition.name,
+                    cost=ActionCost(action=1),
+                )
+            )
     actions.extend(self._available_feature_actions(enemy.creature))
     actions.extend(self._available_spell_actions(enemy.creature))
     actions.extend(available_escape_actions(self, creature_ref))
@@ -246,6 +282,16 @@ def execute_creature_action(
         )
     elif action.kind == "attack":
         resolve_attack_action(
+            self,
+            enemy.creature,
+            action,
+            progress,
+            action_id,
+        )
+    elif action.kind == "stat_block":
+        from .actions.stat_block import resolve_automatic_action
+
+        resolve_automatic_action(
             self,
             enemy.creature,
             action,

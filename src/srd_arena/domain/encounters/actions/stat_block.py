@@ -3,7 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...creatures import Creature
-from ...creatures.stat_block_actions import AttackActionDefinition
+from ...creatures.stat_block_actions import (
+    AutomaticActionDefinition,
+    AttackActionDefinition,
+    DamageEffect,
+)
 from .attack_resolution import (
     apply_attack_damage,
     resolve_attack,
@@ -170,6 +174,74 @@ def resolve_attack_action(
         )
     )
     if defender.get_health() <= 0:
+        state._remove_relational_statuses_for_creature(target_ref)
+        progress.events.append(
+            state._event(
+                "creature_defeated",
+                creature_ref=target_ref,
+                action_id=action_id,
+            )
+        )
+
+
+def resolve_automatic_action(
+    state: EncounterState,
+    creature: Creature,
+    action: EncounterAction,
+    progress: EncounterProgress,
+    action_id: str,
+) -> None:
+    creature_ref = state.current_decision().creature_ref
+    name = action.preferred_attack_name
+    definition = creature.stat_block_actions.get(name or "")
+    if not isinstance(definition, AutomaticActionDefinition):
+        raise ValueError("Automatic stat-block action definition required.")
+    if not isinstance(action.value, str):
+        raise ValueError("Automatic stat-block action requires a target.")
+    target_ref = action.value
+    target = state.creatures[target_ref].creature
+    state._consume_action(allow_magic=False)
+    damage = 0
+    damage_details: list[dict[str, object]] = []
+    for effect in definition.effects:
+        if not isinstance(effect, DamageEffect):
+            raise NotImplementedError(
+                f"Automatic effect '{type(effect).__name__}' is not executable."
+            )
+        count_text, sides_text = effect.dice.lower().split("d", 1)
+        rolled = _roll_dice(int(count_text), int(sides_text))
+        amount = max(effect.minimum or 0, rolled + effect.bonus)
+        applied = target.take_damage(amount)
+        damage += applied
+        damage_details.append(
+            {
+                "damage_type": effect.damage_type,
+                "rolled": rolled,
+                "bonus": effect.bonus,
+                "applied": applied,
+            }
+        )
+    progress.messages.append(
+        (
+            "system",
+            f"{creature.name} uses {definition.name} on {target.name}, "
+            f"dealing {damage} damage.",
+        )
+    )
+    progress.events.append(
+        state._event(
+            "stat_block_action_resolved",
+            creature_ref=creature_ref,
+            action_id=action_id,
+            data={
+                "action_name": definition.name,
+                "target_ref": target_ref,
+                "damage": damage,
+                "damage_details": damage_details,
+            },
+        )
+    )
+    if target.get_health() <= 0:
         state._remove_relational_statuses_for_creature(target_ref)
         progress.events.append(
             state._event(
