@@ -305,6 +305,26 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
         "Shortsword",
         "Light Crossbow",
     ]
+    assassin_creature = build_creature(
+        CreatureSchema.model_validate(
+            {
+                "id": "assassin",
+                "stat_block": {"name": "Assassin", "source": "XMM"},
+            }
+        ),
+        bestiary=catalog,
+    )
+    assert assassin_creature.multiattack is not None
+    assassin_plans = assassin_creature.multiattack.executable_slot_plans(
+        {"Shortsword", "Light Crossbow"}
+    )
+    [assassin_slots] = assassin_plans
+    assert len(assassin_slots) == 3
+    assert all(
+        {option.name for option in slot.options}
+        == {"Shortsword", "Light Crossbow"}
+        for slot in assassin_slots
+    )
 
     black_dragon = catalog.find("Adult Black Dragon", "XMM")
     black_replacement = (

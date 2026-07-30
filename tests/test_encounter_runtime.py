@@ -12,6 +12,9 @@ from srd_arena.domain.encounters.encounter import (
 from srd_arena.domain.encounters.actions.hit_effects import (
     apply_attack_hit_effects,
 )
+from srd_arena.domain.encounters.actions.stat_block import (
+    recharge_stat_block_actions,
+)
 from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.frontends.shared.combat import render_encounter_text
 from srd_arena.runtime.scenario import Scenario
@@ -21,9 +24,13 @@ from srd_arena.domain.effects.conditions import build_named_status
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.creatures import (
     ActionTarget,
+    ActionResource,
+    ActionOutcomeStage,
     AutomaticActionDefinition,
     AttackActionDefinition,
     DamageEffect,
+    ConditionEffect,
+    SavingThrowActionDefinition,
 )
 from srd_arena.frontends.shared.session import (
     SpellSlotTrackView,
@@ -40,6 +47,12 @@ from srd_arena.frontends.qt.ui.encounter.config import TargetSelectionMode
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 MULTIATTACK_SCENARIO_DIR = Path(__file__).parents[1] / "content" / "scenarios" / "multiattack_showcase"
+STAT_BLOCK_ACTION_SCENARIO_DIR = (
+    Path(__file__).parents[1]
+    / "content"
+    / "scenarios"
+    / "stat_block_action_showcase"
+)
 _ROLL_INITIATIVE = EncounterState._roll_initiative
 
 
@@ -124,6 +137,45 @@ def test_goblin_encounter_scene_generates_runtime_actions() -> None:
     assert labels[-1] == "Exit game"
 
 
+def test_stat_block_action_showcase_exposes_new_runtime_capabilities() -> None:
+    scenario = Scenario(str(STAT_BLOCK_ACTION_SCENARIO_DIR))
+    session = scenario.create_session()
+    session.current_scene_id = "stat_block_action_showcase"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+
+    avatar_actions = state._available_creature_actions("avatar")
+    wyrmling_actions = state._available_creature_actions("blue_wyrmling")
+    assassin_actions = state._available_creature_actions("assassin")
+
+    assert scenario.display_name == "Executable Stat-Block Actions"
+    assert any(
+        action.preferred_attack_name == "Reaping Scythe"
+        for action in avatar_actions
+    )
+    assert any(
+        action.preferred_attack_name == "Lightning Breath {@recharge 5}"
+        for action in wyrmling_actions
+    )
+    assert len(
+        [action for action in assassin_actions if action.kind == "multiattack"]
+    ) == 1
+    assert state.creatures["assassin"].creature.multiattack is not None
+    [assassin_slots] = (
+        state.creatures["assassin"]
+        .creature.multiattack.executable_slot_plans(
+            {"Shortsword", "Light Crossbow"}
+        )
+    )
+    assert len(assassin_slots) == 3
+    assert all(
+        {option.name for option in slot.options}
+        == {"Shortsword", "Light Crossbow"}
+        for slot in assassin_slots
+    )
+
+
 def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
     monkeypatch,
 ) -> None:
@@ -147,8 +199,14 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
             name="Reaping Scythe",
             target=ActionTarget(kind="creature", range_feet=5),
             effects=(DamageEffect("1d8", 3, "slashing"),),
+            resource=ActionResource(
+                kind="uses",
+                maximum=1,
+                reset="day",
+            ),
         )
     )
+    actor.creature.stat_block_action_resources["Reaping Scythe"] = 1
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_dice",
         lambda count, sides: count * sides,
@@ -167,10 +225,143 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
 
     assert target.creature.get_health() == max(0, health_before - 11)
     assert actor.actions_remaining == 0
+    assert actor.creature.stat_block_action_resources["Reaping Scythe"] == 0
     assert any(
         event.type == "stat_block_action_resolved"
         for event in result.progress.events
     )
+    actor.actions_remaining = 1
+    assert not any(
+        action.preferred_attack_name == "Reaping Scythe"
+        for action in state._available_creature_actions(actor_ref)
+    )
+
+
+def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save(
+    monkeypatch,
+) -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    actor_ref = state.current_decision().creature_ref
+    target_ref = next(
+        creature_ref
+        for creature_ref in state.creatures
+        if state._creatures_are_opponents(actor_ref, creature_ref)
+    )
+    actor = state.creatures[actor_ref]
+    target = state.creatures[target_ref]
+    actor.position = Position(0, 0)
+    target.position = Position(1, 0)
+    actor.creature.stat_block_actions["Acid Spray"] = (
+        SavingThrowActionDefinition(
+            name="Acid Spray",
+            target=ActionTarget(kind="creature", range_feet=5),
+            ability="dex",
+            dc=20,
+            failure=(
+                ActionOutcomeStage(
+                    effects=(DamageEffect("2d6", 0, "acid"),),
+                ),
+            ),
+            success=(),
+            success_damage="half",
+            always=(),
+        )
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda count, sides: count * sides,
+    )
+    action = next(
+        action
+        for action in state._available_creature_actions(actor_ref)
+        if action.preferred_attack_name == "Acid Spray"
+    )
+    health_before = target.creature.get_health()
+
+    result = state._execute_creature_action(
+        action,
+        state.current_decision(),
+    )
+
+    assert target.creature.get_health() == max(0, health_before - 12)
+    event = next(
+        event
+        for event in result.progress.events
+        if event.type == "stat_block_action_resolved"
+    )
+    [outcome] = event.data["outcomes"]
+    assert outcome["success"] is False
+    assert outcome["damage"] == min(12, health_before)
+
+
+def test_unsupported_stat_block_effect_is_rejected_before_execution() -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    actor_ref = state.current_decision().creature_ref
+    target_ref = next(
+        creature_ref
+        for creature_ref in state.creatures
+        if state._creatures_are_opponents(actor_ref, creature_ref)
+    )
+    actor = state.creatures[actor_ref]
+    actor.creature.stat_block_actions["Paralyze"] = (
+        AutomaticActionDefinition(
+            name="Paralyze",
+            target=ActionTarget(kind="creature", range_feet=5),
+            effects=(ConditionEffect("paralyzed"),),
+        )
+    )
+    action = EncounterAction(
+        "Paralyze",
+        "stat_block",
+        target_ref,
+        id="paralyze",
+        creature_ref=actor_ref,
+        preferred_attack_name="Paralyze",
+        cost=ActionCost(action=1),
+    )
+
+    eligibility = state.action_eligibility(action)
+
+    assert eligibility.allowed is False
+    assert eligibility.failures[-1].code == "unsupported_stat_block_mechanics"
+    assert actor.actions_remaining == 1
+
+
+def test_recharge_stat_block_resource_becomes_available_on_required_roll(
+    monkeypatch,
+) -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    creature = session.encounter_state.active_creature_state.creature
+    creature.stat_block_actions["Breath"] = AutomaticActionDefinition(
+        name="Breath",
+        target=ActionTarget(kind="creature", range_feet=5),
+        effects=(DamageEffect("1d6", 0, "fire"),),
+        resource=ActionResource(kind="recharge", minimum=5),
+    )
+    creature.stat_block_action_resources["Breath"] = 0
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 5,
+    )
+
+    recharge_stat_block_actions(creature)
+
+    assert creature.stat_block_action_resources["Breath"] == 1
 
 
 def test_action_eligibility_exposes_structured_failures() -> None:
@@ -398,7 +589,7 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
 
     assert state.active_creature_state.actions_remaining == 0
     assert state.active_creature_state.attacks_remaining == 2
-    assert [invocation.name for invocation in state.active_creature_state.pending_multiattack] == [
+    assert [slot.options[0].name for slot in state.active_creature_state.pending_multiattack] == [
         "Thunderous Slam",
         "Thunderous Slam",
     ]
@@ -411,7 +602,7 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
     first = state.apply_action(invocation)
 
     assert state.active_creature_state.attacks_remaining == 1
-    assert [invocation.name for invocation in state.active_creature_state.pending_multiattack] == ["Thunderous Slam"]
+    assert [slot.options[0].name for slot in state.active_creature_state.pending_multiattack] == ["Thunderous Slam"]
     assert [event.data["attack_name"] for event in first.events if event.type == "attack_resolved"] == [
         "Thunderous Slam"
     ]
@@ -426,6 +617,67 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
     assert [event.data["attack_name"] for event in second.events if event.type == "attack_resolved"] == [
         "Thunderous Slam"
     ]
+
+
+def test_choice_multiattack_selects_each_attack_when_its_slot_is_resolved(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    assassin = build_creature(
+        CreatureSchema.model_validate(
+            {
+                "id": "assassin",
+                "stat_block": {"name": "Assassin", "source": "XMM"},
+            }
+        ),
+        bestiary=load_bestiary_catalog(SYSTEM_CONTENT_ROOT),
+    )
+    state.active_creature_state.creature = assassin
+    state.active_position.x = 4
+    state.active_position.y = 4
+    state.creatures["goblin_1"].position.x = 4
+    state.creatures["goblin_1"].position.y = 3
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+
+    [multiattack] = [
+        action
+        for action in state.available_actions()
+        if action.kind == "multiattack"
+    ]
+    state.apply_action(multiattack)
+
+    assert len(state.active_creature_state.pending_multiattack) == 3
+    first_slot_actions = [
+        action
+        for action in state.available_actions()
+        if action.kind == "attack" and action.value == "goblin_1"
+    ]
+    assert {
+        action.preferred_attack_name for action in first_slot_actions
+    } == {"Shortsword", "Light Crossbow"}
+
+    shortsword = next(
+        action
+        for action in first_slot_actions
+        if action.preferred_attack_name == "Shortsword"
+    )
+    state.apply_action(shortsword)
+
+    assert len(state.active_creature_state.pending_multiattack) == 2
+    assert {
+        action.preferred_attack_name
+        for action in state.available_actions()
+        if action.kind == "attack" and action.value == "goblin_1"
+    } == {"Shortsword", "Light Crossbow"}
 
 
 def test_multiattack_showcase_loads_enriched_creatures() -> None:

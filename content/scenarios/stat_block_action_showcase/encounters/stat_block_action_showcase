@@ -1,0 +1,119 @@
+{
+  "id": "stat_block_action_showcase",
+  "grid": {
+    "width": 12,
+    "height": 9
+  },
+  "creatures": [
+    {
+      "id": "avatar",
+      "name": "The Reaper",
+      "stat_block": {
+        "name": "Avatar of Death",
+        "source": "DMG"
+      },
+      "start": {
+        "x": 2,
+        "y": 1
+      },
+      "team_id": "showcase",
+      "controller": "external"
+    },
+    {
+      "id": "blue_wyrmling",
+      "name": "Stormscale",
+      "stat_block": {
+        "name": "Blue Dragon Wyrmling",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 2,
+        "y": 4
+      },
+      "team_id": "showcase",
+      "controller": "external"
+    },
+    {
+      "id": "assassin",
+      "name": "The Demonstrator",
+      "stat_block": {
+        "name": "Assassin",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 2,
+        "y": 7
+      },
+      "team_id": "showcase",
+      "controller": "external"
+    },
+    {
+      "id": "reaper_target",
+      "name": "Reaper Target",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 3,
+        "y": 1
+      },
+      "team_id": "targets",
+      "behavior": {"type": "wait"}
+    },
+    {
+      "id": "breath_target_near",
+      "name": "Near Breath Target",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 5,
+        "y": 4
+      },
+      "team_id": "targets",
+      "behavior": {"type": "wait"}
+    },
+    {
+      "id": "breath_target_far",
+      "name": "Far Breath Target",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 7,
+        "y": 4
+      },
+      "team_id": "targets",
+      "behavior": {"type": "wait"}
+    },
+    {
+      "id": "assassin_target",
+      "name": "Assassin Target",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 5,
+        "y": 7
+      },
+      "team_id": "targets",
+      "behavior": {"type": "wait"}
+    }
+  ],
+  "teams": [
+    {
+      "id": "showcase",
+      "name": "Action Demonstrators",
+      "controller": "external"
+    },
+    {
+      "id": "targets",
+      "name": "Training Targets",
+      "controller": "scripted"
+    }
+  ]
+}

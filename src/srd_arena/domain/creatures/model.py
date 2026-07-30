@@ -33,6 +33,7 @@ class Creature:
     stat_block_actions: dict[str, StatBlockActionDefinition] = field(
         default_factory=dict
     )
+    stat_block_action_resources: dict[str, int] = field(default_factory=dict)
     spellcasting: Spellcasting | None = None
     statistics: CreatureStatistics = field(default_factory=CreatureStatistics)
     max_health_override: int | None = None
@@ -40,6 +41,16 @@ class Creature:
     def __post_init__(self):
         if self.current_health is None:
             self.current_health = self.get_max_health()
+        for name, definition in self.stat_block_actions.items():
+            resource = getattr(definition, "resource", None)
+            if resource is None:
+                resource = getattr(definition, "shared_resource", None)
+            if resource is None or name in self.stat_block_action_resources:
+                continue
+            if resource.kind == "uses":
+                self.stat_block_action_resources[name] = resource.maximum or 0
+            else:
+                self.stat_block_action_resources[name] = 1
 
     def __str__(self):
         return f"Creature with attributes: {self.attributes} and inventory: {self.inventory.items}"

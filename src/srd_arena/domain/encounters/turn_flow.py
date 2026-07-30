@@ -204,6 +204,9 @@ class TurnEngine:
         self.normalize_turn(state)
         creature_ref = state.initiative_order[state.turn_index]
         creature_state = state.creatures[creature_ref]
+        from .actions.stat_block import recharge_stat_block_actions
+
+        recharge_stat_block_actions(creature_state.creature)
         creature_state.movement_remaining = None
         creature_state.actions_remaining = 1
         creature_state.magic_actions_remaining = 1

@@ -3,13 +3,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..geometry import Position
-from ..creatures import AutomaticActionDefinition
+from ..creatures import (
+    AutomaticActionDefinition,
+    SavingThrowActionDefinition,
+)
 from .actions.attack_resolution import attack_sources
 from .actions.consumables import healing_potions_in_inventory
 from .actions.eligibility import action_eligibility, require_action_eligible
 from .actions.grappling import available_escape_actions, resolve_escape_action
 from .actions.stat_block import (
-    executable_multiattack_sequence,
+    executable_multiattack_slot_plans,
     resolve_attack_action,
     resolve_multiattack_action,
 )
@@ -58,13 +61,30 @@ def available_creature_actions(
                     cost=ActionCost(movement=movement_cost),
                 )
             )
-    multiattack_sequence = executable_multiattack_sequence(enemy.creature)
-    if multiattack_sequence is not None:
+    multiattack_plans = executable_multiattack_slot_plans(enemy.creature)
+    multiattack_available = bool(multiattack_plans)
+    for plan_index, slots in enumerate(multiattack_plans):
+        plan_summary = [
+            "/".join(invocation.name for invocation in slot.options)
+            for slot in slots
+        ]
+        label = (
+            "Multiattack"
+            if len(multiattack_plans) == 1
+            else f"Multiattack ({', '.join(plan_summary)})"
+        )
         actions.append(
             EncounterAction(
-                "Multiattack",
+                label,
                 "multiattack",
-                id=f"{creature_ref}-multiattack",
+                (
+                    None if len(multiattack_plans) == 1 else str(plan_index)
+                ),
+                id=(
+                    f"{creature_ref}-multiattack"
+                    if len(multiattack_plans) == 1
+                    else f"{creature_ref}-multiattack-{plan_index}"
+                ),
                 creature_ref=creature_ref,
                 cost=ActionCost(action=1),
             )
@@ -75,17 +95,21 @@ def available_creature_actions(
         available_sources = (
             attack_sources(enemy.creature, self.item_templates)
             if (
-                multiattack_sequence is None
+                not multiattack_available
                 or enemy.pending_multiattack
                 or include_attack_alternatives
             )
             else []
         )
         if enemy.pending_multiattack:
+            option_names = {
+                invocation.name
+                for invocation in enemy.pending_multiattack[0].options
+            }
             available_sources = [
                 source
                 for source in available_sources
-                if source.name == enemy.pending_multiattack[0].name
+                if source.name in option_names
             ]
         for source in available_sources:
             for attack_type in source.attack_modes:
@@ -107,9 +131,7 @@ def available_creature_actions(
                             action=1 if enemy.attacks_remaining == 0 else 0
                         ),
                         source_trigger_id=(
-                            enemy.pending_multiattack[0].name
-                            if enemy.pending_multiattack
-                            else None
+                            source.name if enemy.pending_multiattack else None
                         ),
                         preferred_attack_type=attack_type,
                         preferred_attack_name=source.name,
@@ -126,7 +148,10 @@ def available_creature_actions(
             )
         )
     for definition in enemy.creature.stat_block_actions.values():
-        if not isinstance(definition, AutomaticActionDefinition):
+        if not isinstance(
+            definition,
+            (AutomaticActionDefinition, SavingThrowActionDefinition),
+        ):
             continue
         target_refs = (
             [creature_ref]
@@ -136,7 +161,7 @@ def available_creature_actions(
                 for target_ref in self._living_creature_refs()
                 if self._creatures_are_opponents(creature_ref, target_ref)
             ]
-            if definition.target.kind == "creature"
+            if definition.target.kind in {"creature", "area"}
             else []
         )
         for target_ref in target_refs:
@@ -277,6 +302,7 @@ def execute_creature_action(
         resolve_multiattack_action(
             self,
             enemy.creature,
+            action,
             progress,
             action_id,
         )
@@ -289,9 +315,9 @@ def execute_creature_action(
             action_id,
         )
     elif action.kind == "stat_block":
-        from .actions.stat_block import resolve_automatic_action
+        from .actions.stat_block import resolve_stat_block_action
 
-        resolve_automatic_action(
+        resolve_stat_block_action(
             self,
             enemy.creature,
             action,

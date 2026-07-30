@@ -1,12 +1,23 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from ...creatures import Creature
+from ...creatures import Creature, MultiattackStep
 from ...creatures.stat_block_actions import (
+    ActionEffect,
     AutomaticActionDefinition,
     AttackActionDefinition,
     DamageEffect,
+    SavingThrowActionDefinition,
+)
+from ...geometry import (
+    build_directional_area,
+    vector_between_positions,
+)
+from ...rolls.saving_throws import (
+    Ability,
+    SavingThrowCreature,
+    resolve_saving_throw,
 )
 from .attack_resolution import (
     apply_attack_damage,
@@ -33,9 +44,18 @@ def _roll_dice(count: int, sides: int) -> int:
 
 
 def executable_multiattack_sequence(creature: Creature):
-    if creature.multiattack is None:
+    plans = executable_multiattack_slot_plans(creature)
+    if not plans or any(len(slot.options) != 1 for slot in plans[0]):
         return None
-    return creature.multiattack.executable_sequence(
+    return tuple(slot.options[0] for slot in plans[0])
+
+
+def executable_multiattack_slot_plans(
+    creature: Creature,
+) -> tuple[tuple[MultiattackStep, ...], ...]:
+    if creature.multiattack is None:
+        return ()
+    return creature.multiattack.executable_slot_plans(
         {
             action.name
             for action in creature.stat_block_actions.values()
@@ -44,9 +64,83 @@ def executable_multiattack_sequence(creature: Creature):
     )
 
 
+def stat_block_action_resource_available(
+    creature: Creature,
+    action_name: str,
+) -> bool:
+    definition = creature.stat_block_actions.get(action_name)
+    resource = getattr(definition, "resource", None)
+    if resource is None:
+        resource = getattr(definition, "shared_resource", None)
+    if resource is None:
+        return True
+    return creature.stat_block_action_resources.get(action_name, 0) > 0
+
+
+def stat_block_action_runtime_issue(
+    definition: object,
+) -> str | None:
+    if isinstance(definition, AutomaticActionDefinition):
+        effects = definition.effects
+    elif isinstance(definition, SavingThrowActionDefinition):
+        if len(definition.failure) != 1:
+            return "Staged saving-throw failures are not executable yet."
+        if definition.failure[0].repeat_saves:
+            return "Repeated saving throws are not executable yet."
+        if (
+            definition.target.kind == "area"
+            and definition.target.origin != "self"
+        ):
+            return "Point-origin stat-block areas are not executable yet."
+        effects = (
+            *definition.failure[0].effects,
+            *definition.success,
+            *definition.always,
+        )
+    else:
+        return "This stat-block action type is not executable yet."
+    unsupported = next(
+        (
+            effect
+            for effect in effects
+            if not isinstance(effect, DamageEffect)
+        ),
+        None,
+    )
+    if unsupported is not None:
+        return (
+            f"{type(unsupported).__name__} is not executable for "
+            "stat-block actions yet."
+        )
+    return None
+
+
+def consume_stat_block_action_resource(
+    creature: Creature,
+    action_name: str,
+) -> None:
+    if not stat_block_action_resource_available(creature, action_name):
+        raise RuntimeError(f"'{action_name}' has no uses remaining.")
+    if action_name in creature.stat_block_action_resources:
+        creature.stat_block_action_resources[action_name] -= 1
+
+
+def recharge_stat_block_actions(creature: Creature) -> None:
+    for name, definition in creature.stat_block_actions.items():
+        resource = getattr(definition, "resource", None)
+        if resource is None or resource.kind != "recharge":
+            continue
+        if creature.stat_block_action_resources.get(name, 1) > 0:
+            continue
+        minimum = resource.minimum or 6
+        if _roll_die(6) >= minimum:
+            creature.stat_block_action_resources[name] = 1
+
+
 def resolve_multiattack_action(
     state: EncounterState,
     creature: Creature,
+    action: EncounterAction,
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
@@ -54,12 +148,18 @@ def resolve_multiattack_action(
     creature_state = state.creatures[creature_ref]
     if creature_state.actions_remaining <= 0 or creature_state.attacks_remaining > 0:
         raise RuntimeError("No Action remains to make a Multiattack.")
-    sequence = executable_multiattack_sequence(creature)
-    if not sequence:
+    plans = executable_multiattack_slot_plans(creature)
+    selected_plan = (
+        int(action.value)
+        if isinstance(action.value, str) and action.value.isdigit()
+        else 0
+    )
+    if selected_plan >= len(plans):
         raise RuntimeError("This creature has no executable Multiattack plan.")
+    slots = plans[selected_plan]
     state._consume_action(allow_magic=False)
-    creature_state.pending_multiattack = list(sequence)
-    creature_state.attacks_remaining = len(sequence)
+    creature_state.pending_multiattack = list(slots)
+    creature_state.attacks_remaining = len(slots)
     progress.messages.append(
         ("system", f"{creature.name} begins Multiattack.")
     )
@@ -70,7 +170,10 @@ def resolve_multiattack_action(
             action_id=action_id,
             data={
                 "kind": "multiattack",
-                "sequence": [invocation.name for invocation in sequence],
+                "slots": [
+                    [invocation.name for invocation in slot.options]
+                    for slot in slots
+                ],
             },
         )
     )
@@ -87,7 +190,14 @@ def resolve_attack_action(
     creature_state = state.creatures[creature_ref]
     preferred_attack_name = action.preferred_attack_name
     if creature_state.pending_multiattack:
-        preferred_attack_name = creature_state.pending_multiattack.pop(0).name
+        slot = creature_state.pending_multiattack[0]
+        if preferred_attack_name not in {
+            invocation.name for invocation in slot.options
+        }:
+            raise ValueError(
+                "The selected attack is not available for this Multiattack slot."
+            )
+        creature_state.pending_multiattack.pop(0)
         creature_state.attacks_remaining = len(
             creature_state.pending_multiattack
         )
@@ -138,6 +248,8 @@ def resolve_attack_action(
         d20_roller=_roll_die,
         dice_roller=_roll_dice,
     )
+    if isinstance(preferred_attack_name, str):
+        consume_stat_block_action_resource(creature, preferred_attack_name)
     apply_attack_damage(
         outcome,
         defender,
@@ -184,23 +296,54 @@ def resolve_attack_action(
         )
 
 
-def resolve_automatic_action(
+def resolve_stat_block_action(
     state: EncounterState,
     creature: Creature,
     action: EncounterAction,
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
+    definition = creature.stat_block_actions.get(
+        action.preferred_attack_name or ""
+    )
+    if isinstance(definition, AutomaticActionDefinition):
+        _resolve_automatic_action(
+            state,
+            creature,
+            definition,
+            action,
+            progress,
+            action_id,
+        )
+        return
+    if isinstance(definition, SavingThrowActionDefinition):
+        _resolve_saving_throw_action(
+            state,
+            creature,
+            definition,
+            action,
+            progress,
+            action_id,
+        )
+        return
+    raise ValueError("Executable stat-block action definition required.")
+
+
+def _resolve_automatic_action(
+    state: EncounterState,
+    creature: Creature,
+    definition: AutomaticActionDefinition,
+    action: EncounterAction,
+    progress: EncounterProgress,
+    action_id: str,
+) -> None:
     creature_ref = state.current_decision().creature_ref
-    name = action.preferred_attack_name
-    definition = creature.stat_block_actions.get(name or "")
-    if not isinstance(definition, AutomaticActionDefinition):
-        raise ValueError("Automatic stat-block action definition required.")
     if not isinstance(action.value, str):
         raise ValueError("Automatic stat-block action requires a target.")
     target_ref = action.value
     target = state.creatures[target_ref].creature
     state._consume_action(allow_magic=False)
+    consume_stat_block_action_resource(creature, definition.name)
     damage = 0
     damage_details: list[dict[str, object]] = []
     for effect in definition.effects:
@@ -250,3 +393,173 @@ def resolve_automatic_action(
                 action_id=action_id,
             )
         )
+
+
+def _resolve_saving_throw_action(
+    state: EncounterState,
+    creature: Creature,
+    definition: SavingThrowActionDefinition,
+    action: EncounterAction,
+    progress: EncounterProgress,
+    action_id: str,
+) -> None:
+    if not isinstance(action.value, str):
+        raise ValueError("Saving-throw stat-block action requires an aim target.")
+    creature_ref = state.current_decision().creature_ref
+    target_refs = _stat_block_target_refs(
+        state,
+        creature_ref,
+        action.value,
+        definition,
+    )
+    if not target_refs:
+        raise ValueError("The stat-block action has no valid targets.")
+    state._consume_action(allow_magic=False)
+    consume_stat_block_action_resource(creature, definition.name)
+    ability_names = {
+        "str": "strength",
+        "dex": "dexterity",
+        "con": "constitution",
+        "int": "intelligence",
+        "wis": "wisdom",
+        "cha": "charisma",
+    }
+    outcomes: list[dict[str, object]] = []
+    for target_ref in target_refs:
+        target = state.creatures[target_ref].creature
+        saving_throw = resolve_saving_throw(
+            cast(SavingThrowCreature, target),
+            cast(Ability, ability_names[definition.ability]),
+            definition.dc,
+            roller=_roll_die,
+        )
+        effects = (
+            definition.success
+            if saving_throw.check.success
+            else definition.failure[0].effects
+        )
+        damage_effects = (
+            definition.failure[0].effects
+            if saving_throw.check.success
+            and definition.success_damage == "half"
+            else effects
+        )
+        damage = _apply_damage_effects(
+            target,
+            damage_effects,
+            half=(
+                saving_throw.check.success
+                and definition.success_damage == "half"
+            ),
+        )
+        non_damage_effects = (*effects, *definition.always)
+        if any(
+            not isinstance(effect, DamageEffect)
+            for effect in non_damage_effects
+        ):
+            unsupported = next(
+                effect
+                for effect in non_damage_effects
+                if not isinstance(effect, DamageEffect)
+            )
+            raise NotImplementedError(
+                f"Saving-throw effect '{type(unsupported).__name__}' "
+                "is not executable."
+            )
+        damage += _apply_damage_effects(
+            target,
+            definition.always,
+            half=False,
+        )
+        outcomes.append(
+            {
+                "target_ref": target_ref,
+                "save_total": saving_throw.check.roll.total,
+                "success": saving_throw.check.success,
+                "damage": damage,
+            }
+        )
+        if target.get_health() <= 0:
+            state._remove_relational_statuses_for_creature(target_ref)
+    progress.messages.append(
+        (
+            "system",
+            f"{creature.name} uses {definition.name}.",
+        )
+    )
+    progress.events.append(
+        state._event(
+            "stat_block_action_resolved",
+            creature_ref=creature_ref,
+            action_id=action_id,
+            data={
+                "action_name": definition.name,
+                "outcomes": outcomes,
+            },
+        )
+    )
+
+
+def _stat_block_target_refs(
+    state: EncounterState,
+    creature_ref: str,
+    aim_ref: str,
+    definition: SavingThrowActionDefinition,
+) -> tuple[str, ...]:
+    target = definition.target
+    if target.kind == "self":
+        return (creature_ref,)
+    if target.kind == "creature":
+        return (aim_ref,)
+    if target.origin != "self":
+        raise NotImplementedError(
+            "Point-origin stat-block areas are not executable."
+        )
+    actor_position = state.creatures[creature_ref].position
+    aim_position = state.creatures[aim_ref].position
+    feet_per_square = (
+        state.creatures[creature_ref].creature.attributes.movement.feet_per_square
+    )
+    size_squares = max(1, (target.size_feet or 5) // feet_per_square)
+    area = build_directional_area(
+        target.shape,
+        actor_position,
+        vector_between_positions(actor_position, aim_position),
+        size_squares,
+        state.definition.grid,
+        coverage_threshold=(
+            state.geometry_config.directional_area_cell_coverage_threshold
+        ),
+    )
+    if area is None:
+        raise NotImplementedError(
+            f"Area shape '{target.shape}' is not executable."
+        )
+    occupied = {(cell.x, cell.y) for cell in area.cells}
+    return tuple(
+        target_ref
+        for target_ref, target_state in state.creatures.items()
+        if target_state.is_alive
+        and (target_state.position.x, target_state.position.y) in occupied
+    )
+
+
+def _apply_damage_effects(
+    target: Creature,
+    effects: tuple[ActionEffect, ...],
+    *,
+    half: bool,
+) -> int:
+    total = 0
+    for effect in effects:
+        if not isinstance(effect, DamageEffect):
+            continue
+        count_text, sides_text = effect.dice.lower().split("d", 1)
+        amount = max(
+            effect.minimum or 0,
+            _roll_dice(int(count_text), int(sides_text)) + effect.bonus,
+        )
+        if half:
+            amount //= 2
+        total += target.take_damage(amount)
+    return total

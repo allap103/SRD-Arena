@@ -148,6 +148,7 @@ def _target(value: schema.ActionTargetSchema) -> domain.ActionTarget:
         shape=getattr(value, "shape", None),
         size_feet=getattr(value, "size_feet", None),
         width_feet=getattr(value, "width_feet", None),
+        origin=getattr(value, "origin", "self"),
         line_of_sight=getattr(value, "line_of_sight", False),
         requirements=tuple(
             _requirement(requirement)

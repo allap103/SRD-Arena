@@ -40,6 +40,7 @@ class ActionTarget:
     shape: str | None = None
     size_feet: int | None = None
     width_feet: int | None = None
+    origin: str = "self"
     line_of_sight: bool = False
     requirements: tuple[ActionRequirement, ...] = ()
 

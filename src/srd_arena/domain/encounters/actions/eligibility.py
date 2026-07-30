@@ -3,12 +3,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from ...creatures import AutomaticActionDefinition, can_grapple
+from ...creatures import (
+    AutomaticActionDefinition,
+    SavingThrowActionDefinition,
+    can_grapple,
+)
 from ...geometry import Position
 from ..behaviors import DIRECTION_DELTAS, chebyshev_distance
 from ..models import CreatureRef, EncounterAction
 from .attack_resolution import attack_range_squares, has_free_hand
-from .stat_block import executable_multiattack_sequence
+from .stat_block import (
+    executable_multiattack_slot_plans,
+    stat_block_action_resource_available,
+    stat_block_action_runtime_issue,
+)
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -159,7 +167,13 @@ class AttackRule:
         if action.kind == "multiattack":
             if actor.actions_remaining <= 0 or actor.attacks_remaining > 0:
                 return EligibilityFailure("action_spent", "No Action remains.")
-            if executable_multiattack_sequence(actor.creature) is None:
+            plans = executable_multiattack_slot_plans(actor.creature)
+            selected_plan = (
+                int(action.value)
+                if isinstance(action.value, str) and action.value.isdigit()
+                else 0
+            )
+            if not plans or selected_plan >= len(plans):
                 return EligibilityFailure(
                     "multiattack_unavailable",
                     "No executable Multiattack is available.",
@@ -172,10 +186,30 @@ class AttackRule:
             return target_failure
         assert isinstance(action.value, str)
         preferred_attack_name = (
-            actor.pending_multiattack[0].name
+            action.preferred_attack_name
             if actor.pending_multiattack
             else action.preferred_attack_name
         )
+        if actor.pending_multiattack and preferred_attack_name not in {
+            invocation.name
+            for invocation in actor.pending_multiattack[0].options
+        }:
+            return EligibilityFailure(
+                "multiattack_choice_unavailable",
+                "That attack is not available for this Multiattack slot.",
+            )
+        if (
+            isinstance(preferred_attack_name, str)
+            and preferred_attack_name in actor.creature.stat_block_actions
+            and not stat_block_action_resource_available(
+                actor.creature,
+                preferred_attack_name,
+            )
+        ):
+            return EligibilityFailure(
+                "resource_spent",
+                f"{preferred_attack_name} is not available.",
+            )
         reach = attack_range_squares(
             actor.creature,
             state.item_templates,
@@ -235,10 +269,27 @@ class StatBlockActionRule:
         actor = state.creatures[actor_ref]
         name = action.preferred_attack_name
         definition = actor.creature.stat_block_actions.get(name or "")
-        if not isinstance(definition, AutomaticActionDefinition):
+        if not isinstance(
+            definition,
+            (AutomaticActionDefinition, SavingThrowActionDefinition),
+        ):
             return EligibilityFailure(
                 "stat_block_action_unavailable",
                 "The stat-block action is not executable.",
+            )
+        runtime_issue = stat_block_action_runtime_issue(definition)
+        if runtime_issue is not None:
+            return EligibilityFailure(
+                "unsupported_stat_block_mechanics",
+                runtime_issue,
+            )
+        if not stat_block_action_resource_available(
+            actor.creature,
+            definition.name,
+        ):
+            return EligibilityFailure(
+                "resource_spent",
+                f"{definition.name} is not available.",
             )
         if not isinstance(action.value, str):
             return EligibilityFailure(
@@ -256,6 +307,8 @@ class StatBlockActionRule:
         if target_failure is not None:
             return target_failure
         target = state.creatures[action.value]
+        if definition.target.kind == "area" and definition.target.origin == "self":
+            return None
         range_feet = definition.target.range_feet or 0
         range_squares = (range_feet + 4) // 5
         if chebyshev_distance(actor.position, target.position) > range_squares:

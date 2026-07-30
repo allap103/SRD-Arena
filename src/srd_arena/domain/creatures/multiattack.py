@@ -73,6 +73,34 @@ class MultiattackPlan:
             sequence.extend([invocation] * step.times)
         return tuple(sequence) or None
 
+    def executable_slots(
+        self,
+        attack_names: set[str],
+    ) -> tuple[MultiattackStep, ...] | None:
+        slots: list[MultiattackStep] = []
+        for step in self.steps:
+            if not isinstance(step.times, int):
+                return None
+            available = tuple(
+                option
+                for option in step.options
+                if option.kind == "stat_block_action"
+                and option.section == "action"
+                and option.name in attack_names
+            )
+            if not available:
+                if step.availability == "required":
+                    return None
+                continue
+            slots.extend(
+                MultiattackStep(
+                    options=available,
+                    availability=step.availability,
+                )
+                for _ in range(step.times)
+            )
+        return tuple(slots) or None
+
 
 @dataclass(frozen=True)
 class Multiattack:
@@ -87,3 +115,13 @@ class Multiattack:
             if sequence is not None:
                 return sequence
         return None
+
+    def executable_slot_plans(
+        self,
+        attack_names: set[str],
+    ) -> tuple[tuple[MultiattackStep, ...], ...]:
+        return tuple(
+            slots
+            for plan in self.plans
+            if (slots := plan.executable_slots(attack_names)) is not None
+        )
