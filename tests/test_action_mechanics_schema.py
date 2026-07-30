@@ -47,6 +47,45 @@ def test_attack_action_supports_multiple_hit_effects() -> None:
     ]
 
 
+def test_damage_effect_supports_attack_roll_mode_requirement() -> None:
+    action = BestiaryActionSchema.model_validate(
+        {
+            "name": "Scimitar",
+            "mechanics": {
+                "type": "attack",
+                "attack_modes": ["melee"],
+                "attack_bonus": 4,
+                "reach_feet": 5,
+                "target": {"type": "creature", "range_feet": 5},
+                "hit": [
+                    {
+                        "type": "damage",
+                        "dice": "1d6",
+                        "bonus": 2,
+                        "damage_type": "slashing",
+                    },
+                    {
+                        "type": "damage",
+                        "dice": "1d4",
+                        "damage_type": "slashing",
+                        "requirements": [
+                            {
+                                "type": "attack_roll_mode",
+                                "mode": "advantage",
+                            }
+                        ],
+                    },
+                ],
+            },
+        }
+    )
+
+    assert isinstance(action.mechanics, AttackActionMechanicsSchema)
+    conditional_damage = action.mechanics.hit[1]
+    assert conditional_damage.requirements[0].type == "attack_roll_mode"
+    assert conditional_damage.requirements[0].mode == "advantage"
+
+
 def test_save_action_supports_target_requirements_and_half_damage() -> None:
     action = SavingThrowActionMechanicsSchema.model_validate(
         {

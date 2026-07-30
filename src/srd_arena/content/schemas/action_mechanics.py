@@ -121,12 +121,26 @@ EffectDurationSchema = Annotated[
 ]
 
 
+class AttackRollModeRequirementSchema(ActionMechanicsSchemaModel):
+    type: Literal["attack_roll_mode"]
+    mode: Literal["normal", "advantage", "disadvantage"]
+
+
+AttackHitRequirementSchema = Annotated[
+    AttackRollModeRequirementSchema,
+    Field(discriminator="type"),
+]
+
+
 class DamageEffectSchema(ActionMechanicsSchemaModel):
     type: Literal["damage"]
     dice: str = Field(pattern=r"^\d+d\d+$")
     bonus: int = 0
     damage_type: str = Field(min_length=1)
     minimum: NonNegativeInt | None = None
+    requirements: list[AttackHitRequirementSchema] = Field(
+        default_factory=list
+    )
 
 
 class ConditionEffectSchema(ActionMechanicsSchemaModel):

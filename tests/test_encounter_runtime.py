@@ -1652,6 +1652,42 @@ def test_grapple_actions_share_one_board_targeting_mode() -> None:
     assert GameWindow._target_mode_label(window, mode) == "Grapple"
 
 
+def test_attack_sources_have_distinct_board_targeting_modes() -> None:
+    window = GameWindow.__new__(GameWindow)
+    actions = [
+        ActionView(
+            index=0,
+            id="goblin-scimitar-player",
+            label="Scimitar player",
+            kind="attack",
+            creature_ref="goblin",
+            value="player",
+            cost={"action": 1},
+            preferred_attack_name="Scimitar",
+        ),
+        ActionView(
+            index=1,
+            id="goblin-shortbow-player",
+            label="Shortbow player",
+            kind="attack",
+            creature_ref="goblin",
+            value="player",
+            cost={"action": 1},
+            preferred_attack_name="Shortbow",
+        ),
+    ]
+
+    modes = GameWindow._target_selection_modes(window, actions)
+
+    scimitar = TargetSelectionMode(kind="attack", source_trigger_id="Scimitar")
+    shortbow = TargetSelectionMode(kind="attack", source_trigger_id="Shortbow")
+    assert set(modes) == {scimitar, shortbow}
+    assert modes[scimitar]["player"].preferred_attack_name == "Scimitar"
+    assert modes[shortbow]["player"].preferred_attack_name == "Shortbow"
+    assert GameWindow._target_mode_label(window, scimitar) == "Scimitar"
+    assert GameWindow._target_mode_label(window, shortbow) == "Shortbow"
+
+
 @pytest.mark.parametrize(
     ("attacks_available", "actions", "expected"),
     [
@@ -1692,7 +1728,8 @@ def test_follow_up_attack_is_queued_only_with_attacks_and_targets(
         lambda _session: presentation,
     )
 
-    assert GameWindow._available_follow_up_attack_mode(window) == expected
+    attack_mode = TargetSelectionMode(kind="attack", source_trigger_id="attack")
+    assert GameWindow._available_follow_up_attack_mode(window, attack_mode) == expected
 
 
 def test_directional_spell_target_mode_stays_available_without_creature_target_map() -> None:

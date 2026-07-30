@@ -19912,13 +19912,76 @@
           "name": "Scimitar",
           "entries": [
             "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Slashing damage, plus 2 ({@damage 1d4}) Slashing damage if the attack roll had {@variantrule Advantage|XPHB}."
-          ]
+          ],
+          "mechanics": {
+            "type": "attack",
+            "attack_modes": [
+              "melee"
+            ],
+            "attack_bonus": 4,
+            "target": {
+              "type": "creature",
+              "range_feet": 5
+            },
+            "reach_feet": 5,
+            "hit": [
+              {
+                "type": "damage",
+                "dice": "1d6",
+                "bonus": 2,
+                "damage_type": "slashing"
+              },
+              {
+                "type": "damage",
+                "dice": "1d4",
+                "damage_type": "slashing",
+                "requirements": [
+                  {
+                    "type": "attack_roll_mode",
+                    "mode": "advantage"
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "Shortbow",
           "entries": [
             "{@atkr r} {@hit 4}, range 80/320 ft. {@h}5 ({@damage 1d6 + 2}) Piercing damage, plus 2 ({@damage 1d4}) Piercing damage if the attack roll had {@variantrule Advantage|XPHB}."
-          ]
+          ],
+          "mechanics": {
+            "type": "attack",
+            "attack_modes": [
+              "ranged"
+            ],
+            "attack_bonus": 4,
+            "target": {
+              "type": "creature",
+              "range_feet": 80
+            },
+            "range_normal_feet": 80,
+            "range_long_feet": 320,
+            "hit": [
+              {
+                "type": "damage",
+                "dice": "1d6",
+                "bonus": 2,
+                "damage_type": "piercing"
+              },
+              {
+                "type": "damage",
+                "dice": "1d4",
+                "damage_type": "piercing",
+                "requirements": [
+                  {
+                    "type": "attack_roll_mode",
+                    "mode": "advantage"
+                  }
+                ]
+              }
+            ]
+          }
         }
       ],
       "bonus": [

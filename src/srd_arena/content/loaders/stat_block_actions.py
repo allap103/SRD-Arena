@@ -167,6 +167,10 @@ def _effect(value: schema.ActionEffectSchema) -> domain.ActionEffect:
             value.bonus,
             value.damage_type,
             value.minimum,
+            tuple(
+                domain.AttackRollModeRequirement(requirement.mode)
+                for requirement in value.requirements
+            ),
         )
     if isinstance(value, schema.ConditionEffectSchema):
         return domain.ConditionEffect(
