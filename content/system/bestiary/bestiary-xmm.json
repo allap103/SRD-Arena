@@ -19930,6 +19930,17 @@
                 "dice": "1d6",
                 "bonus": 2,
                 "damage_type": "slashing"
+              },
+              {
+                "type": "damage",
+                "dice": "1d4",
+                "damage_type": "slashing",
+                "requirements": [
+                  {
+                    "type": "attack_roll_mode",
+                    "mode": "advantage"
+                  }
+                ]
               }
             ]
           }
@@ -19957,6 +19968,17 @@
                 "dice": "1d6",
                 "bonus": 2,
                 "damage_type": "piercing"
+              },
+              {
+                "type": "damage",
+                "dice": "1d4",
+                "damage_type": "piercing",
+                "requirements": [
+                  {
+                    "type": "attack_roll_mode",
+                    "mode": "advantage"
+                  }
+                ]
               }
             ]
           }

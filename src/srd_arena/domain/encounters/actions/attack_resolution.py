@@ -119,7 +119,12 @@ def resolve_attack(
     damage_total = damage_roll.total
     additional_damage = 0
     additional_damage_details: list[dict[str, object]] = []
-    for extra_dice, extra_bonus, extra_type in attack_source.additional_damage:
+    for effect in attack_source.additional_damage:
+        if not _damage_effect_requirements_met(effect, attack_result.mode):
+            continue
+        extra_dice = effect.dice
+        extra_bonus = effect.bonus
+        extra_type = effect.damage_type
         extra_count, extra_sides = parse_damage_dice(extra_dice)
         if critical_hit:
             extra_count *= 2
@@ -330,14 +335,21 @@ def stat_block_attack_source(attack: AttackActionDefinition) -> AttackSource:
         range_normal=attack.range_normal_feet,
         range_long=attack.range_long_feet,
         weapon_name=attack.name,
-        additional_damage=tuple(
-            (effect.dice, effect.bonus, effect.damage_type)
-            for effect in additional
-        ),
+        additional_damage=tuple(additional),
         hit_effects=tuple(
             effect for effect in attack.hit if not isinstance(effect, DamageEffect)
         ),
         reach_feet=attack.reach_feet,
+    )
+
+
+def _damage_effect_requirements_met(
+    effect: DamageEffect,
+    roll_mode: D20RollMode,
+) -> bool:
+    return all(
+        requirement.mode == roll_mode
+        for requirement in effect.requirements
     )
 
 

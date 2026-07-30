@@ -27,6 +27,12 @@ Effects are a discriminated union covering damage, conditions, forced
 movement, speed and action-economy changes, roll modifiers, control, and
 special memory acquisition. Effects may carry explicit durations.
 
+Damage hit effects may declare typed `requirements`. An
+`attack_roll_mode` requirement applies that damage only when the resolved
+attack roll used the specified mode (`normal`, `advantage`, or
+`disadvantage`). This describes the final mode after advantage and
+disadvantage cancel each other.
+
 Save failures are ordered stages. A failed repeat save advances to the next
 stage when one exists; once at the last stage, further failures retain that
 stage. Repeat saves state their trigger and automatic-success limit.
@@ -45,6 +51,19 @@ Action resources are either fixed uses with a reset rule or die recharge.
   "hit": [
     {"type": "damage", "dice": "2d6", "bonus": 6, "damage_type": "slashing"},
     {"type": "damage", "dice": "1d8", "damage_type": "cold"}
+  ]
+}
+```
+
+## Conditional Damage
+
+```json
+{
+  "type": "damage",
+  "dice": "1d4",
+  "damage_type": "slashing",
+  "requirements": [
+    {"type": "attack_roll_mode", "mode": "advantage"}
   ]
 }
 ```

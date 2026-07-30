@@ -19,6 +19,7 @@ from srd_arena.content.schemas.multiattack import (
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.domain.creatures import (
     AttackActionDefinition,
+    AttackRollModeRequirement,
     ActionResource,
     DamageEffect,
     SavingThrowActionDefinition,
@@ -49,6 +50,8 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     assert scimitar.hit[0].dice == "1d6"
     assert scimitar.hit[0].bonus == 2
     assert scimitar.hit[0].damage_type == "slashing"
+    assert scimitar.hit[1].dice == "1d4"
+    assert scimitar.hit[1].requirements[0].mode == "advantage"
     assert isinstance(shortbow, AttackActionMechanicsSchema)
     assert shortbow.attack_modes == ["ranged"]
     assert shortbow.attack_bonus == 4
@@ -58,6 +61,8 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     assert shortbow.hit[0].dice == "1d6"
     assert shortbow.hit[0].bonus == 2
     assert shortbow.hit[0].damage_type == "piercing"
+    assert shortbow.hit[1].dice == "1d4"
+    assert shortbow.hit[1].requirements[0].mode == "advantage"
     multiattack = aboleth.action[0].mechanics
     assert multiattack is not None
     assert multiattack.plans[0].steps[0].times == 2
@@ -89,12 +94,68 @@ def test_goblin_actions_build_from_typed_bestiary_mechanics() -> None:
     shortbow = creature.stat_block_actions["Shortbow"]
     assert isinstance(scimitar, AttackActionDefinition)
     assert scimitar.attack_modes == ("melee",)
-    assert scimitar.hit == (DamageEffect("1d6", 2, "slashing"),)
+    assert scimitar.hit == (
+        DamageEffect("1d6", 2, "slashing"),
+        DamageEffect(
+            "1d4",
+            0,
+            "slashing",
+            requirements=(AttackRollModeRequirement("advantage"),),
+        ),
+    )
     assert isinstance(shortbow, AttackActionDefinition)
     assert shortbow.attack_modes == ("ranged",)
     assert shortbow.range_normal_feet == 80
     assert shortbow.range_long_feet == 320
-    assert shortbow.hit == (DamageEffect("1d6", 2, "piercing"),)
+    assert shortbow.hit == (
+        DamageEffect("1d6", 2, "piercing"),
+        DamageEffect(
+            "1d4",
+            0,
+            "piercing",
+            requirements=(AttackRollModeRequirement("advantage"),),
+        ),
+    )
+
+
+def test_goblin_conditional_damage_requires_resolved_advantage() -> None:
+    catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
+    goblin = build_creature(
+        CreatureSchema.model_validate(
+            {
+                "id": "goblin",
+                "stat_block": {"name": "Goblin Warrior", "source": "XMM"},
+            }
+        ),
+        bestiary=catalog,
+    )
+
+    advantage_rolls = iter([18, 10])
+    with_advantage = resolve_attack(
+        goblin,
+        goblin,
+        attacker_label="Goblin",
+        target_label="Goblin",
+        preferred_attack_name="Scimitar",
+        attack_roll_mode_override="advantage",
+        d20_roller=lambda _sides: next(advantage_rolls),
+        dice_roller=lambda _count, sides: sides,
+    )
+    without_advantage = resolve_attack(
+        goblin,
+        goblin,
+        attacker_label="Goblin",
+        target_label="Goblin",
+        preferred_attack_name="Scimitar",
+        attack_roll_mode_override="normal",
+        d20_roller=lambda _sides: 18,
+        dice_roller=lambda _count, sides: sides,
+    )
+
+    assert with_advantage.damage == 12
+    assert with_advantage.additional_damage == 4
+    assert without_advantage.damage == 8
+    assert without_advantage.additional_damage == 0
 
 
 def test_bestiary_core_statistics_build_a_domain_creature() -> None:

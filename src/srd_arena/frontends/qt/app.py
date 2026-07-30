@@ -1305,9 +1305,11 @@ class GameWindow(QMainWindow):
         result = self.session.choose(index)
         self._apply_turn_result(
             result,
-            queue_follow_up_attack=(
-                selected_action is not None
+            follow_up_attack_mode=(
+                self._target_mode_for_action(selected_action)
+                if selected_action is not None
                 and selected_action.kind == "attack"
+                else None
             ),
         )
 
@@ -1511,8 +1513,14 @@ class GameWindow(QMainWindow):
         return TargetSelectionMode(
             kind=action.kind,
             source_trigger_id=(
-                action.source_trigger_id or action.kind
-                if action.kind in {"attack", "grapple"}
+                (
+                    action.source_trigger_id
+                    or action.preferred_attack_name
+                    or action.kind
+                )
+                if action.kind == "attack"
+                else action.source_trigger_id or action.kind
+                if action.kind == "grapple"
                 else action.source_trigger_id
             ),
         )
@@ -1594,7 +1602,7 @@ class GameWindow(QMainWindow):
         self,
         result,
         *,
-        queue_follow_up_attack: bool = False,
+        follow_up_attack_mode: TargetSelectionMode | None = None,
     ) -> None:
         encounter_state = self.session.encounter_state
         was_in_encounter = (
@@ -1616,19 +1624,20 @@ class GameWindow(QMainWindow):
         if result.should_exit:
             self.close()
             return
-        if queue_follow_up_attack:
-            self._pending_target_mode = self._available_follow_up_attack_mode()
+        if follow_up_attack_mode is not None:
+            self._pending_target_mode = self._available_follow_up_attack_mode(
+                follow_up_attack_mode
+            )
         self.refresh_view()
 
-    def _available_follow_up_attack_mode(self) -> TargetSelectionMode | None:
+    def _available_follow_up_attack_mode(
+        self,
+        attack_mode: TargetSelectionMode,
+    ) -> TargetSelectionMode | None:
         presentation = self._build_session_presentation()
         encounter = presentation.encounter
         if encounter is None or encounter.resources.attacks_available <= 0:
             return None
-        attack_mode = TargetSelectionMode(
-            kind="attack",
-            source_trigger_id="attack",
-        )
         target_modes = self._target_selection_modes(encounter.non_movement_actions)
         return attack_mode if target_modes.get(attack_mode) else None
 

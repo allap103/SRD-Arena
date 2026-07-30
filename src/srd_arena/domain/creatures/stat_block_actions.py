@@ -55,11 +55,20 @@ class EffectDuration:
 
 
 @dataclass(frozen=True)
+class AttackRollModeRequirement:
+    mode: Literal["normal", "advantage", "disadvantage"]
+
+
+AttackHitRequirement = AttackRollModeRequirement
+
+
+@dataclass(frozen=True)
 class DamageEffect:
     dice: str
     bonus: int
     damage_type: str
     minimum: int | None = None
+    requirements: tuple[AttackHitRequirement, ...] = ()
 
 
 @dataclass(frozen=True)
