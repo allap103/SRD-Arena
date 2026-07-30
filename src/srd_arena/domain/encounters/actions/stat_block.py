@@ -11,6 +11,7 @@ from ...creatures.stat_block_actions import (
     SavingThrowActionDefinition,
 )
 from ...geometry import (
+    Vector2D,
     build_directional_area,
     vector_between_positions,
 )
@@ -403,7 +404,7 @@ def _resolve_saving_throw_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    if not isinstance(action.value, str):
+    if not isinstance(action.value, (str, tuple)):
         raise ValueError("Saving-throw stat-block action requires an aim target.")
     creature_ref = state.current_decision().creature_ref
     target_refs = _stat_block_target_refs(
@@ -503,30 +504,44 @@ def _resolve_saving_throw_action(
 def _stat_block_target_refs(
     state: EncounterState,
     creature_ref: str,
-    aim_ref: str,
+    aim: str | tuple[float, float],
     definition: SavingThrowActionDefinition,
 ) -> tuple[str, ...]:
     target = definition.target
     if target.kind == "self":
         return (creature_ref,)
     if target.kind == "creature":
-        return (aim_ref,)
+        if not isinstance(aim, str):
+            raise ValueError("A creature-targeted action requires a creature target.")
+        return (aim,)
     if target.origin != "self":
         raise NotImplementedError(
             "Point-origin stat-block areas are not executable."
         )
     actor_position = state.creatures[creature_ref].position
-    aim_position = state.creatures[aim_ref].position
+    direction = (
+        vector_between_positions(actor_position, state.creatures[aim].position)
+        if isinstance(aim, str)
+        else Vector2D(
+            aim[0] - (actor_position.x + 0.5),
+            aim[1] - (actor_position.y + 0.5),
+        )
+    )
     feet_per_square = (
         state.creatures[creature_ref].creature.attributes.movement.feet_per_square
     )
     size_squares = max(1, (target.size_feet or 5) // feet_per_square)
+    width_squares = max(
+        1.0,
+        (target.width_feet or feet_per_square) / feet_per_square,
+    )
     area = build_directional_area(
         target.shape,
         actor_position,
-        vector_between_positions(actor_position, aim_position),
+        direction,
         size_squares,
         state.definition.grid,
+        width_squares=width_squares,
         coverage_threshold=(
             state.geometry_config.directional_area_cell_coverage_threshold
         ),

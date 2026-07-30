@@ -231,8 +231,9 @@ than introducing a separate ad hoc grid rule.
 
 ### Current state
 
-The implementation now treats a line as a continuous 1-cell-wide rectangle cast along an
-arbitrary 2D aim vector and rasterizes it with the configured coverage-threshold policy.
+The implementation treats a line as a continuous rectangle cast along an arbitrary 2D aim
+vector. Its width is explicit, defaults to one grid cell, and is rasterized with the same
+configurable coverage-threshold policy as the other directional shapes.
 
 ### Cube
 

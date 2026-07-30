@@ -20,7 +20,7 @@ class ActionView:
     label: str
     kind: str
     creature_ref: str
-    value: str | int | None = None
+    value: str | int | tuple[float, float] | None = None
     cost: dict[str, int] = field(default_factory=dict)
     enabled: bool = True
     unavailable_reason: str | None = None

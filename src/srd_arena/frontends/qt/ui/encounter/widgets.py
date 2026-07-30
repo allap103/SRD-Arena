@@ -856,6 +856,7 @@ class BattlefieldWidget(QWidget):
                 direction,
                 size,
                 grid,
+                width_squares=continuous_area.width,
                 coverage_threshold=coverage_threshold,
             )
         )

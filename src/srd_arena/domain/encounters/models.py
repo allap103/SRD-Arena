@@ -33,7 +33,7 @@ class ActionCost:
 class EncounterAction:
     label: str
     kind: str
-    value: str | int | None = None
+    value: str | int | tuple[float, float] | None = None
     id: str = ""
     creature_ref: CreatureRef | None = None
     source_trigger_id: str | None = None

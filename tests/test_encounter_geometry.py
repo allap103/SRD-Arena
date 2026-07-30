@@ -97,6 +97,31 @@ def test_line_area_supports_diagonal_direction() -> None:
     }
 
 
+def test_line_area_supports_explicit_width() -> None:
+    area = build_line_area(
+        Position(3, 5),
+        "up",
+        3,
+        Grid(width=7, height=7),
+        width_squares=2,
+        coverage_threshold=0.1,
+    )
+
+    assert area.continuous_area is not None
+    assert area.continuous_area.width == 2
+    assert _coords(area) == {
+        (2, 2),
+        (3, 2),
+        (4, 2),
+        (2, 3),
+        (3, 3),
+        (4, 3),
+        (2, 4),
+        (3, 4),
+        (4, 4),
+    }
+
+
 def test_cube_area_extends_away_from_origin_for_cardinal_direction() -> None:
     area = build_cube_area(Position(3, 4), "up", 3, Grid(width=7, height=7))
 

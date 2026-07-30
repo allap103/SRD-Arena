@@ -176,6 +176,99 @@ def test_stat_block_action_showcase_exposes_new_runtime_capabilities() -> None:
     )
 
 
+def test_targeted_action_labels_only_name_the_action() -> None:
+    session = Scenario(str(STAT_BLOCK_ACTION_SCENARIO_DIR)).create_session()
+    session.current_scene_id = "stat_block_action_showcase"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+
+    actions = session.encounter_state._available_creature_actions("avatar")
+
+    assert all(
+        action.label == action.preferred_attack_name
+        for action in actions
+        if action.kind in {"attack", "stat_block"}
+    )
+    assert all(
+        action.label == "Grapple"
+        for action in actions
+        if action.kind == "grapple"
+    )
+
+
+def test_line_stat_block_action_can_be_aimed_at_a_map_point(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    actor_ref = state.current_decision().creature_ref
+    actor = state.creatures[actor_ref]
+    target_refs = [
+        creature_ref
+        for creature_ref in state.creatures
+        if state._creatures_are_opponents(actor_ref, creature_ref)
+    ][:2]
+    assert len(target_refs) == 2
+    actor.position = Position(0, 1)
+    state.creatures[target_refs[0]].position = Position(2, 1)
+    state.creatures[target_refs[1]].position = Position(2, 2)
+    actor.creature.stat_block_actions["Lightning Breath"] = (
+        SavingThrowActionDefinition(
+            name="Lightning Breath",
+            target=ActionTarget(
+                kind="area",
+                shape="line",
+                size_feet=30,
+                width_feet=10,
+            ),
+            ability="dex",
+            dc=30,
+            failure=(
+                ActionOutcomeStage(
+                    effects=(DamageEffect("1d6", 0, "lightning"),),
+                ),
+            ),
+            success=(),
+            success_damage="half",
+            always=(),
+        )
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda count, sides: count * sides,
+    )
+    health_before = {
+        target_ref: state.creatures[target_ref].creature.get_health()
+        for target_ref in target_refs
+    }
+    action = EncounterAction(
+        label="Lightning Breath",
+        kind="stat_block",
+        value=(5.5, 1.5),
+        id=f"{actor_ref}-lightning-breath",
+        creature_ref=actor_ref,
+        preferred_attack_name="Lightning Breath",
+        cost=ActionCost(action=1),
+    )
+
+    state._execute_creature_action(action, state.current_decision())
+
+    assert all(
+        state.creatures[target_ref].creature.get_health()
+        == health_before[target_ref] - 6
+        for target_ref in target_refs
+    )
+
+
 def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
     monkeypatch,
 ) -> None:

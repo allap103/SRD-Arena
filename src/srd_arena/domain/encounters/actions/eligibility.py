@@ -291,6 +291,24 @@ class StatBlockActionRule:
                 "resource_spent",
                 f"{definition.name} is not available.",
             )
+        if definition.target.kind == "area" and definition.target.origin == "self":
+            if isinstance(action.value, tuple):
+                aim_x, aim_y = action.value
+                actor_center = (actor.position.x + 0.5, actor.position.y + 0.5)
+                if abs(aim_x - actor_center[0]) < 1e-9 and abs(
+                    aim_y - actor_center[1]
+                ) < 1e-9:
+                    return EligibilityFailure(
+                        "aim_required",
+                        "The area must be aimed away from its user.",
+                    )
+                return None
+            if isinstance(action.value, str):
+                return _opposing_target_failure(state, actor_ref, action)
+            return EligibilityFailure(
+                "target_required",
+                "An aim point is required.",
+            )
         if not isinstance(action.value, str):
             return EligibilityFailure(
                 "target_required",
@@ -307,8 +325,6 @@ class StatBlockActionRule:
         if target_failure is not None:
             return target_failure
         target = state.creatures[action.value]
-        if definition.target.kind == "area" and definition.target.origin == "self":
-            return None
         range_feet = definition.target.range_feet or 0
         range_squares = (range_feet + 4) // 5
         if chebyshev_distance(actor.position, target.position) > range_squares:

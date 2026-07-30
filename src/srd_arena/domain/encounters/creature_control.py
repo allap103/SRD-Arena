@@ -34,10 +34,6 @@ if TYPE_CHECKING:
     from .encounter import EncounterState
 
 
-def _lower_initial(label: str) -> str:
-    return label[:1].lower() + label[1:]
-
-
 def available_creature_actions(
     self: EncounterState,
     creature_ref: CreatureRef,
@@ -116,10 +112,7 @@ def available_creature_actions(
                 source_slug = source.name.lower().replace(" ", "-")
                 actions.append(
                     EncounterAction(
-                        (
-                            f"{source.name} "
-                            f"{_lower_initial(self._creature_label(target_ref))}"
-                        ),
+                        source.name,
                         "attack",
                         target_ref,
                         id=(
@@ -139,7 +132,7 @@ def available_creature_actions(
                 )
         actions.append(
             EncounterAction(
-                f"Grapple {_lower_initial(self._creature_label(target_ref))}",
+                "Grapple",
                 "grapple",
                 target_ref,
                 id=f"{creature_ref}-grapple-{target_ref.replace(':', '-')}",
@@ -165,15 +158,10 @@ def available_creature_actions(
             else []
         )
         for target_ref in target_refs:
-            target_suffix = (
-                ""
-                if target_ref == creature_ref
-                else f" {_lower_initial(self._creature_label(target_ref))}"
-            )
             source_slug = definition.name.lower().replace(" ", "-")
             actions.append(
                 EncounterAction(
-                    f"{definition.name}{target_suffix}",
+                    definition.name,
                     "stat_block",
                     target_ref,
                     id=(

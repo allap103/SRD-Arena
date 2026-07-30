@@ -80,15 +80,21 @@ def build_directional_area(
     size_squares: int,
     grid: Grid,
     *,
+    width_squares: float | None = None,
     coverage_threshold: float | None = None,
 ) -> AreaOfEffect | None:
+    threshold = (
+        coverage_threshold
+        if coverage_threshold is not None
+        else DEFAULT_CELL_COVERAGE_THRESHOLD
+    )
     if shape == "cone":
         return build_cone_area_from_vector(
             origin,
             direction,
             size_squares,
             grid,
-            coverage_threshold=coverage_threshold,
+            coverage_threshold=threshold,
         )
     if shape == "line":
         return build_line_area_from_vector(
@@ -96,7 +102,8 @@ def build_directional_area(
             direction,
             size_squares,
             grid,
-            coverage_threshold=coverage_threshold,
+            width_squares=width_squares or 1.0,
+            coverage_threshold=threshold,
         )
     if shape == "cube":
         return build_cube_area_from_vector(
@@ -104,7 +111,7 @@ def build_directional_area(
             direction,
             size_squares,
             grid,
-            coverage_threshold=coverage_threshold,
+            coverage_threshold=threshold,
         )
     return None
 
@@ -177,7 +184,12 @@ def continuous_area_outline(area: ContinuousArea) -> tuple[Point2D, ...] | None:
     if area.shape == "cone" and area.length is not None:
         return _cone_polygon(area.origin, normalize_vector(area.direction), area.length)
     if area.shape == "line" and area.length is not None:
-        return _line_polygon(area.origin, normalize_vector(area.direction), area.length)
+        return _line_polygon(
+            area.origin,
+            normalize_vector(area.direction),
+            area.length,
+            area.width or 1.0,
+        )
     if area.shape == "cube" and area.length is not None:
         return _cube_polygon(area.origin, normalize_vector(area.direction), area.length)
     return None
@@ -269,12 +281,17 @@ def build_line_area(
     direction: str,
     length_squares: int,
     grid: Grid,
+    *,
+    width_squares: float = 1.0,
+    coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
     return build_line_area_from_vector(
         origin,
         vector_from_direction(direction),
         length_squares,
         grid,
+        width_squares=width_squares,
+        coverage_threshold=coverage_threshold,
     )
 
 
@@ -284,6 +301,7 @@ def build_line_area_from_vector(
     length_squares: int,
     grid: Grid,
     *,
+    width_squares: float = 1.0,
     coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
     unit_direction = normalize_vector(direction)
@@ -292,13 +310,14 @@ def build_line_area_from_vector(
         origin_point,
         unit_direction,
         max(float(length_squares) - BOUNDARY_SHRINK, 0.0),
+        width_squares,
     )
     continuous_area = ContinuousArea(
         shape="line",
         origin=origin_point,
         direction=unit_direction,
         length=float(length_squares),
-        width=1.0,
+        width=width_squares,
         coverage_threshold=coverage_threshold,
     )
     cells = _filter_origin_cell(
@@ -453,10 +472,11 @@ def _line_polygon(
     origin: Point2D,
     direction: Vector2D,
     length: float,
+    width: float = 1.0,
 ) -> tuple[Point2D, ...]:
     perpendicular = _perpendicular(direction)
     end = _translate(origin, direction, length)
-    half_width = 0.5 - BOUNDARY_SHRINK
+    half_width = max((width / 2.0) - BOUNDARY_SHRINK, 0.0)
     return (
         _translate(origin, perpendicular, half_width),
         _translate(origin, perpendicular, -half_width),

@@ -419,7 +419,6 @@ class GameWindow(QMainWindow):
         title: str,
         *,
         expanded: bool,
-        maximum_body_height: int = 800,
     ) -> tuple[QWidget, QVBoxLayout]:
         section = QFrame()
         section.setObjectName("accordionSection")
@@ -455,23 +454,19 @@ class GameWindow(QMainWindow):
         body_layout = QVBoxLayout(body)
         body_layout.setContentsMargins(8, 8, 8, 8)
         body_layout.setSpacing(8)
-        body_scroll = QScrollArea()
-        body_scroll.setObjectName("accordionScroll")
-        body_scroll.setWidgetResizable(True)
-        body_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        body_scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        body.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Maximum,
         )
-        body_scroll.setMaximumHeight(maximum_body_height)
-        body_scroll.setWidget(body)
-        body_scroll.setVisible(expanded)
-        section_layout.addWidget(body_scroll)
+        body.setVisible(expanded)
+        section_layout.addWidget(body)
 
         def set_expanded(checked: bool) -> None:
-            body_scroll.setVisible(checked)
+            body.setVisible(checked)
             toggle.setArrowType(
                 Qt.ArrowType.DownArrow if checked else Qt.ArrowType.RightArrow
             )
+            section.updateGeometry()
 
         toggle.toggled.connect(set_expanded)
         return section, body_layout
@@ -663,10 +658,10 @@ class GameWindow(QMainWindow):
         if not self._target_mode_is_available(encounter.non_movement_actions, target_modes):
             self._pending_target_mode = None
         self.battlefield_widget.set_cell_targeting_enabled(
-            self._pending_area_spell_action(encounter.non_movement_actions) is not None
+            self._pending_area_action(encounter.non_movement_actions) is not None
         )
         self.battlefield_widget.set_area_overlay(
-            self._pending_spell_overlay(encounter.non_movement_actions)
+            self._pending_area_overlay(encounter.non_movement_actions)
         )
         selected_targetable_actions = (
             target_modes.get(self._pending_target_mode, {}) if self._pending_target_mode is not None else {}
@@ -1460,19 +1455,25 @@ class GameWindow(QMainWindow):
     def _handle_battlefield_point_clicked(self, x: float, y: float) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
-        action = self._pending_area_spell_action(self._presentation.encounter.non_movement_actions)
+        action = self._pending_area_action(
+            self._presentation.encounter.non_movement_actions
+        )
         if action is None:
             return
         if self.session.encounter_state is None:
             return
-        payload = spell_action_value(
-            parse_spell_action_value(str(action.value))[0],
-            aim_point=(x, y),
-        )
+        value: str | tuple[float, float]
+        if action.kind == "spell":
+            value = spell_action_value(
+                parse_spell_action_value(str(action.value))[0],
+                aim_point=(x, y),
+            )
+        else:
+            value = (x, y)
         encounter_action = EncounterAction(
             label=action.label,
             kind=action.kind,
-            value=payload,
+            value=value,
             id=action.id,
             creature_ref=action.creature_ref,
             cost=ActionCost(
@@ -1523,6 +1524,8 @@ class GameWindow(QMainWindow):
                 if action.kind == "attack"
                 else action.source_trigger_id or action.kind
                 if action.kind == "grapple"
+                else action.preferred_attack_name
+                if action.kind == "stat_block"
                 else action.source_trigger_id
             ),
         )
@@ -1536,6 +1539,8 @@ class GameWindow(QMainWindow):
             return "Opportunity attack"
         if mode.kind == "grapple":
             return "Grapple"
+        if mode.kind == "stat_block" and mode.source_trigger_id is not None:
+            return mode.source_trigger_id
         if mode.kind == "attack" and mode.source_trigger_id not in {
             None,
             "attack",
@@ -1548,7 +1553,12 @@ class GameWindow(QMainWindow):
             return None
         if action.kind == "spell" and isinstance(action.value, str):
             return parse_spell_action_value(action.value)[1]
-        if action.kind not in {"attack", "grapple", "opportunity_attack"}:
+        if action.kind not in {
+            "attack",
+            "grapple",
+            "opportunity_attack",
+            "stat_block",
+        }:
             return None
         if isinstance(action.value, str):
             return action.value
@@ -1589,6 +1599,37 @@ class GameWindow(QMainWindow):
             None,
         )
 
+    def _is_area_stat_block_action(self, action: ActionView) -> bool:
+        definition = self._stat_block_definition(action)
+        target = getattr(definition, "target", None)
+        return getattr(target, "kind", None) == "area"
+
+    def _pending_area_stat_block_action(
+        self,
+        actions: list[ActionView],
+    ) -> ActionView | None:
+        mode = self._pending_target_mode
+        if mode is None or mode.kind != "stat_block":
+            return None
+        return next(
+            (
+                action
+                for action in actions
+                if action.kind == "stat_block"
+                and action.preferred_attack_name == mode.source_trigger_id
+                and self._is_area_stat_block_action(action)
+            ),
+            None,
+        )
+
+    def _pending_area_action(
+        self,
+        actions: list[ActionView],
+    ) -> ActionView | None:
+        return self._pending_area_spell_action(
+            actions
+        ) or self._pending_area_stat_block_action(actions)
+
     def _target_mode_is_available(
         self,
         actions: list[ActionView],
@@ -1598,7 +1639,7 @@ class GameWindow(QMainWindow):
             return False
         if self._pending_target_mode in target_modes:
             return True
-        return self._pending_area_spell_action(actions) is not None
+        return self._pending_area_action(actions) is not None
 
     def _apply_turn_result(
         self,
@@ -1663,7 +1704,13 @@ class GameWindow(QMainWindow):
         self._logged_round_number = encounter_state.round_number
         QTimer.singleShot(20, self._scroll_roll_log_to_bottom)
 
-    def _pending_spell_overlay(self, actions: list[ActionView]) -> dict[str, object] | None:
+    def _pending_area_overlay(
+        self,
+        actions: list[ActionView],
+    ) -> dict[str, object] | None:
+        stat_block_action = self._pending_area_stat_block_action(actions)
+        if stat_block_action is not None:
+            return self._pending_stat_block_overlay(stat_block_action)
         action = self._pending_area_spell_action(actions)
         if action is None or self.session.encounter_state is None or self.session.decision_creature.spellcasting is None:
             return None
@@ -1705,6 +1752,51 @@ class GameWindow(QMainWindow):
                 coverage_threshold=coverage_threshold,
             )
         )
+
+    def _pending_stat_block_overlay(
+        self,
+        action: ActionView,
+    ) -> dict[str, object] | None:
+        state = self.session.encounter_state
+        definition = self._stat_block_definition(action)
+        target = getattr(definition, "target", None)
+        if state is None or target is None:
+            return None
+        shape = getattr(target, "shape", None)
+        size_feet = getattr(target, "size_feet", None)
+        if not isinstance(shape, str) or not isinstance(size_feet, int):
+            return None
+        feet_per_square = self.session.decision_creature.attributes.movement.feet_per_square
+        width_feet = getattr(target, "width_feet", None)
+        width_squares = max(
+            1.0,
+            (
+                width_feet
+                if isinstance(width_feet, int)
+                else feet_per_square
+            )
+            / feet_per_square,
+        )
+        origin = Position(state.active_position.x, state.active_position.y)
+        return serialize_area(
+            build_directional_area(
+                shape,
+                origin,
+                Vector2D(1.0, 0.0),
+                max(1, size_feet // feet_per_square),
+                state.definition.grid,
+                width_squares=width_squares,
+                coverage_threshold=(
+                    state.geometry_config.directional_area_cell_coverage_threshold
+                ),
+            )
+        )
+
+    def _stat_block_definition(self, action: ActionView):
+        name = action.preferred_attack_name
+        if action.kind != "stat_block" or name is None:
+            return None
+        return self.session.decision_creature.stat_block_actions.get(name)
 
     def _spell_by_id(self, spell_id: str):
         session = getattr(self, "session", None)
