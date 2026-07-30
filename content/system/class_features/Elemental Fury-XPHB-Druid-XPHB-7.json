@@ -1,0 +1,32 @@
+{
+  "name": "Elemental Fury",
+  "source": "XPHB",
+  "page": 81,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Druid",
+  "classSource": "XPHB",
+  "level": 7,
+  "entries": [
+    "The might of the elements flows through you. You gain one of the following options of your choice.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "options",
+          "count": 1,
+          "entries": [
+            {
+              "type": "refClassFeature",
+              "classFeature": "Potent Spellcasting|Druid|XPHB|7"
+            },
+            {
+              "type": "refClassFeature",
+              "classFeature": "Primal Strike|Druid|XPHB|7"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

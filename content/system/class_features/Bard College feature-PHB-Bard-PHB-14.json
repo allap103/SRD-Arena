@@ -1,0 +1,12 @@
+{
+  "name": "Bard College feature",
+  "source": "PHB",
+  "page": 51,
+  "srd": true,
+  "className": "Bard",
+  "classSource": "PHB",
+  "level": 14,
+  "entries": [
+    "At 14th level, you gain a feature from your Bard College."
+  ]
+}

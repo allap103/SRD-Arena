@@ -1,0 +1,38 @@
+{
+  "name": "Martial Arts",
+  "source": "XPHB",
+  "page": 101,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "level": 1,
+  "entries": [
+    "Your practice of martial arts gives you mastery of combat styles that use your {@variantrule Unarmed Strike|XPHB} and Monk weapons, which are the following:",
+    {
+      "type": "list",
+      "items": [
+        "{@filter Simple Melee Weapons|items|type=simple weapon;melee weapon=sand}",
+        "{@filter Martial Melee Weapons that have the Light property|items|type=martial weapon;melee weapon=sand|property=light}"
+      ]
+    },
+    "You gain the following benefits while you are unarmed or wielding only Monk weapons and you aren't wearing armor or wielding a {@item Shield|XPHB}.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "refClassFeature",
+          "classFeature": "Bonus Unarmed Strike|Monk|XPHB|1"
+        },
+        {
+          "type": "refClassFeature",
+          "classFeature": "Martial Arts Die|Monk|XPHB|1"
+        },
+        {
+          "type": "refClassFeature",
+          "classFeature": "Dexterous Attacks|Monk|XPHB|1"
+        }
+      ]
+    }
+  ]
+}

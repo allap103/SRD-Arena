@@ -1,0 +1,13 @@
+{
+  "name": "Extra Attack",
+  "source": "XPHB",
+  "page": 120,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Ranger",
+  "classSource": "XPHB",
+  "level": 5,
+  "entries": [
+    "You can attack twice instead of once whenever you take the {@action Attack|XPHB} action on your turn."
+  ]
+}

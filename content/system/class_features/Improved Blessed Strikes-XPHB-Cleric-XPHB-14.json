@@ -1,0 +1,32 @@
+{
+  "name": "Improved Blessed Strikes",
+  "source": "XPHB",
+  "page": 71,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Cleric",
+  "classSource": "XPHB",
+  "level": 14,
+  "entries": [
+    "The option you chose for Blessed Strikes grows more powerful.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Divine Strike",
+          "entries": [
+            "The extra damage of your Divine Strike increases to {@damage 2d8}."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Potent Spellcasting",
+          "entries": [
+            "When you cast a Cleric cantrip and deal damage to a creature with it, you can give vitality to yourself or another creature within 60 feet of yourself, granting a number of {@variantrule Temporary Hit Points|XPHB} equal to twice your Wisdom modifier."
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Natural Explorer improvement",
+  "source": "PHB",
+  "page": 89,
+  "srd": true,
+  "className": "Ranger",
+  "classSource": "PHB",
+  "level": 10,
+  "entries": [
+    "You gain an additional favored terrain."
+  ]
+}

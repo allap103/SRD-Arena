@@ -1,0 +1,16 @@
+{
+  "name": "Cutting Words",
+  "source": "XPHB",
+  "page": 66,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Bard",
+  "classSource": "XPHB",
+  "subclassShortName": "Lore",
+  "subclassSource": "XPHB",
+  "level": 3,
+  "header": 2,
+  "entries": [
+    "You learn to use your wit to supernaturally distract, confuse, and otherwise sap the confidence and competence of others. When a creature that you can see within 60 feet of yourself makes a damage roll or succeeds on an ability check or attack roll, you can take a {@variantrule Reaction|XPHB} to expend one use of your Bardic Inspiration; roll your Bardic Inspiration die, and subtract the number rolled from the creature's roll, reducing the damage or potentially turning the success into a failure."
+  ]
+}

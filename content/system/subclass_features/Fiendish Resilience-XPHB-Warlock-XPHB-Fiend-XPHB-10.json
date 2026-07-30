@@ -1,0 +1,16 @@
+{
+  "name": "Fiendish Resilience",
+  "source": "XPHB",
+  "page": 162,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Warlock",
+  "classSource": "XPHB",
+  "subclassShortName": "Fiend",
+  "subclassSource": "XPHB",
+  "level": 10,
+  "header": 2,
+  "entries": [
+    "Choose one damage type, other than Force, whenever you finish a {@variantrule Short Rest|XPHB|Short} or {@variantrule Long Rest|XPHB}. You have {@variantrule Resistance|XPHB} to that damage type until you choose a different one with this feature."
+  ]
+}

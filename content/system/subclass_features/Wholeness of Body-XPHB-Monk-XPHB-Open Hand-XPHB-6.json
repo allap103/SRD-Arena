@@ -1,0 +1,17 @@
+{
+  "name": "Wholeness of Body",
+  "source": "XPHB",
+  "page": 107,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "subclassShortName": "Open Hand",
+  "subclassSource": "XPHB",
+  "level": 6,
+  "header": 2,
+  "entries": [
+    "You gain the ability to heal yourself. As a {@variantrule Bonus Action|XPHB}, you can roll your Martial Arts die. You regain a number of {@variantrule Hit Points|XPHB} equal to the number rolled plus your Wisdom modifier (minimum of 1 {@variantrule Hit Points|XPHB|Hit Point} regained).",
+    "You can use this feature a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}."
+  ]
+}

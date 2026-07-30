@@ -1,0 +1,30 @@
+{
+  "name": "Devious Strikes",
+  "source": "XPHB",
+  "page": 131,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Rogue",
+  "classSource": "XPHB",
+  "level": 14,
+  "entries": [
+    "You've practiced new ways to use your Sneak Attack deviously. The following effects are now among your Cunning Strike options.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "refClassFeature",
+          "classFeature": "Daze (Cost: 2d6)|Rogue|XPHB|14|XPHB"
+        },
+        {
+          "type": "refClassFeature",
+          "classFeature": "Knock Out (Cost: 6d6)|Rogue|XPHB|14|XPHB"
+        },
+        {
+          "type": "refClassFeature",
+          "classFeature": "Obscure (Cost: 3d6)|Rogue|XPHB|14|XPHB"
+        }
+      ]
+    }
+  ]
+}

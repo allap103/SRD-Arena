@@ -1,0 +1,13 @@
+{
+  "name": "Three Extra Attacks",
+  "source": "XPHB",
+  "page": 92,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Fighter",
+  "classSource": "XPHB",
+  "level": 20,
+  "entries": [
+    "You can attack four times instead of once whenever you take the {@action Attack|XPHB} action on your turn."
+  ]
+}

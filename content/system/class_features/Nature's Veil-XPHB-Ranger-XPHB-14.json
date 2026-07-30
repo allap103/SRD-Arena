@@ -1,0 +1,14 @@
+{
+  "name": "Nature's Veil",
+  "source": "XPHB",
+  "page": 121,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Ranger",
+  "classSource": "XPHB",
+  "level": 14,
+  "entries": [
+    "You invoke spirits of nature to magically hide yourself. As a {@variantrule Bonus Action|XPHB}, you can give yourself the {@condition Invisible|XPHB} condition until the end of your next turn.",
+    "You can use this feature a number of times equal to your Wisdom modifier (minimum of once), and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}."
+  ]
+}

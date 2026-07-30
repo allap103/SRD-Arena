@@ -1,0 +1,17 @@
+{
+  "name": "Dragon Companion",
+  "source": "XPHB",
+  "page": 148,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Sorcerer",
+  "classSource": "XPHB",
+  "subclassShortName": "Draconic",
+  "subclassSource": "XPHB",
+  "level": 18,
+  "header": 2,
+  "entries": [
+    "You can cast {@spell Summon Dragon|XPHB} without a Material component. You can also cast it once without a spell slot, and you regain the ability to cast it in this way when you finish a {@variantrule Long Rest|XPHB}.",
+    "Whenever you start casting the spell, you can modify it so that it doesn't require {@status Concentration|XPHB}. If you do so, the spell's duration becomes 1 minute for that casting."
+  ]
+}

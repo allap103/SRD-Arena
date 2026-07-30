@@ -1,0 +1,497 @@
+{
+  "name": "Cleric",
+  "source": "PHB",
+  "page": 56,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Cleric|XPHB"
+  ],
+  "edition": "classic",
+  "hd": {
+    "number": 1,
+    "faces": 8
+  },
+  "proficiency": [
+    "wis",
+    "cha"
+  ],
+  "spellcastingAbility": "wis",
+  "casterProgression": "full",
+  "preparedSpells": "<$level$> + <$wis_mod$>",
+  "preparedSpellsChange": "restLong",
+  "cantripProgression": [
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5
+  ],
+  "startingProficiencies": {
+    "armor": [
+      "light",
+      "medium",
+      "shield"
+    ],
+    "weapons": [
+      "simple"
+    ],
+    "skills": [
+      {
+        "choose": {
+          "from": [
+            "history",
+            "insight",
+            "medicine",
+            "persuasion",
+            "religion"
+          ],
+          "count": 2
+        }
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "default": [
+      "(a) a {@item mace|phb} or (b) a {@item warhammer|phb} (if proficient)",
+      "(a) {@item scale mail|phb}, (b) {@item leather armor|phb}, or (c) {@item chain mail|phb} (if proficient)",
+      "(a) a {@item light crossbow|phb} and {@item Crossbow Bolts (20)|phb|20 bolts} or (b) any {@filter simple weapon|items|source=phb|category=basic|type=simple weapon}",
+      "(a) a {@item priest's pack|phb} or (b) an {@item explorer's pack|phb}",
+      "A {@item shield|phb} and a {@item holy symbol|phb}"
+    ],
+    "goldAlternative": "{@dice 5d4 × 10|5d4 × 10|Starting Gold}",
+    "defaultData": [
+      {
+        "a": [
+          "mace|phb"
+        ],
+        "b": [
+          "warhammer|phb"
+        ]
+      },
+      {
+        "a": [
+          "scale mail|phb"
+        ],
+        "b": [
+          "leather armor|phb"
+        ],
+        "c": [
+          "chain mail|phb"
+        ]
+      },
+      {
+        "a": [
+          "light crossbow|phb",
+          "crossbow bolts (20)|phb"
+        ],
+        "b": [
+          {
+            "equipmentType": "weaponSimple"
+          }
+        ]
+      },
+      {
+        "a": [
+          "priest's pack|phb"
+        ],
+        "b": [
+          "explorer's pack|phb"
+        ]
+      },
+      {
+        "_": [
+          "shield|phb",
+          {
+            "equipmentType": "focusSpellcastingHoly"
+          }
+        ]
+      }
+    ]
+  },
+  "multiclassing": {
+    "requirements": {
+      "wis": 13
+    },
+    "proficienciesGained": {
+      "armor": [
+        "light",
+        "medium",
+        "shield"
+      ]
+    }
+  },
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "{@filter Cantrips Known|spells|level=0|class=Cleric}"
+      ],
+      "rows": [
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ]
+      ]
+    },
+    {
+      "title": "Spell Slots per Spell Level",
+      "colLabels": [
+        "{@filter 1st|spells|level=1|class=Cleric}",
+        "{@filter 2nd|spells|level=2|class=Cleric}",
+        "{@filter 3rd|spells|level=3|class=Cleric}",
+        "{@filter 4th|spells|level=4|class=Cleric}",
+        "{@filter 5th|spells|level=5|class=Cleric}",
+        "{@filter 6th|spells|level=6|class=Cleric}",
+        "{@filter 7th|spells|level=7|class=Cleric}",
+        "{@filter 8th|spells|level=8|class=Cleric}",
+        "{@filter 9th|spells|level=9|class=Cleric}"
+      ],
+      "rowsSpellProgression": [
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1,
+          1
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Spellcasting|Cleric||1",
+    {
+      "classFeature": "Divine Domain|Cleric||1",
+      "gainSubclassFeature": true
+    },
+    {
+      "classFeature": "Channel Divinity|Cleric||2",
+      "tableDisplayName": "Channel Divinity (1/rest)"
+    },
+    "Channel Divinity: Harness Divine Power|Cleric||2|TCE",
+    {
+      "classFeature": "Divine Domain feature|Cleric||2",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Cleric||4",
+    "Cantrip Versatility|Cleric||4|TCE",
+    "Destroy Undead (CR 1/2)|Cleric||5",
+    {
+      "classFeature": "Channel Divinity|Cleric||6",
+      "tableDisplayName": "Channel Divinity (2/rest)"
+    },
+    {
+      "classFeature": "Divine Domain feature|Cleric||6",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Cleric||8",
+    "Destroy Undead (CR 1)|Cleric||8",
+    {
+      "classFeature": "Divine Domain feature|Cleric||8",
+      "gainSubclassFeature": true
+    },
+    "Divine Intervention|Cleric||10",
+    "Destroy Undead (CR 2)|Cleric||11",
+    "Ability Score Improvement|Cleric||12",
+    "Destroy Undead (CR 3)|Cleric||14",
+    "Ability Score Improvement|Cleric||16",
+    "Destroy Undead (CR 4)|Cleric||17",
+    {
+      "classFeature": "Divine Domain feature|Cleric||17",
+      "gainSubclassFeature": true
+    },
+    {
+      "classFeature": "Channel Divinity|Cleric||18",
+      "tableDisplayName": "Channel Divinity (3/rest)"
+    },
+    "Ability Score Improvement|Cleric||19",
+    "Divine Intervention Improvement|Cleric||20"
+  ],
+  "subclassTitle": "Divine Domain",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Martial Arts Die",
+  "source": "XPHB",
+  "page": 101,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "level": 1,
+  "header": 2,
+  "entries": [
+    "You can roll {@damage 1d6} in place of the normal damage of your {@variantrule Unarmed Strike|XPHB} or Monk weapons. This die changes as you gain Monk levels, as shown in the Martial Arts column of the Monk Features table."
+  ]
+}

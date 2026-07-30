@@ -1,0 +1,30 @@
+{
+  "name": "Survivor",
+  "source": "XPHB",
+  "page": 96,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Fighter",
+  "classSource": "XPHB",
+  "subclassShortName": "Champion",
+  "subclassSource": "XPHB",
+  "level": 18,
+  "header": 2,
+  "entries": [
+    "You attain the pinnacle of resilience in battle, giving you these benefits.",
+    {
+      "type": "entries",
+      "name": "Defy Death",
+      "entries": [
+        "You have {@variantrule Advantage|XPHB} on {@variantrule Death Saving Throw|XPHB|Death Saving Throws}. Moreover, when you roll 18–20 on a {@variantrule Death Saving Throw|XPHB}, you gain the benefit of rolling a 20 on it."
+      ]
+    },
+    {
+      "type": "entries",
+      "name": "Heroic Rally",
+      "entries": [
+        "At the start of each of your turns, you regain {@variantrule Hit Points|XPHB} equal to 5 plus your Constitution modifier if you are {@status Bloodied|XPHB} and have at least 1 {@variantrule Hit Points|XPHB|Hit Point}."
+      ]
+    }
+  ]
+}

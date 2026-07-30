@@ -4,10 +4,7 @@ from srd_arena.content.catalogs import (
 )
 from srd_arena.content.normalization import normalize_optional_feature_effects
 from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import (
-    OptionalFeatureFileSchema,
-    OptionalFeatureSchema,
-)
+from srd_arena.content.schemas import OptionalFeatureSchema
 
 
 def test_bundled_optional_features_load_as_typed_records() -> None:
@@ -15,23 +12,21 @@ def test_bundled_optional_features_load_as_typed_records() -> None:
 
     fighting_style = catalog.find("Great Weapon Fighting", "PHB")
 
-    assert len(catalog) >= 70
+    assert len(catalog) == len(
+        list((SYSTEM_CONTENT_ROOT / "optional_features").glob("*.json"))
+    )
     assert isinstance(fighting_style, OptionalFeatureSchema)
     assert "FS:F" in fighting_style.feature_types
 
 
 def test_optional_feature_schema_preserves_unknown_source_fields() -> None:
-    [feature] = OptionalFeatureFileSchema.model_validate(
+    feature = OptionalFeatureSchema.model_validate(
         {
-            "optionalfeature": [
-                {
-                    "name": "Test Feature",
-                    "source": "TEST",
-                    "customFutureField": {"enabled": True},
-                }
-            ]
+            "name": "Test Feature",
+            "source": "TEST",
+            "customFutureField": {"enabled": True},
         }
-    ).optional_features
+    )
 
     assert feature.model_extra == {"customFutureField": {"enabled": True}}
 

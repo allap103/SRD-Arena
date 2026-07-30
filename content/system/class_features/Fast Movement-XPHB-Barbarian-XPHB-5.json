@@ -1,0 +1,13 @@
+{
+  "name": "Fast Movement",
+  "source": "XPHB",
+  "page": 53,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Barbarian",
+  "classSource": "XPHB",
+  "level": 5,
+  "entries": [
+    "Your speed increases by 10 feet while you aren't wearing Heavy armor."
+  ]
+}

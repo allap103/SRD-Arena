@@ -1,0 +1,13 @@
+{
+  "name": "Warden",
+  "source": "XPHB",
+  "page": 80,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Druid",
+  "classSource": "XPHB",
+  "level": 1,
+  "entries": [
+    "Trained for battle, you gain proficiency with {@filter Martial weapons|items|type=martial weapon} and training with {@filter Medium armor|items|type=Medium Armor}."
+  ]
+}

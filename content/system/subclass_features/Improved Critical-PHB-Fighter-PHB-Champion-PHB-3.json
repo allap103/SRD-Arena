@@ -1,0 +1,16 @@
+{
+  "name": "Improved Critical",
+  "source": "PHB",
+  "page": 72,
+  "srd": true,
+  "basicRules": true,
+  "className": "Fighter",
+  "classSource": "PHB",
+  "subclassShortName": "Champion",
+  "subclassSource": "PHB",
+  "level": 3,
+  "header": 1,
+  "entries": [
+    "Beginning when you choose this archetype at 3rd level, your weapon attacks score a critical hit on a roll of 19 or 20."
+  ]
+}

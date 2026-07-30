@@ -1,0 +1,23 @@
+{
+  "name": "Thief",
+  "source": "PHB",
+  "page": 97,
+  "srd": true,
+  "basicRules": true,
+  "className": "Rogue",
+  "classSource": "PHB",
+  "subclassShortName": "Thief",
+  "subclassSource": "PHB",
+  "level": 3,
+  "entries": [
+    "You hone your skills in the larcenous arts. Burglars, bandits, cutpurses, and other criminals typically follow this archetype, but so do rogues who prefer to think of themselves as professional treasure seekers, explorers, delvers, and investigators. In addition to improving your agility and stealth, you learn skills useful for delving into ancient ruins, reading unfamiliar languages, and using magic items you normally couldn't employ.",
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Fast Hands|Rogue||Thief||3"
+    },
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Second-Story Work|Rogue||Thief||3"
+    }
+  ]
+}

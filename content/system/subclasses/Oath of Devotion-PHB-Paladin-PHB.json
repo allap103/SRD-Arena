@@ -1,0 +1,45 @@
+{
+  "name": "Oath of Devotion",
+  "shortName": "Devotion",
+  "source": "PHB",
+  "className": "Paladin",
+  "classSource": "PHB",
+  "page": 85,
+  "srd": true,
+  "reprintedAs": [
+    "Devotion|Paladin|XPHB|XPHB"
+  ],
+  "edition": "classic",
+  "additionalSpells": [
+    {
+      "prepared": {
+        "3": [
+          "protection from evil and good",
+          "sanctuary"
+        ],
+        "5": [
+          "lesser restoration",
+          "zone of truth"
+        ],
+        "9": [
+          "beacon of hope",
+          "dispel magic"
+        ],
+        "13": [
+          "freedom of movement",
+          "guardian of faith"
+        ],
+        "17": [
+          "commune",
+          "flame strike"
+        ]
+      }
+    }
+  ],
+  "subclassFeatures": [
+    "Oath of Devotion|Paladin||Devotion||3",
+    "Aura of Devotion|Paladin||Devotion||7",
+    "Purity of Spirit|Paladin||Devotion||15",
+    "Holy Nimbus|Paladin||Devotion||20"
+  ]
+}

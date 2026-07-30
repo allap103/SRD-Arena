@@ -1,0 +1,519 @@
+{
+  "name": "Wizard",
+  "source": "XPHB",
+  "page": 164,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "primaryAbility": [
+    {
+      "int": true
+    }
+  ],
+  "hd": {
+    "number": 1,
+    "faces": 6
+  },
+  "proficiency": [
+    "int",
+    "wis"
+  ],
+  "spellcastingAbility": "int",
+  "casterProgression": "full",
+  "preparedSpellsProgression": [
+    4,
+    5,
+    6,
+    7,
+    9,
+    10,
+    11,
+    12,
+    14,
+    15,
+    16,
+    16,
+    17,
+    18,
+    19,
+    21,
+    22,
+    23,
+    24,
+    25
+  ],
+  "preparedSpellsChange": "restLong",
+  "cantripProgression": [
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5
+  ],
+  "spellsKnownProgressionFixed": [
+    6,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "spellsKnownProgressionFixedAllowLowerLevel": true,
+  "featProgression": [
+    {
+      "name": "Epic Boon",
+      "category": [
+        "EB"
+      ],
+      "progression": {
+        "19": 1
+      }
+    }
+  ],
+  "startingProficiencies": {
+    "weapons": [
+      "simple"
+    ],
+    "skills": [
+      {
+        "choose": {
+          "from": [
+            "arcana",
+            "history",
+            "insight",
+            "investigation",
+            "medicine",
+            "nature",
+            "religion"
+          ],
+          "count": 2
+        }
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "defaultData": [
+      {
+        "A": [
+          {
+            "item": "dagger|xphb",
+            "quantity": 2
+          },
+          {
+            "item": "quarterstaff|xphb"
+          },
+          {
+            "item": "robe|xphb"
+          },
+          {
+            "special": "Spellbook"
+          },
+          {
+            "item": "scholar's pack|xphb"
+          },
+          {
+            "value": 500
+          }
+        ],
+        "B": [
+          {
+            "value": 5500
+          }
+        ]
+      }
+    ],
+    "entries": [
+      "{@i Choose A or B:} (A) 2 {@item Dagger|XPHB|Daggers}, {@item Arcane Focus|XPHB} ({@item Quarterstaff|XPHB}), {@item Robe|XPHB}, Spellbook, {@item Scholar's Pack|XPHB}, and 5 GP; or (B) 55 GP"
+    ]
+  },
+  "multiclassing": {},
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "{@filter Cantrips|spells|level=0|class=Wizard}",
+        "{@filter Prepared Spells|spells|level=!0|class=Wizard}"
+      ],
+      "rows": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          9
+        ],
+        [
+          4,
+          10
+        ],
+        [
+          4,
+          11
+        ],
+        [
+          4,
+          12
+        ],
+        [
+          4,
+          14
+        ],
+        [
+          5,
+          15
+        ],
+        [
+          5,
+          16
+        ],
+        [
+          5,
+          16
+        ],
+        [
+          5,
+          17
+        ],
+        [
+          5,
+          18
+        ],
+        [
+          5,
+          19
+        ],
+        [
+          5,
+          21
+        ],
+        [
+          5,
+          22
+        ],
+        [
+          5,
+          23
+        ],
+        [
+          5,
+          24
+        ],
+        [
+          5,
+          25
+        ]
+      ]
+    },
+    {
+      "title": "Spell Slots per Spell Level",
+      "colLabels": [
+        "{@filter 1st|spells|level=1|class=Wizard}",
+        "{@filter 2nd|spells|level=2|class=Wizard}",
+        "{@filter 3rd|spells|level=3|class=Wizard}",
+        "{@filter 4th|spells|level=4|class=Wizard}",
+        "{@filter 5th|spells|level=5|class=Wizard}",
+        "{@filter 6th|spells|level=6|class=Wizard}",
+        "{@filter 7th|spells|level=7|class=Wizard}",
+        "{@filter 8th|spells|level=8|class=Wizard}",
+        "{@filter 9th|spells|level=9|class=Wizard}"
+      ],
+      "rowsSpellProgression": [
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1,
+          1
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Spellcasting|Wizard|XPHB|1",
+    "Ritual Adept|Wizard|XPHB|1",
+    "Arcane Recovery|Wizard|XPHB|1",
+    "Scholar|Wizard|XPHB|2",
+    {
+      "classFeature": "Wizard Subclass|Wizard|XPHB|3",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Wizard|XPHB|4",
+    "Memorize Spell|Wizard|XPHB|5",
+    {
+      "classFeature": "Subclass Feature|Wizard|XPHB|6",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Wizard|XPHB|8",
+    {
+      "classFeature": "Subclass Feature|Wizard|XPHB|10",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Wizard|XPHB|12",
+    {
+      "classFeature": "Subclass Feature|Wizard|XPHB|14",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Wizard|XPHB|16",
+    "Spell Mastery|Wizard|XPHB|18",
+    "Epic Boon|Wizard|XPHB|19",
+    "Signature Spells|Wizard|XPHB|20"
+  ],
+  "subclassTitle": "Wizard Subclass",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

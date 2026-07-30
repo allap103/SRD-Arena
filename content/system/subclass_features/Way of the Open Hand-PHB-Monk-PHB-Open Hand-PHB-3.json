@@ -1,0 +1,18 @@
+{
+  "name": "Way of the Open Hand",
+  "source": "PHB",
+  "page": 79,
+  "srd": true,
+  "className": "Monk",
+  "classSource": "PHB",
+  "subclassShortName": "Open Hand",
+  "subclassSource": "PHB",
+  "level": 3,
+  "entries": [
+    "Monks of the Way of the Open Hand are the ultimate masters of martial arts combat, whether armed or unarmed. They learn techniques to push and trip their opponents, manipulate ki to heal damage to their bodies, and practice advanced meditation that can protect them from harm.",
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Open Hand Technique|Monk||Open Hand||3"
+    }
+  ]
+}

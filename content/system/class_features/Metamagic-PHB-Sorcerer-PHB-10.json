@@ -1,0 +1,12 @@
+{
+  "name": "Metamagic",
+  "source": "PHB",
+  "page": 99,
+  "srd": true,
+  "className": "Sorcerer",
+  "classSource": "PHB",
+  "level": 10,
+  "entries": [
+    "At 10th level, you learn an additional metamagic option."
+  ]
+}

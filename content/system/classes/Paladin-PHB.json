@@ -1,0 +1,326 @@
+{
+  "name": "Paladin",
+  "source": "PHB",
+  "page": 82,
+  "srd": true,
+  "reprintedAs": [
+    "Paladin|XPHB"
+  ],
+  "edition": "classic",
+  "hd": {
+    "number": 1,
+    "faces": 10
+  },
+  "proficiency": [
+    "wis",
+    "cha"
+  ],
+  "spellcastingAbility": "cha",
+  "casterProgression": "1/2",
+  "preparedSpells": "<$level$> / 2 + <$cha_mod$>",
+  "preparedSpellsChange": "restLong",
+  "optionalfeatureProgression": [
+    {
+      "name": "Fighting Style",
+      "featureType": [
+        "FS:P"
+      ],
+      "progression": {
+        "2": 1
+      }
+    }
+  ],
+  "startingProficiencies": {
+    "armor": [
+      "light",
+      "medium",
+      "heavy",
+      "shield"
+    ],
+    "weapons": [
+      "simple",
+      "martial"
+    ],
+    "skills": [
+      {
+        "choose": {
+          "from": [
+            "athletics",
+            "insight",
+            "intimidation",
+            "medicine",
+            "persuasion",
+            "religion"
+          ],
+          "count": 2
+        }
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "default": [
+      "(a) a {@filter martial weapon|items|source=phb|category=basic|type=martial weapon} and a {@item shield|phb} or (b) two {@filter martial weapons|items|source=phb|category=basic|type=martial weapon}",
+      "(a) five {@item javelin|phb|javelins} or (b) any {@filter simple melee weapon|items|source=phb|category=basic|type=simple weapon;melee weapon=sand}",
+      "(a) a {@item priest's pack|phb} or (b) an {@item explorer's pack|phb}",
+      "{@item Chain mail|phb} and a {@item holy symbol|phb}"
+    ],
+    "goldAlternative": "{@dice 5d4 × 10|5d4 × 10|Starting Gold}",
+    "defaultData": [
+      {
+        "a": [
+          {
+            "equipmentType": "weaponMartial"
+          },
+          "shield|phb"
+        ],
+        "b": [
+          {
+            "equipmentType": "weaponMartial",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "a": [
+          {
+            "item": "javelin|phb",
+            "quantity": 5
+          }
+        ],
+        "b": [
+          {
+            "equipmentType": "weaponSimpleMelee"
+          }
+        ]
+      },
+      {
+        "a": [
+          "priest's pack|phb"
+        ],
+        "b": [
+          "explorer's pack|phb"
+        ]
+      },
+      {
+        "_": [
+          "chain mail|phb",
+          {
+            "equipmentType": "focusSpellcastingHoly"
+          }
+        ]
+      }
+    ]
+  },
+  "multiclassing": {
+    "requirements": {
+      "str": 13,
+      "cha": 13
+    },
+    "proficienciesGained": {
+      "armor": [
+        "light",
+        "medium",
+        "shield"
+      ],
+      "weapons": [
+        "simple",
+        "martial"
+      ]
+    }
+  },
+  "classTableGroups": [
+    {
+      "title": "Spell Slots per Spell Level",
+      "colLabels": [
+        "{@filter 1st|spells|level=1|class=Paladin}",
+        "{@filter 2nd|spells|level=2|class=Paladin}",
+        "{@filter 3rd|spells|level=3|class=Paladin}",
+        "{@filter 4th|spells|level=4|class=Paladin}",
+        "{@filter 5th|spells|level=5|class=Paladin}"
+      ],
+      "rowsSpellProgression": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Divine Sense|Paladin||1",
+    "Lay on Hands|Paladin||1",
+    "Divine Smite|Paladin||2",
+    "Fighting Style|Paladin||2",
+    "Spellcasting|Paladin||2",
+    "Divine Health|Paladin||3",
+    {
+      "classFeature": "Sacred Oath|Paladin||3",
+      "gainSubclassFeature": true,
+      "gainSubclassFeatureHasContent": true
+    },
+    "Ability Score Improvement|Paladin||4",
+    "Martial Versatility|Paladin||4|TCE",
+    "Extra Attack|Paladin||5",
+    "Aura of Protection|Paladin||6",
+    {
+      "classFeature": "Sacred Oath feature|Paladin||7",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Paladin||8",
+    "Aura of Courage|Paladin||10",
+    "Improved Divine Smite|Paladin||11",
+    "Ability Score Improvement|Paladin||12",
+    "Cleansing Touch|Paladin||14",
+    {
+      "classFeature": "Sacred Oath feature|Paladin||15",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Paladin||16",
+    "Aura improvements|Paladin||18",
+    "Ability Score Improvement|Paladin||19",
+    {
+      "classFeature": "Sacred Oath feature|Paladin||20",
+      "gainSubclassFeature": true
+    }
+  ],
+  "subclassTitle": "Sacred Oath",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

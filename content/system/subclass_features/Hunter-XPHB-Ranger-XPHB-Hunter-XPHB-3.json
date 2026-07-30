@@ -1,0 +1,24 @@
+{
+  "name": "Hunter",
+  "source": "XPHB",
+  "page": 127,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Ranger",
+  "classSource": "XPHB",
+  "subclassShortName": "Hunter",
+  "subclassSource": "XPHB",
+  "level": 3,
+  "entries": [
+    "{@i Protect Nature and People from Destruction}",
+    "You stalk prey in the wilds and elsewhere, using your abilities as a Hunter to protect nature and people everywhere from forces that would destroy them.",
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Hunter's Prey|Ranger|XPHB|Hunter|XPHB|3"
+    },
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Hunter's Lore|Ranger|XPHB|Hunter|XPHB|3"
+    }
+  ]
+}

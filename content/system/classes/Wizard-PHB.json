@@ -1,0 +1,475 @@
+{
+  "name": "Wizard",
+  "source": "PHB",
+  "page": 112,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Wizard|XPHB"
+  ],
+  "edition": "classic",
+  "hd": {
+    "number": 1,
+    "faces": 6
+  },
+  "proficiency": [
+    "int",
+    "wis"
+  ],
+  "spellcastingAbility": "int",
+  "casterProgression": "full",
+  "preparedSpells": "<$level$> + <$int_mod$>",
+  "cantripProgression": [
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5
+  ],
+  "spellsKnownProgressionFixed": [
+    6,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "spellsKnownProgressionFixedAllowLowerLevel": true,
+  "startingProficiencies": {
+    "weapons": [
+      "{@item dagger|phb|daggers}",
+      "{@item dart|phb|darts}",
+      "{@item sling|phb|slings}",
+      "{@item quarterstaff|phb|quarterstaffs}",
+      "{@item light crossbow|phb|light crossbows}"
+    ],
+    "skills": [
+      {
+        "choose": {
+          "from": [
+            "arcana",
+            "history",
+            "insight",
+            "investigation",
+            "medicine",
+            "religion"
+          ],
+          "count": 2
+        }
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "default": [
+      "(a) a {@item quarterstaff|phb} or (b) a {@item dagger|phb}",
+      "(a) a {@item component pouch|phb} or (b) an {@item arcane focus|phb}",
+      "(a) a {@item scholar's pack|phb} or (b) an {@item explorer's pack|phb}",
+      "A {@item spellbook|phb}"
+    ],
+    "goldAlternative": "{@dice 4d4 × 10|4d4 × 10|Starting Gold}",
+    "defaultData": [
+      {
+        "a": [
+          "quarterstaff|phb"
+        ],
+        "b": [
+          "dagger|phb"
+        ]
+      },
+      {
+        "a": [
+          "component pouch|phb"
+        ],
+        "b": [
+          {
+            "equipmentType": "focusSpellcastingArcane"
+          }
+        ]
+      },
+      {
+        "a": [
+          "scholar's pack|phb"
+        ],
+        "b": [
+          "explorer's pack|phb"
+        ]
+      },
+      {
+        "_": [
+          "spellbook|phb"
+        ]
+      }
+    ]
+  },
+  "multiclassing": {
+    "requirements": {
+      "int": 13
+    }
+  },
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "{@filter Cantrips Known|spells|level=0|class=Wizard}"
+      ],
+      "rows": [
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ]
+      ]
+    },
+    {
+      "title": "Spell Slots per Spell Level",
+      "colLabels": [
+        "{@filter 1st|spells|level=1|class=Wizard}",
+        "{@filter 2nd|spells|level=2|class=Wizard}",
+        "{@filter 3rd|spells|level=3|class=Wizard}",
+        "{@filter 4th|spells|level=4|class=Wizard}",
+        "{@filter 5th|spells|level=5|class=Wizard}",
+        "{@filter 6th|spells|level=6|class=Wizard}",
+        "{@filter 7th|spells|level=7|class=Wizard}",
+        "{@filter 8th|spells|level=8|class=Wizard}",
+        "{@filter 9th|spells|level=9|class=Wizard}"
+      ],
+      "rowsSpellProgression": [
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1,
+          1
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Arcane Recovery|Wizard||1",
+    "Spellcasting|Wizard||1",
+    {
+      "classFeature": "Arcane Tradition|Wizard||2",
+      "gainSubclassFeature": true
+    },
+    "Cantrip Formulas|Wizard||3|TCE",
+    "Ability Score Improvement|Wizard||4",
+    {
+      "classFeature": "Arcane Tradition feature|Wizard||6",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Wizard||8",
+    {
+      "classFeature": "Arcane Tradition feature|Wizard||10",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Wizard||12",
+    {
+      "classFeature": "Arcane Tradition feature|Wizard||14",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Wizard||16",
+    "Spell Mastery|Wizard||18",
+    "Ability Score Improvement|Wizard||19",
+    "Signature Spells|Wizard||20"
+  ],
+  "subclassTitle": "Arcane Tradition",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

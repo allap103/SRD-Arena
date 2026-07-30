@@ -1,0 +1,45 @@
+{
+  "name": "The Fiend",
+  "shortName": "Fiend",
+  "source": "PHB",
+  "className": "Warlock",
+  "classSource": "PHB",
+  "page": 109,
+  "srd": true,
+  "reprintedAs": [
+    "Fiend|Warlock|XPHB|XPHB"
+  ],
+  "edition": "classic",
+  "additionalSpells": [
+    {
+      "expanded": {
+        "s1": [
+          "burning hands",
+          "command"
+        ],
+        "s2": [
+          "blindness/deafness",
+          "scorching ray"
+        ],
+        "s3": [
+          "fireball",
+          "stinking cloud"
+        ],
+        "s4": [
+          "fire shield",
+          "wall of fire"
+        ],
+        "s5": [
+          "flame strike",
+          "hallow"
+        ]
+      }
+    }
+  ],
+  "subclassFeatures": [
+    "The Fiend|Warlock||Fiend||1",
+    "Dark One's Own Luck|Warlock||Fiend||6",
+    "Fiendish Resilience|Warlock||Fiend||10",
+    "Hurl Through Hell|Warlock||Fiend||14"
+  ]
+}

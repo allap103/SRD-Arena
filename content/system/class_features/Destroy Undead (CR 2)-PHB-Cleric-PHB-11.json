@@ -1,0 +1,13 @@
+{
+  "name": "Destroy Undead (CR 2)",
+  "source": "PHB",
+  "page": 56,
+  "srd": true,
+  "basicRules": true,
+  "className": "Cleric",
+  "classSource": "PHB",
+  "level": 11,
+  "entries": [
+    "Starting at 11th level, when an {@filter undead of CR 2 or lower|bestiary|challenge rating=[&0;&2]|type=undead|miscellaneous=!swarm} fails its saving throw against your Turn Undead feature, the creature is instantly destroyed."
+  ]
+}

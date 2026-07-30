@@ -1,0 +1,18 @@
+{
+  "name": "Sorcery Incarnate",
+  "source": "XPHB",
+  "page": 141,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Sorcerer",
+  "classSource": "XPHB",
+  "level": 7,
+  "consumes": {
+    "name": "Sorcery Point",
+    "amount": 2
+  },
+  "entries": [
+    "If you have no uses of Innate Sorcery left, you can use it if you spend 2 Sorcery Points when you take the {@variantrule Bonus Action|XPHB} to activate it.",
+    "In addition, while your Innate Sorcery feature is active, you can use up to two of your {@filter Metamagic options|optionalfeatures|feature type=MM} on each spell you cast."
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "Disciple of Life",
+  "source": "PHB",
+  "page": 60,
+  "srd": true,
+  "basicRules": true,
+  "className": "Cleric",
+  "classSource": "PHB",
+  "subclassShortName": "Life",
+  "subclassSource": "PHB",
+  "level": 1,
+  "header": 1,
+  "entries": [
+    "Also starting at 1st level, your healing spells are more effective. Whenever you use a spell of 1st level or higher to restore hit points to a creature, the creature regains additional hit points equal to 2 + the spell's level."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Superior Inspiration",
+  "source": "XPHB",
+  "page": 61,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Bard",
+  "classSource": "XPHB",
+  "level": 18,
+  "entries": [
+    "When you roll {@variantrule Initiative|XPHB}, you regain expended uses of Bardic Inspiration until you have two if you have fewer than that."
+  ]
+}

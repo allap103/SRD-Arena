@@ -1,0 +1,13 @@
+{
+  "name": "Ability Score Improvement",
+  "source": "XPHB",
+  "page": 155,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Warlock",
+  "classSource": "XPHB",
+  "level": 12,
+  "entries": [
+    "You gain the {@feat Ability Score Improvement|XPHB} Feat or another {@5etools feat|feats.html} of your choice for which you qualify."
+  ]
+}

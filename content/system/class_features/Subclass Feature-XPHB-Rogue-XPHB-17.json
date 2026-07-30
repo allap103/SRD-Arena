@@ -1,0 +1,13 @@
+{
+  "name": "Subclass Feature",
+  "source": "XPHB",
+  "page": 131,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Rogue",
+  "classSource": "XPHB",
+  "level": 17,
+  "entries": [
+    "You gain a feature from your Rogue Subclass."
+  ]
+}

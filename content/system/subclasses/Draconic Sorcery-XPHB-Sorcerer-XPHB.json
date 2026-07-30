@@ -1,0 +1,42 @@
+{
+  "name": "Draconic Sorcery",
+  "shortName": "Draconic",
+  "source": "XPHB",
+  "className": "Sorcerer",
+  "classSource": "XPHB",
+  "page": 148,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "additionalSpells": [
+    {
+      "prepared": {
+        "3": [
+          "alter self|xphb",
+          "chromatic orb|xphb",
+          "command|xphb",
+          "dragon's breath|xphb"
+        ],
+        "5": [
+          "fear|xphb",
+          "fly|xphb"
+        ],
+        "7": [
+          "arcane eye|xphb",
+          "charm monster|xphb"
+        ],
+        "9": [
+          "legend lore|xphb",
+          "summon dragon|xphb"
+        ]
+      }
+    }
+  ],
+  "subclassFeatures": [
+    "Draconic Sorcery|Sorcerer|XPHB|Draconic|XPHB|3",
+    "Elemental Affinity|Sorcerer|XPHB|Draconic|XPHB|6",
+    "Dragon Wings|Sorcerer|XPHB|Draconic|XPHB|14",
+    "Dragon Companion|Sorcerer|XPHB|Draconic|XPHB|18"
+  ],
+  "hasFluffImages": true
+}

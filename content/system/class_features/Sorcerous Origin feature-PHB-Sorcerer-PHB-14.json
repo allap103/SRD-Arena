@@ -1,0 +1,12 @@
+{
+  "name": "Sorcerous Origin feature",
+  "source": "PHB",
+  "page": 99,
+  "srd": true,
+  "className": "Sorcerer",
+  "classSource": "PHB",
+  "level": 14,
+  "entries": [
+    "At 14th level, you gain a feature granted by your Sorcerous Origin."
+  ]
+}

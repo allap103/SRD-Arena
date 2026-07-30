@@ -1,0 +1,17 @@
+{
+  "name": "Step of the Wind",
+  "source": "XPHB",
+  "page": 101,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "level": 2,
+  "header": 2,
+  "consumes": {
+    "name": "Focus Point"
+  },
+  "entries": [
+    "You can take the {@action Dash|XPHB} action as a {@variantrule Bonus Action|XPHB}. Alternatively, you can expend 1 Focus Point to take both the {@action Disengage|XPHB} and {@action Dash|XPHB} actions as a {@variantrule Bonus Action|XPHB}, and your jump distance is doubled for the turn."
+  ]
+}

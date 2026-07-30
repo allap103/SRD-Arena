@@ -1,0 +1,15 @@
+{
+  "name": "Purity of Spirit",
+  "source": "PHB",
+  "page": 85,
+  "srd": true,
+  "className": "Paladin",
+  "classSource": "PHB",
+  "subclassShortName": "Devotion",
+  "subclassSource": "PHB",
+  "level": 15,
+  "header": 2,
+  "entries": [
+    "Beginning at 15th level, you are always under the effects of a {@spell protection from evil and good} spell."
+  ]
+}

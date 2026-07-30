@@ -1,0 +1,29 @@
+{
+  "name": "Life Domain",
+  "source": "XPHB",
+  "page": 73,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Cleric",
+  "classSource": "XPHB",
+  "subclassShortName": "Life",
+  "subclassSource": "XPHB",
+  "level": 3,
+  "entries": [
+    "{@i Soothe the Hurts of the World}",
+    "The Life Domain focuses on the positive energy that helps sustain all life in the multiverse. Clerics who tap into this domain are masters of healing, using that life force to cure many hurts.",
+    "Existence itself relies on the positive energy associated with this domain, so a Cleric of almost any religious tradition might choose it. This domain is particularly associated with agricultural deities, gods of healing or endurance, and gods of home and community. Religious orders of healing also seek the magic of this domain.",
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Life Domain Spells|Cleric|XPHB|Life|XPHB|3"
+    },
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Disciple of Life|Cleric|XPHB|Life|XPHB|3"
+    },
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Preserve Life|Cleric|XPHB|Life|XPHB|3"
+    }
+  ]
+}

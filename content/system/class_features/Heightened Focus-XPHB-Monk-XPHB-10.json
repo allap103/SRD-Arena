@@ -1,0 +1,40 @@
+{
+  "name": "Heightened Focus",
+  "source": "XPHB",
+  "page": 103,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "level": 10,
+  "entries": [
+    "Your Flurry of Blows, Patient Defense, and Step of the Wind gain the following benefits.",
+    {
+      "type": "entries",
+      "name": "",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Flurry of Blows",
+          "entries": [
+            "You can expend 1 Focus Point to use Flurry of Blows and make three Unarmed Strikes with it instead of two."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Patient Defense",
+          "entries": [
+            "When you expend a Focus Point to use Patient Defense, you gain a number of {@variantrule Temporary Hit Points|XPHB} equal to two rolls of your Martial Arts die."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Step of the Wind",
+          "entries": [
+            "When you expend a Focus Point to use Step of the Wind, you can choose a willing creature within 5 feet of yourself that is Large or smaller. You move the creature with you until the end of your turn. The creature's movement doesn't provoke {@action Opportunity Attack|XPHB|Opportunity Attacks}."
+          ]
+        }
+      ]
+    }
+  ]
+}

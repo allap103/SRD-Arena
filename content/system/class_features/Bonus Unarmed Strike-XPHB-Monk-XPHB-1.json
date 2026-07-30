@@ -1,0 +1,14 @@
+{
+  "name": "Bonus Unarmed Strike",
+  "source": "XPHB",
+  "page": 101,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "level": 1,
+  "header": 2,
+  "entries": [
+    "You can make an {@variantrule Unarmed Strike|XPHB} as a {@variantrule Bonus Action|XPHB}."
+  ]
+}

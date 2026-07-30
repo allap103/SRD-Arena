@@ -1,0 +1,16 @@
+{
+  "name": "Empowered Evocation",
+  "source": "PHB",
+  "page": 117,
+  "srd": true,
+  "basicRules": true,
+  "className": "Wizard",
+  "classSource": "PHB",
+  "subclassShortName": "Evocation",
+  "subclassSource": "PHB",
+  "level": 10,
+  "header": 2,
+  "entries": [
+    "Beginning at 10th level, you can add your Intelligence modifier to one damage roll of any wizard evocation spell you cast."
+  ]
+}

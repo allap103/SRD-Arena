@@ -1,0 +1,16 @@
+{
+  "name": "Additional Fighting Style",
+  "source": "PHB",
+  "page": 72,
+  "srd": true,
+  "basicRules": true,
+  "className": "Fighter",
+  "classSource": "PHB",
+  "subclassShortName": "Champion",
+  "subclassSource": "PHB",
+  "level": 10,
+  "header": 2,
+  "entries": [
+    "At 10th level, you can choose a second option from the Fighting Style class feature."
+  ]
+}

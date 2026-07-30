@@ -1,0 +1,13 @@
+{
+  "name": "Epic Boon",
+  "source": "XPHB",
+  "page": 155,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Warlock",
+  "classSource": "XPHB",
+  "level": 19,
+  "entries": [
+    "You gain an {@filter Epic Boon feat|feats|category=EB} or another {@5etools feat|feats.html} of your choice for which you qualify. {@feat Boon of Fate|XPHB} is recommended."
+  ]
+}

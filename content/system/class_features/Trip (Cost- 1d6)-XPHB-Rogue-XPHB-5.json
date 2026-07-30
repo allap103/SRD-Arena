@@ -1,0 +1,13 @@
+{
+  "name": "Trip (Cost: 1d6)",
+  "source": "XPHB",
+  "page": 129,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Rogue",
+  "classSource": "XPHB",
+  "level": 5,
+  "entries": [
+    "If the target is Large or smaller, it must succeed on a Dexterity saving throw or have the {@condition Prone|XPHB} condition."
+  ]
+}

@@ -1,6 +1,6 @@
 from srd_arena.content.catalogs import SourceCatalog, load_item_catalog
 from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import BaseItemFileSchema, ItemSchema
+from srd_arena.content.schemas import ItemSchema
 from srd_arena.content.translators import build_item
 
 
@@ -9,7 +9,10 @@ def test_bundled_items_load_as_typed_records() -> None:
 
     longbow = catalog.find("Longbow", "XPHB")
 
-    assert len(catalog) >= 1_000
+    assert len(catalog) == sum(
+        len(list((SYSTEM_CONTENT_ROOT / directory).glob("*.json")))
+        for directory in ("items_base", "items")
+    )
     assert isinstance(longbow, ItemSchema)
     assert longbow.damage == "1d8"
     assert longbow.damage_type == "P"
@@ -17,17 +20,13 @@ def test_bundled_items_load_as_typed_records() -> None:
 
 
 def test_item_schema_preserves_unknown_source_fields() -> None:
-    [item] = BaseItemFileSchema.model_validate(
+    item = ItemSchema.model_validate(
         {
-            "baseitem": [
-                {
-                    "name": "Test Item",
-                    "source": "TEST",
-                    "customFutureField": {"enabled": True},
-                }
-            ]
+            "name": "Test Item",
+            "source": "TEST",
+            "customFutureField": {"enabled": True},
         }
-    ).base_items
+    )
 
     assert item.model_extra == {"customFutureField": {"enabled": True}}
 

@@ -1,0 +1,582 @@
+{
+  "name": "Bard",
+  "source": "PHB",
+  "page": 51,
+  "srd": true,
+  "reprintedAs": [
+    "Bard|XPHB"
+  ],
+  "edition": "classic",
+  "hd": {
+    "number": 1,
+    "faces": 8
+  },
+  "proficiency": [
+    "dex",
+    "cha"
+  ],
+  "spellcastingAbility": "cha",
+  "casterProgression": "full",
+  "cantripProgression": [
+    2,
+    2,
+    2,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  "spellsKnownProgression": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    14,
+    15,
+    15,
+    16,
+    18,
+    19,
+    19,
+    20,
+    22,
+    22,
+    22
+  ],
+  "additionalSpells": [
+    {
+      "name": "Magical Secrets",
+      "known": {
+        "10": [
+          {
+            "choose": "level=0;1;2;3;4;5"
+          },
+          {
+            "choose": "level=0;1;2;3;4;5"
+          }
+        ],
+        "14": [
+          {
+            "choose": "level=0;1;2;3;4;5;6;7"
+          },
+          {
+            "choose": "level=0;1;2;3;4;5;6;7"
+          }
+        ],
+        "18": [
+          {
+            "choose": ""
+          },
+          {
+            "choose": ""
+          }
+        ]
+      }
+    }
+  ],
+  "startingProficiencies": {
+    "armor": [
+      "light"
+    ],
+    "weapons": [
+      "simple",
+      "{@item hand crossbow|phb|hand crossbows}",
+      "{@item longsword|phb|longswords}",
+      "{@item rapier|phb|rapiers}",
+      "{@item shortsword|phb|shortswords}"
+    ],
+    "tools": [
+      "three {@item musical instrument|PHB|musical instruments} of your choice"
+    ],
+    "toolProficiencies": [
+      {
+        "anyMusicalInstrument": 3
+      }
+    ],
+    "skills": [
+      {
+        "any": 3
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "default": [
+      "(a) a {@item rapier|phb}, (b) a {@item longsword|phb}, or (c) any {@filter simple weapon|items|source=phb|category=basic|type=simple weapon}",
+      "(a) a {@item diplomat's pack|phb} or (b) an {@item entertainer's pack|phb}",
+      "(a) a {@item lute|phb} or (b) any other {@filter musical instrument|items|miscellaneous=mundane|type=instrument}",
+      "{@item Leather armor|phb}, and a {@item dagger|phb}"
+    ],
+    "goldAlternative": "{@dice 5d4 × 10|5d4 × 10|Starting Gold}",
+    "defaultData": [
+      {
+        "a": [
+          "rapier|phb"
+        ],
+        "b": [
+          "longsword|phb"
+        ],
+        "c": [
+          {
+            "equipmentType": "weaponSimple"
+          }
+        ]
+      },
+      {
+        "a": [
+          "diplomat's pack|phb"
+        ],
+        "b": [
+          "entertainer's pack|phb"
+        ]
+      },
+      {
+        "a": [
+          "lute|phb"
+        ],
+        "b": [
+          {
+            "equipmentType": "instrumentMusical"
+          }
+        ]
+      },
+      {
+        "_": [
+          "leather armor|phb",
+          "dagger|phb"
+        ]
+      }
+    ]
+  },
+  "multiclassing": {
+    "requirements": {
+      "cha": 13
+    },
+    "proficienciesGained": {
+      "armor": [
+        "light"
+      ],
+      "skills": [
+        {
+          "choose": {
+            "from": [
+              "athletics",
+              "acrobatics",
+              "sleight of hand",
+              "stealth",
+              "arcana",
+              "history",
+              "investigation",
+              "nature",
+              "religion",
+              "animal handling",
+              "insight",
+              "medicine",
+              "perception",
+              "survival",
+              "deception",
+              "intimidation",
+              "performance",
+              "persuasion"
+            ],
+            "count": 1
+          }
+        }
+      ],
+      "tools": [
+        "one {@item musical instrument|PHB} of your choice"
+      ],
+      "toolProficiencies": [
+        {
+          "anyMusicalInstrument": 1
+        }
+      ]
+    }
+  },
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "{@filter Cantrips Known|spells|level=0|class=bard}",
+        "{@filter Spells Known|spells|class=bard}"
+      ],
+      "rows": [
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          3,
+          11
+        ],
+        [
+          3,
+          12
+        ],
+        [
+          4,
+          14
+        ],
+        [
+          4,
+          15
+        ],
+        [
+          4,
+          15
+        ],
+        [
+          4,
+          16
+        ],
+        [
+          4,
+          18
+        ],
+        [
+          4,
+          19
+        ],
+        [
+          4,
+          19
+        ],
+        [
+          4,
+          20
+        ],
+        [
+          4,
+          22
+        ],
+        [
+          4,
+          22
+        ],
+        [
+          4,
+          22
+        ]
+      ]
+    },
+    {
+      "title": "Spell Slots per Spell Level",
+      "colLabels": [
+        "{@filter 1st|spells|level=1|class=bard}",
+        "{@filter 2nd|spells|level=2|class=bard}",
+        "{@filter 3rd|spells|level=3|class=bard}",
+        "{@filter 4th|spells|level=4|class=bard}",
+        "{@filter 5th|spells|level=5|class=bard}",
+        "{@filter 6th|spells|level=6|class=bard}",
+        "{@filter 7th|spells|level=7|class=bard}",
+        "{@filter 8th|spells|level=8|class=bard}",
+        "{@filter 9th|spells|level=9|class=bard}"
+      ],
+      "rowsSpellProgression": [
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1,
+          1
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Bardic Inspiration|Bard||1",
+    "Spellcasting|Bard||1",
+    "Jack of All Trades|Bard||2",
+    "Song of Rest (d6)|Bard||2",
+    "Magical Inspiration|Bard||2|TCE",
+    {
+      "classFeature": "Bard College|Bard||3",
+      "gainSubclassFeature": true
+    },
+    "Expertise|Bard||3",
+    "Ability Score Improvement|Bard||4",
+    "Bardic Versatility|Bard||4|TCE",
+    "Bardic Inspiration (d8)|Bard||5",
+    "Font of Inspiration|Bard||5",
+    "Countercharm|Bard||6",
+    {
+      "classFeature": "Bard College feature|Bard||6",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Bard||8",
+    "Song of Rest (d8)|Bard||9",
+    "Bardic Inspiration (d10)|Bard||10",
+    "Expertise|Bard||10",
+    "Magical Secrets|Bard||10",
+    "Ability Score Improvement|Bard||12",
+    "Song of Rest (d10)|Bard||13",
+    "Magical Secrets|Bard||14",
+    {
+      "classFeature": "Bard College feature|Bard||14",
+      "gainSubclassFeature": true
+    },
+    "Bardic Inspiration (d12)|Bard||15",
+    "Ability Score Improvement|Bard||16",
+    "Song of Rest (d12)|Bard||17",
+    "Magical Secrets|Bard||18",
+    "Ability Score Improvement|Bard||19",
+    "Superior Inspiration|Bard||20"
+  ],
+  "subclassTitle": "Bard College",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

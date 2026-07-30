@@ -1,15 +1,18 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TypeVar
 
 from srd_arena.content.schemas.classes import (
     ClassFeatureSchema,
-    ClassFileSchema,
     ClassSchema,
     SubclassFeatureSchema,
     SubclassSchema,
 )
 from srd_arena.content.sources import SOURCE_PRIORITY, load_json
+from srd_arena.content.schemas.base import SourceModel
 from .base import SourceCatalog
+
+T = TypeVar("T", bound=SourceModel)
 
 
 @dataclass(frozen=True)
@@ -79,20 +82,23 @@ class SubclassCatalog:
 
 
 def load_class_catalog(directory: str | Path) -> ClassCatalog:
-    source_files = _load_class_files(directory)
+    system_dir = Path(directory)
+    definitions = _load_records(system_dir / "classes", ClassSchema)
+    features = _load_records(
+        system_dir / "class_features",
+        ClassFeatureSchema,
+    )
     records = [
         ClassRecord(
             definition=definition,
             features=tuple(
                 feature
-                for source_file in source_files
-                for feature in source_file.class_features
+                for feature in features
                 if feature.class_name.casefold() == definition.name.casefold()
                 and feature.class_source.casefold() == definition.source.casefold()
             ),
         )
-        for source_file in source_files
-        for definition in source_file.classes
+        for definition in definitions
     ]
     return SourceCatalog(
         records,
@@ -103,14 +109,18 @@ def load_class_catalog(directory: str | Path) -> ClassCatalog:
 
 
 def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
-    source_files = _load_class_files(directory)
+    system_dir = Path(directory)
+    definitions = _load_records(system_dir / "subclasses", SubclassSchema)
+    features = _load_records(
+        system_dir / "subclass_features",
+        SubclassFeatureSchema,
+    )
     records = [
         SubclassRecord(
             definition=definition,
             features=tuple(
                 feature
-                for source_file in source_files
-                for feature in source_file.subclass_features
+                for feature in features
                 if feature.class_name.casefold() == definition.class_name.casefold()
                 and feature.class_source.casefold()
                 == definition.class_source.casefold()
@@ -120,17 +130,13 @@ def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
                 == definition.source.casefold()
             ),
         )
-        for source_file in source_files
-        for definition in source_file.subclasses
+        for definition in definitions
     ]
     return SubclassCatalog(records)
 
 
-def _load_class_files(directory: str | Path) -> list[ClassFileSchema]:
-    class_dir = Path(directory) / "class"
-    if not class_dir.is_dir():
-        return []
+def _load_records(directory: Path, schema: type[T]) -> list[T]:
     return [
-        ClassFileSchema.model_validate(load_json(path))
-        for path in sorted(class_dir.glob("class-*.json"))
+        schema.model_validate(load_json(path))
+        for path in sorted(directory.glob("*.json"))
     ]

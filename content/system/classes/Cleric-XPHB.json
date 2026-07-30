@@ -1,0 +1,524 @@
+{
+  "name": "Cleric",
+  "source": "XPHB",
+  "page": 68,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "primaryAbility": [
+    {
+      "wis": true
+    }
+  ],
+  "hd": {
+    "number": 1,
+    "faces": 8
+  },
+  "proficiency": [
+    "wis",
+    "cha"
+  ],
+  "spellcastingAbility": "wis",
+  "casterProgression": "full",
+  "preparedSpellsProgression": [
+    4,
+    5,
+    6,
+    7,
+    9,
+    10,
+    11,
+    12,
+    14,
+    15,
+    16,
+    16,
+    17,
+    17,
+    18,
+    18,
+    19,
+    20,
+    21,
+    22
+  ],
+  "preparedSpellsChange": "restLong",
+  "cantripProgression": [
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5,
+    5
+  ],
+  "featProgression": [
+    {
+      "name": "Epic Boon",
+      "category": [
+        "EB"
+      ],
+      "progression": {
+        "19": 1
+      }
+    }
+  ],
+  "startingProficiencies": {
+    "armor": [
+      "light",
+      "medium",
+      "shield"
+    ],
+    "weapons": [
+      "simple"
+    ],
+    "skills": [
+      {
+        "choose": {
+          "from": [
+            "history",
+            "insight",
+            "medicine",
+            "persuasion",
+            "religion"
+          ],
+          "count": 2
+        }
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "defaultData": [
+      {
+        "A": [
+          {
+            "item": "chain shirt|xphb"
+          },
+          {
+            "item": "shield|xphb"
+          },
+          {
+            "item": "mace|xphb"
+          },
+          {
+            "item": "holy symbol|xphb"
+          },
+          {
+            "item": "priest's pack|xphb"
+          },
+          {
+            "value": 7000
+          }
+        ],
+        "B": [
+          {
+            "value": 11000
+          }
+        ]
+      }
+    ],
+    "entries": [
+      "{@i Choose A or B:} (A) {@item Chain Shirt|XPHB}, {@item Shield|XPHB}, {@item Mace|XPHB}, {@item Holy Symbol|XPHB}, {@item Priest's Pack|XPHB}, 7 GP; or (B) 110 GP"
+    ]
+  },
+  "multiclassing": {
+    "proficienciesGained": {
+      "armor": [
+        "light",
+        "medium",
+        "shield"
+      ]
+    }
+  },
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "Channel Divinity",
+        "{@filter Cantrips|spells|level=0|class=Cleric}",
+        "{@filter Prepared Spells|spells|level=!0|class=Cleric}"
+      ],
+      "rows": [
+        [
+          0,
+          3,
+          4
+        ],
+        [
+          2,
+          3,
+          5
+        ],
+        [
+          2,
+          3,
+          6
+        ],
+        [
+          2,
+          4,
+          7
+        ],
+        [
+          2,
+          4,
+          9
+        ],
+        [
+          3,
+          4,
+          10
+        ],
+        [
+          3,
+          4,
+          11
+        ],
+        [
+          3,
+          4,
+          12
+        ],
+        [
+          3,
+          4,
+          14
+        ],
+        [
+          3,
+          5,
+          15
+        ],
+        [
+          3,
+          5,
+          16
+        ],
+        [
+          3,
+          5,
+          16
+        ],
+        [
+          3,
+          5,
+          17
+        ],
+        [
+          3,
+          5,
+          17
+        ],
+        [
+          3,
+          5,
+          18
+        ],
+        [
+          3,
+          5,
+          18
+        ],
+        [
+          3,
+          5,
+          19
+        ],
+        [
+          4,
+          5,
+          20
+        ],
+        [
+          4,
+          5,
+          21
+        ],
+        [
+          4,
+          5,
+          22
+        ]
+      ]
+    },
+    {
+      "title": "Spell Slots per Spell Level",
+      "colLabels": [
+        "{@filter 1st|spells|level=1|class=Cleric}",
+        "{@filter 2nd|spells|level=2|class=Cleric}",
+        "{@filter 3rd|spells|level=3|class=Cleric}",
+        "{@filter 4th|spells|level=4|class=Cleric}",
+        "{@filter 5th|spells|level=5|class=Cleric}",
+        "{@filter 6th|spells|level=6|class=Cleric}",
+        "{@filter 7th|spells|level=7|class=Cleric}",
+        "{@filter 8th|spells|level=8|class=Cleric}",
+        "{@filter 9th|spells|level=9|class=Cleric}"
+      ],
+      "rowsSpellProgression": [
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1,
+          1
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Spellcasting|Cleric|XPHB|1",
+    "Divine Order|Cleric|XPHB|1",
+    "Channel Divinity|Cleric|XPHB|2",
+    {
+      "classFeature": "Cleric Subclass|Cleric|XPHB|3",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Cleric|XPHB|4",
+    "Sear Undead|Cleric|XPHB|5",
+    {
+      "classFeature": "Subclass Feature|Cleric|XPHB|6",
+      "gainSubclassFeature": true
+    },
+    "Blessed Strikes|Cleric|XPHB|7",
+    "Ability Score Improvement|Cleric|XPHB|8",
+    "Divine Intervention|Cleric|XPHB|10",
+    "Ability Score Improvement|Cleric|XPHB|12",
+    "Improved Blessed Strikes|Cleric|XPHB|14",
+    "Ability Score Improvement|Cleric|XPHB|16",
+    {
+      "classFeature": "Subclass Feature|Cleric|XPHB|17",
+      "gainSubclassFeature": true
+    },
+    "Epic Boon|Cleric|XPHB|19",
+    "Greater Divine Intervention|Cleric|XPHB|20"
+  ],
+  "subclassTitle": "Cleric Subclass",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

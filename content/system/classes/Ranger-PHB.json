@@ -1,0 +1,432 @@
+{
+  "name": "Ranger",
+  "source": "PHB",
+  "page": 89,
+  "srd": true,
+  "reprintedAs": [
+    "Ranger|XPHB"
+  ],
+  "edition": "classic",
+  "hd": {
+    "number": 1,
+    "faces": 10
+  },
+  "proficiency": [
+    "str",
+    "dex"
+  ],
+  "spellcastingAbility": "wis",
+  "casterProgression": "1/2",
+  "spellsKnownProgression": [
+    0,
+    2,
+    3,
+    3,
+    4,
+    4,
+    5,
+    5,
+    6,
+    6,
+    7,
+    7,
+    8,
+    8,
+    9,
+    9,
+    10,
+    10,
+    11,
+    11
+  ],
+  "optionalfeatureProgression": [
+    {
+      "name": "Fighting Style",
+      "featureType": [
+        "FS:R"
+      ],
+      "progression": {
+        "2": 1
+      }
+    }
+  ],
+  "startingProficiencies": {
+    "armor": [
+      "light",
+      "medium",
+      "shield"
+    ],
+    "weapons": [
+      "simple",
+      "martial"
+    ],
+    "skills": [
+      {
+        "choose": {
+          "from": [
+            "animal handling",
+            "athletics",
+            "insight",
+            "investigation",
+            "nature",
+            "perception",
+            "stealth",
+            "survival"
+          ],
+          "count": 3
+        }
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "default": [
+      "(a) {@item scale mail|phb} or (b) {@item leather armor|phb}",
+      "(a) two {@item shortsword|phb|shortswords} or (b) two {@filter simple melee weapons|items|source=phb|category=basic|type=simple weapon;melee weapon=sand}",
+      "(a) a {@item dungeoneer's pack|phb} or (b) an {@item explorer's pack|phb}",
+      "A {@item longbow|phb} and a {@item quiver|phb} of {@item arrows (20)|phb|20 arrows}"
+    ],
+    "goldAlternative": "{@dice 5d4 × 10|5d4 × 10|Starting Gold}",
+    "defaultData": [
+      {
+        "a": [
+          "scale mail|phb"
+        ],
+        "b": [
+          "leather armor|phb"
+        ]
+      },
+      {
+        "a": [
+          {
+            "item": "shortsword|phb",
+            "quantity": 2
+          }
+        ],
+        "b": [
+          {
+            "equipmentType": "weaponSimpleMelee",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "a": [
+          "dungeoneer's pack|phb"
+        ],
+        "b": [
+          "explorer's pack|phb"
+        ]
+      },
+      {
+        "_": [
+          "longbow|phb",
+          "arrows (20)|phb"
+        ]
+      }
+    ]
+  },
+  "multiclassing": {
+    "requirements": {
+      "dex": 13,
+      "wis": 13
+    },
+    "proficienciesGained": {
+      "armor": [
+        "light",
+        "medium",
+        "shield"
+      ],
+      "skills": [
+        {
+          "choose": {
+            "from": [
+              "animal handling",
+              "athletics",
+              "insight",
+              "investigation",
+              "nature",
+              "perception",
+              "stealth",
+              "survival"
+            ],
+            "count": 1
+          }
+        }
+      ],
+      "weapons": [
+        "simple",
+        "martial"
+      ]
+    }
+  },
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "{@filter Spells Known|spells|class=ranger}"
+      ],
+      "rows": [
+        [
+          0
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ],
+        [
+          8
+        ],
+        [
+          9
+        ],
+        [
+          9
+        ],
+        [
+          10
+        ],
+        [
+          10
+        ],
+        [
+          11
+        ],
+        [
+          11
+        ]
+      ]
+    },
+    {
+      "title": "Spell Slots per Spell Level",
+      "colLabels": [
+        "{@filter 1st|spells|level=1|class=Ranger}",
+        "{@filter 2nd|spells|level=2|class=Ranger}",
+        "{@filter 3rd|spells|level=3|class=Ranger}",
+        "{@filter 4th|spells|level=4|class=Ranger}",
+        "{@filter 5th|spells|level=5|class=Ranger}"
+      ],
+      "rowsSpellProgression": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Favored Enemy|Ranger||1",
+    "Favored Foe|Ranger||1|TCE",
+    "Natural Explorer|Ranger||1",
+    "Deft Explorer|Ranger||1|TCE",
+    "Fighting Style|Ranger||2",
+    "Spellcasting|Ranger||2",
+    "Spellcasting Focus|Ranger||2|TCE",
+    {
+      "classFeature": "Ranger Archetype|Ranger||3",
+      "gainSubclassFeature": true
+    },
+    "Primeval Awareness|Ranger||3",
+    "Primal Awareness|Ranger||3|TCE",
+    "Ability Score Improvement|Ranger||4",
+    "Martial Versatility|Ranger||4|TCE",
+    "Extra Attack|Ranger||5",
+    "Favored Enemy and Natural Explorer improvements|Ranger||6",
+    "Deft Explorer Improvement|Ranger||6|TCE",
+    {
+      "classFeature": "Ranger Archetype feature|Ranger||7",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Ranger||8",
+    "Land's Stride|Ranger||8",
+    "Hide in Plain Sight|Ranger||10",
+    "Nature's Veil|Ranger||10|TCE",
+    "Natural Explorer improvement|Ranger||10",
+    "Deft Explorer Improvement|Ranger||10|TCE",
+    {
+      "classFeature": "Ranger Archetype feature|Ranger||11",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Ranger||12",
+    "Vanish|Ranger||14",
+    "Favored Enemy improvement|Ranger||14",
+    {
+      "classFeature": "Ranger Archetype feature|Ranger||15",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Ranger||16",
+    "Feral Senses|Ranger||18",
+    "Ability Score Improvement|Ranger||19",
+    "Foe Slayer|Ranger||20"
+  ],
+  "subclassTitle": "Ranger Archetype",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

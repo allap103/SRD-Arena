@@ -1,0 +1,16 @@
+{
+  "name": "Smite of Protection",
+  "source": "XPHB",
+  "page": 114,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Paladin",
+  "classSource": "XPHB",
+  "subclassShortName": "Devotion",
+  "subclassSource": "XPHB",
+  "level": 15,
+  "header": 2,
+  "entries": [
+    "Your magical smite now radiates protective energy. Whenever you cast {@spell Divine Smite|XPHB}, you and your allies have {@variantrule Cover|XPHB|Half Cover} while in your Aura of Protection. The aura has this benefit until the start of your next turn."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Ritual Adept",
+  "source": "XPHB",
+  "page": 155,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Wizard",
+  "classSource": "XPHB",
+  "level": 1,
+  "entries": [
+    "You can cast any spell as a {@variantrule Ritual|XPHB} if that spell has the {@variantrule Ritual|XPHB} tag and the spell is in your spellbook. You needn't have the spell prepared, but you must read from the book to cast a spell in this way."
+  ]
+}

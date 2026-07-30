@@ -1,0 +1,13 @@
+{
+  "name": "Slow Fall",
+  "source": "XPHB",
+  "page": 103,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "level": 4,
+  "entries": [
+    "You can take a {@variantrule Reaction|XPHB} when you fall to reduce any damage you take from the fall by an amount equal to five times your Monk level."
+  ]
+}

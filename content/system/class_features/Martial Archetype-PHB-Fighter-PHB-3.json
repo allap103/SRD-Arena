@@ -1,0 +1,13 @@
+{
+  "name": "Martial Archetype",
+  "source": "PHB",
+  "page": 72,
+  "srd": true,
+  "basicRules": true,
+  "className": "Fighter",
+  "classSource": "PHB",
+  "level": 3,
+  "entries": [
+    "At 3rd level, you choose an archetype from the list available that you strive to emulate in your combat styles and techniques. The archetype you choose grants you features at 3rd level and again at 7th, 10th, 15th, and 18th level."
+  ]
+}

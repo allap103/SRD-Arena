@@ -1,0 +1,13 @@
+{
+  "name": "Indomitable Might",
+  "source": "XPHB",
+  "page": 53,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Barbarian",
+  "classSource": "XPHB",
+  "level": 18,
+  "entries": [
+    "If your total for a Strength check or Strength saving throw is less than your Strength score, you can use that score in place of the total."
+  ]
+}

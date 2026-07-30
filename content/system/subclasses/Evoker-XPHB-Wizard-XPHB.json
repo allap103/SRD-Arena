@@ -1,0 +1,67 @@
+{
+  "name": "Evoker",
+  "shortName": "Evoker",
+  "source": "XPHB",
+  "className": "Wizard",
+  "classSource": "XPHB",
+  "page": 174,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "additionalSpells": [
+    {
+      "known": {
+        "3": [
+          {
+            "choose": "level=0;1;2|class=Wizard|school=V"
+          },
+          {
+            "choose": "level=0;1;2|class=Wizard|school=V"
+          }
+        ],
+        "5": [
+          {
+            "choose": "level=0;1;2;3|class=Wizard|school=V"
+          }
+        ],
+        "7": [
+          {
+            "choose": "level=0;1;2;3;4|class=Wizard|school=V"
+          }
+        ],
+        "9": [
+          {
+            "choose": "level=0;1;2;3;4;5|class=Wizard|school=V"
+          }
+        ],
+        "11": [
+          {
+            "choose": "level=0;1;2;3;4;5;6|class=Wizard|school=V"
+          }
+        ],
+        "13": [
+          {
+            "choose": "level=0;1;2;3;4;5;6;7|class=Wizard|school=V"
+          }
+        ],
+        "15": [
+          {
+            "choose": "level=0;1;2;3;4;5;6;7;8|class=Wizard|school=V"
+          }
+        ],
+        "17": [
+          {
+            "choose": "level=0;1;2;3;4;5;6;7;8;9|class=Wizard|school=V"
+          }
+        ]
+      }
+    }
+  ],
+  "subclassFeatures": [
+    "Evoker|Wizard|XPHB|Evoker|XPHB|3",
+    "Sculpt Spells|Wizard|XPHB|Evoker|XPHB|6",
+    "Empowered Evocation|Wizard|XPHB|Evoker|XPHB|10",
+    "Overchannel|Wizard|XPHB|Evoker|XPHB|14"
+  ],
+  "hasFluffImages": true
+}

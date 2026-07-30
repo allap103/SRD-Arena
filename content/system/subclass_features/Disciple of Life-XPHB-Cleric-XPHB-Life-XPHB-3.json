@@ -1,0 +1,16 @@
+{
+  "name": "Disciple of Life",
+  "source": "XPHB",
+  "page": 73,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Cleric",
+  "classSource": "XPHB",
+  "subclassShortName": "Life",
+  "subclassSource": "XPHB",
+  "level": 3,
+  "header": 1,
+  "entries": [
+    "When a spell you cast with a spell slot restores {@variantrule Hit Points|XPHB} to a creature, that creature regains additional {@variantrule Hit Points|XPHB} on the turn you cast the spell. The additional {@variantrule Hit Points|XPHB} equal 2 plus the spell slot's level."
+  ]
+}

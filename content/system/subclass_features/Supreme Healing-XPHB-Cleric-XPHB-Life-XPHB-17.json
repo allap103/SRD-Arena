@@ -1,0 +1,16 @@
+{
+  "name": "Supreme Healing",
+  "source": "XPHB",
+  "page": 74,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Cleric",
+  "classSource": "XPHB",
+  "subclassShortName": "Life",
+  "subclassSource": "XPHB",
+  "level": 17,
+  "header": 2,
+  "entries": [
+    "When you would normally roll one or more dice to restore {@variantrule Hit Points|XPHB} to a creature with a spell or Channel Divinity, don't roll those dice for the healing; instead use the highest number possible for each die. For example, instead of restoring {@dice 2d6} {@variantrule Hit Points|XPHB} to a creature with a spell, you restore 12."
+  ]
+}

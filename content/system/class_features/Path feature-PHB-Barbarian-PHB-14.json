@@ -1,0 +1,12 @@
+{
+  "name": "Path feature",
+  "source": "PHB",
+  "page": 46,
+  "srd": true,
+  "className": "Barbarian",
+  "classSource": "PHB",
+  "level": 14,
+  "entries": [
+    "At 14th level, you gain a feature from your Primal Path."
+  ]
+}

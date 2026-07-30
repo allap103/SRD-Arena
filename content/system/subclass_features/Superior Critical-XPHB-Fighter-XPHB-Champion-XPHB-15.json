@@ -1,0 +1,16 @@
+{
+  "name": "Superior Critical",
+  "source": "XPHB",
+  "page": 96,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Fighter",
+  "classSource": "XPHB",
+  "subclassShortName": "Champion",
+  "subclassSource": "XPHB",
+  "level": 15,
+  "header": 2,
+  "entries": [
+    "Your attack rolls with weapons and Unarmed Strikes can now score a {@variantrule Critical Hit|XPHB} on a roll of 18–20 on the {@dice d20}."
+  ]
+}

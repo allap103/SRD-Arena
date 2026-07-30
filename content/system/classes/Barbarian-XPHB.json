@@ -1,0 +1,312 @@
+{
+  "name": "Barbarian",
+  "source": "XPHB",
+  "page": 50,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "primaryAbility": [
+    {
+      "str": true
+    }
+  ],
+  "hd": {
+    "number": 1,
+    "faces": 12
+  },
+  "proficiency": [
+    "str",
+    "con"
+  ],
+  "featProgression": [
+    {
+      "name": "Epic Boon",
+      "category": [
+        "EB"
+      ],
+      "progression": {
+        "19": 1
+      }
+    }
+  ],
+  "startingProficiencies": {
+    "armor": [
+      "light",
+      "medium",
+      "shield"
+    ],
+    "weapons": [
+      "simple",
+      "martial"
+    ],
+    "skills": [
+      {
+        "choose": {
+          "from": [
+            "animal handling",
+            "athletics",
+            "intimidation",
+            "nature",
+            "perception",
+            "survival"
+          ],
+          "count": 2
+        }
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "defaultData": [
+      {
+        "A": [
+          {
+            "item": "greataxe|xphb"
+          },
+          {
+            "item": "handaxe|xphb",
+            "quantity": 4
+          },
+          {
+            "item": "explorer's pack|xphb"
+          },
+          {
+            "value": 1500
+          }
+        ],
+        "B": [
+          {
+            "value": 7500
+          }
+        ]
+      }
+    ],
+    "entries": [
+      "{@i Choose A or B:} (A) {@item Greataxe|XPHB}, 4 {@item Handaxe|XPHB|Handaxes}, {@item Explorer's Pack|XPHB}, and 15 GP; or (B) 75 GP"
+    ]
+  },
+  "multiclassing": {
+    "proficienciesGained": {
+      "armor": [
+        "shield"
+      ],
+      "weapons": [
+        "martial"
+      ]
+    }
+  },
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "Rages",
+        "Rage Damage",
+        "Weapon Mastery"
+      ],
+      "rows": [
+        [
+          "2",
+          {
+            "type": "bonus",
+            "value": 2
+          },
+          "2"
+        ],
+        [
+          "2",
+          {
+            "type": "bonus",
+            "value": 2
+          },
+          "2"
+        ],
+        [
+          "3",
+          {
+            "type": "bonus",
+            "value": 2
+          },
+          "2"
+        ],
+        [
+          "3",
+          {
+            "type": "bonus",
+            "value": 2
+          },
+          "3"
+        ],
+        [
+          "3",
+          {
+            "type": "bonus",
+            "value": 2
+          },
+          "3"
+        ],
+        [
+          "4",
+          {
+            "type": "bonus",
+            "value": 2
+          },
+          "3"
+        ],
+        [
+          "4",
+          {
+            "type": "bonus",
+            "value": 2
+          },
+          "3"
+        ],
+        [
+          "4",
+          {
+            "type": "bonus",
+            "value": 2
+          },
+          "3"
+        ],
+        [
+          "4",
+          {
+            "type": "bonus",
+            "value": 3
+          },
+          "3"
+        ],
+        [
+          "4",
+          {
+            "type": "bonus",
+            "value": 3
+          },
+          "4"
+        ],
+        [
+          "4",
+          {
+            "type": "bonus",
+            "value": 3
+          },
+          "4"
+        ],
+        [
+          "5",
+          {
+            "type": "bonus",
+            "value": 3
+          },
+          "4"
+        ],
+        [
+          "5",
+          {
+            "type": "bonus",
+            "value": 3
+          },
+          "4"
+        ],
+        [
+          "5",
+          {
+            "type": "bonus",
+            "value": 3
+          },
+          "4"
+        ],
+        [
+          "5",
+          {
+            "type": "bonus",
+            "value": 3
+          },
+          "4"
+        ],
+        [
+          "5",
+          {
+            "type": "bonus",
+            "value": 4
+          },
+          "4"
+        ],
+        [
+          "6",
+          {
+            "type": "bonus",
+            "value": 4
+          },
+          "4"
+        ],
+        [
+          "6",
+          {
+            "type": "bonus",
+            "value": 4
+          },
+          "4"
+        ],
+        [
+          "6",
+          {
+            "type": "bonus",
+            "value": 4
+          },
+          "4"
+        ],
+        [
+          "6",
+          {
+            "type": "bonus",
+            "value": 4
+          },
+          "4"
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Rage|Barbarian|XPHB|1",
+    "Unarmored Defense|Barbarian|XPHB|1",
+    "Weapon Mastery|Barbarian|XPHB|1",
+    "Danger Sense|Barbarian|XPHB|2",
+    "Reckless Attack|Barbarian|XPHB|2",
+    {
+      "classFeature": "Barbarian Subclass|Barbarian|XPHB|3",
+      "gainSubclassFeature": true
+    },
+    "Primal Knowledge|Barbarian|XPHB|3",
+    "Ability Score Improvement|Barbarian|XPHB|4",
+    "Extra Attack|Barbarian|XPHB|5",
+    "Fast Movement|Barbarian|XPHB|5",
+    {
+      "classFeature": "Subclass Feature|Barbarian|XPHB|6",
+      "gainSubclassFeature": true
+    },
+    "Feral Instinct|Barbarian|XPHB|7",
+    "Instinctive Pounce|Barbarian|XPHB|7",
+    "Ability Score Improvement|Barbarian|XPHB|8",
+    "Brutal Strike|Barbarian|XPHB|9",
+    {
+      "classFeature": "Subclass Feature|Barbarian|XPHB|10",
+      "gainSubclassFeature": true
+    },
+    "Relentless Rage|Barbarian|XPHB|11",
+    "Ability Score Improvement|Barbarian|XPHB|12",
+    "Improved Brutal Strike|Barbarian|XPHB|13",
+    {
+      "classFeature": "Subclass Feature|Barbarian|XPHB|14",
+      "gainSubclassFeature": true
+    },
+    "Persistent Rage|Barbarian|XPHB|15",
+    "Ability Score Improvement|Barbarian|XPHB|16",
+    "Improved Brutal Strike|Barbarian|XPHB|17",
+    "Indomitable Might|Barbarian|XPHB|18",
+    "Epic Boon|Barbarian|XPHB|19",
+    "Primal Champion|Barbarian|XPHB|20"
+  ],
+  "subclassTitle": "Barbarian Subclass",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

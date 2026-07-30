@@ -1,0 +1,135 @@
+{
+  "name": "Circle of the Land Spells",
+  "source": "XPHB",
+  "page": 84,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Druid",
+  "classSource": "XPHB",
+  "subclassShortName": "Land",
+  "subclassSource": "XPHB",
+  "level": 3,
+  "entries": [
+    "Whenever you finish a {@variantrule Long Rest|XPHB}, choose one type of land: arid, polar, temperate, or tropical. Consult the table below that corresponds to the chosen type; you have the spells listed for your Druid level and lower prepared.",
+    {
+      "type": "table",
+      "caption": "Arid Land",
+      "colLabels": [
+        "Druid Level",
+        "Circle Spells"
+      ],
+      "colStyles": [
+        "col-1 text-center",
+        "col-11"
+      ],
+      "rows": [
+        [
+          "3rd",
+          "{@spell Blur|XPHB}, {@spell Burning Hands|XPHB}, {@spell Fire Bolt|XPHB}"
+        ],
+        [
+          "5th",
+          "{@spell Fireball|XPHB}"
+        ],
+        [
+          "7th",
+          "{@spell Blight|XPHB}"
+        ],
+        [
+          "9th",
+          "{@spell Wall of Stone|XPHB}"
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "Polar Land",
+      "colLabels": [
+        "Druid Level",
+        "Circle Spells"
+      ],
+      "colStyles": [
+        "col-1 text-center",
+        "col-11"
+      ],
+      "rows": [
+        [
+          "3rd",
+          "{@spell Fog Cloud|XPHB}, {@spell Hold Person|XPHB}, {@spell Ray of Frost|XPHB}"
+        ],
+        [
+          "5th",
+          "{@spell Sleet Storm|XPHB}"
+        ],
+        [
+          "7th",
+          "{@spell Ice Storm|XPHB}"
+        ],
+        [
+          "9th",
+          "{@spell Cone of Cold|XPHB}"
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "Temperate Land",
+      "colLabels": [
+        "Druid Level",
+        "Circle Spells"
+      ],
+      "colStyles": [
+        "col-1 text-center",
+        "col-11"
+      ],
+      "rows": [
+        [
+          "3rd",
+          "{@spell Misty Step|XPHB}, {@spell Shocking Grasp|XPHB}, {@spell Sleep|XPHB}"
+        ],
+        [
+          "5th",
+          "{@spell Lightning Bolt|XPHB}"
+        ],
+        [
+          "7th",
+          "{@spell Freedom of Movement|XPHB}"
+        ],
+        [
+          "9th",
+          "{@spell Tree Stride|XPHB}"
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "Tropical Land",
+      "colLabels": [
+        "Druid Level",
+        "Circle Spells"
+      ],
+      "colStyles": [
+        "col-1 text-center",
+        "col-11"
+      ],
+      "rows": [
+        [
+          "3rd",
+          "{@spell Acid Splash|XPHB}, {@spell Ray of Sickness|XPHB}, {@spell Web|XPHB}"
+        ],
+        [
+          "5th",
+          "{@spell Stinking Cloud|XPHB}"
+        ],
+        [
+          "7th",
+          "{@spell Polymorph|XPHB}"
+        ],
+        [
+          "9th",
+          "{@spell Insect Plague|XPHB}"
+        ]
+      ]
+    }
+  ]
+}

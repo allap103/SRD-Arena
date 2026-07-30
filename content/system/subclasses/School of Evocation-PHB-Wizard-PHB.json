@@ -1,0 +1,20 @@
+{
+  "name": "School of Evocation",
+  "shortName": "Evocation",
+  "source": "PHB",
+  "className": "Wizard",
+  "classSource": "PHB",
+  "page": 117,
+  "srd": true,
+  "basicRules": true,
+  "reprintedAs": [
+    "Evoker|Wizard|XPHB|XPHB"
+  ],
+  "edition": "classic",
+  "subclassFeatures": [
+    "School of Evocation|Wizard||Evocation||2",
+    "Potent Cantrip|Wizard||Evocation||6",
+    "Empowered Evocation|Wizard||Evocation||10",
+    "Overchannel|Wizard||Evocation||14"
+  ]
+}

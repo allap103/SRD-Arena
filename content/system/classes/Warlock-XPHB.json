@@ -1,0 +1,391 @@
+{
+  "name": "Warlock",
+  "source": "XPHB",
+  "page": 152,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "primaryAbility": [
+    {
+      "cha": true
+    }
+  ],
+  "hd": {
+    "number": 1,
+    "faces": 8
+  },
+  "proficiency": [
+    "wis",
+    "cha"
+  ],
+  "spellcastingAbility": "cha",
+  "casterProgression": "pact",
+  "preparedSpellsProgression": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    10,
+    11,
+    11,
+    12,
+    12,
+    13,
+    13,
+    14,
+    14,
+    15,
+    15
+  ],
+  "preparedSpellsChange": "level",
+  "cantripProgression": [
+    2,
+    2,
+    2,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  "spellsKnownProgressionFixedByLevel": {
+    "11": {
+      "6": 1
+    },
+    "13": {
+      "7": 1
+    },
+    "15": {
+      "8": 1
+    },
+    "17": {
+      "9": 1
+    }
+  },
+  "additionalSpells": [
+    {
+      "prepared": {
+        "9": [
+          "contact other plane|xphb"
+        ]
+      }
+    }
+  ],
+  "featProgression": [
+    {
+      "name": "Epic Boon",
+      "category": [
+        "EB"
+      ],
+      "progression": {
+        "19": 1
+      }
+    }
+  ],
+  "optionalfeatureProgression": [
+    {
+      "name": "Eldritch Invocations",
+      "featureType": [
+        "EI"
+      ],
+      "progression": [
+        1,
+        3,
+        3,
+        3,
+        5,
+        5,
+        6,
+        6,
+        7,
+        7,
+        7,
+        8,
+        8,
+        8,
+        9,
+        9,
+        9,
+        10,
+        10,
+        10
+      ]
+    }
+  ],
+  "startingProficiencies": {
+    "armor": [
+      "light"
+    ],
+    "weapons": [
+      "simple"
+    ],
+    "skills": [
+      {
+        "choose": {
+          "from": [
+            "arcana",
+            "deception",
+            "history",
+            "intimidation",
+            "investigation",
+            "nature",
+            "religion"
+          ],
+          "count": 2
+        }
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "defaultData": [
+      {
+        "A": [
+          {
+            "item": "leather armor|xphb"
+          },
+          {
+            "item": "sickle|xphb"
+          },
+          {
+            "item": "dagger|xphb",
+            "quantity": 2
+          },
+          {
+            "item": "orb|xphb"
+          },
+          {
+            "item": "book|xphb"
+          },
+          {
+            "item": "scholar's pack|xphb"
+          },
+          {
+            "value": 1500
+          }
+        ],
+        "B": [
+          {
+            "value": 10000
+          }
+        ]
+      }
+    ],
+    "entries": [
+      "{@i Choose A or B:} (A) {@item Leather Armor|XPHB}, {@item Sickle|XPHB}, 2 {@item Dagger|XPHB|Daggers}, {@item Arcane Focus|XPHB} ({@item orb|XPHB}), {@item Book|XPHB} (occult lore), {@item Scholar's Pack|XPHB}, and 15 GP; or (B) 100 GP"
+    ]
+  },
+  "multiclassing": {
+    "proficienciesGained": {
+      "armor": [
+        "light"
+      ]
+    }
+  },
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "{@filter Invocations|optionalfeatures|feature type=ei}",
+        "{@filter Cantrips|spells|level=0|class=Warlock}",
+        "{@filter Prepared Spells|spells|level=!0|class=Warlock}",
+        "Spell Slots",
+        "Slot Level"
+      ],
+      "rows": [
+        [
+          1,
+          2,
+          2,
+          1,
+          1
+        ],
+        [
+          3,
+          2,
+          3,
+          2,
+          1
+        ],
+        [
+          3,
+          2,
+          4,
+          2,
+          2
+        ],
+        [
+          3,
+          3,
+          5,
+          2,
+          2
+        ],
+        [
+          5,
+          3,
+          6,
+          2,
+          3
+        ],
+        [
+          5,
+          3,
+          7,
+          2,
+          3
+        ],
+        [
+          6,
+          3,
+          8,
+          2,
+          4
+        ],
+        [
+          6,
+          3,
+          9,
+          2,
+          4
+        ],
+        [
+          7,
+          3,
+          10,
+          2,
+          5
+        ],
+        [
+          7,
+          4,
+          10,
+          2,
+          5
+        ],
+        [
+          7,
+          4,
+          11,
+          3,
+          5
+        ],
+        [
+          8,
+          4,
+          11,
+          3,
+          5
+        ],
+        [
+          8,
+          4,
+          12,
+          3,
+          5
+        ],
+        [
+          8,
+          4,
+          12,
+          3,
+          5
+        ],
+        [
+          9,
+          4,
+          13,
+          3,
+          5
+        ],
+        [
+          9,
+          4,
+          13,
+          3,
+          5
+        ],
+        [
+          9,
+          4,
+          14,
+          4,
+          5
+        ],
+        [
+          10,
+          4,
+          14,
+          4,
+          5
+        ],
+        [
+          10,
+          4,
+          15,
+          4,
+          5
+        ],
+        [
+          10,
+          4,
+          15,
+          4,
+          5
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Eldritch Invocations|Warlock|XPHB|1",
+    "Pact Magic|Warlock|XPHB|1",
+    "Eldritch Invocation Options|Warlock|XPHB|1",
+    "Magical Cunning|Warlock|XPHB|2",
+    {
+      "classFeature": "Warlock Subclass|Warlock|XPHB|3",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Warlock|XPHB|4",
+    {
+      "classFeature": "Subclass Feature|Warlock|XPHB|6",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Warlock|XPHB|8",
+    "Contact Patron|Warlock|XPHB|9",
+    {
+      "classFeature": "Subclass Feature|Warlock|XPHB|10",
+      "gainSubclassFeature": true
+    },
+    "Mystic Arcanum|Warlock|XPHB|11",
+    "Ability Score Improvement|Warlock|XPHB|12",
+    "Mystic Arcanum|Warlock|XPHB|13",
+    {
+      "classFeature": "Subclass Feature|Warlock|XPHB|14",
+      "gainSubclassFeature": true
+    },
+    "Mystic Arcanum|Warlock|XPHB|15",
+    "Ability Score Improvement|Warlock|XPHB|16",
+    "Mystic Arcanum|Warlock|XPHB|17",
+    "Epic Boon|Warlock|XPHB|19",
+    "Eldritch Master|Warlock|XPHB|20"
+  ],
+  "subclassTitle": "Warlock Subclass",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

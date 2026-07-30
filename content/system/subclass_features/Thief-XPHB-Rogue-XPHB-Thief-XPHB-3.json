@@ -1,0 +1,24 @@
+{
+  "name": "Thief",
+  "source": "XPHB",
+  "page": 137,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Rogue",
+  "classSource": "XPHB",
+  "subclassShortName": "Thief",
+  "subclassSource": "XPHB",
+  "level": 3,
+  "entries": [
+    "{@i Hunt for Treasure as a Classic Adventurer}",
+    "A mix of burglar, treasure hunter, and explorer, you are the epitome of an adventurer. In addition to improving your agility and stealth, you gain abilities useful for delving into ruins and getting maximum benefit from the magic items you find there.",
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Fast Hands|Rogue|XPHB|Thief|XPHB|3"
+    },
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Second-Story Work|Rogue|XPHB|Thief|XPHB|3"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Monastic Tradition feature",
+  "source": "PHB",
+  "page": 76,
+  "srd": true,
+  "className": "Monk",
+  "classSource": "PHB",
+  "level": 17,
+  "entries": [
+    "At 17th level, you gain one feature granted by your Monastic Tradition."
+  ]
+}

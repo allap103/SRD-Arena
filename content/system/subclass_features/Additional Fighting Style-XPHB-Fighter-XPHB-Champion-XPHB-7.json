@@ -1,0 +1,16 @@
+{
+  "name": "Additional Fighting Style",
+  "source": "XPHB",
+  "page": 96,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Fighter",
+  "classSource": "XPHB",
+  "subclassShortName": "Champion",
+  "subclassSource": "XPHB",
+  "level": 7,
+  "header": 2,
+  "entries": [
+    "You gain another {@filter Fighting Style feat|feats|category=FS} of your choice."
+  ]
+}

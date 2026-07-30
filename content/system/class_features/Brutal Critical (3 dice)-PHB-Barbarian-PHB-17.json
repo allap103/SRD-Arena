@@ -1,0 +1,12 @@
+{
+  "name": "Brutal Critical (3 dice)",
+  "source": "PHB",
+  "page": 46,
+  "srd": true,
+  "className": "Barbarian",
+  "classSource": "PHB",
+  "level": 17,
+  "entries": [
+    "At 17th level, you can roll three additional weapon damage dice when determining the extra damage for a critical hit with a melee attack."
+  ]
+}

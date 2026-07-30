@@ -1,0 +1,15 @@
+{
+  "name": "Escape the Horde",
+  "source": "PHB",
+  "page": 93,
+  "srd": true,
+  "className": "Ranger",
+  "classSource": "PHB",
+  "subclassShortName": "Hunter",
+  "subclassSource": "PHB",
+  "level": 7,
+  "header": 2,
+  "entries": [
+    "Opportunity attacks against you are made with disadvantage."
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "Defensive Tactics",
+  "source": "PHB",
+  "page": 93,
+  "srd": true,
+  "className": "Ranger",
+  "classSource": "PHB",
+  "subclassShortName": "Hunter",
+  "subclassSource": "PHB",
+  "level": 7,
+  "header": 2,
+  "entries": [
+    "At 7th level, you gain one of the following features of your choice.",
+    {
+      "type": "options",
+      "count": 1,
+      "entries": [
+        {
+          "type": "refSubclassFeature",
+          "subclassFeature": "Escape the Horde|Ranger||Hunter||7"
+        },
+        {
+          "type": "refSubclassFeature",
+          "subclassFeature": "Multiattack Defense|Ranger||Hunter||7"
+        },
+        {
+          "type": "refSubclassFeature",
+          "subclassFeature": "Steel Will|Ranger||Hunter||7"
+        }
+      ]
+    }
+  ]
+}

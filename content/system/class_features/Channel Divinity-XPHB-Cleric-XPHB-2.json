@@ -1,0 +1,28 @@
+{
+  "name": "Channel Divinity",
+  "source": "XPHB",
+  "page": 70,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Cleric",
+  "classSource": "XPHB",
+  "level": 2,
+  "entries": [
+    "You can channel divine energy directly from the Outer Planes to fuel magical effects. You start with two such effects: Divine Spark and Turn Undead, each of which is described below. Each time you use this class's Channel Divinity, choose which Channel Divinity effect from this class to create. You gain additional effect options at higher Cleric levels.",
+    "You can use this class's Channel Divinity twice. You regain one of its expended uses when you finish a {@variantrule Short Rest|XPHB}, and you regain all expended uses when you finish a {@variantrule Long Rest|XPHB}. You gain additional uses when you reach certain Cleric levels, as shown in the Channel Divinity column of the Cleric Features table.",
+    "If a Channel Divinity effect requires a saving throw, the DC equals the spell save DC from this class's Spellcasting feature.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "refClassFeature",
+          "classFeature": "Divine Spark|Cleric|XPHB|2|XPHB"
+        },
+        {
+          "type": "refClassFeature",
+          "classFeature": "Turn Undead|Cleric|XPHB|2|XPHB"
+        }
+      ]
+    }
+  ]
+}

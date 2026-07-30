@@ -1,0 +1,16 @@
+{
+  "name": "Superior Hunter's Prey",
+  "source": "XPHB",
+  "page": 127,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Ranger",
+  "classSource": "XPHB",
+  "subclassShortName": "Hunter",
+  "subclassSource": "XPHB",
+  "level": 11,
+  "header": 2,
+  "entries": [
+    "Once per turn when you deal damage to a creature marked by your Hunter's Mark, you can also deal that spell's extra damage to a different creature that you can see within 30 feet of the first creature."
+  ]
+}

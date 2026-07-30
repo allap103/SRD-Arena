@@ -1,0 +1,19 @@
+{
+  "name": "Path of the Berserker",
+  "shortName": "Berserker",
+  "source": "PHB",
+  "className": "Barbarian",
+  "classSource": "PHB",
+  "page": 49,
+  "srd": true,
+  "reprintedAs": [
+    "Berserker|Barbarian|XPHB|XPHB"
+  ],
+  "edition": "classic",
+  "subclassFeatures": [
+    "Path of the Berserker|Barbarian||Berserker||3",
+    "Mindless Rage|Barbarian||Berserker||6",
+    "Intimidating Presence|Barbarian||Berserker||10",
+    "Retaliation|Barbarian||Berserker||14"
+  ]
+}

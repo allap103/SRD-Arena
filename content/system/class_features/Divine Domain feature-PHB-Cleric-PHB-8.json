@@ -1,0 +1,13 @@
+{
+  "name": "Divine Domain feature",
+  "source": "PHB",
+  "page": 56,
+  "srd": true,
+  "basicRules": true,
+  "className": "Cleric",
+  "classSource": "PHB",
+  "level": 8,
+  "entries": [
+    "At 8th level, you gain a feature from your Divine Domain."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Empowered Strikes",
+  "source": "XPHB",
+  "page": 103,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "level": 6,
+  "entries": [
+    "Whenever you deal damage with your {@variantrule Unarmed Strike|XPHB}, it can deal your choice of Force damage or its normal damage type."
+  ]
+}

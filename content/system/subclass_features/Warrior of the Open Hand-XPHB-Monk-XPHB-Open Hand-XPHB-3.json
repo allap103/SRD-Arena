@@ -1,0 +1,20 @@
+{
+  "name": "Warrior of the Open Hand",
+  "source": "XPHB",
+  "page": 107,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "subclassShortName": "Open Hand",
+  "subclassSource": "XPHB",
+  "level": 3,
+  "entries": [
+    "{@i Master Unarmed Combat Techniques}",
+    "Warriors of the Open Hand are masters of unarmed combat. They learn techniques to push and trip their opponents and manipulate their own energy to protect themselves from harm.",
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Open Hand Technique|Monk|XPHB|Open Hand|XPHB|3"
+    }
+  ]
+}

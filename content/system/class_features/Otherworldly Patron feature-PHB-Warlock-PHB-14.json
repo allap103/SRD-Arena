@@ -1,0 +1,12 @@
+{
+  "name": "Otherworldly Patron feature",
+  "source": "PHB",
+  "page": 105,
+  "srd": true,
+  "className": "Warlock",
+  "classSource": "PHB",
+  "level": 14,
+  "entries": [
+    "At 14th level, you gain a feature granted by your Otherworldly Patron."
+  ]
+}

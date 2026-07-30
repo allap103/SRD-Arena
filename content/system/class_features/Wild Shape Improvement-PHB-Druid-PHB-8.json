@@ -1,0 +1,12 @@
+{
+  "name": "Wild Shape Improvement",
+  "source": "PHB",
+  "page": 64,
+  "srd": true,
+  "className": "Druid",
+  "classSource": "PHB",
+  "level": 8,
+  "entries": [
+    "At 8th level, your Wild Shape improves as shown on the Beast Shapes table."
+  ]
+}

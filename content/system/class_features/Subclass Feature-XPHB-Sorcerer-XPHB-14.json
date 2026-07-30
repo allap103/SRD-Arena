@@ -1,0 +1,13 @@
+{
+  "name": "Subclass Feature",
+  "source": "XPHB",
+  "page": 141,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Sorcerer",
+  "classSource": "XPHB",
+  "level": 14,
+  "entries": [
+    "You gain a feature from your Sorcerer subclass."
+  ]
+}

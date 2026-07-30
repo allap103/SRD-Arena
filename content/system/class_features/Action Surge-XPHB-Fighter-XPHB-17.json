@@ -1,0 +1,14 @@
+{
+  "name": "Action Surge",
+  "source": "XPHB",
+  "page": 91,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Fighter",
+  "classSource": "XPHB",
+  "level": 17,
+  "entries": [
+    "You can push yourself beyond your normal limits for a moment. On your turn, you can take one additional action, except the {@action Magic|XPHB} action.",
+    "Once you use this feature, you can't do so again until you finish a {@variantrule Short Rest|XPHB|Short} or {@variantrule Long Rest|XPHB}. Starting at level 17, you can use it twice before a rest but only once on a turn."
+  ]
+}

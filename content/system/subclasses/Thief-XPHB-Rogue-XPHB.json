@@ -1,0 +1,18 @@
+{
+  "name": "Thief",
+  "shortName": "Thief",
+  "source": "XPHB",
+  "className": "Rogue",
+  "classSource": "XPHB",
+  "page": 137,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "subclassFeatures": [
+    "Thief|Rogue|XPHB|Thief|XPHB|3",
+    "Supreme Sneak|Rogue|XPHB|Thief|XPHB|9",
+    "Use Magic Device|Rogue|XPHB|Thief|XPHB|13",
+    "Thief's Reflexes|Rogue|XPHB|Thief|XPHB|17"
+  ],
+  "hasFluffImages": true
+}

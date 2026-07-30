@@ -1,0 +1,13 @@
+{
+  "name": "Druid Subclass",
+  "source": "XPHB",
+  "page": 81,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Druid",
+  "classSource": "XPHB",
+  "level": 3,
+  "entries": [
+    "You gain a Druid subclass of your choice. A subclass is a specialization that grants you features at certain Druid levels. For the rest of your career, you gain each of your subclass's features that are of your Druid level or lower."
+  ]
+}

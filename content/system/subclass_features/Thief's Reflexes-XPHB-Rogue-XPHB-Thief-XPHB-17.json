@@ -1,0 +1,16 @@
+{
+  "name": "Thief's Reflexes",
+  "source": "XPHB",
+  "page": 137,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Rogue",
+  "classSource": "XPHB",
+  "subclassShortName": "Thief",
+  "subclassSource": "XPHB",
+  "level": 17,
+  "header": 2,
+  "entries": [
+    "You are adept at laying ambushes and quickly escaping danger. You can take two turns during the first round of any combat. You take your first turn at your normal {@variantrule Initiative|XPHB} and your second turn at your {@variantrule Initiative|XPHB} minus 10."
+  ]
+}

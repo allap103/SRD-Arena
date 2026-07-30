@@ -1,0 +1,31 @@
+{
+  "name": "College of Lore",
+  "shortName": "Lore",
+  "source": "XPHB",
+  "className": "Bard",
+  "classSource": "XPHB",
+  "page": 66,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "additionalSpells": [
+    {
+      "prepared": {
+        "6": [
+          {
+            "choose": "level=0;1;2;3|class=Cleric;Druid;Wizard"
+          },
+          {
+            "choose": "level=0;1;2;3|class=Cleric;Druid;Wizard"
+          }
+        ]
+      }
+    }
+  ],
+  "subclassFeatures": [
+    "College of Lore|Bard|XPHB|Lore|XPHB|3",
+    "Magical Discoveries|Bard|XPHB|Lore|XPHB|6",
+    "Peerless Skill|Bard|XPHB|Lore|XPHB|14"
+  ],
+  "hasFluffImages": true
+}

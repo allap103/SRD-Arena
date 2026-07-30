@@ -472,11 +472,11 @@ def test_source_catalog_supports_records_without_a_source() -> None:
 
 
 def test_bestiary_loader_rejects_duplicate_name_and_source(tmp_path: Path) -> None:
-    bestiary_dir = tmp_path / "bestiary"
-    bestiary_dir.mkdir()
-    record = '{"monster": [{"name": "Goblin", "source": "TEST"}]}'
-    (bestiary_dir / "bestiary-a.json").write_text(record, encoding="utf-8")
-    (bestiary_dir / "bestiary-b.json").write_text(record, encoding="utf-8")
+    monsters_dir = tmp_path / "monsters"
+    monsters_dir.mkdir()
+    record = '{"name": "Goblin", "source": "TEST"}'
+    (monsters_dir / "goblin-a.json").write_text(record, encoding="utf-8")
+    (monsters_dir / "goblin-b.json").write_text(record, encoding="utf-8")
 
     with pytest.raises(ValueError, match=r"Duplicate content record 'Goblin\\|TEST'"):
         load_bestiary_catalog(tmp_path)

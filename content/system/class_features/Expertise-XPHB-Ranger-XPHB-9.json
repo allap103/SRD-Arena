@@ -1,0 +1,13 @@
+{
+  "name": "Expertise",
+  "source": "XPHB",
+  "page": 121,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Ranger",
+  "classSource": "XPHB",
+  "level": 9,
+  "entries": [
+    "Choose two of your skill proficiencies with which you lack {@variantrule Expertise|XPHB}. You gain {@variantrule Expertise|XPHB} in those skills."
+  ]
+}

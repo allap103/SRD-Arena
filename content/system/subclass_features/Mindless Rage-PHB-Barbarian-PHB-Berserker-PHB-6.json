@@ -1,0 +1,15 @@
+{
+  "name": "Mindless Rage",
+  "source": "PHB",
+  "page": 49,
+  "srd": true,
+  "className": "Barbarian",
+  "classSource": "PHB",
+  "subclassShortName": "Berserker",
+  "subclassSource": "PHB",
+  "level": 6,
+  "header": 2,
+  "entries": [
+    "Beginning at 6th level, you can't be {@condition charmed} or {@condition frightened} while raging. If you are {@condition charmed} or {@condition frightened} when you enter your rage, the effect is suspended for the duration of the rage."
+  ]
+}

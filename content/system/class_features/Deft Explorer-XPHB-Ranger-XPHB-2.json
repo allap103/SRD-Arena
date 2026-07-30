@@ -1,0 +1,32 @@
+{
+  "name": "Deft Explorer",
+  "source": "XPHB",
+  "page": 120,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Ranger",
+  "classSource": "XPHB",
+  "level": 2,
+  "entries": [
+    "Thanks to your travels, you gain the following benefits.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Expertise",
+          "entries": [
+            "Choose one of your skill proficiencies with which you lack {@variantrule Expertise|XPHB}. You gain {@variantrule Expertise|XPHB} in that skill."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Languages",
+          "entries": [
+            "You know two languages of your choice from the language tables in {@book chapter 2|XPHB|2|Choose Languages}."
+          ]
+        }
+      ]
+    }
+  ]
+}

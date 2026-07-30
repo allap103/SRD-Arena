@@ -1,0 +1,12 @@
+{
+  "name": "Ranger Archetype feature",
+  "source": "PHB",
+  "page": 89,
+  "srd": true,
+  "className": "Ranger",
+  "classSource": "PHB",
+  "level": 7,
+  "entries": [
+    "At 7th level, you gain a feature granted to you by your Ranger Archetype."
+  ]
+}

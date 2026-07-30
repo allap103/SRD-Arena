@@ -1,0 +1,506 @@
+{
+  "name": "Ranger",
+  "source": "XPHB",
+  "page": 118,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "primaryAbility": [
+    {
+      "dex": true,
+      "wis": true
+    }
+  ],
+  "hd": {
+    "number": 1,
+    "faces": 10
+  },
+  "proficiency": [
+    "str",
+    "dex"
+  ],
+  "spellcastingAbility": "wis",
+  "casterProgression": "artificer",
+  "preparedSpellsProgression": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    6,
+    7,
+    7,
+    9,
+    9,
+    10,
+    10,
+    11,
+    11,
+    12,
+    12,
+    14,
+    14,
+    15,
+    15
+  ],
+  "preparedSpellsChange": "restLong",
+  "additionalSpells": [
+    {
+      "prepared": {
+        "1": [
+          "hunter's mark|xphb"
+        ]
+      }
+    }
+  ],
+  "featProgression": [
+    {
+      "name": "Fighting Style",
+      "category": [
+        "FS",
+        "FS:R"
+      ],
+      "progression": {
+        "2": 1
+      }
+    },
+    {
+      "name": "Epic Boon",
+      "category": [
+        "EB"
+      ],
+      "progression": {
+        "19": 1
+      }
+    }
+  ],
+  "startingProficiencies": {
+    "armor": [
+      "light",
+      "medium",
+      "shield"
+    ],
+    "weapons": [
+      "simple",
+      "martial"
+    ],
+    "skills": [
+      {
+        "choose": {
+          "from": [
+            "animal handling",
+            "athletics",
+            "insight",
+            "investigation",
+            "nature",
+            "perception",
+            "stealth",
+            "survival"
+          ],
+          "count": 3
+        }
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "defaultData": [
+      {
+        "A": [
+          {
+            "item": "studded leather armor|xphb"
+          },
+          {
+            "item": "scimitar|xphb"
+          },
+          {
+            "item": "shortsword|xphb"
+          },
+          {
+            "item": "longbow|xphb"
+          },
+          {
+            "item": "arrows (20)|xphb"
+          },
+          {
+            "item": "quiver|xphb"
+          },
+          {
+            "item": "sprig of mistletoe|xphb"
+          },
+          {
+            "item": "explorer's pack|xphb"
+          },
+          {
+            "value": 700
+          }
+        ],
+        "B": [
+          {
+            "value": 15000
+          }
+        ]
+      }
+    ],
+    "entries": [
+      "{@i Choose A or B:} (A) {@item Studded Leather Armor|XPHB}, {@item Scimitar|XPHB}, {@item Shortsword|XPHB}, {@item Longbow|XPHB}, {@item Arrows (20)|XPHB|20 Arrows}, {@item Quiver|XPHB}, {@item Druidic Focus|XPHB} ({@item sprig of mistletoe|XPHB}), {@item Explorer's Pack|XPHB}, and 7 GP; or (B) 150 GP"
+    ]
+  },
+  "multiclassing": {
+    "proficienciesGained": {
+      "weapons": [
+        "martial"
+      ],
+      "armor": [
+        "light",
+        "medium",
+        "shield"
+      ],
+      "skills": [
+        {
+          "choose": {
+            "from": [
+              "animal handling",
+              "athletics",
+              "insight",
+              "investigation",
+              "nature",
+              "perception",
+              "stealth",
+              "survival"
+            ],
+            "count": 1
+          }
+        }
+      ]
+    }
+  },
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "Favored Enemy"
+      ],
+      "rows": [
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          6
+        ],
+        [
+          6
+        ],
+        [
+          6
+        ]
+      ]
+    },
+    {
+      "colLabels": [
+        "{@filter Prepared Spells|spells|level=!0|class=Ranger}"
+      ],
+      "rows": [
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          7
+        ],
+        [
+          9
+        ],
+        [
+          9
+        ],
+        [
+          10
+        ],
+        [
+          10
+        ],
+        [
+          11
+        ],
+        [
+          11
+        ],
+        [
+          12
+        ],
+        [
+          12
+        ],
+        [
+          14
+        ],
+        [
+          14
+        ],
+        [
+          15
+        ],
+        [
+          15
+        ]
+      ]
+    },
+    {
+      "title": "Spell Slots per Spell Level",
+      "colLabels": [
+        "{@filter 1st|spells|level=1|class=ranger}",
+        "{@filter 2nd|spells|level=2|class=ranger}",
+        "{@filter 3rd|spells|level=3|class=ranger}",
+        "{@filter 4th|spells|level=4|class=ranger}",
+        "{@filter 5th|spells|level=5|class=ranger}"
+      ],
+      "rowsSpellProgression": [
+        [
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Spellcasting|Ranger|XPHB|1",
+    "Favored Enemy|Ranger|XPHB|1",
+    "Weapon Mastery|Ranger|XPHB|1",
+    "Deft Explorer|Ranger|XPHB|2",
+    "Fighting Style|Ranger|XPHB|2",
+    {
+      "classFeature": "Ranger Subclass|Ranger|XPHB|3",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Ranger|XPHB|4",
+    "Extra Attack|Ranger|XPHB|5",
+    "Roving|Ranger|XPHB|6",
+    {
+      "classFeature": "Subclass Feature|Ranger|XPHB|7",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Ranger|XPHB|8",
+    "Expertise|Ranger|XPHB|9",
+    "Tireless|Ranger|XPHB|10",
+    {
+      "classFeature": "Subclass Feature|Ranger|XPHB|11",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Ranger|XPHB|12",
+    "Relentless Hunter|Ranger|XPHB|13",
+    "Nature's Veil|Ranger|XPHB|14",
+    {
+      "classFeature": "Subclass Feature|Ranger|XPHB|15",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Ranger|XPHB|16",
+    "Precise Hunter|Ranger|XPHB|17",
+    "Feral Senses|Ranger|XPHB|18",
+    "Epic Boon|Ranger|XPHB|19",
+    "Foe Slayer|Ranger|XPHB|20"
+  ],
+  "subclassTitle": "Ranger Subclass",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

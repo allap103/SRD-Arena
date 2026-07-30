@@ -1,0 +1,13 @@
+{
+  "name": "Deflect Energy",
+  "source": "XPHB",
+  "page": 103,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "level": 13,
+  "entries": [
+    "You can now use your Deflect Attacks feature against attacks that deal any damage type, not just Bludgeoning, Piercing, or Slashing."
+  ]
+}

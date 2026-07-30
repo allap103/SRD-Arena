@@ -1,0 +1,14 @@
+{
+  "name": "Uncanny Metabolism",
+  "source": "XPHB",
+  "page": 102,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "level": 2,
+  "entries": [
+    "When you roll {@variantrule Initiative|XPHB}, you can regain all expended Focus Points. When you do so, roll your Martial Arts die, and regain a number of {@variantrule Hit Points|XPHB} equal to your Monk level plus the number rolled.",
+    "Once you use this feature, you can't use it again until you finish a {@variantrule Long Rest|XPHB}."
+  ]
+}

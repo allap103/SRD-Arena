@@ -1,0 +1,16 @@
+{
+  "name": "Aura of Devotion",
+  "source": "PHB",
+  "page": 85,
+  "srd": true,
+  "className": "Paladin",
+  "classSource": "PHB",
+  "subclassShortName": "Devotion",
+  "subclassSource": "PHB",
+  "level": 7,
+  "header": 2,
+  "entries": [
+    "Starting at 7th level, you and friendly creatures within 10 feet of you can't be {@condition charmed} while you are conscious.",
+    "At 18th level, the range of this aura increases to 30 feet."
+  ]
+}

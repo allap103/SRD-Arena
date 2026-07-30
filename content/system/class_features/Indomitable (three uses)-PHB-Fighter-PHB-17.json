@@ -1,0 +1,13 @@
+{
+  "name": "Indomitable (three uses)",
+  "source": "PHB",
+  "page": 72,
+  "srd": true,
+  "basicRules": true,
+  "className": "Fighter",
+  "classSource": "PHB",
+  "level": 17,
+  "entries": [
+    "At 17th level, you can use Indomitable three times between long rests."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Steady Aim",
+  "source": "XPHB",
+  "page": 129,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Rogue",
+  "classSource": "XPHB",
+  "level": 3,
+  "entries": [
+    "As a {@variantrule Bonus Action|XPHB}, you give yourself {@variantrule Advantage|XPHB} on your next attack roll on the current turn. You can use this feature only if you haven't moved during this turn, and after you use it, your {@variantrule Speed|XPHB} is 0 until the end of the current turn."
+  ]
+}

@@ -1656,7 +1656,6 @@ def test_attack_sources_have_distinct_board_targeting_modes() -> None:
     window = GameWindow.__new__(GameWindow)
     actions = [
         ActionView(
-            index=0,
             id="goblin-scimitar-player",
             label="Scimitar player",
             kind="attack",
@@ -1666,7 +1665,6 @@ def test_attack_sources_have_distinct_board_targeting_modes() -> None:
             preferred_attack_name="Scimitar",
         ),
         ActionView(
-            index=1,
             id="goblin-shortbow-player",
             label="Shortbow player",
             kind="attack",

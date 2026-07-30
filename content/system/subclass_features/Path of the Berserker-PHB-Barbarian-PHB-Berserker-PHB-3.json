@@ -1,0 +1,18 @@
+{
+  "name": "Path of the Berserker",
+  "source": "PHB",
+  "page": 49,
+  "srd": true,
+  "className": "Barbarian",
+  "classSource": "PHB",
+  "subclassShortName": "Berserker",
+  "subclassSource": "PHB",
+  "level": 3,
+  "entries": [
+    "For some barbarians, rage is a means to an end—that end being violence. The Path of the Berserker is a path of untrammeled fury, slick with blood. As you enter the berserker's rage, you thrill in the chaos of battle, heedless of your own health or well-being.",
+    {
+      "type": "refSubclassFeature",
+      "subclassFeature": "Frenzy|Barbarian||Berserker||3"
+    }
+  ]
+}

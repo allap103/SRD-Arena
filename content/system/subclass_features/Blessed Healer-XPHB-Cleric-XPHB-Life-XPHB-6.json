@@ -1,0 +1,16 @@
+{
+  "name": "Blessed Healer",
+  "source": "XPHB",
+  "page": 74,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Cleric",
+  "classSource": "XPHB",
+  "subclassShortName": "Life",
+  "subclassSource": "XPHB",
+  "level": 6,
+  "header": 2,
+  "entries": [
+    "The healing spells you cast on others heal you as well. Immediately after you cast a spell with a spell slot that restores {@variantrule Hit Points|XPHB} to one creature other than you, you regain {@variantrule Hit Points|XPHB} equal to 2 plus the spell slot's level."
+  ]
+}

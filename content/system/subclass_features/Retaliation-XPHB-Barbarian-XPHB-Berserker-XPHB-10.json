@@ -1,0 +1,15 @@
+{
+  "name": "Retaliation",
+  "source": "XPHB",
+  "page": 54,
+  "srd52": true,
+  "className": "Barbarian",
+  "classSource": "XPHB",
+  "subclassShortName": "Berserker",
+  "subclassSource": "XPHB",
+  "level": 10,
+  "header": 2,
+  "entries": [
+    "When you take damage from a creature that is within 5 feet of you, you can take a {@variantrule Reaction|XPHB} to make one melee attack against that creature, using a weapon or an {@variantrule Unarmed Strike|XPHB}."
+  ]
+}

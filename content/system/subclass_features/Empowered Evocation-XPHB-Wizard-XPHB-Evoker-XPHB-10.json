@@ -1,0 +1,16 @@
+{
+  "name": "Empowered Evocation",
+  "source": "XPHB",
+  "page": 174,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Wizard",
+  "classSource": "XPHB",
+  "subclassShortName": "Evoker",
+  "subclassSource": "XPHB",
+  "level": 10,
+  "header": 2,
+  "entries": [
+    "Whenever you cast a Wizard spell from the Evocation school, you can add your Intelligence modifier to one damage roll of that spell."
+  ]
+}

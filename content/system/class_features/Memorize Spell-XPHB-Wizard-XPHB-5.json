@@ -1,0 +1,13 @@
+{
+  "name": "Memorize Spell",
+  "source": "XPHB",
+  "page": 167,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Wizard",
+  "classSource": "XPHB",
+  "level": 5,
+  "entries": [
+    "Whenever you finish a {@variantrule Short Rest|XPHB}, you can study your spellbook and replace one of the level 1+ Wizard spells you have prepared for your Spellcasting feature with another level 1+ spell from the book."
+  ]
+}

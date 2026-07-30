@@ -1,0 +1,14 @@
+{
+  "name": "Expertise",
+  "source": "XPHB",
+  "page": 60,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Bard",
+  "classSource": "XPHB",
+  "level": 2,
+  "entries": [
+    "You gain {@variantrule Expertise|XPHB} in two of your skill proficiencies of your choice. {@skill Performance|XPHB} and {@skill Persuasion|XPHB} are recommended if you have proficiency in them.",
+    "At Bard level 9, you gain {@variantrule Expertise|XPHB} in two more of your skill proficiencies of your choice."
+  ]
+}

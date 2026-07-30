@@ -1,0 +1,32 @@
+{
+  "name": "Divine Order",
+  "source": "XPHB",
+  "page": 70,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Cleric",
+  "classSource": "XPHB",
+  "level": 1,
+  "entries": [
+    "You have dedicated yourself to one of the following sacred roles of your choice.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "options",
+          "count": 1,
+          "entries": [
+            {
+              "type": "refClassFeature",
+              "classFeature": "Protector|Cleric|XPHB|1|XPHB"
+            },
+            {
+              "type": "refClassFeature",
+              "classFeature": "Thaumaturge|Cleric|XPHB|1|XPHB"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

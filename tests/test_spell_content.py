@@ -1,6 +1,6 @@
 from srd_arena.content.catalogs import SourceCatalog, load_spell_catalog
 from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import SpellFileSchema, SpellSchema
+from srd_arena.content.schemas import SpellSchema
 from srd_arena.content.translators import build_spell
 
 
@@ -19,19 +19,15 @@ def test_bundled_spells_load_as_typed_records() -> None:
 
 
 def test_spell_schema_preserves_unknown_source_fields() -> None:
-    [spell] = SpellFileSchema.model_validate(
+    spell = SpellSchema.model_validate(
         {
-            "spell": [
-                {
-                    "name": "Test Spell",
-                    "source": "TEST",
-                    "level": 1,
-                    "school": "V",
-                    "customFutureField": {"enabled": True},
-                }
-            ]
+            "name": "Test Spell",
+            "source": "TEST",
+            "level": 1,
+            "school": "V",
+            "customFutureField": {"enabled": True},
         }
-    ).spell
+    )
 
     assert spell.model_extra == {"customFutureField": {"enabled": True}}
 

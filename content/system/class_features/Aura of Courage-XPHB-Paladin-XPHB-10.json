@@ -1,0 +1,13 @@
+{
+  "name": "Aura of Courage",
+  "source": "XPHB",
+  "page": 111,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Paladin",
+  "classSource": "XPHB",
+  "level": 10,
+  "entries": [
+    "You and your allies have {@variantrule Immunity|XPHB} to the {@condition Frightened|XPHB} condition while in your Aura of Protection. If a {@condition Frightened|XPHB} ally enters the aura, that condition has no effect on that ally while there."
+  ]
+}

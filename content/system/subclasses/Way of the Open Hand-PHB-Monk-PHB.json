@@ -1,0 +1,33 @@
+{
+  "name": "Way of the Open Hand",
+  "shortName": "Open Hand",
+  "source": "PHB",
+  "className": "Monk",
+  "classSource": "PHB",
+  "page": 79,
+  "srd": true,
+  "reprintedAs": [
+    "Open Hand|Monk|XPHB|XPHB"
+  ],
+  "edition": "classic",
+  "additionalSpells": [
+    {
+      "innate": {
+        "11": {
+          "daily": {
+            "1": [
+              "sanctuary"
+            ]
+          }
+        }
+      },
+      "ability": "wis"
+    }
+  ],
+  "subclassFeatures": [
+    "Way of the Open Hand|Monk||Open Hand||3",
+    "Wholeness of Body|Monk||Open Hand||6",
+    "Tranquility|Monk||Open Hand||11",
+    "Quivering Palm|Monk||Open Hand||17"
+  ]
+}

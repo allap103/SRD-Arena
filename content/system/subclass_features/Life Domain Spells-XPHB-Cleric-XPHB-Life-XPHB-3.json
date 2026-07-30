@@ -1,0 +1,46 @@
+{
+  "name": "Life Domain Spells",
+  "source": "XPHB",
+  "page": 73,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Cleric",
+  "classSource": "XPHB",
+  "subclassShortName": "Life",
+  "subclassSource": "XPHB",
+  "level": 3,
+  "header": 1,
+  "entries": [
+    "Your connection to this divine domain ensures you always have certain spells ready. When you reach a Cleric level specified in the Life Domain Spells table, you thereafter always have the listed spells prepared.",
+    {
+      "type": "table",
+      "caption": "Life Domain Spells",
+      "colLabels": [
+        "Cleric Level",
+        "Prepared Spells"
+      ],
+      "colStyles": [
+        "col-1 text-center",
+        "col-11"
+      ],
+      "rows": [
+        [
+          "3rd",
+          "{@spell Aid|XPHB}, {@spell Bless|XPHB}, {@spell Cure Wounds|XPHB}, {@spell Lesser Restoration|XPHB}"
+        ],
+        [
+          "5th",
+          "{@spell Mass Healing Word|XPHB}, {@spell Revivify|XPHB}"
+        ],
+        [
+          "7th",
+          "{@spell Aura of Life|XPHB}, {@spell Death Ward|XPHB}"
+        ],
+        [
+          "9th",
+          "{@spell Greater Restoration|XPHB}, {@spell Mass Cure Wounds|XPHB}"
+        ]
+      ]
+    }
+  ]
+}

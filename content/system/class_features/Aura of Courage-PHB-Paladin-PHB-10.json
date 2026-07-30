@@ -1,0 +1,13 @@
+{
+  "name": "Aura of Courage",
+  "source": "PHB",
+  "page": 82,
+  "srd": true,
+  "className": "Paladin",
+  "classSource": "PHB",
+  "level": 10,
+  "entries": [
+    "Starting at 10th level, you and friendly creatures within 10 feet of you can't be {@condition frightened} while you are conscious.",
+    "At 18th level, the range of this aura increases to 30 feet."
+  ]
+}

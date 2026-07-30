@@ -1,0 +1,17 @@
+{
+  "name": "Patient Defense",
+  "source": "XPHB",
+  "page": 101,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "level": 2,
+  "header": 2,
+  "consumes": {
+    "name": "Focus Point"
+  },
+  "entries": [
+    "You can take the {@action Disengage|XPHB} action as a {@variantrule Bonus Action|XPHB}. Alternatively, you can expend 1 Focus Point to take both the {@action Disengage|XPHB} and the {@action Dodge|XPHB} actions as a {@variantrule Bonus Action|XPHB}."
+  ]
+}

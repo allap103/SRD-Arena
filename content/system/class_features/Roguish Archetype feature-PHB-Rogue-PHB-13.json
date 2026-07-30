@@ -1,0 +1,13 @@
+{
+  "name": "Roguish Archetype feature",
+  "source": "PHB",
+  "page": 94,
+  "srd": true,
+  "basicRules": true,
+  "className": "Rogue",
+  "classSource": "PHB",
+  "level": 13,
+  "entries": [
+    "At 13th level, you gain a feature granted by your Roguish Archetype."
+  ]
+}

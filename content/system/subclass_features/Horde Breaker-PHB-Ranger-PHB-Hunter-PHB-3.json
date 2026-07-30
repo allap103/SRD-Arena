@@ -1,0 +1,15 @@
+{
+  "name": "Horde Breaker",
+  "source": "PHB",
+  "page": 93,
+  "srd": true,
+  "className": "Ranger",
+  "classSource": "PHB",
+  "subclassShortName": "Hunter",
+  "subclassSource": "PHB",
+  "level": 3,
+  "header": 1,
+  "entries": [
+    "Once on each of your turns when you make a weapon attack, you can make another attack with the same weapon against a different creature that is within 5 feet of the original target and within range of your weapon."
+  ]
+}

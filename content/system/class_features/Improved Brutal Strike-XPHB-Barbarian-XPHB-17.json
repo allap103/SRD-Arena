@@ -1,0 +1,13 @@
+{
+  "name": "Improved Brutal Strike",
+  "source": "XPHB",
+  "page": 53,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Barbarian",
+  "classSource": "XPHB",
+  "level": 17,
+  "entries": [
+    "The extra damage of your Brutal Strike increases to {@damage 2d10}. In addition, you can use two different Brutal Strike effects whenever you use your Brutal Strike feature."
+  ]
+}

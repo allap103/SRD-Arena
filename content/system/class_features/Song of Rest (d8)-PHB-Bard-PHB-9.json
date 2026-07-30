@@ -1,0 +1,12 @@
+{
+  "name": "Song of Rest (d8)",
+  "source": "PHB",
+  "page": 51,
+  "srd": true,
+  "className": "Bard",
+  "classSource": "PHB",
+  "level": 9,
+  "entries": [
+    "At 9th level, the extra hit points gained from Song of Rest increases to {@dice 1d8}."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Martial Archetype feature",
+  "source": "PHB",
+  "page": 72,
+  "srd": true,
+  "basicRules": true,
+  "className": "Fighter",
+  "classSource": "PHB",
+  "level": 18,
+  "entries": [
+    "At 18th level, you gain a feature granted by your Martial Archetype."
+  ]
+}

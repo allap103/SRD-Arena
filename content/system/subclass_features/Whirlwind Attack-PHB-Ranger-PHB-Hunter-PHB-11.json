@@ -1,0 +1,15 @@
+{
+  "name": "Whirlwind Attack",
+  "source": "PHB",
+  "page": 93,
+  "srd": true,
+  "className": "Ranger",
+  "classSource": "PHB",
+  "subclassShortName": "Hunter",
+  "subclassSource": "PHB",
+  "level": 11,
+  "header": 2,
+  "entries": [
+    "You can use your action to make a melee attack against any number of creatures within 5 feet of you, with a separate attack roll for each target."
+  ]
+}

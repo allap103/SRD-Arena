@@ -1,0 +1,34 @@
+{
+  "name": "Second-Story Work",
+  "source": "XPHB",
+  "page": 137,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Rogue",
+  "classSource": "XPHB",
+  "subclassShortName": "Thief",
+  "subclassSource": "XPHB",
+  "level": 3,
+  "entries": [
+    "You've trained to get into especially hard-to-reach places, granting you these benefits.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Climber",
+          "entries": [
+            "You gain a {@variantrule Climb Speed|XPHB} equal to your {@variantrule Speed|XPHB}."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Jumper",
+          "entries": [
+            "You can determine your jump distance using your Dexterity rather than your Strength."
+          ]
+        }
+      ]
+    }
+  ]
+}

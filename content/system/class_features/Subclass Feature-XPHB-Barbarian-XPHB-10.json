@@ -1,0 +1,13 @@
+{
+  "name": "Subclass Feature",
+  "source": "XPHB",
+  "page": 53,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Barbarian",
+  "classSource": "XPHB",
+  "level": 10,
+  "entries": [
+    "You gain a feature from your Barbarian subclass."
+  ]
+}

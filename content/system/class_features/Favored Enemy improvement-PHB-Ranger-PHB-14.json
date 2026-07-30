@@ -1,0 +1,12 @@
+{
+  "name": "Favored Enemy improvement",
+  "source": "PHB",
+  "page": 89,
+  "srd": true,
+  "className": "Ranger",
+  "classSource": "PHB",
+  "level": 14,
+  "entries": [
+    "At 14th level, you choose one additional favored enemy, as well as an associated language. Your choice should reflect the types of monsters you have encountered on your adventures."
+  ]
+}

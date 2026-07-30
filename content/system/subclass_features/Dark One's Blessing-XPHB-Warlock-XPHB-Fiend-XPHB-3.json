@@ -1,0 +1,16 @@
+{
+  "name": "Dark One's Blessing",
+  "source": "XPHB",
+  "page": 161,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Warlock",
+  "classSource": "XPHB",
+  "subclassShortName": "Fiend",
+  "subclassSource": "XPHB",
+  "level": 3,
+  "header": 2,
+  "entries": [
+    "When you reduce an enemy to 0 {@variantrule Hit Points|XPHB}, you gain {@variantrule Temporary Hit Points|XPHB} equal to your Charisma modifier plus your Warlock level (minimum of 1 {@variantrule Temporary Hit Points|XPHB|Temporary Hit Point}). You also gain this benefit if someone else reduces an enemy within 10 feet of you to 0 {@variantrule Hit Points|XPHB}."
+  ]
+}

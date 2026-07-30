@@ -1,0 +1,13 @@
+{
+  "name": "Unarmored Defense",
+  "source": "XPHB",
+  "page": 51,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Barbarian",
+  "classSource": "XPHB",
+  "level": 1,
+  "entries": [
+    "While you aren't wearing any armor, your base {@variantrule Armor Class|XPHB} equals 10 plus your Dexterity and Constitution modifiers. You can use a {@item Shield|XPHB} and still gain this benefit."
+  ]
+}

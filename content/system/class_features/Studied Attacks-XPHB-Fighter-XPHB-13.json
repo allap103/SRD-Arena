@@ -1,0 +1,13 @@
+{
+  "name": "Studied Attacks",
+  "source": "XPHB",
+  "page": 92,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Fighter",
+  "classSource": "XPHB",
+  "level": 13,
+  "entries": [
+    "You study your opponents and learn from each attack you make. If you make an attack roll against a creature and miss, you have {@variantrule Advantage|XPHB} on your next attack roll against that creature before the end of your next turn."
+  ]
+}

@@ -5,7 +5,7 @@ from srd_arena.content.catalogs import (
 )
 from srd_arena.content.catalogs.classes import ClassRecord
 from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import ClassFileSchema, ClassSchema
+from srd_arena.content.schemas import ClassSchema
 
 
 def test_bundled_classes_load_with_typed_feature_records() -> None:
@@ -30,17 +30,13 @@ def test_bundled_subclasses_use_class_aware_identity() -> None:
 
 
 def test_class_schema_preserves_unknown_source_fields() -> None:
-    [class_definition] = ClassFileSchema.model_validate(
+    class_definition = ClassSchema.model_validate(
         {
-            "class": [
-                {
-                    "name": "Test Class",
-                    "source": "TEST",
-                    "customFutureField": {"enabled": True},
-                }
-            ]
+            "name": "Test Class",
+            "source": "TEST",
+            "customFutureField": {"enabled": True},
         }
-    ).classes
+    )
 
     assert class_definition.model_extra == {
         "customFutureField": {"enabled": True}

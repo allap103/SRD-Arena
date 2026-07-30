@@ -1,0 +1,14 @@
+{
+  "name": "Potent Spellcasting",
+  "source": "XPHB",
+  "page": 71,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Cleric",
+  "classSource": "XPHB",
+  "level": 7,
+  "header": 2,
+  "entries": [
+    "Add your Wisdom modifier to the damage you deal with any Cleric cantrip."
+  ]
+}

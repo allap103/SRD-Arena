@@ -1,0 +1,14 @@
+{
+  "name": "Persistent Rage",
+  "source": "XPHB",
+  "page": 53,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Barbarian",
+  "classSource": "XPHB",
+  "level": 15,
+  "entries": [
+    "When you roll {@variantrule Initiative|XPHB}, you can regain all expended uses of Rage. After you regain uses of Rage in this way, you can't do so again until you finish a {@variantrule Long Rest|XPHB}.",
+    "In addition, your Rage is so fierce that it now lasts for 10 minutes without you needing to do anything to extend it from round to round. Your Rage ends early if you have the {@condition Unconscious|XPHB} condition (not just the {@condition Incapacitated|XPHB} condition) or don Heavy armor."
+  ]
+}

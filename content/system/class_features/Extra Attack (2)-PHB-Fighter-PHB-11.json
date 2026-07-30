@@ -1,0 +1,13 @@
+{
+  "name": "Extra Attack (2)",
+  "source": "PHB",
+  "page": 72,
+  "srd": true,
+  "basicRules": true,
+  "className": "Fighter",
+  "classSource": "PHB",
+  "level": 11,
+  "entries": [
+    "At 11th level, you can attack three times whenever you take the {@action Attack} action on your turn."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Precise Hunter",
+  "source": "XPHB",
+  "page": 121,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Ranger",
+  "classSource": "XPHB",
+  "level": 17,
+  "entries": [
+    "You have {@variantrule Advantage|XPHB} on attack rolls against the creature currently marked by your Hunter's Mark."
+  ]
+}

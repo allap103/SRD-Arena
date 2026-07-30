@@ -1,0 +1,771 @@
+{
+  "name": "Bard",
+  "source": "XPHB",
+  "page": 58,
+  "srd52": true,
+  "basicRules2024": true,
+  "edition": "one",
+  "primaryAbility": [
+    {
+      "cha": true
+    }
+  ],
+  "hd": {
+    "number": 1,
+    "faces": 8
+  },
+  "proficiency": [
+    "dex",
+    "cha"
+  ],
+  "spellcastingAbility": "cha",
+  "casterProgression": "full",
+  "preparedSpellsProgression": [
+    4,
+    5,
+    6,
+    7,
+    9,
+    10,
+    11,
+    12,
+    14,
+    15,
+    16,
+    16,
+    17,
+    17,
+    18,
+    18,
+    19,
+    20,
+    21,
+    22
+  ],
+  "preparedSpellsChange": "level",
+  "cantripProgression": [
+    2,
+    2,
+    2,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  "additionalSpells": [
+    {
+      "expanded": {
+        "10": [
+          {
+            "all": "level=1;2;3;4;5|class=Cleric;Druid;Wizard"
+          }
+        ],
+        "s6": [
+          {
+            "all": "level=6|class=Cleric;Druid;Wizard"
+          }
+        ],
+        "s7": [
+          {
+            "all": "level=7|class=Cleric;Druid;Wizard"
+          }
+        ],
+        "s8": [
+          {
+            "all": "level=8|class=Cleric;Druid;Wizard"
+          }
+        ],
+        "s9": [
+          {
+            "all": "level=9|class=Cleric;Druid;Wizard"
+          }
+        ]
+      },
+      "prepared": {
+        "20": [
+          "power word heal|xphb",
+          "power word kill|xphb"
+        ]
+      }
+    }
+  ],
+  "featProgression": [
+    {
+      "name": "Epic Boon",
+      "category": [
+        "EB"
+      ],
+      "progression": {
+        "19": 1
+      }
+    }
+  ],
+  "startingProficiencies": {
+    "armor": [
+      "light"
+    ],
+    "weapons": [
+      "simple"
+    ],
+    "tools": [
+      "Choose three {@item Musical Instrument|XPHB|Musical Instruments}"
+    ],
+    "toolProficiencies": [
+      {
+        "anyMusicalInstrument": 3
+      }
+    ],
+    "skills": [
+      {
+        "any": 3
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "defaultData": [
+      {
+        "A": [
+          {
+            "item": "leather armor|xphb"
+          },
+          {
+            "item": "dagger|xphb",
+            "quantity": 2
+          },
+          {
+            "equipmentType": "instrumentMusical"
+          },
+          {
+            "item": "entertainer's pack|xphb"
+          },
+          {
+            "value": 1900
+          }
+        ],
+        "B": [
+          {
+            "value": 9000
+          }
+        ]
+      }
+    ],
+    "entries": [
+      "{@i Choose A or B:} (A) {@item Leather Armor|XPHB}, 2 {@item Dagger|XPHB}, {@item Musical Instrument|XPHB} of your choice, {@item Entertainer's Pack|XPHB}, 19 GP; or (B) 90 GP"
+    ]
+  },
+  "multiclassing": {
+    "proficienciesGained": {
+      "armor": [
+        "light"
+      ],
+      "tools": [
+        "Choose one {@item Musical Instrument|XPHB}"
+      ],
+      "toolProficiencies": [
+        {
+          "anyMusicalInstrument": 1
+        }
+      ],
+      "skills": [
+        {
+          "choose": {
+            "from": [
+              "athletics",
+              "acrobatics",
+              "sleight of hand",
+              "stealth",
+              "arcana",
+              "history",
+              "investigation",
+              "nature",
+              "religion",
+              "animal handling",
+              "insight",
+              "medicine",
+              "perception",
+              "survival",
+              "deception",
+              "intimidation",
+              "performance",
+              "persuasion"
+            ],
+            "count": 1
+          }
+        }
+      ]
+    }
+  },
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "Bardic Die",
+        "{@filter Cantrips|spells|level=0|class=bard}",
+        "{@filter Prepared Spells|spells|level=!0|class=bard}"
+      ],
+      "rows": [
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 6
+              }
+            ],
+            "rollable": true
+          },
+          2,
+          4
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 6
+              }
+            ],
+            "rollable": true
+          },
+          2,
+          5
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 6
+              }
+            ],
+            "rollable": true
+          },
+          2,
+          6
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 6
+              }
+            ],
+            "rollable": true
+          },
+          3,
+          7
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 8
+              }
+            ],
+            "rollable": true
+          },
+          3,
+          9
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 8
+              }
+            ],
+            "rollable": true
+          },
+          3,
+          10
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 8
+              }
+            ],
+            "rollable": true
+          },
+          3,
+          11
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 8
+              }
+            ],
+            "rollable": true
+          },
+          3,
+          12
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 8
+              }
+            ],
+            "rollable": true
+          },
+          3,
+          14
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 10
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          15
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 10
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          16
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 10
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          16
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 10
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          17
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 10
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          17
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 12
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          18
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 12
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          18
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 12
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          19
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 12
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          20
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 12
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          21
+        ],
+        [
+          {
+            "type": "dice",
+            "toRoll": [
+              {
+                "number": 1,
+                "faces": 12
+              }
+            ],
+            "rollable": true
+          },
+          4,
+          22
+        ]
+      ]
+    },
+    {
+      "title": "Spell Slots per Spell Level",
+      "colLabels": [
+        "{@filter 1st|spells|level=1|class=bard}",
+        "{@filter 2nd|spells|level=2|class=bard}",
+        "{@filter 3rd|spells|level=3|class=bard}",
+        "{@filter 4th|spells|level=4|class=bard}",
+        "{@filter 5th|spells|level=5|class=bard}",
+        "{@filter 6th|spells|level=6|class=bard}",
+        "{@filter 7th|spells|level=7|class=bard}",
+        "{@filter 8th|spells|level=8|class=bard}",
+        "{@filter 9th|spells|level=9|class=bard}"
+      ],
+      "rowsSpellProgression": [
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1,
+          1
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Bardic Inspiration|Bard|XPHB|1",
+    "Spellcasting|Bard|XPHB|1",
+    "Expertise|Bard|XPHB|2",
+    "Jack of All Trades|Bard|XPHB|2",
+    {
+      "classFeature": "Bard Subclass|Bard|XPHB|3",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Bard|XPHB|4",
+    "Font of Inspiration|Bard|XPHB|5",
+    {
+      "classFeature": "Subclass Feature|Bard|XPHB|6",
+      "gainSubclassFeature": true
+    },
+    "Countercharm|Bard|XPHB|7",
+    "Ability Score Improvement|Bard|XPHB|8",
+    "Expertise|Bard|XPHB|9",
+    "Magical Secrets|Bard|XPHB|10",
+    "Ability Score Improvement|Bard|XPHB|12",
+    {
+      "classFeature": "Subclass Feature|Bard|XPHB|14",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Bard|XPHB|16",
+    "Superior Inspiration|Bard|XPHB|18",
+    "Epic Boon|Bard|XPHB|19",
+    "Words of Creation|Bard|XPHB|20"
+  ],
+  "subclassTitle": "Bard Subclass",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

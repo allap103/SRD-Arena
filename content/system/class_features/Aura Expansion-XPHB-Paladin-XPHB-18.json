@@ -1,0 +1,13 @@
+{
+  "name": "Aura Expansion",
+  "source": "XPHB",
+  "page": 111,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Paladin",
+  "classSource": "XPHB",
+  "level": 18,
+  "entries": [
+    "Your Aura of Protection is now a 30-foot {@variantrule Emanation [Area of Effect]|XPHB|Emanation}."
+  ]
+}

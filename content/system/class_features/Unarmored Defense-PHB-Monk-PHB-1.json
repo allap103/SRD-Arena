@@ -1,0 +1,12 @@
+{
+  "name": "Unarmored Defense",
+  "source": "PHB",
+  "page": 76,
+  "srd": true,
+  "className": "Monk",
+  "classSource": "PHB",
+  "level": 1,
+  "entries": [
+    "Beginning at 1st level, while you are wearing no armor and not wielding a shield, your AC equals 10 + your Dexterity modifier + your Wisdom modifier."
+  ]
+}

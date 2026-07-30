@@ -1,0 +1,17 @@
+{
+  "name": "Elemental Affinity",
+  "source": "XPHB",
+  "page": 148,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Sorcerer",
+  "classSource": "XPHB",
+  "subclassShortName": "Draconic",
+  "subclassSource": "XPHB",
+  "level": 6,
+  "header": 2,
+  "entries": [
+    "Your draconic magic has an affinity with a damage type associated with dragons. Choose one of those types: Acid, Cold, Fire, Lightning, or Poison.",
+    "You have {@variantrule Resistance|XPHB} to that damage type, and when you cast a spell that deals damage of that type, you can add your Charisma modifier to one damage roll of that spell."
+  ]
+}

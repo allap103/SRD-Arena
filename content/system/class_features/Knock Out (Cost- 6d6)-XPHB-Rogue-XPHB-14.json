@@ -1,0 +1,13 @@
+{
+  "name": "Knock Out (Cost: 6d6)",
+  "source": "XPHB",
+  "page": 131,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Rogue",
+  "classSource": "XPHB",
+  "level": 14,
+  "entries": [
+    "The target must succeed on a Constitution saving throw, or it has the {@condition Unconscious|XPHB} condition for 1 minute or until it takes any damage. The {@condition Unconscious|XPHB} target repeats the save at the end of each of its turns, ending the effect on itself on a success."
+  ]
+}

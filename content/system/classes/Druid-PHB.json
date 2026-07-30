@@ -1,0 +1,487 @@
+{
+  "name": "Druid",
+  "source": "PHB",
+  "page": 64,
+  "srd": true,
+  "reprintedAs": [
+    "Druid|XPHB"
+  ],
+  "edition": "classic",
+  "hd": {
+    "number": 1,
+    "faces": 8
+  },
+  "proficiency": [
+    "int",
+    "wis"
+  ],
+  "spellcastingAbility": "wis",
+  "casterProgression": "full",
+  "preparedSpells": "<$level$> + <$wis_mod$>",
+  "preparedSpellsChange": "restLong",
+  "cantripProgression": [
+    2,
+    2,
+    2,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  "startingProficiencies": {
+    "armor": [
+      "light",
+      "medium",
+      {
+        "proficiency": "shield",
+        "full": "shields (druids will not wear armor or use shields made of metal)"
+      }
+    ],
+    "weapons": [
+      "{@item club|phb|clubs}",
+      "{@item dagger|phb|daggers}",
+      "{@item dart|phb|darts}",
+      "{@item javelin|phb|javelins}",
+      "{@item mace|phb|maces}",
+      "{@item quarterstaff|phb|quarterstaffs}",
+      "{@item scimitar|phb|scimitars}",
+      "{@item sickle|phb|sickles}",
+      "{@item sling|phb|slings}",
+      "{@item spear|phb|spears}"
+    ],
+    "tools": [
+      "{@item Herbalism kit|PHB}"
+    ],
+    "toolProficiencies": [
+      {
+        "herbalism kit": true
+      }
+    ],
+    "skills": [
+      {
+        "choose": {
+          "from": [
+            "arcana",
+            "animal handling",
+            "insight",
+            "medicine",
+            "nature",
+            "perception",
+            "religion",
+            "survival"
+          ],
+          "count": 2
+        }
+      }
+    ]
+  },
+  "startingEquipment": {
+    "additionalFromBackground": true,
+    "default": [
+      "(a) a wooden {@item shield|phb} or (b) any {@filter simple weapon|items|source=phb|category=basic|type=simple weapon}",
+      "(a) a {@item scimitar|phb} or (b) any {@filter simple melee weapon|items|source=phb|category=basic|type=simple weapon;melee weapon=sand}",
+      "{@item Leather armor|phb}, an {@item explorer's pack|phb}, and a {@item druidic focus|phb}"
+    ],
+    "goldAlternative": "{@dice 2d4 × 10|2d4 × 10|Starting Gold}",
+    "defaultData": [
+      {
+        "a": [
+          "shield|phb"
+        ],
+        "b": [
+          {
+            "equipmentType": "weaponSimple"
+          }
+        ]
+      },
+      {
+        "a": [
+          "scimitar|phb"
+        ],
+        "b": [
+          {
+            "equipmentType": "weaponSimpleMelee"
+          }
+        ]
+      },
+      {
+        "_": [
+          "Leather armor|phb",
+          "explorer's pack|phb",
+          {
+            "equipmentType": "focusSpellcastingDruidic"
+          }
+        ]
+      }
+    ]
+  },
+  "multiclassing": {
+    "requirements": {
+      "wis": 13
+    },
+    "proficienciesGained": {
+      "armor": [
+        "light",
+        "medium",
+        {
+          "proficiency": "shield",
+          "full": "shields (druids will not wear armor or use shields made of metal)"
+        }
+      ]
+    }
+  },
+  "classTableGroups": [
+    {
+      "colLabels": [
+        "{@filter Cantrips Known|spells|level=0|class=Druid}"
+      ],
+      "rows": [
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ],
+        [
+          4
+        ]
+      ]
+    },
+    {
+      "title": "Spell Slots per Spell Level",
+      "colLabels": [
+        "{@filter 1st|spells|level=1|class=Druid}",
+        "{@filter 2nd|spells|level=2|class=Druid}",
+        "{@filter 3rd|spells|level=3|class=Druid}",
+        "{@filter 4th|spells|level=4|class=Druid}",
+        "{@filter 5th|spells|level=5|class=Druid}",
+        "{@filter 6th|spells|level=6|class=Druid}",
+        "{@filter 7th|spells|level=7|class=Druid}",
+        "{@filter 8th|spells|level=8|class=Druid}",
+        "{@filter 9th|spells|level=9|class=Druid}"
+      ],
+      "rowsSpellProgression": [
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          1,
+          1,
+          1
+        ],
+        [
+          4,
+          3,
+          3,
+          3,
+          3,
+          2,
+          2,
+          1,
+          1
+        ]
+      ]
+    }
+  ],
+  "classFeatures": [
+    "Druidic|Druid||1",
+    "Spellcasting|Druid||1",
+    "Wild Shape|Druid||2",
+    "Wild Companion|Druid||2|TCE",
+    {
+      "classFeature": "Druid Circle|Druid||2",
+      "gainSubclassFeature": true
+    },
+    "Wild Shape Improvement|Druid||4",
+    "Ability Score Improvement|Druid||4",
+    "Cantrip Versatility|Druid||4|TCE",
+    {
+      "classFeature": "Druid Circle feature|Druid||6",
+      "gainSubclassFeature": true
+    },
+    "Wild Shape Improvement|Druid||8",
+    "Ability Score Improvement|Druid||8",
+    {
+      "classFeature": "Druid Circle feature|Druid||10",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Druid||12",
+    {
+      "classFeature": "Druid Circle feature|Druid||14",
+      "gainSubclassFeature": true
+    },
+    "Ability Score Improvement|Druid||16",
+    "Timeless Body|Druid||18",
+    "Beast Spells|Druid||18",
+    "Ability Score Improvement|Druid||19",
+    "Archdruid|Druid||20"
+  ],
+  "subclassTitle": "Druid Circle",
+  "hasFluff": true,
+  "hasFluffImages": true
+}

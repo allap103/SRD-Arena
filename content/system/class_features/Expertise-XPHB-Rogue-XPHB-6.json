@@ -1,0 +1,13 @@
+{
+  "name": "Expertise",
+  "source": "XPHB",
+  "page": 129,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Rogue",
+  "classSource": "XPHB",
+  "level": 6,
+  "entries": [
+    "You gain {@variantrule Expertise|XPHB} in two of your Skill Proficiencies of your choice."
+  ]
+}

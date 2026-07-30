@@ -1,0 +1,13 @@
+{
+  "name": "Divine Intervention Improvement",
+  "source": "PHB",
+  "page": 56,
+  "srd": true,
+  "basicRules": true,
+  "className": "Cleric",
+  "classSource": "PHB",
+  "level": 20,
+  "entries": [
+    "At 20th level, your call for intervention succeeds automatically, no roll required."
+  ]
+}

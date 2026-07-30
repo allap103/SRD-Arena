@@ -1,0 +1,13 @@
+{
+  "name": "Blindsense",
+  "source": "PHB",
+  "page": 94,
+  "srd": true,
+  "basicRules": true,
+  "className": "Rogue",
+  "classSource": "PHB",
+  "level": 14,
+  "entries": [
+    "Starting at 14th level, if you are able to hear, you are aware of the location of any hidden or {@condition invisible} creature within 10 feet of you."
+  ]
+}

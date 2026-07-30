@@ -1,0 +1,94 @@
+{
+  "name": "Spellcasting",
+  "source": "XPHB",
+  "page": 165,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Wizard",
+  "classSource": "XPHB",
+  "level": 1,
+  "entries": [
+    "As a student of arcane magic, you have learned to cast spells. See {@book chapter 7|XPHB|7} for the rules on spellcasting. The information below details how you use those rules with Wizard spells, which appear in the {@filter Wizard spell list|spells|class=Wizard} later in the class's description.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Cantrips",
+          "entries": [
+            "You know three Wizard cantrips of your choice. {@spell Light|XPHB}, {@spell Mage Hand|XPHB}, and {@spell Ray of Frost|XPHB} are recommended. Whenever you finish a {@variantrule Long Rest|XPHB}, you can replace one of your cantrips from this feature with another Wizard cantrip of your choice.",
+            "When you reach Wizard levels 4 and 10, you learn another Wizard cantrip of your choice, as shown in the Cantrips column of the Wizard Features table."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spellbook",
+          "entries": [
+            "Your wizardly apprenticeship culminated in the creation of a unique book: your spellbook. It is a Tiny object that weighs 3 pounds, contains 100 pages, and can be read only by you or someone casting {@spell Identify|XPHB}. You determine the book's appearance and materials, such as a gilt-edged tome or a collection of vellum bound with twine.",
+            "The book contains the level 1+ spells you know. It starts with six level 1 Wizard spells of your choice. {@spell Detect Magic|XPHB}, {@spell Feather Fall|XPHB}, {@spell Mage Armor|XPHB}, {@spell Magic Missile|XPHB}, {@spell Sleep|XPHB}, and {@spell Thunderwave|XPHB} are recommended.",
+            "Whenever you gain a Wizard level after 1, add two Wizard spells of your choice to your spellbook. Each of these spells must be of a level for which you have spell slots, as shown in the Wizard Features table. The spells are the culmination of arcane research you do regularly."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spell Slots",
+          "entries": [
+            "The Wizard Features table shows how many spell slots you have to cast your level 1+ spells. You regain all expended slots when you finish a {@variantrule Long Rest|XPHB}."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Prepared Spells of Level 1+",
+          "entries": [
+            "You prepare the list of level 1+ spells that are available for you to cast with this feature. To do so, choose four spells from your spellbook. The chosen spells must be of a level for which you have spell slots.",
+            "The number of spells on your list increases as you gain Wizard levels, as shown in the Prepared Spells column of the Wizard Features table. Whenever that number increases, choose additional Wizard spells until the number of spells on your list matches the number in the table. The chosen spells must be of a level for which you have spell slots. For example, if you're a level 3 Wizard, your list of prepared spells can include six spells of levels 1 and 2 in any combination, chosen from your spellbook.",
+            "If another Wizard feature gives you spells that you always have prepared, those spells don't count against the number of spells you can prepare with this feature, but those spells otherwise count as Wizard spells for you."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Changing Your Prepared Spells",
+          "entries": [
+            "Whenever you finish a {@variantrule Long Rest|XPHB}, you can change your list of prepared spells, replacing any of the spells there with spells from your spellbook."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spellcasting Ability",
+          "entries": [
+            "Intelligence is your spellcasting ability for your Wizard spells."
+          ]
+        },
+        {
+          "type": "entries",
+          "name": "Spellcasting Focus",
+          "entries": [
+            "You can use an {@item Arcane Focus|XPHB} or your spellbook as a {@variantrule Spellcasting Focus|XPHB} for your Wizard spells."
+          ]
+        },
+        {
+          "type": "inset",
+          "name": "Expanding and Replacing a Spellbook",
+          "entries": [
+            "The spells you add to your spellbook as you gain levels reflect your ongoing magical research, but you might find other spells during your adventures that you can add to the book. You could discover a Wizard spell on a {@item Spell Scroll|XDMG}, for example, and then copy it into your spellbook.",
+            {
+              "type": "entries",
+              "name": "Copying a Spell into the Book",
+              "entries": [
+                "When you find a level 1+ Wizard spell, you can copy it into your spellbook if it's of a level you can prepare and if you have time to copy it. For each level of the spell, the transcription takes 2 hours and costs 50 GP. Afterward you can prepare the spell like the other spells in your spellbook."
+              ]
+            },
+            {
+              "type": "entries",
+              "name": "Copying the Book",
+              "entries": [
+                "You can copy a spell from your spellbook into another book. This is like copying a new spell into your spellbook but faster, since you already know how to cast the spell. You need spend only 1 hour and 10 GP for each level of the copied spell.",
+                "If you lose your spellbook, you can use the same procedure to transcribe the Wizard spells that you have prepared into a new spellbook. Filling out the remainder of the new book requires you to find new spells to do so. For this reason, many wizards keep a backup spellbook."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Fighting Style",
+  "source": "XPHB",
+  "page": 110,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Paladin",
+  "classSource": "XPHB",
+  "level": 2,
+  "entries": [
+    "You gain a {@filter Fighting Style feat|feats|category=FS} of your choice. Instead of choosing one of those feats, you can choose the option below.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "refFeat",
+          "feat": "Blessed Warrior|XPHB"
+        }
+      ]
+    }
+  ]
+}

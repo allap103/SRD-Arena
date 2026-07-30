@@ -1,0 +1,13 @@
+{
+  "name": "Arcane Apotheosis",
+  "source": "XPHB",
+  "page": 141,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Sorcerer",
+  "classSource": "XPHB",
+  "level": 20,
+  "entries": [
+    "While your Innate Sorcery feature is active, you can use one Metamagic option on each of your turns without spending Sorcery Points on it."
+  ]
+}

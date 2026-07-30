@@ -1,0 +1,16 @@
+{
+  "name": "Fleet Step",
+  "source": "XPHB",
+  "page": 107,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Monk",
+  "classSource": "XPHB",
+  "subclassShortName": "Open Hand",
+  "subclassSource": "XPHB",
+  "level": 11,
+  "header": 2,
+  "entries": [
+    "When you take a {@variantrule Bonus Action|XPHB} other than Step of the Wind, you can also use Step of the Wind immediately after that {@variantrule Bonus Action|XPHB}."
+  ]
+}

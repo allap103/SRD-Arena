@@ -1,0 +1,13 @@
+{
+  "name": "Arcane Tradition feature",
+  "source": "PHB",
+  "page": 112,
+  "srd": true,
+  "basicRules": true,
+  "className": "Wizard",
+  "classSource": "PHB",
+  "level": 14,
+  "entries": [
+    "At 14th level, you gain a feature granted by your Arcane Tradition."
+  ]
+}

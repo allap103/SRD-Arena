@@ -1,0 +1,75 @@
+{
+  "name": "Tenets of Devotion",
+  "source": "PHB",
+  "page": 85,
+  "srd": true,
+  "className": "Paladin",
+  "classSource": "PHB",
+  "subclassShortName": "Devotion",
+  "subclassSource": "PHB",
+  "level": 3,
+  "header": 1,
+  "entries": [
+    "Though the exact words and strictures of the Oath of Devotion vary, paladins of this oath share these tenets.",
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Honesty",
+          "entries": [
+            "Don't lie or cheat. Let your word be your promise."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Courage",
+          "entries": [
+            "Never fear to act, though caution is wise."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Compassion",
+          "entries": [
+            "Aid others, protect the weak, and punish those who threaten them. Show mercy to your foes, but temper it with wisdom."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Honor",
+          "entries": [
+            "Treat others with fairness, and let your honorable deeds be an example to them. Do as much good as possible while causing the least amount of harm."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "entries",
+      "entries": [
+        {
+          "type": "entries",
+          "name": "Duty",
+          "entries": [
+            "Be responsible for your actions and their consequences, protect those entrusted to your care, and obey those who have just authority over you."
+          ]
+        }
+      ]
+    }
+  ]
+}

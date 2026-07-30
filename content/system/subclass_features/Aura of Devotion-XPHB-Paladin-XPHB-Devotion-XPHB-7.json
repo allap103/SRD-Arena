@@ -1,0 +1,16 @@
+{
+  "name": "Aura of Devotion",
+  "source": "XPHB",
+  "page": 114,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Paladin",
+  "classSource": "XPHB",
+  "subclassShortName": "Devotion",
+  "subclassSource": "XPHB",
+  "level": 7,
+  "header": 2,
+  "entries": [
+    "You and your allies have {@variantrule Immunity|XPHB} to the {@condition Charmed|XPHB} condition while in your Aura of Protection. If a {@condition Charmed|XPHB} ally enters the aura, that condition has no effect on that ally while there."
+  ]
+}

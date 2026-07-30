@@ -1,0 +1,13 @@
+{
+  "name": "Warlock Subclass",
+  "source": "XPHB",
+  "page": 154,
+  "srd52": true,
+  "basicRules2024": true,
+  "className": "Warlock",
+  "classSource": "XPHB",
+  "level": 3,
+  "entries": [
+    "You gain a Warlock subclass of your choice. A subclass is a specialization that grants you features at certain Warlock levels. For the rest of your career, you gain each of your subclass's features that are of your Warlock level or lower."
+  ]
+}
