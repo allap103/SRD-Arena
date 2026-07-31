@@ -1,0 +1,86 @@
+{
+  "id": "conditions_showcase",
+  "grid": {
+    "width": 12,
+    "height": 9
+  },
+  "creatures": [
+    {
+      "id": "assassin",
+      "name": "Venom",
+      "stat_block": {
+        "name": "Assassin",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 2,
+        "y": 2
+      },
+      "team_id": "inflictors"
+    },
+    {
+      "id": "aboleth",
+      "name": "The Binder",
+      "stat_block": {
+        "name": "Aboleth",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 2,
+        "y": 6
+      },
+      "team_id": "inflictors"
+    },
+    {
+      "id": "veteran",
+      "name": "Condition Target",
+      "stat_block": {
+        "name": "Warrior Veteran",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 3,
+        "y": 2
+      },
+      "team_id": "resisters"
+    },
+    {
+      "id": "animated_armor",
+      "name": "Poison-Immune Target",
+      "stat_block": {
+        "name": "Animated Armor",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 3,
+        "y": 4
+      },
+      "team_id": "resisters"
+    },
+    {
+      "id": "air_elemental",
+      "name": "Grapple-Immune Target",
+      "stat_block": {
+        "name": "Air Elemental",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 4,
+        "y": 6
+      },
+      "team_id": "resisters"
+    }
+  ],
+  "teams": [
+    {
+      "id": "inflictors",
+      "name": "Condition Inflictors",
+      "controller": "external"
+    },
+    {
+      "id": "resisters",
+      "name": "Condition Resisters",
+      "controller": "external"
+    }
+  ]
+}

@@ -57,6 +57,12 @@ STAT_BLOCK_ACTION_SCENARIO_DIR = (
     / "scenarios"
     / "stat_block_action_showcase"
 )
+CONDITIONS_SHOWCASE_SCENARIO_DIR = (
+    Path(__file__).parents[1]
+    / "content"
+    / "scenarios"
+    / "conditions_showcase"
+)
 _ROLL_INITIATIVE = EncounterState._roll_initiative
 
 
@@ -602,6 +608,27 @@ def test_action_target_requirement_uses_effective_conditions() -> None:
         failure.code != "target_condition_required"
         for failure in eligibility.failures
     )
+
+
+def test_conditions_showcase_is_externally_controlled_and_uses_immunities() -> None:
+    session = Scenario(str(CONDITIONS_SHOWCASE_SCENARIO_DIR)).create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    assert all(
+        state._creature_controller(creature_ref) == "external"
+        for creature_ref in state.creatures
+    )
+    assert Condition.POISONED in (
+        state.creatures["animated_armor"]
+        .creature.statistics.condition_immunities
+    )
+    assert Condition.GRAPPLED in (
+        state.creatures["air_elemental"]
+        .creature.statistics.condition_immunities
+    )
+    assert state.creatures["assassin"].creature.multiattack is not None
 
 
 def test_execution_rechecks_action_eligibility() -> None:
