@@ -10,6 +10,8 @@ from ...creatures.stat_block_actions import (
 )
 from ...effects.results import EffectResult
 from ...effects.application import condition_from_effect_with_origin
+from ...effects.conditions import Condition, build_applied_condition
+from ...effects.runtime import EffectSourceKind, Indefinite, UntilTurnEnd, UntilTurnStart
 from ..models import EncounterProgress
 
 if TYPE_CHECKING:
@@ -54,10 +56,32 @@ def _apply_condition(
 ) -> None:
     if not isinstance(effect, ConditionEffect):
         return
-    if effect.condition != "grappled":
-        return
     attacker = state.creatures[attacker_ref].creature
     target = state.creatures[target_ref].creature
+    if effect.condition != "grappled":
+        duration = _condition_duration(
+            state,
+            attacker_ref,
+            target_ref,
+            effect,
+        )
+        result = state._apply_condition(
+            build_applied_condition(
+                condition=Condition(effect.condition),
+                source_ref=attacker_ref,
+                source_label=attacker.name,
+                target_ref=target_ref,
+                source_kind=EffectSourceKind.ACTION,
+                definition_id="attack",
+                origin_id=origin_id,
+                duration=duration,
+            )
+        )
+        if result.accepted:
+            progress.messages.append(
+                ("system", f"{target.name} is {effect.condition}.")
+            )
+        return
     maximum_size = next(
         (
             requirement.maximum
@@ -100,6 +124,26 @@ def _apply_condition(
         )
     )
     progress.messages.append(("system", f"{attacker.name} grapples {target.name}."))
+
+
+def _condition_duration(
+    state: EncounterState,
+    attacker_ref: str,
+    target_ref: str,
+    effect: ConditionEffect,
+):
+    duration = effect.duration
+    if duration is None:
+        return Indefinite()
+    creature_ref = (
+        attacker_ref if duration.creature == "source" else target_ref
+    )
+    round_number = state.round.number + duration.turn_offset
+    if duration.kind == "start_of_turn":
+        return UntilTurnStart(creature_ref, round_number)
+    if duration.kind == "end_of_turn":
+        return UntilTurnEnd(creature_ref, round_number)
+    return Indefinite()
 
 
 _HIT_EFFECT_HANDLERS: dict[type[ActionEffect], HitEffectHandler] = {

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..effects.runtime import UntilTurnEnd
+from ..effects.runtime import UntilTurnEnd, UntilTurnStart
 from .behaviors import movement_squares as _movement_squares
 from .models import (
     ActionExecutionOutcome,
@@ -203,6 +203,11 @@ class TurnEngine:
             state.round.advance()
         self.normalize_turn(state)
         creature_ref = state.initiative_order[state.turn_index]
+        self.expire_conditions_for_turn_start(
+            state,
+            creature_ref,
+            state.round.number,
+        )
         creature_state = state.creatures[creature_ref]
         from .actions.stat_block import recharge_stat_block_actions
 
@@ -224,6 +229,33 @@ class TurnEngine:
             condition.id
             for condition in state.conditions
             if isinstance(condition.duration, UntilTurnEnd)
+            and condition.duration.creature_ref == creature_ref
+            and (
+                condition.duration.round_number is None
+                or state.round.matches(condition.duration.round_number)
+            )
+        }
+        state.conditions = [
+            condition
+            for condition in state.conditions
+            if condition.id not in expired_ids
+        ]
+        state.relationships = [
+            relationship
+            for relationship in state.relationships
+            if relationship.identity.parent_id not in expired_ids
+        ]
+
+    def expire_conditions_for_turn_start(
+        self,
+        state: EncounterState,
+        creature_ref: CreatureRef,
+        round_number: int,
+    ) -> None:
+        expired_ids = {
+            condition.id
+            for condition in state.conditions
+            if isinstance(condition.duration, UntilTurnStart)
             and condition.duration.creature_ref == creature_ref
             and (
                 condition.duration.round_number is None

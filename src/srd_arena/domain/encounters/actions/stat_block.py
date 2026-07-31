@@ -16,6 +16,7 @@ from ...geometry import (
     build_directional_area,
     vector_between_positions,
 )
+from ...effects.conditions import Condition
 from ...rolls.saving_throws import (
     Ability,
     SavingThrowCreature,
@@ -83,21 +84,41 @@ def stat_block_action_runtime_issue(
     definition: object,
 ) -> str | None:
     if isinstance(definition, AttackActionDefinition):
-        unsupported = next(
-            (
-                effect
-                for effect in definition.hit
-                if not isinstance(effect, DamageEffect)
-                and not (
-                    isinstance(effect, ConditionEffect)
-                    and effect.condition == "grappled"
-                )
-            ),
-            None,
-        )
-        if unsupported is None:
-            return None
-        return f"{type(unsupported).__name__} is not executable for attack actions yet."
+        for effect in definition.hit:
+            if isinstance(effect, DamageEffect):
+                continue
+            if isinstance(effect, ConditionEffect):
+                try:
+                    Condition(effect.condition)
+                except ValueError:
+                    return (
+                        f"Condition '{effect.condition}' is not supported by "
+                        "the condition runtime yet."
+                    )
+                if effect.condition != "grappled" and effect.requirements:
+                    return (
+                        "Conditional attack-applied conditions are not "
+                        "executable yet."
+                    )
+                if effect.condition != "grappled" and effect.ends_on:
+                    return (
+                        "Event-ended attack-applied conditions are not "
+                        "executable yet."
+                    )
+                if effect.duration is not None and effect.duration.kind not in {
+                    "start_of_turn",
+                    "end_of_turn",
+                }:
+                    return (
+                        f"Condition duration '{effect.duration.kind}' is not "
+                        "executable for attack actions yet."
+                    )
+                continue
+            return (
+                f"{type(effect).__name__} is not executable for attack "
+                "actions yet."
+            )
+        return None
     elif isinstance(definition, AutomaticActionDefinition):
         effects = definition.effects
     elif isinstance(definition, SavingThrowActionDefinition):

@@ -23,6 +23,7 @@ from srd_arena.frontends.qt.app import GameWindow
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
+from srd_arena.domain.effects.runtime import UntilTurnStart
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.creatures import (
     ActionTarget,
@@ -827,7 +828,9 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
     ]
 
 
-def test_partially_implemented_multiattack_is_reported_as_unimplemented() -> None:
+def test_assassin_multiattack_applies_independent_poisoned_conditions(
+    monkeypatch,
+) -> None:
     session = Scenario(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -849,20 +852,53 @@ def test_partially_implemented_multiattack_is_reported_as_unimplemented() -> Non
     state.active_position.y = 4
     state.creatures["goblin_1"].position.x = 4
     state.creatures["goblin_1"].position.y = 3
-    [multiattack] = [
-        action
-        for action in state._creature_action_candidates(
-            state.current_decision().creature_ref
-        )
-        if action.kind == "multiattack"
-    ]
-    eligibility = state.action_eligibility(multiattack)
-
-    assert eligibility.allowed is False
-    assert eligibility.failures[-1].code == (
-        "unsupported_stat_block_mechanics"
+    state.creatures["goblin_1"].creature.current_health = 100
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 20,
     )
-    assert "Shortsword" in eligibility.failures[-1].message
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda count, _sides: count,
+    )
+
+    multiattack = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "multiattack"
+    )
+    assert state.action_eligibility(multiattack).allowed is True
+    state.apply_action(multiattack)
+
+    for _ in range(3):
+        shortsword = next(
+            action
+            for action in state.available_actions()
+            if action.kind == "attack"
+            and action.value == "goblin_1"
+            and action.preferred_attack_name == "Shortsword"
+        )
+        state.apply_action(shortsword)
+
+    poisoned = [
+        condition
+        for condition in state.conditions_for("goblin_1")
+        if condition.condition is Condition.POISONED
+    ]
+    assert len(poisoned) == 3
+    assert len({condition.id for condition in poisoned}) == 3
+    assert all(condition.source_ref == "player" for condition in poisoned)
+    assert all(
+        condition.duration == UntilTurnStart("player", 2)
+        for condition in poisoned
+    )
+
+    state.turn_engine.expire_conditions_for_turn_start(state, "player", 1)
+    assert state.has_condition("goblin_1", Condition.POISONED) is True
+
+    state.round.number = 2
+    state.turn_engine.expire_conditions_for_turn_start(state, "player", 2)
+    assert state.has_condition("goblin_1", Condition.POISONED) is False
 
 
 def test_multiattack_showcase_loads_enriched_creatures() -> None:
