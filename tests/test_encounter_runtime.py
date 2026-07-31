@@ -31,6 +31,7 @@ from srd_arena.domain.creatures import (
     AttackActionDefinition,
     DamageEffect,
     ConditionEffect,
+    ConditionRequirement,
     SavingThrowActionDefinition,
 )
 from srd_arena.frontends.shared.session import (
@@ -508,8 +509,97 @@ def test_action_eligibility_exposes_structured_failures() -> None:
     eligibility = state.action_eligibility(move)
 
     assert eligibility.allowed is False
-    assert {failure.code for failure in eligibility.failures} == {"actor_incapacitated"}
+    assert {failure.code for failure in eligibility.failures} == {
+        "condition.cannot_take_actions"
+    }
     assert all(action.kind == "wait" for action in state.available_actions())
+
+
+def test_paralyzed_blocks_actions_through_effective_incapacitation() -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    actor_ref = state.current_decision().creature_ref
+    paralyzed = build_applied_condition(
+        condition=Condition.PARALYZED,
+        source_ref="goblin_1",
+        source_label="Goblin Warrior",
+        target_ref=actor_ref,
+    )
+    state.conditions.append(paralyzed)
+    move = next(
+        action
+        for action in state._creature_action_candidates(actor_ref)
+        if action.kind == "move"
+    )
+
+    eligibility = state.action_eligibility(move)
+
+    assert eligibility.allowed is False
+    assert eligibility.failures[0].code == "condition.cannot_take_actions"
+    assert eligibility.failures[0].state_ids == (paralyzed.id,)
+    effective = state.effective_conditions_for(actor_ref)
+    assert effective.has(Condition.INCAPACITATED)
+    assert state.has_condition(actor_ref, Condition.INCAPACITATED) is False
+
+
+def test_action_target_requirement_uses_effective_conditions() -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    actor_ref = state.current_decision().creature_ref
+    target_ref = "goblin_1"
+    actor = state.creatures[actor_ref].creature
+    actor.stat_block_actions["Extract Brain"] = AttackActionDefinition(
+        name="Extract Brain",
+        attack_modes=("melee",),
+        attack_bonus=0,
+        target=ActionTarget(
+            kind="creature",
+            range_feet=5,
+            requirements=(
+                ConditionRequirement(
+                    conditions=("incapacitated",),
+                ),
+            ),
+        ),
+        reach_feet=5,
+        range_normal_feet=None,
+        range_long_feet=None,
+        hit=(),
+    )
+    action = EncounterAction(
+        "Extract Brain",
+        "attack",
+        target_ref,
+        id="extract-brain",
+        creature_ref=actor_ref,
+        preferred_attack_name="Extract Brain",
+        cost=ActionCost(action=1),
+    )
+    assert any(
+        failure.code == "target_condition_required"
+        for failure in state.action_eligibility(action).failures
+    )
+    state.conditions.append(
+        build_applied_condition(
+            condition=Condition.PARALYZED,
+            source_ref=actor_ref,
+            source_label=actor.name,
+            target_ref=target_ref,
+        )
+    )
+
+    eligibility = state.action_eligibility(action)
+
+    assert all(
+        failure.code != "target_condition_required"
+        for failure in eligibility.failures
+    )
 
 
 def test_execution_rechecks_action_eligibility() -> None:

@@ -5,6 +5,11 @@ from .conditions import (
     Condition,
     build_applied_condition,
 )
+from .condition_rules import (
+    EffectiveCondition,
+    EffectiveConditionSet,
+    EffectiveTrait,
+)
 from .results import EffectResult
 from .runtime import (
     CreatureRelationship,
@@ -22,6 +27,9 @@ __all__ = [
     "Condition",
     "CreatureRelationship",
     "EffectResult",
+    "EffectiveCondition",
+    "EffectiveConditionSet",
+    "EffectiveTrait",
     "EffectSource",
     "EffectSourceKind",
     "OngoingEffect",

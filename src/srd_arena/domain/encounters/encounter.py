@@ -48,7 +48,6 @@ from .actions.execution import (
 )
 from .actions.eligibility import (
     ActionEligibility,
-    action_eligibility as _action_eligibility_impl,
 )
 from .actions.features import resolve_feature_action as _resolve_feature_action_impl
 from .actions.items import resolve_utilize_action as _resolve_utilize_action_impl
@@ -59,6 +58,8 @@ from .creature_control import (
     creature_action_candidates as _creature_action_candidates_impl,
 )
 from .reactions import REACTION_ENGINE, ReactionEngine
+from .rules import COMBAT_RULES, CombatRules
+from ..effects.condition_rules import EffectiveConditionSet
 from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
@@ -104,6 +105,10 @@ class EncounterState(EncounterStateData):
     @property
     def turn_engine(self) -> TurnEngine:
         return TURN_ENGINE
+
+    @property
+    def combat_rules(self) -> CombatRules:
+        return COMBAT_RULES
 
     @property
     def decision_stack(self) -> list[DecisionFrame]:
@@ -318,6 +323,12 @@ class EncounterState(EncounterStateData):
             for applied in self.conditions_for(creature_ref)
         )
 
+    def effective_conditions_for(
+        self,
+        creature_ref: CreatureRef,
+    ) -> EffectiveConditionSet:
+        return self.combat_rules.effective_conditions(self, creature_ref)
+
     def _attack_roll_mode_for(
         self,
         attacker_ref: CreatureRef,
@@ -375,7 +386,7 @@ class EncounterState(EncounterStateData):
         self,
         action: EncounterAction,
     ) -> ActionEligibility:
-        return _action_eligibility_impl(
+        return self.combat_rules.action_eligibility(
             self,
             self.current_decision().creature_ref,
             action,

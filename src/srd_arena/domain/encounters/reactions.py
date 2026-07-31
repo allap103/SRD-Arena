@@ -64,7 +64,10 @@ class ReactionEngine:
             and reactor.is_alive
             and state._creatures_are_opponents(reactor_ref, mover_ref)
             and state._creature_controller(reactor_ref) == "scripted"
-            and reactor.reaction_available
+            and state.combat_rules.reaction_eligibility(
+                state,
+                reactor_ref,
+            ).allowed
             and can_make_opportunity_attack(
                 reactor.creature,
                 state.item_templates,
@@ -418,6 +421,12 @@ class ReactionEngine:
         )
 
         if action.kind == "opportunity_attack":
+            eligibility = state.combat_rules.reaction_eligibility(
+                state,
+                reactor_ref,
+            )
+            if not eligibility.allowed:
+                raise ValueError(eligibility.failures[0].message)
             reactor.reaction_available = False
             target_ref = pending_action.creature_ref
             target = state.creatures[target_ref]
@@ -597,7 +606,10 @@ class ReactionEngine:
                 not external_only
                 or state._creature_controller(creature_ref) == "external"
             )
-            and creature_state.reaction_available
+            and state.combat_rules.reaction_eligibility(
+                state,
+                creature_ref,
+            ).allowed
             and can_make_opportunity_attack(
                 creature_state.creature,
                 state.item_templates,
@@ -665,9 +677,14 @@ class ReactionEngine:
         target_ref = pending_action.creature_ref
         target = state.creatures[target_ref]
         reactor_ref = state.current_decision().creature_ref
-        reactor = state.creatures[reactor_ref]
         actions: list[EncounterAction] = []
-        if reactor.reaction_available and target.is_alive:
+        if (
+            state.combat_rules.reaction_eligibility(
+                state,
+                reactor_ref,
+            ).allowed
+            and target.is_alive
+        ):
             actions.append(
                 EncounterAction(
                     f"Opportunity attack {target.creature.name}",

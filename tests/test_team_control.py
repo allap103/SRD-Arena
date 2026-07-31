@@ -4,6 +4,7 @@ import pytest
 
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.application import condition_from_effect
+from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterCreatureState
 from srd_arena.frontends.shared.session import build_session_presentation
@@ -324,6 +325,37 @@ def test_user_controlled_goblin_chooses_reaction_to_primary_movement() -> None:
     assert goblin.reaction_available is False
     assert state.current_decision().creature_ref == "player"
     assert (aldren.position.x, aldren.position.y) == (3, 2)
+
+
+def test_effectively_incapacitated_creature_gets_no_reaction_prompt() -> None:
+    session = Scenario(GOBLIN_SKIRMISH_DIR).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    aldren = state.creatures["player"]
+    goblin = state.creatures["red_blade"]
+    aldren.position.x, aldren.position.y = 3, 3
+    goblin.position.x, goblin.position.y = 3, 4
+    state.conditions.append(
+        build_applied_condition(
+            condition=Condition.PARALYZED,
+            source_ref="player",
+            source_label=aldren.creature.name,
+            target_ref="red_blade",
+        )
+    )
+
+    move = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "move" and action.value == "up"
+    )
+    session.choose_encounter_action(move)
+
+    assert state.current_decision().creature_ref == "player"
+    assert state.current_decision().kind == "turn"
+    assert (aldren.position.x, aldren.position.y) == (3, 2)
+    assert goblin.reaction_available is True
 
 
 def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> None:

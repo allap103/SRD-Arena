@@ -4,11 +4,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 from ...creatures import (
+    AttackActionDefinition,
     AutomaticActionDefinition,
+    ConditionRequirement,
     SavingThrowActionDefinition,
     can_grapple,
 )
-from ...effects.conditions import Condition
+from ...effects.conditions import CombatTrait, Condition
 from ...geometry import Position
 from ...spells.rules import parse_spell_action_value
 from ..behaviors import DIRECTION_DELTAS, chebyshev_distance
@@ -28,6 +30,7 @@ if TYPE_CHECKING:
 class EligibilityFailure:
     code: str
     message: str
+    state_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -60,17 +63,16 @@ class ActorReadyRule:
             return EligibilityFailure(
                 "actor_defeated", "A defeated creature cannot act."
             )
-        if action.kind != "wait" and any(
-            state.has_condition(actor_ref, condition)
-            for condition in (
-                Condition.INCAPACITATED,
-                Condition.STUNNED,
-                Condition.UNCONSCIOUS,
-            )
+        effective = state.effective_conditions_for(actor_ref)
+        if action.kind != "wait" and effective.has_trait(
+            CombatTrait.CANNOT_TAKE_ACTIONS
         ):
             return EligibilityFailure(
-                "actor_incapacitated",
+                "condition.cannot_take_actions",
                 "An incapacitated creature cannot take this action.",
+                effective.providers_for_trait(
+                    CombatTrait.CANNOT_TAKE_ACTIONS
+                ),
             )
         return None
 
@@ -227,6 +229,15 @@ class AttackRule:
                         "unsupported_stat_block_mechanics",
                         runtime_issue,
                     )
+                if isinstance(definition, AttackActionDefinition):
+                    requirement_failure = _condition_requirement_failure(
+                        state,
+                        actor_ref,
+                        action.value,
+                        definition.target.requirements,
+                    )
+                    if requirement_failure is not None:
+                        return requirement_failure
         if actor.pending_multiattack and preferred_attack_name not in {
             invocation.name for invocation in actor.pending_multiattack[0].options
         }:
@@ -362,6 +373,14 @@ class StatBlockActionRule:
         if target_failure is not None:
             return target_failure
         target = state.creatures[action.value]
+        requirement_failure = _condition_requirement_failure(
+            state,
+            actor_ref,
+            action.value,
+            definition.target.requirements,
+        )
+        if requirement_failure is not None:
+            return requirement_failure
         range_feet = definition.target.range_feet or 0
         range_squares = (range_feet + 4) // 5
         if chebyshev_distance(actor.position, target.position) > range_squares:
@@ -475,7 +494,11 @@ def require_action_eligible(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> None:
-    eligibility = action_eligibility(state, actor_ref, action)
+    eligibility = state.combat_rules.action_eligibility(
+        state,
+        actor_ref,
+        action,
+    )
     if eligibility.allowed:
         return
     raise ValueError(eligibility.failures[0].message)
@@ -495,5 +518,53 @@ def _opposing_target_failure(
         return EligibilityFailure(
             "target_not_opponent",
             "The target must belong to an opposing team.",
+        )
+    return None
+
+
+def _condition_requirement_failure(
+    state: EncounterState,
+    actor_ref: CreatureRef,
+    target_ref: CreatureRef,
+    requirements: tuple[object, ...],
+) -> EligibilityFailure | None:
+    for requirement in requirements:
+        if not isinstance(requirement, ConditionRequirement):
+            continue
+        required = tuple(
+            Condition(condition) for condition in requirement.conditions
+        )
+        effective = state.effective_conditions_for(target_ref)
+        provider_ids_by_condition = {
+            condition: effective.providers_for(condition)
+            for condition in required
+        }
+        if requirement.applied_by == "source":
+            source_provider_ids = {
+                applied.id
+                for applied in state.conditions_for(target_ref)
+                if applied.source_ref == actor_ref
+            }
+            matches = tuple(
+                bool(
+                    set(provider_ids_by_condition[condition])
+                    & source_provider_ids
+                )
+                for condition in required
+            )
+        else:
+            matches = tuple(
+                bool(provider_ids_by_condition[condition])
+                for condition in required
+            )
+        satisfied = (
+            all(matches) if requirement.match == "all" else any(matches)
+        )
+        if satisfied:
+            continue
+        labels = ", ".join(condition.value for condition in required)
+        return EligibilityFailure(
+            "target_condition_required",
+            f"The target must have the required condition: {labels}.",
         )
     return None

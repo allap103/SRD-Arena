@@ -116,6 +116,7 @@ def _export_creature(
         else _movement_squares(creature)
     )
     spellcasting = creature.spellcasting
+    effective = state.effective_conditions_for(creature_ref)
     return {
         "creature_ref": creature_ref,
         "creature_id": creature_state.creature_id,
@@ -156,6 +157,20 @@ def _export_creature(
         "conditions": [
             condition.condition.value
             for condition in state.conditions_for(creature_ref)
+        ],
+        "effective_conditions": [
+            {
+                "condition": condition.condition.value,
+                "provider_ids": list(condition.provider_ids),
+            }
+            for condition in effective.conditions
+        ],
+        "traits": [
+            {
+                "trait": trait.trait.value,
+                "provider_ids": list(trait.provider_ids),
+            }
+            for trait in effective.traits
         ],
         "spell_slots_max": (
             {str(level): slots for level, slots in spellcasting.spell_slots_max.items()}
