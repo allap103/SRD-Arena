@@ -418,11 +418,18 @@ class EncounterState(EncounterStateData):
 
     _spell_target_context = _spell_target_context_impl
 
-    def _apply_effects(self, effects) -> list[tuple[str, str]]:
+    def _apply_effects(
+        self,
+        effects,
+        *,
+        origin_id: str | None = None,
+    ) -> list[tuple[str, str]]:
+        resolved_origin_id = origin_id or self._next_runtime_origin_id()
         return apply_effects(
             effects,
             apply_condition=self._apply_condition,
             remove_condition=self._remove_condition,
+            origin_id=resolved_origin_id,
         )
 
     _apply_condition = _apply_condition_impl
@@ -557,6 +564,11 @@ class EncounterState(EncounterStateData):
         action_id = f"action_{self.action_sequence}"
         self.action_sequence += 1
         return action_id
+
+    def _next_runtime_origin_id(self) -> str:
+        origin_id = f"effect_{self.runtime_state_sequence}"
+        self.runtime_state_sequence += 1
+        return origin_id
 
     def _next_frame_id(self, prefix: str = "frame") -> str:
         frame_id = f"{prefix}_{self.frame_sequence}"

@@ -63,13 +63,13 @@ class AppliedCondition:
 
     @property
     def source_ref(self) -> str | None:
-        return self.identity.source.creature_ref
+        return self.identity.source.applied_by_ref
 
     @property
     def source_label(self) -> str:
         return (
             self.identity.source.label
-            or self.identity.source.creature_ref
+            or self.identity.source.applied_by_ref
             or self.identity.source.definition_id
         )
 
@@ -85,8 +85,14 @@ def build_applied_condition(
     expires_on_round: int | None = None,
     metadata: dict[str, object] | None = None,
     value: int | None = None,
+    source_kind: EffectSourceKind = EffectSourceKind.CREATURE,
+    definition_id: str | None = None,
+    origin_id: str | None = None,
 ) -> AppliedCondition:
-    condition_id = f"condition:{condition.value}:{source_ref}:{target_ref}"
+    resolved_origin_id = origin_id or f"source:{source_ref}"
+    condition_id = (
+        f"condition:{condition.value}:{resolved_origin_id}:{target_ref}"
+    )
     if duration is None:
         duration = (
             UntilTurnEnd(expires_on_creature_ref, expires_on_round)
@@ -94,10 +100,11 @@ def build_applied_condition(
             else Indefinite()
         )
     source = EffectSource(
-        kind=EffectSourceKind.CREATURE,
-        definition_id=source_ref,
-        creature_ref=source_ref,
+        kind=source_kind,
+        definition_id=definition_id or source_ref,
+        applied_by_ref=source_ref,
         label=source_label,
+        origin_id=resolved_origin_id,
     )
     return AppliedCondition(
         identity=RuntimeStateIdentity(id=condition_id, source=source),

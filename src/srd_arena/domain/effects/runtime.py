@@ -19,9 +19,9 @@ class EffectSourceKind(StrEnum):
 class EffectSource:
     kind: EffectSourceKind
     definition_id: str
-    creature_ref: str | None = None
+    applied_by_ref: str | None = None
     label: str | None = None
-    origin_action_id: str | None = None
+    origin_id: str = ""
 
 
 @dataclass(frozen=True)

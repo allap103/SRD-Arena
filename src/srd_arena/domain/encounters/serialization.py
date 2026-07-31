@@ -237,8 +237,8 @@ def _export_source(source: EffectSource) -> dict[str, object]:
     return {
         "kind": source.kind.value,
         "definition_id": source.definition_id,
-        "creature_ref": source.creature_ref,
-        "origin_action_id": source.origin_action_id,
+        "applied_by_ref": source.applied_by_ref,
+        "origin_id": source.origin_id,
     }
 
 

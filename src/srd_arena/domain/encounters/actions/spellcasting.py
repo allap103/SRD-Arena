@@ -113,7 +113,9 @@ def resolve_spell_action(
 
     self._spend_spell_resources(spellcasting, spell, cost)
     progress.messages.extend(result.messages)
-    progress.messages.extend(self._apply_effects(result.effects))
+    progress.messages.extend(
+        self._apply_effects(result.effects, origin_id=action_id)
+    )
     progress.events.append(
         self._event(
             "spell_cast",

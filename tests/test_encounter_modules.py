@@ -14,6 +14,7 @@ from srd_arena.domain.encounters.participants import (
     creature_team_id,
 )
 from srd_arena.domain.encounters import EncounterTeam
+from srd_arena.domain.creatures import CreatureStatistics
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 
 
@@ -23,6 +24,24 @@ def _condition(condition: Condition, source: str, target: str):
         source_ref=source,
         source_label=source,
         target_ref=target,
+    )
+
+
+def _condition_state(
+    *, conditions=None, relationships=None, immunities=frozenset()
+):
+    return SimpleNamespace(
+        conditions=list(conditions or ()),
+        relationships=list(relationships or ()),
+        creatures={
+            "player": SimpleNamespace(
+                creature=SimpleNamespace(
+                    statistics=CreatureStatistics(
+                        condition_immunities=immunities
+                    )
+                )
+            )
+        },
     )
 
 
@@ -36,11 +55,74 @@ def test_apply_condition_refreshes_matching_condition_without_duplication() -> N
         expires_on_creature_ref="player",
         expires_on_round=3,
     )
-    state = SimpleNamespace(conditions=[original])
+    state = _condition_state(conditions=[original])
 
     apply_condition(state, refreshed)
 
     assert state.conditions == [refreshed]
+
+
+def test_apply_condition_preserves_instances_from_distinct_origins() -> None:
+    first = build_applied_condition(
+        condition=Condition.BLINDED,
+        source_ref="wizard",
+        source_label="Wizard",
+        target_ref="player",
+        origin_id="spell:1",
+    )
+    second = build_applied_condition(
+        condition=Condition.BLINDED,
+        source_ref="wizard",
+        source_label="Wizard",
+        target_ref="player",
+        origin_id="spell:2",
+    )
+    state = _condition_state()
+
+    apply_condition(state, first)
+    apply_condition(state, second)
+
+    assert state.conditions == [first, second]
+
+
+def test_condition_immunity_rejects_new_application() -> None:
+    state = _condition_state(immunities=frozenset({Condition.PRONE}))
+
+    result = apply_condition(
+        state, _condition(Condition.PRONE, "wizard", "player")
+    )
+
+    assert result.accepted is False
+    assert result.rejections[0].reason == "condition_immunity"
+    assert state.conditions == []
+
+
+def test_unconscious_applies_persistent_prone_consequence() -> None:
+    state = _condition_state()
+
+    result = apply_condition(
+        state, _condition(Condition.UNCONSCIOUS, "wizard", "player")
+    )
+    remove_condition(state, "player", Condition.UNCONSCIOUS)
+
+    assert result.accepted is True
+    assert [condition.condition for condition in state.conditions] == [
+        Condition.PRONE
+    ]
+
+
+def test_prone_immunity_does_not_reject_unconscious() -> None:
+    state = _condition_state(immunities=frozenset({Condition.PRONE}))
+
+    result = apply_condition(
+        state, _condition(Condition.UNCONSCIOUS, "wizard", "player")
+    )
+
+    assert result.accepted is True
+    assert result.rejections[0].condition is Condition.PRONE
+    assert [condition.condition for condition in state.conditions] == [
+        Condition.UNCONSCIOUS
+    ]
 
 
 def test_grappled_from_different_sources_do_not_replace_each_other() -> None:
@@ -53,7 +135,7 @@ def test_grappled_from_different_sources_do_not_replace_each_other() -> None:
 def test_removing_grappled_also_removes_matching_relationship() -> None:
     grappled = _condition(Condition.GRAPPLED, "goblin_1", "player")
     unrelated = _condition(Condition.BLINDED, "goblin_2", "player")
-    state = SimpleNamespace(conditions=[unrelated], relationships=[])
+    state = _condition_state(conditions=[unrelated])
     apply_grapple(state, grappled)
 
     remove_condition(state, "player", Condition.GRAPPLED)
@@ -65,7 +147,7 @@ def test_removing_grappled_also_removes_matching_relationship() -> None:
 def test_removing_one_grapple_source_preserves_other_grapples() -> None:
     first = _condition(Condition.GRAPPLED, "goblin_1", "player")
     second = _condition(Condition.GRAPPLED, "goblin_2", "player")
-    state = SimpleNamespace(conditions=[], relationships=[])
+    state = _condition_state()
     apply_grapple(state, first)
     apply_grapple(state, second)
 
@@ -83,7 +165,7 @@ def test_removing_one_grapple_source_preserves_other_grapples() -> None:
 def test_defeated_creature_releases_all_grapple_relationships() -> None:
     grappled = _condition(Condition.GRAPPLED, "aboleth", "player")
     unrelated = _condition(Condition.BLINDED, "goblin_2", "player")
-    state = SimpleNamespace(conditions=[unrelated], relationships=[])
+    state = _condition_state(conditions=[unrelated])
     apply_grapple(state, grappled)
 
     remove_relationships_for_creature(state, "aboleth")

@@ -269,6 +269,7 @@ def resolve_attack_action(
             target_ref=target_ref,
             effects=outcome.hit_effects,
             progress=progress,
+            origin_id=action_id,
         )
     progress.messages.extend(outcome.messages)
     progress.events.append(

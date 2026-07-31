@@ -1,5 +1,6 @@
 from pathlib import Path
 from copy import deepcopy
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
@@ -927,6 +928,10 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
     session.get_scene_view()
     assert session.encounter_state is not None
     state = session.encounter_state
+    state.creatures["air_elemental"].creature.statistics = replace(
+        state.creatures["air_elemental"].creature.statistics,
+        condition_immunities=frozenset(),
+    )
     state.initiative_order = ["aboleth", "air_elemental", "player"]
     state.turn_index = 0
     state.creatures["aboleth"].position.x = 7
@@ -1001,6 +1006,10 @@ def test_tentacle_grapple_enforces_capacity_without_counting_duplicates() -> Non
     state = session.encounter_state
     aboleth_ref = "aboleth"
     template = state.creatures["air_elemental"]
+    template.creature.statistics = replace(
+        template.creature.statistics,
+        condition_immunities=frozenset(),
+    )
     for index in range(4):
         state.creatures[f"tentacle-target:{index}"] = deepcopy(template)
     tentacle = state.creatures[aboleth_ref].creature.stat_block_actions["Tentacle"]
@@ -1691,7 +1700,7 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(
     assert state.has_condition("goblin_1", Condition.BLINDED) is False
 
 
-def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) -> None:
+def test_reapplying_blinded_preserves_independent_durations(monkeypatch) -> None:
     session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
@@ -1711,7 +1720,7 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
 
     assert state.has_condition("goblin_1", Condition.BLINDED) is True
-    assert len(state.conditions_for("goblin_1")) == 1
+    assert len(state.conditions_for("goblin_1")) == 2
 
     session.choose(_action_id_by_label(session, "Wait"))
     assert state.has_condition("goblin_1", Condition.BLINDED) is True

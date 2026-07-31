@@ -43,18 +43,17 @@ def test_effective_condition_preserves_all_independent_providers() -> None:
 
 
 def test_immunity_suppresses_only_the_implied_condition() -> None:
-    unconscious = _applied(Condition.UNCONSCIOUS, "sleep")
+    paralyzed = _applied(Condition.PARALYZED, "hold_person")
 
     effective = effective_conditions(
-        (unconscious,),
-        frozenset({Condition.PRONE}),
+        (paralyzed,),
+        frozenset({Condition.INCAPACITATED}),
     )
 
-    assert effective.has(Condition.UNCONSCIOUS)
-    assert effective.has(Condition.INCAPACITATED)
-    assert effective.has(Condition.PRONE) is False
+    assert effective.has(Condition.PARALYZED)
+    assert effective.has(Condition.INCAPACITATED) is False
     assert len(effective.suppressed_conditions) == 1
     suppressed = effective.suppressed_conditions[0]
-    assert suppressed.condition is Condition.PRONE
-    assert suppressed.provider_ids == (unconscious.id,)
+    assert suppressed.condition is Condition.INCAPACITATED
+    assert suppressed.provider_ids == (paralyzed.id,)
     assert suppressed.reason == "immunity"

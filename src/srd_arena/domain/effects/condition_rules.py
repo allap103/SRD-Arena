@@ -33,12 +33,7 @@ CONDITION_DEFINITIONS: dict[Condition, ConditionDefinition] = {
         traits=frozenset({CombatTrait.SPEED_ZERO}),
     ),
     Condition.UNCONSCIOUS: ConditionDefinition(
-        implied_conditions=frozenset(
-            {
-                Condition.INCAPACITATED,
-                Condition.PRONE,
-            }
-        ),
+        implied_conditions=frozenset({Condition.INCAPACITATED}),
     ),
     Condition.GRAPPLED: ConditionDefinition(
         traits=frozenset({CombatTrait.SPEED_ZERO}),

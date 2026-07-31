@@ -9,14 +9,14 @@ from ...creatures.stat_block_actions import (
     SizeRequirement,
 )
 from ...effects.results import EffectResult
-from ...effects.application import condition_from_effect
+from ...effects.application import condition_from_effect_with_origin
 from ..models import EncounterProgress
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
 
 HitEffectHandler = Callable[
-    ["EncounterState", str, str, ActionEffect, EncounterProgress],
+    ["EncounterState", str, str, ActionEffect, EncounterProgress, str],
     None,
 ]
 
@@ -28,11 +28,20 @@ def apply_attack_hit_effects(
     target_ref: str,
     effects: tuple[ActionEffect, ...],
     progress: EncounterProgress,
+    origin_id: str | None = None,
 ) -> None:
+    resolved_origin_id = origin_id or f"attack:{attacker_ref}:{target_ref}"
     for effect in effects:
         handler = _HIT_EFFECT_HANDLERS.get(type(effect))
         if handler is not None:
-            handler(state, attacker_ref, target_ref, effect, progress)
+            handler(
+                state,
+                attacker_ref,
+                target_ref,
+                effect,
+                progress,
+                resolved_origin_id,
+            )
 
 
 def _apply_condition(
@@ -41,6 +50,7 @@ def _apply_condition(
     target_ref: str,
     effect: ActionEffect,
     progress: EncounterProgress,
+    origin_id: str,
 ) -> None:
     if not isinstance(effect, ConditionEffect):
         return
@@ -73,7 +83,7 @@ def _apply_condition(
         "originating_action": "attack",
     }
     state._apply_grapple(
-        condition_from_effect(
+        condition_from_effect_with_origin(
             EffectResult(
                 kind="apply_condition",
                 target_ref=target_ref,
@@ -81,9 +91,12 @@ def _apply_condition(
                     "condition": "grappled",
                     "source_ref": attacker_ref,
                     "source_label": attacker.name,
+                    "source_kind": "action",
+                    "definition_id": "attack",
                     "metadata": metadata,
                 },
-            )
+            ),
+            origin_id=origin_id,
         )
     )
     progress.messages.append(("system", f"{attacker.name} grapples {target.name}."))

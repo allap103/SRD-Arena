@@ -4,8 +4,9 @@ from collections.abc import Callable
 
 from .conditions import AppliedCondition, Condition, build_applied_condition
 from .results import EffectResult
+from .runtime import EffectSourceKind
 
-ApplyCondition = Callable[[AppliedCondition], None]
+ApplyCondition = Callable[[AppliedCondition], object]
 RemoveCondition = Callable[[str, Condition], None]
 
 
@@ -14,11 +15,17 @@ def apply_effects(
     *,
     apply_condition: ApplyCondition,
     remove_condition: RemoveCondition,
+    origin_id: str | None = None,
 ) -> list[tuple[str, str]]:
     messages: list[tuple[str, str]] = []
     for effect in effects:
         if effect.kind == "apply_condition":
-            apply_condition(condition_from_effect(effect))
+            apply_condition(
+                condition_from_effect_with_origin(
+                    effect,
+                    origin_id=origin_id,
+                )
+            )
         elif effect.kind == "remove_condition":
             remove_condition(
                 effect.target_ref,
@@ -52,6 +59,14 @@ def serialize_effects(effects: list[EffectResult]) -> list[dict[str, object]]:
 
 
 def condition_from_effect(effect: EffectResult) -> AppliedCondition:
+    return condition_from_effect_with_origin(effect, origin_id=None)
+
+
+def condition_from_effect_with_origin(
+    effect: EffectResult,
+    *,
+    origin_id: str | None,
+) -> AppliedCondition:
     source_ref = effect.data.get("source_ref")
     source_label = effect.data.get("source_label")
     if not isinstance(source_ref, str) or not isinstance(source_label, str):
@@ -59,6 +74,8 @@ def condition_from_effect(effect: EffectResult) -> AppliedCondition:
     expires_on_creature_ref = effect.data.get("expires_on_creature_ref")
     expires_on_round = effect.data.get("expires_on_round")
     metadata = effect.data.get("metadata")
+    source_kind = effect.data.get("source_kind", "creature")
+    definition_id = effect.data.get("definition_id")
     return build_applied_condition(
         condition=Condition(_required_condition_name(effect)),
         source_ref=source_ref,
@@ -73,6 +90,11 @@ def condition_from_effect(effect: EffectResult) -> AppliedCondition:
             expires_on_round if isinstance(expires_on_round, int) else None
         ),
         metadata=metadata if isinstance(metadata, dict) else None,
+        source_kind=EffectSourceKind(str(source_kind)),
+        definition_id=(
+            definition_id if isinstance(definition_id, str) else source_ref
+        ),
+        origin_id=origin_id,
     )
 
 

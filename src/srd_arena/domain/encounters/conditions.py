@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from ..creatures import is_two_sizes_smaller
-from ..effects.conditions import AppliedCondition, Condition
+from ..effects.conditions import (
+    AppliedCondition,
+    Condition,
+    build_applied_condition,
+)
 from ..effects.runtime import (
     CreatureRelationship,
     RelationshipKind,
@@ -15,29 +20,83 @@ if TYPE_CHECKING:
     from .encounter import EncounterState
 
 
+@dataclass(frozen=True)
+class ConditionRejection:
+    condition: Condition
+    reason: str
+
+
+@dataclass(frozen=True)
+class ConditionApplicationResult:
+    requested_condition: Condition
+    applied: tuple[AppliedCondition, ...] = ()
+    rejections: tuple[ConditionRejection, ...] = ()
+
+    @property
+    def accepted(self) -> bool:
+        return any(
+            applied.condition is self.requested_condition
+            for applied in self.applied
+        )
+
+
 def apply_condition(
     state: EncounterState,
     applied: AppliedCondition,
-) -> None:
+) -> ConditionApplicationResult:
+    target = state.creatures[applied.target_ref].creature
+    if applied.condition in target.statistics.condition_immunities:
+        return ConditionApplicationResult(
+            requested_condition=applied.condition,
+            rejections=(
+                ConditionRejection(applied.condition, "condition_immunity"),
+            ),
+        )
     state.conditions = [
         existing
         for existing in state.conditions
         if not condition_replaces(existing, applied)
     ]
     state.conditions.append(applied)
+    consequences: list[AppliedCondition] = [applied]
+    if applied.condition is Condition.UNCONSCIOUS:
+        prone = build_applied_condition(
+            condition=Condition.PRONE,
+            source_ref=applied.source_ref or applied.identity.source.definition_id,
+            source_label=applied.source_label,
+            target_ref=applied.target_ref,
+            source_kind=applied.identity.source.kind,
+            definition_id=applied.identity.source.definition_id,
+            origin_id=applied.identity.source.origin_id,
+        )
+        prone_result = apply_condition(state, prone)
+        consequences.extend(prone_result.applied)
+        rejections = prone_result.rejections
+    else:
+        rejections = ()
+    return ConditionApplicationResult(
+        requested_condition=applied.condition,
+        applied=tuple(consequences),
+        rejections=rejections,
+    )
 
 
 def apply_grapple(
     state: EncounterState,
     applied: AppliedCondition,
-) -> None:
+) -> ConditionApplicationResult:
     if applied.condition is not Condition.GRAPPLED:
         raise ValueError("A grapple relationship requires Grappled.")
     source_ref = applied.source_ref
     if source_ref is None:
         raise ValueError("A grapple relationship requires a creature source.")
-    apply_condition(state, applied)
-    relationship_id = f"relationship:grappling:{source_ref}:{applied.target_ref}"
+    result = apply_condition(state, applied)
+    if not result.accepted:
+        return result
+    relationship_id = (
+        f"relationship:grappling:{applied.identity.source.origin_id}:"
+        f"{applied.target_ref}"
+    )
     relationship = CreatureRelationship(
         identity=RuntimeStateIdentity(
             id=relationship_id,
@@ -61,6 +120,7 @@ def apply_grapple(
         )
     ]
     state.relationships.append(relationship)
+    return result
 
 
 def remove_condition(
@@ -185,11 +245,4 @@ def condition_replaces(
     existing: AppliedCondition,
     applied: AppliedCondition,
 ) -> bool:
-    if (
-        existing.condition is not applied.condition
-        or existing.target_ref != applied.target_ref
-    ):
-        return False
-    if existing.condition is Condition.GRAPPLED:
-        return existing.source_ref == applied.source_ref
-    return True
+    return existing.id == applied.id

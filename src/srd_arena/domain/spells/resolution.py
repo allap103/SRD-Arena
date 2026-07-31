@@ -112,6 +112,8 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
                     "condition": "blinded",
                     "source_ref": context.source_ref,
                     "source_label": creature.name,
+                    "source_kind": "spell",
+                    "definition_id": spell.id,
                     "expires_on_creature_ref": context.source_ref,
                     "expires_on_round": context.current_round + 1,
                     "target_label": target.target_label,

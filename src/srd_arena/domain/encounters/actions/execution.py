@@ -6,7 +6,7 @@ from ...creatures import Creature
 from ...creatures import can_grapple
 from ...rolls.dice import resolve_d20
 from ...effects.results import EffectResult
-from ...effects.application import condition_from_effect
+from ...effects.application import condition_from_effect_with_origin
 from .attack_resolution import has_free_hand
 from ..behaviors import is_adjacent as _is_adjacent
 from ..models import EncounterAction, EncounterProgress
@@ -150,7 +150,7 @@ def resolve_grapple_action(
     progress.messages.append(("system", f"{actor.name} grapples {target_label}."))
     progress.messages.append(("system", f"{target_label} is grappled."))
     self._apply_grapple(
-        condition_from_effect(
+        condition_from_effect_with_origin(
             EffectResult(
                 kind="apply_condition",
                 target_ref=target_ref,
@@ -158,8 +158,11 @@ def resolve_grapple_action(
                     "condition": "grappled",
                     "source_ref": creature_ref,
                     "source_label": actor.name,
+                    "source_kind": "action",
+                    "definition_id": "grapple",
                 },
-            )
+            ),
+            origin_id=action_id,
         )
     )
     progress.events.append(
