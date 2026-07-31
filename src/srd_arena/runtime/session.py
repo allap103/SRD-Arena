@@ -1,5 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass
+from typing import Literal
 
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.encounters import EncounterDefinition
@@ -76,25 +77,35 @@ class Session:
         action_ids = [action.id for action in self._encounter_actions]
         if len(action_ids) != len(set(action_ids)):
             raise ValueError("Available encounter action IDs must be unique.")
-        action_details = [
-                ActionView(
-                    id=action.id,
-                    label=action.label,
-                    kind=action.kind,
-                    creature_ref=action.creature_ref,
-                    value=action.value,
-                    cost={
-                        "movement": action.cost.movement,
-                        "action": action.cost.action,
-                        "bonus_action": action.cost.bonus_action,
-                        "reaction": action.cost.reaction,
-                    },
-                    source_trigger_id=action.source_trigger_id,
-                    preferred_attack_type=action.preferred_attack_type,
-                    preferred_attack_name=action.preferred_attack_name,
+        decision = self.encounter_state.current_decision()
+        if (
+            decision.kind == "turn"
+            and self.encounter_state._creature_controller(
+                decision.creature_ref
+            )
+            == "external"
+        ):
+            candidates = self.encounter_state._creature_action_candidates(
+                decision.creature_ref
+            )
+            action_details = [
+                self._action_view(
+                    action,
+                    self.encounter_state.action_eligibility(action),
                 )
-            for action in self._encounter_actions
-        ]
+                for action in candidates
+            ]
+            action_details.extend(
+                self._unimplemented_stat_block_action_views(
+                    decision.creature_ref,
+                    candidates,
+                )
+            )
+        else:
+            action_details = [
+                self._action_view(action)
+                for action in self._encounter_actions
+            ]
 
         system_action_details = self._system_action_details()
         return SceneView(
@@ -102,6 +113,105 @@ class Session:
             scene_text=None,
             action_details=action_details + system_action_details,
         )
+
+    @staticmethod
+    def _action_view(action, eligibility=None) -> ActionView:
+        failures = eligibility.failures if eligibility is not None else ()
+        unimplemented = any(
+            failure.code == "unsupported_stat_block_mechanics"
+            for failure in failures
+        )
+        reasons = tuple(
+            dict.fromkeys(failure.message for failure in failures)
+        )
+        availability: Literal[
+            "available",
+            "unavailable",
+            "unimplemented",
+        ] = (
+            "unimplemented"
+            if unimplemented
+            else "unavailable"
+            if reasons
+            else "available"
+        )
+        return ActionView(
+            id=action.id,
+            label=action.label,
+            kind=action.kind,
+            creature_ref=action.creature_ref,
+            value=action.value,
+            cost={
+                "movement": action.cost.movement,
+                "action": action.cost.action,
+                "bonus_action": action.cost.bonus_action,
+                "reaction": action.cost.reaction,
+            },
+            enabled=availability == "available",
+            unavailable_reason=(
+                "\n".join(reasons) if reasons else None
+            ),
+            availability=availability,
+            unavailable_reasons=reasons,
+            source_trigger_id=action.source_trigger_id,
+            preferred_attack_type=action.preferred_attack_type,
+            preferred_attack_name=action.preferred_attack_name,
+        )
+
+    def _unimplemented_stat_block_action_views(
+        self,
+        creature_ref: str,
+        candidates,
+    ) -> list[ActionView]:
+        assert self.encounter_state is not None
+        creature = self.encounter_state.creatures[creature_ref].creature
+        represented_names = {
+            action.preferred_attack_name
+            for action in candidates
+            if action.preferred_attack_name is not None
+        }
+        if any(action.kind == "multiattack" for action in candidates):
+            represented_names.update(
+                declaration.name
+                for declaration in creature.declared_stat_block_actions
+                if declaration.mechanics_type == "multiattack"
+            )
+        views: list[ActionView] = []
+        for index, declaration in enumerate(
+            creature.declared_stat_block_actions
+        ):
+            if declaration.name in represented_names:
+                continue
+            reason = (
+                "No structured mechanics are available for this action."
+                if declaration.mechanics_type is None
+                else (
+                    f"Actions using '{declaration.mechanics_type}' mechanics "
+                    "are not executable yet."
+                )
+            )
+            views.append(
+                ActionView(
+                    id=(
+                        f"{creature_ref}-unimplemented-stat-block-"
+                        f"{index}"
+                    ),
+                    label=declaration.display_name,
+                    kind="stat_block",
+                    creature_ref=creature_ref,
+                    cost=(
+                        {"bonus_action": 1}
+                        if declaration.section == "bonus_action"
+                        else {"action": 1}
+                    ),
+                    enabled=False,
+                    unavailable_reason=reason,
+                    availability="unimplemented",
+                    unavailable_reasons=(reason,),
+                    preferred_attack_name=declaration.name,
+                )
+            )
+        return views
 
     def choose(self, action_id: str) -> TurnResult:
         if self.pending_scene_transition is not None:

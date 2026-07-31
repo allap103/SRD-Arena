@@ -147,7 +147,7 @@ def test_stat_block_action_showcase_exposes_new_runtime_capabilities() -> None:
 
     avatar_actions = state._available_creature_actions("avatar")
     wyrmling_actions = state._available_creature_actions("blue_wyrmling")
-    assassin_actions = state._available_creature_actions("assassin")
+    assassin_actions = state._creature_action_candidates("assassin")
 
     assert scenario.display_name == "Executable Stat-Block Actions"
     assert any(
@@ -158,9 +158,10 @@ def test_stat_block_action_showcase_exposes_new_runtime_capabilities() -> None:
         action.preferred_attack_name == "Lightning Breath {@recharge 5}"
         for action in wyrmling_actions
     )
-    assert len(
-        [action for action in assassin_actions if action.kind == "multiattack"]
-    ) == 1
+    [assassin_multiattack] = [
+        action for action in assassin_actions if action.kind == "multiattack"
+    ]
+    assert assassin_multiattack.label == "Multiattack"
     assert state.creatures["assassin"].creature.multiattack is not None
     [assassin_slots] = (
         state.creatures["assassin"]
@@ -173,6 +174,28 @@ def test_stat_block_action_showcase_exposes_new_runtime_capabilities() -> None:
         {option.name for option in slot.options}
         == {"Shortsword", "Light Crossbow"}
         for slot in assassin_slots
+    )
+
+
+def test_unenriched_frostwing_breath_is_present_as_unimplemented() -> None:
+    session = Scenario(str(MULTIATTACK_SCENARIO_DIR)).create_session()
+    session.current_scene_id = "multiattack_showcase"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.initiative_order = ["player", "air_elemental", "aboleth"]
+    state.current_turn_index = 0
+
+    cold_breath = next(
+        action
+        for action in session.get_scene_view().action_details
+        if action.label == "Cold Breath"
+    )
+
+    assert cold_breath.enabled is False
+    assert cold_breath.availability == "unimplemented"
+    assert cold_breath.unavailable_reasons == (
+        "No structured mechanics are available for this action.",
     )
 
 
@@ -676,7 +699,7 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
     multiattack = next(action for action in state.available_actions() if action.kind == "multiattack")
     initial_actions = state.available_actions()
     assert multiattack.value is None
-    assert not any(action.kind == "attack" for action in initial_actions)
+    assert any(action.kind == "attack" for action in initial_actions)
 
     started = state.apply_action(multiattack)
 
@@ -712,9 +735,7 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
     ]
 
 
-def test_choice_multiattack_selects_each_attack_when_its_slot_is_resolved(
-    monkeypatch,
-) -> None:
+def test_partially_implemented_multiattack_is_reported_as_unimplemented() -> None:
     session = Scenario(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -736,41 +757,20 @@ def test_choice_multiattack_selects_each_attack_when_its_slot_is_resolved(
     state.active_position.y = 4
     state.creatures["goblin_1"].position.x = 4
     state.creatures["goblin_1"].position.y = 3
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
-
     [multiattack] = [
         action
-        for action in state.available_actions()
+        for action in state._creature_action_candidates(
+            state.current_decision().creature_ref
+        )
         if action.kind == "multiattack"
     ]
-    state.apply_action(multiattack)
+    eligibility = state.action_eligibility(multiattack)
 
-    assert len(state.active_creature_state.pending_multiattack) == 3
-    first_slot_actions = [
-        action
-        for action in state.available_actions()
-        if action.kind == "attack" and action.value == "goblin_1"
-    ]
-    assert {
-        action.preferred_attack_name for action in first_slot_actions
-    } == {"Shortsword", "Light Crossbow"}
-
-    shortsword = next(
-        action
-        for action in first_slot_actions
-        if action.preferred_attack_name == "Shortsword"
+    assert eligibility.allowed is False
+    assert eligibility.failures[-1].code == (
+        "unsupported_stat_block_mechanics"
     )
-    state.apply_action(shortsword)
-
-    assert len(state.active_creature_state.pending_multiattack) == 2
-    assert {
-        action.preferred_attack_name
-        for action in state.available_actions()
-        if action.kind == "attack" and action.value == "goblin_1"
-    } == {"Shortsword", "Light Crossbow"}
+    assert "Shortsword" in eligibility.failures[-1].message
 
 
 def test_multiattack_showcase_loads_enriched_creatures() -> None:
@@ -1905,7 +1905,13 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
     assert session.encounter_state is not None
     assert session.encounter_state.active_bonus_action_available is False
     assert session.decision_creature.feature_uses_remaining["second_wind"] == 1
-    assert "Second Wind" not in _action_labels(session)
+    second_wind = next(
+        action
+        for action in session.get_scene_view().action_details
+        if action.label == "Second Wind"
+    )
+    assert second_wind.availability == "unavailable"
+    assert second_wind.enabled is False
     event = next(event for event in result.events if event.type == "feature_used")
     assert event.data["feature_id"] == "second_wind"
     assert event.data["feature_name"] == "Second Wind"
@@ -1929,7 +1935,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable(
     presentation = build_session_presentation(session)
 
     assert presentation.encounter is not None
-    assert "Second Wind" not in _action_labels(session)
+    assert "Second Wind" in _action_labels(session)
     feature_actions = {action.label: action for action in presentation.encounter.feature_actions}
     assert set(feature_actions) == {"Second Wind", "Action Surge"}
     assert feature_actions["Second Wind"].enabled is False
@@ -2085,6 +2091,62 @@ def test_attack_sources_have_distinct_board_targeting_modes() -> None:
     assert GameWindow._target_mode_label(window, shortbow) == "Shortbow"
 
 
+def test_unavailable_button_tooltip_lists_all_reasons() -> None:
+    class Button:
+        def __init__(self) -> None:
+            self.enabled = True
+            self.properties = {}
+            self.tooltip = ""
+
+        def setProperty(self, name, value) -> None:
+            self.properties[name] = value
+
+        def setEnabled(self, enabled) -> None:
+            self.enabled = enabled
+
+        def setToolTip(self, tooltip) -> None:
+            self.tooltip = tooltip
+
+    button = Button()
+    actions = [
+        ActionView(
+            id="rend-target-1",
+            label="Rend",
+            kind="attack",
+            creature_ref="dragon",
+            enabled=False,
+            availability="unavailable",
+            unavailable_reasons=(
+                "No Action remains.",
+                "The target is out of range.",
+            ),
+        ),
+        ActionView(
+            id="rend-target-2",
+            label="Rend",
+            kind="attack",
+            creature_ref="dragon",
+            enabled=False,
+            availability="unavailable",
+            unavailable_reasons=(
+                "No Action remains.",
+                "The target is not available.",
+            ),
+        ),
+    ]
+
+    GameWindow._configure_action_button(button, actions)
+
+    assert button.enabled is False
+    assert button.properties["availability"] == "unavailable"
+    assert button.tooltip == (
+        "Unavailable:\n"
+        "• No Action remains.\n"
+        "• The target is out of range.\n"
+        "• The target is not available."
+    )
+
+
 @pytest.mark.parametrize(
     ("attacks_available", "actions", "expected"),
     [
@@ -2197,7 +2259,13 @@ def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
     session.choose(attack_index)
 
     assert session.encounter_state.active_action_available is False
-    assert not any(action.kind == "attack" for action in session.get_scene_view().action_details)
+    attacks = [
+        action
+        for action in session.get_scene_view().action_details
+        if action.kind == "attack"
+    ]
+    assert attacks
+    assert all(action.availability == "unavailable" for action in attacks)
 
     wait_index = _action_id_by_label(session, "Wait")
     session.choose(wait_index)

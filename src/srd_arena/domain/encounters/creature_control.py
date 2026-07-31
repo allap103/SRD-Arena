@@ -40,6 +40,23 @@ def available_creature_actions(
     *,
     include_attack_alternatives: bool = False,
 ) -> list[EncounterAction]:
+    return [
+        action
+        for action in creature_action_candidates(
+            self,
+            creature_ref,
+            include_attack_alternatives=include_attack_alternatives,
+        )
+        if action_eligibility(self, creature_ref, action).allowed
+    ]
+
+
+def creature_action_candidates(
+    self: EncounterState,
+    creature_ref: CreatureRef,
+    *,
+    include_attack_alternatives: bool = False,
+) -> list[EncounterAction]:
     enemy = self.creatures[creature_ref]
     movement_cost = self._movement_cost_for(creature_ref)
     if enemy.movement_remaining is None:
@@ -58,7 +75,6 @@ def available_creature_actions(
                 )
             )
     multiattack_plans = executable_multiattack_slot_plans(enemy.creature)
-    multiattack_available = bool(multiattack_plans)
     for plan_index, slots in enumerate(multiattack_plans):
         plan_summary = [
             "/".join(invocation.name for invocation in slot.options)
@@ -85,18 +101,16 @@ def available_creature_actions(
                 cost=ActionCost(action=1),
             )
         )
-    for target_ref in self._living_creature_refs():
-        if target_ref == creature_ref:
-            continue
-        available_sources = (
-            attack_sources(enemy.creature, self.item_templates)
-            if (
-                not multiattack_available
-                or enemy.pending_multiattack
-                or include_attack_alternatives
-            )
-            else []
-        )
+    opponent_refs = [
+        target_ref
+        for target_ref in self._living_creature_refs()
+        if self._creatures_are_opponents(creature_ref, target_ref)
+    ]
+    attack_target_refs: list[str | None] = (
+        list(opponent_refs) if opponent_refs else [None]
+    )
+    for target_ref in attack_target_refs:
+        available_sources = attack_sources(enemy.creature, self.item_templates)
         if enemy.pending_multiattack:
             option_names = {
                 invocation.name
@@ -110,14 +124,19 @@ def available_creature_actions(
         for source in available_sources:
             for attack_type in source.attack_modes:
                 source_slug = source.name.lower().replace(" ", "-")
+                target_slug = (
+                    target_ref.replace(":", "-")
+                    if isinstance(target_ref, str)
+                    else "no-target"
+                )
                 actions.append(
                     EncounterAction(
-                        source.name,
+                        _stat_block_display_name(enemy.creature, source.name),
                         "attack",
                         target_ref,
                         id=(
                             f"{creature_ref}-attack-{source_slug}-{attack_type}-"
-                            f"{target_ref.replace(':', '-')}"
+                            f"{target_slug}"
                         ),
                         creature_ref=creature_ref,
                         cost=ActionCost(
@@ -135,7 +154,10 @@ def available_creature_actions(
                 "Grapple",
                 "grapple",
                 target_ref,
-                id=f"{creature_ref}-grapple-{target_ref.replace(':', '-')}",
+                id=(
+                    f"{creature_ref}-grapple-"
+                    f"{target_ref.replace(':', '-') if isinstance(target_ref, str) else 'no-target'}"
+                ),
                 creature_ref=creature_ref,
                 cost=ActionCost(action=1 if enemy.attacks_remaining == 0 else 0),
             )
@@ -146,27 +168,43 @@ def available_creature_actions(
             (AutomaticActionDefinition, SavingThrowActionDefinition),
         ):
             continue
-        target_refs = (
+        targets: list[str | tuple[float, float] | None] = (
             [creature_ref]
             if definition.target.kind == "self"
+            else [
+                (
+                    enemy.position.x + 1.5,
+                    enemy.position.y + 0.5,
+                )
+            ]
+            if definition.target.kind == "area"
             else [
                 target_ref
                 for target_ref in self._living_creature_refs()
                 if self._creatures_are_opponents(creature_ref, target_ref)
             ]
-            if definition.target.kind in {"creature", "area"}
+            if definition.target.kind == "creature"
             else []
         )
-        for target_ref in target_refs:
+        if definition.target.kind == "creature" and not targets:
+            targets = [None]
+        for target in targets:
             source_slug = definition.name.lower().replace(" ", "-")
+            target_slug = (
+                target.replace(":", "-")
+                if isinstance(target, str)
+                else "aim"
+                if isinstance(target, tuple)
+                else "no-target"
+            )
             actions.append(
                 EncounterAction(
-                    definition.name,
+                    _stat_block_display_name(enemy.creature, definition.name),
                     "stat_block",
-                    target_ref,
+                    target,
                     id=(
                         f"{creature_ref}-stat-block-{source_slug}-"
-                        f"{target_ref.replace(':', '-')}"
+                        f"{target_slug}"
                     ),
                     creature_ref=creature_ref,
                     preferred_attack_name=definition.name,
@@ -176,21 +214,20 @@ def available_creature_actions(
     actions.extend(self._available_feature_actions(enemy.creature))
     actions.extend(self._available_spell_actions(enemy.creature))
     actions.extend(available_escape_actions(self, creature_ref))
-    if enemy.bonus_action_available:
-        for item in healing_potions_in_inventory(
-            enemy.creature,
-            self.item_templates,
-        ):
-            actions.append(
-                EncounterAction(
-                    f"Drink {item.name}",
-                    "utilize",
-                    item.id,
-                    id=f"{creature_ref}-utilize-drink-{item.id}",
-                    creature_ref=creature_ref,
-                    cost=ActionCost(bonus_action=1),
-                )
+    for item in healing_potions_in_inventory(
+        enemy.creature,
+        self.item_templates,
+    ):
+        actions.append(
+            EncounterAction(
+                f"Drink {item.name}",
+                "utilize",
+                item.id,
+                id=f"{creature_ref}-utilize-drink-{item.id}",
+                creature_ref=creature_ref,
+                cost=ActionCost(bonus_action=1),
             )
+        )
     actions.append(
         EncounterAction(
             "Wait",
@@ -199,7 +236,18 @@ def available_creature_actions(
             creature_ref=creature_ref,
         )
     )
-    return [action for action in actions if action_eligibility(self, creature_ref, action).allowed]
+    return actions
+
+
+def _stat_block_display_name(creature, name: str) -> str:
+    return next(
+        (
+            declaration.display_name
+            for declaration in creature.declared_stat_block_actions
+            if declaration.name == name
+        ),
+        name,
+    )
 
 
 def execute_creature_action(

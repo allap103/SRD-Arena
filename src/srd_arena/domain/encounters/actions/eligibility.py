@@ -9,6 +9,7 @@ from ...creatures import (
     can_grapple,
 )
 from ...geometry import Position
+from ...spells.rules import parse_spell_action_value
 from ..behaviors import DIRECTION_DELTAS, chebyshev_distance
 from ..models import CreatureRef, EncounterAction
 from .attack_resolution import attack_range_squares, has_free_hand
@@ -178,6 +179,32 @@ class AttackRule:
                     "multiattack_unavailable",
                     "No executable Multiattack is available.",
                 )
+            unsupported = next(
+                (
+                    (invocation.name, issue)
+                    for slot in plans[selected_plan]
+                    for invocation in slot.options
+                    if (
+                        definition
+                        := actor.creature.stat_block_actions.get(
+                            invocation.name
+                        )
+                    )
+                    is not None
+                    if (
+                        issue
+                        := stat_block_action_runtime_issue(definition)
+                    )
+                    is not None
+                ),
+                None,
+            )
+            if unsupported is not None:
+                name, issue = unsupported
+                return EligibilityFailure(
+                    "unsupported_stat_block_mechanics",
+                    f"{name}: {issue}",
+                )
             return None
         if actor.actions_remaining <= 0 and actor.attacks_remaining <= 0:
             return EligibilityFailure("action_spent", "No attack remains.")
@@ -190,6 +217,17 @@ class AttackRule:
             if actor.pending_multiattack
             else action.preferred_attack_name
         )
+        if isinstance(preferred_attack_name, str):
+            definition = actor.creature.stat_block_actions.get(
+                preferred_attack_name
+            )
+            if definition is not None:
+                runtime_issue = stat_block_action_runtime_issue(definition)
+                if runtime_issue is not None:
+                    return EligibilityFailure(
+                        "unsupported_stat_block_mechanics",
+                        runtime_issue,
+                    )
         if actor.pending_multiattack and preferred_attack_name not in {
             invocation.name
             for invocation in actor.pending_multiattack[0].options
@@ -335,6 +373,78 @@ class StatBlockActionRule:
         return None
 
 
+class FeatureActionRule:
+    def check(
+        self,
+        state: EncounterState,
+        actor_ref: CreatureRef,
+        action: EncounterAction,
+    ) -> EligibilityFailure | None:
+        if action.kind != "feature" or not isinstance(action.value, str):
+            return None
+        actor = state.creatures[actor_ref].creature
+        definition = actor.combat_profile.feature_actions.get(action.value)
+        if definition is None:
+            return EligibilityFailure(
+                "feature_unavailable",
+                "This feature action is not executable.",
+            )
+        if actor.feature_uses_remaining.get(action.value, 0) <= 0:
+            return EligibilityFailure(
+                "resource_spent",
+                f"No uses of {definition.label} remain.",
+            )
+        return None
+
+
+class SpellActionRule:
+    def check(
+        self,
+        state: EncounterState,
+        actor_ref: CreatureRef,
+        action: EncounterAction,
+    ) -> EligibilityFailure | None:
+        if action.kind != "spell" or not isinstance(action.value, str):
+            return None
+        actor = state.creatures[actor_ref].creature
+        if actor.spellcasting is None:
+            return EligibilityFailure(
+                "spellcasting_unavailable",
+                "This creature cannot cast spells.",
+            )
+        spell_id, target_ref, aim_point = parse_spell_action_value(action.value)
+        spell = next(
+            (
+                known
+                for known in actor.spellcasting.learned_spells
+                if known.id == spell_id
+            ),
+            None,
+        )
+        if spell is None:
+            return EligibilityFailure(
+                "spell_unavailable",
+                "This spell is not known.",
+            )
+        reason = state._spell_cast_block_reason(
+            actor.spellcasting,
+            spell,
+            action.cost,
+        )
+        if reason is not None:
+            return EligibilityFailure("spell_blocked", reason)
+        if (
+            spell.geometry_mode not in {"directional_area", "point_area"}
+            and target_ref is None
+            and aim_point is None
+        ):
+            return EligibilityFailure(
+                "target_unavailable",
+                "No valid spell target is available.",
+            )
+        return None
+
+
 ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
     ActorOwnershipRule(),
     ActorReadyRule(),
@@ -343,6 +453,8 @@ ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
     AttackRule(),
     GrappleRule(),
     StatBlockActionRule(),
+    FeatureActionRule(),
+    SpellActionRule(),
 )
 
 

@@ -669,6 +669,7 @@ class GameWindow(QMainWindow):
         targetable_refs = {
             target_ref
             for action in selected_targetable_actions.values()
+            if action.enabled
             if (target_ref := self._target_creature_ref(action)) is not None
         }
         self.battlefield_widget.set_targeting_state(targetable_refs)
@@ -1162,9 +1163,9 @@ class GameWindow(QMainWindow):
             button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
             button.setCheckable(True)
             button.setChecked(target_mode == self._pending_target_mode)
-            if not action.enabled:
-                button.setEnabled(False)
-                button.setToolTip(action.unavailable_reason or "")
+            mode_actions = self._actions_for_target_mode(target_mode)
+            self._configure_action_button(button, mode_actions)
+            if not button.isEnabled():
                 return button
             button.clicked.connect(
                 lambda _checked=False, mode=target_mode: self._toggle_target_action(mode)
@@ -1173,14 +1174,61 @@ class GameWindow(QMainWindow):
 
         button = QPushButton(action.label)
         self._set_compact_button_text(button, action.label)
-        if not action.enabled:
-            button.setEnabled(False)
-            button.setToolTip(action.unavailable_reason or "")
+        self._configure_action_button(button, [action])
+        if not button.isEnabled():
             return button
         button.clicked.connect(
             lambda _checked=False, action_id=action.id: self._select_action(action_id)
         )
         return button
+
+    def _actions_for_target_mode(
+        self,
+        mode: TargetSelectionMode,
+    ) -> list[ActionView]:
+        if self._presentation is None or self._presentation.encounter is None:
+            return []
+        return [
+            action
+            for action in self._presentation.encounter.non_movement_actions
+            if self._target_mode_for_action(action) == mode
+        ]
+
+    @staticmethod
+    def _configure_action_button(
+        button: QPushButton,
+        actions: list[ActionView],
+    ) -> None:
+        availability = (
+            "available"
+            if any(action.enabled for action in actions)
+            else "unimplemented"
+            if any(
+                action.availability == "unimplemented"
+                for action in actions
+            )
+            else "unavailable"
+        )
+        reasons = tuple(
+            dict.fromkeys(
+                reason
+                for action in actions
+                for reason in action.unavailable_reasons
+            )
+        )
+        button.setProperty("availability", availability)
+        button.setEnabled(availability == "available")
+        if reasons and availability != "available":
+            heading = (
+                "Not implemented:"
+                if availability == "unimplemented"
+                else "Unavailable:"
+            )
+            button.setToolTip(
+                "\n".join(
+                    (heading, *(f"• {reason}" for reason in reasons))
+                )
+            )
 
     @staticmethod
     def _set_compact_button_text(button: QPushButton, label: str) -> None:
@@ -1341,7 +1389,7 @@ class GameWindow(QMainWindow):
         ).get(
             creature_ref
         )
-        if action is None:
+        if action is None or not action.enabled:
             return
         self._select_action(action.id)
 
@@ -1510,6 +1558,13 @@ class GameWindow(QMainWindow):
             return TargetSelectionMode(
                 kind=action.kind,
                 source_trigger_id=spell_id,
+            )
+        if action.kind == "stat_block" and self._is_area_stat_block_action(
+            action
+        ):
+            return TargetSelectionMode(
+                kind=action.kind,
+                source_trigger_id=action.preferred_attack_name,
             )
         if self._target_creature_ref(action) is None:
             return None

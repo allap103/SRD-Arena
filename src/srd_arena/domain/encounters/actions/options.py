@@ -43,7 +43,7 @@ def available_feature_actions(
     creature_ref = self.current_decision().creature_ref
     actions: list[EncounterAction] = []
     for feature_id, definition in creature.combat_profile.feature_actions.items():
-        if not self._feature_action_available(creature, definition):
+        if definition.economy == "reaction":
             continue
         action_cost = ActionCost(
             bonus_action=1 if definition.economy == "bonus_action" else 0,
@@ -74,12 +74,7 @@ def available_spell_actions(
     actions: list[EncounterAction] = []
     for spell in spellcasting.learned_spells:
         cost = self._spell_action_cost(spell)
-        if self._spell_cast_block_reason(spellcasting, spell, cost) is not None:
-            continue
         if spell.geometry_mode in {"directional_area", "point_area"}:
-            if not self._spell_action_targets(actor, spell):
-                if spell.geometry_mode == "directional_area":
-                    continue
             actions.append(
                 EncounterAction(
                     spell_action_label(spell, actor_ref=creature_ref),
@@ -91,18 +86,25 @@ def available_spell_actions(
                 )
             )
             continue
-        for target in self._spell_action_targets(actor, spell):
+        targets = self._spell_action_targets(actor, spell)
+        for target in targets:
             actions.append(
                 EncounterAction(
-                    spell_action_label(
-                        spell,
-                        actor_ref=creature_ref,
-                        target_ref=target.target_ref,
-                        target_label=target.target_label,
-                    ),
+                    spell_action_label(spell, actor_ref=creature_ref),
                     "spell",
                     spell_action_value(spell.id, target.target_ref),
                     id=spell_action_id(spell, target_ref=target.target_ref),
+                    creature_ref=creature_ref,
+                    cost=cost,
+                )
+            )
+        if not targets:
+            actions.append(
+                EncounterAction(
+                    spell_action_label(spell, actor_ref=creature_ref),
+                    "spell",
+                    spell_action_value(spell.id),
+                    id=spell_action_id(spell),
                     creature_ref=creature_ref,
                     cost=cost,
                 )

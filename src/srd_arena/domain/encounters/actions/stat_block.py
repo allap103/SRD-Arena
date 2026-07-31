@@ -7,6 +7,7 @@ from ...creatures.stat_block_actions import (
     ActionEffect,
     AutomaticActionDefinition,
     AttackActionDefinition,
+    ConditionEffect,
     DamageEffect,
     SavingThrowActionDefinition,
 )
@@ -81,7 +82,26 @@ def stat_block_action_resource_available(
 def stat_block_action_runtime_issue(
     definition: object,
 ) -> str | None:
-    if isinstance(definition, AutomaticActionDefinition):
+    if isinstance(definition, AttackActionDefinition):
+        unsupported = next(
+            (
+                effect
+                for effect in definition.hit
+                if not isinstance(effect, DamageEffect)
+                and not (
+                    isinstance(effect, ConditionEffect)
+                    and effect.condition == "grappled"
+                )
+            ),
+            None,
+        )
+        if unsupported is None:
+            return None
+        return (
+            f"{type(unsupported).__name__} is not executable for "
+            "attack actions yet."
+        )
+    elif isinstance(definition, AutomaticActionDefinition):
         effects = definition.effects
     elif isinstance(definition, SavingThrowActionDefinition):
         if len(definition.failure) != 1:

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Literal
 
 from srd_arena.domain.encounters.models import CombatEvent
 
@@ -24,6 +25,12 @@ class ActionView:
     cost: dict[str, int] = field(default_factory=dict)
     enabled: bool = True
     unavailable_reason: str | None = None
+    availability: Literal[
+        "available",
+        "unavailable",
+        "unimplemented",
+    ] = "available"
+    unavailable_reasons: tuple[str, ...] = ()
     source_trigger_id: str | None = None
     preferred_attack_type: str | None = None
     preferred_attack_name: str | None = None

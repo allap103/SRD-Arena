@@ -248,6 +248,10 @@ def _build_unavailable_feature_action(
         cost=cost,
         enabled=False,
         unavailable_reason="This feature is not currently available.",
+        availability="unavailable",
+        unavailable_reasons=(
+            "This feature is not currently available.",
+        ),
     )
 
 

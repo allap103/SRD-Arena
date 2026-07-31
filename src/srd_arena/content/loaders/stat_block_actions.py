@@ -1,4 +1,5 @@
 import re
+from typing import Literal, cast
 
 from srd_arena.content.schemas import action_mechanics as schema
 from srd_arena.content.schemas.bestiary import (
@@ -66,6 +67,44 @@ def build_stat_block_actions(
             if fallback is not None:
                 definitions[action.name] = fallback
     return definitions
+
+
+def build_declared_stat_block_actions(
+    stat_block: BestiaryMonsterSchema | None,
+) -> tuple[domain.DeclaredStatBlockAction, ...]:
+    if stat_block is None:
+        return ()
+    declarations: list[domain.DeclaredStatBlockAction] = []
+    for section, actions in (
+        ("action", stat_block.action),
+        ("bonus_action", stat_block.bonus),
+    ):
+        declarations.extend(
+            domain.DeclaredStatBlockAction(
+                name=action.name,
+                display_name=_display_name(action.name),
+                description="\n".join(
+                    entry
+                    for entry in action.entries
+                    if isinstance(entry, str)
+                ),
+                mechanics_type=(
+                    action.mechanics.type
+                    if action.mechanics is not None
+                    else None
+                ),
+                section=cast(
+                    Literal["action", "bonus_action"],
+                    section,
+                ),
+            )
+            for action in actions
+        )
+    return tuple(declarations)
+
+
+def _display_name(name: str) -> str:
+    return re.sub(r"\s*\{@[^}]+\}", "", name).strip()
 
 
 def _attack_definition(

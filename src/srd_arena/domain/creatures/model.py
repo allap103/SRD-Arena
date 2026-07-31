@@ -10,7 +10,7 @@ from ..effects.triggered import TriggeredEffect
 from .multiattack import Multiattack
 from .spellcasting import Spellcasting
 from .statistics import CreatureStatistics
-from .stat_block_actions import StatBlockActionDefinition
+from .stat_block_actions import DeclaredStatBlockAction, StatBlockActionDefinition
 
 @dataclass
 class Creature:
@@ -33,6 +33,7 @@ class Creature:
     stat_block_actions: dict[str, StatBlockActionDefinition] = field(
         default_factory=dict
     )
+    declared_stat_block_actions: tuple[DeclaredStatBlockAction, ...] = ()
     stat_block_action_resources: dict[str, int] = field(default_factory=dict)
     spellcasting: Spellcasting | None = None
     statistics: CreatureStatistics = field(default_factory=CreatureStatistics)

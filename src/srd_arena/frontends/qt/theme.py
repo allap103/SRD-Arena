@@ -90,6 +90,24 @@ QPushButton:disabled {
     border-color: #5e4b36;
 }
 
+QPushButton[availability="unimplemented"] {
+    background: qlineargradient(
+        x1: 0, y1: 0, x2: 1, y2: 1,
+        stop: 0 #6f2727,
+        stop: 0.18 #6f2727,
+        stop: 0.19 #401d1d,
+        stop: 0.36 #401d1d,
+        stop: 0.37 #6f2727,
+        stop: 0.54 #6f2727,
+        stop: 0.55 #401d1d,
+        stop: 0.72 #401d1d,
+        stop: 0.73 #6f2727,
+        stop: 1 #6f2727
+    );
+    color: #f0c4c4;
+    border-color: #a74b4b;
+}
+
 QPushButton#sidebarButton {
     text-align: left;
     padding-left: 16px;

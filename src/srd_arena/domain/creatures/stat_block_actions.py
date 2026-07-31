@@ -3,6 +3,15 @@ from typing import Literal
 
 
 @dataclass(frozen=True)
+class DeclaredStatBlockAction:
+    name: str
+    display_name: str
+    description: str
+    mechanics_type: str | None = None
+    section: Literal["action", "bonus_action"] = "action"
+
+
+@dataclass(frozen=True)
 class SizeRequirement:
     maximum: str | None = None
     minimum: str | None = None
