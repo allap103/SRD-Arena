@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from ..effects.conditions import Condition
+
 
 @dataclass(frozen=True)
 class CreatureStatistics:
@@ -12,3 +14,4 @@ class CreatureStatistics:
     senses: tuple[str, ...] = ()
     passive_perception: int | None = None
     languages: tuple[str, ...] = ()
+    condition_immunities: frozenset[Condition] = frozenset()

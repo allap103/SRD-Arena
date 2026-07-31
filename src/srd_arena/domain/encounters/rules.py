@@ -24,7 +24,12 @@ class CombatRules:
         state: EncounterState,
         creature_ref: CreatureRef,
     ) -> EffectiveConditionSet:
-        return effective_conditions(state.conditions_for(creature_ref))
+        return effective_conditions(
+            state.conditions_for(creature_ref),
+            state.creatures[
+                creature_ref
+            ].creature.statistics.condition_immunities,
+        )
 
     def action_eligibility(
         self,

@@ -31,6 +31,9 @@ from srd_arena.domain.creatures import (
     SpellcastingActionDefinition,
 )
 from srd_arena.domain.encounters.actions.attack_resolution import resolve_attack
+from srd_arena.domain.effects.conditions import Condition
+from srd_arena.domain.effects.conditions import build_applied_condition
+from srd_arena.domain.effects.condition_rules import effective_conditions
 
 
 def test_bundled_bestiary_loads_as_typed_records() -> None:
@@ -122,6 +125,37 @@ def test_goblin_actions_build_from_typed_bestiary_mechanics() -> None:
             requirements=(AttackRollModeRequirement("advantage"),),
         ),
     )
+
+
+def test_black_pudding_loads_condition_immunities() -> None:
+    catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
+    pudding = build_creature(
+        CreatureSchema.model_validate(
+            {
+                "id": "black_pudding",
+                "stat_block": {"name": "Black Pudding", "source": "XMM"},
+            }
+        ),
+        bestiary=catalog,
+    )
+
+    assert Condition.PRONE in pudding.statistics.condition_immunities
+    assert Condition.UNCONSCIOUS not in pudding.statistics.condition_immunities
+    unconscious = build_applied_condition(
+        condition=Condition.UNCONSCIOUS,
+        source_ref="spellcaster",
+        source_label="Spellcaster",
+        target_ref=pudding.id,
+    )
+
+    effective = effective_conditions(
+        (unconscious,),
+        pudding.statistics.condition_immunities,
+    )
+
+    assert effective.has(Condition.UNCONSCIOUS)
+    assert effective.has(Condition.INCAPACITATED)
+    assert effective.has(Condition.PRONE) is False
 
 
 def test_goblin_conditional_damage_requires_resolved_advantage() -> None:

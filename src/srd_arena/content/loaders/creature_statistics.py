@@ -2,6 +2,7 @@ from fractions import Fraction
 
 from srd_arena.content.schemas.bestiary import BestiaryMonsterSchema
 from srd_arena.domain.creatures import CreatureStatistics
+from srd_arena.domain.effects.conditions import Condition
 
 ABILITY_NAMES = {
     "str": "strength",
@@ -36,6 +37,11 @@ def build_creature_statistics(
         senses=tuple(stat_block.senses),
         passive_perception=stat_block.passive,
         languages=tuple(stat_block.languages),
+        condition_immunities=frozenset(
+            Condition(condition.casefold())
+            for condition in stat_block.condition_immune
+            if isinstance(condition, str)
+        ),
     )
 
 

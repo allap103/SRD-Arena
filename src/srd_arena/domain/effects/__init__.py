@@ -9,6 +9,7 @@ from .condition_rules import (
     EffectiveCondition,
     EffectiveConditionSet,
     EffectiveTrait,
+    SuppressedCondition,
 )
 from .results import EffectResult
 from .runtime import (
@@ -30,6 +31,7 @@ __all__ = [
     "EffectiveCondition",
     "EffectiveConditionSet",
     "EffectiveTrait",
+    "SuppressedCondition",
     "EffectSource",
     "EffectSourceKind",
     "OngoingEffect",

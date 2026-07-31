@@ -172,6 +172,18 @@ def _export_creature(
             }
             for trait in effective.traits
         ],
+        "suppressed_conditions": [
+            {
+                "condition": condition.condition.value,
+                "provider_ids": list(condition.provider_ids),
+                "reason": condition.reason,
+            }
+            for condition in effective.suppressed_conditions
+        ],
+        "condition_immunities": sorted(
+            condition.value
+            for condition in creature.statistics.condition_immunities
+        ),
         "spell_slots_max": (
             {str(level): slots for level, slots in spellcasting.spell_slots_max.items()}
             if spellcasting is not None

@@ -38,6 +38,12 @@ class BestiaryChallengeRatingSchema(SourceModel):
     cr: str
 
 
+class BestiaryConditionalImmunitySchema(SourceModel):
+    condition_immune: list[str] = Field(alias="conditionImmune")
+    note: str | None = None
+    conditional: bool = Field(default=True, alias="cond")
+
+
 class BestiaryConditionalSpeedSchema(SourceModel):
     number: int
     condition: str | None = None
@@ -115,6 +121,10 @@ class BestiaryMonsterSchema(SourceModel):
     senses: list[str] = Field(default_factory=list)
     passive: int | None = None
     languages: list[str] = Field(default_factory=list)
+    condition_immune: list[str | BestiaryConditionalImmunitySchema] = Field(
+        default_factory=list,
+        alias="conditionImmune",
+    )
     strength: int = Field(default=10, alias="str")
     dexterity: int = Field(default=10, alias="dex")
     constitution: int = Field(default=10, alias="con")

@@ -33,7 +33,12 @@ CONDITION_DEFINITIONS: dict[Condition, ConditionDefinition] = {
         traits=frozenset({CombatTrait.SPEED_ZERO}),
     ),
     Condition.UNCONSCIOUS: ConditionDefinition(
-        implied_conditions=frozenset({Condition.INCAPACITATED}),
+        implied_conditions=frozenset(
+            {
+                Condition.INCAPACITATED,
+                Condition.PRONE,
+            }
+        ),
     ),
     Condition.GRAPPLED: ConditionDefinition(
         traits=frozenset({CombatTrait.SPEED_ZERO}),
@@ -54,9 +59,17 @@ class EffectiveTrait:
 
 
 @dataclass(frozen=True)
+class SuppressedCondition:
+    condition: Condition
+    provider_ids: tuple[str, ...]
+    reason: str
+
+
+@dataclass(frozen=True)
 class EffectiveConditionSet:
     conditions: tuple[EffectiveCondition, ...]
     traits: tuple[EffectiveTrait, ...]
+    suppressed_conditions: tuple[SuppressedCondition, ...] = ()
 
     def has(self, condition: Condition) -> bool:
         return any(entry.condition is condition for entry in self.conditions)
@@ -87,12 +100,24 @@ class EffectiveConditionSet:
 
 def effective_conditions(
     applied_conditions: tuple[AppliedCondition, ...],
+    condition_immunities: frozenset[Condition] = frozenset(),
 ) -> EffectiveConditionSet:
     condition_providers: dict[Condition, set[str]] = {}
     trait_providers: dict[CombatTrait, set[str]] = {}
+    suppressed_providers: dict[Condition, set[str]] = {}
     for applied in applied_conditions:
-        expanded = _condition_closure(applied.condition)
-        for condition in expanded:
+        pending = [applied.condition]
+        expanded: set[Condition] = set()
+        while pending:
+            condition = pending.pop()
+            if condition in expanded:
+                continue
+            expanded.add(condition)
+            if condition in condition_immunities:
+                suppressed_providers.setdefault(condition, set()).add(
+                    applied.id
+                )
+                continue
             condition_providers.setdefault(condition, set()).add(applied.id)
             definition = CONDITION_DEFINITIONS.get(
                 condition,
@@ -100,6 +125,7 @@ def effective_conditions(
             )
             for trait in definition.traits:
                 trait_providers.setdefault(trait, set()).add(applied.id)
+            pending.extend(definition.implied_conditions)
     return EffectiveConditionSet(
         conditions=tuple(
             EffectiveCondition(condition, tuple(sorted(provider_ids)))
@@ -115,21 +141,15 @@ def effective_conditions(
                 key=lambda item: item[0].value,
             )
         ),
+        suppressed_conditions=tuple(
+            SuppressedCondition(
+                condition,
+                tuple(sorted(provider_ids)),
+                "immunity",
+            )
+            for condition, provider_ids in sorted(
+                suppressed_providers.items(),
+                key=lambda item: item[0].value,
+            )
+        ),
     )
-
-
-def _condition_closure(condition: Condition) -> frozenset[Condition]:
-    expanded = {condition}
-    pending = [condition]
-    while pending:
-        current = pending.pop()
-        definition = CONDITION_DEFINITIONS.get(
-            current,
-            ConditionDefinition(),
-        )
-        for implied in definition.implied_conditions:
-            if implied in expanded:
-                continue
-            expanded.add(implied)
-            pending.append(implied)
-    return frozenset(expanded)
