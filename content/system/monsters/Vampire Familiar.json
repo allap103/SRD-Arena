@@ -54,13 +54,7 @@
     "necrotic"
   ],
   "conditionImmune": [
-    {
-      "conditionImmune": [
-        "charmed"
-      ],
-      "note": "(except from its vampire master)",
-      "cond": true
-    }
+    "charmed"
   ],
   "languages": [
     "Common plus one other language"

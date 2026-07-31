@@ -158,6 +158,26 @@ def test_black_pudding_loads_condition_immunities() -> None:
     assert effective.has(Condition.PRONE) is False
 
 
+def test_vampire_familiar_uses_unconditional_charmed_immunity() -> None:
+    catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
+    familiar = build_creature(
+        CreatureSchema.model_validate(
+            {
+                "id": "vampire_familiar",
+                "stat_block": {
+                    "name": "Vampire Familiar",
+                    "source": "XMM",
+                },
+            }
+        ),
+        bestiary=catalog,
+    )
+
+    assert familiar.statistics.condition_immunities == frozenset(
+        {Condition.CHARMED}
+    )
+
+
 def test_goblin_conditional_damage_requires_resolved_advantage() -> None:
     catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
     goblin = build_creature(

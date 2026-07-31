@@ -95,9 +95,10 @@ Some source records contain conditional notes:
 
 - An Archmage's Charmed immunity is present while Mind Blank is active. The
   spell, rather than the Archmage stat block, provides the runtime immunity.
-- A Vampire Familiar is immune to Charmed except when the applier is its
-  vampire master. This is a source-aware condition-immunity rule and is not
-  related to Vampire Bite eligibility.
+- Rules as written, a Vampire Familiar's Charmed immunity excludes effects from
+  its vampire master. SRD Arena intentionally treats this as unconditional
+  immunity because encounters between a familiar and its own master are outside
+  the supported scope. This deviation is recorded in `rules_deviations.md`.
 
 Conditional source notes are preserved by content loading but are not treated
 as unconditional static immunity.
