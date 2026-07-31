@@ -8,7 +8,8 @@ from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
 from .definitions import EncounterBehavior, EncounterDefinition
-from ..effects.conditions import Status
+from ..effects.conditions import AppliedCondition
+from ..effects.runtime import CreatureRelationship, OngoingEffect
 from ..geometry import GeometryConfig
 from ..rolls.dice import CheckResult, DicePoolResult
 from ..effects.triggered import TriggeredEffect
@@ -153,9 +154,7 @@ class EncounterCreatureState:
     actions_remaining: int = 1
     magic_actions_remaining: int = 1
     attacks_remaining: int = 0
-    pending_multiattack: list[MultiattackStep] = field(
-        default_factory=list
-    )
+    pending_multiattack: list[MultiattackStep] = field(default_factory=list)
     bonus_action_available: bool = True
 
     @property
@@ -246,7 +245,9 @@ class EncounterStateData:
     event_sequence: int = 1
     initiative_order: list[CreatureRef] = field(default_factory=list)
     initiative_entries: list[InitiativeEntry] = field(default_factory=list)
-    conditions: list[Status] = field(default_factory=list)
+    conditions: list[AppliedCondition] = field(default_factory=list)
+    ongoing_effects: list[OngoingEffect] = field(default_factory=list)
+    relationships: list[CreatureRelationship] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
     _action_selectors: dict[CreatureRef, ActionSelector] = field(

@@ -105,7 +105,7 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
         )
         effects.append(
             EffectResult(
-                kind="apply_status",
+                kind="apply_condition",
                 target_ref=target.target_ref,
                 data={
                     "status_name": "blinded",
@@ -167,7 +167,7 @@ def _resolve_lesser_restoration(context: SpellActionContext) -> CapabilityAction
         )
         effects.append(
             EffectResult(
-                kind="remove_status",
+                kind="remove_condition",
                 target_ref=target_ref,
                 data={"condition": removed_condition},
             )

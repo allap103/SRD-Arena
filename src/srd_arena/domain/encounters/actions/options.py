@@ -8,7 +8,13 @@ from ...creatures import Spellcasting
 from ..behaviors import (
     chebyshev_distance as _chebyshev_distance,
 )
-from ...geometry import AreaOfEffect, Vector2D, build_directional_area, build_radius_area, vector_between_positions
+from ...geometry import (
+    AreaOfEffect,
+    Vector2D,
+    build_directional_area,
+    build_radius_area,
+    vector_between_positions,
+)
 from ..models import ActionCost, EncounterAction
 from ...spells.definitions import Spell
 from ...spells.resolution import SpellTargetContext
@@ -35,6 +41,7 @@ def available_actions(self: EncounterState) -> list[EncounterAction]:
     if decision.kind == "reaction":
         return self._reaction_actions()
     return self._available_creature_actions(decision.creature_ref)
+
 
 def available_feature_actions(
     self: EncounterState,
@@ -151,7 +158,9 @@ def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
     return spell.geometry_mode == "self_only" or spell_targets_self_only(spell)
 
 
-def spell_range_squares_for(self: EncounterState, spell: Spell, creature: Creature) -> int | None:
+def spell_range_squares_for(
+    self: EncounterState, spell: Spell, creature: Creature
+) -> int | None:
     return spell_range_squares(spell, creature)
 
 
@@ -171,14 +180,18 @@ def spell_action_targets(
             for target_ref, target_state in self.creatures.items()
             if target_state.is_alive
             and self._creatures_are_opponents(creature_ref, target_ref)
-            and _chebyshev_distance(creature_position, target_state.position) <= max_range
+            and _chebyshev_distance(creature_position, target_state.position)
+            <= max_range
             and (target := self._spell_target_context(actor, target_ref)) is not None
         ]
     if self._spell_targets_self_only(spell):
         target = self._spell_target_context(actor, creature_ref)
         if target is None:
             return []
-        if any(condition in spell.removable_conditions for condition in target.target_conditions):
+        if any(
+            condition in spell.removable_conditions
+            for condition in target.target_conditions
+        ):
             return [target]
         return []
 
@@ -190,10 +203,14 @@ def spell_action_targets(
             target_ref,
         ):
             continue
-        if max_range is not None and _chebyshev_distance(
-            creature_position,
-            target_state.position,
-        ) > max_range:
+        if (
+            max_range is not None
+            and _chebyshev_distance(
+                creature_position,
+                target_state.position,
+            )
+            > max_range
+        ):
             continue
         target = self._spell_target_context(actor, target_ref)
         if target is not None:
@@ -249,15 +266,18 @@ def spell_area(
         radius_feet = spell.area_size_feet
         if radius_feet is None:
             return None
-        radius_squares = max(1, radius_feet // actor.attributes.movement.feet_per_square)
+        radius_squares = max(
+            1, radius_feet // actor.attributes.movement.feet_per_square
+        )
         origin = Position(int(aim_point[0]), int(aim_point[1]))
         return build_radius_area(origin, radius_squares, self.definition.grid)
     if spell.geometry_mode != "directional_area":
         return None
     if aim_point is not None:
-        if abs(aim_point[0] - (creature_position.x + 0.5)) < 1e-9 and abs(
-            aim_point[1] - (creature_position.y + 0.5)
-        ) < 1e-9:
+        if (
+            abs(aim_point[0] - (creature_position.x + 0.5)) < 1e-9
+            and abs(aim_point[1] - (creature_position.y + 0.5)) < 1e-9
+        ):
             return None
         direction = Vector2D(
             aim_point[0] - (creature_position.x + 0.5),
@@ -276,9 +296,7 @@ def spell_area(
     length = self._spell_range_squares(spell, actor)
     if length is None:
         return None
-    coverage_threshold = (
-        self.geometry_config.directional_area_cell_coverage_threshold
-    )
+    coverage_threshold = self.geometry_config.directional_area_cell_coverage_threshold
     return build_directional_area(
         spell.range_data.get("type"),
         creature_position,
@@ -320,6 +338,6 @@ def spell_target_context(
         target_ref=target_ref,
         target_label=target_state.creature.name,
         target_conditions=tuple(
-            condition.name for condition in self.conditions_for(target_ref)
+            condition.condition.value for condition in self.conditions_for(target_ref)
         ),
     )

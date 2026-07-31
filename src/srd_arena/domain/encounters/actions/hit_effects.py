@@ -9,6 +9,7 @@ from ...creatures.stat_block_actions import (
     SizeRequirement,
 )
 from ...effects.results import EffectResult
+from ...effects.application import condition_from_effect
 from ..models import EncounterProgress
 
 if TYPE_CHECKING:
@@ -38,9 +39,11 @@ def _apply_condition(
     state: EncounterState,
     attacker_ref: str,
     target_ref: str,
-    effect: ConditionEffect,
+    effect: ActionEffect,
     progress: EncounterProgress,
 ) -> None:
+    if not isinstance(effect, ConditionEffect):
+        return
     if effect.condition != "grappled":
         return
     attacker = state.creatures[attacker_ref].creature
@@ -53,9 +56,8 @@ def _apply_condition(
         ),
         None,
     )
-    if (
-        isinstance(maximum_size, str)
-        and size_rank(target.size) > size_rank(maximum_size)
+    if isinstance(maximum_size, str) and size_rank(target.size) > size_rank(
+        maximum_size
     ):
         return
     already_grappled = attacker_ref in state._grappled_sources_for(target_ref)
@@ -70,10 +72,10 @@ def _apply_condition(
         "escape_dc": effect.escape_dc,
         "originating_action": "attack",
     }
-    state._apply_effects(
-        [
+    state._apply_grapple(
+        condition_from_effect(
             EffectResult(
-                kind="apply_status",
+                kind="apply_condition",
                 target_ref=target_ref,
                 data={
                     "condition": "grappled",
@@ -81,22 +83,10 @@ def _apply_condition(
                     "source_label": attacker.name,
                     "metadata": metadata,
                 },
-            ),
-            EffectResult(
-                kind="apply_status",
-                target_ref=attacker_ref,
-                data={
-                    "condition": "grappling",
-                    "source_ref": target_ref,
-                    "source_label": target.name,
-                    "metadata": metadata,
-                },
-            ),
-        ]
+            )
+        )
     )
-    progress.messages.append(
-        ("system", f"{attacker.name} grapples {target.name}.")
-    )
+    progress.messages.append(("system", f"{attacker.name} grapples {target.name}."))
 
 
 _HIT_EFFECT_HANDLERS: dict[type[ActionEffect], HitEffectHandler] = {

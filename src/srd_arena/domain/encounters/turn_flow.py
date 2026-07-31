@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..effects.runtime import UntilTurnEnd
 from .behaviors import movement_squares as _movement_squares
 from .models import (
     ActionExecutionOutcome,
@@ -177,8 +178,7 @@ class TurnEngine:
 
     def check_transition(self, state: EncounterState) -> str | None:
         configured_teams = {
-            state._creature_team_id(creature_ref)
-            for creature_ref in state.creatures
+            state._creature_team_id(creature_ref) for creature_ref in state.creatures
         }
         living_teams = {
             state._creature_team_id(creature_ref)
@@ -220,13 +220,25 @@ class TurnEngine:
         creature_ref: CreatureRef,
         round_number: int,
     ) -> None:
+        expired_ids = {
+            condition.id
+            for condition in state.conditions
+            if isinstance(condition.duration, UntilTurnEnd)
+            and condition.duration.creature_ref == creature_ref
+            and (
+                condition.duration.round_number is None
+                or state.round.matches(condition.duration.round_number)
+            )
+        }
         state.conditions = [
             condition
             for condition in state.conditions
-            if not (
-                condition.expires_on_creature_ref == creature_ref
-                and state.round.matches(condition.expires_on_round)
-            )
+            if condition.id not in expired_ids
+        ]
+        state.relationships = [
+            relationship
+            for relationship in state.relationships
+            if relationship.identity.parent_id not in expired_ids
         ]
 
     def maybe_reset_reactions(self, state: EncounterState) -> None:
@@ -261,7 +273,10 @@ class TurnEngine:
         return len(state.initiative_order)
 
     def is_within_bounds(self, state: EncounterState, x: int, y: int) -> bool:
-        return 0 <= x < state.definition.grid.width and 0 <= y < state.definition.grid.height
+        return (
+            0 <= x < state.definition.grid.width
+            and 0 <= y < state.definition.grid.height
+        )
 
 
 TURN_ENGINE = TurnEngine()

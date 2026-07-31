@@ -97,10 +97,7 @@ def stat_block_action_runtime_issue(
         )
         if unsupported is None:
             return None
-        return (
-            f"{type(unsupported).__name__} is not executable for "
-            "attack actions yet."
-        )
+        return f"{type(unsupported).__name__} is not executable for attack actions yet."
     elif isinstance(definition, AutomaticActionDefinition):
         effects = definition.effects
     elif isinstance(definition, SavingThrowActionDefinition):
@@ -108,10 +105,7 @@ def stat_block_action_runtime_issue(
             return "Staged saving-throw failures are not executable yet."
         if definition.failure[0].repeat_saves:
             return "Repeated saving throws are not executable yet."
-        if (
-            definition.target.kind == "area"
-            and definition.target.origin != "self"
-        ):
+        if definition.target.kind == "area" and definition.target.origin != "self":
             return "Point-origin stat-block areas are not executable yet."
         effects = (
             *definition.failure[0].effects,
@@ -121,11 +115,7 @@ def stat_block_action_runtime_issue(
     else:
         return "This stat-block action type is not executable yet."
     unsupported = next(
-        (
-            effect
-            for effect in effects
-            if not isinstance(effect, DamageEffect)
-        ),
+        (effect for effect in effects if not isinstance(effect, DamageEffect)),
         None,
     )
     if unsupported is not None:
@@ -181,9 +171,7 @@ def resolve_multiattack_action(
     state._consume_action(allow_magic=False)
     creature_state.pending_multiattack = list(slots)
     creature_state.attacks_remaining = len(slots)
-    progress.messages.append(
-        ("system", f"{creature.name} begins Multiattack.")
-    )
+    progress.messages.append(("system", f"{creature.name} begins Multiattack."))
     progress.events.append(
         state._event(
             "action_resolved",
@@ -192,8 +180,7 @@ def resolve_multiattack_action(
             data={
                 "kind": "multiattack",
                 "slots": [
-                    [invocation.name for invocation in slot.options]
-                    for slot in slots
+                    [invocation.name for invocation in slot.options] for slot in slots
                 ],
             },
         )
@@ -219,9 +206,7 @@ def resolve_attack_action(
                 "The selected attack is not available for this Multiattack slot."
             )
         creature_state.pending_multiattack.pop(0)
-        creature_state.attacks_remaining = len(
-            creature_state.pending_multiattack
-        )
+        creature_state.attacks_remaining = len(creature_state.pending_multiattack)
     elif creature_state.attacks_remaining == 0:
         if creature_state.actions_remaining <= 0:
             raise RuntimeError("No Action remains to make an attack.")
@@ -307,7 +292,7 @@ def resolve_attack_action(
         )
     )
     if defender.get_health() <= 0:
-        state._remove_relational_statuses_for_creature(target_ref)
+        state._remove_relationships_for_creature(target_ref)
         progress.events.append(
             state._event(
                 "creature_defeated",
@@ -324,9 +309,7 @@ def resolve_stat_block_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    definition = creature.stat_block_actions.get(
-        action.preferred_attack_name or ""
-    )
+    definition = creature.stat_block_actions.get(action.preferred_attack_name or "")
     if isinstance(definition, AutomaticActionDefinition):
         _resolve_automatic_action(
             state,
@@ -406,7 +389,7 @@ def _resolve_automatic_action(
         )
     )
     if target.get_health() <= 0:
-        state._remove_relational_statuses_for_creature(target_ref)
+        state._remove_relationships_for_creature(target_ref)
         progress.events.append(
             state._event(
                 "creature_defeated",
@@ -461,31 +444,23 @@ def _resolve_saving_throw_action(
         )
         damage_effects = (
             definition.failure[0].effects
-            if saving_throw.check.success
-            and definition.success_damage == "half"
+            if saving_throw.check.success and definition.success_damage == "half"
             else effects
         )
         damage = _apply_damage_effects(
             target,
             damage_effects,
-            half=(
-                saving_throw.check.success
-                and definition.success_damage == "half"
-            ),
+            half=(saving_throw.check.success and definition.success_damage == "half"),
         )
         non_damage_effects = (*effects, *definition.always)
-        if any(
-            not isinstance(effect, DamageEffect)
-            for effect in non_damage_effects
-        ):
+        if any(not isinstance(effect, DamageEffect) for effect in non_damage_effects):
             unsupported = next(
                 effect
                 for effect in non_damage_effects
                 if not isinstance(effect, DamageEffect)
             )
             raise NotImplementedError(
-                f"Saving-throw effect '{type(unsupported).__name__}' "
-                "is not executable."
+                f"Saving-throw effect '{type(unsupported).__name__}' is not executable."
             )
         damage += _apply_damage_effects(
             target,
@@ -501,7 +476,7 @@ def _resolve_saving_throw_action(
             }
         )
         if target.get_health() <= 0:
-            state._remove_relational_statuses_for_creature(target_ref)
+            state._remove_relationships_for_creature(target_ref)
     progress.messages.append(
         (
             "system",
@@ -535,9 +510,7 @@ def _stat_block_target_refs(
             raise ValueError("A creature-targeted action requires a creature target.")
         return (aim,)
     if target.origin != "self":
-        raise NotImplementedError(
-            "Point-origin stat-block areas are not executable."
-        )
+        raise NotImplementedError("Point-origin stat-block areas are not executable.")
     actor_position = state.creatures[creature_ref].position
     direction = (
         vector_between_positions(actor_position, state.creatures[aim].position)
@@ -547,9 +520,9 @@ def _stat_block_target_refs(
             aim[1] - (actor_position.y + 0.5),
         )
     )
-    feet_per_square = (
-        state.creatures[creature_ref].creature.attributes.movement.feet_per_square
-    )
+    feet_per_square = state.creatures[
+        creature_ref
+    ].creature.attributes.movement.feet_per_square
     size_squares = max(1, (target.size_feet or 5) // feet_per_square)
     width_squares = max(
         1.0,
@@ -567,9 +540,7 @@ def _stat_block_target_refs(
         ),
     )
     if area is None:
-        raise NotImplementedError(
-            f"Area shape '{target.shape}' is not executable."
-        )
+        raise NotImplementedError(f"Area shape '{target.shape}' is not executable.")
     occupied = {(cell.x, cell.y) for cell in area.cells}
     return tuple(
         target_ref

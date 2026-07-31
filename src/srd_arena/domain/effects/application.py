@@ -2,25 +2,28 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from .conditions import Status, build_named_status
+from .conditions import AppliedCondition, Condition, build_applied_condition
 from .results import EffectResult
 
-ApplyStatus = Callable[[Status], None]
-RemoveStatus = Callable[[str, str], None]
+ApplyCondition = Callable[[AppliedCondition], None]
+RemoveCondition = Callable[[str, Condition], None]
 
 
 def apply_effects(
     effects: list[EffectResult],
     *,
-    apply_status: ApplyStatus,
-    remove_status: RemoveStatus,
+    apply_condition: ApplyCondition,
+    remove_condition: RemoveCondition,
 ) -> list[tuple[str, str]]:
     messages: list[tuple[str, str]] = []
     for effect in effects:
-        if effect.kind == "apply_status":
-            apply_status(_status_from_effect(effect))
-        elif effect.kind == "remove_status":
-            remove_status(effect.target_ref, _required_status_name(effect))
+        if effect.kind == "apply_condition":
+            apply_condition(condition_from_effect(effect))
+        elif effect.kind == "remove_condition":
+            remove_condition(
+                effect.target_ref,
+                Condition(_required_condition_name(effect)),
+            )
         elif effect.kind == "message":
             messages.extend(message_effects(effect))
         else:
@@ -48,37 +51,34 @@ def serialize_effects(effects: list[EffectResult]) -> list[dict[str, object]]:
     ]
 
 
-def _status_from_effect(effect: EffectResult) -> Status:
+def condition_from_effect(effect: EffectResult) -> AppliedCondition:
     source_ref = effect.data.get("source_ref")
     source_label = effect.data.get("source_label")
     if not isinstance(source_ref, str) or not isinstance(source_label, str):
-        raise ValueError("apply_status effect requires source identity.")
-    return build_named_status(
-        name=_required_status_name(effect),
+        raise ValueError("apply_condition effect requires source identity.")
+    expires_on_creature_ref = effect.data.get("expires_on_creature_ref")
+    expires_on_round = effect.data.get("expires_on_round")
+    metadata = effect.data.get("metadata")
+    return build_applied_condition(
+        condition=Condition(_required_condition_name(effect)),
         source_ref=source_ref,
         source_label=source_label,
         target_ref=effect.target_ref,
         expires_on_creature_ref=(
-            effect.data.get("expires_on_creature_ref")
-            if isinstance(effect.data.get("expires_on_creature_ref"), str)
+            expires_on_creature_ref
+            if isinstance(expires_on_creature_ref, str)
             else None
         ),
         expires_on_round=(
-            effect.data.get("expires_on_round")
-            if isinstance(effect.data.get("expires_on_round"), int)
-            else None
+            expires_on_round if isinstance(expires_on_round, int) else None
         ),
-        metadata=(
-            effect.data.get("metadata")
-            if isinstance(effect.data.get("metadata"), dict)
-            else None
-        ),
+        metadata=metadata if isinstance(metadata, dict) else None,
     )
 
 
-def _required_status_name(effect: EffectResult) -> str:
+def _required_condition_name(effect: EffectResult) -> str:
     for key in ("status_name", "condition", "name"):
         value = effect.data.get(key)
         if isinstance(value, str):
             return value
-    raise ValueError(f"{effect.kind} effect requires a status_name.")
+    raise ValueError(f"{effect.kind} effect requires a condition name.")

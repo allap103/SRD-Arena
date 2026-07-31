@@ -1,11 +1,12 @@
 from types import SimpleNamespace
 
 from srd_arena.domain.encounters.conditions import (
-    apply_status,
-    remove_relational_statuses_for_creature,
-    remove_status,
-    remove_status_from_source,
-    status_replaces,
+    apply_condition,
+    apply_grapple,
+    condition_replaces,
+    remove_condition,
+    remove_condition_from_source,
+    remove_relationships_for_creature,
 )
 from srd_arena.domain.encounters.participants import (
     creatures_are_opponents,
@@ -13,85 +14,82 @@ from srd_arena.domain.encounters.participants import (
     creature_team_id,
 )
 from srd_arena.domain.encounters import EncounterTeam
-from srd_arena.domain.effects.conditions import Status
+from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 
 
-def _status(name: str, source: str, target: str) -> Status:
-    return Status(
-        id=f"{name}:{source}:{target}",
-        name=name,
+def _condition(condition: Condition, source: str, target: str):
+    return build_applied_condition(
+        condition=condition,
         source_ref=source,
         source_label=source,
         target_ref=target,
     )
 
 
-def test_apply_status_refreshes_matching_condition_without_duplication() -> None:
-    original = _status("blinded", "goblin_1", "player")
-    refreshed = Status(
-        **{
-            **original.__dict__,
-            "expires_on_round": 3,
-        }
+def test_apply_condition_refreshes_matching_condition_without_duplication() -> None:
+    original = _condition(Condition.BLINDED, "goblin_1", "player")
+    refreshed = build_applied_condition(
+        condition=Condition.BLINDED,
+        source_ref="goblin_1",
+        source_label="goblin_1",
+        target_ref="player",
+        expires_on_creature_ref="player",
+        expires_on_round=3,
     )
     state = SimpleNamespace(conditions=[original])
 
-    apply_status(state, refreshed)
+    apply_condition(state, refreshed)
 
     assert state.conditions == [refreshed]
 
 
-def test_relational_statuses_from_different_sources_do_not_replace_each_other() -> None:
-    first = _status("grappled", "goblin_1", "player")
-    second = _status("grappled", "goblin_2", "player")
+def test_grappled_from_different_sources_do_not_replace_each_other() -> None:
+    first = _condition(Condition.GRAPPLED, "goblin_1", "player")
+    second = _condition(Condition.GRAPPLED, "goblin_2", "player")
 
-    assert status_replaces(first, second) is False
+    assert condition_replaces(first, second) is False
 
 
-def test_removing_grappled_also_removes_matching_grappling_status() -> None:
-    grappled = _status("grappled", "goblin_1", "player")
-    grappling = _status("grappling", "player", "goblin_1")
-    unrelated = _status("blinded", "goblin_2", "player")
-    state = SimpleNamespace(conditions=[grappled, grappling, unrelated])
+def test_removing_grappled_also_removes_matching_relationship() -> None:
+    grappled = _condition(Condition.GRAPPLED, "goblin_1", "player")
+    unrelated = _condition(Condition.BLINDED, "goblin_2", "player")
+    state = SimpleNamespace(conditions=[unrelated], relationships=[])
+    apply_grapple(state, grappled)
 
-    remove_status(state, "player", "grappled")
+    remove_condition(state, "player", Condition.GRAPPLED)
 
     assert state.conditions == [unrelated]
+    assert state.relationships == []
 
 
 def test_removing_one_grapple_source_preserves_other_grapples() -> None:
-    first_grappled = _status("grappled", "goblin_1", "player")
-    first_grappling = _status("grappling", "player", "goblin_1")
-    second_grappled = _status("grappled", "goblin_2", "player")
-    second_grappling = _status("grappling", "player", "goblin_2")
-    state = SimpleNamespace(
-        conditions=[
-            first_grappled,
-            first_grappling,
-            second_grappled,
-            second_grappling,
-        ]
-    )
+    first = _condition(Condition.GRAPPLED, "goblin_1", "player")
+    second = _condition(Condition.GRAPPLED, "goblin_2", "player")
+    state = SimpleNamespace(conditions=[], relationships=[])
+    apply_grapple(state, first)
+    apply_grapple(state, second)
 
-    remove_status_from_source(
+    remove_condition_from_source(
         state,
         "player",
-        "grappled",
+        Condition.GRAPPLED,
         "goblin_1",
     )
 
-    assert state.conditions == [second_grappled, second_grappling]
+    assert state.conditions == [second]
+    assert [relationship.source_ref for relationship in state.relationships] == ["goblin_2"]
 
 
-def test_defeated_creature_releases_all_relational_grapples() -> None:
-    grappled = _status("grappled", "aboleth", "player")
-    grappling = _status("grappling", "player", "aboleth")
-    unrelated = _status("blinded", "goblin_2", "player")
-    state = SimpleNamespace(conditions=[grappled, grappling, unrelated])
+def test_defeated_creature_releases_all_grapple_relationships() -> None:
+    grappled = _condition(Condition.GRAPPLED, "aboleth", "player")
+    unrelated = _condition(Condition.BLINDED, "goblin_2", "player")
+    state = SimpleNamespace(conditions=[unrelated], relationships=[])
+    apply_grapple(state, grappled)
 
-    remove_relational_statuses_for_creature(state, "aboleth")
+    remove_relationships_for_creature(state, "aboleth")
 
     assert state.conditions == [unrelated]
+    assert state.relationships == []
 
 
 def test_participant_queries_use_authored_teams_and_controllers() -> None:

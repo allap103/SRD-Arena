@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...creatures import Creature
+from ...effects.conditions import Condition
 from ...rolls.dice import resolve_d20
 from ..models import ActionCost, EncounterAction, EncounterProgress
 
@@ -24,19 +25,21 @@ def available_escape_actions(
     if creature_state.actions_remaining <= 0:
         return []
     actions = []
-    for status in state.conditions_for(creature_ref):
-        escape_dc = status.metadata.get("escape_dc")
-        if status.name != "grappled" or not isinstance(escape_dc, int):
+    for applied in state.conditions_for(creature_ref):
+        escape_dc = applied.metadata.get("escape_dc")
+        source_ref = applied.source_ref
+        if (
+            applied.condition is not Condition.GRAPPLED
+            or not isinstance(escape_dc, int)
+            or source_ref is None
+        ):
             continue
         actions.append(
             EncounterAction(
-                f"Escape {status.source_label} (DC {escape_dc})",
+                f"Escape {applied.source_label} (DC {escape_dc})",
                 "escape_grapple",
-                status.source_ref,
-                id=(
-                    f"{creature_ref}-escape-grapple-"
-                    f"{status.source_ref.replace(':', '-')}"
-                ),
+                source_ref,
+                id=(f"{creature_ref}-escape-grapple-{source_ref.replace(':', '-')}"),
                 creature_ref=creature_ref,
                 cost=ActionCost(action=1),
             )
@@ -59,11 +62,11 @@ def resolve_escape_action(
         raise ValueError("Escape grapple requires the grappler reference.")
     grapple = next(
         (
-            status
-            for status in state.conditions_for(creature_ref)
-            if status.name == "grappled"
-            and status.source_ref == action.value
-            and isinstance(status.metadata.get("escape_dc"), int)
+            applied
+            for applied in state.conditions_for(creature_ref)
+            if applied.condition is Condition.GRAPPLED
+            and applied.source_ref == action.value
+            and isinstance(applied.metadata.get("escape_dc"), int)
         ),
         None,
     )
@@ -71,6 +74,8 @@ def resolve_escape_action(
         raise RuntimeError("That grapple is no longer active.")
     state._consume_action(allow_magic=False)
     escape_dc = grapple.metadata["escape_dc"]
+    if not isinstance(escape_dc, int):
+        raise RuntimeError("Grapple escape DC must be an integer.")
     modifier = max(
         creature.get_modifier(creature.attributes.strength),
         creature.get_modifier(creature.attributes.dexterity),
@@ -78,9 +83,9 @@ def resolve_escape_action(
     check = resolve_d20(modifier=modifier, roller=_roll_die)
     success = check.total >= escape_dc
     if success:
-        state._remove_status_from_source(
+        state._remove_condition_from_source(
             creature_ref,
-            "grappled",
+            Condition.GRAPPLED,
             action.value,
         )
     progress.messages.append(

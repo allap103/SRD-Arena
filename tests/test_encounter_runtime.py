@@ -20,7 +20,8 @@ from srd_arena.frontends.shared.combat import render_encounter_text
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.frontends.qt.app import GameWindow
 from srd_arena.domain.effects import EffectResult
-from srd_arena.domain.effects.conditions import build_named_status
+from srd_arena.domain.effects.application import condition_from_effect
+from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.creatures import (
     ActionTarget,
@@ -488,8 +489,8 @@ def test_action_eligibility_exposes_structured_failures() -> None:
     state = session.encounter_state
     actor_ref = state.current_decision().creature_ref
     state.conditions.append(
-        build_named_status(
-            name="stunned",
+        build_applied_condition(
+            condition=Condition.STUNNED,
             source_ref="goblin_1",
             source_label="Goblin Warrior",
             target_ref=actor_ref,
@@ -860,16 +861,21 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
     )
     state.apply_action(tentacle)
 
-    grapple = next(status for status in state.conditions_for("air_elemental") if status.name == "grappled")
+    grapple = next(
+        condition
+        for condition in state.conditions_for("air_elemental")
+        if condition.condition is Condition.GRAPPLED
+    )
     assert grapple.source_ref == "aboleth"
     assert grapple.metadata["escape_dc"] == 14
     assert state._grappling_targets_for("aboleth") == ("air_elemental",)
+    assert state.export_state()["relationships"][0]["kind"] == "grappling"
 
     huge_target_tentacle = next(
         action for action in state.available_actions() if action.kind == "attack" and action.value == "player"
     )
     state.apply_action(huge_target_tentacle)
-    assert state.has_condition("player", "grappled") is False
+    assert state.has_condition("player", Condition.GRAPPLED) is False
 
     state.initiative_order = ["air_elemental", "aboleth", "player"]
     state.turn_index = 0
@@ -880,7 +886,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
         lambda _sides: 1,
     )
     failed = state.apply_action(failed_escape)
-    assert state.has_condition("air_elemental", "grappled") is True
+    assert state.has_condition("air_elemental", Condition.GRAPPLED) is True
     assert state.creatures["air_elemental"].actions_remaining == 0
     assert any("fails to escape" in text for _, text in failed.messages)
 
@@ -893,8 +899,8 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
     result = state.apply_action(escape)
 
     assert escape.label == "Escape The Deep One (DC 14)"
-    assert state.has_condition("air_elemental", "grappled") is False
-    assert state.has_condition("aboleth", "grappling") is False
+    assert state.has_condition("air_elemental", Condition.GRAPPLED) is False
+    assert state._grappling_targets_for("aboleth") == ()
     assert any("escapes The Deep One's grapple" in text for _, text in result.messages)
 
 
@@ -933,7 +939,7 @@ def test_tentacle_grapple_enforces_capacity_without_counting_duplicates() -> Non
         "tentacle-target:1",
         "tentacle-target:2",
     }
-    assert state.has_condition("tentacle-target:3", "grappled") is False
+    assert state.has_condition("tentacle-target:3", Condition.GRAPPLED) is False
 
 
 def test_fallback_tokens_use_team_colors() -> None:
@@ -959,27 +965,18 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
     state.creatures["goblin_2"].position.y = 2
     state.creatures["goblin_3"].position.x = 1
     state.creatures["goblin_3"].position.y = 1
-    state._apply_effects(
-        [
+    state._apply_grapple(
+        condition_from_effect(
             EffectResult(
-                kind="apply_status",
+                kind="apply_condition",
                 target_ref="player",
                 data={
                     "condition": "grappled",
                     "source_ref": "goblin_1",
                     "source_label": "Goblin",
                 },
-            ),
-            EffectResult(
-                kind="apply_status",
-                target_ref="goblin_1",
-                data={
-                    "condition": "grappling",
-                    "source_ref": "player",
-                    "source_label": "Traveler",
-                },
-            ),
-        ]
+            )
+        )
     )
 
     labels = _action_labels(session)
@@ -1036,8 +1033,8 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
         "system",
         "Traveler grapples Goblin Warrior (goblin_1).",
     ) in result.messages
-    assert session.encounter_state.has_condition("goblin_1", "grappled") is True
-    assert session.encounter_state.has_condition("player", "grappling") is True
+    assert session.encounter_state.has_condition("goblin_1", Condition.GRAPPLED) is True
+    assert session.encounter_state._grappling_targets_for("player") == ("goblin_1",)
     assert any(action.kind == "grapple" and action.value == "goblin_1" for action in scene_view.action_details)
 
 
@@ -1112,27 +1109,18 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
     state.creatures["goblin_2"].position.y = 2
     state.creatures["goblin_3"].position.x = 1
     state.creatures["goblin_3"].position.y = 1
-    state._apply_effects(
-        [
+    state._apply_grapple(
+        condition_from_effect(
             EffectResult(
-                kind="apply_status",
-                target_ref="player",
-                data={
-                    "condition": "grappling",
-                    "source_ref": "goblin_1",
-                    "source_label": "Goblin",
-                },
-            ),
-            EffectResult(
-                kind="apply_status",
+                kind="apply_condition",
                 target_ref="goblin_1",
                 data={
                     "condition": "grappled",
                     "source_ref": "player",
                     "source_label": "Traveler",
                 },
-            ),
-        ]
+            )
+        )
     )
 
     move_up_index = _action_id_by_label(session, "Move up")
@@ -1247,7 +1235,7 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
     session.encounter_state._apply_effects(
         [
             EffectResult(
-                kind="apply_status",
+                kind="apply_condition",
                 target_ref="player",
                 data={
                     "condition": "blinded",
@@ -1285,7 +1273,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
     assert any("is blinded until the end of your next turn" in message for _, message in result.messages)
     assert session.encounter_state.active_action_available is False
     assert session.decision_creature.spellcasting.spell_slots_remaining[1] == 3
-    assert session.encounter_state.has_condition("goblin_1", "blinded") is True
+    assert session.encounter_state.has_condition("goblin_1", Condition.BLINDED) is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Color Spray"
     assert spell_event.data["save_detail"]["ability"] == "constitution"
@@ -1312,8 +1300,8 @@ def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
 
-    assert state.has_condition("goblin_1", "blinded") is True
-    assert state.has_condition("goblin_2", "blinded") is True
+    assert state.has_condition("goblin_1", Condition.BLINDED) is True
+    assert state.has_condition("goblin_2", Condition.BLINDED) is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["target_refs"] == ["goblin_1", "goblin_2"]
     assert spell_event.data["area"]["shape"] == "cone"
@@ -1345,8 +1333,8 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
 
     result = _choose_directional_spell(session, "Cast Color Spray", (5, 3))
 
-    assert state.has_condition("goblin_1", "blinded") is True
-    assert state.has_condition("goblin_2", "blinded") is True
+    assert state.has_condition("goblin_1", Condition.BLINDED) is True
+    assert state.has_condition("goblin_2", Condition.BLINDED) is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["target_refs"] == ["goblin_1", "goblin_2"]
     assert spell_event.data["area"]["continuous_area"]["direction"] == {
@@ -1606,11 +1594,11 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     session.choose(_action_id_by_label(session, "Wait"))
 
-    assert state.has_condition("goblin_1", "blinded") is True
+    assert state.has_condition("goblin_1", Condition.BLINDED) is True
 
     session.choose(_action_id_by_label(session, "Wait"))
 
-    assert state.has_condition("goblin_1", "blinded") is False
+    assert state.has_condition("goblin_1", Condition.BLINDED) is False
 
 
 def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) -> None:
@@ -1632,17 +1620,17 @@ def test_reapplying_blinded_refreshes_duration_without_duplication(monkeypatch) 
     session.choose(_action_id_by_label(session, "Wait"))
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
 
-    assert state.has_condition("goblin_1", "blinded") is True
+    assert state.has_condition("goblin_1", Condition.BLINDED) is True
     assert len(state.conditions_for("goblin_1")) == 1
 
     session.choose(_action_id_by_label(session, "Wait"))
-    assert state.has_condition("goblin_1", "blinded") is True
+    assert state.has_condition("goblin_1", Condition.BLINDED) is True
 
     session.choose(_action_id_by_label(session, "Wait"))
-    assert state.has_condition("goblin_1", "blinded") is False
+    assert state.has_condition("goblin_1", Condition.BLINDED) is False
 
 
-def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
+def test_remove_condition_effect_clears_blinded_rules_immediately() -> None:
     session = Scenario(str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter").create_session()
     session.get_scene_view()
 
@@ -1656,7 +1644,7 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
     state._apply_effects(
         [
             EffectResult(
-                kind="apply_status",
+                kind="apply_condition",
                 target_ref="goblin_1",
                 data={
                     "condition": "blinded",
@@ -1666,7 +1654,7 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
             )
         ]
     )
-    assert state.has_condition("goblin_1", "blinded") is True
+    assert state.has_condition("goblin_1", Condition.BLINDED) is True
     assert (
         state._attack_roll_mode_for(
             "player",
@@ -1686,7 +1674,7 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
                 data={"channel": "system", "text": "Status removed."},
             ),
             EffectResult(
-                kind="remove_status",
+                kind="remove_condition",
                 target_ref="goblin_1",
                 data={"condition": "blinded"},
             ),
@@ -1694,7 +1682,7 @@ def test_remove_status_effect_clears_blinded_rules_immediately() -> None:
     )
 
     assert messages == [("system", "Status removed.")]
-    assert state.has_condition("goblin_1", "blinded") is False
+    assert state.has_condition("goblin_1", Condition.BLINDED) is False
     assert (
         state._attack_roll_mode_for(
             "player",
@@ -1719,7 +1707,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     state._apply_effects(
         [
             EffectResult(
-                kind="apply_status",
+                kind="apply_condition",
                 target_ref="player",
                 data={
                     "condition": "blinded",
@@ -1737,7 +1725,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
         "Traveler casts Lesser Restoration on Traveler.",
     ) in result.messages
     assert ("system", "Traveler is no longer blinded.") in result.messages
-    assert state.has_condition("player", "blinded") is False
+    assert state.has_condition("player", Condition.BLINDED) is False
     assert state.active_bonus_action_available is False
     assert state.active_action_available is True
     assert session.decision_creature.spellcasting.spell_slots_remaining[2] == 0
@@ -1745,7 +1733,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     assert spell_event.data["spell_name"] == "Lesser Restoration"
     assert spell_event.data["target_ref"] == "player"
     assert spell_event.data["success"] is True
-    assert spell_event.data["effects"][0]["kind"] == "remove_status"
+    assert spell_event.data["effects"][0]["kind"] == "remove_condition"
 
 
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:

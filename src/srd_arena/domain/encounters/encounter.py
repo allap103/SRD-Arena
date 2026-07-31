@@ -63,22 +63,23 @@ from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
 from .definitions import EncounterBehavior, EncounterDefinition
-from ..effects.conditions import Status
+from ..effects.conditions import AppliedCondition, Condition
 from ..geometry import GeometryConfig
 from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
 from ..effects.triggered import TriggeredEffect, matching_effects
 from .turn_flow import TURN_ENGINE, TurnEngine
 from .conditions import (
-    apply_status as _apply_status_impl,
+    apply_condition as _apply_condition_impl,
+    apply_grapple as _apply_grapple_impl,
+    condition_replaces as _condition_replaces_impl,
     condition_sources_for as _condition_sources_for_impl,
     grappled_sources_for as _grappled_sources_for_impl,
     grappling_targets_for as _grappling_targets_for_impl,
     is_grappled as _is_grappled_impl,
     movement_cost_for as _movement_cost_for_impl,
-    remove_status as _remove_status_impl,
-    remove_status_from_source as _remove_status_from_source_impl,
-    remove_relational_statuses_for_creature as _remove_relational_statuses_for_creature_impl,
-    status_replaces as _status_replaces_impl,
+    remove_condition as _remove_condition_impl,
+    remove_condition_from_source as _remove_condition_from_source_impl,
+    remove_relationships_for_creature as _remove_relationships_for_creature_impl,
 )
 from .participants import (
     creatures_are_opponents as _creatures_are_opponents_impl,
@@ -230,7 +231,9 @@ class EncounterState(EncounterStateData):
                 creature_id=participant.creature_id,
                 creature=deepcopy(creature),
                 position=Position(participant.start.x, participant.start.y),
-                behavior=deepcopy(participant.behavior or EncounterBehavior(type="wait")),
+                behavior=deepcopy(
+                    participant.behavior or EncounterBehavior(type="wait")
+                ),
             )
         state = cls(
             encounter_id=encounter_id,
@@ -259,7 +262,9 @@ class EncounterState(EncounterStateData):
             InitiativeEntry(
                 creature_ref=creature_ref,
                 roll=roll_die(20),
-                modifier=creature_state.creature.get_modifier(creature_state.creature.attributes.dexterity),
+                modifier=creature_state.creature.get_modifier(
+                    creature_state.creature.attributes.dexterity
+                ),
                 total=0,
             )
             for creature_ref, creature_state in self.creatures.items()
@@ -293,11 +298,25 @@ class EncounterState(EncounterStateData):
             reason="normal_turn",
         )
 
-    def conditions_for(self, creature_ref: CreatureRef) -> tuple[Status, ...]:
-        return tuple(condition for condition in self.conditions if condition.target_ref == creature_ref)
+    def conditions_for(
+        self,
+        creature_ref: CreatureRef,
+    ) -> tuple[AppliedCondition, ...]:
+        return tuple(
+            condition
+            for condition in self.conditions
+            if condition.target_ref == creature_ref
+        )
 
-    def has_condition(self, creature_ref: CreatureRef, condition_name: str) -> bool:
-        return any(condition.name == condition_name for condition in self.conditions_for(creature_ref))
+    def has_condition(
+        self,
+        creature_ref: CreatureRef,
+        condition: Condition,
+    ) -> bool:
+        return any(
+            applied.condition is condition
+            for applied in self.conditions_for(creature_ref)
+        )
 
     def _attack_roll_mode_for(
         self,
@@ -321,8 +340,10 @@ class EncounterState(EncounterStateData):
             "attack_type": attack_type,
         }
         if any(
-            status.name == "grappled" and status.target_ref == attacker_ref and status.source_ref != target_ref
-            for status in self.conditions
+            condition.condition is Condition.GRAPPLED
+            and condition.target_ref == attacker_ref
+            and condition.source_ref != target_ref
+            for condition in self.conditions
         ):
             modes.append("disadvantage")
         for effect in matching_effects(
@@ -337,13 +358,18 @@ class EncounterState(EncounterStateData):
         return _combine_roll_modes(modes)
 
     def _active_status_effects(self) -> list[TriggeredEffect]:
-        return [effect for status in self.conditions for effect in status.triggered_effects]
+        return [
+            effect for status in self.conditions for effect in status.triggered_effects
+        ]
 
     def active_creature(self) -> CreatureRef:
         return self.current_decision().creature_ref
 
     def requires_automatic_advance(self) -> bool:
-        return self._creature_controller(self.current_decision().creature_ref) == "scripted"
+        return (
+            self._creature_controller(self.current_decision().creature_ref)
+            == "scripted"
+        )
 
     def action_eligibility(
         self,
@@ -384,14 +410,15 @@ class EncounterState(EncounterStateData):
     def _apply_effects(self, effects) -> list[tuple[str, str]]:
         return apply_effects(
             effects,
-            apply_status=self._apply_status,
-            remove_status=self._remove_status,
+            apply_condition=self._apply_condition,
+            remove_condition=self._remove_condition,
         )
 
-    _apply_status = _apply_status_impl
-    _remove_status = _remove_status_impl
-    _remove_status_from_source = _remove_status_from_source_impl
-    _remove_relational_statuses_for_creature = _remove_relational_statuses_for_creature_impl
+    _apply_condition = _apply_condition_impl
+    _apply_grapple = _apply_grapple_impl
+    _remove_condition = _remove_condition_impl
+    _remove_condition_from_source = _remove_condition_from_source_impl
+    _remove_relationships_for_creature = _remove_relationships_for_creature_impl
     _creature_controller = _creature_controller_impl
     _creature_team_id = _creature_team_id_impl
     _creatures_are_opponents = _creatures_are_opponents_impl
@@ -494,7 +521,9 @@ class EncounterState(EncounterStateData):
         creature_ref: CreatureRef,
         round_number: int,
     ) -> None:
-        self.turn_engine.expire_conditions_for_turn_end(self, creature_ref, round_number)
+        self.turn_engine.expire_conditions_for_turn_end(
+            self, creature_ref, round_number
+        )
 
     def _maybe_reset_reactions(self) -> None:
         self.turn_engine.maybe_reset_reactions(self)
@@ -542,12 +571,16 @@ class EncounterState(EncounterStateData):
         self.event_sequence += 1
         return event
 
-    def _merge_progress(self, target: EncounterProgress, source: EncounterProgress) -> None:
+    def _merge_progress(
+        self, target: EncounterProgress, source: EncounterProgress
+    ) -> None:
         target.messages.extend(source.messages)
         target.events.extend(source.events)
         if source.transition is not None:
             target.transition = source.transition
-        target.paused_for_decision = target.paused_for_decision or source.paused_for_decision
+        target.paused_for_decision = (
+            target.paused_for_decision or source.paused_for_decision
+        )
         target.paused_for_pacing = target.paused_for_pacing or source.paused_for_pacing
 
     _export_pending_action = _export_pending_action_impl
@@ -557,7 +590,11 @@ class EncounterState(EncounterStateData):
         return f"{creature_state.creature.name} ({creature_state.creature_id})"
 
     def _living_creature_refs(self) -> list[CreatureRef]:
-        return [creature_ref for creature_ref, creature_state in self.creatures.items() if creature_state.is_alive]
+        return [
+            creature_ref
+            for creature_ref, creature_state in self.creatures.items()
+            if creature_state.is_alive
+        ]
 
     def _creature_position(self, creature_ref: CreatureRef) -> Position:
         return self.creatures[creature_ref].position
@@ -569,7 +606,12 @@ class EncounterState(EncounterStateData):
         *,
         ignored_refs: set[CreatureRef] | frozenset[CreatureRef] = frozenset(),
     ) -> bool:
-        if x < 0 or y < 0 or x >= self.definition.grid.width or y >= self.definition.grid.height:
+        if (
+            x < 0
+            or y < 0
+            or x >= self.definition.grid.width
+            or y >= self.definition.grid.height
+        ):
             return False
         for creature_ref, creature_state in self.creatures.items():
             if creature_ref in ignored_refs or not creature_state.is_alive:
@@ -587,7 +629,7 @@ class EncounterState(EncounterStateData):
     _is_grappled = _is_grappled_impl
     _movement_cost_for = _movement_cost_for_impl
     _creature_for_ref = _creature_for_ref_impl
-    _status_replaces = staticmethod(_status_replaces_impl)
+    _condition_replaces = staticmethod(_condition_replaces_impl)
 
 
 def _attack_roll_mode(
@@ -597,7 +639,10 @@ def _attack_roll_mode(
 ) -> D20RollMode:
     if attack_type != "ranged" or attacker_position is None:
         return "normal"
-    if any(_is_adjacent(attacker_position, position) for position in nearby_opponent_positions):
+    if any(
+        _is_adjacent(attacker_position, position)
+        for position in nearby_opponent_positions
+    ):
         return "disadvantage"
     return "normal"
 

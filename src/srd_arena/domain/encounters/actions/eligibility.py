@@ -8,6 +8,7 @@ from ...creatures import (
     SavingThrowActionDefinition,
     can_grapple,
 )
+from ...effects.conditions import Condition
 from ...geometry import Position
 from ...spells.rules import parse_spell_action_value
 from ..behaviors import DIRECTION_DELTAS, chebyshev_distance
@@ -61,7 +62,11 @@ class ActorReadyRule:
             )
         if action.kind != "wait" and any(
             state.has_condition(actor_ref, condition)
-            for condition in ("incapacitated", "stunned", "unconscious")
+            for condition in (
+                Condition.INCAPACITATED,
+                Condition.STUNNED,
+                Condition.UNCONSCIOUS,
+            )
         ):
             return EligibilityFailure(
                 "actor_incapacitated",
@@ -185,16 +190,12 @@ class AttackRule:
                     for slot in plans[selected_plan]
                     for invocation in slot.options
                     if (
-                        definition
-                        := actor.creature.stat_block_actions.get(
+                        definition := actor.creature.stat_block_actions.get(
                             invocation.name
                         )
                     )
                     is not None
-                    if (
-                        issue
-                        := stat_block_action_runtime_issue(definition)
-                    )
+                    if (issue := stat_block_action_runtime_issue(definition))
                     is not None
                 ),
                 None,
@@ -218,9 +219,7 @@ class AttackRule:
             else action.preferred_attack_name
         )
         if isinstance(preferred_attack_name, str):
-            definition = actor.creature.stat_block_actions.get(
-                preferred_attack_name
-            )
+            definition = actor.creature.stat_block_actions.get(preferred_attack_name)
             if definition is not None:
                 runtime_issue = stat_block_action_runtime_issue(definition)
                 if runtime_issue is not None:
@@ -229,8 +228,7 @@ class AttackRule:
                         runtime_issue,
                     )
         if actor.pending_multiattack and preferred_attack_name not in {
-            invocation.name
-            for invocation in actor.pending_multiattack[0].options
+            invocation.name for invocation in actor.pending_multiattack[0].options
         }:
             return EligibilityFailure(
                 "multiattack_choice_unavailable",
@@ -333,9 +331,10 @@ class StatBlockActionRule:
             if isinstance(action.value, tuple):
                 aim_x, aim_y = action.value
                 actor_center = (actor.position.x + 0.5, actor.position.y + 0.5)
-                if abs(aim_x - actor_center[0]) < 1e-9 and abs(
-                    aim_y - actor_center[1]
-                ) < 1e-9:
+                if (
+                    abs(aim_x - actor_center[0]) < 1e-9
+                    and abs(aim_y - actor_center[1]) < 1e-9
+                ):
                     return EligibilityFailure(
                         "aim_required",
                         "The area must be aimed away from its user.",

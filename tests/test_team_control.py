@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from srd_arena.domain.effects import EffectResult
+from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterCreatureState
 from srd_arena.frontends.shared.session import build_session_presentation
@@ -334,27 +335,18 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
     goblin = state.creatures["red_blade"]
     aldren.position.x, aldren.position.y = 3, 3
     goblin.position.x, goblin.position.y = 3, 4
-    state._apply_effects(
-        [
+    state._apply_grapple(
+        condition_from_effect(
             EffectResult(
-                kind="apply_status",
-                target_ref="player",
-                data={
-                    "condition": "grappling",
-                    "source_ref": "red_blade",
-                    "source_label": goblin.creature.name,
-                },
-            ),
-            EffectResult(
-                kind="apply_status",
+                kind="apply_condition",
                 target_ref="red_blade",
                 data={
                     "condition": "grappled",
                     "source_ref": "player",
                     "source_label": aldren.creature.name,
                 },
-            ),
-        ]
+            )
+        )
     )
 
     move = next(

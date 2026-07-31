@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..effects.conditions import Status
+from ..effects.conditions import AppliedCondition
+from ..effects.runtime import (
+    EffectDuration,
+    EffectSource,
+    Indefinite,
+    Rounds,
+    UntilTurnEnd,
+    UntilTurnStart,
+    WhileParentExists,
+)
 from .behaviors import movement_squares as _movement_squares
 
 if TYPE_CHECKING:
@@ -52,6 +61,44 @@ def export_state(self: EncounterState) -> dict[str, object]:
             creature_ref: _export_creature(self, creature_ref)
             for creature_ref in self.creatures
         },
+        "applied_conditions": [
+            {
+                "id": condition.id,
+                "condition": condition.condition.value,
+                "source": _export_source(condition.identity.source),
+                "target_ref": condition.target_ref,
+                "duration": _export_duration(condition.duration),
+                "value": condition.value,
+                "root_id": condition.identity.root_id,
+                "parent_id": condition.identity.parent_id,
+            }
+            for condition in self.conditions
+        ],
+        "ongoing_effects": [
+            {
+                "id": effect.identity.id,
+                "kind": effect.kind.value,
+                "source": _export_source(effect.identity.source),
+                "target_refs": list(effect.target_refs),
+                "duration": _export_duration(effect.duration),
+                "root_id": effect.identity.root_id,
+                "parent_id": effect.identity.parent_id,
+            }
+            for effect in self.ongoing_effects
+        ],
+        "relationships": [
+            {
+                "id": relationship.identity.id,
+                "kind": relationship.kind.value,
+                "source": _export_source(relationship.identity.source),
+                "source_ref": relationship.source_ref,
+                "target_ref": relationship.target_ref,
+                "duration": _export_duration(relationship.duration),
+                "root_id": relationship.identity.root_id,
+                "parent_id": relationship.identity.parent_id,
+            }
+            for relationship in self.relationships
+        ],
         "decision": self.export_decision(),
         "pending_action": self._export_pending_action(),
     }
@@ -86,9 +133,7 @@ def _export_creature(
             "type_tags": list(creature.statistics.type_tags),
             "alignment": list(creature.statistics.alignment),
             "challenge_rating": creature.statistics.challenge_rating,
-            "saving_throw_bonuses": dict(
-                creature.statistics.saving_throw_bonuses
-            ),
+            "saving_throw_bonuses": dict(creature.statistics.saving_throw_bonuses),
             "skill_bonuses": dict(creature.statistics.skill_bonuses),
             "senses": list(creature.statistics.senses),
             "passive_perception": creature.statistics.passive_perception,
@@ -99,9 +144,7 @@ def _export_creature(
         "movement_remaining_feet": (
             movement_remaining * creature.attributes.movement.feet_per_square
         ),
-        "movement_total_feet": (
-            creature.attributes.movement.effective_speed_feet
-        ),
+        "movement_total_feet": (creature.attributes.movement.effective_speed_feet),
         "action_available": creature_state.actions_remaining > 0,
         "actions_remaining": creature_state.actions_remaining,
         "attacks_remaining": creature_state.attacks_remaining,
@@ -111,13 +154,11 @@ def _export_creature(
         "bonus_action_available": creature_state.bonus_action_available,
         "reaction_available": creature_state.reaction_available,
         "conditions": [
-            condition.name for condition in state.conditions_for(creature_ref)
+            condition.condition.value
+            for condition in state.conditions_for(creature_ref)
         ],
         "spell_slots_max": (
-            {
-                str(level): slots
-                for level, slots in spellcasting.spell_slots_max.items()
-            }
+            {str(level): slots for level, slots in spellcasting.spell_slots_max.items()}
             if spellcasting is not None
             else {}
         ),
@@ -156,8 +197,41 @@ def export_pending_action(self: EncounterState) -> dict[str, object] | None:
     }
 
 
-def _condition_suffix(conditions: tuple[Status, ...]) -> str:
+def _condition_suffix(conditions: tuple[AppliedCondition, ...]) -> str:
     if not conditions:
         return ""
-    labels = ", ".join(condition.name.capitalize() for condition in conditions)
+    labels = ", ".join(
+        condition.condition.value.capitalize() for condition in conditions
+    )
     return f" [{labels}]"
+
+
+def _export_source(source: EffectSource) -> dict[str, object]:
+    return {
+        "kind": source.kind.value,
+        "definition_id": source.definition_id,
+        "creature_ref": source.creature_ref,
+        "origin_action_id": source.origin_action_id,
+    }
+
+
+def _export_duration(duration: EffectDuration) -> dict[str, object]:
+    if isinstance(duration, Indefinite):
+        return {"kind": "indefinite"}
+    if isinstance(duration, UntilTurnStart):
+        return {
+            "kind": "until_turn_start",
+            "creature_ref": duration.creature_ref,
+            "round_number": duration.round_number,
+        }
+    if isinstance(duration, UntilTurnEnd):
+        return {
+            "kind": "until_turn_end",
+            "creature_ref": duration.creature_ref,
+            "round_number": duration.round_number,
+        }
+    if isinstance(duration, Rounds):
+        return {"kind": "rounds", "count": duration.count}
+    if isinstance(duration, WhileParentExists):
+        return {"kind": "while_parent_exists"}
+    raise TypeError(f"Unsupported effect duration: {duration!r}")
