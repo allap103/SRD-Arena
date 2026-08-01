@@ -17,6 +17,10 @@ class SpellSchema(SourceModel):
     condition_inflict: list[str] = Field(default_factory=list, alias="conditionInflict")
     damage_inflict: list[str] = Field(default_factory=list, alias="damageInflict")
     area_tags: list[str] = Field(default_factory=list, alias="areaTags")
+    affects_creature_type: list[str] = Field(
+        default_factory=list,
+        alias="affectsCreatureType",
+    )
     srd: bool | str | None = None
     srd52: bool | str | None = None
 

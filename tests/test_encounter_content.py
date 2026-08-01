@@ -362,7 +362,7 @@ def test_creature_can_load_subclass_and_explicit_spellcasting(tmp_path: Path) ->
         "paralyzed",
         "poisoned",
     )
-    assert creature.spellcasting.learned_spells[1].geometry_mode == "self_only"
+    assert creature.spellcasting.learned_spells[1].geometry_mode == "point_target"
 
 
 def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) -> None:

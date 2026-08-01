@@ -26,3 +26,5 @@ class Spell:
     area_tags: tuple[str, ...] = ()
     geometry_mode: str = "point_target"
     area_size_feet: int | None = None
+    concentration: bool = False
+    affected_creature_types: tuple[str, ...] = ()

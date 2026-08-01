@@ -11,6 +11,10 @@ from .models import (
     EncounterAction,
     EncounterProgress,
 )
+from .ongoing_effects import (
+    expire_ongoing_effects_for_turn_start,
+    resolve_end_turn_effects,
+)
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -42,7 +46,7 @@ class TurnEngine:
         progress = result.progress
         if result.outcome is not ActionExecutionOutcome.END_TURN:
             return progress
-        self.advance_turn(state)
+        self.advance_turn(state, progress)
         self.maybe_reset_reactions(state)
         follow_up = self.advance_until_next_decision(state)
         state._merge_progress(progress, follow_up)
@@ -92,7 +96,7 @@ class TurnEngine:
             if progress.transition is not None or progress.paused_for_decision:
                 break
             if completed_turn:
-                self.advance_turn(state)
+                self.advance_turn(state, progress)
                 self.maybe_reset_reactions(state)
                 progress.transition = self.check_transition(state)
                 if progress.transition is not None:
@@ -193,9 +197,14 @@ class TurnEngine:
             )
         return None
 
-    def advance_turn(self, state: EncounterState) -> None:
+    def advance_turn(
+        self,
+        state: EncounterState,
+        progress: EncounterProgress | None = None,
+    ) -> None:
         ending_creature_ref = state.current_decision().creature_ref
         ending_round = state.round.number
+        resolve_end_turn_effects(state, ending_creature_ref, progress)
         self.expire_conditions_for_turn_end(state, ending_creature_ref, ending_round)
         state.turn_index += 1
         if state.turn_index >= self.turn_count(state):
@@ -203,6 +212,7 @@ class TurnEngine:
             state.round.advance()
         self.normalize_turn(state)
         creature_ref = state.initiative_order[state.turn_index]
+        expire_ongoing_effects_for_turn_start(state, creature_ref)
         self.expire_conditions_for_turn_start(
             state,
             creature_ref,

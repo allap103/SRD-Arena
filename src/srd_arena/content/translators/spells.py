@@ -33,6 +33,12 @@ def build_spell(
         area_tags=tuple(raw.area_tags),
         geometry_mode=_spell_geometry_mode(raw),
         area_size_feet=_spell_area_size_feet(raw),
+        concentration=any(
+            bool(duration.get("concentration"))
+            for duration in raw.duration
+            if isinstance(duration, dict)
+        ),
+        affected_creature_types=tuple(raw.affects_creature_type),
     )
 
 
@@ -90,13 +96,13 @@ def _spell_geometry_mode(raw: SpellSchema) -> str:
         if isinstance(raw.range.get("type"), str)
         else None
     )
-    if _spell_removable_conditions(raw) and range_type == "point":
-        return "self_only"
+    if _spell_removable_conditions(raw):
+        return "point_target"
     if range_type in {"cone", "line", "cube"}:
         return "directional_area"
     if range_type in {"radius", "sphere", "cylinder", "emanation"}:
         return "non_directional_area"
-    if range_type == "point" and raw.area_tags:
+    if range_type == "point" and _spell_area_size_feet(raw) is not None:
         return "point_area"
     return "point_target"
 

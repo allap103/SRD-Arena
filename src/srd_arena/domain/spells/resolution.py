@@ -3,13 +3,18 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 import re
+from typing import cast
 
 from ..creatures import Creature
 from ..creatures.feature_rules.types import CapabilityActionResult
 from ..effects.results import EffectResult
 from ..geometry import AreaOfEffect, serialize_area
 from ..rolls.dice import resolve_dice
-from ..rolls.saving_throws import resolve_saving_throw
+from ..rolls.saving_throws import (
+    Ability,
+    SavingThrowCreature,
+    resolve_saving_throw,
+)
 from .definitions import Spell
 
 DieRoller = Callable[[int], int]
@@ -33,6 +38,7 @@ class SpellActionContext:
     area: AreaOfEffect | None = None
     source_ref: str = "player"
     roller: DieRoller | None = None
+    selected_condition: str | None = None
 
 
 def resolve_spell_action(
@@ -47,6 +53,8 @@ def resolve_spell_action(
         return _resolve_fireball(context)
     if spell.id == "lesser_restoration":
         return _resolve_lesser_restoration(context)
+    if spell.id == "hold_person":
+        return _resolve_hold_person(context)
     return None
 
 
@@ -148,14 +156,12 @@ def _resolve_lesser_restoration(context: SpellActionContext) -> CapabilityAction
     target_ref = context.target.target_ref
     target_label = context.target.target_label
     removable = spell.removable_conditions
-    removed_condition = next(
-        (
-            condition
-            for condition in context.target.target_conditions
-            if condition in removable
-        ),
-        None,
-    )
+    removed_condition = context.selected_condition
+    if (
+        removed_condition not in removable
+        or removed_condition not in context.target.target_conditions
+    ):
+        removed_condition = None
     messages = [("system", f"{creature.name} casts {spell.name} on {target_label}.")]
     effects: list[EffectResult] = []
     if removed_condition is None:
@@ -188,6 +194,92 @@ def _resolve_lesser_restoration(context: SpellActionContext) -> CapabilityAction
             "slot_level": spell.level,
             "removed_condition": removed_condition,
             "success": success,
+        },
+    )
+
+
+def _resolve_hold_person(context: SpellActionContext) -> CapabilityActionResult:
+    creature = context.creature
+    spell = context.spell
+    target = context.target
+    assert creature.spellcasting is not None
+    assert context.roller is not None
+    ability = spell.saving_throw_abilities[0]
+    save = resolve_saving_throw(
+        cast(SavingThrowCreature, target.creature),
+        cast(Ability, ability),
+        creature.spellcasting.save_dc,
+        roller=context.roller,
+    )
+    messages = [
+        (
+            "system",
+            f"{creature.name} casts {spell.name} on {target.target_label}.",
+        )
+    ]
+    effects: list[EffectResult] = [
+        EffectResult(
+            kind="start_ongoing_effect",
+            target_ref=target.target_ref,
+            data={
+                "effect_kind": "concentration",
+                "source_ref": context.source_ref,
+                "source_label": creature.name,
+                "definition_id": spell.id,
+                "duration_rounds": 10,
+                "parameters": (
+                    {
+                        "started_round": context.current_round,
+                        "repeat_save_trigger": "end_of_turn",
+                        "save_ability": ability,
+                        "save_dc": creature.spellcasting.save_dc,
+                    }
+                    if not save.check.success
+                    else {"started_round": context.current_round}
+                ),
+            },
+        )
+    ]
+    if save.check.success:
+        messages.append(("system", f"{target.target_label} resists {spell.name}."))
+    else:
+        messages.append(("system", f"{target.target_label} is paralyzed."))
+        effects.append(
+            EffectResult(
+                kind="apply_condition",
+                target_ref=target.target_ref,
+                data={
+                    "condition": "paralyzed",
+                    "source_ref": context.source_ref,
+                    "source_label": creature.name,
+                    "source_kind": "spell",
+                    "definition_id": spell.id,
+                    "parent_effect_kind": "concentration",
+                },
+            )
+        )
+    save_detail = {
+        "target_ref": target.target_ref,
+        "target_label": target.target_label,
+        "ability": ability,
+        "die": save.check.roll.selected,
+        "modifier": save.modifiers.total,
+        "total": save.check.roll.total,
+        "target_dc": save.check.target,
+        "success": save.check.success,
+    }
+    return CapabilityActionResult(
+        capability_id=spell.id,
+        capability_name=spell.name,
+        messages=messages,
+        effects=effects,
+        details={
+            "target_ref": target.target_ref,
+            "target_label": target.target_label,
+            "spell_level": spell.level,
+            "slot_level": spell.level,
+            "save_detail": save_detail,
+            "success": not save.check.success,
         },
     )
 

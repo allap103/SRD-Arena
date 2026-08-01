@@ -28,6 +28,7 @@ from .attack_resolution import (
     selected_attack_type,
 )
 from .hit_effects import apply_attack_hit_effects
+from ..ongoing_effects import resolve_concentration_damage
 from ..models import EncounterAction, EncounterProgress
 
 if TYPE_CHECKING:
@@ -283,6 +284,7 @@ def resolve_attack_action(
         attacker_label=creature.name,
         target_label=target_label,
     )
+    resolve_concentration_damage(state, target_ref, outcome.damage, progress)
     if outcome.hit and defender.get_health() > 0:
         apply_attack_hit_effects(
             state,

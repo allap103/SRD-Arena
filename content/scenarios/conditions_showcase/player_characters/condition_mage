@@ -1,0 +1,39 @@
+{
+  "id": "condition_mage",
+  "name": "Lifecrafter",
+  "description": "A spellcaster demonstrating condition spell lifecycles.",
+  "spellcasting": {
+    "ability": "wis",
+    "caster_progression": "full",
+    "spell_slots": {
+      "2": 4
+    }
+  },
+  "spells_known": [
+    {
+      "name": "Hold Person",
+      "source": "XPHB"
+    },
+    {
+      "name": "Lesser Restoration",
+      "source": "XPHB"
+    }
+  ],
+  "attributes": {
+    "base_health": 48,
+    "level": 8,
+    "movement": {
+      "speed_feet": 30,
+      "feet_per_square": 5
+    },
+    "strength": 10,
+    "dexterity": 14,
+    "constitution": 14,
+    "wisdom": 18,
+    "intelligence": 12,
+    "charisma": 10,
+    "base_armor_class": 12
+  },
+  "inventory": [],
+  "equipment": {}
+}

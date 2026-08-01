@@ -10,6 +10,8 @@ from ...spells.resolution import (
     resolve_spell_action as _resolve_spell_action_impl,
 )
 from ...spells.rules import parse_spell_action_value
+from ...spells.rules import parse_spell_action_condition
+from ..ongoing_effects import resolve_concentration_damage
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -97,6 +99,7 @@ def resolve_spell_action(
             area=area,
             source_ref=creature_ref,
             roller=_roll_die,
+            selected_condition=parse_spell_action_condition(spell_value),
         )
     )
     if result is None:
@@ -113,6 +116,20 @@ def resolve_spell_action(
 
     self._spend_spell_resources(spellcasting, spell, cost)
     progress.messages.extend(result.messages)
+    damage_details = result.details.get("damage_roll_details")
+    if isinstance(damage_details, list):
+        for detail in damage_details:
+            if not isinstance(detail, dict):
+                continue
+            damaged_ref = detail.get("target_ref")
+            applied_damage = detail.get("applied_damage")
+            if isinstance(damaged_ref, str) and isinstance(applied_damage, int):
+                resolve_concentration_damage(
+                    self,
+                    damaged_ref,
+                    applied_damage,
+                    progress,
+                )
     progress.messages.extend(
         self._apply_effects(result.effects, origin_id=action_id)
     )

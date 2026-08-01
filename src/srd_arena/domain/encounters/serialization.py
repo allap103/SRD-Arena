@@ -83,6 +83,9 @@ def export_state(self: EncounterState) -> dict[str, object]:
                 "duration": _export_duration(effect.duration),
                 "root_id": effect.identity.root_id,
                 "parent_id": effect.identity.parent_id,
+                "parameters": dict(effect.parameters),
+                "dispellable": effect.dispellable,
+                "tags": sorted(tag.value for tag in effect.tags),
             }
             for effect in self.ongoing_effects
         ],

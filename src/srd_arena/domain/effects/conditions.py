@@ -88,6 +88,8 @@ def build_applied_condition(
     source_kind: EffectSourceKind = EffectSourceKind.CREATURE,
     definition_id: str | None = None,
     origin_id: str | None = None,
+    parent_id: str | None = None,
+    root_id: str | None = None,
 ) -> AppliedCondition:
     resolved_origin_id = origin_id or f"source:{source_ref}"
     condition_id = (
@@ -107,7 +109,12 @@ def build_applied_condition(
         origin_id=resolved_origin_id,
     )
     return AppliedCondition(
-        identity=RuntimeStateIdentity(id=condition_id, source=source),
+        identity=RuntimeStateIdentity(
+            id=condition_id,
+            source=source,
+            parent_id=parent_id,
+            root_id=root_id,
+        ),
         condition=condition,
         target_ref=target_ref,
         duration=duration,

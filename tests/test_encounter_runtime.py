@@ -17,6 +17,9 @@ from srd_arena.domain.encounters.actions.stat_block import (
     recharge_stat_block_actions,
 )
 from srd_arena.domain.encounters.models import EncounterProgress
+from srd_arena.domain.encounters.ongoing_effects import (
+    resolve_concentration_damage,
+)
 from srd_arena.frontends.shared.combat import render_encounter_text
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.frontends.qt.app import GameWindow
@@ -41,8 +44,9 @@ from srd_arena.frontends.shared.session import (
     build_session_presentation,
 )
 from srd_arena.runtime.models import ActionView
-from srd_arena.content.catalogs import load_bestiary_catalog
+from srd_arena.content.catalogs import load_bestiary_catalog, load_spell_catalog
 from srd_arena.content.loaders.creatures import build_creature
+from srd_arena.content.translators import build_spell
 from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.schemas import CreatureSchema
 from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
@@ -629,6 +633,12 @@ def test_conditions_showcase_is_externally_controlled_and_uses_immunities() -> N
         .creature.statistics.condition_immunities
     )
     assert state.creatures["assassin"].creature.multiattack is not None
+    mage = state.creatures["condition_mage"].creature
+    assert mage.spellcasting is not None
+    assert {spell.id for spell in mage.spellcasting.learned_spells} == {
+        "hold_person",
+        "lesser_restoration",
+    }
 
 
 def test_execution_rechecks_action_eligibility() -> None:
@@ -1408,7 +1418,10 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
         ]
     )
 
-    assert "Cast Lesser Restoration" in _action_labels(session)
+    assert any(
+        label.startswith("Cast Lesser Restoration")
+        for label in _action_labels(session)
+    )
 
 
 def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
@@ -1912,6 +1925,203 @@ def test_lesser_restoration_uses_magic_menu_bucket() -> None:
     )
 
     assert bucket == "magic"
+
+
+def test_lesser_restoration_explicitly_selects_the_condition_to_remove() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    assert session.decision_creature.spellcasting is not None
+    session.decision_creature.spellcasting.spell_slots_remaining[2] = 1
+    for condition in ("blinded", "poisoned"):
+        state._apply_effects(
+            [
+                EffectResult(
+                    kind="apply_condition",
+                    target_ref="player",
+                    data={
+                        "condition": condition,
+                        "source_ref": "goblin_1",
+                        "source_label": "Goblin",
+                    },
+                )
+            ]
+        )
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).endswith("#poisoned")
+    )
+    state.apply_action(action)
+
+    assert state.has_condition("player", Condition.POISONED) is False
+    assert state.has_condition("player", Condition.BLINDED) is True
+
+
+def test_hold_person_applies_concentration_and_ends_after_repeated_save(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Hold Person",
+            "XPHB",
+            load_spell_catalog(SYSTEM_CONTENT_ROOT),
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[2] = 2
+    state.creatures["goblin_1"].creature.statistics = replace(
+        state.creatures["goblin_1"].creature.statistics,
+        creature_type="humanoid",
+    )
+    state.creatures["goblin_1"].position.x = state.active_position.x + 1
+    state.creatures["goblin_1"].position.y = state.active_position.y
+    rolls = iter((1, 20))
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: next(rolls),
+    )
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("hold_person:goblin_1")
+    )
+    cast = state.apply_action(action)
+
+    assert state.has_condition("goblin_1", Condition.PARALYZED) is True
+    assert state.effective_conditions_for("goblin_1").has(
+        Condition.INCAPACITATED
+    )
+    assert len(state.ongoing_effects) == 1
+    assert state.ongoing_effects[0].kind.value == "concentration"
+    paralyzed = next(
+        condition
+        for condition in state.conditions_for("goblin_1")
+        if condition.condition is Condition.PARALYZED
+    )
+    assert paralyzed.identity.parent_id == state.ongoing_effects[0].identity.id
+    assert paralyzed.identity.root_id == state.ongoing_effects[0].identity.id
+
+    state.initiative_order = ["player", "goblin_1"]
+    state.turn_index = 1
+    state.turn_engine.advance_turn(state, cast)
+
+    assert state.has_condition("goblin_1", Condition.PARALYZED) is False
+    assert state.ongoing_effects == []
+    assert any("succeeds on the repeated Wisdom save" in text for _, text in cast.messages)
+
+
+def test_new_concentration_replaces_the_previous_effect_tree() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+
+    for origin_id, target_ref in (
+        ("first-cast", "goblin_1"),
+        ("second-cast", "goblin_2"),
+    ):
+        state._apply_effects(
+            [
+                EffectResult(
+                    kind="start_ongoing_effect",
+                    target_ref=target_ref,
+                    data={
+                        "effect_kind": "concentration",
+                        "source_ref": "player",
+                        "source_label": "Traveler",
+                        "definition_id": "hold_person",
+                        "parameters": {},
+                    },
+                ),
+                EffectResult(
+                    kind="apply_condition",
+                    target_ref=target_ref,
+                    data={
+                        "condition": "paralyzed",
+                        "source_ref": "player",
+                        "source_label": "Traveler",
+                        "source_kind": "spell",
+                        "definition_id": "hold_person",
+                    },
+                ),
+            ],
+            origin_id=origin_id,
+        )
+
+    assert state.has_condition("goblin_1", Condition.PARALYZED) is False
+    assert state.has_condition("goblin_2", Condition.PARALYZED) is True
+    assert len(state.ongoing_effects) == 1
+    assert state.ongoing_effects[0].identity.source.origin_id == "second-cast"
+
+
+def test_failed_damage_save_ends_concentration_and_its_conditions(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="goblin_1",
+                data={
+                    "effect_kind": "concentration",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                    "definition_id": "hold_person",
+                    "parameters": {},
+                },
+            ),
+            EffectResult(
+                kind="apply_condition",
+                target_ref="goblin_1",
+                data={
+                    "condition": "paralyzed",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                    "source_kind": "spell",
+                    "definition_id": "hold_person",
+                },
+            ),
+        ],
+        origin_id="hold-cast",
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+
+    resolve_concentration_damage(state, "player", 20)
+
+    assert state.ongoing_effects == []
+    assert state.has_condition("goblin_1", Condition.PARALYZED) is False
 
 
 def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> None:

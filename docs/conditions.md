@@ -127,3 +127,26 @@ Removal operations have distinct scopes:
 
 Exhaustion is the stacking exception and uses explicit gain, remove, and set
 level operations.
+
+## Condition Spell Lifecycles
+
+A concentration spell is represented by an `OngoingEffect` root. Conditions
+created by that casting reference the ongoing effect as their parent and root,
+while sharing the casting's runtime origin. Ending concentration removes the
+root and all condition applications produced by that casting.
+
+Concentration currently ends when:
+
+- the caster starts concentrating on another effect;
+- the caster fails the Constitution saving throw caused by taking damage;
+- the caster becomes Incapacitated or is defeated;
+- the spell reaches its maximum duration.
+
+Repeat saving throws are parameters of the ongoing effect rather than of the
+condition. A successful repeat save removes the complete effect subtree. This
+keeps Paralyzed reusable while allowing Hold Person and future spells to define
+different repeat-save schedules.
+
+Lesser Restoration presents its removable conditions as explicit action
+choices. Resolution therefore never depends on collection order when a target
+has more than one removable condition.

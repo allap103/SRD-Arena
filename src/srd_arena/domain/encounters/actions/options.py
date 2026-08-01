@@ -95,16 +95,45 @@ def available_spell_actions(
             continue
         targets = self._spell_action_targets(actor, spell)
         for target in targets:
-            actions.append(
-                EncounterAction(
-                    spell_action_label(spell, actor_ref=creature_ref),
-                    "spell",
-                    spell_action_value(spell.id, target.target_ref),
-                    id=spell_action_id(spell, target_ref=target.target_ref),
-                    creature_ref=creature_ref,
-                    cost=cost,
+            selections = (
+                tuple(
+                    dict.fromkeys(
+                        condition
+                        for condition in target.target_conditions
+                        if condition in spell.removable_conditions
+                    )
                 )
+                if spell.removable_conditions
+                else (None,)
             )
+            for selection in selections:
+                selection_label = (
+                    f" ({selection.title()})"
+                    if isinstance(selection, str)
+                    else ""
+                )
+                selection_id = (
+                    f"-{selection}" if isinstance(selection, str) else ""
+                )
+                actions.append(
+                    EncounterAction(
+                        spell_action_label(spell, actor_ref=creature_ref)
+                        + selection_label,
+                        "spell",
+                        spell_action_value(
+                            spell.id,
+                            target.target_ref,
+                            selected_condition=selection,
+                        ),
+                        id=spell_action_id(
+                            spell,
+                            target_ref=target.target_ref,
+                        )
+                        + selection_id,
+                        creature_ref=creature_ref,
+                        cost=cost,
+                    )
+                )
         if not targets:
             actions.append(
                 EncounterAction(
@@ -171,6 +200,25 @@ def spell_action_targets(
 ) -> list[SpellTargetContext]:
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
+    if spell.removable_conditions:
+        restoration_targets: list[SpellTargetContext] = []
+        max_range = self._spell_range_squares(spell, actor)
+        for target_ref, target_state in self.creatures.items():
+            if not target_state.is_alive:
+                continue
+            if (
+                max_range is not None
+                and _chebyshev_distance(creature_position, target_state.position)
+                > max_range
+            ):
+                continue
+            target = self._spell_target_context(actor, target_ref)
+            if target is not None and any(
+                condition in spell.removable_conditions
+                for condition in target.target_conditions
+            ):
+                restoration_targets.append(target)
+        return restoration_targets
     if spell.geometry_mode == "point_area":
         max_range = self._spell_range_squares(spell, actor)
         if max_range is None:
@@ -214,7 +262,12 @@ def spell_action_targets(
             continue
         target = self._spell_target_context(actor, target_ref)
         if target is not None:
-            targets.append(target)
+            creature_type = target.creature.statistics.creature_type
+            if (
+                not spell.affected_creature_types
+                or creature_type in spell.affected_creature_types
+            ):
+                targets.append(target)
     return targets
 
 

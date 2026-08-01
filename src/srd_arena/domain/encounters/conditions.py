@@ -9,6 +9,7 @@ from ..effects.conditions import (
     Condition,
     build_applied_condition,
 )
+from ..effects.condition_rules import effective_conditions
 from ..effects.runtime import (
     CreatureRelationship,
     RelationshipKind,
@@ -68,12 +69,27 @@ def apply_condition(
             source_kind=applied.identity.source.kind,
             definition_id=applied.identity.source.definition_id,
             origin_id=applied.identity.source.origin_id,
+            parent_id=applied.id,
+            root_id=applied.identity.root_id,
         )
         prone_result = apply_condition(state, prone)
         consequences.extend(prone_result.applied)
         rejections = prone_result.rejections
     else:
         rejections = ()
+    target_conditions = tuple(
+        condition
+        for condition in state.conditions
+        if condition.target_ref == applied.target_ref
+    )
+    if effective_conditions(
+        target_conditions,
+        target.statistics.condition_immunities,
+    ).has(Condition.INCAPACITATED):
+        from .ongoing_effects import end_concentration
+
+        if hasattr(state, "ongoing_effects"):
+            end_concentration(state, applied.target_ref)
     return ConditionApplicationResult(
         requested_condition=applied.condition,
         applied=tuple(consequences),
@@ -159,6 +175,10 @@ def remove_relationships_for_creature(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> None:
+    from .ongoing_effects import end_concentration
+
+    if hasattr(state, "ongoing_effects"):
+        end_concentration(state, creature_ref)
     grapple_condition_ids = {
         relationship.identity.parent_id
         for relationship in state.relationships

@@ -8,6 +8,7 @@ from .runtime import EffectSourceKind
 
 ApplyCondition = Callable[[AppliedCondition], object]
 RemoveCondition = Callable[[str, Condition], None]
+ApplyOngoingEffect = Callable[[EffectResult, str], object]
 
 
 def apply_effects(
@@ -15,6 +16,7 @@ def apply_effects(
     *,
     apply_condition: ApplyCondition,
     remove_condition: RemoveCondition,
+    apply_ongoing_effect: ApplyOngoingEffect | None = None,
     origin_id: str | None = None,
 ) -> list[tuple[str, str]]:
     messages: list[tuple[str, str]] = []
@@ -31,6 +33,10 @@ def apply_effects(
                 effect.target_ref,
                 Condition(_required_condition_name(effect)),
             )
+        elif effect.kind == "start_ongoing_effect":
+            if apply_ongoing_effect is None:
+                raise ValueError("No ongoing-effect application service provided.")
+            apply_ongoing_effect(effect, origin_id or "")
         elif effect.kind == "message":
             messages.extend(message_effects(effect))
         else:
@@ -76,6 +82,12 @@ def condition_from_effect_with_origin(
     metadata = effect.data.get("metadata")
     source_kind = effect.data.get("source_kind", "creature")
     definition_id = effect.data.get("definition_id")
+    parent_effect_kind = effect.data.get("parent_effect_kind")
+    parent_id = (
+        f"ongoing:{parent_effect_kind}:{origin_id}"
+        if isinstance(parent_effect_kind, str) and origin_id is not None
+        else None
+    )
     return build_applied_condition(
         condition=Condition(_required_condition_name(effect)),
         source_ref=source_ref,
@@ -95,6 +107,8 @@ def condition_from_effect_with_origin(
             definition_id if isinstance(definition_id, str) else source_ref
         ),
         origin_id=origin_id,
+        parent_id=parent_id,
+        root_id=parent_id,
     )
 
 

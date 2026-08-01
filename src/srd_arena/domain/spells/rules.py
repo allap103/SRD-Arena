@@ -47,7 +47,7 @@ def spell_cast_block_reason(
 
 
 def spell_targets_self_only(spell: Spell) -> bool:
-    return bool(spell.removable_conditions) and spell.range_data.get("type") == "point"
+    return spell.range_data.get("type") == "self"
 
 
 def spell_range_squares(spell: Spell, creature: Creature) -> int | None:
@@ -55,6 +55,8 @@ def spell_range_squares(spell: Spell, creature: Creature) -> int | None:
     if not isinstance(distance, dict):
         return None
     amount = distance.get("amount")
+    if distance.get("type") == "touch":
+        return 1
     if not isinstance(amount, int):
         return None
     return max(1, amount // creature.attributes.movement.feet_per_square)
@@ -84,15 +86,20 @@ def spell_action_value(
     spell_id: str,
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
+    selected_condition: str | None = None,
 ) -> str:
     if aim_point is not None:
         return f"{spell_id}@{aim_point[0]:.4f},{aim_point[1]:.4f}"
     if target_ref is None:
         return spell_id
-    return f"{spell_id}:{target_ref}"
+    value = f"{spell_id}:{target_ref}"
+    if selected_condition is not None:
+        value += f"#{selected_condition}"
+    return value
 
 
 def parse_spell_action_value(value: str) -> tuple[str, str | None, tuple[float, float] | None]:
+    value, _, _selection = value.partition("#")
     if "@" in value:
         spell_id, _, aim = value.partition("@")
         x_text, _, y_text = aim.partition(",")
@@ -105,3 +112,8 @@ def parse_spell_action_value(value: str) -> tuple[str, str | None, tuple[float, 
     if not target_ref:
         return spell_id, None, None
     return spell_id, target_ref, None
+
+
+def parse_spell_action_condition(value: str) -> str | None:
+    _base, separator, condition = value.partition("#")
+    return condition if separator and condition else None

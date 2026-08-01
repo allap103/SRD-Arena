@@ -6,6 +6,15 @@
   },
   "creatures": [
     {
+      "id": "condition_mage",
+      "player_character": "condition_mage",
+      "start": {
+        "x": 1,
+        "y": 4
+      },
+      "team_id": "inflictors"
+    },
+    {
       "id": "assassin",
       "name": "Venom",
       "stat_block": {
