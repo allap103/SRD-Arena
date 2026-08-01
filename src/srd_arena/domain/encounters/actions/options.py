@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from ...creatures import Creature
 from ...geometry import Position
 from ...creatures import Spellcasting
+from ...effects.conditions import CombatTrait
 from ..behaviors import (
     chebyshev_distance as _chebyshev_distance,
 )
@@ -386,6 +387,7 @@ def spell_target_context(
     target_state = self.creatures.get(target_ref)
     if target_state is None or not target_state.is_alive:
         return None
+    effective = self.effective_conditions_for(target_ref)
     return SpellTargetContext(
         creature=target_state.creature,
         target_ref=target_ref,
@@ -393,4 +395,12 @@ def spell_target_context(
         target_conditions=tuple(
             condition.condition.value for condition in self.conditions_for(target_ref)
         ),
+        automatic_save_failures={
+            "strength": effective.providers_for_trait(
+                CombatTrait.AUTO_FAIL_STRENGTH_SAVES
+            ),
+            "dexterity": effective.providers_for_trait(
+                CombatTrait.AUTO_FAIL_DEXTERITY_SAVES
+            ),
+        },
     )

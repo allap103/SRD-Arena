@@ -36,6 +36,11 @@ class CombatTrait(StrEnum):
     CANNOT_TAKE_ACTIONS = "cannot_take_actions"
     CANNOT_TAKE_REACTIONS = "cannot_take_reactions"
     SPEED_ZERO = "speed_zero"
+    ATTACKERS_HAVE_ADVANTAGE = "attackers_have_advantage"
+    AUTO_FAIL_STRENGTH_SAVES = "auto_fail_strength_saves"
+    AUTO_FAIL_DEXTERITY_SAVES = "auto_fail_dexterity_saves"
+    HITS_WITHIN_5_FEET_ARE_CRITICAL = "hits_within_5_feet_are_critical"
+    INITIATIVE_DISADVANTAGE = "initiative_disadvantage"
 
 
 @dataclass(frozen=True)

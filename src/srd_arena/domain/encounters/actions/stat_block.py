@@ -275,6 +275,12 @@ def resolve_attack_action(
         ),
         d20_roller=_roll_die,
         dice_roller=_roll_dice,
+        automatic_critical_provider_ids=(
+            state._automatic_critical_provider_ids_for(
+                creature_ref,
+                target_ref,
+            )
+        ),
     )
     if isinstance(preferred_attack_name, str):
         consume_stat_block_action_resource(creature, preferred_attack_name)
@@ -460,6 +466,12 @@ def _resolve_saving_throw_action(
             cast(Ability, ability_names[definition.ability]),
             definition.dc,
             roller=_roll_die,
+            automatic_failure_reasons=(
+                state._automatic_save_failure_provider_ids_for(
+                    target_ref,
+                    ability_names[definition.ability],
+                )
+            ),
         )
         effects = (
             definition.success
@@ -496,6 +508,9 @@ def _resolve_saving_throw_action(
                 "target_ref": target_ref,
                 "save_total": saving_throw.check.roll.total,
                 "success": saving_throw.check.success,
+                "automatic_failure_reasons": list(
+                    saving_throw.automatic_failure_reasons
+                ),
                 "damage": damage,
             }
         )

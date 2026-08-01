@@ -150,3 +150,19 @@ different repeat-save schedules.
 Lesser Restoration presents its removable conditions as explicit action
 choices. Resolution therefore never depends on collection order when a target
 has more than one removable condition.
+
+## Shared Condition Traits
+
+Conditions contribute reusable mechanical traits to the pipeline responsible
+for enforcing them. Pipelines do not branch on condition names.
+
+Paralyzed and Unconscious both contribute the following traits:
+
+- attacks against the creature have Advantage;
+- Strength and Dexterity saving throws automatically fail;
+- a hit from an attacker within 5 feet becomes a Critical Hit.
+
+The attack and saving-throw results retain the provider IDs responsible for
+these outcomes. Paralyzed additionally contributes Speed 0 and derives
+Incapacitated. Incapacitated blocks actions and reactions, ends concentration,
+and imposes Disadvantage on Initiative.

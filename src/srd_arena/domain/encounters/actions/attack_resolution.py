@@ -38,6 +38,7 @@ def resolve_attack(
     attack_roll_mode_override: D20RollMode | None = None,
     d20_roller=roll_die,
     dice_roller=roll_dice,
+    automatic_critical_provider_ids: tuple[str, ...] = (),
 ) -> AttackOutcome:
     attack_source = select_attack_source(
         attacker,
@@ -62,8 +63,11 @@ def resolve_attack(
     target_ac = defender.get_armor_class()
     attack_check = resolve_check(attack_result, target_ac)
     critical_miss = attack_result.selected == 1
-    critical_hit = attack_result.selected == 20
-    hit = not critical_miss and (critical_hit or attack_check.success)
+    natural_critical_hit = attack_result.selected == 20
+    hit = not critical_miss and (natural_critical_hit or attack_check.success)
+    critical_hit = hit and (
+        natural_critical_hit or bool(automatic_critical_provider_ids)
+    )
     attack_roll_detail = {
         "die": attack_result.selected,
         "dice": list(attack_result.dice),
@@ -77,6 +81,9 @@ def resolve_attack(
         "target_ac": target_ac,
         "critical_miss": critical_miss,
         "critical_hit": critical_hit,
+        "automatic_critical_provider_ids": list(
+            automatic_critical_provider_ids
+        ),
     }
     if attack_source.weapon_id is not None:
         attack_roll_detail["weapon_id"] = attack_source.weapon_id
@@ -420,14 +427,11 @@ def attack_range_squares(
         return 1
     attack_type = source.attack_modes[0]
     range_feet = (
-        source.range_normal
+        source.range_normal or 5
         if attack_type == "ranged"
         else source.reach_feet or 5
     )
     return max(1, range_feet // attacker.attributes.movement.feet_per_square)
-
-
-
 
 def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
     return AttackSource(

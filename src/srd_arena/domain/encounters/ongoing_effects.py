@@ -111,6 +111,12 @@ def resolve_end_turn_effects(
             cast(Ability, ability),
             dc,
             roller=_roll_die,
+            automatic_failure_reasons=(
+                state._automatic_save_failure_provider_ids_for(
+                    creature_ref,
+                    ability,
+                )
+            ),
         )
         if progress is not None:
             outcome = "succeeds" if save.check.success else "fails"

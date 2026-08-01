@@ -28,6 +28,7 @@ from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 from srd_arena.domain.effects.runtime import UntilTurnStart
 from srd_arena.domain.geometry import Position
+from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.domain.creatures import (
     ActionTarget,
     ActionResource,
@@ -555,6 +556,87 @@ def test_paralyzed_blocks_actions_through_effective_incapacitation() -> None:
     effective = state.effective_conditions_for(actor_ref)
     assert effective.has(Condition.INCAPACITATED)
     assert state.has_condition(actor_ref, Condition.INCAPACITATED) is False
+
+
+def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical(
+    monkeypatch,
+) -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    attacker_ref = state.current_decision().creature_ref
+    target_ref = "goblin_1"
+    state.creatures[target_ref].position.x = state.active_position.x + 1
+    state.creatures[target_ref].position.y = state.active_position.y
+    paralyzed = build_applied_condition(
+        condition=Condition.PARALYZED,
+        source_ref=attacker_ref,
+        source_label=state._creature_label(attacker_ref),
+        target_ref=target_ref,
+    )
+    state.conditions.append(paralyzed)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 10,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda count, _sides: count,
+    )
+
+    attack = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "attack" and action.value == target_ref
+    )
+    result = state.apply_action(attack)
+    event = next(event for event in result.events if event.type == "attack_resolved")
+
+    assert event.data["attack_roll_detail"]["mode"] == "advantage"
+    assert event.data["critical_hit"] is True
+    assert event.data["attack_roll_detail"][
+        "automatic_critical_provider_ids"
+    ] == [paralyzed.id]
+
+
+def test_paralyzed_target_automatically_fails_strength_and_dexterity_saves() -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    target_ref = "goblin_1"
+    paralyzed = build_applied_condition(
+        condition=Condition.PARALYZED,
+        source_ref="player",
+        source_label="Traveler",
+        target_ref=target_ref,
+    )
+    state.conditions.append(paralyzed)
+
+    assert state._automatic_save_failure_provider_ids_for(
+        target_ref,
+        "strength",
+    ) == (paralyzed.id,)
+    assert state._automatic_save_failure_provider_ids_for(
+        target_ref,
+        "dexterity",
+    ) == (paralyzed.id,)
+    assert state._automatic_save_failure_provider_ids_for(
+        target_ref,
+        "wisdom",
+    ) == ()
+    save = resolve_saving_throw(
+        state.creatures[target_ref].creature,
+        "dexterity",
+        1,
+        roller=lambda _sides: 20,
+        automatic_failure_reasons=(paralyzed.id,),
+    )
+    assert save.check.success is False
+    assert save.automatic_failure_reasons == (paralyzed.id,)
 
 
 def test_action_target_requirement_uses_effective_conditions() -> None:

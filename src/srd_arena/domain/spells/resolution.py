@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import re
 from typing import cast
 
@@ -26,6 +26,12 @@ class SpellTargetContext:
     target_ref: str
     target_label: str
     target_conditions: tuple[str, ...] = ()
+    automatic_save_failures: dict[str, tuple[str, ...]] = field(
+        default_factory=dict
+    )
+
+    def automatic_failure_reasons(self, ability: str) -> tuple[str, ...]:
+        return self.automatic_save_failures.get(ability, ())
 
 
 @dataclass(frozen=True)
@@ -78,6 +84,9 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
             ability,
             creature.spellcasting.save_dc,
             roller=context.roller,
+            automatic_failure_reasons=target.automatic_failure_reasons(
+                ability
+            ),
         )
         save_detail = {
             "target_ref": target.target_ref,
@@ -95,6 +104,9 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
             "total": save_result.check.roll.total,
             "target_dc": save_result.check.target,
             "success": save_result.check.success,
+            "automatic_failure_reasons": list(
+                save_result.automatic_failure_reasons
+            ),
         }
         save_details.append(save_detail)
         messages.append(
@@ -210,6 +222,7 @@ def _resolve_hold_person(context: SpellActionContext) -> CapabilityActionResult:
         cast(Ability, ability),
         creature.spellcasting.save_dc,
         roller=context.roller,
+        automatic_failure_reasons=target.automatic_failure_reasons(ability),
     )
     messages = [
         (
@@ -267,6 +280,7 @@ def _resolve_hold_person(context: SpellActionContext) -> CapabilityActionResult:
         "total": save.check.roll.total,
         "target_dc": save.check.target,
         "success": save.check.success,
+        "automatic_failure_reasons": list(save.automatic_failure_reasons),
     }
     return CapabilityActionResult(
         capability_id=spell.id,
@@ -308,6 +322,9 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
             ability,
             creature.spellcasting.save_dc,
             roller=context.roller,
+            automatic_failure_reasons=target.automatic_failure_reasons(
+                ability
+            ),
         )
         save_detail = {
             "target_ref": target.target_ref,
@@ -325,6 +342,9 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
             "total": save_result.check.roll.total,
             "target_dc": save_result.check.target,
             "success": save_result.check.success,
+            "automatic_failure_reasons": list(
+                save_result.automatic_failure_reasons
+            ),
         }
         save_details.append(save_detail)
         messages.append(
@@ -428,6 +448,9 @@ def _resolve_fireball(context: SpellActionContext) -> CapabilityActionResult:
             ability,
             creature.spellcasting.save_dc,
             roller=context.roller,
+            automatic_failure_reasons=target.automatic_failure_reasons(
+                ability
+            ),
         )
         save_detail = {
             "target_ref": target.target_ref,
@@ -445,6 +468,9 @@ def _resolve_fireball(context: SpellActionContext) -> CapabilityActionResult:
             "total": save_result.check.roll.total,
             "target_dc": save_result.check.target,
             "success": save_result.check.success,
+            "automatic_failure_reasons": list(
+                save_result.automatic_failure_reasons
+            ),
         }
         save_details.append(save_detail)
         messages.append(

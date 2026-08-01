@@ -23,9 +23,24 @@ def test_paralyzed_exposes_incapacitated_without_an_applied_child() -> None:
     assert effective.has(Condition.PARALYZED)
     assert effective.has(Condition.INCAPACITATED)
     assert effective.has_trait(CombatTrait.CANNOT_TAKE_ACTIONS)
+    assert effective.has_trait(CombatTrait.INITIATIVE_DISADVANTAGE)
     assert effective.providers_for(Condition.INCAPACITATED) == (
         paralyzed.id,
     )
+
+
+def test_paralyzed_and_unconscious_share_close_combat_traits() -> None:
+    for condition in (Condition.PARALYZED, Condition.UNCONSCIOUS):
+        applied = _applied(condition, "effect")
+        effective = effective_conditions((applied,))
+
+        for trait in (
+            CombatTrait.ATTACKERS_HAVE_ADVANTAGE,
+            CombatTrait.AUTO_FAIL_STRENGTH_SAVES,
+            CombatTrait.AUTO_FAIL_DEXTERITY_SAVES,
+            CombatTrait.HITS_WITHIN_5_FEET_ARE_CRITICAL,
+        ):
+            assert effective.providers_for_trait(trait) == (applied.id,)
 
 
 def test_effective_condition_preserves_all_independent_providers() -> None:

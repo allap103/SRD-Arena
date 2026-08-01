@@ -17,12 +17,21 @@ CONDITION_DEFINITIONS: dict[Condition, ConditionDefinition] = {
             {
                 CombatTrait.CANNOT_TAKE_ACTIONS,
                 CombatTrait.CANNOT_TAKE_REACTIONS,
+                CombatTrait.INITIATIVE_DISADVANTAGE,
             }
         )
     ),
     Condition.PARALYZED: ConditionDefinition(
         implied_conditions=frozenset({Condition.INCAPACITATED}),
-        traits=frozenset({CombatTrait.SPEED_ZERO}),
+        traits=frozenset(
+            {
+                CombatTrait.SPEED_ZERO,
+                CombatTrait.ATTACKERS_HAVE_ADVANTAGE,
+                CombatTrait.AUTO_FAIL_STRENGTH_SAVES,
+                CombatTrait.AUTO_FAIL_DEXTERITY_SAVES,
+                CombatTrait.HITS_WITHIN_5_FEET_ARE_CRITICAL,
+            }
+        ),
     ),
     Condition.PETRIFIED: ConditionDefinition(
         implied_conditions=frozenset({Condition.INCAPACITATED}),
@@ -34,6 +43,14 @@ CONDITION_DEFINITIONS: dict[Condition, ConditionDefinition] = {
     ),
     Condition.UNCONSCIOUS: ConditionDefinition(
         implied_conditions=frozenset({Condition.INCAPACITATED}),
+        traits=frozenset(
+            {
+                CombatTrait.ATTACKERS_HAVE_ADVANTAGE,
+                CombatTrait.AUTO_FAIL_STRENGTH_SAVES,
+                CombatTrait.AUTO_FAIL_DEXTERITY_SAVES,
+                CombatTrait.HITS_WITHIN_5_FEET_ARE_CRITICAL,
+            }
+        ),
     ),
     Condition.GRAPPLED: ConditionDefinition(
         traits=frozenset({CombatTrait.SPEED_ZERO}),

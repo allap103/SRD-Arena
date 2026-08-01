@@ -64,7 +64,7 @@ from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
 from .definitions import EncounterBehavior, EncounterDefinition
-from ..effects.conditions import AppliedCondition, Condition
+from ..effects.conditions import AppliedCondition, CombatTrait, Condition
 from ..geometry import GeometryConfig
 from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
 from ..effects.triggered import TriggeredEffect, matching_effects
@@ -264,17 +264,23 @@ class EncounterState(EncounterStateData):
             )
 
     def _roll_initiative(self) -> None:
-        entries = [
-            InitiativeEntry(
+        entries: list[InitiativeEntry] = []
+        for creature_ref, creature_state in self.creatures.items():
+            roll = roll_die(20)
+            if self.effective_conditions_for(creature_ref).has_trait(
+                CombatTrait.INITIATIVE_DISADVANTAGE
+            ):
+                roll = min(roll, roll_die(20))
+            entries.append(
+                InitiativeEntry(
                 creature_ref=creature_ref,
-                roll=roll_die(20),
+                roll=roll,
                 modifier=creature_state.creature.get_modifier(
                     creature_state.creature.attributes.dexterity
                 ),
                 total=0,
+                )
             )
-            for creature_ref, creature_state in self.creatures.items()
-        ]
         for entry in entries:
             entry.total = entry.roll + entry.modifier
         entries.sort(
@@ -346,6 +352,11 @@ class EncounterState(EncounterStateData):
         )
         if base_mode != "normal":
             modes.append(base_mode)
+        target_effective = self.effective_conditions_for(target_ref)
+        if target_effective.has_trait(
+            CombatTrait.ATTACKERS_HAVE_ADVANTAGE
+        ):
+            modes.append("advantage")
         context = {
             "attacker_ref": attacker_ref,
             "target_ref": target_ref,
@@ -368,6 +379,35 @@ class EncounterState(EncounterStateData):
             elif effect.operation == "grant_disadvantage":
                 modes.append("disadvantage")
         return _combine_roll_modes(modes)
+
+    def _automatic_critical_provider_ids_for(
+        self,
+        attacker_ref: CreatureRef,
+        target_ref: CreatureRef,
+    ) -> tuple[str, ...]:
+        if not _is_adjacent(
+            self._creature_position(attacker_ref),
+            self._creature_position(target_ref),
+        ):
+            return ()
+        return self.effective_conditions_for(target_ref).providers_for_trait(
+            CombatTrait.HITS_WITHIN_5_FEET_ARE_CRITICAL
+        )
+
+    def _automatic_save_failure_provider_ids_for(
+        self,
+        target_ref: CreatureRef,
+        ability: str,
+    ) -> tuple[str, ...]:
+        trait = {
+            "strength": CombatTrait.AUTO_FAIL_STRENGTH_SAVES,
+            "dexterity": CombatTrait.AUTO_FAIL_DEXTERITY_SAVES,
+        }.get(ability)
+        if trait is None:
+            return ()
+        return self.effective_conditions_for(target_ref).providers_for_trait(
+            trait
+        )
 
     def _active_status_effects(self) -> list[TriggeredEffect]:
         return [

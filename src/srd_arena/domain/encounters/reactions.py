@@ -96,6 +96,12 @@ class ReactionEngine:
                 ),
                 d20_roller=_roll_die,
                 dice_roller=_roll_dice,
+                automatic_critical_provider_ids=(
+                    state._automatic_critical_provider_ids_for(
+                        reactor_ref,
+                        mover_ref,
+                    )
+                ),
             )
             apply_attack_damage(
                 attack,
@@ -451,6 +457,12 @@ class ReactionEngine:
                 ),
                 d20_roller=_roll_die,
                 dice_roller=_roll_dice,
+                automatic_critical_provider_ids=(
+                    state._automatic_critical_provider_ids_for(
+                        reactor_ref,
+                        target_ref,
+                    )
+                ),
             )
             reroll_rule = matching_damage_reroll_rule(reactor.creature, attack)
             if attack.hit and reroll_rule is not None:

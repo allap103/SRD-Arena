@@ -45,6 +45,7 @@ class SavingThrowResult:
     proficient: bool
     modifiers: SavingThrowModifiers
     check: CheckResult
+    automatic_failure_reasons: tuple[str, ...] = ()
 
 
 def resolve_saving_throw(
@@ -55,6 +56,7 @@ def resolve_saving_throw(
     mode: D20RollMode = "normal",
     other_modifier: int = 0,
     roller: DieRoller = roll_die,
+    automatic_failure_reasons: tuple[str, ...] = (),
 ) -> SavingThrowResult:
     """Resolve an creature's saving throw against a target."""
     ability_score = getattr(creature.attributes, ability)
@@ -74,11 +76,15 @@ def resolve_saving_throw(
         other=other_modifier,
     )
     roll = resolve_d20(modifier=modifiers.total, mode=mode, roller=roller)
+    check = resolve_check(roll, target)
+    if automatic_failure_reasons:
+        check = CheckResult(roll=check.roll, target=check.target, success=False)
     return SavingThrowResult(
         ability=ability,
         proficient=proficient,
         modifiers=modifiers,
-        check=resolve_check(roll, target),
+        check=check,
+        automatic_failure_reasons=automatic_failure_reasons,
     )
 
 
@@ -98,6 +104,7 @@ def reroll_saving_throw(
         mode=mode,
         other_modifier=original.modifiers.other + bonus_modifier,
         roller=roller,
+        automatic_failure_reasons=original.automatic_failure_reasons,
     )
 
 
