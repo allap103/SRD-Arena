@@ -680,6 +680,42 @@ def test_stunned_target_grants_advantage_without_automatic_critical_hits() -> No
     ) == (stunned.id,)
 
 
+def test_stunned_creature_automatically_fails_dexterity_save() -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    target_ref = "goblin_1"
+    stunned = build_applied_condition(
+        condition=Condition.STUNNED,
+        source_ref="player",
+        source_label="Traveler",
+        target_ref=target_ref,
+    )
+    state.conditions.append(stunned)
+    target = state._spell_target_context(
+        state.creatures["player"].creature,
+        target_ref,
+    )
+    assert target is not None
+
+    save = resolve_saving_throw(
+        target.creature,
+        "dexterity",
+        1,
+        roller=lambda _sides: 20,
+        automatic_failure_reasons=target.automatic_failure_reasons(
+            "dexterity"
+        ),
+    )
+
+    assert save.check.roll.selected == 20
+    assert save.check.roll.total >= save.check.target
+    assert save.check.success is False
+    assert save.automatic_failure_reasons == (stunned.id,)
+
+
 def test_action_target_requirement_uses_effective_conditions() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
