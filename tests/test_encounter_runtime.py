@@ -639,6 +639,47 @@ def test_paralyzed_target_automatically_fails_strength_and_dexterity_saves() -> 
     assert save.automatic_failure_reasons == (paralyzed.id,)
 
 
+def test_stunned_target_grants_advantage_without_automatic_critical_hits() -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    attacker_ref = state.current_decision().creature_ref
+    target_ref = "goblin_1"
+    state.creatures[target_ref].position.x = state.active_position.x + 1
+    state.creatures[target_ref].position.y = state.active_position.y
+    stunned = build_applied_condition(
+        condition=Condition.STUNNED,
+        source_ref=attacker_ref,
+        source_label=state._creature_label(attacker_ref),
+        target_ref=target_ref,
+    )
+    state.conditions.append(stunned)
+
+    mode = state._attack_roll_mode_for(
+        attacker_ref,
+        target_ref,
+        "melee",
+        state.active_position,
+        (state.creatures[target_ref].position,),
+    )
+
+    assert mode == "advantage"
+    assert state._automatic_critical_provider_ids_for(
+        attacker_ref,
+        target_ref,
+    ) == ()
+    assert state._automatic_save_failure_provider_ids_for(
+        target_ref,
+        "strength",
+    ) == (stunned.id,)
+    assert state._automatic_save_failure_provider_ids_for(
+        target_ref,
+        "dexterity",
+    ) == (stunned.id,)
+
+
 def test_action_target_requirement_uses_effective_conditions() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"

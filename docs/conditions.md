@@ -166,3 +166,8 @@ The attack and saving-throw results retain the provider IDs responsible for
 these outcomes. Paralyzed additionally contributes Speed 0 and derives
 Incapacitated. Incapacitated blocks actions and reactions, ends concentration,
 and imposes Disadvantage on Initiative.
+
+Stunned reuses the incoming-attack Advantage and automatic Strength/Dexterity
+save-failure traits, while also contributing Speed 0 and deriving
+Incapacitated. It does not contribute the close-range automatic Critical Hit
+trait.

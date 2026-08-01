@@ -39,7 +39,14 @@ CONDITION_DEFINITIONS: dict[Condition, ConditionDefinition] = {
     ),
     Condition.STUNNED: ConditionDefinition(
         implied_conditions=frozenset({Condition.INCAPACITATED}),
-        traits=frozenset({CombatTrait.SPEED_ZERO}),
+        traits=frozenset(
+            {
+                CombatTrait.SPEED_ZERO,
+                CombatTrait.ATTACKERS_HAVE_ADVANTAGE,
+                CombatTrait.AUTO_FAIL_STRENGTH_SAVES,
+                CombatTrait.AUTO_FAIL_DEXTERITY_SAVES,
+            }
+        ),
     ),
     Condition.UNCONSCIOUS: ConditionDefinition(
         implied_conditions=frozenset({Condition.INCAPACITATED}),

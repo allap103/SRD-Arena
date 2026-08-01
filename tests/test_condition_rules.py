@@ -43,6 +43,22 @@ def test_paralyzed_and_unconscious_share_close_combat_traits() -> None:
             assert effective.providers_for_trait(trait) == (applied.id,)
 
 
+def test_stunned_reuses_attack_and_save_traits_without_automatic_criticals() -> None:
+    stunned = _applied(Condition.STUNNED, "mind_blast")
+
+    effective = effective_conditions((stunned,))
+
+    for trait in (
+        CombatTrait.ATTACKERS_HAVE_ADVANTAGE,
+        CombatTrait.AUTO_FAIL_STRENGTH_SAVES,
+        CombatTrait.AUTO_FAIL_DEXTERITY_SAVES,
+    ):
+        assert effective.providers_for_trait(trait) == (stunned.id,)
+    assert effective.has_trait(
+        CombatTrait.HITS_WITHIN_5_FEET_ARE_CRITICAL
+    ) is False
+
+
 def test_effective_condition_preserves_all_independent_providers() -> None:
     paralyzed = _applied(Condition.PARALYZED, "hold_person")
     stunned = _applied(Condition.STUNNED, "mind_blast")
