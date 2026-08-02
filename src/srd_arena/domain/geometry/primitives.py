@@ -19,6 +19,15 @@ class MovementBudget(int):
         return super().__new__(cls, squares)
 
 
+class MovementCost(int):
+    """Movement required to enter one or more grid cells."""
+
+    def __new__(cls, squares: int) -> "MovementCost":
+        if squares < 0:
+            raise ValueError("Movement cost cannot be negative.")
+        return super().__new__(cls, squares)
+
+
 @dataclass
 class Position:
     x: int

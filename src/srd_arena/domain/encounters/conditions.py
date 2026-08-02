@@ -15,6 +15,7 @@ from ..effects.runtime import (
     RelationshipKind,
     RuntimeStateIdentity,
 )
+from ..geometry import MovementCost
 from .models import CreatureRef
 
 if TYPE_CHECKING:
@@ -247,7 +248,7 @@ def is_grappled(state: EncounterState, creature_ref: CreatureRef) -> bool:
 def movement_cost_for(
     state: EncounterState,
     creature_ref: CreatureRef,
-) -> int | None:
+) -> MovementCost | None:
     if is_grappled(state, creature_ref):
         return None
     cost = 1
@@ -258,7 +259,7 @@ def movement_cost_for(
             grappler_size,
         ):
             cost += 1
-    return cost
+    return MovementCost(cost)
 
 
 def condition_replaces(

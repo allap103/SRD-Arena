@@ -4,7 +4,7 @@ from collections.abc import Collection
 from typing import TYPE_CHECKING
 
 from ..creatures import Creature
-from ..geometry import Position
+from ..geometry import MovementBudget, Position
 from ..rolls.dice import reroll_dice
 from ..effects.triggered import TriggeredEffect, reroll_eligible_indices
 from .actions.attack_resolution import (
@@ -602,7 +602,7 @@ class ReactionEngine:
         direction: str,
         from_position: Position,
         to_position: Position,
-        remaining_movement_after: int,
+        remaining_movement_after: MovementBudget,
         progress: EncounterProgress,
         external_only: bool,
         excluded_reactor_refs: Collection[str] = (),
