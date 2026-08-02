@@ -260,12 +260,7 @@ def spell_action_targets(
             continue
         target = self._spell_target_context(actor, target_ref)
         if target is not None:
-            creature_type = target.creature.statistics.creature_type
-            if (
-                not spell.affected_creature_types
-                or creature_type in spell.affected_creature_types
-            ):
-                targets.append(target)
+            targets.append(target)
     return targets
 
 

@@ -38,6 +38,7 @@ from srd_arena.domain.creatures import (
     DamageEffect,
     ConditionEffect,
     ConditionRequirement,
+    CreatureTypeRequirement,
     SavingThrowActionDefinition,
 )
 from srd_arena.frontends.shared.session import (
@@ -798,6 +799,36 @@ def test_conditions_showcase_is_externally_controlled_and_uses_immunities() -> N
         "hold_person",
         "lesser_restoration",
     }
+    hold_person = next(
+        spell for spell in mage.spellcasting.learned_spells if spell.id == "hold_person"
+    )
+    assert hold_person.target_requirements == (
+        CreatureTypeRequirement(("humanoid",)),
+    )
+
+
+def test_creature_type_restricted_spell_targets_are_visible_but_unavailable() -> None:
+    session = Scenario(str(CONDITIONS_SHOWCASE_SCENARIO_DIR)).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    candidates = state._creature_action_candidates("condition_mage")
+    hold_person_actions = [
+        action
+        for action in candidates
+        if action.kind == "spell" and str(action.value).startswith("hold_person:")
+    ]
+
+    by_target = {
+        str(action.value).split(":")[1]: state.action_eligibility(action)
+        for action in hold_person_actions
+    }
+
+    assert by_target["veteran"].allowed
+    assert not by_target["animated_armor"].allowed
+    assert by_target["animated_armor"].failures[0].code == (
+        "target_creature_type_required"
+    )
 
 
 def test_execution_rechecks_action_eligibility() -> None:

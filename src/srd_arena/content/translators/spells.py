@@ -4,6 +4,7 @@ from srd_arena.content.catalogs import SpellCatalog
 from srd_arena.content.schemas.spells import SpellSchema
 from srd_arena.content.sources import slug
 from srd_arena.domain.spells import Spell
+from srd_arena.domain.creatures import CreatureTypeRequirement
 
 
 def build_spell(
@@ -38,7 +39,11 @@ def build_spell(
             for duration in raw.duration
             if isinstance(duration, dict)
         ),
-        affected_creature_types=tuple(raw.affects_creature_type),
+        target_requirements=(
+            (CreatureTypeRequirement(tuple(raw.affects_creature_type)),)
+            if raw.affects_creature_type
+            else ()
+        ),
     )
 
 

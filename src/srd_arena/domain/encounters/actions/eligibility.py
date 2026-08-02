@@ -7,6 +7,7 @@ from ...creatures import (
     AttackActionDefinition,
     AutomaticActionDefinition,
     ConditionRequirement,
+    CreatureTypeRequirement,
     SavingThrowActionDefinition,
     can_grapple,
 )
@@ -230,7 +231,7 @@ class AttackRule:
                         runtime_issue,
                     )
                 if isinstance(definition, AttackActionDefinition):
-                    requirement_failure = _condition_requirement_failure(
+                    requirement_failure = _target_requirement_failure(
                         state,
                         actor_ref,
                         action.value,
@@ -374,7 +375,7 @@ class StatBlockActionRule:
         if target_failure is not None:
             return target_failure
         target = state.creatures[action.value]
-        requirement_failure = _condition_requirement_failure(
+        requirement_failure = _target_requirement_failure(
             state,
             actor_ref,
             action.value,
@@ -452,6 +453,20 @@ class SpellActionRule:
         )
         if reason is not None:
             return EligibilityFailure("spell_blocked", reason)
+        if target_ref is not None:
+            target = state.creatures.get(target_ref)
+            if target is None or not target.is_alive:
+                return EligibilityFailure(
+                    "target_unavailable", "The target is not available."
+                )
+            requirement_failure = _target_requirement_failure(
+                state,
+                actor_ref,
+                target_ref,
+                spell.target_requirements,
+            )
+            if requirement_failure is not None:
+                return requirement_failure
         if (
             spell.geometry_mode not in {"directional_area", "point_area"}
             and target_ref is None
@@ -523,13 +538,24 @@ def _opposing_target_failure(
     return None
 
 
-def _condition_requirement_failure(
+def _target_requirement_failure(
     state: EncounterState,
     actor_ref: CreatureRef,
     target_ref: CreatureRef,
     requirements: tuple[object, ...],
 ) -> EligibilityFailure | None:
     for requirement in requirements:
+        if isinstance(requirement, CreatureTypeRequirement):
+            creature_type = state.creatures[
+                target_ref
+            ].creature.statistics.creature_type
+            if creature_type in requirement.creature_types:
+                continue
+            labels = ", ".join(requirement.creature_types)
+            return EligibilityFailure(
+                "target_creature_type_required",
+                f"The target must have one of these creature types: {labels}.",
+            )
         if not isinstance(requirement, ConditionRequirement):
             continue
         required = tuple(

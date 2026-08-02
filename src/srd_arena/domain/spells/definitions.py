@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from ..creatures.stat_block_actions import ActionRequirement
+
 
 @dataclass(frozen=True)
 class SpellRef:
@@ -27,4 +29,4 @@ class Spell:
     geometry_mode: str = "point_target"
     area_size_feet: int | None = None
     concentration: bool = False
-    affected_creature_types: tuple[str, ...] = ()
+    target_requirements: tuple[ActionRequirement, ...] = ()
