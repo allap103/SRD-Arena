@@ -65,7 +65,7 @@ from ..equipment import Item
 from ..geometry import Position
 from .definitions import EncounterBehavior, EncounterDefinition
 from ..effects.conditions import AppliedCondition, CombatTrait, Condition
-from ..geometry import GeometryConfig
+from ..geometry import GeometryConfig, MovementBudget
 from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
 from ..effects.triggered import TriggeredEffect, matching_effects
 from .turn_flow import TURN_ENGINE, TurnEngine
@@ -160,12 +160,14 @@ class EncounterState(EncounterStateData):
         return self.active_creature_state.position
 
     @property
-    def active_movement_remaining(self) -> int | None:
+    def active_movement_remaining(self) -> MovementBudget | None:
         return self.active_creature_state.movement_remaining
 
     @active_movement_remaining.setter
     def active_movement_remaining(self, value: int | None) -> None:
-        self.active_creature_state.movement_remaining = value
+        self.active_creature_state.movement_remaining = (
+            MovementBudget(value) if value is not None else None
+        )
 
     @property
     def active_action_available(self) -> bool:
@@ -592,7 +594,7 @@ class EncounterState(EncounterStateData):
     def _normalize_turn(self) -> None:
         self.turn_engine.normalize_turn(self)
 
-    def _active_movement_remaining(self) -> int:
+    def _active_movement_remaining(self) -> MovementBudget:
         return self.active_movement_remaining_for()
 
     active_movement_remaining_for = _active_movement_remaining_query

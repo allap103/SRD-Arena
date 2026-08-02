@@ -31,6 +31,7 @@ from srd_arena.domain.creatures import (
     SpellcastingActionDefinition,
 )
 from srd_arena.domain.encounters.actions.attack_resolution import resolve_attack
+from srd_arena.domain.geometry import Grid
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.conditions import build_applied_condition
 from srd_arena.domain.effects.condition_rules import effective_conditions
@@ -291,7 +292,9 @@ def test_bestiary_core_statistics_build_a_domain_creature() -> None:
     assert air_elemental.attributes.movement.speed_feet == 10
     assert air_elemental.attributes.movement.fly_feet == 90
     assert air_elemental.attributes.movement.effective_speed_feet == 90
-    assert air_elemental.attributes.movement.squares_per_turn == 18
+    assert Grid(width=1, height=1).movement_budget(
+        air_elemental.attributes.movement.effective_speed_feet
+    ) == 18
 
 
 def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:

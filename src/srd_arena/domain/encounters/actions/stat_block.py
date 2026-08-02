@@ -559,13 +559,13 @@ def _stat_block_target_refs(
             aim[1] - (actor_position.y + 0.5),
         )
     )
-    feet_per_square = state.creatures[
-        creature_ref
-    ].creature.attributes.movement.feet_per_square
-    size_squares = max(1, (target.size_feet or 5) // feet_per_square)
+    grid = state.definition.grid
+    size_squares = int(
+        grid.distance_from_feet(target.size_feet or grid.square_size_feet, minimum=1)
+    )
     width_squares = max(
         1.0,
-        (target.width_feet or feet_per_square) / feet_per_square,
+        (target.width_feet or grid.square_size_feet) / grid.square_size_feet,
     )
     area = build_directional_area(
         target.shape,

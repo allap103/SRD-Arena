@@ -33,7 +33,6 @@ def build_creature_attributes(
                 if stat_block.walk_speed is not None
                 else schema.attributes.movement.speed_feet
             ),
-            feet_per_square=schema.attributes.movement.feet_per_square,
             burrow_feet=_movement_speed(stat_block, "burrow"),
             climb_feet=_movement_speed(stat_block, "climb"),
             fly_feet=_movement_speed(stat_block, "fly"),

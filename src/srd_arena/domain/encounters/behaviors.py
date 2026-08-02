@@ -3,7 +3,13 @@ from __future__ import annotations
 from typing import Generator
 
 from ..creatures import Creature
-from ..geometry import Position
+from ..geometry import (
+    Grid,
+    MovementBudget,
+    Position,
+    grid_distance_between,
+    manhattan_distance,
+)
 from .models import BehaviorContext, EncounterAction, EncounterCreatureState
 
 DIRECTION_DELTAS = {
@@ -126,16 +132,8 @@ def sign(value: int) -> int:
 
 
 def is_adjacent(a: Position, b: Position) -> bool:
-    return chebyshev_distance(a, b) == 1
+    return grid_distance_between(a, b) == 1
 
 
-def chebyshev_distance(a: Position, b: Position) -> int:
-    return max(abs(a.x - b.x), abs(a.y - b.y))
-
-
-def manhattan_distance(a: Position, b: Position) -> int:
-    return abs(a.x - b.x) + abs(a.y - b.y)
-
-
-def movement_squares(creature: Creature) -> int:
-    return creature.attributes.movement.squares_per_turn
+def movement_budget_for(creature: Creature, grid: Grid) -> MovementBudget:
+    return grid.movement_budget(creature.attributes.movement.effective_speed_feet)

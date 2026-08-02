@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 @dataclass
 class Movement:
     speed_feet: int = 30
-    feet_per_square: int = 5
     burrow_feet: int | None = None
     climb_feet: int | None = None
     fly_feet: int | None = None
@@ -13,11 +12,6 @@ class Movement:
     @property
     def effective_speed_feet(self) -> int:
         return max(self.speed_feet, self.fly_feet or 0)
-
-    @property
-    def squares_per_turn(self) -> int:
-        return self.effective_speed_feet // self.feet_per_square
-
 
 @dataclass
 class Attributes:

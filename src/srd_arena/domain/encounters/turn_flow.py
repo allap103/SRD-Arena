@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..effects.runtime import UntilTurnEnd, UntilTurnStart
-from .behaviors import movement_squares as _movement_squares
+from ..geometry import MovementBudget
+from .behaviors import movement_budget_for
 from .models import (
     ActionExecutionOutcome,
     CreatureRef,
@@ -122,7 +123,9 @@ class TurnEngine:
         if not actor.is_alive:
             return True, progress, 0
         if actor.movement_remaining is None:
-            actor.movement_remaining = _movement_squares(actor.creature)
+            actor.movement_remaining = movement_budget_for(
+                actor.creature, state.definition.grid
+            )
 
         selector = state._action_selectors[creature_ref]
         action = initial_action or selector.select_action(
@@ -302,13 +305,15 @@ class TurnEngine:
                 state.turn_index = 0
                 state.round.advance()
 
-    def active_movement_remaining(self, state: EncounterState) -> int:
+    def active_movement_remaining(self, state: EncounterState) -> MovementBudget:
         creature_ref = state.current_decision().creature_ref
         if state._is_grappled(creature_ref):
-            return 0
+            return MovementBudget(0)
         if state.active_movement_remaining is None:
             actor = state.creatures[creature_ref].creature
-            state.active_movement_remaining = _movement_squares(actor)
+            state.active_movement_remaining = movement_budget_for(
+                actor, state.definition.grid
+            )
         return state.active_movement_remaining
 
     def turn_count(self, state: EncounterState) -> int:

@@ -54,7 +54,6 @@ class MovementSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     speed_feet: int = 30
-    feet_per_square: int = 5
 
 
 class SpellcastingSchema(BaseModel):

@@ -23,7 +23,15 @@ from .areas import (
     vector_between_positions,
     vector_from_direction,
 )
-from .primitives import Grid, Position
+from .primitives import (
+    Grid,
+    GridDistance,
+    MovementBudget,
+    MovementCost,
+    Position,
+    grid_distance_between,
+    manhattan_distance,
+)
 from .config import GeometryConfig
 
 __all__ = [
@@ -32,7 +40,10 @@ __all__ = [
     "AreaOfEffect",
     "ContinuousArea",
     "Grid",
+    "GridDistance",
     "GeometryConfig",
+    "MovementBudget",
+    "MovementCost",
     "Point2D",
     "Position",
     "Vector2D",
@@ -47,7 +58,9 @@ __all__ = [
     "continuous_area_outline",
     "deserialize_continuous_area",
     "directional_origin_point",
+    "grid_distance_between",
     "normalize_vector",
+    "manhattan_distance",
     "point_from_position",
     "serialize_area",
     "serialize_continuous_area",

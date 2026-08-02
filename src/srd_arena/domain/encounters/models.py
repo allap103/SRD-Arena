@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..creatures import Creature
 from ..equipment import Item
-from ..geometry import Position
+from ..geometry import MovementBudget, MovementCost, Position
 from .definitions import EncounterBehavior, EncounterDefinition
 from ..effects.conditions import AppliedCondition
 from ..effects.runtime import CreatureRelationship, OngoingEffect
@@ -24,10 +24,13 @@ if TYPE_CHECKING:
 
 @dataclass
 class ActionCost:
-    movement: int = 0
+    movement: MovementCost = MovementCost(0)
     action: int = 0
     bonus_action: int = 0
     reaction: int = 0
+
+    def __post_init__(self) -> None:
+        self.movement = MovementCost(self.movement)
 
 
 @dataclass
@@ -138,7 +141,7 @@ class PendingAction:
     direction: str
     from_position: Position
     to_position: Position
-    remaining_movement_after: int | None = None
+    remaining_movement_after: MovementBudget | None = None
     trigger_id: str | None = None
 
 
@@ -150,7 +153,7 @@ class EncounterCreatureState:
     behavior: EncounterBehavior
     patrol_index: int = 0
     reaction_available: bool = True
-    movement_remaining: int | None = None
+    movement_remaining: MovementBudget | None = None
     actions_remaining: int = 1
     magic_actions_remaining: int = 1
     attacks_remaining: int = 0

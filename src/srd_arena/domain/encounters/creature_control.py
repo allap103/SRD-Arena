@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..geometry import Position
+from ..geometry import MovementBudget, Position
 from ..creatures import (
     AutomaticActionDefinition,
     SavingThrowActionDefinition,
@@ -18,7 +18,7 @@ from .actions.stat_block import (
 )
 from .behaviors import (
     DIRECTION_DELTAS,
-    movement_squares as _movement_squares,
+    movement_budget_for,
 )
 from .models import (
     ActionCost,
@@ -60,7 +60,9 @@ def creature_action_candidates(
     enemy = self.creatures[creature_ref]
     movement_cost = self._movement_cost_for(creature_ref)
     if enemy.movement_remaining is None:
-        enemy.movement_remaining = _movement_squares(enemy.creature)
+        enemy.movement_remaining = movement_budget_for(
+            enemy.creature, self.definition.grid
+        )
     actions: list[EncounterAction] = []
     if movement_cost is not None:
         for direction in DIRECTION_DELTAS:
@@ -268,9 +270,8 @@ def execute_creature_action(
         movement_cost = self._movement_cost_for(decision.creature_ref)
         if movement_cost is None:
             raise RuntimeError("Movement is unavailable for this creature.")
-        remaining = max(
-            0,
-            (enemy.movement_remaining or 0) - movement_cost,
+        remaining = MovementBudget(
+            max(0, (enemy.movement_remaining or 0) - movement_cost)
         )
         grappled_refs = self._grappling_targets_for(decision.creature_ref)
         grappled_positions = {
