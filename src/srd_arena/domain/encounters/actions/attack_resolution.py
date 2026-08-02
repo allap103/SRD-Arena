@@ -6,7 +6,7 @@ from ...creatures.stat_block_actions import (
     DamageEffect,
 )
 from ...equipment import Item
-from ...geometry import Position
+from ...geometry import Grid, Position
 from ...rolls.dice import (
     D20RollMode,
     resolve_check,
@@ -413,6 +413,7 @@ def attack_sources(attacker: Creature, items_by_id: dict[str, Item]) -> list[Att
 def attack_range_squares(
     attacker: Creature,
     items_by_id: dict[str, Item],
+    grid: Grid,
     *,
     preferred_attack_type: str | None = None,
     preferred_attack_name: str | None = None,
@@ -431,7 +432,7 @@ def attack_range_squares(
         if attack_type == "ranged"
         else source.reach_feet or 5
     )
-    return max(1, range_feet // attacker.attributes.movement.feet_per_square)
+    return int(grid.distance_from_feet(range_feet, minimum=1))
 
 def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
     return AttackSource(

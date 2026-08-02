@@ -122,7 +122,9 @@ class TurnEngine:
         if not actor.is_alive:
             return True, progress, 0
         if actor.movement_remaining is None:
-            actor.movement_remaining = _movement_squares(actor.creature)
+            actor.movement_remaining = _movement_squares(
+                actor.creature, state.definition.grid
+            )
 
         selector = state._action_selectors[creature_ref]
         action = initial_action or selector.select_action(
@@ -308,7 +310,9 @@ class TurnEngine:
             return 0
         if state.active_movement_remaining is None:
             actor = state.creatures[creature_ref].creature
-            state.active_movement_remaining = _movement_squares(actor)
+            state.active_movement_remaining = _movement_squares(
+                actor, state.definition.grid
+            )
         return state.active_movement_remaining
 
     def turn_count(self, state: EncounterState) -> int:

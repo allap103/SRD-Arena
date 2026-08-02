@@ -40,7 +40,8 @@ def render_encounter_text(encounter: EncounterState) -> str:
             *rows,
             "",
             f"Round {encounter.round_number} - Turn: {encounter.current_turn_label()}",
-            f"Movement remaining: {movement}/{movement_squares(actor)} squares",
+            f"Movement remaining: "
+            f"{movement}/{movement_squares(actor, encounter.definition.grid)} squares",
             f"Actor HP: {actor.get_health()}/{actor.get_max_health()} "
             f"at ({actor_position.x}, {actor_position.y})",
             f"Actions remaining: {encounter.active_actions_remaining}",

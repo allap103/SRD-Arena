@@ -2,18 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from ...geometry import Position
-from ...creatures import Spellcasting
+from ...creatures import Creature, Spellcasting
 from ...effects.conditions import CombatTrait
-from ..behaviors import (
-    chebyshev_distance as _chebyshev_distance,
-)
 from ...geometry import (
     AreaOfEffect,
+    Position,
     Vector2D,
     build_directional_area,
     build_radius_area,
+    grid_distance_between,
     vector_between_positions,
 )
 from ..models import ActionCost, EncounterAction
@@ -191,7 +188,7 @@ def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
 def spell_range_squares_for(
     self: EncounterState, spell: Spell, creature: Creature
 ) -> int | None:
-    return spell_range_squares(spell, creature)
+    return spell_range_squares(spell, self.definition.grid)
 
 
 def spell_action_targets(
@@ -209,7 +206,7 @@ def spell_action_targets(
                 continue
             if (
                 max_range is not None
-                and _chebyshev_distance(creature_position, target_state.position)
+                and grid_distance_between(creature_position, target_state.position)
                 > max_range
             ):
                 continue
@@ -229,7 +226,7 @@ def spell_action_targets(
             for target_ref, target_state in self.creatures.items()
             if target_state.is_alive
             and self._creatures_are_opponents(creature_ref, target_ref)
-            and _chebyshev_distance(creature_position, target_state.position)
+            and grid_distance_between(creature_position, target_state.position)
             <= max_range
             and (target := self._spell_target_context(actor, target_ref)) is not None
         ]
@@ -254,7 +251,7 @@ def spell_action_targets(
             continue
         if (
             max_range is not None
-            and _chebyshev_distance(
+            and grid_distance_between(
                 creature_position,
                 target_state.position,
             )
@@ -320,8 +317,8 @@ def spell_area(
         radius_feet = spell.area_size_feet
         if radius_feet is None:
             return None
-        radius_squares = max(
-            1, radius_feet // actor.attributes.movement.feet_per_square
+        radius_squares = int(
+            self.definition.grid.distance_from_feet(radius_feet, minimum=1)
         )
         origin = Position(int(aim_point[0]), int(aim_point[1]))
         return build_radius_area(origin, radius_squares, self.definition.grid)

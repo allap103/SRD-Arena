@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..creatures import Creature, Spellcasting
+from ..creatures import Spellcasting
+from ..geometry import Grid
 from .definitions import Spell
 
 
@@ -50,7 +51,7 @@ def spell_targets_self_only(spell: Spell) -> bool:
     return spell.range_data.get("type") == "self"
 
 
-def spell_range_squares(spell: Spell, creature: Creature) -> int | None:
+def spell_range_squares(spell: Spell, grid: Grid) -> int | None:
     distance = spell.range_data.get("distance", {})
     if not isinstance(distance, dict):
         return None
@@ -59,7 +60,7 @@ def spell_range_squares(spell: Spell, creature: Creature) -> int | None:
         return 1
     if not isinstance(amount, int):
         return None
-    return max(1, amount // creature.attributes.movement.feet_per_square)
+    return int(grid.distance_from_feet(amount, minimum=1))
 
 
 def spell_action_label(

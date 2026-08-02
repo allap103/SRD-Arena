@@ -11,9 +11,9 @@ from ...creatures import (
     can_grapple,
 )
 from ...effects.conditions import CombatTrait, Condition
-from ...geometry import Position
+from ...geometry import Position, grid_distance_between
 from ...spells.rules import parse_spell_action_value
-from ..behaviors import DIRECTION_DELTAS, chebyshev_distance
+from ..behaviors import DIRECTION_DELTAS
 from ..models import CreatureRef, EncounterAction
 from .attack_resolution import attack_range_squares, has_free_hand
 from .stat_block import (
@@ -260,11 +260,12 @@ class AttackRule:
         reach = attack_range_squares(
             actor.creature,
             state.item_templates,
+            state.definition.grid,
             preferred_attack_type=action.preferred_attack_type,
             preferred_attack_name=preferred_attack_name,
         )
         if (
-            chebyshev_distance(
+            grid_distance_between(
                 actor.position,
                 state._creature_position(action.value),
             )
@@ -293,7 +294,7 @@ class GrappleRule:
             return target_failure
         assert isinstance(action.value, str)
         target = state.creatures[action.value]
-        if chebyshev_distance(actor.position, target.position) != 1:
+        if grid_distance_between(actor.position, target.position) != 1:
             return EligibilityFailure(
                 "target_out_of_range", "The target is out of reach."
             )
@@ -382,8 +383,8 @@ class StatBlockActionRule:
         if requirement_failure is not None:
             return requirement_failure
         range_feet = definition.target.range_feet or 0
-        range_squares = (range_feet + 4) // 5
-        if chebyshev_distance(actor.position, target.position) > range_squares:
+        range_squares = state.definition.grid.covering_distance_from_feet(range_feet)
+        if grid_distance_between(actor.position, target.position) > range_squares:
             return EligibilityFailure(
                 "target_out_of_range",
                 "The target is out of range.",

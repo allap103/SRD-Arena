@@ -6,7 +6,6 @@ from collections import deque
 from datetime import datetime, timezone
 from ...domain.encounters.models import ActionCost, EncounterAction
 from ...domain.geometry import (
-    Grid,
     Position,
     Vector2D,
     build_directional_area,
@@ -1780,20 +1779,16 @@ class GameWindow(QMainWindow):
         spell = self._spell_by_id(spell_id)
         if spell is None:
             return None
-        grid = Grid(
-            width=self.session.encounter_state.definition.grid.width,
-            height=self.session.encounter_state.definition.grid.height,
-        )
+        grid = self.session.encounter_state.definition.grid
         if spell.geometry_mode == "point_area":
             radius_feet = spell.area_size_feet
             if radius_feet is None:
                 return None
-            radius_squares = max(
-                1,
-                radius_feet // self.session.decision_creature.attributes.movement.feet_per_square,
+            radius_squares = int(
+                grid.distance_from_feet(radius_feet, minimum=1)
             )
             return serialize_area(build_radius_area(Position(0, 0), radius_squares, grid))
-        length = spell_range_squares(spell, self.session.decision_creature)
+        length = spell_range_squares(spell, grid)
         if length is None:
             return None
         origin = Position(
@@ -1828,16 +1823,16 @@ class GameWindow(QMainWindow):
         size_feet = getattr(target, "size_feet", None)
         if not isinstance(shape, str) or not isinstance(size_feet, int):
             return None
-        feet_per_square = self.session.decision_creature.attributes.movement.feet_per_square
+        grid = state.definition.grid
         width_feet = getattr(target, "width_feet", None)
         width_squares = max(
             1.0,
             (
                 width_feet
                 if isinstance(width_feet, int)
-                else feet_per_square
+                else grid.square_size_feet
             )
-            / feet_per_square,
+            / grid.square_size_feet,
         )
         origin = Position(state.active_position.x, state.active_position.y)
         return serialize_area(
@@ -1845,7 +1840,7 @@ class GameWindow(QMainWindow):
                 shape,
                 origin,
                 Vector2D(1.0, 0.0),
-                max(1, size_feet // feet_per_square),
+                int(grid.distance_from_feet(size_feet, minimum=1)),
                 state.definition.grid,
                 width_squares=width_squares,
                 coverage_threshold=(

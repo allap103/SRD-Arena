@@ -60,7 +60,9 @@ def creature_action_candidates(
     enemy = self.creatures[creature_ref]
     movement_cost = self._movement_cost_for(creature_ref)
     if enemy.movement_remaining is None:
-        enemy.movement_remaining = _movement_squares(enemy.creature)
+        enemy.movement_remaining = _movement_squares(
+            enemy.creature, self.definition.grid
+        )
     actions: list[EncounterAction] = []
     if movement_cost is not None:
         for direction in DIRECTION_DELTAS:

@@ -116,7 +116,7 @@ def _export_creature(
     movement_remaining = (
         creature_state.movement_remaining
         if creature_state.movement_remaining is not None
-        else _movement_squares(creature)
+        else _movement_squares(creature, state.definition.grid)
     )
     spellcasting = creature.spellcasting
     effective = state.effective_conditions_for(creature_ref)
@@ -144,9 +144,9 @@ def _export_creature(
             "languages": list(creature.statistics.languages),
         },
         "movement_remaining": movement_remaining,
-        "movement_total": _movement_squares(creature),
+        "movement_total": _movement_squares(creature, state.definition.grid),
         "movement_remaining_feet": (
-            movement_remaining * creature.attributes.movement.feet_per_square
+            state.definition.grid.feet_for_squares(movement_remaining)
         ),
         "movement_total_feet": (creature.attributes.movement.effective_speed_feet),
         "action_available": creature_state.actions_remaining > 0,

@@ -10,8 +10,7 @@
         "base_health": 16,
         "level": 2,
         "movement": {
-            "speed_feet": 30,
-            "feet_per_square": 5
+            "speed_feet": 30
         },
         "strength": 16,
         "dexterity": 12,
