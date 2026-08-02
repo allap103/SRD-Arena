@@ -1389,7 +1389,14 @@ class GameWindow(QMainWindow):
         ).get(
             creature_ref
         )
-        if action is None or not action.enabled:
+        if action is None:
+            # Follow-up attack targeting remains active while a Multiattack has
+            # attacks left. Let the actor's own token reopen movement planning
+            # between those attacks; _begin_movement_plan rejects non-active
+            # creatures and actors without legal movement.
+            self._begin_movement_plan(creature_ref)
+            return
+        if not action.enabled:
             return
         self._select_action(action.id)
 

@@ -2710,6 +2710,57 @@ def test_follow_up_attack_is_queued_only_with_attacks_and_targets(
     assert GameWindow._available_follow_up_attack_mode(window, attack_mode) == expected
 
 
+def test_clicking_actor_during_follow_up_attack_reopens_movement() -> None:
+    window = GameWindow.__new__(GameWindow)
+    attack_mode = TargetSelectionMode(
+        kind="attack",
+        source_trigger_id="Shortsword",
+    )
+    window._pending_target_mode = attack_mode
+    window._presentation = SimpleNamespace(
+        encounter=SimpleNamespace(non_movement_actions=[])
+    )
+    planned_for: list[str] = []
+    window._begin_movement_plan = planned_for.append
+
+    GameWindow._handle_battlefield_creature_clicked(window, "assassin")
+
+    assert planned_for == ["assassin"]
+
+
+def test_movement_does_not_consume_pending_multiattack_slots() -> None:
+    session = Scenario(
+        str(STAT_BLOCK_ACTION_SCENARIO_DIR),
+        start_scene="stat_block_action_showcase",
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.turn_index = state.initiative_order.index("assassin")
+    actor = state.active_creature_state
+    actor.movement_remaining = None
+    actor.actions_remaining = 1
+    actor.magic_actions_remaining = 1
+    actor.attacks_remaining = 0
+    actor.pending_multiattack.clear()
+
+    multiattack = next(
+        action for action in state.available_actions() if action.kind == "multiattack"
+    )
+    state.apply_action(multiattack)
+    slots_before = tuple(actor.pending_multiattack)
+
+    move = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "move" and action.value == "left"
+    )
+    state.apply_action(move)
+
+    assert tuple(actor.pending_multiattack) == slots_before
+    assert actor.attacks_remaining == len(slots_before)
+
+
 def test_directional_spell_target_mode_stays_available_without_creature_target_map() -> None:
     window = GameWindow.__new__(GameWindow)
     window._pending_target_mode = TargetSelectionMode(
