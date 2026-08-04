@@ -1,6 +1,7 @@
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .base import SourceModel
+from .spell_mechanics import SpellImplementationSchema, SpellMechanicsSchema
 
 
 class SpellSchema(SourceModel):
@@ -21,8 +22,28 @@ class SpellSchema(SourceModel):
         default_factory=list,
         alias="affectsCreatureType",
     )
+    implementation: SpellImplementationSchema = Field(
+        default_factory=SpellImplementationSchema
+    )
+    mechanics: SpellMechanicsSchema | None = None
     srd: bool | str | None = None
     srd52: bool | str | None = None
+
+    @model_validator(mode="after")
+    def validate_implementation_state(self) -> "SpellSchema":
+        status = self.implementation.status
+        if status in {"complete", "partial", "blocked"} and self.mechanics is None:
+            raise ValueError(f"{status.title()} spells must define mechanics.")
+        if status in {"unimplemented", "out_of_scope"} and self.mechanics is not None:
+            raise ValueError(f"{status.title()} spells cannot define mechanics.")
+        return self
+
+    @property
+    def executable(self) -> bool:
+        return self.mechanics is not None and self.implementation.status in {
+            "complete",
+            "partial",
+        }
 
     @property
     def public_name(self) -> str:

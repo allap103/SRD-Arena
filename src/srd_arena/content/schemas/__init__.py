@@ -26,6 +26,7 @@ from .action_mechanics import (
     SpellcastingActionMechanicsSchema,
 )
 from .spells import SpellFileSchema, SpellSchema
+from .spell_mechanics import SpellImplementationSchema, SpellMechanicsSchema
 from .items import (
     BaseItemFileSchema,
     ItemFileSchema,
@@ -75,6 +76,8 @@ __all__ = [
     "PositionSchema",
     "SpellcastingSchema",
     "SpellFileSchema",
+    "SpellImplementationSchema",
+    "SpellMechanicsSchema",
     "SpellSchema",
     "StartingProficienciesSchema",
     "StatBlockReferenceSchema",

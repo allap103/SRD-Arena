@@ -7,6 +7,9 @@ spell schema must be able to describe. The goal is schema coverage, not an
 implementation schedule: a mechanic may be representable while its runtime
 support is still partial, blocked, or intentionally out of scope.
 
+The resulting concrete contract and JSON examples are documented in
+[`spell_mechanics_schema.md`](spell_mechanics_schema.md).
+
 SRD Arena's spell JSON files are the canonical source of truth. Prose remains
 human-readable rules text and must not be parsed at runtime. Explicit mechanics
 enrichment supplies relationships, choices, triggers, formulas, and exceptions

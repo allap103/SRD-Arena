@@ -143,6 +143,7 @@ class DamageEffectSchema(ActionMechanicsSchemaModel):
     type: Literal["damage"]
     dice: str = Field(pattern=r"^\d+d\d+$")
     bonus: int = 0
+    modifier: Literal["none", "spellcasting_ability"] = "none"
     damage_type: str = Field(min_length=1)
     minimum: NonNegativeInt | None = None
     requirements: list[AttackHitRequirementSchema] = Field(
