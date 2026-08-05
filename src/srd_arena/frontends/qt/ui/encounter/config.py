@@ -20,6 +20,7 @@ ARROW_LABELS = {
 class TargetSelectionMode:
     kind: str
     source_trigger_id: str | None = None
+    variant_id: str | None = None
 
 
 @dataclass(frozen=True)

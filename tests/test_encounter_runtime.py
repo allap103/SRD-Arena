@@ -2852,6 +2852,45 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
     assert GameWindow._target_mode_is_available(window, actions, {}) is True
 
 
+def test_spell_target_modes_preserve_selected_cast_level() -> None:
+    window = GameWindow.__new__(GameWindow)
+    actions = [
+        ActionView(
+            id=f"blight-{suffix}",
+            label=label,
+            kind="spell",
+            creature_ref="spectrum_adept",
+            value=value,
+            cost={"action": 1},
+        )
+        for suffix, label, value in (
+            ("base", "Cast Blight", "blight:plant_target"),
+            ("level-5", "Cast Blight (Level 5)", "blight:plant_target#slot=5"),
+            ("level-6", "Cast Blight (Level 6)", "blight:plant_target#slot=6"),
+        )
+    ]
+
+    modes = GameWindow._target_selection_modes(window, actions)
+
+    assert modes[
+        TargetSelectionMode(kind="spell", source_trigger_id="blight")
+    ]["plant_target"].id == "blight-base"
+    assert modes[
+        TargetSelectionMode(
+            kind="spell",
+            source_trigger_id="blight",
+            variant_id="Level 5",
+        )
+    ]["plant_target"].id == "blight-level-5"
+    assert modes[
+        TargetSelectionMode(
+            kind="spell",
+            source_trigger_id="blight",
+            variant_id="Level 6",
+        )
+    ]["plant_target"].id == "blight-level-6"
+
+
 def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"

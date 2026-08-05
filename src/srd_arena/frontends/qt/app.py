@@ -41,6 +41,11 @@ from .ui.encounter import (
     spell_slot_rich_text,
 )
 
+
+def _spell_slot_variant(value: str) -> str | None:
+    slot_level = parse_spell_action_slot(value)
+    return f"Level {slot_level}" if slot_level is not None else None
+
 try:
     from PySide6.QtCore import QSize, Qt, QTimer, Signal
     from PySide6.QtGui import QFont
@@ -862,11 +867,12 @@ class GameWindow(QMainWindow):
         search.setPlaceholderText("Search spells...")
         target_layout.addWidget(search)
 
-        spell_actions: dict[str, ActionView] = {}
+        spell_actions: dict[tuple[str, int | None], ActionView] = {}
         spell_details = {}
         for action in actions:
             spell_id = parse_spell_action_value(str(action.value))[0]
-            spell_actions.setdefault(spell_id, action)
+            slot_level = parse_spell_action_slot(str(action.value))
+            spell_actions.setdefault((spell_id, slot_level), action)
             spell = self._spell_by_id(spell_id)
             if spell is not None:
                 spell_details[spell_id] = spell
@@ -881,13 +887,16 @@ class GameWindow(QMainWindow):
         target_layout.addWidget(level_filter)
 
         rows: list[tuple[QPushButton, str, int | None]] = []
-        for spell_id, action in sorted(
+        for (spell_id, slot_level), action in sorted(
             spell_actions.items(),
             key=lambda item: (
-                spell_details[item[0]].level if item[0] in spell_details else 99,
-                spell_details[item[0]].name.casefold()
-                if item[0] in spell_details
+                spell_details[item[0][0]].level
+                if item[0][0] in spell_details
+                else 99,
+                spell_details[item[0][0]].name.casefold()
+                if item[0][0] in spell_details
                 else item[1].label.casefold(),
+                item[0][1] or 0,
             ),
         ):
             spell = spell_details.get(spell_id)
@@ -898,6 +907,8 @@ class GameWindow(QMainWindow):
             if button is None:
                 continue
             name = spell.name if spell is not None else action.label
+            if slot_level is not None:
+                name = f"{name} (Level {slot_level})"
             level = spell.level if spell is not None else None
             self._set_compact_button_text(button, name)
             target_layout.addWidget(button)
@@ -1566,6 +1577,7 @@ class GameWindow(QMainWindow):
             return TargetSelectionMode(
                 kind=action.kind,
                 source_trigger_id=spell_id,
+                variant_id=_spell_slot_variant(action.value),
             )
         if action.kind == "stat_block" and self._is_area_stat_block_action(
             action
@@ -1597,6 +1609,8 @@ class GameWindow(QMainWindow):
         if mode.kind == "spell" and mode.source_trigger_id is not None:
             spell = self._spell_by_id(mode.source_trigger_id)
             if spell is not None:
+                if mode.variant_id is not None:
+                    return f"{spell.name} ({mode.variant_id})"
                 return spell.name
         if mode.kind == "opportunity_attack":
             return "Opportunity attack"
@@ -1657,6 +1671,7 @@ class GameWindow(QMainWindow):
                 and isinstance(action.value, str)
                 and parse_spell_action_value(action.value)[0]
                 == pending_mode.source_trigger_id
+                and _spell_slot_variant(action.value) == pending_mode.variant_id
                 and self._is_area_spell_action(action)
             ),
             None,
