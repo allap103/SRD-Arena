@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING, cast
 
 from ..effects.results import EffectResult
@@ -49,12 +50,18 @@ def start_ongoing_effect(
     )
     parameters = result.data.get("parameters")
     duration_rounds = result.data.get("duration_rounds")
+    target_refs_data = result.data.get("target_refs")
+    target_refs = (
+        tuple(ref for ref in target_refs_data if isinstance(ref, str))
+        if isinstance(target_refs_data, list)
+        else (result.target_ref,)
+    )
     effect = OngoingEffect(
         identity=RuntimeStateIdentity(
             id=f"ongoing:{kind.value}:{origin_id}",
             source=source,
         ),
-        target_refs=(result.target_ref,),
+        target_refs=target_refs,
         duration=(
             Rounds(duration_rounds)
             if isinstance(duration_rounds, int)
@@ -128,7 +135,7 @@ def resolve_end_turn_effects(
                 )
             )
         if save.check.success:
-            _remove_effect_tree(state, effect)
+            _remove_effect_target(state, effect, creature_ref)
 
 
 def expire_ongoing_effects_for_turn_start(
@@ -211,6 +218,38 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
         condition
         for condition in state.conditions
         if condition.identity.source.origin_id != origin_id
+    ]
+
+
+def _remove_effect_target(
+    state: EncounterState,
+    effect: OngoingEffect,
+    target_ref: str,
+) -> None:
+    remaining_targets = tuple(
+        existing for existing in effect.target_refs if existing != target_ref
+    )
+    state.conditions = [
+        condition
+        for condition in state.conditions
+        if not (
+            condition.identity.source.origin_id
+            == effect.identity.source.origin_id
+            and condition.target_ref == target_ref
+        )
+    ]
+    if not remaining_targets:
+        state.ongoing_effects = [
+            existing
+            for existing in state.ongoing_effects
+            if existing.identity.id != effect.identity.id
+        ]
+        return
+    state.ongoing_effects = [
+        replace(existing, target_refs=remaining_targets)
+        if existing.identity.id == effect.identity.id
+        else existing
+        for existing in state.ongoing_effects
     ]
 
 

@@ -3,6 +3,8 @@ __pycache__
 ___
 .coverage
 .pycache
+.pytest_cache/
+.test-tmp/
 saves/
 dist
 build

@@ -19,6 +19,7 @@ from srd_arena.domain.encounters.actions.stat_block import (
 from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import (
     resolve_concentration_damage,
+    resolve_end_turn_effects,
 )
 from srd_arena.frontends.shared.combat import render_encounter_text
 from srd_arena.runtime.scenario import Scenario
@@ -2257,6 +2258,60 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save(
     assert state.has_condition("goblin_1", Condition.PARALYZED) is False
     assert state.ongoing_effects == []
     assert any("succeeds on the repeated Wisdom save" in text for _, text in cast.messages)
+
+
+def test_one_target_repeat_save_does_not_end_multi_target_spell(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    effects = [
+        EffectResult(
+            kind="start_ongoing_effect",
+            target_ref="goblin_1",
+            data={
+                "effect_kind": "concentration",
+                "source_ref": "player",
+                "source_label": "Caster",
+                "definition_id": "hold_person",
+                "target_refs": ["goblin_1", "goblin_2"],
+                "parameters": {
+                    "repeat_save_trigger": "end_of_turn",
+                    "save_ability": "wisdom",
+                    "save_dc": 10,
+                },
+            },
+        ),
+        *(
+            EffectResult(
+                kind="apply_condition",
+                target_ref=target_ref,
+                data={
+                    "condition": "paralyzed",
+                    "source_ref": "player",
+                    "source_label": "Caster",
+                    "source_kind": "spell",
+                    "definition_id": "hold_person",
+                    "parent_effect_kind": "concentration",
+                },
+            )
+            for target_ref in ("goblin_1", "goblin_2")
+        ),
+    ]
+    state._apply_effects(effects, origin_id="multi-target-cast")
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20
+    )
+
+    resolve_end_turn_effects(state, "goblin_1")
+
+    assert state.has_condition("goblin_1", Condition.PARALYZED) is False
+    assert state.has_condition("goblin_2", Condition.PARALYZED) is True
+    assert state.ongoing_effects[0].target_refs == ("goblin_2",)
 
 
 def test_new_concentration_replaces_the_previous_effect_tree() -> None:
