@@ -1,0 +1,130 @@
+{
+  "id": "spell_condition_showcase",
+  "grid": {
+    "width": 16,
+    "height": 10
+  },
+  "creatures": [
+    {
+      "id": "lifecycle_savant",
+      "name": "Lifecycle Savant",
+      "description": "A demo caster prepared with every Wave 1B condition spell.",
+      "stat_block": {
+        "name": "Mage",
+        "source": "XMM"
+      },
+      "attributes": {
+        "level": 13
+      },
+      "spellcasting": {
+        "ability": "int",
+        "caster_progression": "full",
+        "spell_slots": {
+          "1": 4,
+          "2": 4,
+          "3": 3,
+          "4": 3,
+          "5": 2,
+          "6": 1
+        }
+      },
+      "spells_known": [
+        {"name": "Animal Friendship", "source": "XPHB"},
+        {"name": "Blindness/Deafness", "source": "XPHB"},
+        {"name": "Charm Monster", "source": "XPHB"},
+        {"name": "Charm Person", "source": "XPHB"},
+        {"name": "Color Spray", "source": "XPHB"},
+        {"name": "Greater Invisibility", "source": "XPHB"},
+        {"name": "Hideous Laughter", "source": "XPHB"},
+        {"name": "Hold Monster", "source": "XPHB"},
+        {"name": "Hold Person", "source": "XPHB"},
+        {"name": "Invisibility", "source": "XPHB"},
+        {"name": "Sleep", "source": "XPHB"}
+      ],
+      "start": {"x": 2, "y": 5},
+      "team_id": "casters"
+    },
+    {
+      "id": "caster_guard",
+      "name": "Caster Guard",
+      "stat_block": {
+        "name": "Warrior Veteran",
+        "source": "XMM"
+      },
+      "start": {"x": 3, "y": 5},
+      "team_id": "casters"
+    },
+    {
+      "id": "humanoid_target_1",
+      "name": "Humanoid Target One",
+      "stat_block": {
+        "name": "Warrior Veteran",
+        "source": "XMM"
+      },
+      "start": {"x": 7, "y": 3},
+      "team_id": "targets"
+    },
+    {
+      "id": "humanoid_target_2",
+      "name": "Humanoid Target Two",
+      "stat_block": {
+        "name": "Warrior Veteran",
+        "source": "XMM"
+      },
+      "start": {"x": 8, "y": 4},
+      "team_id": "targets"
+    },
+    {
+      "id": "sleep_target",
+      "name": "Sleep Target",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {"x": 8, "y": 5},
+      "team_id": "targets"
+    },
+    {
+      "id": "wake_attendant",
+      "name": "Wake Attendant",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {"x": 9, "y": 5},
+      "team_id": "targets"
+    },
+    {
+      "id": "sleep_immune_target",
+      "name": "Exhaustion-Immune Target",
+      "stat_block": {
+        "name": "Animated Armor",
+        "source": "XMM"
+      },
+      "start": {"x": 8, "y": 6},
+      "team_id": "targets"
+    },
+    {
+      "id": "beast_target",
+      "name": "Beast Target",
+      "stat_block": {
+        "name": "Wolf",
+        "source": "XMM"
+      },
+      "start": {"x": 6, "y": 8},
+      "team_id": "targets"
+    }
+  ],
+  "teams": [
+    {
+      "id": "casters",
+      "name": "Lifecycle Casters",
+      "controller": "external"
+    },
+    {
+      "id": "targets",
+      "name": "Lifecycle Targets",
+      "controller": "external"
+    }
+  ]
+}
