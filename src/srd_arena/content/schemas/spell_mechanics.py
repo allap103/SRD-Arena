@@ -1054,6 +1054,7 @@ class SpellMechanicsSchema(SpellMechanicsSchemaModel):
     scaling: list[SlotScalingSchema] = Field(default_factory=list)
     outcome_triggers: list[OutcomeTriggerSchema] = Field(default_factory=list)
     condition_application: Literal["all", "choose_one"] = "all"
+    self_removal_blocked_conditions: list[str] = Field(default_factory=list)
 
 
 AnyRequirementSchema.model_rebuild()

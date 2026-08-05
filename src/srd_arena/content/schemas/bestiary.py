@@ -125,6 +125,10 @@ class BestiaryMonsterSchema(SourceModel):
         default_factory=list,
         alias="conditionImmune",
     )
+    mechanical_traits: list[str] = Field(
+        default_factory=list,
+        alias="mechanicalTraits",
+    )
     strength: int = Field(default=10, alias="str")
     dexterity: int = Field(default=10, alias="dex")
     constitution: int = Field(default=10, alias="con")

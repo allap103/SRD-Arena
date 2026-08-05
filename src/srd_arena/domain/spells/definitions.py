@@ -44,6 +44,8 @@ class ImmediateSpellMechanics:
     damage_repeat_save_advantage: bool = False
     save_advantage_against_opponents: bool = False
     automatic_success_condition_immunities: tuple[str, ...] = ()
+    automatic_success_traits: tuple[str, ...] = ()
+    self_removal_blocked_conditions: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

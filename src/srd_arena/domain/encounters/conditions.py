@@ -144,8 +144,15 @@ def remove_condition(
     state: EncounterState,
     target_ref: CreatureRef,
     condition: Condition,
+    *,
+    removed_by_ref: CreatureRef | None = None,
 ) -> None:
-    remove_condition_from_source(state, target_ref, condition)
+    remove_condition_from_source(
+        state,
+        target_ref,
+        condition,
+        removed_by_ref=removed_by_ref,
+    )
 
 
 def remove_condition_from_source(
@@ -153,6 +160,8 @@ def remove_condition_from_source(
     target_ref: CreatureRef,
     condition: Condition,
     source_ref: CreatureRef | None = None,
+    *,
+    removed_by_ref: CreatureRef | None = None,
 ) -> None:
     removed_ids = {
         applied.id
@@ -160,6 +169,10 @@ def remove_condition_from_source(
         if applied.target_ref == target_ref
         and applied.condition is condition
         and (source_ref is None or applied.source_ref == source_ref)
+        and not (
+            removed_by_ref == target_ref
+            and applied.metadata.get("blocks_self_removal") is True
+        )
     }
     state.conditions = [
         applied for applied in state.conditions if applied.id not in removed_ids

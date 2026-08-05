@@ -51,7 +51,7 @@
   "areaTags": [
     "S"
   ]
-  ,"implementation": {"status": "partial", "omissions": [{"mechanic": "choosing creatures within the area", "reason": "Chosen area occupants are being added in Wave 1B."}, {"mechanic": "automatic success for sleepless creatures", "reason": "Explicit creature traits still need to be connected to runtime saves."}]},
+  ,"implementation": {"status": "partial", "omissions": [{"mechanic": "choosing creatures within the area", "reason": "Chosen area occupants are being added in Wave 1B."}]},
   "mechanics": {
     "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 5}, "occupants": "all"},
     "resolution": {

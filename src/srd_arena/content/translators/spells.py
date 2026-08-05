@@ -10,6 +10,7 @@ from srd_arena.content.schemas.action_mechanics import (
 from srd_arena.content.schemas.spell_mechanics import (
     AutomaticResolutionSchema,
     ConditionImmunityRequirementSchema,
+    CreatureTraitRequirementSchema,
     SavingThrowResolutionSchema,
     SpellAttackResolutionSchema,
 )
@@ -155,6 +156,10 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         automatic_success_condition_immunities=(
             _automatic_success_condition_immunities(resolution)
         ),
+        automatic_success_traits=_automatic_success_traits(resolution),
+        self_removal_blocked_conditions=tuple(
+            raw.mechanics.self_removal_blocked_conditions
+        ),
     )
 
 
@@ -291,6 +296,16 @@ def _automatic_success_condition_immunities(
         requirement.condition
         for requirement in resolution.automatic_success
         if isinstance(requirement, ConditionImmunityRequirementSchema)
+    )
+
+
+def _automatic_success_traits(resolution: object) -> tuple[str, ...]:
+    if not isinstance(resolution, SavingThrowResolutionSchema):
+        return ()
+    return tuple(
+        requirement.trait
+        for requirement in resolution.automatic_success
+        if isinstance(requirement, CreatureTraitRequirementSchema)
     )
 
 

@@ -2351,8 +2351,23 @@ def test_sleep_progresses_from_incapacitated_to_unconscious(
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
 
 
-def test_sleep_automatically_spares_creature_immune_to_exhaustion(
+@pytest.mark.parametrize(
+    ("statistics_change", "reason"),
+    [
+        (
+            {"condition_immunities": frozenset({Condition.EXHAUSTION})},
+            "Sleep: immune to exhaustion",
+        ),
+        (
+            {"mechanical_traits": frozenset({"does_not_sleep"})},
+            "Sleep: does_not_sleep",
+        ),
+    ],
+)
+def test_sleep_automatically_spares_ineligible_creature(
     monkeypatch,
+    statistics_change: dict[str, object],
+    reason: str,
 ) -> None:
     session = Scenario(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -2370,7 +2385,7 @@ def test_sleep_automatically_spares_creature_immune_to_exhaustion(
     target.position.y = state.active_position.y
     target.creature.statistics = replace(
         target.creature.statistics,
-        condition_immunities=frozenset({Condition.EXHAUSTION}),
+        **statistics_change,
     )
     state.creatures["goblin_2"].creature.current_health = 0
     state.creatures["goblin_3"].creature.current_health = 0
@@ -2390,9 +2405,7 @@ def test_sleep_automatically_spares_creature_immune_to_exhaustion(
         for event in cast.events
         if event.type == "spell_cast"
     )
-    assert save["automatic_success_reasons"] == [
-        "Sleep: immune to exhaustion"
-    ]
+    assert save["automatic_success_reasons"] == [reason]
 
 
 def test_charm_person_save_has_advantage_against_opponent(
@@ -2665,6 +2678,51 @@ def test_hideous_laughter_damage_save_has_advantage(monkeypatch) -> None:
 
     assert state.ongoing_effects == []
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
+
+
+def test_hideous_laughter_prevents_target_from_removing_its_own_prone(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Hideous Laughter",
+            "XPHB",
+            load_spell_catalog(SYSTEM_CONTENT_ROOT),
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[1] = 1
+    state.creatures["goblin_1"].position = Position(
+        state.active_position.x + 1,
+        state.active_position.y,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
+    )
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("hideous_laughter:goblin_1")
+    )
+    state.apply_action(action)
+
+    state._remove_condition(
+        "goblin_1",
+        Condition.PRONE,
+        removed_by_ref="goblin_1",
+    )
+    assert state.has_condition("goblin_1", Condition.PRONE)
+
+    state._remove_condition("goblin_1", Condition.PRONE)
+    assert state.has_condition("goblin_1", Condition.PRONE) is False
 
 
 def test_new_concentration_replaces_the_previous_effect_tree() -> None:

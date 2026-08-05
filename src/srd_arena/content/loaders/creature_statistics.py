@@ -42,6 +42,7 @@ def build_creature_statistics(
             for condition in stat_block.condition_immune
             if isinstance(condition, str)
         ),
+        mechanical_traits=frozenset(stat_block.mechanical_traits),
     )
 
 

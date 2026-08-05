@@ -134,6 +134,11 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     for immunity in target.creature.statistics.condition_immunities
                 )
             )
+            automatic_success_reasons += tuple(
+                f"{spell.name}: {trait}"
+                for trait in mechanics.automatic_success_traits
+                if trait in target.creature.statistics.mechanical_traits
+            )
             if creature_type in mechanics.automatic_failure_creature_types:
                 automatic_reasons += (f"{spell.name}: {creature_type}",)
             save_mode = context.save_roll_modes.get(
@@ -287,6 +292,10 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "source_kind": "spell",
                     "definition_id": spell.id,
                 }
+                if condition in mechanics.self_removal_blocked_conditions:
+                    condition_data["metadata"] = {
+                        "blocks_self_removal": True
+                    }
                 if effects:
                     condition_data["parent_effect_kind"] = parent_kind
                 if mechanics.expires_on_source_turn_end:
