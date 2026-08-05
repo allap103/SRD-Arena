@@ -28,9 +28,7 @@ class SpellTargetContext:
     target_ref: str
     target_label: str
     target_conditions: tuple[str, ...] = ()
-    automatic_save_failures: dict[str, tuple[str, ...]] = field(
-        default_factory=dict
-    )
+    automatic_save_failures: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
     def automatic_failure_reasons(self, ability: str) -> tuple[str, ...]:
         return self.automatic_save_failures.get(ability, ())
@@ -65,12 +63,6 @@ def resolve_spell_action(
         return _resolve_color_spray(context)
     if spell.id == "burning_hands":
         return _resolve_burning_hands(context)
-    if spell.id == "fireball":
-        return _resolve_fireball(context)
-    if spell.id == "lesser_restoration":
-        return _resolve_lesser_restoration(context)
-    if spell.id == "hold_person":
-        return _resolve_hold_person(context)
     return None
 
 
@@ -81,8 +73,18 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
     assert context.creature.spellcasting is not None
     assert context.roller is not None
     targets = context.targets or (context.target,)
-    messages = [("system", f"{context.creature.name} casts {spell.name}.")]
-    damage_rolls: list[tuple[SpellDamage, DicePoolResult]] = []
+    target_suffix = (
+        f" on {targets[0].target_label}"
+        if mechanics.target == "creature" and len(targets) == 1
+        else ""
+    )
+    messages = [
+        (
+            "system",
+            f"{context.creature.name} casts {spell.name}{target_suffix}.",
+        )
+    ]
+    shared_damage_rolls: list[tuple[SpellDamage, DicePoolResult]] = []
     damage_definitions = mechanics.damage
     if mechanics.cantrip_damage_by_level:
         caster_level = context.creature.attributes.level
@@ -92,8 +94,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             if level <= caster_level
         )
         damage_definitions = tuple(
-            SpellDamage(scaled_dice, damage.damage_type)
-            for damage in mechanics.damage
+            SpellDamage(scaled_dice, damage.damage_type) for damage in mechanics.damage
         )
     cast_level = context.cast_level if context.cast_level is not None else spell.level
     if mechanics.slot_damage_increment is not None and cast_level > spell.level:
@@ -111,7 +112,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
     if mechanics.resolution == "saving_throw":
         for damage in damage_definitions:
             count, sides = _parse_damage_dice(damage.dice)
-            damage_rolls.append(
+            shared_damage_rolls.append(
                 (damage, resolve_dice(count, sides, roller=context.roller))
             )
 
@@ -122,6 +123,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
     for target in targets:
         successful_save = False
         hit = True
+        target_damage_rolls = list(shared_damage_rolls)
         if mechanics.resolution == "saving_throw":
             ability = mechanics.save_ability or "dexterity"
             creature_type = (target.creature.statistics.creature_type or "").casefold()
@@ -166,13 +168,11 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "total": save.check.roll.total,
                     "target_dc": save.check.target,
                     "success": successful_save,
-                    "automatic_success_reasons": list(
-                        automatic_success_reasons
-                    ),
+                    "automatic_success_reasons": list(automatic_success_reasons),
                     "automatic_failure_reasons": list(save.automatic_failure_reasons),
                 }
             )
-        else:
+        elif mechanics.resolution == "spell_attack":
             attack = resolve_d20(
                 modifier=context.creature.spellcasting.attack_bonus,
                 mode=context.attack_roll_modes.get(target.target_ref, "normal"),
@@ -186,6 +186,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             critical_hit = hit and (attack.selected == 20 or bool(automatic_critical))
             attack_details.append(
                 {
+                    "projectile_index": len(attack_details) + 1,
                     "target_ref": target.target_ref,
                     "target_label": target.target_label,
                     "die": attack.selected,
@@ -201,11 +202,11 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 count, sides = _parse_damage_dice(damage.dice)
                 if critical_hit:
                     count *= 2
-                damage_rolls.append(
+                target_damage_rolls.append(
                     (damage, resolve_dice(count, sides, roller=context.roller))
                 )
         target_damage = 0
-        for damage, roll in damage_rolls:
+        for damage, roll in target_damage_rolls:
             final_damage = roll.total
             if successful_save:
                 final_damage = final_damage // 2 if mechanics.half_damage_on_save else 0
@@ -240,20 +241,29 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             if affected and mechanics.conditions
             else "does not affect"
         )
-        messages.append(("system", f"{spell.name} {outcome} {target.target_label}."))
+        if not spell.removable_conditions:
+            messages.append(
+                ("system", f"{spell.name} {outcome} {target.target_label}.")
+            )
 
     effects: list[EffectResult] = []
     selected_condition = context.selected_condition
     if selected_condition not in mechanics.conditions:
         selected_condition = mechanics.conditions[0] if mechanics.conditions else None
     selected_conditions = (
-        (selected_condition,) if selected_condition is not None else ()
-    ) if mechanics.condition_choice else mechanics.conditions
+        ((selected_condition,) if selected_condition is not None else ())
+        if mechanics.condition_choice
+        else mechanics.conditions
+    )
     parent_kind = "concentration" if mechanics.concentration else "spell"
-    if affected_targets and mechanics.conditions and (
-        mechanics.duration_rounds is not None
-        or mechanics.concentration
-        or mechanics.repeat_save_trigger is not None
+    if (
+        affected_targets
+        and mechanics.conditions
+        and (
+            mechanics.duration_rounds is not None
+            or mechanics.concentration
+            or mechanics.repeat_save_trigger is not None
+        )
     ):
         effects.append(
             EffectResult(
@@ -293,9 +303,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "definition_id": spell.id,
                 }
                 if condition in mechanics.self_removal_blocked_conditions:
-                    condition_data["metadata"] = {
-                        "blocks_self_removal": True
-                    }
+                    condition_data["metadata"] = {"blocks_self_removal": True}
                 if effects:
                     condition_data["parent_effect_kind"] = parent_kind
                 if mechanics.expires_on_source_turn_end:
@@ -308,6 +316,37 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         data=condition_data,
                     )
                 )
+
+    removed_conditions: list[str] = []
+    if spell.removable_conditions:
+        for target in affected_targets:
+            removed_condition = context.selected_condition
+            if (
+                removed_condition not in spell.removable_conditions
+                or removed_condition not in target.target_conditions
+            ):
+                messages.append(
+                    (
+                        "system",
+                        f"No removable condition on "
+                        f"{target.target_label.lower()} is affected.",
+                    )
+                )
+                continue
+            removed_conditions.append(removed_condition)
+            messages.append(
+                (
+                    "system",
+                    f"{target.target_label} is no longer {removed_condition}.",
+                )
+            )
+            effects.append(
+                EffectResult(
+                    kind="remove_condition",
+                    target_ref=target.target_ref,
+                    data={"condition": removed_condition},
+                )
+            )
 
     return CapabilityActionResult(
         capability_id=spell.id,
@@ -328,7 +367,11 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             "attack_roll_details": attack_details,
             "damage_roll_detail": damage_details[0] if damage_details else None,
             "damage_roll_details": damage_details,
-            "success": any(
+            "removed_condition": (
+                removed_conditions[0] if removed_conditions else None
+            ),
+            "success": bool(effects)
+            or any(
                 isinstance(detail.get("applied_damage"), int)
                 and cast(int, detail["applied_damage"]) > 0
                 for detail in damage_details
@@ -348,18 +391,21 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
         else "constitution"
     )
     targets = context.targets or (context.target,)
-    messages = [("system", f"{creature.name} casts {spell.name} on {context.target.target_label}.")]
+    messages = [
+        (
+            "system",
+            f"{creature.name} casts {spell.name} on {context.target.target_label}.",
+        )
+    ]
     effects: list[EffectResult] = []
     save_details: list[dict[str, object]] = []
     for target in targets:
         save_result = resolve_saving_throw(
-            target.creature,
-            ability,
+            cast(SavingThrowCreature, target.creature),
+            cast(Ability, ability),
             creature.spellcasting.save_dc,
             roller=context.roller,
-            automatic_failure_reasons=target.automatic_failure_reasons(
-                ability
-            ),
+            automatic_failure_reasons=target.automatic_failure_reasons(ability),
         )
         save_detail = {
             "target_ref": target.target_ref,
@@ -377,9 +423,7 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
             "total": save_result.check.roll.total,
             "target_dc": save_result.check.target,
             "success": save_result.check.success,
-            "automatic_failure_reasons": list(
-                save_result.automatic_failure_reasons
-            ),
+            "automatic_failure_reasons": list(save_result.automatic_failure_reasons),
         }
         save_details.append(save_detail)
         messages.append(
@@ -391,10 +435,15 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
             ),
         )
         if save_result.check.success:
-            messages.append(("system", f"{target.target_label} shrugs off the dazzling light."))
+            messages.append(
+                ("system", f"{target.target_label} shrugs off the dazzling light.")
+            )
             continue
         messages.append(
-            ("system", f"{target.target_label} is blinded until the end of your next turn.")
+            (
+                "system",
+                f"{target.target_label} is blinded until the end of your next turn.",
+            )
         )
         effects.append(
             EffectResult(
@@ -435,142 +484,6 @@ def _resolve_color_spray(context: SpellActionContext) -> CapabilityActionResult:
     )
 
 
-def _resolve_lesser_restoration(context: SpellActionContext) -> CapabilityActionResult:
-    creature = context.creature
-    spell = context.spell
-    target_ref = context.target.target_ref
-    target_label = context.target.target_label
-    removable = spell.removable_conditions
-    removed_condition = context.selected_condition
-    if (
-        removed_condition not in removable
-        or removed_condition not in context.target.target_conditions
-    ):
-        removed_condition = None
-    messages = [("system", f"{creature.name} casts {spell.name} on {target_label}.")]
-    effects: list[EffectResult] = []
-    if removed_condition is None:
-        messages.append(
-            ("system", f"No removable condition on {target_label.lower()} is affected.")
-        )
-        success = False
-    else:
-        messages.append(
-            ("system", f"{target_label} is no longer {removed_condition}.")
-        )
-        effects.append(
-            EffectResult(
-                kind="remove_condition",
-                target_ref=target_ref,
-                data={"condition": removed_condition},
-            )
-        )
-        success = True
-
-    return CapabilityActionResult(
-        capability_id=spell.id,
-        capability_name=spell.name,
-        messages=messages,
-        effects=effects,
-        details={
-            "target_ref": target_ref,
-            "target_label": target_label,
-            "spell_level": spell.level,
-            "slot_level": spell.level,
-            "removed_condition": removed_condition,
-            "success": success,
-        },
-    )
-
-
-def _resolve_hold_person(context: SpellActionContext) -> CapabilityActionResult:
-    creature = context.creature
-    spell = context.spell
-    target = context.target
-    assert creature.spellcasting is not None
-    assert context.roller is not None
-    ability = spell.saving_throw_abilities[0]
-    save = resolve_saving_throw(
-        cast(SavingThrowCreature, target.creature),
-        cast(Ability, ability),
-        creature.spellcasting.save_dc,
-        roller=context.roller,
-        automatic_failure_reasons=target.automatic_failure_reasons(ability),
-    )
-    messages = [
-        (
-            "system",
-            f"{creature.name} casts {spell.name} on {target.target_label}.",
-        )
-    ]
-    effects: list[EffectResult] = [
-        EffectResult(
-            kind="start_ongoing_effect",
-            target_ref=target.target_ref,
-            data={
-                "effect_kind": "concentration",
-                "source_ref": context.source_ref,
-                "source_label": creature.name,
-                "definition_id": spell.id,
-                "duration_rounds": 10,
-                "parameters": (
-                    {
-                        "started_round": context.current_round,
-                        "repeat_save_trigger": "end_of_turn",
-                        "save_ability": ability,
-                        "save_dc": creature.spellcasting.save_dc,
-                    }
-                    if not save.check.success
-                    else {"started_round": context.current_round}
-                ),
-            },
-        )
-    ]
-    if save.check.success:
-        messages.append(("system", f"{target.target_label} resists {spell.name}."))
-    else:
-        messages.append(("system", f"{target.target_label} is paralyzed."))
-        effects.append(
-            EffectResult(
-                kind="apply_condition",
-                target_ref=target.target_ref,
-                data={
-                    "condition": "paralyzed",
-                    "source_ref": context.source_ref,
-                    "source_label": creature.name,
-                    "source_kind": "spell",
-                    "definition_id": spell.id,
-                    "parent_effect_kind": "concentration",
-                },
-            )
-        )
-    save_detail = {
-        "target_ref": target.target_ref,
-        "target_label": target.target_label,
-        "ability": ability,
-        "die": save.check.roll.selected,
-        "modifier": save.modifiers.total,
-        "total": save.check.roll.total,
-        "target_dc": save.check.target,
-        "success": save.check.success,
-        "automatic_failure_reasons": list(save.automatic_failure_reasons),
-    }
-    return CapabilityActionResult(
-        capability_id=spell.id,
-        capability_name=spell.name,
-        messages=messages,
-        effects=effects,
-        details={
-            "target_ref": target.target_ref,
-            "target_label": target.target_label,
-            "spell_level": spell.level,
-            "slot_level": spell.level,
-            "save_detail": save_detail,
-            "success": not save.check.success,
-        },
-    )
-
-
 def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResult:
     creature = context.creature
     spell = context.spell
@@ -579,9 +492,7 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
     damage_dice = spell.damage_dice or "3d6"
     damage_count, damage_sides = _parse_damage_dice(damage_dice)
     ability = (
-        spell.saving_throw_abilities[0]
-        if spell.saving_throw_abilities
-        else "dexterity"
+        spell.saving_throw_abilities[0] if spell.saving_throw_abilities else "dexterity"
     )
     damage_type = spell.damage_inflict[0] if spell.damage_inflict else "damage"
     targets = context.targets or (context.target,)
@@ -591,13 +502,11 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
 
     for target in targets:
         save_result = resolve_saving_throw(
-            target.creature,
-            ability,
+            cast(SavingThrowCreature, target.creature),
+            cast(Ability, ability),
             creature.spellcasting.save_dc,
             roller=context.roller,
-            automatic_failure_reasons=target.automatic_failure_reasons(
-                ability
-            ),
+            automatic_failure_reasons=target.automatic_failure_reasons(ability),
         )
         save_detail = {
             "target_ref": target.target_ref,
@@ -615,9 +524,7 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
             "total": save_result.check.roll.total,
             "target_dc": save_result.check.target,
             "success": save_result.check.success,
-            "automatic_failure_reasons": list(
-                save_result.automatic_failure_reasons
-            ),
+            "automatic_failure_reasons": list(save_result.automatic_failure_reasons),
         }
         save_details.append(save_detail)
         messages.append(
@@ -660,11 +567,17 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
         )
         if save_result.check.success:
             messages.append(
-                ("system", f"{target.target_label} takes {applied_damage} {damage_type} damage on a successful save.")
+                (
+                    "system",
+                    f"{target.target_label} takes {applied_damage} {damage_type} damage on a successful save.",
+                )
             )
         else:
             messages.append(
-                ("system", f"{target.target_label} takes {applied_damage} {damage_type} damage.")
+                (
+                    "system",
+                    f"{target.target_label} takes {applied_damage} {damage_type} damage.",
+                )
             )
         if target.creature.get_health() <= 0:
             messages.append(("system", f"{target.target_label} is defeated."))
@@ -686,127 +599,11 @@ def _resolve_burning_hands(context: SpellActionContext) -> CapabilityActionResul
             "save_details": save_details,
             "damage_roll_detail": damage_details[0] if damage_details else None,
             "damage_roll_details": damage_details,
-            "success": any(detail["applied_damage"] > 0 for detail in damage_details),
-        },
-    )
-
-
-def _resolve_fireball(context: SpellActionContext) -> CapabilityActionResult:
-    creature = context.creature
-    spell = context.spell
-    assert creature.spellcasting is not None
-    assert context.roller is not None
-    damage_dice = spell.damage_dice or "8d6"
-    damage_count, damage_sides = _parse_damage_dice(damage_dice)
-    ability = (
-        spell.saving_throw_abilities[0]
-        if spell.saving_throw_abilities
-        else "dexterity"
-    )
-    damage_type = spell.damage_inflict[0] if spell.damage_inflict else "damage"
-    targets = context.targets or (context.target,)
-    messages = [("system", f"{creature.name} casts {spell.name}.")]
-    save_details: list[dict[str, object]] = []
-    damage_details: list[dict[str, object]] = []
-    damage_roll = resolve_dice(
-        damage_count,
-        damage_sides,
-        roller=context.roller,
-    )
-    full_damage = damage_roll.total
-
-    for target in targets:
-        save_result = resolve_saving_throw(
-            target.creature,
-            ability,
-            creature.spellcasting.save_dc,
-            roller=context.roller,
-            automatic_failure_reasons=target.automatic_failure_reasons(
-                ability
+            "success": any(
+                isinstance(detail.get("applied_damage"), int)
+                and cast(int, detail["applied_damage"]) > 0
+                for detail in damage_details
             ),
-        )
-        save_detail = {
-            "target_ref": target.target_ref,
-            "target_label": target.target_label,
-            "ability": ability,
-            "proficient": save_result.proficient,
-            "die": save_result.check.roll.selected,
-            "dice": list(save_result.check.roll.dice),
-            "selected_index": save_result.check.roll.selected_index,
-            "mode": save_result.check.roll.mode,
-            "modifier": save_result.modifiers.total,
-            "ability_modifier": save_result.modifiers.ability,
-            "proficiency_modifier": save_result.modifiers.proficiency,
-            "other_modifier": save_result.modifiers.other,
-            "total": save_result.check.roll.total,
-            "target_dc": save_result.check.target,
-            "success": save_result.check.success,
-            "automatic_failure_reasons": list(
-                save_result.automatic_failure_reasons
-            ),
-        }
-        save_details.append(save_detail)
-        messages.append(
-            (
-                "system",
-                f"{target.target_label} makes a Dexterity save: d20={save_result.check.roll.selected} "
-                f"+ {save_result.modifiers.total} = {save_result.check.roll.total} "
-                f"vs DC {creature.spellcasting.save_dc}.",
-            ),
-        )
-        final_damage = full_damage // 2 if save_result.check.success else full_damage
-        applied_damage = target.creature.take_damage(final_damage)
-        damage_detail = {
-            "target_ref": target.target_ref,
-            "target_label": target.target_label,
-            "dice": damage_dice,
-            "dice_values": [die.result for die in damage_roll.dice],
-            "die_rolls": [list(die.rolls) for die in damage_roll.dice],
-            "dice_total": damage_roll.subtotal,
-            "modifier": damage_roll.modifier,
-            "total": damage_roll.total,
-            "damage_type": damage_type,
-            "saved": save_result.check.success,
-            "final_damage": final_damage,
-            "applied_damage": applied_damage,
-        }
-        damage_details.append(damage_detail)
-        messages.append(
-            (
-                "system",
-                f"Damage to {target.target_label}: {damage_dice}={damage_roll.subtotal} + 0 = "
-                f"{damage_roll.total}; final damage {final_damage}, applied {applied_damage}.",
-            ),
-        )
-        if save_result.check.success:
-            messages.append(
-                ("system", f"{target.target_label} takes {applied_damage} {damage_type} damage on a successful save.")
-            )
-        else:
-            messages.append(
-                ("system", f"{target.target_label} takes {applied_damage} {damage_type} damage.")
-            )
-        if target.creature.get_health() <= 0:
-            messages.append(("system", f"{target.target_label} is defeated."))
-
-    return CapabilityActionResult(
-        capability_id=spell.id,
-        capability_name=spell.name,
-        messages=messages,
-        effects=[],
-        details={
-            "target_ref": context.target.target_ref,
-            "target_label": context.target.target_label,
-            "target_refs": [target.target_ref for target in targets],
-            "target_labels": [target.target_label for target in targets],
-            "area": serialize_area(context.area),
-            "spell_level": spell.level,
-            "slot_level": spell.level,
-            "save_detail": save_details[0] if save_details else None,
-            "save_details": save_details,
-            "damage_roll_detail": damage_details[0] if damage_details else None,
-            "damage_roll_details": damage_details,
-            "success": any(detail["applied_damage"] > 0 for detail in damage_details),
         },
     )
 

@@ -52,5 +52,50 @@
   "areaTags": [
     "MT",
     "ST"
-  ]
+  ],
+  "implementation": {
+    "status": "complete"
+  },
+  "mechanics": {
+    "target": {
+      "type": "creature",
+      "count": {
+        "minimum": 1,
+        "maximum": 3
+      },
+      "disposition": "enemy",
+      "selection": "choose_up_to"
+    },
+    "resolution": {
+      "type": "repeat",
+      "count": 3,
+      "allocation": "same_or_different",
+      "simultaneous": true,
+      "resolution": {
+        "type": "spell_attack",
+        "mode": "ranged",
+        "hit": {
+          "effects": [
+            {
+              "type": "damage",
+              "dice": "2d6",
+              "damage_type": "fire"
+            }
+          ]
+        }
+      }
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "above_level": 2,
+        "per_level": [
+          {
+            "type": "projectile_count",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  }
 }

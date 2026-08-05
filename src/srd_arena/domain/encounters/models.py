@@ -125,6 +125,8 @@ class PendingSpellCast:
     spell_id: str
     selected_target_refs: list[CreatureRef]
     maximum_targets: int
+    repeat_target_allocations: bool = False
+    require_full_target_count: bool = False
 
 
 @dataclass

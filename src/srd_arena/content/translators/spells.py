@@ -11,6 +11,8 @@ from srd_arena.content.schemas.spell_mechanics import (
     AutomaticResolutionSchema,
     ConditionImmunityRequirementSchema,
     CreatureTraitRequirementSchema,
+    RepeatResolutionSchema,
+    RemoveEffectSchema,
     SavingThrowResolutionSchema,
     SpellAttackResolutionSchema,
 )
@@ -36,8 +38,7 @@ def build_spell(
         duration_data=tuple(raw.duration),
         components=dict(raw.components),
         saving_throw_abilities=tuple(
-            _normalize_save_ability(value)
-            for value in raw.saving_throw
+            _normalize_save_ability(value) for value in raw.saving_throw
         ),
         condition_inflict=tuple(raw.condition_inflict),
         removable_conditions=_spell_removable_conditions(raw),
@@ -60,7 +61,13 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
     if raw.mechanics is None:
         return None
     target = raw.mechanics.target
-    resolution = raw.mechanics.resolution.root
+    outer_resolution = raw.mechanics.resolution.root
+    repeated = (
+        outer_resolution
+        if isinstance(outer_resolution, RepeatResolutionSchema)
+        else None
+    )
+    resolution = repeated.resolution.root if repeated is not None else outer_resolution
     if not isinstance(
         resolution,
         (
@@ -95,10 +102,14 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             _normalize_save_ability(resolution.ability)
             if isinstance(resolution, SavingThrowResolutionSchema)
             and resolution.ability is not None
-            else raw.saving_throw[0] if raw.saving_throw else None
+            else raw.saving_throw[0]
+            if raw.saving_throw
+            else None
         ),
         attack_mode=(
-            resolution.mode if isinstance(resolution, SpellAttackResolutionSchema) else None
+            resolution.mode
+            if isinstance(resolution, SpellAttackResolutionSchema)
+            else None
         ),
         half_damage_on_save=(
             isinstance(resolution, SavingThrowResolutionSchema)
@@ -144,9 +155,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             and effect.root.duration.creature == "source"
             for effect in outcome.effects
         ),
-        target_disposition=(
-            target.disposition if target.type == "creature" else "any"
-        ),
+        target_disposition=(target.disposition if target.type == "creature" else "any"),
         repeat_failure_conditions=_repeat_failure_conditions(resolution),
         end_events=_end_events(raw),
         damage_repeat_save_advantage=_damage_repeat_save_advantage(raw),
@@ -161,14 +170,19 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             raw.mechanics.self_removal_blocked_conditions
         ),
         base_target_count=(
-            target.count.maximum
+            repeated.count
+            if repeated is not None and isinstance(repeated.count, int)
+            else target.count.maximum
             if target.type == "creature" and isinstance(target.count.maximum, int)
             else 1
         ),
         slot_target_increment=_slot_target_increment(raw),
-        choose_area_targets=(
-            target.type == "area" and target.occupants == "chosen"
+        choose_area_targets=(target.type == "area" and target.occupants == "chosen"),
+        repeat_target_allocations=(
+            repeated is not None
+            and repeated.allocation in {"same_target", "same_or_different"}
         ),
+        require_full_target_count=repeated is not None,
     )
 
 
@@ -214,7 +228,7 @@ def _slot_target_increment(raw: SpellSchema) -> int:
         increment.amount
         for scaling in raw.mechanics.scaling
         for increment in scaling.per_level
-        if increment.type == "target_count"
+        if increment.type in {"target_count", "projectile_count"}
         and isinstance(increment.amount, int)
     )
 
@@ -299,8 +313,7 @@ def _save_advantage_against_opponents(resolution: object) -> bool:
         modifier.mode == "advantage"
         and any(
             getattr(requirement, "type", None) == "relationship"
-            and getattr(requirement, "relationship", None)
-            == "fighting_source_team"
+            and getattr(requirement, "relationship", None) == "fighting_source_team"
             for requirement in modifier.requirements
         )
         for modifier in resolution.save_modifiers
@@ -349,11 +362,7 @@ def _target_requirements(raw: SpellSchema) -> tuple[CreatureTypeRequirement, ...
         )
         if mechanics_types:
             creature_types = mechanics_types
-    return (
-        (CreatureTypeRequirement(creature_types),)
-        if creature_types
-        else ()
-    )
+    return (CreatureTypeRequirement(creature_types),) if creature_types else ()
 
 
 def _normalize_save_ability(value: str) -> str:
@@ -370,6 +379,30 @@ def _normalize_save_ability(value: str) -> str:
 
 
 def _spell_damage_dice(raw: SpellSchema) -> str | None:
+    if raw.mechanics is not None:
+        resolution = raw.mechanics.resolution.root
+        if isinstance(resolution, RepeatResolutionSchema):
+            resolution = resolution.resolution.root
+        outcome = (
+            resolution.failure
+            if isinstance(resolution, SavingThrowResolutionSchema)
+            else resolution.hit
+            if isinstance(resolution, SpellAttackResolutionSchema)
+            else resolution.outcome
+            if isinstance(resolution, AutomaticResolutionSchema)
+            else None
+        )
+        if outcome is not None:
+            damage = next(
+                (
+                    effect.root
+                    for effect in outcome.effects
+                    if isinstance(effect.root, DamageEffectSchema)
+                ),
+                None,
+            )
+            if damage is not None:
+                return damage.dice
     for entry in raw.entries:
         if not isinstance(entry, str):
             continue
@@ -380,6 +413,20 @@ def _spell_damage_dice(raw: SpellSchema) -> str | None:
 
 
 def _spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
+    if raw.mechanics is not None:
+        resolution = raw.mechanics.resolution.root
+        if isinstance(resolution, RepeatResolutionSchema):
+            resolution = resolution.resolution.root
+        if isinstance(resolution, AutomaticResolutionSchema):
+            conditions = tuple(
+                condition
+                for effect in resolution.outcome.effects
+                if isinstance(effect.root, RemoveEffectSchema)
+                and "condition" in effect.root.removable
+                for condition in effect.root.conditions
+            )
+            if conditions:
+                return conditions
     text_parts = [entry for entry in raw.entries if isinstance(entry, str)]
     if not text_parts:
         return ()
@@ -387,8 +434,7 @@ def _spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
     if "end one condition on it:" not in text.casefold():
         return ()
     return tuple(
-        match.casefold()
-        for match in re.findall(r"\{@condition ([^|}]+)", text)
+        match.casefold() for match in re.findall(r"\{@condition ([^|}]+)", text)
     )
 
 
@@ -400,9 +446,7 @@ def _spell_geometry_mode(raw: SpellSchema) -> str:
             else "point_area"
         )
     range_type = (
-        raw.range.get("type")
-        if isinstance(raw.range.get("type"), str)
-        else None
+        raw.range.get("type") if isinstance(raw.range.get("type"), str) else None
     )
     if _spell_removable_conditions(raw):
         return "point_target"

@@ -75,9 +75,7 @@ class ActorReadyRule:
             return EligibilityFailure(
                 "condition.cannot_take_actions",
                 "An incapacitated creature cannot take this action.",
-                effective.providers_for_trait(
-                    CombatTrait.CANNOT_TAKE_ACTIONS
-                ),
+                effective.providers_for_trait(CombatTrait.CANNOT_TAKE_ACTIONS),
             )
         return None
 
@@ -528,8 +526,7 @@ class SpellTargetSelectionRule:
             target.target_ref
             for target in (
                 state._spell_area_targets(actor, spell, aim_point=aim_point)
-                if spell.mechanics is not None
-                and spell.mechanics.choose_area_targets
+                if spell.mechanics is not None and spell.mechanics.choose_area_targets
                 else tuple(state._spell_action_targets(actor, spell))
             )
         }
@@ -539,7 +536,18 @@ class SpellTargetSelectionRule:
                     "target_required",
                     "A creature target is required.",
                 )
-            if action.value in pending.selected_target_refs:
+            remove_target = action.id.endswith("-remove")
+            if remove_target:
+                if action.value not in pending.selected_target_refs:
+                    return EligibilityFailure(
+                        "target_unavailable",
+                        "That target has no allocated spell effect to remove.",
+                    )
+                return None
+            if (
+                not pending.repeat_target_allocations
+                and action.value in pending.selected_target_refs
+            ):
                 return None
             if len(pending.selected_target_refs) >= pending.maximum_targets:
                 return EligibilityFailure(
@@ -561,6 +569,14 @@ class SpellTargetSelectionRule:
             return EligibilityFailure(
                 "target_required",
                 "Select at least one spell target.",
+            )
+        if (
+            pending.require_full_target_count
+            and len(pending.selected_target_refs) != pending.maximum_targets
+        ):
+            return EligibilityFailure(
+                "target_allocation_incomplete",
+                "Allocate every spell effect before casting.",
             )
         for target_ref in pending.selected_target_refs:
             if target_ref not in candidate_refs:
@@ -659,13 +675,10 @@ def _target_requirement_failure(
             )
         if not isinstance(requirement, ConditionRequirement):
             continue
-        required = tuple(
-            Condition(condition) for condition in requirement.conditions
-        )
+        required = tuple(Condition(condition) for condition in requirement.conditions)
         effective = state.effective_conditions_for(target_ref)
         provider_ids_by_condition = {
-            condition: effective.providers_for(condition)
-            for condition in required
+            condition: effective.providers_for(condition) for condition in required
         }
         if requirement.applied_by == "source":
             source_provider_ids = {
@@ -674,20 +687,14 @@ def _target_requirement_failure(
                 if applied.source_ref == actor_ref
             }
             matches = tuple(
-                bool(
-                    set(provider_ids_by_condition[condition])
-                    & source_provider_ids
-                )
+                bool(set(provider_ids_by_condition[condition]) & source_provider_ids)
                 for condition in required
             )
         else:
             matches = tuple(
-                bool(provider_ids_by_condition[condition])
-                for condition in required
+                bool(provider_ids_by_condition[condition]) for condition in required
             )
-        satisfied = (
-            all(matches) if requirement.match == "all" else any(matches)
-        )
+        satisfied = all(matches) if requirement.match == "all" else any(matches)
         if satisfied:
             continue
         labels = ", ".join(condition.value for condition in required)

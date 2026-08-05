@@ -90,8 +90,7 @@ def creature_action_candidates(
     multiattack_plans = executable_multiattack_slot_plans(enemy.creature)
     for plan_index, slots in enumerate(multiattack_plans):
         plan_summary = [
-            "/".join(invocation.name for invocation in slot.options)
-            for slot in slots
+            "/".join(invocation.name for invocation in slot.options) for slot in slots
         ]
         label = (
             "Multiattack"
@@ -102,9 +101,7 @@ def creature_action_candidates(
             EncounterAction(
                 label,
                 "multiattack",
-                (
-                    None if len(multiattack_plans) == 1 else str(plan_index)
-                ),
+                (None if len(multiattack_plans) == 1 else str(plan_index)),
                 id=(
                     f"{creature_ref}-multiattack"
                     if len(multiattack_plans) == 1
@@ -126,13 +123,10 @@ def creature_action_candidates(
         available_sources = attack_sources(enemy.creature, self.item_templates)
         if enemy.pending_multiattack:
             option_names = {
-                invocation.name
-                for invocation in enemy.pending_multiattack[0].options
+                invocation.name for invocation in enemy.pending_multiattack[0].options
             }
             available_sources = [
-                source
-                for source in available_sources
-                if source.name in option_names
+                source for source in available_sources if source.name in option_names
             ]
         for source in available_sources:
             for attack_type in source.attack_modes:
@@ -215,10 +209,7 @@ def creature_action_candidates(
                     _stat_block_display_name(enemy.creature, definition.name),
                     "stat_block",
                     target,
-                    id=(
-                        f"{creature_ref}-stat-block-{source_slug}-"
-                        f"{target_slug}"
-                    ),
+                    id=(f"{creature_ref}-stat-block-{source_slug}-{target_slug}"),
                     creature_ref=creature_ref,
                     preferred_attack_name=definition.name,
                     cost=ActionCost(action=1),
@@ -228,10 +219,14 @@ def creature_action_candidates(
     actions.extend(self._available_spell_actions(enemy.creature))
     for effect in self.ongoing_effects:
         end_events = effect.parameters.get("end_events", [])
-        if not isinstance(end_events, list) or [
-            "adjacent_creature_wakes_target",
-            "any",
-        ] not in end_events:
+        if (
+            not isinstance(end_events, list)
+            or [
+                "adjacent_creature_wakes_target",
+                "any",
+            ]
+            not in end_events
+        ):
             continue
         for target_ref in effect.target_refs:
             wake_target_state = self.creatures.get(target_ref)
@@ -436,15 +431,29 @@ def execute_creature_action(
         if not isinstance(action.value, str):
             raise ValueError("Spell action requires a spell payload.")
         spell_id, _target_ref, aim_point = parse_spell_action_value(action.value)
-        spell = next(
-            candidate
-            for candidate in enemy.creature.spellcasting.learned_spells
-            if candidate.id == spell_id
-        ) if enemy.creature.spellcasting is not None else None
+        spell = (
+            next(
+                candidate
+                for candidate in enemy.creature.spellcasting.learned_spells
+                if candidate.id == spell_id
+            )
+            if enemy.creature.spellcasting is not None
+            else None
+        )
         maximum_targets = (
             spell_max_targets(spell, parse_spell_action_slot(action.value))
             if spell is not None
             else 1
+        )
+        repeat_target_allocations = bool(
+            spell is not None
+            and spell.mechanics is not None
+            and spell.mechanics.repeat_target_allocations
+        )
+        require_full_target_count = bool(
+            spell is not None
+            and spell.mechanics is not None
+            and spell.mechanics.require_full_target_count
         )
         selected_targets = list(parse_spell_action_targets(action.value))
         if (
@@ -462,14 +471,11 @@ def execute_creature_action(
                 )
             ]
             maximum_targets = len(selected_targets)
-        staged_selection_needed = (
-            (maximum_targets > 1 and bool(selected_targets))
-            or (
-                spell is not None
-                and spell.mechanics is not None
-                and spell.mechanics.choose_area_targets
-                and len(selected_targets) > 1
-            )
+        staged_selection_needed = (maximum_targets > 1 and bool(selected_targets)) or (
+            spell is not None
+            and spell.mechanics is not None
+            and spell.mechanics.choose_area_targets
+            and len(selected_targets) > 1
         )
         automated_resolved = False
         if (
@@ -478,7 +484,10 @@ def execute_creature_action(
             and spell is not None
         ):
             assert spell.mechanics is not None
-            if not spell.mechanics.choose_area_targets:
+            if repeat_target_allocations:
+                target_ref = selected_targets[0]
+                selected_targets = [target_ref] * maximum_targets
+            elif not spell.mechanics.choose_area_targets:
                 selected_targets = [
                     target.target_ref
                     for target in self._spell_action_targets(
@@ -507,13 +516,19 @@ def execute_creature_action(
                 spell_id=spell_id,
                 selected_target_refs=selected_targets,
                 maximum_targets=maximum_targets,
+                repeat_target_allocations=repeat_target_allocations,
+                require_full_target_count=require_full_target_count,
             )
             self.decision_stack.append(
                 DecisionFrame(
                     id=f"spell-targets-{action_id}",
                     creature_ref=decision.creature_ref,
                     kind="spell_targets",
-                    reason=f"Choose up to {maximum_targets} spell targets.",
+                    reason=(
+                        f"Allocate {maximum_targets} spell effects."
+                        if require_full_target_count
+                        else f"Choose up to {maximum_targets} spell targets."
+                    ),
                     parent_frame_id=decision.id,
                     parent_action_id=action_id,
                 )
@@ -530,7 +545,16 @@ def execute_creature_action(
         pending = self.pending_spell_cast
         if pending is None or not isinstance(action.value, str):
             raise RuntimeError("No staged spell target selection is active.")
-        if action.value in pending.selected_target_refs:
+        remove_target = action.id.endswith("-remove")
+        if pending.repeat_target_allocations:
+            if remove_target and action.value in pending.selected_target_refs:
+                pending.selected_target_refs.remove(action.value)
+            elif (
+                not remove_target
+                and len(pending.selected_target_refs) < pending.maximum_targets
+            ):
+                pending.selected_target_refs.append(action.value)
+        elif action.value in pending.selected_target_refs:
             pending.selected_target_refs.remove(action.value)
         elif len(pending.selected_target_refs) < pending.maximum_targets:
             pending.selected_target_refs.append(action.value)
@@ -539,10 +563,13 @@ def execute_creature_action(
         pending = self.pending_spell_cast
         if pending is None or not pending.selected_target_refs:
             raise RuntimeError("No staged spell targets can be confirmed.")
+        if (
+            pending.require_full_target_count
+            and len(pending.selected_target_refs) != pending.maximum_targets
+        ):
+            raise RuntimeError("All spell effects must be allocated before casting.")
         original_value = str(pending.action.value)
-        _spell_id, _target_ref, aim_point = parse_spell_action_value(
-            original_value
-        )
+        _spell_id, _target_ref, aim_point = parse_spell_action_value(original_value)
         selected_condition = parse_spell_action_condition(original_value)
         slot_level = parse_spell_action_slot(original_value)
         payload = spell_action_value(

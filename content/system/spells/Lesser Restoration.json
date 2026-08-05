@@ -36,5 +36,34 @@
   "areaTags": [
     "ST"
   ],
-  "hasFluffImages": true
+  "hasFluffImages": true,
+  "implementation": {
+    "status": "complete"
+  },
+  "mechanics": {
+    "target": {
+      "type": "creature",
+      "disposition": "any"
+    },
+    "resolution": {
+      "type": "automatic",
+      "outcome": {
+        "effects": [
+          {
+            "type": "remove_effect",
+            "selection": "one",
+            "removable": [
+              "condition"
+            ],
+            "conditions": [
+              "blinded",
+              "deafened",
+              "paralyzed",
+              "poisoned"
+            ]
+          }
+        ]
+      }
+    }
+  }
 }

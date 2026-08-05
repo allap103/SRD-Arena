@@ -2,6 +2,7 @@ from srd_arena.content.catalogs import SourceCatalog, load_spell_catalog
 from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.schemas import SpellSchema
 from srd_arena.content.translators import build_spell
+from srd_arena.domain.spells.rules import spell_max_targets
 
 
 def test_bundled_spells_load_as_typed_records() -> None:
@@ -50,19 +51,53 @@ def test_spell_translation_builds_combat_ready_domain_spell() -> None:
     assert fireball.mechanics.damage[0].dice == "8d6"
 
 
+def test_repeated_attack_and_removal_spells_translate_from_typed_mechanics() -> None:
+    catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+
+    scorching_ray = build_spell("Scorching Ray", "XPHB", catalog)
+    lesser_restoration = build_spell("Lesser Restoration", "XPHB", catalog)
+
+    assert scorching_ray.mechanics is not None
+    assert scorching_ray.mechanics.resolution == "spell_attack"
+    assert scorching_ray.mechanics.repeat_target_allocations
+    assert scorching_ray.mechanics.require_full_target_count
+    assert spell_max_targets(scorching_ray, 2) == 3
+    assert spell_max_targets(scorching_ray, 3) == 4
+    assert lesser_restoration.removable_conditions == (
+        "blinded",
+        "deafened",
+        "paralyzed",
+        "poisoned",
+    )
+    assert lesser_restoration.mechanics is not None
+    assert lesser_restoration.mechanics.resolution == "automatic"
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {
-        "Acid Splash", "Blight", "Burning Hands", "Circle of Death",
-        "Cone of Cold", "Fire Bolt", "Fireball", "Flame Strike",
-        "Inflict Wounds", "Lightning Bolt", "Poison Spray", "Sacred Flame",
+        "Acid Splash",
+        "Blight",
+        "Burning Hands",
+        "Circle of Death",
+        "Cone of Cold",
+        "Fire Bolt",
+        "Fireball",
+        "Flame Strike",
+        "Inflict Wounds",
+        "Lightning Bolt",
+        "Poison Spray",
+        "Sacred Flame",
         "Shatter",
     }
 
     spells = [catalog.find(name, "XPHB") for name in names]
 
     assert all(spell.executable for spell in spells)
-    assert all(build_spell(spell.public_name, spell.source, catalog).mechanics for spell in spells)
+    assert all(
+        build_spell(spell.public_name, spell.source, catalog).mechanics
+        for spell in spells
+    )
     assert catalog.find("Blight", "XPHB").implementation.status == "partial"
     assert catalog.find("Sacred Flame", "XPHB").implementation.status == "complete"
 

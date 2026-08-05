@@ -2401,6 +2401,85 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
     assert state.ongoing_effects[0].target_refs == ("goblin_1", "goblin_2")
 
 
+def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinations(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Scorching Ray", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[2] = 1
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda sides: 10 if sides == 20 else 3,
+    )
+
+    initial = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value) == "scorching_ray:goblin_1"
+    )
+    opened = state.apply_action(initial)
+
+    assert opened.paused_for_decision
+    assert state.pending_spell_cast is not None
+    assert state.pending_spell_cast.selected_target_refs == ["goblin_1"]
+    assert not any(
+        action.kind == "confirm_spell_targets"
+        for action in state.available_actions()
+    )
+
+    for target_ref in ("goblin_1", "goblin_2"):
+        add_ray = next(
+            action
+            for action in state.available_actions()
+            if action.kind == "toggle_spell_target"
+            and action.value == target_ref
+            and action.id.endswith("-add")
+        )
+        state.apply_action(add_ray)
+
+    assert state.pending_spell_cast is not None
+    assert state.pending_spell_cast.selected_target_refs == [
+        "goblin_1",
+        "goblin_1",
+        "goblin_2",
+    ]
+
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+    resolved = state.apply_action(confirm)
+
+    spell_event = next(
+        event for event in resolved.events if event.type == "spell_cast"
+    )
+    assert spell_event.data["target_refs"] == [
+        "goblin_1",
+        "goblin_1",
+        "goblin_2",
+    ]
+    assert len(spell_event.data["attack_roll_details"]) == 3
+    assert [
+        detail["projectile_index"]
+        for detail in spell_event.data["attack_roll_details"]
+    ] == [1, 2, 3]
+    assert len(spell_event.data["damage_roll_details"]) == 3
+    assert caster.spellcasting.spell_slots_remaining[2] == 0
+
+
 def test_sleep_progresses_from_incapacitated_to_unconscious(
     monkeypatch,
 ) -> None:
