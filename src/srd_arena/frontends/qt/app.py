@@ -1359,6 +1359,22 @@ class GameWindow(QMainWindow):
         self._pending_target_mode = None
         self._action_menu_scope = None
         result = self.session.choose(action_id)
+        if selected_action is not None and selected_action.kind == "toggle_spell_target":
+            self._pending_target_mode = self._target_mode_for_action(
+                selected_action
+            )
+        elif (
+            selected_action is not None
+            and selected_action.kind == "spell"
+            and self.session.encounter_state is not None
+            and self.session.encounter_state.current_decision().kind
+            == "spell_targets"
+        ):
+            spell_id = parse_spell_action_value(str(selected_action.value))[0]
+            self._pending_target_mode = TargetSelectionMode(
+                kind="toggle_spell_target",
+                source_trigger_id=spell_id,
+            )
         self._apply_turn_result(
             result,
             follow_up_attack_mode=(
@@ -1572,6 +1588,11 @@ class GameWindow(QMainWindow):
         return modes
 
     def _target_mode_for_action(self, action: ActionView) -> TargetSelectionMode | None:
+        if action.kind == "toggle_spell_target":
+            return TargetSelectionMode(
+                kind=action.kind,
+                source_trigger_id=action.source_trigger_id,
+            )
         if action.kind == "spell" and isinstance(action.value, str):
             spell_id = parse_spell_action_value(action.value)[0]
             return TargetSelectionMode(
@@ -1606,6 +1627,13 @@ class GameWindow(QMainWindow):
         )
 
     def _target_mode_label(self, mode: TargetSelectionMode) -> str:
+        if mode.kind == "toggle_spell_target":
+            spell = (
+                self._spell_by_id(mode.source_trigger_id)
+                if mode.source_trigger_id is not None
+                else None
+            )
+            return f"Choose {spell.name} targets" if spell is not None else "Choose targets"
         if mode.kind == "spell" and mode.source_trigger_id is not None:
             spell = self._spell_by_id(mode.source_trigger_id)
             if spell is not None:
@@ -1630,6 +1658,8 @@ class GameWindow(QMainWindow):
             return None
         if action.kind == "spell" and isinstance(action.value, str):
             return parse_spell_action_value(action.value)[1]
+        if action.kind == "toggle_spell_target" and isinstance(action.value, str):
+            return action.value
         if action.kind not in {
             "attack",
             "grapple",

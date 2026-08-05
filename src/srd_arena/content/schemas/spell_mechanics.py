@@ -173,7 +173,7 @@ class SpellSaveModifierSchema(SpellMechanicsSchemaModel):
 
 class TargetCountSchema(SpellMechanicsSchemaModel):
     minimum: NonNegativeInt = 1
-    maximum: PositiveInt | Literal["spellcasting_modifier"] = 1
+    maximum: PositiveInt | Literal["spellcasting_modifier", "all"] = 1
 
     @model_validator(mode="after")
     def validate_bounds(self) -> "TargetCountSchema":

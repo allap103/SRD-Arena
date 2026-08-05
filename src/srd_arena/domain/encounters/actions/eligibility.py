@@ -13,7 +13,11 @@ from ...creatures import (
 )
 from ...effects.conditions import CombatTrait, Condition
 from ...geometry import Position, grid_distance_between
-from ...spells.rules import parse_spell_action_slot, parse_spell_action_value
+from ...spells.rules import (
+    parse_spell_action_slot,
+    parse_spell_action_targets,
+    parse_spell_action_value,
+)
 from ..behaviors import DIRECTION_DELTAS
 from ..models import CreatureRef, EncounterAction
 from .attack_resolution import attack_range_squares, has_free_hand
@@ -454,8 +458,9 @@ class SpellActionRule:
         )
         if reason is not None:
             return EligibilityFailure("spell_blocked", reason)
-        if target_ref is not None:
-            target = state.creatures.get(target_ref)
+        selected_target_refs = parse_spell_action_targets(action.value)
+        for selected_target_ref in selected_target_refs:
+            target = state.creatures.get(selected_target_ref)
             if target is None or not target.is_alive:
                 return EligibilityFailure(
                     "target_unavailable", "The target is not available."
@@ -463,7 +468,7 @@ class SpellActionRule:
             requirement_failure = _target_requirement_failure(
                 state,
                 actor_ref,
-                target_ref,
+                selected_target_ref,
                 spell.target_requirements,
             )
             if requirement_failure is not None:

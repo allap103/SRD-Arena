@@ -39,6 +39,8 @@ def available_actions(self: EncounterState) -> list[EncounterAction]:
         return self._reroll_damage_actions()
     if decision.kind == "reaction":
         return self._reaction_actions()
+    if decision.kind == "spell_targets":
+        return spell_target_selection_actions(self, decision.creature_ref)
     return self._available_creature_actions(decision.creature_ref)
 
 
@@ -158,7 +160,10 @@ def _append_spell_action_variants(
     actions.append(action)
     if spell.level == 0 or spell.mechanics is None:
         return
-    if spell.mechanics.slot_damage_increment is None:
+    if (
+        spell.mechanics.slot_damage_increment is None
+        and spell.mechanics.slot_target_increment == 0
+    ):
         return
     spell_id, target_ref, aim_point = parse_spell_action_value(str(action.value))
     selected_condition = parse_spell_action_condition(str(action.value))
@@ -183,6 +188,62 @@ def _append_spell_action_variants(
                 cost=action.cost,
             )
         )
+
+
+def spell_target_selection_actions(
+    state: EncounterState,
+    creature_ref: str,
+) -> list[EncounterAction]:
+    pending = state.pending_spell_cast
+    if pending is None:
+        return []
+    actor = state.creatures[creature_ref].creature
+    spell = next(
+        candidate
+        for candidate in actor.spellcasting.learned_spells
+        if candidate.id == pending.spell_id
+    ) if actor.spellcasting is not None else None
+    if spell is None:
+        return []
+    actions: list[EncounterAction] = []
+    _spell_id, _target_ref, aim_point = parse_spell_action_value(
+        str(pending.action.value)
+    )
+    candidates = (
+        state._spell_area_targets(actor, spell, aim_point=aim_point)
+        if spell.mechanics is not None
+        and spell.mechanics.choose_area_targets
+        else tuple(state._spell_action_targets(actor, spell))
+    )
+    for target in candidates:
+        selected = target.target_ref in pending.selected_target_refs
+        if not selected and len(pending.selected_target_refs) >= pending.maximum_targets:
+            continue
+        actions.append(
+            EncounterAction(
+                ("Remove " if selected else "Add ") + target.target_label,
+                "toggle_spell_target",
+                target.target_ref,
+                id=(
+                    f"{creature_ref}-spell-target-"
+                    f"{target.target_ref.replace(':', '-') }"
+                ),
+                creature_ref=creature_ref,
+                source_trigger_id=pending.spell_id,
+            )
+        )
+    if pending.selected_target_refs:
+        actions.append(
+            EncounterAction(
+                f"Cast {spell.name} ({len(pending.selected_target_refs)}/"
+                f"{pending.maximum_targets} targets)",
+                "confirm_spell_targets",
+                id=f"{creature_ref}-confirm-{spell.id}",
+                creature_ref=creature_ref,
+                cost=pending.action.cost,
+            )
+        )
+    return actions
 
 
 def feature_action_available(self: EncounterState, actor: Creature, definition) -> bool:

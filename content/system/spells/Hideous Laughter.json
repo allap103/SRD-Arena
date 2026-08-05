@@ -61,7 +61,7 @@
   "areaTags": [
     "ST"
   ]
-  ,"implementation": {"status": "partial", "omissions": [{"mechanic": "additional targets from higher-level slots", "reason": "Multi-target spell selection is being added in Wave 1B."}]},
+  ,"implementation": {"status": "complete"},
   "mechanics": {
     "target": {"type": "creature", "line_of_sight": true},
     "resolution": {"type": "saving_throw", "ability": "wis", "failure": {"effects": [{"type": "condition", "condition": "prone"}, {"type": "condition", "condition": "incapacitated"}]}, "repeat_save": {"trigger": "turn_end", "ability": "wis"}},

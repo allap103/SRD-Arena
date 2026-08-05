@@ -46,6 +46,9 @@ class ImmediateSpellMechanics:
     automatic_success_condition_immunities: tuple[str, ...] = ()
     automatic_success_traits: tuple[str, ...] = ()
     self_removal_blocked_conditions: tuple[str, ...] = ()
+    base_target_count: int = 1
+    slot_target_increment: int = 0
+    choose_area_targets: bool = False
 
 
 @dataclass(frozen=True)

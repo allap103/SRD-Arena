@@ -38,6 +38,7 @@ from .models import (
     InitiativeEntry,
     InterruptState,
     PendingAttack,
+    PendingSpellCast,
     RoundState,
     TurnState,
     PendingAction,
@@ -134,6 +135,14 @@ class EncounterState(EncounterStateData):
     @pending_attack.setter
     def pending_attack(self, value: PendingAttack | None) -> None:
         self.interrupts.pending_attack = value
+
+    @property
+    def pending_spell_cast(self) -> PendingSpellCast | None:
+        return self.interrupts.pending_spell_cast
+
+    @pending_spell_cast.setter
+    def pending_spell_cast(self, value: PendingSpellCast | None) -> None:
+        self.interrupts.pending_spell_cast = value
 
     @property
     def turn_index(self) -> int:

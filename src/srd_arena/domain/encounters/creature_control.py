@@ -21,6 +21,14 @@ from .behaviors import (
     is_adjacent as _is_adjacent,
     movement_budget_for,
 )
+from ..spells.rules import (
+    parse_spell_action_condition,
+    parse_spell_action_slot,
+    parse_spell_action_targets,
+    parse_spell_action_value,
+    spell_action_value,
+    spell_max_targets,
+)
 from .models import (
     ActionCost,
     ActionExecutionContext,
@@ -29,6 +37,7 @@ from .models import (
     CreatureRef,
     DecisionFrame,
     EncounterAction,
+    PendingSpellCast,
 )
 from .ongoing_effects import resolve_spell_lifecycle_event
 
@@ -426,9 +435,128 @@ def execute_creature_action(
     elif action.kind == "spell":
         if not isinstance(action.value, str):
             raise ValueError("Spell action requires a spell payload.")
+        spell_id, _target_ref, aim_point = parse_spell_action_value(action.value)
+        spell = next(
+            candidate
+            for candidate in enemy.creature.spellcasting.learned_spells
+            if candidate.id == spell_id
+        ) if enemy.creature.spellcasting is not None else None
+        maximum_targets = (
+            spell_max_targets(spell, parse_spell_action_slot(action.value))
+            if spell is not None
+            else 1
+        )
+        selected_targets = list(parse_spell_action_targets(action.value))
+        if (
+            spell is not None
+            and spell.mechanics is not None
+            and spell.mechanics.choose_area_targets
+            and aim_point is not None
+        ):
+            selected_targets = [
+                target.target_ref
+                for target in self._spell_area_targets(
+                    enemy.creature,
+                    spell,
+                    aim_point=aim_point,
+                )
+            ]
+            maximum_targets = len(selected_targets)
+        staged_selection_needed = (
+            (maximum_targets > 1 and bool(selected_targets))
+            or (
+                spell is not None
+                and spell.mechanics is not None
+                and spell.mechanics.choose_area_targets
+                and len(selected_targets) > 1
+            )
+        )
+        automated_resolved = False
+        if (
+            staged_selection_needed
+            and self._creature_controller(decision.creature_ref) != "external"
+            and spell is not None
+        ):
+            assert spell.mechanics is not None
+            if not spell.mechanics.choose_area_targets:
+                selected_targets = [
+                    target.target_ref
+                    for target in self._spell_action_targets(
+                        enemy.creature,
+                        spell,
+                    )[:maximum_targets]
+                ]
+            automated_payload = spell_action_value(
+                spell_id,
+                tuple(selected_targets),
+                aim_point=aim_point,
+                selected_condition=parse_spell_action_condition(action.value),
+                slot_level=parse_spell_action_slot(action.value),
+            )
+            self._resolve_spell_action(
+                enemy.creature,
+                automated_payload,
+                progress,
+                action_id,
+            )
+            staged_selection_needed = False
+            automated_resolved = True
+        if staged_selection_needed:
+            self.pending_spell_cast = PendingSpellCast(
+                action=action,
+                spell_id=spell_id,
+                selected_target_refs=selected_targets,
+                maximum_targets=maximum_targets,
+            )
+            self.decision_stack.append(
+                DecisionFrame(
+                    id=f"spell-targets-{action_id}",
+                    creature_ref=decision.creature_ref,
+                    kind="spell_targets",
+                    reason=f"Choose up to {maximum_targets} spell targets.",
+                    parent_frame_id=decision.id,
+                    parent_action_id=action_id,
+                )
+            )
+            progress.paused_for_decision = True
+        elif not automated_resolved:
+            self._resolve_spell_action(
+                enemy.creature,
+                action.value,
+                progress,
+                action_id,
+            )
+    elif action.kind == "toggle_spell_target":
+        pending = self.pending_spell_cast
+        if pending is None or not isinstance(action.value, str):
+            raise RuntimeError("No staged spell target selection is active.")
+        if action.value in pending.selected_target_refs:
+            pending.selected_target_refs.remove(action.value)
+        elif len(pending.selected_target_refs) < pending.maximum_targets:
+            pending.selected_target_refs.append(action.value)
+        progress.paused_for_decision = True
+    elif action.kind == "confirm_spell_targets":
+        pending = self.pending_spell_cast
+        if pending is None or not pending.selected_target_refs:
+            raise RuntimeError("No staged spell targets can be confirmed.")
+        original_value = str(pending.action.value)
+        _spell_id, _target_ref, aim_point = parse_spell_action_value(
+            original_value
+        )
+        selected_condition = parse_spell_action_condition(original_value)
+        slot_level = parse_spell_action_slot(original_value)
+        payload = spell_action_value(
+            pending.spell_id,
+            tuple(pending.selected_target_refs),
+            aim_point=aim_point,
+            selected_condition=selected_condition,
+            slot_level=slot_level,
+        )
+        self.decision_stack.pop()
+        self.pending_spell_cast = None
         self._resolve_spell_action(
             enemy.creature,
-            action.value,
+            payload,
             progress,
             action_id,
         )
@@ -514,6 +642,8 @@ def finish_action_execution(
 ) -> ActionExecutionResult:
     if context.progress.transition is not None:
         outcome = ActionExecutionOutcome.ENCOUNTER_COMPLETE
+    elif context.progress.paused_for_decision:
+        outcome = ActionExecutionOutcome.PAUSE_FOR_REACTION
     elif action_ends_turn:
         outcome = ActionExecutionOutcome.END_TURN
     else:

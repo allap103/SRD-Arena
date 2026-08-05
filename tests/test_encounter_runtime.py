@@ -2312,6 +2312,71 @@ def test_one_target_repeat_save_does_not_end_multi_target_spell(
     assert state.ongoing_effects[0].target_refs == ("goblin_2",)
 
 
+def test_upcast_hold_person_stages_and_resolves_multiple_targets(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Hold Person", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[3] = 1
+    for offset, target_ref in enumerate(("goblin_1", "goblin_2"), start=1):
+        target = state.creatures[target_ref]
+        target.creature.statistics = replace(
+            target.creature.statistics,
+            creature_type="humanoid",
+        )
+        target.position = Position(
+            state.active_position.x + offset,
+            state.active_position.y,
+        )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
+    )
+
+    initial = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("hold_person:goblin_1")
+        and parse_spell_action_slot(str(action.value)) == 3
+    )
+    opened = state.apply_action(initial)
+
+    assert opened.paused_for_decision
+    assert state.current_decision().kind == "spell_targets"
+    assert caster.spellcasting.spell_slots_remaining[3] == 1
+    add_second = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "toggle_spell_target"
+        and action.value == "goblin_2"
+    )
+    state.apply_action(add_second)
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+    resolved = state.apply_action(confirm)
+
+    assert resolved.paused_for_decision is False
+    assert state.current_decision().kind == "turn"
+    assert caster.spellcasting.spell_slots_remaining[3] == 0
+    assert state.has_condition("goblin_1", Condition.PARALYZED)
+    assert state.has_condition("goblin_2", Condition.PARALYZED)
+    assert state.ongoing_effects[0].target_refs == ("goblin_1", "goblin_2")
+
+
 def test_sleep_progresses_from_incapacitated_to_unconscious(
     monkeypatch,
 ) -> None:
@@ -2349,6 +2414,52 @@ def test_sleep_progresses_from_incapacitated_to_unconscious(
     state.turn_engine.advance_turn(state, cast)
     assert state.has_condition("goblin_1", Condition.UNCONSCIOUS)
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
+
+
+def test_sleep_stages_choice_when_area_contains_multiple_creatures(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Sleep", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    origin = Position(state.active_position.x + 2, state.active_position.y)
+    state.creatures["goblin_1"].position = origin
+    state.creatures["goblin_2"].position = Position(origin.x, origin.y + 1)
+    state.creatures["goblin_3"].creature.current_health = 0
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
+    )
+
+    _choose_directional_spell(
+        session,
+        "Cast Sleep",
+        (origin.x, origin.y),
+    )
+    assert state.current_decision().kind == "spell_targets"
+    remove_second = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "toggle_spell_target"
+        and action.value == "goblin_2"
+    )
+    state.apply_action(remove_second)
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+    state.apply_action(confirm)
+
+    assert state.has_condition("goblin_1", Condition.INCAPACITATED)
+    assert state.has_condition("goblin_2", Condition.INCAPACITATED) is False
 
 
 @pytest.mark.parametrize(

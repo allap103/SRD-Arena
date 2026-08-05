@@ -10,6 +10,7 @@ from ...spells.resolution import (
     resolve_spell_action as _resolve_spell_action_impl,
 )
 from ...spells.rules import parse_spell_action_value
+from ...spells.rules import parse_spell_action_targets
 from ...spells.rules import parse_spell_action_condition
 from ...spells.rules import parse_spell_action_slot
 from ..ongoing_effects import (
@@ -48,6 +49,7 @@ def resolve_spell_action(
         )
         return
     spell_id, target_ref, aim_point = parse_spell_action_value(spell_value)
+    selected_target_refs = parse_spell_action_targets(spell_value)
     cast_level = parse_spell_action_slot(spell_value)
     spell = next((candidate for candidate in spellcasting.learned_spells if candidate.id == spell_id), None)
     if spell is None:
@@ -83,11 +85,23 @@ def resolve_spell_action(
         )
         return
     area = self._spell_area(actor, spell, target_ref=target_ref, aim_point=aim_point)
-    targets = self._spell_area_targets(actor, spell, target_ref=target_ref, aim_point=aim_point)
+    targets = (
+        tuple(
+            target
+            for selected_ref in selected_target_refs
+            if (target := self._spell_target_context(actor, selected_ref))
+            is not None
+        )
+        if selected_target_refs
+        else self._spell_area_targets(
+            actor,
+            spell,
+            target_ref=target_ref,
+            aim_point=aim_point,
+        )
+    )
     target = (
-        self._spell_target_context(actor, target_ref)
-        if target_ref is not None
-        else targets[0]
+        targets[0]
         if targets
         else None
     )

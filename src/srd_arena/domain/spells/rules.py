@@ -87,17 +87,22 @@ def spell_action_id(spell: Spell, *, target_ref: str | None = None) -> str:
 
 def spell_action_value(
     spell_id: str,
-    target_ref: str | None = None,
+    target_ref: str | tuple[str, ...] | None = None,
     aim_point: tuple[float, float] | None = None,
     selected_condition: str | None = None,
     slot_level: int | None = None,
 ) -> str:
     if aim_point is not None:
         value = f"{spell_id}@{aim_point[0]:.4f},{aim_point[1]:.4f}"
+        if isinstance(target_ref, tuple) and target_ref:
+            value += f"|{','.join(target_ref)}"
         return _with_spell_selections(value, selected_condition, slot_level)
     if target_ref is None:
         return _with_spell_selections(spell_id, selected_condition, slot_level)
-    value = f"{spell_id}:{target_ref}"
+    encoded_target = (
+        ",".join(target_ref) if isinstance(target_ref, tuple) else target_ref
+    )
+    value = f"{spell_id}:{encoded_target}"
     return _with_spell_selections(value, selected_condition, slot_level)
 
 
@@ -120,6 +125,7 @@ def parse_spell_action_value(value: str) -> tuple[str, str | None, tuple[float, 
     value, _, _selection = value.partition("#")
     if "@" in value:
         spell_id, _, aim = value.partition("@")
+        aim, _, _targets = aim.partition("|")
         x_text, _, y_text = aim.partition(",")
         if not spell_id or not x_text or not y_text:
             raise ValueError(f"Unsupported spell action payload: {value!r}.")
@@ -130,6 +136,28 @@ def parse_spell_action_value(value: str) -> tuple[str, str | None, tuple[float, 
     if not target_ref:
         return spell_id, None, None
     return spell_id, target_ref, None
+
+
+def parse_spell_action_targets(value: str) -> tuple[str, ...]:
+    base, _, _selection = value.partition("#")
+    if "|" in base:
+        _aim_payload, _, targets = base.partition("|")
+        return tuple(ref for ref in targets.split(",") if ref)
+    _spell_id, target_ref, _aim = parse_spell_action_value(value)
+    if target_ref is None:
+        return ()
+    return tuple(ref for ref in target_ref.split(",") if ref)
+
+
+def spell_max_targets(spell: Spell, cast_level: int | None) -> int:
+    mechanics = spell.mechanics
+    if mechanics is None:
+        return 1
+    resolved_level = cast_level if cast_level is not None else spell.level
+    levels_above = max(0, resolved_level - spell.level)
+    return mechanics.base_target_count + (
+        levels_above * mechanics.slot_target_increment
+    )
 
 
 def parse_spell_action_condition(value: str) -> str | None:

@@ -120,10 +120,19 @@ class TurnState:
 
 
 @dataclass
+class PendingSpellCast:
+    action: EncounterAction
+    spell_id: str
+    selected_target_refs: list[CreatureRef]
+    maximum_targets: int
+
+
+@dataclass
 class InterruptState:
     decision_stack: list[DecisionFrame] = field(default_factory=list)
     pending_action: PendingAction | None = None
     pending_attack: PendingAttack | None = None
+    pending_spell_cast: PendingSpellCast | None = None
 
 
 @dataclass

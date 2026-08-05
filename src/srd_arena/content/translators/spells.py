@@ -160,6 +160,15 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         self_removal_blocked_conditions=tuple(
             raw.mechanics.self_removal_blocked_conditions
         ),
+        base_target_count=(
+            target.count.maximum
+            if target.type == "creature" and isinstance(target.count.maximum, int)
+            else 1
+        ),
+        slot_target_increment=_slot_target_increment(raw),
+        choose_area_targets=(
+            target.type == "area" and target.occupants == "chosen"
+        ),
     )
 
 
@@ -197,6 +206,17 @@ def _slot_damage_increment(raw: SpellSchema) -> str | None:
             if increment.type == "damage_dice" and isinstance(increment.amount, str):
                 return increment.amount
     return None
+
+
+def _slot_target_increment(raw: SpellSchema) -> int:
+    assert raw.mechanics is not None
+    return sum(
+        increment.amount
+        for scaling in raw.mechanics.scaling
+        for increment in scaling.per_level
+        if increment.type == "target_count"
+        and isinstance(increment.amount, int)
+    )
 
 
 def _spell_duration_rounds(raw: SpellSchema) -> int | None:
