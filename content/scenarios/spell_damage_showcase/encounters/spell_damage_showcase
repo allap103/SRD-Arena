@@ -1,0 +1,131 @@
+{
+  "id": "spell_damage_showcase",
+  "grid": {
+    "width": 18,
+    "height": 12
+  },
+  "creatures": [
+    {
+      "id": "spectrum_adept",
+      "name": "Spectrum Adept",
+      "description": "A demo spellcaster prepared with every Wave 1A damage spell.",
+      "stat_block": {
+        "name": "Mage",
+        "source": "XMM"
+      },
+      "attributes": {
+        "level": 13
+      },
+      "spellcasting": {
+        "ability": "int",
+        "caster_progression": "full",
+        "cantrips_known": 4,
+        "spell_count": 13,
+        "spell_slots": {
+          "1": 4,
+          "2": 3,
+          "3": 3,
+          "4": 3,
+          "5": 2,
+          "6": 1
+        }
+      },
+      "spells_known": [
+        {"name": "Acid Splash", "source": "XPHB"},
+        {"name": "Blight", "source": "XPHB"},
+        {"name": "Burning Hands", "source": "XPHB"},
+        {"name": "Circle of Death", "source": "XPHB"},
+        {"name": "Cone of Cold", "source": "XPHB"},
+        {"name": "Fire Bolt", "source": "XPHB"},
+        {"name": "Fireball", "source": "XPHB"},
+        {"name": "Flame Strike", "source": "XPHB"},
+        {"name": "Inflict Wounds", "source": "XPHB"},
+        {"name": "Lightning Bolt", "source": "XPHB"},
+        {"name": "Poison Spray", "source": "XPHB"},
+        {"name": "Sacred Flame", "source": "XPHB"},
+        {"name": "Shatter", "source": "XPHB"}
+      ],
+      "start": {"x": 2, "y": 6},
+      "team_id": "casters",
+      "controller": "external"
+    },
+    {
+      "id": "plant_target",
+      "name": "Blight Target",
+      "stat_block": {
+        "name": "Awakened Tree",
+        "source": "XMM"
+      },
+      "start": {"x": 5, "y": 2},
+      "team_id": "targets",
+      "controller": "external"
+    },
+    {
+      "id": "construct_target",
+      "name": "Shatter Target",
+      "stat_block": {
+        "name": "Animated Armor",
+        "source": "XMM"
+      },
+      "start": {"x": 5, "y": 9},
+      "team_id": "targets",
+      "controller": "external"
+    },
+    {
+      "id": "near_target",
+      "name": "Near Target",
+      "stat_block": {
+        "name": "Warrior Veteran",
+        "source": "XMM"
+      },
+      "start": {"x": 3, "y": 6},
+      "team_id": "targets",
+      "controller": "external"
+    },
+    {
+      "id": "area_target_1",
+      "name": "Area Target One",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {"x": 9, "y": 5},
+      "team_id": "targets",
+      "controller": "external"
+    },
+    {
+      "id": "area_target_2",
+      "name": "Area Target Two",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {"x": 10, "y": 6},
+      "team_id": "targets",
+      "controller": "external"
+    },
+    {
+      "id": "area_target_3",
+      "name": "Area Target Three",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {"x": 9, "y": 7},
+      "team_id": "targets",
+      "controller": "external"
+    }
+  ],
+  "teams": [
+    {
+      "id": "casters",
+      "name": "Demo Spellcasters",
+      "controller": "external"
+    },
+    {
+      "id": "targets",
+      "name": "Demo Targets",
+      "controller": "external"
+    }
+  ]
+}
