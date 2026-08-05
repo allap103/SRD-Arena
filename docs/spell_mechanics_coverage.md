@@ -9,6 +9,8 @@ support is still partial, blocked, or intentionally out of scope.
 
 The resulting concrete contract and JSON examples are documented in
 [`spell_mechanics_schema.md`](spell_mechanics_schema.md).
+The implementation order is documented in
+[`spell_implementation_waves.md`](spell_implementation_waves.md).
 
 SRD Arena's spell JSON files are the canonical source of truth. Prose remains
 human-readable rules text and must not be parsed at runtime. Explicit mechanics
@@ -174,3 +176,8 @@ spell-instance root.
   added from another supported source later, only the summoned creature's
   ordinary combat functionality is in scope; mounted-combat functionality is
   not.
+- Creation, Control Weather, Imprisonment, Planar Ally, Prayer of Healing,
+  Sequester, Tiny Hut, Unseen Servant, and Wind Walk are outside the active
+  catalog. Their long casting process produces ordinary scenario configuration,
+  no lasting combat state, open-ended behavior, or no meaningful tactical
+  participation under the current simulator scope.
