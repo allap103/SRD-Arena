@@ -41,4 +41,9 @@
   "areaTags": [
     "ST"
   ]
+  ,"implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {"type": "creature"},
+    "resolution": {"type": "automatic", "outcome": {"effects": [{"type": "condition", "condition": "invisible"}]}}
+  }
 }

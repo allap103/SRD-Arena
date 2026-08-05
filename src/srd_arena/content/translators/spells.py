@@ -3,8 +3,12 @@ import re
 
 from srd_arena.content.catalogs import SpellCatalog
 from srd_arena.content.schemas.spells import SpellSchema
-from srd_arena.content.schemas.action_mechanics import DamageEffectSchema
+from srd_arena.content.schemas.action_mechanics import (
+    ConditionEffectSchema,
+    DamageEffectSchema,
+)
 from srd_arena.content.schemas.spell_mechanics import (
+    AutomaticResolutionSchema,
     SavingThrowResolutionSchema,
     SpellAttackResolutionSchema,
 )
@@ -60,18 +64,29 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
     target = raw.mechanics.target
     resolution = raw.mechanics.resolution.root
     if not isinstance(
-        resolution, (SavingThrowResolutionSchema, SpellAttackResolutionSchema)
+        resolution,
+        (
+            AutomaticResolutionSchema,
+            SavingThrowResolutionSchema,
+            SpellAttackResolutionSchema,
+        ),
     ):
         return None
-    outcome = (
-        resolution.failure
-        if isinstance(resolution, SavingThrowResolutionSchema)
-        else resolution.hit
-    )
+    if isinstance(resolution, SavingThrowResolutionSchema):
+        outcome = resolution.failure
+    elif isinstance(resolution, SpellAttackResolutionSchema):
+        outcome = resolution.hit
+    else:
+        outcome = resolution.outcome
     damage = tuple(
         SpellDamage(effect.root.dice, effect.root.damage_type)
         for effect in outcome.effects
         if isinstance(effect.root, DamageEffectSchema)
+    )
+    conditions = tuple(
+        effect.root.condition
+        for effect in outcome.effects
+        if isinstance(effect.root, ConditionEffectSchema)
     )
     geometry = target.geometry if target.type == "area" else None
     return ImmediateSpellMechanics(
@@ -115,6 +130,22 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         ),
         cantrip_damage_by_level=_cantrip_damage_by_level(raw),
         slot_damage_increment=_slot_damage_increment(raw),
+        conditions=conditions,
+        condition_choice=len(conditions) > 1,
+        duration_rounds=_spell_duration_rounds(raw),
+        concentration=any(
+            bool(duration.get("concentration"))
+            for duration in raw.duration
+            if isinstance(duration, dict)
+        ),
+        repeat_save_trigger=_repeat_save_trigger(resolution),
+        expires_on_source_turn_end=any(
+            isinstance(effect.root, ConditionEffectSchema)
+            and effect.root.duration is not None
+            and effect.root.duration.type == "end_of_turn"
+            and effect.root.duration.creature == "source"
+            for effect in outcome.effects
+        ),
     )
 
 
@@ -152,6 +183,28 @@ def _slot_damage_increment(raw: SpellSchema) -> str | None:
             if increment.type == "damage_dice" and isinstance(increment.amount, str):
                 return increment.amount
     return None
+
+
+def _spell_duration_rounds(raw: SpellSchema) -> int | None:
+    unit_rounds = {"round": 1, "minute": 10, "hour": 600, "day": 14400}
+    for entry in raw.duration:
+        duration = entry.get("duration")
+        if not isinstance(duration, dict):
+            continue
+        unit = duration.get("type")
+        amount = duration.get("amount")
+        if isinstance(unit, str) and isinstance(amount, int) and unit in unit_rounds:
+            return amount * unit_rounds[unit]
+    return None
+
+
+def _repeat_save_trigger(resolution: object) -> str | None:
+    if not isinstance(resolution, SavingThrowResolutionSchema):
+        return None
+    if resolution.repeat_save is None:
+        return None
+    aliases = {"turn_end": "end_of_turn", "turn_start": "start_of_turn"}
+    return aliases.get(resolution.repeat_save.trigger, resolution.repeat_save.trigger)
 
 
 def _find_spell(

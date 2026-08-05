@@ -32,6 +32,12 @@ class ImmediateSpellMechanics:
     disadvantage_creature_types: tuple[str, ...] = ()
     cantrip_damage_by_level: tuple[tuple[int, str], ...] = ()
     slot_damage_increment: str | None = None
+    conditions: tuple[str, ...] = ()
+    condition_choice: bool = False
+    duration_rounds: int | None = None
+    concentration: bool = False
+    repeat_save_trigger: str | None = None
+    expires_on_source_turn_end: bool = False
 
 
 @dataclass(frozen=True)

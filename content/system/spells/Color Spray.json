@@ -44,4 +44,9 @@
   "areaTags": [
     "N"
   ]
+  ,"implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {"type": "area", "origin": "self", "geometry": {"shape": "cone", "length_feet": 15}},
+    "resolution": {"type": "saving_throw", "ability": "con", "failure": {"effects": [{"type": "condition", "condition": "blinded", "duration": {"type": "end_of_turn", "creature": "source", "turn_offset": 1}}]}}
+  }
 }

@@ -117,6 +117,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
     save_details: list[dict[str, object]] = []
     attack_details: list[dict[str, object]] = []
     damage_details: list[dict[str, object]] = []
+    affected_targets: list[SpellTargetContext] = []
     for target in targets:
         successful_save = False
         hit = True
@@ -208,14 +209,77 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "applied_damage": applied,
                 }
             )
-        outcome = "damages" if target_damage > 0 else "does not affect"
+        affected = (mechanics.resolution == "saving_throw" and not successful_save) or (
+            mechanics.resolution in {"spell_attack", "automatic"} and hit
+        )
+        if affected:
+            affected_targets.append(target)
+        outcome = (
+            "damages"
+            if target_damage > 0
+            else "affects"
+            if affected and mechanics.conditions
+            else "does not affect"
+        )
         messages.append(("system", f"{spell.name} {outcome} {target.target_label}."))
+
+    effects: list[EffectResult] = []
+    selected_condition = context.selected_condition
+    if selected_condition not in mechanics.conditions:
+        selected_condition = mechanics.conditions[0] if mechanics.conditions else None
+    parent_kind = "concentration" if mechanics.concentration else "spell"
+    if affected_targets and mechanics.conditions and (
+        mechanics.duration_rounds is not None
+        or mechanics.concentration
+        or mechanics.repeat_save_trigger is not None
+    ):
+        effects.append(
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref=affected_targets[0].target_ref,
+                data={
+                    "effect_kind": parent_kind,
+                    "source_ref": context.source_ref,
+                    "source_label": context.creature.name,
+                    "definition_id": spell.id,
+                    "target_refs": [target.target_ref for target in affected_targets],
+                    "duration_rounds": mechanics.duration_rounds,
+                    "parameters": {
+                        "started_round": context.current_round,
+                        "repeat_save_trigger": mechanics.repeat_save_trigger,
+                        "save_ability": mechanics.save_ability,
+                        "save_dc": context.creature.spellcasting.save_dc,
+                    },
+                },
+            )
+        )
+    if selected_condition is not None:
+        for target in affected_targets:
+            condition_data: dict[str, object] = {
+                "condition": selected_condition,
+                "source_ref": context.source_ref,
+                "source_label": context.creature.name,
+                "source_kind": "spell",
+                "definition_id": spell.id,
+            }
+            if effects:
+                condition_data["parent_effect_kind"] = parent_kind
+            if mechanics.expires_on_source_turn_end:
+                condition_data["expires_on_creature_ref"] = context.source_ref
+                condition_data["expires_on_round"] = context.current_round + 1
+            effects.append(
+                EffectResult(
+                    kind="apply_condition",
+                    target_ref=target.target_ref,
+                    data=condition_data,
+                )
+            )
 
     return CapabilityActionResult(
         capability_id=spell.id,
         capability_name=spell.name,
         messages=messages,
-        effects=[],
+        effects=effects,
         details={
             "target_ref": context.target.target_ref,
             "target_label": context.target.target_label,

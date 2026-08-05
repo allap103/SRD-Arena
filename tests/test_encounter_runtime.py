@@ -1643,11 +1643,8 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
 
-    assert (
-        "system",
-        "Traveler casts Color Spray on Goblin Warrior.",
-    ) in result.messages
-    assert any("is blinded until the end of your next turn" in message for _, message in result.messages)
+    assert ("system", "Traveler casts Color Spray.") in result.messages
+    assert any("Color Spray affects Goblin Warrior." == message for _, message in result.messages)
     assert session.encounter_state.active_action_available is False
     assert session.decision_creature.spellcasting.spell_slots_remaining[1] == 3
     assert session.encounter_state.has_condition("goblin_1", Condition.BLINDED) is True

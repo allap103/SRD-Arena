@@ -103,6 +103,8 @@ def available_spell_actions(
                     )
                 )
                 if spell.removable_conditions
+                else spell.mechanics.conditions
+                if spell.mechanics is not None and spell.mechanics.condition_choice
                 else (None,)
             )
             for selection in selections:
