@@ -1,21 +1,21 @@
-# Spell Implementation Waves
+# Spell Implementation Batchs
 
 ## Purpose
 
 This plan orders executable spell work by shared engine capability rather than
-spell level. A spell enters the first wave that can express and execute all of
+spell level. A spell enters the first batch that can express and execute all of
 its combat-relevant behavior. This prevents spell-name handlers and avoids
 building several unrelated subsystems at once.
 
-Spell JSON remains the source of truth. Each wave includes schema enrichment,
+Spell JSON remains the source of truth. Each batch includes schema enrichment,
 translation, execution, presentation, and tests for its spells. A spell is not
 considered implemented merely because its source fields can be loaded.
 
 The exhaustive, machine-validated assignment is maintained in
 [`spell_implementation_manifest.json`](spell_implementation_manifest.json).
-Every active spell appears there exactly once. Wave 1 assignments are
+Every active spell appears there exactly once. Batch 1 assignments are
 committed; later assignments are provisional and should be reviewed when their
-preceding wave finishes.
+preceding batch finishes.
 
 ## General rules
 
@@ -23,22 +23,22 @@ preceding wave finishes.
 - `partial` is allowed only with explicit omissions. It is appropriate for a
   genuinely out-of-scope side effect, such as Fireball igniting unattended
   objects before environmental fire exists. It must not conceal a mechanic
-  merely deferred to a later wave.
+  merely deferred to a later batch.
 - `blocked` is used when mechanics are enriched but their required executor is
-  scheduled for a later wave.
-- A spell requiring mechanics from several waves belongs to the latest of
-  those waves.
+  scheduled for a later batch.
+- A spell requiring mechanics from several batches belongs to the latest of
+  those batches.
 - Shared mechanics are implemented once and reused by stat-block actions,
   spells, conditions, and later character features where applicable.
 - Spells with casting times longer than one action are not selectable during
   an encounter. They remain supported only when their completed effect creates
   meaningful ongoing combat state for scenario setup.
 
-## Wave 1: rolls, conditions, and concentration
+## Batch 1: rolls, conditions, and concentration
 
 ### Scope
 
-Wave 1 contains only spells composed from:
+Batch 1 contains only spells composed from:
 
 - spell attack rolls;
 - saving throws;
@@ -52,7 +52,7 @@ Wave 1 contains only spells composed from:
 - ordinary creature targets and existing cone, cube, line, and sphere areas;
 - simple dice and target-count scaling.
 
-Wave 1 deliberately excludes healing, temporary HP, general bonuses and
+Batch 1 deliberately excludes healing, temporary HP, general bonuses and
 penalties, forced movement, persistent areas, reactions, damage riders,
 granted actions, summons, transformations, spell entities, encounter
 departure, and unrestricted authored behavior.
@@ -102,7 +102,7 @@ target must use shared effect events rather than spell-name checks.
 
 ### Batch 1C: compositions of the same primitives
 
-Finish the wave with spells that remain within the same vocabulary but compose
+Finish the batch with spells that remain within the same vocabulary but compose
 it more deeply:
 
 - Ray of Sickness: attack, damage, save, and condition.
@@ -111,12 +111,12 @@ it more deeply:
 - Eldritch Blast: repeated attacks with level scaling.
 - Weird: condition application and repeat-save damage for multiple targets.
 
-These are Wave 1 capstones, not permission to introduce generic event riders or
+These are Batch 1 capstones, not permission to introduce generic event riders or
 persistent hazards early.
 
 ### Exit criteria
 
-Wave 1 is complete when:
+Batch 1 is complete when:
 
 1. Every listed spell has explicit mechanics and an honest implementation
    status.
@@ -132,7 +132,7 @@ Wave 1 is complete when:
 9. The UI and model-facing action API expose the same choices without
    enumerating target names in action labels.
 
-## Wave 2: immediate support and creature modifiers
+## Batch 2: immediate support and creature modifiers
 
 Add effects that alter a creature without requiring a new event or spatial
 entity:
@@ -149,11 +149,11 @@ Bless, Bane, Mage Armor, Shield of Faith, Barkskin, Lesser Restoration,
 Greater Restoration, Protection from Energy, Stoneskin, Magic Missile, and
 Slow. Flesh to Stone also belongs here because its successful initial save
 applies a Speed modifier in addition to its condition progression.
-Hypnotic Pattern and Power Word Stun also wait for this wave because each has a
+Hypnotic Pattern and Power Word Stun also wait for this batch because each has a
 Speed-0 branch in addition to its conditions. Phantasmal Killer applies
 Disadvantage rather than the Frightened condition in SRD 5.2.
 
-## Wave 3: event-driven spells and interruption
+## Batch 3: event-driven spells and interruption
 
 Extend the action lifecycle with typed reaction windows and ongoing event
 providers:
@@ -171,7 +171,7 @@ Sanctuary, Mirror Image, Fire Shield, Warding Bond, Death Ward, and Finger of
 Death. Contagion belongs here because it intercepts later attempts to remove
 its Poisoned condition rather than merely applying a condition and repeat save.
 
-## Wave 4: persistent spatial effects
+## Batch 4: persistent spatial effects
 
 Introduce spell-owned battlefield entities and their spatial event ledger:
 
@@ -187,7 +187,7 @@ Spike Growth, Moonbeam, Spirit Guardians, Stinking Cloud, Black Tentacles,
 Wall of Fire, Cloudkill, Blade Barrier, Wall of Ice, Wall of Thorns, and Fire
 Storm.
 
-## Wave 5: granted actions and spell entities
+## Batch 5: granted actions and spell entities
 
 Add spell instances that expose later actions or create independently tracked
 entities without creating ordinary creatures:
@@ -202,7 +202,7 @@ Representative spells include Flame Blade, Spiritual Weapon, Flaming Sphere,
 Heat Metal, Call Lightning, Vampiric Touch, Sunbeam, Eyebite, Telekinesis,
 Arcane Hand, and Delayed Blast Fireball.
 
-## Wave 6: summons, control, and transformations
+## Batch 6: summons, control, and transformations
 
 Add temporary combatants and changes to creature identity or decision policy:
 
@@ -220,7 +220,7 @@ Person, Polymorph, True Polymorph, Shapechange, and Simulacrum.
 Mounted-combat rules remain out of scope. A future Find Greater Steed source
 may expose only the summoned creature's ordinary combat functionality.
 
-## Wave 7: encounter-scale movement and scheduling
+## Batch 7: encounter-scale movement and scheduling
 
 Build mechanics that change participation, dimensions, or the turn scheduler:
 
@@ -240,7 +240,7 @@ combatant on that team leaves, the encounter ends as a draw; this follows a
 general encounter-departure rule rather than a Teleport-specific terminal
 handler.
 
-## Wave 8: prepared, random, and exceptional orchestration
+## Batch 8: prepared, random, and exceptional orchestration
 
 Complete the remaining combat catalog with mechanics that require mature
 effect, event, and scenario systems:
@@ -255,15 +255,15 @@ effect, event, and scenario systems:
 Representative spells include Confusion, Prismatic Spray, Contingency, Glyph
 of Warding, Symbol, Antimagic Field, Dispel Magic, Globe of Invulnerability,
 Forbiddance, Guards and Wards, Hallow, Antipathy/Sympathy, Magic Jar, Mirage
-Arcane, Sunburst, and Wish. Sunburst waits for this wave because dispelling
+Arcane, Sunburst, and Wish. Sunburst waits for this batch because dispelling
 magical Darkness is a combat-relevant part of the spell, not a silent omission.
 
 Wish should first support duplication of an executable eligible spell. Its
 open-ended reality-altering use remains explicitly out of scope.
 
-## Review after each wave
+## Review after each batch
 
-At the end of every wave:
+At the end of every batch:
 
 1. Reclassify active spells whose remaining behavior is no longer appropriate
    for the combat simulator.
