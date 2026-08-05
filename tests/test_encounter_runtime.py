@@ -20,6 +20,7 @@ from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import (
     resolve_concentration_damage,
     resolve_end_turn_effects,
+    resolve_spell_lifecycle_event,
 )
 from srd_arena.frontends.shared.combat import render_encounter_text
 from srd_arena.runtime.scenario import Scenario
@@ -2347,6 +2348,173 @@ def test_sleep_progresses_from_incapacitated_to_unconscious(
     state.turn_index = 1
     state.turn_engine.advance_turn(state, cast)
     assert state.has_condition("goblin_1", Condition.UNCONSCIOUS)
+    assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
+
+
+@pytest.mark.parametrize(
+    ("definition_id", "condition", "event"),
+    [
+        ("invisibility", "invisible", "target_makes_attack"),
+        ("sleep", "unconscious", "target_damaged"),
+    ],
+)
+def test_spell_lifecycle_event_ends_effect_for_affected_target(
+    definition_id: str,
+    condition: str,
+    event: str,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    target_ref = "goblin_1"
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref=target_ref,
+                data={
+                    "effect_kind": "spell",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                    "definition_id": definition_id,
+                    "parameters": {"end_events": [[event, "any"]]},
+                },
+            ),
+            EffectResult(
+                kind="apply_condition",
+                target_ref=target_ref,
+                data={
+                    "condition": condition,
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                    "source_kind": "spell",
+                    "definition_id": definition_id,
+                },
+            ),
+        ],
+        origin_id=f"{definition_id}-cast",
+    )
+
+    resolve_spell_lifecycle_event(
+        state,
+        event,
+        actor_ref=target_ref if event != "target_damaged" else "player",
+        target_ref=target_ref,
+    )
+
+    assert state.ongoing_effects == []
+    assert state.conditions_for(target_ref) == ()
+
+
+def test_charm_ends_only_when_source_side_damages_target() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="goblin_1",
+                data={
+                    "effect_kind": "spell",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                    "definition_id": "charm_person",
+                    "parameters": {
+                        "end_events": [["target_damaged", "source_team"]]
+                    },
+                },
+            ),
+            EffectResult(
+                kind="apply_condition",
+                target_ref="goblin_1",
+                data={
+                    "condition": "charmed",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                    "source_kind": "spell",
+                    "definition_id": "charm_person",
+                },
+            ),
+        ],
+        origin_id="charm-cast",
+    )
+
+    resolve_spell_lifecycle_event(
+        state,
+        "target_damaged",
+        actor_ref="goblin_2",
+        target_ref="goblin_1",
+    )
+    assert state.has_condition("goblin_1", Condition.CHARMED)
+
+    resolve_spell_lifecycle_event(
+        state,
+        "target_damaged",
+        actor_ref="player",
+        target_ref="goblin_1",
+    )
+    assert state.has_condition("goblin_1", Condition.CHARMED) is False
+
+
+def test_hideous_laughter_damage_save_has_advantage(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="goblin_1",
+                data={
+                    "effect_kind": "concentration",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                    "definition_id": "hideous_laughter",
+                    "parameters": {
+                        "damage_repeat_save_advantage": True,
+                        "save_ability": "wisdom",
+                        "save_dc": 15,
+                    },
+                },
+            ),
+            EffectResult(
+                kind="apply_condition",
+                target_ref="goblin_1",
+                data={
+                    "condition": "incapacitated",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                    "source_kind": "spell",
+                    "definition_id": "hideous_laughter",
+                },
+            ),
+        ],
+        origin_id="laughter-cast",
+    )
+    rolls = iter((1, 20))
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.ongoing_effects._roll_die",
+        lambda _sides: next(rolls),
+    )
+
+    resolve_spell_lifecycle_event(
+        state,
+        "target_damaged",
+        actor_ref="player",
+        target_ref="goblin_1",
+    )
+
+    assert state.ongoing_effects == []
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
 
 

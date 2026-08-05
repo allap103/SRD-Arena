@@ -40,6 +40,8 @@ class ImmediateSpellMechanics:
     expires_on_source_turn_end: bool = False
     target_disposition: str = "enemy"
     repeat_failure_conditions: tuple[str, ...] = ()
+    end_events: tuple[tuple[str, str], ...] = ()
+    damage_repeat_save_advantage: bool = False
 
 
 @dataclass(frozen=True)

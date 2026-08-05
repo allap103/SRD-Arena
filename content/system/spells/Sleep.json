@@ -51,7 +51,7 @@
   "areaTags": [
     "S"
   ]
-  ,"implementation": {"status": "partial", "omissions": [{"mechanic": "choosing creatures within the area", "reason": "Chosen area occupants are being added in Wave 1B."}, {"mechanic": "automatic success for sleepless creatures and Exhaustion immunity", "reason": "Save-success requirements are being connected to runtime traits in Wave 1B."}, {"mechanic": "ending from damage or an adjacent waking action", "reason": "Spell-owned wake events are being added in Wave 1B."}]},
+  ,"implementation": {"status": "partial", "omissions": [{"mechanic": "choosing creatures within the area", "reason": "Chosen area occupants are being added in Wave 1B."}, {"mechanic": "automatic success for sleepless creatures and Exhaustion immunity", "reason": "Save-success requirements are being connected to runtime traits in Wave 1B."}, {"mechanic": "ending from an adjacent waking action", "reason": "Spell-owned wake actions are being added in Wave 1B."}]},
   "mechanics": {
     "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 5}, "occupants": "all"},
     "resolution": {
@@ -60,6 +60,7 @@
       "automatic_success": [{"type": "creature_trait", "trait": "does_not_sleep"}, {"type": "condition_immunity", "condition": "exhaustion"}],
       "failure": {"effects": [{"type": "condition", "condition": "incapacitated"}]},
       "repeat_save": {"trigger": "turn_end", "ability": "wis", "on_failure": {"type": "automatic", "outcome": {"effects": [{"type": "condition", "condition": "unconscious"}]}}}
-    }
+    },
+    "outcome_triggers": [{"event": "target_damaged", "resolution": {"type": "automatic", "outcome": {"end_spell": true}}}]
   }
 }

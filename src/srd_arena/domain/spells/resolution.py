@@ -255,6 +255,10 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         "repeat_failure_conditions": list(
                             mechanics.repeat_failure_conditions
                         ),
+                        "end_events": [list(event) for event in mechanics.end_events],
+                        "damage_repeat_save_advantage": (
+                            mechanics.damage_repeat_save_advantage
+                        ),
                     },
                 },
             )

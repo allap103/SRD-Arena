@@ -146,6 +146,8 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             target.disposition if target.type == "creature" else "any"
         ),
         repeat_failure_conditions=_repeat_failure_conditions(resolution),
+        end_events=_end_events(raw),
+        damage_repeat_save_advantage=_damage_repeat_save_advantage(raw),
     )
 
 
@@ -220,6 +222,41 @@ def _repeat_failure_conditions(resolution: object) -> tuple[str, ...]:
         effect.root.condition
         for effect in failure.outcome.effects
         if isinstance(effect.root, ConditionEffectSchema)
+    )
+
+
+def _end_events(raw: SpellSchema) -> tuple[tuple[str, str], ...]:
+    if raw.mechanics is None:
+        return ()
+    events: list[tuple[str, str]] = []
+    for trigger in raw.mechanics.outcome_triggers:
+        resolution = trigger.resolution.root
+        if not isinstance(resolution, AutomaticResolutionSchema):
+            continue
+        if not resolution.outcome.end_spell:
+            continue
+        scope = "any"
+        for requirement in trigger.requirements:
+            if (
+                getattr(requirement, "type", None) == "relationship"
+                and getattr(requirement, "relationship", None) == "ally_of_source"
+            ):
+                scope = "source_team"
+        events.append((trigger.event, scope))
+    return tuple(events)
+
+
+def _damage_repeat_save_advantage(raw: SpellSchema) -> bool:
+    if raw.mechanics is None:
+        return False
+    return any(
+        trigger.event == "target_damaged"
+        and isinstance(trigger.resolution.root, SavingThrowResolutionSchema)
+        and any(
+            modifier.mode == "advantage"
+            for modifier in trigger.resolution.root.save_modifiers
+        )
+        for trigger in raw.mechanics.outcome_triggers
     )
 
 

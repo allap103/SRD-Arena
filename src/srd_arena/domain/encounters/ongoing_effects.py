@@ -256,6 +256,68 @@ def resolve_concentration_damage(
         end_concentration(state, creature_ref)
 
 
+def resolve_spell_lifecycle_event(
+    state: EncounterState,
+    event: str,
+    *,
+    actor_ref: str,
+    target_ref: str | None = None,
+    progress: EncounterProgress | None = None,
+) -> None:
+    for effect in tuple(state.ongoing_effects):
+        affected_ref = target_ref if event == "target_damaged" else actor_ref
+        if affected_ref not in effect.target_refs:
+            continue
+        if event == "target_damaged" and effect.parameters.get(
+            "damage_repeat_save_advantage"
+        ):
+            ability = effect.parameters.get("save_ability")
+            dc = effect.parameters.get("save_dc")
+            if isinstance(ability, str) and isinstance(dc, int):
+                creature = state.creatures[affected_ref].creature
+                save = resolve_saving_throw(
+                    cast(SavingThrowCreature, creature),
+                    cast(Ability, ability),
+                    dc,
+                    mode="advantage",
+                    roller=_roll_die,
+                    automatic_failure_reasons=(
+                        state._automatic_save_failure_provider_ids_for(
+                            affected_ref, ability
+                        )
+                    ),
+                )
+                if save.check.success:
+                    _remove_effect_target(state, effect, affected_ref)
+                    if progress is not None:
+                        progress.messages.append(
+                            (
+                                "system",
+                                f"{creature.name} ends "
+                                f"{effect.identity.source.label} after taking damage.",
+                            )
+                        )
+                    continue
+        end_events = effect.parameters.get("end_events", [])
+        if not isinstance(end_events, list):
+            continue
+        for configured in end_events:
+            if not isinstance(configured, list) or len(configured) != 2:
+                continue
+            configured_event, scope = configured
+            if configured_event != event:
+                continue
+            source_ref = effect.identity.source.applied_by_ref
+            if (
+                scope == "source_team"
+                and source_ref is not None
+                and state._creatures_are_opponents(source_ref, actor_ref)
+            ):
+                continue
+            _remove_effect_target(state, effect, affected_ref)
+            break
+
+
 def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
     origin_id = effect.identity.source.origin_id
     state.ongoing_effects = [

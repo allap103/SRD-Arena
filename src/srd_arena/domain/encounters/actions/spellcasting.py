@@ -12,7 +12,10 @@ from ...spells.resolution import (
 from ...spells.rules import parse_spell_action_value
 from ...spells.rules import parse_spell_action_condition
 from ...spells.rules import parse_spell_action_slot
-from ..ongoing_effects import resolve_concentration_damage
+from ..ongoing_effects import (
+    resolve_concentration_damage,
+    resolve_spell_lifecycle_event,
+)
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -164,12 +167,33 @@ def resolve_spell_action(
             damaged_ref = detail.get("target_ref")
             applied_damage = detail.get("applied_damage")
             if isinstance(damaged_ref, str) and isinstance(applied_damage, int):
+                if applied_damage > 0:
+                    resolve_spell_lifecycle_event(
+                        self,
+                        "target_damaged",
+                        actor_ref=creature_ref,
+                        target_ref=damaged_ref,
+                        progress=progress,
+                    )
+                    resolve_spell_lifecycle_event(
+                        self,
+                        "target_deals_damage",
+                        actor_ref=creature_ref,
+                        target_ref=damaged_ref,
+                        progress=progress,
+                    )
                 resolve_concentration_damage(
                     self,
                     damaged_ref,
                     applied_damage,
                     progress,
                 )
+    resolve_spell_lifecycle_event(
+        self,
+        "target_casts_spell",
+        actor_ref=creature_ref,
+        progress=progress,
+    )
     progress.messages.extend(
         self._apply_effects(result.effects, origin_id=action_id)
     )

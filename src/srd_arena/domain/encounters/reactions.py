@@ -24,6 +24,10 @@ from .models import (
     PendingAction,
     PendingAttack,
 )
+from .ongoing_effects import (
+    resolve_concentration_damage,
+    resolve_spell_lifecycle_event,
+)
 from .refs import reroll_die_action_id as _reroll_die_action_id
 
 if TYPE_CHECKING:
@@ -34,6 +38,39 @@ def _roll_die(sides: int) -> int:
     from . import encounter as encounter_module
 
     return encounter_module.roll_die(sides)
+
+
+def _resolve_attack_lifecycle(
+    state: EncounterState,
+    *,
+    attacker_ref: str,
+    target_ref: str,
+    damage: int,
+    progress: EncounterProgress,
+) -> None:
+    resolve_spell_lifecycle_event(
+        state,
+        "target_makes_attack",
+        actor_ref=attacker_ref,
+        target_ref=target_ref,
+        progress=progress,
+    )
+    if damage > 0:
+        resolve_spell_lifecycle_event(
+            state,
+            "target_damaged",
+            actor_ref=attacker_ref,
+            target_ref=target_ref,
+            progress=progress,
+        )
+        resolve_spell_lifecycle_event(
+            state,
+            "target_deals_damage",
+            actor_ref=attacker_ref,
+            target_ref=target_ref,
+            progress=progress,
+        )
+    resolve_concentration_damage(state, target_ref, damage, progress)
 
 
 def _roll_dice(count: int, sides: int) -> int:
@@ -108,6 +145,13 @@ class ReactionEngine:
                 mover.creature,
                 attacker_label=reactor.creature.name,
                 target_label=mover.creature.name,
+            )
+            _resolve_attack_lifecycle(
+                state,
+                attacker_ref=reactor_ref,
+                target_ref=mover_ref,
+                damage=attack.damage,
+                progress=progress,
             )
             messages.extend(attack.messages)
             progress.events.append(
@@ -302,6 +346,13 @@ class ReactionEngine:
             attacker_label=attacker.name,
             target_label=pending.target_label,
         )
+        _resolve_attack_lifecycle(
+            state,
+            attacker_ref=pending.attacker_ref,
+            target_ref=pending.target_ref,
+            damage=pending.attack.damage,
+            progress=progress,
+        )
         progress.messages.extend(pending.attack.messages)
         progress.events.append(
             state._event(
@@ -485,6 +536,13 @@ class ReactionEngine:
                 target.creature,
                 attacker_label=reactor_label,
                 target_label=target_label,
+            )
+            _resolve_attack_lifecycle(
+                state,
+                attacker_ref=reactor_ref,
+                target_ref=target_ref,
+                damage=attack.damage,
+                progress=progress,
             )
             progress.messages.extend(attack.messages)
             progress.events.append(
