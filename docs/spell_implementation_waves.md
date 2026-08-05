@@ -11,6 +11,12 @@ Spell JSON remains the source of truth. Each wave includes schema enrichment,
 translation, execution, presentation, and tests for its spells. A spell is not
 considered implemented merely because its source fields can be loaded.
 
+The exhaustive, machine-validated assignment is maintained in
+[`spell_implementation_manifest.json`](spell_implementation_manifest.json).
+Every active spell appears there exactly once. Wave 1 assignments are
+committed; later assignments are provisional and should be reviewed when their
+preceding wave finishes.
+
 ## General rules
 
 - `complete` means every combat-relevant branch in the supported scope runs.
@@ -81,14 +87,14 @@ events:
 - Animal Friendship
 - Charm Person
 - Color Spray
+- Greater Invisibility
 - Hideous Laughter
+- Invisibility
 - Sleep
 - Blindness/Deafness
 - Hold Person
-- Hypnotic Pattern
 - Charm Monster
 - Hold Monster
-- Power Word Stun
 
 This batch must prove that ending concentration or the spell instance removes
 only effects owned by that instance. Early-ending rules such as damage waking a
@@ -103,6 +109,7 @@ it more deeply:
 - Ice Knife: attack followed by an area save.
 - Scorching Ray: repeated spell attacks with target allocation.
 - Eldritch Blast: repeated attacks with level scaling.
+- Weird: condition application and repeat-save damage for multiple targets.
 
 These are Wave 1 capstones, not permission to introduce generic event riders or
 persistent hazards early.
@@ -142,6 +149,9 @@ Bless, Bane, Mage Armor, Shield of Faith, Barkskin, Lesser Restoration,
 Greater Restoration, Protection from Energy, Stoneskin, Magic Missile, and
 Slow. Flesh to Stone also belongs here because its successful initial save
 applies a Speed modifier in addition to its condition progression.
+Hypnotic Pattern and Power Word Stun also wait for this wave because each has a
+Speed-0 branch in addition to its conditions. Phantasmal Killer applies
+Disadvantage rather than the Frightened condition in SRD 5.2.
 
 ## Wave 3: event-driven spells and interruption
 
