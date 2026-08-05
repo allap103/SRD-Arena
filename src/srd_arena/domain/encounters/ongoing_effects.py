@@ -106,6 +106,7 @@ def resolve_end_turn_effects(
         for effect in state.ongoing_effects
         if creature_ref in effect.target_refs
         and effect.parameters.get("repeat_save_trigger") == "end_of_turn"
+        and creature_ref not in _progressed_target_refs(effect)
     )
     for effect in matching:
         ability = effect.parameters.get("save_ability")
@@ -136,6 +137,54 @@ def resolve_end_turn_effects(
             )
         if save.check.success:
             _remove_effect_target(state, effect, creature_ref)
+        else:
+            failure_conditions = effect.parameters.get(
+                "repeat_failure_conditions", []
+            )
+            if isinstance(failure_conditions, list) and failure_conditions:
+                state.conditions = [
+                    condition
+                    for condition in state.conditions
+                    if not (
+                        condition.identity.source.origin_id
+                        == effect.identity.source.origin_id
+                        and condition.target_ref == creature_ref
+                    )
+                ]
+                state._apply_effects(
+                    [
+                        EffectResult(
+                            kind="apply_condition",
+                            target_ref=creature_ref,
+                            data={
+                                "condition": condition,
+                                "source_ref": (
+                                    effect.identity.source.applied_by_ref or "system"
+                                ),
+                                "source_label": effect.identity.source.label or "Spell",
+                                "source_kind": "spell",
+                                "definition_id": effect.identity.source.definition_id,
+                                "parent_effect_kind": effect.kind.value,
+                            },
+                        )
+                        for condition in failure_conditions
+                        if isinstance(condition, str)
+                    ],
+                    origin_id=effect.identity.source.origin_id,
+                )
+                progressed = effect.parameters.get("progressed_target_refs", [])
+                progressed_refs = (
+                    list(progressed) if isinstance(progressed, list) else []
+                )
+                progressed_refs.append(creature_ref)
+                parameters = dict(effect.parameters)
+                parameters["progressed_target_refs"] = progressed_refs
+                state.ongoing_effects = [
+                    replace(existing, parameters=parameters)
+                    if existing.identity.id == effect.identity.id
+                    else existing
+                    for existing in state.ongoing_effects
+                ]
 
 
 def expire_ongoing_effects_for_turn_start(
@@ -251,6 +300,13 @@ def _remove_effect_target(
         else existing
         for existing in state.ongoing_effects
     ]
+
+
+def _progressed_target_refs(effect: OngoingEffect) -> tuple[str, ...]:
+    value = effect.parameters.get("progressed_target_refs", [])
+    if not isinstance(value, list):
+        return ()
+    return tuple(ref for ref in value if isinstance(ref, str))
 
 
 def _required_string(result: EffectResult, key: str) -> str:

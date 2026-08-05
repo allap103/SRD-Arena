@@ -227,6 +227,9 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
     selected_condition = context.selected_condition
     if selected_condition not in mechanics.conditions:
         selected_condition = mechanics.conditions[0] if mechanics.conditions else None
+    selected_conditions = (
+        (selected_condition,) if selected_condition is not None else ()
+    ) if mechanics.condition_choice else mechanics.conditions
     parent_kind = "concentration" if mechanics.concentration else "spell"
     if affected_targets and mechanics.conditions and (
         mechanics.duration_rounds is not None
@@ -249,31 +252,35 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         "repeat_save_trigger": mechanics.repeat_save_trigger,
                         "save_ability": mechanics.save_ability,
                         "save_dc": context.creature.spellcasting.save_dc,
+                        "repeat_failure_conditions": list(
+                            mechanics.repeat_failure_conditions
+                        ),
                     },
                 },
             )
         )
-    if selected_condition is not None:
+    if selected_conditions:
         for target in affected_targets:
-            condition_data: dict[str, object] = {
-                "condition": selected_condition,
-                "source_ref": context.source_ref,
-                "source_label": context.creature.name,
-                "source_kind": "spell",
-                "definition_id": spell.id,
-            }
-            if effects:
-                condition_data["parent_effect_kind"] = parent_kind
-            if mechanics.expires_on_source_turn_end:
-                condition_data["expires_on_creature_ref"] = context.source_ref
-                condition_data["expires_on_round"] = context.current_round + 1
-            effects.append(
-                EffectResult(
-                    kind="apply_condition",
-                    target_ref=target.target_ref,
-                    data=condition_data,
+            for condition in selected_conditions:
+                condition_data: dict[str, object] = {
+                    "condition": condition,
+                    "source_ref": context.source_ref,
+                    "source_label": context.creature.name,
+                    "source_kind": "spell",
+                    "definition_id": spell.id,
+                }
+                if effects:
+                    condition_data["parent_effect_kind"] = parent_kind
+                if mechanics.expires_on_source_turn_end:
+                    condition_data["expires_on_creature_ref"] = context.source_ref
+                    condition_data["expires_on_round"] = context.current_round + 1
+                effects.append(
+                    EffectResult(
+                        kind="apply_condition",
+                        target_ref=target.target_ref,
+                        data=condition_data,
+                    )
                 )
-            )
 
     return CapabilityActionResult(
         capability_id=spell.id,

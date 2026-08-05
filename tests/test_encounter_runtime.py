@@ -2311,6 +2311,45 @@ def test_one_target_repeat_save_does_not_end_multi_target_spell(
     assert state.ongoing_effects[0].target_refs == ("goblin_2",)
 
 
+def test_sleep_progresses_from_incapacitated_to_unconscious(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Sleep", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    state.creatures["goblin_1"].position.x = state.active_position.x + 2
+    state.creatures["goblin_1"].position.y = state.active_position.y
+    state.creatures["goblin_2"].creature.current_health = 0
+    state.creatures["goblin_3"].creature.current_health = 0
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
+    )
+
+    cast = _choose_directional_spell(
+        session,
+        "Cast Sleep",
+        (
+            state.creatures["goblin_1"].position.x,
+            state.creatures["goblin_1"].position.y,
+        ),
+    )
+
+    assert state.has_condition("goblin_1", Condition.INCAPACITATED)
+    state.initiative_order = ["player", "goblin_1"]
+    state.turn_index = 1
+    state.turn_engine.advance_turn(state, cast)
+    assert state.has_condition("goblin_1", Condition.UNCONSCIOUS)
+    assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
+
+
 def test_new_concentration_replaces_the_previous_effect_tree() -> None:
     session = Scenario(
         str(TACTICAL_SCENARIO_DIR),

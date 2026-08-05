@@ -49,11 +49,7 @@ def build_spell(
             for duration in raw.duration
             if isinstance(duration, dict)
         ),
-        target_requirements=(
-            (CreatureTypeRequirement(tuple(raw.affects_creature_type)),)
-            if raw.affects_creature_type
-            else ()
-        ),
+        target_requirements=_target_requirements(raw),
         mechanics=_immediate_mechanics(raw),
     )
 
@@ -131,7 +127,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         cantrip_damage_by_level=_cantrip_damage_by_level(raw),
         slot_damage_increment=_slot_damage_increment(raw),
         conditions=conditions,
-        condition_choice=len(conditions) > 1,
+        condition_choice=raw.mechanics.condition_application == "choose_one",
         duration_rounds=_spell_duration_rounds(raw),
         concentration=any(
             bool(duration.get("concentration"))
@@ -146,6 +142,10 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             and effect.root.duration.creature == "source"
             for effect in outcome.effects
         ),
+        target_disposition=(
+            target.disposition if target.type == "creature" else "any"
+        ),
+        repeat_failure_conditions=_repeat_failure_conditions(resolution),
     )
 
 
@@ -207,6 +207,22 @@ def _repeat_save_trigger(resolution: object) -> str | None:
     return aliases.get(resolution.repeat_save.trigger, resolution.repeat_save.trigger)
 
 
+def _repeat_failure_conditions(resolution: object) -> tuple[str, ...]:
+    if not isinstance(resolution, SavingThrowResolutionSchema):
+        return ()
+    repeat = resolution.repeat_save
+    if repeat is None or repeat.on_failure is None:
+        return ()
+    failure = repeat.on_failure.root
+    if not isinstance(failure, AutomaticResolutionSchema):
+        return ()
+    return tuple(
+        effect.root.condition
+        for effect in failure.outcome.effects
+        if isinstance(effect.root, ConditionEffectSchema)
+    )
+
+
 def _find_spell(
     name: str,
     source: str | None,
@@ -217,6 +233,21 @@ def _find_spell(
             f"Creature references spell '{name}', but no spell catalog was loaded."
         )
     return catalog.find(name, source)
+
+
+def _target_requirements(raw: SpellSchema) -> tuple[CreatureTypeRequirement, ...]:
+    creature_types = tuple(raw.affects_creature_type)
+    if raw.mechanics is not None and raw.mechanics.target.type == "creature":
+        mechanics_types = _creature_types_from_requirements(
+            raw.mechanics.target.requirements
+        )
+        if mechanics_types:
+            creature_types = mechanics_types
+    return (
+        (CreatureTypeRequirement(creature_types),)
+        if creature_types
+        else ()
+    )
 
 
 def _normalize_save_ability(value: str) -> str:

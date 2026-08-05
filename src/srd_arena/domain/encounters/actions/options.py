@@ -285,10 +285,17 @@ def spell_action_targets(
     max_range = self._spell_range_squares(spell, actor)
     targets: list[SpellTargetContext] = []
     for target_ref, target_state in self.creatures.items():
-        if not target_state.is_alive or not self._creatures_are_opponents(
-            creature_ref,
-            target_ref,
-        ):
+        if not target_state.is_alive:
+            continue
+        disposition = (
+            spell.mechanics.target_disposition
+            if spell.mechanics is not None
+            else "enemy"
+        )
+        is_opponent = self._creatures_are_opponents(creature_ref, target_ref)
+        if disposition == "enemy" and not is_opponent:
+            continue
+        if disposition == "ally" and is_opponent:
             continue
         if (
             max_range is not None

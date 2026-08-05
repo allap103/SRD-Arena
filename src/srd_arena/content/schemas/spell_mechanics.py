@@ -1038,6 +1038,7 @@ class SpellMechanicsSchema(SpellMechanicsSchemaModel):
     casting_trigger: CastingTriggerSchema | None = None
     scaling: list[SlotScalingSchema] = Field(default_factory=list)
     outcome_triggers: list[OutcomeTriggerSchema] = Field(default_factory=list)
+    condition_application: Literal["all", "choose_one"] = "all"
 
 
 AnyRequirementSchema.model_rebuild()

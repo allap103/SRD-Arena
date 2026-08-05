@@ -61,4 +61,10 @@
   "areaTags": [
     "ST"
   ]
+  ,"implementation": {"status": "partial", "omissions": [{"mechanic": "ending when the caster or an ally damages the target", "reason": "Spell-owned damage termination is being added in Wave 1B."}, {"mechanic": "additional targets from higher-level slots", "reason": "Multi-target spell selection is being added in Wave 1B."}]},
+  "mechanics": {
+    "target": {"type": "creature", "line_of_sight": true, "requirements": [{"type": "creature_type", "creature_types": ["beast"]}]},
+    "resolution": {"type": "saving_throw", "ability": "wis", "failure": {"effects": [{"type": "condition", "condition": "charmed"}]}},
+    "scaling": [{"type": "slot_level", "above_level": 1, "per_level": [{"type": "target_count", "amount": 1}]}]
+  }
 }

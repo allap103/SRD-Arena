@@ -38,6 +38,8 @@ class ImmediateSpellMechanics:
     concentration: bool = False
     repeat_save_trigger: str | None = None
     expires_on_source_turn_end: bool = False
+    target_disposition: str = "enemy"
+    repeat_failure_conditions: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
