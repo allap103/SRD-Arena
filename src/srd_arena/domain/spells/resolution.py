@@ -52,6 +52,7 @@ class SpellActionContext:
         default_factory=dict
     )
     cast_level: int | None = None
+    save_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
 
 
 def resolve_spell_action(
@@ -125,21 +126,31 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             ability = mechanics.save_ability or "dexterity"
             creature_type = (target.creature.statistics.creature_type or "").casefold()
             automatic_reasons = target.automatic_failure_reasons(ability)
+            automatic_success_reasons = tuple(
+                f"{spell.name}: immune to {condition}"
+                for condition in mechanics.automatic_success_condition_immunities
+                if any(
+                    immunity.value == condition
+                    for immunity in target.creature.statistics.condition_immunities
+                )
+            )
             if creature_type in mechanics.automatic_failure_creature_types:
                 automatic_reasons += (f"{spell.name}: {creature_type}",)
+            save_mode = context.save_roll_modes.get(
+                target.target_ref,
+                "disadvantage"
+                if creature_type in mechanics.disadvantage_creature_types
+                else "normal",
+            )
             save = resolve_saving_throw(
                 cast(SavingThrowCreature, target.creature),
                 cast(Ability, ability),
                 context.creature.spellcasting.save_dc,
-                mode=(
-                    "disadvantage"
-                    if creature_type in mechanics.disadvantage_creature_types
-                    else "normal"
-                ),
+                mode=save_mode,
                 roller=context.roller,
                 automatic_failure_reasons=automatic_reasons,
             )
-            successful_save = save.check.success
+            successful_save = bool(automatic_success_reasons) or save.check.success
             save_details.append(
                 {
                     "target_ref": target.target_ref,
@@ -150,6 +161,9 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "total": save.check.roll.total,
                     "target_dc": save.check.target,
                     "success": successful_save,
+                    "automatic_success_reasons": list(
+                        automatic_success_reasons
+                    ),
                     "automatic_failure_reasons": list(save.automatic_failure_reasons),
                 }
             )

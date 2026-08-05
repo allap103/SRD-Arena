@@ -9,6 +9,7 @@ from srd_arena.content.schemas.action_mechanics import (
 )
 from srd_arena.content.schemas.spell_mechanics import (
     AutomaticResolutionSchema,
+    ConditionImmunityRequirementSchema,
     SavingThrowResolutionSchema,
     SpellAttackResolutionSchema,
 )
@@ -148,6 +149,12 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         repeat_failure_conditions=_repeat_failure_conditions(resolution),
         end_events=_end_events(raw),
         damage_repeat_save_advantage=_damage_repeat_save_advantage(raw),
+        save_advantage_against_opponents=(
+            _save_advantage_against_opponents(resolution)
+        ),
+        automatic_success_condition_immunities=(
+            _automatic_success_condition_immunities(resolution)
+        ),
     )
 
 
@@ -257,6 +264,33 @@ def _damage_repeat_save_advantage(raw: SpellSchema) -> bool:
             for modifier in trigger.resolution.root.save_modifiers
         )
         for trigger in raw.mechanics.outcome_triggers
+    )
+
+
+def _save_advantage_against_opponents(resolution: object) -> bool:
+    if not isinstance(resolution, SavingThrowResolutionSchema):
+        return False
+    return any(
+        modifier.mode == "advantage"
+        and any(
+            getattr(requirement, "type", None) == "relationship"
+            and getattr(requirement, "relationship", None)
+            == "fighting_source_team"
+            for requirement in modifier.requirements
+        )
+        for modifier in resolution.save_modifiers
+    )
+
+
+def _automatic_success_condition_immunities(
+    resolution: object,
+) -> tuple[str, ...]:
+    if not isinstance(resolution, SavingThrowResolutionSchema):
+        return ()
+    return tuple(
+        requirement.condition
+        for requirement in resolution.automatic_success
+        if isinstance(requirement, ConditionImmunityRequirementSchema)
     )
 
 

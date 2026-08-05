@@ -2351,6 +2351,155 @@ def test_sleep_progresses_from_incapacitated_to_unconscious(
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
 
 
+def test_sleep_automatically_spares_creature_immune_to_exhaustion(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Sleep", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    target = state.creatures["goblin_1"]
+    target.position.x = state.active_position.x + 2
+    target.position.y = state.active_position.y
+    target.creature.statistics = replace(
+        target.creature.statistics,
+        condition_immunities=frozenset({Condition.EXHAUSTION}),
+    )
+    state.creatures["goblin_2"].creature.current_health = 0
+    state.creatures["goblin_3"].creature.current_health = 0
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
+    )
+
+    cast = _choose_directional_spell(
+        session,
+        "Cast Sleep",
+        (target.position.x, target.position.y),
+    )
+
+    assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
+    save = next(
+        event.data["save_details"][0]
+        for event in cast.events
+        if event.type == "spell_cast"
+    )
+    assert save["automatic_success_reasons"] == [
+        "Sleep: immune to exhaustion"
+    ]
+
+
+def test_charm_person_save_has_advantage_against_opponent(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Charm Person", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[1] = 1
+    target = state.creatures["goblin_1"]
+    target.creature.statistics = replace(
+        target.creature.statistics,
+        creature_type="humanoid",
+    )
+    target.position.x = state.active_position.x + 1
+    target.position.y = state.active_position.y
+    rolls = iter((1, 20))
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: next(rolls),
+    )
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("charm_person:goblin_1")
+    )
+    cast = state.apply_action(action)
+
+    assert state.has_condition("goblin_1", Condition.CHARMED) is False
+    save = next(
+        event.data["save_details"][0]
+        for event in cast.events
+        if event.type == "spell_cast"
+    )
+    assert save["die"] == 20
+
+
+def test_adjacent_creature_can_spend_action_to_wake_sleep_target() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="goblin_1",
+                data={
+                    "effect_kind": "concentration",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                    "definition_id": "sleep",
+                    "parameters": {
+                        "end_events": [
+                            ["adjacent_creature_wakes_target", "any"]
+                        ]
+                    },
+                },
+            ),
+            EffectResult(
+                kind="apply_condition",
+                target_ref="goblin_1",
+                data={
+                    "condition": "unconscious",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                    "source_kind": "spell",
+                    "definition_id": "sleep",
+                },
+            ),
+        ],
+        origin_id="sleep-cast",
+    )
+    state.creatures["goblin_2"].position = Position(
+        state.creatures["goblin_1"].position.x + 1,
+        state.creatures["goblin_1"].position.y,
+    )
+    state.initiative_order = ["goblin_2", "player", "goblin_1"]
+    state.turn_index = 0
+
+    action = next(
+        action
+        for action in state._creature_action_candidates("goblin_2")
+        if action.kind == "wake_spell_target"
+        and action.value == "goblin_1"
+    )
+    result = state._execute_creature_action(action, state.current_decision())
+
+    assert state.has_condition("goblin_1", Condition.UNCONSCIOUS) is False
+    assert state.creatures["goblin_2"].actions_remaining == 0
+    assert any("wakes" in text for _, text in result.progress.messages)
+
+
 @pytest.mark.parametrize(
     ("definition_id", "condition", "event"),
     [

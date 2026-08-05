@@ -18,6 +18,7 @@ from .actions.stat_block import (
 )
 from .behaviors import (
     DIRECTION_DELTAS,
+    is_adjacent as _is_adjacent,
     movement_budget_for,
 )
 from .models import (
@@ -29,6 +30,7 @@ from .models import (
     DecisionFrame,
     EncounterAction,
 )
+from .ongoing_effects import resolve_spell_lifecycle_event
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -215,6 +217,33 @@ def creature_action_candidates(
             )
     actions.extend(self._available_feature_actions(enemy.creature))
     actions.extend(self._available_spell_actions(enemy.creature))
+    for effect in self.ongoing_effects:
+        end_events = effect.parameters.get("end_events", [])
+        if not isinstance(end_events, list) or [
+            "adjacent_creature_wakes_target",
+            "any",
+        ] not in end_events:
+            continue
+        for target_ref in effect.target_refs:
+            wake_target_state = self.creatures.get(target_ref)
+            if (
+                wake_target_state is None
+                or not wake_target_state.is_alive
+                or target_ref == creature_ref
+            ):
+                continue
+            if not _is_adjacent(enemy.position, wake_target_state.position):
+                continue
+            actions.append(
+                EncounterAction(
+                    f"Wake {wake_target_state.creature.name}",
+                    "wake_spell_target",
+                    target_ref,
+                    id=f"{creature_ref}-wake-{target_ref.replace(':', '-')}",
+                    creature_ref=creature_ref,
+                    cost=ActionCost(action=1),
+                )
+            )
     actions.extend(available_escape_actions(self, creature_ref))
     for item in healing_potions_in_inventory(
         enemy.creature,
@@ -402,6 +431,32 @@ def execute_creature_action(
             action.value,
             progress,
             action_id,
+        )
+    elif action.kind == "wake_spell_target":
+        if not isinstance(action.value, str):
+            raise ValueError("Wake action requires a creature reference.")
+        self._consume_action(allow_magic=False)
+        resolve_spell_lifecycle_event(
+            self,
+            "adjacent_creature_wakes_target",
+            actor_ref=decision.creature_ref,
+            target_ref=action.value,
+            progress=progress,
+        )
+        progress.messages.append(
+            (
+                "system",
+                f"{enemy.creature.name} wakes "
+                f"{self.creatures[action.value].creature.name}.",
+            )
+        )
+        progress.events.append(
+            self._event(
+                "action_resolved",
+                creature_ref=decision.creature_ref,
+                action_id=action_id,
+                data={"kind": "wake_spell_target", "target_ref": action.value},
+            )
         )
     elif action.kind == "wait":
         progress.messages.append(("system", f"{enemy.creature.name} waits."))

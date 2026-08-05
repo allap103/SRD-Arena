@@ -160,6 +160,17 @@ SpellRequirementSchema = Annotated[
 ]
 
 
+class SpellSaveModifierSchema(SpellMechanicsSchemaModel):
+    type: Literal["roll_modifier"]
+    roll: Literal["saving_throw"]
+    mode: Literal["advantage", "disadvantage", "add", "subtract"]
+    ability: Ability | None = None
+    dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
+    value: int | None = None
+    duration: EffectDurationSchema | None = None
+    requirements: list[SpellRequirementSchema] = Field(default_factory=list)
+
+
 class TargetCountSchema(SpellMechanicsSchemaModel):
     minimum: NonNegativeInt = 1
     maximum: PositiveInt | Literal["spellcasting_modifier"] = 1
@@ -773,7 +784,7 @@ class SavingThrowResolutionSchema(SpellMechanicsSchemaModel):
     use_spell_metadata_ability: bool = True
     automatic_success: list[SpellRequirementSchema] = Field(default_factory=list)
     automatic_failure: list[SpellRequirementSchema] = Field(default_factory=list)
-    save_modifiers: list[RollModifierEffectSchema] = Field(default_factory=list)
+    save_modifiers: list[SpellSaveModifierSchema] = Field(default_factory=list)
     failure: OutcomeSchema
     success: OutcomeSchema = Field(default_factory=OutcomeSchema)
     success_damage: Literal["none", "half"] = "none"
@@ -1010,6 +1021,7 @@ class OutcomeTriggerSchema(SpellMechanicsSchemaModel):
         "target_makes_attack",
         "target_casts_spell",
         "target_deals_damage",
+        "adjacent_creature_wakes_target",
         "source_damaged",
         "before_target_reduced_to_zero",
         "target_reduced_to_zero",

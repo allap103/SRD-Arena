@@ -265,7 +265,12 @@ def resolve_spell_lifecycle_event(
     progress: EncounterProgress | None = None,
 ) -> None:
     for effect in tuple(state.ongoing_effects):
-        affected_ref = target_ref if event == "target_damaged" else actor_ref
+        affected_ref = (
+            target_ref
+            if event in {"target_damaged", "adjacent_creature_wakes_target"}
+            and target_ref is not None
+            else actor_ref
+        )
         if affected_ref not in effect.target_refs:
             continue
         if event == "target_damaged" and effect.parameters.get(

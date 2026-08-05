@@ -143,6 +143,18 @@ def resolve_spell_action(
                 for candidate in targets
             },
             cast_level=cast_level,
+            save_roll_modes=(
+                {
+                    candidate.target_ref: "advantage"
+                    for candidate in targets
+                    if self._creatures_are_opponents(
+                        creature_ref, candidate.target_ref
+                    )
+                }
+                if spell.mechanics is not None
+                and spell.mechanics.save_advantage_against_opponents
+                else {}
+            ),
         )
     )
     if result is None:
