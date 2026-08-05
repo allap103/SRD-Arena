@@ -165,3 +165,12 @@ Genuinely unusual orchestration may use a named, typed mechanic variant. Rules
 that answer an existing engine question should instead use reusable primitives,
 and unique combinations such as Slow should group those primitives under one
 spell-instance root.
+
+## Scope decisions
+
+- Mounted combat is not currently supported. Find Steed and Phantom Steed are
+  therefore outside the active spell catalog.
+- Find Greater Steed is not part of the current SRD 5.2 spell catalog. If it is
+  added from another supported source later, only the summoned creature's
+  ordinary combat functionality is in scope; mounted-combat functionality is
+  not.

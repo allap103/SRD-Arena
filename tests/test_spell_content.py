@@ -9,7 +9,7 @@ def test_bundled_spells_load_as_typed_records() -> None:
 
     color_spray = catalog.find("Color Spray", "xphb")
 
-    assert len(catalog) >= 300
+    assert len(catalog) >= 275
     assert isinstance(color_spray, SpellSchema)
     assert color_spray.level == 1
     assert color_spray.school == "I"
