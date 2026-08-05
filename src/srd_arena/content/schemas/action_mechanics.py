@@ -210,6 +210,7 @@ class RollModifierEffectSchema(ActionMechanicsSchemaModel):
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     value: int | None = None
     duration: EffectDurationSchema | None = None
+    requirements: list[ActionRequirementSchema] = Field(default_factory=list)
 
 
 class ControlEffectSchema(ActionMechanicsSchemaModel):

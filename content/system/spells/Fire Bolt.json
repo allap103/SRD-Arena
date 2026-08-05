@@ -67,5 +67,10 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "partial", "omissions": [{"mechanic": "object targeting and ignition", "reason": "Objects and environmental fire are not modeled yet."}]},
+  "mechanics": {
+    "target": {"type": "creature", "line_of_sight": true},
+    "resolution": {"type": "spell_attack", "mode": "ranged", "hit": {"effects": [{"type": "damage", "dice": "1d10", "damage_type": "fire"}]}}
+  }
 }

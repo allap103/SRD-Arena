@@ -10,6 +10,31 @@ class SpellRef:
 
 
 @dataclass(frozen=True)
+class SpellDamage:
+    dice: str
+    damage_type: str
+
+
+@dataclass(frozen=True)
+class ImmediateSpellMechanics:
+    resolution: str
+    target: str
+    damage: tuple[SpellDamage, ...]
+    save_ability: str | None = None
+    attack_mode: str | None = None
+    half_damage_on_save: bool = False
+    area_shape: str | None = None
+    area_radius_feet: int | None = None
+    area_length_feet: int | None = None
+    area_width_feet: int | None = None
+    area_height_feet: int | None = None
+    automatic_failure_creature_types: tuple[str, ...] = ()
+    disadvantage_creature_types: tuple[str, ...] = ()
+    cantrip_damage_by_level: tuple[tuple[int, str], ...] = ()
+    slot_damage_increment: str | None = None
+
+
+@dataclass(frozen=True)
 class Spell:
     id: str
     name: str
@@ -30,3 +55,4 @@ class Spell:
     area_size_feet: int | None = None
     concentration: bool = False
     target_requirements: tuple[ActionRequirement, ...] = ()
+    mechanics: ImmediateSpellMechanics | None = None

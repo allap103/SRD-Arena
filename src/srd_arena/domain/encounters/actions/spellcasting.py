@@ -11,6 +11,7 @@ from ...spells.resolution import (
 )
 from ...spells.rules import parse_spell_action_value
 from ...spells.rules import parse_spell_action_condition
+from ...spells.rules import parse_spell_action_slot
 from ..ongoing_effects import resolve_concentration_damage
 
 if TYPE_CHECKING:
@@ -44,6 +45,7 @@ def resolve_spell_action(
         )
         return
     spell_id, target_ref, aim_point = parse_spell_action_value(spell_value)
+    cast_level = parse_spell_action_slot(spell_value)
     spell = next((candidate for candidate in spellcasting.learned_spells if candidate.id == spell_id), None)
     if spell is None:
         progress.messages.append(("system", "That spell is not available."))
@@ -57,7 +59,15 @@ def resolve_spell_action(
         )
         return
     cost = self._spell_action_cost(spell)
-    block_reason = self._spell_cast_block_reason(spellcasting, spell, cost)
+    block_reason: str | None
+    if cast_level is not None and (
+        spell.level == 0 or cast_level <= spell.level or cast_level > 9
+    ):
+        block_reason = "That spell slot level is not available for this spell."
+    else:
+        block_reason = self._spell_cast_block_reason(
+            spellcasting, spell, cost, cast_level
+        )
     if block_reason is not None:
         progress.messages.append(("system", block_reason))
         progress.events.append(
@@ -100,6 +110,36 @@ def resolve_spell_action(
             source_ref=creature_ref,
             roller=_roll_die,
             selected_condition=parse_spell_action_condition(spell_value),
+            attack_roll_modes=(
+                {
+                    candidate.target_ref: self._attack_roll_mode_for(
+                        creature_ref,
+                        candidate.target_ref,
+                        spell.mechanics.attack_mode,
+                        self._creature_position(creature_ref),
+                        tuple(
+                            state.position
+                            for opponent_ref, state in self.creatures.items()
+                            if state.is_alive
+                            and self._creatures_are_opponents(
+                                creature_ref, opponent_ref
+                            )
+                        ),
+                    )
+                    for candidate in targets
+                }
+                if spell.mechanics is not None
+                and spell.mechanics.resolution == "spell_attack"
+                and spell.mechanics.attack_mode is not None
+                else {}
+            ),
+            automatic_critical_providers={
+                candidate.target_ref: self._automatic_critical_provider_ids_for(
+                    creature_ref, candidate.target_ref
+                )
+                for candidate in targets
+            },
+            cast_level=cast_level,
         )
     )
     if result is None:
@@ -114,7 +154,7 @@ def resolve_spell_action(
         )
         return
 
-    self._spend_spell_resources(spellcasting, spell, cost)
+    self._spend_spell_resources(spellcasting, spell, cost, cast_level)
     progress.messages.extend(result.messages)
     damage_details = result.details.get("damage_roll_details")
     if isinstance(damage_details, list):
@@ -150,12 +190,16 @@ def resolve_spell_action(
                 "area": result.details.get("area"),
                 "slot_level": result.details.get("slot_level", spell.level),
                 "spell_slots_remaining": (
-                    spellcasting.spell_slots_remaining.get(spell.level, 0)
+                    spellcasting.spell_slots_remaining.get(
+                        cast_level if cast_level is not None else spell.level, 0
+                    )
                     if spell.level > 0
                     else None
                 ),
                 "save_detail": result.details.get("save_detail"),
                 "save_details": result.details.get("save_details"),
+                "attack_roll_detail": result.details.get("attack_roll_detail"),
+                "attack_roll_details": result.details.get("attack_roll_details"),
                 "damage_roll_detail": result.details.get("damage_roll_detail"),
                 "damage_roll_details": result.details.get("damage_roll_details"),
                 "effects": serialize_effects(result.effects),

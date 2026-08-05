@@ -772,6 +772,7 @@ class SavingThrowResolutionSchema(SpellMechanicsSchemaModel):
     ability: Ability | None = None
     use_spell_metadata_ability: bool = True
     automatic_success: list[SpellRequirementSchema] = Field(default_factory=list)
+    automatic_failure: list[SpellRequirementSchema] = Field(default_factory=list)
     save_modifiers: list[RollModifierEffectSchema] = Field(default_factory=list)
     failure: OutcomeSchema
     success: OutcomeSchema = Field(default_factory=OutcomeSchema)

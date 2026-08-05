@@ -53,5 +53,11 @@
   "areaTags": [
     "N"
   ],
-  "hasFluffImages": true
+  "hasFluffImages": true,
+  "implementation": {"status": "partial", "omissions": [{"mechanic": "frozen statue on death", "reason": "Defeated-creature remains are not modeled yet."}]},
+  "mechanics": {
+    "target": {"type": "area", "origin": "self", "geometry": {"shape": "cone", "length_feet": 60}},
+    "resolution": {"type": "saving_throw", "ability": "con", "failure": {"effects": [{"type": "damage", "dice": "8d8", "damage_type": "cold"}]}, "success_damage": "half"},
+    "scaling": [{"type": "slot_level", "above_level": 5, "per_level": [{"type": "damage_dice", "amount": "1d8"}]}]
+  }
 }

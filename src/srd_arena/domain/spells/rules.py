@@ -35,6 +35,7 @@ def spell_cast_block_reason(
     action_available: bool,
     bonus_action_available: bool,
     reaction_available: bool,
+    cast_level: int | None = None,
 ) -> str | None:
     if economy.action > 0 and not action_available:
         return "You have already used your Action."
@@ -42,8 +43,9 @@ def spell_cast_block_reason(
         return "You have already used your Bonus Action."
     if economy.reaction > 0 and not reaction_available:
         return "You have already used your Reaction."
-    if spell.level > 0 and spellcasting.spell_slots_remaining.get(spell.level, 0) <= 0:
-        return f"You have no level {spell.level} spell slots remaining."
+    slot_level = cast_level if cast_level is not None else spell.level
+    if spell.level > 0 and spellcasting.spell_slots_remaining.get(slot_level, 0) <= 0:
+        return f"You have no level {slot_level} spell slots remaining."
     return None
 
 
@@ -88,15 +90,30 @@ def spell_action_value(
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
     selected_condition: str | None = None,
+    slot_level: int | None = None,
 ) -> str:
     if aim_point is not None:
-        return f"{spell_id}@{aim_point[0]:.4f},{aim_point[1]:.4f}"
+        value = f"{spell_id}@{aim_point[0]:.4f},{aim_point[1]:.4f}"
+        return _with_spell_selections(value, selected_condition, slot_level)
     if target_ref is None:
-        return spell_id
+        return _with_spell_selections(spell_id, selected_condition, slot_level)
     value = f"{spell_id}:{target_ref}"
+    return _with_spell_selections(value, selected_condition, slot_level)
+
+
+def _with_spell_selections(
+    value: str,
+    selected_condition: str | None,
+    slot_level: int | None,
+) -> str:
+    if selected_condition is not None and slot_level is None:
+        return f"{value}#{selected_condition}"
+    selections = []
     if selected_condition is not None:
-        value += f"#{selected_condition}"
-    return value
+        selections.append(f"condition={selected_condition}")
+    if slot_level is not None:
+        selections.append(f"slot={slot_level}")
+    return value if not selections else f"{value}#{'&'.join(selections)}"
 
 
 def parse_spell_action_value(value: str) -> tuple[str, str | None, tuple[float, float] | None]:
@@ -116,5 +133,22 @@ def parse_spell_action_value(value: str) -> tuple[str, str | None, tuple[float, 
 
 
 def parse_spell_action_condition(value: str) -> str | None:
-    _base, separator, condition = value.partition("#")
-    return condition if separator and condition else None
+    _base, separator, selections = value.partition("#")
+    if not separator:
+        return None
+    for selection in selections.split("&"):
+        key, equals, selected = selection.partition("=")
+        if equals and key == "condition" and selected:
+            return selected
+    return selections if "=" not in selections and selections else None
+
+
+def parse_spell_action_slot(value: str) -> int | None:
+    _base, separator, selections = value.partition("#")
+    if not separator:
+        return None
+    for selection in selections.split("&"):
+        key, equals, selected = selection.partition("=")
+        if equals and key == "slot" and selected.isdigit():
+            return int(selected)
+    return None

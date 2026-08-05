@@ -13,6 +13,7 @@ from ...domain.geometry import (
     serialize_area,
 )
 from ...domain.spells.rules import (
+    parse_spell_action_slot,
     parse_spell_action_value,
     spell_action_value,
     spell_range_squares,
@@ -1521,6 +1522,7 @@ class GameWindow(QMainWindow):
             value = spell_action_value(
                 parse_spell_action_value(str(action.value))[0],
                 aim_point=(x, y),
+                slot_level=parse_spell_action_slot(str(action.value)),
             )
         else:
             value = (x, y)

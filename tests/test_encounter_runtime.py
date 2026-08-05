@@ -29,6 +29,11 @@ from srd_arena.domain.effects.conditions import Condition, build_applied_conditi
 from srd_arena.domain.effects.runtime import UntilTurnStart
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
+from srd_arena.domain.spells.rules import (
+    parse_spell_action_slot,
+    parse_spell_action_value,
+    spell_action_value,
+)
 from srd_arena.domain.creatures import (
     ActionTarget,
     ActionResource,
@@ -122,7 +127,11 @@ def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
         EncounterAction(
             label=action.label,
             kind=action.kind,
-            value=f"{action.value}@{aim_cell[0] + 0.5:.4f},{aim_cell[1] + 0.5:.4f}",
+            value=spell_action_value(
+                parse_spell_action_value(str(action.value))[0],
+                aim_point=(aim_cell[0] + 0.5, aim_cell[1] + 0.5),
+                slot_level=parse_spell_action_slot(str(action.value)),
+            ),
             id=action.id,
             creature_ref=action.creature_ref,
             cost=ActionCost(
@@ -1560,6 +1569,8 @@ def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
     session.encounter_state.creatures["goblin_1"].position.y = 2
 
     assert "Cast Burning Hands" in _action_labels(session)
+    assert "Cast Burning Hands (Level 2)" in _action_labels(session)
+    assert "Cast Burning Hands (Level 3)" in _action_labels(session)
 
 
 def test_presentation_derives_spell_slot_rows_from_player_spellcasting(
@@ -1731,13 +1742,42 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
     assert spell_event.data["spell_name"] == "Burning Hands"
     assert spell_event.data["save_details"][0]["ability"] == "dexterity"
     assert spell_event.data["damage_roll_details"][0]["dice"] == "3d6"
-    assert spell_event.data["damage_roll_details"][0]["applied_damage"] == 6
-    assert spell_event.data["damage_roll_details"][1]["applied_damage"] == 7
-    assert state.creatures["goblin_1"].creature.get_health() == 4
-    assert state.creatures["goblin_2"].creature.get_health() == 3
-    assert any("takes 6 fire damage." in message for _, message in result.messages)
-    assert any("takes 7 fire damage on a successful save." in message for _, message in result.messages)
+    assert spell_event.data["damage_roll_details"][0]["applied_damage"] == 8
+    assert spell_event.data["damage_roll_details"][1]["applied_damage"] == 4
+    assert spell_event.data["damage_roll_details"][0]["dice_values"] == [5, 1, 2]
+    assert spell_event.data["damage_roll_details"][1]["dice_values"] == [5, 1, 2]
+    assert state.creatures["goblin_1"].creature.get_health() == 2
+    assert state.creatures["goblin_2"].creature.get_health() == 6
+    assert sum("Burning Hands damages" in message for _, message in result.messages) == 2
     assert not any("Enemy 2 (Goblin Warrior) is defeated." == message for _, message in result.messages)
+
+
+def test_burning_hands_can_use_and_scale_a_higher_level_slot(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.active_position.x = 4
+    state.active_position.y = 4
+    state.creatures["goblin_1"].position.x = 4
+    state.creatures["goblin_1"].position.y = 3
+    state.creatures["goblin_2"].creature.current_health = 0
+    state.creatures["goblin_3"].creature.current_health = 0
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+
+    result = _choose_directional_spell(
+        session, "Cast Burning Hands (Level 3)", (4, 3)
+    )
+
+    event = next(event for event in result.events if event.type == "spell_cast")
+    assert event.data["slot_level"] == 3
+    assert event.data["damage_roll_detail"]["dice"] == "5d6"
+    assert event.data["spell_slots_remaining"] == 1
 
 
 def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:

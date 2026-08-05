@@ -25,6 +25,7 @@ from ...spells.rules import (
     spell_range_squares,
     spell_targets_self_only,
 )
+from ...spells.rules import parse_spell_action_condition, parse_spell_action_value
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -80,7 +81,7 @@ def available_spell_actions(
     for spell in spellcasting.learned_spells:
         cost = self._spell_action_cost(spell)
         if spell.geometry_mode in {"directional_area", "point_area"}:
-            actions.append(
+            _append_spell_action_variants(actions, spellcasting, spell,
                 EncounterAction(
                     spell_action_label(spell, actor_ref=creature_ref),
                     "spell",
@@ -88,7 +89,7 @@ def available_spell_actions(
                     id=spell_action_id(spell),
                     creature_ref=creature_ref,
                     cost=cost,
-                )
+                ),
             )
             continue
         targets = self._spell_action_targets(actor, spell)
@@ -113,7 +114,7 @@ def available_spell_actions(
                 selection_id = (
                     f"-{selection}" if isinstance(selection, str) else ""
                 )
-                actions.append(
+                _append_spell_action_variants(actions, spellcasting, spell,
                     EncounterAction(
                         spell_action_label(spell, actor_ref=creature_ref)
                         + selection_label,
@@ -130,10 +131,10 @@ def available_spell_actions(
                         + selection_id,
                         creature_ref=creature_ref,
                         cost=cost,
-                    )
+                    ),
                 )
         if not targets:
-            actions.append(
+            _append_spell_action_variants(actions, spellcasting, spell,
                 EncounterAction(
                     spell_action_label(spell, actor_ref=creature_ref),
                     "spell",
@@ -141,9 +142,45 @@ def available_spell_actions(
                     id=spell_action_id(spell),
                     creature_ref=creature_ref,
                     cost=cost,
-                )
+                ),
             )
     return actions
+
+
+def _append_spell_action_variants(
+    actions: list[EncounterAction],
+    spellcasting: Spellcasting,
+    spell: Spell,
+    action: EncounterAction,
+) -> None:
+    actions.append(action)
+    if spell.level == 0 or spell.mechanics is None:
+        return
+    if spell.mechanics.slot_damage_increment is None:
+        return
+    spell_id, target_ref, aim_point = parse_spell_action_value(str(action.value))
+    selected_condition = parse_spell_action_condition(str(action.value))
+    for slot_level in sorted(spellcasting.spell_slots_remaining):
+        if slot_level <= spell.level:
+            continue
+        if spellcasting.spell_slots_remaining[slot_level] <= 0:
+            continue
+        actions.append(
+            EncounterAction(
+                f"{action.label} (Level {slot_level})",
+                action.kind,
+                spell_action_value(
+                    spell_id,
+                    target_ref,
+                    aim_point,
+                    selected_condition,
+                    slot_level,
+                ),
+                id=f"{action.id}-level-{slot_level}",
+                creature_ref=action.creature_ref,
+                cost=action.cost,
+            )
+        )
 
 
 def feature_action_available(self: EncounterState, actor: Creature, definition) -> bool:
@@ -170,6 +207,7 @@ def spell_cast_block_reason_for(
     spellcasting: Spellcasting,
     spell: Spell,
     cost: ActionCost,
+    cast_level: int | None = None,
 ) -> str | None:
     return spell_cast_block_reason(
         spellcasting,
@@ -178,6 +216,7 @@ def spell_cast_block_reason_for(
         action_available=self.active_magic_actions_remaining > 0,
         bonus_action_available=self.active_bonus_action_available,
         reaction_available=self.active_reaction_available,
+        cast_level=cast_level,
     )
 
 
@@ -285,6 +324,7 @@ def spend_spell_resources(
     spellcasting: Spellcasting,
     spell: Spell,
     cost: ActionCost,
+    cast_level: int | None = None,
 ) -> None:
     if cost.action > 0:
         self._consume_action(allow_magic=True)
@@ -294,7 +334,8 @@ def spend_spell_resources(
     if cost.reaction > 0:
         self.active_reaction_available = False
     if spell.level > 0:
-        spellcasting.spell_slots_remaining[spell.level] -= 1
+        slot_level = cast_level if cast_level is not None else spell.level
+        spellcasting.spell_slots_remaining[slot_level] -= 1
 
 
 def spell_area(

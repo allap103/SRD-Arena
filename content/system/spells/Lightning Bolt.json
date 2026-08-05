@@ -56,5 +56,11 @@
   ],
   "areaTags": [
     "L"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {"type": "area", "origin": "self", "geometry": {"shape": "line", "length_feet": 100, "width_feet": 5}},
+    "resolution": {"type": "saving_throw", "ability": "dex", "failure": {"effects": [{"type": "damage", "dice": "8d6", "damage_type": "lightning"}]}, "success_damage": "half"},
+    "scaling": [{"type": "slot_level", "above_level": 3, "per_level": [{"type": "damage_dice", "amount": "1d6"}]}]
+  }
 }

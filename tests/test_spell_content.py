@@ -45,6 +45,26 @@ def test_spell_translation_builds_combat_ready_domain_spell() -> None:
     assert fireball.damage_inflict == ("fire",)
     assert fireball.geometry_mode == "point_area"
     assert fireball.area_size_feet == 20
+    assert fireball.mechanics is not None
+    assert fireball.mechanics.resolution == "saving_throw"
+    assert fireball.mechanics.damage[0].dice == "8d6"
+
+
+def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
+    catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    names = {
+        "Acid Splash", "Blight", "Burning Hands", "Circle of Death",
+        "Cone of Cold", "Fire Bolt", "Fireball", "Flame Strike",
+        "Inflict Wounds", "Lightning Bolt", "Poison Spray", "Sacred Flame",
+        "Shatter",
+    }
+
+    spells = [catalog.find(name, "XPHB") for name in names]
+
+    assert all(spell.executable for spell in spells)
+    assert all(build_spell(spell.public_name, spell.source, catalog).mechanics for spell in spells)
+    assert catalog.find("Blight", "XPHB").implementation.status == "partial"
+    assert catalog.find("Sacred Flame", "XPHB").implementation.status == "complete"
 
 
 def test_spell_catalog_and_translation_use_srd_public_name() -> None:

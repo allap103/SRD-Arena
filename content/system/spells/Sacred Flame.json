@@ -64,5 +64,10 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {"type": "creature", "line_of_sight": true},
+    "resolution": {"type": "saving_throw", "ability": "dex", "failure": {"effects": [{"type": "damage", "dice": "1d8", "damage_type": "radiant"}]}}
+  }
 }

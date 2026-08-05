@@ -1,9 +1,15 @@
+from collections.abc import Sequence
 import re
 
 from srd_arena.content.catalogs import SpellCatalog
 from srd_arena.content.schemas.spells import SpellSchema
+from srd_arena.content.schemas.action_mechanics import DamageEffectSchema
+from srd_arena.content.schemas.spell_mechanics import (
+    SavingThrowResolutionSchema,
+    SpellAttackResolutionSchema,
+)
 from srd_arena.content.sources import slug
-from srd_arena.domain.spells import Spell
+from srd_arena.domain.spells import ImmediateSpellMechanics, Spell, SpellDamage
 from srd_arena.domain.creatures import CreatureTypeRequirement
 
 
@@ -44,7 +50,108 @@ def build_spell(
             if raw.affects_creature_type
             else ()
         ),
+        mechanics=_immediate_mechanics(raw),
     )
+
+
+def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
+    if raw.mechanics is None:
+        return None
+    target = raw.mechanics.target
+    resolution = raw.mechanics.resolution.root
+    if not isinstance(
+        resolution, (SavingThrowResolutionSchema, SpellAttackResolutionSchema)
+    ):
+        return None
+    outcome = (
+        resolution.failure
+        if isinstance(resolution, SavingThrowResolutionSchema)
+        else resolution.hit
+    )
+    damage = tuple(
+        SpellDamage(effect.root.dice, effect.root.damage_type)
+        for effect in outcome.effects
+        if isinstance(effect.root, DamageEffectSchema)
+    )
+    geometry = target.geometry if target.type == "area" else None
+    return ImmediateSpellMechanics(
+        resolution=resolution.type,
+        target=target.type,
+        damage=damage,
+        save_ability=(
+            _normalize_save_ability(resolution.ability)
+            if isinstance(resolution, SavingThrowResolutionSchema)
+            and resolution.ability is not None
+            else raw.saving_throw[0] if raw.saving_throw else None
+        ),
+        attack_mode=(
+            resolution.mode if isinstance(resolution, SpellAttackResolutionSchema) else None
+        ),
+        half_damage_on_save=(
+            isinstance(resolution, SavingThrowResolutionSchema)
+            and resolution.success_damage == "half"
+        ),
+        area_shape=geometry.shape if geometry is not None else None,
+        area_radius_feet=geometry.radius_feet if geometry is not None else None,
+        area_length_feet=geometry.length_feet if geometry is not None else None,
+        area_width_feet=geometry.width_feet if geometry is not None else None,
+        area_height_feet=geometry.height_feet if geometry is not None else None,
+        automatic_failure_creature_types=(
+            _creature_types_from_requirements(resolution.automatic_failure)
+            if isinstance(resolution, SavingThrowResolutionSchema)
+            else ()
+        ),
+        disadvantage_creature_types=(
+            tuple(
+                creature_type
+                for modifier in resolution.save_modifiers
+                if modifier.mode == "disadvantage"
+                for creature_type in _creature_types_from_requirements(
+                    modifier.requirements
+                )
+            )
+            if isinstance(resolution, SavingThrowResolutionSchema)
+            else ()
+        ),
+        cantrip_damage_by_level=_cantrip_damage_by_level(raw),
+        slot_damage_increment=_slot_damage_increment(raw),
+    )
+
+
+def _creature_types_from_requirements(
+    requirements: Sequence[object],
+) -> tuple[str, ...]:
+    return tuple(
+        creature_type
+        for requirement in requirements
+        if getattr(requirement, "type", None) == "creature_type"
+        for creature_type in getattr(requirement, "creature_types", ())
+    )
+
+
+def _cantrip_damage_by_level(raw: SpellSchema) -> tuple[tuple[int, str], ...]:
+    scaling_data = (raw.model_extra or {}).get("scalingLevelDice")
+    if not isinstance(scaling_data, dict):
+        return ()
+    scaling = scaling_data.get("scaling")
+    if not isinstance(scaling, dict):
+        return ()
+    return tuple(
+        sorted(
+            (int(level), dice)
+            for level, dice in scaling.items()
+            if isinstance(level, str) and level.isdigit() and isinstance(dice, str)
+        )
+    )
+
+
+def _slot_damage_increment(raw: SpellSchema) -> str | None:
+    assert raw.mechanics is not None
+    for scaling in raw.mechanics.scaling:
+        for increment in scaling.per_level:
+            if increment.type == "damage_dice" and isinstance(increment.amount, str):
+                return increment.amount
+    return None
 
 
 def _find_spell(
@@ -96,6 +203,12 @@ def _spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
 
 
 def _spell_geometry_mode(raw: SpellSchema) -> str:
+    if raw.mechanics is not None and raw.mechanics.target.type == "area":
+        return (
+            "directional_area"
+            if raw.mechanics.target.origin == "self"
+            else "point_area"
+        )
     range_type = (
         raw.range.get("type")
         if isinstance(raw.range.get("type"), str)
@@ -113,6 +226,9 @@ def _spell_geometry_mode(raw: SpellSchema) -> str:
 
 
 def _spell_area_size_feet(raw: SpellSchema) -> int | None:
+    if raw.mechanics is not None and raw.mechanics.target.type == "area":
+        geometry = raw.mechanics.target.geometry
+        return geometry.radius_feet or geometry.length_feet
     text_parts = [entry for entry in raw.entries if isinstance(entry, str)]
     if not text_parts:
         return None

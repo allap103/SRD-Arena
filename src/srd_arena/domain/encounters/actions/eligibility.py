@@ -13,7 +13,7 @@ from ...creatures import (
 )
 from ...effects.conditions import CombatTrait, Condition
 from ...geometry import Position, grid_distance_between
-from ...spells.rules import parse_spell_action_value
+from ...spells.rules import parse_spell_action_slot, parse_spell_action_value
 from ..behaviors import DIRECTION_DELTAS
 from ..models import CreatureRef, EncounterAction
 from .attack_resolution import attack_range_squares, has_free_hand
@@ -450,6 +450,7 @@ class SpellActionRule:
             actor.spellcasting,
             spell,
             action.cost,
+            parse_spell_action_slot(action.value),
         )
         if reason is not None:
             return EligibilityFailure("spell_blocked", reason)
