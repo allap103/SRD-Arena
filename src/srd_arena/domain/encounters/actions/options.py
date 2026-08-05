@@ -243,7 +243,15 @@ def spell_target_selection_actions(
                 cost=pending.action.cost,
             )
         )
-    return actions
+    return [
+        action
+        for action in actions
+        if state.combat_rules.action_eligibility(
+            state,
+            creature_ref,
+            action,
+        ).allowed
+    ]
 
 
 def feature_action_available(self: EncounterState, actor: Creature, definition) -> bool:

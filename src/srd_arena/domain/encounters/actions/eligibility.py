@@ -485,6 +485,100 @@ class SpellActionRule:
         return None
 
 
+class SpellTargetSelectionRule:
+    def check(
+        self,
+        state: EncounterState,
+        actor_ref: CreatureRef,
+        action: EncounterAction,
+    ) -> EligibilityFailure | None:
+        if action.kind not in {
+            "toggle_spell_target",
+            "confirm_spell_targets",
+        }:
+            return None
+        pending = state.pending_spell_cast
+        if pending is None:
+            return EligibilityFailure(
+                "spell_selection_unavailable",
+                "No spell target selection is active.",
+            )
+        actor = state.creatures[actor_ref].creature
+        spell = (
+            next(
+                (
+                    known
+                    for known in actor.spellcasting.learned_spells
+                    if known.id == pending.spell_id
+                ),
+                None,
+            )
+            if actor.spellcasting is not None
+            else None
+        )
+        if spell is None:
+            return EligibilityFailure(
+                "spell_unavailable",
+                "The staged spell is no longer available.",
+            )
+        _pending_spell_id, _pending_target, aim_point = parse_spell_action_value(
+            str(pending.action.value)
+        )
+        candidate_refs = {
+            target.target_ref
+            for target in (
+                state._spell_area_targets(actor, spell, aim_point=aim_point)
+                if spell.mechanics is not None
+                and spell.mechanics.choose_area_targets
+                else tuple(state._spell_action_targets(actor, spell))
+            )
+        }
+        if action.kind == "toggle_spell_target":
+            if not isinstance(action.value, str):
+                return EligibilityFailure(
+                    "target_required",
+                    "A creature target is required.",
+                )
+            if action.value in pending.selected_target_refs:
+                return None
+            if len(pending.selected_target_refs) >= pending.maximum_targets:
+                return EligibilityFailure(
+                    "target_limit_reached",
+                    "The spell's target limit has been reached.",
+                )
+            if action.value not in candidate_refs:
+                return EligibilityFailure(
+                    "target_unavailable",
+                    "The target is not available for this spell.",
+                )
+            return _target_requirement_failure(
+                state,
+                actor_ref,
+                action.value,
+                spell.target_requirements,
+            )
+        if not pending.selected_target_refs:
+            return EligibilityFailure(
+                "target_required",
+                "Select at least one spell target.",
+            )
+        for target_ref in pending.selected_target_refs:
+            if target_ref not in candidate_refs:
+                return EligibilityFailure(
+                    "target_unavailable",
+                    "A selected target is no longer available for this spell.",
+                )
+            failure = _target_requirement_failure(
+                state,
+                actor_ref,
+                target_ref,
+                spell.target_requirements,
+            )
+            if failure is not None:
+                return failure
+        return None
+
+
 ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
     ActorOwnershipRule(),
     ActorReadyRule(),
@@ -494,6 +588,7 @@ ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
     GrappleRule(),
     StatBlockActionRule(),
     FeatureActionRule(),
+    SpellTargetSelectionRule(),
     SpellActionRule(),
 )
 

@@ -2339,6 +2339,15 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
             state.active_position.x + offset,
             state.active_position.y,
         )
+    invalid_target = state.creatures["goblin_3"]
+    invalid_target.creature.statistics = replace(
+        invalid_target.creature.statistics,
+        creature_type="construct",
+    )
+    invalid_target.position = Position(
+        state.active_position.x + 3,
+        state.active_position.y,
+    )
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
     )
@@ -2355,6 +2364,21 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
     assert opened.paused_for_decision
     assert state.current_decision().kind == "spell_targets"
     assert caster.spellcasting.spell_slots_remaining[3] == 1
+    assert not any(
+        action.kind == "toggle_spell_target"
+        and action.value == "goblin_3"
+        for action in state.available_actions()
+    )
+    with pytest.raises(ValueError, match="creature types: humanoid"):
+        state.apply_action(
+            EncounterAction(
+                "Add invalid target",
+                "toggle_spell_target",
+                "goblin_3",
+                id="crafted-invalid-spell-target",
+                creature_ref="player",
+            )
+        )
     add_second = next(
         action
         for action in state.available_actions()
