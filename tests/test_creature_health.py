@@ -182,6 +182,29 @@ def test_sourced_condition_immunity_does_not_remove_static_immunity() -> None:
     assert Condition.FRIGHTENED not in creature.condition_immunities()
 
 
+def test_sourced_senses_extend_static_senses_and_bypass_blur() -> None:
+    attacker = make_creature()
+    defender = make_creature()
+    defender.set_roll_modifiers(
+        "blur",
+        "cast",
+        (
+            RollModifier(
+                roll="attack_roll",
+                mode="disadvantage",
+                subject="attacks_against_target",
+                ignored_by_senses=("blindsight", "truesight"),
+            ),
+        ),
+    )
+
+    assert defender.incoming_attack_roll_mode(attacker) == "disadvantage"
+
+    attacker.set_senses("true_seeing", "cast", (("truesight", 120),))
+    assert attacker.sense_range("truesight") == 120
+    assert defender.incoming_attack_roll_mode(attacker) == "normal"
+
+
 def test_same_definition_maximum_health_modifiers_do_not_stack() -> None:
     creature = make_creature()
     base_maximum = creature.get_max_health()

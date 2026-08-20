@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import re
 
 from .equipment import Equipment
 from .inventory import Inventory
@@ -56,6 +57,9 @@ class Creature:
         default_factory=dict
     )
     condition_immunity_sources: dict[str, dict[str, frozenset[Condition]]] = field(
+        default_factory=dict
+    )
+    sense_sources: dict[str, dict[str, tuple[tuple[str, int], ...]]] = field(
         default_factory=dict
     )
 
@@ -251,6 +255,43 @@ class Creature:
         if not sources:
             self.condition_immunity_sources.pop(definition_id, None)
 
+    def set_senses(
+        self,
+        definition_id: str,
+        origin_id: str,
+        senses: tuple[tuple[str, int], ...],
+    ) -> None:
+        self.sense_sources.setdefault(definition_id, {})[origin_id] = senses
+
+    def remove_senses(self, definition_id: str, origin_id: str) -> None:
+        sources = self.sense_sources.get(definition_id)
+        if sources is None:
+            return
+        sources.pop(origin_id, None)
+        if not sources:
+            self.sense_sources.pop(definition_id, None)
+
+    def sense_range(self, sense: str) -> int | None:
+        normalized = sense.casefold()
+        ranges = [
+            feet
+            for sources in self.sense_sources.values()
+            for granted in sources.values()
+            for kind, feet in granted
+            if kind == normalized
+        ]
+        for entry in self.statistics.senses:
+            match = re.match(
+                rf"^{re.escape(normalized)}\s+(\d+)\s*ft\.?$",
+                entry.casefold().strip(),
+            )
+            if match:
+                ranges.append(int(match.group(1)))
+        return max(ranges) if ranges else None
+
+    def has_sense(self, sense: str) -> bool:
+        return self.sense_range(sense) is not None
+
     def set_roll_modifiers(
         self,
         definition_id: str,
@@ -289,7 +330,9 @@ class Creature:
             )
         )
 
-    def incoming_attack_roll_mode(self) -> D20RollMode:
+    def incoming_attack_roll_mode(
+        self, attacker: "Creature | None" = None
+    ) -> D20RollMode:
         return combine_roll_modes(
             *(
                 modifier.roll_mode
@@ -299,6 +342,13 @@ class Creature:
                 if modifier.roll == "attack_roll"
                 and modifier.subject == "attacks_against_target"
                 and modifier.roll_mode is not None
+                and not (
+                    attacker is not None
+                    and any(
+                        attacker.has_sense(sense)
+                        for sense in modifier.ignored_by_senses
+                    )
+                )
             )
         )
 

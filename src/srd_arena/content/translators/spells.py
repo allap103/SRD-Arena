@@ -24,6 +24,7 @@ from srd_arena.content.schemas.spell_mechanics import (
     RepeatResolutionSchema,
     RemoveEffectSchema,
     SavingThrowResolutionSchema,
+    SenseEffectSchema,
     SpeedModifierEffectSchema,
     SequenceResolutionSchema,
     SlotScalingSchema,
@@ -205,6 +206,11 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         if isinstance(effect.root, ConditionImmunityEffectSchema)
         for condition in effect.root.conditions
     )
+    senses = tuple(
+        (effect.root.sense, effect.root.range_feet)
+        for effect in outcome.effects
+        if isinstance(effect.root, SenseEffectSchema)
+    )
     roll_modifiers = tuple(
         RollModifier(
             roll=cast(RollKind, roll),
@@ -212,6 +218,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             dice=effect.root.dice,
             value=effect.root.value,
             subject=cast(ModifierSubject, effect.root.subject),
+            ignored_by_senses=tuple(effect.root.ignored_by_senses),
         )
         for effect in outcome.effects
         if isinstance(effect.root, RollModifierEffectSchema)
@@ -367,6 +374,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             damage_reduction.dice if damage_reduction is not None else None
         ),
         condition_immunities=condition_immunities,
+        senses=senses,
     )
 
 

@@ -120,6 +120,11 @@ def start_ongoing_effect(
                 dice=cast(str | None, value.get("dice")),
                 value=cast(int | None, value.get("value")),
                 subject=cast(ModifierSubject, value.get("subject", "target")),
+                ignored_by_senses=tuple(
+                    sense
+                    for sense in value.get("ignored_by_senses", [])
+                    if isinstance(sense, str)
+                ),
             )
             for value in roll_modifiers
             if isinstance(value, dict)
@@ -165,6 +170,20 @@ def start_ongoing_effect(
         for target_ref in effect.target_refs:
             state.creatures[target_ref].creature.set_condition_immunities(
                 definition_id, origin_id, parsed_immunities
+            )
+    senses = effect.parameters.get("senses", [])
+    if isinstance(senses, list):
+        parsed_senses = tuple(
+            (value[0], value[1])
+            for value in senses
+            if isinstance(value, list)
+            and len(value) == 2
+            and isinstance(value[0], str)
+            and isinstance(value[1], int)
+        )
+        for target_ref in effect.target_refs:
+            state.creatures[target_ref].creature.set_senses(
+                definition_id, origin_id, parsed_senses
             )
     return effect
 
@@ -540,6 +559,9 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
         state.creatures[target_ref].creature.remove_condition_immunities(
             effect.identity.source.definition_id, origin_id
         )
+        state.creatures[target_ref].creature.remove_senses(
+            effect.identity.source.definition_id, origin_id
+        )
     state.ongoing_effects = [
         existing
         for existing in state.ongoing_effects
@@ -573,6 +595,10 @@ def _remove_effect_target(
         effect.identity.source.origin_id,
     )
     state.creatures[target_ref].creature.remove_condition_immunities(
+        effect.identity.source.definition_id,
+        effect.identity.source.origin_id,
+    )
+    state.creatures[target_ref].creature.remove_senses(
         effect.identity.source.definition_id,
         effect.identity.source.origin_id,
     )

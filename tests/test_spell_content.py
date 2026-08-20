@@ -241,6 +241,23 @@ def test_shield_of_faith_translates_sourced_armor_class() -> None:
     assert spell.mechanics.duration_rounds == 100
 
 
+def test_sense_spells_and_blur_translate_directional_perception() -> None:
+    catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    darkvision = build_spell("Darkvision", "XPHB", catalog)
+    true_seeing = build_spell("True Seeing", "XPHB", catalog)
+    blur = build_spell("Blur", "XPHB", catalog)
+
+    assert darkvision.mechanics is not None
+    assert darkvision.mechanics.senses == (("darkvision", 150),)
+    assert true_seeing.mechanics is not None
+    assert true_seeing.mechanics.senses == (("truesight", 120),)
+    assert blur.mechanics is not None
+    defensive = blur.mechanics.roll_modifiers[0]
+    assert defensive.subject == "attacks_against_target"
+    assert defensive.mode == "disadvantage"
+    assert defensive.ignored_by_senses == ("blindsight", "truesight")
+
+
 def test_speed_spells_translate_additive_modifiers() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     longstrider = build_spell("Longstrider", "XPHB", catalog)
@@ -281,6 +298,20 @@ def test_heroism_translates_immunity_and_turn_start_temporary_hp() -> None:
     assert spell.mechanics.temporary_hit_points[0].trigger == "target_turn_start"
     assert spell.mechanics.temporary_hit_points[0].add_spellcasting_modifier
     assert spell.mechanics.slot_target_increment == 1
+
+
+def test_stoneskin_translates_multiple_damage_resistances() -> None:
+    spell = build_spell("Stoneskin", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+
+    assert spell.mechanics is not None
+    assert spell.mechanics.damage_resistances == (
+        "bludgeoning",
+        "piercing",
+        "slashing",
+    )
+    assert not spell.mechanics.damage_resistance_choice
+    assert spell.mechanics.concentration
+    assert spell.mechanics.duration_rounds == 600
 
 
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:

@@ -402,6 +402,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 for temporary in mechanics.temporary_hit_points
             )
             or mechanics.condition_immunities
+            or mechanics.senses
         )
         and (
             mechanics.duration_rounds is not None
@@ -459,6 +460,9 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                                 "dice": modifier.dice,
                                 "value": modifier.value,
                                 "subject": modifier.subject,
+                                "ignored_by_senses": list(
+                                    modifier.ignored_by_senses
+                                ),
                             }
                             for modifier in mechanics.roll_modifiers
                         ],
@@ -480,6 +484,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                             0,
                         ),
                         "condition_immunities": list(mechanics.condition_immunities),
+                        "senses": [list(sense) for sense in mechanics.senses],
                     },
                 },
             )

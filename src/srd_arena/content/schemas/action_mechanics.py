@@ -207,6 +207,9 @@ class RollModifierEffectSchema(ActionMechanicsSchemaModel):
     ]
     mode: Literal["advantage", "disadvantage", "add", "subtract"]
     subject: Literal["target", "attacks_against_target"] = "target"
+    ignored_by_senses: list[
+        Literal["blindsight", "darkvision", "truesight"]
+    ] = Field(default_factory=list)
     ability: Ability | None = None
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     value: int | None = None

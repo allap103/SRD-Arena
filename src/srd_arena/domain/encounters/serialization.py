@@ -141,6 +141,11 @@ def _export_creature(
             "saving_throw_bonuses": dict(creature.statistics.saving_throw_bonuses),
             "skill_bonuses": dict(creature.statistics.skill_bonuses),
             "senses": list(creature.statistics.senses),
+            "effective_senses": {
+                sense: distance
+                for sense in ("blindsight", "darkvision", "truesight")
+                if (distance := creature.sense_range(sense)) is not None
+            },
             "passive_perception": creature.statistics.passive_perception,
             "languages": list(creature.statistics.languages),
         },

@@ -38,5 +38,12 @@
   ],
   "entries": [
     "For the duration, the willing creature you touch has {@sense Truesight|XPHB} with a range of 120 feet."
-  ]
+  ],
+  "implementation": {"status": "partial", "omissions": [{"mechanic": "special truesight perception", "reason": "Illusions, transformations, and Ethereal-plane perception are not modeled yet."}]},
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "willing"},
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {"type": "sense", "sense": "truesight", "range_feet": 120}
+    ]}}
+  }
 }

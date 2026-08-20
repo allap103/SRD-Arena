@@ -455,6 +455,13 @@ class ConditionImmunityEffectSchema(SpellMechanicsSchemaModel):
     duration: EffectDurationSchema | None = None
 
 
+class SenseEffectSchema(SpellMechanicsSchemaModel):
+    type: Literal["sense"]
+    sense: Literal["blindsight", "darkvision", "truesight"]
+    range_feet: PositiveInt
+    duration: EffectDurationSchema | None = None
+
+
 class HitPointMaximumModifierEffectSchema(SpellMechanicsSchemaModel):
     type: Literal["hit_point_maximum_modifier"]
     value: int
@@ -738,6 +745,7 @@ OngoingModifierSchema = Annotated[
     | ConditionSaveAdvantageEffectSchema
     | DamageImmunityEffectSchema
     | ConditionImmunityEffectSchema
+    | SenseEffectSchema
     | MovementModeEffectSchema
     | ExtraActionEffectSchema,
     Field(discriminator="type"),
@@ -766,6 +774,7 @@ class SpellEffectSchema(
             | ConditionSaveAdvantageEffectSchema
             | DamageImmunityEffectSchema
             | ConditionImmunityEffectSchema
+            | SenseEffectSchema
             | HitPointMaximumModifierEffectSchema
             | TeleportEffectSchema
             | ObscurementEffectSchema

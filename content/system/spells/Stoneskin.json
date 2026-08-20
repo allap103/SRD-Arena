@@ -47,5 +47,15 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "willing"},
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {
+        "type": "damage_resistance",
+        "damage_types": ["bludgeoning", "piercing", "slashing"]
+      }
+    ]}}
+  }
 }
