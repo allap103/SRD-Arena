@@ -375,6 +375,13 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             if context.selected_damage_type in mechanics.damage_resistances
             else mechanics.damage_resistances[:1]
         )
+    selected_damage_reduction_type = None
+    if mechanics.damage_reduction_types:
+        selected_damage_reduction_type = (
+            context.selected_damage_type
+            if context.selected_damage_type in mechanics.damage_reduction_types
+            else mechanics.damage_reduction_types[0]
+        )
     if (
         affected_targets
         and (
@@ -385,6 +392,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             or mechanics.roll_modifiers
             or mechanics.armor_class_modifier
             or mechanics.speed_modifier_feet
+            or selected_damage_reduction_type is not None
         )
         and (
             mechanics.duration_rounds is not None
@@ -447,6 +455,8 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         ],
                         "armor_class_modifier": mechanics.armor_class_modifier,
                         "speed_modifier_feet": mechanics.speed_modifier_feet,
+                        "damage_reduction_type": selected_damage_reduction_type,
+                        "damage_reduction_dice": mechanics.damage_reduction_dice,
                     },
                 },
             )

@@ -419,6 +419,16 @@ class DamageResistanceEffectSchema(SpellMechanicsSchemaModel):
     duration: EffectDurationSchema | None = None
 
 
+class DamageReductionEffectSchema(SpellMechanicsSchemaModel):
+    type: Literal["damage_reduction"]
+    damage_types: list[str] = Field(min_length=1)
+    selection: Literal["all", "choose_one"] = "all"
+    dice: str = Field(pattern=r"^\d+d\d+$")
+    limit: PositiveInt = 1
+    period: Literal["turn"] = "turn"
+    duration: EffectDurationSchema | None = None
+
+
 class SpeedModifierEffectSchema(SpellMechanicsSchemaModel):
     type: Literal["speed_modifier"]
     feet: int
@@ -722,6 +732,7 @@ OngoingModifierSchema = Annotated[
     | AttackLimitEffectSchema
     | ActionFailureChanceEffectSchema
     | DamageResistanceEffectSchema
+    | DamageReductionEffectSchema
     | SpeedModifierEffectSchema
     | ConditionSaveAdvantageEffectSchema
     | DamageImmunityEffectSchema
@@ -749,6 +760,7 @@ class SpellEffectSchema(
             | ActionFailureChanceEffectSchema
             | RemoveEffectSchema
             | DamageResistanceEffectSchema
+            | DamageReductionEffectSchema
             | SpeedModifierEffectSchema
             | ConditionSaveAdvantageEffectSchema
             | DamageImmunityEffectSchema

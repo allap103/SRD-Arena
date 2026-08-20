@@ -30,3 +30,17 @@ class RollModifier:
         if self.mode in {"advantage", "disadvantage"}:
             return cast(D20RollMode, self.mode)
         return None
+
+
+@dataclass
+class DamageReduction:
+    damage_type: str
+    dice: str
+    available: bool = True
+
+    def resolve(self, roller: DieRoller) -> int:
+        if not self.available:
+            return 0
+        count_text, sides_text = self.dice.casefold().split("d", 1)
+        self.available = False
+        return sum(roller(int(sides_text)) for _ in range(int(count_text)))

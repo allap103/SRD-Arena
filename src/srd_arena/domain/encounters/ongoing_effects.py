@@ -4,7 +4,13 @@ from dataclasses import replace
 from typing import TYPE_CHECKING, cast
 
 from ..effects.results import EffectResult
-from ..effects.modifiers import ModifierMode, ModifierSubject, RollKind, RollModifier
+from ..effects.modifiers import (
+    DamageReduction,
+    ModifierMode,
+    ModifierSubject,
+    RollKind,
+    RollModifier,
+)
 from ..effects.runtime import (
     EffectSource,
     EffectSourceKind,
@@ -135,6 +141,20 @@ def start_ongoing_effect(
         for target_ref in effect.target_refs:
             _set_speed_modifier(
                 state, target_ref, definition_id, origin_id, speed_modifier
+            )
+    damage_reduction_type = effect.parameters.get("damage_reduction_type")
+    damage_reduction_dice = effect.parameters.get("damage_reduction_dice")
+    if isinstance(damage_reduction_type, str) and isinstance(
+        damage_reduction_dice, str
+    ):
+        for target_ref in effect.target_refs:
+            state.creatures[target_ref].creature.set_damage_reduction(
+                definition_id,
+                origin_id,
+                DamageReduction(
+                    damage_type=damage_reduction_type.casefold(),
+                    dice=damage_reduction_dice,
+                ),
             )
     return effect
 
@@ -496,6 +516,9 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
             effect.identity.source.definition_id, origin_id
         )
         _remove_speed_modifier(state, effect, target_ref)
+        state.creatures[target_ref].creature.remove_damage_reduction(
+            effect.identity.source.definition_id, origin_id
+        )
     state.ongoing_effects = [
         existing
         for existing in state.ongoing_effects
@@ -524,6 +547,10 @@ def _remove_effect_target(
         effect.identity.source.origin_id,
     )
     _remove_speed_modifier(state, effect, target_ref)
+    state.creatures[target_ref].creature.remove_damage_reduction(
+        effect.identity.source.definition_id,
+        effect.identity.source.origin_id,
+    )
     remaining_targets = tuple(
         existing for existing in effect.target_refs if existing != target_ref
     )

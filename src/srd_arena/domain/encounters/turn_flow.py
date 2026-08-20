@@ -214,6 +214,8 @@ class TurnEngine:
             state.turn_index = 0
             state.round.advance()
         self.normalize_turn(state)
+        for candidate in state.creatures.values():
+            candidate.creature.reset_per_turn_modifiers()
         creature_ref = state.initiative_order[state.turn_index]
         expire_ongoing_effects_for_turn_start(state, creature_ref)
         self.expire_conditions_for_turn_start(

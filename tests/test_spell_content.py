@@ -261,6 +261,18 @@ def test_speed_spells_translate_additive_modifiers() -> None:
     )
 
 
+def test_resistance_translates_typed_per_turn_damage_reduction() -> None:
+    spell = build_spell("Resistance", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+
+    assert spell.mechanics is not None
+    assert spell.mechanics.damage_reduction_choice
+    assert spell.mechanics.damage_reduction_dice == "1d4"
+    assert "fire" in spell.mechanics.damage_reduction_types
+    assert "force" not in spell.mechanics.damage_reduction_types
+    assert spell.mechanics.concentration
+    assert spell.mechanics.duration_rounds == 10
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

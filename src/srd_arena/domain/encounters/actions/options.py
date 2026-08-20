@@ -110,9 +110,16 @@ def available_spell_actions(
                 else (None,)
             )
             damage_type_selections: tuple[str | None, ...] = (
-                spell.mechanics.damage_resistances
+                (
+                    spell.mechanics.damage_resistances
+                    if spell.mechanics.damage_resistance_choice
+                    else spell.mechanics.damage_reduction_types
+                )
                 if spell.mechanics is not None
-                and spell.mechanics.damage_resistance_choice
+                and (
+                    spell.mechanics.damage_resistance_choice
+                    or spell.mechanics.damage_reduction_choice
+                )
                 else (None,)
             )
             for selection in selections:

@@ -2,7 +2,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from tests.helpers import make_creature
-from srd_arena.domain.effects.modifiers import RollModifier
+from srd_arena.domain.effects.modifiers import DamageReduction, RollModifier
 from srd_arena.domain.encounters.actions.attack_resolution import resolve_attack
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 
@@ -151,6 +151,22 @@ def test_sourced_speed_modifiers_stack_by_definition() -> None:
 
     creature.remove_speed_modifier("ray_of_frost", "ray")
     assert creature.effective_speed_feet() == base + 10
+
+
+def test_damage_reduction_is_used_once_per_turn_before_resistance() -> None:
+    creature = make_creature()
+    creature.set_damage_reduction(
+        "resistance",
+        "cast",
+        DamageReduction(damage_type="fire", dice="1d4"),
+    )
+    creature.add_damage_resistance("fire", "another-effect")
+
+    assert creature.take_damage(10, "fire", roller=lambda _sides: 4) == 3
+    assert creature.take_damage(10, "fire", roller=lambda _sides: 4) == 5
+
+    creature.reset_per_turn_modifiers()
+    assert creature.take_damage(10, "fire", roller=lambda _sides: 2) == 4
 
 
 def test_same_definition_maximum_health_modifiers_do_not_stack() -> None:

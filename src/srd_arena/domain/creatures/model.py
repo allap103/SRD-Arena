@@ -7,8 +7,8 @@ from .classes import ClassRef, SubclassRef
 from .class_features import ClassFeature
 from .combat_profile import CombatProfile
 from ..effects.triggered import TriggeredEffect
-from ..effects.modifiers import RollKind, RollModifier
-from ..rolls.dice import D20RollMode, DieRoller, combine_roll_modes
+from ..effects.modifiers import DamageReduction, RollKind, RollModifier
+from ..rolls.dice import D20RollMode, DieRoller, combine_roll_modes, roll_die
 from .multiattack import Multiattack
 from .spellcasting import Spellcasting
 from .statistics import CreatureStatistics
@@ -51,6 +51,9 @@ class Creature:
         default_factory=dict
     )
     speed_modifier_sources: dict[str, dict[str, int]] = field(default_factory=dict)
+    damage_reduction_sources: dict[str, dict[str, DamageReduction]] = field(
+        default_factory=dict
+    )
 
     def __post_init__(self):
         if self.current_health is None:
@@ -147,7 +150,18 @@ class Creature:
     def get_health(self) -> int:
         return self.current_health or 0
 
-    def take_damage(self, amount: int, damage_type: str | None = None) -> int:
+    def take_damage(
+        self,
+        amount: int,
+        damage_type: str | None = None,
+        *,
+        roller: DieRoller = roll_die,
+    ) -> int:
+        if damage_type is not None:
+            amount = max(
+                0,
+                amount - self.resolve_damage_reduction(damage_type, roller),
+            )
         if damage_type is not None and self.has_damage_resistance(damage_type):
             amount //= 2
         applied_damage = min(
@@ -175,6 +189,37 @@ class Creature:
         sources.discard(origin_id)
         if not sources:
             self.damage_resistance_sources.pop(damage_type.casefold(), None)
+
+    def set_damage_reduction(
+        self,
+        definition_id: str,
+        origin_id: str,
+        reduction: DamageReduction,
+    ) -> None:
+        self.damage_reduction_sources.setdefault(definition_id, {})[origin_id] = (
+            reduction
+        )
+
+    def remove_damage_reduction(self, definition_id: str, origin_id: str) -> None:
+        sources = self.damage_reduction_sources.get(definition_id)
+        if sources is None:
+            return
+        sources.pop(origin_id, None)
+        if not sources:
+            self.damage_reduction_sources.pop(definition_id, None)
+
+    def resolve_damage_reduction(self, damage_type: str, roller: DieRoller) -> int:
+        return sum(
+            reduction.resolve(roller)
+            for sources in self.damage_reduction_sources.values()
+            for reduction in tuple(sources.values())[:1]
+            if reduction.damage_type == damage_type.casefold()
+        )
+
+    def reset_per_turn_modifiers(self) -> None:
+        for sources in self.damage_reduction_sources.values():
+            for reduction in sources.values():
+                reduction.available = True
 
     def set_roll_modifiers(
         self,

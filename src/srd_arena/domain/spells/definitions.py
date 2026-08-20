@@ -99,6 +99,9 @@ class ImmediateSpellMechanics:
     armor_class_modifier: int = 0
     speed_modifier_feet: int = 0
     speed_modifier_duration_rounds: int | None = None
+    damage_reduction_types: tuple[str, ...] = ()
+    damage_reduction_choice: bool = False
+    damage_reduction_dice: str | None = None
 
     @property
     def healing_pool(self) -> int | None:

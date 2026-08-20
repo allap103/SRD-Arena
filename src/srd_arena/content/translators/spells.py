@@ -19,6 +19,7 @@ from srd_arena.content.schemas.spell_mechanics import (
     HealingEffectSchema,
     HitPointMaximumModifierEffectSchema,
     DamageResistanceEffectSchema,
+    DamageReductionEffectSchema,
     RepeatResolutionSchema,
     RemoveEffectSchema,
     SavingThrowResolutionSchema,
@@ -182,6 +183,14 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         and effect.root.selection == "choose_one"
         for effect in outcome.effects
     )
+    damage_reduction = next(
+        (
+            effect.root
+            for effect in outcome.effects
+            if isinstance(effect.root, DamageReductionEffectSchema)
+        ),
+        None,
+    )
     condition_save_advantages = tuple(
         condition
         for effect in outcome.effects
@@ -339,6 +348,15 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             _effect_duration_rounds(speed_modifier.duration)
             if speed_modifier is not None
             else None
+        ),
+        damage_reduction_types=(
+            tuple(damage_reduction.damage_types) if damage_reduction is not None else ()
+        ),
+        damage_reduction_choice=(
+            damage_reduction is not None and damage_reduction.selection == "choose_one"
+        ),
+        damage_reduction_dice=(
+            damage_reduction.dice if damage_reduction is not None else None
         ),
     )
 

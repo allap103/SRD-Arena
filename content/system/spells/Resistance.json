@@ -37,5 +37,22 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "willing"},
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {
+        "type": "damage_reduction",
+        "damage_types": [
+          "acid", "bludgeoning", "cold", "fire", "lightning", "necrotic",
+          "piercing", "poison", "radiant", "slashing", "thunder"
+        ],
+        "selection": "choose_one",
+        "dice": "1d4",
+        "limit": 1,
+        "period": "turn"
+      }
+    ]}}
+  }
 }
