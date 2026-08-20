@@ -54,6 +54,7 @@ class SpellActionContext:
     area_targets_around: (
         Callable[[str, int], tuple[SpellTargetContext, ...]] | None
     ) = None
+    healing_allocations: dict[str, int] = field(default_factory=dict)
 
 
 def resolve_spell_action(
@@ -121,6 +122,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             _roll_optional_dice(dice, context.roller),
         )
         for healing in mechanics.healing
+        if healing.pool is None
         for dice in (
             _scale_dice(
                 healing.dice,
@@ -279,6 +281,21 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         applied=applied,
                     )
                 )
+            for healing in mechanics.healing:
+                if healing.pool is None:
+                    continue
+                allocated = context.healing_allocations.get(target.target_ref, 0)
+                applied = target.creature.heal(allocated)
+                detail = _restoration_detail(
+                    target,
+                    dice=None,
+                    roll=None,
+                    modifier=0,
+                    total=allocated,
+                    applied=applied,
+                )
+                detail["allocated"] = allocated
+                healing_details.append(detail)
             for temporary in mechanics.temporary_hit_points:
                 temporary_roll = _roll_optional_dice(temporary.dice, context.roller)
                 modifier = temporary.value + (

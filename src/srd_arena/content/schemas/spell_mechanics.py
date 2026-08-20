@@ -347,6 +347,7 @@ class HealingEffectSchema(SpellMechanicsSchemaModel):
     modifier: Literal["none", "spellcasting_ability"] = "none"
     from_damage: Literal["none", "half_damage_dealt", "all_damage_dealt"] = "none"
     restore_to_maximum: bool = False
+    pool: PositiveInt | None = None
 
     @model_validator(mode="after")
     def validate_healing_source(self) -> "HealingEffectSchema":
@@ -356,6 +357,7 @@ class HealingEffectSchema(SpellMechanicsSchemaModel):
             and self.modifier == "none"
             and self.from_damage == "none"
             and not self.restore_to_maximum
+            and self.pool is None
         ):
             raise ValueError("Healing requires a roll, value, modifier, or damage source.")
         return self

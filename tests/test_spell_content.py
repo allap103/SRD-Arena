@@ -135,6 +135,10 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     assert aid.mechanics.maximum_hit_point_modifier == 5
     assert aid.mechanics.also_modify_current_hit_points
     assert aid.mechanics.slot_maximum_hit_point_increment == 5
+    mass_heal = build_spell("Mass Heal", "XPHB", catalog)
+    assert mass_heal.mechanics is not None
+    assert mass_heal.mechanics.healing_pool == 700
+    assert mass_heal.remove_effect_selection == "all"
 
 
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:

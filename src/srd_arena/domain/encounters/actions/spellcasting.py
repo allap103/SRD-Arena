@@ -14,6 +14,7 @@ from ...spells.rules import parse_spell_action_value
 from ...spells.rules import parse_spell_action_targets
 from ...spells.rules import parse_spell_action_condition
 from ...spells.rules import parse_spell_action_slot
+from ...spells.rules import parse_spell_healing_allocations
 from ..ongoing_effects import (
     resolve_concentration_damage,
     resolve_spell_lifecycle_event,
@@ -185,6 +186,7 @@ def resolve_spell_action(
                     ),
                 )
             ),
+            healing_allocations=parse_spell_healing_allocations(spell_value),
         )
     )
     if result is None:

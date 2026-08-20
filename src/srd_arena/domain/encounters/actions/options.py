@@ -232,6 +232,45 @@ def spell_target_selection_actions(
         if spell.mechanics is not None and spell.mechanics.choose_area_targets
         else tuple(state._spell_action_targets(actor, spell))
     )
+    if pending.resource_pool_total is not None:
+        for target in candidates:
+            limit = pending.resource_allocation_limits.get(target.target_ref)
+            if limit is None:
+                continue
+            current = pending.resource_allocations.get(target.target_ref, 0)
+            actions.append(
+                EncounterAction(
+                    f"Allocate healing to {target.target_label}",
+                    "set_spell_resource_allocation",
+                    f"{target.target_ref}~{current}",
+                    id=(
+                        f"{creature_ref}-spell-allocation-"
+                        f"{target.target_ref.replace(':', '-')}"
+                    ),
+                    creature_ref=creature_ref,
+                    source_trigger_id=pending.spell_id,
+                )
+            )
+        allocated = sum(pending.resource_allocations.values())
+        if allocated > 0:
+            actions.append(
+                EncounterAction(
+                    f"Cast {spell.name} ({allocated}/{pending.resource_pool_total} HP)",
+                    "confirm_spell_targets",
+                    id=f"{creature_ref}-confirm-{spell.id}",
+                    creature_ref=creature_ref,
+                    cost=pending.action.cost,
+                )
+            )
+        actions.append(
+            EncounterAction(
+                f"Cancel {spell.name}",
+                "cancel_spell_targets",
+                id=f"{creature_ref}-cancel-{spell.id}",
+                creature_ref=creature_ref,
+            )
+        )
+        return actions
     for target in candidates:
         if pending.repeat_target_allocations:
             selected_count = pending.selected_target_refs.count(target.target_ref)

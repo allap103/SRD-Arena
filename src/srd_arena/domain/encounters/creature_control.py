@@ -459,7 +459,23 @@ def execute_creature_action(
             and spell.mechanics is not None
             and spell.mechanics.require_full_target_count
         )
+        resource_pool_total = (
+            spell.mechanics.healing_pool
+            if spell is not None and spell.mechanics is not None
+            else None
+        )
         selected_targets = list(parse_spell_action_targets(action.value))
+        resource_allocation_limits: dict[str, int] = {}
+        if resource_pool_total is not None and spell is not None:
+            resource_allocation_limits = {
+                target.target_ref: (
+                    target.creature.get_max_health() - target.creature.get_health()
+                )
+                for target in self._spell_action_targets(enemy.creature, spell)
+                if target.creature.get_health() < target.creature.get_max_health()
+            }
+            selected_targets = []
+            maximum_targets = len(resource_allocation_limits)
         if (
             spell is not None
             and spell.mechanics is not None
@@ -475,7 +491,9 @@ def execute_creature_action(
                 )
             ]
             maximum_targets = len(selected_targets)
-        staged_selection_needed = (maximum_targets > 1 and bool(selected_targets)) or (
+        staged_selection_needed = resource_pool_total is not None or (
+            maximum_targets > 1 and bool(selected_targets)
+        ) or (
             spell is not None
             and spell.mechanics is not None
             and spell.mechanics.choose_area_targets
@@ -491,6 +509,31 @@ def execute_creature_action(
             if repeat_target_allocations:
                 target_ref = selected_targets[0]
                 selected_targets = [target_ref] * maximum_targets
+            elif resource_pool_total is not None:
+                healing_remaining = resource_pool_total
+                allocations: dict[str, int] = {}
+                for target_ref, candidate_limit in resource_allocation_limits.items():
+                    amount = min(candidate_limit, healing_remaining)
+                    if amount > 0:
+                        allocations[target_ref] = amount
+                        healing_remaining -= amount
+                    if healing_remaining == 0:
+                        break
+                automated_payload = spell_action_value(
+                    spell_id,
+                    tuple(allocations),
+                    aim_point=aim_point,
+                    slot_level=parse_spell_action_slot(action.value),
+                    healing_allocations=allocations,
+                )
+                self._resolve_spell_action(
+                    enemy.creature,
+                    automated_payload,
+                    progress,
+                    action_id,
+                )
+                staged_selection_needed = False
+                automated_resolved = True
             elif not spell.mechanics.choose_area_targets:
                 selected_targets = [
                     target.target_ref
@@ -499,21 +542,22 @@ def execute_creature_action(
                         spell,
                     )[:maximum_targets]
                 ]
-            automated_payload = spell_action_value(
-                spell_id,
-                tuple(selected_targets),
-                aim_point=aim_point,
-                selected_condition=parse_spell_action_condition(action.value),
-                slot_level=parse_spell_action_slot(action.value),
-            )
-            self._resolve_spell_action(
-                enemy.creature,
-                automated_payload,
-                progress,
-                action_id,
-            )
-            staged_selection_needed = False
-            automated_resolved = True
+            if not automated_resolved:
+                automated_payload = spell_action_value(
+                    spell_id,
+                    tuple(selected_targets),
+                    aim_point=aim_point,
+                    selected_condition=parse_spell_action_condition(action.value),
+                    slot_level=parse_spell_action_slot(action.value),
+                )
+                self._resolve_spell_action(
+                    enemy.creature,
+                    automated_payload,
+                    progress,
+                    action_id,
+                )
+                staged_selection_needed = False
+                automated_resolved = True
         if staged_selection_needed:
             self.pending_spell_cast = PendingSpellCast(
                 action=action,
@@ -522,6 +566,8 @@ def execute_creature_action(
                 maximum_targets=maximum_targets,
                 repeat_target_allocations=repeat_target_allocations,
                 require_full_target_count=require_full_target_count,
+                resource_pool_total=resource_pool_total,
+                resource_allocation_limits=resource_allocation_limits,
             )
             self.decision_stack.append(
                 DecisionFrame(
@@ -563,9 +609,40 @@ def execute_creature_action(
         elif len(pending.selected_target_refs) < pending.maximum_targets:
             pending.selected_target_refs.append(action.value)
         progress.paused_for_decision = True
+    elif action.kind == "set_spell_resource_allocation":
+        pending = self.pending_spell_cast
+        if pending is None or pending.resource_pool_total is None:
+            raise RuntimeError("No staged spell resource allocation is active.")
+        if not isinstance(action.value, str):
+            raise ValueError("Spell resource allocation requires target and amount.")
+        target_ref, separator, amount_text = action.value.rpartition("~")
+        if not separator or not amount_text.isdigit():
+            raise ValueError("Invalid spell resource allocation.")
+        amount = int(amount_text)
+        target_allocation_limit = pending.resource_allocation_limits.get(target_ref)
+        other_total = sum(
+            value
+            for ref, value in pending.resource_allocations.items()
+            if ref != target_ref
+        )
+        if (
+            target_allocation_limit is None
+            or amount < 0
+            or amount > target_allocation_limit
+        ):
+            raise ValueError("The allocation exceeds the target's legal amount.")
+        if other_total + amount > pending.resource_pool_total:
+            raise ValueError("The allocation exceeds the remaining resource pool.")
+        if amount:
+            pending.resource_allocations[target_ref] = amount
+        else:
+            pending.resource_allocations.pop(target_ref, None)
+        progress.paused_for_decision = True
     elif action.kind == "confirm_spell_targets":
         pending = self.pending_spell_cast
-        if pending is None or not pending.selected_target_refs:
+        if pending is None or (
+            not pending.selected_target_refs and not pending.resource_allocations
+        ):
             raise RuntimeError("No staged spell targets can be confirmed.")
         if (
             pending.require_full_target_count
@@ -576,12 +653,18 @@ def execute_creature_action(
         _spell_id, _target_ref, aim_point = parse_spell_action_value(original_value)
         selected_condition = parse_spell_action_condition(original_value)
         slot_level = parse_spell_action_slot(original_value)
+        resolved_target_refs = (
+            tuple(pending.resource_allocations)
+            if pending.resource_pool_total is not None
+            else tuple(pending.selected_target_refs)
+        )
         payload = spell_action_value(
             pending.spell_id,
-            tuple(pending.selected_target_refs),
+            resolved_target_refs,
             aim_point=aim_point,
             selected_condition=selected_condition,
             slot_level=slot_level,
+            healing_allocations=pending.resource_allocations,
         )
         self.decision_stack.pop()
         self.pending_spell_cast = None

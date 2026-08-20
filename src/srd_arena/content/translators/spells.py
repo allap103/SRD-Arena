@@ -121,6 +121,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             bonus=effect.root.bonus,
             add_spellcasting_modifier=effect.root.modifier == "spellcasting_ability",
             restore_to_maximum=effect.root.restore_to_maximum,
+            pool=effect.root.pool,
         )
         for effect in outcome.effects
         if isinstance(effect.root, HealingEffectSchema)

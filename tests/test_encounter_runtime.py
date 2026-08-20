@@ -2359,6 +2359,86 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
     ) == original["goblin_1"]
 
 
+def test_mass_heal_uses_bounded_numeric_allocations() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Mass Heal", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[9] = 1
+    target = state.creatures["goblin_1"]
+    target.position = Position(state.active_position.x + 1, state.active_position.y)
+    caster.max_health_override = 500
+    caster.current_health = 100
+    target.creature.max_health_override = 500
+    target.creature.current_health = 100
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_condition",
+                target_ref="goblin_1",
+                data={
+                    "condition": "blinded",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                },
+            )
+        ]
+    )
+
+    initial = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell" and str(action.value).startswith("mass_heal:")
+    )
+    opened = state.apply_action(initial)
+
+    assert opened.paused_for_decision
+    assert state.pending_spell_cast is not None
+    assert state.pending_spell_cast.resource_pool_total == 700
+    for target_ref, amount in (("player", 300), ("goblin_1", 400)):
+        state.apply_action(
+            EncounterAction(
+                label="Set healing allocation",
+                kind="set_spell_resource_allocation",
+                value=f"{target_ref}~{amount}",
+                id=f"player-spell-allocation-{target_ref}",
+                creature_ref="player",
+            )
+        )
+    with pytest.raises(ValueError, match="remaining healing pool"):
+        state.apply_action(
+            EncounterAction(
+                label="Over-allocate healing",
+                kind="set_spell_resource_allocation",
+                value="player~301",
+                id="player-spell-allocation-player",
+                creature_ref="player",
+            )
+        )
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+    result = state.apply_action(confirm)
+
+    assert caster.get_health() == 400
+    assert target.creature.get_health() == 500
+    assert state.has_condition("goblin_1", Condition.BLINDED) is False
+    event = next(event for event in result.events if event.type == "spell_cast")
+    assert {
+        detail["target_ref"]: detail["allocated"]
+        for detail in event.data["healing_roll_details"]
+    } == {"player": 300, "goblin_1": 400}
+
+
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:
     bucket = GameWindow._action_bucket_key(
         None,

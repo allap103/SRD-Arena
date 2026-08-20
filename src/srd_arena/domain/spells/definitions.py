@@ -21,6 +21,7 @@ class SpellHealing:
     bonus: int = 0
     add_spellcasting_modifier: bool = False
     restore_to_maximum: bool = False
+    pool: int | None = None
 
 
 @dataclass(frozen=True)
@@ -88,6 +89,13 @@ class ImmediateSpellMechanics:
     maximum_hit_point_modifier: int = 0
     also_modify_current_hit_points: bool = False
     slot_maximum_hit_point_increment: int = 0
+
+    @property
+    def healing_pool(self) -> int | None:
+        return next(
+            (healing.pool for healing in self.healing if healing.pool is not None),
+            None,
+        )
 
 
 @dataclass(frozen=True)
