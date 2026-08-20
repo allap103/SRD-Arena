@@ -80,7 +80,7 @@ def build_roll_views(events: list[CombatEvent]) -> list[RollView]:
                 views.append(healing)
             continue
 
-        if event.type == "spell_cast":
+        if event.type in {"spell_cast", "ongoing_effect_resolved"}:
             views.extend(_saving_throw_roll_views(event))
             views.extend(_spell_damage_roll_views(event))
     return views

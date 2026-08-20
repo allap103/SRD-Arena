@@ -2463,10 +2463,20 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage(monkeypatch) -> None:
         {"dice": "5d10", "damage_type": "psychic"}
     ]
 
-    resolve_end_turn_effects(state, "goblin_1")
+    progress = EncounterProgress()
+    resolve_end_turn_effects(state, "goblin_1", progress)
 
     assert target.get_health() == 16
     assert state.ongoing_effects
+    event = next(
+        event
+        for event in progress.events
+        if event.type == "ongoing_effect_resolved"
+    )
+    assert event.data["spell_name"] == "Phantasmal Killer"
+    assert event.data["save_detail"]["success"] is False
+    assert event.data["damage_roll_details"][0]["dice"] == "5d10"
+    assert event.data["damage_roll_details"][0]["damage_type"] == "psychic"
 
 
 def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:

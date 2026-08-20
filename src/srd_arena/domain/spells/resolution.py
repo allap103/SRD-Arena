@@ -428,6 +428,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         else mechanics.speed_modifier_duration_rounds
                     ),
                     "parameters": {
+                        "effect_label": spell.name,
                         "started_round": context.current_round,
                         "repeat_save_trigger": mechanics.repeat_save_trigger,
                         "save_ability": mechanics.save_ability,

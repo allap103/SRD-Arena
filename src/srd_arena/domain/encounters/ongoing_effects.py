@@ -295,13 +295,17 @@ def resolve_end_turn_effects(
                 )
             ),
         )
+        effect_label = effect.parameters.get("effect_label")
+        if not isinstance(effect_label, str):
+            effect_label = effect.identity.source.definition_id.replace("_", " ").title()
+        damage_details: list[dict[str, object]] = []
         if progress is not None:
             outcome = "succeeds" if save.check.success else "fails"
             progress.messages.append(
                 (
                     "system",
                     f"{target.name} {outcome} on the repeated {ability.title()} "
-                    f"save against {effect.identity.source.label or 'the effect'}.",
+                    f"save against {effect_label}.",
                 )
             )
         if save.check.success:
@@ -329,11 +333,25 @@ def resolve_end_turn_effects(
                         roller=_roll_die,
                     )
                     applied = target.take_damage(roll.total, damage_type)
+                    damage_details.append(
+                        {
+                            "target_ref": creature_ref,
+                            "target_label": target.name,
+                            "dice": dice,
+                            "dice_values": [die.result for die in roll.dice],
+                            "die_rolls": [list(die.rolls) for die in roll.dice],
+                            "dice_total": roll.subtotal,
+                            "modifier": roll.modifier,
+                            "total": roll.total,
+                            "damage_type": damage_type,
+                            "applied_damage": applied,
+                        }
+                    )
                     if progress is not None:
                         progress.messages.append(
                             (
                                 "system",
-                                f"{effect.identity.source.label or 'The effect'} deals "
+                                f"{effect_label} deals "
                                 f"{applied} {damage_type} damage to {target.name}.",
                             )
                         )
@@ -396,6 +414,34 @@ def resolve_end_turn_effects(
                     else existing
                     for existing in state.ongoing_effects
                 ]
+        if progress is not None:
+            progress.events.append(
+                state._event(
+                    "ongoing_effect_resolved",
+                    creature_ref=creature_ref,
+                    data={
+                        "spell_id": effect.identity.source.definition_id,
+                        "spell_name": effect_label,
+                        "effect_id": effect.identity.id,
+                        "save_detail": {
+                            "target_ref": creature_ref,
+                            "target_label": target.name,
+                            "ability": ability,
+                            "die": save.check.roll.selected,
+                            "dice": list(save.check.roll.dice),
+                            "selected_index": save.check.roll.selected_index,
+                            "modifier": save.modifiers.total,
+                            "total": save.check.roll.total,
+                            "target_dc": save.check.target,
+                            "success": save.check.success,
+                            "automatic_failure_reasons": list(
+                                save.automatic_failure_reasons
+                            ),
+                        },
+                        "damage_roll_details": damage_details,
+                    },
+                )
+            )
 
 
 def expire_ongoing_effects_for_turn_start(

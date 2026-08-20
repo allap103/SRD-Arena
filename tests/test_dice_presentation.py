@@ -219,6 +219,47 @@ def test_build_roll_views_extracts_spell_damage_dice():
     assert damage.total == 13
 
 
+def test_build_roll_views_extracts_ongoing_spell_save_and_damage():
+    event = CombatEvent(
+        seq=1,
+        type="ongoing_effect_resolved",
+        data={
+            "spell_name": "Phantasmal Killer",
+            "save_detail": {
+                "target_label": "Veteran",
+                "ability": "wisdom",
+                "die": 7,
+                "dice": [7],
+                "selected_index": 0,
+                "modifier": 1,
+                "total": 8,
+                "target_dc": 16,
+                "success": False,
+            },
+            "damage_roll_details": [
+                {
+                    "target_label": "Veteran",
+                    "dice": "4d10",
+                    "dice_values": [2, 4, 6, 8],
+                    "die_rolls": [[2], [4], [6], [8]],
+                    "dice_total": 20,
+                    "modifier": 0,
+                    "total": 20,
+                }
+            ],
+        },
+    )
+
+    save, damage = build_roll_views([event])
+
+    assert save.label == "Veteran Wisdom save vs Phantasmal Killer"
+    assert save.total == 8
+    assert save.success is False
+    assert damage.label == "Veteran takes damage from Phantasmal Killer"
+    assert [die.value for die in damage.dice] == [2, 4, 6, 8]
+    assert damage.total == 20
+
+
 def test_build_roll_views_exposes_individual_rerollable_damage_dice():
     event = CombatEvent(
         seq=1,
