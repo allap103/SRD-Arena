@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 import re
+from typing import overload
 
 from srd_arena.content.catalogs import SpellCatalog
 from srd_arena.content.schemas.spells import SpellSchema
@@ -12,12 +13,15 @@ from srd_arena.content.schemas.spell_mechanics import (
     CasterLevelScalingSchema,
     ConditionImmunityRequirementSchema,
     CreatureTraitRequirementSchema,
+    HealingEffectSchema,
+    HitPointMaximumModifierEffectSchema,
     RepeatResolutionSchema,
     RemoveEffectSchema,
     SavingThrowResolutionSchema,
     SequenceResolutionSchema,
     SlotScalingSchema,
     SpellAttackResolutionSchema,
+    TemporaryHitPointsEffectSchema,
 )
 from srd_arena.content.sources import slug
 from srd_arena.domain.spells import (
@@ -25,6 +29,8 @@ from srd_arena.domain.spells import (
     ImmediateSpellMechanics,
     Spell,
     SpellDamage,
+    SpellHealing,
+    SpellTemporaryHitPoints,
 )
 from srd_arena.domain.creatures import CreatureTypeRequirement
 
@@ -50,6 +56,8 @@ def build_spell(
         ),
         condition_inflict=tuple(raw.condition_inflict),
         removable_conditions=_spell_removable_conditions(raw),
+        removable_effect_kinds=_spell_removable_effect_kinds(raw),
+        remove_effect_selection=_remove_effect_selection(raw),
         damage_dice=_spell_damage_dice(raw),
         damage_inflict=tuple(raw.damage_inflict),
         area_tags=tuple(raw.area_tags),
@@ -107,6 +115,34 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         effect.root.condition
         for effect in outcome.effects
         if isinstance(effect.root, ConditionEffectSchema)
+    )
+    healing = tuple(
+        SpellHealing(
+            dice=effect.root.dice,
+            bonus=effect.root.bonus,
+            add_spellcasting_modifier=effect.root.modifier == "spellcasting_ability",
+            restore_to_maximum=effect.root.restore_to_maximum,
+            pool=effect.root.pool,
+        )
+        for effect in outcome.effects
+        if isinstance(effect.root, HealingEffectSchema)
+    )
+    temporary_hit_points = tuple(
+        SpellTemporaryHitPoints(
+            dice=effect.root.dice,
+            value=effect.root.value,
+            add_spellcasting_modifier=effect.root.modifier == "spellcasting_ability",
+        )
+        for effect in outcome.effects
+        if isinstance(effect.root, TemporaryHitPointsEffectSchema)
+    )
+    maximum_hit_point_modifier = next(
+        (
+            effect.root
+            for effect in outcome.effects
+            if isinstance(effect.root, HitPointMaximumModifierEffectSchema)
+        ),
+        None,
     )
     geometry = target.geometry if target.type == "area" else None
     return ImmediateSpellMechanics(
@@ -213,6 +249,62 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             if sequence is not None
             else ()
         ),
+        healing=healing,
+        temporary_hit_points=temporary_hit_points,
+        slot_healing_dice_increment=_slot_scaling_value(raw, "healing_dice", str),
+        slot_healing_bonus_increment=(
+            _slot_scaling_value(raw, "healing_bonus", int) or 0
+        ),
+        slot_temporary_hit_points_increment=(
+            _slot_scaling_value(raw, "temporary_hit_points", int) or 0
+        ),
+        maximum_hit_point_modifier=(
+            maximum_hit_point_modifier.value
+            if maximum_hit_point_modifier is not None
+            else 0
+        ),
+        also_modify_current_hit_points=(
+            maximum_hit_point_modifier.also_modify_current
+            if maximum_hit_point_modifier is not None
+            else False
+        ),
+        slot_maximum_hit_point_increment=(
+            _slot_scaling_value(raw, "hit_point_maximum", int) or 0
+        ),
+    )
+
+
+@overload
+def _slot_scaling_value(
+    raw: SpellSchema,
+    kind: str,
+    value_type: type[str],
+) -> str | None: ...
+
+
+@overload
+def _slot_scaling_value(
+    raw: SpellSchema,
+    kind: str,
+    value_type: type[int],
+) -> int | None: ...
+
+
+def _slot_scaling_value(
+    raw: SpellSchema,
+    kind: str,
+    value_type: type[str] | type[int],
+) -> str | int | None:
+    assert raw.mechanics is not None
+    return next(
+        (
+            increment.amount
+            for scaling in raw.mechanics.scaling
+            if isinstance(scaling, SlotScalingSchema)
+            for increment in scaling.per_level
+            if increment.type == kind and isinstance(increment.amount, value_type)
+        ),
+        None,
     )
 
 
@@ -540,6 +632,44 @@ def _spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
     return tuple(
         match.casefold() for match in re.findall(r"\{@condition ([^|}]+)", text)
     )
+
+
+def _remove_effect_selection(raw: SpellSchema) -> str | None:
+    if raw.mechanics is None:
+        return None
+    resolution = raw.mechanics.resolution.root
+    if isinstance(resolution, RepeatResolutionSchema):
+        resolution = resolution.resolution.root
+    if not isinstance(resolution, AutomaticResolutionSchema):
+        return None
+    removal = next(
+        (
+            effect.root
+            for effect in resolution.outcome.effects
+            if isinstance(effect.root, RemoveEffectSchema)
+        ),
+        None,
+    )
+    return removal.selection if removal is not None else None
+
+
+def _spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
+    if raw.mechanics is None:
+        return ()
+    resolution = raw.mechanics.resolution.root
+    if isinstance(resolution, RepeatResolutionSchema):
+        resolution = resolution.resolution.root
+    if not isinstance(resolution, AutomaticResolutionSchema):
+        return ()
+    removal = next(
+        (
+            effect.root
+            for effect in resolution.outcome.effects
+            if isinstance(effect.root, RemoveEffectSchema)
+        ),
+        None,
+    )
+    return tuple(removal.removable) if removal is not None else ()
 
 
 def _spell_geometry_mode(raw: SpellSchema) -> str:

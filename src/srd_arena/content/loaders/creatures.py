@@ -12,7 +12,11 @@ from srd_arena.content.catalogs import (
     SubclassRecord,
 )
 from srd_arena.content.normalization import normalize_optional_feature_effects
-from srd_arena.content.schemas import CreatureSchema, OptionalFeatureSchema
+from srd_arena.content.schemas import (
+    CreatureSchema,
+    MultiattackMechanicsSchema,
+    OptionalFeatureSchema,
+)
 from srd_arena.content.schemas.bestiary import BestiaryMonsterSchema
 from srd_arena.content.schemas.classes import (
     ClassFeatureReferenceSchema,
@@ -132,6 +136,7 @@ def build_creature(
         name=schema.name or _stat_block_name(stat_block),
         description=schema.description,
         token_image=schema.token_image,
+        current_health=schema.current_health,
         inventory=Inventory(items=[_creature_item_id(item) for item in schema.inventory]),
         attributes=attributes,
         equipment=equipment,
@@ -156,7 +161,7 @@ def build_creature(
         combat_profile=combat_profile,
         feature_uses_remaining=build_feature_uses_remaining(combat_profile),
         multiattack=build_multiattack(
-            multiattack_action.mechanics
+            cast(MultiattackMechanicsSchema, multiattack_action.mechanics)
             if multiattack_action is not None
             else None
         ),

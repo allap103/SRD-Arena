@@ -51,5 +51,33 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {
+    "status": "partial",
+    "omissions": [
+      {
+        "mechanic": "remove one Exhaustion level",
+        "reason": "Exhaustion levels are not represented in encounter state yet."
+      },
+      {
+        "mechanic": "remove an ability-score reduction",
+        "reason": "Temporary ability-score reductions are not represented yet."
+      }
+    ]
+  },
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "any"},
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {
+        "type": "remove_effect",
+        "selection": "one",
+        "removable": [
+          "condition",
+          "curse",
+          "hit_point_maximum_reduction"
+        ],
+        "conditions": ["charmed", "petrified"]
+      }
+    ]}}
+  }
 }

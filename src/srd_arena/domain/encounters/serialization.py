@@ -132,6 +132,7 @@ def _export_creature(
         },
         "health": creature.get_health(),
         "max_health": creature.get_max_health(),
+        "temporary_hit_points": creature.temporary_hit_points,
         "statistics": {
             "creature_type": creature.statistics.creature_type,
             "type_tags": list(creature.statistics.type_tags),

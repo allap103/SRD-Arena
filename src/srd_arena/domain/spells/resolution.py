@@ -54,6 +54,7 @@ class SpellActionContext:
     area_targets_around: (
         Callable[[str, int], tuple[SpellTargetContext, ...]] | None
     ) = None
+    healing_allocations: dict[str, int] = field(default_factory=dict)
 
 
 def resolve_spell_action(
@@ -114,10 +115,28 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             shared_damage_rolls.append(
                 (damage, resolve_dice(count, sides, roller=context.roller))
             )
+    shared_healing_rolls = tuple(
+        (
+            healing,
+            dice,
+            _roll_optional_dice(dice, context.roller),
+        )
+        for healing in mechanics.healing
+        if healing.pool is None
+        for dice in (
+            _scale_dice(
+                healing.dice,
+                mechanics.slot_healing_dice_increment,
+                cast_level - spell.level,
+            ),
+        )
+    )
 
     save_details: list[dict[str, object]] = []
     attack_details: list[dict[str, object]] = []
     damage_details: list[dict[str, object]] = []
+    healing_details: list[dict[str, object]] = []
+    temporary_hit_point_details: list[dict[str, object]] = []
     affected_targets: list[SpellTargetContext] = []
     for target in targets:
         successful_save = False
@@ -233,9 +252,86 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
         )
         if affected:
             affected_targets.append(target)
+            for healing, dice, healing_roll in shared_healing_rolls:
+                modifier = healing.bonus + (
+                    context.creature.spellcasting.ability_modifier
+                    if healing.add_spellcasting_modifier
+                    else 0
+                )
+                modifier += mechanics.slot_healing_bonus_increment * (
+                    cast_level - spell.level
+                )
+                total = (
+                    target.creature.get_max_health() - target.creature.get_health()
+                    if healing.restore_to_maximum
+                    else max(
+                        0,
+                        (healing_roll.subtotal if healing_roll is not None else 0)
+                        + modifier,
+                    )
+                )
+                applied = target.creature.heal(total)
+                healing_details.append(
+                    _restoration_detail(
+                        target,
+                        dice=dice,
+                        roll=healing_roll,
+                        modifier=modifier,
+                        total=total,
+                        applied=applied,
+                    )
+                )
+            for healing in mechanics.healing:
+                if healing.pool is None:
+                    continue
+                allocated = context.healing_allocations.get(target.target_ref, 0)
+                applied = target.creature.heal(allocated)
+                detail = _restoration_detail(
+                    target,
+                    dice=None,
+                    roll=None,
+                    modifier=0,
+                    total=allocated,
+                    applied=applied,
+                )
+                detail["allocated"] = allocated
+                healing_details.append(detail)
+            for temporary in mechanics.temporary_hit_points:
+                temporary_roll = _roll_optional_dice(temporary.dice, context.roller)
+                modifier = temporary.value + (
+                    context.creature.spellcasting.ability_modifier
+                    if temporary.add_spellcasting_modifier
+                    else 0
+                )
+                modifier += mechanics.slot_temporary_hit_points_increment * (
+                    cast_level - spell.level
+                )
+                total = max(
+                    0,
+                    (temporary_roll.subtotal if temporary_roll is not None else 0)
+                    + modifier,
+                )
+                granted = target.creature.grant_temporary_hit_points(total)
+                temporary_hit_point_details.append(
+                    _restoration_detail(
+                        target,
+                        dice=temporary.dice,
+                        roll=temporary_roll,
+                        modifier=modifier,
+                        total=total,
+                        applied=granted,
+                    )
+                )
         outcome = (
             "damages"
             if target_damage > 0
+            else "heals"
+            if any(detail["target_ref"] == target.target_ref for detail in healing_details)
+            else "wards"
+            if any(
+                detail["target_ref"] == target.target_ref
+                for detail in temporary_hit_point_details
+            )
             else "affects"
             if affected and mechanics.conditions
             else "does not affect"
@@ -268,9 +364,12 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
         else mechanics.conditions
     )
     parent_kind = "concentration" if mechanics.concentration else "spell"
+    maximum_hit_point_modifier = mechanics.maximum_hit_point_modifier + (
+        mechanics.slot_maximum_hit_point_increment * (cast_level - spell.level)
+    )
     if (
         affected_targets
-        and mechanics.conditions
+        and (mechanics.conditions or maximum_hit_point_modifier != 0)
         and (
             mechanics.duration_rounds is not None
             or mechanics.concentration
@@ -307,6 +406,10 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         "damage_repeat_save_advantage": (
                             mechanics.damage_repeat_save_advantage
                         ),
+                        "maximum_hit_point_modifier": maximum_hit_point_modifier,
+                        "also_modify_current_hit_points": (
+                            mechanics.also_modify_current_hit_points
+                        ),
                     },
                 },
             )
@@ -337,35 +440,94 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 )
 
     removed_conditions: list[str] = []
-    if spell.removable_conditions:
+    if spell.removable_effect_kinds:
         for target in affected_targets:
-            removed_condition = context.selected_condition
-            if (
-                removed_condition not in spell.removable_conditions
-                or removed_condition not in target.target_conditions
-            ):
+            selected_removal = context.selected_condition
+            if spell.remove_effect_selection == "all" and spell.removable_conditions:
+                target_removed_conditions = tuple(
+                    condition
+                    for condition in spell.removable_conditions
+                    if condition in target.target_conditions
+                )
+                for condition in target_removed_conditions:
+                    removed_conditions.append(condition)
+                    messages.append(
+                        (
+                            "system",
+                            f"{target.target_label} is no longer {condition}.",
+                        )
+                    )
+                    effects.append(
+                        EffectResult(
+                            kind="remove_condition",
+                            target_ref=target.target_ref,
+                            data={"condition": condition},
+                        )
+                    )
+            elif selected_removal in spell.removable_conditions:
+                if selected_removal not in target.target_conditions:
+                    continue
+                removed_conditions.append(selected_removal)
                 messages.append(
                     (
                         "system",
-                        f"No removable condition on "
-                        f"{target.target_label.lower()} is affected.",
+                        f"{target.target_label} is no longer {selected_removal}.",
                     )
                 )
-                continue
-            removed_conditions.append(removed_condition)
-            messages.append(
-                (
-                    "system",
-                    f"{target.target_label} is no longer {removed_condition}.",
+                effects.append(
+                    EffectResult(
+                        kind="remove_condition",
+                        target_ref=target.target_ref,
+                        data={"condition": selected_removal},
+                    )
                 )
-            )
-            effects.append(
-                EffectResult(
-                    kind="remove_condition",
-                    target_ref=target.target_ref,
-                    data={"condition": removed_condition},
+            if "curse" in spell.removable_effect_kinds and (
+                spell.remove_effect_selection == "all"
+                or (
+                    isinstance(selected_removal, str)
+                    and selected_removal.startswith("curse@")
                 )
-            )
+            ):
+                effect_id = (
+                    selected_removal.removeprefix("curse@")
+                    if isinstance(selected_removal, str)
+                    and selected_removal.startswith("curse@")
+                    else None
+                )
+                effects.append(
+                    EffectResult(
+                        kind="remove_ongoing_effects",
+                        target_ref=target.target_ref,
+                        data={
+                            "effect_kind": "curse",
+                            "effect_id": effect_id,
+                            "all": spell.remove_effect_selection == "all",
+                        },
+                    )
+                )
+                messages.append(
+                    ("system", f"A curse ends on {target.target_label}.")
+                )
+            if (
+                "hit_point_maximum_reduction" in spell.removable_effect_kinds
+                and selected_removal == "hit_point_maximum_reduction"
+            ):
+                effects.append(
+                    EffectResult(
+                        kind="remove_ongoing_effects",
+                        target_ref=target.target_ref,
+                        data={
+                            "parameter": "negative_maximum_hit_points",
+                            "all": True,
+                        },
+                    )
+                )
+                messages.append(
+                    (
+                        "system",
+                        f"Hit Point maximum reductions end on {target.target_label}.",
+                    )
+                )
 
     return CapabilityActionResult(
         capability_id=spell.id,
@@ -386,10 +548,20 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             "attack_roll_details": attack_details,
             "damage_roll_detail": damage_details[0] if damage_details else None,
             "damage_roll_details": damage_details,
+            "healing_roll_detail": healing_details[0] if healing_details else None,
+            "healing_roll_details": healing_details,
+            "temporary_hit_point_detail": (
+                temporary_hit_point_details[0]
+                if temporary_hit_point_details
+                else None
+            ),
+            "temporary_hit_point_details": temporary_hit_point_details,
             "removed_condition": (
                 removed_conditions[0] if removed_conditions else None
             ),
             "success": bool(effects)
+            or bool(healing_details)
+            or bool(temporary_hit_point_details)
             or any(
                 isinstance(detail.get("applied_damage"), int)
                 and cast(int, detail["applied_damage"]) > 0
@@ -397,6 +569,51 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             ),
         },
     )
+
+
+def _scale_dice(
+    base: str | None,
+    increment: str | None,
+    levels_above: int,
+) -> str | None:
+    if base is None or increment is None or levels_above <= 0:
+        return base
+    base_count, base_sides = _parse_damage_dice(base)
+    increment_count, increment_sides = _parse_damage_dice(increment)
+    if base_sides != increment_sides:
+        raise ValueError("Healing scaling must use the base healing die.")
+    return f"{base_count + increment_count * levels_above}d{base_sides}"
+
+
+def _roll_optional_dice(
+    dice: str | None,
+    roller: DieRoller,
+) -> DicePoolResult | None:
+    if dice is None:
+        return None
+    count, sides = _parse_damage_dice(dice)
+    return resolve_dice(count, sides, roller=roller)
+
+
+def _restoration_detail(
+    target: SpellTargetContext,
+    *,
+    dice: str | None,
+    roll: DicePoolResult | None,
+    modifier: int,
+    total: int,
+    applied: int,
+) -> dict[str, object]:
+    return {
+        "target_ref": target.target_ref,
+        "target_label": target.target_label,
+        "dice": dice,
+        "dice_values": [die.result for die in roll.dice] if roll is not None else [],
+        "dice_total": roll.subtotal if roll is not None else 0,
+        "modifier": modifier,
+        "total": total,
+        "applied": applied,
+    }
 
 
 def _resolve_follow_up(

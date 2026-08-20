@@ -16,6 +16,22 @@ class SpellDamage:
 
 
 @dataclass(frozen=True)
+class SpellHealing:
+    dice: str | None = None
+    bonus: int = 0
+    add_spellcasting_modifier: bool = False
+    restore_to_maximum: bool = False
+    pool: int | None = None
+
+
+@dataclass(frozen=True)
+class SpellTemporaryHitPoints:
+    dice: str | None = None
+    value: int = 0
+    add_spellcasting_modifier: bool = False
+
+
+@dataclass(frozen=True)
 class FollowUpSpellResolution:
     resolution: str
     target: str
@@ -65,6 +81,21 @@ class ImmediateSpellMechanics:
     require_full_target_count: bool = False
     target_count_by_caster_level: tuple[tuple[int, int], ...] = ()
     follow_up_resolutions: tuple[FollowUpSpellResolution, ...] = ()
+    healing: tuple[SpellHealing, ...] = ()
+    temporary_hit_points: tuple[SpellTemporaryHitPoints, ...] = ()
+    slot_healing_dice_increment: str | None = None
+    slot_healing_bonus_increment: int = 0
+    slot_temporary_hit_points_increment: int = 0
+    maximum_hit_point_modifier: int = 0
+    also_modify_current_hit_points: bool = False
+    slot_maximum_hit_point_increment: int = 0
+
+    @property
+    def healing_pool(self) -> int | None:
+        return next(
+            (healing.pool for healing in self.healing if healing.pool is not None),
+            None,
+        )
 
 
 @dataclass(frozen=True)
@@ -81,6 +112,8 @@ class Spell:
     saving_throw_abilities: tuple[str, ...] = ()
     condition_inflict: tuple[str, ...] = ()
     removable_conditions: tuple[str, ...] = ()
+    removable_effect_kinds: tuple[str, ...] = ()
+    remove_effect_selection: str | None = None
     damage_dice: str | None = None
     damage_inflict: tuple[str, ...] = ()
     area_tags: tuple[str, ...] = ()

@@ -47,5 +47,33 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {
+      "type": "creature",
+      "disposition": "any"
+    },
+    "resolution": {
+      "type": "automatic",
+      "outcome": {
+        "effects": [
+          {
+            "type": "healing",
+            "dice": "2d8",
+            "modifier": "spellcasting_ability"
+          }
+        ]
+      }
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "above_level": "spell_level",
+        "per_level": [
+          {"type": "healing_dice", "amount": "2d8"}
+        ]
+      }
+    ]
+  }
 }

@@ -35,5 +35,24 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {
+    "status": "partial",
+    "omissions": [
+      {
+        "mechanic": "object targeting and cursed-item attunement removal",
+        "reason": "Encounter objects and item attunement are not modeled yet."
+      }
+    ]
+  },
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "any"},
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {
+        "type": "remove_effect",
+        "selection": "all",
+        "removable": ["curse"]
+      }
+    ]}}
+  }
 }

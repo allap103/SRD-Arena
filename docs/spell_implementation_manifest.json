@@ -62,13 +62,12 @@
       "id": "2A",
       "wave": 2,
       "name": "Healing and restoration",
-      "status": "provisional",
+      "status": "committed",
       "requires": ["healing", "temporary_hit_points", "effect_removal", "maximum_hit_points"],
       "spells": [
         "Aid",
         "Cure Wounds",
         "False Life",
-        "Goodberry",
         "Greater Restoration",
         "Heal",
         "Healing Word",
@@ -77,7 +76,6 @@
         "Mass Heal",
         "Mass Healing Word",
         "Power Word Heal",
-        "Protection from Poison",
         "Remove Curse"
       ]
     },
@@ -117,6 +115,7 @@
         "Power Word Stun",
         "Protection from Energy",
         "Protection from Evil and Good",
+        "Protection from Poison",
         "Ray of Enfeeblement",
         "Ray of Frost",
         "Resistance",
@@ -307,6 +306,7 @@
         "Delayed Blast Fireball",
         "Faithful Hound",
         "Freezing Sphere",
+        "Goodberry",
         "Guardian of Faith",
         "Light",
         "Mage Hand",

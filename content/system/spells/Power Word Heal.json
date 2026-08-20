@@ -36,5 +36,26 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {
+    "status": "partial",
+    "omissions": [
+      {
+        "mechanic": "optional reaction to stand from prone",
+        "reason": "Optional reaction offers are scheduled for the event-driven spell batch."
+      }
+    ]
+  },
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "any", "line_of_sight": true},
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {"type": "healing", "restore_to_maximum": true},
+      {
+        "type": "remove_effect",
+        "selection": "all",
+        "removable": ["condition"],
+        "conditions": ["charmed", "frightened", "paralyzed", "poisoned", "stunned"]
+      }
+    ]}}
+  }
 }

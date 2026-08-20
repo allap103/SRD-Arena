@@ -38,6 +38,8 @@ class Creature:
     spellcasting: Spellcasting | None = None
     statistics: CreatureStatistics = field(default_factory=CreatureStatistics)
     max_health_override: int | None = None
+    temporary_hit_points: int = 0
+    maximum_health_modifiers: dict[str, dict[str, int]] = field(default_factory=dict)
 
     def __post_init__(self):
         if self.current_health is None:
@@ -85,19 +87,64 @@ class Creature:
         return (attribute_value - 10) // 2
 
     def get_max_health(self) -> int:
-        if self.max_health_override is not None:
-            return self.max_health_override
-        return (
-            self.attributes.base_health
+        base = (
+            self.max_health_override
+            if self.max_health_override is not None
+            else self.attributes.base_health
             + self.get_modifier(self.attributes.constitution) * self.attributes.level
         )
+        return base + sum(
+            max(instances.values(), default=0)
+            for instances in self.maximum_health_modifiers.values()
+        )
+
+    def set_maximum_health_modifier(
+        self,
+        definition_id: str,
+        origin_id: str,
+        value: int,
+        *,
+        also_modify_current: bool,
+    ) -> None:
+        previous_maximum = self.get_max_health()
+        self.maximum_health_modifiers.setdefault(definition_id, {})[origin_id] = value
+        if also_modify_current:
+            self.current_health = self.get_health() + (
+                self.get_max_health() - previous_maximum
+            )
+
+    def remove_maximum_health_modifier(
+        self,
+        definition_id: str,
+        origin_id: str,
+        *,
+        also_modify_current: bool,
+    ) -> None:
+        previous_maximum = self.get_max_health()
+        instances = self.maximum_health_modifiers.get(definition_id)
+        if instances is None:
+            return
+        instances.pop(origin_id, None)
+        if not instances:
+            self.maximum_health_modifiers.pop(definition_id, None)
+        if also_modify_current:
+            self.current_health = max(
+                0,
+                self.get_health() + self.get_max_health() - previous_maximum,
+            )
 
     def get_health(self) -> int:
         return self.current_health or 0
 
     def take_damage(self, amount: int) -> int:
-        applied_damage = min(max(amount, 0), self.get_health())
-        self.current_health = self.get_health() - applied_damage
+        applied_damage = min(
+            max(amount, 0),
+            self.get_health() + self.temporary_hit_points,
+        )
+        absorbed_damage = min(applied_damage, self.temporary_hit_points)
+        self.temporary_hit_points -= absorbed_damage
+        health_damage = applied_damage - absorbed_damage
+        self.current_health = self.get_health() - health_damage
         return applied_damage
 
     def heal(self, amount: int) -> int:
@@ -105,6 +152,12 @@ class Creature:
         applied_healing = min(max(amount, 0), missing_health)
         self.current_health = self.get_health() + applied_healing
         return applied_healing
+
+    def grant_temporary_hit_points(self, amount: int) -> int:
+        """Replace temporary HP only when the new amount is greater."""
+        previous = self.temporary_hit_points
+        self.temporary_hit_points = max(previous, max(amount, 0))
+        return self.temporary_hit_points - previous
 
     def get_armor_class(self) -> int:
         return self.attributes.base_armor_class + self.get_modifier(

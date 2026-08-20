@@ -45,5 +45,33 @@
   ],
   "miscTags": [
     "THP"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {
+      "type": "creature",
+      "disposition": "source"
+    },
+    "resolution": {
+      "type": "automatic",
+      "outcome": {
+        "effects": [
+          {
+            "type": "temporary_hit_points",
+            "dice": "2d4",
+            "value": 4
+          }
+        ]
+      }
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "above_level": "spell_level",
+        "per_level": [
+          {"type": "temporary_hit_points", "amount": 5}
+        ]
+      }
+    ]
+  }
 }

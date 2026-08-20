@@ -18,6 +18,7 @@ from srd_arena.domain.encounters.actions.stat_block import (
 )
 from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import (
+    expire_ongoing_effects_for_turn_start,
     resolve_concentration_damage,
     resolve_end_turn_effects,
     resolve_spell_lifecycle_event,
@@ -2141,6 +2142,466 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     assert spell_event.data["target_ref"] == "player"
     assert spell_event.data["success"] is True
     assert spell_event.data["effects"][0]["kind"] == "remove_condition"
+
+
+def test_cure_wounds_heals_through_generic_spell_resolution(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Cure Wounds", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[1] = 1
+    caster.current_health = caster.get_max_health() - 12
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 4
+    )
+
+    result = session.choose(_action_id_by_prefix(session, "Cast Cure Wounds"))
+
+    assert caster.get_health() == caster.get_max_health() - 3
+    spell_event = next(event for event in result.events if event.type == "spell_cast")
+    assert spell_event.data["success"] is True
+    assert spell_event.data["healing_roll_detail"]["total"] == 9
+    assert spell_event.data["healing_roll_detail"]["applied"] == 9
+
+
+def test_false_life_grants_scaled_temporary_hit_points(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("False Life", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[2] = 1
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 3
+    )
+
+    result = session.choose(
+        _action_id_by_prefix(session, "Cast False Life (Level 2)")
+    )
+
+    assert caster.temporary_hit_points == 15
+    spell_event = next(event for event in result.events if event.type == "spell_cast")
+    assert spell_event.data["temporary_hit_point_detail"]["total"] == 15
+    assert spell_event.data["temporary_hit_point_detail"]["applied"] == 15
+
+
+def test_mass_healing_word_uses_one_roll_for_selected_targets(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Mass Healing Word", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[3] = 1
+    for offset, target_ref in enumerate(("goblin_1", "goblin_2"), start=1):
+        target = state.creatures[target_ref]
+        target.position = Position(
+            state.active_position.x + offset,
+            state.active_position.y,
+        )
+        target.creature.current_health = target.creature.get_max_health() - 8
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 3
+    )
+
+    initial = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value) == "mass_healing_word:goblin_1"
+    )
+    state.apply_action(initial)
+    add_second = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "toggle_spell_target"
+        and action.value == "goblin_2"
+    )
+    state.apply_action(add_second)
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+
+    result = state.apply_action(confirm)
+
+    event = next(event for event in result.events if event.type == "spell_cast")
+    details = event.data["healing_roll_details"]
+    assert [detail["target_ref"] for detail in details] == ["goblin_1", "goblin_2"]
+    assert details[0]["dice_values"] == details[1]["dice_values"] == [3, 3]
+    assert all(detail["applied"] == 7 for detail in details)
+
+
+def test_heal_upcasts_and_removes_every_listed_condition() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Heal", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[7] = 1
+    caster.max_health_override = 200
+    caster.current_health = 50
+    for condition in ("blinded", "poisoned"):
+        state._apply_effects(
+            [
+                EffectResult(
+                    kind="apply_condition",
+                    target_ref="player",
+                    data={
+                        "condition": condition,
+                        "source_ref": "goblin_1",
+                        "source_label": "Goblin",
+                    },
+                )
+            ]
+        )
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("heal:player")
+        and parse_spell_action_slot(str(action.value)) == 7
+    )
+    result = state.apply_action(action)
+
+    assert caster.get_health() == 130
+    assert state.has_condition("player", Condition.BLINDED) is False
+    assert state.has_condition("player", Condition.POISONED) is False
+    event = next(event for event in result.events if event.type == "spell_cast")
+    assert event.data["healing_roll_detail"]["total"] == 80
+    assert [effect["data"]["condition"] for effect in event.data["effects"]] == [
+        "blinded",
+        "poisoned",
+    ]
+
+
+def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Aid", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[3] = 1
+    target = state.creatures["goblin_1"]
+    target.position = Position(state.active_position.x + 1, state.active_position.y)
+    original = {
+        "player": (caster.get_max_health(), caster.get_health()),
+        "goblin_1": (
+            target.creature.get_max_health(),
+            target.creature.get_health(),
+        ),
+    }
+
+    initial = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("aid:player")
+        and parse_spell_action_slot(str(action.value)) == 3
+    )
+    state.apply_action(initial)
+    add_target = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "toggle_spell_target"
+        and action.value == "goblin_1"
+    )
+    state.apply_action(add_target)
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+    state.apply_action(confirm)
+
+    assert caster.get_max_health() == original["player"][0] + 10
+    assert caster.get_health() == original["player"][1] + 10
+    assert target.creature.get_max_health() == original["goblin_1"][0] + 10
+    assert target.creature.get_health() == original["goblin_1"][1] + 10
+
+    state.round.number = 4801
+    expire_ongoing_effects_for_turn_start(state, "player")
+
+    assert (caster.get_max_health(), caster.get_health()) == original["player"]
+    assert (
+        target.creature.get_max_health(),
+        target.creature.get_health(),
+    ) == original["goblin_1"]
+
+
+def test_mass_heal_uses_bounded_numeric_allocations() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Mass Heal", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[9] = 1
+    target = state.creatures["goblin_1"]
+    target.position = Position(state.active_position.x + 1, state.active_position.y)
+    caster.max_health_override = 500
+    caster.current_health = 100
+    target.creature.max_health_override = 500
+    target.creature.current_health = 100
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_condition",
+                target_ref="goblin_1",
+                data={
+                    "condition": "blinded",
+                    "source_ref": "player",
+                    "source_label": "Traveler",
+                },
+            )
+        ]
+    )
+
+    initial = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell" and str(action.value).startswith("mass_heal:")
+    )
+    opened = state.apply_action(initial)
+
+    assert opened.paused_for_decision
+    assert state.pending_spell_cast is not None
+    assert state.pending_spell_cast.resource_pool_total == 700
+    for target_ref, amount in (("player", 300), ("goblin_1", 400)):
+        state.apply_action(
+            EncounterAction(
+                label="Set healing allocation",
+                kind="set_spell_resource_allocation",
+                value=f"{target_ref}~{amount}",
+                id=f"player-spell-allocation-{target_ref}",
+                creature_ref="player",
+            )
+        )
+    with pytest.raises(ValueError, match="remaining healing pool"):
+        state.apply_action(
+            EncounterAction(
+                label="Over-allocate healing",
+                kind="set_spell_resource_allocation",
+                value="player~301",
+                id="player-spell-allocation-player",
+                creature_ref="player",
+            )
+        )
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+    result = state.apply_action(confirm)
+
+    assert caster.get_health() == 400
+    assert target.creature.get_health() == 500
+    assert state.has_condition("goblin_1", Condition.BLINDED) is False
+    event = next(event for event in result.events if event.type == "spell_cast")
+    assert {
+        detail["target_ref"]: detail["allocated"]
+        for detail in event.data["healing_roll_details"]
+    } == {"player": 300, "goblin_1": 400}
+
+
+def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Greater Restoration", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[5] = 1
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_condition",
+                target_ref="player",
+                data={
+                    "condition": "charmed",
+                    "source_ref": "goblin_1",
+                    "source_label": "Goblin",
+                },
+            )
+        ],
+        origin_id="charm-origin",
+    )
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="player",
+                data={
+                    "effect_kind": "curse",
+                    "source_ref": "goblin_2",
+                    "source_label": "Goblin Hex",
+                    "definition_id": "goblin_hex",
+                    "target_refs": ["player"],
+                },
+            ),
+        ],
+        origin_id="curse-origin",
+    )
+
+    curse_action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("greater_restoration:player")
+        and "curse@" in str(action.value)
+    )
+    result = state.apply_action(curse_action)
+
+    assert state.has_condition("player", Condition.CHARMED)
+    assert not any(effect.kind.value == "curse" for effect in state.ongoing_effects)
+    event = next(event for event in result.events if event.type == "spell_cast")
+    assert event.data["effects"] == [
+        {
+            "kind": "remove_ongoing_effects",
+            "target_ref": "player",
+            "success": True,
+            "data": {
+                "effect_kind": "curse",
+                "effect_id": "ongoing:curse:curse-origin",
+                "all": False,
+            },
+        }
+    ]
+
+
+def test_remove_curse_ends_every_curse_on_one_creature() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Remove Curse", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[3] = 1
+    for index in (1, 2):
+        state._apply_effects(
+            [
+                EffectResult(
+                    kind="start_ongoing_effect",
+                    target_ref="player",
+                    data={
+                        "effect_kind": "curse",
+                        "source_ref": f"goblin_{index}",
+                        "source_label": f"Curse {index}",
+                        "definition_id": f"curse_{index}",
+                        "target_refs": ["player"],
+                    },
+                )
+            ],
+            origin_id=f"curse-{index}",
+        )
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell" and str(action.value) == "remove_curse:player"
+    )
+    state.apply_action(action)
+
+    assert not any(effect.kind.value == "curse" for effect in state.ongoing_effects)
+
+
+def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Greater Restoration", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[5] = 1
+    original = (caster.get_max_health(), caster.get_health())
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="player",
+                data={
+                    "effect_kind": "spell",
+                    "source_ref": "goblin_1",
+                    "source_label": "Withering Effect",
+                    "definition_id": "withering_effect",
+                    "target_refs": ["player"],
+                    "parameters": {
+                        "maximum_hit_point_modifier": -10,
+                        "also_modify_current_hit_points": True,
+                    },
+                },
+            )
+        ],
+        origin_id="withering-origin",
+    )
+    assert (caster.get_max_health(), caster.get_health()) == (
+        original[0] - 10,
+        original[1] - 10,
+    )
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and "hit_point_maximum_reduction" in str(action.value)
+    )
+    state.apply_action(action)
+
+    assert (caster.get_max_health(), caster.get_health()) == original
 
 
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:

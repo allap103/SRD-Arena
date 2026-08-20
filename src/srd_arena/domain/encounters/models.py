@@ -127,6 +127,9 @@ class PendingSpellCast:
     maximum_targets: int
     repeat_target_allocations: bool = False
     require_full_target_count: bool = False
+    resource_pool_total: int | None = None
+    resource_allocations: dict[CreatureRef, int] = field(default_factory=dict)
+    resource_allocation_limits: dict[CreatureRef, int] = field(default_factory=dict)
 
 
 @dataclass

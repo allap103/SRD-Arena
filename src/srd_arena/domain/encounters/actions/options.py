@@ -99,24 +99,32 @@ def available_spell_actions(
             continue
         targets = self._spell_action_targets(actor, spell)
         for target in targets:
+            removal_choices = _spell_removal_choices(self, target.target_ref, spell)
             selections = (
-                tuple(
-                    dict.fromkeys(
-                        condition
-                        for condition in target.target_conditions
-                        if condition in spell.removable_conditions
-                    )
-                )
-                if spell.removable_conditions
+                tuple(choice for choice, _label in removal_choices)
+                if spell.removable_effect_kinds
+                and spell.remove_effect_selection != "all"
                 else spell.mechanics.conditions
                 if spell.mechanics is not None and spell.mechanics.condition_choice
                 else (None,)
             )
             for selection in selections:
-                selection_label = (
-                    f" ({selection.title()})" if isinstance(selection, str) else ""
+                selection_display = next(
+                    (
+                        label
+                        for choice, label in removal_choices
+                        if choice == selection
+                    ),
+                    selection.title() if isinstance(selection, str) else "",
                 )
-                selection_id = f"-{selection}" if isinstance(selection, str) else ""
+                selection_label = (
+                    f" ({selection_display})" if isinstance(selection, str) else ""
+                )
+                selection_id = (
+                    f"-{selection.replace(':', '-').replace('@', '-')}"
+                    if isinstance(selection, str)
+                    else ""
+                )
                 _append_spell_action_variants(
                     actions,
                     spellcasting,
@@ -168,6 +176,10 @@ def _append_spell_action_variants(
     if (
         spell.mechanics.slot_damage_increment is None
         and spell.mechanics.slot_target_increment == 0
+        and spell.mechanics.slot_healing_dice_increment is None
+        and spell.mechanics.slot_healing_bonus_increment == 0
+        and spell.mechanics.slot_temporary_hit_points_increment == 0
+        and spell.mechanics.slot_maximum_hit_point_increment == 0
         and not any(
             follow_up.slot_damage_increment is not None
             for follow_up in spell.mechanics.follow_up_resolutions
@@ -227,6 +239,45 @@ def spell_target_selection_actions(
         if spell.mechanics is not None and spell.mechanics.choose_area_targets
         else tuple(state._spell_action_targets(actor, spell))
     )
+    if pending.resource_pool_total is not None:
+        for target in candidates:
+            limit = pending.resource_allocation_limits.get(target.target_ref)
+            if limit is None:
+                continue
+            current = pending.resource_allocations.get(target.target_ref, 0)
+            actions.append(
+                EncounterAction(
+                    f"Allocate healing to {target.target_label}",
+                    "set_spell_resource_allocation",
+                    f"{target.target_ref}~{current}",
+                    id=(
+                        f"{creature_ref}-spell-allocation-"
+                        f"{target.target_ref.replace(':', '-')}"
+                    ),
+                    creature_ref=creature_ref,
+                    source_trigger_id=pending.spell_id,
+                )
+            )
+        allocated = sum(pending.resource_allocations.values())
+        if allocated > 0:
+            actions.append(
+                EncounterAction(
+                    f"Cast {spell.name} ({allocated}/{pending.resource_pool_total} HP)",
+                    "confirm_spell_targets",
+                    id=f"{creature_ref}-confirm-{spell.id}",
+                    creature_ref=creature_ref,
+                    cost=pending.action.cost,
+                )
+            )
+        actions.append(
+            EncounterAction(
+                f"Cancel {spell.name}",
+                "cancel_spell_targets",
+                id=f"{creature_ref}-cancel-{spell.id}",
+                creature_ref=creature_ref,
+            )
+        )
+        return actions
     for target in candidates:
         if pending.repeat_target_allocations:
             selected_count = pending.selected_target_refs.count(target.target_ref)
@@ -365,7 +416,10 @@ def spell_action_targets(
 ) -> list[SpellTargetContext]:
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
-    if spell.removable_conditions:
+    if spell.removable_effect_kinds and not (
+        spell.mechanics is not None
+        and (spell.mechanics.healing or spell.mechanics.temporary_hit_points)
+    ):
         restoration_targets: list[SpellTargetContext] = []
         max_range = self._spell_range_squares(spell, actor)
         for target_ref, target_state in self.creatures.items():
@@ -378,9 +432,8 @@ def spell_action_targets(
             ):
                 continue
             target = self._spell_target_context(actor, target_ref)
-            if target is not None and any(
-                condition in spell.removable_conditions
-                for condition in target.target_conditions
+            if target is not None and _spell_removal_choices(
+                self, target_ref, spell
             ):
                 restoration_targets.append(target)
         return restoration_targets
@@ -401,10 +454,7 @@ def spell_action_targets(
         target = self._spell_target_context(actor, creature_ref)
         if target is None:
             return []
-        if any(
-            condition in spell.removable_conditions
-            for condition in target.target_conditions
-        ):
+        if _spell_removal_choices(self, creature_ref, spell):
             return [target]
         return []
 
@@ -423,6 +473,8 @@ def spell_action_targets(
             continue
         if disposition == "ally" and is_opponent:
             continue
+        if disposition == "source" and target_ref != creature_ref:
+            continue
         if (
             max_range is not None
             and grid_distance_between(
@@ -436,6 +488,48 @@ def spell_action_targets(
         if target is not None:
             targets.append(target)
     return targets
+
+
+def _spell_removal_choices(
+    state: EncounterState,
+    target_ref: str,
+    spell: Spell,
+) -> tuple[tuple[str, str], ...]:
+    target = state._spell_target_context(
+        state.creatures[state.current_decision().creature_ref].creature,
+        target_ref,
+    )
+    if target is None:
+        return ()
+    choices: list[tuple[str, str]] = [
+        (condition, condition.title())
+        for condition in dict.fromkeys(target.target_conditions)
+        if condition in spell.removable_conditions
+    ]
+    if "curse" in spell.removable_effect_kinds:
+        choices.extend(
+            (
+                f"curse@{effect.identity.id}",
+                f"Curse: {effect.identity.source.label or effect.identity.source.definition_id}",
+            )
+            for effect in state.ongoing_effects
+            if target_ref in effect.target_refs and effect.kind.value == "curse"
+        )
+    if "hit_point_maximum_reduction" in spell.removable_effect_kinds and any(
+        target_ref in effect.target_refs
+        and isinstance(
+            maximum_modifier := effect.parameters.get(
+                "maximum_hit_point_modifier"
+            ),
+            int,
+        )
+        and maximum_modifier < 0
+        for effect in state.ongoing_effects
+    ):
+        choices.append(
+            ("hit_point_maximum_reduction", "Hit Point Maximum Reduction")
+        )
+    return tuple(choices)
 
 
 def spell_area_targets(

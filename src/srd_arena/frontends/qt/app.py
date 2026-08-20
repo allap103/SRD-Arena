@@ -63,6 +63,7 @@ try:
         QMessageBox,
         QPushButton,
         QScrollArea,
+        QSpinBox,
         QSizePolicy,
         QStackedWidget,
         QTextEdit,
@@ -91,6 +92,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QMessageBox = object  # type: ignore[assignment]
     QPushButton = object  # type: ignore[assignment]
     QScrollArea = object  # type: ignore[assignment]
+    QSpinBox = object  # type: ignore[assignment]
     QSizePolicy = object  # type: ignore[assignment]
     QStackedWidget = object  # type: ignore[assignment]
     QTextEdit = object  # type: ignore[assignment]
@@ -724,6 +726,7 @@ class GameWindow(QMainWindow):
                 "Shift-click removes one allocation; right-click cancels."
             )
             self.actions_section_layout.addWidget(allocation_label)
+            self._render_spell_resource_allocation_controls()
         rendered_target_modes: set[TargetSelectionMode] = set()
         if encounter.action_pane_title != "Actions":
             self._render_action_detail_column(
@@ -1303,6 +1306,8 @@ class GameWindow(QMainWindow):
             for economy in ("action", "bonus_action", "reaction")
         }
         for action in actions:
+            if action.kind == "set_spell_resource_allocation":
+                continue
             groups[self._action_economy_key(action)][self._action_bucket_key(action)].append(action)
         return groups
 
@@ -1619,6 +1624,12 @@ class GameWindow(QMainWindow):
         pending = state.pending_spell_cast if state is not None else None
         if pending is None:
             return None
+        if pending.resource_pool_total is not None:
+            allocated = sum(pending.resource_allocations.values())
+            return (
+                f"Healing allocated: {allocated}/{pending.resource_pool_total} HP "
+                f"({pending.resource_pool_total - allocated} remaining)"
+            )
         spell = self._spell_by_id(pending.spell_id)
         spell_name = spell.name if spell is not None else "Spell"
         selected = len(pending.selected_target_refs)
@@ -1628,6 +1639,55 @@ class GameWindow(QMainWindow):
             f"{spell_name}: {remaining} {allocation_label} remaining "
             f"({selected}/{pending.maximum_targets} assigned)"
         )
+
+    def _render_spell_resource_allocation_controls(self) -> None:
+        state = self.session.encounter_state
+        pending = state.pending_spell_cast if state is not None else None
+        if pending is None or pending.resource_pool_total is None or state is None:
+            return
+        allocated_total = sum(pending.resource_allocations.values())
+        for target_ref, missing_hit_points in pending.resource_allocation_limits.items():
+            row = QWidget()
+            layout = QHBoxLayout(row)
+            layout.setContentsMargins(0, 0, 0, 0)
+            target = state.creatures[target_ref].creature
+            label = QLabel(f"{target.name} ({missing_hit_points} missing)")
+            spin = QSpinBox()
+            current = pending.resource_allocations.get(target_ref, 0)
+            remaining_with_current = (
+                pending.resource_pool_total - allocated_total + current
+            )
+            spin.setRange(0, min(missing_hit_points, remaining_with_current))
+            spin.setValue(current)
+            spin.setSuffix(" HP")
+            spin.setToolTip(
+                f"Allocate 0–{min(missing_hit_points, remaining_with_current)} "
+                "Hit Points to this creature."
+            )
+            spin.editingFinished.connect(
+                lambda ref=target_ref, control=spin: (
+                    self._set_spell_resource_allocation(ref, control.value())
+                )
+            )
+            layout.addWidget(label, 1)
+            layout.addWidget(spin)
+            self.actions_section_layout.addWidget(row)
+
+    def _set_spell_resource_allocation(self, target_ref: str, amount: int) -> None:
+        state = self.session.encounter_state
+        if state is None or state.pending_spell_cast is None:
+            return
+        pending = state.pending_spell_cast
+        action = EncounterAction(
+            label=f"Allocate {amount} healing to {target_ref}",
+            kind="set_spell_resource_allocation",
+            value=f"{target_ref}~{amount}",
+            id=f"{state.current_decision().creature_ref}-spell-allocation-{target_ref.replace(':', '-')}",
+            creature_ref=state.current_decision().creature_ref,
+            source_trigger_id=pending.spell_id,
+        )
+        result = self.session.choose_encounter_action(action)
+        self._apply_turn_result(result)
 
     def _handle_battlefield_point_clicked(self, x: float, y: float) -> None:
         if self._presentation is None or self._presentation.encounter is None:

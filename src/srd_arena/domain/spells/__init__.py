@@ -3,7 +3,9 @@ from .definitions import (
     ImmediateSpellMechanics,
     Spell,
     SpellDamage,
+    SpellHealing,
     SpellRef,
+    SpellTemporaryHitPoints,
 )
 
 __all__ = [
@@ -11,5 +13,7 @@ __all__ = [
     "ImmediateSpellMechanics",
     "Spell",
     "SpellDamage",
+    "SpellHealing",
     "SpellRef",
+    "SpellTemporaryHitPoints",
 ]

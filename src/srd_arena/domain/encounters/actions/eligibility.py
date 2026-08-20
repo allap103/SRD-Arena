@@ -492,6 +492,7 @@ class SpellTargetSelectionRule:
     ) -> EligibilityFailure | None:
         if action.kind not in {
             "toggle_spell_target",
+            "set_spell_resource_allocation",
             "confirm_spell_targets",
         }:
             return None
@@ -565,6 +566,48 @@ class SpellTargetSelectionRule:
                 action.value,
                 spell.target_requirements,
             )
+        if action.kind == "set_spell_resource_allocation":
+            if pending.resource_pool_total is None or not isinstance(action.value, str):
+                return EligibilityFailure(
+                    "spell_allocation_unavailable",
+                    "No spell resource allocation is active.",
+                )
+            target_ref, separator, amount_text = action.value.rpartition("~")
+            if not separator or not amount_text.isdigit():
+                return EligibilityFailure(
+                    "invalid_allocation",
+                    "The allocation must provide a target and whole-number amount.",
+                )
+            amount = int(amount_text)
+            limit = pending.resource_allocation_limits.get(target_ref)
+            other_total = sum(
+                value
+                for ref, value in pending.resource_allocations.items()
+                if ref != target_ref
+            )
+            if limit is None or amount > limit:
+                return EligibilityFailure(
+                    "invalid_allocation",
+                    "The allocation exceeds that target's missing Hit Points.",
+                )
+            if other_total + amount > pending.resource_pool_total:
+                return EligibilityFailure(
+                    "resource_pool_exceeded",
+                    "The allocation exceeds the remaining healing pool.",
+                )
+            return _target_requirement_failure(
+                state,
+                actor_ref,
+                target_ref,
+                spell.target_requirements,
+            )
+        if action.kind == "confirm_spell_targets" and pending.resource_pool_total is not None:
+            if not pending.resource_allocations:
+                return EligibilityFailure(
+                    "target_required",
+                    "Allocate at least 1 Hit Point before casting.",
+                )
+            return None
         if not pending.selected_target_refs:
             return EligibilityFailure(
                 "target_required",

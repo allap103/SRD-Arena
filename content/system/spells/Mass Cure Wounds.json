@@ -46,5 +46,21 @@
   "areaTags": [
     "MT",
     "S"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {
+      "type": "area",
+      "origin": "point_in_range",
+      "geometry": {"shape": "sphere", "radius_feet": 30},
+      "occupants": "chosen",
+      "chosen_count": {"minimum": 1, "maximum": 6}
+    },
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {"type": "healing", "dice": "5d8", "modifier": "spellcasting_ability"}
+    ]}},
+    "scaling": [{"type": "slot_level", "above_level": "spell_level", "per_level": [
+      {"type": "healing_dice", "amount": "1d8"}
+    ]}]
+  }
 }

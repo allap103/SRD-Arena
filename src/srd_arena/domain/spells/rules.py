@@ -91,33 +91,46 @@ def spell_action_value(
     aim_point: tuple[float, float] | None = None,
     selected_condition: str | None = None,
     slot_level: int | None = None,
+    healing_allocations: dict[str, int] | None = None,
 ) -> str:
     if aim_point is not None:
         value = f"{spell_id}@{aim_point[0]:.4f},{aim_point[1]:.4f}"
         if isinstance(target_ref, tuple) and target_ref:
             value += f"|{','.join(target_ref)}"
-        return _with_spell_selections(value, selected_condition, slot_level)
+        return _with_spell_selections(
+            value, selected_condition, slot_level, healing_allocations
+        )
     if target_ref is None:
-        return _with_spell_selections(spell_id, selected_condition, slot_level)
+        return _with_spell_selections(
+            spell_id, selected_condition, slot_level, healing_allocations
+        )
     encoded_target = (
         ",".join(target_ref) if isinstance(target_ref, tuple) else target_ref
     )
     value = f"{spell_id}:{encoded_target}"
-    return _with_spell_selections(value, selected_condition, slot_level)
+    return _with_spell_selections(value, selected_condition, slot_level, healing_allocations)
 
 
 def _with_spell_selections(
     value: str,
     selected_condition: str | None,
     slot_level: int | None,
+    healing_allocations: dict[str, int] | None = None,
 ) -> str:
-    if selected_condition is not None and slot_level is None:
+    if selected_condition is not None and slot_level is None and not healing_allocations:
         return f"{value}#{selected_condition}"
     selections = []
     if selected_condition is not None:
         selections.append(f"condition={selected_condition}")
     if slot_level is not None:
         selections.append(f"slot={slot_level}")
+    if healing_allocations:
+        encoded = ",".join(
+            f"{target_ref}~{amount}"
+            for target_ref, amount in sorted(healing_allocations.items())
+            if amount > 0
+        )
+        selections.append(f"healing={encoded}")
     return value if not selections else f"{value}#{'&'.join(selections)}"
 
 
@@ -192,3 +205,20 @@ def parse_spell_action_slot(value: str) -> int | None:
         if equals and key == "slot" and selected.isdigit():
             return int(selected)
     return None
+
+
+def parse_spell_healing_allocations(value: str) -> dict[str, int]:
+    _base, separator, selections = value.partition("#")
+    if not separator:
+        return {}
+    for selection in selections.split("&"):
+        key, equals, encoded = selection.partition("=")
+        if not equals or key != "healing":
+            continue
+        allocations: dict[str, int] = {}
+        for entry in encoded.split(","):
+            target_ref, separator, amount = entry.rpartition("~")
+            if separator and target_ref and amount.isdigit():
+                allocations[target_ref] = int(amount)
+        return allocations
+    return {}

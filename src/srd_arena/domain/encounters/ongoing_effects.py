@@ -73,28 +73,60 @@ def start_ongoing_effect(
         dispellable=True,
     )
     state.ongoing_effects.append(effect)
+    maximum_hit_point_modifier = effect.parameters.get(
+        "maximum_hit_point_modifier"
+    )
+    also_modify_current = bool(
+        effect.parameters.get("also_modify_current_hit_points", False)
+    )
+    if isinstance(maximum_hit_point_modifier, int) and maximum_hit_point_modifier:
+        for target_ref in effect.target_refs:
+            state.creatures[target_ref].creature.set_maximum_health_modifier(
+                definition_id,
+                origin_id,
+                maximum_hit_point_modifier,
+                also_modify_current=also_modify_current,
+            )
     return effect
 
 
 def end_concentration(state: EncounterState, source_ref: str) -> None:
-    origins = {
-        effect.identity.source.origin_id
+    matching = tuple(
+        effect
         for effect in state.ongoing_effects
         if effect.kind is OngoingEffectKind.CONCENTRATION
         and effect.identity.source.applied_by_ref == source_ref
-    }
-    if not origins:
-        return
-    state.ongoing_effects = [
+    )
+    for effect in matching:
+        _remove_effect_tree(state, effect)
+
+
+def remove_ongoing_effects(state: EncounterState, result: EffectResult) -> None:
+    effect_id = result.data.get("effect_id")
+    effect_kind = result.data.get("effect_kind")
+    parameter = result.data.get("parameter")
+    remove_all = bool(result.data.get("all", False))
+    matching = tuple(
         effect
         for effect in state.ongoing_effects
-        if effect.identity.source.origin_id not in origins
-    ]
-    state.conditions = [
-        condition
-        for condition in state.conditions
-        if condition.identity.source.origin_id not in origins
-    ]
+        if result.target_ref in effect.target_refs
+        and (not isinstance(effect_id, str) or effect.identity.id == effect_id)
+        and (not isinstance(effect_kind, str) or effect.kind.value == effect_kind)
+        and (
+            parameter != "negative_maximum_hit_points"
+            or (
+                isinstance(
+                    maximum_modifier := effect.parameters.get(
+                        "maximum_hit_point_modifier"
+                    ),
+                    int,
+                )
+                and maximum_modifier < 0
+            )
+        )
+    )
+    for effect in matching if remove_all else matching[:1]:
+        _remove_effect_target(state, effect, result.target_ref)
 
 
 def resolve_end_turn_effects(
@@ -372,6 +404,8 @@ def resolve_spell_lifecycle_event(
 
 def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
     origin_id = effect.identity.source.origin_id
+    for target_ref in effect.target_refs:
+        _remove_maximum_hit_point_modifier(state, effect, target_ref)
     state.ongoing_effects = [
         existing
         for existing in state.ongoing_effects
@@ -389,6 +423,7 @@ def _remove_effect_target(
     effect: OngoingEffect,
     target_ref: str,
 ) -> None:
+    _remove_maximum_hit_point_modifier(state, effect, target_ref)
     remaining_targets = tuple(
         existing for existing in effect.target_refs if existing != target_ref
     )
@@ -414,6 +449,23 @@ def _remove_effect_target(
         else existing
         for existing in state.ongoing_effects
     ]
+
+
+def _remove_maximum_hit_point_modifier(
+    state: EncounterState,
+    effect: OngoingEffect,
+    target_ref: str,
+) -> None:
+    modifier = effect.parameters.get("maximum_hit_point_modifier")
+    if not isinstance(modifier, int) or modifier == 0:
+        return
+    state.creatures[target_ref].creature.remove_maximum_health_modifier(
+        effect.identity.source.definition_id,
+        effect.identity.source.origin_id,
+        also_modify_current=bool(
+            effect.parameters.get("also_modify_current_hit_points", False)
+        ),
+    )
 
 
 def _progressed_target_refs(effect: OngoingEffect) -> tuple[str, ...]:

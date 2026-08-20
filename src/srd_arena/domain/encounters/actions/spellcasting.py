@@ -14,6 +14,7 @@ from ...spells.rules import parse_spell_action_value
 from ...spells.rules import parse_spell_action_targets
 from ...spells.rules import parse_spell_action_condition
 from ...spells.rules import parse_spell_action_slot
+from ...spells.rules import parse_spell_healing_allocations
 from ..ongoing_effects import (
     resolve_concentration_damage,
     resolve_spell_lifecycle_event,
@@ -185,6 +186,7 @@ def resolve_spell_action(
                     ),
                 )
             ),
+            healing_allocations=parse_spell_healing_allocations(spell_value),
         )
     )
     if result is None:
@@ -268,6 +270,14 @@ def resolve_spell_action(
                 "attack_roll_details": result.details.get("attack_roll_details"),
                 "damage_roll_detail": result.details.get("damage_roll_detail"),
                 "damage_roll_details": result.details.get("damage_roll_details"),
+                "healing_roll_detail": result.details.get("healing_roll_detail"),
+                "healing_roll_details": result.details.get("healing_roll_details"),
+                "temporary_hit_point_detail": result.details.get(
+                    "temporary_hit_point_detail"
+                ),
+                "temporary_hit_point_details": result.details.get(
+                    "temporary_hit_point_details"
+                ),
                 "effects": serialize_effects(result.effects),
                 "success": result.details.get("success", False),
             },
