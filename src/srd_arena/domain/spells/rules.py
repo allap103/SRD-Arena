@@ -16,9 +16,7 @@ class SpellActionEconomy:
 
 def spell_action_economy(spell: Spell) -> SpellActionEconomy:
     units = {
-        entry.get("unit")
-        for entry in spell.casting_time
-        if isinstance(entry, dict)
+        entry.get("unit") for entry in spell.casting_time if isinstance(entry, dict)
     }
     return SpellActionEconomy(
         action=1 if "action" in units else 0,
@@ -90,6 +88,7 @@ def spell_action_value(
     target_ref: str | tuple[str, ...] | None = None,
     aim_point: tuple[float, float] | None = None,
     selected_condition: str | None = None,
+    selected_damage_type: str | None = None,
     slot_level: int | None = None,
     healing_allocations: dict[str, int] | None = None,
 ) -> str:
@@ -98,30 +97,48 @@ def spell_action_value(
         if isinstance(target_ref, tuple) and target_ref:
             value += f"|{','.join(target_ref)}"
         return _with_spell_selections(
-            value, selected_condition, slot_level, healing_allocations
+            value,
+            selected_condition,
+            selected_damage_type,
+            slot_level,
+            healing_allocations,
         )
     if target_ref is None:
         return _with_spell_selections(
-            spell_id, selected_condition, slot_level, healing_allocations
+            spell_id,
+            selected_condition,
+            selected_damage_type,
+            slot_level,
+            healing_allocations,
         )
     encoded_target = (
         ",".join(target_ref) if isinstance(target_ref, tuple) else target_ref
     )
     value = f"{spell_id}:{encoded_target}"
-    return _with_spell_selections(value, selected_condition, slot_level, healing_allocations)
+    return _with_spell_selections(
+        value, selected_condition, selected_damage_type, slot_level, healing_allocations
+    )
 
 
 def _with_spell_selections(
     value: str,
     selected_condition: str | None,
+    selected_damage_type: str | None,
     slot_level: int | None,
     healing_allocations: dict[str, int] | None = None,
 ) -> str:
-    if selected_condition is not None and slot_level is None and not healing_allocations:
+    if (
+        selected_condition is not None
+        and selected_damage_type is None
+        and slot_level is None
+        and not healing_allocations
+    ):
         return f"{value}#{selected_condition}"
     selections = []
     if selected_condition is not None:
         selections.append(f"condition={selected_condition}")
+    if selected_damage_type is not None:
+        selections.append(f"damage_type={selected_damage_type}")
     if slot_level is not None:
         selections.append(f"slot={slot_level}")
     if healing_allocations:
@@ -134,7 +151,9 @@ def _with_spell_selections(
     return value if not selections else f"{value}#{'&'.join(selections)}"
 
 
-def parse_spell_action_value(value: str) -> tuple[str, str | None, tuple[float, float] | None]:
+def parse_spell_action_value(
+    value: str,
+) -> tuple[str, str | None, tuple[float, float] | None]:
     value, _, _selection = value.partition("#")
     if "@" in value:
         spell_id, _, aim = value.partition("@")
@@ -180,9 +199,7 @@ def spell_max_targets(
             for minimum_level, count in mechanics.target_count_by_caster_level
             if minimum_level <= caster_level
         )
-    return base_target_count + (
-        levels_above * mechanics.slot_target_increment
-    )
+    return base_target_count + (levels_above * mechanics.slot_target_increment)
 
 
 def parse_spell_action_condition(value: str) -> str | None:
@@ -194,6 +211,17 @@ def parse_spell_action_condition(value: str) -> str | None:
         if equals and key == "condition" and selected:
             return selected
     return selections if "=" not in selections and selections else None
+
+
+def parse_spell_action_damage_type(value: str) -> str | None:
+    _base, separator, selections = value.partition("#")
+    if not separator:
+        return None
+    for selection in selections.split("&"):
+        key, equals, selected = selection.partition("=")
+        if equals and key == "damage_type" and selected:
+            return selected
+    return None
 
 
 def parse_spell_action_slot(value: str) -> int | None:

@@ -45,6 +45,7 @@ class SpellActionContext:
     source_ref: str = "player"
     roller: DieRoller | None = None
     selected_condition: str | None = None
+    selected_damage_type: str | None = None
     attack_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
     automatic_critical_providers: dict[str, tuple[str, ...]] = field(
         default_factory=dict
@@ -367,12 +368,19 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
     maximum_hit_point_modifier = mechanics.maximum_hit_point_modifier + (
         mechanics.slot_maximum_hit_point_increment * (cast_level - spell.level)
     )
+    selected_damage_resistances = mechanics.damage_resistances
+    if mechanics.damage_resistance_choice:
+        selected_damage_resistances = (
+            (context.selected_damage_type,)
+            if context.selected_damage_type in mechanics.damage_resistances
+            else mechanics.damage_resistances[:1]
+        )
     if (
         affected_targets
         and (
             mechanics.conditions
             or maximum_hit_point_modifier != 0
-            or mechanics.damage_resistances
+            or selected_damage_resistances
             or mechanics.condition_save_advantages
         )
         and (
@@ -415,7 +423,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         "also_modify_current_hit_points": (
                             mechanics.also_modify_current_hit_points
                         ),
-                        "damage_resistances": list(mechanics.damage_resistances),
+                        "damage_resistances": list(selected_damage_resistances),
                         "condition_save_advantages": list(
                             mechanics.condition_save_advantages
                         ),

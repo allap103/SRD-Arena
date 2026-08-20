@@ -35,6 +35,7 @@ from srd_arena.domain.effects.runtime import UntilTurnStart
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.domain.spells.rules import (
+    parse_spell_action_damage_type,
     parse_spell_action_slot,
     parse_spell_action_value,
     spell_action_value,
@@ -2299,6 +2300,44 @@ def test_heal_upcasts_and_removes_every_listed_condition() -> None:
         "blinded",
         "poisoned",
     ]
+
+
+def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Protection from Energy", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[3] = 1
+
+    actions = [
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("protection_from_energy:player")
+    ]
+
+    assert {
+        parse_spell_action_damage_type(str(action.value)) for action in actions
+    } == {"acid", "cold", "fire", "lightning", "thunder"}
+    fire_action = next(
+        action
+        for action in actions
+        if parse_spell_action_damage_type(str(action.value)) == "fire"
+    )
+    state.apply_action(fire_action)
+
+    assert caster.has_damage_resistance("fire")
+    assert not caster.has_damage_resistance("cold")
+    assert state.ongoing_effects[0].parameters["damage_resistances"] == ["fire"]
 
 
 def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:

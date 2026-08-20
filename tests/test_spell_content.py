@@ -170,6 +170,24 @@ def test_protection_from_poison_translates_creature_modifiers() -> None:
     assert spell.mechanics.duration_rounds == 600
 
 
+def test_protection_from_energy_translates_a_resistance_choice() -> None:
+    spell = build_spell(
+        "Protection from Energy", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    )
+
+    assert spell.mechanics is not None
+    assert spell.mechanics.damage_resistances == (
+        "acid",
+        "cold",
+        "fire",
+        "lightning",
+        "thunder",
+    )
+    assert spell.mechanics.damage_resistance_choice
+    assert spell.mechanics.concentration
+    assert spell.mechanics.duration_rounds == 600
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

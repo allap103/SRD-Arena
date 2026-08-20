@@ -90,6 +90,7 @@ class ImmediateSpellMechanics:
     also_modify_current_hit_points: bool = False
     slot_maximum_hit_point_increment: int = 0
     damage_resistances: tuple[str, ...] = ()
+    damage_resistance_choice: bool = False
     condition_save_advantages: tuple[str, ...] = ()
 
     @property

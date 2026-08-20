@@ -415,6 +415,7 @@ class RemoveEffectSchema(SpellMechanicsSchemaModel):
 class DamageResistanceEffectSchema(SpellMechanicsSchemaModel):
     type: Literal["damage_resistance"]
     damage_types: list[str] = Field(min_length=1)
+    selection: Literal["all", "choose_one"] = "all"
     duration: EffectDurationSchema | None = None
 
 

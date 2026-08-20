@@ -152,6 +152,11 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         if isinstance(effect.root, DamageResistanceEffectSchema)
         for damage_type in effect.root.damage_types
     )
+    damage_resistance_choice = any(
+        isinstance(effect.root, DamageResistanceEffectSchema)
+        and effect.root.selection == "choose_one"
+        for effect in outcome.effects
+    )
     condition_save_advantages = tuple(
         condition
         for effect in outcome.effects
@@ -286,6 +291,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             _slot_scaling_value(raw, "hit_point_maximum", int) or 0
         ),
         damage_resistances=damage_resistances,
+        damage_resistance_choice=damage_resistance_choice,
         condition_save_advantages=condition_save_advantages,
     )
 
