@@ -125,6 +125,7 @@ def start_ongoing_effect(
                     for sense in value.get("ignored_by_senses", [])
                     if isinstance(sense, str)
                 ),
+                ability=cast(str | None, value.get("ability")),
             )
             for value in roll_modifiers
             if isinstance(value, dict)

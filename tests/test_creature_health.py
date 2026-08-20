@@ -127,6 +127,25 @@ def test_roll_mode_modifiers_expose_own_and_incoming_modes() -> None:
     assert creature.incoming_attack_roll_mode() == "disadvantage"
 
 
+def test_ability_scoped_roll_mode_only_applies_to_matching_checks() -> None:
+    creature = make_creature()
+    creature.set_roll_modifiers(
+        "enhance_ability",
+        "cast",
+        (
+            RollModifier(
+                roll="ability_check",
+                mode="advantage",
+                ability="strength",
+            ),
+        ),
+    )
+
+    assert creature.roll_mode("ability_check", "strength") == "advantage"
+    assert creature.roll_mode("ability_check", "dexterity") == "normal"
+    assert creature.roll_mode("ability_check") == "normal"
+
+
 def test_same_spell_armor_class_modifiers_do_not_stack() -> None:
     creature = make_creature()
     base = creature.get_armor_class()

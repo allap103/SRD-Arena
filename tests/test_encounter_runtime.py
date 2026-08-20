@@ -35,6 +35,7 @@ from srd_arena.domain.effects.runtime import UntilTurnStart
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.domain.spells.rules import (
+    parse_spell_action_ability,
     parse_spell_action_damage_type,
     parse_spell_action_slot,
     parse_spell_action_value,
@@ -2338,6 +2339,55 @@ def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
     assert caster.has_damage_resistance("fire")
     assert not caster.has_damage_resistance("cold")
     assert state.ongoing_effects[0].parameters["damage_resistances"] == ["fire"]
+
+
+def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Enhance Ability", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[2] = 1
+
+    actions = [
+        action
+        for action in state.available_actions()
+        if action.kind == "spell" and str(action.value).startswith("enhance_ability:player")
+    ]
+
+    assert {parse_spell_action_ability(str(action.value)) for action in actions} == {
+        "strength",
+        "dexterity",
+        "intelligence",
+        "wisdom",
+        "charisma",
+    }
+    strength_action = next(
+        action
+        for action in actions
+        if parse_spell_action_ability(str(action.value)) == "strength"
+    )
+    state.apply_action(strength_action)
+
+    assert caster.roll_mode("ability_check", "strength") == "advantage"
+    assert caster.roll_mode("ability_check", "dexterity") == "normal"
+    assert state.ongoing_effects[0].parameters["roll_modifiers"] == [
+        {
+            "roll": "ability_check",
+            "mode": "advantage",
+            "dice": None,
+            "value": None,
+            "subject": "target",
+            "ignored_by_senses": [],
+            "ability": "strength",
+        }
+    ]
 
 
 def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:

@@ -105,6 +105,7 @@ class ImmediateSpellMechanics:
     damage_reduction_dice: str | None = None
     condition_immunities: tuple[str, ...] = ()
     senses: tuple[tuple[str, int], ...] = ()
+    roll_modifier_ability_choices: tuple[str, ...] = ()
 
     @property
     def healing_pool(self) -> int | None:

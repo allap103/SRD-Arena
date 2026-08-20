@@ -314,6 +314,28 @@ def test_stoneskin_translates_multiple_damage_resistances() -> None:
     assert spell.mechanics.duration_rounds == 600
 
 
+def test_enhance_ability_translates_ability_scoped_choices() -> None:
+    spell = build_spell(
+        "Enhance Ability", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    )
+
+    assert spell.mechanics is not None
+    assert spell.mechanics.roll_modifier_ability_choices == (
+        "strength",
+        "dexterity",
+        "intelligence",
+        "wisdom",
+        "charisma",
+    )
+    assert [modifier.ability for modifier in spell.mechanics.roll_modifiers] == [
+        "strength",
+        "dexterity",
+        "intelligence",
+        "wisdom",
+        "charisma",
+    ]
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

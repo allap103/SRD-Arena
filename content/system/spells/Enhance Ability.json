@@ -51,5 +51,25 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {
+    "status": "partial",
+    "omissions": [
+      {
+        "mechanic": "different ability choices per upcast target",
+        "reason": "Spell action selections currently apply one ability choice to every selected target."
+      }
+    ]
+  },
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "willing"},
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {
+        "type": "roll_modifier",
+        "roll": "ability_check",
+        "mode": "advantage",
+        "ability_options": ["str", "dex", "int", "wis", "cha"]
+      }
+    ]}}
+  }
 }

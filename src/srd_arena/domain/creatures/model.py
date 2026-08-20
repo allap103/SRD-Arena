@@ -308,16 +308,20 @@ class Creature:
         if not sources:
             self.roll_modifier_sources.pop(definition_id, None)
 
-    def resolve_roll_modifiers(self, roll: RollKind, roller: DieRoller) -> int:
+    def resolve_roll_modifiers(
+        self, roll: RollKind, roller: DieRoller, ability: str | None = None
+    ) -> int:
         return sum(
             modifier.resolve(roller)
             for sources in self.roll_modifier_sources.values()
             for modifiers in tuple(sources.values())[:1]
             for modifier in modifiers
-            if modifier.roll == roll and modifier.subject == "target"
+            if modifier.roll == roll
+            and modifier.subject == "target"
+            and (modifier.ability is None or modifier.ability == ability)
         )
 
-    def roll_mode(self, roll: RollKind) -> D20RollMode:
+    def roll_mode(self, roll: RollKind, ability: str | None = None) -> D20RollMode:
         return combine_roll_modes(
             *(
                 modifier.roll_mode
@@ -326,6 +330,7 @@ class Creature:
                 for modifier in modifiers
                 if modifier.roll == roll
                 and modifier.subject == "target"
+                and (modifier.ability is None or modifier.ability == ability)
                 and modifier.roll_mode is not None
             )
         )

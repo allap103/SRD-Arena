@@ -14,6 +14,7 @@ from ...spells.rules import parse_spell_action_value
 from ...spells.rules import parse_spell_action_targets
 from ...spells.rules import parse_spell_action_condition
 from ...spells.rules import parse_spell_action_damage_type
+from ...spells.rules import parse_spell_action_ability
 from ...spells.rules import parse_spell_action_slot
 from ...spells.rules import parse_spell_healing_allocations
 from ..ongoing_effects import (
@@ -132,6 +133,7 @@ def resolve_spell_action(
             roller=_roll_die,
             selected_condition=parse_spell_action_condition(spell_value),
             selected_damage_type=parse_spell_action_damage_type(spell_value),
+            selected_ability=parse_spell_action_ability(spell_value),
             attack_roll_modes=(
                 {
                     candidate.target_ref: self._attack_roll_mode_for(

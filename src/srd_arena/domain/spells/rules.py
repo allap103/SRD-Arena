@@ -89,6 +89,7 @@ def spell_action_value(
     aim_point: tuple[float, float] | None = None,
     selected_condition: str | None = None,
     selected_damage_type: str | None = None,
+    selected_ability: str | None = None,
     slot_level: int | None = None,
     healing_allocations: dict[str, int] | None = None,
 ) -> str:
@@ -100,6 +101,7 @@ def spell_action_value(
             value,
             selected_condition,
             selected_damage_type,
+            selected_ability,
             slot_level,
             healing_allocations,
         )
@@ -108,6 +110,7 @@ def spell_action_value(
             spell_id,
             selected_condition,
             selected_damage_type,
+            selected_ability,
             slot_level,
             healing_allocations,
         )
@@ -116,7 +119,12 @@ def spell_action_value(
     )
     value = f"{spell_id}:{encoded_target}"
     return _with_spell_selections(
-        value, selected_condition, selected_damage_type, slot_level, healing_allocations
+        value,
+        selected_condition,
+        selected_damage_type,
+        selected_ability,
+        slot_level,
+        healing_allocations,
     )
 
 
@@ -124,12 +132,14 @@ def _with_spell_selections(
     value: str,
     selected_condition: str | None,
     selected_damage_type: str | None,
+    selected_ability: str | None,
     slot_level: int | None,
     healing_allocations: dict[str, int] | None = None,
 ) -> str:
     if (
         selected_condition is not None
         and selected_damage_type is None
+        and selected_ability is None
         and slot_level is None
         and not healing_allocations
     ):
@@ -139,6 +149,8 @@ def _with_spell_selections(
         selections.append(f"condition={selected_condition}")
     if selected_damage_type is not None:
         selections.append(f"damage_type={selected_damage_type}")
+    if selected_ability is not None:
+        selections.append(f"ability={selected_ability}")
     if slot_level is not None:
         selections.append(f"slot={slot_level}")
     if healing_allocations:
@@ -220,6 +232,17 @@ def parse_spell_action_damage_type(value: str) -> str | None:
     for selection in selections.split("&"):
         key, equals, selected = selection.partition("=")
         if equals and key == "damage_type" and selected:
+            return selected
+    return None
+
+
+def parse_spell_action_ability(value: str) -> str | None:
+    _base, separator, selections = value.partition("#")
+    if not separator:
+        return None
+    for selection in selections.split("&"):
+        key, equals, selected = selection.partition("=")
+        if equals and key == "ability" and selected:
             return selected
     return None
 

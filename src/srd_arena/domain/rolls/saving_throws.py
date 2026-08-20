@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
+
+from ..effects.modifiers import RollKind
 
 from .dice import (
     CheckResult,
@@ -24,13 +26,17 @@ Ability = Literal[
 
 
 class SavingThrowCreature(Protocol):
-    attributes: object
+    attributes: Any
 
     def get_modifier(self, attribute_value: int) -> int: ...
 
-    def resolve_roll_modifiers(self, roll: str, roller: DieRoller) -> int: ...
+    def resolve_roll_modifiers(
+        self, roll: RollKind, roller: DieRoller, ability: str | None = None
+    ) -> int: ...
 
-    def roll_mode(self, roll: str) -> D20RollMode: ...
+    def roll_mode(
+        self, roll: RollKind, ability: str | None = None
+    ) -> D20RollMode: ...
 
 
 @dataclass(frozen=True)
@@ -75,7 +81,7 @@ def resolve_saving_throw(
         if proficient
         else 0
     )
-    sourced_modifier = creature.resolve_roll_modifiers("saving_throw", roller)
+    sourced_modifier = creature.resolve_roll_modifiers("saving_throw", roller, ability)
     modifiers = SavingThrowModifiers(
         ability=ability_modifier,
         proficiency=proficiency_modifier,
@@ -83,7 +89,7 @@ def resolve_saving_throw(
     )
     roll = resolve_d20(
         modifier=modifiers.total,
-        mode=combine_roll_modes(mode, creature.roll_mode("saving_throw")),
+        mode=combine_roll_modes(mode, creature.roll_mode("saving_throw", ability)),
         roller=roller,
     )
     check = resolve_check(roll, target)

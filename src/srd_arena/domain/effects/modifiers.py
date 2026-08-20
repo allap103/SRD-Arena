@@ -16,6 +16,7 @@ class RollModifier:
     value: int | None = None
     subject: ModifierSubject = "target"
     ignored_by_senses: tuple[str, ...] = ()
+    ability: str | None = None
 
     def resolve(self, roller: DieRoller) -> int:
         if self.mode not in {"add", "subtract"}:

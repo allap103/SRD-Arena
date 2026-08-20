@@ -22,7 +22,9 @@ from .behaviors import (
     movement_budget_for,
 )
 from ..spells.rules import (
+    parse_spell_action_ability,
     parse_spell_action_condition,
+    parse_spell_action_damage_type,
     parse_spell_action_slot,
     parse_spell_action_targets,
     parse_spell_action_value,
@@ -548,6 +550,8 @@ def execute_creature_action(
                     tuple(selected_targets),
                     aim_point=aim_point,
                     selected_condition=parse_spell_action_condition(action.value),
+                    selected_damage_type=parse_spell_action_damage_type(action.value),
+                    selected_ability=parse_spell_action_ability(action.value),
                     slot_level=parse_spell_action_slot(action.value),
                 )
                 self._resolve_spell_action(
@@ -652,6 +656,8 @@ def execute_creature_action(
         original_value = str(pending.action.value)
         _spell_id, _target_ref, aim_point = parse_spell_action_value(original_value)
         selected_condition = parse_spell_action_condition(original_value)
+        selected_damage_type = parse_spell_action_damage_type(original_value)
+        selected_ability = parse_spell_action_ability(original_value)
         slot_level = parse_spell_action_slot(original_value)
         resolved_target_refs = (
             tuple(pending.resource_allocations)
@@ -663,6 +669,8 @@ def execute_creature_action(
             resolved_target_refs,
             aim_point=aim_point,
             selected_condition=selected_condition,
+            selected_damage_type=selected_damage_type,
+            selected_ability=selected_ability,
             slot_level=slot_level,
             healing_allocations=pending.resource_allocations,
         )

@@ -46,6 +46,7 @@ class SpellActionContext:
     roller: DieRoller | None = None
     selected_condition: str | None = None
     selected_damage_type: str | None = None
+    selected_ability: str | None = None
     attack_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
     automatic_critical_providers: dict[str, tuple[str, ...]] = field(
         default_factory=dict
@@ -463,8 +464,11 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                                 "ignored_by_senses": list(
                                     modifier.ignored_by_senses
                                 ),
+                                "ability": modifier.ability,
                             }
                             for modifier in mechanics.roll_modifiers
+                            if modifier.ability is None
+                            or modifier.ability == context.selected_ability
                         ],
                         "armor_class_modifier": mechanics.armor_class_modifier,
                         "speed_modifier_feet": mechanics.speed_modifier_feet,

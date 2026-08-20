@@ -76,14 +76,14 @@ def resolve_escape_action(
     escape_dc = grapple.metadata["escape_dc"]
     if not isinstance(escape_dc, int):
         raise RuntimeError("Grapple escape DC must be an integer.")
-    modifier = max(
-        creature.get_modifier(creature.attributes.strength),
-        creature.get_modifier(creature.attributes.dexterity),
-    )
+    strength_modifier = creature.get_modifier(creature.attributes.strength)
+    dexterity_modifier = creature.get_modifier(creature.attributes.dexterity)
+    ability = "strength" if strength_modifier >= dexterity_modifier else "dexterity"
+    modifier = max(strength_modifier, dexterity_modifier)
     check = resolve_d20(
         modifier=modifier
-        + creature.resolve_roll_modifiers("ability_check", _roll_die),
-        mode=creature.roll_mode("ability_check"),
+        + creature.resolve_roll_modifiers("ability_check", _roll_die, ability),
+        mode=creature.roll_mode("ability_check", ability),
         roller=_roll_die,
     )
     success = check.total >= escape_dc

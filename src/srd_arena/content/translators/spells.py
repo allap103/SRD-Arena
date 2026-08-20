@@ -219,6 +219,9 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             value=effect.root.value,
             subject=cast(ModifierSubject, effect.root.subject),
             ignored_by_senses=tuple(effect.root.ignored_by_senses),
+            ability=(
+                _normalize_save_ability(ability) if ability is not None else None
+            ),
         )
         for effect in outcome.effects
         if isinstance(effect.root, RollModifierEffectSchema)
@@ -226,6 +229,11 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             ("ability_check", "attack_roll", "saving_throw")
             if effect.root.roll == "d20_test"
             else (effect.root.roll,)
+        )
+        for ability in (
+            tuple(effect.root.ability_options)
+            if effect.root.ability_options
+            else (effect.root.ability,)
         )
     )
     geometry = target.geometry if target.type == "area" else None
@@ -375,6 +383,12 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         ),
         condition_immunities=condition_immunities,
         senses=senses,
+        roll_modifier_ability_choices=tuple(
+            _normalize_save_ability(ability)
+            for effect in outcome.effects
+            if isinstance(effect.root, RollModifierEffectSchema)
+            for ability in effect.root.ability_options
+        ),
     )
 
 

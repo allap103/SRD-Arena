@@ -211,6 +211,7 @@ class RollModifierEffectSchema(ActionMechanicsSchemaModel):
         Literal["blindsight", "darkvision", "truesight"]
     ] = Field(default_factory=list)
     ability: Ability | None = None
+    ability_options: list[Ability] = Field(default_factory=list)
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     value: int | None = None
     duration: EffectDurationSchema | None = None
