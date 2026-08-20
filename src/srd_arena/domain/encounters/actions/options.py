@@ -108,6 +108,7 @@ def available_spell_actions(
                     )
                 )
                 if spell.removable_conditions
+                and spell.remove_effect_selection != "all"
                 else spell.mechanics.conditions
                 if spell.mechanics is not None and spell.mechanics.condition_choice
                 else (None,)
@@ -368,7 +369,10 @@ def spell_action_targets(
 ) -> list[SpellTargetContext]:
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
-    if spell.removable_conditions:
+    if spell.removable_conditions and not (
+        spell.mechanics is not None
+        and (spell.mechanics.healing or spell.mechanics.temporary_hit_points)
+    ):
         restoration_targets: list[SpellTargetContext] = []
         max_range = self._spell_range_squares(spell, actor)
         for target_ref, target_state in self.creatures.items():

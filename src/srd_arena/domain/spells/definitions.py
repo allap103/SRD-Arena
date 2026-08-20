@@ -20,6 +20,7 @@ class SpellHealing:
     dice: str | None = None
     bonus: int = 0
     add_spellcasting_modifier: bool = False
+    restore_to_maximum: bool = False
 
 
 @dataclass(frozen=True)
@@ -100,6 +101,7 @@ class Spell:
     saving_throw_abilities: tuple[str, ...] = ()
     condition_inflict: tuple[str, ...] = ()
     removable_conditions: tuple[str, ...] = ()
+    remove_effect_selection: str | None = None
     damage_dice: str | None = None
     damage_inflict: tuple[str, ...] = ()
     area_tags: tuple[str, ...] = ()

@@ -109,6 +109,28 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     assert false_life.mechanics.temporary_hit_points[0].value == 4
     assert false_life.mechanics.slot_temporary_hit_points_increment == 5
 
+    healing_word = build_spell("Healing Word", "XPHB", catalog)
+    mass_healing_word = build_spell("Mass Healing Word", "XPHB", catalog)
+    mass_cure_wounds = build_spell("Mass Cure Wounds", "XPHB", catalog)
+    assert healing_word.mechanics is not None
+    assert healing_word.mechanics.slot_healing_dice_increment == "2d4"
+    assert mass_healing_word.mechanics is not None
+    assert mass_healing_word.mechanics.base_target_count == 6
+    assert mass_healing_word.mechanics.slot_healing_dice_increment == "1d4"
+    assert mass_cure_wounds.mechanics is not None
+    assert mass_cure_wounds.mechanics.choose_area_targets
+    assert mass_cure_wounds.mechanics.area_radius_feet == 30
+    heal = build_spell("Heal", "XPHB", catalog)
+    power_word_heal = build_spell("Power Word Heal", "XPHB", catalog)
+    assert heal.remove_effect_selection == "all"
+    assert heal.removable_conditions == ("blinded", "deafened", "poisoned")
+    assert heal.mechanics is not None
+    assert heal.mechanics.healing[0].bonus == 70
+    assert heal.mechanics.slot_healing_bonus_increment == 10
+    assert power_word_heal.remove_effect_selection == "all"
+    assert power_word_heal.mechanics is not None
+    assert power_word_heal.mechanics.healing[0].restore_to_maximum
+
 
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)

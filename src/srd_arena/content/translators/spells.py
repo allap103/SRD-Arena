@@ -55,6 +55,7 @@ def build_spell(
         ),
         condition_inflict=tuple(raw.condition_inflict),
         removable_conditions=_spell_removable_conditions(raw),
+        remove_effect_selection=_remove_effect_selection(raw),
         damage_dice=_spell_damage_dice(raw),
         damage_inflict=tuple(raw.damage_inflict),
         area_tags=tuple(raw.area_tags),
@@ -118,6 +119,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             dice=effect.root.dice,
             bonus=effect.root.bonus,
             add_spellcasting_modifier=effect.root.modifier == "spellcasting_ability",
+            restore_to_maximum=effect.root.restore_to_maximum,
         )
         for effect in outcome.effects
         if isinstance(effect.root, HealingEffectSchema)
@@ -606,6 +608,26 @@ def _spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
     return tuple(
         match.casefold() for match in re.findall(r"\{@condition ([^|}]+)", text)
     )
+
+
+def _remove_effect_selection(raw: SpellSchema) -> str | None:
+    if raw.mechanics is None:
+        return None
+    resolution = raw.mechanics.resolution.root
+    if isinstance(resolution, RepeatResolutionSchema):
+        resolution = resolution.resolution.root
+    if not isinstance(resolution, AutomaticResolutionSchema):
+        return None
+    removal = next(
+        (
+            effect.root
+            for effect in resolution.outcome.effects
+            if isinstance(effect.root, RemoveEffectSchema)
+            and "condition" in effect.root.removable
+        ),
+        None,
+    )
+    return removal.selection if removal is not None else None
 
 
 def _spell_geometry_mode(raw: SpellSchema) -> str:

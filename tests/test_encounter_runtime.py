@@ -2193,6 +2193,111 @@ def test_false_life_grants_scaled_temporary_hit_points(monkeypatch) -> None:
     assert spell_event.data["temporary_hit_point_detail"]["applied"] == 15
 
 
+def test_mass_healing_word_uses_one_roll_for_selected_targets(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Mass Healing Word", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[3] = 1
+    for offset, target_ref in enumerate(("goblin_1", "goblin_2"), start=1):
+        target = state.creatures[target_ref]
+        target.position = Position(
+            state.active_position.x + offset,
+            state.active_position.y,
+        )
+        target.creature.current_health = target.creature.get_max_health() - 8
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 3
+    )
+
+    initial = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value) == "mass_healing_word:goblin_1"
+    )
+    state.apply_action(initial)
+    add_second = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "toggle_spell_target"
+        and action.value == "goblin_2"
+    )
+    state.apply_action(add_second)
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+
+    result = state.apply_action(confirm)
+
+    event = next(event for event in result.events if event.type == "spell_cast")
+    details = event.data["healing_roll_details"]
+    assert [detail["target_ref"] for detail in details] == ["goblin_1", "goblin_2"]
+    assert details[0]["dice_values"] == details[1]["dice_values"] == [3, 3]
+    assert all(detail["applied"] == 7 for detail in details)
+
+
+def test_heal_upcasts_and_removes_every_listed_condition() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Heal", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[7] = 1
+    caster.max_health_override = 200
+    caster.current_health = 50
+    for condition in ("blinded", "poisoned"):
+        state._apply_effects(
+            [
+                EffectResult(
+                    kind="apply_condition",
+                    target_ref="player",
+                    data={
+                        "condition": condition,
+                        "source_ref": "goblin_1",
+                        "source_label": "Goblin",
+                    },
+                )
+            ]
+        )
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("heal:player")
+        and parse_spell_action_slot(str(action.value)) == 7
+    )
+    result = state.apply_action(action)
+
+    assert caster.get_health() == 130
+    assert state.has_condition("player", Condition.BLINDED) is False
+    assert state.has_condition("player", Condition.POISONED) is False
+    event = next(event for event in result.events if event.type == "spell_cast")
+    assert event.data["healing_roll_detail"]["total"] == 80
+    assert [effect["data"]["condition"] for effect in event.data["effects"]] == [
+        "blinded",
+        "poisoned",
+    ]
+
+
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:
     bucket = GameWindow._action_bucket_key(
         None,

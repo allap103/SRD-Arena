@@ -114,6 +114,21 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             shared_damage_rolls.append(
                 (damage, resolve_dice(count, sides, roller=context.roller))
             )
+    shared_healing_rolls = tuple(
+        (
+            healing,
+            dice,
+            _roll_optional_dice(dice, context.roller),
+        )
+        for healing in mechanics.healing
+        for dice in (
+            _scale_dice(
+                healing.dice,
+                mechanics.slot_healing_dice_increment,
+                cast_level - spell.level,
+            ),
+        )
+    )
 
     save_details: list[dict[str, object]] = []
     attack_details: list[dict[str, object]] = []
@@ -235,13 +250,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
         )
         if affected:
             affected_targets.append(target)
-            for healing in mechanics.healing:
-                dice = _scale_dice(
-                    healing.dice,
-                    mechanics.slot_healing_dice_increment,
-                    cast_level - spell.level,
-                )
-                healing_roll = _roll_optional_dice(dice, context.roller)
+            for healing, dice, healing_roll in shared_healing_rolls:
                 modifier = healing.bonus + (
                     context.creature.spellcasting.ability_modifier
                     if healing.add_spellcasting_modifier
@@ -250,10 +259,14 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 modifier += mechanics.slot_healing_bonus_increment * (
                     cast_level - spell.level
                 )
-                total = max(
-                    0,
-                    (healing_roll.subtotal if healing_roll is not None else 0)
-                    + modifier,
+                total = (
+                    target.creature.get_max_health() - target.creature.get_health()
+                    if healing.restore_to_maximum
+                    else max(
+                        0,
+                        (healing_roll.subtotal if healing_roll is not None else 0)
+                        + modifier,
+                    )
                 )
                 applied = target.creature.heal(total)
                 healing_details.append(
@@ -405,6 +418,28 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
     removed_conditions: list[str] = []
     if spell.removable_conditions:
         for target in affected_targets:
+            if spell.remove_effect_selection == "all":
+                target_removed_conditions = tuple(
+                    condition
+                    for condition in spell.removable_conditions
+                    if condition in target.target_conditions
+                )
+                for condition in target_removed_conditions:
+                    removed_conditions.append(condition)
+                    messages.append(
+                        (
+                            "system",
+                            f"{target.target_label} is no longer {condition}.",
+                        )
+                    )
+                    effects.append(
+                        EffectResult(
+                            kind="remove_condition",
+                            target_ref=target.target_ref,
+                            data={"condition": condition},
+                        )
+                    )
+                continue
             removed_condition = context.selected_condition
             if (
                 removed_condition not in spell.removable_conditions
