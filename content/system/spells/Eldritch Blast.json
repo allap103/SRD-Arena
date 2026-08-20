@@ -52,5 +52,49 @@
   "areaTags": [
     "MT",
     "ST"
-  ]
+  ],
+  "implementation": {
+    "status": "partial",
+    "omissions": [
+      {
+        "mechanic": "object targeting",
+        "reason": "Objects are not encounter participants yet."
+      }
+    ]
+  },
+  "mechanics": {
+    "target": {
+      "type": "creature",
+      "count": {"minimum": 1, "maximum": 4},
+      "disposition": "enemy",
+      "selection": "choose_up_to",
+      "line_of_sight": true
+    },
+    "resolution": {
+      "type": "repeat",
+      "count": 4,
+      "allocation": "same_or_different",
+      "simultaneous": true,
+      "resolution": {
+        "type": "spell_attack",
+        "mode": "ranged",
+        "hit": {
+          "effects": [
+            {"type": "damage", "dice": "1d10", "damage_type": "force"}
+          ]
+        }
+      }
+    },
+    "scaling": [
+      {
+        "type": "caster_level",
+        "thresholds": [
+          {"minimum_level": 1, "projectile_count": 1},
+          {"minimum_level": 5, "projectile_count": 2},
+          {"minimum_level": 11, "projectile_count": 3},
+          {"minimum_level": 17, "projectile_count": 4}
+        ]
+      }
+    ]
+  }
 }

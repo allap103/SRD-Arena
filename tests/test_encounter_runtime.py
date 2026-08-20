@@ -2480,6 +2480,184 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
     assert caster.spellcasting.spell_slots_remaining[2] == 0
 
 
+def test_ray_of_sickness_combines_scaled_damage_and_timed_condition(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Ray of Sickness", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[2] = 1
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda sides: 15 if sides == 20 else 2,
+    )
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("ray_of_sickness:goblin_1")
+        and parse_spell_action_slot(str(action.value)) == 2
+    )
+    resolved = state.apply_action(action)
+
+    spell_event = next(event for event in resolved.events if event.type == "spell_cast")
+    assert spell_event.data["damage_roll_detail"]["dice"] == "3d8"
+    assert state.has_condition("goblin_1", Condition.POISONED)
+
+
+def test_eldritch_blast_uses_caster_level_for_beam_allocation(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.attributes = replace(caster.attributes, level=11)
+    caster.spellcasting.learned_spells.append(
+        build_spell("Eldritch Blast", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda sides: 20 if sides == 20 else 4,
+    )
+
+    initial = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value) == "eldritch_blast:goblin_1"
+    )
+    state.apply_action(initial)
+
+    assert state.pending_spell_cast is not None
+    assert state.pending_spell_cast.maximum_targets == 3
+    for target_ref in ("goblin_1", "goblin_2"):
+        add_beam = next(
+            action
+            for action in state.available_actions()
+            if action.kind == "toggle_spell_target"
+            and action.value == target_ref
+            and action.id.endswith("-add")
+        )
+        state.apply_action(add_beam)
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+    resolved = state.apply_action(confirm)
+
+    spell_event = next(event for event in resolved.events if event.type == "spell_cast")
+    assert spell_event.data["target_refs"] == [
+        "goblin_1",
+        "goblin_1",
+        "goblin_2",
+    ]
+    assert len(spell_event.data["attack_roll_details"]) == 3
+    assert len(spell_event.data["damage_roll_details"]) == 3
+
+
+def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Ice Knife", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[2] = 1
+    state.active_position.x = 1
+    state.active_position.y = 1
+    state.creatures["goblin_1"].position = Position(5, 5)
+    state.creatures["goblin_2"].position = Position(6, 5)
+    state.creatures["goblin_3"].position = Position(10, 10)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda sides: 1 if sides == 20 else 2,
+    )
+
+    ice_knife_actions = [
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("ice_knife")
+    ]
+    assert ice_knife_actions
+    action = next(
+        action
+        for action in ice_knife_actions
+        if str(action.value).startswith("ice_knife:goblin_1")
+        and parse_spell_action_slot(str(action.value)) == 2
+    )
+    resolved = state.apply_action(action)
+
+    spell_event = next(event for event in resolved.events if event.type == "spell_cast")
+    primary = next(
+        detail
+        for detail in spell_event.data["damage_roll_details"]
+        if detail["damage_type"] == "piercing"
+    )
+    cold = [
+        detail
+        for detail in spell_event.data["damage_roll_details"]
+        if detail["damage_type"] == "cold"
+    ]
+    assert primary["dice"] == "1d10"
+    assert primary["final_damage"] == 0
+    assert {detail["target_ref"] for detail in cold} == {"goblin_1", "goblin_2"}
+    assert all(detail["dice"] == "3d6" for detail in cold)
+
+
+def test_weird_deals_damage_on_a_failed_repeat_save(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Weird", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[9] = 1
+    state.active_position.x = 1
+    state.active_position.y = 1
+    target = state.creatures["goblin_1"]
+    target.position = Position(8, 8)
+    target.creature.current_health = 200
+    state.creatures["goblin_2"].position = Position(15, 1)
+    state.creatures["goblin_3"].position = Position(15, 10)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+
+    _choose_directional_spell(session, "Cast Weird", (8, 8))
+
+    assert state.has_condition("goblin_1", Condition.FRIGHTENED)
+    health_after_cast = target.creature.get_health()
+    resolve_end_turn_effects(state, "goblin_1")
+    assert target.creature.get_health() == health_after_cast - 5
+
+
 def test_sleep_progresses_from_incapacitated_to_unconscious(
     monkeypatch,
 ) -> None:

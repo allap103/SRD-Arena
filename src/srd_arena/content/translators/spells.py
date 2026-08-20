@@ -9,15 +9,23 @@ from srd_arena.content.schemas.action_mechanics import (
 )
 from srd_arena.content.schemas.spell_mechanics import (
     AutomaticResolutionSchema,
+    CasterLevelScalingSchema,
     ConditionImmunityRequirementSchema,
     CreatureTraitRequirementSchema,
     RepeatResolutionSchema,
     RemoveEffectSchema,
     SavingThrowResolutionSchema,
+    SequenceResolutionSchema,
+    SlotScalingSchema,
     SpellAttackResolutionSchema,
 )
 from srd_arena.content.sources import slug
-from srd_arena.domain.spells import ImmediateSpellMechanics, Spell, SpellDamage
+from srd_arena.domain.spells import (
+    FollowUpSpellResolution,
+    ImmediateSpellMechanics,
+    Spell,
+    SpellDamage,
+)
 from srd_arena.domain.creatures import CreatureTypeRequirement
 
 
@@ -62,6 +70,13 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         return None
     target = raw.mechanics.target
     outer_resolution = raw.mechanics.resolution.root
+    sequence = (
+        outer_resolution
+        if isinstance(outer_resolution, SequenceResolutionSchema)
+        else None
+    )
+    if sequence is not None:
+        outer_resolution = sequence.steps[0].resolution.root
     repeated = (
         outer_resolution
         if isinstance(outer_resolution, RepeatResolutionSchema)
@@ -138,7 +153,10 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             else ()
         ),
         cantrip_damage_by_level=_cantrip_damage_by_level(raw),
-        slot_damage_increment=_slot_damage_increment(raw),
+        slot_damage_increment=_slot_damage_increment(
+            raw,
+            damage_types={damage.damage_type for damage in damage},
+        ),
         conditions=conditions,
         condition_choice=raw.mechanics.condition_application == "choose_one",
         duration_rounds=_spell_duration_rounds(raw),
@@ -157,6 +175,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         ),
         target_disposition=(target.disposition if target.type == "creature" else "any"),
         repeat_failure_conditions=_repeat_failure_conditions(resolution),
+        repeat_failure_damage=_repeat_failure_damage(resolution),
         end_events=_end_events(raw),
         damage_repeat_save_advantage=_damage_repeat_save_advantage(raw),
         save_advantage_against_opponents=(
@@ -170,7 +189,9 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             raw.mechanics.self_removal_blocked_conditions
         ),
         base_target_count=(
-            repeated.count
+            _target_count_by_caster_level(raw)[0][1]
+            if _target_count_by_caster_level(raw)
+            else repeated.count
             if repeated is not None and isinstance(repeated.count, int)
             else target.count.maximum
             if target.type == "creature" and isinstance(target.count.maximum, int)
@@ -183,6 +204,49 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             and repeated.allocation in {"same_target", "same_or_different"}
         ),
         require_full_target_count=repeated is not None,
+        target_count_by_caster_level=_target_count_by_caster_level(raw),
+        follow_up_resolutions=(
+            tuple(
+                _follow_up_resolution(raw, step)
+                for step in sequence.steps[1:]
+            )
+            if sequence is not None
+            else ()
+        ),
+    )
+
+
+def _follow_up_resolution(
+    raw: SpellSchema,
+    step: object,
+) -> FollowUpSpellResolution:
+    target = getattr(step, "target", None)
+    resolution_wrapper = getattr(step, "resolution", None)
+    resolution = getattr(resolution_wrapper, "root", None)
+    if target is None or target.type != "area" or target.origin != "target":
+        raise ValueError("Follow-up spell resolutions require a target-origin area.")
+    if not isinstance(resolution, SavingThrowResolutionSchema):
+        raise ValueError("Only saving-throw follow-up resolutions are executable.")
+    damage = tuple(
+        SpellDamage(effect.root.dice, effect.root.damage_type)
+        for effect in resolution.failure.effects
+        if isinstance(effect.root, DamageEffectSchema)
+    )
+    return FollowUpSpellResolution(
+        resolution=resolution.type,
+        target=target.type,
+        damage=damage,
+        save_ability=(
+            _normalize_save_ability(resolution.ability)
+            if resolution.ability is not None
+            else None
+        ),
+        half_damage_on_save=resolution.success_damage == "half",
+        area_radius_feet=target.geometry.radius_feet,
+        slot_damage_increment=_slot_damage_increment(
+            raw,
+            damage_types={entry.damage_type for entry in damage},
+        ),
     )
 
 
@@ -213,11 +277,24 @@ def _cantrip_damage_by_level(raw: SpellSchema) -> tuple[tuple[int, str], ...]:
     )
 
 
-def _slot_damage_increment(raw: SpellSchema) -> str | None:
+def _slot_damage_increment(
+    raw: SpellSchema,
+    *,
+    damage_types: set[str],
+) -> str | None:
     assert raw.mechanics is not None
     for scaling in raw.mechanics.scaling:
+        if not isinstance(scaling, SlotScalingSchema):
+            continue
         for increment in scaling.per_level:
-            if increment.type == "damage_dice" and isinstance(increment.amount, str):
+            if (
+                increment.type == "damage_dice"
+                and isinstance(increment.amount, str)
+                and (
+                    increment.damage_type is None
+                    or increment.damage_type in damage_types
+                )
+            ):
                 return increment.amount
     return None
 
@@ -227,9 +304,20 @@ def _slot_target_increment(raw: SpellSchema) -> int:
     return sum(
         increment.amount
         for scaling in raw.mechanics.scaling
+        if isinstance(scaling, SlotScalingSchema)
         for increment in scaling.per_level
         if increment.type in {"target_count", "projectile_count"}
         and isinstance(increment.amount, int)
+    )
+
+
+def _target_count_by_caster_level(raw: SpellSchema) -> tuple[tuple[int, int], ...]:
+    assert raw.mechanics is not None
+    return tuple(
+        (threshold.minimum_level, threshold.projectile_count)
+        for scaling in raw.mechanics.scaling
+        if isinstance(scaling, CasterLevelScalingSchema)
+        for threshold in scaling.thresholds
     )
 
 
@@ -268,6 +356,22 @@ def _repeat_failure_conditions(resolution: object) -> tuple[str, ...]:
         effect.root.condition
         for effect in failure.outcome.effects
         if isinstance(effect.root, ConditionEffectSchema)
+    )
+
+
+def _repeat_failure_damage(resolution: object) -> tuple[SpellDamage, ...]:
+    if not isinstance(resolution, SavingThrowResolutionSchema):
+        return ()
+    repeat = resolution.repeat_save
+    if repeat is None or repeat.on_failure is None:
+        return ()
+    failure = repeat.on_failure.root
+    if not isinstance(failure, AutomaticResolutionSchema):
+        return ()
+    return tuple(
+        SpellDamage(effect.root.dice, effect.root.damage_type)
+        for effect in failure.outcome.effects
+        if isinstance(effect.root, DamageEffectSchema)
     )
 
 

@@ -168,6 +168,10 @@ def _append_spell_action_variants(
     if (
         spell.mechanics.slot_damage_increment is None
         and spell.mechanics.slot_target_increment == 0
+        and not any(
+            follow_up.slot_damage_increment is not None
+            for follow_up in spell.mechanics.follow_up_resolutions
+        )
     ):
         return
     spell_id, target_ref, aim_point = parse_spell_action_value(str(action.value))

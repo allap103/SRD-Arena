@@ -441,7 +441,11 @@ def execute_creature_action(
             else None
         )
         maximum_targets = (
-            spell_max_targets(spell, parse_spell_action_slot(action.value))
+            spell_max_targets(
+                spell,
+                parse_spell_action_slot(action.value),
+                caster_level=enemy.creature.attributes.level,
+            )
             if spell is not None
             else 1
         )

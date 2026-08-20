@@ -54,5 +54,34 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {
+      "type": "creature",
+      "disposition": "enemy",
+      "line_of_sight": true
+    },
+    "resolution": {
+      "type": "spell_attack",
+      "mode": "ranged",
+      "hit": {
+        "effects": [
+          {"type": "damage", "dice": "2d8", "damage_type": "poison"},
+          {
+            "type": "condition",
+            "condition": "poisoned",
+            "duration": {"type": "end_of_turn", "creature": "source", "turn_offset": 1}
+          }
+        ]
+      }
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "above_level": 1,
+        "per_level": [{"type": "damage_dice", "amount": "1d8"}]
+      }
+    ]
+  }
 }

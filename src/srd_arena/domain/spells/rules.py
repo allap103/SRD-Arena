@@ -149,13 +149,25 @@ def parse_spell_action_targets(value: str) -> tuple[str, ...]:
     return tuple(ref for ref in target_ref.split(",") if ref)
 
 
-def spell_max_targets(spell: Spell, cast_level: int | None) -> int:
+def spell_max_targets(
+    spell: Spell,
+    cast_level: int | None,
+    *,
+    caster_level: int | None = None,
+) -> int:
     mechanics = spell.mechanics
     if mechanics is None:
         return 1
     resolved_level = cast_level if cast_level is not None else spell.level
     levels_above = max(0, resolved_level - spell.level)
-    return mechanics.base_target_count + (
+    base_target_count = mechanics.base_target_count
+    if mechanics.target_count_by_caster_level and caster_level is not None:
+        base_target_count = max(
+            count
+            for minimum_level, count in mechanics.target_count_by_caster_level
+            if minimum_level <= caster_level
+        )
+    return base_target_count + (
         levels_above * mechanics.slot_target_increment
     )
 

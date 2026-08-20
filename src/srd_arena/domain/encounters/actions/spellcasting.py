@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from ...creatures import Creature
 from ...effects import serialize_effects
+from ...geometry import build_radius_area
 from ..models import EncounterProgress
 from ...spells.resolution import (
     SpellActionContext,
@@ -168,6 +169,21 @@ def resolve_spell_action(
                 if spell.mechanics is not None
                 and spell.mechanics.save_advantage_against_opponents
                 else {}
+            ),
+            area_targets_around=lambda center_ref, radius_feet: tuple(
+                self._targets_in_area(
+                    actor,
+                    build_radius_area(
+                        self._creature_position(center_ref),
+                        int(
+                            self.definition.grid.distance_from_feet(
+                                radius_feet,
+                                minimum=1,
+                            )
+                        ),
+                        self.definition.grid,
+                    ),
+                )
             ),
         )
     )

@@ -18,6 +18,7 @@ from ..rolls.saving_throws import (
     SavingThrowCreature,
     resolve_saving_throw,
 )
+from ..rolls.dice import resolve_dice
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -138,6 +139,52 @@ def resolve_end_turn_effects(
         if save.check.success:
             _remove_effect_target(state, effect, creature_ref)
         else:
+            repeat_damage = effect.parameters.get("repeat_failure_damage", [])
+            if isinstance(repeat_damage, list):
+                for damage in repeat_damage:
+                    if not isinstance(damage, dict):
+                        continue
+                    dice = damage.get("dice")
+                    damage_type = damage.get("damage_type")
+                    if not isinstance(dice, str) or not isinstance(
+                        damage_type, str
+                    ):
+                        continue
+                    count_text, separator, sides_text = dice.partition("d")
+                    if (
+                        not separator
+                        or not count_text.isdigit()
+                        or not sides_text.isdigit()
+                    ):
+                        continue
+                    roll = resolve_dice(
+                        int(count_text),
+                        int(sides_text),
+                        roller=_roll_die,
+                    )
+                    applied = target.take_damage(roll.total)
+                    if progress is not None:
+                        progress.messages.append(
+                            (
+                                "system",
+                                f"{effect.identity.source.label or 'The effect'} deals "
+                                f"{applied} {damage_type} damage to {target.name}.",
+                            )
+                        )
+                    source_ref = effect.identity.source.applied_by_ref or "system"
+                    resolve_spell_lifecycle_event(
+                        state,
+                        "target_damaged",
+                        actor_ref=source_ref,
+                        target_ref=creature_ref,
+                        progress=progress,
+                    )
+                    resolve_concentration_damage(
+                        state,
+                        creature_ref,
+                        applied,
+                        progress,
+                    )
             failure_conditions = effect.parameters.get(
                 "repeat_failure_conditions", []
             )

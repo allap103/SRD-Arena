@@ -73,6 +73,28 @@ def test_repeated_attack_and_removal_spells_translate_from_typed_mechanics() -> 
     assert lesser_restoration.mechanics.resolution == "automatic"
 
 
+def test_wave_1c_spells_translate_composed_mechanics() -> None:
+    catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    ray = build_spell("Ray of Sickness", "XPHB", catalog)
+    ice_knife = build_spell("Ice Knife", "XPHB", catalog)
+    eldritch_blast = build_spell("Eldritch Blast", "XPHB", catalog)
+    weird = build_spell("Weird", "XPHB", catalog)
+
+    assert ray.mechanics is not None
+    assert ray.mechanics.conditions == ("poisoned",)
+    assert ray.mechanics.expires_on_source_turn_end
+    assert ice_knife.mechanics is not None
+    assert ice_knife.mechanics.damage[0].damage_type == "piercing"
+    assert ice_knife.mechanics.follow_up_resolutions[0].area_radius_feet == 5
+    assert ice_knife.mechanics.follow_up_resolutions[0].damage[0].damage_type == "cold"
+    assert eldritch_blast.mechanics is not None
+    assert spell_max_targets(eldritch_blast, None, caster_level=1) == 1
+    assert spell_max_targets(eldritch_blast, None, caster_level=11) == 3
+    assert weird.mechanics is not None
+    assert weird.mechanics.repeat_save_trigger == "end_of_turn"
+    assert weird.mechanics.repeat_failure_damage[0].dice == "5d10"
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

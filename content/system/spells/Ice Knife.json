@@ -53,5 +53,55 @@
   "areaTags": [
     "ST"
   ],
-  "hasFluffImages": true
+  "hasFluffImages": true,
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {
+      "type": "creature",
+      "disposition": "enemy",
+      "line_of_sight": true
+    },
+    "resolution": {
+      "type": "sequence",
+      "steps": [
+        {
+          "resolution": {
+            "type": "spell_attack",
+            "mode": "ranged",
+            "hit": {
+              "effects": [
+                {"type": "damage", "dice": "1d10", "damage_type": "piercing"}
+              ]
+            }
+          }
+        },
+        {
+          "target": {
+            "type": "area",
+            "origin": "target",
+            "geometry": {"shape": "sphere", "radius_feet": 5},
+            "occupants": "all"
+          },
+          "resolution": {
+            "type": "saving_throw",
+            "ability": "dex",
+            "failure": {
+              "effects": [
+                {"type": "damage", "dice": "2d6", "damage_type": "cold"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "above_level": 1,
+        "per_level": [
+          {"type": "damage_dice", "amount": "1d6", "damage_type": "cold"}
+        ]
+      }
+    ]
+  }
 }
