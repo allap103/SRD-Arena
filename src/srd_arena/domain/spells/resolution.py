@@ -440,9 +440,10 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 )
 
     removed_conditions: list[str] = []
-    if spell.removable_conditions:
+    if spell.removable_effect_kinds:
         for target in affected_targets:
-            if spell.remove_effect_selection == "all":
+            selected_removal = context.selected_condition
+            if spell.remove_effect_selection == "all" and spell.removable_conditions:
                 target_removed_conditions = tuple(
                     condition
                     for condition in spell.removable_conditions
@@ -463,34 +464,70 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                             data={"condition": condition},
                         )
                     )
-                continue
-            removed_condition = context.selected_condition
-            if (
-                removed_condition not in spell.removable_conditions
-                or removed_condition not in target.target_conditions
-            ):
+            elif selected_removal in spell.removable_conditions:
+                if selected_removal not in target.target_conditions:
+                    continue
+                removed_conditions.append(selected_removal)
                 messages.append(
                     (
                         "system",
-                        f"No removable condition on "
-                        f"{target.target_label.lower()} is affected.",
+                        f"{target.target_label} is no longer {selected_removal}.",
                     )
                 )
-                continue
-            removed_conditions.append(removed_condition)
-            messages.append(
-                (
-                    "system",
-                    f"{target.target_label} is no longer {removed_condition}.",
+                effects.append(
+                    EffectResult(
+                        kind="remove_condition",
+                        target_ref=target.target_ref,
+                        data={"condition": selected_removal},
+                    )
                 )
-            )
-            effects.append(
-                EffectResult(
-                    kind="remove_condition",
-                    target_ref=target.target_ref,
-                    data={"condition": removed_condition},
+            if "curse" in spell.removable_effect_kinds and (
+                spell.remove_effect_selection == "all"
+                or (
+                    isinstance(selected_removal, str)
+                    and selected_removal.startswith("curse@")
                 )
-            )
+            ):
+                effect_id = (
+                    selected_removal.removeprefix("curse@")
+                    if isinstance(selected_removal, str)
+                    and selected_removal.startswith("curse@")
+                    else None
+                )
+                effects.append(
+                    EffectResult(
+                        kind="remove_ongoing_effects",
+                        target_ref=target.target_ref,
+                        data={
+                            "effect_kind": "curse",
+                            "effect_id": effect_id,
+                            "all": spell.remove_effect_selection == "all",
+                        },
+                    )
+                )
+                messages.append(
+                    ("system", f"A curse ends on {target.target_label}.")
+                )
+            if (
+                "hit_point_maximum_reduction" in spell.removable_effect_kinds
+                and selected_removal == "hit_point_maximum_reduction"
+            ):
+                effects.append(
+                    EffectResult(
+                        kind="remove_ongoing_effects",
+                        target_ref=target.target_ref,
+                        data={
+                            "parameter": "negative_maximum_hit_points",
+                            "all": True,
+                        },
+                    )
+                )
+                messages.append(
+                    (
+                        "system",
+                        f"Hit Point maximum reductions end on {target.target_label}.",
+                    )
+                )
 
     return CapabilityActionResult(
         capability_id=spell.id,

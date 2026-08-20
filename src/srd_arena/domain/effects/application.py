@@ -9,6 +9,7 @@ from .runtime import EffectSourceKind
 ApplyCondition = Callable[[AppliedCondition], object]
 RemoveCondition = Callable[[str, Condition], None]
 ApplyOngoingEffect = Callable[[EffectResult, str], object]
+RemoveOngoingEffects = Callable[[EffectResult], object]
 
 
 def apply_effects(
@@ -17,6 +18,7 @@ def apply_effects(
     apply_condition: ApplyCondition,
     remove_condition: RemoveCondition,
     apply_ongoing_effect: ApplyOngoingEffect | None = None,
+    remove_ongoing_effects: RemoveOngoingEffects | None = None,
     origin_id: str | None = None,
 ) -> list[tuple[str, str]]:
     messages: list[tuple[str, str]] = []
@@ -37,6 +39,10 @@ def apply_effects(
             if apply_ongoing_effect is None:
                 raise ValueError("No ongoing-effect application service provided.")
             apply_ongoing_effect(effect, origin_id or "")
+        elif effect.kind == "remove_ongoing_effects":
+            if remove_ongoing_effects is None:
+                raise ValueError("No ongoing-effect removal service provided.")
+            remove_ongoing_effects(effect)
         elif effect.kind == "message":
             messages.extend(message_effects(effect))
         else:

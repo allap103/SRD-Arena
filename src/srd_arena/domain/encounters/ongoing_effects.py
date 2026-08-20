@@ -101,6 +101,34 @@ def end_concentration(state: EncounterState, source_ref: str) -> None:
         _remove_effect_tree(state, effect)
 
 
+def remove_ongoing_effects(state: EncounterState, result: EffectResult) -> None:
+    effect_id = result.data.get("effect_id")
+    effect_kind = result.data.get("effect_kind")
+    parameter = result.data.get("parameter")
+    remove_all = bool(result.data.get("all", False))
+    matching = tuple(
+        effect
+        for effect in state.ongoing_effects
+        if result.target_ref in effect.target_refs
+        and (not isinstance(effect_id, str) or effect.identity.id == effect_id)
+        and (not isinstance(effect_kind, str) or effect.kind.value == effect_kind)
+        and (
+            parameter != "negative_maximum_hit_points"
+            or (
+                isinstance(
+                    maximum_modifier := effect.parameters.get(
+                        "maximum_hit_point_modifier"
+                    ),
+                    int,
+                )
+                and maximum_modifier < 0
+            )
+        )
+    )
+    for effect in matching if remove_all else matching[:1]:
+        _remove_effect_target(state, effect, result.target_ref)
+
+
 def resolve_end_turn_effects(
     state: EncounterState,
     creature_ref: str,

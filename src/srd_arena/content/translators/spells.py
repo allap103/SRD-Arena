@@ -56,6 +56,7 @@ def build_spell(
         ),
         condition_inflict=tuple(raw.condition_inflict),
         removable_conditions=_spell_removable_conditions(raw),
+        removable_effect_kinds=_spell_removable_effect_kinds(raw),
         remove_effect_selection=_remove_effect_selection(raw),
         damage_dice=_spell_damage_dice(raw),
         damage_inflict=tuple(raw.damage_inflict),
@@ -646,11 +647,29 @@ def _remove_effect_selection(raw: SpellSchema) -> str | None:
             effect.root
             for effect in resolution.outcome.effects
             if isinstance(effect.root, RemoveEffectSchema)
-            and "condition" in effect.root.removable
         ),
         None,
     )
     return removal.selection if removal is not None else None
+
+
+def _spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
+    if raw.mechanics is None:
+        return ()
+    resolution = raw.mechanics.resolution.root
+    if isinstance(resolution, RepeatResolutionSchema):
+        resolution = resolution.resolution.root
+    if not isinstance(resolution, AutomaticResolutionSchema):
+        return ()
+    removal = next(
+        (
+            effect.root
+            for effect in resolution.outcome.effects
+            if isinstance(effect.root, RemoveEffectSchema)
+        ),
+        None,
+    )
+    return tuple(removal.removable) if removal is not None else ()
 
 
 def _spell_geometry_mode(raw: SpellSchema) -> str:

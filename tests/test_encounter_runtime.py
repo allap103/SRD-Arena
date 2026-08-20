@@ -2439,6 +2439,171 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
     } == {"player": 300, "goblin_1": 400}
 
 
+def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Greater Restoration", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[5] = 1
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_condition",
+                target_ref="player",
+                data={
+                    "condition": "charmed",
+                    "source_ref": "goblin_1",
+                    "source_label": "Goblin",
+                },
+            )
+        ],
+        origin_id="charm-origin",
+    )
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="player",
+                data={
+                    "effect_kind": "curse",
+                    "source_ref": "goblin_2",
+                    "source_label": "Goblin Hex",
+                    "definition_id": "goblin_hex",
+                    "target_refs": ["player"],
+                },
+            ),
+        ],
+        origin_id="curse-origin",
+    )
+
+    curse_action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("greater_restoration:player")
+        and "curse@" in str(action.value)
+    )
+    result = state.apply_action(curse_action)
+
+    assert state.has_condition("player", Condition.CHARMED)
+    assert not any(effect.kind.value == "curse" for effect in state.ongoing_effects)
+    event = next(event for event in result.events if event.type == "spell_cast")
+    assert event.data["effects"] == [
+        {
+            "kind": "remove_ongoing_effects",
+            "target_ref": "player",
+            "success": True,
+            "data": {
+                "effect_kind": "curse",
+                "effect_id": "ongoing:curse:curse-origin",
+                "all": False,
+            },
+        }
+    ]
+
+
+def test_remove_curse_ends_every_curse_on_one_creature() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Remove Curse", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[3] = 1
+    for index in (1, 2):
+        state._apply_effects(
+            [
+                EffectResult(
+                    kind="start_ongoing_effect",
+                    target_ref="player",
+                    data={
+                        "effect_kind": "curse",
+                        "source_ref": f"goblin_{index}",
+                        "source_label": f"Curse {index}",
+                        "definition_id": f"curse_{index}",
+                        "target_refs": ["player"],
+                    },
+                )
+            ],
+            origin_id=f"curse-{index}",
+        )
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell" and str(action.value) == "remove_curse:player"
+    )
+    state.apply_action(action)
+
+    assert not any(effect.kind.value == "curse" for effect in state.ongoing_effects)
+
+
+def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Greater Restoration", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[5] = 1
+    original = (caster.get_max_health(), caster.get_health())
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="player",
+                data={
+                    "effect_kind": "spell",
+                    "source_ref": "goblin_1",
+                    "source_label": "Withering Effect",
+                    "definition_id": "withering_effect",
+                    "target_refs": ["player"],
+                    "parameters": {
+                        "maximum_hit_point_modifier": -10,
+                        "also_modify_current_hit_points": True,
+                    },
+                },
+            )
+        ],
+        origin_id="withering-origin",
+    )
+    assert (caster.get_max_health(), caster.get_health()) == (
+        original[0] - 10,
+        original[1] - 10,
+    )
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and "hit_point_maximum_reduction" in str(action.value)
+    )
+    state.apply_action(action)
+
+    assert (caster.get_max_health(), caster.get_health()) == original
+
+
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:
     bucket = GameWindow._action_bucket_key(
         None,

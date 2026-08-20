@@ -84,6 +84,7 @@ from .conditions import (
     remove_relationships_for_creature as _remove_relationships_for_creature_impl,
 )
 from .ongoing_effects import start_ongoing_effect as _start_ongoing_effect_impl
+from .ongoing_effects import remove_ongoing_effects
 from .participants import (
     creatures_are_opponents as _creatures_are_opponents_impl,
     creature_controller as _creature_controller_impl,
@@ -489,6 +490,9 @@ class EncounterState(EncounterStateData):
             apply_condition=self._apply_condition,
             remove_condition=self._remove_condition,
             apply_ongoing_effect=self._start_ongoing_effect,
+            remove_ongoing_effects=lambda effect: remove_ongoing_effects(
+                self, effect
+            ),
             origin_id=resolved_origin_id,
         )
 

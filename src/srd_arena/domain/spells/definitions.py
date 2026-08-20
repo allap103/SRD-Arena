@@ -112,6 +112,7 @@ class Spell:
     saving_throw_abilities: tuple[str, ...] = ()
     condition_inflict: tuple[str, ...] = ()
     removable_conditions: tuple[str, ...] = ()
+    removable_effect_kinds: tuple[str, ...] = ()
     remove_effect_selection: str | None = None
     damage_dice: str | None = None
     damage_inflict: tuple[str, ...] = ()

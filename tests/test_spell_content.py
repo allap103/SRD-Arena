@@ -141,6 +141,22 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     assert mass_heal.remove_effect_selection == "all"
 
 
+def test_restoration_spells_translate_source_aware_removal() -> None:
+    catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    greater = build_spell("Greater Restoration", "XPHB", catalog)
+    remove_curse = build_spell("Remove Curse", "XPHB", catalog)
+
+    assert greater.removable_conditions == ("charmed", "petrified")
+    assert greater.removable_effect_kinds == (
+        "condition",
+        "curse",
+        "hit_point_maximum_reduction",
+    )
+    assert greater.remove_effect_selection == "one"
+    assert remove_curse.removable_effect_kinds == ("curse",)
+    assert remove_curse.remove_effect_selection == "all"
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {
