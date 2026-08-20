@@ -38,6 +38,7 @@ class Creature:
     spellcasting: Spellcasting | None = None
     statistics: CreatureStatistics = field(default_factory=CreatureStatistics)
     max_health_override: int | None = None
+    temporary_hit_points: int = 0
 
     def __post_init__(self):
         if self.current_health is None:
@@ -96,8 +97,14 @@ class Creature:
         return self.current_health or 0
 
     def take_damage(self, amount: int) -> int:
-        applied_damage = min(max(amount, 0), self.get_health())
-        self.current_health = self.get_health() - applied_damage
+        applied_damage = min(
+            max(amount, 0),
+            self.get_health() + self.temporary_hit_points,
+        )
+        absorbed_damage = min(applied_damage, self.temporary_hit_points)
+        self.temporary_hit_points -= absorbed_damage
+        health_damage = applied_damage - absorbed_damage
+        self.current_health = self.get_health() - health_damage
         return applied_damage
 
     def heal(self, amount: int) -> int:
@@ -105,6 +112,12 @@ class Creature:
         applied_healing = min(max(amount, 0), missing_health)
         self.current_health = self.get_health() + applied_healing
         return applied_healing
+
+    def grant_temporary_hit_points(self, amount: int) -> int:
+        """Replace temporary HP only when the new amount is greater."""
+        previous = self.temporary_hit_points
+        self.temporary_hit_points = max(previous, max(amount, 0))
+        return self.temporary_hit_points - previous
 
     def get_armor_class(self) -> int:
         return self.attributes.base_armor_class + self.get_modifier(

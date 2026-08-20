@@ -23,6 +23,27 @@ def test_heal_restores_missing_health_only() -> None:
     assert creature.get_health() == creature.get_max_health() - 3
 
 
+def test_temporary_hit_points_absorb_damage_before_health() -> None:
+    creature = make_creature()
+    creature.grant_temporary_hit_points(5)
+
+    applied = creature.take_damage(7)
+
+    assert applied == 7
+    assert creature.temporary_hit_points == 0
+    assert creature.get_health() == creature.get_max_health() - 2
+
+
+def test_temporary_hit_points_replace_only_a_smaller_pool() -> None:
+    creature = make_creature()
+
+    assert creature.grant_temporary_hit_points(5) == 5
+    assert creature.grant_temporary_hit_points(3) == 0
+    assert creature.temporary_hit_points == 5
+    assert creature.grant_temporary_hit_points(8) == 3
+    assert creature.temporary_hit_points == 8
+
+
 @given(st.integers(min_value=0, max_value=100))
 def test_take_damage_never_drops_health_below_zero(amount: int) -> None:
     creature = make_creature()
