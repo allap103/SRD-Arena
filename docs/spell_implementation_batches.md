@@ -1,4 +1,4 @@
-# Spell Implementation Batchs
+# Spell Implementation Batches
 
 ## Purpose
 
@@ -16,6 +16,21 @@ The exhaustive, machine-validated assignment is maintained in
 Every active spell appears there exactly once. Batch 1 assignments are
 committed; later assignments are provisional and should be reviewed when their
 preceding batch finishes.
+
+## Current status and release cutoff
+
+Batch 1 is complete. Its attack, save, damage, condition, concentration,
+scaling, composed-resolution, and repeated-target-allocation mechanics execute
+through the shared spell pipeline. Spells marked `partial` in Batch 1 identify
+only explicit omissions involving unsupported objects, environmental effects,
+or defeated-creature remains.
+
+The initial feature-release cutoff is the completion of Batch 4. At that point,
+the simulator should support the core combat spell vocabulary: direct
+resolution, conditions, healing and creature modifiers, event-driven reactions
+and riders, and persistent battlefield effects. Batches 5 through 8 remain in
+the intended combat-spell scope, but are post-release breadth rather than
+requirements for the first feature-complete release.
 
 ## General rules
 
