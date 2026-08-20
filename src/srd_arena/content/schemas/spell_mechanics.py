@@ -1000,6 +1000,8 @@ class SlotScalingIncrementSchema(SpellMechanicsSchemaModel):
     type: Literal[
         "damage_dice",
         "healing_dice",
+        "healing_bonus",
+        "temporary_hit_points",
         "target_count",
         "projectile_count",
         "area_radius_feet",

@@ -118,6 +118,8 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
     save_details: list[dict[str, object]] = []
     attack_details: list[dict[str, object]] = []
     damage_details: list[dict[str, object]] = []
+    healing_details: list[dict[str, object]] = []
+    temporary_hit_point_details: list[dict[str, object]] = []
     affected_targets: list[SpellTargetContext] = []
     for target in targets:
         successful_save = False
@@ -233,9 +235,73 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
         )
         if affected:
             affected_targets.append(target)
+            for healing in mechanics.healing:
+                dice = _scale_dice(
+                    healing.dice,
+                    mechanics.slot_healing_dice_increment,
+                    cast_level - spell.level,
+                )
+                healing_roll = _roll_optional_dice(dice, context.roller)
+                modifier = healing.bonus + (
+                    context.creature.spellcasting.ability_modifier
+                    if healing.add_spellcasting_modifier
+                    else 0
+                )
+                modifier += mechanics.slot_healing_bonus_increment * (
+                    cast_level - spell.level
+                )
+                total = max(
+                    0,
+                    (healing_roll.subtotal if healing_roll is not None else 0)
+                    + modifier,
+                )
+                applied = target.creature.heal(total)
+                healing_details.append(
+                    _restoration_detail(
+                        target,
+                        dice=dice,
+                        roll=healing_roll,
+                        modifier=modifier,
+                        total=total,
+                        applied=applied,
+                    )
+                )
+            for temporary in mechanics.temporary_hit_points:
+                temporary_roll = _roll_optional_dice(temporary.dice, context.roller)
+                modifier = temporary.value + (
+                    context.creature.spellcasting.ability_modifier
+                    if temporary.add_spellcasting_modifier
+                    else 0
+                )
+                modifier += mechanics.slot_temporary_hit_points_increment * (
+                    cast_level - spell.level
+                )
+                total = max(
+                    0,
+                    (temporary_roll.subtotal if temporary_roll is not None else 0)
+                    + modifier,
+                )
+                granted = target.creature.grant_temporary_hit_points(total)
+                temporary_hit_point_details.append(
+                    _restoration_detail(
+                        target,
+                        dice=temporary.dice,
+                        roll=temporary_roll,
+                        modifier=modifier,
+                        total=total,
+                        applied=granted,
+                    )
+                )
         outcome = (
             "damages"
             if target_damage > 0
+            else "heals"
+            if any(detail["target_ref"] == target.target_ref for detail in healing_details)
+            else "wards"
+            if any(
+                detail["target_ref"] == target.target_ref
+                for detail in temporary_hit_point_details
+            )
             else "affects"
             if affected and mechanics.conditions
             else "does not affect"
@@ -386,10 +452,20 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             "attack_roll_details": attack_details,
             "damage_roll_detail": damage_details[0] if damage_details else None,
             "damage_roll_details": damage_details,
+            "healing_roll_detail": healing_details[0] if healing_details else None,
+            "healing_roll_details": healing_details,
+            "temporary_hit_point_detail": (
+                temporary_hit_point_details[0]
+                if temporary_hit_point_details
+                else None
+            ),
+            "temporary_hit_point_details": temporary_hit_point_details,
             "removed_condition": (
                 removed_conditions[0] if removed_conditions else None
             ),
             "success": bool(effects)
+            or bool(healing_details)
+            or bool(temporary_hit_point_details)
             or any(
                 isinstance(detail.get("applied_damage"), int)
                 and cast(int, detail["applied_damage"]) > 0
@@ -397,6 +473,51 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             ),
         },
     )
+
+
+def _scale_dice(
+    base: str | None,
+    increment: str | None,
+    levels_above: int,
+) -> str | None:
+    if base is None or increment is None or levels_above <= 0:
+        return base
+    base_count, base_sides = _parse_damage_dice(base)
+    increment_count, increment_sides = _parse_damage_dice(increment)
+    if base_sides != increment_sides:
+        raise ValueError("Healing scaling must use the base healing die.")
+    return f"{base_count + increment_count * levels_above}d{base_sides}"
+
+
+def _roll_optional_dice(
+    dice: str | None,
+    roller: DieRoller,
+) -> DicePoolResult | None:
+    if dice is None:
+        return None
+    count, sides = _parse_damage_dice(dice)
+    return resolve_dice(count, sides, roller=roller)
+
+
+def _restoration_detail(
+    target: SpellTargetContext,
+    *,
+    dice: str | None,
+    roll: DicePoolResult | None,
+    modifier: int,
+    total: int,
+    applied: int,
+) -> dict[str, object]:
+    return {
+        "target_ref": target.target_ref,
+        "target_label": target.target_label,
+        "dice": dice,
+        "dice_values": [die.result for die in roll.dice] if roll is not None else [],
+        "dice_total": roll.subtotal if roll is not None else 0,
+        "modifier": modifier,
+        "total": total,
+        "applied": applied,
+    }
 
 
 def _resolve_follow_up(

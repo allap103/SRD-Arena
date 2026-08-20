@@ -2143,6 +2143,56 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     assert spell_event.data["effects"][0]["kind"] == "remove_condition"
 
 
+def test_cure_wounds_heals_through_generic_spell_resolution(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Cure Wounds", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[1] = 1
+    caster.current_health = caster.get_max_health() - 12
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 4
+    )
+
+    result = session.choose(_action_id_by_prefix(session, "Cast Cure Wounds"))
+
+    assert caster.get_health() == caster.get_max_health() - 3
+    spell_event = next(event for event in result.events if event.type == "spell_cast")
+    assert spell_event.data["success"] is True
+    assert spell_event.data["healing_roll_detail"]["total"] == 9
+    assert spell_event.data["healing_roll_detail"]["applied"] == 9
+
+
+def test_false_life_grants_scaled_temporary_hit_points(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("False Life", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[2] = 1
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 3
+    )
+
+    result = session.choose(
+        _action_id_by_prefix(session, "Cast False Life (Level 2)")
+    )
+
+    assert caster.temporary_hit_points == 15
+    spell_event = next(event for event in result.events if event.type == "spell_cast")
+    assert spell_event.data["temporary_hit_point_detail"]["total"] == 15
+    assert spell_event.data["temporary_hit_point_detail"]["applied"] == 15
+
+
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:
     bucket = GameWindow._action_bucket_key(
         None,

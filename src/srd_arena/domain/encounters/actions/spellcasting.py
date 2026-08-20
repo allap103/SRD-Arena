@@ -268,6 +268,14 @@ def resolve_spell_action(
                 "attack_roll_details": result.details.get("attack_roll_details"),
                 "damage_roll_detail": result.details.get("damage_roll_detail"),
                 "damage_roll_details": result.details.get("damage_roll_details"),
+                "healing_roll_detail": result.details.get("healing_roll_detail"),
+                "healing_roll_details": result.details.get("healing_roll_details"),
+                "temporary_hit_point_detail": result.details.get(
+                    "temporary_hit_point_detail"
+                ),
+                "temporary_hit_point_details": result.details.get(
+                    "temporary_hit_point_details"
+                ),
                 "effects": serialize_effects(result.effects),
                 "success": result.details.get("success", False),
             },

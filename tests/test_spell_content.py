@@ -95,6 +95,21 @@ def test_wave_1c_spells_translate_composed_mechanics() -> None:
     assert weird.mechanics.repeat_failure_damage[0].dice == "5d10"
 
 
+def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
+    catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    cure_wounds = build_spell("Cure Wounds", "XPHB", catalog)
+    false_life = build_spell("False Life", "XPHB", catalog)
+
+    assert cure_wounds.mechanics is not None
+    assert cure_wounds.mechanics.healing[0].dice == "2d8"
+    assert cure_wounds.mechanics.healing[0].add_spellcasting_modifier
+    assert cure_wounds.mechanics.slot_healing_dice_increment == "2d8"
+    assert false_life.mechanics is not None
+    assert false_life.mechanics.temporary_hit_points[0].dice == "2d4"
+    assert false_life.mechanics.temporary_hit_points[0].value == 4
+    assert false_life.mechanics.slot_temporary_hit_points_increment == 5
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

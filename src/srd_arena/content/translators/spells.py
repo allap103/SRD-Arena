@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 import re
+from typing import overload
 
 from srd_arena.content.catalogs import SpellCatalog
 from srd_arena.content.schemas.spells import SpellSchema
@@ -12,12 +13,14 @@ from srd_arena.content.schemas.spell_mechanics import (
     CasterLevelScalingSchema,
     ConditionImmunityRequirementSchema,
     CreatureTraitRequirementSchema,
+    HealingEffectSchema,
     RepeatResolutionSchema,
     RemoveEffectSchema,
     SavingThrowResolutionSchema,
     SequenceResolutionSchema,
     SlotScalingSchema,
     SpellAttackResolutionSchema,
+    TemporaryHitPointsEffectSchema,
 )
 from srd_arena.content.sources import slug
 from srd_arena.domain.spells import (
@@ -25,6 +28,8 @@ from srd_arena.domain.spells import (
     ImmediateSpellMechanics,
     Spell,
     SpellDamage,
+    SpellHealing,
+    SpellTemporaryHitPoints,
 )
 from srd_arena.domain.creatures import CreatureTypeRequirement
 
@@ -107,6 +112,24 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         effect.root.condition
         for effect in outcome.effects
         if isinstance(effect.root, ConditionEffectSchema)
+    )
+    healing = tuple(
+        SpellHealing(
+            dice=effect.root.dice,
+            bonus=effect.root.bonus,
+            add_spellcasting_modifier=effect.root.modifier == "spellcasting_ability",
+        )
+        for effect in outcome.effects
+        if isinstance(effect.root, HealingEffectSchema)
+    )
+    temporary_hit_points = tuple(
+        SpellTemporaryHitPoints(
+            dice=effect.root.dice,
+            value=effect.root.value,
+            add_spellcasting_modifier=effect.root.modifier == "spellcasting_ability",
+        )
+        for effect in outcome.effects
+        if isinstance(effect.root, TemporaryHitPointsEffectSchema)
     )
     geometry = target.geometry if target.type == "area" else None
     return ImmediateSpellMechanics(
@@ -213,6 +236,49 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             if sequence is not None
             else ()
         ),
+        healing=healing,
+        temporary_hit_points=temporary_hit_points,
+        slot_healing_dice_increment=_slot_scaling_value(raw, "healing_dice", str),
+        slot_healing_bonus_increment=(
+            _slot_scaling_value(raw, "healing_bonus", int) or 0
+        ),
+        slot_temporary_hit_points_increment=(
+            _slot_scaling_value(raw, "temporary_hit_points", int) or 0
+        ),
+    )
+
+
+@overload
+def _slot_scaling_value(
+    raw: SpellSchema,
+    kind: str,
+    value_type: type[str],
+) -> str | None: ...
+
+
+@overload
+def _slot_scaling_value(
+    raw: SpellSchema,
+    kind: str,
+    value_type: type[int],
+) -> int | None: ...
+
+
+def _slot_scaling_value(
+    raw: SpellSchema,
+    kind: str,
+    value_type: type[str] | type[int],
+) -> str | int | None:
+    assert raw.mechanics is not None
+    return next(
+        (
+            increment.amount
+            for scaling in raw.mechanics.scaling
+            if isinstance(scaling, SlotScalingSchema)
+            for increment in scaling.per_level
+            if increment.type == kind and isinstance(increment.amount, value_type)
+        ),
+        None,
     )
 
 

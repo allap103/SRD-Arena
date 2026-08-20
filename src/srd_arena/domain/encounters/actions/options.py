@@ -168,6 +168,9 @@ def _append_spell_action_variants(
     if (
         spell.mechanics.slot_damage_increment is None
         and spell.mechanics.slot_target_increment == 0
+        and spell.mechanics.slot_healing_dice_increment is None
+        and spell.mechanics.slot_healing_bonus_increment == 0
+        and spell.mechanics.slot_temporary_hit_points_increment == 0
         and not any(
             follow_up.slot_damage_increment is not None
             for follow_up in spell.mechanics.follow_up_resolutions
@@ -422,6 +425,8 @@ def spell_action_targets(
         if disposition == "enemy" and not is_opponent:
             continue
         if disposition == "ally" and is_opponent:
+            continue
+        if disposition == "source" and target_ref != creature_ref:
             continue
         if (
             max_range is not None
