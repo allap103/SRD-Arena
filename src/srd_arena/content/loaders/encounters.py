@@ -78,6 +78,7 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
                 )
                 if creature.behavior
                 else None,
+                takes_turns=creature.takes_turns,
             )
             for creature in schema.creatures
         ],
@@ -108,7 +109,13 @@ def load_encounter(
                 CreatureSchema.model_validate(
                     creature.model_dump(
                         exclude_unset=True,
-                        exclude={"start", "team_id", "controller", "behavior"},
+                        exclude={
+                            "start",
+                            "team_id",
+                            "controller",
+                            "behavior",
+                            "takes_turns",
+                        },
                     )
                 ),
                 bestiary,

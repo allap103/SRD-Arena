@@ -35,6 +35,7 @@ class EncounterCreatureSchema(CreatureSchema):
     team_id: str
     controller: Literal["external", "scripted"] | None = None
     behavior: BehaviorSchema | None = None
+    takes_turns: bool = True
 
 
 class EncounterTeamSchema(BaseModel):
@@ -66,6 +67,10 @@ class EncounterDefinitionSchema(BaseModel):
                 "Encounter creature IDs must be unique: "
                 + ", ".join(duplicate_ids)
             )
+        if self.creatures and not any(
+            creature.takes_turns for creature in self.creatures
+        ):
+            raise ValueError("An encounter requires at least one turn-taking creature.")
         return self
 
 

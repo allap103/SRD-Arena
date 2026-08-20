@@ -1,0 +1,118 @@
+{
+  "id": "eldritch_blast_scaling_showcase",
+  "grid": {"width": 24, "height": 20},
+  "creatures": [
+    {
+      "id": "caster_level_1",
+      "name": "Level 1 Warlock",
+      "attributes": {"base_health": 30, "level": 1, "charisma": 20},
+      "spellcasting": {"ability": "cha", "caster_progression": "full", "cantrips_known": 1},
+      "spells_known": [{"name": "Eldritch Blast", "source": "XPHB"}],
+      "start": {"x": 2, "y": 1},
+      "team_id": "casters"
+    },
+    {
+      "id": "caster_level_3",
+      "name": "Level 3 Warlock",
+      "attributes": {"base_health": 30, "level": 3, "charisma": 20},
+      "spellcasting": {"ability": "cha", "caster_progression": "full", "cantrips_known": 1},
+      "spells_known": [{"name": "Eldritch Blast", "source": "XPHB"}],
+      "start": {"x": 2, "y": 3},
+      "team_id": "casters"
+    },
+    {
+      "id": "caster_level_5",
+      "name": "Level 5 Warlock",
+      "attributes": {"base_health": 40, "level": 5, "charisma": 20},
+      "spellcasting": {"ability": "cha", "caster_progression": "full", "cantrips_known": 1},
+      "spells_known": [{"name": "Eldritch Blast", "source": "XPHB"}],
+      "start": {"x": 2, "y": 5},
+      "team_id": "casters"
+    },
+    {
+      "id": "caster_level_7",
+      "name": "Level 7 Warlock",
+      "attributes": {"base_health": 50, "level": 7, "charisma": 20},
+      "spellcasting": {"ability": "cha", "caster_progression": "full", "cantrips_known": 1},
+      "spells_known": [{"name": "Eldritch Blast", "source": "XPHB"}],
+      "start": {"x": 2, "y": 7},
+      "team_id": "casters"
+    },
+    {
+      "id": "caster_level_9",
+      "name": "Level 9 Warlock",
+      "attributes": {"base_health": 60, "level": 9, "charisma": 20},
+      "spellcasting": {"ability": "cha", "caster_progression": "full", "cantrips_known": 1},
+      "spells_known": [{"name": "Eldritch Blast", "source": "XPHB"}],
+      "start": {"x": 2, "y": 9},
+      "team_id": "casters"
+    },
+    {
+      "id": "caster_level_11",
+      "name": "Level 11 Warlock",
+      "attributes": {"base_health": 70, "level": 11, "charisma": 20},
+      "spellcasting": {"ability": "cha", "caster_progression": "full", "cantrips_known": 1},
+      "spells_known": [{"name": "Eldritch Blast", "source": "XPHB"}],
+      "start": {"x": 2, "y": 11},
+      "team_id": "casters"
+    },
+    {
+      "id": "caster_level_15",
+      "name": "Level 15 Warlock",
+      "attributes": {"base_health": 90, "level": 15, "charisma": 20},
+      "spellcasting": {"ability": "cha", "caster_progression": "full", "cantrips_known": 1},
+      "spells_known": [{"name": "Eldritch Blast", "source": "XPHB"}],
+      "start": {"x": 2, "y": 13},
+      "team_id": "casters"
+    },
+    {
+      "id": "caster_level_17",
+      "name": "Level 17 Warlock",
+      "attributes": {"base_health": 100, "level": 17, "charisma": 20},
+      "spellcasting": {"ability": "cha", "caster_progression": "full", "cantrips_known": 1},
+      "spells_known": [{"name": "Eldritch Blast", "source": "XPHB"}],
+      "start": {"x": 2, "y": 15},
+      "team_id": "casters"
+    },
+    {
+      "id": "caster_level_20",
+      "name": "Level 20 Warlock",
+      "attributes": {"base_health": 120, "level": 20, "charisma": 20},
+      "spellcasting": {"ability": "cha", "caster_progression": "full", "cantrips_known": 1},
+      "spells_known": [{"name": "Eldritch Blast", "source": "XPHB"}],
+      "start": {"x": 2, "y": 17},
+      "team_id": "casters"
+    },
+    {
+      "id": "target_dummy_1",
+      "name": "Target Dummy One",
+      "description": "A durable target that does not take turns.",
+      "attributes": {"base_health": 500, "base_armor_class": 10, "constitution": 20},
+      "start": {"x": 13, "y": 4},
+      "team_id": "targets",
+      "takes_turns": false
+    },
+    {
+      "id": "target_dummy_2",
+      "name": "Target Dummy Two",
+      "description": "A durable target that does not take turns.",
+      "attributes": {"base_health": 500, "base_armor_class": 10, "constitution": 20},
+      "start": {"x": 13, "y": 9},
+      "team_id": "targets",
+      "takes_turns": false
+    },
+    {
+      "id": "target_dummy_3",
+      "name": "Target Dummy Three",
+      "description": "A durable target that does not take turns.",
+      "attributes": {"base_health": 500, "base_armor_class": 10, "constitution": 20},
+      "start": {"x": 13, "y": 14},
+      "team_id": "targets",
+      "takes_turns": false
+    }
+  ],
+  "teams": [
+    {"id": "casters", "name": "Scaling Casters", "controller": "external"},
+    {"id": "targets", "name": "Target Dummies", "controller": "scripted"}
+  ]
+}
