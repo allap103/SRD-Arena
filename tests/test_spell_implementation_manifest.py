@@ -66,5 +66,9 @@ def test_manifest_batches_are_stable_and_internally_sorted() -> None:
     ]
     for batch in batches:
         assert batch["spells"] == sorted(batch["spells"])
-        expected_status = "committed" if batch["wave"] == 1 else "provisional"
+        expected_status = (
+            "committed"
+            if batch["wave"] == 1 or batch["id"] == "2A"
+            else "provisional"
+        )
         assert batch["status"] == expected_status

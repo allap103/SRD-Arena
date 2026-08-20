@@ -25,6 +25,12 @@ through the shared spell pipeline. Spells marked `partial` in Batch 1 identify
 only explicit omissions involving unsupported objects, environmental effects,
 or defeated-creature remains.
 
+Batch 2A is complete. Goodberry moved to Batch 5B because it creates tracked
+consumables that grant later Bonus Actions. Protection from Poison moved to
+Batch 2B because its lasting poison resistance and saving-throw Advantage are
+creature modifiers; its immediate condition removal does not justify splitting
+the spell across executable batches.
+
 The initial feature-release cutoff is the completion of Batch 4. At that point,
 the simulator should support the core combat spell vocabulary: direct
 resolution, conditions, healing and creature modifiers, event-driven reactions
