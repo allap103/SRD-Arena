@@ -53,5 +53,20 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "willing"},
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {"type": "condition_immunity", "conditions": ["frightened"]},
+      {
+        "type": "temporary_hit_points",
+        "modifier": "spellcasting_ability",
+        "trigger": "target_turn_start"
+      }
+    ]}},
+    "scaling": [{"type": "slot_level", "above_level": "spell_level", "per_level": [
+      {"type": "target_count", "amount": 1}
+    ]}]
+  }
 }

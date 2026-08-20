@@ -3,6 +3,7 @@ from hypothesis import strategies as st
 
 from tests.helpers import make_creature
 from srd_arena.domain.effects.modifiers import DamageReduction, RollModifier
+from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.encounters.actions.attack_resolution import resolve_attack
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 
@@ -167,6 +168,18 @@ def test_damage_reduction_is_used_once_per_turn_before_resistance() -> None:
 
     creature.reset_per_turn_modifiers()
     assert creature.take_damage(10, "fire", roller=lambda _sides: 2) == 4
+
+
+def test_sourced_condition_immunity_does_not_remove_static_immunity() -> None:
+    creature = make_creature()
+    creature.set_condition_immunities(
+        "heroism", "cast", frozenset({Condition.FRIGHTENED})
+    )
+
+    assert Condition.FRIGHTENED in creature.condition_immunities()
+
+    creature.remove_condition_immunities("heroism", "cast")
+    assert Condition.FRIGHTENED not in creature.condition_immunities()
 
 
 def test_same_definition_maximum_health_modifiers_do_not_stack() -> None:

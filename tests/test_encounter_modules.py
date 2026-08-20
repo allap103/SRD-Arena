@@ -38,7 +38,8 @@ def _condition_state(
                 creature=SimpleNamespace(
                     statistics=CreatureStatistics(
                         condition_immunities=immunities
-                    )
+                    ),
+                    condition_immunities=lambda: immunities,
                 )
             )
         },

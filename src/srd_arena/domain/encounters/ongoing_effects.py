@@ -4,6 +4,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING, cast
 
 from ..effects.results import EffectResult
+from ..effects.conditions import Condition
 from ..effects.modifiers import (
     DamageReduction,
     ModifierMode,
@@ -155,6 +156,15 @@ def start_ongoing_effect(
                     damage_type=damage_reduction_type.casefold(),
                     dice=damage_reduction_dice,
                 ),
+            )
+    condition_immunities = effect.parameters.get("condition_immunities", [])
+    if isinstance(condition_immunities, list):
+        parsed_immunities = frozenset(
+            Condition(value) for value in condition_immunities if isinstance(value, str)
+        )
+        for target_ref in effect.target_refs:
+            state.creatures[target_ref].creature.set_condition_immunities(
+                definition_id, origin_id, parsed_immunities
             )
     return effect
 
@@ -380,6 +390,14 @@ def expire_ongoing_effects_for_turn_start(
     )
     for effect in expired:
         _remove_effect_tree(state, effect)
+    for effect in tuple(state.ongoing_effects):
+        if creature_ref not in effect.target_refs:
+            continue
+        temporary_hit_points = effect.parameters.get("turn_start_temporary_hit_points")
+        if isinstance(temporary_hit_points, int) and temporary_hit_points > 0:
+            state.creatures[creature_ref].creature.grant_temporary_hit_points(
+                temporary_hit_points
+            )
 
 
 def _round_duration_expired(
@@ -519,6 +537,9 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
         state.creatures[target_ref].creature.remove_damage_reduction(
             effect.identity.source.definition_id, origin_id
         )
+        state.creatures[target_ref].creature.remove_condition_immunities(
+            effect.identity.source.definition_id, origin_id
+        )
     state.ongoing_effects = [
         existing
         for existing in state.ongoing_effects
@@ -548,6 +569,10 @@ def _remove_effect_target(
     )
     _remove_speed_modifier(state, effect, target_ref)
     state.creatures[target_ref].creature.remove_damage_reduction(
+        effect.identity.source.definition_id,
+        effect.identity.source.origin_id,
+    )
+    state.creatures[target_ref].creature.remove_condition_immunities(
         effect.identity.source.definition_id,
         effect.identity.source.origin_id,
     )

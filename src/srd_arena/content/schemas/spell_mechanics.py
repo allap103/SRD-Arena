@@ -368,6 +368,7 @@ class TemporaryHitPointsEffectSchema(SpellMechanicsSchemaModel):
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     value: NonNegativeInt = 0
     modifier: Literal["none", "spellcasting_ability"] = "none"
+    trigger: Literal["application", "target_turn_start"] = "application"
 
     @model_validator(mode="after")
     def validate_temporary_hit_points(self) -> "TemporaryHitPointsEffectSchema":

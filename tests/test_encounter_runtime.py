@@ -2992,6 +2992,77 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
     assert state.active_creature_state.creature.effective_speed_feet() == 30
 
 
+def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_condition",
+                target_ref="player",
+                data={
+                    "condition": "frightened",
+                    "source_ref": "goblin_1",
+                    "source_label": "Goblin",
+                },
+            )
+        ],
+        origin_id="original-fear",
+    )
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="player",
+                data={
+                    "effect_kind": "concentration",
+                    "source_ref": "player",
+                    "source_label": "Caster",
+                    "definition_id": "heroism",
+                    "duration_rounds": 10,
+                    "parameters": {
+                        "condition_immunities": ["frightened"],
+                        "turn_start_temporary_hit_points": 4,
+                    },
+                },
+            )
+        ],
+        origin_id="heroism-cast",
+    )
+
+    assert state.has_condition("player", Condition.FRIGHTENED)
+    state.conditions = [
+        condition
+        for condition in state.conditions
+        if condition.condition is not Condition.FRIGHTENED
+    ]
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="apply_condition",
+                target_ref="player",
+                data={
+                    "condition": "frightened",
+                    "source_ref": "goblin_1",
+                    "source_label": "Goblin",
+                },
+            ),
+        ],
+        origin_id="new-fear",
+    )
+
+    assert not state.has_condition("player", Condition.FRIGHTENED)
+    assert state.creatures["player"].creature.temporary_hit_points == 0
+
+    expire_ongoing_effects_for_turn_start(state, "player")
+
+    assert state.creatures["player"].creature.temporary_hit_points == 4
+
+
 def test_upcast_hold_person_stages_and_resolves_multiple_targets(
     monkeypatch,
 ) -> None:

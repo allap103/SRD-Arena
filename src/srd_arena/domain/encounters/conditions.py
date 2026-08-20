@@ -47,7 +47,7 @@ def apply_condition(
     applied: AppliedCondition,
 ) -> ConditionApplicationResult:
     target = state.creatures[applied.target_ref].creature
-    if applied.condition in target.statistics.condition_immunities:
+    if applied.condition in target.condition_immunities():
         return ConditionApplicationResult(
             requested_condition=applied.condition,
             rejections=(

@@ -8,6 +8,7 @@ from .class_features import ClassFeature
 from .combat_profile import CombatProfile
 from ..effects.triggered import TriggeredEffect
 from ..effects.modifiers import DamageReduction, RollKind, RollModifier
+from ..effects.conditions import Condition
 from ..rolls.dice import D20RollMode, DieRoller, combine_roll_modes, roll_die
 from .multiattack import Multiattack
 from .spellcasting import Spellcasting
@@ -52,6 +53,9 @@ class Creature:
     )
     speed_modifier_sources: dict[str, dict[str, int]] = field(default_factory=dict)
     damage_reduction_sources: dict[str, dict[str, DamageReduction]] = field(
+        default_factory=dict
+    )
+    condition_immunity_sources: dict[str, dict[str, frozenset[Condition]]] = field(
         default_factory=dict
     )
 
@@ -220,6 +224,32 @@ class Creature:
         for sources in self.damage_reduction_sources.values():
             for reduction in sources.values():
                 reduction.available = True
+
+    def condition_immunities(self) -> frozenset[Condition]:
+        return self.statistics.condition_immunities.union(
+            condition
+            for sources in self.condition_immunity_sources.values()
+            for immunities in sources.values()
+            for condition in immunities
+        )
+
+    def set_condition_immunities(
+        self,
+        definition_id: str,
+        origin_id: str,
+        conditions: frozenset[Condition],
+    ) -> None:
+        self.condition_immunity_sources.setdefault(definition_id, {})[origin_id] = (
+            conditions
+        )
+
+    def remove_condition_immunities(self, definition_id: str, origin_id: str) -> None:
+        sources = self.condition_immunity_sources.get(definition_id)
+        if sources is None:
+            return
+        sources.pop(origin_id, None)
+        if not sources:
+            self.condition_immunity_sources.pop(definition_id, None)
 
     def set_roll_modifiers(
         self,

@@ -273,6 +273,16 @@ def test_resistance_translates_typed_per_turn_damage_reduction() -> None:
     assert spell.mechanics.duration_rounds == 10
 
 
+def test_heroism_translates_immunity_and_turn_start_temporary_hp() -> None:
+    spell = build_spell("Heroism", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+
+    assert spell.mechanics is not None
+    assert spell.mechanics.condition_immunities == ("frightened",)
+    assert spell.mechanics.temporary_hit_points[0].trigger == "target_turn_start"
+    assert spell.mechanics.temporary_hit_points[0].add_spellcasting_modifier
+    assert spell.mechanics.slot_target_increment == 1
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

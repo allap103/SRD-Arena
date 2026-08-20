@@ -52,9 +52,9 @@ class SpellActionContext:
     )
     cast_level: int | None = None
     save_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
-    area_targets_around: (
-        Callable[[str, int], tuple[SpellTargetContext, ...]] | None
-    ) = None
+    area_targets_around: Callable[[str, int], tuple[SpellTargetContext, ...]] | None = (
+        None
+    )
     healing_allocations: dict[str, int] = field(default_factory=dict)
 
 
@@ -298,6 +298,8 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 detail["allocated"] = allocated
                 healing_details.append(detail)
             for temporary in mechanics.temporary_hit_points:
+                if temporary.trigger != "application":
+                    continue
                 temporary_roll = _roll_optional_dice(temporary.dice, context.roller)
                 modifier = temporary.value + (
                     context.creature.spellcasting.ability_modifier
@@ -327,7 +329,9 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             "damages"
             if target_damage > 0
             else "heals"
-            if any(detail["target_ref"] == target.target_ref for detail in healing_details)
+            if any(
+                detail["target_ref"] == target.target_ref for detail in healing_details
+            )
             else "wards"
             if any(
                 detail["target_ref"] == target.target_ref
@@ -393,6 +397,11 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             or mechanics.armor_class_modifier
             or mechanics.speed_modifier_feet
             or selected_damage_reduction_type is not None
+            or any(
+                temporary.trigger == "target_turn_start"
+                for temporary in mechanics.temporary_hit_points
+            )
+            or mechanics.condition_immunities
         )
         and (
             mechanics.duration_rounds is not None
@@ -457,6 +466,20 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         "speed_modifier_feet": mechanics.speed_modifier_feet,
                         "damage_reduction_type": selected_damage_reduction_type,
                         "damage_reduction_dice": mechanics.damage_reduction_dice,
+                        "turn_start_temporary_hit_points": next(
+                            (
+                                temporary.value
+                                + (
+                                    context.creature.spellcasting.ability_modifier
+                                    if temporary.add_spellcasting_modifier
+                                    else 0
+                                )
+                                for temporary in mechanics.temporary_hit_points
+                                if temporary.trigger == "target_turn_start"
+                            ),
+                            0,
+                        ),
+                        "condition_immunities": list(mechanics.condition_immunities),
                     },
                 },
             )
@@ -552,9 +575,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         },
                     )
                 )
-                messages.append(
-                    ("system", f"A curse ends on {target.target_label}.")
-                )
+                messages.append(("system", f"A curse ends on {target.target_label}."))
             if (
                 "hit_point_maximum_reduction" in spell.removable_effect_kinds
                 and selected_removal == "hit_point_maximum_reduction"
@@ -598,9 +619,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             "healing_roll_detail": healing_details[0] if healing_details else None,
             "healing_roll_details": healing_details,
             "temporary_hit_point_detail": (
-                temporary_hit_point_details[0]
-                if temporary_hit_point_details
-                else None
+                temporary_hit_point_details[0] if temporary_hit_point_details else None
             ),
             "temporary_hit_point_details": temporary_hit_point_details,
             "removed_condition": (

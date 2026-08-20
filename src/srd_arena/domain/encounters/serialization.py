@@ -186,7 +186,7 @@ def _export_creature(
         ],
         "condition_immunities": sorted(
             condition.value
-            for condition in creature.statistics.condition_immunities
+            for condition in creature.condition_immunities()
         ),
         "spell_slots_max": (
             {str(level): slots for level, slots in spellcasting.spell_slots_max.items()}

@@ -31,6 +31,7 @@ class SpellTemporaryHitPoints:
     dice: str | None = None
     value: int = 0
     add_spellcasting_modifier: bool = False
+    trigger: str = "application"
 
 
 @dataclass(frozen=True)
@@ -102,6 +103,7 @@ class ImmediateSpellMechanics:
     damage_reduction_types: tuple[str, ...] = ()
     damage_reduction_choice: bool = False
     damage_reduction_dice: str | None = None
+    condition_immunities: tuple[str, ...] = ()
 
     @property
     def healing_pool(self) -> int | None:

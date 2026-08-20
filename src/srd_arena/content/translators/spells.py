@@ -15,6 +15,7 @@ from srd_arena.content.schemas.spell_mechanics import (
     CasterLevelScalingSchema,
     ConditionImmunityRequirementSchema,
     ConditionSaveAdvantageEffectSchema,
+    ConditionImmunityEffectSchema,
     CreatureTraitRequirementSchema,
     HealingEffectSchema,
     HitPointMaximumModifierEffectSchema,
@@ -144,6 +145,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             dice=effect.root.dice,
             value=effect.root.value,
             add_spellcasting_modifier=effect.root.modifier == "spellcasting_ability",
+            trigger=effect.root.trigger,
         )
         for effect in outcome.effects
         if isinstance(effect.root, TemporaryHitPointsEffectSchema)
@@ -195,6 +197,12 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         condition
         for effect in outcome.effects
         if isinstance(effect.root, ConditionSaveAdvantageEffectSchema)
+        for condition in effect.root.conditions
+    )
+    condition_immunities = tuple(
+        condition
+        for effect in outcome.effects
+        if isinstance(effect.root, ConditionImmunityEffectSchema)
         for condition in effect.root.conditions
     )
     roll_modifiers = tuple(
@@ -358,6 +366,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         damage_reduction_dice=(
             damage_reduction.dice if damage_reduction is not None else None
         ),
+        condition_immunities=condition_immunities,
     )
 
 
