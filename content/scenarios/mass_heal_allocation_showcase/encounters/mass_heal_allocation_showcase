@@ -1,0 +1,70 @@
+{
+  "id": "mass_heal_allocation_showcase",
+  "grid": {"width": 18, "height": 14},
+  "creatures": [
+    {
+      "id": "healer",
+      "name": "Seraphine, High Healer",
+      "description": "A level 17 spellcaster with one level 9 slot for Mass Heal.",
+      "attributes": {
+        "base_health": 300,
+        "level": 17,
+        "wisdom": 20,
+        "constitution": 10,
+        "base_armor_class": 16
+      },
+      "current_health": 100,
+      "spellcasting": {
+        "ability": "wis",
+        "caster_progression": "full",
+        "spell_slots": {"9": 1}
+      },
+      "spells_known": [{"name": "Mass Heal", "source": "XPHB"}],
+      "start": {"x": 4, "y": 6},
+      "team_id": "wounded_party"
+    },
+    {
+      "id": "guardian",
+      "name": "Wounded Guardian",
+      "description": "Missing 450 Hit Points.",
+      "attributes": {"base_health": 500, "base_armor_class": 18},
+      "current_health": 50,
+      "start": {"x": 6, "y": 3},
+      "team_id": "wounded_party",
+      "takes_turns": false
+    },
+    {
+      "id": "champion",
+      "name": "Wounded Champion",
+      "description": "Missing 200 Hit Points.",
+      "attributes": {"base_health": 400, "base_armor_class": 17},
+      "current_health": 200,
+      "start": {"x": 7, "y": 6},
+      "team_id": "wounded_party",
+      "takes_turns": false
+    },
+    {
+      "id": "scout",
+      "name": "Wounded Scout",
+      "description": "Missing 50 Hit Points.",
+      "attributes": {"base_health": 250, "base_armor_class": 15},
+      "current_health": 200,
+      "start": {"x": 6, "y": 9},
+      "team_id": "wounded_party",
+      "takes_turns": false
+    },
+    {
+      "id": "observer",
+      "name": "Hostile Observer",
+      "description": "Keeps the encounter active while the healing allocation is tested.",
+      "attributes": {"base_health": 1000, "base_armor_class": 10},
+      "start": {"x": 15, "y": 6},
+      "team_id": "observers",
+      "takes_turns": false
+    }
+  ],
+  "teams": [
+    {"id": "wounded_party", "name": "Wounded Party", "controller": "external"},
+    {"id": "observers", "name": "Observers", "controller": "scripted"}
+  ]
+}
