@@ -147,7 +147,11 @@ entity:
 Representative spells include Cure Wounds, Healing Word, Aid, False Life,
 Bless, Bane, Mage Armor, Shield of Faith, Barkskin, Lesser Restoration,
 Greater Restoration, Protection from Energy, Stoneskin, Magic Missile, and
-Slow. Flesh to Stone also belongs here because its successful initial save
+Slow. Foresight also belongs here because its combat behavior consists of
+ordinary D20 Test and incoming-attack modifiers. Its one-minute casting time
+makes it scenario-applied rather than selectable during an encounter; it does
+not require the prepared-state mechanics from Batch 8. Flesh to Stone also
+belongs here because its successful initial save
 applies a Speed modifier in addition to its condition progression.
 Hypnotic Pattern and Power Word Stun also wait for this batch because each has a
 Speed-0 branch in addition to its conditions. Phantasmal Killer applies
