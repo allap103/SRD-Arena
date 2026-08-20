@@ -81,7 +81,12 @@ def resolve_saving_throw(
         if proficient
         else 0
     )
-    sourced_modifier = creature.resolve_roll_modifiers("saving_throw", roller, ability)
+    resolve_modifiers = getattr(creature, "resolve_roll_modifiers", None)
+    sourced_modifier = (
+        resolve_modifiers("saving_throw", roller, ability)
+        if callable(resolve_modifiers)
+        else 0
+    )
     modifiers = SavingThrowModifiers(
         ability=ability_modifier,
         proficiency=proficiency_modifier,
@@ -89,7 +94,7 @@ def resolve_saving_throw(
     )
     roll = resolve_d20(
         modifier=modifiers.total,
-        mode=combine_roll_modes(mode, creature.roll_mode("saving_throw", ability)),
+        mode=combine_roll_modes(mode, _sourced_roll_mode(creature, ability)),
         roller=roller,
     )
     check = resolve_check(roll, target)
@@ -102,6 +107,14 @@ def resolve_saving_throw(
         check=check,
         automatic_failure_reasons=automatic_failure_reasons,
     )
+
+
+def _sourced_roll_mode(
+    creature: SavingThrowCreature,
+    ability: Ability,
+) -> D20RollMode:
+    roll_mode = getattr(creature, "roll_mode", None)
+    return roll_mode("saving_throw", ability) if callable(roll_mode) else "normal"
 
 
 def reroll_saving_throw(
