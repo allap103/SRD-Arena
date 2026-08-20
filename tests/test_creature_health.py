@@ -2,6 +2,9 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from tests.helpers import make_creature
+from srd_arena.domain.effects.modifiers import RollModifier
+from srd_arena.domain.encounters.actions.attack_resolution import resolve_attack
+from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 
 
 def test_take_damage_reduces_current_health() -> None:
@@ -53,6 +56,57 @@ def test_sourced_damage_resistance_halves_matching_damage() -> None:
 
     creature.remove_damage_resistance("poison", "protection-cast")
     assert creature.take_damage(2, "poison") == 2
+
+
+def test_same_spell_roll_modifiers_do_not_stack() -> None:
+    creature = make_creature()
+    bless = (
+        RollModifier(roll="attack_roll", mode="add", dice="1d4"),
+    )
+    creature.set_roll_modifiers("bless", "first", bless)
+    creature.set_roll_modifiers("bless", "second", bless)
+
+    rolls: list[int] = []
+
+    def roller(sides: int) -> int:
+        rolls.append(sides)
+        return 4
+
+    assert creature.resolve_roll_modifiers("attack_roll", roller) == 4
+    assert rolls == [4]
+
+    creature.remove_roll_modifiers("bless", "first")
+    assert creature.resolve_roll_modifiers("attack_roll", roller) == 4
+
+
+def test_sourced_modifiers_feed_central_attack_and_save_resolution() -> None:
+    creature = make_creature()
+    target = make_creature()
+    creature.set_roll_modifiers(
+        "bless",
+        "cast",
+        (
+            RollModifier(roll="attack_roll", mode="add", value=2),
+            RollModifier(roll="saving_throw", mode="add", value=3),
+        ),
+    )
+
+    attack = resolve_attack(
+        creature,
+        target,
+        "Attacker",
+        "Target",
+        d20_roller=lambda _sides: 10,
+    )
+    save = resolve_saving_throw(
+        creature,
+        "constitution",
+        10,
+        roller=lambda _sides: 10,
+    )
+
+    assert attack.attack_roll_detail["sourced_modifier"] == 2
+    assert save.modifiers.other == 3
 
 
 def test_same_definition_maximum_health_modifiers_do_not_stack() -> None:

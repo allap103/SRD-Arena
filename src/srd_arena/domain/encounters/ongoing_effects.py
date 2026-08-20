@@ -4,6 +4,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING, cast
 
 from ..effects.results import EffectResult
+from ..effects.modifiers import ModifierMode, RollKind, RollModifier
 from ..effects.runtime import (
     EffectSource,
     EffectSourceKind,
@@ -95,6 +96,25 @@ def start_ongoing_effect(
                     state.creatures[target_ref].creature.add_damage_resistance(
                         damage_type, origin_id
                     )
+    roll_modifiers = effect.parameters.get("roll_modifiers", [])
+    if isinstance(roll_modifiers, list):
+        parsed = tuple(
+            RollModifier(
+                roll=cast(RollKind, value["roll"]),
+                mode=cast(ModifierMode, value["mode"]),
+                dice=cast(str | None, value.get("dice")),
+                value=cast(int | None, value.get("value")),
+            )
+            for value in roll_modifiers
+            if isinstance(value, dict)
+            and value.get("roll")
+            in {"ability_check", "attack_roll", "damage_roll", "saving_throw"}
+            and value.get("mode") in {"add", "subtract"}
+        )
+        for target_ref in effect.target_refs:
+            state.creatures[target_ref].creature.set_roll_modifiers(
+                definition_id, origin_id, parsed
+            )
     return effect
 
 
@@ -452,6 +472,9 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
     for target_ref in effect.target_refs:
         _remove_maximum_hit_point_modifier(state, effect, target_ref)
         _remove_damage_resistances(state, effect, target_ref)
+        state.creatures[target_ref].creature.remove_roll_modifiers(
+            effect.identity.source.definition_id, origin_id
+        )
     state.ongoing_effects = [
         existing
         for existing in state.ongoing_effects
@@ -471,6 +494,10 @@ def _remove_effect_target(
 ) -> None:
     _remove_maximum_hit_point_modifier(state, effect, target_ref)
     _remove_damage_resistances(state, effect, target_ref)
+    state.creatures[target_ref].creature.remove_roll_modifiers(
+        effect.identity.source.definition_id,
+        effect.identity.source.origin_id,
+    )
     remaining_targets = tuple(
         existing for existing in effect.target_refs if existing != target_ref
     )

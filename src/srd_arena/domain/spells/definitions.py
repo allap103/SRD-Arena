@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from ..effects.modifiers import RollModifier
+
 from ..creatures.stat_block_actions import ActionRequirement
 
 
@@ -92,6 +94,7 @@ class ImmediateSpellMechanics:
     damage_resistances: tuple[str, ...] = ()
     damage_resistance_choice: bool = False
     condition_save_advantages: tuple[str, ...] = ()
+    roll_modifiers: tuple[RollModifier, ...] = ()
 
     @property
     def healing_pool(self) -> int | None:

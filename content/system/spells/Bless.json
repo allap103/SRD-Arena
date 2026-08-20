@@ -58,5 +58,21 @@
   ],
   "areaTags": [
     "MT"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {
+      "type": "creature",
+      "count": {"minimum": 1, "maximum": 3},
+      "disposition": "ally",
+      "selection": "choose_up_to"
+    },
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {"type": "roll_modifier", "roll": "attack_roll", "mode": "add", "dice": "1d4"},
+      {"type": "roll_modifier", "roll": "saving_throw", "mode": "add", "dice": "1d4"}
+    ]}},
+    "scaling": [{"type": "slot_level", "above_level": "spell_level", "per_level": [
+      {"type": "target_count", "amount": 1}
+    ]}]
+  }
 }

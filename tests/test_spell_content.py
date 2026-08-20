@@ -188,6 +188,31 @@ def test_protection_from_energy_translates_a_resistance_choice() -> None:
     assert spell.mechanics.duration_rounds == 600
 
 
+def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
+    catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    bless = build_spell("Bless", "XPHB", catalog)
+    bane = build_spell("Bane", "XPHB", catalog)
+
+    assert bless.mechanics is not None
+    assert [
+        (modifier.roll, modifier.mode, modifier.dice)
+        for modifier in bless.mechanics.roll_modifiers
+    ] == [
+        ("attack_roll", "add", "1d4"),
+        ("saving_throw", "add", "1d4"),
+    ]
+    assert bless.mechanics.base_target_count == 3
+    assert bless.mechanics.slot_target_increment == 1
+    assert bane.mechanics is not None
+    assert [
+        (modifier.roll, modifier.mode, modifier.dice)
+        for modifier in bane.mechanics.roll_modifiers
+    ] == [
+        ("attack_roll", "subtract", "1d4"),
+        ("saving_throw", "subtract", "1d4"),
+    ]
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

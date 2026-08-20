@@ -27,6 +27,8 @@ class SavingThrowCreature(Protocol):
 
     def get_modifier(self, attribute_value: int) -> int: ...
 
+    def resolve_roll_modifiers(self, roll: str, roller: DieRoller) -> int: ...
+
 
 @dataclass(frozen=True)
 class SavingThrowModifiers:
@@ -70,10 +72,11 @@ def resolve_saving_throw(
         if proficient
         else 0
     )
+    sourced_modifier = creature.resolve_roll_modifiers("saving_throw", roller)
     modifiers = SavingThrowModifiers(
         ability=ability_modifier,
         proficiency=proficiency_modifier,
-        other=other_modifier,
+        other=other_modifier + sourced_modifier,
     )
     roll = resolve_d20(modifier=modifiers.total, mode=mode, roller=roller)
     check = resolve_check(roll, target)

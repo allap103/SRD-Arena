@@ -49,7 +49,8 @@ def resolve_attack(
     if attack_source is None:
         attack_source = unarmed_attack_source(attacker)
     attack_type = attack_source.attack_modes[0]
-    attack_modifier = attack_source.attack_bonus
+    sourced_modifier = attacker.resolve_roll_modifiers("attack_roll", d20_roller)
+    attack_modifier = attack_source.attack_bonus + sourced_modifier
     roll_mode = attack_roll_mode_override or attack_roll_mode(
         attack_type,
         attacker_position,
@@ -77,6 +78,7 @@ def resolve_attack(
         "ability_modifier": attack_source.ability_modifier,
         "proficiency_bonus": attack_source.proficiency_bonus,
         "modifier": attack_modifier,
+        "sourced_modifier": sourced_modifier,
         "total": attack_result.total,
         "target_ac": target_ac,
         "critical_miss": critical_miss,

@@ -382,6 +382,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             or maximum_hit_point_modifier != 0
             or selected_damage_resistances
             or mechanics.condition_save_advantages
+            or mechanics.roll_modifiers
         )
         and (
             mechanics.duration_rounds is not None
@@ -427,6 +428,15 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         "condition_save_advantages": list(
                             mechanics.condition_save_advantages
                         ),
+                        "roll_modifiers": [
+                            {
+                                "roll": modifier.roll,
+                                "mode": modifier.mode,
+                                "dice": modifier.dice,
+                                "value": modifier.value,
+                            }
+                            for modifier in mechanics.roll_modifiers
+                        ],
                     },
                 },
             )

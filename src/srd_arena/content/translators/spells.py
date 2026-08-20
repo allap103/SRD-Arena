@@ -1,12 +1,13 @@
 from collections.abc import Sequence
 import re
-from typing import overload
+from typing import cast, overload
 
 from srd_arena.content.catalogs import SpellCatalog
 from srd_arena.content.schemas.spells import SpellSchema
 from srd_arena.content.schemas.action_mechanics import (
     ConditionEffectSchema,
     DamageEffectSchema,
+    RollModifierEffectSchema,
 )
 from srd_arena.content.schemas.spell_mechanics import (
     AutomaticResolutionSchema,
@@ -35,6 +36,7 @@ from srd_arena.domain.spells import (
     SpellTemporaryHitPoints,
 )
 from srd_arena.domain.creatures import CreatureTypeRequirement
+from srd_arena.domain.effects.modifiers import ModifierMode, RollKind, RollModifier
 
 
 def build_spell(
@@ -162,6 +164,19 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         for effect in outcome.effects
         if isinstance(effect.root, ConditionSaveAdvantageEffectSchema)
         for condition in effect.root.conditions
+    )
+    roll_modifiers = tuple(
+        RollModifier(
+            roll=cast(RollKind, effect.root.roll),
+            mode=cast(ModifierMode, effect.root.mode),
+            dice=effect.root.dice,
+            value=effect.root.value,
+        )
+        for effect in outcome.effects
+        if isinstance(effect.root, RollModifierEffectSchema)
+        and effect.root.roll
+        in {"ability_check", "attack_roll", "damage_roll", "saving_throw"}
+        and effect.root.mode in {"add", "subtract"}
     )
     geometry = target.geometry if target.type == "area" else None
     return ImmediateSpellMechanics(
@@ -293,6 +308,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         damage_resistances=damage_resistances,
         damage_resistance_choice=damage_resistance_choice,
         condition_save_advantages=condition_save_advantages,
+        roll_modifiers=roll_modifiers,
     )
 
 

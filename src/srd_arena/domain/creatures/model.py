@@ -7,10 +7,13 @@ from .classes import ClassRef, SubclassRef
 from .class_features import ClassFeature
 from .combat_profile import CombatProfile
 from ..effects.triggered import TriggeredEffect
+from ..effects.modifiers import RollKind, RollModifier
+from ..rolls.dice import DieRoller
 from .multiattack import Multiattack
 from .spellcasting import Spellcasting
 from .statistics import CreatureStatistics
 from .stat_block_actions import DeclaredStatBlockAction, StatBlockActionDefinition
+
 
 @dataclass
 class Creature:
@@ -41,6 +44,9 @@ class Creature:
     temporary_hit_points: int = 0
     maximum_health_modifiers: dict[str, dict[str, int]] = field(default_factory=dict)
     damage_resistance_sources: dict[str, set[str]] = field(default_factory=dict)
+    roll_modifier_sources: dict[str, dict[str, tuple[RollModifier, ...]]] = field(
+        default_factory=dict
+    )
 
     def __post_init__(self):
         if self.current_health is None:
@@ -165,6 +171,31 @@ class Creature:
         sources.discard(origin_id)
         if not sources:
             self.damage_resistance_sources.pop(damage_type.casefold(), None)
+
+    def set_roll_modifiers(
+        self,
+        definition_id: str,
+        origin_id: str,
+        modifiers: tuple[RollModifier, ...],
+    ) -> None:
+        self.roll_modifier_sources.setdefault(definition_id, {})[origin_id] = modifiers
+
+    def remove_roll_modifiers(self, definition_id: str, origin_id: str) -> None:
+        sources = self.roll_modifier_sources.get(definition_id)
+        if sources is None:
+            return
+        sources.pop(origin_id, None)
+        if not sources:
+            self.roll_modifier_sources.pop(definition_id, None)
+
+    def resolve_roll_modifiers(self, roll: RollKind, roller: DieRoller) -> int:
+        return sum(
+            modifier.resolve(roller)
+            for sources in self.roll_modifier_sources.values()
+            for modifiers in tuple(sources.values())[:1]
+            for modifier in modifiers
+            if modifier.roll == roll
+        )
 
     def heal(self, amount: int) -> int:
         missing_health = self.get_max_health() - self.get_health()
