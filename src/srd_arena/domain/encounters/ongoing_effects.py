@@ -123,6 +123,12 @@ def start_ongoing_effect(
             state.creatures[target_ref].creature.set_roll_modifiers(
                 definition_id, origin_id, parsed
             )
+    armor_class_modifier = effect.parameters.get("armor_class_modifier")
+    if isinstance(armor_class_modifier, int) and armor_class_modifier:
+        for target_ref in effect.target_refs:
+            state.creatures[target_ref].creature.set_armor_class_modifier(
+                definition_id, origin_id, armor_class_modifier
+            )
     return effect
 
 
@@ -479,6 +485,9 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
         state.creatures[target_ref].creature.remove_roll_modifiers(
             effect.identity.source.definition_id, origin_id
         )
+        state.creatures[target_ref].creature.remove_armor_class_modifier(
+            effect.identity.source.definition_id, origin_id
+        )
     state.ongoing_effects = [
         existing
         for existing in state.ongoing_effects
@@ -499,6 +508,10 @@ def _remove_effect_target(
     _remove_maximum_hit_point_modifier(state, effect, target_ref)
     _remove_damage_resistances(state, effect, target_ref)
     state.creatures[target_ref].creature.remove_roll_modifiers(
+        effect.identity.source.definition_id,
+        effect.identity.source.origin_id,
+    )
+    state.creatures[target_ref].creature.remove_armor_class_modifier(
         effect.identity.source.definition_id,
         effect.identity.source.origin_id,
     )

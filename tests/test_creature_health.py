@@ -126,6 +126,20 @@ def test_roll_mode_modifiers_expose_own_and_incoming_modes() -> None:
     assert creature.incoming_attack_roll_mode() == "disadvantage"
 
 
+def test_same_spell_armor_class_modifiers_do_not_stack() -> None:
+    creature = make_creature()
+    base = creature.get_armor_class()
+    creature.set_armor_class_modifier("shield_of_faith", "first", 2)
+    creature.set_armor_class_modifier("shield_of_faith", "second", 2)
+
+    assert creature.get_armor_class() == base + 2
+
+    creature.remove_armor_class_modifier("shield_of_faith", "first")
+    assert creature.get_armor_class() == base + 2
+    creature.remove_armor_class_modifier("shield_of_faith", "second")
+    assert creature.get_armor_class() == base
+
+
 def test_same_definition_maximum_health_modifiers_do_not_stack() -> None:
     creature = make_creature()
     base_maximum = creature.get_max_health()

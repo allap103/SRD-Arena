@@ -10,6 +10,7 @@ from srd_arena.content.schemas.action_mechanics import (
     RollModifierEffectSchema,
 )
 from srd_arena.content.schemas.spell_mechanics import (
+    ArmorClassModifierEffectSchema,
     AutomaticResolutionSchema,
     CasterLevelScalingSchema,
     ConditionImmunityRequirementSchema,
@@ -152,6 +153,14 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             if isinstance(effect.root, HitPointMaximumModifierEffectSchema)
         ),
         None,
+    )
+    armor_class_modifier = next(
+        (
+            effect.root.value
+            for effect in outcome.effects
+            if isinstance(effect.root, ArmorClassModifierEffectSchema)
+        ),
+        0,
     )
     damage_resistances = tuple(
         damage_type
@@ -315,6 +324,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         condition_save_advantages=condition_save_advantages,
         roll_modifiers=roll_modifiers,
         recast_ends_previous=raw.mechanics.recast_ends_previous,
+        armor_class_modifier=armor_class_modifier,
     )
 
 

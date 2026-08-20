@@ -47,6 +47,9 @@ class Creature:
     roll_modifier_sources: dict[str, dict[str, tuple[RollModifier, ...]]] = field(
         default_factory=dict
     )
+    armor_class_modifier_sources: dict[str, dict[str, int]] = field(
+        default_factory=dict
+    )
 
     def __post_init__(self):
         if self.current_health is None:
@@ -236,6 +239,26 @@ class Creature:
         return self.temporary_hit_points - previous
 
     def get_armor_class(self) -> int:
-        return self.attributes.base_armor_class + self.get_modifier(
-            self.attributes.dexterity
+        return (
+            self.attributes.base_armor_class
+            + self.get_modifier(self.attributes.dexterity)
+            + sum(
+                max(sources.values(), default=0)
+                for sources in self.armor_class_modifier_sources.values()
+            )
         )
+
+    def set_armor_class_modifier(
+        self, definition_id: str, origin_id: str, value: int
+    ) -> None:
+        self.armor_class_modifier_sources.setdefault(definition_id, {})[origin_id] = (
+            value
+        )
+
+    def remove_armor_class_modifier(self, definition_id: str, origin_id: str) -> None:
+        sources = self.armor_class_modifier_sources.get(definition_id)
+        if sources is None:
+            return
+        sources.pop(origin_id, None)
+        if not sources:
+            self.armor_class_modifier_sources.pop(definition_id, None)

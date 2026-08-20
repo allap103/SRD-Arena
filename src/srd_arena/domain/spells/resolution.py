@@ -383,6 +383,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             or selected_damage_resistances
             or mechanics.condition_save_advantages
             or mechanics.roll_modifiers
+            or mechanics.armor_class_modifier
         )
         and (
             mechanics.duration_rounds is not None
@@ -439,6 +440,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                             }
                             for modifier in mechanics.roll_modifiers
                         ],
+                        "armor_class_modifier": mechanics.armor_class_modifier,
                     },
                 },
             )

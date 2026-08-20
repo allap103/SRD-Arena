@@ -230,6 +230,17 @@ def test_foresight_translates_bidirectional_roll_modes() -> None:
     assert spell.mechanics.duration_rounds == 4800
 
 
+def test_shield_of_faith_translates_sourced_armor_class() -> None:
+    spell = build_spell(
+        "Shield of Faith", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    )
+
+    assert spell.mechanics is not None
+    assert spell.mechanics.armor_class_modifier == 2
+    assert spell.mechanics.concentration
+    assert spell.mechanics.duration_rounds == 100
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {
