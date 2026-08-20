@@ -19,6 +19,8 @@ from srd_arena.domain.encounters.actions.stat_block import (
 from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import (
     expire_ongoing_effects_for_turn_start,
+    has_condition_save_advantage,
+    remove_ongoing_effects,
     resolve_concentration_damage,
     resolve_end_turn_effects,
     resolve_spell_lifecycle_event,
@@ -2774,6 +2776,51 @@ def test_one_target_repeat_save_does_not_end_multi_target_spell(
     assert state.has_condition("goblin_1", Condition.PARALYZED) is False
     assert state.has_condition("goblin_2", Condition.PARALYZED) is True
     assert state.ongoing_effects[0].target_refs == ("goblin_2",)
+
+
+def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="goblin_1",
+                data={
+                    "effect_kind": "spell",
+                    "source_ref": "player",
+                    "source_label": "Caster",
+                    "definition_id": "protection_from_poison",
+                    "duration_rounds": 600,
+                    "parameters": {
+                        "damage_resistances": ["poison"],
+                        "condition_save_advantages": ["poisoned"],
+                    },
+                },
+            )
+        ],
+        origin_id="protection-cast",
+    )
+
+    target = state.creatures["goblin_1"].creature
+    assert target.has_damage_resistance("poison")
+    assert has_condition_save_advantage(state, "goblin_1", ("poisoned",))
+
+    remove_ongoing_effects(
+        state,
+        EffectResult(
+            kind="remove_ongoing_effects",
+            target_ref="goblin_1",
+            data={"effect_id": state.ongoing_effects[0].identity.id},
+        )
+    )
+
+    assert not target.has_damage_resistance("poison")
+    assert not has_condition_save_advantage(state, "goblin_1", ("poisoned",))
 
 
 def test_upcast_hold_person_stages_and_resolves_multiple_targets(

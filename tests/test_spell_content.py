@@ -157,6 +157,19 @@ def test_restoration_spells_translate_source_aware_removal() -> None:
     assert remove_curse.remove_effect_selection == "all"
 
 
+def test_protection_from_poison_translates_creature_modifiers() -> None:
+    spell = build_spell(
+        "Protection from Poison", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    )
+
+    assert spell.removable_conditions == ("poisoned",)
+    assert spell.remove_effect_selection == "all"
+    assert spell.mechanics is not None
+    assert spell.mechanics.damage_resistances == ("poison",)
+    assert spell.mechanics.condition_save_advantages == ("poisoned",)
+    assert spell.mechanics.duration_rounds == 600
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

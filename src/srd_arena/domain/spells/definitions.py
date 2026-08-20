@@ -89,6 +89,8 @@ class ImmediateSpellMechanics:
     maximum_hit_point_modifier: int = 0
     also_modify_current_hit_points: bool = False
     slot_maximum_hit_point_increment: int = 0
+    damage_resistances: tuple[str, ...] = ()
+    condition_save_advantages: tuple[str, ...] = ()
 
     @property
     def healing_pool(self) -> int | None:

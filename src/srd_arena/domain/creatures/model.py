@@ -40,6 +40,7 @@ class Creature:
     max_health_override: int | None = None
     temporary_hit_points: int = 0
     maximum_health_modifiers: dict[str, dict[str, int]] = field(default_factory=dict)
+    damage_resistance_sources: dict[str, set[str]] = field(default_factory=dict)
 
     def __post_init__(self):
         if self.current_health is None:
@@ -136,7 +137,9 @@ class Creature:
     def get_health(self) -> int:
         return self.current_health or 0
 
-    def take_damage(self, amount: int) -> int:
+    def take_damage(self, amount: int, damage_type: str | None = None) -> int:
+        if damage_type is not None and self.has_damage_resistance(damage_type):
+            amount //= 2
         applied_damage = min(
             max(amount, 0),
             self.get_health() + self.temporary_hit_points,
@@ -146,6 +149,22 @@ class Creature:
         health_damage = applied_damage - absorbed_damage
         self.current_health = self.get_health() - health_damage
         return applied_damage
+
+    def has_damage_resistance(self, damage_type: str) -> bool:
+        return bool(self.damage_resistance_sources.get(damage_type.casefold()))
+
+    def add_damage_resistance(self, damage_type: str, origin_id: str) -> None:
+        self.damage_resistance_sources.setdefault(damage_type.casefold(), set()).add(
+            origin_id
+        )
+
+    def remove_damage_resistance(self, damage_type: str, origin_id: str) -> None:
+        sources = self.damage_resistance_sources.get(damage_type.casefold())
+        if sources is None:
+            return
+        sources.discard(origin_id)
+        if not sources:
+            self.damage_resistance_sources.pop(damage_type.casefold(), None)
 
     def heal(self, amount: int) -> int:
         missing_health = self.get_max_health() - self.get_health()

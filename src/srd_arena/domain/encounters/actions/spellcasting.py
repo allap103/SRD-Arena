@@ -16,6 +16,7 @@ from ...spells.rules import parse_spell_action_condition
 from ...spells.rules import parse_spell_action_slot
 from ...spells.rules import parse_spell_healing_allocations
 from ..ongoing_effects import (
+    has_condition_save_advantage,
     resolve_concentration_damage,
     resolve_spell_lifecycle_event,
 )
@@ -163,12 +164,26 @@ def resolve_spell_action(
                 {
                     candidate.target_ref: "advantage"
                     for candidate in targets
-                    if self._creatures_are_opponents(
-                        creature_ref, candidate.target_ref
+                    if (
+                        spell.mechanics is not None
+                        and has_condition_save_advantage(
+                            self,
+                            candidate.target_ref,
+                            spell.mechanics.conditions,
+                        )
+                    )
+                    or (
+                        spell.mechanics.save_advantage_against_opponents
+                        and self._creatures_are_opponents(
+                            creature_ref, candidate.target_ref
+                        )
                     )
                 }
                 if spell.mechanics is not None
-                and spell.mechanics.save_advantage_against_opponents
+                and (
+                    spell.mechanics.save_advantage_against_opponents
+                    or spell.mechanics.conditions
+                )
                 else {}
             ),
             area_targets_around=lambda center_ref, radius_feet: tuple(

@@ -230,7 +230,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 final_damage = final_damage // 2 if mechanics.half_damage_on_save else 0
             if mechanics.resolution == "spell_attack" and not hit:
                 final_damage = 0
-            applied = target.creature.take_damage(final_damage)
+            applied = target.creature.take_damage(final_damage, damage.damage_type)
             target_damage += applied
             damage_details.append(
                 {
@@ -369,7 +369,12 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
     )
     if (
         affected_targets
-        and (mechanics.conditions or maximum_hit_point_modifier != 0)
+        and (
+            mechanics.conditions
+            or maximum_hit_point_modifier != 0
+            or mechanics.damage_resistances
+            or mechanics.condition_save_advantages
+        )
         and (
             mechanics.duration_rounds is not None
             or mechanics.concentration
@@ -409,6 +414,10 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         "maximum_hit_point_modifier": maximum_hit_point_modifier,
                         "also_modify_current_hit_points": (
                             mechanics.also_modify_current_hit_points
+                        ),
+                        "damage_resistances": list(mechanics.damage_resistances),
+                        "condition_save_advantages": list(
+                            mechanics.condition_save_advantages
                         ),
                     },
                 },
@@ -693,7 +702,7 @@ def _resolve_follow_up(
                 if save.check.success
                 else roll.total
             )
-            applied = target.creature.take_damage(final_damage)
+            applied = target.creature.take_damage(final_damage, damage.damage_type)
             damage_details.append(
                 {
                     "sequence_step": sequence_step,

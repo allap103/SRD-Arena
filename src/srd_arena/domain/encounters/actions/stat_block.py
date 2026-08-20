@@ -413,7 +413,7 @@ def _resolve_automatic_action(
         count_text, sides_text = effect.dice.lower().split("d", 1)
         rolled = _roll_dice(int(count_text), int(sides_text))
         amount = max(effect.minimum or 0, rolled + effect.bonus)
-        applied = target.take_damage(amount)
+        applied = target.take_damage(amount, effect.damage_type)
         damage += applied
         damage_details.append(
             {
@@ -631,5 +631,5 @@ def _apply_damage_effects(
         )
         if half:
             amount //= 2
-        total += target.take_damage(amount)
+        total += target.take_damage(amount, effect.damage_type)
     return total

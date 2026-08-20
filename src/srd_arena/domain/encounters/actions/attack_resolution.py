@@ -209,7 +209,15 @@ def apply_attack_damage(
         return
     damage_total = attack.damage_roll.total
     damage = max(1, damage_total) + attack.additional_damage
-    applied_damage = defender.take_damage(damage)
+    applied_damage = defender.take_damage(max(1, damage_total), attack.damage_type)
+    for detail in attack.additional_damage_details:
+        extra_damage = detail.get("total", 0)
+        extra_type = detail.get("damage_type")
+        if isinstance(extra_damage, int):
+            applied_damage += defender.take_damage(
+                extra_damage,
+                extra_type if isinstance(extra_type, str) else None,
+            )
     attack.damage = applied_damage
     attack.defender_defeated = defender.get_health() <= 0
     attack.damage_roll_detail = damage_roll_detail(attack, applied_damage)

@@ -87,7 +87,36 @@ def start_ongoing_effect(
                 maximum_hit_point_modifier,
                 also_modify_current=also_modify_current,
             )
+    damage_resistances = effect.parameters.get("damage_resistances", [])
+    if isinstance(damage_resistances, list):
+        for target_ref in effect.target_refs:
+            for damage_type in damage_resistances:
+                if isinstance(damage_type, str):
+                    state.creatures[target_ref].creature.add_damage_resistance(
+                        damage_type, origin_id
+                    )
     return effect
+
+
+def has_condition_save_advantage(
+    state: EncounterState,
+    target_ref: str,
+    conditions: tuple[str, ...],
+) -> bool:
+    requested = {condition.casefold() for condition in conditions}
+    if not requested:
+        return False
+    return any(
+        target_ref in effect.target_refs
+        and isinstance(configured, list)
+        and bool(
+            requested.intersection(
+                value.casefold() for value in configured if isinstance(value, str)
+            )
+        )
+        for effect in state.ongoing_effects
+        for configured in (effect.parameters.get("condition_save_advantages"),)
+    )
 
 
 def end_concentration(state: EncounterState, source_ref: str) -> None:
@@ -406,6 +435,7 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
     origin_id = effect.identity.source.origin_id
     for target_ref in effect.target_refs:
         _remove_maximum_hit_point_modifier(state, effect, target_ref)
+        _remove_damage_resistances(state, effect, target_ref)
     state.ongoing_effects = [
         existing
         for existing in state.ongoing_effects
@@ -424,6 +454,7 @@ def _remove_effect_target(
     target_ref: str,
 ) -> None:
     _remove_maximum_hit_point_modifier(state, effect, target_ref)
+    _remove_damage_resistances(state, effect, target_ref)
     remaining_targets = tuple(
         existing for existing in effect.target_refs if existing != target_ref
     )
@@ -466,6 +497,21 @@ def _remove_maximum_hit_point_modifier(
             effect.parameters.get("also_modify_current_hit_points", False)
         ),
     )
+
+
+def _remove_damage_resistances(
+    state: EncounterState,
+    effect: OngoingEffect,
+    target_ref: str,
+) -> None:
+    values = effect.parameters.get("damage_resistances", [])
+    if not isinstance(values, list):
+        return
+    for damage_type in values:
+        if isinstance(damage_type, str):
+            state.creatures[target_ref].creature.remove_damage_resistance(
+                damage_type, effect.identity.source.origin_id
+            )
 
 
 def _progressed_target_refs(effect: OngoingEffect) -> tuple[str, ...]:

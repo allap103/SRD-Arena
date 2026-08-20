@@ -44,6 +44,17 @@ def test_temporary_hit_points_replace_only_a_smaller_pool() -> None:
     assert creature.temporary_hit_points == 8
 
 
+def test_sourced_damage_resistance_halves_matching_damage() -> None:
+    creature = make_creature()
+    creature.add_damage_resistance("poison", "protection-cast")
+
+    assert creature.take_damage(7, "poison") == 3
+    assert creature.take_damage(7, "fire") == 7
+
+    creature.remove_damage_resistance("poison", "protection-cast")
+    assert creature.take_damage(2, "poison") == 2
+
+
 def test_same_definition_maximum_health_modifiers_do_not_stack() -> None:
     creature = make_creature()
     base_maximum = creature.get_max_health()

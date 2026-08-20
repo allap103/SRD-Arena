@@ -12,9 +12,11 @@ from srd_arena.content.schemas.spell_mechanics import (
     AutomaticResolutionSchema,
     CasterLevelScalingSchema,
     ConditionImmunityRequirementSchema,
+    ConditionSaveAdvantageEffectSchema,
     CreatureTraitRequirementSchema,
     HealingEffectSchema,
     HitPointMaximumModifierEffectSchema,
+    DamageResistanceEffectSchema,
     RepeatResolutionSchema,
     RemoveEffectSchema,
     SavingThrowResolutionSchema,
@@ -144,6 +146,18 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         ),
         None,
     )
+    damage_resistances = tuple(
+        damage_type
+        for effect in outcome.effects
+        if isinstance(effect.root, DamageResistanceEffectSchema)
+        for damage_type in effect.root.damage_types
+    )
+    condition_save_advantages = tuple(
+        condition
+        for effect in outcome.effects
+        if isinstance(effect.root, ConditionSaveAdvantageEffectSchema)
+        for condition in effect.root.conditions
+    )
     geometry = target.geometry if target.type == "area" else None
     return ImmediateSpellMechanics(
         resolution=resolution.type,
@@ -271,6 +285,8 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         slot_maximum_hit_point_increment=(
             _slot_scaling_value(raw, "hit_point_maximum", int) or 0
         ),
+        damage_resistances=damage_resistances,
+        condition_save_advantages=condition_save_advantages,
     )
 
 
