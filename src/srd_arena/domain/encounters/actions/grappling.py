@@ -80,7 +80,12 @@ def resolve_escape_action(
         creature.get_modifier(creature.attributes.strength),
         creature.get_modifier(creature.attributes.dexterity),
     )
-    check = resolve_d20(modifier=modifier, roller=_roll_die)
+    check = resolve_d20(
+        modifier=modifier
+        + creature.resolve_roll_modifiers("ability_check", _roll_die),
+        mode=creature.roll_mode("ability_check"),
+        roller=_roll_die,
+    )
     success = check.total >= escape_dc
     if success:
         state._remove_condition_from_source(

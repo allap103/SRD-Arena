@@ -95,6 +95,7 @@ class ImmediateSpellMechanics:
     damage_resistance_choice: bool = False
     condition_save_advantages: tuple[str, ...] = ()
     roll_modifiers: tuple[RollModifier, ...] = ()
+    recast_ends_previous: bool = False
 
     @property
     def healing_pool(self) -> int | None:

@@ -213,6 +213,23 @@ def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
     ]
 
 
+def test_foresight_translates_bidirectional_roll_modes() -> None:
+    spell = build_spell("Foresight", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+
+    assert spell.mechanics is not None
+    assert [
+        (modifier.roll, modifier.mode, modifier.subject)
+        for modifier in spell.mechanics.roll_modifiers
+    ] == [
+        ("ability_check", "advantage", "target"),
+        ("attack_roll", "advantage", "target"),
+        ("saving_throw", "advantage", "target"),
+        ("attack_roll", "disadvantage", "attacks_against_target"),
+    ]
+    assert spell.mechanics.recast_ends_previous
+    assert spell.mechanics.duration_rounds == 4800
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

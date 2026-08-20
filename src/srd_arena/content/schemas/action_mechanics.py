@@ -206,6 +206,7 @@ class RollModifierEffectSchema(ActionMechanicsSchemaModel):
         "d20_test",
     ]
     mode: Literal["advantage", "disadvantage", "add", "subtract"]
+    subject: Literal["target", "attacks_against_target"] = "target"
     ability: Ability | None = None
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     value: int | None = None

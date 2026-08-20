@@ -36,7 +36,12 @@ from srd_arena.domain.spells import (
     SpellTemporaryHitPoints,
 )
 from srd_arena.domain.creatures import CreatureTypeRequirement
-from srd_arena.domain.effects.modifiers import ModifierMode, RollKind, RollModifier
+from srd_arena.domain.effects.modifiers import (
+    ModifierMode,
+    ModifierSubject,
+    RollKind,
+    RollModifier,
+)
 
 
 def build_spell(
@@ -167,16 +172,19 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
     )
     roll_modifiers = tuple(
         RollModifier(
-            roll=cast(RollKind, effect.root.roll),
+            roll=cast(RollKind, roll),
             mode=cast(ModifierMode, effect.root.mode),
             dice=effect.root.dice,
             value=effect.root.value,
+            subject=cast(ModifierSubject, effect.root.subject),
         )
         for effect in outcome.effects
         if isinstance(effect.root, RollModifierEffectSchema)
-        and effect.root.roll
-        in {"ability_check", "attack_roll", "damage_roll", "saving_throw"}
-        and effect.root.mode in {"add", "subtract"}
+        for roll in (
+            ("ability_check", "attack_roll", "saving_throw")
+            if effect.root.roll == "d20_test"
+            else (effect.root.roll,)
+        )
     )
     geometry = target.geometry if target.type == "area" else None
     return ImmediateSpellMechanics(
@@ -276,10 +284,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         require_full_target_count=repeated is not None,
         target_count_by_caster_level=_target_count_by_caster_level(raw),
         follow_up_resolutions=(
-            tuple(
-                _follow_up_resolution(raw, step)
-                for step in sequence.steps[1:]
-            )
+            tuple(_follow_up_resolution(raw, step) for step in sequence.steps[1:])
             if sequence is not None
             else ()
         ),
@@ -309,6 +314,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         damage_resistance_choice=damage_resistance_choice,
         condition_save_advantages=condition_save_advantages,
         roll_modifiers=roll_modifiers,
+        recast_ends_previous=raw.mechanics.recast_ends_previous,
     )
 
 

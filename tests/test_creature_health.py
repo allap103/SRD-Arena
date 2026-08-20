@@ -60,9 +60,7 @@ def test_sourced_damage_resistance_halves_matching_damage() -> None:
 
 def test_same_spell_roll_modifiers_do_not_stack() -> None:
     creature = make_creature()
-    bless = (
-        RollModifier(roll="attack_roll", mode="add", dice="1d4"),
-    )
+    bless = (RollModifier(roll="attack_roll", mode="add", dice="1d4"),)
     creature.set_roll_modifiers("bless", "first", bless)
     creature.set_roll_modifiers("bless", "second", bless)
 
@@ -109,28 +107,39 @@ def test_sourced_modifiers_feed_central_attack_and_save_resolution() -> None:
     assert save.modifiers.other == 3
 
 
+def test_roll_mode_modifiers_expose_own_and_incoming_modes() -> None:
+    creature = make_creature()
+    creature.set_roll_modifiers(
+        "foresight",
+        "cast",
+        (
+            RollModifier(roll="attack_roll", mode="advantage"),
+            RollModifier(
+                roll="attack_roll",
+                mode="disadvantage",
+                subject="attacks_against_target",
+            ),
+        ),
+    )
+
+    assert creature.roll_mode("attack_roll") == "advantage"
+    assert creature.incoming_attack_roll_mode() == "disadvantage"
+
+
 def test_same_definition_maximum_health_modifiers_do_not_stack() -> None:
     creature = make_creature()
     base_maximum = creature.get_max_health()
     base_current = creature.get_health()
 
-    creature.set_maximum_health_modifier(
-        "aid", "first", 5, also_modify_current=True
-    )
-    creature.set_maximum_health_modifier(
-        "aid", "second", 10, also_modify_current=True
-    )
+    creature.set_maximum_health_modifier("aid", "first", 5, also_modify_current=True)
+    creature.set_maximum_health_modifier("aid", "second", 10, also_modify_current=True)
 
     assert creature.get_max_health() == base_maximum + 10
     assert creature.get_health() == base_current + 10
-    creature.remove_maximum_health_modifier(
-        "aid", "second", also_modify_current=True
-    )
+    creature.remove_maximum_health_modifier("aid", "second", also_modify_current=True)
     assert creature.get_max_health() == base_maximum + 5
     assert creature.get_health() == base_current + 5
-    creature.remove_maximum_health_modifier(
-        "aid", "first", also_modify_current=True
-    )
+    creature.remove_maximum_health_modifier("aid", "first", also_modify_current=True)
     assert creature.get_max_health() == base_maximum
     assert creature.get_health() == base_current
 

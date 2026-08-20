@@ -8,7 +8,7 @@ from .class_features import ClassFeature
 from .combat_profile import CombatProfile
 from ..effects.triggered import TriggeredEffect
 from ..effects.modifiers import RollKind, RollModifier
-from ..rolls.dice import DieRoller
+from ..rolls.dice import D20RollMode, DieRoller, combine_roll_modes
 from .multiattack import Multiattack
 from .spellcasting import Spellcasting
 from .statistics import CreatureStatistics
@@ -194,7 +194,33 @@ class Creature:
             for sources in self.roll_modifier_sources.values()
             for modifiers in tuple(sources.values())[:1]
             for modifier in modifiers
-            if modifier.roll == roll
+            if modifier.roll == roll and modifier.subject == "target"
+        )
+
+    def roll_mode(self, roll: RollKind) -> D20RollMode:
+        return combine_roll_modes(
+            *(
+                modifier.roll_mode
+                for sources in self.roll_modifier_sources.values()
+                for modifiers in tuple(sources.values())[:1]
+                for modifier in modifiers
+                if modifier.roll == roll
+                and modifier.subject == "target"
+                and modifier.roll_mode is not None
+            )
+        )
+
+    def incoming_attack_roll_mode(self) -> D20RollMode:
+        return combine_roll_modes(
+            *(
+                modifier.roll_mode
+                for sources in self.roll_modifier_sources.values()
+                for modifiers in tuple(sources.values())[:1]
+                for modifier in modifiers
+                if modifier.roll == "attack_roll"
+                and modifier.subject == "attacks_against_target"
+                and modifier.roll_mode is not None
+            )
         )
 
     def heal(self, amount: int) -> int:

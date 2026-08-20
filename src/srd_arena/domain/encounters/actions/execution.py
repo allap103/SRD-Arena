@@ -107,10 +107,19 @@ def resolve_grapple_action(
         creature_state.attacks_remaining -= 1
 
     player_roll = resolve_d20(
-        modifier=actor.get_modifier(actor.attributes.strength), roller=_roll_die
+        modifier=(
+            actor.get_modifier(actor.attributes.strength)
+            + actor.resolve_roll_modifiers("ability_check", _roll_die)
+        ),
+        mode=actor.roll_mode("ability_check"),
+        roller=_roll_die,
     )
     target_roll = resolve_d20(
-        modifier=target.creature.get_modifier(target.creature.attributes.strength),
+        modifier=(
+            target.creature.get_modifier(target.creature.attributes.strength)
+            + target.creature.resolve_roll_modifiers("ability_check", _roll_die)
+        ),
+        mode=target.creature.roll_mode("ability_check"),
         roller=_roll_die,
     )
     success = player_roll.total >= target_roll.total

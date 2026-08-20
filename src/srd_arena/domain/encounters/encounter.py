@@ -372,6 +372,9 @@ class EncounterState(EncounterStateData):
         if base_mode != "normal":
             modes.append(base_mode)
         target_effective = self.effective_conditions_for(target_ref)
+        modes.append(
+            self.creatures[target_ref].creature.incoming_attack_roll_mode()
+        )
         if target_effective.has_trait(
             CombatTrait.ATTACKERS_HAVE_ADVANTAGE
         ):

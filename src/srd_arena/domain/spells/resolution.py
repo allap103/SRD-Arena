@@ -399,6 +399,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "source_ref": context.source_ref,
                     "source_label": context.creature.name,
                     "definition_id": spell.id,
+                    "recast_ends_previous": mechanics.recast_ends_previous,
                     "target_refs": [target.target_ref for target in affected_targets],
                     "duration_rounds": mechanics.duration_rounds,
                     "parameters": {
@@ -434,6 +435,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                                 "mode": modifier.mode,
                                 "dice": modifier.dice,
                                 "value": modifier.value,
+                                "subject": modifier.subject,
                             }
                             for modifier in mechanics.roll_modifiers
                         ],

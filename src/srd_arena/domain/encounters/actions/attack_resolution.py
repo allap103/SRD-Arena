@@ -10,6 +10,7 @@ from ...geometry import Grid, Position
 from ...rolls.dice import (
     D20RollMode,
     resolve_check,
+    combine_roll_modes,
     resolve_d20,
     resolve_dice,
     roll_dice,
@@ -51,10 +52,14 @@ def resolve_attack(
     attack_type = attack_source.attack_modes[0]
     sourced_modifier = attacker.resolve_roll_modifiers("attack_roll", d20_roller)
     attack_modifier = attack_source.attack_bonus + sourced_modifier
-    roll_mode = attack_roll_mode_override or attack_roll_mode(
-        attack_type,
-        attacker_position,
-        nearby_opponent_positions,
+    roll_mode = combine_roll_modes(
+        attack_roll_mode_override
+        or attack_roll_mode(
+            attack_type,
+            attacker_position,
+            nearby_opponent_positions,
+        ),
+        attacker.roll_mode("attack_roll"),
     )
     attack_result = resolve_d20(
         modifier=attack_modifier,

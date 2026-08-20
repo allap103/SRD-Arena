@@ -4,7 +4,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING, cast
 
 from ..effects.results import EffectResult
-from ..effects.modifiers import ModifierMode, RollKind, RollModifier
+from ..effects.modifiers import ModifierMode, ModifierSubject, RollKind, RollModifier
 from ..effects.runtime import (
     EffectSource,
     EffectSourceKind,
@@ -50,6 +50,15 @@ def start_ongoing_effect(
         label=source_label,
         origin_id=origin_id,
     )
+    if bool(result.data.get("recast_ends_previous", False)):
+        previous = tuple(
+            effect
+            for effect in state.ongoing_effects
+            if effect.identity.source.definition_id == definition_id
+            and effect.identity.source.applied_by_ref == source_ref
+        )
+        for effect in previous:
+            _remove_effect_tree(state, effect)
     parameters = result.data.get("parameters")
     duration_rounds = result.data.get("duration_rounds")
     target_refs_data = result.data.get("target_refs")
@@ -74,9 +83,7 @@ def start_ongoing_effect(
         dispellable=True,
     )
     state.ongoing_effects.append(effect)
-    maximum_hit_point_modifier = effect.parameters.get(
-        "maximum_hit_point_modifier"
-    )
+    maximum_hit_point_modifier = effect.parameters.get("maximum_hit_point_modifier")
     also_modify_current = bool(
         effect.parameters.get("also_modify_current_hit_points", False)
     )
@@ -104,12 +111,13 @@ def start_ongoing_effect(
                 mode=cast(ModifierMode, value["mode"]),
                 dice=cast(str | None, value.get("dice")),
                 value=cast(int | None, value.get("value")),
+                subject=cast(ModifierSubject, value.get("subject", "target")),
             )
             for value in roll_modifiers
             if isinstance(value, dict)
             and value.get("roll")
             in {"ability_check", "attack_roll", "damage_roll", "saving_throw"}
-            and value.get("mode") in {"add", "subtract"}
+            and value.get("mode") in {"advantage", "disadvantage", "add", "subtract"}
         )
         for target_ref in effect.target_refs:
             state.creatures[target_ref].creature.set_roll_modifiers(
@@ -243,9 +251,7 @@ def resolve_end_turn_effects(
                         continue
                     dice = damage.get("dice")
                     damage_type = damage.get("damage_type")
-                    if not isinstance(dice, str) or not isinstance(
-                        damage_type, str
-                    ):
+                    if not isinstance(dice, str) or not isinstance(damage_type, str):
                         continue
                     count_text, separator, sides_text = dice.partition("d")
                     if (
@@ -282,9 +288,7 @@ def resolve_end_turn_effects(
                         applied,
                         progress,
                     )
-            failure_conditions = effect.parameters.get(
-                "repeat_failure_conditions", []
-            )
+            failure_conditions = effect.parameters.get("repeat_failure_conditions", [])
             if isinstance(failure_conditions, list) and failure_conditions:
                 state.conditions = [
                     condition
@@ -505,8 +509,7 @@ def _remove_effect_target(
         condition
         for condition in state.conditions
         if not (
-            condition.identity.source.origin_id
-            == effect.identity.source.origin_id
+            condition.identity.source.origin_id == effect.identity.source.origin_id
             and condition.target_ref == target_ref
         )
     ]

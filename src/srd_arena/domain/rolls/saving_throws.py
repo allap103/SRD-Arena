@@ -8,6 +8,7 @@ from .dice import (
     D20RollMode,
     DieRoller,
     resolve_check,
+    combine_roll_modes,
     resolve_d20,
     roll_die,
 )
@@ -28,6 +29,8 @@ class SavingThrowCreature(Protocol):
     def get_modifier(self, attribute_value: int) -> int: ...
 
     def resolve_roll_modifiers(self, roll: str, roller: DieRoller) -> int: ...
+
+    def roll_mode(self, roll: str) -> D20RollMode: ...
 
 
 @dataclass(frozen=True)
@@ -78,7 +81,11 @@ def resolve_saving_throw(
         proficiency=proficiency_modifier,
         other=other_modifier + sourced_modifier,
     )
-    roll = resolve_d20(modifier=modifiers.total, mode=mode, roller=roller)
+    roll = resolve_d20(
+        modifier=modifiers.total,
+        mode=combine_roll_modes(mode, creature.roll_mode("saving_throw")),
+        roller=roller,
+    )
     check = resolve_check(roll, target)
     if automatic_failure_reasons:
         check = CheckResult(roll=check.roll, target=check.target, success=False)

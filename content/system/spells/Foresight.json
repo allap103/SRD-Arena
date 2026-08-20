@@ -40,5 +40,19 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "recast_ends_previous": true,
+    "target": {"type": "creature", "disposition": "willing"},
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {"type": "roll_modifier", "roll": "d20_test", "mode": "advantage"},
+      {
+        "type": "roll_modifier",
+        "roll": "attack_roll",
+        "mode": "disadvantage",
+        "subject": "attacks_against_target"
+      }
+    ]}}
+  }
 }

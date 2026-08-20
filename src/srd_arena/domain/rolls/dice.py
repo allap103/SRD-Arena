@@ -6,6 +6,14 @@ from typing import Generic, Literal, TypeVar
 
 DieRoller = Callable[[int], int]
 D20RollMode = Literal["normal", "advantage", "disadvantage"]
+
+
+def combine_roll_modes(*modes: D20RollMode) -> D20RollMode:
+    has_advantage = "advantage" in modes
+    has_disadvantage = "disadvantage" in modes
+    if has_advantage == has_disadvantage:
+        return "normal"
+    return "advantage" if has_advantage else "disadvantage"
 RollResultT = TypeVar("RollResultT")
 
 
