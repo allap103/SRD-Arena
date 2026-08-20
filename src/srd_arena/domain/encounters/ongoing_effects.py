@@ -18,7 +18,7 @@ from ..rolls.saving_throws import (
     SavingThrowCreature,
     resolve_saving_throw,
 )
-from ..rolls.dice import resolve_dice
+from ..rolls.dice import D20RollMode, resolve_dice
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -176,10 +176,26 @@ def resolve_end_turn_effects(
         if not isinstance(ability, str) or not isinstance(dc, int):
             continue
         target = state.creatures[creature_ref].creature
+        repeat_conditions = effect.parameters.get("repeat_failure_conditions", [])
+        save_mode: D20RollMode = (
+            "advantage"
+            if isinstance(repeat_conditions, list)
+            and has_condition_save_advantage(
+                state,
+                creature_ref,
+                tuple(
+                    condition
+                    for condition in repeat_conditions
+                    if isinstance(condition, str)
+                ),
+            )
+            else "normal"
+        )
         save = resolve_saving_throw(
             cast(SavingThrowCreature, target),
             cast(Ability, ability),
             dc,
+            mode=save_mode,
             roller=_roll_die,
             automatic_failure_reasons=(
                 state._automatic_save_failure_provider_ids_for(

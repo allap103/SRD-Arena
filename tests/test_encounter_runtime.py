@@ -2862,6 +2862,63 @@ def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
     assert not has_condition_save_advantage(state, "goblin_1", ("poisoned",))
 
 
+def test_condition_modifier_applies_to_repeated_saves(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="goblin_1",
+                data={
+                    "effect_kind": "spell",
+                    "source_ref": "player",
+                    "source_label": "Protector",
+                    "definition_id": "protection_from_poison",
+                    "parameters": {"condition_save_advantages": ["poisoned"]},
+                },
+            )
+        ],
+        origin_id="protection-origin",
+    )
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="goblin_1",
+                data={
+                    "effect_kind": "spell",
+                    "source_ref": "goblin_2",
+                    "source_label": "Poisoner",
+                    "definition_id": "persistent_poison",
+                    "parameters": {
+                        "repeat_save_trigger": "end_of_turn",
+                        "repeat_failure_conditions": ["poisoned"],
+                        "save_ability": "constitution",
+                        "save_dc": 15,
+                    },
+                },
+            ),
+        ],
+        origin_id="poison-origin",
+    )
+    rolls = iter([1, 20])
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: next(rolls),
+    )
+
+    resolve_end_turn_effects(state, "goblin_1")
+
+    assert [effect.identity.source.definition_id for effect in state.ongoing_effects] == [
+        "protection_from_poison"
+    ]
+
+
 def test_upcast_hold_person_stages_and_resolves_multiple_targets(
     monkeypatch,
 ) -> None:

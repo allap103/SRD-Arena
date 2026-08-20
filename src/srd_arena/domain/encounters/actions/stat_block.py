@@ -29,6 +29,7 @@ from .attack_resolution import (
 )
 from .hit_effects import apply_attack_hit_effects
 from ..ongoing_effects import (
+    has_condition_save_advantage,
     resolve_concentration_damage,
     resolve_spell_lifecycle_event,
 )
@@ -486,10 +487,23 @@ def _resolve_saving_throw_action(
     outcomes: list[dict[str, object]] = []
     for target_ref in target_refs:
         target = state.creatures[target_ref].creature
+        inflicted_conditions = tuple(
+            effect.condition
+            for stage in definition.failure
+            for effect in stage.effects
+            if isinstance(effect, ConditionEffect)
+        )
         saving_throw = resolve_saving_throw(
             cast(SavingThrowCreature, target),
             cast(Ability, ability_names[definition.ability]),
             definition.dc,
+            mode=(
+                "advantage"
+                if has_condition_save_advantage(
+                    state, target_ref, inflicted_conditions
+                )
+                else "normal"
+            ),
             roller=_roll_die,
             automatic_failure_reasons=(
                 state._automatic_save_failure_provider_ids_for(
