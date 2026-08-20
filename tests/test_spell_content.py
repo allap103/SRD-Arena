@@ -102,6 +102,31 @@ def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     assert catalog.find("Sacred Flame", "XPHB").implementation.status == "complete"
 
 
+def test_wave_1b_spells_define_executable_condition_mechanics() -> None:
+    catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    names = {
+        "Animal Friendship",
+        "Blindness/Deafness",
+        "Charm Monster",
+        "Charm Person",
+        "Color Spray",
+        "Greater Invisibility",
+        "Hideous Laughter",
+        "Hold Monster",
+        "Hold Person",
+        "Invisibility",
+        "Sleep",
+    }
+
+    spells = [catalog.find(name, "XPHB") for name in names]
+
+    assert all(spell.executable for spell in spells)
+    assert all(
+        build_spell(spell.public_name, spell.source, catalog).mechanics
+        for spell in spells
+    )
+
+
 def test_spell_catalog_and_translation_use_srd_public_name() -> None:
     source_spell = SpellSchema.model_validate(
         {
