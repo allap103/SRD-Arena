@@ -848,9 +848,14 @@ class RepeatResolutionSchema(SpellMechanicsSchemaModel):
         return self
 
 
+class SequenceStepSchema(SpellMechanicsSchemaModel):
+    resolution: SpellResolutionSchema
+    target: SpellTargetSchema | None = None
+
+
 class SequenceResolutionSchema(SpellMechanicsSchemaModel):
     type: Literal["sequence"]
-    steps: list[SpellResolutionSchema] = Field(min_length=1)
+    steps: list[SequenceStepSchema] = Field(min_length=1)
 
 
 class ResolutionChoiceOptionSchema(SpellMechanicsSchemaModel):
@@ -1001,12 +1006,32 @@ class SlotScalingIncrementSchema(SpellMechanicsSchemaModel):
         "duration",
     ]
     amount: PositiveInt | str
+    damage_type: str | None = None
 
 
 class SlotScalingSchema(SpellMechanicsSchemaModel):
     type: Literal["slot_level"] = "slot_level"
     above_level: NonNegativeInt | Literal["spell_level"] = "spell_level"
     per_level: list[SlotScalingIncrementSchema] = Field(min_length=1)
+
+
+class CasterLevelScalingThresholdSchema(SpellMechanicsSchemaModel):
+    minimum_level: PositiveInt
+    projectile_count: PositiveInt
+
+
+class CasterLevelScalingSchema(SpellMechanicsSchemaModel):
+    type: Literal["caster_level"]
+    thresholds: list[CasterLevelScalingThresholdSchema] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_thresholds(self) -> "CasterLevelScalingSchema":
+        levels = [threshold.minimum_level for threshold in self.thresholds]
+        if levels != sorted(set(levels)):
+            raise ValueError("Caster-level thresholds must be unique and sorted.")
+        if levels[0] != 1:
+            raise ValueError("Caster-level scaling must define a level 1 baseline.")
+        return self
 
 
 class OutcomeTriggerSchema(SpellMechanicsSchemaModel):
@@ -1051,7 +1076,12 @@ class SpellMechanicsSchema(SpellMechanicsSchemaModel):
     resolution: SpellResolutionSchema
     casting_requirements: list[SpellRequirementSchema] = Field(default_factory=list)
     casting_trigger: CastingTriggerSchema | None = None
-    scaling: list[SlotScalingSchema] = Field(default_factory=list)
+    scaling: list[
+        Annotated[
+            SlotScalingSchema | CasterLevelScalingSchema,
+            Field(discriminator="type"),
+        ]
+    ] = Field(default_factory=list)
     outcome_triggers: list[OutcomeTriggerSchema] = Field(default_factory=list)
     condition_application: Literal["all", "choose_one"] = "all"
     self_removal_blocked_conditions: list[str] = Field(default_factory=list)

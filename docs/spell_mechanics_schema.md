@@ -104,6 +104,11 @@ The initial resolution is one of:
 Every branch produces an `Outcome`, which contains typed effects and can end
 the parent spell instance.
 
+Sequence steps may override the top-level target. This represents composed
+spells such as Ice Knife without a spell-name handler: its first step attacks
+the selected creature, while its second step always resolves against a
+target-origin area around that creature.
+
 ### Effects
 
 The effect union contains shared combat primitives such as damage, healing,
@@ -145,6 +150,12 @@ target count, projectile count, area radius, or duration. The cast level and
 derived values are snapshotted on the spell instance so later granted actions
 and triggers do not consume another slot or silently recalculate the original
 cast.
+
+Caster-level scaling uses ordered thresholds rather than slot increments. It
+is appropriate when the number of independently resolved projectiles changes
+at character levels 5, 11, and 17, as with Eldritch Blast. A damage-type
+selector on a slot-scaling increment limits that increment to the matching
+part of a composed resolution, such as Ice Knife's Cold explosion.
 
 ## Example: direct area damage
 

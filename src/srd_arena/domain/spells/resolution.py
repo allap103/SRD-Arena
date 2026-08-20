@@ -17,7 +17,7 @@ from ..rolls.saving_throws import (
     SavingThrowCreature,
     resolve_saving_throw,
 )
-from .definitions import Spell, SpellDamage
+from .definitions import FollowUpSpellResolution, Spell, SpellDamage
 
 DieRoller = Callable[[int], int]
 
@@ -51,6 +51,9 @@ class SpellActionContext:
     )
     cast_level: int | None = None
     save_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
+    area_targets_around: (
+        Callable[[str, int], tuple[SpellTargetContext, ...]] | None
+    ) = None
 
 
 def resolve_spell_action(
@@ -242,6 +245,19 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 ("system", f"{spell.name} {outcome} {target.target_label}.")
             )
 
+    for sequence_step, follow_up in enumerate(
+        mechanics.follow_up_resolutions,
+        start=2,
+    ):
+        follow_up_saves, follow_up_damage = _resolve_follow_up(
+            context,
+            follow_up,
+            cast_level,
+            sequence_step,
+        )
+        save_details.extend(follow_up_saves)
+        damage_details.extend(follow_up_damage)
+
     effects: list[EffectResult] = []
     selected_condition = context.selected_condition
     if selected_condition not in mechanics.conditions:
@@ -280,6 +296,13 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         "repeat_failure_conditions": list(
                             mechanics.repeat_failure_conditions
                         ),
+                        "repeat_failure_damage": [
+                            {
+                                "dice": damage.dice,
+                                "damage_type": damage.damage_type,
+                            }
+                            for damage in mechanics.repeat_failure_damage
+                        ],
                         "end_events": [list(event) for event in mechanics.end_events],
                         "damage_repeat_save_advantage": (
                             mechanics.damage_repeat_save_advantage
@@ -374,6 +397,115 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             ),
         },
     )
+
+
+def _resolve_follow_up(
+    context: SpellActionContext,
+    follow_up: FollowUpSpellResolution,
+    cast_level: int,
+    sequence_step: int,
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    if (
+        follow_up.target != "area"
+        or follow_up.area_radius_feet is None
+        or context.area_targets_around is None
+        or follow_up.resolution != "saving_throw"
+    ):
+        return [], []
+    assert context.creature.spellcasting is not None
+    assert context.roller is not None
+    targets = context.area_targets_around(
+        context.target.target_ref,
+        follow_up.area_radius_feet,
+    )
+    damage_definitions = follow_up.damage
+    if follow_up.slot_damage_increment is not None and cast_level > context.spell.level:
+        increment_count, increment_sides = _parse_damage_dice(
+            follow_up.slot_damage_increment
+        )
+        damage_definitions = tuple(
+            SpellDamage(
+                _scaled_damage_dice(
+                    damage.dice,
+                    increment_count,
+                    increment_sides,
+                    cast_level - context.spell.level,
+                ),
+                damage.damage_type,
+            )
+            for damage in damage_definitions
+        )
+    shared_rolls = [
+        (
+            damage,
+            resolve_dice(*_parse_damage_dice(damage.dice), roller=context.roller),
+        )
+        for damage in damage_definitions
+    ]
+    save_details: list[dict[str, object]] = []
+    damage_details: list[dict[str, object]] = []
+    ability = follow_up.save_ability or "dexterity"
+    for target in targets:
+        save = resolve_saving_throw(
+            cast(SavingThrowCreature, target.creature),
+            cast(Ability, ability),
+            context.creature.spellcasting.save_dc,
+            mode=context.save_roll_modes.get(target.target_ref, "normal"),
+            roller=context.roller,
+            automatic_failure_reasons=target.automatic_failure_reasons(ability),
+        )
+        save_details.append(
+            {
+                "sequence_step": sequence_step,
+                "target_ref": target.target_ref,
+                "target_label": target.target_label,
+                "ability": ability,
+                "die": save.check.roll.selected,
+                "modifier": save.modifiers.total,
+                "total": save.check.roll.total,
+                "target_dc": save.check.target,
+                "success": save.check.success,
+                "automatic_failure_reasons": list(save.automatic_failure_reasons),
+            }
+        )
+        for damage, roll in shared_rolls:
+            final_damage = (
+                roll.total // 2
+                if save.check.success and follow_up.half_damage_on_save
+                else 0
+                if save.check.success
+                else roll.total
+            )
+            applied = target.creature.take_damage(final_damage)
+            damage_details.append(
+                {
+                    "sequence_step": sequence_step,
+                    "target_ref": target.target_ref,
+                    "target_label": target.target_label,
+                    "dice": damage.dice,
+                    "dice_values": [die.result for die in roll.dice],
+                    "dice_total": roll.subtotal,
+                    "modifier": roll.modifier,
+                    "total": roll.total,
+                    "damage_type": damage.damage_type,
+                    "saved": save.check.success,
+                    "final_damage": final_damage,
+                    "applied_damage": applied,
+                }
+            )
+    return save_details, damage_details
+
+
+def _scaled_damage_dice(
+    dice: str,
+    increment_count: int,
+    increment_sides: int,
+    levels_above: int,
+) -> str:
+    count, sides = _parse_damage_dice(dice)
+    if sides != increment_sides:
+        raise ValueError("Slot damage scaling must use the base damage die.")
+    return f"{count + increment_count * levels_above}d{sides}"
 
 
 def _parse_damage_dice(expression: str) -> tuple[int, int]:

@@ -277,6 +277,13 @@ class EncounterState(EncounterStateData):
     def _roll_initiative(self) -> None:
         entries: list[InitiativeEntry] = []
         for creature_ref, creature_state in self.creatures.items():
+            participant = next(
+                participant
+                for participant in self.definition.participants
+                if participant.creature_id == creature_ref
+            )
+            if not participant.takes_turns:
+                continue
             roll = roll_die(20)
             if self.effective_conditions_for(creature_ref).has_trait(
                 CombatTrait.INITIATIVE_DISADVANTAGE

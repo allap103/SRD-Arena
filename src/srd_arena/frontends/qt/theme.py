@@ -141,6 +141,15 @@ QLabel#sectionSubtitle {
     color: #c9b89b;
 }
 
+QLabel#targetAllocationStatus {
+    color: #fff4cf;
+    background: #302712;
+    border: 1px solid #d4ad45;
+    border-radius: 7px;
+    padding: 8px;
+    font-weight: 700;
+}
+
 QWidget#combatBoard {
     background: #211a14;
     border: 1px solid #7a5c33;

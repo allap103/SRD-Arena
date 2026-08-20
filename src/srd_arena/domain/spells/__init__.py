@@ -1,3 +1,15 @@
-from .definitions import ImmediateSpellMechanics, Spell, SpellDamage, SpellRef
+from .definitions import (
+    FollowUpSpellResolution,
+    ImmediateSpellMechanics,
+    Spell,
+    SpellDamage,
+    SpellRef,
+)
 
-__all__ = ["ImmediateSpellMechanics", "Spell", "SpellDamage", "SpellRef"]
+__all__ = [
+    "FollowUpSpellResolution",
+    "ImmediateSpellMechanics",
+    "Spell",
+    "SpellDamage",
+    "SpellRef",
+]

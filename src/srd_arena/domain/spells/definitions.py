@@ -16,6 +16,17 @@ class SpellDamage:
 
 
 @dataclass(frozen=True)
+class FollowUpSpellResolution:
+    resolution: str
+    target: str
+    damage: tuple[SpellDamage, ...]
+    save_ability: str | None = None
+    half_damage_on_save: bool = False
+    area_radius_feet: int | None = None
+    slot_damage_increment: str | None = None
+
+
+@dataclass(frozen=True)
 class ImmediateSpellMechanics:
     resolution: str
     target: str
@@ -40,6 +51,7 @@ class ImmediateSpellMechanics:
     expires_on_source_turn_end: bool = False
     target_disposition: str = "enemy"
     repeat_failure_conditions: tuple[str, ...] = ()
+    repeat_failure_damage: tuple[SpellDamage, ...] = ()
     end_events: tuple[tuple[str, str], ...] = ()
     damage_repeat_save_advantage: bool = False
     save_advantage_against_opponents: bool = False
@@ -51,6 +63,8 @@ class ImmediateSpellMechanics:
     choose_area_targets: bool = False
     repeat_target_allocations: bool = False
     require_full_target_count: bool = False
+    target_count_by_caster_level: tuple[tuple[int, int], ...] = ()
+    follow_up_resolutions: tuple[FollowUpSpellResolution, ...] = ()
 
 
 @dataclass(frozen=True)

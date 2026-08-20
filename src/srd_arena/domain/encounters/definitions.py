@@ -17,6 +17,7 @@ class EncounterParticipant:
     start: Position
     controller: str | None = None
     behavior: EncounterBehavior | None = None
+    takes_turns: bool = True
 
 
 @dataclass
