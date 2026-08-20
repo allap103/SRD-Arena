@@ -2390,6 +2390,40 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
     ]
 
 
+def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Faerie Fire", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[1] = 1
+    state.creatures["goblin_1"].position = Position(3, 3)
+    state.creatures["goblin_2"].position = Position(4, 3)
+    rolls = iter((1, 20))
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: next(rolls),
+    )
+
+    result = _choose_directional_spell(session, "Cast Faerie Fire", (3, 3))
+
+    assert result.events
+    assert state.creatures["goblin_1"].creature.incoming_attack_roll_mode(caster) == (
+        "advantage"
+    )
+    assert state.creatures["goblin_2"].creature.incoming_attack_roll_mode(caster) == (
+        "normal"
+    )
+
+
 def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
     session = Scenario(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"

@@ -336,6 +336,20 @@ def test_enhance_ability_translates_ability_scoped_choices() -> None:
     ]
 
 
+def test_faerie_fire_translates_cube_and_incoming_attack_advantage() -> None:
+    spell = build_spell("Faerie Fire", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+
+    assert spell.geometry_mode == "point_area"
+    assert spell.mechanics is not None
+    assert spell.mechanics.area_shape == "cube"
+    assert spell.mechanics.area_length_feet == 20
+    assert spell.mechanics.save_ability == "dexterity"
+    assert [
+        (modifier.roll, modifier.mode, modifier.subject)
+        for modifier in spell.mechanics.roll_modifiers
+    ] == [("attack_roll", "advantage", "attacks_against_target")]
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

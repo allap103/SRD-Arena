@@ -10,6 +10,7 @@ from srd_arena.domain.geometry import (
     build_cube_area_from_vector,
     build_line_area,
     build_line_area_from_vector,
+    build_point_cube_area,
     build_radius_area,
 )
 
@@ -36,6 +37,16 @@ def test_radius_area_includes_chebyshev_cells_within_bounds() -> None:
         (1, 3),
         (2, 3),
         (3, 3),
+    }
+
+
+def test_point_cube_area_uses_exact_grid_aligned_dimensions() -> None:
+    area = build_point_cube_area(Position(3, 3), 4, Grid(width=8, height=8))
+
+    assert area.shape == "cube"
+    assert len(area.cells) == 16
+    assert _coords(area) == {
+        (x, y) for y in range(2, 6) for x in range(2, 6)
     }
 
 

@@ -220,6 +220,23 @@ def build_radius_area(
     )
 
 
+def build_point_cube_area(
+    origin: Position,
+    size_squares: int,
+    grid: Grid,
+) -> AreaOfEffect:
+    """Build a grid-aligned cube centered on a selected battlefield cell."""
+    start_x = origin.x - ((size_squares - 1) // 2)
+    start_y = origin.y - ((size_squares - 1) // 2)
+    cells = tuple(
+        Position(x, y)
+        for y in range(start_y, start_y + size_squares)
+        for x in range(start_x, start_x + size_squares)
+        if 0 <= x < grid.width and 0 <= y < grid.height
+    )
+    return AreaOfEffect(shape="cube", origin=origin, cells=cells)
+
+
 def build_cone_area(
     origin: Position,
     direction: str,

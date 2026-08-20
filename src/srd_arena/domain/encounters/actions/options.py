@@ -9,6 +9,7 @@ from ...geometry import (
     Position,
     Vector2D,
     build_directional_area,
+    build_point_cube_area,
     build_radius_area,
     grid_distance_between,
     vector_between_positions,
@@ -627,6 +628,8 @@ def spell_area(
             self.definition.grid.distance_from_feet(radius_feet, minimum=1)
         )
         origin = Position(int(aim_point[0]), int(aim_point[1]))
+        if spell.mechanics is not None and spell.mechanics.area_shape == "cube":
+            return build_point_cube_area(origin, radius_squares, self.definition.grid)
         return build_radius_area(origin, radius_squares, self.definition.grid)
     if spell.geometry_mode != "directional_area":
         return None

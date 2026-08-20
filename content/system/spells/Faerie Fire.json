@@ -48,5 +48,41 @@
   ],
   "areaTags": [
     "C"
-  ]
+  ],
+  "implementation": {
+    "status": "partial",
+    "omissions": [
+      {
+        "mechanic": "visibility-dependent advantage",
+        "reason": "The runtime does not yet calculate whether an attacker can see a target."
+      },
+      {
+        "mechanic": "suppression of Invisible benefits",
+        "reason": "Condition-benefit suppression awaits the visibility runtime."
+      },
+      {
+        "mechanic": "objects and dim light",
+        "reason": "Battlefield objects and illumination are not modeled yet."
+      }
+    ]
+  },
+  "mechanics": {
+    "target": {
+      "type": "area",
+      "origin": "point_in_range",
+      "geometry": {"shape": "cube", "length_feet": 20}
+    },
+    "resolution": {
+      "type": "saving_throw",
+      "ability": "dex",
+      "failure": {"effects": [
+        {
+          "type": "roll_modifier",
+          "roll": "attack_roll",
+          "mode": "advantage",
+          "subject": "attacks_against_target"
+        }
+      ]}
+    }
+  }
 }
