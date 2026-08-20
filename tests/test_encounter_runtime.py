@@ -18,6 +18,7 @@ from srd_arena.domain.encounters.actions.stat_block import (
 )
 from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import (
+    expire_ongoing_effects_for_turn_start,
     resolve_concentration_damage,
     resolve_end_turn_effects,
     resolve_spell_lifecycle_event,
@@ -2296,6 +2297,66 @@ def test_heal_upcasts_and_removes_every_listed_condition() -> None:
         "blinded",
         "poisoned",
     ]
+
+
+def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell("Aid", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    caster.spellcasting.spell_slots_remaining[3] = 1
+    target = state.creatures["goblin_1"]
+    target.position = Position(state.active_position.x + 1, state.active_position.y)
+    original = {
+        "player": (caster.get_max_health(), caster.get_health()),
+        "goblin_1": (
+            target.creature.get_max_health(),
+            target.creature.get_health(),
+        ),
+    }
+
+    initial = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("aid:player")
+        and parse_spell_action_slot(str(action.value)) == 3
+    )
+    state.apply_action(initial)
+    add_target = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "toggle_spell_target"
+        and action.value == "goblin_1"
+    )
+    state.apply_action(add_target)
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+    state.apply_action(confirm)
+
+    assert caster.get_max_health() == original["player"][0] + 10
+    assert caster.get_health() == original["player"][1] + 10
+    assert target.creature.get_max_health() == original["goblin_1"][0] + 10
+    assert target.creature.get_health() == original["goblin_1"][1] + 10
+
+    state.round.number = 4801
+    expire_ongoing_effects_for_turn_start(state, "player")
+
+    assert (caster.get_max_health(), caster.get_health()) == original["player"]
+    assert (
+        target.creature.get_max_health(),
+        target.creature.get_health(),
+    ) == original["goblin_1"]
 
 
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:

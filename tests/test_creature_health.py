@@ -44,6 +44,32 @@ def test_temporary_hit_points_replace_only_a_smaller_pool() -> None:
     assert creature.temporary_hit_points == 8
 
 
+def test_same_definition_maximum_health_modifiers_do_not_stack() -> None:
+    creature = make_creature()
+    base_maximum = creature.get_max_health()
+    base_current = creature.get_health()
+
+    creature.set_maximum_health_modifier(
+        "aid", "first", 5, also_modify_current=True
+    )
+    creature.set_maximum_health_modifier(
+        "aid", "second", 10, also_modify_current=True
+    )
+
+    assert creature.get_max_health() == base_maximum + 10
+    assert creature.get_health() == base_current + 10
+    creature.remove_maximum_health_modifier(
+        "aid", "second", also_modify_current=True
+    )
+    assert creature.get_max_health() == base_maximum + 5
+    assert creature.get_health() == base_current + 5
+    creature.remove_maximum_health_modifier(
+        "aid", "first", also_modify_current=True
+    )
+    assert creature.get_max_health() == base_maximum
+    assert creature.get_health() == base_current
+
+
 @given(st.integers(min_value=0, max_value=100))
 def test_take_damage_never_drops_health_below_zero(amount: int) -> None:
     creature = make_creature()

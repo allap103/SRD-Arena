@@ -53,5 +53,24 @@
   ],
   "areaTags": [
     "MT"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {
+      "type": "creature",
+      "count": {"minimum": 1, "maximum": 3},
+      "disposition": "any",
+      "selection": "choose_up_to"
+    },
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {
+        "type": "hit_point_maximum_modifier",
+        "value": 5,
+        "also_modify_current": true
+      }
+    ]}},
+    "scaling": [{"type": "slot_level", "above_level": "spell_level", "per_level": [
+      {"type": "hit_point_maximum", "amount": 5}
+    ]}]
+  }
 }

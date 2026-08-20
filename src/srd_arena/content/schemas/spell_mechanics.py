@@ -1004,6 +1004,7 @@ class SlotScalingIncrementSchema(SpellMechanicsSchemaModel):
         "healing_dice",
         "healing_bonus",
         "temporary_hit_points",
+        "hit_point_maximum",
         "target_count",
         "projectile_count",
         "area_radius_feet",

@@ -14,6 +14,7 @@ from srd_arena.content.schemas.spell_mechanics import (
     ConditionImmunityRequirementSchema,
     CreatureTraitRequirementSchema,
     HealingEffectSchema,
+    HitPointMaximumModifierEffectSchema,
     RepeatResolutionSchema,
     RemoveEffectSchema,
     SavingThrowResolutionSchema,
@@ -133,6 +134,14 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         for effect in outcome.effects
         if isinstance(effect.root, TemporaryHitPointsEffectSchema)
     )
+    maximum_hit_point_modifier = next(
+        (
+            effect.root
+            for effect in outcome.effects
+            if isinstance(effect.root, HitPointMaximumModifierEffectSchema)
+        ),
+        None,
+    )
     geometry = target.geometry if target.type == "area" else None
     return ImmediateSpellMechanics(
         resolution=resolution.type,
@@ -246,6 +255,19 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         ),
         slot_temporary_hit_points_increment=(
             _slot_scaling_value(raw, "temporary_hit_points", int) or 0
+        ),
+        maximum_hit_point_modifier=(
+            maximum_hit_point_modifier.value
+            if maximum_hit_point_modifier is not None
+            else 0
+        ),
+        also_modify_current_hit_points=(
+            maximum_hit_point_modifier.also_modify_current
+            if maximum_hit_point_modifier is not None
+            else False
+        ),
+        slot_maximum_hit_point_increment=(
+            _slot_scaling_value(raw, "hit_point_maximum", int) or 0
         ),
     )
 

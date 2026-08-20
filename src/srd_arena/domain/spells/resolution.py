@@ -347,9 +347,12 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
         else mechanics.conditions
     )
     parent_kind = "concentration" if mechanics.concentration else "spell"
+    maximum_hit_point_modifier = mechanics.maximum_hit_point_modifier + (
+        mechanics.slot_maximum_hit_point_increment * (cast_level - spell.level)
+    )
     if (
         affected_targets
-        and mechanics.conditions
+        and (mechanics.conditions or maximum_hit_point_modifier != 0)
         and (
             mechanics.duration_rounds is not None
             or mechanics.concentration
@@ -385,6 +388,10 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         "end_events": [list(event) for event in mechanics.end_events],
                         "damage_repeat_save_advantage": (
                             mechanics.damage_repeat_save_advantage
+                        ),
+                        "maximum_hit_point_modifier": maximum_hit_point_modifier,
+                        "also_modify_current_hit_points": (
+                            mechanics.also_modify_current_hit_points
                         ),
                     },
                 },

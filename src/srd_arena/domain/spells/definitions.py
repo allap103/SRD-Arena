@@ -85,6 +85,9 @@ class ImmediateSpellMechanics:
     slot_healing_dice_increment: str | None = None
     slot_healing_bonus_increment: int = 0
     slot_temporary_hit_points_increment: int = 0
+    maximum_hit_point_modifier: int = 0
+    also_modify_current_hit_points: bool = False
+    slot_maximum_hit_point_increment: int = 0
 
 
 @dataclass(frozen=True)
