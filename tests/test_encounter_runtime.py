@@ -59,7 +59,10 @@ from srd_arena.content.translators import build_spell
 from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.schemas import CreatureSchema
 from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
-from srd_arena.frontends.qt.ui.encounter.config import TargetSelectionMode
+from srd_arena.frontends.qt.ui.encounter.config import (
+    ActionMenuScope,
+    TargetSelectionMode,
+)
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
@@ -2480,6 +2483,42 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
     assert caster.spellcasting.spell_slots_remaining[2] == 0
 
 
+def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Scorching Ray", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[2] = 1
+    initial = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value) == "scorching_ray:goblin_1"
+    )
+    state.apply_action(initial)
+
+    cancel = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "cancel_spell_targets"
+    )
+    state.apply_action(cancel)
+
+    assert state.pending_spell_cast is None
+    assert state.current_decision().kind == "turn"
+    assert caster.spellcasting.spell_slots_remaining[2] == 1
+    assert state.active_actions_remaining == 1
+
+
 def test_ray_of_sickness_combines_scaled_damage_and_timed_condition(
     monkeypatch,
 ) -> None:
@@ -3655,6 +3694,114 @@ def test_clicking_actor_during_follow_up_attack_reopens_movement() -> None:
     GameWindow._handle_battlefield_creature_clicked(window, "assassin")
 
     assert planned_for == ["assassin"]
+
+
+def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
+    window = GameWindow.__new__(GameWindow)
+    mode = TargetSelectionMode(
+        kind="toggle_spell_target",
+        source_trigger_id="eldritch_blast",
+    )
+    window._pending_target_mode = mode
+    window._presentation = SimpleNamespace(
+        encounter=SimpleNamespace(
+            non_movement_actions=[
+                ActionView(
+                    id="caster-spell-target-dummy-remove",
+                    label="Remove Target Dummy (1)",
+                    kind="toggle_spell_target",
+                    creature_ref="caster",
+                    value="target_dummy",
+                    source_trigger_id="eldritch_blast",
+                ),
+                ActionView(
+                    id="caster-spell-target-dummy-add",
+                    label="Add Target Dummy (2)",
+                    kind="toggle_spell_target",
+                    creature_ref="caster",
+                    value="target_dummy",
+                    source_trigger_id="eldritch_blast",
+                ),
+            ]
+        )
+    )
+    selected: list[str] = []
+    window._select_action = selected.append
+    window._begin_movement_plan = lambda _creature_ref: None
+
+    GameWindow._handle_battlefield_creature_clicked(
+        window,
+        "target_dummy",
+    )
+    GameWindow._handle_battlefield_creature_clicked(
+        window,
+        "target_dummy",
+        remove_allocation=True,
+    )
+
+    assert selected == [
+        "caster-spell-target-dummy-add",
+        "caster-spell-target-dummy-remove",
+    ]
+
+
+def test_exact_spell_allocation_auto_confirms_after_final_click(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.attributes = replace(caster.attributes, level=5)
+    caster.spellcasting.learned_spells.append(
+        build_spell("Eldritch Blast", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda sides: 15 if sides == 20 else 3,
+    )
+    initial = next(
+        action
+        for action in session.get_scene_view().action_details
+        if action.kind == "spell"
+        and str(action.value) == "eldritch_blast:goblin_1"
+    )
+    session.choose(initial.id)
+    assert state.pending_spell_cast is not None
+    add = next(
+        action
+        for action in session.get_scene_view().action_details
+        if action.kind == "toggle_spell_target"
+        and action.value == "goblin_1"
+        and action.id.endswith("-add")
+    )
+
+    window = GameWindow.__new__(GameWindow)
+    window.session = session
+    window._presentation = build_session_presentation(session)
+    window._pending_target_mode = TargetSelectionMode(
+        kind="toggle_spell_target",
+        source_trigger_id="eldritch_blast",
+    )
+    window._action_menu_scope = ActionMenuScope("action", "magic")
+    window._apply_turn_result = lambda _result, **_kwargs: None
+
+    assert GameWindow._pending_spell_allocation_counts(window) == {
+        "goblin_1": 1
+    }
+    assert GameWindow._pending_spell_allocation_status(window) == (
+        "Eldritch Blast: 1 allocation remaining (1/2 assigned)"
+    )
+
+    GameWindow._select_action(window, add.id)
+
+    assert state.pending_spell_cast is None
+    assert state.current_decision().kind == "turn"
+    assert state.active_actions_remaining == 0
 
 
 def test_movement_does_not_consume_pending_multiattack_slots() -> None:

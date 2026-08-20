@@ -292,6 +292,14 @@ def spell_target_selection_actions(
                 cost=pending.action.cost,
             )
         )
+    actions.append(
+        EncounterAction(
+            f"Cancel {spell.name}",
+            "cancel_spell_targets",
+            id=f"{creature_ref}-cancel-{spell.id}",
+            creature_ref=creature_ref,
+        )
+    )
     return [
         action
         for action in actions

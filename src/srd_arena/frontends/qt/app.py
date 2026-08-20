@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import textwrap
-from collections import deque
+from collections import Counter, deque
 from datetime import datetime, timezone
 from ...domain.encounters.models import ActionCost, EncounterAction
 from ...domain.geometry import (
@@ -677,7 +677,13 @@ class GameWindow(QMainWindow):
             if action.enabled
             if (target_ref := self._target_creature_ref(action)) is not None
         }
-        self.battlefield_widget.set_targeting_state(targetable_refs)
+        allocation_counts = self._pending_spell_allocation_counts()
+        allocation_status = self._pending_spell_allocation_status()
+        self.battlefield_widget.set_targeting_state(
+            targetable_refs,
+            allocation_counts=allocation_counts,
+            targeting_label=allocation_status,
+        )
 
         self._render_movement_status(encounter.resources)
         self._render_health_status(encounter.resources)
@@ -709,6 +715,15 @@ class GameWindow(QMainWindow):
             self.status_section_layout,
         ):
             clear_layout(section_layout)
+        if allocation_status is not None:
+            allocation_label = QLabel(allocation_status)
+            allocation_label.setObjectName("targetAllocationStatus")
+            allocation_label.setWordWrap(True)
+            allocation_label.setToolTip(
+                "Click a highlighted target to allocate. "
+                "Shift-click removes one allocation; right-click cancels."
+            )
+            self.actions_section_layout.addWidget(allocation_label)
         rendered_target_modes: set[TargetSelectionMode] = set()
         if encounter.action_pane_title != "Actions":
             self._render_action_detail_column(
@@ -1343,6 +1358,7 @@ class GameWindow(QMainWindow):
 
     def _select_action(self, action_id: str) -> None:
         self._clear_movement_plan()
+        previous_scope = self._action_menu_scope
         selected_action = (
             next(
                 (
@@ -1359,10 +1375,14 @@ class GameWindow(QMainWindow):
         self._pending_target_mode = None
         self._action_menu_scope = None
         result = self.session.choose(action_id)
+        completed_allocation = self._completed_spell_allocation_action()
+        if completed_allocation is not None:
+            result = self.session.choose(completed_allocation.id)
         if selected_action is not None and selected_action.kind == "toggle_spell_target":
-            self._pending_target_mode = self._target_mode_for_action(
-                selected_action
-            )
+            if completed_allocation is None:
+                self._pending_target_mode = self._target_mode_for_action(
+                    selected_action
+                )
         elif (
             selected_action is not None
             and selected_action.kind == "spell"
@@ -1375,6 +1395,12 @@ class GameWindow(QMainWindow):
                 kind="toggle_spell_target",
                 source_trigger_id=spell_id,
             )
+        if (
+            self.session.encounter_state is not None
+            and self.session.encounter_state.current_decision().kind
+            == "spell_targets"
+        ):
+            self._action_menu_scope = previous_scope
         self._apply_turn_result(
             result,
             follow_up_attack_mode=(
@@ -1404,17 +1430,31 @@ class GameWindow(QMainWindow):
         self._pending_target_mode = None if self._pending_target_mode == mode else mode
         self.refresh_view()
 
-    def _handle_battlefield_creature_clicked(self, creature_ref: str) -> None:
+    def _handle_battlefield_creature_clicked(
+        self,
+        creature_ref: str,
+        remove_allocation: bool = False,
+    ) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
         if self._pending_target_mode is None:
             self._begin_movement_plan(creature_ref)
             return
-        action = self._target_selection_modes(self._presentation.encounter.non_movement_actions).get(
-            self._pending_target_mode,
-            {},
-        ).get(
-            creature_ref
+        matching_actions = [
+            action
+            for action in self._presentation.encounter.non_movement_actions
+            if self._target_mode_for_action(action) == self._pending_target_mode
+            and self._target_creature_ref(action) == creature_ref
+        ]
+        action = next(
+            (
+                candidate
+                for candidate in matching_actions
+                if candidate.id.endswith(
+                    "-remove" if remove_allocation else "-add"
+                )
+            ),
+            matching_actions[0] if matching_actions and not remove_allocation else None,
         )
         if action is None:
             # Follow-up attack targeting remains active while a Multiattack has
@@ -1531,8 +1571,63 @@ class GameWindow(QMainWindow):
 
     def _cancel_battlefield_interaction(self) -> None:
         self._clear_movement_plan()
+        if (
+            self._presentation is not None
+            and self._presentation.encounter is not None
+        ):
+            cancel = next(
+                (
+                    action
+                    for action in self._presentation.encounter.non_movement_actions
+                    if action.kind == "cancel_spell_targets"
+                ),
+                None,
+            )
+            if cancel is not None:
+                self._select_action(cancel.id)
+                return
         self._pending_target_mode = None
         self.refresh_view()
+
+    def _completed_spell_allocation_action(self) -> ActionView | None:
+        state = self.session.encounter_state
+        pending = state.pending_spell_cast if state is not None else None
+        if (
+            pending is None
+            or not pending.require_full_target_count
+            or len(pending.selected_target_refs) != pending.maximum_targets
+        ):
+            return None
+        return next(
+            (
+                action
+                for action in self.session.get_scene_view().action_details
+                if action.kind == "confirm_spell_targets"
+            ),
+            None,
+        )
+
+    def _pending_spell_allocation_counts(self) -> dict[str, int]:
+        state = self.session.encounter_state
+        pending = state.pending_spell_cast if state is not None else None
+        if pending is None:
+            return {}
+        return dict(Counter(pending.selected_target_refs))
+
+    def _pending_spell_allocation_status(self) -> str | None:
+        state = self.session.encounter_state
+        pending = state.pending_spell_cast if state is not None else None
+        if pending is None:
+            return None
+        spell = self._spell_by_id(pending.spell_id)
+        spell_name = spell.name if spell is not None else "Spell"
+        selected = len(pending.selected_target_refs)
+        remaining = max(0, pending.maximum_targets - selected)
+        allocation_label = "allocation" if remaining == 1 else "allocations"
+        return (
+            f"{spell_name}: {remaining} {allocation_label} remaining "
+            f"({selected}/{pending.maximum_targets} assigned)"
+        )
 
     def _handle_battlefield_point_clicked(self, x: float, y: float) -> None:
         if self._presentation is None or self._presentation.encounter is None:

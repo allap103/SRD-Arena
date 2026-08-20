@@ -591,6 +591,11 @@ def execute_creature_action(
             progress,
             action_id,
         )
+    elif action.kind == "cancel_spell_targets":
+        if self.pending_spell_cast is None:
+            raise RuntimeError("No staged spell targets can be cancelled.")
+        self.decision_stack.pop()
+        self.pending_spell_cast = None
     elif action.kind == "wake_spell_target":
         if not isinstance(action.value, str):
             raise ValueError("Wake action requires a creature reference.")

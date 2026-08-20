@@ -279,7 +279,7 @@ def _single_die_sides(expression: str) -> int | None:
 
 
 class BattlefieldWidget(QWidget):
-    creature_clicked = Signal(str)
+    creature_clicked = Signal(str, bool)
     cell_clicked = Signal(int, int)
     point_clicked = Signal(float, float)
     interaction_cancelled = Signal()
@@ -295,6 +295,8 @@ class BattlefieldWidget(QWidget):
         self._creature_positions: dict[str, tuple[float, float, float]] = {}
         self._targetable_creature_refs: set[str] = set()
         self._selected_creature_ref: str | None = None
+        self._target_allocation_counts: dict[str, int] = {}
+        self._targeting_label: str | None = None
         self._area_overlay: dict[str, object] | None = None
         self._hover_cell: tuple[int, int] | None = None
         self._hover_point: tuple[float, float] | None = None
@@ -347,9 +349,13 @@ class BattlefieldWidget(QWidget):
         self,
         targetable_creature_refs: set[str],
         selected_creature_ref: str | None = None,
+        allocation_counts: dict[str, int] | None = None,
+        targeting_label: str | None = None,
     ) -> None:
         self._targetable_creature_refs = set(targetable_creature_refs)
         self._selected_creature_ref = selected_creature_ref
+        self._target_allocation_counts = dict(allocation_counts or {})
+        self._targeting_label = targeting_label
         self.update()
 
     def set_cell_targeting_enabled(self, enabled: bool) -> None:
@@ -656,6 +662,36 @@ class BattlefieldWidget(QWidget):
                     creature.label[:1].upper(),
                 )
 
+            allocation_count = self._target_allocation_counts.get(
+                creature.creature_ref,
+                0,
+            )
+            if allocation_count:
+                badge_radius = max(9, int(cell_size * 0.16))
+                badge_x = center_x + radius * 0.72
+                badge_y = center_y - radius * 0.72
+                painter.setBrush(QColor("#f4d35e"))
+                painter.setPen(QPen(QColor("#4b3900"), 2))
+                painter.drawEllipse(
+                    int(badge_x - badge_radius),
+                    int(badge_y - badge_radius),
+                    badge_radius * 2,
+                    badge_radius * 2,
+                )
+                painter.setPen(QColor("#211900"))
+                font = QFont()
+                font.setBold(True)
+                font.setPointSize(max(8, int(cell_size * 0.13)))
+                painter.setFont(font)
+                painter.drawText(
+                    int(badge_x - badge_radius),
+                    int(badge_y - badge_radius),
+                    badge_radius * 2,
+                    badge_radius * 2,
+                    Qt.AlignmentFlag.AlignCenter,
+                    f"x{allocation_count}",
+                )
+
             if self._always_show_creature_names or self._hover_cell == (
                 creature.position.x,
                 creature.position.y,
@@ -748,6 +784,37 @@ class BattlefieldWidget(QWidget):
                 badge_height,
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
                 self._area_overlay_label(display_overlay),
+            )
+
+        if self._targeting_label is not None:
+            badge_rect = rect.adjusted(12, 12, -12, -12)
+            badge_height = 34
+            badge_width = min(
+                max(260, int(cell_size * 6.5)),
+                badge_rect.width(),
+            )
+            painter.setBrush(QColor(37, 30, 14, 225))
+            painter.setPen(QPen(QColor("#d4ad45"), 2))
+            painter.drawRoundedRect(
+                badge_rect.x(),
+                badge_rect.y(),
+                badge_width,
+                badge_height,
+                10,
+                10,
+            )
+            painter.setPen(QColor("#fff4cf"))
+            font = QFont()
+            font.setBold(True)
+            font.setPointSize(10)
+            painter.setFont(font)
+            painter.drawText(
+                badge_rect.x() + 12,
+                badge_rect.y(),
+                badge_width - 24,
+                badge_height,
+                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
+                self._targeting_label,
             )
 
         painter.end()
@@ -913,7 +980,10 @@ class BattlefieldWidget(QWidget):
             dx = event.position().x() - center_x
             dy = event.position().y() - center_y
             if dx * dx + dy * dy <= radius * radius:
-                self.creature_clicked.emit(creature_ref)
+                remove_allocation = bool(
+                    event.modifiers() & Qt.KeyboardModifier.ShiftModifier
+                )
+                self.creature_clicked.emit(creature_ref, remove_allocation)
                 break
         super().mousePressEvent(event)
 
