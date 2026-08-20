@@ -384,6 +384,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             or mechanics.condition_save_advantages
             or mechanics.roll_modifiers
             or mechanics.armor_class_modifier
+            or mechanics.speed_modifier_feet
         )
         and (
             mechanics.duration_rounds is not None
@@ -402,7 +403,11 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "definition_id": spell.id,
                     "recast_ends_previous": mechanics.recast_ends_previous,
                     "target_refs": [target.target_ref for target in affected_targets],
-                    "duration_rounds": mechanics.duration_rounds,
+                    "duration_rounds": (
+                        mechanics.duration_rounds
+                        if mechanics.duration_rounds is not None
+                        else mechanics.speed_modifier_duration_rounds
+                    ),
                     "parameters": {
                         "started_round": context.current_round,
                         "repeat_save_trigger": mechanics.repeat_save_trigger,
@@ -441,6 +446,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                             for modifier in mechanics.roll_modifiers
                         ],
                         "armor_class_modifier": mechanics.armor_class_modifier,
+                        "speed_modifier_feet": mechanics.speed_modifier_feet,
                     },
                 },
             )

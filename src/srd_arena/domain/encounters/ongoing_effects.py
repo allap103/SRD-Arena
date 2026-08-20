@@ -20,6 +20,7 @@ from ..rolls.saving_throws import (
     resolve_saving_throw,
 )
 from ..rolls.dice import D20RollMode, resolve_dice
+from ..geometry import MovementBudget
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -128,6 +129,12 @@ def start_ongoing_effect(
         for target_ref in effect.target_refs:
             state.creatures[target_ref].creature.set_armor_class_modifier(
                 definition_id, origin_id, armor_class_modifier
+            )
+    speed_modifier = effect.parameters.get("speed_modifier_feet")
+    if isinstance(speed_modifier, int) and speed_modifier:
+        for target_ref in effect.target_refs:
+            _set_speed_modifier(
+                state, target_ref, definition_id, origin_id, speed_modifier
             )
     return effect
 
@@ -488,6 +495,7 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
         state.creatures[target_ref].creature.remove_armor_class_modifier(
             effect.identity.source.definition_id, origin_id
         )
+        _remove_speed_modifier(state, effect, target_ref)
     state.ongoing_effects = [
         existing
         for existing in state.ongoing_effects
@@ -515,6 +523,7 @@ def _remove_effect_target(
         effect.identity.source.definition_id,
         effect.identity.source.origin_id,
     )
+    _remove_speed_modifier(state, effect, target_ref)
     remaining_targets = tuple(
         existing for existing in effect.target_refs if existing != target_ref
     )
@@ -571,6 +580,49 @@ def _remove_damage_resistances(
             state.creatures[target_ref].creature.remove_damage_resistance(
                 damage_type, effect.identity.source.origin_id
             )
+
+
+def _set_speed_modifier(
+    state: EncounterState,
+    target_ref: str,
+    definition_id: str,
+    origin_id: str,
+    feet: int,
+) -> None:
+    creature_state = state.creatures[target_ref]
+    before = state.definition.grid.movement_budget(
+        creature_state.creature.effective_speed_feet()
+    )
+    creature_state.creature.set_speed_modifier(definition_id, origin_id, feet)
+    after = state.definition.grid.movement_budget(
+        creature_state.creature.effective_speed_feet()
+    )
+    if creature_state.movement_remaining is not None:
+        creature_state.movement_remaining = MovementBudget(
+            max(0, int(creature_state.movement_remaining) + int(after) - int(before))
+        )
+
+
+def _remove_speed_modifier(
+    state: EncounterState,
+    effect: OngoingEffect,
+    target_ref: str,
+) -> None:
+    creature_state = state.creatures[target_ref]
+    before = state.definition.grid.movement_budget(
+        creature_state.creature.effective_speed_feet()
+    )
+    creature_state.creature.remove_speed_modifier(
+        effect.identity.source.definition_id,
+        effect.identity.source.origin_id,
+    )
+    after = state.definition.grid.movement_budget(
+        creature_state.creature.effective_speed_feet()
+    )
+    if creature_state.movement_remaining is not None:
+        creature_state.movement_remaining = MovementBudget(
+            max(0, int(creature_state.movement_remaining) + int(after) - int(before))
+        )
 
 
 def _progressed_target_refs(effect: OngoingEffect) -> tuple[str, ...]:

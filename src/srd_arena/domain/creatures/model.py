@@ -50,6 +50,7 @@ class Creature:
     armor_class_modifier_sources: dict[str, dict[str, int]] = field(
         default_factory=dict
     )
+    speed_modifier_sources: dict[str, dict[str, int]] = field(default_factory=dict)
 
     def __post_init__(self):
         if self.current_health is None:
@@ -262,3 +263,25 @@ class Creature:
         sources.pop(origin_id, None)
         if not sources:
             self.armor_class_modifier_sources.pop(definition_id, None)
+
+    def effective_speed_feet(self) -> int:
+        return max(
+            0,
+            self.attributes.movement.effective_speed_feet
+            + sum(
+                max(sources.values())
+                for sources in self.speed_modifier_sources.values()
+                if sources
+            ),
+        )
+
+    def set_speed_modifier(self, definition_id: str, origin_id: str, feet: int) -> None:
+        self.speed_modifier_sources.setdefault(definition_id, {})[origin_id] = feet
+
+    def remove_speed_modifier(self, definition_id: str, origin_id: str) -> None:
+        sources = self.speed_modifier_sources.get(definition_id)
+        if sources is None:
+            return
+        sources.pop(origin_id, None)
+        if not sources:
+            self.speed_modifier_sources.pop(definition_id, None)

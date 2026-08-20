@@ -52,5 +52,15 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "any"},
+    "resolution": {"type": "automatic", "outcome": {"effects": [
+      {"type": "speed_modifier", "feet": 10}
+    ]}},
+    "scaling": [{"type": "slot_level", "above_level": "spell_level", "per_level": [
+      {"type": "target_count", "amount": 1}
+    ]}]
+  }
 }

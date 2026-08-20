@@ -149,7 +149,7 @@ def _export_creature(
         "movement_remaining_feet": (
             state.definition.grid.feet_for_squares(movement_remaining)
         ),
-        "movement_total_feet": (creature.attributes.movement.effective_speed_feet),
+        "movement_total_feet": creature.effective_speed_feet(),
         "action_available": creature_state.actions_remaining > 0,
         "actions_remaining": creature_state.actions_remaining,
         "attacks_remaining": creature_state.attacks_remaining,

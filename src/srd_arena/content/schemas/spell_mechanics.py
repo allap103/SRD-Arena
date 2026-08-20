@@ -419,6 +419,12 @@ class DamageResistanceEffectSchema(SpellMechanicsSchemaModel):
     duration: EffectDurationSchema | None = None
 
 
+class SpeedModifierEffectSchema(SpellMechanicsSchemaModel):
+    type: Literal["speed_modifier"]
+    feet: int
+    duration: EffectDurationSchema | None = None
+
+
 class ConditionSaveAdvantageEffectSchema(SpellMechanicsSchemaModel):
     type: Literal["condition_save_advantage"]
     conditions: list[str] = Field(min_length=1)
@@ -716,6 +722,7 @@ OngoingModifierSchema = Annotated[
     | AttackLimitEffectSchema
     | ActionFailureChanceEffectSchema
     | DamageResistanceEffectSchema
+    | SpeedModifierEffectSchema
     | ConditionSaveAdvantageEffectSchema
     | DamageImmunityEffectSchema
     | ConditionImmunityEffectSchema
@@ -742,6 +749,7 @@ class SpellEffectSchema(
             | ActionFailureChanceEffectSchema
             | RemoveEffectSchema
             | DamageResistanceEffectSchema
+            | SpeedModifierEffectSchema
             | ConditionSaveAdvantageEffectSchema
             | DamageImmunityEffectSchema
             | ConditionImmunityEffectSchema

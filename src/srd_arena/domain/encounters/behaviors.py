@@ -136,4 +136,4 @@ def is_adjacent(a: Position, b: Position) -> bool:
 
 
 def movement_budget_for(creature: Creature, grid: Grid) -> MovementBudget:
-    return grid.movement_budget(creature.attributes.movement.effective_speed_feet)
+    return grid.movement_budget(creature.effective_speed_feet())

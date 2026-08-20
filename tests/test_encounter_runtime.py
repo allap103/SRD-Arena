@@ -2919,6 +2919,48 @@ def test_condition_modifier_applies_to_repeated_saves(monkeypatch) -> None:
     ]
 
 
+def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    before = state._active_movement_remaining()
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="player",
+                data={
+                    "effect_kind": "spell",
+                    "source_ref": "player",
+                    "source_label": "Caster",
+                    "definition_id": "longstrider",
+                    "duration_rounds": 600,
+                    "parameters": {"speed_modifier_feet": 10},
+                },
+            )
+        ],
+        origin_id="longstrider-cast",
+    )
+
+    assert state.active_creature_state.movement_remaining == before + 2
+    assert state.active_creature_state.creature.effective_speed_feet() == 40
+
+    remove_ongoing_effects(
+        state,
+        EffectResult(
+            kind="remove_ongoing_effects",
+            target_ref="player",
+            data={"effect_id": state.ongoing_effects[0].identity.id},
+        ),
+    )
+
+    assert state.active_creature_state.movement_remaining == before
+    assert state.active_creature_state.creature.effective_speed_feet() == 30
+
+
 def test_upcast_hold_person_stages_and_resolves_multiple_targets(
     monkeypatch,
 ) -> None:

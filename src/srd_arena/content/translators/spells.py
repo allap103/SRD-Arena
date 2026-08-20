@@ -22,6 +22,7 @@ from srd_arena.content.schemas.spell_mechanics import (
     RepeatResolutionSchema,
     RemoveEffectSchema,
     SavingThrowResolutionSchema,
+    SpeedModifierEffectSchema,
     SequenceResolutionSchema,
     SlotScalingSchema,
     SpellAttackResolutionSchema,
@@ -161,6 +162,14 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             if isinstance(effect.root, ArmorClassModifierEffectSchema)
         ),
         0,
+    )
+    speed_modifier = next(
+        (
+            effect.root
+            for effect in outcome.effects
+            if isinstance(effect.root, SpeedModifierEffectSchema)
+        ),
+        None,
     )
     damage_resistances = tuple(
         damage_type
@@ -325,6 +334,12 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         roll_modifiers=roll_modifiers,
         recast_ends_previous=raw.mechanics.recast_ends_previous,
         armor_class_modifier=armor_class_modifier,
+        speed_modifier_feet=(speed_modifier.feet if speed_modifier is not None else 0),
+        speed_modifier_duration_rounds=(
+            _effect_duration_rounds(speed_modifier.duration)
+            if speed_modifier is not None
+            else None
+        ),
     )
 
 
@@ -478,6 +493,24 @@ def _spell_duration_rounds(raw: SpellSchema) -> int | None:
         if isinstance(unit, str) and isinstance(amount, int) and unit in unit_rounds:
             return amount * unit_rounds[unit]
     return None
+
+
+def _effect_duration_rounds(duration: object) -> int | None:
+    if duration is None:
+        return None
+    duration_type = getattr(duration, "type", None)
+    if duration_type in {"start_of_turn", "end_of_turn"}:
+        return 1
+    if duration_type != "timed":
+        return None
+    unit_rounds = {"round": 1, "minute": 10, "hour": 600, "day": 14400}
+    amount = getattr(duration, "amount", None)
+    unit = getattr(duration, "unit", None)
+    return (
+        amount * unit_rounds[unit]
+        if isinstance(amount, int) and isinstance(unit, str) and unit in unit_rounds
+        else None
+    )
 
 
 def _repeat_save_trigger(resolution: object) -> str | None:

@@ -140,6 +140,19 @@ def test_same_spell_armor_class_modifiers_do_not_stack() -> None:
     assert creature.get_armor_class() == base
 
 
+def test_sourced_speed_modifiers_stack_by_definition() -> None:
+    creature = make_creature()
+    base = creature.effective_speed_feet()
+    creature.set_speed_modifier("longstrider", "first", 10)
+    creature.set_speed_modifier("longstrider", "second", 10)
+    creature.set_speed_modifier("ray_of_frost", "ray", -10)
+
+    assert creature.effective_speed_feet() == base
+
+    creature.remove_speed_modifier("ray_of_frost", "ray")
+    assert creature.effective_speed_feet() == base + 10
+
+
 def test_same_definition_maximum_health_modifiers_do_not_stack() -> None:
     creature = make_creature()
     base_maximum = creature.get_max_health()

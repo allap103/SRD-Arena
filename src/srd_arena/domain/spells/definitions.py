@@ -97,6 +97,8 @@ class ImmediateSpellMechanics:
     roll_modifiers: tuple[RollModifier, ...] = ()
     recast_ends_previous: bool = False
     armor_class_modifier: int = 0
+    speed_modifier_feet: int = 0
+    speed_modifier_duration_rounds: int | None = None
 
     @property
     def healing_pool(self) -> int | None:

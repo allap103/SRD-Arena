@@ -241,6 +241,26 @@ def test_shield_of_faith_translates_sourced_armor_class() -> None:
     assert spell.mechanics.duration_rounds == 100
 
 
+def test_speed_spells_translate_additive_modifiers() -> None:
+    catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    longstrider = build_spell("Longstrider", "XPHB", catalog)
+    ray_of_frost = build_spell("Ray of Frost", "XPHB", catalog)
+
+    assert longstrider.mechanics is not None
+    assert longstrider.mechanics.speed_modifier_feet == 10
+    assert longstrider.mechanics.duration_rounds == 600
+    assert longstrider.mechanics.slot_target_increment == 1
+    assert ray_of_frost.mechanics is not None
+    assert ray_of_frost.mechanics.speed_modifier_feet == -10
+    assert ray_of_frost.mechanics.speed_modifier_duration_rounds == 1
+    assert ray_of_frost.mechanics.cantrip_damage_by_level == (
+        (1, "1d8"),
+        (5, "2d8"),
+        (11, "3d8"),
+        (17, "4d8"),
+    )
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

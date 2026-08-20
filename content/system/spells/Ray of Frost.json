@@ -63,5 +63,17 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "enemy", "line_of_sight": true},
+    "resolution": {"type": "spell_attack", "mode": "ranged", "hit": {"effects": [
+      {"type": "damage", "dice": "1d8", "damage_type": "cold"},
+      {
+        "type": "speed_modifier",
+        "feet": -10,
+        "duration": {"type": "start_of_turn", "creature": "source", "turn_offset": 1}
+      }
+    ]}}
+  }
 }
