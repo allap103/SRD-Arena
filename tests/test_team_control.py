@@ -12,7 +12,7 @@ from srd_arena.runtime.scenario import Scenario
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "goblin_skirmish"
+    Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
 )
 
 

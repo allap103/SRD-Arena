@@ -1,0 +1,67 @@
+{
+  "id": "spell_modifier_showcase",
+  "grid": {"width": 18, "height": 12},
+  "creatures": [
+    {
+      "id": "modifier_archmage",
+      "name": "Modifier Archmage",
+      "description": "Demonstrates sourced bonuses, penalties, defenses, speed, senses, and damage mitigation.",
+      "stat_block": {"name": "Mage", "source": "XMM"},
+      "attributes": {"level": 17},
+      "spellcasting": {
+        "ability": "int",
+        "caster_progression": "full",
+        "spell_slots": {"1": 4, "2": 4, "3": 4, "4": 3, "6": 2, "9": 1}
+      },
+      "spells_known": [
+        {"name": "Bane", "source": "XPHB"},
+        {"name": "Bless", "source": "XPHB"},
+        {"name": "Blur", "source": "XPHB"},
+        {"name": "Darkvision", "source": "XPHB"},
+        {"name": "Foresight", "source": "XPHB"},
+        {"name": "Heroism", "source": "XPHB"},
+        {"name": "Longstrider", "source": "XPHB"},
+        {"name": "Protection from Energy", "source": "XPHB"},
+        {"name": "Protection from Poison", "source": "XPHB"},
+        {"name": "Resistance", "source": "XPHB"},
+        {"name": "Shield of Faith", "source": "XPHB"},
+        {"name": "Stoneskin", "source": "XPHB"},
+        {"name": "True Seeing", "source": "XPHB"}
+      ],
+      "start": {"x": 2, "y": 6},
+      "team_id": "experimenters"
+    },
+    {
+      "id": "allied_subject",
+      "name": "Allied Test Subject",
+      "stat_block": {"name": "Warrior Veteran", "source": "XMM"},
+      "start": {"x": 4, "y": 5},
+      "team_id": "experimenters"
+    },
+    {
+      "id": "allied_subject_two",
+      "name": "Second Allied Subject",
+      "stat_block": {"name": "Warrior Veteran", "source": "XMM"},
+      "start": {"x": 4, "y": 7},
+      "team_id": "experimenters"
+    },
+    {
+      "id": "hostile_subject",
+      "name": "Hostile Test Subject",
+      "stat_block": {"name": "Warrior Veteran", "source": "XMM"},
+      "start": {"x": 10, "y": 5},
+      "team_id": "targets"
+    },
+    {
+      "id": "hostile_subject_two",
+      "name": "Second Hostile Subject",
+      "stat_block": {"name": "Warrior Veteran", "source": "XMM"},
+      "start": {"x": 10, "y": 7},
+      "team_id": "targets"
+    }
+  ],
+  "teams": [
+    {"id": "experimenters", "name": "Modifier Experimenters", "controller": "external"},
+    {"id": "targets", "name": "Modifier Targets", "controller": "external"}
+  ]
+}

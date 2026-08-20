@@ -13,7 +13,7 @@ from srd_arena.domain.creatures import AttackActionDefinition
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "goblin_skirmish"
+    Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
 )
 
 
@@ -72,9 +72,9 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
     assert session.encounter_state is not None
 
 
-def test_goblin_skirmish_gives_external_control_to_every_creature() -> None:
+def test_full_control_showcase_gives_external_control_to_every_creature() -> None:
     scenario = Scenario(GOBLIN_SKIRMISH_DIR)
-    encounter = scenario.encounters["goblin_skirmish"]
+    encounter = scenario.encounters["full_control_showcase"]
     session = scenario.create_session()
     session.get_scene_view()
 

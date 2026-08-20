@@ -1,0 +1,58 @@
+{
+  "id": "spell_effect_lifecycle_showcase",
+  "grid": {"width": 18, "height": 12},
+  "creatures": [
+    {
+      "id": "lifecycle_archmage",
+      "name": "Lifecycle Archmage",
+      "description": "Demonstrates choices, area saves, recurring damage, concentration, and expiry.",
+      "stat_block": {"name": "Mage", "source": "XMM"},
+      "attributes": {"level": 17},
+      "spellcasting": {
+        "ability": "int",
+        "caster_progression": "full",
+        "spell_slots": {"2": 4, "4": 4, "5": 2}
+      },
+      "spells_known": [
+        {"name": "Enhance Ability", "source": "XPHB"},
+        {"name": "Faerie Fire", "source": "XPHB"},
+        {"name": "Phantasmal Killer", "source": "XPHB"},
+        {"name": "Ray of Frost", "source": "XPHB"}
+      ],
+      "start": {"x": 2, "y": 6},
+      "team_id": "casters"
+    },
+    {
+      "id": "ability_subject",
+      "name": "Ability Test Subject",
+      "stat_block": {"name": "Warrior Veteran", "source": "XMM"},
+      "start": {"x": 4, "y": 6},
+      "team_id": "casters"
+    },
+    {
+      "id": "nightmare_subject",
+      "name": "Nightmare Subject",
+      "stat_block": {"name": "Giant Ape", "source": "XMM"},
+      "start": {"x": 11, "y": 6},
+      "team_id": "targets"
+    },
+    {
+      "id": "cube_subject_one",
+      "name": "Cube Subject One",
+      "stat_block": {"name": "Warrior Veteran", "source": "XMM"},
+      "start": {"x": 10, "y": 4},
+      "team_id": "targets"
+    },
+    {
+      "id": "cube_subject_two",
+      "name": "Cube Subject Two",
+      "stat_block": {"name": "Warrior Veteran", "source": "XMM"},
+      "start": {"x": 11, "y": 4},
+      "team_id": "targets"
+    }
+  ],
+  "teams": [
+    {"id": "casters", "name": "Lifecycle Casters", "controller": "external"},
+    {"id": "targets", "name": "Lifecycle Targets", "controller": "external"}
+  ]
+}

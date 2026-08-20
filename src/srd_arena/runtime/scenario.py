@@ -22,7 +22,7 @@ from srd_arena.domain.geometry import GeometryConfig
 
 from .session import Session
 
-DEFAULT_SCENARIO_DIR = SCENARIOS_ROOT / "sample_game"
+DEFAULT_SCENARIO_DIR = SCENARIOS_ROOT / "spell_modifier_showcase"
 DEFAULT_SYSTEM_CONTENT_DIR = SYSTEM_CONTENT_ROOT
 @dataclass(frozen=True)
 class ScenarioConfig:

@@ -1,6 +1,6 @@
 {
-  "display_name": "Goblin Skirmish - Full Control",
-  "encounters": ["goblin_skirmish"],
+  "display_name": "Full Control Showcase",
+  "encounters": ["full_control_showcase"],
   "background_image": "backgrounds/grass.png",
   "grid_opacity": 0.6,
   "geometry": {

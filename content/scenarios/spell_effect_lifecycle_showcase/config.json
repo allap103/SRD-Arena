@@ -1,0 +1,6 @@
+{
+  "display_name": "Spell Effect Lifecycle Showcase",
+  "encounters": ["spell_effect_lifecycle_showcase"],
+  "background_image": "backgrounds/grass.png",
+  "grid_opacity": 0.8
+}

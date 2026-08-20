@@ -1,7 +1,0 @@
-{
-  "display_name": "Goblins 2",
-  "encounters": ["goblin_encounter"],
-  "geometry": {
-    "directional_area_cell_coverage_threshold": 0.1
-  }
-}
