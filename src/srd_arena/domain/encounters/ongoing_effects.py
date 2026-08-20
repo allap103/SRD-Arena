@@ -328,7 +328,7 @@ def resolve_end_turn_effects(
                         int(sides_text),
                         roller=_roll_die,
                     )
-                    applied = target.take_damage(roll.total)
+                    applied = target.take_damage(roll.total, damage_type)
                     if progress is not None:
                         progress.messages.append(
                             (

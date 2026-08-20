@@ -2424,6 +2424,51 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
     )
 
 
+def test_phantasmal_killer_scales_and_repeats_typed_damage(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    target = state.creatures["goblin_1"].creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Phantasmal Killer", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_max[5] = 1
+    caster.spellcasting.spell_slots_remaining[5] = 1
+    target.current_health = 20
+    target.add_damage_resistance("psychic", "test-resistance")
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
+    )
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("phantasmal_killer:goblin_1")
+        and parse_spell_action_slot(str(action.value)) == 5
+    )
+
+    state.apply_action(action)
+
+    assert target.get_health() == 18
+    assert target.roll_mode("ability_check") == "disadvantage"
+    assert target.roll_mode("attack_roll") == "disadvantage"
+    assert state.ongoing_effects[0].parameters["repeat_failure_damage"] == [
+        {"dice": "5d10", "damage_type": "psychic"}
+    ]
+
+    resolve_end_turn_effects(state, "goblin_1")
+
+    assert target.get_health() == 16
+    assert state.ongoing_effects
+
+
 def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
     session = Scenario(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"

@@ -350,6 +350,26 @@ def test_faerie_fire_translates_cube_and_incoming_attack_advantage() -> None:
     ] == [("attack_roll", "advantage", "attacks_against_target")]
 
 
+def test_phantasmal_killer_translates_repeat_damage_and_roll_disadvantage() -> None:
+    spell = build_spell(
+        "Phantasmal Killer", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    )
+
+    assert spell.mechanics is not None
+    assert spell.mechanics.damage[0].dice == "4d10"
+    assert spell.mechanics.half_damage_on_save
+    assert spell.mechanics.repeat_save_trigger == "end_of_turn"
+    assert spell.mechanics.repeat_failure_damage[0].dice == "4d10"
+    assert spell.mechanics.slot_damage_increment == "1d10"
+    assert {
+        (modifier.roll, modifier.mode)
+        for modifier in spell.mechanics.roll_modifiers
+    } == {
+        ("ability_check", "disadvantage"),
+        ("attack_roll", "disadvantage"),
+    }
+
+
 def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {

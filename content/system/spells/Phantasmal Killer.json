@@ -57,5 +57,39 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {"status": "complete"},
+  "mechanics": {
+    "target": {"type": "creature", "disposition": "enemy", "line_of_sight": true},
+    "resolution": {
+      "type": "saving_throw",
+      "ability": "wis",
+      "failure": {"effects": [
+        {"type": "damage", "dice": "4d10", "damage_type": "psychic"},
+        {"type": "roll_modifier", "roll": "ability_check", "mode": "disadvantage"},
+        {"type": "roll_modifier", "roll": "attack_roll", "mode": "disadvantage"}
+      ]},
+      "success": {"effects": [
+        {"type": "damage", "dice": "4d10", "damage_type": "psychic"}
+      ]},
+      "success_damage": "half",
+      "repeat_save": {
+        "trigger": "turn_end",
+        "ability": "wis",
+        "on_failure": {
+          "type": "automatic",
+          "outcome": {"effects": [
+            {"type": "damage", "dice": "4d10", "damage_type": "psychic"}
+          ]}
+        }
+      }
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "above_level": 4,
+        "per_level": [{"type": "damage_dice", "amount": "1d10"}]
+      }
+    ]
+  }
 }

@@ -437,7 +437,11 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         ),
                         "repeat_failure_damage": [
                             {
-                                "dice": damage.dice,
+                                "dice": _scale_dice(
+                                    damage.dice,
+                                    mechanics.slot_damage_increment,
+                                    cast_level - spell.level,
+                                ),
                                 "damage_type": damage.damage_type,
                             }
                             for damage in mechanics.repeat_failure_damage
