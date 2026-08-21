@@ -4,7 +4,7 @@ from typing import cast, overload
 
 from .catalog import SpellCatalog
 from .schema import SpellSchema
-from srd_arena.content.creatures.action_schema import (
+from srd_arena.content.mechanics import (
     ConditionEffectSchema,
     DamageEffectSchema,
     RollModifierEffectSchema,

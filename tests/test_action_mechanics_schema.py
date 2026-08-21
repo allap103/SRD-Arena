@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from srd_arena.content.creatures.action_schema import (
+from srd_arena.content.creatures.actions.schema import (
     AttackActionMechanicsSchema,
     SavingThrowActionMechanicsSchema,
     SpellcastingActionMechanicsSchema,

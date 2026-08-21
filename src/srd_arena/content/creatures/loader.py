@@ -33,9 +33,8 @@ from srd_arena.domain.effects.triggered import TriggeredEffect
 from .catalog import BestiaryCatalog
 from .schema import CreatureItemReferenceSchema, CreatureSchema
 from .stat_block_schema import BestiaryMonsterSchema
-from .multiattack_schema import MultiattackMechanicsSchema
-from .multiattacks import build_multiattack
-from .stat_block_actions import (
+from .actions.multiattack import MultiattackMechanicsSchema, build_multiattack
+from .actions.translator import (
     build_declared_stat_block_actions,
     build_stat_block_actions,
 )

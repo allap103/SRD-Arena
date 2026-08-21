@@ -1,8 +1,9 @@
 import re
 from typing import Literal, cast
 
-from . import action_schema as schema
-from .stat_block_schema import (
+from . import schema
+from srd_arena.content.mechanics import schema as mechanics
+from srd_arena.content.creatures.stat_block_schema import (
     BestiaryActionSchema,
     BestiaryMonsterSchema,
 )
@@ -180,7 +181,7 @@ def _parse_attack_modes(value: str) -> tuple[str, ...]:
     return tuple(modes)
 
 
-def _target(value: schema.ActionTargetSchema) -> domain.ActionTarget:
+def _target(value: mechanics.ActionTargetSchema) -> domain.ActionTarget:
     return domain.ActionTarget(
         kind=value.type,
         range_feet=getattr(value, "range_feet", None),
@@ -197,15 +198,15 @@ def _target(value: schema.ActionTargetSchema) -> domain.ActionTarget:
 
 
 def _requirement(value) -> domain.ActionRequirement:
-    if isinstance(value, schema.SizeRequirementSchema):
+    if isinstance(value, mechanics.SizeRequirementSchema):
         return domain.SizeRequirement(value.maximum, value.minimum)
-    if isinstance(value, schema.ConditionRequirementSchema):
+    if isinstance(value, mechanics.ConditionRequirementSchema):
         return domain.ConditionRequirement(
             tuple(value.conditions),
             value.match,
             value.applied_by,
         )
-    if isinstance(value, schema.CreatureTypeRequirementSchema):
+    if isinstance(value, mechanics.CreatureTypeRequirementSchema):
         return domain.CreatureTypeRequirement(tuple(value.creature_types))
     return domain.NotAffectedRequirement(value.action)
 
@@ -230,8 +231,8 @@ def _required_duration(value) -> domain.EffectDuration:
     return duration
 
 
-def _effect(value: schema.ActionEffectSchema) -> domain.ActionEffect:
-    if isinstance(value, schema.DamageEffectSchema):
+def _effect(value: mechanics.ActionEffectSchema) -> domain.ActionEffect:
+    if isinstance(value, mechanics.DamageEffectSchema):
         return domain.DamageEffect(
             value.dice,
             value.bonus,
@@ -242,7 +243,7 @@ def _effect(value: schema.ActionEffectSchema) -> domain.ActionEffect:
                 for requirement in value.requirements
             ),
         )
-    if isinstance(value, schema.ConditionEffectSchema):
+    if isinstance(value, mechanics.ConditionEffectSchema):
         return domain.ConditionEffect(
             condition=value.condition,
             duration=_duration(value.duration),
@@ -254,28 +255,28 @@ def _effect(value: schema.ActionEffectSchema) -> domain.ActionEffect:
             source_capacity=value.source_capacity,
             ends_on=tuple(value.ends_on),
         )
-    if isinstance(value, schema.ForcedMovementEffectSchema):
+    if isinstance(value, mechanics.ForcedMovementEffectSchema):
         return domain.ForcedMovementEffect(
             value.direction,
             value.distance_feet,
             value.up_to,
         )
-    if isinstance(value, schema.SpeedMultiplierEffectSchema):
+    if isinstance(value, mechanics.SpeedMultiplierEffectSchema):
         return domain.SpeedMultiplierEffect(
             value.numerator,
             value.denominator,
             _required_duration(value.duration),
         )
-    if isinstance(value, schema.ProhibitReactionEffectSchema):
+    if isinstance(value, mechanics.ProhibitReactionEffectSchema):
         return domain.ProhibitReactionsEffect(
             _required_duration(value.duration)
         )
-    if isinstance(value, schema.TurnEconomyRestrictionEffectSchema):
+    if isinstance(value, mechanics.TurnEconomyRestrictionEffectSchema):
         return domain.TurnEconomyRestrictionEffect(
             tuple(value.choose_between),
             _required_duration(value.duration),
         )
-    if isinstance(value, schema.RollModifierEffectSchema):
+    if isinstance(value, mechanics.RollModifierEffectSchema):
         return domain.RollModifierEffect(
             value.roll,
             value.mode,
@@ -284,7 +285,7 @@ def _effect(value: schema.ActionEffectSchema) -> domain.ActionEffect:
             value.value,
             _duration(value.duration),
         )
-    if isinstance(value, schema.ControlEffectSchema):
+    if isinstance(value, mechanics.ControlEffectSchema):
         return domain.ControlEffect(
             value.communication,
             value.communication_range_feet,

@@ -31,6 +31,10 @@ RULES = (
         ),
     ),
     DependencyRule(
+        package="srd_arena.content.spells",
+        forbidden=("srd_arena.content.creatures",),
+    ),
+    DependencyRule(
         package="srd_arena.runtime",
         forbidden=("srd_arena.frontends",),
     ),
@@ -136,6 +140,7 @@ def test_content_is_grouped_by_game_concept() -> None:
         "creatures",
         "encounters",
         "equipment",
+        "mechanics",
         "spells",
     } <= {
         path.name

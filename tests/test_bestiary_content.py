@@ -11,15 +11,15 @@ from srd_arena.content.creatures import (
     build_creature,
     load_bestiary_catalog,
 )
-from srd_arena.content.creatures.action_schema import (
+from srd_arena.content.creatures.actions.schema import (
     AttackActionMechanicsSchema,
     SavingThrowActionMechanicsSchema,
 )
-from srd_arena.content.creatures.stat_block_actions import (
+from srd_arena.content.creatures.actions.translator import (
     build_stat_block_actions,
 )
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.creatures.multiattack_schema import (
+from srd_arena.content.creatures.actions.multiattack import (
     ChoiceStepSchema,
     StatBlockActionInvocationSchema,
 )

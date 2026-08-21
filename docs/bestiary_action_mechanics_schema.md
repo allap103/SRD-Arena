@@ -4,7 +4,7 @@
 entry. Original `entries` remain authoritative and are never replaced.
 
 The canonical Pydantic models live in
-`src/srd_arena/content/creatures/action_schema.py`.
+`src/srd_arena/content/creatures/actions/schema.py`.
 
 ## Action Families
 

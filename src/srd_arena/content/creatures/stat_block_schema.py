@@ -3,11 +3,11 @@ import re
 from pydantic import Field, model_validator
 
 from srd_arena.content.common.schema import SourceModel
-from .multiattack_schema import (
+from .actions.multiattack import (
     MultiattackMechanicsSchema,
     iter_stat_block_references,
 )
-from .action_schema import NonMultiattackMechanicsSchema
+from .actions.schema import NonMultiattackMechanicsSchema
 
 BestiaryActionMechanicsSchema = (
     MultiattackMechanicsSchema | NonMultiattackMechanicsSchema

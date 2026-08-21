@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
 
-from srd_arena.content.creatures.action_schema import (
+from srd_arena.content.mechanics import (
     Ability,
     ConditionEffectSchema,
     ConditionRequirementSchema,
