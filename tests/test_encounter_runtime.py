@@ -3726,6 +3726,11 @@ def test_sleep_automatically_spares_ineligible_creature(
         if event.type == "spell_cast"
     )
     assert save["automatic_success_reasons"] == [reason]
+    assert "die" not in save
+    assert any(
+        f"is unaffected by Sleep: {reason}" in text
+        for _channel, text in cast.messages
+    )
 
 
 def test_charm_person_save_has_advantage_against_opponent(
@@ -4043,6 +4048,47 @@ def test_hideous_laughter_prevents_target_from_removing_its_own_prone(
 
     state._remove_condition("goblin_1", Condition.PRONE)
     assert state.has_condition("goblin_1", Condition.PRONE) is False
+
+
+def test_hideous_laughter_success_is_reported_as_a_save(monkeypatch) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        build_spell(
+            "Hideous Laughter",
+            "XPHB",
+            load_spell_catalog(SYSTEM_CONTENT_ROOT),
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[1] = 1
+    state.creatures["goblin_1"].position = Position(
+        state.active_position.x + 1,
+        state.active_position.y,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20
+    )
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("hideous_laughter:goblin_1")
+    )
+
+    result = state.apply_action(action)
+
+    assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
+    assert any(
+        "resists Hideous Laughter with a successful Wisdom save" in text
+        for _channel, text in result.messages
+    )
+    assert not any("does not affect" in text for _channel, text in result.messages)
 
 
 def test_new_concentration_replaces_the_previous_effect_tree() -> None:

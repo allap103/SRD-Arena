@@ -142,6 +142,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
     affected_targets: list[SpellTargetContext] = []
     for target in targets:
         successful_save = False
+        automatic_success_reasons: tuple[str, ...] = ()
         hit = True
         target_damage_rolls = list(shared_damage_rolls)
         if mechanics.resolution == "saving_throw":
@@ -169,17 +170,32 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 if creature_type in mechanics.disadvantage_creature_types
                 else "normal",
             )
-            save = resolve_saving_throw(
-                cast(SavingThrowCreature, target.creature),
-                cast(Ability, ability),
-                context.creature.spellcasting.save_dc,
-                mode=save_mode,
-                roller=context.roller,
-                automatic_failure_reasons=automatic_reasons,
-            )
-            successful_save = bool(automatic_success_reasons) or save.check.success
-            save_details.append(
-                {
+            if automatic_success_reasons:
+                successful_save = True
+                save_details.append(
+                    {
+                        "target_ref": target.target_ref,
+                        "target_label": target.target_label,
+                        "ability": ability,
+                        "target_dc": context.creature.spellcasting.save_dc,
+                        "success": True,
+                        "automatic_success_reasons": list(
+                            automatic_success_reasons
+                        ),
+                        "automatic_failure_reasons": [],
+                    }
+                )
+            else:
+                save = resolve_saving_throw(
+                    cast(SavingThrowCreature, target.creature),
+                    cast(Ability, ability),
+                    context.creature.spellcasting.save_dc,
+                    mode=save_mode,
+                    roller=context.roller,
+                    automatic_failure_reasons=automatic_reasons,
+                )
+                successful_save = save.check.success
+                save_details.append({
                     "target_ref": target.target_ref,
                     "target_label": target.target_label,
                     "ability": ability,
@@ -190,8 +206,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "success": successful_save,
                     "automatic_success_reasons": list(automatic_success_reasons),
                     "automatic_failure_reasons": list(save.automatic_failure_reasons),
-                }
-            )
+                })
         elif mechanics.resolution == "spell_attack":
             attack = resolve_d20(
                 modifier=context.creature.spellcasting.attack_bonus,
@@ -343,9 +358,31 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             else "does not affect"
         )
         if not spell.removable_conditions:
-            messages.append(
-                ("system", f"{spell.name} {outcome} {target.target_label}.")
-            )
+            if automatic_success_reasons:
+                messages.append(
+                    (
+                        "system",
+                        f"{target.target_label} is unaffected by {spell.name}: "
+                        f"{'; '.join(automatic_success_reasons)}.",
+                    )
+                )
+            elif (
+                mechanics.resolution == "saving_throw"
+                and successful_save
+                and target_damage == 0
+            ):
+                messages.append(
+                    (
+                        "system",
+                        f"{target.target_label} resists {spell.name} with a "
+                        f"successful {(mechanics.save_ability or 'dexterity').title()} "
+                        "save.",
+                    )
+                )
+            else:
+                messages.append(
+                    ("system", f"{spell.name} {outcome} {target.target_label}.")
+                )
 
     for sequence_step, follow_up in enumerate(
         mechanics.follow_up_resolutions,
