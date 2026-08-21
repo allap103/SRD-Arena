@@ -423,16 +423,20 @@ def _compile_definition(
     resolution: AutomaticResolutionSchema | SavingThrowResolutionSchema | SpellAttackResolutionSchema,
     outcome: OutcomeSchema,
 ) -> capability_domain.CapabilityDefinition | None:
-    if isinstance(resolution, SpellAttackResolutionSchema):
-        return None
     effect_values = tuple(effect.root for effect in outcome.effects)
     success_values = (
         tuple(effect.root for effect in resolution.success.effects)
         if isinstance(resolution, SavingThrowResolutionSchema)
         else ()
     )
+    miss_values = (
+        tuple(effect.root for effect in resolution.miss.effects)
+        if isinstance(resolution, SpellAttackResolutionSchema)
+        else ()
+    )
     if not all(
-        is_shared_effect(effect) for effect in (*effect_values, *success_values)
+        is_shared_effect(effect)
+        for effect in (*effect_values, *success_values, *miss_values)
     ):
         return None
     compiled_target = _compile_target(target)
@@ -441,8 +445,27 @@ def _compile_definition(
     compiled_outcome = capability_domain.Outcome(
         tuple(compile_effect(effect) for effect in effect_values if is_shared_effect(effect))
     )
-    if isinstance(resolution, AutomaticResolutionSchema):
+    if isinstance(resolution, SpellAttackResolutionSchema):
         compiled_resolution: capability_domain.CapabilityResolution = (
+            capability_domain.AttackResolution(
+                modes=(resolution.mode,),
+                attack_bonus=capability_domain.DerivedAttackBonus(
+                    "spell_attack_modifier"
+                ),
+                hit=compiled_outcome,
+                miss=capability_domain.Outcome(
+                    tuple(
+                        compile_effect(effect)
+                        for effect in miss_values
+                        if is_shared_effect(effect)
+                    )
+                ),
+                attacks=resolution.attacks,
+                allocation=resolution.allocation,
+            )
+        )
+    elif isinstance(resolution, AutomaticResolutionSchema):
+        compiled_resolution = (
             capability_domain.AutomaticResolution(compiled_outcome)
         )
     else:

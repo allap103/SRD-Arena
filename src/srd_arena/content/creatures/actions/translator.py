@@ -5,7 +5,6 @@ from . import schema
 from srd_arena.content.capabilities import AutomaticResolutionSchema
 from srd_arena.content.capabilities.compiler import (
     compile_duration,
-    compile_effect,
     compile_outcome,
     compile_target,
 )
@@ -145,16 +144,27 @@ def _attack_definition(
     action: BestiaryActionSchema,
     capability: schema.AttackCapabilitySchema,
 ) -> domain.AttackActionDefinition:
+    target = compile_target(capability.target)
+    hit = compile_outcome(capability.hit)
+    compiled = shared_domain.CapabilityDefinition(
+        target=target,
+        resolution=shared_domain.AttackResolution(
+            modes=tuple(capability.attack_modes),
+            attack_bonus=shared_domain.FixedAttackBonus(capability.attack_bonus),
+            hit=hit,
+        ),
+    )
     return domain.AttackActionDefinition(
         name=action.name,
         attack_modes=tuple(capability.attack_modes),
         attack_bonus=capability.attack_bonus,
-        target=compile_target(capability.target),
+        target=target,
         reach_feet=capability.reach_feet,
         range_normal_feet=capability.range_normal_feet,
         range_long_feet=capability.range_long_feet,
-        hit=tuple(compile_effect(effect) for effect in capability.hit),
+        hit=hit.effects,
         resource=_resource(capability.resource),
+        capability=compiled,
     )
 
 

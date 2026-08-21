@@ -36,6 +36,7 @@ class AttackActionDefinition:
     range_long_feet: int | None
     hit: tuple[CapabilityEffect, ...]
     resource: ActionResource | None = None
+    capability: CapabilityDefinition | None = None
 
 
 @dataclass(frozen=True)

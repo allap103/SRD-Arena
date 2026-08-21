@@ -7,11 +7,14 @@ from srd_arena.content.creatures.actions.translator import build_stat_block_acti
 from srd_arena.content.capabilities import SavingThrowResolutionSchema
 from srd_arena.content.spells import build_spell, load_spell_catalog
 from srd_arena.domain.capabilities import (
+    AttackResolution,
     DerivedDifficultyClass,
+    DerivedAttackBonus,
+    FixedAttackBonus,
     FixedDifficultyClass,
     SavingThrowResolution,
 )
-from srd_arena.domain.creatures import SavingThrowActionDefinition
+from srd_arena.domain.creatures import AttackActionDefinition, SavingThrowActionDefinition
 
 
 def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:
@@ -62,3 +65,25 @@ def test_spells_and_stat_blocks_compile_shared_domain_capabilities() -> None:
     assert isinstance(action_resolution, SavingThrowResolution)
     assert isinstance(action_resolution.difficulty, FixedDifficultyClass)
     assert action_resolution.difficulty.value == 22
+
+
+def test_spells_and_stat_blocks_compile_shared_attack_resolutions() -> None:
+    spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    monsters = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
+
+    fire_bolt = build_spell("Fire Bolt", "XPHB", spells)
+    assert fire_bolt.capability is not None
+    assert fire_bolt.capability.definition is not None
+    spell_resolution = fire_bolt.capability.definition.resolution
+    assert isinstance(spell_resolution, AttackResolution)
+    assert isinstance(spell_resolution.attack_bonus, DerivedAttackBonus)
+    assert spell_resolution.attack_bonus.derivation == "spell_attack_modifier"
+
+    goblin = monsters.find("Goblin Warrior", "XMM")
+    scimitar = build_stat_block_actions(goblin)["Scimitar"]
+    assert isinstance(scimitar, AttackActionDefinition)
+    assert scimitar.capability is not None
+    action_resolution = scimitar.capability.resolution
+    assert isinstance(action_resolution, AttackResolution)
+    assert isinstance(action_resolution.attack_bonus, FixedAttackBonus)
+    assert action_resolution.attack_bonus.value == 4

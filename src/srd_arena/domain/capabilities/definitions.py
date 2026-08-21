@@ -16,6 +16,32 @@ class AutomaticResolution:
 
 
 @dataclass(frozen=True)
+class FixedAttackBonus:
+    value: int
+    kind: Literal["fixed"] = "fixed"
+
+
+@dataclass(frozen=True)
+class DerivedAttackBonus:
+    derivation: Literal["spell_attack_modifier"]
+    kind: Literal["derived"] = "derived"
+
+
+AttackBonus = FixedAttackBonus | DerivedAttackBonus
+
+
+@dataclass(frozen=True)
+class AttackResolution:
+    modes: tuple[Literal["melee", "ranged"], ...]
+    attack_bonus: AttackBonus
+    hit: Outcome
+    miss: Outcome = Outcome()
+    attacks: int = 1
+    allocation: Literal["same_target", "same_or_different"] = "same_target"
+    kind: Literal["attack"] = "attack"
+
+
+@dataclass(frozen=True)
 class FixedDifficultyClass:
     value: int
     kind: Literal["fixed"] = "fixed"
@@ -41,7 +67,9 @@ class SavingThrowResolution:
     kind: Literal["saving_throw"] = "saving_throw"
 
 
-CapabilityResolution = AutomaticResolution | SavingThrowResolution
+CapabilityResolution = (
+    AttackResolution | AutomaticResolution | SavingThrowResolution
+)
 
 
 @dataclass(frozen=True)
