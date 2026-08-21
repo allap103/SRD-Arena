@@ -185,52 +185,65 @@
         "{@actSave con} {@dc 20}, each creature in a 60-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail 1} The target has the {@condition Incapacitated|XPHB} condition until the end of its next turn, when it repeats the save. {@actSaveFail 2} The target has the {@condition Paralyzed|XPHB} condition, and it repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "con",
-        "dc": 20,
+        "type": "capability",
         "target": {
           "type": "area",
           "shape": "cone",
           "size_feet": 60
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "condition",
-                "condition": "incapacitated",
-                "duration": {
-                  "type": "end_of_turn",
-                  "creature": "target",
-                  "turn_offset": 1
-                }
-              }
-            ],
-            "repeat_saves": [
-              {
-                "trigger": "end_of_turn"
-              }
-            ]
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "con",
+          "difficulty": {
+            "type": "fixed",
+            "value": 20
           },
-          {
-            "effects": [
-              {
-                "type": "condition",
-                "condition": "paralyzed"
-              }
-            ],
-            "repeat_saves": [
-              {
-                "trigger": "end_of_turn",
-                "automatic_success_after": {
-                  "type": "timed",
-                  "amount": 1,
-                  "unit": "minute"
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "condition",
+                  "condition": "incapacitated",
+                  "duration": {
+                    "type": "end_of_turn",
+                    "creature": "target",
+                    "turn_offset": 1
+                  }
                 }
-              }
-            ]
-          }
-        ]
+              ],
+              "repeat_saves": [
+                {
+                  "trigger": "end_of_turn"
+                }
+              ]
+            },
+            {
+              "effects": [
+                {
+                  "type": "condition",
+                  "condition": "paralyzed"
+                }
+              ],
+              "repeat_saves": [
+                {
+                  "trigger": "end_of_turn",
+                  "automatic_success_after": {
+                    "type": "timed",
+                    "amount": 1,
+                    "unit": "minute"
+                  }
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
       }
     }
   ],

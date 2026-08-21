@@ -7,10 +7,13 @@ from srd_arena.content.mechanics import (
     ActionEffectSchema,
     ActionMechanicsSchemaModel,
     ActionTargetSchema,
+    AutomaticResolutionSchema,
     CreatureTargetSchema,
+    FixedDifficultyClassSchema,
     NonNegativeInt,
     OutcomeSchema,
     PositiveInt,
+    SavingThrowResolutionSchema,
     TimedDurationSchema,
 )
 
@@ -37,8 +40,27 @@ class SaveOutcomeStageSchema(OutcomeSchema[ActionEffectSchema]):
     repeat_saves: list[RepeatSaveSchema] = Field(default_factory=list)
 
 
-class ActionOutcomeSchema(OutcomeSchema[ActionEffectSchema]):
+class RequiredActionOutcomeSchema(OutcomeSchema[ActionEffectSchema]):
     effects: list[ActionEffectSchema] = Field(min_length=1)
+
+
+ActionOutcomeSchema = OutcomeSchema[ActionEffectSchema]
+StagedFailureSchema = Annotated[
+    list[SaveOutcomeStageSchema],
+    Field(min_length=1),
+]
+AutomaticActionResolutionSchema = AutomaticResolutionSchema[
+    RequiredActionOutcomeSchema
+]
+
+
+class SavingThrowActionResolutionSchema(
+    SavingThrowResolutionSchema[StagedFailureSchema, ActionOutcomeSchema]
+):
+    ability: Ability
+    difficulty: FixedDifficultyClassSchema
+    success: ActionOutcomeSchema = Field(default_factory=ActionOutcomeSchema)
+    always: ActionOutcomeSchema = Field(default_factory=ActionOutcomeSchema)
 
 
 class UsesResourceSchema(ActionMechanicsSchemaModel):
@@ -79,22 +101,16 @@ class AttackActionMechanicsSchema(ActionMechanicsSchemaModel):
         return self
 
 
-class SavingThrowActionMechanicsSchema(ActionMechanicsSchemaModel):
-    type: Literal["saving_throw"] = "saving_throw"
-    target: ActionTargetSchema
-    ability: Ability
-    dc: PositiveInt
-    failure: list[SaveOutcomeStageSchema] = Field(min_length=1)
-    success: list[ActionEffectSchema] = Field(default_factory=list)
-    success_damage: Literal["none", "half"] = "none"
-    always: list[ActionEffectSchema] = Field(default_factory=list)
-    resource: ActionResourceSchema | None = None
+CreatureActionResolutionSchema = Annotated[
+    SavingThrowActionResolutionSchema | AutomaticActionResolutionSchema,
+    Field(discriminator="type"),
+]
 
 
-class AutomaticActionMechanicsSchema(ActionMechanicsSchemaModel):
-    type: Literal["automatic"] = "automatic"
+class CapabilityActionMechanicsSchema(ActionMechanicsSchemaModel):
+    type: Literal["capability"] = "capability"
     target: ActionTargetSchema
-    outcome: ActionOutcomeSchema
+    resolution: CreatureActionResolutionSchema
     resource: ActionResourceSchema | None = None
 
 
@@ -114,8 +130,7 @@ class SpellcastingActionMechanicsSchema(ActionMechanicsSchemaModel):
 
 NonMultiattackMechanicsSchema = Annotated[
     AttackActionMechanicsSchema
-    | SavingThrowActionMechanicsSchema
-    | AutomaticActionMechanicsSchema
+    | CapabilityActionMechanicsSchema
     | SpellcastingActionMechanicsSchema,
     Field(discriminator="type"),
 ]

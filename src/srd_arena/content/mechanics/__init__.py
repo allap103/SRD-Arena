@@ -27,10 +27,19 @@ from .schema import (
     TimedDurationSchema,
     TurnEconomyRestrictionEffectSchema,
 )
-from .resolutions import OutcomeSchema, ResolutionSchemaModel
+from .resolutions import (
+    AutomaticResolutionSchema,
+    DerivedDifficultyClassSchema,
+    DifficultyClassSchema,
+    FixedDifficultyClassSchema,
+    OutcomeSchema,
+    ResolutionSchemaModel,
+    SavingThrowResolutionSchema,
+)
 
 __all__ = [
     "Ability",
+    "AutomaticResolutionSchema",
     "ActionEffectSchema",
     "ActionMechanicsSchemaModel",
     "ActionRequirementSchema",
@@ -42,8 +51,11 @@ __all__ = [
     "CreatureTargetSchema",
     "CreatureTypeRequirementSchema",
     "DamageEffectSchema",
+    "DerivedDifficultyClassSchema",
+    "DifficultyClassSchema",
     "EffectDurationSchema",
     "ForcedMovementEffectSchema",
+    "FixedDifficultyClassSchema",
     "GainMemoriesEffectSchema",
     "NonNegativeInt",
     "NotAffectedRequirementSchema",
@@ -52,6 +64,7 @@ __all__ = [
     "ProhibitReactionEffectSchema",
     "RollModifierEffectSchema",
     "ResolutionSchemaModel",
+    "SavingThrowResolutionSchema",
     "SelfTargetSchema",
     "SizeRequirementSchema",
     "SpeedMultiplierEffectSchema",

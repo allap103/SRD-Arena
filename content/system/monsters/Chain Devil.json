@@ -171,25 +171,38 @@
         "The devil conjures a fiery chain to bind a creature. {@actSave dex} {@dc 15}, one creature the devil can see within 60 feet. {@actSaveFail} 9 ({@damage 2d4 + 4}) Fire damage, and the target has the {@condition Restrained|XPHB} condition until the end of the devil's next turn, at which point the chain disappears. If the target is Large or smaller, the devil moves the target up to 30 feet straight toward itself. {@actSaveSuccess} The chain disappears."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "dex",
-        "dc": 15,
+        "type": "capability",
         "target": {
           "type": "creature",
           "range_feet": 60
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "damage",
-                "dice": "2d4",
-                "damage_type": "fire",
-                "bonus": 4
-              }
-            ]
-          }
-        ]
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "dex",
+          "difficulty": {
+            "type": "fixed",
+            "value": 15
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "2d4",
+                  "damage_type": "fire",
+                  "bonus": 4
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
       }
     }
   ],

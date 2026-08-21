@@ -7,10 +7,12 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
 
 from srd_arena.content.mechanics import (
     Ability,
+    AutomaticResolutionSchema as SharedAutomaticResolutionSchema,
     ConditionEffectSchema,
     ConditionRequirementSchema,
     CreatureTypeRequirementSchema,
     DamageEffectSchema,
+    DerivedDifficultyClassSchema,
     EffectDurationSchema,
     ForcedMovementEffectSchema,
     NonNegativeInt,
@@ -19,6 +21,7 @@ from srd_arena.content.mechanics import (
     PositiveInt,
     ProhibitReactionEffectSchema,
     RollModifierEffectSchema,
+    SavingThrowResolutionSchema as SharedSavingThrowResolutionSchema,
     SizeRequirementSchema,
     SpeedMultiplierEffectSchema,
     TurnEconomyRestrictionEffectSchema,
@@ -816,21 +819,26 @@ class OutcomeSchema(SharedOutcomeSchema[SpellEffectSchema]):
     end_spell: bool = False
 
 
-class AutomaticResolutionSchema(SpellMechanicsSchemaModel):
-    type: Literal["automatic"]
-    outcome: OutcomeSchema
+class AutomaticResolutionSchema(
+    SharedAutomaticResolutionSchema[OutcomeSchema]
+):
+    pass
 
 
-class SavingThrowResolutionSchema(SpellMechanicsSchemaModel):
-    type: Literal["saving_throw"]
+class SavingThrowResolutionSchema(
+    SharedSavingThrowResolutionSchema[OutcomeSchema, OutcomeSchema]
+):
     ability: Ability | None = None
+    difficulty: DerivedDifficultyClassSchema = Field(
+        default_factory=lambda: DerivedDifficultyClassSchema(
+            type="spell_save_dc"
+        )
+    )
     use_spell_metadata_ability: bool = True
     automatic_success: list[SpellRequirementSchema] = Field(default_factory=list)
     automatic_failure: list[SpellRequirementSchema] = Field(default_factory=list)
     save_modifiers: list[SpellSaveModifierSchema] = Field(default_factory=list)
-    failure: OutcomeSchema
     success: OutcomeSchema = Field(default_factory=OutcomeSchema)
-    success_damage: Literal["none", "half"] = "none"
     repeat_save: RepeatSaveProgressionSchema | None = None
 
 

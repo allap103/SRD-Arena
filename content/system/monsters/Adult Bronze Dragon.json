@@ -194,30 +194,43 @@
         "{@actSave str} {@dc 19}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target is pushed up to 60 feet straight away from the dragon and has the {@condition Prone|XPHB} condition."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "str",
-        "dc": 19,
+        "type": "capability",
         "target": {
           "type": "area",
           "shape": "cone",
           "size_feet": 30
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "forced_movement",
-                "direction": "away",
-                "distance_feet": 60,
-                "up_to": true
-              },
-              {
-                "type": "condition",
-                "condition": "prone"
-              }
-            ]
-          }
-        ]
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "str",
+          "difficulty": {
+            "type": "fixed",
+            "value": 19
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "forced_movement",
+                  "direction": "away",
+                  "distance_feet": 60,
+                  "up_to": true
+                },
+                {
+                  "type": "condition",
+                  "condition": "prone"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
       }
     }
   ],

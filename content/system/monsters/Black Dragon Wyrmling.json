@@ -130,27 +130,39 @@
         "{@actSave dex} {@dc 11}, each creature in a 15-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 22 ({@damage 5d8}) Acid damage. {@actSaveSuccess} Half damage."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "dex",
-        "dc": 11,
+        "type": "capability",
         "target": {
           "type": "area",
           "shape": "line",
           "size_feet": 15,
           "width_feet": 5
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "damage",
-                "dice": "5d8",
-                "damage_type": "acid"
-              }
-            ]
-          }
-        ],
-        "success_damage": "half",
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "dex",
+          "difficulty": {
+            "type": "fixed",
+            "value": 11
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "5d8",
+                  "damage_type": "acid"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "half"
+        },
         "resource": {
           "type": "recharge",
           "minimum": 5

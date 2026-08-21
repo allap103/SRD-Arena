@@ -13,7 +13,7 @@ from srd_arena.content.creatures import (
 )
 from srd_arena.content.creatures.actions.schema import (
     AttackActionMechanicsSchema,
-    SavingThrowActionMechanicsSchema,
+    CapabilityActionMechanicsSchema,
 )
 from srd_arena.content.creatures.actions.translator import (
     build_stat_block_actions,
@@ -483,7 +483,7 @@ def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
                         referenced.mechanics,
                         (
                             AttackActionMechanicsSchema,
-                            SavingThrowActionMechanicsSchema,
+                            CapabilityActionMechanicsSchema,
                         ),
                     )
 
@@ -504,7 +504,7 @@ def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
     assert dominate.mechanics.resource.maximum == 2
     assert [
         repeat.trigger
-        for repeat in dominate.mechanics.failure[0].repeat_saves
+        for repeat in dominate.mechanics.resolution.failure[0].repeat_saves
     ] == ["on_damage", "elapsed"]
 
     ancient_gold = catalog.find("Ancient Gold Dragon", "XMM")
@@ -513,8 +513,8 @@ def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
         for action in ancient_gold.action
         if action.name == "Weakening Breath"
     )
-    assert weakening.mechanics.dc == 24
-    assert weakening.mechanics.failure[0].effects[1].dice == "1d10"
+    assert weakening.mechanics.resolution.difficulty.value == 24
+    assert weakening.mechanics.resolution.failure[0].effects[1].dice == "1d10"
 
 
 def test_b_and_c_monster_actions_have_typed_mechanics() -> None:

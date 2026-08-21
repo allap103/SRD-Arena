@@ -149,44 +149,57 @@
         "{@actSave str} {@dc 15}, one Medium or smaller creature the couatl can see within 5 feet. {@actSaveFail} 8 ({@damage 1d6 + 5}) Bludgeoning damage. The target has the {@condition Grappled|XPHB} condition (escape {@dc 13}), and it has the {@condition Restrained|XPHB} condition until the grapple ends."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "str",
-        "dc": 15,
+        "type": "capability",
         "target": {
           "type": "creature",
           "range_feet": 5
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "damage",
-                "dice": "1d6",
-                "damage_type": "bludgeoning",
-                "bonus": 5
-              },
-              {
-                "type": "condition",
-                "condition": "grappled",
-                "escape_dc": 13,
-                "source_capacity": 1
-              },
-              {
-                "type": "condition",
-                "condition": "restrained",
-                "requirements": [
-                  {
-                    "type": "condition",
-                    "conditions": [
-                      "grappled"
-                    ],
-                    "applied_by": "source"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "str",
+          "difficulty": {
+            "type": "fixed",
+            "value": 15
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "1d6",
+                  "damage_type": "bludgeoning",
+                  "bonus": 5
+                },
+                {
+                  "type": "condition",
+                  "condition": "grappled",
+                  "escape_dc": 13,
+                  "source_capacity": 1
+                },
+                {
+                  "type": "condition",
+                  "condition": "restrained",
+                  "requirements": [
+                    {
+                      "type": "condition",
+                      "conditions": [
+                        "grappled"
+                      ],
+                      "applied_by": "source"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
       }
     }
   ],

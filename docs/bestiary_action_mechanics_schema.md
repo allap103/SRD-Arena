@@ -73,34 +73,37 @@ Action resources are either fixed uses with a reset rule or die recharge.
 
 ```json
 {
-  "type": "saving_throw",
+  "type": "capability",
   "target": {"type": "area", "shape": "cone", "size_feet": 60},
-  "ability": "con",
-  "dc": 20,
-  "failure": [
-    {
-      "effects": [{
-        "type": "condition",
-        "condition": "incapacitated",
-        "duration": {
-          "type": "end_of_turn",
-          "creature": "target",
-          "turn_offset": 1
-        }
-      }],
-      "repeat_saves": [{"trigger": "end_of_turn"}]
-    },
-    {
-      "effects": [{"type": "condition", "condition": "paralyzed"}],
-      "repeat_saves": [{
-        "trigger": "end_of_turn",
-        "automatic_success_after": {
-          "type": "timed",
-          "amount": 1,
-          "unit": "minute"
-        }
-      }]
-    }
-  ]
+  "resolution": {
+    "type": "saving_throw",
+    "ability": "con",
+    "difficulty": {"type": "fixed", "value": 20},
+    "failure": [
+      {
+        "effects": [{
+          "type": "condition",
+          "condition": "incapacitated",
+          "duration": {
+            "type": "end_of_turn",
+            "creature": "target",
+            "turn_offset": 1
+          }
+        }],
+        "repeat_saves": [{"trigger": "end_of_turn"}]
+      },
+      {
+        "effects": [{"type": "condition", "condition": "paralyzed"}],
+        "repeat_saves": [{
+          "trigger": "end_of_turn",
+          "automatic_success_after": {
+            "type": "timed",
+            "amount": 1,
+            "unit": "minute"
+          }
+        }]
+      }
+    ]
+  }
 }
 ```

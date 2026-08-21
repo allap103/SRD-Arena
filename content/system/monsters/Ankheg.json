@@ -53,17 +53,36 @@
       ],
       "mechanics": {
         "type": "attack",
-        "attack_modes": ["melee"],
+        "attack_modes": [
+          "melee"
+        ],
         "attack_bonus": 5,
-        "target": {"type": "creature", "range_feet": 5},
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
         "reach_feet": 5,
         "hit": [
-          {"type": "damage", "dice": "2d6", "bonus": 3, "damage_type": "slashing"},
-          {"type": "damage", "dice": "1d6", "damage_type": "acid"},
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "bonus": 3,
+            "damage_type": "slashing"
+          },
+          {
+            "type": "damage",
+            "dice": "1d6",
+            "damage_type": "acid"
+          },
           {
             "type": "condition",
             "condition": "grappled",
-            "requirements": [{"type": "size", "maximum": "L"}],
+            "requirements": [
+              {
+                "type": "size",
+                "maximum": "L"
+              }
+            ],
             "escape_dc": 13,
             "source_capacity": 1
           }
@@ -76,15 +95,43 @@
         "{@actSave dex} {@dc 12}, each creature in a 30-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 14 ({@damage 4d6}) Acid damage. {@actSaveSuccess} Half damage."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "dex",
-        "dc": 12,
-        "target": {"type": "area", "shape": "line", "size_feet": 30, "width_feet": 5},
-        "failure": [
-          {"effects": [{"type": "damage", "dice": "4d6", "damage_type": "acid"}]}
-        ],
-        "success_damage": "half",
-        "resource": {"type": "recharge", "minimum": 6}
+        "type": "capability",
+        "target": {
+          "type": "area",
+          "shape": "line",
+          "size_feet": 30,
+          "width_feet": 5
+        },
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "dex",
+          "difficulty": {
+            "type": "fixed",
+            "value": 12
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "4d6",
+                  "damage_type": "acid"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "half"
+        },
+        "resource": {
+          "type": "recharge",
+          "minimum": 6
+        }
       }
     }
   ],

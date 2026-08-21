@@ -2,6 +2,7 @@ import re
 from typing import Literal, cast
 
 from . import schema
+from srd_arena.content.mechanics import AutomaticResolutionSchema
 from srd_arena.content.mechanics import schema as mechanics
 from srd_arena.content.creatures.stat_block_schema import (
     BestiaryActionSchema,
@@ -20,36 +21,47 @@ def build_stat_block_actions(
         mechanics = action.mechanics
         if isinstance(mechanics, schema.AttackActionMechanicsSchema):
             definitions[action.name] = _attack_definition(action, mechanics)
-        elif isinstance(mechanics, schema.SavingThrowActionMechanicsSchema):
-            definitions[action.name] = domain.SavingThrowActionDefinition(
-                name=action.name,
-                target=_target(mechanics.target),
-                ability=mechanics.ability,
-                dc=mechanics.dc,
-                failure=tuple(
-                    domain.ActionOutcomeStage(
-                        effects=tuple(_effect(effect) for effect in stage.effects),
-                        repeat_saves=tuple(
-                            _repeat_save(repeat)
-                            for repeat in stage.repeat_saves
-                        ),
-                    )
-                    for stage in mechanics.failure
-                ),
-                success=tuple(_effect(effect) for effect in mechanics.success),
-                success_damage=mechanics.success_damage,
-                always=tuple(_effect(effect) for effect in mechanics.always),
-                resource=_resource(mechanics.resource),
-            )
-        elif isinstance(mechanics, schema.AutomaticActionMechanicsSchema):
-            definitions[action.name] = domain.AutomaticActionDefinition(
-                name=action.name,
-                target=_target(mechanics.target),
-                effects=tuple(
-                    _effect(effect) for effect in mechanics.outcome.effects
-                ),
-                resource=_resource(mechanics.resource),
-            )
+        elif isinstance(mechanics, schema.CapabilityActionMechanicsSchema):
+            resolution = mechanics.resolution
+            if isinstance(
+                resolution,
+                schema.SavingThrowActionResolutionSchema,
+            ):
+                definitions[action.name] = domain.SavingThrowActionDefinition(
+                    name=action.name,
+                    target=_target(mechanics.target),
+                    ability=resolution.ability,
+                    dc=resolution.difficulty.value,
+                    failure=tuple(
+                        domain.ActionOutcomeStage(
+                            effects=tuple(
+                                _effect(effect) for effect in stage.effects
+                            ),
+                            repeat_saves=tuple(
+                                _repeat_save(repeat)
+                                for repeat in stage.repeat_saves
+                            ),
+                        )
+                        for stage in resolution.failure
+                    ),
+                    success=tuple(
+                        _effect(effect) for effect in resolution.success.effects
+                    ),
+                    success_damage=resolution.success_damage,
+                    always=tuple(
+                        _effect(effect) for effect in resolution.always.effects
+                    ),
+                    resource=_resource(mechanics.resource),
+                )
+            elif isinstance(resolution, AutomaticResolutionSchema):
+                definitions[action.name] = domain.AutomaticActionDefinition(
+                    name=action.name,
+                    target=_target(mechanics.target),
+                    effects=tuple(
+                        _effect(effect) for effect in resolution.outcome.effects
+                    ),
+                    resource=_resource(mechanics.resource),
+                )
         elif isinstance(mechanics, schema.SpellcastingActionMechanicsSchema):
             definitions[action.name] = domain.SpellcastingActionDefinition(
                 name=action.name,

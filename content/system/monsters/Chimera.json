@@ -202,26 +202,38 @@
         "{@actSave dex} {@dc 15}, each creature in a 15-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 31 ({@damage 7d8}) Fire damage. {@actSaveSuccess} Half damage."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "dex",
-        "dc": 15,
+        "type": "capability",
         "target": {
           "type": "area",
           "shape": "cone",
           "size_feet": 15
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "damage",
-                "dice": "7d8",
-                "damage_type": "fire"
-              }
-            ]
-          }
-        ],
-        "success_damage": "half",
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "dex",
+          "difficulty": {
+            "type": "fixed",
+            "value": 15
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "7d8",
+                  "damage_type": "fire"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "half"
+        },
         "resource": {
           "type": "recharge",
           "minimum": 5

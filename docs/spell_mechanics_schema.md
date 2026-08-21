@@ -178,6 +178,7 @@ part of a composed resolution, such as Ice Knife's Cold explosion.
     "resolution": {
       "type": "saving_throw",
       "ability": "dex",
+      "difficulty": {"type": "spell_save_dc"},
       "failure": {
         "effects": [{
           "type": "damage",

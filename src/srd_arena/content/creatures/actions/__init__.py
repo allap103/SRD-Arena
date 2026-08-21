@@ -3,16 +3,16 @@
 from .multiattack import MultiattackMechanicsSchema
 from .schema import (
     AttackActionMechanicsSchema,
-    AutomaticActionMechanicsSchema,
+    CapabilityActionMechanicsSchema,
     NonMultiattackMechanicsSchema,
-    SavingThrowActionMechanicsSchema,
+    SavingThrowActionResolutionSchema,
     SpellcastingActionMechanicsSchema,
 )
 __all__ = [
     "AttackActionMechanicsSchema",
-    "AutomaticActionMechanicsSchema",
+    "CapabilityActionMechanicsSchema",
     "MultiattackMechanicsSchema",
     "NonMultiattackMechanicsSchema",
-    "SavingThrowActionMechanicsSchema",
+    "SavingThrowActionResolutionSchema",
     "SpellcastingActionMechanicsSchema",
 ]

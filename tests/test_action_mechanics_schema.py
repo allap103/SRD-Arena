@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 from srd_arena.content.creatures.actions.schema import (
     AttackActionMechanicsSchema,
-    SavingThrowActionMechanicsSchema,
+    CapabilityActionMechanicsSchema,
     SpellcastingActionMechanicsSchema,
 )
 from srd_arena.content.creatures import BestiaryActionSchema
@@ -87,7 +87,7 @@ def test_damage_effect_supports_attack_roll_mode_requirement() -> None:
 
 
 def test_save_action_supports_target_requirements_and_half_damage() -> None:
-    action = SavingThrowActionMechanicsSchema.model_validate(
+    action = CapabilityActionMechanicsSchema.model_validate(
         {
             "target": {
                 "type": "creature",
@@ -101,49 +101,57 @@ def test_save_action_supports_target_requirements_and_half_damage() -> None:
                     }
                 ],
             },
-            "ability": "int",
-            "dc": 16,
-            "failure": [
-                {
+            "resolution": {
+                "type": "saving_throw",
+                "ability": "int",
+                "difficulty": {"type": "fixed", "value": 16},
+                "failure": [
+                    {
+                        "effects": [
+                            {
+                                "type": "damage",
+                                "dice": "3d6",
+                                "damage_type": "psychic",
+                            }
+                        ]
+                    }
+                ],
+                "success_damage": "half",
+                "always": {
                     "effects": [
                         {
-                            "type": "damage",
-                            "dice": "3d6",
-                            "damage_type": "psychic",
+                            "type": "gain_memories",
+                            "requirement": {
+                                "type": "creature_type",
+                                "creature_types": ["humanoid"],
+                            },
+                            "trigger": "reduced_to_zero_by_action",
                         }
                     ]
-                }
-            ],
-            "success_damage": "half",
-            "always": [
-                {
-                    "type": "gain_memories",
-                    "requirement": {
-                        "type": "creature_type",
-                        "creature_types": ["humanoid"],
-                    },
-                    "trigger": "reduced_to_zero_by_action",
-                }
-            ],
+                },
+                "success": {"effects": []},
+            },
         }
     )
 
     assert action.target.requirements[0].applied_by == "source"
-    assert action.success_damage == "half"
-    assert action.always[0].type == "gain_memories"
+    assert action.resolution.success_damage == "half"
+    assert action.resolution.always.effects[0].type == "gain_memories"
 
 
 def test_save_action_supports_staged_failures_and_repeat_saves() -> None:
-    action = SavingThrowActionMechanicsSchema.model_validate(
+    action = CapabilityActionMechanicsSchema.model_validate(
         {
             "target": {
                 "type": "area",
                 "shape": "cone",
                 "size_feet": 60,
             },
-            "ability": "con",
-            "dc": 20,
-            "failure": [
+            "resolution": {
+                "type": "saving_throw",
+                "ability": "con",
+                "difficulty": {"type": "fixed", "value": 20},
+                "failure": [
                 {
                     "effects": [
                         {
@@ -176,12 +184,15 @@ def test_save_action_supports_staged_failures_and_repeat_saves() -> None:
                         }
                     ],
                 },
-            ],
+                ],
+                "success": {"effects": []},
+            },
         }
     )
 
-    assert len(action.failure) == 2
-    assert action.failure[1].repeat_saves[0].automatic_success_after.amount == 1
+    assert len(action.resolution.failure) == 2
+    repeat = action.resolution.failure[1].repeat_saves[0]
+    assert repeat.automatic_success_after.amount == 1
 
 
 def test_condition_duration_can_end_at_start_of_source_turn() -> None:
@@ -229,15 +240,17 @@ def test_spellcasting_action_is_distinct_from_save_and_attack_actions() -> None:
 
 def test_action_mechanics_reject_unknown_effects() -> None:
     with pytest.raises(ValidationError):
-        SavingThrowActionMechanicsSchema.model_validate(
+        CapabilityActionMechanicsSchema.model_validate(
             {
                 "target": {
                     "type": "creature",
                     "range_feet": 30,
                 },
-                "ability": "wis",
-                "dc": 16,
-                "failure": [
+                "resolution": {
+                    "type": "saving_throw",
+                    "ability": "wis",
+                    "difficulty": {"type": "fixed", "value": 16},
+                    "failure": [
                     {
                         "effects": [
                             {
@@ -246,6 +259,8 @@ def test_action_mechanics_reject_unknown_effects() -> None:
                             }
                         ]
                     }
-                ],
+                    ],
+                    "success": {"effects": []},
+                },
             }
         )

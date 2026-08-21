@@ -138,34 +138,67 @@
         "{@actSave con} {@dc 13}, one creature {@condition Grappled|XPHB} by the chuul. {@actSaveFail} The target has the {@condition Poisoned|XPHB} condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically. While {@condition Poisoned|XPHB}, the target has the {@condition Paralyzed|XPHB} condition."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "con",
-        "dc": 13,
+        "type": "capability",
         "target": {
           "type": "creature",
           "range_feet": 10,
           "requirements": [
-            {"type": "condition", "conditions": ["grappled"], "applied_by": "source"}
+            {
+              "type": "condition",
+              "conditions": [
+                "grappled"
+              ],
+              "applied_by": "source"
+            }
           ]
         },
-        "failure": [
-          {
-            "effects": [
-              {"type": "condition", "condition": "poisoned"},
-              {
-                "type": "condition",
-                "condition": "paralyzed",
-                "requirements": [{"type": "condition", "conditions": ["poisoned"]}]
-              }
-            ],
-            "repeat_saves": [
-              {
-                "trigger": "end_of_turn",
-                "automatic_success_after": {"type": "timed", "amount": 1, "unit": "minute"}
-              }
-            ]
-          }
-        ]
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "con",
+          "difficulty": {
+            "type": "fixed",
+            "value": 13
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "condition",
+                  "condition": "poisoned"
+                },
+                {
+                  "type": "condition",
+                  "condition": "paralyzed",
+                  "requirements": [
+                    {
+                      "type": "condition",
+                      "conditions": [
+                        "poisoned"
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "repeat_saves": [
+                {
+                  "trigger": "end_of_turn",
+                  "automatic_success_after": {
+                    "type": "timed",
+                    "amount": 1,
+                    "unit": "minute"
+                  }
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
       }
     }
   ],

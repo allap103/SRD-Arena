@@ -198,9 +198,7 @@
         "{@actSave str} {@dc 24}, each creature that isn't currently affected by this breath in a 90-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target has {@variantrule Disadvantage|XPHB} on Strength-based {@variantrule D20 Test|XPHB|D20 Tests} and subtracts 5 ({@dice 1d10}) from its damage rolls. It repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "str",
-        "dc": 24,
+        "type": "capability",
         "target": {
           "type": "area",
           "shape": "cone",
@@ -212,34 +210,49 @@
             }
           ]
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "roll_modifier",
-                "roll": "d20_test",
-                "mode": "disadvantage",
-                "ability": "str"
-              },
-              {
-                "type": "roll_modifier",
-                "roll": "damage_roll",
-                "mode": "subtract",
-                "dice": "1d10"
-              }
-            ],
-            "repeat_saves": [
-              {
-                "trigger": "end_of_turn",
-                "automatic_success_after": {
-                  "type": "timed",
-                  "amount": 1,
-                  "unit": "minute"
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "str",
+          "difficulty": {
+            "type": "fixed",
+            "value": 24
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "roll_modifier",
+                  "roll": "d20_test",
+                  "mode": "disadvantage",
+                  "ability": "str"
+                },
+                {
+                  "type": "roll_modifier",
+                  "roll": "damage_roll",
+                  "mode": "subtract",
+                  "dice": "1d10"
                 }
-              }
-            ]
-          }
-        ]
+              ],
+              "repeat_saves": [
+                {
+                  "trigger": "end_of_turn",
+                  "automatic_success_after": {
+                    "type": "timed",
+                    "amount": 1,
+                    "unit": "minute"
+                  }
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
       }
     }
   ],

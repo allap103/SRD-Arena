@@ -116,44 +116,57 @@
         "{@actSave str} {@dc 18}, one Large or smaller creature the behir can see within 5 feet. {@actSaveFail} 28 ({@damage 5d8 + 6}) Bludgeoning damage. The target has the {@condition Grappled|XPHB} condition (escape {@dc 16}), and it has the {@condition Restrained|XPHB} condition until the grapple ends."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "str",
-        "dc": 18,
+        "type": "capability",
         "target": {
           "type": "creature",
           "range_feet": 5
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "damage",
-                "dice": "5d8",
-                "damage_type": "bludgeoning",
-                "bonus": 6
-              },
-              {
-                "type": "condition",
-                "condition": "grappled",
-                "escape_dc": 16,
-                "source_capacity": 1
-              },
-              {
-                "type": "condition",
-                "condition": "restrained",
-                "requirements": [
-                  {
-                    "type": "condition",
-                    "conditions": [
-                      "grappled"
-                    ],
-                    "applied_by": "source"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "str",
+          "difficulty": {
+            "type": "fixed",
+            "value": 18
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "5d8",
+                  "damage_type": "bludgeoning",
+                  "bonus": 6
+                },
+                {
+                  "type": "condition",
+                  "condition": "grappled",
+                  "escape_dc": 16,
+                  "source_capacity": 1
+                },
+                {
+                  "type": "condition",
+                  "condition": "restrained",
+                  "requirements": [
+                    {
+                      "type": "condition",
+                      "conditions": [
+                        "grappled"
+                      ],
+                      "applied_by": "source"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
       }
     },
     {
@@ -162,27 +175,39 @@
         "{@actSave dex} {@dc 16}, each creature in a 90-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 66 ({@damage 12d10}) Lightning damage. {@actSaveSuccess} Half damage."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "dex",
-        "dc": 16,
+        "type": "capability",
         "target": {
           "type": "area",
           "shape": "line",
           "size_feet": 90,
           "width_feet": 5
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "damage",
-                "dice": "12d10",
-                "damage_type": "lightning"
-              }
-            ]
-          }
-        ],
-        "success_damage": "half",
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "dex",
+          "difficulty": {
+            "type": "fixed",
+            "value": 16
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "12d10",
+                  "damage_type": "lightning"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "half"
+        },
         "resource": {
           "type": "recharge",
           "minimum": 5

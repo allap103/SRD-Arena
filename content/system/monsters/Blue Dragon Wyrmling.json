@@ -122,27 +122,39 @@
         "{@actSave dex} {@dc 12}, each creature in a 30-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 21 ({@damage 6d6}) Lightning damage. {@actSaveSuccess} Half damage."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "dex",
-        "dc": 12,
+        "type": "capability",
         "target": {
           "type": "area",
           "shape": "line",
           "size_feet": 30,
           "width_feet": 5
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "damage",
-                "dice": "6d6",
-                "damage_type": "lightning"
-              }
-            ]
-          }
-        ],
-        "success_damage": "half",
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "dex",
+          "difficulty": {
+            "type": "fixed",
+            "value": 12
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "6d6",
+                  "damage_type": "lightning"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "half"
+        },
         "resource": {
           "type": "recharge",
           "minimum": 5

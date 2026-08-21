@@ -98,25 +98,37 @@
         "The bulette spends 5 feet of movement to jump to a space within 15 feet that contains one or more Large or smaller creatures. {@actSave dex} {@dc 15}, each creature in the bulette's destination space. {@actSaveFail} 19 ({@damage 3d12}) Bludgeoning damage, and the target has the {@condition Prone|XPHB} condition. {@actSaveSuccess} Half damage, and the target is pushed 5 feet straight away from the bulette."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "dex",
-        "dc": 15,
+        "type": "capability",
         "target": {
           "type": "creature",
           "range_feet": 5
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "damage",
-                "dice": "3d12",
-                "damage_type": "bludgeoning"
-              }
-            ]
-          }
-        ],
-        "success_damage": "half"
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "dex",
+          "difficulty": {
+            "type": "fixed",
+            "value": 15
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "3d12",
+                  "damage_type": "bludgeoning"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "half"
+        }
       }
     }
   ],

@@ -81,30 +81,43 @@
         "{@actSave str} {@dc 12}, one Medium or smaller creature the snake can see within 5 feet. {@actSaveFail} 7 ({@damage 3d4}) Bludgeoning damage, and the target has the {@condition Grappled|XPHB} condition (escape {@dc 12})."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "str",
-        "dc": 12,
+        "type": "capability",
         "target": {
           "type": "creature",
           "range_feet": 5
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "damage",
-                "dice": "3d4",
-                "damage_type": "bludgeoning"
-              },
-              {
-                "type": "condition",
-                "condition": "grappled",
-                "escape_dc": 12,
-                "source_capacity": 1
-              }
-            ]
-          }
-        ]
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "str",
+          "difficulty": {
+            "type": "fixed",
+            "value": 12
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "3d4",
+                  "damage_type": "bludgeoning"
+                },
+                {
+                  "type": "condition",
+                  "condition": "grappled",
+                  "escape_dc": 12,
+                  "source_capacity": 1
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
       }
     }
   ],

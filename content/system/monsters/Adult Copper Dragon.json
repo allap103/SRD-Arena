@@ -192,50 +192,63 @@
         "{@actSave con} {@dc 18}, each creature in a 60-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target can't take Reactions; its {@variantrule Speed|XPHB} is halved; and it can take either an action or a {@variantrule Bonus Action|XPHB} on its turn, not both. This effect lasts until the end of its next turn."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "con",
-        "dc": 18,
+        "type": "capability",
         "target": {
           "type": "area",
           "shape": "cone",
           "size_feet": 60
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "prohibit_reactions",
-                "duration": {
-                  "type": "end_of_turn",
-                  "creature": "target",
-                  "turn_offset": 1
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "con",
+          "difficulty": {
+            "type": "fixed",
+            "value": 18
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "prohibit_reactions",
+                  "duration": {
+                    "type": "end_of_turn",
+                    "creature": "target",
+                    "turn_offset": 1
+                  }
+                },
+                {
+                  "type": "speed_multiplier",
+                  "numerator": 1,
+                  "denominator": 2,
+                  "duration": {
+                    "type": "end_of_turn",
+                    "creature": "target",
+                    "turn_offset": 1
+                  }
+                },
+                {
+                  "type": "turn_economy_restriction",
+                  "choose_between": [
+                    "action",
+                    "bonus_action"
+                  ],
+                  "duration": {
+                    "type": "end_of_turn",
+                    "creature": "target",
+                    "turn_offset": 1
+                  }
                 }
-              },
-              {
-                "type": "speed_multiplier",
-                "numerator": 1,
-                "denominator": 2,
-                "duration": {
-                  "type": "end_of_turn",
-                  "creature": "target",
-                  "turn_offset": 1
-                }
-              },
-              {
-                "type": "turn_economy_restriction",
-                "choose_between": [
-                  "action",
-                  "bonus_action"
-                ],
-                "duration": {
-                  "type": "end_of_turn",
-                  "creature": "target",
-                  "turn_offset": 1
-                }
-              }
-            ]
-          }
-        ]
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
       }
     }
   ],

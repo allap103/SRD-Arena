@@ -175,9 +175,7 @@
         "{@actSave int} {@dc 16}, one creature within 30 feet that is {@condition Charmed|XPHB} or {@condition Grappled|XPHB} by the aboleth. {@actSaveFail} 10 ({@damage 3d6}) Psychic damage. {@actSaveSuccess} Half damage. {@actSaveSuccessOrFail} The aboleth gains the target's memories if the target is a Humanoid and is reduced to 0 {@variantrule Hit Points|XPHB} by this action."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "int",
-        "dc": 16,
+        "type": "capability",
         "target": {
           "type": "creature",
           "range_feet": 30,
@@ -193,30 +191,43 @@
             }
           ]
         },
-        "failure": [
-          {
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "int",
+          "difficulty": {
+            "type": "fixed",
+            "value": 16
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "3d6",
+                  "damage_type": "psychic"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
             "effects": [
               {
-                "type": "damage",
-                "dice": "3d6",
-                "damage_type": "psychic"
+                "type": "gain_memories",
+                "requirement": {
+                  "type": "creature_type",
+                  "creature_types": [
+                    "humanoid"
+                  ]
+                },
+                "trigger": "reduced_to_zero_by_action"
               }
             ]
-          }
-        ],
-        "success_damage": "half",
-        "always": [
-          {
-            "type": "gain_memories",
-            "requirement": {
-              "type": "creature_type",
-              "creature_types": [
-                "humanoid"
-              ]
-            },
-            "trigger": "reduced_to_zero_by_action"
-          }
-        ]
+          },
+          "success_damage": "half"
+        }
       }
     },
     {
@@ -226,56 +237,69 @@
         "The target repeats the save whenever it takes damage as well as after every 24 hours it spends at least 1 mile away from the aboleth, ending the effect on itself on a success."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "wis",
-        "dc": 16,
+        "type": "capability",
         "target": {
           "type": "creature",
           "range_feet": 30,
           "line_of_sight": true
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "condition",
-                "condition": "charmed",
-                "duration": {
-                  "type": "until_event",
-                  "events": [
-                    "source_dies",
-                    "different_plane"
-                  ]
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "wis",
+          "difficulty": {
+            "type": "fixed",
+            "value": 16
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "condition",
+                  "condition": "charmed",
+                  "duration": {
+                    "type": "until_event",
+                    "events": [
+                      "source_dies",
+                      "different_plane"
+                    ]
+                  }
+                },
+                {
+                  "type": "control",
+                  "controller": "source",
+                  "communication": "telepathy",
+                  "communication_range_feet": "unlimited",
+                  "control_range_feet": 60,
+                  "duration": {
+                    "type": "until_event",
+                    "events": [
+                      "source_dies",
+                      "different_plane"
+                    ]
+                  }
                 }
-              },
-              {
-                "type": "control",
-                "controller": "source",
-                "communication": "telepathy",
-                "communication_range_feet": "unlimited",
-                "control_range_feet": 60,
-                "duration": {
-                  "type": "until_event",
-                  "events": [
-                    "source_dies",
-                    "different_plane"
-                  ]
+              ],
+              "repeat_saves": [
+                {
+                  "trigger": "on_damage"
+                },
+                {
+                  "trigger": "elapsed",
+                  "interval_amount": 24,
+                  "interval_unit": "hour",
+                  "distance_from_source_feet": 5280
                 }
-              }
-            ],
-            "repeat_saves": [
-              {
-                "trigger": "on_damage"
-              },
-              {
-                "trigger": "elapsed",
-                "interval_amount": 24,
-                "interval_unit": "hour",
-                "distance_from_source_feet": 5280
-              }
-            ]
-          }
-        ],
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        },
         "resource": {
           "type": "uses",
           "maximum": 2,

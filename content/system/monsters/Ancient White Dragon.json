@@ -130,13 +130,27 @@
       ],
       "mechanics": {
         "type": "attack",
-        "attack_modes": ["melee"],
+        "attack_modes": [
+          "melee"
+        ],
         "attack_bonus": 14,
-        "target": {"type": "creature", "range_feet": 15},
+        "target": {
+          "type": "creature",
+          "range_feet": 15
+        },
         "reach_feet": 15,
         "hit": [
-          {"type": "damage", "dice": "2d8", "bonus": 8, "damage_type": "slashing"},
-          {"type": "damage", "dice": "2d6", "damage_type": "cold"}
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "bonus": 8,
+            "damage_type": "slashing"
+          },
+          {
+            "type": "damage",
+            "dice": "2d6",
+            "damage_type": "cold"
+          }
         ]
       }
     },
@@ -146,15 +160,42 @@
         "{@actSave con} {@dc 22}, each creature in a 90-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 63 ({@damage 14d8}) Cold damage. {@actSaveSuccess} Half damage."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "con",
-        "dc": 22,
-        "target": {"type": "area", "shape": "cone", "size_feet": 90},
-        "failure": [
-          {"effects": [{"type": "damage", "dice": "14d8", "damage_type": "cold"}]}
-        ],
-        "success_damage": "half",
-        "resource": {"type": "recharge", "minimum": 5}
+        "type": "capability",
+        "target": {
+          "type": "area",
+          "shape": "cone",
+          "size_feet": 90
+        },
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "con",
+          "difficulty": {
+            "type": "fixed",
+            "value": 22
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "14d8",
+                  "damage_type": "cold"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "half"
+        },
+        "resource": {
+          "type": "recharge",
+          "minimum": 5
+        }
       }
     }
   ],

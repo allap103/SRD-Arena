@@ -125,27 +125,39 @@
         "{@actSave dex} {@dc 12}, each creature in a 40-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 16 ({@damage 3d10}) Lightning damage. {@actSaveSuccess} Half damage."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "dex",
-        "dc": 12,
+        "type": "capability",
         "target": {
           "type": "area",
           "shape": "line",
           "size_feet": 40,
           "width_feet": 5
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "damage",
-                "dice": "3d10",
-                "damage_type": "lightning"
-              }
-            ]
-          }
-        ],
-        "success_damage": "half",
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "dex",
+          "difficulty": {
+            "type": "fixed",
+            "value": 12
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "3d10",
+                  "damage_type": "lightning"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "half"
+        },
         "resource": {
           "type": "recharge",
           "minimum": 5
@@ -158,29 +170,42 @@
         "{@actSave str} {@dc 12}, each creature in a 30-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target is pushed up to 30 feet straight away from the dragon and has the {@condition Prone|XPHB} condition."
       ],
       "mechanics": {
-        "type": "saving_throw",
-        "ability": "str",
-        "dc": 12,
+        "type": "capability",
         "target": {
           "type": "area",
           "shape": "cone",
           "size_feet": 30
         },
-        "failure": [
-          {
-            "effects": [
-              {
-                "type": "forced_movement",
-                "direction": "away",
-                "distance_feet": 30
-              },
-              {
-                "type": "condition",
-                "condition": "prone"
-              }
-            ]
-          }
-        ]
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "str",
+          "difficulty": {
+            "type": "fixed",
+            "value": 12
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "forced_movement",
+                  "direction": "away",
+                  "distance_feet": 30
+                },
+                {
+                  "type": "condition",
+                  "condition": "prone"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
       }
     }
   ],
