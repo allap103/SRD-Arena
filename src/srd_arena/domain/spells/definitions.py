@@ -2,7 +2,8 @@ from dataclasses import dataclass, field
 
 from ..effects.modifiers import RollModifier
 
-from ..creatures.stat_block_actions import ActionRequirement
+from ..capabilities import CapabilityRequirement
+from ..capabilities import CapabilityDefinition
 
 
 @dataclass(frozen=True)
@@ -106,6 +107,7 @@ class SpellCapability:
     condition_immunities: tuple[str, ...] = ()
     senses: tuple[tuple[str, int], ...] = ()
     roll_modifier_ability_choices: tuple[str, ...] = ()
+    definition: CapabilityDefinition | None = None
 
     @property
     def healing_pool(self) -> int | None:
@@ -137,5 +139,5 @@ class Spell:
     geometry_mode: str = "point_target"
     area_size_feet: int | None = None
     concentration: bool = False
-    target_requirements: tuple[ActionRequirement, ...] = ()
+    target_requirements: tuple[CapabilityRequirement, ...] = ()
     capability: SpellCapability | None = None

@@ -24,12 +24,11 @@ from srd_arena.content.creatures.actions.multiattack import (
     StatBlockActionInvocationSchema,
 )
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
+from srd_arena.domain.capabilities import AttackRollModeRequirement, DamageEffect
 from srd_arena.domain.creatures import (
     AutomaticActionDefinition,
     AttackActionDefinition,
-    AttackRollModeRequirement,
     ActionResource,
-    DamageEffect,
     SavingThrowActionDefinition,
     SpellcastingActionDefinition,
 )

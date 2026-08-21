@@ -3,8 +3,15 @@ from srd_arena.content.creatures import load_bestiary_catalog
 from srd_arena.content.creatures.actions.schema import (
     CapabilitySchema,
 )
+from srd_arena.content.creatures.actions.translator import build_stat_block_actions
 from srd_arena.content.capabilities import SavingThrowResolutionSchema
-from srd_arena.content.spells import load_spell_catalog
+from srd_arena.content.spells import build_spell, load_spell_catalog
+from srd_arena.domain.capabilities import (
+    DerivedDifficultyClass,
+    FixedDifficultyClass,
+    SavingThrowResolution,
+)
+from srd_arena.domain.creatures import SavingThrowActionDefinition
 
 
 def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:
@@ -28,4 +35,30 @@ def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:
     assert isinstance(action_resolution, SavingThrowResolutionSchema)
     assert spell_resolution.difficulty.type == "spell_save_dc"
     assert action_resolution.difficulty.type == "fixed"
+    assert action_resolution.difficulty.value == 22
+
+
+def test_spells_and_stat_blocks_compile_shared_domain_capabilities() -> None:
+    spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    monsters = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
+
+    fireball = build_spell("Fireball", "XPHB", spells)
+    assert fireball.capability is not None
+    assert fireball.capability.definition is not None
+    spell_resolution = fireball.capability.definition.resolution
+    assert isinstance(spell_resolution, SavingThrowResolution)
+    assert isinstance(spell_resolution.difficulty, DerivedDifficultyClass)
+    assert spell_resolution.difficulty.derivation == "spell_save_dc"
+
+    dragon = monsters.find("Ancient White Dragon", "XMM")
+    breath = next(
+        definition
+        for name, definition in build_stat_block_actions(dragon).items()
+        if name.startswith("Cold Breath")
+    )
+    assert isinstance(breath, SavingThrowActionDefinition)
+    assert breath.capability is not None
+    action_resolution = breath.capability.resolution
+    assert isinstance(action_resolution, SavingThrowResolution)
+    assert isinstance(action_resolution.difficulty, FixedDifficultyClass)
     assert action_resolution.difficulty.value == 22

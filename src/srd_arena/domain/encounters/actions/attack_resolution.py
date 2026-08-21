@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from ...creatures import Creature
-from ...creatures.stat_block_actions import (
-    AttackActionDefinition,
-    DamageEffect,
-)
+from ...capabilities import DamageEffect
+from ...creatures.stat_block_actions import AttackActionDefinition
 from ...equipment import Item
 from ...geometry import Grid, Position
 from ...rolls.dice import (

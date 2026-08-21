@@ -5,8 +5,11 @@ from .schema import SpellSchema
 from srd_arena.content.capabilities import (
     ConditionEffectSchema,
     DamageEffectSchema,
+    DerivedDifficultyClassSchema,
+    FixedDifficultyClassSchema,
     RollModifierEffectSchema,
 )
+from srd_arena.content.capabilities.compiler import compile_effect, is_shared_effect
 from .resolution import (
     ArmorClassModifierEffectSchema,
     AutomaticResolutionSchema,
@@ -23,7 +26,9 @@ from .resolution import (
     SequenceResolutionSchema,
     SpellAttackResolutionSchema,
     TemporaryHitPointsEffectSchema,
+    OutcomeSchema,
 )
+from .targeting import SpellTargetSchema
 from srd_arena.content.common.sources import slug
 from srd_arena.domain.spells import (
     SpellCapability,
@@ -38,6 +43,7 @@ from srd_arena.domain.effects.modifiers import (
     RollKind,
     RollModifier,
 )
+import srd_arena.domain.capabilities as capability_domain
 
 
 from .translation_helpers import (
@@ -408,4 +414,83 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
             if isinstance(effect.root, RollModifierEffectSchema)
             for ability in effect.root.ability_options
         ),
+        definition=_compile_definition(target, resolution, outcome),
+    )
+
+
+def _compile_definition(
+    target: SpellTargetSchema,
+    resolution: AutomaticResolutionSchema | SavingThrowResolutionSchema | SpellAttackResolutionSchema,
+    outcome: OutcomeSchema,
+) -> capability_domain.CapabilityDefinition | None:
+    if isinstance(resolution, SpellAttackResolutionSchema):
+        return None
+    effect_values = tuple(effect.root for effect in outcome.effects)
+    success_values = (
+        tuple(effect.root for effect in resolution.success.effects)
+        if isinstance(resolution, SavingThrowResolutionSchema)
+        else ()
+    )
+    if not all(
+        is_shared_effect(effect) for effect in (*effect_values, *success_values)
+    ):
+        return None
+    compiled_target = _compile_target(target)
+    if compiled_target is None:
+        return None
+    compiled_outcome = capability_domain.Outcome(
+        tuple(compile_effect(effect) for effect in effect_values if is_shared_effect(effect))
+    )
+    if isinstance(resolution, AutomaticResolutionSchema):
+        compiled_resolution: capability_domain.CapabilityResolution = (
+            capability_domain.AutomaticResolution(compiled_outcome)
+        )
+    else:
+        ability = resolution.ability
+        if ability is None:
+            return None
+        difficulty = resolution.difficulty
+        if isinstance(difficulty, FixedDifficultyClassSchema):
+            compiled_difficulty: capability_domain.DifficultyClass = (
+                capability_domain.FixedDifficultyClass(difficulty.value)
+            )
+        else:
+            derived = cast(DerivedDifficultyClassSchema, difficulty)
+            compiled_difficulty = capability_domain.DerivedDifficultyClass(derived.type)
+        compiled_resolution = capability_domain.SavingThrowResolution(
+            ability=ability,
+            difficulty=compiled_difficulty,
+            failure=(capability_domain.OutcomeStage(compiled_outcome.effects),),
+            success=capability_domain.Outcome(
+                tuple(
+                    compile_effect(effect)
+                    for effect in success_values
+                    if is_shared_effect(effect)
+                )
+            ),
+            success_damage=resolution.success_damage,
+        )
+    return capability_domain.CapabilityDefinition(compiled_target, compiled_resolution)
+
+
+def _compile_target(
+    target: SpellTargetSchema,
+) -> capability_domain.CapabilityTarget | None:
+    if target.type == "self":
+        return capability_domain.CapabilityTarget(kind="self")
+    if target.type == "creature":
+        return capability_domain.CapabilityTarget(kind="creature")
+    if target.type != "area":
+        return None
+    geometry = target.geometry
+    return capability_domain.CapabilityTarget(
+        kind="area",
+        shape=geometry.shape,
+        size_feet=(
+            geometry.radius_feet
+            or geometry.length_feet
+            or geometry.diameter_feet
+        ),
+        width_feet=geometry.width_feet,
+        origin=target.origin,
     )

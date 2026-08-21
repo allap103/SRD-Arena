@@ -3,12 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from ...creatures import Creature, MultiattackStep
+from ...capabilities import CapabilityEffect, ConditionEffect, DamageEffect
 from ...creatures.stat_block_actions import (
-    ActionEffect,
     AutomaticActionDefinition,
     AttackActionDefinition,
-    ConditionEffect,
-    DamageEffect,
     SavingThrowActionDefinition,
 )
 from ...geometry import (
@@ -630,7 +628,7 @@ def _stat_block_target_refs(
 
 def _apply_damage_effects(
     target: Creature,
-    effects: tuple[ActionEffect, ...],
+    effects: tuple[CapabilityEffect, ...],
     *,
     half: bool,
 ) -> int:

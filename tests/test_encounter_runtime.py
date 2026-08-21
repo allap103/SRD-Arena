@@ -41,16 +41,18 @@ from srd_arena.domain.spells.rules import (
     parse_spell_action_value,
     spell_action_value,
 )
-from srd_arena.domain.creatures import (
-    ActionTarget,
-    ActionResource,
-    ActionOutcomeStage,
-    AutomaticActionDefinition,
-    AttackActionDefinition,
+from srd_arena.domain.capabilities import (
+    CapabilityTarget,
+    OutcomeStage,
     DamageEffect,
     ConditionEffect,
     ConditionRequirement,
     CreatureTypeRequirement,
+)
+from srd_arena.domain.creatures import (
+    ActionResource,
+    AutomaticActionDefinition,
+    AttackActionDefinition,
     SavingThrowActionDefinition,
 )
 from srd_arena.frontends.shared.session import (
@@ -276,7 +278,7 @@ def test_line_stat_block_action_can_be_aimed_at_a_map_point(
     actor.creature.stat_block_actions["Lightning Breath"] = (
         SavingThrowActionDefinition(
             name="Lightning Breath",
-            target=ActionTarget(
+            target=CapabilityTarget(
                 kind="area",
                 shape="line",
                 size_feet=30,
@@ -285,7 +287,7 @@ def test_line_stat_block_action_can_be_aimed_at_a_map_point(
             ability="dex",
             dc=30,
             failure=(
-                ActionOutcomeStage(
+                OutcomeStage(
                     effects=(DamageEffect("1d6", 0, "lightning"),),
                 ),
             ),
@@ -346,7 +348,7 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
     actor.creature.stat_block_actions["Reaping Scythe"] = (
         AutomaticActionDefinition(
             name="Reaping Scythe",
-            target=ActionTarget(kind="creature", range_feet=5),
+            target=CapabilityTarget(kind="creature", range_feet=5),
             effects=(DamageEffect("1d8", 3, "slashing"),),
             resource=ActionResource(
                 kind="uses",
@@ -407,11 +409,11 @@ def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save(
     actor.creature.stat_block_actions["Acid Spray"] = (
         SavingThrowActionDefinition(
             name="Acid Spray",
-            target=ActionTarget(kind="creature", range_feet=5),
+            target=CapabilityTarget(kind="creature", range_feet=5),
             ability="dex",
             dc=20,
             failure=(
-                ActionOutcomeStage(
+                OutcomeStage(
                     effects=(DamageEffect("2d6", 0, "acid"),),
                 ),
             ),
@@ -467,7 +469,7 @@ def test_unsupported_stat_block_effect_is_rejected_before_execution() -> None:
     actor.creature.stat_block_actions["Paralyze"] = (
         AutomaticActionDefinition(
             name="Paralyze",
-            target=ActionTarget(kind="creature", range_feet=5),
+            target=CapabilityTarget(kind="creature", range_feet=5),
             effects=(ConditionEffect("paralyzed"),),
         )
     )
@@ -498,7 +500,7 @@ def test_recharge_stat_block_resource_becomes_available_on_required_roll(
     creature = session.encounter_state.active_creature_state.creature
     creature.stat_block_actions["Breath"] = AutomaticActionDefinition(
         name="Breath",
-        target=ActionTarget(kind="creature", range_feet=5),
+        target=CapabilityTarget(kind="creature", range_feet=5),
         effects=(DamageEffect("1d6", 0, "fire"),),
         resource=ActionResource(kind="recharge", minimum=5),
     )
@@ -747,7 +749,7 @@ def test_action_target_requirement_uses_effective_conditions() -> None:
         name="Extract Brain",
         attack_modes=("melee",),
         attack_bonus=0,
-        target=ActionTarget(
+        target=CapabilityTarget(
             kind="creature",
             range_feet=5,
             requirements=(

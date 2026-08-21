@@ -13,7 +13,7 @@ from ..effects.runtime import CreatureRelationship, OngoingEffect
 from ..geometry import GeometryConfig
 from ..rolls.dice import CheckResult, DicePoolResult
 from ..effects.triggered import TriggeredEffect
-from ..creatures.stat_block_actions import ActionEffect, DamageEffect
+from ..capabilities import CapabilityEffect, DamageEffect
 from ..creatures.multiattack import MultiattackStep
 
 CreatureRef = str
@@ -209,7 +209,7 @@ class AttackOutcome:
     weapon_properties: tuple[str, ...] = ()
     additional_damage: int = 0
     additional_damage_details: tuple[dict[str, object], ...] = ()
-    hit_effects: tuple[ActionEffect, ...] = ()
+    hit_effects: tuple[CapabilityEffect, ...] = ()
 
 
 @dataclass
@@ -244,7 +244,7 @@ class AttackSource:
     weapon_name: str | None = None
     weapon_properties: tuple[str, ...] = ()
     additional_damage: tuple[DamageEffect, ...] = ()
-    hit_effects: tuple[ActionEffect, ...] = ()
+    hit_effects: tuple[CapabilityEffect, ...] = ()
     reach_feet: int | None = None
 
 

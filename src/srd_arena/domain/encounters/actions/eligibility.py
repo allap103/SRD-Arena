@@ -3,11 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
+from ...capabilities import ConditionRequirement, CreatureTypeRequirement
 from ...creatures import (
     AttackActionDefinition,
     AutomaticActionDefinition,
-    ConditionRequirement,
-    CreatureTypeRequirement,
     SavingThrowActionDefinition,
     can_grapple,
 )

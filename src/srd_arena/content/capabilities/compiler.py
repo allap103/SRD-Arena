@@ -1,0 +1,149 @@
+"""Compile authored capability primitives into executable domain definitions."""
+
+from typing import TypeGuard, cast
+from collections.abc import Iterable
+
+import srd_arena.domain.capabilities as domain
+
+from . import effects, requirements, targets
+from .durations import EffectDurationSchema
+
+_SHARED_EFFECT_TYPES = (
+    effects.DamageEffectSchema,
+    effects.ConditionEffectSchema,
+    effects.ForcedMovementEffectSchema,
+    effects.SpeedMultiplierEffectSchema,
+    effects.ProhibitReactionEffectSchema,
+    effects.TurnEconomyRestrictionEffectSchema,
+    effects.RollModifierEffectSchema,
+    effects.ControlEffectSchema,
+    effects.GainMemoriesEffectSchema,
+)
+
+
+def is_shared_effect(value: object) -> TypeGuard[effects.ActionEffectSchema]:
+    return isinstance(value, _SHARED_EFFECT_TYPES)
+
+
+def compile_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
+    return domain.CapabilityTarget(
+        kind=value.type,
+        range_feet=getattr(value, "range_feet", None),
+        shape=getattr(value, "shape", None),
+        size_feet=getattr(value, "size_feet", None),
+        width_feet=getattr(value, "width_feet", None),
+        origin=getattr(value, "origin", "self"),
+        line_of_sight=getattr(value, "line_of_sight", False),
+        requirements=tuple(
+            compile_requirement(requirement)
+            for requirement in getattr(value, "requirements", ())
+        ),
+    )
+
+
+def compile_requirement(
+    value: requirements.ActionRequirementSchema,
+) -> domain.CapabilityRequirement:
+    if isinstance(value, requirements.SizeRequirementSchema):
+        return domain.SizeRequirement(value.maximum, value.minimum)
+    if isinstance(value, requirements.ConditionRequirementSchema):
+        return domain.ConditionRequirement(
+            tuple(value.conditions),
+            value.match,
+            value.applied_by,
+        )
+    if isinstance(value, requirements.CreatureTypeRequirementSchema):
+        return domain.CreatureTypeRequirement(tuple(value.creature_types))
+    return domain.NotAffectedRequirement(value.action)
+
+
+def compile_duration(value: EffectDurationSchema | None) -> domain.EffectDuration | None:
+    if value is None:
+        return None
+    return domain.EffectDuration(
+        kind=value.type,
+        amount=getattr(value, "amount", None),
+        unit=getattr(value, "unit", None),
+        creature=getattr(value, "creature", None),
+        turn_offset=getattr(value, "turn_offset", 0),
+        events=tuple(getattr(value, "events", ())),
+    )
+
+
+def compile_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
+    if isinstance(value, effects.DamageEffectSchema):
+        return domain.DamageEffect(
+            value.dice,
+            value.bonus,
+            value.damage_type,
+            value.minimum,
+            tuple(
+                domain.AttackRollModeRequirement(requirement.mode)
+                for requirement in value.requirements
+            ),
+        )
+    if isinstance(value, effects.ConditionEffectSchema):
+        return domain.ConditionEffect(
+            condition=value.condition,
+            duration=compile_duration(value.duration),
+            requirements=tuple(
+                compile_requirement(requirement)
+                for requirement in value.requirements
+            ),
+            escape_dc=value.escape_dc,
+            source_capacity=value.source_capacity,
+            ends_on=tuple(value.ends_on),
+        )
+    if isinstance(value, effects.ForcedMovementEffectSchema):
+        return domain.ForcedMovementEffect(
+            value.direction,
+            value.distance_feet,
+            value.up_to,
+        )
+    if isinstance(value, effects.SpeedMultiplierEffectSchema):
+        return domain.SpeedMultiplierEffect(
+            value.numerator,
+            value.denominator,
+            _required_duration(value.duration),
+        )
+    if isinstance(value, effects.ProhibitReactionEffectSchema):
+        return domain.ProhibitReactionsEffect(_required_duration(value.duration))
+    if isinstance(value, effects.TurnEconomyRestrictionEffectSchema):
+        return domain.TurnEconomyRestrictionEffect(
+            tuple(value.choose_between),
+            _required_duration(value.duration),
+        )
+    if isinstance(value, effects.RollModifierEffectSchema):
+        return domain.RollModifierEffect(
+            value.roll,
+            value.mode,
+            value.ability,
+            value.dice,
+            value.value,
+            compile_duration(value.duration),
+        )
+    if isinstance(value, effects.ControlEffectSchema):
+        return domain.ControlEffect(
+            value.communication,
+            value.communication_range_feet,
+            value.control_range_feet,
+            _required_duration(value.duration),
+        )
+    memories = cast(effects.GainMemoriesEffectSchema, value)
+    return domain.GainMemoriesEffect(
+        domain.CreatureTypeRequirement(tuple(memories.requirement.creature_types)),
+        memories.trigger,
+    )
+
+
+def compile_outcome(
+    values: Iterable[effects.ActionEffectSchema],
+) -> domain.Outcome:
+    return domain.Outcome(tuple(compile_effect(value) for value in values))
+
+
+def _required_duration(value: EffectDurationSchema) -> domain.EffectDuration:
+    duration = compile_duration(value)
+    if duration is None:
+        raise ValueError("This effect requires a duration.")
+    return duration

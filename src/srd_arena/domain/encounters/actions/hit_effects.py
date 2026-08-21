@@ -3,11 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Callable
 
 from ...creatures import size_rank
-from ...creatures.stat_block_actions import (
-    ActionEffect,
-    ConditionEffect,
-    SizeRequirement,
-)
+from ...capabilities import CapabilityEffect, ConditionEffect, SizeRequirement
 from ...effects.results import EffectResult
 from ...effects.application import condition_from_effect_with_origin
 from ...effects.conditions import Condition, build_applied_condition
@@ -18,7 +14,7 @@ if TYPE_CHECKING:
     from ..encounter import EncounterState
 
 HitEffectHandler = Callable[
-    ["EncounterState", str, str, ActionEffect, EncounterProgress, str],
+    ["EncounterState", str, str, CapabilityEffect, EncounterProgress, str],
     None,
 ]
 
@@ -28,7 +24,7 @@ def apply_attack_hit_effects(
     *,
     attacker_ref: str,
     target_ref: str,
-    effects: tuple[ActionEffect, ...],
+    effects: tuple[CapabilityEffect, ...],
     progress: EncounterProgress,
     origin_id: str | None = None,
 ) -> None:
@@ -50,7 +46,7 @@ def _apply_condition(
     state: EncounterState,
     attacker_ref: str,
     target_ref: str,
-    effect: ActionEffect,
+    effect: CapabilityEffect,
     progress: EncounterProgress,
     origin_id: str,
 ) -> None:
@@ -146,6 +142,6 @@ def _condition_duration(
     return Indefinite()
 
 
-_HIT_EFFECT_HANDLERS: dict[type[ActionEffect], HitEffectHandler] = {
+_HIT_EFFECT_HANDLERS: dict[type[CapabilityEffect], HitEffectHandler] = {
     ConditionEffect: _apply_condition,
 }

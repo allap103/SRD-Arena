@@ -24,7 +24,7 @@ from srd_arena.domain.spells import (
     FollowUpSpellResolution,
     SpellDamage,
 )
-from srd_arena.domain.creatures import CreatureTypeRequirement
+from srd_arena.domain.capabilities import CreatureTypeRequirement
 
 
 @overload
