@@ -112,7 +112,7 @@ def build_creature(
         spells,
     )
 
-    stat_block_actions = build_stat_block_actions(stat_block)
+    stat_block_actions = build_stat_block_actions(stat_block, spells)
     multiattack_action = (
         next(
             (

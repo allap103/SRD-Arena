@@ -1,5 +1,5 @@
 import re
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 from . import schema
 from srd_arena.content.capabilities import AutomaticResolutionSchema
@@ -15,9 +15,13 @@ from srd_arena.content.creatures.stat_block_schema import (
 from srd_arena.domain.creatures import stat_block_actions as domain
 import srd_arena.domain.capabilities as shared_domain
 
+if TYPE_CHECKING:
+    from srd_arena.content.spells import SpellCatalog
+
 
 def build_stat_block_actions(
     stat_block: BestiaryMonsterSchema | None,
+    spells: "SpellCatalog | None" = None,
 ) -> dict[str, domain.StatBlockActionDefinition]:
     if stat_block is None:
         return {}
@@ -99,7 +103,7 @@ def build_stat_block_actions(
                 name=action.name,
                 ability=capability.ability,
                 spells=tuple(
-                    _spell_option(spell)
+                    _spell_option(spell, spells)
                     for spell in capability.spells
                 ),
                 shared_resource=_resource(capability.shared_resource),
@@ -259,7 +263,15 @@ def _resource(value) -> domain.ActionResource | None:
     )
 
 
-def _spell_option(spell: schema.SpellOptionSchema) -> domain.SpellOption:
+def _spell_option(
+    spell: schema.SpellOptionSchema,
+    catalog: "SpellCatalog | None",
+) -> domain.SpellOption:
+    resolved = None
+    if catalog is not None:
+        from srd_arena.content.spells import build_spell
+
+        resolved = build_spell(spell.name, spell.source, catalog)
     pool = None
     cost = None
     if isinstance(spell.uses, int):
@@ -270,6 +282,14 @@ def _spell_option(spell: schema.SpellOptionSchema) -> domain.SpellOption:
             refresh="day",
         )
         cost = shared_domain.PoolUseCost(pool_id)
+    grant = None
+    if resolved is not None and resolved.grant is not None:
+        grant = shared_domain.CapabilityGrant(
+            id=resolved.grant.id,
+            definition=resolved.grant.definition,
+            activation=resolved.grant.activation,
+            cost=cost,
+        )
     return domain.SpellOption(
         name=spell.name,
         source=spell.source,
@@ -277,6 +297,8 @@ def _spell_option(spell: schema.SpellOptionSchema) -> domain.SpellOption:
         uses=spell.uses,
         resource_pool=pool,
         cost=cost,
+        spell=resolved,
+        grant=grant,
     )
 
 

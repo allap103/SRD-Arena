@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from ..capabilities import (
     CapabilityEffect,
@@ -10,6 +10,9 @@ from ..capabilities import (
     ResourcePoolDefinition,
     ResourceCost,
 )
+
+if TYPE_CHECKING:
+    from ..spells import Spell
 
 @dataclass(frozen=True)
 class DeclaredStatBlockAction:
@@ -79,6 +82,8 @@ class SpellOption:
     uses: int | Literal["at_will"] | None = None
     resource_pool: ResourcePoolDefinition | None = None
     cost: ResourceCost | None = None
+    spell: "Spell | None" = None
+    grant: CapabilityGrant | None = None
 
 
 @dataclass(frozen=True)

@@ -157,6 +157,7 @@ def test_spell_grants_describe_activation_and_slot_cost() -> None:
 
 
 def test_npc_spell_uses_are_separate_from_player_spell_slots() -> None:
+    spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     monster = BestiaryMonsterSchema.model_validate(
         {
             "name": "Test Mage",
@@ -186,7 +187,7 @@ def test_npc_spell_uses_are_separate_from_player_spell_slots() -> None:
         }
     )
 
-    spellcasting = build_stat_block_actions(monster)["Spellcasting"]
+    spellcasting = build_stat_block_actions(monster, spells)["Spellcasting"]
     assert isinstance(spellcasting, SpellcastingActionDefinition)
     fireball, fire_bolt = spellcasting.spells
 
@@ -195,5 +196,14 @@ def test_npc_spell_uses_are_separate_from_player_spell_slots() -> None:
     assert fireball.resource_pool.refresh == "day"
     assert isinstance(fireball.cost, PoolUseCost)
     assert fireball.cost.pool_id == fireball.resource_pool.id
+    assert fireball.spell is not None
+    assert fireball.spell.name == "Fireball"
+    assert fireball.spell.grant is not None
+    assert fireball.grant is not None
+    assert fireball.grant.definition == fireball.spell.grant.definition
+    assert fireball.grant.cost == fireball.cost
     assert fire_bolt.resource_pool is None
     assert fire_bolt.cost is None
+    assert fire_bolt.spell is not None
+    assert fire_bolt.grant is not None
+    assert fire_bolt.grant.cost is None
