@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from ...creatures import Creature, MultiattackStep
-from ...capabilities import CapabilityEffect, ConditionEffect, DamageEffect
+from ...capabilities import (
+    CapabilityEffect,
+    ConditionEffect,
+    DamageEffect,
+    RechargePool,
+)
 from ...creatures.stat_block_actions import (
     AutomaticActionDefinition,
     AttackActionDefinition,
@@ -75,10 +80,8 @@ def stat_block_action_resource_available(
     action_name: str,
 ) -> bool:
     definition = creature.stat_block_actions.get(action_name)
-    resource = getattr(definition, "resource", None)
-    if resource is None:
-        resource = getattr(definition, "shared_resource", None)
-    if resource is None:
+    resource_pool = getattr(definition, "resource_pool", None)
+    if resource_pool is None:
         return True
     return creature.stat_block_action_resources.get(action_name, 0) > 0
 
@@ -162,13 +165,12 @@ def consume_stat_block_action_resource(
 
 def recharge_stat_block_actions(creature: Creature) -> None:
     for name, definition in creature.stat_block_actions.items():
-        resource = getattr(definition, "resource", None)
-        if resource is None or resource.kind != "recharge":
+        resource_pool = getattr(definition, "resource_pool", None)
+        if not isinstance(resource_pool, RechargePool):
             continue
         if creature.stat_block_action_resources.get(name, 1) > 0:
             continue
-        minimum = resource.minimum or 6
-        if _roll_die(6) >= minimum:
+        if _roll_die(resource_pool.die_sides) >= resource_pool.minimum:
             creature.stat_block_action_resources[name] = 1
 
 

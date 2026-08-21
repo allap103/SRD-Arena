@@ -15,6 +15,7 @@ from .multiattack import Multiattack
 from .spellcasting import Spellcasting
 from .statistics import CreatureStatistics
 from .stat_block_actions import DeclaredStatBlockAction, StatBlockActionDefinition
+from ..capabilities import LimitedUsePool
 
 
 @dataclass
@@ -67,13 +68,11 @@ class Creature:
         if self.current_health is None:
             self.current_health = self.get_max_health()
         for name, definition in self.stat_block_actions.items():
-            resource = getattr(definition, "resource", None)
-            if resource is None:
-                resource = getattr(definition, "shared_resource", None)
-            if resource is None or name in self.stat_block_action_resources:
+            resource_pool = getattr(definition, "resource_pool", None)
+            if resource_pool is None or name in self.stat_block_action_resources:
                 continue
-            if resource.kind == "uses":
-                self.stat_block_action_resources[name] = resource.maximum or 0
+            if isinstance(resource_pool, LimitedUsePool):
+                self.stat_block_action_resources[name] = resource_pool.maximum
             else:
                 self.stat_block_action_resources[name] = 1
 

@@ -48,9 +48,10 @@ from srd_arena.domain.capabilities import (
     ConditionEffect,
     ConditionRequirement,
     CreatureTypeRequirement,
+    LimitedUsePool,
+    RechargePool,
 )
 from srd_arena.domain.creatures import (
-    ActionResource,
     AutomaticActionDefinition,
     AttackActionDefinition,
     SavingThrowActionDefinition,
@@ -350,10 +351,10 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
             name="Reaping Scythe",
             target=CapabilityTarget(kind="creature", range_feet=5),
             effects=(DamageEffect("1d8", 3, "slashing"),),
-            resource=ActionResource(
-                kind="uses",
+            resource_pool=LimitedUsePool(
+                id="stat_block_action:Reaping Scythe",
                 maximum=1,
-                reset="day",
+                refresh="day",
             ),
         )
     )
@@ -502,7 +503,11 @@ def test_recharge_stat_block_resource_becomes_available_on_required_roll(
         name="Breath",
         target=CapabilityTarget(kind="creature", range_feet=5),
         effects=(DamageEffect("1d6", 0, "fire"),),
-        resource=ActionResource(kind="recharge", minimum=5),
+        resource_pool=RechargePool(
+            id="stat_block_action:Breath",
+            die_sides=6,
+            minimum=5,
+        ),
     )
     creature.stat_block_action_resources["Breath"] = 0
     monkeypatch.setattr(

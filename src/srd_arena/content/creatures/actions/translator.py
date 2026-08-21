@@ -72,7 +72,6 @@ def build_stat_block_actions(
                     success=compile_outcome(resolution.success.effects).effects,
                     success_damage=resolution.success_damage,
                     always=compile_outcome(resolution.always.effects).effects,
-                    resource=_resource(capability.resource),
                     capability=compiled,
                     grant=grant,
                     resource_pool=resource_pool,
@@ -93,7 +92,6 @@ def build_stat_block_actions(
                     name=action.name,
                     target=compiled.target,
                     effects=compile_outcome(resolution.outcome.effects).effects,
-                    resource=_resource(capability.resource),
                     capability=compiled,
                     grant=grant,
                     resource_pool=resource_pool,
@@ -106,7 +104,10 @@ def build_stat_block_actions(
                     _spell_option(spell, spells)
                     for spell in capability.spells
                 ),
-                shared_resource=_resource(capability.shared_resource),
+                resource_pool=_resource_pool(
+                    f"stat_block_action:{action.name}",
+                    capability.shared_resource,
+                ),
             )
         else:
             fallback = _parse_tagged_attack(action)
@@ -177,7 +178,6 @@ def _attack_definition(
         range_normal_feet=capability.range_normal_feet,
         range_long_feet=capability.range_long_feet,
         hit=hit.effects,
-        resource=_resource(capability.resource),
         capability=compiled,
         grant=grant,
         resource_pool=resource_pool,
@@ -251,15 +251,22 @@ def _repeat_save(value: schema.RepeatSaveSchema) -> shared_domain.RepeatSave:
     )
 
 
-def _resource(value) -> domain.ActionResource | None:
+def _resource_pool(
+    pool_id: str,
+    value: schema.ActionResourceSchema | None,
+) -> shared_domain.ResourcePoolDefinition | None:
     if value is None:
         return None
-    return domain.ActionResource(
-        kind=value.type,
-        maximum=getattr(value, "maximum", None),
-        reset=getattr(value, "reset", None),
-        die=getattr(value, "die", None),
-        minimum=getattr(value, "minimum", None),
+    if isinstance(value, schema.UsesResourceSchema):
+        return shared_domain.LimitedUsePool(
+            id=pool_id,
+            maximum=value.maximum,
+            refresh=value.reset,
+        )
+    return shared_domain.RechargePool(
+        id=pool_id,
+        die_sides=int(value.die.removeprefix("d")),
+        minimum=value.minimum,
     )
 
 
@@ -320,18 +327,8 @@ def _grant(
             None,
         )
     pool_id = f"stat_block_action:{action_name}"
-    if isinstance(resource, schema.UsesResourceSchema):
-        pool: shared_domain.ResourcePoolDefinition = shared_domain.LimitedUsePool(
-            id=pool_id,
-            maximum=resource.maximum,
-            refresh=resource.reset,
-        )
-    else:
-        pool = shared_domain.RechargePool(
-            id=pool_id,
-            die_sides=int(resource.die.removeprefix("d")),
-            minimum=resource.minimum,
-        )
+    pool = _resource_pool(pool_id, resource)
+    assert pool is not None
     return (
         shared_domain.CapabilityGrant(
             id=action_name,

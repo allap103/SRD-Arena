@@ -23,15 +23,6 @@ class DeclaredStatBlockAction:
     section: Literal["action", "bonus_action"] = "action"
 
 @dataclass(frozen=True)
-class ActionResource:
-    kind: Literal["uses", "recharge"]
-    maximum: int | None = None
-    reset: str | None = None
-    die: str | None = None
-    minimum: int | None = None
-
-
-@dataclass(frozen=True)
 class AttackActionDefinition:
     name: str
     attack_modes: tuple[str, ...]
@@ -41,7 +32,6 @@ class AttackActionDefinition:
     range_normal_feet: int | None
     range_long_feet: int | None
     hit: tuple[CapabilityEffect, ...]
-    resource: ActionResource | None = None
     capability: CapabilityDefinition | None = None
     grant: CapabilityGrant | None = None
     resource_pool: ResourcePoolDefinition | None = None
@@ -57,7 +47,6 @@ class SavingThrowActionDefinition:
     success: tuple[CapabilityEffect, ...]
     success_damage: Literal["none", "half"]
     always: tuple[CapabilityEffect, ...]
-    resource: ActionResource | None = None
     capability: CapabilityDefinition | None = None
     grant: CapabilityGrant | None = None
     resource_pool: ResourcePoolDefinition | None = None
@@ -68,7 +57,6 @@ class AutomaticActionDefinition:
     name: str
     target: CapabilityTarget
     effects: tuple[CapabilityEffect, ...]
-    resource: ActionResource | None = None
     capability: CapabilityDefinition | None = None
     grant: CapabilityGrant | None = None
     resource_pool: ResourcePoolDefinition | None = None
@@ -91,7 +79,7 @@ class SpellcastingActionDefinition:
     name: str
     ability: str
     spells: tuple[SpellOption, ...]
-    shared_resource: ActionResource | None = None
+    resource_pool: ResourcePoolDefinition | None = None
 
 
 StatBlockActionDefinition = (

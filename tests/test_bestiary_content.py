@@ -24,11 +24,14 @@ from srd_arena.content.creatures.actions.multiattack import (
     StatBlockActionInvocationSchema,
 )
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
-from srd_arena.domain.capabilities import AttackRollModeRequirement, DamageEffect
+from srd_arena.domain.capabilities import (
+    AttackRollModeRequirement,
+    DamageEffect,
+    LimitedUsePool,
+)
 from srd_arena.domain.creatures import (
     AutomaticActionDefinition,
     AttackActionDefinition,
-    ActionResource,
     SavingThrowActionDefinition,
     SpellcastingActionDefinition,
 )
@@ -269,10 +272,10 @@ def test_bestiary_core_statistics_build_a_domain_creature() -> None:
     )
     dominate = creature.stat_block_actions["Dominate Mind (2/Day)"]
     assert isinstance(dominate, SavingThrowActionDefinition)
-    assert dominate.resource == ActionResource(
-        kind="uses",
+    assert dominate.resource_pool == LimitedUsePool(
+        id="stat_block_action:Dominate Mind (2/Day)",
         maximum=2,
-        reset="day",
+        refresh="day",
     )
     saving_throw = resolve_saving_throw(
         creature,

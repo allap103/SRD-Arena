@@ -18,7 +18,6 @@ from .multiattack import (
 from .size import can_grapple, is_two_sizes_smaller, normalize_size, size_rank
 from .spellcasting import Spellcasting
 from .stat_block_actions import (
-    ActionResource,
     AutomaticActionDefinition,
     AttackActionDefinition,
     DeclaredStatBlockAction,
@@ -47,7 +46,6 @@ __all__ = [
     "MultiattackStep",
     "SubclassRef",
     "Spellcasting",
-    "ActionResource",
     "AutomaticActionDefinition",
     "AttackActionDefinition",
     "DeclaredStatBlockAction",
