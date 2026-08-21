@@ -219,6 +219,38 @@ def test_build_roll_views_extracts_spell_damage_dice():
     assert damage.total == 13
 
 
+def test_spell_damage_view_explains_save_and_defense_reductions():
+    event = CombatEvent(
+        seq=1,
+        type="spell_cast",
+        data={
+            "spell_name": "Phantasmal Killer",
+            "damage_roll_details": [
+                {
+                    "target_label": "Veteran",
+                    "dice": "4d10",
+                    "dice_values": [5, 5, 5, 5],
+                    "die_rolls": [[5], [5], [5], [5]],
+                    "dice_total": 20,
+                    "modifier": 0,
+                    "total": 20,
+                    "saved": True,
+                    "final_damage": 10,
+                    "applied_damage": 5,
+                }
+            ],
+        },
+    )
+
+    [damage] = build_roll_views([event])
+
+    assert damage.total == 20
+    assert damage.resolution_notes == (
+        "Successful save: 10 damage",
+        "Applied to target: 5 damage",
+    )
+
+
 def test_build_roll_views_extracts_ongoing_spell_save_and_damage():
     event = CombatEvent(
         seq=1,

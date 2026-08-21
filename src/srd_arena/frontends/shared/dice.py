@@ -24,6 +24,7 @@ class RollView:
     target: int | None = None
     success: bool | None = None
     roll_id: str | None = None
+    resolution_notes: tuple[str, ...] = ()
 
 
 def build_roll_views(events: list[CombatEvent]) -> list[RollView]:
@@ -296,7 +297,26 @@ def _pool_roll_view(
         modifier=modifier,
         total=total,
         roll_id=roll_id if isinstance(roll_id, str) else None,
+        resolution_notes=_damage_resolution_notes(detail, total),
     )
+
+
+def _damage_resolution_notes(
+    detail: dict[str, object],
+    rolled_total: int,
+) -> tuple[str, ...]:
+    notes: list[str] = []
+    final_damage = detail.get("final_damage")
+    applied_damage = detail.get("applied_damage")
+    saved = detail.get("saved")
+    if saved is True and isinstance(final_damage, int):
+        notes.append(f"Successful save: {final_damage} damage")
+    elif isinstance(final_damage, int) and final_damage != rolled_total:
+        notes.append(f"Resolved damage: {final_damage}")
+    resolved_damage = final_damage if isinstance(final_damage, int) else rolled_total
+    if isinstance(applied_damage, int) and applied_damage != resolved_damage:
+        notes.append(f"Applied to target: {applied_damage} damage")
+    return tuple(notes)
 
 
 def _individual_dice_views(

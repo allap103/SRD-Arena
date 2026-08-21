@@ -266,6 +266,13 @@ class DiceRollPanel(QWidget):
         summary_label.setWordWrap(True)
         summary_label.setStyleSheet("QLabel { font-weight: 600; }")
         layout.addWidget(summary_label)
+        if roll.resolution_notes:
+            resolution_label = QLabel("\n".join(roll.resolution_notes))
+            resolution_label.setWordWrap(True)
+            resolution_label.setStyleSheet(
+                "QLabel { color: #8a4b08; font-weight: 600; }"
+            )
+            layout.addWidget(resolution_label)
         return row
 
 
