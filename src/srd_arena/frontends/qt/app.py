@@ -1915,10 +1915,7 @@ class GameWindow(QMainWindow):
             self._presentation is not None and self._presentation.encounter is not None
         )
         is_combat_result = was_in_encounter or encounter_state is not None
-        if (
-            encounter_state is not None
-            and self._combat_log_scene_id != encounter_state.encounter_id
-        ):
+        if encounter_state is not None:
             self._sync_combat_log_round(encounter_state.encounter_id)
         if is_combat_result:
             roll_views = build_roll_views(result.events)
@@ -1957,7 +1954,8 @@ class GameWindow(QMainWindow):
         encounter_state = self.session.encounter_state
         if encounter_state is None:
             return
-        if self._combat_log_scene_id != scene_id:
+        entering_encounter = self._combat_log_scene_id != scene_id
+        if entering_encounter:
             self.dice_roll_panel.clear_log()
             self._combat_log_scene_id = scene_id
             self._logged_round_number = None
@@ -1965,6 +1963,11 @@ class GameWindow(QMainWindow):
             return
         self.dice_roll_panel.start_round(encounter_state.round_number)
         self._logged_round_number = encounter_state.round_number
+        if entering_encounter:
+            creature_ref = encounter_state.active_creature()
+            self.dice_roll_panel.start_turn(
+                f"{encounter_state.creatures[creature_ref].creature.name}'s turn"
+            )
         QTimer.singleShot(20, self._scroll_roll_log_to_bottom)
 
     def _pending_area_overlay(

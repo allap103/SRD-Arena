@@ -233,6 +233,10 @@ class TurnEngine:
         creature_state.attacks_remaining = 0
         creature_state.pending_multiattack.clear()
         creature_state.bonus_action_available = True
+        if progress is not None:
+            progress.messages.append(
+                ("turn", f"{creature_state.creature.name}'s turn")
+            )
 
     def expire_conditions_for_turn_end(
         self,

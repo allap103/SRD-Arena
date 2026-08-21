@@ -143,6 +143,13 @@ class DiceRollPanel(QWidget):
         self._insert_widget(announcement)
         self._has_content = True
 
+    def start_turn(self, label: str) -> None:
+        announcement = QLabel(label)
+        announcement.setWordWrap(True)
+        announcement.setStyleSheet("QLabel { font-weight: 700; }")
+        self._insert_widget(announcement)
+        self._has_content = True
+
     def append_entry(
         self,
         messages: list[tuple[str, str]],
@@ -151,12 +158,22 @@ class DiceRollPanel(QWidget):
         if not messages and not rolls:
             return
 
+        regular_messages: list[str] = []
+        for channel, message in messages:
+            if channel == "turn":
+                self.start_turn(message)
+            else:
+                regular_messages.append(message)
+
+        if not regular_messages and not rolls:
+            return
+
         entry = QWidget()
         entry_layout = QVBoxLayout(entry)
         entry_layout.setContentsMargins(0, 0, 0, 0)
         entry_layout.setSpacing(6)
-        if messages:
-            message_label = QLabel("\n".join(message for _, message in messages))
+        if regular_messages:
+            message_label = QLabel("\n".join(regular_messages))
             message_label.setWordWrap(True)
             entry_layout.addWidget(message_label)
         for roll in rolls:
