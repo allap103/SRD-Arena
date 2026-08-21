@@ -6,6 +6,9 @@ from ..capabilities import (
     OutcomeStage,
     CapabilityTarget,
     CapabilityDefinition,
+    CapabilityGrant,
+    ResourcePoolDefinition,
+    ResourceCost,
 )
 
 @dataclass(frozen=True)
@@ -37,6 +40,8 @@ class AttackActionDefinition:
     hit: tuple[CapabilityEffect, ...]
     resource: ActionResource | None = None
     capability: CapabilityDefinition | None = None
+    grant: CapabilityGrant | None = None
+    resource_pool: ResourcePoolDefinition | None = None
 
 
 @dataclass(frozen=True)
@@ -51,6 +56,8 @@ class SavingThrowActionDefinition:
     always: tuple[CapabilityEffect, ...]
     resource: ActionResource | None = None
     capability: CapabilityDefinition | None = None
+    grant: CapabilityGrant | None = None
+    resource_pool: ResourcePoolDefinition | None = None
 
 
 @dataclass(frozen=True)
@@ -60,6 +67,8 @@ class AutomaticActionDefinition:
     effects: tuple[CapabilityEffect, ...]
     resource: ActionResource | None = None
     capability: CapabilityDefinition | None = None
+    grant: CapabilityGrant | None = None
+    resource_pool: ResourcePoolDefinition | None = None
 
 
 @dataclass(frozen=True)
@@ -68,6 +77,8 @@ class SpellOption:
     source: str | None = None
     cast_level: int | None = None
     uses: int | Literal["at_will"] | None = None
+    resource_pool: ResourcePoolDefinition | None = None
+    cost: ResourceCost | None = None
 
 
 @dataclass(frozen=True)

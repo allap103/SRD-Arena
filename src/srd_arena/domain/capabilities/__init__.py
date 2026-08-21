@@ -37,6 +37,16 @@ from .models import (
     SpeedMultiplierEffect,
     TurnEconomyRestrictionEffect,
 )
+from .grants import (
+    CapabilityGrant,
+    LimitedUsePool,
+    PoolUseCost,
+    RechargePool,
+    ResourceCost,
+    ResourcePoolDefinition,
+    SpellSlotCost,
+    SpellSlotPool,
+)
 
 __all__ = [
     "CapabilityEffect",
@@ -49,6 +59,7 @@ __all__ = [
     "AttackRollModeRequirement",
     "AutomaticResolution",
     "CapabilityDefinition",
+    "CapabilityGrant",
     "CapabilityResolution",
     "ConditionEffect",
     "ConditionRequirement",
@@ -65,11 +76,18 @@ __all__ = [
     "GainMemoriesEffect",
     "NotAffectedRequirement",
     "Outcome",
+    "LimitedUsePool",
+    "PoolUseCost",
     "ProhibitReactionsEffect",
     "RepeatSave",
     "RollModifierEffect",
+    "RechargePool",
+    "ResourceCost",
+    "ResourcePoolDefinition",
     "SavingThrowResolution",
     "SizeRequirement",
     "SpeedMultiplierEffect",
+    "SpellSlotCost",
+    "SpellSlotPool",
     "TurnEconomyRestrictionEffect",
 ]

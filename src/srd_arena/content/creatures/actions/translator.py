@@ -54,6 +54,11 @@ def build_stat_block_actions(
                         success_damage=resolution.success_damage,
                     ),
                 )
+                grant, resource_pool = _grant(
+                    action.name,
+                    compiled,
+                    capability.resource,
+                )
                 definitions[action.name] = domain.SavingThrowActionDefinition(
                     name=action.name,
                     target=compiled.target,
@@ -65,6 +70,8 @@ def build_stat_block_actions(
                     always=compile_outcome(resolution.always.effects).effects,
                     resource=_resource(capability.resource),
                     capability=compiled,
+                    grant=grant,
+                    resource_pool=resource_pool,
                 )
             elif isinstance(resolution, AutomaticResolutionSchema):
                 compiled = shared_domain.CapabilityDefinition(
@@ -73,24 +80,26 @@ def build_stat_block_actions(
                         compile_outcome(resolution.outcome.effects)
                     ),
                 )
+                grant, resource_pool = _grant(
+                    action.name,
+                    compiled,
+                    capability.resource,
+                )
                 definitions[action.name] = domain.AutomaticActionDefinition(
                     name=action.name,
                     target=compiled.target,
                     effects=compile_outcome(resolution.outcome.effects).effects,
                     resource=_resource(capability.resource),
                     capability=compiled,
+                    grant=grant,
+                    resource_pool=resource_pool,
                 )
         elif isinstance(capability, schema.SpellcastingCapabilitySchema):
             definitions[action.name] = domain.SpellcastingActionDefinition(
                 name=action.name,
                 ability=capability.ability,
                 spells=tuple(
-                    domain.SpellOption(
-                        name=spell.name,
-                        source=spell.source,
-                        cast_level=spell.cast_level,
-                        uses=spell.uses,
-                    )
+                    _spell_option(spell)
                     for spell in capability.spells
                 ),
                 shared_resource=_resource(capability.shared_resource),
@@ -154,6 +163,7 @@ def _attack_definition(
             hit=hit,
         ),
     )
+    grant, resource_pool = _grant(action.name, compiled, capability.resource)
     return domain.AttackActionDefinition(
         name=action.name,
         attack_modes=tuple(capability.attack_modes),
@@ -165,6 +175,8 @@ def _attack_definition(
         hit=hit.effects,
         resource=_resource(capability.resource),
         capability=compiled,
+        grant=grant,
+        resource_pool=resource_pool,
     )
 
 
@@ -244,4 +256,66 @@ def _resource(value) -> domain.ActionResource | None:
         reset=getattr(value, "reset", None),
         die=getattr(value, "die", None),
         minimum=getattr(value, "minimum", None),
+    )
+
+
+def _spell_option(spell: schema.SpellOptionSchema) -> domain.SpellOption:
+    pool = None
+    cost = None
+    if isinstance(spell.uses, int):
+        pool_id = f"stat_block_spell:{spell.name}"
+        pool = shared_domain.LimitedUsePool(
+            id=pool_id,
+            maximum=spell.uses,
+            refresh="day",
+        )
+        cost = shared_domain.PoolUseCost(pool_id)
+    return domain.SpellOption(
+        name=spell.name,
+        source=spell.source,
+        cast_level=spell.cast_level,
+        uses=spell.uses,
+        resource_pool=pool,
+        cost=cost,
+    )
+
+
+def _grant(
+    action_name: str,
+    definition: shared_domain.CapabilityDefinition,
+    resource: schema.ActionResourceSchema | None,
+) -> tuple[
+    shared_domain.CapabilityGrant,
+    shared_domain.ResourcePoolDefinition | None,
+]:
+    if resource is None:
+        return (
+            shared_domain.CapabilityGrant(
+                id=action_name,
+                definition=definition,
+                activation="action",
+            ),
+            None,
+        )
+    pool_id = f"stat_block_action:{action_name}"
+    if isinstance(resource, schema.UsesResourceSchema):
+        pool: shared_domain.ResourcePoolDefinition = shared_domain.LimitedUsePool(
+            id=pool_id,
+            maximum=resource.maximum,
+            refresh=resource.reset,
+        )
+    else:
+        pool = shared_domain.RechargePool(
+            id=pool_id,
+            die_sides=int(resource.die.removeprefix("d")),
+            minimum=resource.minimum,
+        )
+    return (
+        shared_domain.CapabilityGrant(
+            id=action_name,
+            definition=definition,
+            activation="action",
+            cost=shared_domain.PoolUseCost(pool_id),
+        ),
+        pool,
     )
