@@ -62,7 +62,7 @@
     "ST"
   ]
   ,"implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "line_of_sight": true, "requirements": [{"type": "creature_type", "creature_types": ["beast"]}]},
     "resolution": {"type": "saving_throw", "ability": "wis", "failure": {"effects": [{"type": "condition", "condition": "charmed"}]}},
     "scaling": [{"type": "slot_level", "above_level": 1, "per_level": [{"type": "target_count", "amount": 1}]}],

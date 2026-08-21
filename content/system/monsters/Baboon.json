@@ -44,7 +44,7 @@
       "entries": [
         "{@atkr m} {@hit 1}, reach 5 ft. {@h}1 ({@damage 1d4 - 1}) Piercing damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"

@@ -59,7 +59,7 @@
     "ST"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "disposition": "enemy", "line_of_sight": true},
     "resolution": {
       "type": "saving_throw",

@@ -4,13 +4,13 @@ from pydantic import Field, model_validator
 
 from srd_arena.content.common.schema import SourceModel
 from .actions.multiattack import (
-    MultiattackMechanicsSchema,
+    MultiattackCapabilitySchema,
     iter_stat_block_references,
 )
-from .actions.schema import NonMultiattackMechanicsSchema
+from .actions.schema import NonMultiattackCapabilitySchema
 
-BestiaryActionMechanicsSchema = (
-    MultiattackMechanicsSchema | NonMultiattackMechanicsSchema
+BestiaryCapabilitySchema = (
+    MultiattackCapabilitySchema | NonMultiattackCapabilitySchema
 )
 
 
@@ -74,30 +74,19 @@ class BestiarySpeedSchema(SourceModel):
 class BestiaryActionSchema(SourceModel):
     name: str
     entries: list[object] = Field(default_factory=list)
-    mechanics: BestiaryActionMechanicsSchema | None = Field(
+    capability: BestiaryCapabilitySchema | None = Field(
         default=None,
         discriminator="type",
     )
 
     @model_validator(mode="before")
     @classmethod
-    def reject_obsolete_mechanics_key(cls, value: object) -> object:
+    def reject_legacy_multiattack_key(cls, value: object) -> object:
         if isinstance(value, dict) and "srdArenaMultiattack" in value:
             raise ValueError(
-                "Use 'mechanics' instead of the obsolete "
+                "Use 'capability' instead of the obsolete "
                 "'srdArenaMultiattack' key."
             )
-        if isinstance(value, dict):
-            mechanics = value.get("mechanics")
-            if (
-                isinstance(mechanics, dict)
-                and "type" not in mechanics
-                and "plans" in mechanics
-            ):
-                return {
-                    **value,
-                    "mechanics": {"type": "multiattack", **mechanics},
-                }
         return value
 
 
@@ -154,10 +143,10 @@ class BestiaryMonsterSchema(SourceModel):
             )
         }
         for action in self.action:
-            mechanics = action.mechanics
-            if not isinstance(mechanics, MultiattackMechanicsSchema):
+            capability = action.capability
+            if not isinstance(capability, MultiattackCapabilitySchema):
                 continue
-            for section, name in iter_stat_block_references(mechanics):
+            for section, name in iter_stat_block_references(capability):
                 if _reference_name(name) not in sections[section]:
                     raise ValueError(
                         f"Multiattack references missing {section} entry "

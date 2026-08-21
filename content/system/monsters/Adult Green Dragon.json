@@ -113,7 +113,7 @@
       "entries": [
         "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Mind Spike|XPHB} (level 3 version)."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -154,7 +154,7 @@
       "entries": [
         "{@atkr m} {@hit 11}, reach 10 ft. {@h}15 ({@damage 2d8 + 6}) Slashing damage plus 7 ({@damage 2d6}) Poison damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"

@@ -153,15 +153,15 @@ class MultiattackPlanSchema(MultiattackSchemaModel):
         return self
 
 
-class MultiattackMechanicsSchema(MultiattackSchemaModel):
+class MultiattackCapabilitySchema(MultiattackSchemaModel):
     type: Literal["multiattack"] = "multiattack"
     plans: list[MultiattackPlanSchema] = Field(min_length=1)
 
 
 def iter_stat_block_references(
-    mechanics: MultiattackMechanicsSchema,
+    capability: MultiattackCapabilitySchema,
 ) -> Iterator[tuple[StatBlockSection, str]]:
-    for plan in mechanics.plans:
+    for plan in capability.plans:
         for step in plan.steps:
             invocations = (
                 [step.invocation]
@@ -187,9 +187,9 @@ def _invocation_references(
 
 
 def build_multiattack(
-    mechanics: MultiattackMechanicsSchema | None,
+    capability: MultiattackCapabilitySchema | None,
 ) -> "Multiattack | None":
-    if mechanics is None:
+    if capability is None:
         return None
     return Multiattack(
         plans=tuple(
@@ -227,7 +227,7 @@ def build_multiattack(
                 ),
                 requirement=_build_requirement(plan.requirement),
             )
-            for plan in mechanics.plans
+            for plan in capability.plans
         )
     )
 

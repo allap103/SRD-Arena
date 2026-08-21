@@ -105,7 +105,7 @@
       "entries": [
         "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Sleep Breath or (B) Spellcasting to cast {@spell Scorching Ray|XPHB} (level 3 version)."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -150,7 +150,7 @@
       "entries": [
         "{@atkr m} {@hit 14}, reach 15 ft. {@h}19 ({@damage 2d10 + 8}) Slashing damage plus 7 ({@damage 2d6}) Fire damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -188,7 +188,7 @@
       "entries": [
         "{@actSave con} {@dc 21}, each creature in a 90-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target has the {@condition Incapacitated|XPHB} condition until the end of its next turn, at which point it repeats the save. {@actSaveFail 2} The target has the {@condition Unconscious|XPHB} condition for 10 minutes. This effect ends for the target if it takes damage or a creature within 5 feet of it takes an action to wake it."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "area",

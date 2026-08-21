@@ -453,17 +453,17 @@ def execute_creature_action(
         )
         repeat_target_allocations = bool(
             spell is not None
-            and spell.mechanics is not None
-            and spell.mechanics.repeat_target_allocations
+            and spell.capability is not None
+            and spell.capability.repeat_target_allocations
         )
         require_full_target_count = bool(
             spell is not None
-            and spell.mechanics is not None
-            and spell.mechanics.require_full_target_count
+            and spell.capability is not None
+            and spell.capability.require_full_target_count
         )
         resource_pool_total = (
-            spell.mechanics.healing_pool
-            if spell is not None and spell.mechanics is not None
+            spell.capability.healing_pool
+            if spell is not None and spell.capability is not None
             else None
         )
         selected_targets = list(parse_spell_action_targets(action.value))
@@ -480,8 +480,8 @@ def execute_creature_action(
             maximum_targets = len(resource_allocation_limits)
         if (
             spell is not None
-            and spell.mechanics is not None
-            and spell.mechanics.choose_area_targets
+            and spell.capability is not None
+            and spell.capability.choose_area_targets
             and aim_point is not None
         ):
             selected_targets = [
@@ -497,8 +497,8 @@ def execute_creature_action(
             maximum_targets > 1 and bool(selected_targets)
         ) or (
             spell is not None
-            and spell.mechanics is not None
-            and spell.mechanics.choose_area_targets
+            and spell.capability is not None
+            and spell.capability.choose_area_targets
             and len(selected_targets) > 1
         )
         automated_resolved = False
@@ -507,7 +507,7 @@ def execute_creature_action(
             and self._creature_controller(decision.creature_ref) != "external"
             and spell is not None
         ):
-            assert spell.mechanics is not None
+            assert spell.capability is not None
             if repeat_target_allocations:
                 target_ref = selected_targets[0]
                 selected_targets = [target_ref] * maximum_targets
@@ -536,7 +536,7 @@ def execute_creature_action(
                 )
                 staged_selection_needed = False
                 automated_resolved = True
-            elif not spell.mechanics.choose_area_targets:
+            elif not spell.capability.choose_area_targets:
                 selected_targets = [
                     target.target_ref
                     for target in self._spell_action_targets(

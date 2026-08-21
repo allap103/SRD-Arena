@@ -228,7 +228,7 @@ def test_unenriched_frostwing_breath_is_present_as_unimplemented() -> None:
     assert cold_breath.enabled is False
     assert cold_breath.availability == "unimplemented"
     assert cold_breath.unavailable_reasons == (
-        "No structured mechanics are available for this action.",
+        "No structured capability are available for this action.",
     )
 
 
@@ -484,7 +484,7 @@ def test_unsupported_stat_block_effect_is_rejected_before_execution() -> None:
     eligibility = state.action_eligibility(action)
 
     assert eligibility.allowed is False
-    assert eligibility.failures[-1].code == "unsupported_stat_block_mechanics"
+    assert eligibility.failures[-1].code == "unsupported_stat_block_capability"
     assert actor.actions_remaining == 1
 
 

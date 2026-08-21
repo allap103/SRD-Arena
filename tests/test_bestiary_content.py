@@ -12,8 +12,8 @@ from srd_arena.content.creatures import (
     load_bestiary_catalog,
 )
 from srd_arena.content.creatures.actions.schema import (
-    AttackActionMechanicsSchema,
-    CapabilityActionMechanicsSchema,
+    AttackCapabilitySchema,
+    CapabilitySchema,
 )
 from srd_arena.content.creatures.actions.translator import (
     build_stat_block_actions,
@@ -53,9 +53,9 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     assert goblin.walk_speed == 30
     assert goblin.speed.walk == 30
     assert [action.name for action in goblin.action] == ["Scimitar", "Shortbow"]
-    scimitar = goblin.action[0].mechanics
-    shortbow = goblin.action[1].mechanics
-    assert isinstance(scimitar, AttackActionMechanicsSchema)
+    scimitar = goblin.action[0].capability
+    shortbow = goblin.action[1].capability
+    assert isinstance(scimitar, AttackCapabilitySchema)
     assert scimitar.attack_modes == ["melee"]
     assert scimitar.attack_bonus == 4
     assert scimitar.target.range_feet == 5
@@ -65,7 +65,7 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     assert scimitar.hit[0].damage_type == "slashing"
     assert scimitar.hit[1].dice == "1d4"
     assert scimitar.hit[1].requirements[0].mode == "advantage"
-    assert isinstance(shortbow, AttackActionMechanicsSchema)
+    assert isinstance(shortbow, AttackCapabilitySchema)
     assert shortbow.attack_modes == ["ranged"]
     assert shortbow.attack_bonus == 4
     assert shortbow.target.range_feet == 80
@@ -76,7 +76,7 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     assert shortbow.hit[0].damage_type == "piercing"
     assert shortbow.hit[1].dice == "1d4"
     assert shortbow.hit[1].requirements[0].mode == "advantage"
-    multiattack = aboleth.action[0].mechanics
+    multiattack = aboleth.action[0].capability
     assert multiattack is not None
     assert multiattack.plans[0].steps[0].times == 2
     assert [
@@ -91,7 +91,7 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     assert air_elemental.speed.can_hover is True
 
 
-def test_goblin_actions_build_from_typed_bestiary_mechanics() -> None:
+def test_goblin_actions_build_from_typed_bestiary_capabilities() -> None:
     catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
     creature = build_creature(
         CreatureSchema.model_validate(
@@ -338,7 +338,7 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
         multiattack = next(
             action for action in monster.action if action.name == "Multiattack"
         )
-        assert multiattack.mechanics is not None
+        assert multiattack.capability is not None
         creature = build_creature(
             CreatureSchema.model_validate(
                 {
@@ -359,7 +359,7 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
             )
 
     assassin = catalog.find("Assassin", "XMM")
-    assassin_step = assassin.action[0].mechanics.plans[0].steps[0]
+    assassin_step = assassin.action[0].capability.plans[0].steps[0]
     assert isinstance(assassin_step, ChoiceStepSchema)
     assert [option.name for option in assassin_step.options] == [
         "Shortsword",
@@ -388,12 +388,12 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
 
     black_dragon = catalog.find("Adult Black Dragon", "XMM")
     black_replacement = (
-        black_dragon.action[0].mechanics.plans[0].replacements[0]
+        black_dragon.action[0].capability.plans[0].replacements[0]
     )
     assert black_replacement.options[0].cast_level == 3
 
     white_dragon = catalog.find("Adult White Dragon", "XMM")
-    assert white_dragon.action[0].mechanics.plans[0].replacements == []
+    assert white_dragon.action[0].capability.plans[0].replacements == []
     white_creature = build_creature(
         CreatureSchema.model_validate(
             {
@@ -441,15 +441,15 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
     assert outcome.additional_damage_details[0]["damage_type"] == "cold"
 
 
-def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
+def test_enriched_multiattack_action_references_have_typed_capability() -> None:
     catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
     referenced_actions = []
     for monster in catalog:
         multiattacks = [
-            action.mechanics
+            action.capability
             for action in monster.action
-            if action.mechanics is not None
-            and action.mechanics.type == "multiattack"
+            if action.capability is not None
+            and action.capability.type == "multiattack"
         ]
         for multiattack in multiattacks:
             for plan in multiattack.plans:
@@ -480,10 +480,10 @@ def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
                     )
                     referenced_actions.append(referenced)
                     assert isinstance(
-                        referenced.mechanics,
+                        referenced.capability,
                         (
-                            AttackActionMechanicsSchema,
-                            CapabilityActionMechanicsSchema,
+                            AttackCapabilitySchema,
+                            CapabilitySchema,
                         ),
                     )
 
@@ -491,7 +491,7 @@ def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
 
     aboleth = catalog.find("Aboleth", "XMM")
     tentacle = next(action for action in aboleth.action if action.name == "Tentacle")
-    grapple = tentacle.mechanics.hit[1]
+    grapple = tentacle.capability.hit[1]
     assert grapple.condition == "grappled"
     assert grapple.escape_dc == 14
     assert grapple.source_capacity == 4
@@ -501,10 +501,10 @@ def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
         for action in aboleth.action
         if action.name == "Dominate Mind (2/Day)"
     )
-    assert dominate.mechanics.resource.maximum == 2
+    assert dominate.capability.resource.maximum == 2
     assert [
         repeat.trigger
-        for repeat in dominate.mechanics.resolution.failure[0].repeat_saves
+        for repeat in dominate.capability.resolution.failure[0].repeat_saves
     ] == ["on_damage", "elapsed"]
 
     ancient_gold = catalog.find("Ancient Gold Dragon", "XMM")
@@ -513,11 +513,11 @@ def test_enriched_multiattack_action_references_have_typed_mechanics() -> None:
         for action in ancient_gold.action
         if action.name == "Weakening Breath"
     )
-    assert weakening.mechanics.resolution.difficulty.value == 24
-    assert weakening.mechanics.resolution.failure[0].effects[1].dice == "1d10"
+    assert weakening.capability.resolution.difficulty.value == 24
+    assert weakening.capability.resolution.failure[0].effects[1].dice == "1d10"
 
 
-def test_b_and_c_monster_actions_have_typed_mechanics() -> None:
+def test_b_and_c_monster_actions_have_typed_capability() -> None:
     catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
 
     actions = [
@@ -528,7 +528,7 @@ def test_b_and_c_monster_actions_have_typed_mechanics() -> None:
     ]
 
     assert len(actions) == 94
-    assert all(action.mechanics is not None for action in actions)
+    assert all(action.capability is not None for action in actions)
 
 
 def test_all_typed_stat_block_action_variants_survive_loading() -> None:
@@ -557,7 +557,7 @@ def test_all_typed_stat_block_action_variants_survive_loading() -> None:
                 {
                     "name": "Innate Spellcasting",
                     "entries": ["The creature casts a spell."],
-                    "mechanics": {
+                    "capability": {
                         "type": "spellcasting",
                         "ability": "cha",
                         "spells": [

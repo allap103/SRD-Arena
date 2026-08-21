@@ -62,7 +62,7 @@
     "MT"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 5}},
     "resolution": {"type": "saving_throw", "ability": "dex", "failure": {"effects": [{"type": "damage", "dice": "1d6", "damage_type": "acid"}]}}
   }

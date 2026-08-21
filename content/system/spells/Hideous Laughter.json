@@ -62,7 +62,7 @@
     "ST"
   ]
   ,"implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "line_of_sight": true},
     "resolution": {"type": "saving_throw", "ability": "wis", "failure": {"effects": [{"type": "condition", "condition": "prone"}, {"type": "condition", "condition": "incapacitated"}]}, "repeat_save": {"trigger": "turn_end", "ability": "wis"}},
     "scaling": [{"type": "slot_level", "above_level": 1, "per_level": [{"type": "target_count", "amount": 1}]}],

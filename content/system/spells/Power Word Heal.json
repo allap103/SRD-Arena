@@ -46,7 +46,7 @@
       }
     ]
   },
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "disposition": "any", "line_of_sight": true},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "healing", "restore_to_maximum": true},

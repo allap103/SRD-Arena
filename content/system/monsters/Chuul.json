@@ -69,7 +69,7 @@
       "entries": [
         "The chuul makes two Pincer attacks and uses Paralyzing Tentacles."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -99,7 +99,7 @@
       "entries": [
         "{@atkr m} {@hit 6}, reach 10 ft. {@h}9 ({@damage 1d10 + 4}) Bludgeoning damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 14}) from one of two pincers."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -137,7 +137,7 @@
       "entries": [
         "{@actSave con} {@dc 13}, one creature {@condition Grappled|XPHB} by the chuul. {@actSaveFail} The target has the {@condition Poisoned|XPHB} condition and repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically. While {@condition Poisoned|XPHB}, the target has the {@condition Paralyzed|XPHB} condition."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "creature",

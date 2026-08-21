@@ -47,7 +47,7 @@
     "ST"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "disposition": "any"},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "armor_class_modifier", "value": 2}

@@ -46,7 +46,7 @@ class FollowUpSpellResolution:
 
 
 @dataclass(frozen=True)
-class ImmediateSpellMechanics:
+class SpellCapability:
     resolution: str
     target: str
     damage: tuple[SpellDamage, ...]
@@ -138,4 +138,4 @@ class Spell:
     area_size_feet: int | None = None
     concentration: bool = False
     target_requirements: tuple[ActionRequirement, ...] = ()
-    mechanics: ImmediateSpellMechanics | None = None
+    capability: SpellCapability | None = None

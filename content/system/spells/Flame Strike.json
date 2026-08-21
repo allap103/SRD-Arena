@@ -52,7 +52,7 @@
     "Y"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "cylinder", "radius_feet": 10, "height_feet": 40}},
     "resolution": {"type": "saving_throw", "ability": "dex", "failure": {"effects": [{"type": "damage", "dice": "5d6", "damage_type": "fire"}, {"type": "damage", "dice": "5d6", "damage_type": "radiant"}]}, "success_damage": "half"},
     "scaling": [{"type": "slot_level", "above_level": 5, "per_level": [{"type": "damage_dice", "amount": "1d6"}]}]

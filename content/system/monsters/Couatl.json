@@ -113,7 +113,7 @@
       "entries": [
         "{@atkr m} {@hit 7}, reach 5 ft. {@h}11 ({@damage 1d12 + 5}) Piercing damage, and the target has the {@condition Poisoned|XPHB} condition until the end of the couatl's next turn."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -148,7 +148,7 @@
       "entries": [
         "{@actSave str} {@dc 15}, one Medium or smaller creature the couatl can see within 5 feet. {@actSaveFail} 8 ({@damage 1d6 + 5}) Bludgeoning damage. The target has the {@condition Grappled|XPHB} condition (escape {@dc 13}), and it has the {@condition Restrained|XPHB} condition until the grapple ends."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "creature",

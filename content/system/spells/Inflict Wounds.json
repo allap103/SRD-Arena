@@ -49,7 +49,7 @@
     "ST"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "line_of_sight": true},
     "resolution": {"type": "saving_throw", "ability": "con", "failure": {"effects": [{"type": "damage", "dice": "2d10", "damage_type": "necrotic"}]}, "success_damage": "half"},
     "scaling": [{"type": "slot_level", "above_level": 1, "per_level": [{"type": "damage_dice", "amount": "1d10"}]}]

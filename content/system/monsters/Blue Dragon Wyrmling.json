@@ -67,7 +67,7 @@
       "entries": [
         "The dragon makes two Rend attacks."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -90,7 +90,7 @@
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}8 ({@damage 1d10 + 3}) Slashing damage plus 3 ({@damage 1d6}) Lightning damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -121,7 +121,7 @@
       "entries": [
         "{@actSave dex} {@dc 12}, each creature in a 30-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 21 ({@damage 6d6}) Lightning damage. {@actSaveSuccess} Half damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "area",

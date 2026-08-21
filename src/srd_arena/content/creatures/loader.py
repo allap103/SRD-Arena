@@ -33,7 +33,7 @@ from srd_arena.domain.effects.triggered import TriggeredEffect
 from .catalog import BestiaryCatalog
 from .schema import CreatureItemReferenceSchema, CreatureSchema
 from .stat_block_schema import BestiaryMonsterSchema
-from .actions.multiattack import MultiattackMechanicsSchema, build_multiattack
+from .actions.multiattack import MultiattackCapabilitySchema, build_multiattack
 from .actions.translator import (
     build_declared_stat_block_actions,
     build_stat_block_actions,
@@ -118,8 +118,8 @@ def build_creature(
             (
                 action
                 for action in stat_block.action
-                if action.mechanics is not None
-                and action.mechanics.type == "multiattack"
+                if action.capability is not None
+                and action.capability.type == "multiattack"
             ),
             None,
         )
@@ -156,7 +156,7 @@ def build_creature(
         combat_profile=combat_profile,
         feature_uses_remaining=build_feature_uses_remaining(combat_profile),
         multiattack=build_multiattack(
-            cast(MultiattackMechanicsSchema, multiattack_action.mechanics)
+            cast(MultiattackCapabilitySchema, multiattack_action.capability)
             if multiattack_action is not None
             else None
         ),

@@ -2,9 +2,9 @@ import pytest
 from pydantic import ValidationError
 
 from srd_arena.content.creatures.actions.schema import (
-    AttackActionMechanicsSchema,
-    CapabilityActionMechanicsSchema,
-    SpellcastingActionMechanicsSchema,
+    AttackCapabilitySchema,
+    CapabilitySchema,
+    SpellcastingCapabilitySchema,
 )
 from srd_arena.content.creatures import BestiaryActionSchema
 
@@ -14,7 +14,7 @@ def test_attack_action_supports_multiple_hit_effects() -> None:
         {
             "name": "Rend",
             "entries": ["Original prose remains authoritative."],
-            "mechanics": {
+            "capability": {
                 "type": "attack",
                 "attack_modes": ["melee"],
                 "attack_bonus": 11,
@@ -40,8 +40,8 @@ def test_attack_action_supports_multiple_hit_effects() -> None:
         }
     )
 
-    assert isinstance(action.mechanics, AttackActionMechanicsSchema)
-    assert [effect.damage_type for effect in action.mechanics.hit] == [
+    assert isinstance(action.capability, AttackCapabilitySchema)
+    assert [effect.damage_type for effect in action.capability.hit] == [
         "slashing",
         "cold",
     ]
@@ -51,7 +51,7 @@ def test_damage_effect_supports_attack_roll_mode_requirement() -> None:
     action = BestiaryActionSchema.model_validate(
         {
             "name": "Scimitar",
-            "mechanics": {
+            "capability": {
                 "type": "attack",
                 "attack_modes": ["melee"],
                 "attack_bonus": 4,
@@ -80,14 +80,14 @@ def test_damage_effect_supports_attack_roll_mode_requirement() -> None:
         }
     )
 
-    assert isinstance(action.mechanics, AttackActionMechanicsSchema)
-    conditional_damage = action.mechanics.hit[1]
+    assert isinstance(action.capability, AttackCapabilitySchema)
+    conditional_damage = action.capability.hit[1]
     assert conditional_damage.requirements[0].type == "attack_roll_mode"
     assert conditional_damage.requirements[0].mode == "advantage"
 
 
 def test_save_action_supports_target_requirements_and_half_damage() -> None:
-    action = CapabilityActionMechanicsSchema.model_validate(
+    action = CapabilitySchema.model_validate(
         {
             "target": {
                 "type": "creature",
@@ -140,7 +140,7 @@ def test_save_action_supports_target_requirements_and_half_damage() -> None:
 
 
 def test_save_action_supports_staged_failures_and_repeat_saves() -> None:
-    action = CapabilityActionMechanicsSchema.model_validate(
+    action = CapabilitySchema.model_validate(
         {
             "target": {
                 "type": "area",
@@ -196,7 +196,7 @@ def test_save_action_supports_staged_failures_and_repeat_saves() -> None:
 
 
 def test_condition_duration_can_end_at_start_of_source_turn() -> None:
-    action = AttackActionMechanicsSchema.model_validate(
+    action = AttackCapabilitySchema.model_validate(
         {
             "attack_modes": ["melee"],
             "attack_bonus": 7,
@@ -220,7 +220,7 @@ def test_condition_duration_can_end_at_start_of_source_turn() -> None:
 
 
 def test_spellcasting_action_is_distinct_from_save_and_attack_actions() -> None:
-    action = SpellcastingActionMechanicsSchema.model_validate(
+    action = SpellcastingCapabilitySchema.model_validate(
         {
             "ability": "cha",
             "spells": [
@@ -238,9 +238,9 @@ def test_spellcasting_action_is_distinct_from_save_and_attack_actions() -> None:
     assert action.spells[0].cast_level == 3
 
 
-def test_action_mechanics_reject_unknown_effects() -> None:
+def test_action_capability_reject_unknown_effects() -> None:
     with pytest.raises(ValidationError):
-        CapabilityActionMechanicsSchema.model_validate(
+        CapabilitySchema.model_validate(
             {
                 "target": {
                     "type": "creature",

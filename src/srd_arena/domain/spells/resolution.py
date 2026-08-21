@@ -63,21 +63,21 @@ def resolve_spell_action(
     context: SpellActionContext,
 ) -> CapabilityActionResult | None:
     spell = context.spell
-    if spell.mechanics is not None:
+    if spell.capability is not None:
         return _resolve_immediate_spell(context)
     return None
 
 
 def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionResult:
     spell = context.spell
-    mechanics = spell.mechanics
-    assert mechanics is not None
+    capability = spell.capability
+    assert capability is not None
     assert context.creature.spellcasting is not None
     assert context.roller is not None
     targets = context.targets or (context.target,)
     target_suffix = (
         f" on {targets[0].target_label}"
-        if mechanics.target == "creature" and len(targets) == 1
+        if capability.target == "creature" and len(targets) == 1
         else ""
     )
     messages = [
@@ -87,21 +87,21 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
         )
     ]
     shared_damage_rolls: list[tuple[SpellDamage, DicePoolResult]] = []
-    damage_definitions = mechanics.damage
-    if mechanics.cantrip_damage_by_level:
+    damage_definitions = capability.damage
+    if capability.cantrip_damage_by_level:
         caster_level = context.creature.attributes.level
         scaled_dice = max(
             dice
-            for level, dice in mechanics.cantrip_damage_by_level
+            for level, dice in capability.cantrip_damage_by_level
             if level <= caster_level
         )
         damage_definitions = tuple(
-            SpellDamage(scaled_dice, damage.damage_type) for damage in mechanics.damage
+            SpellDamage(scaled_dice, damage.damage_type) for damage in capability.damage
         )
     cast_level = context.cast_level if context.cast_level is not None else spell.level
-    if mechanics.slot_damage_increment is not None and cast_level > spell.level:
+    if capability.slot_damage_increment is not None and cast_level > spell.level:
         increment_count, increment_sides = _parse_damage_dice(
-            mechanics.slot_damage_increment
+            capability.slot_damage_increment
         )
         scaled: list[SpellDamage] = []
         for damage in damage_definitions:
@@ -111,7 +111,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             count += increment_count * (cast_level - spell.level)
             scaled.append(SpellDamage(f"{count}d{sides}", damage.damage_type))
         damage_definitions = tuple(scaled)
-    if mechanics.resolution == "saving_throw":
+    if capability.resolution == "saving_throw":
         for damage in damage_definitions:
             count, sides = _parse_damage_dice(damage.dice)
             shared_damage_rolls.append(
@@ -123,12 +123,12 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             dice,
             _roll_optional_dice(dice, context.roller),
         )
-        for healing in mechanics.healing
+        for healing in capability.healing
         if healing.pool is None
         for dice in (
             _scale_dice(
                 healing.dice,
-                mechanics.slot_healing_dice_increment,
+                capability.slot_healing_dice_increment,
                 cast_level - spell.level,
             ),
         )
@@ -145,13 +145,13 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
         automatic_success_reasons: tuple[str, ...] = ()
         hit = True
         target_damage_rolls = list(shared_damage_rolls)
-        if mechanics.resolution == "saving_throw":
-            ability = mechanics.save_ability or "dexterity"
+        if capability.resolution == "saving_throw":
+            ability = capability.save_ability or "dexterity"
             creature_type = (target.creature.statistics.creature_type or "").casefold()
             automatic_reasons = target.automatic_failure_reasons(ability)
             automatic_success_reasons = tuple(
                 f"{spell.name}: immune to {condition}"
-                for condition in mechanics.automatic_success_condition_immunities
+                for condition in capability.automatic_success_condition_immunities
                 if any(
                     immunity.value == condition
                     for immunity in target.creature.statistics.condition_immunities
@@ -159,15 +159,15 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             )
             automatic_success_reasons += tuple(
                 f"{spell.name}: {trait}"
-                for trait in mechanics.automatic_success_traits
+                for trait in capability.automatic_success_traits
                 if trait in target.creature.statistics.mechanical_traits
             )
-            if creature_type in mechanics.automatic_failure_creature_types:
+            if creature_type in capability.automatic_failure_creature_types:
                 automatic_reasons += (f"{spell.name}: {creature_type}",)
             save_mode = context.save_roll_modes.get(
                 target.target_ref,
                 "disadvantage"
-                if creature_type in mechanics.disadvantage_creature_types
+                if creature_type in capability.disadvantage_creature_types
                 else "normal",
             )
             if automatic_success_reasons:
@@ -207,7 +207,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "automatic_success_reasons": list(automatic_success_reasons),
                     "automatic_failure_reasons": list(save.automatic_failure_reasons),
                 })
-        elif mechanics.resolution == "spell_attack":
+        elif capability.resolution == "spell_attack":
             attack = resolve_d20(
                 modifier=context.creature.spellcasting.attack_bonus,
                 mode=context.attack_roll_modes.get(target.target_ref, "normal"),
@@ -244,8 +244,8 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
         for damage, roll in target_damage_rolls:
             final_damage = roll.total
             if successful_save:
-                final_damage = final_damage // 2 if mechanics.half_damage_on_save else 0
-            if mechanics.resolution == "spell_attack" and not hit:
+                final_damage = final_damage // 2 if capability.half_damage_on_save else 0
+            if capability.resolution == "spell_attack" and not hit:
                 final_damage = 0
             applied = target.creature.take_damage(final_damage, damage.damage_type)
             target_damage += applied
@@ -264,8 +264,8 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "applied_damage": applied,
                 }
             )
-        affected = (mechanics.resolution == "saving_throw" and not successful_save) or (
-            mechanics.resolution in {"spell_attack", "automatic"} and hit
+        affected = (capability.resolution == "saving_throw" and not successful_save) or (
+            capability.resolution in {"spell_attack", "automatic"} and hit
         )
         if affected:
             affected_targets.append(target)
@@ -275,7 +275,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     if healing.add_spellcasting_modifier
                     else 0
                 )
-                modifier += mechanics.slot_healing_bonus_increment * (
+                modifier += capability.slot_healing_bonus_increment * (
                     cast_level - spell.level
                 )
                 total = (
@@ -298,7 +298,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                         applied=applied,
                     )
                 )
-            for healing in mechanics.healing:
+            for healing in capability.healing:
                 if healing.pool is None:
                     continue
                 allocated = context.healing_allocations.get(target.target_ref, 0)
@@ -313,7 +313,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 )
                 detail["allocated"] = allocated
                 healing_details.append(detail)
-            for temporary in mechanics.temporary_hit_points:
+            for temporary in capability.temporary_hit_points:
                 if temporary.trigger != "application":
                     continue
                 temporary_roll = _roll_optional_dice(temporary.dice, context.roller)
@@ -322,7 +322,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     if temporary.add_spellcasting_modifier
                     else 0
                 )
-                modifier += mechanics.slot_temporary_hit_points_increment * (
+                modifier += capability.slot_temporary_hit_points_increment * (
                     cast_level - spell.level
                 )
                 total = max(
@@ -354,7 +354,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 for detail in temporary_hit_point_details
             )
             else "affects"
-            if affected and mechanics.conditions
+            if affected and capability.conditions
             else "does not affect"
         )
         if not spell.removable_conditions:
@@ -367,7 +367,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     )
                 )
             elif (
-                mechanics.resolution == "saving_throw"
+                capability.resolution == "saving_throw"
                 and successful_save
                 and target_damage == 0
             ):
@@ -375,7 +375,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     (
                         "system",
                         f"{target.target_label} resists {spell.name} with a "
-                        f"successful {(mechanics.save_ability or 'dexterity').title()} "
+                        f"successful {(capability.save_ability or 'dexterity').title()} "
                         "save.",
                     )
                 )
@@ -385,7 +385,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 )
 
     for sequence_step, follow_up in enumerate(
-        mechanics.follow_up_resolutions,
+        capability.follow_up_resolutions,
         start=2,
     ):
         follow_up_saves, follow_up_damage = _resolve_follow_up(
@@ -399,53 +399,53 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
 
     effects: list[EffectResult] = []
     selected_condition = context.selected_condition
-    if selected_condition not in mechanics.conditions:
-        selected_condition = mechanics.conditions[0] if mechanics.conditions else None
+    if selected_condition not in capability.conditions:
+        selected_condition = capability.conditions[0] if capability.conditions else None
     selected_conditions = (
         ((selected_condition,) if selected_condition is not None else ())
-        if mechanics.condition_choice
-        else mechanics.conditions
+        if capability.condition_choice
+        else capability.conditions
     )
-    parent_kind = "concentration" if mechanics.concentration else "spell"
-    maximum_hit_point_modifier = mechanics.maximum_hit_point_modifier + (
-        mechanics.slot_maximum_hit_point_increment * (cast_level - spell.level)
+    parent_kind = "concentration" if capability.concentration else "spell"
+    maximum_hit_point_modifier = capability.maximum_hit_point_modifier + (
+        capability.slot_maximum_hit_point_increment * (cast_level - spell.level)
     )
-    selected_damage_resistances = mechanics.damage_resistances
-    if mechanics.damage_resistance_choice:
+    selected_damage_resistances = capability.damage_resistances
+    if capability.damage_resistance_choice:
         selected_damage_resistances = (
             (context.selected_damage_type,)
-            if context.selected_damage_type in mechanics.damage_resistances
-            else mechanics.damage_resistances[:1]
+            if context.selected_damage_type in capability.damage_resistances
+            else capability.damage_resistances[:1]
         )
     selected_damage_reduction_type = None
-    if mechanics.damage_reduction_types:
+    if capability.damage_reduction_types:
         selected_damage_reduction_type = (
             context.selected_damage_type
-            if context.selected_damage_type in mechanics.damage_reduction_types
-            else mechanics.damage_reduction_types[0]
+            if context.selected_damage_type in capability.damage_reduction_types
+            else capability.damage_reduction_types[0]
         )
     if (
         affected_targets
         and (
-            mechanics.conditions
+            capability.conditions
             or maximum_hit_point_modifier != 0
             or selected_damage_resistances
-            or mechanics.condition_save_advantages
-            or mechanics.roll_modifiers
-            or mechanics.armor_class_modifier
-            or mechanics.speed_modifier_feet
+            or capability.condition_save_advantages
+            or capability.roll_modifiers
+            or capability.armor_class_modifier
+            or capability.speed_modifier_feet
             or selected_damage_reduction_type is not None
             or any(
                 temporary.trigger == "target_turn_start"
-                for temporary in mechanics.temporary_hit_points
+                for temporary in capability.temporary_hit_points
             )
-            or mechanics.condition_immunities
-            or mechanics.senses
+            or capability.condition_immunities
+            or capability.senses
         )
         and (
-            mechanics.duration_rounds is not None
-            or mechanics.concentration
-            or mechanics.repeat_save_trigger is not None
+            capability.duration_rounds is not None
+            or capability.concentration
+            or capability.repeat_save_trigger is not None
         )
     ):
         effects.append(
@@ -457,44 +457,44 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "source_ref": context.source_ref,
                     "source_label": context.creature.name,
                     "definition_id": spell.id,
-                    "recast_ends_previous": mechanics.recast_ends_previous,
+                    "recast_ends_previous": capability.recast_ends_previous,
                     "target_refs": [target.target_ref for target in affected_targets],
                     "duration_rounds": (
-                        mechanics.duration_rounds
-                        if mechanics.duration_rounds is not None
-                        else mechanics.speed_modifier_duration_rounds
+                        capability.duration_rounds
+                        if capability.duration_rounds is not None
+                        else capability.speed_modifier_duration_rounds
                     ),
                     "parameters": {
                         "effect_label": spell.name,
                         "started_round": context.current_round,
-                        "repeat_save_trigger": mechanics.repeat_save_trigger,
-                        "save_ability": mechanics.save_ability,
+                        "repeat_save_trigger": capability.repeat_save_trigger,
+                        "save_ability": capability.save_ability,
                         "save_dc": context.creature.spellcasting.save_dc,
                         "repeat_failure_conditions": list(
-                            mechanics.repeat_failure_conditions
+                            capability.repeat_failure_conditions
                         ),
                         "repeat_failure_damage": [
                             {
                                 "dice": _scale_dice(
                                     damage.dice,
-                                    mechanics.slot_damage_increment,
+                                    capability.slot_damage_increment,
                                     cast_level - spell.level,
                                 ),
                                 "damage_type": damage.damage_type,
                             }
-                            for damage in mechanics.repeat_failure_damage
+                            for damage in capability.repeat_failure_damage
                         ],
-                        "end_events": [list(event) for event in mechanics.end_events],
+                        "end_events": [list(event) for event in capability.end_events],
                         "damage_repeat_save_advantage": (
-                            mechanics.damage_repeat_save_advantage
+                            capability.damage_repeat_save_advantage
                         ),
                         "maximum_hit_point_modifier": maximum_hit_point_modifier,
                         "also_modify_current_hit_points": (
-                            mechanics.also_modify_current_hit_points
+                            capability.also_modify_current_hit_points
                         ),
                         "damage_resistances": list(selected_damage_resistances),
                         "condition_save_advantages": list(
-                            mechanics.condition_save_advantages
+                            capability.condition_save_advantages
                         ),
                         "roll_modifiers": [
                             {
@@ -508,14 +508,14 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                                 ),
                                 "ability": modifier.ability,
                             }
-                            for modifier in mechanics.roll_modifiers
+                            for modifier in capability.roll_modifiers
                             if modifier.ability is None
                             or modifier.ability == context.selected_ability
                         ],
-                        "armor_class_modifier": mechanics.armor_class_modifier,
-                        "speed_modifier_feet": mechanics.speed_modifier_feet,
+                        "armor_class_modifier": capability.armor_class_modifier,
+                        "speed_modifier_feet": capability.speed_modifier_feet,
                         "damage_reduction_type": selected_damage_reduction_type,
-                        "damage_reduction_dice": mechanics.damage_reduction_dice,
+                        "damage_reduction_dice": capability.damage_reduction_dice,
                         "turn_start_temporary_hit_points": next(
                             (
                                 temporary.value
@@ -524,13 +524,13 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                                     if temporary.add_spellcasting_modifier
                                     else 0
                                 )
-                                for temporary in mechanics.temporary_hit_points
+                                for temporary in capability.temporary_hit_points
                                 if temporary.trigger == "target_turn_start"
                             ),
                             0,
                         ),
-                        "condition_immunities": list(mechanics.condition_immunities),
-                        "senses": [list(sense) for sense in mechanics.senses],
+                        "condition_immunities": list(capability.condition_immunities),
+                        "senses": [list(sense) for sense in capability.senses],
                     },
                 },
             )
@@ -545,11 +545,11 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "source_kind": "spell",
                     "definition_id": spell.id,
                 }
-                if condition in mechanics.self_removal_blocked_conditions:
+                if condition in capability.self_removal_blocked_conditions:
                     condition_data["metadata"] = {"blocks_self_removal": True}
                 if effects:
                     condition_data["parent_effect_kind"] = parent_kind
-                if mechanics.expires_on_source_turn_end:
+                if capability.expires_on_source_turn_end:
                     condition_data["expires_on_creature_ref"] = context.source_ref
                     condition_data["expires_on_round"] = context.current_round + 1
                 effects.append(

@@ -140,7 +140,7 @@ def test_content_is_grouped_by_game_concept() -> None:
         "creatures",
         "encounters",
         "equipment",
-        "mechanics",
+        "capabilities",
         "spells",
     } <= {
         path.name

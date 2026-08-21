@@ -208,7 +208,7 @@ class AttackRule:
             if unsupported is not None:
                 name, issue = unsupported
                 return EligibilityFailure(
-                    "unsupported_stat_block_mechanics",
+                    "unsupported_stat_block_capability",
                     f"{name}: {issue}",
                 )
             return None
@@ -229,7 +229,7 @@ class AttackRule:
                 runtime_issue = stat_block_action_runtime_issue(definition)
                 if runtime_issue is not None:
                     return EligibilityFailure(
-                        "unsupported_stat_block_mechanics",
+                        "unsupported_stat_block_capability",
                         runtime_issue,
                     )
                 if isinstance(definition, AttackActionDefinition):
@@ -331,7 +331,7 @@ class StatBlockActionRule:
         runtime_issue = stat_block_action_runtime_issue(definition)
         if runtime_issue is not None:
             return EligibilityFailure(
-                "unsupported_stat_block_mechanics",
+                "unsupported_stat_block_capability",
                 runtime_issue,
             )
         if not stat_block_action_resource_available(
@@ -527,7 +527,7 @@ class SpellTargetSelectionRule:
             target.target_ref
             for target in (
                 state._spell_area_targets(actor, spell, aim_point=aim_point)
-                if spell.mechanics is not None and spell.mechanics.choose_area_targets
+                if spell.capability is not None and spell.capability.choose_area_targets
                 else tuple(state._spell_action_targets(actor, spell))
             )
         }

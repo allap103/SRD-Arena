@@ -49,7 +49,7 @@
       "entries": [
         "The ape makes two Fist attacks."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [{"steps": [{"type": "invoke", "invocation": {"type": "stat_block_action", "name": "Fist"}, "times": 2}]}]
       }
@@ -59,7 +59,7 @@
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}5 ({@damage 1d4 + 3}) Bludgeoning damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": ["melee"],
         "attack_bonus": 5,
@@ -73,7 +73,7 @@
       "entries": [
         "{@atkr r} {@hit 5}, range 25/50 ft. {@h}10 ({@damage 2d6 + 3}) Bludgeoning damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": ["ranged"],
         "attack_bonus": 5,

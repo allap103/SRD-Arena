@@ -49,7 +49,7 @@
     "ST"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {
       "type": "creature",
       "disposition": "any"

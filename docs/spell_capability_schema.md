@@ -1,14 +1,14 @@
-# Executable Spell Mechanics Schema
+# Executable Spell Capability Schema
 
 ## Purpose
 
 The spell JSON record is the single source of truth for both its original SRD
 data and its executable combat behavior. Rules prose remains available for
-people, but the runtime must use the typed `mechanics` object rather than parse
+people, but the runtime must use the typed `capability` object rather than parse
 `entries` or dispatch on a spell name.
 
 The canonical Pydantic models live in
-`src/srd_arena/content/spells/mechanics.py`. `SpellSchema` exposes the
+`src/srd_arena/content/spells/capability.py`. `SpellSchema` exposes the
 two additive top-level fields described here. A machine-readable JSON Schema
 can be generated from `SpellSchema.model_json_schema()`; it is not checked in,
 so it cannot drift from the validating models.
@@ -39,7 +39,7 @@ behavior:
       }
     ]
   },
-  "mechanics": {
+  "capability": {
     "target": {},
     "resolution": {},
     "casting_requirements": [],
@@ -50,19 +50,19 @@ behavior:
 }
 ```
 
-`mechanics` deliberately does not repeat casting time, range, components, or
+`capability` deliberately does not repeat casting time, range, components, or
 spell duration. The runtime reads those values from the same spell record.
 
 ## Implementation status
 
 - `complete`: every combat-relevant branch in the declared scope is encoded.
 - `partial`: executable, with every omission listed and explained.
-- `unimplemented`: no executable mechanics have been authored yet.
-- `blocked`: mechanics are encoded but require unavailable engine support;
+- `unimplemented`: no executable capability has been authored yet.
+- `blocked`: a capability is encoded but requires unavailable engine support;
   blockers must be listed.
 - `out_of_scope`: intentionally excluded and accompanied by a reason.
 
-Complete, partial, and blocked records require `mechanics`. Unimplemented and
+Complete, partial, and blocked records require `capability`. Unimplemented and
 out-of-scope records reject it. Only complete and partial records are
 executable.
 
@@ -70,7 +70,7 @@ An independently selectable resolution branch can carry its own
 implementation status. This prevents one implemented option from hiding an
 unsupported option in a spell such as Eyebite.
 
-## Mechanics structure
+## Capability structure
 
 All polymorphic concepts are closed discriminated unions selected by `type`.
 Unknown variants and unknown fields are validation errors.
@@ -114,7 +114,7 @@ target-origin area around that creature.
 The effect union contains shared combat primitives such as damage, healing,
 conditions, movement, roll modifiers, action restrictions, resistance,
 immunity, and effect removal. It also contains typed orchestration primitives
-for mechanics that cannot be reduced to those values alone:
+for capabilities that cannot be reduced to those values alone:
 
 - granted actions and compound modifier groups;
 - persistent and moving areas;
@@ -168,7 +168,7 @@ part of a composed resolution, such as Ice Knife's Cold explosion.
       "reason": "Environmental fire is not modeled yet."
     }]
   },
-  "mechanics": {
+  "capability": {
     "target": {
       "type": "area",
       "origin": "point_in_range",
@@ -202,7 +202,7 @@ part of a composed resolution, such as Ice Knife's Cold explosion.
 ```json
 {
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {
       "type": "creature",
       "line_of_sight": true,
@@ -244,5 +244,5 @@ difference, not a Player Character/NPC execution branch.
 
 This schema establishes representation and validation. A variant being
 representable does not imply that its executor already exists. Enrichment must
-therefore use `blocked` for valid mechanics awaiting engine support and
+therefore use `blocked` for valid capabilities awaiting engine support and
 `partial` only when the encoded subset is already executable.

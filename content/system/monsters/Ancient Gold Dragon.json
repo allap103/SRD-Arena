@@ -114,7 +114,7 @@
       "entries": [
         "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Spellcasting to cast {@spell Guiding Bolt|XPHB} (level 4 version) or (B) Weakening Breath."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -159,7 +159,7 @@
       "entries": [
         "{@atkr m} {@hit 17} to hit, reach 15 ft. {@h}19 ({@damage 2d8 + 10}) Slashing damage plus 9 ({@damage 2d8}) Fire damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -197,7 +197,7 @@
       "entries": [
         "{@actSave str} {@dc 24}, each creature that isn't currently affected by this breath in a 90-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target has {@variantrule Disadvantage|XPHB} on Strength-based {@variantrule D20 Test|XPHB|D20 Tests} and subtracts 5 ({@dice 1d10}) from its damage rolls. It repeats the save at the end of each of its turns, ending the effect on itself on a success. After 1 minute, it succeeds automatically."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "area",

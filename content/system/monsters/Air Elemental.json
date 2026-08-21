@@ -80,7 +80,7 @@
       "entries": [
         "The elemental makes two Thunderous Slam attacks."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -103,7 +103,7 @@
       "entries": [
         "{@atkr m} {@hit 8}, reach 10 ft. {@h}14 ({@damage 2d8 + 5}) Thunder damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"

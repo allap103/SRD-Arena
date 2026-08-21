@@ -1,6 +1,6 @@
 from .definitions import (
     FollowUpSpellResolution,
-    ImmediateSpellMechanics,
+    SpellCapability,
     Spell,
     SpellDamage,
     SpellHealing,
@@ -10,7 +10,7 @@ from .definitions import (
 
 __all__ = [
     "FollowUpSpellResolution",
-    "ImmediateSpellMechanics",
+    "SpellCapability",
     "Spell",
     "SpellDamage",
     "SpellHealing",

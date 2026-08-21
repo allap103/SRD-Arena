@@ -100,7 +100,7 @@
       "entries": [
         "The balor makes one Flame Whip attack and one Lightning Blade attack."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -129,7 +129,7 @@
       "entries": [
         "{@atkr m} {@hit 14}, reach 30 ft. {@h}18 ({@damage 3d6 + 8}) Force damage plus 17 ({@damage 5d6}) Fire damage. If the target is a Huge or smaller creature, the balor pulls the target up to 25 feet straight toward itself, and the target has the {@condition Prone|XPHB} condition."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -175,7 +175,7 @@
       "entries": [
         "{@atkr m} {@hit 14}, reach 10 ft. {@h}21 ({@damage 3d8 + 8}) Force damage plus 22 ({@damage 4d10}) Lightning damage, and the target can't take Reactions until the start of the balor's next turn."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"

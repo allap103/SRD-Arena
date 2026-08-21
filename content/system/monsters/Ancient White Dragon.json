@@ -105,7 +105,7 @@
       "entries": [
         "The dragon makes three Rend attacks."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -128,7 +128,7 @@
       "entries": [
         "{@atkr m} {@hit 14}, reach 15 ft. {@h}17 ({@damage 2d8 + 8}) Slashing damage plus 7 ({@damage 2d6}) Cold damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -159,7 +159,7 @@
       "entries": [
         "{@actSave con} {@dc 22}, each creature in a 90-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} 63 ({@damage 14d8}) Cold damage. {@actSaveSuccess} Half damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "area",

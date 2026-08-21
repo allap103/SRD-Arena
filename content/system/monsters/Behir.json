@@ -55,7 +55,7 @@
       "entries": [
         "The behir makes one Bite attack and uses Constrict."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -84,7 +84,7 @@
       "entries": [
         "{@atkr m} {@hit 10}, reach 10 ft. {@h}19 ({@damage 2d12 + 6}) Piercing damage plus 11 ({@damage 2d10}) Lightning damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -115,7 +115,7 @@
       "entries": [
         "{@actSave str} {@dc 18}, one Large or smaller creature the behir can see within 5 feet. {@actSaveFail} 28 ({@damage 5d8 + 6}) Bludgeoning damage. The target has the {@condition Grappled|XPHB} condition (escape {@dc 16}), and it has the {@condition Restrained|XPHB} condition until the grapple ends."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "creature",
@@ -174,7 +174,7 @@
       "entries": [
         "{@actSave dex} {@dc 16}, each creature in a 90-foot-long, 5-foot-wide {@variantrule Line [Area of Effect]|XPHB|Line}. {@actSaveFail} 66 ({@damage 12d10}) Lightning damage. {@actSaveSuccess} Half damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "area",

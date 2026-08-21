@@ -7,7 +7,7 @@ class DeclaredStatBlockAction:
     name: str
     display_name: str
     description: str
-    mechanics_type: str | None = None
+    capability_type: str | None = None
     section: Literal["action", "bonus_action"] = "action"
 
 

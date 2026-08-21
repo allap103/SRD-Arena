@@ -52,7 +52,7 @@
     "S"
   ]
   ,"implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 5}, "occupants": "chosen", "chosen_count": {"minimum": 0, "maximum": "all"}},
     "resolution": {
       "type": "saving_throw",

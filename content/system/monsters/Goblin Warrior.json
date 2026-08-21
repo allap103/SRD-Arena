@@ -68,7 +68,7 @@
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Slashing damage, plus 2 ({@damage 1d4}) Slashing damage if the attack roll had {@variantrule Advantage|XPHB}."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -105,7 +105,7 @@
       "entries": [
         "{@atkr r} {@hit 4}, range 80/320 ft. {@h}5 ({@damage 1d6 + 2}) Piercing damage, plus 2 ({@damage 1d4}) Piercing damage if the attack roll had {@variantrule Advantage|XPHB}."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "ranged"

@@ -1,18 +1,18 @@
 """Authored stat-block action schemas and domain translation."""
 
-from .multiattack import MultiattackMechanicsSchema
+from .multiattack import MultiattackCapabilitySchema
 from .schema import (
-    AttackActionMechanicsSchema,
-    CapabilityActionMechanicsSchema,
-    NonMultiattackMechanicsSchema,
+    AttackCapabilitySchema,
+    CapabilitySchema,
+    NonMultiattackCapabilitySchema,
     SavingThrowActionResolutionSchema,
-    SpellcastingActionMechanicsSchema,
+    SpellcastingCapabilitySchema,
 )
 __all__ = [
-    "AttackActionMechanicsSchema",
-    "CapabilityActionMechanicsSchema",
-    "MultiattackMechanicsSchema",
-    "NonMultiattackMechanicsSchema",
+    "AttackCapabilitySchema",
+    "CapabilitySchema",
+    "MultiattackCapabilitySchema",
+    "NonMultiattackCapabilitySchema",
     "SavingThrowActionResolutionSchema",
-    "SpellcastingActionMechanicsSchema",
+    "SpellcastingCapabilitySchema",
 ]

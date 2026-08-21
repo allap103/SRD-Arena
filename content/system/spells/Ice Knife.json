@@ -55,7 +55,7 @@
   ],
   "hasFluffImages": true,
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {
       "type": "creature",
       "disposition": "enemy",

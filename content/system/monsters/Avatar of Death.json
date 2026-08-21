@@ -78,7 +78,7 @@
       "entries": [
         "The avatar sweeps its spectral scythe through a creature within 5 feet of it, dealing 7 ({@damage 1d8 + 3}) slashing damage plus 4 ({@damage 1d8}) necrotic damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "creature",

@@ -56,7 +56,7 @@
       "entries": [
         "{@atkr m} {@hit 2}, reach 5 ft. {@h}1 Bludgeoning damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": ["melee"],
         "attack_bonus": 2,

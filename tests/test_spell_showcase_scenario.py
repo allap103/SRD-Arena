@@ -33,7 +33,7 @@ def test_spell_damage_showcase_loads_wave_1a_demo_spellcaster() -> None:
         "Sacred Flame",
         "Shatter",
     }
-    assert all(spell.mechanics is not None for spell in adept.spellcasting.learned_spells)
+    assert all(spell.capability is not None for spell in adept.spellcasting.learned_spells)
     assert adept.spellcasting.spell_slots_remaining == {
         1: 4,
         2: 3,

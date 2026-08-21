@@ -118,7 +118,7 @@ class Session:
     def _action_view(action, eligibility=None) -> ActionView:
         failures = eligibility.failures if eligibility is not None else ()
         unimplemented = any(
-            failure.code == "unsupported_stat_block_mechanics"
+            failure.code == "unsupported_stat_block_capability"
             for failure in failures
         )
         reasons = tuple(
@@ -174,7 +174,7 @@ class Session:
             represented_names.update(
                 declaration.name
                 for declaration in creature.declared_stat_block_actions
-                if declaration.mechanics_type == "multiattack"
+                if declaration.capability_type == "multiattack"
             )
         views: list[ActionView] = []
         for index, declaration in enumerate(
@@ -183,10 +183,10 @@ class Session:
             if declaration.name in represented_names:
                 continue
             reason = (
-                "No structured mechanics are available for this action."
-                if declaration.mechanics_type is None
+                "No structured capability are available for this action."
+                if declaration.capability_type is None
                 else (
-                    f"Actions using '{declaration.mechanics_type}' mechanics "
+                    f"Actions using '{declaration.capability_type}' capability "
                     "are not executable yet."
                 )
             )

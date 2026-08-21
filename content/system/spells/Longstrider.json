@@ -54,7 +54,7 @@
     "ST"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "disposition": "any"},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "speed_modifier", "feet": 10}

@@ -61,7 +61,7 @@
     "ST"
   ]
   ,"implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "line_of_sight": true},
     "condition_application": "choose_one",
     "resolution": {"type": "saving_throw", "ability": "con", "failure": {"effects": [{"type": "condition", "condition": "blinded"}, {"type": "condition", "condition": "deafened"}]}, "repeat_save": {"trigger": "turn_end", "ability": "con"}},

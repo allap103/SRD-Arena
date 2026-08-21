@@ -8,7 +8,7 @@ implementation schedule: a mechanic may be representable while its runtime
 support is still partial, blocked, or intentionally out of scope.
 
 The resulting concrete contract and JSON examples are documented in
-[`spell_mechanics_schema.md`](spell_mechanics_schema.md).
+[`spell_capability_schema.md`](spell_capability_schema.md).
 The implementation order is documented in
 [`spell_implementation_waves.md`](spell_implementation_waves.md).
 

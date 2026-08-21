@@ -56,7 +56,7 @@
       "entries": [
         "{@atkr m} {@hit 3}, reach 5 ft. {@h}4 ({@damage 1d6 + 1}) Slashing damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -82,7 +82,7 @@
       "entries": [
         "{@atkr r} {@hit 3}, range 80/320 ft. {@h}5 ({@damage 1d8 + 1}) Piercing damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "ranged"

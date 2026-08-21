@@ -78,7 +78,7 @@
       "entries": [
         "The bugbear makes two Javelin or Morningstar attacks."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -107,7 +107,7 @@
       "entries": [
         "{@atkr m,r} {@hit 5}, reach 10 ft. or range 30/120 ft. {@h}13 ({@damage 3d6 + 3}) Piercing damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee",
@@ -136,7 +136,7 @@
       "entries": [
         "{@atkr m} {@hit 5} (with {@variantrule Advantage|XPHB} if the target is {@condition Grappled|XPHB} by the bugbear), reach 10 ft. {@h}12 ({@damage 2d8 + 3}) Piercing damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"

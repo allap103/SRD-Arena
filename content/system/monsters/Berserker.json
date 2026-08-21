@@ -60,7 +60,7 @@
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}9 ({@damage 1d12 + 3}) Slashing damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"

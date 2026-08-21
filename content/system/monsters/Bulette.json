@@ -48,7 +48,7 @@
       "entries": [
         "The bulette makes two Bite attacks."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -71,7 +71,7 @@
       "entries": [
         "{@atkr m} {@hit 7}, reach 5 ft. {@h}17 ({@damage 2d12 + 4}) Piercing damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -97,7 +97,7 @@
       "entries": [
         "The bulette spends 5 feet of movement to jump to a space within 15 feet that contains one or more Large or smaller creatures. {@actSave dex} {@dc 15}, each creature in the bulette's destination space. {@actSaveFail} 19 ({@damage 3d12}) Bludgeoning damage, and the target has the {@condition Prone|XPHB} condition. {@actSaveSuccess} Half damage, and the target is pushed 5 feet straight away from the bulette."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "creature",

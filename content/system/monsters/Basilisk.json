@@ -44,7 +44,7 @@
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Piercing damage plus 7 ({@damage 2d6}) Poison damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"

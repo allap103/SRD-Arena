@@ -62,7 +62,7 @@
   ],
   "hasFluffImages": true,
   "implementation": {"status": "partial", "omissions": [{"mechanic": "flammable object ignition", "reason": "Environmental fire is not modeled yet."}]},
-  "mechanics": {
+  "capability": {
     "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 20}},
     "resolution": {"type": "saving_throw", "ability": "dex", "failure": {"effects": [{"type": "damage", "dice": "8d6", "damage_type": "fire"}]}, "success_damage": "half"},
     "scaling": [{"type": "slot_level", "above_level": 3, "per_level": [{"type": "damage_dice", "amount": "1d6"}]}]

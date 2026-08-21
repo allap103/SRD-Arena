@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from srd_arena.content.creatures.actions.multiattack import (
-    MultiattackMechanicsSchema,
+    MultiattackCapabilitySchema,
 )
 from srd_arena.content.creatures import BestiaryActionSchema, BestiaryMonsterSchema
 
@@ -12,7 +12,7 @@ def _action(name: str) -> dict[str, str]:
 
 
 def test_repeated_action_multiattack_is_compact() -> None:
-    effect = MultiattackMechanicsSchema.model_validate(
+    effect = MultiattackCapabilitySchema.model_validate(
         {
             "plans": [
                 {
@@ -34,7 +34,7 @@ def test_repeated_action_multiattack_is_compact() -> None:
 
 
 def test_repeated_choice_supports_any_combination() -> None:
-    effect = MultiattackMechanicsSchema.model_validate(
+    effect = MultiattackCapabilitySchema.model_validate(
         {
             "plans": [
                 {
@@ -61,7 +61,7 @@ def test_repeated_choice_supports_any_combination() -> None:
 
 
 def test_alternative_plans_and_strict_sequences_are_supported() -> None:
-    effect = MultiattackMechanicsSchema.model_validate(
+    effect = MultiattackCapabilitySchema.model_validate(
         {
             "plans": [
                 {
@@ -99,7 +99,8 @@ def test_replacement_can_invoke_action_or_specific_spell() -> None:
         {
             "name": "Multiattack",
             "entries": ["Source text remains unchanged."],
-            "mechanics": {
+            "capability": {
+                "type": "multiattack",
                 "plans": [
                     {
                         "steps": [
@@ -134,14 +135,14 @@ def test_replacement_can_invoke_action_or_specific_spell() -> None:
         }
     )
 
-    assert action.mechanics is not None
-    replacement = action.mechanics.plans[0].replacements[0]
+    assert action.capability is not None
+    replacement = action.capability.plans[0].replacements[0]
     assert replacement.target.name == "Rend"
     assert replacement.options[1].spell.name == "Scorching Ray"
 
 
 def test_required_and_dynamic_multiattacks_are_supported() -> None:
-    effect = MultiattackMechanicsSchema.model_validate(
+    effect = MultiattackCapabilitySchema.model_validate(
         {
             "plans": [
                 {
@@ -183,7 +184,7 @@ def test_required_and_dynamic_multiattacks_are_supported() -> None:
 
 def test_multiattack_schema_rejects_unknown_invocation_types() -> None:
     with pytest.raises(ValidationError):
-        MultiattackMechanicsSchema.model_validate(
+        MultiattackCapabilitySchema.model_validate(
             {
                 "plans": [
                     {
@@ -204,7 +205,7 @@ def test_multiattack_schema_rejects_unknown_invocation_types() -> None:
 
 def test_multiattack_schema_rejects_condition_as_requirement_alias() -> None:
     with pytest.raises(ValidationError):
-        MultiattackMechanicsSchema.model_validate(
+        MultiattackCapabilitySchema.model_validate(
             {
                 "plans": [
                     {
@@ -227,7 +228,7 @@ def test_multiattack_schema_rejects_condition_as_requirement_alias() -> None:
 def test_bestiary_action_rejects_obsolete_multiattack_key() -> None:
     with pytest.raises(
         ValidationError,
-        match="Use 'mechanics' instead",
+        match="Use 'capability' instead",
     ):
         BestiaryActionSchema.model_validate(
             {
@@ -256,7 +257,8 @@ def test_monster_validates_multiattack_references_across_sections() -> None:
             "action": [
                 {
                     "name": "Multiattack",
-                    "mechanics": {
+                    "capability": {
+                        "type": "multiattack",
                         "plans": [
                             {
                                 "steps": [
@@ -295,7 +297,7 @@ def test_monster_validates_multiattack_references_across_sections() -> None:
         }
     )
 
-    assert monster.action[0].mechanics is not None
+    assert monster.action[0].capability is not None
 
 
 def test_monster_rejects_missing_multiattack_reference() -> None:
@@ -310,7 +312,8 @@ def test_monster_rejects_missing_multiattack_reference() -> None:
                 "action": [
                     {
                         "name": "Multiattack",
-                        "mechanics": {
+                        "capability": {
+                            "type": "multiattack",
                             "plans": [
                                 {
                                     "steps": [

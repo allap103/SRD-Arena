@@ -96,7 +96,7 @@
       "entries": [
         "The giant makes two attacks, using Thunderous Mace or Thundercloud in any combination. It can replace one attack with a use of Spellcasting to cast {@spell Fog Cloud|XPHB}."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -141,7 +141,7 @@
       "entries": [
         "{@atkr m} {@hit 12}, reach 10 ft. {@h}21 ({@damage 3d8 + 8}) Bludgeoning damage plus 7 ({@damage 2d6}) Thunder damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -172,7 +172,7 @@
       "entries": [
         "{@atkr r} {@hit 12}, range 240 ft. {@h}18 ({@damage 3d6 + 8}) Thunder damage, and the target has the {@condition Incapacitated|XPHB} condition until the end of its next turn."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "ranged"

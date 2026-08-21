@@ -2,10 +2,10 @@ from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
-from srd_arena.content.mechanics import (
+from srd_arena.content.capabilities import (
     Ability,
     ActionEffectSchema,
-    ActionMechanicsSchemaModel,
+    CapabilitySchemaModel,
     ActionTargetSchema,
     AutomaticResolutionSchema,
     CreatureTargetSchema,
@@ -18,7 +18,7 @@ from srd_arena.content.mechanics import (
 )
 
 
-class RepeatSaveSchema(ActionMechanicsSchemaModel):
+class RepeatSaveSchema(CapabilitySchemaModel):
     trigger: Literal["end_of_turn", "on_damage", "elapsed"]
     interval_amount: PositiveInt | None = None
     interval_unit: Literal["hour", "day"] | None = None
@@ -63,13 +63,13 @@ class SavingThrowActionResolutionSchema(
     always: ActionOutcomeSchema = Field(default_factory=ActionOutcomeSchema)
 
 
-class UsesResourceSchema(ActionMechanicsSchemaModel):
+class UsesResourceSchema(CapabilitySchemaModel):
     type: Literal["uses"]
     maximum: PositiveInt
     reset: Literal["short_rest", "long_rest", "day"]
 
 
-class RechargeResourceSchema(ActionMechanicsSchemaModel):
+class RechargeResourceSchema(CapabilitySchemaModel):
     type: Literal["recharge"]
     die: Literal["d6"] = "d6"
     minimum: int = Field(ge=2, le=6)
@@ -81,7 +81,7 @@ ActionResourceSchema = Annotated[
 ]
 
 
-class AttackActionMechanicsSchema(ActionMechanicsSchemaModel):
+class AttackCapabilitySchema(CapabilitySchemaModel):
     type: Literal["attack"] = "attack"
     attack_modes: list[Literal["melee", "ranged"]] = Field(min_length=1)
     attack_bonus: int
@@ -93,7 +93,7 @@ class AttackActionMechanicsSchema(ActionMechanicsSchemaModel):
     resource: ActionResourceSchema | None = None
 
     @model_validator(mode="after")
-    def validate_attack_distances(self) -> "AttackActionMechanicsSchema":
+    def validate_attack_distances(self) -> "AttackCapabilitySchema":
         if "melee" in self.attack_modes and self.reach_feet is None:
             raise ValueError("Melee attacks require reach_feet.")
         if "ranged" in self.attack_modes and self.range_normal_feet is None:
@@ -107,30 +107,30 @@ CreatureActionResolutionSchema = Annotated[
 ]
 
 
-class CapabilityActionMechanicsSchema(ActionMechanicsSchemaModel):
+class CapabilitySchema(CapabilitySchemaModel):
     type: Literal["capability"] = "capability"
     target: ActionTargetSchema
     resolution: CreatureActionResolutionSchema
     resource: ActionResourceSchema | None = None
 
 
-class SpellOptionSchema(ActionMechanicsSchemaModel):
+class SpellOptionSchema(CapabilitySchemaModel):
     name: str = Field(min_length=1)
     source: str | None = None
     cast_level: PositiveInt | None = None
     uses: PositiveInt | Literal["at_will"] | None = None
 
 
-class SpellcastingActionMechanicsSchema(ActionMechanicsSchemaModel):
+class SpellcastingCapabilitySchema(CapabilitySchemaModel):
     type: Literal["spellcasting"] = "spellcasting"
     ability: Ability
     spells: list[SpellOptionSchema] = Field(min_length=1)
     shared_resource: ActionResourceSchema | None = None
 
 
-NonMultiattackMechanicsSchema = Annotated[
-    AttackActionMechanicsSchema
-    | CapabilityActionMechanicsSchema
-    | SpellcastingActionMechanicsSchema,
+NonMultiattackCapabilitySchema = Annotated[
+    AttackCapabilitySchema
+    | CapabilitySchema
+    | SpellcastingCapabilitySchema,
     Field(discriminator="type"),
 ]

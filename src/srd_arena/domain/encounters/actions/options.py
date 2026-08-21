@@ -107,27 +107,27 @@ def available_spell_actions(
                 tuple(choice for choice, _label in removal_choices)
                 if spell.removable_effect_kinds
                 and spell.remove_effect_selection != "all"
-                else spell.mechanics.conditions
-                if spell.mechanics is not None and spell.mechanics.condition_choice
+                else spell.capability.conditions
+                if spell.capability is not None and spell.capability.condition_choice
                 else (None,)
             )
             damage_type_selections: tuple[str | None, ...] = (
                 (
-                    spell.mechanics.damage_resistances
-                    if spell.mechanics.damage_resistance_choice
-                    else spell.mechanics.damage_reduction_types
+                    spell.capability.damage_resistances
+                    if spell.capability.damage_resistance_choice
+                    else spell.capability.damage_reduction_types
                 )
-                if spell.mechanics is not None
+                if spell.capability is not None
                 and (
-                    spell.mechanics.damage_resistance_choice
-                    or spell.mechanics.damage_reduction_choice
+                    spell.capability.damage_resistance_choice
+                    or spell.capability.damage_reduction_choice
                 )
                 else (None,)
             )
             ability_selections: tuple[str | None, ...] = (
-                spell.mechanics.roll_modifier_ability_choices
-                if spell.mechanics is not None
-                and spell.mechanics.roll_modifier_ability_choices
+                spell.capability.roll_modifier_ability_choices
+                if spell.capability is not None
+                and spell.capability.roll_modifier_ability_choices
                 else (None,)
             )
             for selection in selections:
@@ -215,18 +215,18 @@ def _append_spell_action_variants(
     action: EncounterAction,
 ) -> None:
     actions.append(action)
-    if spell.level == 0 or spell.mechanics is None:
+    if spell.level == 0 or spell.capability is None:
         return
     if (
-        spell.mechanics.slot_damage_increment is None
-        and spell.mechanics.slot_target_increment == 0
-        and spell.mechanics.slot_healing_dice_increment is None
-        and spell.mechanics.slot_healing_bonus_increment == 0
-        and spell.mechanics.slot_temporary_hit_points_increment == 0
-        and spell.mechanics.slot_maximum_hit_point_increment == 0
+        spell.capability.slot_damage_increment is None
+        and spell.capability.slot_target_increment == 0
+        and spell.capability.slot_healing_dice_increment is None
+        and spell.capability.slot_healing_bonus_increment == 0
+        and spell.capability.slot_temporary_hit_points_increment == 0
+        and spell.capability.slot_maximum_hit_point_increment == 0
         and not any(
             follow_up.slot_damage_increment is not None
-            for follow_up in spell.mechanics.follow_up_resolutions
+            for follow_up in spell.capability.follow_up_resolutions
         )
     ):
         return
@@ -284,7 +284,7 @@ def spell_target_selection_actions(
     )
     candidates = (
         state._spell_area_targets(actor, spell, aim_point=aim_point)
-        if spell.mechanics is not None and spell.mechanics.choose_area_targets
+        if spell.capability is not None and spell.capability.choose_area_targets
         else tuple(state._spell_action_targets(actor, spell))
     )
     if pending.resource_pool_total is not None:
@@ -465,8 +465,8 @@ def spell_action_targets(
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
     if spell.removable_effect_kinds and not (
-        spell.mechanics is not None
-        and (spell.mechanics.healing or spell.mechanics.temporary_hit_points)
+        spell.capability is not None
+        and (spell.capability.healing or spell.capability.temporary_hit_points)
     ):
         restoration_targets: list[SpellTargetContext] = []
         max_range = self._spell_range_squares(spell, actor)
@@ -510,8 +510,8 @@ def spell_action_targets(
         if not target_state.is_alive:
             continue
         disposition = (
-            spell.mechanics.target_disposition
-            if spell.mechanics is not None
+            spell.capability.target_disposition
+            if spell.capability is not None
             else "enemy"
         )
         is_opponent = self._creatures_are_opponents(creature_ref, target_ref)
@@ -628,7 +628,7 @@ def spell_area(
             self.definition.grid.distance_from_feet(radius_feet, minimum=1)
         )
         origin = Position(int(aim_point[0]), int(aim_point[1]))
-        if spell.mechanics is not None and spell.mechanics.area_shape == "cube":
+        if spell.capability is not None and spell.capability.area_shape == "cube":
             return build_point_cube_area(origin, radius_squares, self.definition.grid)
         return build_radius_area(origin, radius_squares, self.definition.grid)
     if spell.geometry_mode != "directional_area":

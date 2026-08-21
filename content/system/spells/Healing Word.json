@@ -50,7 +50,7 @@
     "ST"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "disposition": "any", "line_of_sight": true},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "healing", "dice": "2d4", "modifier": "spellcasting_ability"}

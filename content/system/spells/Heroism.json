@@ -55,7 +55,7 @@
     "ST"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "disposition": "willing"},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "condition_immunity", "conditions": ["frightened"]},

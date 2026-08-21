@@ -153,7 +153,7 @@
       "entries": [
         "The archmage makes four Arcane Burst attacks."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [{"steps": [{"type": "invoke", "invocation": {"type": "stat_block_action", "name": "Arcane Burst"}, "times": 4}]}]
       }
@@ -163,7 +163,7 @@
       "entries": [
         "{@atkr m,r} {@hit 9}, reach 5 ft. or range 150 ft. {@h}27 ({@damage 4d10 + 5}) Force damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": ["melee", "ranged"],
         "attack_bonus": 9,

@@ -42,7 +42,7 @@
     "ST"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "recast_ends_previous": true,
     "target": {"type": "creature", "disposition": "willing"},
     "resolution": {"type": "automatic", "outcome": {"effects": [

@@ -60,7 +60,7 @@
     "ST"
   ]
   ,"implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature"},
     "resolution": {"type": "automatic", "outcome": {"effects": [{"type": "condition", "condition": "invisible"}]}},
     "scaling": [{"type": "slot_level", "above_level": 2, "per_level": [{"type": "target_count", "amount": 1}]}],

@@ -45,21 +45,21 @@ def test_spell_translation_builds_combat_ready_domain_spell() -> None:
     assert fireball.damage_inflict == ("fire",)
     assert fireball.geometry_mode == "point_area"
     assert fireball.area_size_feet == 20
-    assert fireball.mechanics is not None
-    assert fireball.mechanics.resolution == "saving_throw"
-    assert fireball.mechanics.damage[0].dice == "8d6"
+    assert fireball.capability is not None
+    assert fireball.capability.resolution == "saving_throw"
+    assert fireball.capability.damage[0].dice == "8d6"
 
 
-def test_repeated_attack_and_removal_spells_translate_from_typed_mechanics() -> None:
+def test_repeated_attack_and_removal_spells_translate_from_typed_capability() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
 
     scorching_ray = build_spell("Scorching Ray", "XPHB", catalog)
     lesser_restoration = build_spell("Lesser Restoration", "XPHB", catalog)
 
-    assert scorching_ray.mechanics is not None
-    assert scorching_ray.mechanics.resolution == "spell_attack"
-    assert scorching_ray.mechanics.repeat_target_allocations
-    assert scorching_ray.mechanics.require_full_target_count
+    assert scorching_ray.capability is not None
+    assert scorching_ray.capability.resolution == "spell_attack"
+    assert scorching_ray.capability.repeat_target_allocations
+    assert scorching_ray.capability.require_full_target_count
     assert spell_max_targets(scorching_ray, 2) == 3
     assert spell_max_targets(scorching_ray, 3) == 4
     assert lesser_restoration.removable_conditions == (
@@ -68,30 +68,30 @@ def test_repeated_attack_and_removal_spells_translate_from_typed_mechanics() -> 
         "paralyzed",
         "poisoned",
     )
-    assert lesser_restoration.mechanics is not None
-    assert lesser_restoration.mechanics.resolution == "automatic"
+    assert lesser_restoration.capability is not None
+    assert lesser_restoration.capability.resolution == "automatic"
 
 
-def test_wave_1c_spells_translate_composed_mechanics() -> None:
+def test_wave_1c_spells_translate_composed_capability() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     ray = build_spell("Ray of Sickness", "XPHB", catalog)
     ice_knife = build_spell("Ice Knife", "XPHB", catalog)
     eldritch_blast = build_spell("Eldritch Blast", "XPHB", catalog)
     weird = build_spell("Weird", "XPHB", catalog)
 
-    assert ray.mechanics is not None
-    assert ray.mechanics.conditions == ("poisoned",)
-    assert ray.mechanics.expires_on_source_turn_end
-    assert ice_knife.mechanics is not None
-    assert ice_knife.mechanics.damage[0].damage_type == "piercing"
-    assert ice_knife.mechanics.follow_up_resolutions[0].area_radius_feet == 5
-    assert ice_knife.mechanics.follow_up_resolutions[0].damage[0].damage_type == "cold"
-    assert eldritch_blast.mechanics is not None
+    assert ray.capability is not None
+    assert ray.capability.conditions == ("poisoned",)
+    assert ray.capability.expires_on_source_turn_end
+    assert ice_knife.capability is not None
+    assert ice_knife.capability.damage[0].damage_type == "piercing"
+    assert ice_knife.capability.follow_up_resolutions[0].area_radius_feet == 5
+    assert ice_knife.capability.follow_up_resolutions[0].damage[0].damage_type == "cold"
+    assert eldritch_blast.capability is not None
     assert spell_max_targets(eldritch_blast, None, caster_level=1) == 1
     assert spell_max_targets(eldritch_blast, None, caster_level=11) == 3
-    assert weird.mechanics is not None
-    assert weird.mechanics.repeat_save_trigger == "end_of_turn"
-    assert weird.mechanics.repeat_failure_damage[0].dice == "5d10"
+    assert weird.capability is not None
+    assert weird.capability.repeat_save_trigger == "end_of_turn"
+    assert weird.capability.repeat_failure_damage[0].dice == "5d10"
 
 
 def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
@@ -99,44 +99,44 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     cure_wounds = build_spell("Cure Wounds", "XPHB", catalog)
     false_life = build_spell("False Life", "XPHB", catalog)
 
-    assert cure_wounds.mechanics is not None
-    assert cure_wounds.mechanics.healing[0].dice == "2d8"
-    assert cure_wounds.mechanics.healing[0].add_spellcasting_modifier
-    assert cure_wounds.mechanics.slot_healing_dice_increment == "2d8"
-    assert false_life.mechanics is not None
-    assert false_life.mechanics.temporary_hit_points[0].dice == "2d4"
-    assert false_life.mechanics.temporary_hit_points[0].value == 4
-    assert false_life.mechanics.slot_temporary_hit_points_increment == 5
+    assert cure_wounds.capability is not None
+    assert cure_wounds.capability.healing[0].dice == "2d8"
+    assert cure_wounds.capability.healing[0].add_spellcasting_modifier
+    assert cure_wounds.capability.slot_healing_dice_increment == "2d8"
+    assert false_life.capability is not None
+    assert false_life.capability.temporary_hit_points[0].dice == "2d4"
+    assert false_life.capability.temporary_hit_points[0].value == 4
+    assert false_life.capability.slot_temporary_hit_points_increment == 5
 
     healing_word = build_spell("Healing Word", "XPHB", catalog)
     mass_healing_word = build_spell("Mass Healing Word", "XPHB", catalog)
     mass_cure_wounds = build_spell("Mass Cure Wounds", "XPHB", catalog)
-    assert healing_word.mechanics is not None
-    assert healing_word.mechanics.slot_healing_dice_increment == "2d4"
-    assert mass_healing_word.mechanics is not None
-    assert mass_healing_word.mechanics.base_target_count == 6
-    assert mass_healing_word.mechanics.slot_healing_dice_increment == "1d4"
-    assert mass_cure_wounds.mechanics is not None
-    assert mass_cure_wounds.mechanics.choose_area_targets
-    assert mass_cure_wounds.mechanics.area_radius_feet == 30
+    assert healing_word.capability is not None
+    assert healing_word.capability.slot_healing_dice_increment == "2d4"
+    assert mass_healing_word.capability is not None
+    assert mass_healing_word.capability.base_target_count == 6
+    assert mass_healing_word.capability.slot_healing_dice_increment == "1d4"
+    assert mass_cure_wounds.capability is not None
+    assert mass_cure_wounds.capability.choose_area_targets
+    assert mass_cure_wounds.capability.area_radius_feet == 30
     heal = build_spell("Heal", "XPHB", catalog)
     power_word_heal = build_spell("Power Word Heal", "XPHB", catalog)
     assert heal.remove_effect_selection == "all"
     assert heal.removable_conditions == ("blinded", "deafened", "poisoned")
-    assert heal.mechanics is not None
-    assert heal.mechanics.healing[0].bonus == 70
-    assert heal.mechanics.slot_healing_bonus_increment == 10
+    assert heal.capability is not None
+    assert heal.capability.healing[0].bonus == 70
+    assert heal.capability.slot_healing_bonus_increment == 10
     assert power_word_heal.remove_effect_selection == "all"
-    assert power_word_heal.mechanics is not None
-    assert power_word_heal.mechanics.healing[0].restore_to_maximum
+    assert power_word_heal.capability is not None
+    assert power_word_heal.capability.healing[0].restore_to_maximum
     aid = build_spell("Aid", "XPHB", catalog)
-    assert aid.mechanics is not None
-    assert aid.mechanics.maximum_hit_point_modifier == 5
-    assert aid.mechanics.also_modify_current_hit_points
-    assert aid.mechanics.slot_maximum_hit_point_increment == 5
+    assert aid.capability is not None
+    assert aid.capability.maximum_hit_point_modifier == 5
+    assert aid.capability.also_modify_current_hit_points
+    assert aid.capability.slot_maximum_hit_point_increment == 5
     mass_heal = build_spell("Mass Heal", "XPHB", catalog)
-    assert mass_heal.mechanics is not None
-    assert mass_heal.mechanics.healing_pool == 700
+    assert mass_heal.capability is not None
+    assert mass_heal.capability.healing_pool == 700
     assert mass_heal.remove_effect_selection == "all"
 
 
@@ -163,10 +163,10 @@ def test_protection_from_poison_translates_creature_modifiers() -> None:
 
     assert spell.removable_conditions == ("poisoned",)
     assert spell.remove_effect_selection == "all"
-    assert spell.mechanics is not None
-    assert spell.mechanics.damage_resistances == ("poison",)
-    assert spell.mechanics.condition_save_advantages == ("poisoned",)
-    assert spell.mechanics.duration_rounds == 600
+    assert spell.capability is not None
+    assert spell.capability.damage_resistances == ("poison",)
+    assert spell.capability.condition_save_advantages == ("poisoned",)
+    assert spell.capability.duration_rounds == 600
 
 
 def test_protection_from_energy_translates_a_resistance_choice() -> None:
@@ -174,17 +174,17 @@ def test_protection_from_energy_translates_a_resistance_choice() -> None:
         "Protection from Energy", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
     )
 
-    assert spell.mechanics is not None
-    assert spell.mechanics.damage_resistances == (
+    assert spell.capability is not None
+    assert spell.capability.damage_resistances == (
         "acid",
         "cold",
         "fire",
         "lightning",
         "thunder",
     )
-    assert spell.mechanics.damage_resistance_choice
-    assert spell.mechanics.concentration
-    assert spell.mechanics.duration_rounds == 600
+    assert spell.capability.damage_resistance_choice
+    assert spell.capability.concentration
+    assert spell.capability.duration_rounds == 600
 
 
 def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
@@ -192,20 +192,20 @@ def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
     bless = build_spell("Bless", "XPHB", catalog)
     bane = build_spell("Bane", "XPHB", catalog)
 
-    assert bless.mechanics is not None
+    assert bless.capability is not None
     assert [
         (modifier.roll, modifier.mode, modifier.dice)
-        for modifier in bless.mechanics.roll_modifiers
+        for modifier in bless.capability.roll_modifiers
     ] == [
         ("attack_roll", "add", "1d4"),
         ("saving_throw", "add", "1d4"),
     ]
-    assert bless.mechanics.base_target_count == 3
-    assert bless.mechanics.slot_target_increment == 1
-    assert bane.mechanics is not None
+    assert bless.capability.base_target_count == 3
+    assert bless.capability.slot_target_increment == 1
+    assert bane.capability is not None
     assert [
         (modifier.roll, modifier.mode, modifier.dice)
-        for modifier in bane.mechanics.roll_modifiers
+        for modifier in bane.capability.roll_modifiers
     ] == [
         ("attack_roll", "subtract", "1d4"),
         ("saving_throw", "subtract", "1d4"),
@@ -215,18 +215,18 @@ def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
 def test_foresight_translates_bidirectional_roll_modes() -> None:
     spell = build_spell("Foresight", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
 
-    assert spell.mechanics is not None
+    assert spell.capability is not None
     assert [
         (modifier.roll, modifier.mode, modifier.subject)
-        for modifier in spell.mechanics.roll_modifiers
+        for modifier in spell.capability.roll_modifiers
     ] == [
         ("ability_check", "advantage", "target"),
         ("attack_roll", "advantage", "target"),
         ("saving_throw", "advantage", "target"),
         ("attack_roll", "disadvantage", "attacks_against_target"),
     ]
-    assert spell.mechanics.recast_ends_previous
-    assert spell.mechanics.duration_rounds == 4800
+    assert spell.capability.recast_ends_previous
+    assert spell.capability.duration_rounds == 4800
 
 
 def test_shield_of_faith_translates_sourced_armor_class() -> None:
@@ -234,10 +234,10 @@ def test_shield_of_faith_translates_sourced_armor_class() -> None:
         "Shield of Faith", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
     )
 
-    assert spell.mechanics is not None
-    assert spell.mechanics.armor_class_modifier == 2
-    assert spell.mechanics.concentration
-    assert spell.mechanics.duration_rounds == 100
+    assert spell.capability is not None
+    assert spell.capability.armor_class_modifier == 2
+    assert spell.capability.concentration
+    assert spell.capability.duration_rounds == 100
 
 
 def test_sense_spells_and_blur_translate_directional_perception() -> None:
@@ -246,12 +246,12 @@ def test_sense_spells_and_blur_translate_directional_perception() -> None:
     true_seeing = build_spell("True Seeing", "XPHB", catalog)
     blur = build_spell("Blur", "XPHB", catalog)
 
-    assert darkvision.mechanics is not None
-    assert darkvision.mechanics.senses == (("darkvision", 150),)
-    assert true_seeing.mechanics is not None
-    assert true_seeing.mechanics.senses == (("truesight", 120),)
-    assert blur.mechanics is not None
-    defensive = blur.mechanics.roll_modifiers[0]
+    assert darkvision.capability is not None
+    assert darkvision.capability.senses == (("darkvision", 150),)
+    assert true_seeing.capability is not None
+    assert true_seeing.capability.senses == (("truesight", 120),)
+    assert blur.capability is not None
+    defensive = blur.capability.roll_modifiers[0]
     assert defensive.subject == "attacks_against_target"
     assert defensive.mode == "disadvantage"
     assert defensive.ignored_by_senses == ("blindsight", "truesight")
@@ -262,14 +262,14 @@ def test_speed_spells_translate_additive_modifiers() -> None:
     longstrider = build_spell("Longstrider", "XPHB", catalog)
     ray_of_frost = build_spell("Ray of Frost", "XPHB", catalog)
 
-    assert longstrider.mechanics is not None
-    assert longstrider.mechanics.speed_modifier_feet == 10
-    assert longstrider.mechanics.duration_rounds == 600
-    assert longstrider.mechanics.slot_target_increment == 1
-    assert ray_of_frost.mechanics is not None
-    assert ray_of_frost.mechanics.speed_modifier_feet == -10
-    assert ray_of_frost.mechanics.speed_modifier_duration_rounds == 1
-    assert ray_of_frost.mechanics.cantrip_damage_by_level == (
+    assert longstrider.capability is not None
+    assert longstrider.capability.speed_modifier_feet == 10
+    assert longstrider.capability.duration_rounds == 600
+    assert longstrider.capability.slot_target_increment == 1
+    assert ray_of_frost.capability is not None
+    assert ray_of_frost.capability.speed_modifier_feet == -10
+    assert ray_of_frost.capability.speed_modifier_duration_rounds == 1
+    assert ray_of_frost.capability.cantrip_damage_by_level == (
         (1, "1d8"),
         (5, "2d8"),
         (11, "3d8"),
@@ -280,37 +280,37 @@ def test_speed_spells_translate_additive_modifiers() -> None:
 def test_resistance_translates_typed_per_turn_damage_reduction() -> None:
     spell = build_spell("Resistance", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
 
-    assert spell.mechanics is not None
-    assert spell.mechanics.damage_reduction_choice
-    assert spell.mechanics.damage_reduction_dice == "1d4"
-    assert "fire" in spell.mechanics.damage_reduction_types
-    assert "force" not in spell.mechanics.damage_reduction_types
-    assert spell.mechanics.concentration
-    assert spell.mechanics.duration_rounds == 10
+    assert spell.capability is not None
+    assert spell.capability.damage_reduction_choice
+    assert spell.capability.damage_reduction_dice == "1d4"
+    assert "fire" in spell.capability.damage_reduction_types
+    assert "force" not in spell.capability.damage_reduction_types
+    assert spell.capability.concentration
+    assert spell.capability.duration_rounds == 10
 
 
 def test_heroism_translates_immunity_and_turn_start_temporary_hp() -> None:
     spell = build_spell("Heroism", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
 
-    assert spell.mechanics is not None
-    assert spell.mechanics.condition_immunities == ("frightened",)
-    assert spell.mechanics.temporary_hit_points[0].trigger == "target_turn_start"
-    assert spell.mechanics.temporary_hit_points[0].add_spellcasting_modifier
-    assert spell.mechanics.slot_target_increment == 1
+    assert spell.capability is not None
+    assert spell.capability.condition_immunities == ("frightened",)
+    assert spell.capability.temporary_hit_points[0].trigger == "target_turn_start"
+    assert spell.capability.temporary_hit_points[0].add_spellcasting_modifier
+    assert spell.capability.slot_target_increment == 1
 
 
 def test_stoneskin_translates_multiple_damage_resistances() -> None:
     spell = build_spell("Stoneskin", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
 
-    assert spell.mechanics is not None
-    assert spell.mechanics.damage_resistances == (
+    assert spell.capability is not None
+    assert spell.capability.damage_resistances == (
         "bludgeoning",
         "piercing",
         "slashing",
     )
-    assert not spell.mechanics.damage_resistance_choice
-    assert spell.mechanics.concentration
-    assert spell.mechanics.duration_rounds == 600
+    assert not spell.capability.damage_resistance_choice
+    assert spell.capability.concentration
+    assert spell.capability.duration_rounds == 600
 
 
 def test_enhance_ability_translates_ability_scoped_choices() -> None:
@@ -318,15 +318,15 @@ def test_enhance_ability_translates_ability_scoped_choices() -> None:
         "Enhance Ability", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
     )
 
-    assert spell.mechanics is not None
-    assert spell.mechanics.roll_modifier_ability_choices == (
+    assert spell.capability is not None
+    assert spell.capability.roll_modifier_ability_choices == (
         "strength",
         "dexterity",
         "intelligence",
         "wisdom",
         "charisma",
     )
-    assert [modifier.ability for modifier in spell.mechanics.roll_modifiers] == [
+    assert [modifier.ability for modifier in spell.capability.roll_modifiers] == [
         "strength",
         "dexterity",
         "intelligence",
@@ -339,13 +339,13 @@ def test_faerie_fire_translates_cube_and_incoming_attack_advantage() -> None:
     spell = build_spell("Faerie Fire", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
 
     assert spell.geometry_mode == "point_area"
-    assert spell.mechanics is not None
-    assert spell.mechanics.area_shape == "cube"
-    assert spell.mechanics.area_length_feet == 20
-    assert spell.mechanics.save_ability == "dexterity"
+    assert spell.capability is not None
+    assert spell.capability.area_shape == "cube"
+    assert spell.capability.area_length_feet == 20
+    assert spell.capability.save_ability == "dexterity"
     assert [
         (modifier.roll, modifier.mode, modifier.subject)
-        for modifier in spell.mechanics.roll_modifiers
+        for modifier in spell.capability.roll_modifiers
     ] == [("attack_roll", "advantage", "attacks_against_target")]
 
 
@@ -354,22 +354,22 @@ def test_phantasmal_killer_translates_repeat_damage_and_roll_disadvantage() -> N
         "Phantasmal Killer", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
     )
 
-    assert spell.mechanics is not None
-    assert spell.mechanics.damage[0].dice == "4d10"
-    assert spell.mechanics.half_damage_on_save
-    assert spell.mechanics.repeat_save_trigger == "end_of_turn"
-    assert spell.mechanics.repeat_failure_damage[0].dice == "4d10"
-    assert spell.mechanics.slot_damage_increment == "1d10"
+    assert spell.capability is not None
+    assert spell.capability.damage[0].dice == "4d10"
+    assert spell.capability.half_damage_on_save
+    assert spell.capability.repeat_save_trigger == "end_of_turn"
+    assert spell.capability.repeat_failure_damage[0].dice == "4d10"
+    assert spell.capability.slot_damage_increment == "1d10"
     assert {
         (modifier.roll, modifier.mode)
-        for modifier in spell.mechanics.roll_modifiers
+        for modifier in spell.capability.roll_modifiers
     } == {
         ("ability_check", "disadvantage"),
         ("attack_roll", "disadvantage"),
     }
 
 
-def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
+def test_wave_1a_spells_define_executable_translate_capability() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {
         "Acid Splash",
@@ -391,14 +391,14 @@ def test_wave_1a_spells_define_executable_immediate_mechanics() -> None:
 
     assert all(spell.executable for spell in spells)
     assert all(
-        build_spell(spell.public_name, spell.source, catalog).mechanics
+        build_spell(spell.public_name, spell.source, catalog).capability
         for spell in spells
     )
     assert catalog.find("Blight", "XPHB").implementation.status == "partial"
     assert catalog.find("Sacred Flame", "XPHB").implementation.status == "complete"
 
 
-def test_wave_1b_spells_define_executable_condition_mechanics() -> None:
+def test_wave_1b_spells_define_executable_condition_capability() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     names = {
         "Animal Friendship",
@@ -418,7 +418,7 @@ def test_wave_1b_spells_define_executable_condition_mechanics() -> None:
 
     assert all(spell.executable for spell in spells)
     assert all(
-        build_spell(spell.public_name, spell.source, catalog).mechanics
+        build_spell(spell.public_name, spell.source, catalog).capability
         for spell in spells
     )
 

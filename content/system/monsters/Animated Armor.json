@@ -60,7 +60,7 @@
       "entries": [
         "The armor makes two Slam attacks."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [{"steps": [{"type": "invoke", "invocation": {"type": "stat_block_action", "name": "Slam"}, "times": 2}]}]
       }
@@ -70,7 +70,7 @@
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Bludgeoning damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": ["melee"],
         "attack_bonus": 4,

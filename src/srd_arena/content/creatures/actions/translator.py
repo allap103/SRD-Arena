@@ -2,8 +2,8 @@ import re
 from typing import Literal, cast
 
 from . import schema
-from srd_arena.content.mechanics import AutomaticResolutionSchema
-from srd_arena.content.mechanics import schema as mechanics
+from srd_arena.content.capabilities import AutomaticResolutionSchema
+from srd_arena.content.capabilities import schema as capability
 from srd_arena.content.creatures.stat_block_schema import (
     BestiaryActionSchema,
     BestiaryMonsterSchema,
@@ -18,18 +18,18 @@ def build_stat_block_actions(
         return {}
     definitions: dict[str, domain.StatBlockActionDefinition] = {}
     for action in stat_block.action:
-        mechanics = action.mechanics
-        if isinstance(mechanics, schema.AttackActionMechanicsSchema):
-            definitions[action.name] = _attack_definition(action, mechanics)
-        elif isinstance(mechanics, schema.CapabilityActionMechanicsSchema):
-            resolution = mechanics.resolution
+        capability = action.capability
+        if isinstance(capability, schema.AttackCapabilitySchema):
+            definitions[action.name] = _attack_definition(action, capability)
+        elif isinstance(capability, schema.CapabilitySchema):
+            resolution = capability.resolution
             if isinstance(
                 resolution,
                 schema.SavingThrowActionResolutionSchema,
             ):
                 definitions[action.name] = domain.SavingThrowActionDefinition(
                     name=action.name,
-                    target=_target(mechanics.target),
+                    target=_target(capability.target),
                     ability=resolution.ability,
                     dc=resolution.difficulty.value,
                     failure=tuple(
@@ -51,21 +51,21 @@ def build_stat_block_actions(
                     always=tuple(
                         _effect(effect) for effect in resolution.always.effects
                     ),
-                    resource=_resource(mechanics.resource),
+                    resource=_resource(capability.resource),
                 )
             elif isinstance(resolution, AutomaticResolutionSchema):
                 definitions[action.name] = domain.AutomaticActionDefinition(
                     name=action.name,
-                    target=_target(mechanics.target),
+                    target=_target(capability.target),
                     effects=tuple(
                         _effect(effect) for effect in resolution.outcome.effects
                     ),
-                    resource=_resource(mechanics.resource),
+                    resource=_resource(capability.resource),
                 )
-        elif isinstance(mechanics, schema.SpellcastingActionMechanicsSchema):
+        elif isinstance(capability, schema.SpellcastingCapabilitySchema):
             definitions[action.name] = domain.SpellcastingActionDefinition(
                 name=action.name,
-                ability=mechanics.ability,
+                ability=capability.ability,
                 spells=tuple(
                     domain.SpellOption(
                         name=spell.name,
@@ -73,9 +73,9 @@ def build_stat_block_actions(
                         cast_level=spell.cast_level,
                         uses=spell.uses,
                     )
-                    for spell in mechanics.spells
+                    for spell in capability.spells
                 ),
-                shared_resource=_resource(mechanics.shared_resource),
+                shared_resource=_resource(capability.shared_resource),
             )
         else:
             fallback = _parse_tagged_attack(action)
@@ -103,9 +103,9 @@ def build_declared_stat_block_actions(
                     for entry in action.entries
                     if isinstance(entry, str)
                 ),
-                mechanics_type=(
-                    action.mechanics.type
-                    if action.mechanics is not None
+                capability_type=(
+                    action.capability.type
+                    if action.capability is not None
                     else None
                 ),
                 section=cast(
@@ -124,18 +124,18 @@ def _display_name(name: str) -> str:
 
 def _attack_definition(
     action: BestiaryActionSchema,
-    mechanics: schema.AttackActionMechanicsSchema,
+    capability: schema.AttackCapabilitySchema,
 ) -> domain.AttackActionDefinition:
     return domain.AttackActionDefinition(
         name=action.name,
-        attack_modes=tuple(mechanics.attack_modes),
-        attack_bonus=mechanics.attack_bonus,
-        target=_target(mechanics.target),
-        reach_feet=mechanics.reach_feet,
-        range_normal_feet=mechanics.range_normal_feet,
-        range_long_feet=mechanics.range_long_feet,
-        hit=tuple(_effect(effect) for effect in mechanics.hit),
-        resource=_resource(mechanics.resource),
+        attack_modes=tuple(capability.attack_modes),
+        attack_bonus=capability.attack_bonus,
+        target=_target(capability.target),
+        reach_feet=capability.reach_feet,
+        range_normal_feet=capability.range_normal_feet,
+        range_long_feet=capability.range_long_feet,
+        hit=tuple(_effect(effect) for effect in capability.hit),
+        resource=_resource(capability.resource),
     )
 
 
@@ -195,7 +195,7 @@ def _parse_attack_modes(value: str) -> tuple[str, ...]:
     return tuple(modes)
 
 
-def _target(value: mechanics.ActionTargetSchema) -> domain.ActionTarget:
+def _target(value: capability.ActionTargetSchema) -> domain.ActionTarget:
     return domain.ActionTarget(
         kind=value.type,
         range_feet=getattr(value, "range_feet", None),
@@ -212,15 +212,15 @@ def _target(value: mechanics.ActionTargetSchema) -> domain.ActionTarget:
 
 
 def _requirement(value) -> domain.ActionRequirement:
-    if isinstance(value, mechanics.SizeRequirementSchema):
+    if isinstance(value, capability.SizeRequirementSchema):
         return domain.SizeRequirement(value.maximum, value.minimum)
-    if isinstance(value, mechanics.ConditionRequirementSchema):
+    if isinstance(value, capability.ConditionRequirementSchema):
         return domain.ConditionRequirement(
             tuple(value.conditions),
             value.match,
             value.applied_by,
         )
-    if isinstance(value, mechanics.CreatureTypeRequirementSchema):
+    if isinstance(value, capability.CreatureTypeRequirementSchema):
         return domain.CreatureTypeRequirement(tuple(value.creature_types))
     return domain.NotAffectedRequirement(value.action)
 
@@ -245,8 +245,8 @@ def _required_duration(value) -> domain.EffectDuration:
     return duration
 
 
-def _effect(value: mechanics.ActionEffectSchema) -> domain.ActionEffect:
-    if isinstance(value, mechanics.DamageEffectSchema):
+def _effect(value: capability.ActionEffectSchema) -> domain.ActionEffect:
+    if isinstance(value, capability.DamageEffectSchema):
         return domain.DamageEffect(
             value.dice,
             value.bonus,
@@ -257,7 +257,7 @@ def _effect(value: mechanics.ActionEffectSchema) -> domain.ActionEffect:
                 for requirement in value.requirements
             ),
         )
-    if isinstance(value, mechanics.ConditionEffectSchema):
+    if isinstance(value, capability.ConditionEffectSchema):
         return domain.ConditionEffect(
             condition=value.condition,
             duration=_duration(value.duration),
@@ -269,28 +269,28 @@ def _effect(value: mechanics.ActionEffectSchema) -> domain.ActionEffect:
             source_capacity=value.source_capacity,
             ends_on=tuple(value.ends_on),
         )
-    if isinstance(value, mechanics.ForcedMovementEffectSchema):
+    if isinstance(value, capability.ForcedMovementEffectSchema):
         return domain.ForcedMovementEffect(
             value.direction,
             value.distance_feet,
             value.up_to,
         )
-    if isinstance(value, mechanics.SpeedMultiplierEffectSchema):
+    if isinstance(value, capability.SpeedMultiplierEffectSchema):
         return domain.SpeedMultiplierEffect(
             value.numerator,
             value.denominator,
             _required_duration(value.duration),
         )
-    if isinstance(value, mechanics.ProhibitReactionEffectSchema):
+    if isinstance(value, capability.ProhibitReactionEffectSchema):
         return domain.ProhibitReactionsEffect(
             _required_duration(value.duration)
         )
-    if isinstance(value, mechanics.TurnEconomyRestrictionEffectSchema):
+    if isinstance(value, capability.TurnEconomyRestrictionEffectSchema):
         return domain.TurnEconomyRestrictionEffect(
             tuple(value.choose_between),
             _required_duration(value.duration),
         )
-    if isinstance(value, mechanics.RollModifierEffectSchema):
+    if isinstance(value, capability.RollModifierEffectSchema):
         return domain.RollModifierEffect(
             value.roll,
             value.mode,
@@ -299,7 +299,7 @@ def _effect(value: mechanics.ActionEffectSchema) -> domain.ActionEffect:
             value.value,
             _duration(value.duration),
         )
-    if isinstance(value, mechanics.ControlEffectSchema):
+    if isinstance(value, capability.ControlEffectSchema):
         return domain.ControlEffect(
             value.communication,
             value.communication_range_feet,

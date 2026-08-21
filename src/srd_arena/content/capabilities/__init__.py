@@ -3,7 +3,7 @@
 from .schema import (
     Ability,
     ActionEffectSchema,
-    ActionMechanicsSchemaModel,
+    CapabilitySchemaModel,
     ActionRequirementSchema,
     ActionTargetSchema,
     AreaTargetSchema,
@@ -41,7 +41,7 @@ __all__ = [
     "Ability",
     "AutomaticResolutionSchema",
     "ActionEffectSchema",
-    "ActionMechanicsSchemaModel",
+    "CapabilitySchemaModel",
     "ActionRequirementSchema",
     "ActionTargetSchema",
     "AreaTargetSchema",

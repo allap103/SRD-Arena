@@ -91,7 +91,7 @@
       "entries": [
         "The devil makes two Claw attacks and one Infernal Sting attack."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -121,7 +121,7 @@
       "entries": [
         "{@atkr m} {@hit 8}, reach 10 ft. {@h}13 ({@damage 2d8 + 4}) Slashing damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -147,7 +147,7 @@
       "entries": [
         "{@atkr m} {@hit 8}, reach 10 ft. {@h}15 ({@damage 2d10 + 4}) Piercing damage plus 18 ({@damage 4d8}) Poison damage, and the target has the {@condition Poisoned|XPHB} condition until the start of the devil's next turn. While {@condition Poisoned|XPHB}, the target can't regain {@variantrule Hit Points|XPHB}."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"

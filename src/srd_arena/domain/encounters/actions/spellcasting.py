@@ -140,7 +140,7 @@ def resolve_spell_action(
                     candidate.target_ref: self._attack_roll_mode_for(
                         creature_ref,
                         candidate.target_ref,
-                        spell.mechanics.attack_mode,
+                        spell.capability.attack_mode,
                         self._creature_position(creature_ref),
                         tuple(
                             state.position
@@ -153,9 +153,9 @@ def resolve_spell_action(
                     )
                     for candidate in targets
                 }
-                if spell.mechanics is not None
-                and spell.mechanics.resolution == "spell_attack"
-                and spell.mechanics.attack_mode is not None
+                if spell.capability is not None
+                and spell.capability.resolution == "spell_attack"
+                and spell.capability.attack_mode is not None
                 else {}
             ),
             automatic_critical_providers={
@@ -170,24 +170,24 @@ def resolve_spell_action(
                     candidate.target_ref: "advantage"
                     for candidate in targets
                     if (
-                        spell.mechanics is not None
+                        spell.capability is not None
                         and has_condition_save_advantage(
                             self,
                             candidate.target_ref,
-                            spell.mechanics.conditions,
+                            spell.capability.conditions,
                         )
                     )
                     or (
-                        spell.mechanics.save_advantage_against_opponents
+                        spell.capability.save_advantage_against_opponents
                         and self._creatures_are_opponents(
                             creature_ref, candidate.target_ref
                         )
                     )
                 }
-                if spell.mechanics is not None
+                if spell.capability is not None
                 and (
-                    spell.mechanics.save_advantage_against_opponents
-                    or spell.mechanics.conditions
+                    spell.capability.save_advantage_against_opponents
+                    or spell.capability.conditions
                 )
                 else {}
             ),

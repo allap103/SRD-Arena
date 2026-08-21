@@ -35,7 +35,7 @@
     "Your body becomes blurred. For the duration, any creature has {@variantrule Disadvantage|XPHB} on attack rolls against you. An attacker is immune to this effect if it perceives you with {@sense Blindsight|XPHB} or {@sense Truesight|XPHB}."
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "self"},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "roll_modifier", "roll": "attack_roll", "mode": "disadvantage", "subject": "attacks_against_target", "ignored_by_senses": ["blindsight", "truesight"]}

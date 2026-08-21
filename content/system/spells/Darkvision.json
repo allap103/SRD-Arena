@@ -42,7 +42,7 @@
     "ST"
   ],
   "implementation": {"status": "partial", "omissions": [{"mechanic": "darkness perception", "reason": "Lighting and obscured-vision targeting are not modeled yet."}]},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "disposition": "willing"},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "sense", "sense": "darkvision", "range_feet": 150}

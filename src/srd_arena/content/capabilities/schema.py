@@ -7,29 +7,29 @@ NonNegativeInt = Annotated[int, Field(ge=0)]
 Ability = Literal["str", "dex", "con", "int", "wis", "cha"]
 
 
-class ActionMechanicsSchemaModel(BaseModel):
+class CapabilitySchemaModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class ConditionRequirementSchema(ActionMechanicsSchemaModel):
+class ConditionRequirementSchema(CapabilitySchemaModel):
     type: Literal["condition"]
     conditions: list[str] = Field(min_length=1)
     match: Literal["any", "all"] = "any"
     applied_by: Literal["source", "any"] = "any"
 
 
-class CreatureTypeRequirementSchema(ActionMechanicsSchemaModel):
+class CreatureTypeRequirementSchema(CapabilitySchemaModel):
     type: Literal["creature_type"]
     creature_types: list[str] = Field(min_length=1)
 
 
-class SizeRequirementSchema(ActionMechanicsSchemaModel):
+class SizeRequirementSchema(CapabilitySchemaModel):
     type: Literal["size"]
     maximum: str | None = None
     minimum: str | None = None
 
 
-class NotAffectedRequirementSchema(ActionMechanicsSchemaModel):
+class NotAffectedRequirementSchema(CapabilitySchemaModel):
     type: Literal["not_affected_by"]
     action: str = Field(min_length=1)
 
@@ -43,11 +43,11 @@ ActionRequirementSchema = Annotated[
 ]
 
 
-class SelfTargetSchema(ActionMechanicsSchemaModel):
+class SelfTargetSchema(CapabilitySchemaModel):
     type: Literal["self"]
 
 
-class CreatureTargetSchema(ActionMechanicsSchemaModel):
+class CreatureTargetSchema(CapabilitySchemaModel):
     type: Literal["creature"]
     count: PositiveInt = 1
     range_feet: NonNegativeInt
@@ -55,7 +55,7 @@ class CreatureTargetSchema(ActionMechanicsSchemaModel):
     requirements: list[ActionRequirementSchema] = Field(default_factory=list)
 
 
-class AreaTargetSchema(ActionMechanicsSchemaModel):
+class AreaTargetSchema(CapabilitySchemaModel):
     type: Literal["area"]
     shape: Literal["cone", "cube", "line", "radius"]
     size_feet: PositiveInt
@@ -83,25 +83,25 @@ ActionTargetSchema = Annotated[
 ]
 
 
-class EndOfTurnDurationSchema(ActionMechanicsSchemaModel):
+class EndOfTurnDurationSchema(CapabilitySchemaModel):
     type: Literal["end_of_turn"]
     creature: Literal["source", "target"]
     turn_offset: NonNegativeInt = 0
 
 
-class StartOfTurnDurationSchema(ActionMechanicsSchemaModel):
+class StartOfTurnDurationSchema(CapabilitySchemaModel):
     type: Literal["start_of_turn"]
     creature: Literal["source", "target"]
     turn_offset: NonNegativeInt = 0
 
 
-class TimedDurationSchema(ActionMechanicsSchemaModel):
+class TimedDurationSchema(CapabilitySchemaModel):
     type: Literal["timed"]
     amount: PositiveInt
     unit: Literal["round", "minute", "hour", "day"]
 
 
-class UntilEventDurationSchema(ActionMechanicsSchemaModel):
+class UntilEventDurationSchema(CapabilitySchemaModel):
     type: Literal["until_event"]
     events: list[
         Literal[
@@ -114,7 +114,7 @@ class UntilEventDurationSchema(ActionMechanicsSchemaModel):
     match: Literal["any", "all"] = "any"
 
 
-class PermanentDurationSchema(ActionMechanicsSchemaModel):
+class PermanentDurationSchema(CapabilitySchemaModel):
     type: Literal["permanent"]
 
 
@@ -128,7 +128,7 @@ EffectDurationSchema = Annotated[
 ]
 
 
-class AttackRollModeRequirementSchema(ActionMechanicsSchemaModel):
+class AttackRollModeRequirementSchema(CapabilitySchemaModel):
     type: Literal["attack_roll_mode"]
     mode: Literal["normal", "advantage", "disadvantage"]
 
@@ -139,7 +139,7 @@ AttackHitRequirementSchema = Annotated[
 ]
 
 
-class DamageEffectSchema(ActionMechanicsSchemaModel):
+class DamageEffectSchema(CapabilitySchemaModel):
     type: Literal["damage"]
     dice: str = Field(pattern=r"^\d+d\d+$")
     bonus: int = 0
@@ -151,7 +151,7 @@ class DamageEffectSchema(ActionMechanicsSchemaModel):
     )
 
 
-class ConditionEffectSchema(ActionMechanicsSchemaModel):
+class ConditionEffectSchema(CapabilitySchemaModel):
     type: Literal["condition"]
     condition: str = Field(min_length=1)
     duration: EffectDurationSchema | None = None
@@ -168,26 +168,26 @@ class ConditionEffectSchema(ActionMechanicsSchemaModel):
     ] = Field(default_factory=list)
 
 
-class ForcedMovementEffectSchema(ActionMechanicsSchemaModel):
+class ForcedMovementEffectSchema(CapabilitySchemaModel):
     type: Literal["forced_movement"]
     direction: Literal["away", "toward", "chosen"]
     distance_feet: PositiveInt
     up_to: bool = True
 
 
-class SpeedMultiplierEffectSchema(ActionMechanicsSchemaModel):
+class SpeedMultiplierEffectSchema(CapabilitySchemaModel):
     type: Literal["speed_multiplier"]
     numerator: NonNegativeInt
     denominator: PositiveInt
     duration: EffectDurationSchema
 
 
-class ProhibitReactionEffectSchema(ActionMechanicsSchemaModel):
+class ProhibitReactionEffectSchema(CapabilitySchemaModel):
     type: Literal["prohibit_reactions"]
     duration: EffectDurationSchema
 
 
-class TurnEconomyRestrictionEffectSchema(ActionMechanicsSchemaModel):
+class TurnEconomyRestrictionEffectSchema(CapabilitySchemaModel):
     type: Literal["turn_economy_restriction"]
     choose_between: list[Literal["action", "bonus_action"]] = Field(
         min_length=2,
@@ -196,7 +196,7 @@ class TurnEconomyRestrictionEffectSchema(ActionMechanicsSchemaModel):
     duration: EffectDurationSchema
 
 
-class RollModifierEffectSchema(ActionMechanicsSchemaModel):
+class RollModifierEffectSchema(CapabilitySchemaModel):
     type: Literal["roll_modifier"]
     roll: Literal[
         "ability_check",
@@ -218,7 +218,7 @@ class RollModifierEffectSchema(ActionMechanicsSchemaModel):
     requirements: list[ActionRequirementSchema] = Field(default_factory=list)
 
 
-class ControlEffectSchema(ActionMechanicsSchemaModel):
+class ControlEffectSchema(CapabilitySchemaModel):
     type: Literal["control"]
     controller: Literal["source"]
     communication: Literal["telepathy"] | None = None
@@ -227,7 +227,7 @@ class ControlEffectSchema(ActionMechanicsSchemaModel):
     duration: EffectDurationSchema
 
 
-class GainMemoriesEffectSchema(ActionMechanicsSchemaModel):
+class GainMemoriesEffectSchema(CapabilitySchemaModel):
     type: Literal["gain_memories"]
     requirement: CreatureTypeRequirementSchema
     trigger: Literal["reduced_to_zero_by_action"]

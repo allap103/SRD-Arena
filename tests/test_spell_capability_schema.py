@@ -5,7 +5,7 @@ from srd_arena.content.spells import SpellSchema
 
 
 def _spell(
-    mechanics: dict[str, object] | None,
+    capability: dict[str, object] | None,
     *,
     implementation: dict[str, object] | None = None,
 ) -> SpellSchema:
@@ -15,8 +15,8 @@ def _spell(
         "level": 3,
         "school": "V",
     }
-    if mechanics is not None:
-        data["mechanics"] = mechanics
+    if capability is not None:
+        data["capability"] = capability
     if implementation is not None:
         data["implementation"] = implementation
     return SpellSchema.model_validate(data)
@@ -72,10 +72,10 @@ def test_direct_area_damage_supports_half_damage_and_slot_scaling() -> None:
     )
 
     assert spell.executable
-    assert spell.mechanics is not None
-    mechanics = spell.mechanics.model_dump()
-    assert mechanics["resolution"]["success_damage"] == "half"
-    assert mechanics["resolution"]["failure"]["effects"][0]["damage_type"] == "fire"
+    assert spell.capability is not None
+    capability = spell.capability.model_dump()
+    assert capability["resolution"]["success_damage"] == "half"
+    assert capability["resolution"]["failure"]["effects"][0]["damage_type"] == "fire"
 
 
 def test_condition_spell_supports_type_requirement_and_repeat_save() -> None:
@@ -112,10 +112,10 @@ def test_condition_spell_supports_type_requirement_and_repeat_save() -> None:
         implementation={"status": "complete"},
     )
 
-    assert spell.mechanics is not None
-    mechanics = spell.mechanics.model_dump()
-    assert mechanics["target"]["requirements"][0]["creature_types"] == ["humanoid"]
-    assert mechanics["resolution"]["repeat_save"]["trigger"] == "turn_end"
+    assert spell.capability is not None
+    capability = spell.capability.model_dump()
+    assert capability["target"]["requirements"][0]["creature_types"] == ["humanoid"]
+    assert capability["resolution"]["repeat_save"]["trigger"] == "turn_end"
 
 
 def test_compound_spell_groups_shared_ongoing_modifiers() -> None:
@@ -172,9 +172,9 @@ def test_compound_spell_groups_shared_ongoing_modifiers() -> None:
         implementation={"status": "complete"},
     )
 
-    assert spell.mechanics is not None
-    mechanics = spell.mechanics.model_dump()
-    modifiers = mechanics["resolution"]["failure"]["effects"][0]["modifiers"]
+    assert spell.capability is not None
+    capability = spell.capability.model_dump()
+    modifiers = capability["resolution"]["failure"]["effects"][0]["modifiers"]
     assert [modifier["type"] for modifier in modifiers] == [
         "speed_multiplier",
         "prohibit_reactions",
@@ -219,10 +219,10 @@ def test_hp_pool_and_random_table_are_first_class_resolutions() -> None:
         implementation={"status": "complete"},
     )
 
-    assert hp_pool.mechanics is not None
-    assert hp_pool.mechanics.model_dump()["resolution"]["cost"] == "current_hit_points"
-    assert random.mechanics is not None
-    assert len(random.mechanics.model_dump()["resolution"]["entries"]) == 3
+    assert hp_pool.capability is not None
+    assert hp_pool.capability.model_dump()["resolution"]["cost"] == "current_hit_points"
+    assert random.capability is not None
+    assert len(random.capability.model_dump()["resolution"]["entries"]) == 3
 
 
 def test_granted_actions_and_persistent_areas_share_spell_instance_state() -> None:
@@ -272,8 +272,8 @@ def test_granted_actions_and_persistent_areas_share_spell_instance_state() -> No
         implementation={"status": "complete"},
     )
 
-    assert spell.mechanics is not None
-    effects = spell.mechanics.model_dump()["resolution"]["outcome"]["effects"]
+    assert spell.capability is not None
+    effects = spell.capability.model_dump()["resolution"]["outcome"]["effects"]
     assert effects[0]["actions"][0]["id"] == "attack"
     assert effects[1]["action"]["economy"] == "bonus_action"
 
@@ -330,12 +330,12 @@ def test_composite_and_moving_areas_are_explicit() -> None:
         implementation={"status": "complete"},
     )
 
-    assert fire_storm.mechanics is not None
-    fire_storm_mechanics = fire_storm.mechanics.model_dump()
-    assert fire_storm_mechanics["target"]["component"]["maximum"] == 10
-    assert cloudkill.mechanics is not None
-    cloudkill_mechanics = cloudkill.mechanics.model_dump()
-    area = cloudkill_mechanics["resolution"]["outcome"]["effects"][0]
+    assert fire_storm.capability is not None
+    fire_storm_capability = fire_storm.capability.model_dump()
+    assert fire_storm_capability["target"]["component"]["maximum"] == 10
+    assert cloudkill.capability is not None
+    cloudkill_capability = cloudkill.capability.model_dump()
+    area = cloudkill_capability["resolution"]["outcome"]["effects"][0]
     assert area["movement"]["distance_feet"] == 10
 
 
@@ -378,14 +378,14 @@ def test_triggered_casts_links_interception_and_defeat_prevention_are_typed() ->
         implementation={"status": "complete"},
     )
 
-    assert spell.mechanics is not None
-    assert spell.mechanics.casting_trigger is not None
-    assert spell.mechanics.casting_trigger.event == "attack_hit"
-    assert spell.mechanics.outcome_triggers[0].event == "attack_would_hit"
+    assert spell.capability is not None
+    assert spell.capability.casting_trigger is not None
+    assert spell.capability.casting_trigger.event == "attack_hit"
+    assert spell.capability.outcome_triggers[0].event == "attack_would_hit"
 
 
-def test_implementation_status_cannot_hide_missing_or_extra_mechanics() -> None:
-    with pytest.raises(ValidationError, match="Complete spells must define mechanics"):
+def test_implementation_status_cannot_hide_missing_or_extra_capability() -> None:
+    with pytest.raises(ValidationError, match="Complete spells must define a capability"):
         _spell(None, implementation={"status": "complete"})
 
     with pytest.raises(ValidationError, match="Unimplemented spells cannot define"):
@@ -400,7 +400,7 @@ def test_implementation_status_cannot_hide_missing_or_extra_mechanics() -> None:
         )
 
 
-def test_schema_rejects_unknown_mechanics_and_invalid_structures() -> None:
+def test_schema_rejects_unknown_capability_and_invalid_structures() -> None:
     with pytest.raises(ValidationError):
         _spell(
             {

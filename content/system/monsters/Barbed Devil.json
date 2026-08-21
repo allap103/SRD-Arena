@@ -95,7 +95,7 @@
       "entries": [
         "The devil makes one Claws attack and one Tail attack, or it makes two Hurl Flame attacks."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -136,7 +136,7 @@
       "entries": [
         "{@atkr m} {@hit 6}, reach 5 ft. {@h}10 ({@damage 2d6 + 3}) Piercing damage. If the target is a Large or smaller creature, it has the {@condition Grappled|XPHB} condition (escape {@dc 13}) from both claws."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -174,7 +174,7 @@
       "entries": [
         "{@atkr m} {@hit 6}, reach 10 ft. {@h}14 ({@damage 2d10 + 3}) Slashing damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -200,7 +200,7 @@
       "entries": [
         "{@atkr r} {@hit 5}, range 150 ft. {@h}17 ({@damage 5d6}) Fire damage. If the target is a flammable object that isn't being worn or carried, it starts {@hazard burning|XPHB}."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "ranged"

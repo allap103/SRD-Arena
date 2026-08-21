@@ -1,6 +1,6 @@
-# Bestiary Action Mechanics Schema
+# Bestiary Action Capability Schema
 
-`mechanics` is an additive, machine-readable normalization of a stat-block
+`capability` is an additive, machine-readable normalization of a stat-block
 entry. Original `entries` remain authoritative and are never replaced.
 
 The canonical Pydantic models live in

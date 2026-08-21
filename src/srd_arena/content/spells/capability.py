@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
 
-from srd_arena.content.mechanics import (
+from srd_arena.content.capabilities import (
     Ability,
     AutomaticResolutionSchema as SharedAutomaticResolutionSchema,
     ConditionEffectSchema,
@@ -28,7 +28,7 @@ from srd_arena.content.mechanics import (
 )
 
 
-class SpellMechanicsSchemaModel(BaseModel):
+class SpellCapabilitySchemaModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
@@ -54,12 +54,12 @@ def _default_implementation_scope() -> list[ImplementationScope]:
     return ["combat"]
 
 
-class ImplementationOmissionSchema(SpellMechanicsSchemaModel):
+class ImplementationOmissionSchema(SpellCapabilitySchemaModel):
     mechanic: str = Field(min_length=1)
     reason: str = Field(min_length=1)
 
 
-class SpellImplementationSchema(SpellMechanicsSchemaModel):
+class SpellImplementationSchema(SpellCapabilitySchemaModel):
     status: Literal[
         "complete",
         "partial",
@@ -87,59 +87,59 @@ class SpellImplementationSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class CreatureTraitRequirementSchema(SpellMechanicsSchemaModel):
+class CreatureTraitRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["creature_trait"]
     trait: str = Field(min_length=1)
 
 
-class ConditionImmunityRequirementSchema(SpellMechanicsSchemaModel):
+class ConditionImmunityRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["condition_immunity"]
     condition: str = Field(min_length=1)
 
 
-class SpellComponentRequirementSchema(SpellMechanicsSchemaModel):
+class SpellComponentRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["spell_component"]
     component: Literal["verbal", "somatic", "material"]
 
 
-class AttackSourceRequirementSchema(SpellMechanicsSchemaModel):
+class AttackSourceRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["attack_source"]
     source: Literal["weapon", "unarmed_strike", "spell", "any"]
     mode: Literal["melee", "ranged", "any"] = "any"
 
 
-class WillingRequirementSchema(SpellMechanicsSchemaModel):
+class WillingRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["willing"]
 
 
-class FreeHandRequirementSchema(SpellMechanicsSchemaModel):
+class FreeHandRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["free_hand"]
 
 
-class PerceptionRequirementSchema(SpellMechanicsSchemaModel):
+class PerceptionRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["perception"]
     sense: Literal["see", "hear"]
     subject: Literal["source", "target", "each_other"] = "source"
 
 
-class HitPointRequirementSchema(SpellMechanicsSchemaModel):
+class HitPointRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["hit_points"]
     comparison: Literal["less_than", "at_most", "at_least", "greater_than"]
     value: NonNegativeInt
 
 
-class RelationshipRequirementSchema(SpellMechanicsSchemaModel):
+class RelationshipRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["relationship"]
     relationship: str = Field(min_length=1)
     established_by: Literal["this_spell", "source", "any"] = "any"
 
 
-class AnyRequirementSchema(SpellMechanicsSchemaModel):
+class AnyRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["any"]
     requirements: list[SpellRequirementSchema] = Field(min_length=1)
 
 
-class AllRequirementSchema(SpellMechanicsSchemaModel):
+class AllRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["all"]
     requirements: list[SpellRequirementSchema] = Field(min_length=1)
 
@@ -164,7 +164,7 @@ SpellRequirementSchema = Annotated[
 ]
 
 
-class SpellSaveModifierSchema(SpellMechanicsSchemaModel):
+class SpellSaveModifierSchema(SpellCapabilitySchemaModel):
     type: Literal["roll_modifier"]
     roll: Literal["saving_throw"]
     mode: Literal["advantage", "disadvantage", "add", "subtract"]
@@ -175,7 +175,7 @@ class SpellSaveModifierSchema(SpellMechanicsSchemaModel):
     requirements: list[SpellRequirementSchema] = Field(default_factory=list)
 
 
-class TargetCountSchema(SpellMechanicsSchemaModel):
+class TargetCountSchema(SpellCapabilitySchemaModel):
     minimum: NonNegativeInt = 1
     maximum: PositiveInt | Literal["spellcasting_modifier", "all"] = 1
 
@@ -186,11 +186,11 @@ class TargetCountSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class SelfSpellTargetSchema(SpellMechanicsSchemaModel):
+class SelfSpellTargetSchema(SpellCapabilitySchemaModel):
     type: Literal["self"]
 
 
-class CreatureSpellTargetSchema(SpellMechanicsSchemaModel):
+class CreatureSpellTargetSchema(SpellCapabilitySchemaModel):
     type: Literal["creature"]
     count: TargetCountSchema = Field(default_factory=TargetCountSchema)
     disposition: Literal[
@@ -201,7 +201,7 @@ class CreatureSpellTargetSchema(SpellMechanicsSchemaModel):
     requirements: list[SpellRequirementSchema] = Field(default_factory=list)
 
 
-class ObjectSpellTargetSchema(SpellMechanicsSchemaModel):
+class ObjectSpellTargetSchema(SpellCapabilitySchemaModel):
     type: Literal["object"]
     count: TargetCountSchema = Field(default_factory=TargetCountSchema)
     carried: Literal["allowed", "required", "forbidden"] = "allowed"
@@ -209,13 +209,13 @@ class ObjectSpellTargetSchema(SpellMechanicsSchemaModel):
     requirements: list[SpellRequirementSchema] = Field(default_factory=list)
 
 
-class PointSpellTargetSchema(SpellMechanicsSchemaModel):
+class PointSpellTargetSchema(SpellCapabilitySchemaModel):
     type: Literal["point"]
     surface: Literal["any", "solid", "ground"] = "any"
     line_of_sight: bool = False
 
 
-class EventSpellTargetSchema(SpellMechanicsSchemaModel):
+class EventSpellTargetSchema(SpellCapabilitySchemaModel):
     type: Literal["event_target"]
     binding: Literal[
         "triggering_actor",
@@ -227,7 +227,7 @@ class EventSpellTargetSchema(SpellMechanicsSchemaModel):
     ]
 
 
-class AreaGeometrySchema(SpellMechanicsSchemaModel):
+class AreaGeometrySchema(SpellCapabilitySchemaModel):
     shape: Literal[
         "sphere", "cone", "cube", "line", "cylinder", "emanation", "wall", "ring"
     ]
@@ -272,7 +272,7 @@ class AreaGeometrySchema(SpellMechanicsSchemaModel):
         return self
 
 
-class AreaSpellTargetSchema(SpellMechanicsSchemaModel):
+class AreaSpellTargetSchema(SpellCapabilitySchemaModel):
     type: Literal["area"]
     origin: Literal[
         "self", "point_in_range", "target", "spell_entity", "event_target"
@@ -291,7 +291,7 @@ class AreaSpellTargetSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class CompositeAreaComponentSchema(SpellMechanicsSchemaModel):
+class CompositeAreaComponentSchema(SpellCapabilitySchemaModel):
     geometry: AreaGeometrySchema
     minimum: PositiveInt = 1
     maximum: PositiveInt
@@ -303,7 +303,7 @@ class CompositeAreaComponentSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class CompositeAreaSpellTargetSchema(SpellMechanicsSchemaModel):
+class CompositeAreaSpellTargetSchema(SpellCapabilitySchemaModel):
     type: Literal["composite_area"]
     origin: Literal["point_in_range"] = "point_in_range"
     component: CompositeAreaComponentSchema
@@ -313,19 +313,19 @@ class CompositeAreaSpellTargetSchema(SpellMechanicsSchemaModel):
     occupants: Literal["all", "allies", "enemies", "chosen"] = "all"
 
 
-class SpellEntityTargetSchema(SpellMechanicsSchemaModel):
+class SpellEntityTargetSchema(SpellCapabilitySchemaModel):
     type: Literal["spell_entity"]
     ownership: Literal["source", "any"] = "source"
     entity_kinds: list[str] = Field(default_factory=list)
 
 
-class TargetChoiceOptionSchema(SpellMechanicsSchemaModel):
+class TargetChoiceOptionSchema(SpellCapabilitySchemaModel):
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
     target: SpellTargetSchema
 
 
-class ChoiceSpellTargetSchema(SpellMechanicsSchemaModel):
+class ChoiceSpellTargetSchema(SpellCapabilitySchemaModel):
     type: Literal["choice"]
     options: list[TargetChoiceOptionSchema] = Field(min_length=1)
 
@@ -344,7 +344,7 @@ SpellTargetSchema = Annotated[
 ]
 
 
-class HealingEffectSchema(SpellMechanicsSchemaModel):
+class HealingEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["healing"]
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     bonus: int = 0
@@ -367,7 +367,7 @@ class HealingEffectSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class TemporaryHitPointsEffectSchema(SpellMechanicsSchemaModel):
+class TemporaryHitPointsEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["temporary_hit_points"]
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     value: NonNegativeInt = 0
@@ -381,19 +381,19 @@ class TemporaryHitPointsEffectSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class ArmorClassModifierEffectSchema(SpellMechanicsSchemaModel):
+class ArmorClassModifierEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["armor_class_modifier"]
     value: int
     duration: EffectDurationSchema | None = None
 
 
-class AttackLimitEffectSchema(SpellMechanicsSchemaModel):
+class AttackLimitEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["attack_action_limit"]
     maximum: PositiveInt
     duration: EffectDurationSchema | None = None
 
 
-class ActionFailureChanceEffectSchema(SpellMechanicsSchemaModel):
+class ActionFailureChanceEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["action_failure_chance"]
     action: Literal["cast_spell", "attack", "magic_action", "any"]
     percent: Annotated[int, Field(ge=1, le=100)]
@@ -401,7 +401,7 @@ class ActionFailureChanceEffectSchema(SpellMechanicsSchemaModel):
     duration: EffectDurationSchema | None = None
 
 
-class RemoveEffectSchema(SpellMechanicsSchemaModel):
+class RemoveEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["remove_effect"]
     selection: Literal["one", "all"] = "one"
     removable: list[
@@ -417,14 +417,14 @@ class RemoveEffectSchema(SpellMechanicsSchemaModel):
     conditions: list[str] = Field(default_factory=list)
 
 
-class DamageResistanceEffectSchema(SpellMechanicsSchemaModel):
+class DamageResistanceEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["damage_resistance"]
     damage_types: list[str] = Field(min_length=1)
     selection: Literal["all", "choose_one"] = "all"
     duration: EffectDurationSchema | None = None
 
 
-class DamageReductionEffectSchema(SpellMechanicsSchemaModel):
+class DamageReductionEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["damage_reduction"]
     damage_types: list[str] = Field(min_length=1)
     selection: Literal["all", "choose_one"] = "all"
@@ -434,46 +434,46 @@ class DamageReductionEffectSchema(SpellMechanicsSchemaModel):
     duration: EffectDurationSchema | None = None
 
 
-class SpeedModifierEffectSchema(SpellMechanicsSchemaModel):
+class SpeedModifierEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["speed_modifier"]
     feet: int
     duration: EffectDurationSchema | None = None
 
 
-class ConditionSaveAdvantageEffectSchema(SpellMechanicsSchemaModel):
+class ConditionSaveAdvantageEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["condition_save_advantage"]
     conditions: list[str] = Field(min_length=1)
     duration: EffectDurationSchema | None = None
 
 
-class DamageImmunityEffectSchema(SpellMechanicsSchemaModel):
+class DamageImmunityEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["damage_immunity"]
     damage_types: list[str] = Field(min_length=1)
     duration: EffectDurationSchema | None = None
 
 
-class ConditionImmunityEffectSchema(SpellMechanicsSchemaModel):
+class ConditionImmunityEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["condition_immunity"]
     conditions: list[str] = Field(min_length=1)
     suppress_existing: bool = False
     duration: EffectDurationSchema | None = None
 
 
-class SenseEffectSchema(SpellMechanicsSchemaModel):
+class SenseEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["sense"]
     sense: Literal["blindsight", "darkvision", "truesight"]
     range_feet: PositiveInt
     duration: EffectDurationSchema | None = None
 
 
-class HitPointMaximumModifierEffectSchema(SpellMechanicsSchemaModel):
+class HitPointMaximumModifierEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["hit_point_maximum_modifier"]
     value: int
     also_modify_current: bool = False
     duration: EffectDurationSchema | None = None
 
 
-class TeleportEffectSchema(SpellMechanicsSchemaModel):
+class TeleportEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["teleport"]
     distance_feet: NonNegativeInt | Literal["spell_range", "unlimited"]
     destination: Literal[
@@ -481,24 +481,24 @@ class TeleportEffectSchema(SpellMechanicsSchemaModel):
     ]
 
 
-class ObscurementEffectSchema(SpellMechanicsSchemaModel):
+class ObscurementEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["obscurement"]
     degree: Literal["light", "heavy"]
 
 
-class MovementModeEffectSchema(SpellMechanicsSchemaModel):
+class MovementModeEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["movement_mode"]
     mode: Literal["walk", "fly", "swim", "climb", "burrow", "hover"]
     speed_feet: PositiveInt | Literal["walking_speed"]
     duration: EffectDurationSchema | None = None
 
 
-class DifficultTerrainEffectSchema(SpellMechanicsSchemaModel):
+class DifficultTerrainEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["difficult_terrain"]
     applies_to: Literal["all", "enemies", "creatures_on_ground"] = "all"
 
 
-class BattlefieldRemovalEffectSchema(SpellMechanicsSchemaModel):
+class BattlefieldRemovalEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["battlefield_removal"]
     destination: Literal["demiplane", "another_plane", "extradimensional", "off_board"]
     return_trigger: Literal[
@@ -507,7 +507,7 @@ class BattlefieldRemovalEffectSchema(SpellMechanicsSchemaModel):
     return_position: Literal["origin", "nearest_free_space", "chosen_free_space"]
 
 
-class RelationshipEffectSchema(SpellMechanicsSchemaModel):
+class RelationshipEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["relationship"]
     relationship: str = Field(min_length=1)
     source_role: str = Field(default="source", min_length=1)
@@ -515,7 +515,7 @@ class RelationshipEffectSchema(SpellMechanicsSchemaModel):
     unique: Literal["none", "per_source", "per_target", "per_pair"] = "per_pair"
 
 
-class MirroredDamageEffectSchema(SpellMechanicsSchemaModel):
+class MirroredDamageEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["mirrored_damage"]
     from_event: Literal["triggering_damage"] = "triggering_damage"
     numerator: PositiveInt = 1
@@ -524,7 +524,7 @@ class MirroredDamageEffectSchema(SpellMechanicsSchemaModel):
     prevent_recursion: bool = True
 
 
-class CompelledBehaviorEffectSchema(SpellMechanicsSchemaModel):
+class CompelledBehaviorEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["compelled_behavior"]
     behavior: Literal[
         "authored_command",
@@ -538,29 +538,29 @@ class CompelledBehaviorEffectSchema(SpellMechanicsSchemaModel):
     command_id: str | None = None
 
 
-class CancelPendingEventEffectSchema(SpellMechanicsSchemaModel):
+class CancelPendingEventEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["cancel_pending_event"]
     event: Literal["attack", "damage", "spell", "defeat", "instant_death"]
     consume_triggering_resources: bool = True
 
 
-class RedirectPendingTargetEffectSchema(SpellMechanicsSchemaModel):
+class RedirectPendingTargetEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["redirect_pending_target"]
     destination: Literal["random_spell_entity", "chosen_legal_target"]
 
 
-class RequireTargetReselectionEffectSchema(SpellMechanicsSchemaModel):
+class RequireTargetReselectionEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["require_target_reselection"]
     on_no_legal_target: Literal["cancel_action", "retain_target"] = "cancel_action"
 
 
-class LightEffectSchema(SpellMechanicsSchemaModel):
+class LightEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["light"]
     bright_radius_feet: NonNegativeInt = 0
     dim_additional_feet: NonNegativeInt = 0
 
 
-class SpellEntityStatisticsSchema(SpellMechanicsSchemaModel):
+class SpellEntityStatisticsSchema(SpellCapabilitySchemaModel):
     armor_class: PositiveInt | Literal["caster"] | None = None
     hit_points: PositiveInt | Literal["caster_maximum"] | None = None
     size: str | None = None
@@ -571,7 +571,7 @@ class SpellEntityStatisticsSchema(SpellMechanicsSchemaModel):
     damage_immunities: list[str] = Field(default_factory=list)
 
 
-class CreateSpellEntityEffectSchema(SpellMechanicsSchemaModel):
+class CreateSpellEntityEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["create_spell_entity"]
     entity_id: str = Field(min_length=1)
     entity_kind: Literal["manifestation", "weapon", "hand", "hazard", "image"]
@@ -583,21 +583,21 @@ class CreateSpellEntityEffectSchema(SpellMechanicsSchemaModel):
     actions: list[GrantedActionSchema] = Field(default_factory=list)
 
 
-class TransformObjectEffectSchema(SpellMechanicsSchemaModel):
+class TransformObjectEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["transform_object"]
     creature_by_size: dict[str, str] = Field(min_length=1)
     restore_object_on_end: bool = True
     carry_damage_to_object: bool = True
 
 
-class AccumulateDiceEffectSchema(SpellMechanicsSchemaModel):
+class AccumulateDiceEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["accumulate_dice"]
     counter: str = Field(min_length=1)
     dice: str = Field(pattern=r"^\d+d\d+$")
     maximum_dice: PositiveInt | None = None
 
 
-class StoreSpellEffectSchema(SpellMechanicsSchemaModel):
+class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["store_spell"]
     maximum_level: NonNegativeInt | Literal["cast_level"]
     activation_trigger: Literal[
@@ -623,7 +623,7 @@ class StoreSpellEffectSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class AccumulatedDamageEffectSchema(SpellMechanicsSchemaModel):
+class AccumulatedDamageEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["accumulated_damage"]
     base_dice: str = Field(pattern=r"^\d+d\d+$")
     counter: str = Field(min_length=1)
@@ -631,12 +631,12 @@ class AccumulatedDamageEffectSchema(SpellMechanicsSchemaModel):
     damage_type: str = Field(min_length=1)
 
 
-class GrantActionEffectSchema(SpellMechanicsSchemaModel):
+class GrantActionEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["grant_action"]
     action: GrantedActionSchema
 
 
-class CreatePersistentAreaEffectSchema(SpellMechanicsSchemaModel):
+class CreatePersistentAreaEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["create_persistent_area"]
     geometry_from_target: bool = True
     properties: list[PersistentAreaPropertySchema] = Field(default_factory=list)
@@ -654,7 +654,7 @@ class CreatePersistentAreaEffectSchema(SpellMechanicsSchemaModel):
     ] = Field(default_factory=list)
 
 
-class SummonEffectSchema(SpellMechanicsSchemaModel):
+class SummonEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["summon"]
     creature: str
     source: str | None = None
@@ -664,7 +664,7 @@ class SummonEffectSchema(SpellMechanicsSchemaModel):
     command: Literal["verbal", "mental", "none"] = "verbal"
 
 
-class ReplaceWithCreatureEffectSchema(SpellMechanicsSchemaModel):
+class ReplaceWithCreatureEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["replace_with_creature"]
     creature: str
     source: str | None = None
@@ -672,14 +672,14 @@ class ReplaceWithCreatureEffectSchema(SpellMechanicsSchemaModel):
     team: Literal["source", "target", "hostile"] = "source"
 
 
-class ExtraActionEffectSchema(SpellMechanicsSchemaModel):
+class ExtraActionEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["extra_action"]
     allowed_actions: list[str] = Field(min_length=1)
     attack_limit: PositiveInt | None = None
     duration: EffectDurationSchema | None = None
 
 
-class ExtraTurnsEffectSchema(SpellMechanicsSchemaModel):
+class ExtraTurnsEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["extra_turns"]
     count_dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     count: PositiveInt | None = None
@@ -692,7 +692,7 @@ class ExtraTurnsEffectSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class PreventDefeatEffectSchema(SpellMechanicsSchemaModel):
+class PreventDefeatEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["prevent_defeat"]
     prevent_drop_to_zero: bool = True
     prevent_instant_death: bool = True
@@ -701,13 +701,13 @@ class PreventDefeatEffectSchema(SpellMechanicsSchemaModel):
     duration: EffectDurationSchema | None = None
 
 
-class SuppressMagicEffectSchema(SpellMechanicsSchemaModel):
+class SuppressMagicEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["suppress_magic"]
     minimum_spell_level: NonNegativeInt = 0
     exceptions: list[str] = Field(default_factory=list)
 
 
-class TransformEffectSchema(SpellMechanicsSchemaModel):
+class TransformEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["transform"]
     forms: Literal["beast", "creature_catalog", "authored"]
     maximum_rating: Literal["target_level_or_cr", "cast_level"]
@@ -715,12 +715,12 @@ class TransformEffectSchema(SpellMechanicsSchemaModel):
     equipment: Literal["merge", "drop", "retain"] = "merge"
 
 
-class RandomOutcomeEffectSchema(SpellMechanicsSchemaModel):
+class RandomOutcomeEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["random_outcome"]
     table: RandomTableSchema
 
 
-class OngoingModifierGroupEffectSchema(SpellMechanicsSchemaModel):
+class OngoingModifierGroupEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["ongoing_modifier_group"]
     duration: EffectDurationSchema | None = None
     modifiers: list[OngoingModifierSchema] = Field(min_length=1)
@@ -842,7 +842,7 @@ class SavingThrowResolutionSchema(
     repeat_save: RepeatSaveProgressionSchema | None = None
 
 
-class SpellAttackResolutionSchema(SpellMechanicsSchemaModel):
+class SpellAttackResolutionSchema(SpellCapabilitySchemaModel):
     type: Literal["spell_attack"]
     mode: Literal["melee", "ranged"]
     attacks: PositiveInt = 1
@@ -851,7 +851,7 @@ class SpellAttackResolutionSchema(SpellMechanicsSchemaModel):
     miss: OutcomeSchema = Field(default_factory=OutcomeSchema)
 
 
-class AbilityCheckResolutionSchema(SpellMechanicsSchemaModel):
+class AbilityCheckResolutionSchema(SpellCapabilitySchemaModel):
     type: Literal["ability_check"]
     ability: Ability | Literal["spellcasting"]
     dc: PositiveInt | Literal["spell_save_dc", "ten_plus_spell_level"]
@@ -859,7 +859,7 @@ class AbilityCheckResolutionSchema(SpellMechanicsSchemaModel):
     failure: OutcomeSchema = Field(default_factory=OutcomeSchema)
 
 
-class ContestedCheckResolutionSchema(SpellMechanicsSchemaModel):
+class ContestedCheckResolutionSchema(SpellCapabilitySchemaModel):
     type: Literal["contested_check"]
     source_ability: Ability | Literal["spellcasting"]
     target_abilities: list[Ability] = Field(min_length=1)
@@ -869,7 +869,7 @@ class ContestedCheckResolutionSchema(SpellMechanicsSchemaModel):
     target_wins: OutcomeSchema = Field(default_factory=OutcomeSchema)
 
 
-class HitPointPoolResolutionSchema(SpellMechanicsSchemaModel):
+class HitPointPoolResolutionSchema(SpellCapabilitySchemaModel):
     type: Literal["hit_point_pool"]
     dice: str = Field(pattern=r"^\d+d\d+$")
     bonus: int = 0
@@ -881,7 +881,7 @@ class HitPointPoolResolutionSchema(SpellMechanicsSchemaModel):
     stop_when_next_target_exceeds_pool: bool = False
 
 
-class RepeatResolutionSchema(SpellMechanicsSchemaModel):
+class RepeatResolutionSchema(SpellCapabilitySchemaModel):
     type: Literal["repeat"]
     count: PositiveInt | Literal["spellcasting_modifier", "slot_scaled"]
     allocation: Literal[
@@ -899,30 +899,30 @@ class RepeatResolutionSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class SequenceStepSchema(SpellMechanicsSchemaModel):
+class SequenceStepSchema(SpellCapabilitySchemaModel):
     resolution: SpellResolutionSchema
     target: SpellTargetSchema | None = None
 
 
-class SequenceResolutionSchema(SpellMechanicsSchemaModel):
+class SequenceResolutionSchema(SpellCapabilitySchemaModel):
     type: Literal["sequence"]
     steps: list[SequenceStepSchema] = Field(min_length=1)
 
 
-class ResolutionChoiceOptionSchema(SpellMechanicsSchemaModel):
+class ResolutionChoiceOptionSchema(SpellCapabilitySchemaModel):
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
     resolution: SpellResolutionSchema
     implementation: SpellImplementationSchema | None = None
 
 
-class ChoiceResolutionSchema(SpellMechanicsSchemaModel):
+class ChoiceResolutionSchema(SpellCapabilitySchemaModel):
     type: Literal["choice"]
     count: PositiveInt = 1
     options: list[ResolutionChoiceOptionSchema] = Field(min_length=1)
 
 
-class RandomResolutionEntrySchema(SpellMechanicsSchemaModel):
+class RandomResolutionEntrySchema(SpellCapabilitySchemaModel):
     minimum: PositiveInt
     maximum: PositiveInt
     resolution: SpellResolutionSchema
@@ -934,7 +934,7 @@ class RandomResolutionEntrySchema(SpellMechanicsSchemaModel):
         return self
 
 
-class RandomTableResolutionSchema(SpellMechanicsSchemaModel):
+class RandomTableResolutionSchema(SpellCapabilitySchemaModel):
     type: Literal["random_table"]
     die: str = Field(pattern=r"^\d+d\d+$")
     per_target: bool = False
@@ -966,7 +966,7 @@ class SpellResolutionSchema(
     pass
 
 
-class RepeatSaveProgressionSchema(SpellMechanicsSchemaModel):
+class RepeatSaveProgressionSchema(SpellCapabilitySchemaModel):
     trigger: Literal["turn_start", "turn_end", "source_turn_start", "source_turn_end"]
     ability: Ability | None = None
     on_success: SpellResolutionSchema = Field(
@@ -980,7 +980,7 @@ class RepeatSaveProgressionSchema(SpellMechanicsSchemaModel):
     counters_need_not_be_consecutive: bool = True
 
 
-class GrantedActionSchema(SpellMechanicsSchemaModel):
+class GrantedActionSchema(SpellCapabilitySchemaModel):
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
     economy: Literal["action", "bonus_action", "reaction", "magic_action"]
@@ -992,7 +992,7 @@ class GrantedActionSchema(SpellMechanicsSchemaModel):
     ] = "none"
 
 
-class AreaTriggerSchema(SpellMechanicsSchemaModel):
+class AreaTriggerSchema(SpellCapabilitySchemaModel):
     event: Literal[
         "created",
         "creature_enters",
@@ -1005,14 +1005,14 @@ class AreaTriggerSchema(SpellMechanicsSchemaModel):
     limit_period: Literal["turn", "round", "spell_instance"] | None = None
 
 
-class AreaMovementSchema(SpellMechanicsSchemaModel):
+class AreaMovementSchema(SpellCapabilitySchemaModel):
     trigger: Literal["source_turn_start", "source_turn_end", "granted_action"]
     distance_feet: PositiveInt
     direction: Literal["away_from_source", "chosen", "fixed"]
     movement_mode: Literal["ground", "flying", "unrestricted"] = "unrestricted"
 
 
-class RandomTableEntrySchema(SpellMechanicsSchemaModel):
+class RandomTableEntrySchema(SpellCapabilitySchemaModel):
     minimum: PositiveInt
     maximum: PositiveInt
     resolution: SpellResolutionSchema
@@ -1024,7 +1024,7 @@ class RandomTableEntrySchema(SpellMechanicsSchemaModel):
         return self
 
 
-class RandomTableSchema(SpellMechanicsSchemaModel):
+class RandomTableSchema(SpellCapabilitySchemaModel):
     die: str = Field(pattern=r"^\d+d\d+$")
     entries: list[RandomTableEntrySchema] = Field(min_length=1)
 
@@ -1034,7 +1034,7 @@ class RandomTableSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class CastingTriggerSchema(SpellMechanicsSchemaModel):
+class CastingTriggerSchema(SpellCapabilitySchemaModel):
     event: Literal[
         "attack_hit",
         "creature_damaged",
@@ -1047,7 +1047,7 @@ class CastingTriggerSchema(SpellMechanicsSchemaModel):
     target: EventSpellTargetSchema | None = None
 
 
-class SlotScalingIncrementSchema(SpellMechanicsSchemaModel):
+class SlotScalingIncrementSchema(SpellCapabilitySchemaModel):
     type: Literal[
         "damage_dice",
         "healing_dice",
@@ -1063,18 +1063,18 @@ class SlotScalingIncrementSchema(SpellMechanicsSchemaModel):
     damage_type: str | None = None
 
 
-class SlotScalingSchema(SpellMechanicsSchemaModel):
+class SlotScalingSchema(SpellCapabilitySchemaModel):
     type: Literal["slot_level"] = "slot_level"
     above_level: NonNegativeInt | Literal["spell_level"] = "spell_level"
     per_level: list[SlotScalingIncrementSchema] = Field(min_length=1)
 
 
-class CasterLevelScalingThresholdSchema(SpellMechanicsSchemaModel):
+class CasterLevelScalingThresholdSchema(SpellCapabilitySchemaModel):
     minimum_level: PositiveInt
     projectile_count: PositiveInt
 
 
-class CasterLevelScalingSchema(SpellMechanicsSchemaModel):
+class CasterLevelScalingSchema(SpellCapabilitySchemaModel):
     type: Literal["caster_level"]
     thresholds: list[CasterLevelScalingThresholdSchema] = Field(min_length=1)
 
@@ -1088,7 +1088,7 @@ class CasterLevelScalingSchema(SpellMechanicsSchemaModel):
         return self
 
 
-class OutcomeTriggerSchema(SpellMechanicsSchemaModel):
+class OutcomeTriggerSchema(SpellCapabilitySchemaModel):
     event: Literal[
         "targeted_by_attack",
         "attack_would_hit",
@@ -1125,7 +1125,7 @@ class OutcomeTriggerSchema(SpellMechanicsSchemaModel):
     resolution: SpellResolutionSchema
 
 
-class SpellMechanicsSchema(SpellMechanicsSchemaModel):
+class SpellCapabilitySchema(SpellCapabilitySchemaModel):
     target: SpellTargetSchema
     resolution: SpellResolutionSchema
     casting_requirements: list[SpellRequirementSchema] = Field(default_factory=list)

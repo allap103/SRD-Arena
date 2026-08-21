@@ -78,7 +78,7 @@
       "entries": [
         "The assassin makes three attacks, using Shortsword or Light Crossbow in any combination."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -101,7 +101,7 @@
       "entries": [
         "{@atkr m} {@hit 7}, reach 5 ft. {@h}7 ({@damage 1d6 + 4}) Piercing damage plus 17 ({@damage 5d6}) Poison damage, and the target has the {@condition Poisoned|XPHB} condition until the start of the assassin's next turn."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": ["melee"],
         "attack_bonus": 7,
@@ -127,7 +127,7 @@
       "entries": [
         "{@atkr r} {@hit 7}, range 80/320 ft. {@h}8 ({@damage 1d8 + 4}) Piercing damage plus 21 ({@damage 6d6}) Poison damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": ["ranged"],
         "attack_bonus": 7,

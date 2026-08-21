@@ -62,7 +62,7 @@
       }
     ]
   },
-  "mechanics": {
+  "capability": {
     "target": {
       "type": "creature",
       "count": {"minimum": 1, "maximum": 4},

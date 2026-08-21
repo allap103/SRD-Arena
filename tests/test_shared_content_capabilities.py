@@ -1,9 +1,9 @@
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.creatures import load_bestiary_catalog
 from srd_arena.content.creatures.actions.schema import (
-    CapabilityActionMechanicsSchema,
+    CapabilitySchema,
 )
-from srd_arena.content.mechanics import SavingThrowResolutionSchema
+from srd_arena.content.capabilities import SavingThrowResolutionSchema
 from srd_arena.content.spells import load_spell_catalog
 
 
@@ -12,8 +12,8 @@ def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:
     monsters = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
 
     fireball = spells.find("Fireball", "XPHB")
-    assert fireball.mechanics is not None
-    spell_resolution = fireball.mechanics.resolution.root
+    assert fireball.capability is not None
+    spell_resolution = fireball.capability.resolution.root
 
     dragon = monsters.find("Ancient White Dragon", "XMM")
     breath = next(
@@ -21,8 +21,8 @@ def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:
         for action in dragon.action
         if action.name.startswith("Cold Breath")
     )
-    assert isinstance(breath.mechanics, CapabilityActionMechanicsSchema)
-    action_resolution = breath.mechanics.resolution
+    assert isinstance(breath.capability, CapabilitySchema)
+    action_resolution = breath.capability.resolution
 
     assert isinstance(spell_resolution, SavingThrowResolutionSchema)
     assert isinstance(action_resolution, SavingThrowResolutionSchema)

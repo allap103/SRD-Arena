@@ -42,7 +42,7 @@
     "ST"
   ]
   ,"implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature"},
     "resolution": {"type": "automatic", "outcome": {"effects": [{"type": "condition", "condition": "invisible"}]}}
   }

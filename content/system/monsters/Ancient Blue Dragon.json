@@ -107,7 +107,7 @@
       "entries": [
         "The dragon makes three Rend attacks. It can replace one attack with a use of Spellcasting to cast {@spell Shatter|XPHB} (level 3 version)."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -148,7 +148,7 @@
       "entries": [
         "{@atkr m} {@hit 16}, reach 15 ft. {@h}18 ({@damage 2d8 + 9}) Slashing damage plus 11 ({@damage 2d10}) Lightning damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"

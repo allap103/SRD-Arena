@@ -45,7 +45,7 @@
       }
     ]
   },
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "disposition": "any"},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {

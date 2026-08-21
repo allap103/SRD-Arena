@@ -199,19 +199,19 @@ def spell_max_targets(
     *,
     caster_level: int | None = None,
 ) -> int:
-    mechanics = spell.mechanics
-    if mechanics is None:
+    capability = spell.capability
+    if capability is None:
         return 1
     resolved_level = cast_level if cast_level is not None else spell.level
     levels_above = max(0, resolved_level - spell.level)
-    base_target_count = mechanics.base_target_count
-    if mechanics.target_count_by_caster_level and caster_level is not None:
+    base_target_count = capability.base_target_count
+    if capability.target_count_by_caster_level and caster_level is not None:
         base_target_count = max(
             count
-            for minimum_level, count in mechanics.target_count_by_caster_level
+            for minimum_level, count in capability.target_count_by_caster_level
             if minimum_level <= caster_level
         )
-    return base_target_count + (levels_above * mechanics.slot_target_increment)
+    return base_target_count + (levels_above * capability.slot_target_increment)
 
 
 def parse_spell_action_condition(value: str) -> str | None:

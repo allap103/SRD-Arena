@@ -4,12 +4,12 @@ from typing import cast, overload
 
 from .catalog import SpellCatalog
 from .schema import SpellSchema
-from srd_arena.content.mechanics import (
+from srd_arena.content.capabilities import (
     ConditionEffectSchema,
     DamageEffectSchema,
     RollModifierEffectSchema,
 )
-from .mechanics import (
+from .capability import (
     ArmorClassModifierEffectSchema,
     AutomaticResolutionSchema,
     CasterLevelScalingSchema,
@@ -34,7 +34,7 @@ from .mechanics import (
 from srd_arena.content.common.sources import slug
 from srd_arena.domain.spells import (
     FollowUpSpellResolution,
-    ImmediateSpellMechanics,
+    SpellCapability,
     Spell,
     SpellDamage,
     SpellHealing,
@@ -83,15 +83,15 @@ def build_spell(
             if isinstance(duration, dict)
         ),
         target_requirements=_target_requirements(raw),
-        mechanics=_immediate_mechanics(raw),
+        capability=_translate_capability(raw),
     )
 
 
-def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
-    if raw.mechanics is None:
+def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
+    if raw.capability is None:
         return None
-    target = raw.mechanics.target
-    outer_resolution = raw.mechanics.resolution.root
+    target = raw.capability.target
+    outer_resolution = raw.capability.resolution.root
     sequence = (
         outer_resolution
         if isinstance(outer_resolution, SequenceResolutionSchema)
@@ -237,7 +237,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         )
     )
     geometry = target.geometry if target.type == "area" else None
-    return ImmediateSpellMechanics(
+    return SpellCapability(
         resolution=resolution.type,
         target=target.type,
         damage=damage,
@@ -286,7 +286,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
             damage_types={damage.damage_type for damage in damage},
         ),
         conditions=conditions,
-        condition_choice=raw.mechanics.condition_application == "choose_one",
+        condition_choice=raw.capability.condition_application == "choose_one",
         duration_rounds=_spell_duration_rounds(raw),
         concentration=any(
             bool(duration.get("concentration"))
@@ -314,7 +314,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         ),
         automatic_success_traits=_automatic_success_traits(resolution),
         self_removal_blocked_conditions=tuple(
-            raw.mechanics.self_removal_blocked_conditions
+            raw.capability.self_removal_blocked_conditions
         ),
         base_target_count=(
             _target_count_by_caster_level(raw)[0][1]
@@ -364,7 +364,7 @@ def _immediate_mechanics(raw: SpellSchema) -> ImmediateSpellMechanics | None:
         damage_resistance_choice=damage_resistance_choice,
         condition_save_advantages=condition_save_advantages,
         roll_modifiers=roll_modifiers,
-        recast_ends_previous=raw.mechanics.recast_ends_previous,
+        recast_ends_previous=raw.capability.recast_ends_previous,
         armor_class_modifier=armor_class_modifier,
         speed_modifier_feet=(speed_modifier.feet if speed_modifier is not None else 0),
         speed_modifier_duration_rounds=(
@@ -413,11 +413,11 @@ def _slot_scaling_value(
     kind: str,
     value_type: type[str] | type[int],
 ) -> str | int | None:
-    assert raw.mechanics is not None
+    assert raw.capability is not None
     return next(
         (
             increment.amount
-            for scaling in raw.mechanics.scaling
+            for scaling in raw.capability.scaling
             if isinstance(scaling, SlotScalingSchema)
             for increment in scaling.per_level
             if increment.type == kind and isinstance(increment.amount, value_type)
@@ -492,8 +492,8 @@ def _slot_damage_increment(
     *,
     damage_types: set[str],
 ) -> str | None:
-    assert raw.mechanics is not None
-    for scaling in raw.mechanics.scaling:
+    assert raw.capability is not None
+    for scaling in raw.capability.scaling:
         if not isinstance(scaling, SlotScalingSchema):
             continue
         for increment in scaling.per_level:
@@ -510,10 +510,10 @@ def _slot_damage_increment(
 
 
 def _slot_target_increment(raw: SpellSchema) -> int:
-    assert raw.mechanics is not None
+    assert raw.capability is not None
     return sum(
         increment.amount
-        for scaling in raw.mechanics.scaling
+        for scaling in raw.capability.scaling
         if isinstance(scaling, SlotScalingSchema)
         for increment in scaling.per_level
         if increment.type in {"target_count", "projectile_count"}
@@ -522,10 +522,10 @@ def _slot_target_increment(raw: SpellSchema) -> int:
 
 
 def _target_count_by_caster_level(raw: SpellSchema) -> tuple[tuple[int, int], ...]:
-    assert raw.mechanics is not None
+    assert raw.capability is not None
     return tuple(
         (threshold.minimum_level, threshold.projectile_count)
-        for scaling in raw.mechanics.scaling
+        for scaling in raw.capability.scaling
         if isinstance(scaling, CasterLevelScalingSchema)
         for threshold in scaling.thresholds
     )
@@ -604,10 +604,10 @@ def _repeat_failure_damage(resolution: object) -> tuple[SpellDamage, ...]:
 
 
 def _end_events(raw: SpellSchema) -> tuple[tuple[str, str], ...]:
-    if raw.mechanics is None:
+    if raw.capability is None:
         return ()
     events: list[tuple[str, str]] = []
-    for trigger in raw.mechanics.outcome_triggers:
+    for trigger in raw.capability.outcome_triggers:
         resolution = trigger.resolution.root
         if not isinstance(resolution, AutomaticResolutionSchema):
             continue
@@ -625,7 +625,7 @@ def _end_events(raw: SpellSchema) -> tuple[tuple[str, str], ...]:
 
 
 def _damage_repeat_save_advantage(raw: SpellSchema) -> bool:
-    if raw.mechanics is None:
+    if raw.capability is None:
         return False
     return any(
         trigger.event == "target_damaged"
@@ -634,7 +634,7 @@ def _damage_repeat_save_advantage(raw: SpellSchema) -> bool:
             modifier.mode == "advantage"
             for modifier in trigger.resolution.root.save_modifiers
         )
-        for trigger in raw.mechanics.outcome_triggers
+        for trigger in raw.capability.outcome_triggers
     )
 
 
@@ -688,12 +688,12 @@ def _find_spell(
 
 def _target_requirements(raw: SpellSchema) -> tuple[CreatureTypeRequirement, ...]:
     creature_types = tuple(raw.affects_creature_type)
-    if raw.mechanics is not None and raw.mechanics.target.type == "creature":
-        mechanics_types = _creature_types_from_requirements(
-            raw.mechanics.target.requirements
+    if raw.capability is not None and raw.capability.target.type == "creature":
+        capability_types = _creature_types_from_requirements(
+            raw.capability.target.requirements
         )
-        if mechanics_types:
-            creature_types = mechanics_types
+        if capability_types:
+            creature_types = capability_types
     return (CreatureTypeRequirement(creature_types),) if creature_types else ()
 
 
@@ -711,8 +711,8 @@ def _normalize_save_ability(value: str) -> str:
 
 
 def _spell_damage_dice(raw: SpellSchema) -> str | None:
-    if raw.mechanics is not None:
-        resolution = raw.mechanics.resolution.root
+    if raw.capability is not None:
+        resolution = raw.capability.resolution.root
         if isinstance(resolution, RepeatResolutionSchema):
             resolution = resolution.resolution.root
         outcome = (
@@ -745,8 +745,8 @@ def _spell_damage_dice(raw: SpellSchema) -> str | None:
 
 
 def _spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
-    if raw.mechanics is not None:
-        resolution = raw.mechanics.resolution.root
+    if raw.capability is not None:
+        resolution = raw.capability.resolution.root
         if isinstance(resolution, RepeatResolutionSchema):
             resolution = resolution.resolution.root
         if isinstance(resolution, AutomaticResolutionSchema):
@@ -771,9 +771,9 @@ def _spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
 
 
 def _remove_effect_selection(raw: SpellSchema) -> str | None:
-    if raw.mechanics is None:
+    if raw.capability is None:
         return None
-    resolution = raw.mechanics.resolution.root
+    resolution = raw.capability.resolution.root
     if isinstance(resolution, RepeatResolutionSchema):
         resolution = resolution.resolution.root
     if not isinstance(resolution, AutomaticResolutionSchema):
@@ -790,9 +790,9 @@ def _remove_effect_selection(raw: SpellSchema) -> str | None:
 
 
 def _spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
-    if raw.mechanics is None:
+    if raw.capability is None:
         return ()
-    resolution = raw.mechanics.resolution.root
+    resolution = raw.capability.resolution.root
     if isinstance(resolution, RepeatResolutionSchema):
         resolution = resolution.resolution.root
     if not isinstance(resolution, AutomaticResolutionSchema):
@@ -809,10 +809,10 @@ def _spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
 
 
 def _spell_geometry_mode(raw: SpellSchema) -> str:
-    if raw.mechanics is not None and raw.mechanics.target.type == "area":
+    if raw.capability is not None and raw.capability.target.type == "area":
         return (
             "directional_area"
-            if raw.mechanics.target.origin == "self"
+            if raw.capability.target.origin == "self"
             else "point_area"
         )
     range_type = (
@@ -830,8 +830,8 @@ def _spell_geometry_mode(raw: SpellSchema) -> str:
 
 
 def _spell_area_size_feet(raw: SpellSchema) -> int | None:
-    if raw.mechanics is not None and raw.mechanics.target.type == "area":
-        geometry = raw.mechanics.target.geometry
+    if raw.capability is not None and raw.capability.target.type == "area":
+        geometry = raw.capability.target.geometry
         return geometry.radius_feet or geometry.length_feet
     text_parts = [entry for entry in raw.entries if isinstance(entry, str)]
     if not text_parts:

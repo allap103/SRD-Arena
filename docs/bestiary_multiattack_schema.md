@@ -1,6 +1,6 @@
 # Bestiary Multiattack Schema
 
-`mechanics` is an additive, machine-readable normalization of a stat block
+`capability` is an additive, machine-readable normalization of a stat block
 entry. This document covers its `multiattack` variant. The original `entries`
 value remains authoritative and must not be changed by normalization.
 

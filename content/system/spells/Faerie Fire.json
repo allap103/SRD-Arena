@@ -66,7 +66,7 @@
       }
     ]
   },
-  "mechanics": {
+  "capability": {
     "target": {
       "type": "area",
       "origin": "point_in_range",

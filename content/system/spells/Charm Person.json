@@ -61,7 +61,7 @@
     "ST"
   ]
   ,"implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "line_of_sight": true, "requirements": [{"type": "creature_type", "creature_types": ["humanoid"]}]},
     "resolution": {"type": "saving_throw", "ability": "wis", "save_modifiers": [{"type": "roll_modifier", "roll": "saving_throw", "mode": "advantage", "requirements": [{"type": "relationship", "relationship": "fighting_source_team", "established_by": "source"}]}], "failure": {"effects": [{"type": "condition", "condition": "charmed"}]}},
     "scaling": [{"type": "slot_level", "above_level": 1, "per_level": [{"type": "target_count", "amount": 1}]}],

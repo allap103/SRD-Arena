@@ -62,7 +62,7 @@
     "ST"
   ],
   "implementation": {"status": "complete"},
-  "mechanics": {
+  "capability": {
     "target": {"type": "creature", "line_of_sight": true},
     "resolution": {"type": "spell_attack", "mode": "ranged", "hit": {"effects": [{"type": "damage", "dice": "1d12", "damage_type": "poison"}]}}
   }

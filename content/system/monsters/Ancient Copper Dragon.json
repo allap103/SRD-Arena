@@ -107,7 +107,7 @@
       "entries": [
         "The dragon makes three Rend attacks. It can replace one attack with a use of (A) Slowing Breath or (B) Spellcasting to cast {@spell Mind Spike|XPHB} (level 5 version)."
       ],
-      "mechanics": {
+      "capability": {
         "type": "multiattack",
         "plans": [
           {
@@ -152,7 +152,7 @@
       "entries": [
         "{@atkr m} {@hit 15}, reach 15 ft. {@h}19 ({@damage 2d10 + 8}) Slashing damage plus 9 ({@damage 2d8}) Acid damage."
       ],
-      "mechanics": {
+      "capability": {
         "type": "attack",
         "attack_modes": [
           "melee"
@@ -190,7 +190,7 @@
       "entries": [
         "{@actSave con} {@dc 22}, each creature in a 90-foot {@variantrule Cone [Area of Effect]|XPHB|Cone}. {@actSaveFail} The target can't take Reactions; its {@variantrule Speed|XPHB} is halved; and it can take either an action or a {@variantrule Bonus Action|XPHB} on its turn, not both. This effect lasts until the end of its next turn."
       ],
-      "mechanics": {
+      "capability": {
         "type": "capability",
         "target": {
           "type": "area",
