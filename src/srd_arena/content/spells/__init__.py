@@ -1,7 +1,8 @@
 """Schemas, catalogs, and translation for authored spell content."""
 
 from .catalog import SpellCatalog, load_spell_catalog
-from .capability import SpellImplementationSchema, SpellCapabilitySchema
+from .capability import SpellCapabilitySchema
+from .implementation import SpellImplementationSchema
 from .schema import SpellFileSchema, SpellSchema
 from .translator import build_spell
 

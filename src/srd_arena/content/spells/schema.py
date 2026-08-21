@@ -1,7 +1,8 @@
 from pydantic import Field, model_validator
 
 from srd_arena.content.common.schema import SourceModel
-from .capability import SpellImplementationSchema, SpellCapabilitySchema
+from .capability import SpellCapabilitySchema
+from .implementation import SpellImplementationSchema
 
 
 class SpellSchema(SourceModel):

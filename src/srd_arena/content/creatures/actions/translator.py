@@ -3,7 +3,7 @@ from typing import Literal, cast
 
 from . import schema
 from srd_arena.content.capabilities import AutomaticResolutionSchema
-from srd_arena.content.capabilities import schema as capability
+import srd_arena.content.capabilities as capability
 from srd_arena.content.creatures.stat_block_schema import (
     BestiaryActionSchema,
     BestiaryMonsterSchema,

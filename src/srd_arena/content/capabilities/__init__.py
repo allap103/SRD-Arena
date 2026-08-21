@@ -1,31 +1,31 @@
 """Schema vocabulary shared by independently authored content concepts."""
 
-from .schema import (
-    Ability,
+from .base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
+from .durations import EffectDurationSchema, TimedDurationSchema
+from .effects import (
     ActionEffectSchema,
-    CapabilitySchemaModel,
-    ActionRequirementSchema,
-    ActionTargetSchema,
-    AreaTargetSchema,
     ConditionEffectSchema,
-    ConditionRequirementSchema,
     ControlEffectSchema,
-    CreatureTargetSchema,
-    CreatureTypeRequirementSchema,
     DamageEffectSchema,
-    EffectDurationSchema,
     ForcedMovementEffectSchema,
     GainMemoriesEffectSchema,
-    NonNegativeInt,
-    NotAffectedRequirementSchema,
-    PositiveInt,
     ProhibitReactionEffectSchema,
     RollModifierEffectSchema,
-    SelfTargetSchema,
-    SizeRequirementSchema,
     SpeedMultiplierEffectSchema,
-    TimedDurationSchema,
     TurnEconomyRestrictionEffectSchema,
+)
+from .requirements import (
+    ActionRequirementSchema,
+    ConditionRequirementSchema,
+    CreatureTypeRequirementSchema,
+    NotAffectedRequirementSchema,
+    SizeRequirementSchema,
+)
+from .targets import (
+    ActionTargetSchema,
+    AreaTargetSchema,
+    CreatureTargetSchema,
+    SelfTargetSchema,
 )
 from .resolutions import (
     AutomaticResolutionSchema,

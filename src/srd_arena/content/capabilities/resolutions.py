@@ -2,7 +2,7 @@ from typing import Annotated, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .schema import Ability
+from .base import Ability
 
 EffectSchemaT = TypeVar("EffectSchemaT")
 FailureOutcomeT = TypeVar("FailureOutcomeT")

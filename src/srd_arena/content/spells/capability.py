@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, model_validator
+from pydantic import Field, RootModel, model_validator
 
 from srd_arena.content.capabilities import (
     Ability,
@@ -26,10 +26,9 @@ from srd_arena.content.capabilities import (
     SpeedMultiplierEffectSchema,
     TurnEconomyRestrictionEffectSchema,
 )
-
-
-class SpellCapabilitySchemaModel(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+from .base import SpellCapabilitySchemaModel
+from .implementation import SpellImplementationSchema
+from .scaling import CasterLevelScalingSchema, SlotScalingSchema
 
 
 def _validate_complete_roll_table(
@@ -45,46 +44,6 @@ def _validate_complete_roll_table(
         expected = entry.maximum + 1
     if expected != maximum + 1:
         raise ValueError("Random-table ranges must cover every possible roll.")
-
-
-ImplementationScope = Literal["combat", "exploration", "social", "world"]
-
-
-def _default_implementation_scope() -> list[ImplementationScope]:
-    return ["combat"]
-
-
-class ImplementationOmissionSchema(SpellCapabilitySchemaModel):
-    mechanic: str = Field(min_length=1)
-    reason: str = Field(min_length=1)
-
-
-class SpellImplementationSchema(SpellCapabilitySchemaModel):
-    status: Literal[
-        "complete",
-        "partial",
-        "unimplemented",
-        "blocked",
-        "out_of_scope",
-    ] = "unimplemented"
-    scope: list[ImplementationScope] = Field(
-        default_factory=_default_implementation_scope
-    )
-    omissions: list[ImplementationOmissionSchema] = Field(default_factory=list)
-    blocked_by: list[str] = Field(default_factory=list)
-    reason: str | None = None
-
-    @model_validator(mode="after")
-    def validate_status_details(self) -> "SpellImplementationSchema":
-        if self.status == "partial" and not self.omissions:
-            raise ValueError("Partial spell implementations must list omissions.")
-        if self.status == "blocked" and not self.blocked_by:
-            raise ValueError("Blocked spell implementations must list blockers.")
-        if self.status == "out_of_scope" and not self.reason:
-            raise ValueError("Out-of-scope spells must provide a reason.")
-        if self.status == "complete" and (self.omissions or self.blocked_by):
-            raise ValueError("Complete spell implementations cannot have omissions.")
-        return self
 
 
 class CreatureTraitRequirementSchema(SpellCapabilitySchemaModel):
@@ -1045,47 +1004,6 @@ class CastingTriggerSchema(SpellCapabilitySchemaModel):
     timing: Literal["before_resolution", "immediately_after", "after_resolution"]
     requirements: list[SpellRequirementSchema] = Field(default_factory=list)
     target: EventSpellTargetSchema | None = None
-
-
-class SlotScalingIncrementSchema(SpellCapabilitySchemaModel):
-    type: Literal[
-        "damage_dice",
-        "healing_dice",
-        "healing_bonus",
-        "temporary_hit_points",
-        "hit_point_maximum",
-        "target_count",
-        "projectile_count",
-        "area_radius_feet",
-        "duration",
-    ]
-    amount: PositiveInt | str
-    damage_type: str | None = None
-
-
-class SlotScalingSchema(SpellCapabilitySchemaModel):
-    type: Literal["slot_level"] = "slot_level"
-    above_level: NonNegativeInt | Literal["spell_level"] = "spell_level"
-    per_level: list[SlotScalingIncrementSchema] = Field(min_length=1)
-
-
-class CasterLevelScalingThresholdSchema(SpellCapabilitySchemaModel):
-    minimum_level: PositiveInt
-    projectile_count: PositiveInt
-
-
-class CasterLevelScalingSchema(SpellCapabilitySchemaModel):
-    type: Literal["caster_level"]
-    thresholds: list[CasterLevelScalingThresholdSchema] = Field(min_length=1)
-
-    @model_validator(mode="after")
-    def validate_thresholds(self) -> "CasterLevelScalingSchema":
-        levels = [threshold.minimum_level for threshold in self.thresholds]
-        if levels != sorted(set(levels)):
-            raise ValueError("Caster-level thresholds must be unique and sorted.")
-        if levels[0] != 1:
-            raise ValueError("Caster-level scaling must define a level 1 baseline.")
-        return self
 
 
 class OutcomeTriggerSchema(SpellCapabilitySchemaModel):
