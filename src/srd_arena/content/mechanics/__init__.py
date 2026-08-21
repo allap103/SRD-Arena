@@ -27,6 +27,7 @@ from .schema import (
     TimedDurationSchema,
     TurnEconomyRestrictionEffectSchema,
 )
+from .resolutions import OutcomeSchema, ResolutionSchemaModel
 
 __all__ = [
     "Ability",
@@ -46,9 +47,11 @@ __all__ = [
     "GainMemoriesEffectSchema",
     "NonNegativeInt",
     "NotAffectedRequirementSchema",
+    "OutcomeSchema",
     "PositiveInt",
     "ProhibitReactionEffectSchema",
     "RollModifierEffectSchema",
+    "ResolutionSchemaModel",
     "SelfTargetSchema",
     "SizeRequirementSchema",
     "SpeedMultiplierEffectSchema",

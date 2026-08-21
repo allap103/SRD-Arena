@@ -81,10 +81,12 @@
       "mechanics": {
         "type": "automatic",
         "target": {"type": "creature", "range_feet": 5},
-        "effects": [
-          {"type": "damage", "dice": "1d8", "bonus": 3, "damage_type": "slashing"},
-          {"type": "damage", "dice": "1d8", "damage_type": "necrotic"}
-        ]
+        "outcome": {
+          "effects": [
+            {"type": "damage", "dice": "1d8", "bonus": 3, "damage_type": "slashing"},
+            {"type": "damage", "dice": "1d8", "damage_type": "necrotic"}
+          ]
+        }
       }
     }
   ],

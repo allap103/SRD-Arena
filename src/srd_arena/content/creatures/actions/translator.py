@@ -45,7 +45,9 @@ def build_stat_block_actions(
             definitions[action.name] = domain.AutomaticActionDefinition(
                 name=action.name,
                 target=_target(mechanics.target),
-                effects=tuple(_effect(effect) for effect in mechanics.effects),
+                effects=tuple(
+                    _effect(effect) for effect in mechanics.outcome.effects
+                ),
                 resource=_resource(mechanics.resource),
             )
         elif isinstance(mechanics, schema.SpellcastingActionMechanicsSchema):

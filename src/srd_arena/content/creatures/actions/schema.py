@@ -9,6 +9,7 @@ from srd_arena.content.mechanics import (
     ActionTargetSchema,
     CreatureTargetSchema,
     NonNegativeInt,
+    OutcomeSchema,
     PositiveInt,
     TimedDurationSchema,
 )
@@ -31,9 +32,13 @@ class RepeatSaveSchema(ActionMechanicsSchemaModel):
         return self
 
 
-class SaveOutcomeStageSchema(ActionMechanicsSchemaModel):
+class SaveOutcomeStageSchema(OutcomeSchema[ActionEffectSchema]):
     effects: list[ActionEffectSchema] = Field(min_length=1)
     repeat_saves: list[RepeatSaveSchema] = Field(default_factory=list)
+
+
+class ActionOutcomeSchema(OutcomeSchema[ActionEffectSchema]):
+    effects: list[ActionEffectSchema] = Field(min_length=1)
 
 
 class UsesResourceSchema(ActionMechanicsSchemaModel):
@@ -89,7 +94,7 @@ class SavingThrowActionMechanicsSchema(ActionMechanicsSchemaModel):
 class AutomaticActionMechanicsSchema(ActionMechanicsSchemaModel):
     type: Literal["automatic"] = "automatic"
     target: ActionTargetSchema
-    effects: list[ActionEffectSchema] = Field(min_length=1)
+    outcome: ActionOutcomeSchema
     resource: ActionResourceSchema | None = None
 
 

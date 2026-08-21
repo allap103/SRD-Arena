@@ -15,6 +15,7 @@ from srd_arena.content.mechanics import (
     ForcedMovementEffectSchema,
     NonNegativeInt,
     NotAffectedRequirementSchema,
+    OutcomeSchema as SharedOutcomeSchema,
     PositiveInt,
     ProhibitReactionEffectSchema,
     RollModifierEffectSchema,
@@ -811,8 +812,7 @@ class SpellEffectSchema(
     pass
 
 
-class OutcomeSchema(SpellMechanicsSchemaModel):
-    effects: list[SpellEffectSchema] = Field(default_factory=list)
+class OutcomeSchema(SharedOutcomeSchema[SpellEffectSchema]):
     end_spell: bool = False
 
 
