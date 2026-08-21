@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from ...creatures import Creature
 from ...effects import serialize_effects
+from ...effects.runtime import OngoingEffectKind
 from ...geometry import build_radius_area
 from ..models import EncounterProgress
 from ...spells.resolution import (
@@ -257,6 +258,27 @@ def resolve_spell_action(
         actor_ref=creature_ref,
         progress=progress,
     )
+    if any(
+        effect.kind == "start_ongoing_effect"
+        and effect.data.get("effect_kind") == "concentration"
+        for effect in result.effects
+    ):
+        for existing in self.ongoing_effects:
+            if (
+                existing.kind is OngoingEffectKind.CONCENTRATION
+                and existing.identity.source.applied_by_ref == creature_ref
+            ):
+                effect_label = existing.parameters.get("effect_label")
+                if not isinstance(effect_label, str):
+                    effect_label = existing.identity.source.definition_id.replace(
+                        "_", " "
+                    ).title()
+                progress.messages.append(
+                    (
+                        "system",
+                        f"{actor.name} drops concentration on {effect_label}.",
+                    )
+                )
     progress.messages.extend(
         self._apply_effects(result.effects, origin_id=action_id)
     )

@@ -510,10 +510,15 @@ def resolve_concentration_damage(
     )
     if progress is not None:
         outcome = "maintains" if save.check.success else "loses"
+        effect_label = concentrating.parameters.get("effect_label")
+        if not isinstance(effect_label, str):
+            effect_label = concentrating.identity.source.definition_id.replace(
+                "_", " "
+            ).title()
         progress.messages.append(
             (
                 "system",
-                f"{creature.name} {outcome} concentration "
+                f"{creature.name} {outcome} concentration on {effect_label} "
                 f"(Constitution {save.check.roll.total} vs DC {dc}).",
             )
         )

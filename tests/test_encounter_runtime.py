@@ -4090,6 +4090,70 @@ def test_new_concentration_replaces_the_previous_effect_tree() -> None:
     assert state.ongoing_effects[0].identity.source.origin_id == "second-cast"
 
 
+def test_casting_a_new_concentration_spell_logs_the_dropped_spell(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.extend(
+        (
+            build_spell("Hold Person", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)),
+            build_spell(
+                "Protection from Energy",
+                "XPHB",
+                load_spell_catalog(SYSTEM_CONTENT_ROOT),
+            ),
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[2] = 1
+    caster.spellcasting.spell_slots_remaining[3] = 1
+    state.creatures["goblin_1"].creature.statistics = replace(
+        state.creatures["goblin_1"].creature.statistics,
+        creature_type="humanoid",
+    )
+    state.creatures["goblin_1"].position = Position(
+        state.active_position.x + 1,
+        state.active_position.y,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
+    )
+    hold = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("hold_person:goblin_1")
+    )
+    state.apply_action(hold)
+    state.creatures["player"].actions_remaining = 1
+    state.creatures["player"].magic_actions_remaining = 1
+    protection = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("protection_from_energy:player")
+        and parse_spell_action_damage_type(str(action.value)) == "fire"
+    )
+
+    result = state.apply_action(protection)
+
+    assert (
+        "system",
+        f"{caster.name} drops concentration on Hold Person.",
+    ) in result.messages
+    assert state.has_condition("goblin_1", Condition.PARALYZED) is False
+    assert state.ongoing_effects[0].parameters["effect_label"] == (
+        "Protection from Energy"
+    )
+
+
 def test_failed_damage_save_ends_concentration_and_its_conditions(
     monkeypatch,
 ) -> None:
@@ -4132,10 +4196,15 @@ def test_failed_damage_save_ends_concentration_and_its_conditions(
         lambda _sides: 1,
     )
 
-    resolve_concentration_damage(state, "player", 20)
+    progress = EncounterProgress()
+    resolve_concentration_damage(state, "player", 20, progress)
 
     assert state.ongoing_effects == []
     assert state.has_condition("goblin_1", Condition.PARALYZED) is False
+    assert (
+        "system",
+        "Traveler loses concentration on Hold Person (Constitution 9 vs DC 10).",
+    ) in progress.messages
 
 
 def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> None:
