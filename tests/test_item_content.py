@@ -1,7 +1,6 @@
-from srd_arena.content.catalogs import SourceCatalog, load_item_catalog
-from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import ItemSchema
-from srd_arena.content.translators import build_item
+from srd_arena.content.common import SourceCatalog
+from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
+from srd_arena.content.equipment import ItemSchema, build_item, load_item_catalog
 
 
 def test_bundled_items_load_as_typed_records() -> None:

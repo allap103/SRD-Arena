@@ -3,20 +3,23 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.content.catalogs import SourceCatalog, load_bestiary_catalog
-from srd_arena.content.loaders.creatures import build_creature
-from srd_arena.content.loaders.stat_block_actions import (
-    build_stat_block_actions,
-)
-from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import (
-    AttackActionMechanicsSchema,
+from srd_arena.content.common import SourceCatalog
+from srd_arena.content.creatures import (
     BestiaryFileSchema,
     BestiaryMonsterSchema,
     CreatureSchema,
+    build_creature,
+    load_bestiary_catalog,
+)
+from srd_arena.content.creatures.action_schema import (
+    AttackActionMechanicsSchema,
     SavingThrowActionMechanicsSchema,
 )
-from srd_arena.content.schemas.multiattack import (
+from srd_arena.content.creatures.stat_block_actions import (
+    build_stat_block_actions,
+)
+from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
+from srd_arena.content.creatures.multiattack_schema import (
     ChoiceStepSchema,
     StatBlockActionInvocationSchema,
 )

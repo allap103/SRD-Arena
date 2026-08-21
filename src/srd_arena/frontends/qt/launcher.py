@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from ...content.scenarios import ScenarioInfo, list_scenarios
+from ...content.encounters import ScenarioInfo, list_scenarios
 from ...runtime.scenario import Scenario
 from .app import GameWindow, _require_pyside6
 from .theme import apply_fantasy_theme

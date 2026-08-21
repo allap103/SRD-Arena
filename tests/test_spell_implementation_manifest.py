@@ -2,9 +2,8 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from srd_arena.content.catalogs import load_spell_catalog
-from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import SpellSchema
+from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
+from srd_arena.content.spells import SpellSchema, load_spell_catalog
 
 PROJECT_ROOT = Path(__file__).parents[1]
 MANIFEST_PATH = PROJECT_ROOT / "docs" / "spell_implementation_manifest.json"

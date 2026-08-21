@@ -5,7 +5,7 @@ entry. This document covers its `multiattack` variant. The original `entries`
 value remains authoritative and must not be changed by normalization.
 
 The canonical Pydantic models live in
-`src/srd_arena/content/schemas/multiattack.py`.
+`src/srd_arena/content/creatures/multiattack_schema.py`.
 
 ## Composition
 

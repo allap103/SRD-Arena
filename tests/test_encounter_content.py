@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from srd_arena.content.loaders import load_creature
-from srd_arena.content.schemas import EncounterDefinitionSchema
+from srd_arena.content.creatures import load_creature
+from srd_arena.content.encounters import EncounterDefinitionSchema
 from srd_arena.frontends.shared.config import load_encounter_presentation_config
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.domain.creatures import AttackActionDefinition

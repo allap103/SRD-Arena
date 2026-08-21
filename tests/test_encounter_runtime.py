@@ -58,11 +58,9 @@ from srd_arena.frontends.shared.session import (
     build_session_presentation,
 )
 from srd_arena.runtime.models import ActionView
-from srd_arena.content.catalogs import load_bestiary_catalog, load_spell_catalog
-from srd_arena.content.loaders.creatures import build_creature
-from srd_arena.content.translators import build_spell
-from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import CreatureSchema
+from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
+from srd_arena.content.creatures import CreatureSchema, build_creature, load_bestiary_catalog
+from srd_arena.content.spells import build_spell, load_spell_catalog
 from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
 from srd_arena.frontends.qt.ui.encounter.config import (
     ActionMenuScope,

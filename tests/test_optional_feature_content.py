@@ -1,10 +1,10 @@
-from srd_arena.content.catalogs import (
-    SourceCatalog,
-    load_optional_feature_catalog,
+from srd_arena.content.classes import load_optional_feature_catalog
+from srd_arena.content.common import SourceCatalog
+from srd_arena.content.classes import (
+    OptionalFeatureSchema,
+    normalize_optional_feature_effects,
 )
-from srd_arena.content.normalization import normalize_optional_feature_effects
-from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import OptionalFeatureSchema
+from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 
 
 def test_bundled_optional_features_load_as_typed_records() -> None:

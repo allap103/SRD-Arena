@@ -1,12 +1,12 @@
 import pytest
 from pydantic import ValidationError
 
-from srd_arena.content.schemas import (
+from srd_arena.content.creatures.action_schema import (
     AttackActionMechanicsSchema,
-    BestiaryActionSchema,
     SavingThrowActionMechanicsSchema,
     SpellcastingActionMechanicsSchema,
 )
+from srd_arena.content.creatures import BestiaryActionSchema
 
 
 def test_attack_action_supports_multiple_hit_effects() -> None:

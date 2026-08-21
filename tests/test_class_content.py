@@ -1,11 +1,7 @@
-from srd_arena.content.catalogs import (
-    SourceCatalog,
-    load_class_catalog,
-    load_subclass_catalog,
-)
-from srd_arena.content.catalogs.classes import ClassRecord
-from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import ClassSchema
+from srd_arena.content.classes import load_class_catalog, load_subclass_catalog
+from srd_arena.content.common import SourceCatalog
+from srd_arena.content.classes import ClassRecord, ClassSchema
+from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 
 
 def test_bundled_classes_load_with_typed_feature_records() -> None:

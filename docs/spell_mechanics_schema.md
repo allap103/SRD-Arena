@@ -8,7 +8,7 @@ people, but the runtime must use the typed `mechanics` object rather than parse
 `entries` or dispatch on a spell name.
 
 The canonical Pydantic models live in
-`src/srd_arena/content/schemas/spell_mechanics.py`. `SpellSchema` exposes the
+`src/srd_arena/content/spells/mechanics.py`. `SpellSchema` exposes the
 two additive top-level fields described here. A machine-readable JSON Schema
 can be generated from `SpellSchema.model_json_schema()`; it is not checked in,
 so it cannot drift from the validating models.

@@ -4,17 +4,19 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from srd_arena.content.loaders import (
-    load_bestiary_catalog,
+from srd_arena.content.classes import (
     load_class_catalog,
-    load_player_character_templates,
     load_optional_feature_catalog,
-    load_encounter,
-    load_spell_catalog,
     load_subclass_catalog,
-    load_system_items,
 )
-from srd_arena.content.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
+from srd_arena.content.common.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
+from srd_arena.content.creatures import (
+    load_bestiary_catalog,
+    load_player_character_templates,
+)
+from srd_arena.content.encounters import load_encounter
+from srd_arena.content.equipment import load_system_items
+from srd_arena.content.spells import load_spell_catalog
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.encounters import EncounterDefinition
 from srd_arena.domain.equipment import Item

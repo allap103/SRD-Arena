@@ -1,11 +1,10 @@
 import pytest
 from pydantic import ValidationError
 
-from srd_arena.content.schemas import (
-    BestiaryActionSchema,
-    BestiaryMonsterSchema,
+from srd_arena.content.creatures.multiattack_schema import (
     MultiattackMechanicsSchema,
 )
+from srd_arena.content.creatures import BestiaryActionSchema, BestiaryMonsterSchema
 
 
 def _action(name: str) -> dict[str, str]:

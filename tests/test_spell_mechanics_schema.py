@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from srd_arena.content.schemas import SpellSchema
+from srd_arena.content.spells import SpellSchema
 
 
 def _spell(

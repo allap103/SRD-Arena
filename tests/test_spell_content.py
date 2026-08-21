@@ -1,7 +1,6 @@
-from srd_arena.content.catalogs import SourceCatalog, load_spell_catalog
-from srd_arena.content.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.schemas import SpellSchema
-from srd_arena.content.translators import build_spell
+from srd_arena.content.common import SourceCatalog
+from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
+from srd_arena.content.spells import SpellSchema, build_spell, load_spell_catalog
 from srd_arena.domain.spells.rules import spell_max_targets
 
 

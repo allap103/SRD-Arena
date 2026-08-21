@@ -1,1 +1,1 @@
-"""Content loading and schema modules for authored game data."""
+"""Feature-oriented boundaries for translating authored data into the domain."""

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .....content.paths import IMAGES_ROOT
+from .....content.common.paths import IMAGES_ROOT
 from ....shared.dice import RollView
 from .....domain.geometry import (
     Grid,

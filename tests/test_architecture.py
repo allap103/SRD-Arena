@@ -114,6 +114,36 @@ def test_content_and_runtime_use_absolute_cross_package_imports() -> None:
     )
 
 
+def test_content_is_grouped_by_game_concept() -> None:
+    content_dir = PACKAGE_ROOT / "content"
+    legacy_layer_packages = (
+        "catalogs",
+        "loaders",
+        "normalization",
+        "schemas",
+        "translators",
+    )
+
+    assert not [
+        name
+        for name in legacy_layer_packages
+        if list((content_dir / name).glob("*.py"))
+    ], "Content belongs with its game concept, not in technical-layer packages."
+
+    assert {
+        "classes",
+        "common",
+        "creatures",
+        "encounters",
+        "equipment",
+        "spells",
+    } <= {
+        path.name
+        for path in content_dir.iterdir()
+        if path.is_dir()
+    }
+
+
 def test_encounter_actions_have_no_legacy_peer_package() -> None:
     legacy_actions = PACKAGE_ROOT / "domain" / "actions"
 
