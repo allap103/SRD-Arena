@@ -141,6 +141,21 @@ def test_spell_slot_cost_is_separate_from_spell_slot_pool() -> None:
     assert cost.allow_higher_level
 
 
+def test_spell_grants_describe_activation_and_slot_cost() -> None:
+    spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+
+    fireball = build_spell("Fireball", "XPHB", spells)
+    assert fireball.grant is not None
+    assert fireball.grant.activation == "action"
+    assert isinstance(fireball.grant.cost, SpellSlotCost)
+    assert fireball.grant.cost.minimum_level == 3
+
+    fire_bolt = build_spell("Fire Bolt", "XPHB", spells)
+    assert fire_bolt.grant is not None
+    assert fire_bolt.grant.activation == "action"
+    assert fire_bolt.grant.cost is None
+
+
 def test_npc_spell_uses_are_separate_from_player_spell_slots() -> None:
     monster = BestiaryMonsterSchema.model_validate(
         {

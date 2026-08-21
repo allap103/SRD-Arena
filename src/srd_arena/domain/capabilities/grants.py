@@ -47,17 +47,18 @@ class SpellSlotCost:
 
 
 ResourceCost = PoolUseCost | SpellSlotCost
+CapabilityActivation = Literal[
+    "action",
+    "bonus_action",
+    "reaction",
+    "free_action",
+    "passive",
+]
 
 
 @dataclass(frozen=True)
 class CapabilityGrant:
     id: str
     definition: CapabilityDefinition
-    activation: Literal[
-        "action",
-        "bonus_action",
-        "reaction",
-        "free_action",
-        "passive",
-    ]
+    activation: CapabilityActivation
     cost: ResourceCost | None = None

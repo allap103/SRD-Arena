@@ -38,6 +38,7 @@ from .models import (
     TurnEconomyRestrictionEffect,
 )
 from .grants import (
+    CapabilityActivation,
     CapabilityGrant,
     LimitedUsePool,
     PoolUseCost,
@@ -59,6 +60,7 @@ __all__ = [
     "AttackRollModeRequirement",
     "AutomaticResolution",
     "CapabilityDefinition",
+    "CapabilityActivation",
     "CapabilityGrant",
     "CapabilityResolution",
     "ConditionEffect",

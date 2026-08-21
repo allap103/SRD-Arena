@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from ..effects.modifiers import RollModifier
 
 from ..capabilities import CapabilityRequirement
-from ..capabilities import CapabilityDefinition
+from ..capabilities import CapabilityDefinition, CapabilityGrant
 
 
 @dataclass(frozen=True)
@@ -141,3 +141,4 @@ class Spell:
     concentration: bool = False
     target_requirements: tuple[CapabilityRequirement, ...] = ()
     capability: SpellCapability | None = None
+    grant: CapabilityGrant | None = None
