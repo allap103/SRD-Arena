@@ -5,10 +5,8 @@ from ..capabilities import (
     CapabilityEffect,
     OutcomeStage,
     CapabilityTarget,
-    CapabilityDefinition,
     CapabilityGrant,
     ResourcePoolDefinition,
-    ResourceCost,
 )
 
 if TYPE_CHECKING:
@@ -32,7 +30,6 @@ class AttackActionDefinition:
     range_normal_feet: int | None
     range_long_feet: int | None
     hit: tuple[CapabilityEffect, ...]
-    capability: CapabilityDefinition | None = None
     grant: CapabilityGrant | None = None
     resource_pool: ResourcePoolDefinition | None = None
 
@@ -47,7 +44,6 @@ class SavingThrowActionDefinition:
     success: tuple[CapabilityEffect, ...]
     success_damage: Literal["none", "half"]
     always: tuple[CapabilityEffect, ...]
-    capability: CapabilityDefinition | None = None
     grant: CapabilityGrant | None = None
     resource_pool: ResourcePoolDefinition | None = None
 
@@ -57,7 +53,6 @@ class AutomaticActionDefinition:
     name: str
     target: CapabilityTarget
     effects: tuple[CapabilityEffect, ...]
-    capability: CapabilityDefinition | None = None
     grant: CapabilityGrant | None = None
     resource_pool: ResourcePoolDefinition | None = None
 
@@ -69,7 +64,6 @@ class SpellOption:
     cast_level: int | None = None
     uses: int | Literal["at_will"] | None = None
     resource_pool: ResourcePoolDefinition | None = None
-    cost: ResourceCost | None = None
     spell: "Spell | None" = None
     grant: CapabilityGrant | None = None
 

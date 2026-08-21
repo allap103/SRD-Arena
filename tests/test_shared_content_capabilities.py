@@ -70,8 +70,8 @@ def test_spells_and_stat_blocks_compile_shared_domain_capabilities() -> None:
         if name.startswith("Cold Breath")
     )
     assert isinstance(breath, SavingThrowActionDefinition)
-    assert breath.capability is not None
-    action_resolution = breath.capability.resolution
+    assert breath.grant is not None
+    action_resolution = breath.grant.definition.resolution
     assert isinstance(action_resolution, SavingThrowResolution)
     assert isinstance(action_resolution.difficulty, FixedDifficultyClass)
     assert action_resolution.difficulty.value == 22
@@ -92,8 +92,8 @@ def test_spells_and_stat_blocks_compile_shared_attack_resolutions() -> None:
     goblin = monsters.find("Goblin Warrior", "XMM")
     scimitar = build_stat_block_actions(goblin)["Scimitar"]
     assert isinstance(scimitar, AttackActionDefinition)
-    assert scimitar.capability is not None
-    action_resolution = scimitar.capability.resolution
+    assert scimitar.grant is not None
+    action_resolution = scimitar.grant.definition.resolution
     assert isinstance(action_resolution, AttackResolution)
     assert isinstance(action_resolution.attack_bonus, FixedAttackBonus)
     assert action_resolution.attack_bonus.value == 4
@@ -194,16 +194,14 @@ def test_npc_spell_uses_are_separate_from_player_spell_slots() -> None:
     assert isinstance(fireball.resource_pool, LimitedUsePool)
     assert fireball.resource_pool.maximum == 2
     assert fireball.resource_pool.refresh == "day"
-    assert isinstance(fireball.cost, PoolUseCost)
-    assert fireball.cost.pool_id == fireball.resource_pool.id
     assert fireball.spell is not None
     assert fireball.spell.name == "Fireball"
     assert fireball.spell.grant is not None
     assert fireball.grant is not None
     assert fireball.grant.definition == fireball.spell.grant.definition
-    assert fireball.grant.cost == fireball.cost
+    assert isinstance(fireball.grant.cost, PoolUseCost)
+    assert fireball.grant.cost.pool_id == fireball.resource_pool.id
     assert fire_bolt.resource_pool is None
-    assert fire_bolt.cost is None
     assert fire_bolt.spell is not None
     assert fire_bolt.grant is not None
     assert fire_bolt.grant.cost is None

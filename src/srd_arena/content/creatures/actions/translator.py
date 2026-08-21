@@ -72,7 +72,6 @@ def build_stat_block_actions(
                     success=compile_outcome(resolution.success.effects).effects,
                     success_damage=resolution.success_damage,
                     always=compile_outcome(resolution.always.effects).effects,
-                    capability=compiled,
                     grant=grant,
                     resource_pool=resource_pool,
                 )
@@ -92,7 +91,6 @@ def build_stat_block_actions(
                     name=action.name,
                     target=compiled.target,
                     effects=compile_outcome(resolution.outcome.effects).effects,
-                    capability=compiled,
                     grant=grant,
                     resource_pool=resource_pool,
                 )
@@ -178,7 +176,6 @@ def _attack_definition(
         range_normal_feet=capability.range_normal_feet,
         range_long_feet=capability.range_long_feet,
         hit=hit.effects,
-        capability=compiled,
         grant=grant,
         resource_pool=resource_pool,
     )
@@ -303,7 +300,6 @@ def _spell_option(
         cast_level=spell.cast_level,
         uses=spell.uses,
         resource_pool=pool,
-        cost=cost,
         spell=resolved,
         grant=grant,
     )
