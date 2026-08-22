@@ -1,4 +1,7 @@
-from srd_arena.content.classes.schema import ClassSchema, SubclassSchema
+from srd_arena.content.character_options.classes.schema import (
+    ClassSchema,
+    SubclassSchema,
+)
 from srd_arena.domain.creatures import Attributes
 
 SpellcastingSource = ClassSchema | SubclassSchema

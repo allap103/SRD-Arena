@@ -135,7 +135,7 @@ def test_content_is_grouped_by_game_concept() -> None:
     ], "Content belongs with its game concept, not in technical-layer packages."
 
     assert {
-        "classes",
+        "character_options",
         "common",
         "creatures",
         "encounters",
@@ -147,6 +147,10 @@ def test_content_is_grouped_by_game_concept() -> None:
         for path in content_dir.iterdir()
         if path.is_dir()
     }
+
+    assert not (content_dir / "classes").exists(), (
+        "Class content belongs under content.character_options."
+    )
 
 
 def test_encounter_actions_have_no_legacy_peer_package() -> None:

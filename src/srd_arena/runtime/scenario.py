@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from srd_arena.content.classes import (
+from srd_arena.content.character_options.classes import (
     load_class_catalog,
     load_optional_feature_catalog,
     load_subclass_catalog,

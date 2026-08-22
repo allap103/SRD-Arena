@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 from typing import cast
 
-from srd_arena.content.classes import (
+from srd_arena.content.character_options.classes import (
     ClassCatalog,
     ClassRecord,
     OptionalFeatureCatalog,
@@ -12,13 +12,15 @@ from srd_arena.content.classes import (
 )
 from srd_arena.content.common.sources import load_json, slug
 from srd_arena.content.spells import SpellCatalog, build_spell
-from srd_arena.content.classes.schema import (
+from srd_arena.content.character_options.classes.schema import (
     ClassFeatureReferenceSchema,
     ClassFeatureSchema,
     ClassSchema,
     SubclassSchema,
 )
-from srd_arena.content.classes.optional_feature_schema import OptionalFeatureSchema
+from srd_arena.content.character_options.classes.optional_feature_schema import (
+    OptionalFeatureSchema,
+)
 from srd_arena.domain.creatures import (
     Attributes,
     ClassFeature,

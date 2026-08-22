@@ -1,4 +1,4 @@
-from srd_arena.content.classes import ClassRecord
+from srd_arena.content.character_options.classes import ClassRecord
 from .schema import CreatureSchema
 from .stat_block_schema import BestiaryMonsterSchema
 from srd_arena.domain.creatures import Attributes, Movement, normalize_size

@@ -1,6 +1,9 @@
-from srd_arena.content.classes import load_class_catalog, load_subclass_catalog
+from srd_arena.content.character_options.classes import (
+    load_class_catalog,
+    load_subclass_catalog,
+)
 from srd_arena.content.common import SourceCatalog
-from srd_arena.content.classes import ClassRecord, ClassSchema
+from srd_arena.content.character_options.classes import ClassRecord, ClassSchema
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 
 

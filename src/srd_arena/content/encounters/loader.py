@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from srd_arena.content.classes import (
+from srd_arena.content.character_options.classes import (
     ClassCatalog,
     OptionalFeatureCatalog,
     SubclassCatalog,
