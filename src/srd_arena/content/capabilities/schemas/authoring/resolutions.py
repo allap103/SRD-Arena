@@ -89,11 +89,6 @@ class CapabilityResolutionSchema(
 class RepeatSaveProgressionSchema(RepeatSaveProgressionSchemaBase):
     """A repeated saving throw applied after an initial failed save."""
 
-    on_success: CapabilityResolutionSchema = Field(
-        default_factory=lambda: CapabilityResolutionSchema.model_validate(
-            {"type": "automatic", "outcome": {"end_capability": True}}
-        )
-    )
     on_failure: CapabilityResolutionSchema | None = None
 
 

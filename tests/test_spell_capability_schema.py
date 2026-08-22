@@ -121,6 +121,30 @@ def test_condition_spell_supports_requirements_and_repeat_save() -> None:
     assert capability["resolution"]["repeat_save"]["trigger"] == "turn_end"
 
 
+def test_repeat_save_rejects_unsupported_success_resolution() -> None:
+    with pytest.raises(ValidationError, match="on_success"):
+        _spell(
+            {
+                "target": {"type": "creature", "range_feet": 60},
+                "resolution": {
+                    "type": "saving_throw",
+                    "ability": "wis",
+                    "failure": {
+                        "effects": [{"type": "condition", "condition": "paralyzed"}]
+                    },
+                    "repeat_save": {
+                        "trigger": "turn_end",
+                        "on_success": {
+                            "type": "automatic",
+                            "outcome": {"end_capability": True},
+                        },
+                    },
+                },
+            },
+            implementation={"status": "complete"},
+        )
+
+
 def test_implementation_status_matches_executable_capability() -> None:
     with pytest.raises(ValidationError, match="Complete spells must define"):
         _spell(None, implementation={"status": "complete"})
