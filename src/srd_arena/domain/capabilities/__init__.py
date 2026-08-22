@@ -21,7 +21,10 @@ from .definitions import (
     ScalingThreshold,
 )
 from .models import (
+    AllRequirement,
+    AnyRequirement,
     ArmorClassModifierEffect,
+    AttackSourceRequirement,
     CapabilityEffect,
     OutcomeStage,
     CapabilityRequirement,
@@ -41,11 +44,14 @@ from .models import (
     DamageReductionEffect,
     DamageResistanceEffect,
     EffectDuration,
+    FreeHandRequirement,
     ForcedMovementEffect,
     GainMemoriesEffect,
     HealingEffect,
+    HitPointRequirement,
     HitPointMaximumModifierEffect,
     NotAffectedRequirement,
+    PerceptionRequirement,
     ProhibitReactionsEffect,
     RepeatSave,
     RollModifierEffect,
@@ -58,6 +64,7 @@ from .models import (
     TargetCount,
     TurnEconomyRestrictionEffect,
     TemporaryHitPointsEffect,
+    WillingRequirement,
 )
 from .grants import (
     CapabilityActivation,
@@ -73,6 +80,8 @@ from .grants import (
 from .rules import capability_effects, primary_effects
 
 __all__ = [
+    "AllRequirement",
+    "AnyRequirement",
     "ArmorClassModifierEffect",
     "CapabilityEffect",
     "capability_effects",
@@ -84,6 +93,7 @@ __all__ = [
     "AttackBonus",
     "AttackResolution",
     "AttackRollModeRequirement",
+    "AttackSourceRequirement",
     "AutomaticResolution",
     "CapabilityRepetition",
     "CapabilityScaling",
@@ -109,13 +119,16 @@ __all__ = [
     "DerivedDifficultyClass",
     "DifficultyClass",
     "EffectDuration",
+    "FreeHandRequirement",
     "ForcedMovementEffect",
     "FixedDifficultyClass",
     "FixedAttackBonus",
     "GainMemoriesEffect",
     "HealingEffect",
+    "HitPointRequirement",
     "HitPointMaximumModifierEffect",
     "NotAffectedRequirement",
+    "PerceptionRequirement",
     "Outcome",
     "LimitedUsePool",
     "PoolUseCost",
@@ -139,4 +152,5 @@ __all__ = [
     "SpellSlotPool",
     "TurnEconomyRestrictionEffect",
     "TemporaryHitPointsEffect",
+    "WillingRequirement",
 ]

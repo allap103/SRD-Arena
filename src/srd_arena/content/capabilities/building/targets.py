@@ -7,7 +7,7 @@ import srd_arena.domain.capabilities as domain
 
 from srd_arena.content.capabilities.schemas import targets
 from .errors import CapabilityBuildError
-from .requirements import build_requirement
+from .requirements import build_checked_requirement
 
 
 def build_target(
@@ -28,7 +28,14 @@ def build_target(
             line_of_sight=value.line_of_sight,
             disposition=value.disposition,
             selection=value.selection,
-            requirements=(build_requirement(item) for item in value.requirements),
+            requirements=(
+                build_checked_requirement(
+                    item,
+                    content=content,
+                    location=f"{location}.requirements[{index}]",
+                )
+                for index, item in enumerate(value.requirements)
+            ),
         )
     if isinstance(value, targets.AreaTargetSchema):
         chosen = value.chosen_count
@@ -48,13 +55,20 @@ def build_target(
             origin=value.origin,
             occupants=value.occupants,
             excludes_source=value.excludes_source,
-            requirements=(build_requirement(item) for item in value.requirements),
+            requirements=(
+                build_checked_requirement(
+                    item,
+                    content=content,
+                    location=f"{location}.requirements[{index}]",
+                )
+                for index, item in enumerate(value.requirements)
+            ),
         )
     if isinstance(
         value,
         (targets.ActionCreatureTargetSchema, targets.ActionAreaTargetSchema),
     ):
-        return _build_action_target(value)
+        return _build_action_target(value, content=content, location=location)
     raise CapabilityBuildError(
         content=content,
         location=location,
@@ -64,6 +78,9 @@ def build_target(
 
 def _build_action_target(
     value: targets.ActionTargetSchema,
+    *,
+    content: str,
+    location: str,
 ) -> domain.CapabilityTarget:
     count = getattr(value, "count", 1)
     affects = getattr(value, "affects", "creatures")
@@ -82,8 +99,12 @@ def _build_action_target(
         ),
         excludes_source=getattr(value, "excludes_self", False),
         requirements=(
-            build_requirement(requirement)
-            for requirement in getattr(value, "requirements", ())
+            build_checked_requirement(
+                requirement,
+                content=content,
+                location=f"{location}.requirements[{index}]",
+            )
+            for index, requirement in enumerate(getattr(value, "requirements", ()))
         ),
     )
 

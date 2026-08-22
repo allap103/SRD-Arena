@@ -7,18 +7,11 @@ from pydantic import Field, model_validator
 from srd_arena.content.capabilities import (
     AreaGeometrySchema,
     AreaTargetSchema,
-    ConditionImmunityRequirementSchema,
-    ConditionRequirementSchema,
-    CreatureTraitRequirementSchema,
+    CapabilityRequirementSchema,
     CreatureTargetSchema,
-    CreatureTypeRequirementSchema,
-    NonNegativeInt,
-    NotAffectedRequirementSchema,
     PositiveInt,
-    RelationshipRequirementSchema,
     SelfTargetSchema,
     SavingThrowModifierSchema,
-    SizeRequirementSchema,
     TargetCountSchema,
 )
 
@@ -30,58 +23,8 @@ class SpellComponentRequirementSchema(SpellCapabilitySchemaModel):
     component: Literal["verbal", "somatic", "material"]
 
 
-class AttackSourceRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["attack_source"]
-    source: Literal["weapon", "unarmed_strike", "spell", "any"]
-    mode: Literal["melee", "ranged", "any"] = "any"
-
-
-class WillingRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["willing"]
-
-
-class FreeHandRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["free_hand"]
-
-
-class PerceptionRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["perception"]
-    sense: Literal["see", "hear"]
-    subject: Literal["source", "target", "each_other"] = "source"
-
-
-class HitPointRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["hit_points"]
-    comparison: Literal["less_than", "at_most", "at_least", "greater_than"]
-    value: NonNegativeInt
-
-
-class AnyRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["any"]
-    requirements: list[SpellRequirementSchema] = Field(min_length=1)
-
-
-class AllRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["all"]
-    requirements: list[SpellRequirementSchema] = Field(min_length=1)
-
-
 SpellRequirementSchema = Annotated[
-    ConditionRequirementSchema
-    | CreatureTypeRequirementSchema
-    | SizeRequirementSchema
-    | NotAffectedRequirementSchema
-    | CreatureTraitRequirementSchema
-    | ConditionImmunityRequirementSchema
-    | SpellComponentRequirementSchema
-    | AttackSourceRequirementSchema
-    | WillingRequirementSchema
-    | FreeHandRequirementSchema
-    | PerceptionRequirementSchema
-    | HitPointRequirementSchema
-    | RelationshipRequirementSchema
-    | AnyRequirementSchema
-    | AllRequirementSchema,
+    CapabilityRequirementSchema | SpellComponentRequirementSchema,
     Field(discriminator="type"),
 ]
 
@@ -174,7 +117,5 @@ SpellTargetSchema = Annotated[
     Field(discriminator="type"),
 ]
 
-AnyRequirementSchema.model_rebuild()
-AllRequirementSchema.model_rebuild()
 TargetChoiceOptionSchema.model_rebuild()
 ChoiceSpellTargetSchema.model_rebuild()

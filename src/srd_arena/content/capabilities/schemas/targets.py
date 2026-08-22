@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 from pydantic import Field, model_validator
 
 from .base import CapabilitySchemaModel, NonNegativeInt, PositiveInt
-from .requirements import ActionRequirementSchema
+from .requirements import CapabilityRequirementSchema
 
 
 class SelfTargetSchema(CapabilitySchemaModel):
@@ -17,7 +17,7 @@ class ActionCreatureTargetSchema(CapabilitySchemaModel):
     count: PositiveInt = 1
     range_feet: NonNegativeInt
     line_of_sight: bool = False
-    requirements: list[ActionRequirementSchema] = Field(default_factory=list)
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
 
 
 class ActionAreaTargetSchema(CapabilitySchemaModel):
@@ -29,7 +29,7 @@ class ActionAreaTargetSchema(CapabilitySchemaModel):
     range_feet: NonNegativeInt | None = None
     affects: Literal["creatures", "enemies", "allies", "objects", "all"] = "creatures"
     excludes_self: bool = True
-    requirements: list[ActionRequirementSchema] = Field(default_factory=list)
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_area_dimensions(self) -> "ActionAreaTargetSchema":
@@ -67,7 +67,7 @@ class CreatureTargetSchema(CapabilitySchemaModel):
     ] = "any"
     selection: Literal["all", "choose", "choose_up_to"] = "choose"
     line_of_sight: bool = False
-    requirements: list[ActionRequirementSchema] = Field(default_factory=list)
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
 
 
 class AreaGeometrySchema(CapabilitySchemaModel):
@@ -123,7 +123,7 @@ class AreaTargetSchema(CapabilitySchemaModel):
     occupants: Literal["all", "allies", "enemies", "chosen"] = "all"
     chosen_count: TargetCountSchema | None = None
     excludes_source: bool = False
-    requirements: list[ActionRequirementSchema] = Field(default_factory=list)
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_chosen_count(self) -> "AreaTargetSchema":

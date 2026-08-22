@@ -49,6 +49,7 @@ from srd_arena.domain.capabilities import (
     ConditionRequirement,
     CreatureTypeRequirement,
     LimitedUsePool,
+    PerceptionRequirement,
     RechargePool,
 )
 from srd_arena.domain.creatures import (
@@ -856,6 +857,49 @@ def test_creature_type_restricted_spell_targets_are_visible_but_unavailable() ->
     assert by_target["animated_armor"].failures[0].code == (
         "target_creature_type_required"
     )
+
+
+def test_perception_requirement_is_shared_by_non_spell_actions() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    actor_ref = "player"
+    state.creatures[actor_ref].creature.stat_block_actions["Cutting Words"] = (
+        AutomaticActionDefinition(
+            name="Cutting Words",
+            target=CapabilityTarget(
+                kind="creature",
+                range_feet=60,
+                requirements=(PerceptionRequirement("see"),),
+            ),
+            effects=(),
+        )
+    )
+    action = EncounterAction(
+        "Cutting Words",
+        "stat_block",
+        "goblin_1",
+        creature_ref=actor_ref,
+        preferred_attack_name="Cutting Words",
+    )
+
+    visible = state.combat_rules.action_eligibility(state, actor_ref, action)
+    state.conditions.append(
+        build_applied_condition(
+            condition=Condition.BLINDED,
+            source_ref="goblin_1",
+            source_label="Goblin Warrior",
+            target_ref=actor_ref,
+        )
+    )
+    blinded = state.combat_rules.action_eligibility(state, actor_ref, action)
+
+    assert visible.allowed
+    assert not blinded.allowed
+    assert any(failure.code == "target_see_required" for failure in blinded.failures)
 
 
 def test_execution_rechecks_action_eligibility() -> None:

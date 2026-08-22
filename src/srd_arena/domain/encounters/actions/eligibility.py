@@ -3,7 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from ...capabilities import ConditionRequirement, CreatureTypeRequirement
+from ...capabilities import (
+    AllRequirement,
+    AnyRequirement,
+    ConditionRequirement,
+    CreatureTypeRequirement,
+    FreeHandRequirement,
+    HitPointRequirement,
+    PerceptionRequirement,
+)
 from ...creatures import (
     AttackActionDefinition,
     AutomaticActionDefinition,
@@ -601,7 +609,10 @@ class SpellTargetSelectionRule:
                 target_ref,
                 spell.target_requirements,
             )
-        if action.kind == "confirm_spell_targets" and pending.resource_pool_total is not None:
+        if (
+            action.kind == "confirm_spell_targets"
+            and pending.resource_pool_total is not None
+        ):
             if not pending.resource_allocations:
                 return EligibilityFailure(
                     "target_required",
@@ -705,6 +716,32 @@ def _target_requirement_failure(
     requirements: tuple[object, ...],
 ) -> EligibilityFailure | None:
     for requirement in requirements:
+        if isinstance(requirement, AllRequirement):
+            failure = _target_requirement_failure(
+                state,
+                actor_ref,
+                target_ref,
+                requirement.requirements,
+            )
+            if failure is not None:
+                return failure
+            continue
+        if isinstance(requirement, AnyRequirement):
+            if any(
+                _target_requirement_failure(
+                    state,
+                    actor_ref,
+                    target_ref,
+                    (option,),
+                )
+                is None
+                for option in requirement.requirements
+            ):
+                continue
+            return EligibilityFailure(
+                "target_any_requirement_failed",
+                "The target does not satisfy any permitted requirement.",
+            )
         if isinstance(requirement, CreatureTypeRequirement):
             creature_type = state.creatures[
                 target_ref
@@ -715,6 +752,45 @@ def _target_requirement_failure(
             return EligibilityFailure(
                 "target_creature_type_required",
                 f"The target must have one of these creature types: {labels}.",
+            )
+        if isinstance(requirement, PerceptionRequirement):
+            pairs = {
+                "source": ((actor_ref, target_ref),),
+                "target": ((target_ref, actor_ref),),
+                "each_other": (
+                    (actor_ref, target_ref),
+                    (target_ref, actor_ref),
+                ),
+            }[requirement.subject]
+            if all(
+                _can_perceive(state, observer, perceived, requirement.sense)
+                for observer, perceived in pairs
+            ):
+                continue
+            return EligibilityFailure(
+                f"target_{requirement.sense}_required",
+                f"The required creature must be able to {requirement.sense}.",
+            )
+        if isinstance(requirement, HitPointRequirement):
+            hit_points = state.creatures[target_ref].creature.get_health()
+            comparisons = {
+                "less_than": hit_points < requirement.value,
+                "at_most": hit_points <= requirement.value,
+                "at_least": hit_points >= requirement.value,
+                "greater_than": hit_points > requirement.value,
+            }
+            if comparisons[requirement.comparison]:
+                continue
+            return EligibilityFailure(
+                "target_hit_points_required",
+                "The target does not meet the Hit Point requirement.",
+            )
+        if isinstance(requirement, FreeHandRequirement):
+            if has_free_hand(state.creatures[actor_ref].creature):
+                continue
+            return EligibilityFailure(
+                "free_hand_required",
+                "A free hand is required.",
             )
         if not isinstance(requirement, ConditionRequirement):
             continue
@@ -746,3 +822,30 @@ def _target_requirement_failure(
             f"The target must have the required condition: {labels}.",
         )
     return None
+
+
+def _can_perceive(
+    state: EncounterState,
+    observer_ref: CreatureRef,
+    perceived_ref: CreatureRef,
+    sense: str,
+) -> bool:
+    observer_conditions = state.effective_conditions_for(observer_ref)
+    if sense == "hear":
+        return not observer_conditions.has(Condition.DEAFENED)
+    if observer_conditions.has(Condition.BLINDED):
+        return False
+    perceived_conditions = state.effective_conditions_for(perceived_ref)
+    if not perceived_conditions.has(Condition.INVISIBLE):
+        return True
+    observer = state.creatures[observer_ref]
+    truesight_range = observer.creature.sense_range("truesight")
+    if truesight_range is None:
+        return False
+    distance = grid_distance_between(
+        observer.position,
+        state.creatures[perceived_ref].position,
+    )
+    return distance <= state.definition.grid.covering_distance_from_feet(
+        truesight_range
+    )

@@ -13,14 +13,18 @@ from srd_arena.content.capabilities import (
     build_capability,
 )
 from srd_arena.content.spells import build_spell, load_spell_catalog
+from srd_arena.content.spells import SpellSchema
 from srd_arena.domain.capabilities import (
+    AllRequirement,
     AttackResolution,
     DerivedDifficultyClass,
     DerivedAttackBonus,
     FixedAttackBonus,
     FixedDifficultyClass,
     HealingEffect,
+    HitPointRequirement,
     LimitedUsePool,
+    PerceptionRequirement,
     PoolUseCost,
     RechargePool,
     SavingThrowResolution,
@@ -62,6 +66,75 @@ def test_non_spell_action_can_use_shared_healing_effect() -> None:
 
     assert isinstance(restore, AutomaticActionDefinition)
     assert restore.effects == (HealingEffect(dice="1d8"),)
+
+
+def test_spells_and_stat_blocks_share_perception_requirements() -> None:
+    requirement = {
+        "type": "all",
+        "requirements": [
+            {"type": "perception", "sense": "see"},
+            {"type": "hit_points", "comparison": "at_least", "value": 1},
+        ],
+    }
+    spell_schema = SpellSchema.model_validate(
+        {
+            "name": "Visible Rebuke",
+            "source": "TEST",
+            "level": 0,
+            "school": "E",
+            "implementation": {"status": "complete"},
+            "capability": {
+                "target": {
+                    "type": "creature",
+                    "requirements": [requirement],
+                },
+                "resolution": {
+                    "type": "automatic",
+                    "outcome": {"effects": []},
+                },
+            },
+        }
+    )
+    monster = BestiaryMonsterSchema.model_validate(
+        {
+            "name": "Test Observer",
+            "source": "TEST",
+            "action": [
+                {
+                    "name": "Visible Rebuke",
+                    "capability": {
+                        "type": "capability",
+                        "target": {
+                            "type": "creature",
+                            "range_feet": 30,
+                            "requirements": [requirement],
+                        },
+                        "resolution": {
+                            "type": "automatic",
+                            "outcome": {
+                                "effects": [{"type": "healing", "dice": "1d4"}]
+                            },
+                        },
+                    },
+                }
+            ],
+        }
+    )
+
+    spell = build_spell(spell_schema)
+    action = build_stat_block_actions(monster)["Visible Rebuke"]
+
+    expected = (
+        AllRequirement(
+            (
+                PerceptionRequirement("see"),
+                HitPointRequirement("at_least", 1),
+            )
+        ),
+    )
+    assert spell.target_requirements == expected
+    assert isinstance(action, AutomaticActionDefinition)
+    assert action.target.requirements == expected
 
 
 def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:

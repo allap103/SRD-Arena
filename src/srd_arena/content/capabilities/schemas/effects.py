@@ -7,7 +7,7 @@ from pydantic import Field, model_validator
 from .base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
 from .durations import EffectDurationSchema
 from .requirements import (
-    ActionRequirementSchema,
+    CapabilityRequirementSchema,
     AttackHitRequirementSchema,
     CreatureTypeRequirementSchema,
 )
@@ -144,7 +144,7 @@ class ConditionEffectSchema(CapabilitySchemaModel):
     type: Literal["condition"]
     condition: str = Field(min_length=1)
     duration: EffectDurationSchema | None = None
-    requirements: list[ActionRequirementSchema] = Field(default_factory=list)
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
     escape_dc: PositiveInt | None = None
     source_capacity: PositiveInt | None = None
     ends_on: list[
@@ -204,7 +204,7 @@ class RollModifierEffectSchema(CapabilitySchemaModel):
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     value: int | None = None
     duration: EffectDurationSchema | None = None
-    requirements: list[ActionRequirementSchema] = Field(default_factory=list)
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
 
 
 class ControlEffectSchema(CapabilitySchemaModel):

@@ -1,7 +1,5 @@
 """Build domain requirements from authored requirement schemas."""
 
-from typing import cast
-
 import srd_arena.domain.capabilities as domain
 
 from srd_arena.content.capabilities.schemas import requirements
@@ -10,7 +8,7 @@ from .supported import EXECUTABLE_REQUIREMENT_TYPES
 
 
 def build_requirement(
-    value: requirements.ActionRequirementSchema,
+    value: requirements.CapabilityRequirementSchema,
 ) -> domain.CapabilityRequirement:
     if isinstance(value, requirements.SizeRequirementSchema):
         return domain.SizeRequirement(value.maximum, value.minimum)
@@ -28,10 +26,27 @@ def build_requirement(
         return domain.CreatureTraitRequirement(value.trait)
     if isinstance(value, requirements.ConditionImmunityRequirementSchema):
         return domain.ConditionImmunityRequirement(value.condition)
-    relationship = cast(requirements.RelationshipRequirementSchema, value)
-    return domain.RelationshipRequirement(
-        relationship.relationship,
-        relationship.established_by,
+    if isinstance(value, requirements.RelationshipRequirementSchema):
+        return domain.RelationshipRequirement(
+            value.relationship,
+            value.established_by,
+        )
+    if isinstance(value, requirements.AttackSourceRequirementSchema):
+        return domain.AttackSourceRequirement(value.source, value.mode)
+    if isinstance(value, requirements.WillingRequirementSchema):
+        return domain.WillingRequirement()
+    if isinstance(value, requirements.FreeHandRequirementSchema):
+        return domain.FreeHandRequirement()
+    if isinstance(value, requirements.PerceptionRequirementSchema):
+        return domain.PerceptionRequirement(value.sense, value.subject)
+    if isinstance(value, requirements.HitPointRequirementSchema):
+        return domain.HitPointRequirement(value.comparison, value.value)
+    if isinstance(value, requirements.AnyRequirementSchema):
+        return domain.AnyRequirement(
+            tuple(build_requirement(item) for item in value.requirements)
+        )
+    return domain.AllRequirement(
+        tuple(build_requirement(item) for item in value.requirements)
     )
 
 
@@ -46,4 +61,14 @@ def build_checked_requirement(
             location=location,
             mechanic=type(value).__name__,
         )
+    if isinstance(
+        value,
+        (requirements.AnyRequirementSchema, requirements.AllRequirementSchema),
+    ):
+        for index, item in enumerate(value.requirements):
+            build_checked_requirement(
+                item,
+                content=content,
+                location=f"{location}.requirements[{index}]",
+            )
     return build_requirement(value)

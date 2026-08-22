@@ -1,5 +1,7 @@
 """Authored requirement schemas for capability use and targeting."""
 
+from __future__ import annotations
+
 from typing import Annotated, Literal
 
 from pydantic import Field
@@ -46,16 +48,63 @@ class RelationshipRequirementSchema(CapabilitySchemaModel):
     established_by: Literal["this_spell", "source", "any"] = "any"
 
 
-ActionRequirementSchema = Annotated[
+class AttackSourceRequirementSchema(CapabilitySchemaModel):
+    type: Literal["attack_source"]
+    source: Literal["weapon", "unarmed_strike", "spell", "any"]
+    mode: Literal["melee", "ranged", "any"] = "any"
+
+
+class WillingRequirementSchema(CapabilitySchemaModel):
+    type: Literal["willing"]
+
+
+class FreeHandRequirementSchema(CapabilitySchemaModel):
+    type: Literal["free_hand"]
+
+
+class PerceptionRequirementSchema(CapabilitySchemaModel):
+    type: Literal["perception"]
+    sense: Literal["see", "hear"]
+    subject: Literal["source", "target", "each_other"] = "source"
+
+
+class HitPointRequirementSchema(CapabilitySchemaModel):
+    type: Literal["hit_points"]
+    comparison: Literal["less_than", "at_most", "at_least", "greater_than"]
+    value: int = Field(ge=0)
+
+
+class AnyRequirementSchema(CapabilitySchemaModel):
+    type: Literal["any"]
+    requirements: list[CapabilityRequirementSchema] = Field(min_length=1)
+
+
+class AllRequirementSchema(CapabilitySchemaModel):
+    type: Literal["all"]
+    requirements: list[CapabilityRequirementSchema] = Field(min_length=1)
+
+
+CapabilityRequirementSchema = Annotated[
     ConditionRequirementSchema
     | CreatureTypeRequirementSchema
     | SizeRequirementSchema
     | NotAffectedRequirementSchema
     | CreatureTraitRequirementSchema
     | ConditionImmunityRequirementSchema
-    | RelationshipRequirementSchema,
+    | RelationshipRequirementSchema
+    | AttackSourceRequirementSchema
+    | WillingRequirementSchema
+    | FreeHandRequirementSchema
+    | PerceptionRequirementSchema
+    | HitPointRequirementSchema
+    | AnyRequirementSchema
+    | AllRequirementSchema,
     Field(discriminator="type"),
 ]
+
+
+AnyRequirementSchema.model_rebuild()
+AllRequirementSchema.model_rebuild()
 
 
 class AttackRollModeRequirementSchema(CapabilitySchemaModel):

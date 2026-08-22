@@ -1,7 +1,5 @@
 """Build domain spells from authored spell schemas."""
 
-from collections.abc import Sequence
-
 from srd_arena.content.capabilities import build_capability
 from srd_arena.content.common.sources import slug
 import srd_arena.domain.capabilities as capability_domain
@@ -19,6 +17,7 @@ from .metadata import (
 
 def build_spell(spell_schema: SpellSchema) -> Spell:
     """Build a domain spell from validated authored content."""
+    definition = build_spell_definition(spell_schema)
     return Spell(
         id=slug(spell_schema.public_name),
         name=spell_schema.public_name,
@@ -56,8 +55,8 @@ def build_spell(spell_schema: SpellSchema) -> Spell:
             if spell_schema.capability is not None
             else ()
         ),
-        target_requirements=target_requirements(spell_schema),
-        definition=build_spell_definition(spell_schema),
+        target_requirements=target_requirements(spell_schema, definition),
+        definition=definition,
         activation=build_activation(spell_schema),
     )
 
@@ -129,32 +128,15 @@ def build_activation(
 
 def target_requirements(
     spell_schema: SpellSchema,
-) -> tuple[capability_domain.CreatureTypeRequirement, ...]:
+    definition: capability_domain.CapabilityDefinition | None = None,
+) -> tuple[capability_domain.CapabilityRequirement, ...]:
+    if definition is not None:
+        return definition.target.requirements
     creature_types = tuple(spell_schema.affects_creature_type)
-    if (
-        spell_schema.capability is not None
-        and spell_schema.capability.target.type == "creature"
-    ):
-        capability_types = _creature_types_from_requirements(
-            spell_schema.capability.target.requirements
-        )
-        if capability_types:
-            creature_types = capability_types
     return (
         (capability_domain.CreatureTypeRequirement(creature_types),)
         if creature_types
         else ()
-    )
-
-
-def _creature_types_from_requirements(
-    requirements: Sequence[object],
-) -> tuple[str, ...]:
-    return tuple(
-        creature_type
-        for requirement in requirements
-        if getattr(requirement, "type", None) == "creature_type"
-        for creature_type in getattr(requirement, "creature_types", ())
     )
 
 

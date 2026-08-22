@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .base import Ability, PositiveInt
 from .durations import EffectDurationSchema
 from .effects import ActionEffectSchema
-from .requirements import ActionRequirementSchema
+from .requirements import CapabilityRequirementSchema
 
 EffectSchemaT = TypeVar("EffectSchemaT")
 FailureOutcomeT = TypeVar("FailureOutcomeT")
@@ -60,8 +60,8 @@ class SavingThrowResolutionSchema(
     failure: FailureOutcomeT
     success: SuccessOutcomeT
     success_damage: Literal["none", "half"] = "none"
-    automatic_success: list[ActionRequirementSchema] = Field(default_factory=list)
-    automatic_failure: list[ActionRequirementSchema] = Field(default_factory=list)
+    automatic_success: list[CapabilityRequirementSchema] = Field(default_factory=list)
+    automatic_failure: list[CapabilityRequirementSchema] = Field(default_factory=list)
     save_modifiers: list[SavingThrowModifierSchema] = Field(default_factory=list)
 
 
@@ -73,7 +73,7 @@ class SavingThrowModifierSchema(ResolutionSchemaModel):
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     value: int | None = None
     duration: EffectDurationSchema | None = None
-    requirements: list[ActionRequirementSchema] = Field(default_factory=list)
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
 
 
 class AttackResolutionSchema(

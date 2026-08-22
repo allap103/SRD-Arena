@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import Field
 
 from .base import CapabilitySchemaModel, NonNegativeInt, PositiveInt
-from .requirements import ActionRequirementSchema
+from .requirements import CapabilityRequirementSchema
 from .scaling import CapabilityScalingSchema
 
 
@@ -35,7 +35,7 @@ class OutcomeTriggerSchemaBase(CapabilitySchemaModel):
         "effect_ended",
     ]
     attribution: Literal["this_effect", "this_spell", "source"] = "this_spell"
-    requirements: list[ActionRequirementSchema] = Field(default_factory=list)
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
     delay_trigger: Literal[
         "none", "source_turn_start", "source_turn_end", "target_turn_start"
     ] = "none"

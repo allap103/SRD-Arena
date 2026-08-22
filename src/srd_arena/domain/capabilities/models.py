@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Literal
 
@@ -41,6 +43,44 @@ class RelationshipRequirement:
     established_by: Literal["this_spell", "source", "any"] = "any"
 
 
+@dataclass(frozen=True)
+class AttackSourceRequirement:
+    source: Literal["weapon", "unarmed_strike", "spell", "any"]
+    mode: Literal["melee", "ranged", "any"] = "any"
+
+
+@dataclass(frozen=True)
+class WillingRequirement:
+    pass
+
+
+@dataclass(frozen=True)
+class FreeHandRequirement:
+    pass
+
+
+@dataclass(frozen=True)
+class PerceptionRequirement:
+    sense: Literal["see", "hear"]
+    subject: Literal["source", "target", "each_other"] = "source"
+
+
+@dataclass(frozen=True)
+class HitPointRequirement:
+    comparison: Literal["less_than", "at_most", "at_least", "greater_than"]
+    value: int
+
+
+@dataclass(frozen=True)
+class AnyRequirement:
+    requirements: tuple[CapabilityRequirement, ...]
+
+
+@dataclass(frozen=True)
+class AllRequirement:
+    requirements: tuple[CapabilityRequirement, ...]
+
+
 CapabilityRequirement = (
     SizeRequirement
     | ConditionRequirement
@@ -49,6 +89,13 @@ CapabilityRequirement = (
     | CreatureTraitRequirement
     | ConditionImmunityRequirement
     | RelationshipRequirement
+    | AttackSourceRequirement
+    | WillingRequirement
+    | FreeHandRequirement
+    | PerceptionRequirement
+    | HitPointRequirement
+    | AnyRequirement
+    | AllRequirement
 )
 
 

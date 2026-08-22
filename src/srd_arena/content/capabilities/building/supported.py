@@ -49,11 +49,16 @@ EXECUTABLE_EFFECT_TYPES = (
 )
 
 EXECUTABLE_REQUIREMENT_TYPES = (
+    requirements.AllRequirementSchema,
+    requirements.AnyRequirementSchema,
     requirements.ConditionRequirementSchema,
     requirements.ConditionImmunityRequirementSchema,
     requirements.CreatureTraitRequirementSchema,
     requirements.CreatureTypeRequirementSchema,
+    requirements.FreeHandRequirementSchema,
+    requirements.HitPointRequirementSchema,
     requirements.NotAffectedRequirementSchema,
+    requirements.PerceptionRequirementSchema,
     requirements.RelationshipRequirementSchema,
     requirements.SizeRequirementSchema,
 )
