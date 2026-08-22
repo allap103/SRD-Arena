@@ -2,12 +2,6 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-ImplementationScope = Literal["combat", "exploration", "social", "world"]
-
-
-def _default_implementation_scope() -> list[ImplementationScope]:
-    return ["combat"]
-
 
 class ImplementationSchemaModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -26,9 +20,6 @@ class ImplementationSchema(ImplementationSchemaModel):
         "blocked",
         "out_of_scope",
     ] = "unimplemented"
-    scope: list[ImplementationScope] = Field(
-        default_factory=_default_implementation_scope
-    )
     omissions: list[ImplementationOmissionSchema] = Field(default_factory=list)
     blocked_by: list[str] = Field(default_factory=list)
     reason: str | None = None

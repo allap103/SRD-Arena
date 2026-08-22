@@ -24,6 +24,7 @@ from srd_arena.domain.capabilities import (
     capability_duration_rounds,
     capability_effects,
     capability_geometry_mode,
+    capability_inflicted_conditions,
     capability_max_targets,
     primary_effects,
     capability_removable_conditions,
@@ -56,12 +57,13 @@ def test_bundled_spells_load_as_typed_records() -> None:
     assert isinstance(color_spray, SpellSchema)
     assert color_spray.level == 1
     assert color_spray.school == "I"
-    assert color_spray.saving_throw == ["constitution"]
-    assert color_spray.condition_inflict == ["blinded"]
-    assert color_spray.area_tags == ["N"]
+
+    spell = build_spell(color_spray)
+    assert capability_saving_throw_abilities(spell.definition) == ("constitution",)
+    assert capability_inflicted_conditions(spell.definition) == ("blinded",)
 
 
-def test_spell_schema_preserves_unknown_source_fields() -> None:
+def test_spell_schema_ignores_unused_source_fields() -> None:
     spell = SpellSchema.model_validate(
         {
             "name": "Test Spell",
@@ -72,7 +74,7 @@ def test_spell_schema_preserves_unknown_source_fields() -> None:
         }
     )
 
-    assert spell.model_extra == {"customFutureField": {"enabled": True}}
+    assert spell.model_extra is None
 
 
 def test_spell_builder_creates_combat_ready_domain_spell() -> None:

@@ -5,7 +5,6 @@ from srd_arena.content.common.schema import SourceModel
 
 class ItemPropertySchema(SourceModel):
     uid: str
-    note: str | None = None
 
 
 class ItemSchema(SourceModel):

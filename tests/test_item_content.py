@@ -18,7 +18,7 @@ def test_bundled_items_load_as_typed_records() -> None:
     assert longbow.range == "150/600"
 
 
-def test_item_schema_preserves_unknown_source_fields() -> None:
+def test_item_schema_ignores_unknown_source_fields() -> None:
     item = ItemSchema.model_validate(
         {
             "name": "Test Item",
@@ -27,7 +27,7 @@ def test_item_schema_preserves_unknown_source_fields() -> None:
         }
     )
 
-    assert item.model_extra == {"customFutureField": {"enabled": True}}
+    assert item.model_extra is None
 
 
 def test_item_builder_creates_combat_ready_weapon() -> None:

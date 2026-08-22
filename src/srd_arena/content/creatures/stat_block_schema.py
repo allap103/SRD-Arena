@@ -9,28 +9,19 @@ from .actions.multiattack import (
 )
 from .actions.schema import NonMultiattackCapabilitySchema
 
-BestiaryCapabilitySchema = (
-    MultiattackCapabilitySchema | NonMultiattackCapabilitySchema
-)
+BestiaryCapabilitySchema = MultiattackCapabilitySchema | NonMultiattackCapabilitySchema
 
 
 class BestiaryHitPointsSchema(SourceModel):
     average: int | None = None
-    formula: str | None = None
-    special: str | None = None
 
 
 class BestiaryArmorClassSchema(SourceModel):
     ac: int | None = None
-    special: str | None = None
-
-
-class BestiaryTypeChoiceSchema(SourceModel):
-    choose: list[str] = Field(default_factory=list)
 
 
 class BestiaryTypeSchema(SourceModel):
-    type: str | BestiaryTypeChoiceSchema
+    type: str | dict[str, object]
     tags: list[str | object] = Field(default_factory=list)
 
 
@@ -38,15 +29,8 @@ class BestiaryChallengeRatingSchema(SourceModel):
     cr: str
 
 
-class BestiaryConditionalImmunitySchema(SourceModel):
-    condition_immune: list[str] = Field(alias="conditionImmune")
-    note: str | None = None
-    conditional: bool = Field(default=True, alias="cond")
-
-
 class BestiaryConditionalSpeedSchema(SourceModel):
     number: int
-    condition: str | None = None
 
 
 BestiarySpeedValue = int | BestiaryConditionalSpeedSchema
@@ -58,9 +42,6 @@ class BestiarySpeedSchema(SourceModel):
     climb: BestiarySpeedValue | None = None
     fly: BestiarySpeedValue | None = None
     swim: BestiarySpeedValue | None = None
-    can_hover: bool = Field(default=False, alias="canHover")
-    alternate: dict[str, object] | None = None
-    choose: dict[str, object] | None = None
 
     def feet_for(self, mode: str) -> int | None:
         value = getattr(self, mode, None)
@@ -84,8 +65,7 @@ class BestiaryActionSchema(SourceModel):
     def reject_legacy_multiattack_key(cls, value: object) -> object:
         if isinstance(value, dict) and "srdArenaMultiattack" in value:
             raise ValueError(
-                "Use 'capability' instead of the obsolete "
-                "'srdArenaMultiattack' key."
+                "Use 'capability' instead of the obsolete 'srdArenaMultiattack' key."
             )
         return value
 
@@ -110,7 +90,7 @@ class BestiaryMonsterSchema(SourceModel):
     senses: list[str] = Field(default_factory=list)
     passive: int | None = None
     languages: list[str] = Field(default_factory=list)
-    condition_immune: list[str | BestiaryConditionalImmunitySchema] = Field(
+    condition_immune: list[str | dict[str, object]] = Field(
         default_factory=list,
         alias="conditionImmune",
     )
@@ -130,10 +110,7 @@ class BestiaryMonsterSchema(SourceModel):
     @model_validator(mode="after")
     def validate_multiattack_references(self) -> "BestiaryMonsterSchema":
         sections = {
-            section: {
-                _reference_name(entry.name)
-                for entry in getattr(self, section)
-            }
+            section: {_reference_name(entry.name) for entry in getattr(self, section)}
             for section in (
                 "action",
                 "bonus",

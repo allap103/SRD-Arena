@@ -16,10 +16,10 @@ def test_bundled_optional_features_load_as_typed_records() -> None:
         list((SYSTEM_CONTENT_ROOT / "optional_features").glob("*.json"))
     )
     assert isinstance(fighting_style, OptionalFeatureSchema)
-    assert "FS:F" in fighting_style.feature_types
+    assert fighting_style.public_name == "Great Weapon Fighting"
 
 
-def test_optional_feature_schema_preserves_unknown_source_fields() -> None:
+def test_optional_feature_schema_ignores_unknown_source_fields() -> None:
     feature = OptionalFeatureSchema.model_validate(
         {
             "name": "Test Feature",
@@ -28,7 +28,7 @@ def test_optional_feature_schema_preserves_unknown_source_fields() -> None:
         }
     )
 
-    assert feature.model_extra == {"customFutureField": {"enabled": True}}
+    assert feature.model_extra is None
 
 
 def test_optional_feature_normalization_builds_triggered_effect() -> None:

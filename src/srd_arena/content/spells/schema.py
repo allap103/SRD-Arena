@@ -8,23 +8,15 @@ from srd_arena.content.common.implementation import ImplementationSchema
 
 
 class SpellSchema(SourceModel):
+    """Validated view of the source fields used to build a spell."""
+
     name: str
     source: str
     level: int
     school: str
     time: list[dict[str, object]] = Field(default_factory=list)
-    range: dict[str, object] = Field(default_factory=dict)
     components: dict[str, object] = Field(default_factory=dict)
     duration: list[dict[str, object]] = Field(default_factory=list)
-    entries: list[object] = Field(default_factory=list)
-    saving_throw: list[str] = Field(default_factory=list, alias="savingThrow")
-    condition_inflict: list[str] = Field(default_factory=list, alias="conditionInflict")
-    damage_inflict: list[str] = Field(default_factory=list, alias="damageInflict")
-    area_tags: list[str] = Field(default_factory=list, alias="areaTags")
-    affects_creature_type: list[str] = Field(
-        default_factory=list,
-        alias="affectsCreatureType",
-    )
     implementation: ImplementationSchema = Field(default_factory=ImplementationSchema)
     capability: CapabilityDeclarationSchema | None = None
     srd: bool | str | None = None
@@ -58,4 +50,6 @@ class SpellSchema(SourceModel):
 
 
 class SpellFileSchema(SourceModel):
+    """Container for spell records loaded from a source file."""
+
     spell: list[SpellSchema] = Field(default_factory=list)

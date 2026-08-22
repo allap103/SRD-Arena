@@ -25,10 +25,12 @@ def test_bundled_subclasses_use_class_aware_identity() -> None:
 
     assert len(catalog) == 24
     assert champion.definition.class_name == "Fighter"
-    assert any(feature.public_name == "Improved Critical" for feature in champion.features)
+    assert any(
+        feature.public_name == "Improved Critical" for feature in champion.features
+    )
 
 
-def test_class_schema_preserves_unknown_source_fields() -> None:
+def test_class_schema_ignores_unknown_source_fields() -> None:
     class_definition = ClassSchema.model_validate(
         {
             "name": "Test Class",
@@ -37,9 +39,7 @@ def test_class_schema_preserves_unknown_source_fields() -> None:
         }
     )
 
-    assert class_definition.model_extra == {
-        "customFutureField": {"enabled": True}
-    }
+    assert class_definition.model_extra is None
 
 
 def test_class_catalog_uses_srd_public_name() -> None:

@@ -88,7 +88,6 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     assert air_elemental.speed.walk == 10
     assert air_elemental.speed.fly is not None
     assert air_elemental.speed.feet_for("fly") == 90
-    assert air_elemental.speed.can_hover is True
 
 
 def test_goblin_actions_build_from_typed_bestiary_capabilities() -> None:
@@ -564,7 +563,7 @@ def test_all_typed_stat_block_action_variants_survive_loading() -> None:
     assert spellcasting.spells[0].cast_level == 3
 
 
-def test_bestiary_schema_preserves_unknown_source_fields() -> None:
+def test_bestiary_schema_ignores_unknown_source_fields() -> None:
     [monster] = BestiaryFileSchema.model_validate(
         {
             "monster": [
@@ -577,7 +576,7 @@ def test_bestiary_schema_preserves_unknown_source_fields() -> None:
         }
     ).monster
 
-    assert monster.model_extra == {"customFutureField": {"enabled": True}}
+    assert monster.model_extra is None
 
 
 def test_bestiary_catalog_uses_srd_name_as_public_identity() -> None:
