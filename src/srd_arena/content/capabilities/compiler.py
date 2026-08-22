@@ -1,6 +1,6 @@
 """Compile authored capability primitives into executable domain definitions."""
 
-from typing import TypeGuard, cast
+from typing import Literal, TypeGuard, cast
 from collections.abc import Iterable
 
 import srd_arena.domain.capabilities as domain
@@ -37,8 +37,9 @@ def compile_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget
         width_feet=getattr(value, "width_feet", None),
         origin=getattr(value, "origin", "self"),
         line_of_sight=getattr(value, "line_of_sight", False),
-        occupants=(
-            affects if affects in {"allies", "enemies"} else "all"
+        occupants=cast(
+            Literal["all", "allies", "enemies", "chosen"],
+            affects if affects in {"allies", "enemies"} else "all",
         ),
         excludes_source=getattr(value, "excludes_self", False),
         requirements=tuple(
@@ -64,7 +65,9 @@ def compile_requirement(
     return domain.NotAffectedRequirement(value.action)
 
 
-def compile_duration(value: EffectDurationSchema | None) -> domain.EffectDuration | None:
+def compile_duration(
+    value: EffectDurationSchema | None,
+) -> domain.EffectDuration | None:
     if value is None:
         return None
     return domain.EffectDuration(
@@ -94,8 +97,7 @@ def compile_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect
             condition=value.condition,
             duration=compile_duration(value.duration),
             requirements=tuple(
-                compile_requirement(requirement)
-                for requirement in value.requirements
+                compile_requirement(requirement) for requirement in value.requirements
             ),
             escape_dc=value.escape_dc,
             source_capacity=value.source_capacity,
@@ -122,12 +124,21 @@ def compile_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect
         )
     if isinstance(value, effects.RollModifierEffectSchema):
         return domain.RollModifierEffect(
-            value.roll,
-            value.mode,
-            value.ability,
-            value.dice,
-            value.value,
-            compile_duration(value.duration),
+            roll=value.roll,
+            mode=value.mode,
+            ability=_normalize_ability(value.ability),
+            dice=value.dice,
+            value=value.value,
+            duration=compile_duration(value.duration),
+            ability_options=tuple(
+                _normalize_ability(ability) or ability
+                for ability in value.ability_options
+            ),
+            subject=value.subject,
+            ignored_by_senses=tuple(value.ignored_by_senses),
+            requirements=tuple(
+                compile_requirement(requirement) for requirement in value.requirements
+            ),
         )
     if isinstance(value, effects.ControlEffectSchema):
         return domain.ControlEffect(
@@ -154,3 +165,16 @@ def _required_duration(value: EffectDurationSchema) -> domain.EffectDuration:
     if duration is None:
         raise ValueError("This effect requires a duration.")
     return duration
+
+
+def _normalize_ability(value: str | None) -> str | None:
+    if value is None:
+        return None
+    return {
+        "str": "strength",
+        "dex": "dexterity",
+        "con": "constitution",
+        "int": "intelligence",
+        "wis": "wisdom",
+        "cha": "charisma",
+    }.get(value, value)

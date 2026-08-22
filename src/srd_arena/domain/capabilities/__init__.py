@@ -65,12 +65,13 @@ from .grants import (
     SpellSlotCost,
     SpellSlotPool,
 )
-from .rules import capability_effects
+from .rules import capability_effects, primary_effects
 
 __all__ = [
     "ArmorClassModifierEffect",
     "CapabilityEffect",
     "capability_effects",
+    "primary_effects",
     "OutcomeStage",
     "CapabilityRequirement",
     "CapabilityTarget",

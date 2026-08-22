@@ -96,6 +96,27 @@ def spell_supports_higher_level(spell: Spell) -> bool:
     return False
 
 
+def spell_duration_rounds(spell: Spell) -> int | None:
+    """Return the spell metadata duration converted to encounter rounds."""
+    rounds_per_unit = {
+        "round": 1,
+        "minute": 10,
+        "hour": 600,
+        "day": 14_400,
+    }
+    for entry in spell.duration_data:
+        duration = entry.get("duration")
+        if not isinstance(duration, dict):
+            continue
+        unit = duration.get("type")
+        amount = duration.get("amount")
+        if isinstance(unit, str) and isinstance(amount, int):
+            multiplier = rounds_per_unit.get(unit)
+            if multiplier is not None:
+                return amount * multiplier
+    return None
+
+
 def spell_range_squares(spell: Spell, grid: Grid) -> int | None:
     distance = spell.range_data.get("distance", {})
     if not isinstance(distance, dict):

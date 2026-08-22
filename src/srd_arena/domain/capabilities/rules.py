@@ -27,3 +27,19 @@ def capability_effects(
             *resolution.always.effects,
         )
     return ()
+
+
+def primary_effects(
+    definition: CapabilityDefinition | None,
+) -> tuple[CapabilityEffect, ...]:
+    """Return effects applied when the primary resolution succeeds."""
+    if definition is None:
+        return ()
+    resolution = definition.resolution
+    if isinstance(resolution, AutomaticResolution):
+        return resolution.outcome.effects
+    if isinstance(resolution, AttackResolution):
+        return resolution.hit.effects
+    if isinstance(resolution, SavingThrowResolution):
+        return tuple(effect for stage in resolution.failure for effect in stage.effects)
+    return ()

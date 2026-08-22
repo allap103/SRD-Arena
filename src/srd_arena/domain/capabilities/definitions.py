@@ -67,9 +67,7 @@ class SavingThrowResolution:
     kind: Literal["saving_throw"] = "saving_throw"
 
 
-CapabilityResolution = (
-    AttackResolution | AutomaticResolution | SavingThrowResolution
-)
+CapabilityResolution = AttackResolution | AutomaticResolution | SavingThrowResolution
 
 
 @dataclass(frozen=True)
@@ -118,5 +116,6 @@ class CapabilityRepetition:
 class CapabilityDefinition:
     target: CapabilityTarget
     resolution: CapabilityResolution
+    condition_selection: Literal["all", "choose_one"] = "all"
     repetition: CapabilityRepetition | None = None
     scaling: tuple[CapabilityScaling, ...] = ()

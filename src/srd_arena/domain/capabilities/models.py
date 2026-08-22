@@ -215,6 +215,10 @@ class RollModifierEffect:
     dice: str | None = None
     value: int | None = None
     duration: EffectDuration | None = None
+    ability_options: tuple[str, ...] = ()
+    subject: Literal["target", "attacks_against_target"] = "target"
+    ignored_by_senses: tuple[str, ...] = ()
+    requirements: tuple[CapabilityRequirement, ...] = ()
 
 
 @dataclass(frozen=True)

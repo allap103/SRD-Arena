@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import cast
+from typing import Literal, cast
 
 from srd_arena.content.capabilities import (
     DerivedDifficultyClassSchema,
@@ -24,6 +24,7 @@ from srd_arena.content.spells.targeting import (
 
 from .scaling import compile_scaling
 from .effects import compile_capability_effect, is_compilable_effect
+from .targeting import normalize_save_ability
 
 SpellResolutionSchema = (
     AutomaticResolutionSchema
@@ -60,7 +61,12 @@ def compile_spell_definition(
         if isinstance(resolution, SpellAttackResolutionSchema)
         else resolution.outcome
     )
-    definition = compile_definition(raw.capability.target, resolution, outcome)
+    definition = compile_definition(
+        raw.capability.target,
+        resolution,
+        outcome,
+        raw.capability.condition_application,
+    )
     if definition is None:
         return None
     repetition = (
@@ -91,6 +97,7 @@ def compile_definition(
     target: SpellTargetSchema,
     resolution: SpellResolutionSchema,
     outcome: OutcomeSchema,
+    condition_selection: Literal["all", "choose_one"] = "all",
 ) -> domain.CapabilityDefinition | None:
     effect_values = tuple(effect.root for effect in outcome.effects)
     success_values = (
@@ -126,7 +133,11 @@ def compile_definition(
     )
     if compiled_resolution is None:
         return None
-    return domain.CapabilityDefinition(compiled_target, compiled_resolution)
+    return domain.CapabilityDefinition(
+        compiled_target,
+        compiled_resolution,
+        condition_selection=condition_selection,
+    )
 
 
 def _compile_resolution(
@@ -163,7 +174,7 @@ def _compile_resolution(
         derived = cast(DerivedDifficultyClassSchema, difficulty)
         compiled_difficulty = domain.DerivedDifficultyClass(derived.type)
     return domain.SavingThrowResolution(
-        ability=resolution.ability,
+        ability=normalize_save_ability(resolution.ability),
         difficulty=compiled_difficulty,
         failure=(domain.OutcomeStage(outcome.effects),),
         success=domain.Outcome(

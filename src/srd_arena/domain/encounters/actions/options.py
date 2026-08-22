@@ -3,11 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...capabilities import (
+    ConditionEffect,
     DamageReductionEffect,
     DamageResistanceEffect,
     HealingEffect,
+    RollModifierEffect,
     TemporaryHitPointsEffect,
     capability_effects,
+    primary_effects,
 )
 from ...creatures import Creature, Spellcasting
 from ...effects.conditions import CombatTrait
@@ -113,6 +116,11 @@ def available_spell_actions(
             continue
         targets = self._spell_action_targets(actor, spell)
         shared_effects = capability_effects(spell.definition)
+        conditions = tuple(
+            effect.condition
+            for effect in primary_effects(spell.definition)
+            if isinstance(effect, ConditionEffect)
+        )
         resistance = next(
             (
                 effect
@@ -135,8 +143,9 @@ def available_spell_actions(
                 tuple(choice for choice, _label in removal_choices)
                 if spell.removable_effect_kinds
                 and spell.remove_effect_selection != "all"
-                else spell.capability.conditions
-                if spell.capability is not None and spell.capability.condition_choice
+                else conditions
+                if spell.definition is not None
+                and spell.definition.condition_selection == "choose_one"
                 else (None,)
             )
             damage_type_selections: tuple[str | None, ...] = (
@@ -153,11 +162,14 @@ def available_spell_actions(
                 and reduction.selection == "choose_one"
                 else (None,)
             )
+            ability_choices = tuple(
+                ability
+                for effect in shared_effects
+                if isinstance(effect, RollModifierEffect)
+                for ability in effect.ability_options
+            )
             ability_selections: tuple[str | None, ...] = (
-                spell.capability.roll_modifier_ability_choices
-                if spell.capability is not None
-                and spell.capability.roll_modifier_ability_choices
-                else (None,)
+                ability_choices if ability_choices else (None,)
             )
             for selection in selections:
                 for damage_type_selection in damage_type_selections:

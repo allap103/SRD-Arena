@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...capabilities import AttackResolution, ConditionEffect, primary_effects
 from ...creatures import Creature
 from ...effects import serialize_effects
 from ...effects.runtime import OngoingEffectKind
@@ -57,7 +58,14 @@ def resolve_spell_action(
     spell_id, target_ref, aim_point = parse_spell_action_value(spell_value)
     selected_target_refs = parse_spell_action_targets(spell_value)
     cast_level = parse_spell_action_slot(spell_value)
-    spell = next((candidate for candidate in spellcasting.learned_spells if candidate.id == spell_id), None)
+    spell = next(
+        (
+            candidate
+            for candidate in spellcasting.learned_spells
+            if candidate.id == spell_id
+        ),
+        None,
+    )
     if spell is None:
         progress.messages.append(("system", "That spell is not available."))
         progress.events.append(
@@ -95,8 +103,7 @@ def resolve_spell_action(
         tuple(
             target
             for selected_ref in selected_target_refs
-            if (target := self._spell_target_context(actor, selected_ref))
-            is not None
+            if (target := self._spell_target_context(actor, selected_ref)) is not None
         )
         if selected_target_refs
         else self._spell_area_targets(
@@ -106,11 +113,7 @@ def resolve_spell_action(
             aim_point=aim_point,
         )
     )
-    target = (
-        targets[0]
-        if targets
-        else None
-    )
+    target = targets[0] if targets else None
     if target is None or not targets:
         progress.messages.append(("system", "That target is not available."))
         progress.events.append(
@@ -122,6 +125,18 @@ def resolve_spell_action(
             )
         )
         return
+    definition = spell.definition
+    assert definition is not None
+    attack_mode = (
+        definition.resolution.modes[0]
+        if isinstance(definition.resolution, AttackResolution)
+        else None
+    )
+    conditions = tuple(
+        effect.condition
+        for effect in primary_effects(definition)
+        if isinstance(effect, ConditionEffect)
+    )
     result = _resolve_spell_action_impl(
         SpellActionContext(
             creature=actor,
@@ -140,7 +155,7 @@ def resolve_spell_action(
                     candidate.target_ref: self._attack_roll_mode_for(
                         creature_ref,
                         candidate.target_ref,
-                        spell.capability.attack_mode,
+                        attack_mode,
                         self._creature_position(creature_ref),
                         tuple(
                             state.position
@@ -153,9 +168,7 @@ def resolve_spell_action(
                     )
                     for candidate in targets
                 }
-                if spell.capability is not None
-                and spell.capability.resolution == "spell_attack"
-                and spell.capability.attack_mode is not None
+                if attack_mode is not None
                 else {}
             ),
             automatic_critical_providers={
@@ -170,24 +183,24 @@ def resolve_spell_action(
                     candidate.target_ref: "advantage"
                     for candidate in targets
                     if (
-                        spell.capability is not None
-                        and has_condition_save_advantage(
+                        has_condition_save_advantage(
                             self,
                             candidate.target_ref,
-                            spell.capability.conditions,
+                            conditions,
                         )
                     )
                     or (
-                        spell.capability.save_advantage_against_opponents
+                        spell.capability is not None
+                        and spell.capability.save_advantage_against_opponents
                         and self._creatures_are_opponents(
                             creature_ref, candidate.target_ref
                         )
                     )
                 }
-                if spell.capability is not None
-                and (
-                    spell.capability.save_advantage_against_opponents
-                    or spell.capability.conditions
+                if conditions
+                or (
+                    spell.capability is not None
+                    and spell.capability.save_advantage_against_opponents
                 )
                 else {}
             ),
@@ -279,9 +292,7 @@ def resolve_spell_action(
                         f"{actor.name} drops concentration on {effect_label}.",
                     )
                 )
-    progress.messages.extend(
-        self._apply_effects(result.effects, origin_id=action_id)
-    )
+    progress.messages.extend(self._apply_effects(result.effects, origin_id=action_id))
     progress.events.append(
         self._event(
             "spell_cast",
