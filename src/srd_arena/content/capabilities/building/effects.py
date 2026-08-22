@@ -1,12 +1,11 @@
 """Build domain effects from authored effect schemas."""
 
 from collections.abc import Iterable
-from typing import TypeGuard, cast
+from typing import TypeGuard
 
 import srd_arena.domain.capabilities as domain
 
 from srd_arena.content.capabilities.schemas import effects
-from srd_arena.content.capabilities.schemas.durations import EffectDurationSchema
 from .common import build_duration, normalize_ability
 from .errors import CapabilityBuildError
 from .requirements import build_requirement
@@ -82,11 +81,6 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
             tuple(value.conditions),
             build_duration(value.duration),
         )
-    if isinstance(value, effects.DamageImmunityEffectSchema):
-        return domain.DamageImmunityEffect(
-            tuple(value.damage_types),
-            build_duration(value.duration),
-        )
     if isinstance(value, effects.ConditionImmunityEffectSchema):
         return domain.ConditionImmunityEffect(
             tuple(value.conditions),
@@ -116,25 +110,6 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
             source_capacity=value.source_capacity,
             ends_on=tuple(value.ends_on),
         )
-    if isinstance(value, effects.ForcedMovementEffectSchema):
-        return domain.ForcedMovementEffect(
-            value.direction,
-            value.distance_feet,
-            value.up_to,
-        )
-    if isinstance(value, effects.SpeedMultiplierEffectSchema):
-        return domain.SpeedMultiplierEffect(
-            value.numerator,
-            value.denominator,
-            _required_duration(value.duration),
-        )
-    if isinstance(value, effects.ProhibitReactionEffectSchema):
-        return domain.ProhibitReactionsEffect(_required_duration(value.duration))
-    if isinstance(value, effects.TurnEconomyRestrictionEffectSchema):
-        return domain.TurnEconomyRestrictionEffect(
-            tuple(value.choose_between),
-            _required_duration(value.duration),
-        )
     if isinstance(value, effects.RollModifierEffectSchema):
         return domain.RollModifierEffect(
             roll=value.roll,
@@ -153,18 +128,7 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
                 build_requirement(requirement) for requirement in value.requirements
             ),
         )
-    if isinstance(value, effects.ControlEffectSchema):
-        return domain.ControlEffect(
-            value.communication,
-            value.communication_range_feet,
-            value.control_range_feet,
-            _required_duration(value.duration),
-        )
-    memories = cast(effects.GainMemoriesEffectSchema, value)
-    return domain.GainMemoriesEffect(
-        domain.CreatureTypeRequirement(tuple(memories.requirement.creature_types)),
-        memories.trigger,
-    )
+    raise TypeError(f"Unsupported executable effect: {type(value).__name__}")
 
 
 def build_effects(
@@ -184,10 +148,3 @@ def build_effects(
             )
         built.append(build_effect(value))
     return tuple(built)
-
-
-def _required_duration(value: EffectDurationSchema) -> domain.EffectDuration:
-    duration = build_duration(value)
-    if duration is None:
-        raise ValueError("This effect requires a duration.")
-    return duration

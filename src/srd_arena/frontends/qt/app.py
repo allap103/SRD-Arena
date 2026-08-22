@@ -5,6 +5,7 @@ import textwrap
 from collections import Counter, deque
 from datetime import datetime, timezone
 from ...domain.encounters.models import ActionCost, EncounterAction
+from ...domain.capabilities import capability_area_size_feet, capability_geometry_mode
 from ...domain.geometry import (
     Position,
     Vector2D,
@@ -16,8 +17,6 @@ from ...domain.spells.rules import (
     parse_spell_action_slot,
     parse_spell_action_value,
     spell_action_value,
-    spell_area_size_feet,
-    spell_geometry_mode,
     spell_range_squares,
 )
 from ...runtime.scenario import DEFAULT_SCENARIO_DIR, Scenario
@@ -1859,7 +1858,7 @@ class GameWindow(QMainWindow):
         spell = self._spell_by_id(spell_id)
         if spell is None:
             return True
-        return spell is not None and spell_geometry_mode(spell) in {
+        return spell is not None and capability_geometry_mode(spell.definition) in {
             "directional_area",
             "point_area",
         }
@@ -2014,8 +2013,8 @@ class GameWindow(QMainWindow):
         if spell is None:
             return None
         grid = self.session.encounter_state.definition.grid
-        if spell_geometry_mode(spell) == "point_area":
-            radius_feet = spell_area_size_feet(spell)
+        if capability_geometry_mode(spell.definition) == "point_area":
+            radius_feet = capability_area_size_feet(spell.definition)
             if radius_feet is None:
                 return None
             radius_squares = int(grid.distance_from_feet(radius_feet, minimum=1))

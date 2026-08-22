@@ -1,11 +1,5 @@
-from .definitions import (
-    Spell,
-    SpellDamage,
-    SpellRef,
-)
+from .definitions import Spell
 
 __all__ = [
     "Spell",
-    "SpellDamage",
-    "SpellRef",
 ]

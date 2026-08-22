@@ -14,7 +14,6 @@ from srd_arena.content.capabilities import (
 )
 from srd_arena.content.spells import build_spell, load_spell_catalog
 from srd_arena.content.spells import SpellSchema
-from srd_arena.domain.spells.rules import spell_target_requirements
 from srd_arena.domain.capabilities import (
     AllRequirement,
     AttackResolution,
@@ -29,7 +28,8 @@ from srd_arena.domain.capabilities import (
     PoolUseCost,
     RechargePool,
     SavingThrowResolution,
-    SpellSlotCost,
+    TieredResourceCost,
+    capability_target_requirements,
 )
 from srd_arena.domain.creatures import (
     AttackActionDefinition,
@@ -133,7 +133,7 @@ def test_spells_and_stat_blocks_share_perception_requirements() -> None:
             )
         ),
     )
-    assert spell_target_requirements(spell) == expected
+    assert capability_target_requirements(spell.definition) == expected
     assert isinstance(action, AutomaticActionDefinition)
     assert action.target.requirements == expected
 
@@ -299,11 +299,7 @@ def test_stat_block_resources_belong_to_capability_grants() -> None:
     assert breath.resource_pool.minimum == 5
 
     aboleth = monsters.find("Aboleth", "XMM")
-    dominate = build_stat_block_actions(aboleth)["Dominate Mind (2/Day)"]
-    assert isinstance(dominate, SavingThrowActionDefinition)
-    assert isinstance(dominate.resource_pool, LimitedUsePool)
-    assert dominate.resource_pool.maximum == 2
-    assert dominate.resource_pool.refresh == "day"
+    assert "Dominate Mind (2/Day)" not in build_stat_block_actions(aboleth)
 
 
 def test_spell_slot_cost_is_separate_from_spell_slot_pool() -> None:
@@ -316,11 +312,11 @@ def test_spell_slot_cost_is_separate_from_spell_slot_pool() -> None:
         spell_slots_max={1: 4, 2: 3},
     )
     pool = spellcasting.spell_slot_pool
-    cost = SpellSlotCost(pool.id, minimum_level=1)
+    cost = TieredResourceCost(pool.id, minimum_tier=1)
 
-    assert pool.maximum_by_level == ((1, 4), (2, 3))
+    assert pool.maximum_by_tier == ((1, 4), (2, 3))
     assert cost.pool_id == pool.id
-    assert cost.allow_higher_level
+    assert cost.allow_higher_tier
 
 
 def test_spell_grants_describe_activation_and_slot_cost() -> None:
@@ -339,8 +335,8 @@ def test_spell_grants_describe_activation_and_slot_cost() -> None:
     assert fireball_grant is not None
     assert fireball.activation == "action"
     assert fireball_grant.activation == "action"
-    assert isinstance(fireball_grant.cost, SpellSlotCost)
-    assert fireball_grant.cost.minimum_level == 3
+    assert isinstance(fireball_grant.cost, TieredResourceCost)
+    assert fireball_grant.cost.minimum_tier == 3
 
     fire_bolt = build_spell(spells.find("Fire Bolt", "XPHB"))
     fire_bolt_grant = spellcasting.grant_for(fire_bolt)

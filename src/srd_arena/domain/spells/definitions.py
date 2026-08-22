@@ -4,18 +4,6 @@ from ..capabilities import CapabilityActivation, CapabilityDefinition
 
 
 @dataclass(frozen=True)
-class SpellRef:
-    name: str
-    source: str | None = None
-
-
-@dataclass(frozen=True)
-class SpellDamage:
-    dice: str
-    damage_type: str
-
-
-@dataclass(frozen=True)
 class Spell:
     id: str
     name: str

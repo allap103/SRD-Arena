@@ -29,14 +29,27 @@ def build_stat_block_actions(
     for action in stat_block.action:
         capability = action.capability
         if isinstance(capability, schema.AttackCapabilitySchema):
-            definitions[action.name] = _attack_definition(action, capability)
+            try:
+                definitions[action.name] = _attack_definition(action, capability)
+            except CapabilityBuildError:
+                # Keep draft-only attacks in the declaration list so the UI can
+                # present them as unavailable without exposing partial behavior.
+                continue
         elif isinstance(capability, schema.CapabilitySchema):
             resolution = capability.resolution
-            definition = build_capability(
-                target=capability.target,
-                resolution=resolution,
-                content=(f"Monster '{stat_block.public_name}' action '{action.name}'"),
-            )
+            try:
+                definition = build_capability(
+                    target=capability.target,
+                    resolution=resolution,
+                    content=(
+                        f"Monster '{stat_block.public_name}' action '{action.name}'"
+                    ),
+                )
+            except CapabilityBuildError:
+                # The declaration remains available to presentation code, which
+                # renders it as explicitly unimplemented instead of executing a
+                # partially understood effect.
+                continue
             if isinstance(
                 resolution,
                 schema.SavingThrowActionResolutionSchema,

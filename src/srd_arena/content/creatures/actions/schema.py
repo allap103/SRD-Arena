@@ -5,7 +5,6 @@ from pydantic import Field, model_validator
 from srd_arena.content.capabilities import (
     Ability,
     ActionCreatureTargetSchema,
-    ActionEffectSchema,
     CapabilitySchemaModel,
     ActionTargetSchema,
     AutomaticResolutionSchema,
@@ -17,6 +16,7 @@ from srd_arena.content.capabilities import (
     SavingThrowResolutionSchema,
     TimedDurationSchema,
 )
+from .declared_effects import DeclaredActionEffectSchema
 
 
 class RepeatSaveSchema(CapabilitySchemaModel):
@@ -36,16 +36,16 @@ class RepeatSaveSchema(CapabilitySchemaModel):
         return self
 
 
-class SaveOutcomeStageSchema(OutcomeSchema[ActionEffectSchema]):
-    effects: list[ActionEffectSchema] = Field(min_length=1)
+class SaveOutcomeStageSchema(OutcomeSchema[DeclaredActionEffectSchema]):
+    effects: list[DeclaredActionEffectSchema] = Field(min_length=1)
     repeat_saves: list[RepeatSaveSchema] = Field(default_factory=list)
 
 
-class RequiredActionOutcomeSchema(OutcomeSchema[ActionEffectSchema]):
-    effects: list[ActionEffectSchema] = Field(min_length=1)
+class RequiredActionOutcomeSchema(OutcomeSchema[DeclaredActionEffectSchema]):
+    effects: list[DeclaredActionEffectSchema] = Field(min_length=1)
 
 
-ActionOutcomeSchema = OutcomeSchema[ActionEffectSchema]
+ActionOutcomeSchema = OutcomeSchema[DeclaredActionEffectSchema]
 StagedFailureSchema = Annotated[
     list[SaveOutcomeStageSchema],
     Field(min_length=1),
@@ -80,7 +80,7 @@ ActionResourceSchema = Annotated[
 ]
 
 
-class AttackCapabilitySchema(FixedAttackResolutionSchema):
+class AttackCapabilitySchema(FixedAttackResolutionSchema[DeclaredActionEffectSchema]):
     target: ActionCreatureTargetSchema
     reach_feet: PositiveInt | None = None
     range_normal_feet: PositiveInt | None = None

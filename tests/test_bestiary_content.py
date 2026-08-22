@@ -27,12 +27,10 @@ from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.domain.capabilities import (
     AttackRollModeRequirement,
     DamageEffect,
-    LimitedUsePool,
 )
 from srd_arena.domain.creatures import (
     AutomaticActionDefinition,
     AttackActionDefinition,
-    SavingThrowActionDefinition,
     SpellcastingActionDefinition,
 )
 from srd_arena.domain.encounters.actions.attack_resolution import resolve_attack
@@ -262,17 +260,12 @@ def test_bestiary_core_statistics_build_a_domain_creature() -> None:
         creature.stat_block_actions["Tentacle"],
         AttackActionDefinition,
     )
-    assert isinstance(
-        creature.stat_block_actions["Consume Memories"],
-        SavingThrowActionDefinition,
-    )
-    dominate = creature.stat_block_actions["Dominate Mind (2/Day)"]
-    assert isinstance(dominate, SavingThrowActionDefinition)
-    assert dominate.resource_pool == LimitedUsePool(
-        id="stat_block_action:Dominate Mind (2/Day)",
-        maximum=2,
-        refresh="day",
-    )
+    assert "Consume Memories" not in creature.stat_block_actions
+    assert "Dominate Mind (2/Day)" not in creature.stat_block_actions
+    assert {action.name for action in creature.declared_stat_block_actions} >= {
+        "Consume Memories",
+        "Dominate Mind (2/Day)",
+    }
     saving_throw = resolve_saving_throw(
         creature,
         "intelligence",

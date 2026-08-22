@@ -6,7 +6,6 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .base import Ability, PositiveInt
 from .durations import EffectDurationSchema
-from .effects import ActionEffectSchema
 from .requirements import CapabilityRequirementSchema
 
 EffectSchemaT = TypeVar("EffectSchemaT")
@@ -88,11 +87,14 @@ class AttackResolutionSchema(
     miss: SuccessOutcomeT
 
 
-class FixedAttackResolutionSchema(ResolutionSchemaModel):
+class FixedAttackResolutionSchema(
+    ResolutionSchemaModel,
+    Generic[EffectSchemaT],
+):
     type: Literal["attack"] = "attack"
     attack_modes: list[Literal["melee", "ranged"]] = Field(min_length=1)
     attack_bonus: int
-    hit: list[ActionEffectSchema] = Field(min_length=1)
+    hit: list[EffectSchemaT] = Field(min_length=1)
 
 
 class RepeatResolutionSchemaBase(ResolutionSchemaModel):

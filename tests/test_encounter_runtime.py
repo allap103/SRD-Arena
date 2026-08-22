@@ -40,7 +40,6 @@ from srd_arena.domain.spells.rules import (
     parse_spell_action_slot,
     parse_spell_action_value,
     spell_action_value,
-    spell_target_requirements,
 )
 from srd_arena.domain.capabilities import (
     CapabilityTarget,
@@ -52,6 +51,7 @@ from srd_arena.domain.capabilities import (
     LimitedUsePool,
     PerceptionRequirement,
     RechargePool,
+    capability_target_requirements,
 )
 from srd_arena.domain.creatures import (
     AutomaticActionDefinition,
@@ -833,7 +833,7 @@ def test_conditions_showcase_is_externally_controlled_and_uses_immunities() -> N
     hold_person = next(
         spell for spell in mage.spellcasting.learned_spells if spell.id == "hold_person"
     )
-    assert spell_target_requirements(hold_person) == (
+    assert capability_target_requirements(hold_person.definition) == (
         CreatureTypeRequirement(("humanoid",)),
     )
 

@@ -11,6 +11,11 @@ from ..capabilities.execution import (
     CapabilityTargetContext,
     resolve_capability,
 )
+from ..capabilities.rules import (
+    capability_removable_conditions,
+    capability_removable_effect_kinds,
+    capability_remove_effect_selection,
+)
 from ..capabilities.results import CapabilityActionResult
 from ..creatures import Creature
 from ..geometry import AreaOfEffect
@@ -18,9 +23,6 @@ from ..rolls.dice import D20RollMode
 from .definitions import Spell
 from .rules import (
     spell_duration_rounds,
-    spell_removable_conditions,
-    spell_removable_effect_kinds,
-    spell_remove_effect_selection,
 )
 
 DieRoller = Callable[[int], int]
@@ -94,9 +96,11 @@ def resolve_spell_action(
             concentration=spell.concentration,
             activation_verb="casts",
             source_kind="spell",
-            removable_conditions=spell_removable_conditions(spell),
-            removable_effect_kinds=spell_removable_effect_kinds(spell),
-            remove_effect_selection=spell_remove_effect_selection(spell),
+            removable_conditions=capability_removable_conditions(spell.definition),
+            removable_effect_kinds=capability_removable_effect_kinds(spell.definition),
+            remove_effect_selection=capability_remove_effect_selection(
+                spell.definition
+            ),
             result_metadata={"spell_level": spell.level, "slot_level": cast_level},
             save_roll_modes=context.save_roll_modes,
             area_targets_around=context.area_targets_around,

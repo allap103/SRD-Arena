@@ -9,14 +9,14 @@ from srd_arena.content.encounters import EncounterDefinitionSchema
 from srd_arena.frontends.shared.config import load_encounter_presentation_config
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.domain.creatures import AttackActionDefinition
-from srd_arena.domain.spells.rules import (
-    spell_area_size_feet,
-    spell_damage_dice,
-    spell_damage_types,
-    spell_geometry_mode,
-    spell_inflicted_conditions,
-    spell_removable_conditions,
-    spell_saving_throw_abilities,
+from srd_arena.domain.capabilities import (
+    capability_area_size_feet,
+    capability_damage_dice,
+    capability_damage_types,
+    capability_geometry_mode,
+    capability_inflicted_conditions,
+    capability_removable_conditions,
+    capability_saving_throw_abilities,
 )
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
@@ -365,21 +365,24 @@ def test_creature_can_load_subclass_and_explicit_spellcasting(tmp_path: Path) ->
         "Lesser Restoration",
     ]
     assert creature.spellcasting.learned_spells[0].level == 1
-    assert spell_inflicted_conditions(creature.spellcasting.learned_spells[0]) == (
-        "blinded",
-    )
-    assert spell_geometry_mode(creature.spellcasting.learned_spells[0]) == (
-        "directional_area"
-    )
+    assert capability_inflicted_conditions(
+        creature.spellcasting.learned_spells[0].definition
+    ) == ("blinded",)
+    assert capability_geometry_mode(
+        creature.spellcasting.learned_spells[0].definition
+    ) == ("directional_area")
     assert creature.spellcasting.learned_spells[1].level == 2
-    assert spell_removable_conditions(creature.spellcasting.learned_spells[1]) == (
+    assert capability_removable_conditions(
+        creature.spellcasting.learned_spells[1].definition
+    ) == (
         "blinded",
         "deafened",
         "paralyzed",
         "poisoned",
     )
     assert (
-        spell_geometry_mode(creature.spellcasting.learned_spells[1]) == "point_target"
+        capability_geometry_mode(creature.spellcasting.learned_spells[1].definition)
+        == "point_target"
     )
 
 
@@ -426,14 +429,24 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
     assert creature.spellcasting is not None
     spells = {spell.name: spell for spell in creature.spellcasting.learned_spells}
 
-    assert spell_geometry_mode(spells["Burning Hands"]) == "directional_area"
-    assert spell_saving_throw_abilities(spells["Burning Hands"]) == ("dexterity",)
-    assert spell_damage_dice(spells["Burning Hands"]) == "3d6"
-    assert spell_damage_types(spells["Burning Hands"]) == ("fire",)
+    assert (
+        capability_geometry_mode(spells["Burning Hands"].definition)
+        == "directional_area"
+    )
+    assert capability_saving_throw_abilities(spells["Burning Hands"].definition) == (
+        "dexterity",
+    )
+    assert capability_damage_dice(spells["Burning Hands"].definition) == "3d6"
+    assert capability_damage_types(spells["Burning Hands"].definition) == ("fire",)
     assert spells["Thunderwave"].definition is None
-    assert spell_geometry_mode(spells["Lightning Bolt"]) == "directional_area"
-    assert spell_geometry_mode(spells["Fireball"]) == "point_area"
-    assert spell_area_size_feet(spells["Fireball"]) == 20
-    assert spell_saving_throw_abilities(spells["Fireball"]) == ("dexterity",)
-    assert spell_damage_dice(spells["Fireball"]) == "8d6"
-    assert spell_damage_types(spells["Fireball"]) == ("fire",)
+    assert (
+        capability_geometry_mode(spells["Lightning Bolt"].definition)
+        == "directional_area"
+    )
+    assert capability_geometry_mode(spells["Fireball"].definition) == "point_area"
+    assert capability_area_size_feet(spells["Fireball"].definition) == 20
+    assert capability_saving_throw_abilities(spells["Fireball"].definition) == (
+        "dexterity",
+    )
+    assert capability_damage_dice(spells["Fireball"].definition) == "8d6"
+    assert capability_damage_types(spells["Fireball"].definition) == ("fire",)

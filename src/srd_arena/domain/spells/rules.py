@@ -2,15 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..capabilities import (
-    ConditionEffect,
-    DamageEffect,
-    RemoveEffect,
-    SavingThrowResolution,
-    capability_effects,
-    primary_effects,
-)
-from ..capabilities.models import CapabilityRequirement
 from ..creatures import Spellcasting
 from ..geometry import Grid
 from .definitions import Spell
@@ -21,97 +12,6 @@ class SpellActionEconomy:
     action: int = 0
     bonus_action: int = 0
     reaction: int = 0
-
-
-def spell_geometry_mode(spell: Spell) -> str:
-    """Classify targeting geometry directly from the capability definition."""
-    if spell.definition is None:
-        return "point_target"
-    target = spell.definition.target
-    if target.kind == "self":
-        return "self_only"
-    if target.kind != "area":
-        return "point_target"
-    return "directional_area" if target.origin == "self" else "point_area"
-
-
-def spell_area_size_feet(spell: Spell) -> int | None:
-    """Return the primary authored area dimension."""
-    if spell.definition is None or spell.definition.target.kind != "area":
-        return None
-    return spell.definition.target.size_feet
-
-
-def spell_target_requirements(spell: Spell) -> tuple[CapabilityRequirement, ...]:
-    """Return target requirements from the executable definition."""
-    return spell.definition.target.requirements if spell.definition is not None else ()
-
-
-def spell_removal_effect(spell: Spell) -> RemoveEffect | None:
-    """Return the primary removal effect, when the spell has one."""
-    return next(
-        (
-            effect
-            for effect in primary_effects(spell.definition)
-            if isinstance(effect, RemoveEffect)
-        ),
-        None,
-    )
-
-
-def spell_removable_conditions(spell: Spell) -> tuple[str, ...]:
-    removal = spell_removal_effect(spell)
-    return removal.conditions if removal is not None else ()
-
-
-def spell_removable_effect_kinds(spell: Spell) -> tuple[str, ...]:
-    removal = spell_removal_effect(spell)
-    return removal.removable if removal is not None else ()
-
-
-def spell_remove_effect_selection(spell: Spell) -> str | None:
-    removal = spell_removal_effect(spell)
-    return removal.selection if removal is not None else None
-
-
-def spell_damage_dice(spell: Spell) -> str | None:
-    damage = next(
-        (
-            effect
-            for effect in primary_effects(spell.definition)
-            if isinstance(effect, DamageEffect)
-        ),
-        None,
-    )
-    return damage.dice if damage is not None else None
-
-
-def spell_damage_types(spell: Spell) -> tuple[str, ...]:
-    return tuple(
-        dict.fromkeys(
-            effect.damage_type
-            for effect in capability_effects(spell.definition)
-            if isinstance(effect, DamageEffect)
-        )
-    )
-
-
-def spell_inflicted_conditions(spell: Spell) -> tuple[str, ...]:
-    return tuple(
-        dict.fromkeys(
-            effect.condition
-            for effect in capability_effects(spell.definition)
-            if isinstance(effect, ConditionEffect)
-        )
-    )
-
-
-def spell_saving_throw_abilities(spell: Spell) -> tuple[str, ...]:
-    if spell.definition is None or not isinstance(
-        spell.definition.resolution, SavingThrowResolution
-    ):
-        return ()
-    return (spell.definition.resolution.ability,)
 
 
 def spell_action_economy(spell: Spell) -> SpellActionEconomy:

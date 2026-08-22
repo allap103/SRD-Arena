@@ -21,14 +21,14 @@ class RechargePool:
 
 
 @dataclass(frozen=True)
-class SpellSlotPool:
+class TieredResourcePool:
     id: str
-    maximum_by_level: tuple[tuple[int, int], ...]
+    maximum_by_tier: tuple[tuple[int, int], ...]
     refresh: Literal["short_rest", "long_rest"] = "long_rest"
-    kind: Literal["spell_slots"] = "spell_slots"
+    kind: Literal["tiered"] = "tiered"
 
 
-ResourcePoolDefinition = LimitedUsePool | RechargePool | SpellSlotPool
+ResourcePoolDefinition = LimitedUsePool | RechargePool | TieredResourcePool
 
 
 @dataclass(frozen=True)
@@ -39,14 +39,14 @@ class PoolUseCost:
 
 
 @dataclass(frozen=True)
-class SpellSlotCost:
+class TieredResourceCost:
     pool_id: str
-    minimum_level: int
-    allow_higher_level: bool = True
-    kind: Literal["spell_slot"] = "spell_slot"
+    minimum_tier: int
+    allow_higher_tier: bool = True
+    kind: Literal["tiered_resource"] = "tiered_resource"
 
 
-ResourceCost = PoolUseCost | SpellSlotCost
+ResourceCost = PoolUseCost | TieredResourceCost
 CapabilityActivation = Literal[
     "action",
     "bonus_action",

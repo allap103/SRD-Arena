@@ -34,18 +34,11 @@ EXECUTABLE_EFFECT_TYPES = (
     effects.DamageReductionEffectSchema,
     effects.SpeedModifierEffectSchema,
     effects.ConditionSaveAdvantageEffectSchema,
-    effects.DamageImmunityEffectSchema,
     effects.ConditionImmunityEffectSchema,
     effects.SenseEffectSchema,
     effects.HitPointMaximumModifierEffectSchema,
     effects.ConditionEffectSchema,
-    effects.ForcedMovementEffectSchema,
-    effects.SpeedMultiplierEffectSchema,
-    effects.ProhibitReactionEffectSchema,
-    effects.TurnEconomyRestrictionEffectSchema,
     effects.RollModifierEffectSchema,
-    effects.ControlEffectSchema,
-    effects.GainMemoriesEffectSchema,
 )
 
 EXECUTABLE_REQUIREMENT_TYPES = (

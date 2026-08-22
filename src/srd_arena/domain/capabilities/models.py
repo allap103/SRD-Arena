@@ -224,12 +224,6 @@ class ConditionSaveAdvantageEffect:
 
 
 @dataclass(frozen=True)
-class DamageImmunityEffect:
-    damage_types: tuple[str, ...]
-    duration: EffectDuration | None = None
-
-
-@dataclass(frozen=True)
 class ConditionImmunityEffect:
     conditions: tuple[str, ...]
     suppress_existing: bool = False
@@ -261,31 +255,6 @@ class ConditionEffect:
 
 
 @dataclass(frozen=True)
-class ForcedMovementEffect:
-    direction: str
-    distance_feet: int
-    up_to: bool
-
-
-@dataclass(frozen=True)
-class SpeedMultiplierEffect:
-    numerator: int
-    denominator: int
-    duration: EffectDuration
-
-
-@dataclass(frozen=True)
-class ProhibitReactionsEffect:
-    duration: EffectDuration
-
-
-@dataclass(frozen=True)
-class TurnEconomyRestrictionEffect:
-    choose_between: tuple[str, ...]
-    duration: EffectDuration
-
-
-@dataclass(frozen=True)
 class RollModifierEffect:
     roll: str
     mode: str
@@ -299,20 +268,6 @@ class RollModifierEffect:
     requirements: tuple[CapabilityRequirement, ...] = ()
 
 
-@dataclass(frozen=True)
-class ControlEffect:
-    communication: str | None
-    communication_range_feet: int | Literal["unlimited"] | None
-    control_range_feet: int | None
-    duration: EffectDuration
-
-
-@dataclass(frozen=True)
-class GainMemoriesEffect:
-    requirement: CreatureTypeRequirement
-    trigger: str
-
-
 CapabilityEffect = (
     DamageEffect
     | HealingEffect
@@ -323,18 +278,11 @@ CapabilityEffect = (
     | DamageReductionEffect
     | SpeedModifierEffect
     | ConditionSaveAdvantageEffect
-    | DamageImmunityEffect
     | ConditionImmunityEffect
     | SenseEffect
     | HitPointMaximumModifierEffect
     | ConditionEffect
-    | ForcedMovementEffect
-    | SpeedMultiplierEffect
-    | ProhibitReactionsEffect
-    | TurnEconomyRestrictionEffect
     | RollModifierEffect
-    | ControlEffect
-    | GainMemoriesEffect
 )
 
 

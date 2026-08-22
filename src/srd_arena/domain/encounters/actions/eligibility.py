@@ -11,6 +11,8 @@ from ...capabilities import (
     FreeHandRequirement,
     HitPointRequirement,
     PerceptionRequirement,
+    capability_geometry_mode,
+    capability_target_requirements,
 )
 from ...creatures import (
     AttackActionDefinition,
@@ -25,8 +27,6 @@ from ...spells.rules import (
     parse_spell_action_targets,
     parse_spell_action_value,
     spell_chooses_area_targets,
-    spell_geometry_mode,
-    spell_target_requirements,
 )
 from ..behaviors import DIRECTION_DELTAS
 from ..models import CreatureRef, EncounterAction
@@ -477,12 +477,13 @@ class SpellActionRule:
                 state,
                 actor_ref,
                 selected_target_ref,
-                spell_target_requirements(spell),
+                capability_target_requirements(spell.definition),
             )
             if requirement_failure is not None:
                 return requirement_failure
         if (
-            spell_geometry_mode(spell) not in {"directional_area", "point_area"}
+            capability_geometry_mode(spell.definition)
+            not in {"directional_area", "point_area"}
             and target_ref is None
             and aim_point is None
         ):
@@ -574,7 +575,7 @@ class SpellTargetSelectionRule:
                 state,
                 actor_ref,
                 action.value,
-                spell_target_requirements(spell),
+                capability_target_requirements(spell.definition),
             )
         if action.kind == "set_spell_resource_allocation":
             if pending.resource_pool_total is None or not isinstance(action.value, str):
@@ -609,7 +610,7 @@ class SpellTargetSelectionRule:
                 state,
                 actor_ref,
                 target_ref,
-                spell_target_requirements(spell),
+                capability_target_requirements(spell.definition),
             )
         if (
             action.kind == "confirm_spell_targets"
@@ -644,7 +645,7 @@ class SpellTargetSelectionRule:
                 state,
                 actor_ref,
                 target_ref,
-                spell_target_requirements(spell),
+                capability_target_requirements(spell.definition),
             )
             if failure is not None:
                 return failure
