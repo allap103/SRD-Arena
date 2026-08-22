@@ -1,12 +1,19 @@
 from dataclasses import dataclass
 from typing import Literal
 
-from .models import CapabilityEffect, OutcomeStage, CapabilityTarget
+from .models import (
+    CapabilityEffect,
+    CapabilityRequirement,
+    OutcomeStage,
+    CapabilityTarget,
+    RollModifierEffect,
+)
 
 
 @dataclass(frozen=True)
 class Outcome:
     effects: tuple[CapabilityEffect, ...] = ()
+    end_capability: bool = False
 
 
 @dataclass(frozen=True)
@@ -64,10 +71,26 @@ class SavingThrowResolution:
     success: Outcome = Outcome()
     always: Outcome = Outcome()
     success_damage: Literal["none", "half"] = "none"
+    automatic_success: tuple[CapabilityRequirement, ...] = ()
+    automatic_failure: tuple[CapabilityRequirement, ...] = ()
+    save_modifiers: tuple[RollModifierEffect, ...] = ()
     kind: Literal["saving_throw"] = "saving_throw"
 
 
 CapabilityResolution = AttackResolution | AutomaticResolution | SavingThrowResolution
+
+
+@dataclass(frozen=True)
+class CapabilityTrigger:
+    event: str
+    resolution: CapabilityResolution
+    requirements: tuple[CapabilityRequirement, ...] = ()
+
+
+@dataclass(frozen=True)
+class CapabilityStep:
+    target: CapabilityTarget
+    resolution: CapabilityResolution
 
 
 @dataclass(frozen=True)
@@ -119,3 +142,5 @@ class CapabilityDefinition:
     condition_selection: Literal["all", "choose_one"] = "all"
     repetition: CapabilityRepetition | None = None
     scaling: tuple[CapabilityScaling, ...] = ()
+    triggers: tuple[CapabilityTrigger, ...] = ()
+    follow_ups: tuple[CapabilityStep, ...] = ()

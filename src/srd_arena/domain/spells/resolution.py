@@ -10,16 +10,21 @@ from ..capabilities import (
     ArmorClassModifierEffect,
     AutomaticResolution,
     CapabilityDefinition,
+    CapabilityStep,
     ConditionEffect,
     ConditionImmunityEffect,
+    ConditionImmunityRequirement,
     ConditionSaveAdvantageEffect,
     DamageReductionEffect,
     DamageResistanceEffect,
     DamageEffect,
+    CreatureTraitRequirement,
+    CreatureTypeRequirement,
     EffectDuration,
     HealingEffect,
     HitPointMaximumModifierEffect,
     RollModifierEffect,
+    RelationshipRequirement,
     SenseEffect,
     SavingThrowResolution,
     SpeedModifierEffect,
@@ -39,7 +44,7 @@ from ..rolls.saving_throws import (
     SavingThrowCreature,
     resolve_saving_throw,
 )
-from .definitions import FollowUpSpellResolution, Spell, SpellDamage
+from .definitions import Spell, SpellDamage
 from .rules import spell_duration_rounds
 
 DieRoller = Callable[[int], int]
@@ -86,15 +91,13 @@ def resolve_spell_action(
     context: SpellActionContext,
 ) -> CapabilityActionResult | None:
     spell = context.spell
-    if spell.capability is not None:
+    if spell.definition is not None:
         return _resolve_immediate_spell(context)
     return None
 
 
 def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionResult:
     spell = context.spell
-    capability = spell.capability
-    assert capability is not None
     definition = spell.definition
     assert definition is not None
     assert context.creature.spellcasting is not None
@@ -114,12 +117,96 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
         for effect in resolved_effects
         if isinstance(effect, ConditionEffect)
     )
+    automatic_failure_creature_types = tuple(
+        creature_type
+        for requirement in (
+            resolution.automatic_failure
+            if isinstance(resolution, SavingThrowResolution)
+            else ()
+        )
+        if isinstance(requirement, CreatureTypeRequirement)
+        for creature_type in requirement.creature_types
+    )
+    automatic_success_condition_immunities = tuple(
+        requirement.condition
+        for requirement in (
+            resolution.automatic_success
+            if isinstance(resolution, SavingThrowResolution)
+            else ()
+        )
+        if isinstance(requirement, ConditionImmunityRequirement)
+    )
+    automatic_success_traits = tuple(
+        requirement.trait
+        for requirement in (
+            resolution.automatic_success
+            if isinstance(resolution, SavingThrowResolution)
+            else ()
+        )
+        if isinstance(requirement, CreatureTraitRequirement)
+    )
+    disadvantage_creature_types = tuple(
+        creature_type
+        for modifier in (
+            resolution.save_modifiers
+            if isinstance(resolution, SavingThrowResolution)
+            else ()
+        )
+        if modifier.mode == "disadvantage"
+        for requirement in modifier.requirements
+        if isinstance(requirement, CreatureTypeRequirement)
+        for creature_type in requirement.creature_types
+    )
     expires_on_source_turn_end = any(
         isinstance(effect, ConditionEffect)
         and effect.duration is not None
         and effect.duration.kind == "end_of_turn"
         and effect.duration.creature == "source"
         for effect in resolved_effects
+    )
+    repeat_save = (
+        next(
+            (repeat for stage in resolution.failure for repeat in stage.repeat_saves),
+            None,
+        )
+        if isinstance(resolution, SavingThrowResolution)
+        else None
+    )
+    repeat_failure_conditions = tuple(
+        effect.condition
+        for effect in (repeat_save.failure_effects if repeat_save is not None else ())
+        if isinstance(effect, ConditionEffect)
+    )
+    repeat_failure_damage = tuple(
+        SpellDamage(effect.dice, effect.damage_type)
+        for effect in (repeat_save.failure_effects if repeat_save is not None else ())
+        if isinstance(effect, DamageEffect)
+    )
+    end_events = tuple(
+        (
+            trigger.event,
+            (
+                "source_team"
+                if any(
+                    isinstance(requirement, RelationshipRequirement)
+                    and requirement.relationship == "ally_of_source"
+                    for requirement in trigger.requirements
+                )
+                else "any"
+            ),
+        )
+        for trigger in definition.triggers
+        if isinstance(trigger.resolution, AutomaticResolution)
+        and trigger.resolution.outcome.end_capability
+    )
+    damage_repeat_save_advantage = any(
+        trigger.event == "target_damaged"
+        and isinstance(trigger.resolution, SavingThrowResolution)
+        and any(
+            modifier.mode == "advantage"
+            for modifier in trigger.resolution.save_modifiers
+        )
+        for trigger in definition.triggers
     )
     healing_effects = tuple(
         effect for effect in definition_effects if isinstance(effect, HealingEffect)
@@ -223,7 +310,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             automatic_reasons = target.automatic_failure_reasons(ability)
             automatic_success_reasons = tuple(
                 f"{spell.name}: immune to {condition}"
-                for condition in capability.automatic_success_condition_immunities
+                for condition in automatic_success_condition_immunities
                 if any(
                     immunity.value == condition
                     for immunity in target.creature.statistics.condition_immunities
@@ -231,15 +318,15 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             )
             automatic_success_reasons += tuple(
                 f"{spell.name}: {trait}"
-                for trait in capability.automatic_success_traits
+                for trait in automatic_success_traits
                 if trait in target.creature.statistics.mechanical_traits
             )
-            if creature_type in capability.automatic_failure_creature_types:
+            if creature_type in automatic_failure_creature_types:
                 automatic_reasons += (f"{spell.name}: {creature_type}",)
             save_mode = context.save_roll_modes.get(
                 target.target_ref,
                 "disadvantage"
-                if creature_type in capability.disadvantage_creature_types
+                if creature_type in disadvantage_creature_types
                 else "normal",
             )
             if automatic_success_reasons:
@@ -460,7 +547,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                 )
 
     for sequence_step, follow_up in enumerate(
-        capability.follow_up_resolutions,
+        definition.follow_ups,
         start=2,
     ):
         follow_up_saves, follow_up_damage = _resolve_follow_up(
@@ -583,7 +670,7 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
         and (
             duration_rounds is not None
             or spell.concentration
-            or capability.repeat_save_trigger is not None
+            or repeat_save is not None
         )
     ):
         effects.append(
@@ -605,12 +692,16 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                     "parameters": {
                         "effect_label": spell.name,
                         "started_round": context.current_round,
-                        "repeat_save_trigger": capability.repeat_save_trigger,
-                        "save_ability": save_ability,
-                        "save_dc": context.creature.spellcasting.save_dc,
-                        "repeat_failure_conditions": list(
-                            capability.repeat_failure_conditions
+                        "repeat_save_trigger": (
+                            repeat_save.trigger if repeat_save is not None else None
                         ),
+                        "save_ability": (
+                            repeat_save.ability
+                            if repeat_save is not None
+                            else save_ability
+                        ),
+                        "save_dc": context.creature.spellcasting.save_dc,
+                        "repeat_failure_conditions": list(repeat_failure_conditions),
                         "repeat_failure_damage": [
                             {
                                 "dice": _scale_dice(
@@ -624,12 +715,10 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
                                 ),
                                 "damage_type": damage.damage_type,
                             }
-                            for damage in capability.repeat_failure_damage
+                            for damage in repeat_failure_damage
                         ],
-                        "end_events": [list(event) for event in capability.end_events],
-                        "damage_repeat_save_advantage": (
-                            capability.damage_repeat_save_advantage
-                        ),
+                        "end_events": [list(event) for event in end_events],
+                        "damage_repeat_save_advantage": damage_repeat_save_advantage,
                         "maximum_hit_point_modifier": maximum_hit_point_modifier,
                         "also_modify_current_hit_points": (
                             maximum_hit_point_effect.also_modify_current
@@ -869,40 +958,56 @@ def _restoration_detail(
 
 def _resolve_follow_up(
     context: SpellActionContext,
-    follow_up: FollowUpSpellResolution,
+    follow_up: CapabilityStep,
     cast_level: int,
     sequence_step: int,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     if (
-        follow_up.target != "area"
-        or follow_up.area_radius_feet is None
+        follow_up.target.kind != "area"
+        or follow_up.target.origin != "target"
+        or follow_up.target.size_feet is None
         or context.area_targets_around is None
-        or follow_up.resolution != "saving_throw"
+        or not isinstance(follow_up.resolution, SavingThrowResolution)
     ):
         return [], []
     assert context.creature.spellcasting is not None
     assert context.roller is not None
     targets = context.area_targets_around(
         context.target.target_ref,
-        follow_up.area_radius_feet,
+        follow_up.target.size_feet,
     )
-    damage_definitions = follow_up.damage
-    if follow_up.slot_damage_increment is not None and cast_level > context.spell.level:
-        increment_count, increment_sides = _parse_damage_dice(
-            follow_up.slot_damage_increment
-        )
-        damage_definitions = tuple(
-            SpellDamage(
-                _scaled_damage_dice(
-                    damage.dice,
-                    increment_count,
-                    increment_sides,
-                    cast_level - context.spell.level,
-                ),
+    damage_definitions = tuple(
+        SpellDamage(effect.dice, effect.damage_type)
+        for stage in follow_up.resolution.failure
+        for effect in stage.effects
+        if isinstance(effect, DamageEffect)
+    )
+    definition = context.spell.definition
+    assert definition is not None
+    if cast_level > context.spell.level:
+        scaled: list[SpellDamage] = []
+        for damage in damage_definitions:
+            increment = _resource_dice_increment(
+                definition,
+                "damage_dice",
                 damage.damage_type,
             )
-            for damage in damage_definitions
-        )
+            if increment is None:
+                scaled.append(damage)
+                continue
+            increment_count, increment_sides = _parse_damage_dice(increment)
+            scaled.append(
+                SpellDamage(
+                    _scaled_damage_dice(
+                        damage.dice,
+                        increment_count,
+                        increment_sides,
+                        cast_level - context.spell.level,
+                    ),
+                    damage.damage_type,
+                )
+            )
+        damage_definitions = tuple(scaled)
     shared_rolls = [
         (
             damage,
@@ -912,7 +1017,7 @@ def _resolve_follow_up(
     ]
     save_details: list[dict[str, object]] = []
     damage_details: list[dict[str, object]] = []
-    ability = follow_up.save_ability or "dexterity"
+    ability = follow_up.resolution.ability
     for target in targets:
         save = resolve_saving_throw(
             cast(SavingThrowCreature, target.creature),
@@ -939,7 +1044,7 @@ def _resolve_follow_up(
         for damage, roll in shared_rolls:
             final_damage = (
                 roll.total // 2
-                if save.check.success and follow_up.half_damage_on_save
+                if save.check.success and follow_up.resolution.success_damage == "half"
                 else 0
                 if save.check.success
                 else roll.total

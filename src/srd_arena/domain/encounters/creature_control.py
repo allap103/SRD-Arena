@@ -512,7 +512,6 @@ def execute_creature_action(
             and self._creature_controller(decision.creature_ref) != "external"
             and spell is not None
         ):
-            assert spell.capability is not None
             if repeat_target_allocations:
                 target_ref = selected_targets[0]
                 selected_targets = [target_ref] * maximum_targets

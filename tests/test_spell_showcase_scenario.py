@@ -4,10 +4,7 @@ from srd_arena.runtime.scenario import Scenario
 
 
 SCENARIO_DIR = (
-    Path(__file__).parents[1]
-    / "content"
-    / "scenarios"
-    / "spell_damage_showcase"
+    Path(__file__).parents[1] / "content" / "scenarios" / "spell_damage_showcase"
 )
 
 
@@ -33,7 +30,9 @@ def test_spell_damage_showcase_loads_wave_1a_demo_spellcaster() -> None:
         "Sacred Flame",
         "Shatter",
     }
-    assert all(spell.capability is not None for spell in adept.spellcasting.learned_spells)
+    assert all(
+        spell.definition is not None for spell in adept.spellcasting.learned_spells
+    )
     assert adept.spellcasting.spell_slots_remaining == {
         1: 4,
         2: 3,
@@ -44,12 +43,14 @@ def test_spell_damage_showcase_loads_wave_1a_demo_spellcaster() -> None:
     }
     assert adept.attributes.level == 13
     assert (
-        session.encounter_state.creatures["plant_target"]
-        .creature.statistics.creature_type
+        session.encounter_state.creatures[
+            "plant_target"
+        ].creature.statistics.creature_type
         == "plant"
     )
     assert (
-        session.encounter_state.creatures["construct_target"]
-        .creature.statistics.creature_type
+        session.encounter_state.creatures[
+            "construct_target"
+        ].creature.statistics.creature_type
         == "construct"
     )

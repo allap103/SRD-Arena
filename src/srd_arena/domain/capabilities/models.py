@@ -25,11 +25,30 @@ class NotAffectedRequirement:
     action: str
 
 
+@dataclass(frozen=True)
+class CreatureTraitRequirement:
+    trait: str
+
+
+@dataclass(frozen=True)
+class ConditionImmunityRequirement:
+    condition: str
+
+
+@dataclass(frozen=True)
+class RelationshipRequirement:
+    relationship: str
+    established_by: Literal["this_spell", "source", "any"] = "any"
+
+
 CapabilityRequirement = (
     SizeRequirement
     | ConditionRequirement
     | CreatureTypeRequirement
     | NotAffectedRequirement
+    | CreatureTraitRequirement
+    | ConditionImmunityRequirement
+    | RelationshipRequirement
 )
 
 
@@ -263,11 +282,16 @@ CapabilityEffect = (
 @dataclass(frozen=True)
 class RepeatSave:
     trigger: str
+    ability: str | None = None
     interval_amount: int | None = None
     interval_unit: str | None = None
     distance_from_source_feet: int | None = None
     effects_end_on_success: bool = True
     automatic_success_after: EffectDuration | None = None
+    failure_effects: tuple[CapabilityEffect, ...] = ()
+    successes_required: int = 1
+    failures_required: int | None = None
+    counters_need_not_be_consecutive: bool = True
 
 
 @dataclass(frozen=True)

@@ -17,32 +17,6 @@ class SpellDamage:
 
 
 @dataclass(frozen=True)
-class FollowUpSpellResolution:
-    resolution: str
-    target: str
-    damage: tuple[SpellDamage, ...]
-    save_ability: str | None = None
-    half_damage_on_save: bool = False
-    area_radius_feet: int | None = None
-    slot_damage_increment: str | None = None
-
-
-@dataclass(frozen=True)
-class SpellCapability:
-    automatic_failure_creature_types: tuple[str, ...] = ()
-    disadvantage_creature_types: tuple[str, ...] = ()
-    repeat_save_trigger: str | None = None
-    repeat_failure_conditions: tuple[str, ...] = ()
-    repeat_failure_damage: tuple[SpellDamage, ...] = ()
-    end_events: tuple[tuple[str, str], ...] = ()
-    damage_repeat_save_advantage: bool = False
-    save_advantage_against_opponents: bool = False
-    automatic_success_condition_immunities: tuple[str, ...] = ()
-    automatic_success_traits: tuple[str, ...] = ()
-    follow_up_resolutions: tuple[FollowUpSpellResolution, ...] = ()
-
-
-@dataclass(frozen=True)
 class Spell:
     id: str
     name: str
@@ -68,5 +42,4 @@ class Spell:
     self_removal_blocked_conditions: tuple[str, ...] = ()
     target_requirements: tuple[CapabilityRequirement, ...] = ()
     definition: CapabilityDefinition | None = None
-    capability: SpellCapability | None = None
     activation: CapabilityActivation | None = None

@@ -78,7 +78,7 @@ def test_spell_translation_builds_combat_ready_domain_spell() -> None:
     assert fireball.damage_inflict == ("fire",)
     assert fireball.geometry_mode == "point_area"
     assert fireball.area_size_feet == 20
-    assert fireball.capability is not None
+    assert fireball.definition is not None
     assert fireball.definition is not None
     assert isinstance(fireball.definition.resolution, SavingThrowResolution)
     assert any(
@@ -93,7 +93,7 @@ def test_repeated_attack_and_removal_spells_translate_from_typed_capability() ->
     scorching_ray = build_spell("Scorching Ray", "XPHB", catalog)
     lesser_restoration = build_spell("Lesser Restoration", "XPHB", catalog)
 
-    assert scorching_ray.capability is not None
+    assert scorching_ray.definition is not None
     assert scorching_ray.definition is not None
     assert isinstance(scorching_ray.definition.resolution, AttackResolution)
     assert scorching_ray.definition is not None
@@ -108,7 +108,7 @@ def test_repeated_attack_and_removal_spells_translate_from_typed_capability() ->
         "paralyzed",
         "poisoned",
     )
-    assert lesser_restoration.capability is not None
+    assert lesser_restoration.definition is not None
     assert lesser_restoration.definition is not None
     assert isinstance(lesser_restoration.definition.resolution, AutomaticResolution)
 
@@ -120,7 +120,7 @@ def test_wave_1c_spells_translate_composed_capability() -> None:
     eldritch_blast = build_spell("Eldritch Blast", "XPHB", catalog)
     weird = build_spell("Weird", "XPHB", catalog)
 
-    assert ray.capability is not None
+    assert ray.definition is not None
     assert any(
         isinstance(effect, ConditionEffect) and effect.condition == "poisoned"
         for effect in primary_effects(ray.definition)
@@ -132,19 +132,31 @@ def test_wave_1c_spells_translate_composed_capability() -> None:
         and effect.duration.creature == "source"
         for effect in primary_effects(ray.definition)
     )
-    assert ice_knife.capability is not None
+    assert ice_knife.definition is not None
     assert any(
         isinstance(effect, DamageEffect) and effect.damage_type == "piercing"
         for effect in primary_effects(ice_knife.definition)
     )
-    assert ice_knife.capability.follow_up_resolutions[0].area_radius_feet == 5
-    assert ice_knife.capability.follow_up_resolutions[0].damage[0].damage_type == "cold"
-    assert eldritch_blast.capability is not None
+    follow_up = ice_knife.definition.follow_ups[0]
+    assert follow_up.target.size_feet == 5
+    assert isinstance(follow_up.resolution, SavingThrowResolution)
+    assert any(
+        isinstance(effect, DamageEffect) and effect.damage_type == "cold"
+        for stage in follow_up.resolution.failure
+        for effect in stage.effects
+    )
+    assert eldritch_blast.definition is not None
     assert spell_max_targets(eldritch_blast, None, caster_level=1) == 1
     assert spell_max_targets(eldritch_blast, None, caster_level=11) == 3
-    assert weird.capability is not None
-    assert weird.capability.repeat_save_trigger == "end_of_turn"
-    assert weird.capability.repeat_failure_damage[0].dice == "5d10"
+    assert weird.definition is not None
+    assert weird.definition is not None
+    assert isinstance(weird.definition.resolution, SavingThrowResolution)
+    weird_repeat = weird.definition.resolution.failure[0].repeat_saves[0]
+    assert weird_repeat.trigger == "end_of_turn"
+    assert any(
+        isinstance(effect, DamageEffect) and effect.dice == "5d10"
+        for effect in weird_repeat.failure_effects
+    )
 
 
 def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
@@ -152,7 +164,7 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     cure_wounds = build_spell("Cure Wounds", "XPHB", catalog)
     false_life = build_spell("False Life", "XPHB", catalog)
 
-    assert cure_wounds.capability is not None
+    assert cure_wounds.definition is not None
     assert cure_wounds.definition is not None
     assert cure_wounds.definition.scaling[0].per_level[0].amount == "2d8"
     assert any(
@@ -161,7 +173,7 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
         and effect.modifier == "ability_modifier"
         for effect in capability_effects(cure_wounds.definition)
     )
-    assert false_life.capability is not None
+    assert false_life.definition is not None
     assert false_life.definition is not None
     assert false_life.definition.scaling[0].per_level[0].amount == 5
     assert any(
@@ -174,14 +186,14 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     healing_word = build_spell("Healing Word", "XPHB", catalog)
     mass_healing_word = build_spell("Mass Healing Word", "XPHB", catalog)
     mass_cure_wounds = build_spell("Mass Cure Wounds", "XPHB", catalog)
-    assert healing_word.capability is not None
+    assert healing_word.definition is not None
     assert healing_word.definition is not None
     assert healing_word.definition.scaling[0].per_level[0].amount == "2d4"
-    assert mass_healing_word.capability is not None
+    assert mass_healing_word.definition is not None
     assert mass_healing_word.definition is not None
     assert mass_healing_word.definition.target.count.maximum == 6
     assert mass_healing_word.definition.scaling[0].per_level[0].amount == "1d4"
-    assert mass_cure_wounds.capability is not None
+    assert mass_cure_wounds.definition is not None
     assert mass_cure_wounds.definition is not None
     assert mass_cure_wounds.definition.target.occupants == "chosen"
     assert mass_cure_wounds.definition.target.size_feet == 30
@@ -189,7 +201,7 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     power_word_heal = build_spell("Power Word Heal", "XPHB", catalog)
     assert heal.remove_effect_selection == "all"
     assert heal.removable_conditions == ("blinded", "deafened", "poisoned")
-    assert heal.capability is not None
+    assert heal.definition is not None
     assert any(
         isinstance(effect, HealingEffect) and effect.bonus == 70
         for effect in capability_effects(heal.definition)
@@ -197,13 +209,13 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     assert heal.definition is not None
     assert heal.definition.scaling[0].per_level[0].amount == 10
     assert power_word_heal.remove_effect_selection == "all"
-    assert power_word_heal.capability is not None
+    assert power_word_heal.definition is not None
     assert any(
         isinstance(effect, HealingEffect) and effect.restore_to_maximum
         for effect in capability_effects(power_word_heal.definition)
     )
     aid = build_spell("Aid", "XPHB", catalog)
-    assert aid.capability is not None
+    assert aid.definition is not None
     assert any(
         isinstance(effect, HitPointMaximumModifierEffect)
         and effect.value == 5
@@ -213,7 +225,7 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     assert aid.definition is not None
     assert aid.definition.scaling[0].per_level[0].amount == 5
     mass_heal = build_spell("Mass Heal", "XPHB", catalog)
-    assert mass_heal.capability is not None
+    assert mass_heal.definition is not None
     assert any(
         isinstance(effect, HealingEffect) and effect.pool == 700
         for effect in capability_effects(mass_heal.definition)
@@ -244,7 +256,7 @@ def test_protection_from_poison_translates_creature_modifiers() -> None:
 
     assert spell.removable_conditions == ("poisoned",)
     assert spell.remove_effect_selection == "all"
-    assert spell.capability is not None
+    assert spell.definition is not None
     effects = capability_effects(spell.definition)
     assert any(
         isinstance(effect, DamageResistanceEffect)
@@ -264,7 +276,7 @@ def test_protection_from_energy_translates_a_resistance_choice() -> None:
         "Protection from Energy", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
     )
 
-    assert spell.capability is not None
+    assert spell.definition is not None
     assert any(
         isinstance(effect, DamageResistanceEffect)
         and effect.selection == "choose_one"
@@ -280,7 +292,7 @@ def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
     bless = build_spell("Bless", "XPHB", catalog)
     bane = build_spell("Bane", "XPHB", catalog)
 
-    assert bless.capability is not None
+    assert bless.definition is not None
     assert [
         (modifier.roll, modifier.mode, modifier.dice)
         for modifier in primary_effects(bless.definition)
@@ -294,7 +306,7 @@ def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
     assert bless.definition is not None
     assert bless.definition.scaling[0].per_level[0].kind == "target_count"
     assert bless.definition.scaling[0].per_level[0].amount == 1
-    assert bane.capability is not None
+    assert bane.definition is not None
     assert [
         (modifier.roll, modifier.mode, modifier.dice)
         for modifier in primary_effects(bane.definition)
@@ -308,7 +320,7 @@ def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
 def test_foresight_translates_bidirectional_roll_modes() -> None:
     spell = build_spell("Foresight", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
 
-    assert spell.capability is not None
+    assert spell.definition is not None
     assert [
         (modifier.roll, modifier.mode, modifier.subject)
         for modifier in primary_effects(spell.definition)
@@ -326,7 +338,7 @@ def test_shield_of_faith_translates_sourced_armor_class() -> None:
         "Shield of Faith", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
     )
 
-    assert spell.capability is not None
+    assert spell.definition is not None
     assert any(
         isinstance(effect, ArmorClassModifierEffect) and effect.value == 2
         for effect in capability_effects(spell.definition)
@@ -351,7 +363,7 @@ def test_sense_spells_and_blur_translate_directional_perception() -> None:
         and (effect.sense, effect.range_feet) == ("truesight", 120)
         for effect in capability_effects(true_seeing.definition)
     )
-    assert blur.capability is not None
+    assert blur.definition is not None
     defensive = next(
         effect
         for effect in primary_effects(blur.definition)
@@ -367,7 +379,7 @@ def test_speed_spells_translate_additive_modifiers() -> None:
     longstrider = build_spell("Longstrider", "XPHB", catalog)
     ray_of_frost = build_spell("Ray of Frost", "XPHB", catalog)
 
-    assert longstrider.capability is not None
+    assert longstrider.definition is not None
     assert any(
         isinstance(effect, SpeedModifierEffect) and effect.feet == 10
         for effect in capability_effects(longstrider.definition)
@@ -375,7 +387,7 @@ def test_speed_spells_translate_additive_modifiers() -> None:
     assert spell_duration_rounds(longstrider) == 600
     assert longstrider.definition is not None
     assert longstrider.definition.scaling[0].per_level[0].kind == "target_count"
-    assert ray_of_frost.capability is not None
+    assert ray_of_frost.definition is not None
     assert any(
         isinstance(effect, SpeedModifierEffect)
         and effect.feet == -10
@@ -395,7 +407,7 @@ def test_speed_spells_translate_additive_modifiers() -> None:
 def test_resistance_translates_typed_per_turn_damage_reduction() -> None:
     spell = build_spell("Resistance", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
 
-    assert spell.capability is not None
+    assert spell.definition is not None
     reduction = next(
         effect
         for effect in capability_effects(spell.definition)
@@ -412,7 +424,7 @@ def test_resistance_translates_typed_per_turn_damage_reduction() -> None:
 def test_heroism_translates_immunity_and_turn_start_temporary_hp() -> None:
     spell = build_spell("Heroism", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
 
-    assert spell.capability is not None
+    assert spell.definition is not None
     effects = capability_effects(spell.definition)
     assert any(
         isinstance(effect, ConditionImmunityEffect)
@@ -432,7 +444,7 @@ def test_heroism_translates_immunity_and_turn_start_temporary_hp() -> None:
 def test_stoneskin_translates_multiple_damage_resistances() -> None:
     spell = build_spell("Stoneskin", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
 
-    assert spell.capability is not None
+    assert spell.definition is not None
     assert any(
         isinstance(effect, DamageResistanceEffect)
         and effect.damage_types == ("bludgeoning", "piercing", "slashing")
@@ -448,7 +460,7 @@ def test_enhance_ability_translates_ability_scoped_choices() -> None:
         "Enhance Ability", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
     )
 
-    assert spell.capability is not None
+    assert spell.definition is not None
     modifier = next(
         effect
         for effect in primary_effects(spell.definition)
@@ -467,7 +479,7 @@ def test_faerie_fire_translates_cube_and_incoming_attack_advantage() -> None:
     spell = build_spell("Faerie Fire", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
 
     assert spell.geometry_mode == "point_area"
-    assert spell.capability is not None
+    assert spell.definition is not None
     assert spell.definition is not None
     assert spell.definition.target.shape == "cube"
     assert spell.definition.target.size_feet == 20
@@ -485,7 +497,7 @@ def test_phantasmal_killer_translates_repeat_damage_and_roll_disadvantage() -> N
         "Phantasmal Killer", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
     )
 
-    assert spell.capability is not None
+    assert spell.definition is not None
     assert spell.definition is not None
     assert isinstance(spell.definition.resolution, SavingThrowResolution)
     assert spell.definition.resolution.success_damage == "half"
@@ -493,8 +505,12 @@ def test_phantasmal_killer_translates_repeat_damage_and_roll_disadvantage() -> N
         isinstance(effect, DamageEffect) and effect.dice == "4d10"
         for effect in primary_effects(spell.definition)
     )
-    assert spell.capability.repeat_save_trigger == "end_of_turn"
-    assert spell.capability.repeat_failure_damage[0].dice == "4d10"
+    repeat = spell.definition.resolution.failure[0].repeat_saves[0]
+    assert repeat.trigger == "end_of_turn"
+    assert any(
+        isinstance(effect, DamageEffect) and effect.dice == "4d10"
+        for effect in repeat.failure_effects
+    )
     assert spell.definition.scaling[0].per_level[0].amount == "1d10"
     assert {
         (modifier.roll, modifier.mode)
@@ -528,7 +544,7 @@ def test_wave_1a_spells_define_executable_translate_capability() -> None:
 
     assert all(spell.executable for spell in spells)
     assert all(
-        build_spell(spell.public_name, spell.source, catalog).capability
+        build_spell(spell.public_name, spell.source, catalog).definition
         for spell in spells
     )
     assert catalog.find("Blight", "XPHB").implementation.status == "partial"
@@ -555,7 +571,7 @@ def test_wave_1b_spells_define_executable_condition_capability() -> None:
 
     assert all(spell.executable for spell in spells)
     assert all(
-        build_spell(spell.public_name, spell.source, catalog).capability
+        build_spell(spell.public_name, spell.source, catalog).definition
         for spell in spells
     )
 

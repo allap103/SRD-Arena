@@ -2,14 +2,23 @@ from dataclasses import replace
 from typing import Literal, cast
 
 from srd_arena.content.capabilities import (
+    ConditionRequirementSchema,
+    CreatureTypeRequirementSchema,
     DerivedDifficultyClassSchema,
     FixedDifficultyClassSchema,
+    NotAffectedRequirementSchema,
+    SizeRequirementSchema,
+)
+from srd_arena.content.capabilities.compiler import (
+    compile_duration,
+    compile_requirement,
 )
 import srd_arena.domain.capabilities as domain
 
 from srd_arena.content.spells.resolution import (
     AutomaticResolutionSchema,
     OutcomeSchema,
+    RepeatSaveProgressionSchema,
     RepeatResolutionSchema,
     SavingThrowResolutionSchema,
     SequenceResolutionSchema,
@@ -19,7 +28,11 @@ from srd_arena.content.spells.schema import SpellSchema
 from srd_arena.content.spells.targeting import SpellTargetSchema
 from srd_arena.content.spells.targeting import (
     AreaSpellTargetSchema,
+    ConditionImmunityRequirementSchema,
+    CreatureTraitRequirementSchema,
     CreatureSpellTargetSchema,
+    RelationshipRequirementSchema,
+    SpellSaveModifierSchema,
 )
 
 from .scaling import compile_scaling
@@ -90,6 +103,8 @@ def compile_spell_definition(
         definition,
         repetition=repetition,
         scaling=compile_scaling(raw),
+        triggers=_compile_triggers(raw),
+        follow_ups=_compile_follow_ups(raw),
     )
 
 
@@ -123,13 +138,24 @@ def compile_definition(
             compile_capability_effect(effect)
             for effect in effect_values
             if is_compilable_effect(effect)
-        )
+        ),
+        outcome.end_spell,
     )
     compiled_resolution = _compile_resolution(
         resolution,
         compiled_outcome,
         success_values,
         miss_values,
+        (
+            resolution.success.end_spell
+            if isinstance(resolution, SavingThrowResolutionSchema)
+            else False
+        ),
+        (
+            resolution.miss.end_spell
+            if isinstance(resolution, SpellAttackResolutionSchema)
+            else False
+        ),
     )
     if compiled_resolution is None:
         return None
@@ -145,6 +171,8 @@ def _compile_resolution(
     outcome: domain.Outcome,
     success_values: tuple[object, ...],
     miss_values: tuple[object, ...],
+    success_ends_capability: bool,
+    miss_ends_capability: bool,
 ) -> domain.CapabilityResolution | None:
     if isinstance(resolution, SpellAttackResolutionSchema):
         return domain.AttackResolution(
@@ -156,7 +184,8 @@ def _compile_resolution(
                     compile_capability_effect(effect)
                     for effect in miss_values
                     if is_compilable_effect(effect)
-                )
+                ),
+                miss_ends_capability,
             ),
             attacks=resolution.attacks,
             allocation=resolution.allocation,
@@ -176,15 +205,174 @@ def _compile_resolution(
     return domain.SavingThrowResolution(
         ability=normalize_save_ability(resolution.ability),
         difficulty=compiled_difficulty,
-        failure=(domain.OutcomeStage(outcome.effects),),
+        failure=(
+            domain.OutcomeStage(
+                outcome.effects,
+                (_compile_repeat_save(resolution.repeat_save, resolution.ability),)
+                if resolution.repeat_save is not None
+                else (),
+            ),
+        ),
         success=domain.Outcome(
             tuple(
                 compile_capability_effect(effect)
                 for effect in success_values
                 if is_compilable_effect(effect)
-            )
+            ),
+            success_ends_capability,
         ),
         success_damage=resolution.success_damage,
+        automatic_success=tuple(
+            _compile_spell_requirement(requirement)
+            for requirement in resolution.automatic_success
+        ),
+        automatic_failure=tuple(
+            _compile_spell_requirement(requirement)
+            for requirement in resolution.automatic_failure
+        ),
+        save_modifiers=tuple(
+            _compile_save_modifier(modifier) for modifier in resolution.save_modifiers
+        ),
+    )
+
+
+def _compile_triggers(raw: SpellSchema) -> tuple[domain.CapabilityTrigger, ...]:
+    assert raw.capability is not None
+    compiled: list[domain.CapabilityTrigger] = []
+    for trigger in raw.capability.outcome_triggers:
+        resolution = trigger.resolution.root
+        if not isinstance(
+            resolution,
+            (
+                AutomaticResolutionSchema,
+                SavingThrowResolutionSchema,
+                SpellAttackResolutionSchema,
+            ),
+        ):
+            continue
+        outcome = (
+            resolution.failure
+            if isinstance(resolution, SavingThrowResolutionSchema)
+            else resolution.hit
+            if isinstance(resolution, SpellAttackResolutionSchema)
+            else resolution.outcome
+        )
+        nested = compile_definition(raw.capability.target, resolution, outcome)
+        if nested is None:
+            continue
+        compiled.append(
+            domain.CapabilityTrigger(
+                event=trigger.event,
+                resolution=nested.resolution,
+                requirements=tuple(
+                    _compile_spell_requirement(requirement)
+                    for requirement in trigger.requirements
+                ),
+            )
+        )
+    return tuple(compiled)
+
+
+def _compile_follow_ups(raw: SpellSchema) -> tuple[domain.CapabilityStep, ...]:
+    assert raw.capability is not None
+    outer = raw.capability.resolution.root
+    if not isinstance(outer, SequenceResolutionSchema):
+        return ()
+    compiled: list[domain.CapabilityStep] = []
+    for step in outer.steps[1:]:
+        resolution = step.resolution.root
+        if not isinstance(
+            resolution,
+            (
+                AutomaticResolutionSchema,
+                SavingThrowResolutionSchema,
+                SpellAttackResolutionSchema,
+            ),
+        ):
+            continue
+        outcome = (
+            resolution.failure
+            if isinstance(resolution, SavingThrowResolutionSchema)
+            else resolution.hit
+            if isinstance(resolution, SpellAttackResolutionSchema)
+            else resolution.outcome
+        )
+        nested = compile_definition(
+            step.target or raw.capability.target,
+            resolution,
+            outcome,
+        )
+        if nested is not None:
+            compiled.append(domain.CapabilityStep(nested.target, nested.resolution))
+    return tuple(compiled)
+
+
+def _compile_repeat_save(
+    repeat: RepeatSaveProgressionSchema,
+    default_ability: str,
+) -> domain.RepeatSave:
+    failure_effects: tuple[domain.CapabilityEffect, ...] = ()
+    if repeat.on_failure is not None:
+        failure = repeat.on_failure.root
+        if isinstance(failure, AutomaticResolutionSchema):
+            failure_effects = tuple(
+                compile_capability_effect(effect.root)
+                for effect in failure.outcome.effects
+                if is_compilable_effect(effect.root)
+            )
+    trigger_aliases = {
+        "turn_end": "end_of_turn",
+        "turn_start": "start_of_turn",
+    }
+    return domain.RepeatSave(
+        trigger=trigger_aliases.get(repeat.trigger, repeat.trigger),
+        ability=normalize_save_ability(repeat.ability or default_ability),
+        failure_effects=failure_effects,
+        successes_required=repeat.successes_required,
+        failures_required=repeat.failures_required,
+        counters_need_not_be_consecutive=repeat.counters_need_not_be_consecutive,
+    )
+
+
+def _compile_spell_requirement(value: object) -> domain.CapabilityRequirement:
+    if isinstance(
+        value,
+        (
+            ConditionRequirementSchema,
+            CreatureTypeRequirementSchema,
+            NotAffectedRequirementSchema,
+            SizeRequirementSchema,
+        ),
+    ):
+        return compile_requirement(value)
+    if isinstance(value, CreatureTraitRequirementSchema):
+        return domain.CreatureTraitRequirement(value.trait)
+    if isinstance(value, ConditionImmunityRequirementSchema):
+        return domain.ConditionImmunityRequirement(value.condition)
+    if isinstance(value, RelationshipRequirementSchema):
+        return domain.RelationshipRequirement(
+            value.relationship,
+            value.established_by,
+        )
+    raise TypeError(f"Unsupported save requirement: {type(value).__name__}")
+
+
+def _compile_save_modifier(
+    value: SpellSaveModifierSchema,
+) -> domain.RollModifierEffect:
+    return domain.RollModifierEffect(
+        roll=value.roll,
+        mode=value.mode,
+        ability=(
+            normalize_save_ability(value.ability) if value.ability is not None else None
+        ),
+        dice=value.dice,
+        value=value.value,
+        duration=compile_duration(value.duration),
+        requirements=tuple(
+            _compile_spell_requirement(requirement)
+            for requirement in value.requirements
+        ),
     )
 
 

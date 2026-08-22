@@ -99,8 +99,7 @@ def build_stat_block_actions(
                 name=action.name,
                 ability=capability.ability,
                 spells=tuple(
-                    _spell_option(spell, spells)
-                    for spell in capability.spells
+                    _spell_option(spell, spells) for spell in capability.spells
                 ),
                 resource_pool=_resource_pool(
                     f"stat_block_action:{action.name}",
@@ -129,14 +128,10 @@ def build_declared_stat_block_actions(
                 name=action.name,
                 display_name=_display_name(action.name),
                 description="\n".join(
-                    entry
-                    for entry in action.entries
-                    if isinstance(entry, str)
+                    entry for entry in action.entries if isinstance(entry, str)
                 ),
                 capability_type=(
-                    action.capability.type
-                    if action.capability is not None
-                    else None
+                    action.capability.type if action.capability is not None else None
                 ),
                 section=cast(
                     Literal["action", "bonus_action"],

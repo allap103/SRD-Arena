@@ -5,7 +5,9 @@ from srd_arena.content.spells.schema import SpellSchema
 from srd_arena.domain.capabilities import CreatureTypeRequirement
 
 
-def find_spell(name: str, source: str | None, catalog: SpellCatalog | None) -> SpellSchema:
+def find_spell(
+    name: str, source: str | None, catalog: SpellCatalog | None
+) -> SpellSchema:
     if catalog is None:
         raise ValueError(
             f"Creature references spell '{name}', but no spell catalog was loaded."
@@ -37,8 +39,12 @@ def target_requirements(raw: SpellSchema) -> tuple[CreatureTypeRequirement, ...]
 
 def normalize_save_ability(value: str) -> str:
     aliases = {
-        "str": "strength", "dex": "dexterity", "con": "constitution",
-        "int": "intelligence", "wis": "wisdom", "cha": "charisma",
+        "str": "strength",
+        "dex": "dexterity",
+        "con": "constitution",
+        "int": "intelligence",
+        "wis": "wisdom",
+        "cha": "charisma",
     }
     normalized = value.casefold()
     return aliases.get(normalized, normalized)

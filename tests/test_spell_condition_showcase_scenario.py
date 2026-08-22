@@ -5,10 +5,7 @@ from srd_arena.runtime.scenario import Scenario
 
 
 SCENARIO_DIR = (
-    Path(__file__).parents[1]
-    / "content"
-    / "scenarios"
-    / "spell_condition_showcase"
+    Path(__file__).parents[1] / "content" / "scenarios" / "spell_condition_showcase"
 )
 
 
@@ -34,16 +31,11 @@ def test_spell_condition_showcase_loads_wave_1b_capability() -> None:
         "Sleep",
     }
     assert all(
-        spell.capability is not None
-        for spell in savant.spellcasting.learned_spells
+        spell.definition is not None for spell in savant.spellcasting.learned_spells
     )
     assert state._creature_controller("lifecycle_savant") == "external"
     assert state._creature_controller("sleep_target") == "external"
-    assert (
-        state.creatures["beast_target"].creature.statistics.creature_type
-        == "beast"
-    )
+    assert state.creatures["beast_target"].creature.statistics.creature_type == "beast"
     assert Condition.EXHAUSTION in (
-        state.creatures["sleep_immune_target"]
-        .creature.statistics.condition_immunities
+        state.creatures["sleep_immune_target"].creature.statistics.condition_immunities
     )

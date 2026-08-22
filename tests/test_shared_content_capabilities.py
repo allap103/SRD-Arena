@@ -37,9 +37,7 @@ def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:
 
     dragon = monsters.find("Ancient White Dragon", "XMM")
     breath = next(
-        action
-        for action in dragon.action
-        if action.name.startswith("Cold Breath")
+        action for action in dragon.action if action.name.startswith("Cold Breath")
     )
     assert isinstance(breath.capability, CapabilitySchema)
     action_resolution = breath.capability.resolution
@@ -56,7 +54,6 @@ def test_spells_and_stat_blocks_compile_shared_domain_capabilities() -> None:
     monsters = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
 
     fireball = build_spell("Fireball", "XPHB", spells)
-    assert fireball.capability is not None
     assert fireball.definition is not None
     spell_resolution = fireball.definition.resolution
     assert isinstance(spell_resolution, SavingThrowResolution)
@@ -85,7 +82,6 @@ def test_spells_and_stat_blocks_compile_shared_attack_resolutions() -> None:
     monsters = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
 
     fire_bolt = build_spell("Fire Bolt", "XPHB", spells)
-    assert fire_bolt.capability is not None
     assert fire_bolt.definition is not None
     spell_resolution = fire_bolt.definition.resolution
     assert isinstance(spell_resolution, AttackResolution)
@@ -260,7 +256,6 @@ def test_npc_spell_uses_are_separate_from_player_spell_slots() -> None:
     assert fireball.resource_pool.refresh == "day"
     assert fireball.spell is not None
     assert fireball.spell.name == "Fireball"
-    assert fireball.spell.capability is not None
     assert fireball.spell.definition is not None
     assert fireball.grant is not None
     assert fireball.grant.definition == fireball.spell.definition

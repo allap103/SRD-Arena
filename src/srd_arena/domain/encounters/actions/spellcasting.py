@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...capabilities import AttackResolution, ConditionEffect, primary_effects
+from ...capabilities import (
+    AttackResolution,
+    ConditionEffect,
+    RelationshipRequirement,
+    SavingThrowResolution,
+    primary_effects,
+)
 from ...creatures import Creature
 from ...effects import serialize_effects
 from ...effects.runtime import OngoingEffectKind
@@ -137,6 +143,17 @@ def resolve_spell_action(
         for effect in primary_effects(definition)
         if isinstance(effect, ConditionEffect)
     )
+    save_advantage_against_opponents = isinstance(
+        definition.resolution, SavingThrowResolution
+    ) and any(
+        modifier.mode == "advantage"
+        and any(
+            isinstance(requirement, RelationshipRequirement)
+            and requirement.relationship == "fighting_source_team"
+            for requirement in modifier.requirements
+        )
+        for modifier in definition.resolution.save_modifiers
+    )
     result = _resolve_spell_action_impl(
         SpellActionContext(
             creature=actor,
@@ -190,18 +207,13 @@ def resolve_spell_action(
                         )
                     )
                     or (
-                        spell.capability is not None
-                        and spell.capability.save_advantage_against_opponents
+                        save_advantage_against_opponents
                         and self._creatures_are_opponents(
                             creature_ref, candidate.target_ref
                         )
                     )
                 }
-                if conditions
-                or (
-                    spell.capability is not None
-                    and spell.capability.save_advantage_against_opponents
-                )
+                if conditions or (save_advantage_against_opponents)
                 else {}
             ),
             area_targets_around=lambda center_ref, radius_feet: tuple(
