@@ -57,6 +57,10 @@ RULES = (
         package="srd_arena.domain.spells",
         forbidden=("srd_arena.domain.encounters",),
     ),
+    DependencyRule(
+        package="srd_arena.domain.capabilities",
+        forbidden=("srd_arena.domain.spells",),
+    ),
 )
 
 

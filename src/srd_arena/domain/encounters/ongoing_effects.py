@@ -58,7 +58,7 @@ def start_ongoing_effect(
         label=source_label,
         origin_id=origin_id,
     )
-    if bool(result.data.get("recast_ends_previous", False)):
+    if bool(result.data.get("reactivation_ends_previous", False)):
         previous = tuple(
             effect
             for effect in state.ongoing_effects

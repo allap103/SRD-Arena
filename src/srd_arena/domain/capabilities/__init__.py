@@ -79,6 +79,7 @@ from .grants import (
     SpellSlotPool,
 )
 from .rules import capability_effects, primary_effects
+from .results import CapabilityActionResult
 
 __all__ = [
     "AllRequirement",
@@ -100,6 +101,7 @@ __all__ = [
     "CapabilityScaling",
     "CapabilityDefinition",
     "CapabilityActivation",
+    "CapabilityActionResult",
     "CapabilityGrant",
     "CapabilityResolution",
     "CapabilityTrigger",

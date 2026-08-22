@@ -26,7 +26,7 @@ from ...geometry import (
 )
 from ..models import ActionCost, EncounterAction
 from ...spells.definitions import Spell
-from ...spells.resolution import SpellTargetContext
+from ...capabilities.execution import CapabilityTargetContext
 from ...spells.rules import (
     spell_action_economy,
     spell_action_id,
@@ -491,7 +491,7 @@ def spell_action_targets(
     self: EncounterState,
     actor: Creature,
     spell: Spell,
-) -> list[SpellTargetContext]:
+) -> list[CapabilityTargetContext]:
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
     if spell.removable_effect_kinds and not (
@@ -500,7 +500,7 @@ def spell_action_targets(
             for effect in capability_effects(spell.definition)
         )
     ):
-        restoration_targets: list[SpellTargetContext] = []
+        restoration_targets: list[CapabilityTargetContext] = []
         max_range = self._spell_range_squares(spell, actor)
         for target_ref, target_state in self.creatures.items():
             if not target_state.is_alive:
@@ -537,7 +537,7 @@ def spell_action_targets(
         return []
 
     max_range = self._spell_range_squares(spell, actor)
-    targets: list[SpellTargetContext] = []
+    targets: list[CapabilityTargetContext] = []
     for target_ref, target_state in self.creatures.items():
         if not target_state.is_alive:
             continue
@@ -608,7 +608,7 @@ def spell_area_targets(
     spell: Spell,
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
-) -> tuple[SpellTargetContext, ...]:
+) -> tuple[CapabilityTargetContext, ...]:
     area = self._spell_area(actor, spell, target_ref=target_ref, aim_point=aim_point)
     if area is None:
         if target_ref is None:
@@ -699,9 +699,9 @@ def targets_in_area(
     self: EncounterState,
     actor: Creature,
     area: AreaOfEffect,
-) -> list[SpellTargetContext]:
+) -> list[CapabilityTargetContext]:
     occupied_cells = {(cell.x, cell.y) for cell in area.cells}
-    targets: list[SpellTargetContext] = []
+    targets: list[CapabilityTargetContext] = []
     for target_ref, target_state in self.creatures.items():
         if not target_state.is_alive:
             continue
@@ -717,12 +717,12 @@ def spell_target_context(
     self: EncounterState,
     actor: Creature,
     target_ref: str,
-) -> SpellTargetContext | None:
+) -> CapabilityTargetContext | None:
     target_state = self.creatures.get(target_ref)
     if target_state is None or not target_state.is_alive:
         return None
     effective = self.effective_conditions_for(target_ref)
-    return SpellTargetContext(
+    return CapabilityTargetContext(
         creature=target_state.creature,
         target_ref=target_ref,
         target_label=target_state.creature.name,
