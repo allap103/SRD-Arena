@@ -11,18 +11,16 @@ from srd_arena.content.character_options.classes import (
     normalize_optional_feature_effects,
 )
 from srd_arena.content.common.sources import load_json, slug
-from srd_arena.content.spells import SpellCatalog, build_spell
+from srd_arena.content.spells import SpellCatalog
 from srd_arena.content.character_options.classes.schema import (
     ClassFeatureReferenceSchema,
     ClassFeatureSchema,
     ClassSchema,
-    SubclassSchema,
 )
 from srd_arena.content.character_options.classes.optional_feature_schema import (
     OptionalFeatureSchema,
 )
 from srd_arena.domain.creatures import (
-    Attributes,
     ClassFeature,
     ClassRef,
     Creature,
@@ -30,7 +28,6 @@ from srd_arena.domain.creatures import (
     Inventory,
     SubclassRef,
 )
-from srd_arena.domain.creatures import Spellcasting
 from srd_arena.domain.effects.triggered import TriggeredEffect
 from .catalog import BestiaryCatalog
 from .schema import CreatureItemReferenceSchema, CreatureSchema
@@ -42,13 +39,7 @@ from .actions.translator import (
 )
 from .attributes import build_creature_attributes, build_creature_size
 from .features import build_combat_profile, build_feature_uses_remaining
-from .spellcasting import (
-    progression_value as _progression_value,
-    spell_count_progression as _spell_count_progression,
-    spell_preparation_mode as _spell_preparation_mode,
-    spell_slots_progression as _spell_slots_progression,
-    spellcasting_ability_score as _spellcasting_ability_score,
-)
+from .spellcasting import build_spellcasting
 from .statistics import build_creature_statistics
 from .player_characters import PlayerCharacterTemplates
 
@@ -106,7 +97,7 @@ def build_creature(
     )
     triggered_effects = _resolve_optional_feature_effects(schema, optional_features)
     combat_profile = build_combat_profile(class_features)
-    spellcasting = _build_spellcasting(
+    spellcasting = build_spellcasting(
         schema,
         attributes,
         class_record,
@@ -445,91 +436,6 @@ def _normalize_class_feature(
         source_subclass=source_subclass,
         data={"attacks": attacks},
     )
-
-
-def _build_spellcasting(
-    schema: CreatureSchema,
-    attributes: Attributes,
-    class_record: ClassRecord | None,
-    subclass_record: SubclassRecord | None,
-    spells: SpellCatalog | None,
-) -> Spellcasting | None:
-    if schema.spellcasting is not None:
-        config = schema.spellcasting
-        ability_score = _spellcasting_ability_score(attributes, config.ability)
-        ability_modifier = (ability_score - 10) // 2
-        spell_slots_max = dict(config.spell_slots)
-        return Spellcasting(
-            ability=config.ability,
-            ability_modifier=ability_modifier,
-            save_dc=8 + attributes.proficiency_bonus + ability_modifier,
-            attack_bonus=attributes.proficiency_bonus + ability_modifier,
-            caster_progression=config.caster_progression,
-            preparation_mode=config.preparation_mode,
-            cantrips_known=config.cantrips_known,
-            spell_count=config.spell_count,
-            spell_slots_max=spell_slots_max,
-            spell_slots_remaining=dict(spell_slots_max),
-            learned_spells=[
-                build_spell(reference.name, reference.source, spells)
-                for reference in schema.spells_known
-            ],
-        )
-
-    source_definition = _spellcasting_source_definition(
-        class_record,
-        subclass_record,
-    )
-    if source_definition is None:
-        return None
-
-    ability = source_definition.spellcasting_ability
-    caster_progression = source_definition.caster_progression
-    if ability is None or caster_progression is None:
-        return None
-
-    level = attributes.level
-    ability_score = _spellcasting_ability_score(attributes, ability)
-    ability_modifier = (ability_score - 10) // 2
-    spell_slots_max = _spell_slots_progression(source_definition, level)
-    learned_spells = [
-        build_spell(reference.name, reference.source, spells)
-        for reference in schema.spells_known
-    ]
-
-    return Spellcasting(
-        ability=ability,
-        ability_modifier=ability_modifier,
-        save_dc=8 + attributes.proficiency_bonus + ability_modifier,
-        attack_bonus=attributes.proficiency_bonus + ability_modifier,
-        caster_progression=caster_progression,
-        preparation_mode=_spell_preparation_mode(source_definition),
-        cantrips_known=(
-            _progression_value(source_definition.cantrip_progression, level) or 0
-        ),
-        spell_count=_spell_count_progression(source_definition, level),
-        spell_slots_max=spell_slots_max,
-        spell_slots_remaining=dict(spell_slots_max),
-        learned_spells=learned_spells,
-    )
-
-
-def _spellcasting_source_definition(
-    class_record: ClassRecord | None,
-    subclass_record: SubclassRecord | None,
-) -> ClassSchema | SubclassSchema | None:
-    definitions: tuple[ClassSchema | SubclassSchema | None, ...] = (
-        subclass_record.definition if subclass_record else None,
-        class_record.definition if class_record else None,
-    )
-    for definition in definitions:
-        if (
-            definition is not None
-            and definition.spellcasting_ability is not None
-            and definition.caster_progression is not None
-        ):
-            return definition
-    return None
 
 
 def _second_wind_uses(
