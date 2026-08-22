@@ -58,6 +58,6 @@
   "capability": {
     "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 10}},
     "resolution": {"type": "saving_throw", "ability": "con", "save_modifiers": [{"type": "roll_modifier", "roll": "saving_throw", "mode": "disadvantage", "requirements": [{"type": "creature_type", "creature_types": ["construct"]}]}], "failure": {"effects": [{"type": "damage", "dice": "3d8", "damage_type": "thunder"}]}, "success_damage": "half"},
-    "scaling": [{"type": "slot_level", "above_level": 2, "per_level": [{"type": "damage_dice", "amount": "1d8"}]}]
+    "scaling": [{"type": "resource_level", "above_level": 2, "per_level": [{"type": "damage_dice", "amount": "1d8"}]}]
   }
 }

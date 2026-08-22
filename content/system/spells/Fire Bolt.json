@@ -71,6 +71,12 @@
   "implementation": {"status": "partial", "omissions": [{"mechanic": "object targeting and ignition", "reason": "Objects and environmental fire are not modeled yet."}]},
   "capability": {
     "target": {"type": "creature", "line_of_sight": true},
-    "resolution": {"type": "spell_attack", "mode": "ranged", "hit": {"effects": [{"type": "damage", "dice": "1d10", "damage_type": "fire"}]}}
+    "resolution": {"type": "spell_attack", "mode": "ranged", "hit": {"effects": [{"type": "damage", "dice": "1d10", "damage_type": "fire"}]}},
+    "scaling": [{"type": "actor_level", "thresholds": [
+      {"minimum_level": 1, "increments": [{"type": "damage_dice", "amount": "1d10"}]},
+      {"minimum_level": 5, "increments": [{"type": "damage_dice", "amount": "2d10"}]},
+      {"minimum_level": 11, "increments": [{"type": "damage_dice", "amount": "3d10"}]},
+      {"minimum_level": 17, "increments": [{"type": "damage_dice", "amount": "4d10"}]}
+    ]}]
   }
 }

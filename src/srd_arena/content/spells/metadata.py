@@ -1,4 +1,4 @@
-"""Derive display and compatibility metadata from authored spell content."""
+"""Derive display metadata from authored spell content."""
 
 import re
 

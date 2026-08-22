@@ -24,18 +24,18 @@ class ScalingIncrementSchema(CapabilitySchemaModel):
 
 
 class ResourceScalingSchema(CapabilitySchemaModel):
-    type: Literal["slot_level"] = "slot_level"
-    above_level: NonNegativeInt | Literal["spell_level"] = "spell_level"
+    type: Literal["resource_level"] = "resource_level"
+    above_level: NonNegativeInt | Literal["base_level"] = "base_level"
     per_level: list[ScalingIncrementSchema] = Field(min_length=1)
 
 
 class ActorLevelScalingThresholdSchema(CapabilitySchemaModel):
     minimum_level: PositiveInt
-    projectile_count: PositiveInt
+    increments: list[ScalingIncrementSchema] = Field(min_length=1)
 
 
 class ActorLevelScalingSchema(CapabilitySchemaModel):
-    type: Literal["caster_level"]
+    type: Literal["actor_level"]
     thresholds: list[ActorLevelScalingThresholdSchema] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -52,10 +52,3 @@ CapabilityScalingSchema = Annotated[
     ResourceScalingSchema | ActorLevelScalingSchema,
     Field(discriminator="type"),
 ]
-
-# Authored spell JSON still uses these historical names. Keeping aliases avoids a
-# second representation while the shared vocabulary uses capability terminology.
-SlotScalingIncrementSchema = ScalingIncrementSchema
-SlotScalingSchema = ResourceScalingSchema
-CasterLevelScalingThresholdSchema = ActorLevelScalingThresholdSchema
-CasterLevelScalingSchema = ActorLevelScalingSchema

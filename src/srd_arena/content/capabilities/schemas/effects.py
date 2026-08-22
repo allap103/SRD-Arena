@@ -17,7 +17,7 @@ class DamageEffectSchema(CapabilitySchemaModel):
     type: Literal["damage"]
     dice: str = Field(pattern=r"^\d+d\d+$")
     bonus: int = 0
-    modifier: Literal["none", "spellcasting_ability"] = "none"
+    modifier: Literal["none", "ability_modifier"] = "none"
     damage_type: str = Field(min_length=1)
     minimum: NonNegativeInt | None = None
     requirements: list[AttackHitRequirementSchema] = Field(default_factory=list)
@@ -27,7 +27,7 @@ class HealingEffectSchema(CapabilitySchemaModel):
     type: Literal["healing"]
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     bonus: int = 0
-    modifier: Literal["none", "ability_modifier", "spellcasting_ability"] = "none"
+    modifier: Literal["none", "ability_modifier"] = "none"
     from_damage: Literal["none", "half_damage_dealt", "all_damage_dealt"] = "none"
     restore_to_maximum: bool = False
     pool: PositiveInt | None = None
@@ -52,7 +52,7 @@ class TemporaryHitPointsEffectSchema(CapabilitySchemaModel):
     type: Literal["temporary_hit_points"]
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     value: NonNegativeInt = 0
-    modifier: Literal["none", "ability_modifier", "spellcasting_ability"] = "none"
+    modifier: Literal["none", "ability_modifier"] = "none"
     trigger: Literal["application", "target_turn_start"] = "application"
 
     @model_validator(mode="after")
@@ -238,7 +238,7 @@ class ActionFailureChanceEffectSchema(CapabilitySchemaModel):
 
 class TeleportEffectSchema(CapabilitySchemaModel):
     type: Literal["teleport"]
-    distance_feet: NonNegativeInt | Literal["spell_range", "unlimited"]
+    distance_feet: NonNegativeInt | Literal["capability_range", "unlimited"]
     destination: Literal[
         "chosen_space", "origin_space", "nearest_free_space", "another_plane"
     ]
@@ -264,7 +264,9 @@ class DifficultTerrainEffectSchema(CapabilitySchemaModel):
 class BattlefieldRemovalEffectSchema(CapabilitySchemaModel):
     type: Literal["battlefield_removal"]
     destination: Literal["demiplane", "another_plane", "extradimensional", "off_board"]
-    return_trigger: Literal["spell_ends", "turn_start", "turn_end", "random_turn_start"]
+    return_trigger: Literal[
+        "capability_ends", "turn_start", "turn_end", "random_turn_start"
+    ]
     return_position: Literal["origin", "nearest_free_space", "chosen_free_space"]
 
 
@@ -307,7 +309,7 @@ class CancelPendingEventEffectSchema(CapabilitySchemaModel):
 
 class RedirectPendingTargetEffectSchema(CapabilitySchemaModel):
     type: Literal["redirect_pending_target"]
-    destination: Literal["random_spell_entity", "chosen_legal_target"]
+    destination: Literal["random_created_entity", "chosen_legal_target"]
 
 
 class RequireTargetReselectionEffectSchema(CapabilitySchemaModel):
@@ -358,7 +360,7 @@ class SummonEffectSchema(CapabilitySchemaModel):
     type: Literal["summon"]
     creature: str
     source: str | None = None
-    count: PositiveInt | Literal["spellcasting_modifier"] = 1
+    count: PositiveInt | Literal["ability_modifier"] = 1
     team: Literal["source", "hostile"] = "source"
     initiative: Literal["own", "source_after"] = "source_after"
     command: Literal["verbal", "mental", "none"] = "verbal"

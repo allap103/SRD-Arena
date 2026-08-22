@@ -76,39 +76,6 @@ def build_spell_definition(
         condition_selection=capability.condition_application,
         scaling_rules=capability.scaling,
         triggers=capability.outcome_triggers,
-        additional_scaling=_legacy_cantrip_scaling(spell_schema),
-    )
-
-
-def _legacy_cantrip_scaling(
-    spell_schema: SpellSchema,
-) -> tuple[capability_domain.CapabilityScaling, ...]:
-    scaling_data = (spell_schema.model_extra or {}).get("scalingLevelDice")
-    if not isinstance(scaling_data, dict):
-        return ()
-    raw_scaling = scaling_data.get("scaling")
-    if not isinstance(raw_scaling, dict):
-        return ()
-    thresholds = tuple(
-        sorted(
-            (int(level), dice)
-            for level, dice in raw_scaling.items()
-            if isinstance(level, str) and level.isdigit() and isinstance(dice, str)
-        )
-    )
-    if not thresholds:
-        return ()
-    return (
-        capability_domain.CapabilityScaling(
-            basis="actor_level",
-            thresholds=tuple(
-                capability_domain.ScalingThreshold(
-                    minimum_level,
-                    (capability_domain.ScalingIncrement("damage_dice", dice),),
-                )
-                for minimum_level, dice in thresholds
-            ),
-        ),
     )
 
 

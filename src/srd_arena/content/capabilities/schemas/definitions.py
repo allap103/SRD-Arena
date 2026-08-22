@@ -34,14 +34,14 @@ class OutcomeTriggerSchemaBase(CapabilitySchemaModel):
         "target_moves",
         "effect_ended",
     ]
-    attribution: Literal["this_effect", "this_spell", "source"] = "this_spell"
+    attribution: Literal["this_effect", "this_capability", "source"] = "this_capability"
     requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
     delay_trigger: Literal[
         "none", "source_turn_start", "source_turn_end", "target_turn_start"
     ] = "none"
     turn_offset: NonNegativeInt = 0
     per_target_limit: PositiveInt | None = None
-    limit_period: Literal["turn", "round", "spell_instance"] | None = None
+    limit_period: Literal["turn", "round", "capability_instance"] | None = None
 
 
 class CapabilitySchemaBase(CapabilitySchemaModel):

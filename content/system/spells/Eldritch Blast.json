@@ -87,12 +87,12 @@
     },
     "scaling": [
       {
-        "type": "caster_level",
+        "type": "actor_level",
         "thresholds": [
-          {"minimum_level": 1, "projectile_count": 1},
-          {"minimum_level": 5, "projectile_count": 2},
-          {"minimum_level": 11, "projectile_count": 3},
-          {"minimum_level": 17, "projectile_count": 4}
+          {"minimum_level": 1, "increments": [{"type": "projectile_count", "amount": 1}]},
+          {"minimum_level": 5, "increments": [{"type": "projectile_count", "amount": 2}]},
+          {"minimum_level": 11, "increments": [{"type": "projectile_count", "amount": 3}]},
+          {"minimum_level": 17, "increments": [{"type": "projectile_count", "amount": 4}]}
         ]
       }
     ]

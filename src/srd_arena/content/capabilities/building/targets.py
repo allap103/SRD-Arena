@@ -23,7 +23,7 @@ def build_target(
             kind="creature",
             count=domain.TargetCount(
                 value.count.minimum,
-                _normalize_count(value.count.maximum),
+                value.count.maximum,
             ),
             line_of_sight=value.line_of_sight,
             disposition=value.disposition,
@@ -43,7 +43,7 @@ def build_target(
         return _build_target_model(
             kind="area",
             count=(
-                domain.TargetCount(chosen.minimum, _normalize_count(chosen.maximum))
+                domain.TargetCount(chosen.minimum, chosen.maximum)
                 if chosen is not None
                 else domain.TargetCount()
             ),
@@ -142,9 +142,3 @@ def _build_target_model(
         excludes_source=excludes_source,
         requirements=tuple(requirements),
     )
-
-
-def _normalize_count(
-    value: int | Literal["spellcasting_modifier", "all"],
-) -> int | Literal["ability_modifier", "all"]:
-    return "ability_modifier" if value == "spellcasting_modifier" else value

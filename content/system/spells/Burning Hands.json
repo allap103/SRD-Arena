@@ -60,6 +60,6 @@
   "capability": {
     "target": {"type": "area", "origin": "self", "geometry": {"shape": "cone", "length_feet": 15}},
     "resolution": {"type": "saving_throw", "ability": "dex", "failure": {"effects": [{"type": "damage", "dice": "3d6", "damage_type": "fire"}]}, "success_damage": "half"},
-    "scaling": [{"type": "slot_level", "above_level": 1, "per_level": [{"type": "damage_dice", "amount": "1d6"}]}]
+    "scaling": [{"type": "resource_level", "above_level": 1, "per_level": [{"type": "damage_dice", "amount": "1d6"}]}]
   }
 }

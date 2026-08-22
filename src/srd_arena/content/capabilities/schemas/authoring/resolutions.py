@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Annotated, Literal
 
-from pydantic import AliasChoices, Field, RootModel, model_validator
+from pydantic import Field, RootModel, model_validator
 
 from srd_arena.content.common.implementation import ImplementationSchema
 
@@ -98,7 +98,7 @@ def _validate_complete_roll_table(
 
 
 class CreateEntityEffectSchema(CapabilitySchemaModel):
-    type: Literal["create_spell_entity"]
+    type: Literal["create_entity"]
     entity_id: str = Field(min_length=1)
     entity_kind: Literal["manifestation", "weapon", "hand", "hazard", "image"]
     targetable: bool = False
@@ -153,7 +153,7 @@ class CreatePersistentAreaEffectSchema(CapabilitySchemaModel):
             "source_dies",
             "source_incapacitated",
             "source_loses_concentration",
-            "parent_spell_ends",
+            "parent_capability_ends",
         ]
     ] = Field(default_factory=list)
 
@@ -273,13 +273,7 @@ class SavingThrowResolutionSchema(
     difficulty: DerivedDifficultyClassSchema = Field(
         default_factory=lambda: DerivedDifficultyClassSchema(type="spell_save_dc")
     )
-    use_provider_metadata_ability: bool = Field(
-        default=True,
-        validation_alias=AliasChoices(
-            "use_provider_metadata_ability",
-            "use_spell_metadata_ability",
-        ),
-    )
+    use_provider_metadata_ability: bool = True
     success: OutcomeSchema = Field(default_factory=OutcomeSchema)
     repeat_save: RepeatSaveProgressionSchema | None = None
 
@@ -419,7 +413,7 @@ class AreaTriggerSchema(CapabilitySchemaModel):
     ]
     resolution: CapabilityResolutionSchema
     per_target_limit: PositiveInt | None = None
-    limit_period: Literal["turn", "round", "spell_instance"] | None = None
+    limit_period: Literal["turn", "round", "capability_instance"] | None = None
 
 
 class AreaMovementSchema(CapabilitySchemaModel):

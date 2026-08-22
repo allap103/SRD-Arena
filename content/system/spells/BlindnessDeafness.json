@@ -65,6 +65,6 @@
     "target": {"type": "creature", "line_of_sight": true},
     "condition_application": "choose_one",
     "resolution": {"type": "saving_throw", "ability": "con", "failure": {"effects": [{"type": "condition", "condition": "blinded"}, {"type": "condition", "condition": "deafened"}]}, "repeat_save": {"trigger": "turn_end", "ability": "con"}},
-    "scaling": [{"type": "slot_level", "above_level": 2, "per_level": [{"type": "target_count", "amount": 1}]}]
+    "scaling": [{"type": "resource_level", "above_level": 2, "per_level": [{"type": "target_count", "amount": 1}]}]
   }
 }

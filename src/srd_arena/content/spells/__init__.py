@@ -1,10 +1,6 @@
 """Schemas, catalogs, loading, and building for authored spell content."""
 
 from .catalog import SpellCatalog
-from .capability import SpellCapabilitySchema
-from srd_arena.content.common.implementation import (
-    ImplementationSchema as SpellImplementationSchema,
-)
 from .schema import SpellFileSchema, SpellSchema
 from .builder import build_spell
 from .loader import load_spell_catalog
@@ -12,8 +8,6 @@ from .loader import load_spell_catalog
 __all__ = [
     "SpellCatalog",
     "SpellFileSchema",
-    "SpellImplementationSchema",
-    "SpellCapabilitySchema",
     "SpellSchema",
     "build_spell",
     "load_spell_catalog",

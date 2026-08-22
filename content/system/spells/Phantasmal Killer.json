@@ -86,7 +86,7 @@
     },
     "scaling": [
       {
-        "type": "slot_level",
+        "type": "resource_level",
         "above_level": 4,
         "per_level": [{"type": "damage_dice", "amount": "1d10"}]
       }

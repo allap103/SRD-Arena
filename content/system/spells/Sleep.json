@@ -62,8 +62,8 @@
       "repeat_save": {"trigger": "turn_end", "ability": "wis", "on_failure": {"type": "automatic", "outcome": {"effects": [{"type": "condition", "condition": "unconscious"}]}}}
     },
     "outcome_triggers": [
-      {"event": "target_damaged", "resolution": {"type": "automatic", "outcome": {"end_spell": true}}},
-      {"event": "adjacent_creature_wakes_target", "resolution": {"type": "automatic", "outcome": {"end_spell": true}}}
+      {"event": "target_damaged", "resolution": {"type": "automatic", "outcome": {"end_capability": true}}},
+      {"event": "adjacent_creature_wakes_target", "resolution": {"type": "automatic", "outcome": {"end_capability": true}}}
     ]
   }
 }

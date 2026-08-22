@@ -54,7 +54,7 @@ def test_direct_area_damage_supports_half_damage_and_slot_scaling() -> None:
             },
             "scaling": [
                 {
-                    "type": "slot_level",
+                    "type": "resource_level",
                     "above_level": 3,
                     "per_level": [{"type": "damage_dice", "amount": "1d6"}],
                 }
@@ -95,15 +95,13 @@ def test_condition_spell_supports_type_requirement_and_repeat_save() -> None:
                 "type": "saving_throw",
                 "ability": "wis",
                 "failure": {
-                    "effects": [
-                        {"type": "condition", "condition": "paralyzed"}
-                    ]
+                    "effects": [{"type": "condition", "condition": "paralyzed"}]
                 },
                 "repeat_save": {"trigger": "turn_end", "ability": "wis"},
             },
             "scaling": [
                 {
-                    "type": "slot_level",
+                    "type": "resource_level",
                     "above_level": 2,
                     "per_level": [{"type": "target_count", "amount": 1}],
                 }
@@ -195,9 +193,7 @@ def test_hp_pool_and_random_table_are_first_class_resolutions() -> None:
                 "type": "hit_point_pool",
                 "dice": "5d8",
                 "on_covered": {
-                    "effects": [
-                        {"type": "condition", "condition": "unconscious"}
-                    ]
+                    "effects": [{"type": "condition", "condition": "unconscious"}]
                 },
             },
         },
@@ -225,14 +221,14 @@ def test_hp_pool_and_random_table_are_first_class_resolutions() -> None:
     assert len(random.capability.model_dump()["resolution"]["entries"]) == 3
 
 
-def test_granted_actions_and_persistent_areas_share_spell_instance_state() -> None:
+def test_granted_actions_and_persistent_areas_share_capability_state() -> None:
     spell = _spell(
         {
             "target": {"type": "self"},
-            "casting_requirements": [{"type": "free_hand"}],
+            "activation_requirements": [{"type": "free_hand"}],
             "resolution": _automatic(
                 {
-                    "type": "create_spell_entity",
+                    "type": "create_entity",
                     "entity_id": "flame_blade",
                     "entity_kind": "weapon",
                     "actions": [
@@ -343,12 +339,10 @@ def test_triggered_casts_links_interception_and_defeat_prevention_are_typed() ->
     spell = _spell(
         {
             "target": {"type": "event_target", "binding": "triggering_target"},
-            "casting_trigger": {
+            "activation_trigger": {
                 "event": "attack_hit",
                 "timing": "immediately_after",
-                "requirements": [
-                    {"type": "attack_source", "source": "weapon"}
-                ],
+                "requirements": [{"type": "attack_source", "source": "weapon"}],
                 "target": {
                     "type": "event_target",
                     "binding": "triggering_target",
@@ -385,7 +379,9 @@ def test_triggered_casts_links_interception_and_defeat_prevention_are_typed() ->
 
 
 def test_implementation_status_cannot_hide_missing_or_extra_capability() -> None:
-    with pytest.raises(ValidationError, match="Complete spells must define a capability"):
+    with pytest.raises(
+        ValidationError, match="Complete spells must define a capability"
+    ):
         _spell(None, implementation={"status": "complete"})
 
     with pytest.raises(ValidationError, match="Unimplemented spells cannot define"):

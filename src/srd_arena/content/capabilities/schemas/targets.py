@@ -48,7 +48,7 @@ ActionTargetSchema = Annotated[
 
 class TargetCountSchema(CapabilitySchemaModel):
     minimum: NonNegativeInt = 1
-    maximum: PositiveInt | Literal["spellcasting_modifier", "all"] = 1
+    maximum: PositiveInt | Literal["ability_modifier", "all"] = 1
 
     @model_validator(mode="after")
     def validate_bounds(self) -> "TargetCountSchema":
@@ -117,7 +117,9 @@ class AreaTargetSchema(CapabilitySchemaModel):
     """Executable area selection shared by spells and other capabilities."""
 
     type: Literal["area"]
-    origin: Literal["self", "point_in_range", "target", "spell_entity", "event_target"]
+    origin: Literal[
+        "self", "point_in_range", "target", "created_entity", "event_target"
+    ]
     geometry: AreaGeometrySchema
     affects: Literal["creatures", "objects", "creatures_and_objects"] = "creatures"
     occupants: Literal["all", "allies", "enemies", "chosen"] = "all"

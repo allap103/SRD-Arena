@@ -66,8 +66,8 @@
     },
     "scaling": [
       {
-        "type": "slot_level",
-        "above_level": "spell_level",
+        "type": "resource_level",
+        "above_level": "base_level",
         "per_level": [
           {"type": "temporary_hit_points", "amount": 5}
         ]

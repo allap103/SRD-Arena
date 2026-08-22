@@ -87,7 +87,7 @@
     },
     "scaling": [
       {
-        "type": "slot_level",
+        "type": "resource_level",
         "above_level": 2,
         "per_level": [
           {

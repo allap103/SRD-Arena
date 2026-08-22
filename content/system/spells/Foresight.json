@@ -43,7 +43,7 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "recast_ends_previous": true,
+    "reactivation_ends_previous": true,
     "target": {"type": "creature", "disposition": "willing"},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "roll_modifier", "roll": "d20_test", "mode": "advantage"},

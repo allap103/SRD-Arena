@@ -79,11 +79,8 @@ from .scaling import (
     ActorLevelScalingSchema,
     ActorLevelScalingThresholdSchema,
     CapabilityScalingSchema,
-    CasterLevelScalingSchema,
     ResourceScalingSchema,
     ScalingIncrementSchema,
-    SlotScalingIncrementSchema,
-    SlotScalingSchema,
 )
 from .targets import (
     ActionAreaTargetSchema,
@@ -134,7 +131,6 @@ __all__ = [
     "CapabilityScalingSchema",
     "CapabilitySchemaBase",
     "CapabilitySchemaModel",
-    "CasterLevelScalingSchema",
     "ConditionEffectSchema",
     "ConditionImmunityEffectSchema",
     "ConditionImmunityRequirementSchema",
@@ -178,8 +174,6 @@ __all__ = [
     "SenseEffectSchema",
     "SequenceResolutionSchemaBase",
     "SizeRequirementSchema",
-    "SlotScalingIncrementSchema",
-    "SlotScalingSchema",
     "SpeedModifierEffectSchema",
     "SpeedMultiplierEffectSchema",
     "TargetCountSchema",

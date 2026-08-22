@@ -96,7 +96,7 @@
     },
     "scaling": [
       {
-        "type": "slot_level",
+        "type": "resource_level",
         "above_level": 1,
         "per_level": [
           {"type": "damage_dice", "amount": "1d6", "damage_type": "cold"}

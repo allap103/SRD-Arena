@@ -40,7 +40,7 @@ class ConditionImmunityRequirement:
 @dataclass(frozen=True)
 class RelationshipRequirement:
     relationship: str
-    established_by: Literal["this_spell", "source", "any"] = "any"
+    established_by: Literal["this_capability", "source", "any"] = "any"
 
 
 @dataclass(frozen=True)

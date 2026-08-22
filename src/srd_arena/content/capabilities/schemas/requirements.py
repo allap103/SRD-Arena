@@ -45,7 +45,7 @@ class ConditionImmunityRequirementSchema(CapabilitySchemaModel):
 class RelationshipRequirementSchema(CapabilitySchemaModel):
     type: Literal["relationship"]
     relationship: str = Field(min_length=1)
-    established_by: Literal["this_spell", "source", "any"] = "any"
+    established_by: Literal["this_capability", "source", "any"] = "any"
 
 
 class AttackSourceRequirementSchema(CapabilitySchemaModel):

@@ -69,7 +69,7 @@ class CompositeAreaTargetSchema(CapabilitySchemaModel):
 
 
 class CreatedEntityTargetSchema(CapabilitySchemaModel):
-    type: Literal["spell_entity"]
+    type: Literal["created_entity"]
     ownership: Literal["source", "any"] = "source"
     entity_kinds: list[str] = Field(default_factory=list)
 

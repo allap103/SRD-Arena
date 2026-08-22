@@ -64,6 +64,12 @@
   "implementation": {"status": "complete"},
   "capability": {
     "target": {"type": "creature", "line_of_sight": true},
-    "resolution": {"type": "spell_attack", "mode": "ranged", "hit": {"effects": [{"type": "damage", "dice": "1d12", "damage_type": "poison"}]}}
+    "resolution": {"type": "spell_attack", "mode": "ranged", "hit": {"effects": [{"type": "damage", "dice": "1d12", "damage_type": "poison"}]}},
+    "scaling": [{"type": "actor_level", "thresholds": [
+      {"minimum_level": 1, "increments": [{"type": "damage_dice", "amount": "1d12"}]},
+      {"minimum_level": 5, "increments": [{"type": "damage_dice", "amount": "2d12"}]},
+      {"minimum_level": 11, "increments": [{"type": "damage_dice", "amount": "3d12"}]},
+      {"minimum_level": 17, "increments": [{"type": "damage_dice", "amount": "4d12"}]}
+    ]}]
   }
 }

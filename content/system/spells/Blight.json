@@ -57,6 +57,6 @@
   "capability": {
     "target": {"type": "creature", "line_of_sight": true},
     "resolution": {"type": "saving_throw", "ability": "con", "automatic_failure": [{"type": "creature_type", "creature_types": ["plant"]}], "failure": {"effects": [{"type": "damage", "dice": "8d8", "damage_type": "necrotic"}]}, "success_damage": "half"},
-    "scaling": [{"type": "slot_level", "above_level": 4, "per_level": [{"type": "damage_dice", "amount": "1d8"}]}]
+    "scaling": [{"type": "resource_level", "above_level": 4, "per_level": [{"type": "damage_dice", "amount": "1d8"}]}]
   }
 }

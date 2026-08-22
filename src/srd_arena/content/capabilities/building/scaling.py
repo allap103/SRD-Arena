@@ -16,11 +16,7 @@ def build_scaling_rules(
             built.append(
                 domain.CapabilityScaling(
                     basis="resource_level",
-                    above_level=(
-                        "base_level"
-                        if value.above_level == "spell_level"
-                        else value.above_level
-                    ),
+                    above_level=value.above_level,
                     per_level=tuple(
                         domain.ScalingIncrement(
                             increment.type,
@@ -38,11 +34,13 @@ def build_scaling_rules(
                     thresholds=tuple(
                         domain.ScalingThreshold(
                             threshold.minimum_level,
-                            (
+                            tuple(
                                 domain.ScalingIncrement(
-                                    "projectile_count",
-                                    threshold.projectile_count,
-                                ),
+                                    increment.type,
+                                    increment.amount,
+                                    increment.damage_type,
+                                )
+                                for increment in threshold.increments
                             ),
                         )
                         for threshold in value.thresholds

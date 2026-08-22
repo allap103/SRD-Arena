@@ -16,7 +16,7 @@ from .targets import build_target
 
 
 class _RepetitionLike(Protocol):
-    count: int | Literal["spellcasting_modifier", "slot_scaled"]
+    count: int | Literal["ability_modifier", "resource_scaled"]
     allocation: Literal[
         "same_target", "same_or_different", "different_targets", "propagating"
     ]
@@ -48,7 +48,6 @@ def build_capability(
     condition_selection: Literal["all", "choose_one"] = "all",
     scaling_rules: Iterable[scaling.CapabilityScalingSchema] = (),
     triggers: Iterable[object] = (),
-    additional_scaling: Iterable[domain.CapabilityScaling] = (),
     location: str = "capability.resolution",
 ) -> domain.CapabilityDefinition:
     """Build the executable subset of the shared capability vocabulary.
@@ -97,7 +96,7 @@ def build_capability(
     return replace(
         definition,
         repetition=_build_repetition(repeated),
-        scaling=(*build_scaling_rules(scaling_rules), *tuple(additional_scaling)),
+        scaling=build_scaling_rules(scaling_rules),
         triggers=_build_triggers(target, triggers, content=content),
         follow_ups=_build_follow_ups(
             target,
@@ -112,15 +111,8 @@ def _build_repetition(value: object | None) -> domain.CapabilityRepetition | Non
     if value is None:
         return None
     repetition = cast(_RepetitionLike, value)
-    count = repetition.count
     return domain.CapabilityRepetition(
-        count=(
-            "ability_modifier"
-            if count == "spellcasting_modifier"
-            else "resource_scaled"
-            if count == "slot_scaled"
-            else count
-        ),
+        count=repetition.count,
         allocation=repetition.allocation,
         simultaneous=repetition.simultaneous,
         propagation_range_feet=repetition.propagation_range_feet,

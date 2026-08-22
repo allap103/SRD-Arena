@@ -68,6 +68,12 @@
   "implementation": {"status": "complete"},
   "capability": {
     "target": {"type": "creature", "line_of_sight": true},
-    "resolution": {"type": "saving_throw", "ability": "dex", "failure": {"effects": [{"type": "damage", "dice": "1d8", "damage_type": "radiant"}]}}
+    "resolution": {"type": "saving_throw", "ability": "dex", "failure": {"effects": [{"type": "damage", "dice": "1d8", "damage_type": "radiant"}]}},
+    "scaling": [{"type": "actor_level", "thresholds": [
+      {"minimum_level": 1, "increments": [{"type": "damage_dice", "amount": "1d8"}]},
+      {"minimum_level": 5, "increments": [{"type": "damage_dice", "amount": "2d8"}]},
+      {"minimum_level": 11, "increments": [{"type": "damage_dice", "amount": "3d8"}]},
+      {"minimum_level": 17, "increments": [{"type": "damage_dice", "amount": "4d8"}]}
+    ]}]
   }
 }

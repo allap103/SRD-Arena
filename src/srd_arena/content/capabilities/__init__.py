@@ -85,11 +85,8 @@ from .schemas.scaling import (
     ActorLevelScalingSchema,
     ActorLevelScalingThresholdSchema,
     CapabilityScalingSchema,
-    CasterLevelScalingSchema,
     ResourceScalingSchema,
     ScalingIncrementSchema,
-    SlotScalingIncrementSchema,
-    SlotScalingSchema,
 )
 from .building.supported import (
     EXECUTABLE_EFFECT_TYPES,
@@ -110,7 +107,6 @@ __all__ = [
     "CapabilitySchemaModel",
     "CapabilitySchemaBase",
     "CapabilityScalingSchema",
-    "CasterLevelScalingSchema",
     "build_capability",
     "CapabilityBuildError",
     "AllRequirementSchema",
@@ -178,8 +174,6 @@ __all__ = [
     "SequenceResolutionSchemaBase",
     "SelfTargetSchema",
     "SizeRequirementSchema",
-    "SlotScalingIncrementSchema",
-    "SlotScalingSchema",
     "SpeedModifierEffectSchema",
     "SpeedMultiplierEffectSchema",
     "TemporaryHitPointsEffectSchema",

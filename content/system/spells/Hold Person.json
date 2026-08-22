@@ -69,6 +69,6 @@
   "capability": {
     "target": {"type": "creature", "line_of_sight": true, "requirements": [{"type": "creature_type", "creature_types": ["humanoid"]}]},
     "resolution": {"type": "saving_throw", "ability": "wis", "failure": {"effects": [{"type": "condition", "condition": "paralyzed"}]}, "repeat_save": {"trigger": "turn_end", "ability": "wis"}},
-    "scaling": [{"type": "slot_level", "above_level": 2, "per_level": [{"type": "target_count", "amount": 1}]}]
+    "scaling": [{"type": "resource_level", "above_level": 2, "per_level": [{"type": "target_count", "amount": 1}]}]
   }
 }
