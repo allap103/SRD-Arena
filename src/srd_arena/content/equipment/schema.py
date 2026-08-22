@@ -45,11 +45,3 @@ class ItemSchema(SourceModel):
     @property
     def is_armor(self) -> bool:
         return self.armor or isinstance(self.ac, int)
-
-
-class BaseItemFileSchema(SourceModel):
-    base_items: list[ItemSchema] = Field(default_factory=list, alias="baseitem")
-
-
-class ItemFileSchema(SourceModel):
-    items: list[ItemSchema] = Field(default_factory=list, alias="item")

@@ -16,7 +16,6 @@ from .schema import (
 )
 from .stat_block_schema import (
     BestiaryActionSchema,
-    BestiaryFileSchema,
     BestiaryMonsterSchema,
 )
 
@@ -24,7 +23,6 @@ __all__ = [
     "AttributesSchema",
     "BestiaryActionSchema",
     "BestiaryCatalog",
-    "BestiaryFileSchema",
     "BestiaryMonsterSchema",
     "CreatureItemReferenceSchema",
     "CreatureSchema",

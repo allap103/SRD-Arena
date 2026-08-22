@@ -1,5 +1,3 @@
-from pydantic import Field
-
 from srd_arena.content.common.schema import SourceModel
 
 
@@ -15,10 +13,3 @@ class OptionalFeatureSchema(SourceModel):
             if isinstance(marker, str):
                 return marker
         return self.name
-
-
-class OptionalFeatureFileSchema(SourceModel):
-    optional_features: list[OptionalFeatureSchema] = Field(
-        default_factory=list,
-        alias="optionalfeature",
-    )

@@ -47,9 +47,3 @@ class SpellSchema(SourceModel):
             if isinstance(marker, str):
                 return marker
         return self.name
-
-
-class SpellFileSchema(SourceModel):
-    """Container for spell records loaded from a source file."""
-
-    spell: list[SpellSchema] = Field(default_factory=list)

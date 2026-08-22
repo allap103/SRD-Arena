@@ -180,9 +180,5 @@ class BestiaryMonsterSchema(SourceModel):
         return self.cr.cr if self.cr is not None else None
 
 
-class BestiaryFileSchema(SourceModel):
-    monster: list[BestiaryMonsterSchema] = Field(default_factory=list)
-
-
 def _reference_name(name: str) -> str:
     return re.sub(r"\s*\{@[^}]+\}", "", name).strip().casefold()

@@ -5,7 +5,6 @@ import pytest
 
 from srd_arena.content.common import SourceCatalog
 from srd_arena.content.creatures import (
-    BestiaryFileSchema,
     BestiaryMonsterSchema,
     CreatureSchema,
     build_creature,
@@ -564,17 +563,13 @@ def test_all_typed_stat_block_action_variants_survive_loading() -> None:
 
 
 def test_bestiary_schema_ignores_unknown_source_fields() -> None:
-    [monster] = BestiaryFileSchema.model_validate(
+    monster = BestiaryMonsterSchema.model_validate(
         {
-            "monster": [
-                {
-                    "name": "Test Creature",
-                    "source": "TEST",
-                    "customFutureField": {"enabled": True},
-                }
-            ]
+            "name": "Test Creature",
+            "source": "TEST",
+            "customFutureField": {"enabled": True},
         }
-    ).monster
+    )
 
     assert monster.model_extra is None
 

@@ -13,11 +13,10 @@ from .optional_feature_catalog import (
     load_optional_feature_catalog,
 )
 from .optional_feature_effects import normalize_optional_feature_effects
-from .optional_feature_schema import OptionalFeatureFileSchema, OptionalFeatureSchema
+from .optional_feature_schema import OptionalFeatureSchema
 from .schema import (
     ClassFeatureReferenceSchema,
     ClassFeatureSchema,
-    ClassFileSchema,
     ClassSchema,
     ClassTableGroupSchema,
     StartingProficienciesSchema,
@@ -29,12 +28,10 @@ __all__ = [
     "ClassCatalog",
     "ClassFeatureReferenceSchema",
     "ClassFeatureSchema",
-    "ClassFileSchema",
     "ClassRecord",
     "ClassSchema",
     "ClassTableGroupSchema",
     "OptionalFeatureCatalog",
-    "OptionalFeatureFileSchema",
     "OptionalFeatureSchema",
     "StartingProficienciesSchema",
     "SubclassCatalog",

@@ -125,16 +125,3 @@ class SubclassSchema(SourceModel):
             if isinstance(marker, str):
                 return marker
         return self.name
-
-
-class ClassFileSchema(SourceModel):
-    classes: list[ClassSchema] = Field(default_factory=list, alias="class")
-    subclasses: list[SubclassSchema] = Field(default_factory=list, alias="subclass")
-    class_features: list[ClassFeatureSchema] = Field(
-        default_factory=list,
-        alias="classFeature",
-    )
-    subclass_features: list[SubclassFeatureSchema] = Field(
-        default_factory=list,
-        alias="subclassFeature",
-    )
