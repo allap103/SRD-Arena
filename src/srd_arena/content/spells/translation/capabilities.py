@@ -5,7 +5,6 @@ from srd_arena.content.capabilities import (
     DerivedDifficultyClassSchema,
     FixedDifficultyClassSchema,
 )
-from srd_arena.content.capabilities.compiler import compile_effect, is_shared_effect
 import srd_arena.domain.capabilities as domain
 
 from srd_arena.content.spells.resolution import (
@@ -24,6 +23,7 @@ from srd_arena.content.spells.targeting import (
 )
 
 from .scaling import compile_scaling
+from .effects import compile_capability_effect, is_compilable_effect
 
 SpellResolutionSchema = (
     AutomaticResolutionSchema
@@ -43,7 +43,7 @@ def compile_spell_definition(
         resolution = resolution.steps[0].resolution.root
     repeated = resolution if isinstance(resolution, RepeatResolutionSchema) else None
     if repeated is not None:
-        resolution = resolution.resolution.root
+        resolution = repeated.resolution.root
     if not isinstance(
         resolution,
         (
@@ -104,7 +104,7 @@ def compile_definition(
         else ()
     )
     if not all(
-        is_shared_effect(effect)
+        is_compilable_effect(effect)
         for effect in (*effect_values, *success_values, *miss_values)
     ):
         return None
@@ -113,9 +113,9 @@ def compile_definition(
         return None
     compiled_outcome = domain.Outcome(
         tuple(
-            compile_effect(effect)
+            compile_capability_effect(effect)
             for effect in effect_values
-            if is_shared_effect(effect)
+            if is_compilable_effect(effect)
         )
     )
     compiled_resolution = _compile_resolution(
@@ -142,9 +142,9 @@ def _compile_resolution(
             hit=outcome,
             miss=domain.Outcome(
                 tuple(
-                    compile_effect(effect)
+                    compile_capability_effect(effect)
                     for effect in miss_values
-                    if is_shared_effect(effect)
+                    if is_compilable_effect(effect)
                 )
             ),
             attacks=resolution.attacks,
@@ -168,9 +168,9 @@ def _compile_resolution(
         failure=(domain.OutcomeStage(outcome.effects),),
         success=domain.Outcome(
             tuple(
-                compile_effect(effect)
+                compile_capability_effect(effect)
                 for effect in success_values
-                if is_shared_effect(effect)
+                if is_compilable_effect(effect)
             )
         ),
         success_damage=resolution.success_damage,
@@ -215,9 +215,7 @@ def _compile_target(
         ),
         shape=geometry.shape,
         size_feet=(
-            geometry.radius_feet
-            or geometry.length_feet
-            or geometry.diameter_feet
+            geometry.radius_feet or geometry.length_feet or geometry.diameter_feet
         ),
         width_feet=geometry.width_feet,
         origin=target.origin,

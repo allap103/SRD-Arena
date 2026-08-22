@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..capabilities import HealingEffect, capability_effects
 from ..geometry import MovementBudget, Position
 from ..creatures import (
     AutomaticActionDefinition,
@@ -455,17 +456,20 @@ def execute_creature_action(
             else 1
         )
         repeat_target_allocations = bool(
-            spell is not None
-            and spell_repeats_target_allocations(spell)
+            spell is not None and spell_repeats_target_allocations(spell)
         )
         require_full_target_count = bool(
-            spell is not None
-            and spell_requires_full_target_count(spell)
+            spell is not None and spell_requires_full_target_count(spell)
         )
-        resource_pool_total = (
-            spell.capability.healing_pool
-            if spell is not None and spell.capability is not None
-            else None
+        resource_pool_total = next(
+            (
+                effect.pool
+                for effect in capability_effects(
+                    spell.definition if spell is not None else None
+                )
+                if isinstance(effect, HealingEffect) and effect.pool is not None
+            ),
+            None,
         )
         selected_targets = list(parse_spell_action_targets(action.value))
         resource_allocation_limits: dict[str, int] = {}
@@ -493,12 +497,14 @@ def execute_creature_action(
                 )
             ]
             maximum_targets = len(selected_targets)
-        staged_selection_needed = resource_pool_total is not None or (
-            maximum_targets > 1 and bool(selected_targets)
-        ) or (
-            spell is not None
-            and spell_chooses_area_targets(spell)
-            and len(selected_targets) > 1
+        staged_selection_needed = (
+            resource_pool_total is not None
+            or (maximum_targets > 1 and bool(selected_targets))
+            or (
+                spell is not None
+                and spell_chooses_area_targets(spell)
+                and len(selected_targets) > 1
+            )
         )
         automated_resolved = False
         if (

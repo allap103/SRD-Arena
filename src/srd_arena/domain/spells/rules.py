@@ -54,28 +54,22 @@ def spell_targets_self_only(spell: Spell) -> bool:
 
 
 def spell_chooses_area_targets(spell: Spell) -> bool:
-    if spell.definition is not None:
-        target = spell.definition.target
-        return target.kind == "area" and target.occupants == "chosen"
-    return bool(
-        spell.capability is not None and spell.capability.choose_area_targets
-    )
+    if spell.definition is None:
+        return False
+    target = spell.definition.target
+    return target.kind == "area" and target.occupants == "chosen"
 
 
 def spell_target_disposition(spell: Spell) -> str:
     if spell.definition is not None and spell.definition.target.kind == "creature":
         return spell.definition.target.disposition
-    return (
-        spell.capability.target_disposition
-        if spell.capability is not None
-        else "enemy"
-    )
+    return "enemy"
 
 
 def spell_area_shape(spell: Spell) -> str | None:
     if spell.definition is not None and spell.definition.target.kind == "area":
         return spell.definition.target.shape
-    return spell.capability.area_shape if spell.capability is not None else None
+    return None
 
 
 def spell_repeats_target_allocations(spell: Spell) -> bool:
@@ -99,21 +93,7 @@ def spell_supports_higher_level(spell: Spell) -> bool:
             scaling.basis == "resource_level" and scaling.per_level
             for scaling in spell.definition.scaling
         )
-    capability = spell.capability
-    if capability is None:
-        return False
-    return not (
-        capability.slot_damage_increment is None
-        and capability.slot_target_increment == 0
-        and capability.slot_healing_dice_increment is None
-        and capability.slot_healing_bonus_increment == 0
-        and capability.slot_temporary_hit_points_increment == 0
-        and capability.slot_maximum_hit_point_increment == 0
-        and not any(
-            follow_up.slot_damage_increment is not None
-            for follow_up in capability.follow_up_resolutions
-        )
-    )
+    return False
 
 
 def spell_range_squares(spell: Spell, grid: Grid) -> int | None:
@@ -306,13 +286,7 @@ def spell_max_targets(
             and isinstance(increment.amount, int)
         )
         return base_target_count + levels_above * per_level_increment
-    capability = spell.capability
-    if capability is None:
-        return 1
-    resolved_level = cast_level if cast_level is not None else spell.level
-    levels_above = max(0, resolved_level - spell.level)
-    base_target_count = capability.base_target_count
-    return base_target_count + (levels_above * capability.slot_target_increment)
+    return 1
 
 
 def parse_spell_action_condition(value: str) -> str | None:

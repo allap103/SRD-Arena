@@ -86,6 +86,93 @@ class DamageEffect:
 
 
 @dataclass(frozen=True)
+class HealingEffect:
+    dice: str | None = None
+    bonus: int = 0
+    modifier: Literal["none", "ability_modifier"] = "none"
+    from_damage: Literal["none", "half_damage_dealt", "all_damage_dealt"] = "none"
+    restore_to_maximum: bool = False
+    pool: int | None = None
+
+
+@dataclass(frozen=True)
+class TemporaryHitPointsEffect:
+    dice: str | None = None
+    value: int = 0
+    modifier: Literal["none", "ability_modifier"] = "none"
+    trigger: Literal["application", "target_turn_start"] = "application"
+
+
+@dataclass(frozen=True)
+class ArmorClassModifierEffect:
+    value: int
+    duration: EffectDuration | None = None
+
+
+@dataclass(frozen=True)
+class RemoveEffect:
+    removable: tuple[str, ...]
+    selection: Literal["one", "all"] = "one"
+    conditions: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class DamageResistanceEffect:
+    damage_types: tuple[str, ...]
+    selection: Literal["all", "choose_one"] = "all"
+    duration: EffectDuration | None = None
+
+
+@dataclass(frozen=True)
+class DamageReductionEffect:
+    damage_types: tuple[str, ...]
+    dice: str
+    selection: Literal["all", "choose_one"] = "all"
+    limit: int = 1
+    period: Literal["turn"] = "turn"
+    duration: EffectDuration | None = None
+
+
+@dataclass(frozen=True)
+class SpeedModifierEffect:
+    feet: int
+    duration: EffectDuration | None = None
+
+
+@dataclass(frozen=True)
+class ConditionSaveAdvantageEffect:
+    conditions: tuple[str, ...]
+    duration: EffectDuration | None = None
+
+
+@dataclass(frozen=True)
+class DamageImmunityEffect:
+    damage_types: tuple[str, ...]
+    duration: EffectDuration | None = None
+
+
+@dataclass(frozen=True)
+class ConditionImmunityEffect:
+    conditions: tuple[str, ...]
+    suppress_existing: bool = False
+    duration: EffectDuration | None = None
+
+
+@dataclass(frozen=True)
+class SenseEffect:
+    sense: Literal["blindsight", "darkvision", "truesight"]
+    range_feet: int
+    duration: EffectDuration | None = None
+
+
+@dataclass(frozen=True)
+class HitPointMaximumModifierEffect:
+    value: int
+    also_modify_current: bool = False
+    duration: EffectDuration | None = None
+
+
+@dataclass(frozen=True)
 class ConditionEffect:
     condition: str
     duration: EffectDuration | None = None
@@ -146,6 +233,18 @@ class GainMemoriesEffect:
 
 CapabilityEffect = (
     DamageEffect
+    | HealingEffect
+    | TemporaryHitPointsEffect
+    | ArmorClassModifierEffect
+    | RemoveEffect
+    | DamageResistanceEffect
+    | DamageReductionEffect
+    | SpeedModifierEffect
+    | ConditionSaveAdvantageEffect
+    | DamageImmunityEffect
+    | ConditionImmunityEffect
+    | SenseEffect
+    | HitPointMaximumModifierEffect
     | ConditionEffect
     | ForcedMovementEffect
     | SpeedMultiplierEffect

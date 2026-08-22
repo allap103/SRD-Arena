@@ -24,29 +24,17 @@ from srd_arena.content.capabilities import (
     RollModifierEffectSchema,
 )
 from .resolution import (
-    ArmorClassModifierEffectSchema,
     AutomaticResolutionSchema,
-    ConditionSaveAdvantageEffectSchema,
-    ConditionImmunityEffectSchema,
-    HealingEffectSchema,
-    HitPointMaximumModifierEffectSchema,
-    DamageResistanceEffectSchema,
-    DamageReductionEffectSchema,
     RepeatResolutionSchema,
     SavingThrowResolutionSchema,
-    SenseEffectSchema,
-    SpeedModifierEffectSchema,
     SequenceResolutionSchema,
     SpellAttackResolutionSchema,
-    TemporaryHitPointsEffectSchema,
 )
 from srd_arena.content.common.sources import slug
 from srd_arena.domain.spells import (
     SpellCapability,
     Spell,
     SpellDamage,
-    SpellHealing,
-    SpellTemporaryHitPoints,
 )
 from srd_arena.domain.effects.modifiers import (
     ModifierMode,
@@ -62,7 +50,6 @@ from .translation import (
     compile_spell_definition,
     creature_types_from_requirements,
     damage_repeat_save_advantage,
-    effect_duration_rounds,
     end_events,
     find_spell,
     normalize_save_ability,
@@ -72,7 +59,6 @@ from .translation import (
     save_advantage_against_opponents,
     slot_damage_increment,
     slot_scaling_value,
-    slot_target_increment,
     spell_duration_rounds,
     target_requirements,
 )
@@ -133,7 +119,6 @@ def build_spell(
 def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
     if raw.capability is None:
         return None
-    target = raw.capability.target
     outer_resolution = raw.capability.resolution.root
     sequence = (
         outer_resolution
@@ -173,87 +158,6 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
         for effect in outcome.effects
         if isinstance(effect.root, ConditionEffectSchema)
     )
-    healing = tuple(
-        SpellHealing(
-            dice=effect.root.dice,
-            bonus=effect.root.bonus,
-            add_spellcasting_modifier=effect.root.modifier == "spellcasting_ability",
-            restore_to_maximum=effect.root.restore_to_maximum,
-            pool=effect.root.pool,
-        )
-        for effect in outcome.effects
-        if isinstance(effect.root, HealingEffectSchema)
-    )
-    temporary_hit_points = tuple(
-        SpellTemporaryHitPoints(
-            dice=effect.root.dice,
-            value=effect.root.value,
-            add_spellcasting_modifier=effect.root.modifier == "spellcasting_ability",
-            trigger=effect.root.trigger,
-        )
-        for effect in outcome.effects
-        if isinstance(effect.root, TemporaryHitPointsEffectSchema)
-    )
-    maximum_hit_point_modifier = next(
-        (
-            effect.root
-            for effect in outcome.effects
-            if isinstance(effect.root, HitPointMaximumModifierEffectSchema)
-        ),
-        None,
-    )
-    armor_class_modifier = next(
-        (
-            effect.root.value
-            for effect in outcome.effects
-            if isinstance(effect.root, ArmorClassModifierEffectSchema)
-        ),
-        0,
-    )
-    speed_modifier = next(
-        (
-            effect.root
-            for effect in outcome.effects
-            if isinstance(effect.root, SpeedModifierEffectSchema)
-        ),
-        None,
-    )
-    damage_resistances = tuple(
-        damage_type
-        for effect in outcome.effects
-        if isinstance(effect.root, DamageResistanceEffectSchema)
-        for damage_type in effect.root.damage_types
-    )
-    damage_resistance_choice = any(
-        isinstance(effect.root, DamageResistanceEffectSchema)
-        and effect.root.selection == "choose_one"
-        for effect in outcome.effects
-    )
-    damage_reduction = next(
-        (
-            effect.root
-            for effect in outcome.effects
-            if isinstance(effect.root, DamageReductionEffectSchema)
-        ),
-        None,
-    )
-    condition_save_advantages = tuple(
-        condition
-        for effect in outcome.effects
-        if isinstance(effect.root, ConditionSaveAdvantageEffectSchema)
-        for condition in effect.root.conditions
-    )
-    condition_immunities = tuple(
-        condition
-        for effect in outcome.effects
-        if isinstance(effect.root, ConditionImmunityEffectSchema)
-        for condition in effect.root.conditions
-    )
-    senses = tuple(
-        (effect.root.sense, effect.root.range_feet)
-        for effect in outcome.effects
-        if isinstance(effect.root, SenseEffectSchema)
-    )
     roll_modifiers = tuple(
         RollModifier(
             roll=cast(RollKind, roll),
@@ -277,10 +181,8 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
             else (effect.root.ability,)
         )
     )
-    geometry = target.geometry if target.type == "area" else None
     return SpellCapability(
         resolution=resolution.type,
-        target=target.type,
         damage=damage,
         save_ability=(
             normalize_save_ability(resolution.ability)
@@ -299,11 +201,6 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
             isinstance(resolution, SavingThrowResolutionSchema)
             and resolution.success_damage == "half"
         ),
-        area_shape=geometry.shape if geometry is not None else None,
-        area_radius_feet=geometry.radius_feet if geometry is not None else None,
-        area_length_feet=geometry.length_feet if geometry is not None else None,
-        area_width_feet=geometry.width_feet if geometry is not None else None,
-        area_height_feet=geometry.height_feet if geometry is not None else None,
         automatic_failure_creature_types=(
             creature_types_from_requirements(resolution.automatic_failure)
             if isinstance(resolution, SavingThrowResolutionSchema)
@@ -342,14 +239,11 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
             and effect.root.duration.creature == "source"
             for effect in outcome.effects
         ),
-        target_disposition=(target.disposition if target.type == "creature" else "any"),
         repeat_failure_conditions=repeat_failure_conditions(resolution),
         repeat_failure_damage=repeat_failure_damage(resolution),
         end_events=end_events(raw),
         damage_repeat_save_advantage=damage_repeat_save_advantage(raw),
-        save_advantage_against_opponents=(
-            save_advantage_against_opponents(resolution)
-        ),
+        save_advantage_against_opponents=(save_advantage_against_opponents(resolution)),
         automatic_success_condition_immunities=(
             automatic_success_condition_immunities(resolution)
         ),
@@ -357,22 +251,11 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
         self_removal_blocked_conditions=tuple(
             raw.capability.self_removal_blocked_conditions
         ),
-        base_target_count=(
-            repeated.count
-            if repeated is not None and isinstance(repeated.count, int)
-            else target.count.maximum
-            if target.type == "creature" and isinstance(target.count.maximum, int)
-            else 1
-        ),
-        slot_target_increment=slot_target_increment(raw),
-        choose_area_targets=(target.type == "area" and target.occupants == "chosen"),
         follow_up_resolutions=(
             tuple(follow_up_resolution(raw, step) for step in sequence.steps[1:])
             if sequence is not None
             else ()
         ),
-        healing=healing,
-        temporary_hit_points=temporary_hit_points,
         slot_healing_dice_increment=slot_scaling_value(raw, "healing_dice", str),
         slot_healing_bonus_increment=(
             slot_scaling_value(raw, "healing_bonus", int) or 0
@@ -380,42 +263,11 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
         slot_temporary_hit_points_increment=(
             slot_scaling_value(raw, "temporary_hit_points", int) or 0
         ),
-        maximum_hit_point_modifier=(
-            maximum_hit_point_modifier.value
-            if maximum_hit_point_modifier is not None
-            else 0
-        ),
-        also_modify_current_hit_points=(
-            maximum_hit_point_modifier.also_modify_current
-            if maximum_hit_point_modifier is not None
-            else False
-        ),
         slot_maximum_hit_point_increment=(
             slot_scaling_value(raw, "hit_point_maximum", int) or 0
         ),
-        damage_resistances=damage_resistances,
-        damage_resistance_choice=damage_resistance_choice,
-        condition_save_advantages=condition_save_advantages,
         roll_modifiers=roll_modifiers,
         recast_ends_previous=raw.capability.recast_ends_previous,
-        armor_class_modifier=armor_class_modifier,
-        speed_modifier_feet=(speed_modifier.feet if speed_modifier is not None else 0),
-        speed_modifier_duration_rounds=(
-            effect_duration_rounds(speed_modifier.duration)
-            if speed_modifier is not None
-            else None
-        ),
-        damage_reduction_types=(
-            tuple(damage_reduction.damage_types) if damage_reduction is not None else ()
-        ),
-        damage_reduction_choice=(
-            damage_reduction is not None and damage_reduction.selection == "choose_one"
-        ),
-        damage_reduction_dice=(
-            damage_reduction.dice if damage_reduction is not None else None
-        ),
-        condition_immunities=condition_immunities,
-        senses=senses,
         roll_modifier_ability_choices=tuple(
             normalize_save_ability(ability)
             for effect in outcome.effects

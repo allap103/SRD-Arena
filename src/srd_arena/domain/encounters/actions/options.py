@@ -2,6 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...capabilities import (
+    DamageReductionEffect,
+    DamageResistanceEffect,
+    HealingEffect,
+    TemporaryHitPointsEffect,
+    capability_effects,
+)
 from ...creatures import Creature, Spellcasting
 from ...effects.conditions import CombatTrait
 from ...geometry import (
@@ -105,6 +112,23 @@ def available_spell_actions(
             )
             continue
         targets = self._spell_action_targets(actor, spell)
+        shared_effects = capability_effects(spell.definition)
+        resistance = next(
+            (
+                effect
+                for effect in shared_effects
+                if isinstance(effect, DamageResistanceEffect)
+            ),
+            None,
+        )
+        reduction = next(
+            (
+                effect
+                for effect in shared_effects
+                if isinstance(effect, DamageReductionEffect)
+            ),
+            None,
+        )
         for target in targets:
             removal_choices = _spell_removal_choices(self, target.target_ref, spell)
             selections = (
@@ -117,15 +141,16 @@ def available_spell_actions(
             )
             damage_type_selections: tuple[str | None, ...] = (
                 (
-                    spell.capability.damage_resistances
-                    if spell.capability.damage_resistance_choice
-                    else spell.capability.damage_reduction_types
+                    resistance.damage_types
+                    if resistance is not None and resistance.selection == "choose_one"
+                    else reduction.damage_types
+                    if reduction is not None and reduction.selection == "choose_one"
+                    else ()
                 )
-                if spell.capability is not None
-                and (
-                    spell.capability.damage_resistance_choice
-                    or spell.capability.damage_reduction_choice
-                )
+                if resistance is not None
+                and resistance.selection == "choose_one"
+                or reduction is not None
+                and reduction.selection == "choose_one"
                 else (None,)
             )
             ability_selections: tuple[str | None, ...] = (
@@ -458,8 +483,10 @@ def spell_action_targets(
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
     if spell.removable_effect_kinds and not (
-        spell.capability is not None
-        and (spell.capability.healing or spell.capability.temporary_hit_points)
+        any(
+            isinstance(effect, (HealingEffect, TemporaryHitPointsEffect))
+            for effect in capability_effects(spell.definition)
+        )
     ):
         restoration_targets: list[SpellTargetContext] = []
         max_range = self._spell_range_squares(spell, actor)
