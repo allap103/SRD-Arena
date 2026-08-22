@@ -55,6 +55,5 @@ EXECUTABLE_REQUIREMENT_TYPES = (
     requirements.PerceptionRequirementSchema,
     requirements.RelationshipRequirementSchema,
     requirements.SizeRequirementSchema,
-    requirements.SpellComponentRequirementSchema,
     requirements.WillingRequirementSchema,
 )

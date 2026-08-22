@@ -62,11 +62,6 @@ class FreeHandRequirementSchema(CapabilitySchemaModel):
     type: Literal["free_hand"]
 
 
-class SpellComponentRequirementSchema(CapabilitySchemaModel):
-    type: Literal["spell_component"]
-    component: Literal["verbal", "somatic", "material"]
-
-
 class PerceptionRequirementSchema(CapabilitySchemaModel):
     type: Literal["perception"]
     sense: Literal["see", "hear"]
@@ -100,7 +95,6 @@ CapabilityRequirementSchema = Annotated[
     | AttackSourceRequirementSchema
     | WillingRequirementSchema
     | FreeHandRequirementSchema
-    | SpellComponentRequirementSchema
     | PerceptionRequirementSchema
     | HitPointRequirementSchema
     | AnyRequirementSchema

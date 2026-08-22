@@ -41,7 +41,6 @@ from .requirements import (
     PerceptionRequirementSchema,
     RelationshipRequirementSchema,
     SizeRequirementSchema,
-    SpellComponentRequirementSchema,
     WillingRequirementSchema,
 )
 from .resolutions import (
@@ -95,7 +94,6 @@ __all__ = [
     "FreeHandRequirementSchema",
     "HitPointRequirementSchema",
     "PerceptionRequirementSchema",
-    "SpellComponentRequirementSchema",
     "WillingRequirementSchema",
     "ActionTargetSchema",
     "ActorLevelScalingSchema",

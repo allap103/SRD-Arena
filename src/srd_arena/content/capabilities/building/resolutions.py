@@ -13,7 +13,7 @@ from .errors import CapabilityBuildError
 from .requirements import build_checked_requirement
 
 
-class _SpellRepeatSaveLike(Protocol):
+class _ProgressiveRepeatSaveLike(Protocol):
     trigger: str
     ability: str | None
     on_failure: object | None
@@ -213,9 +213,9 @@ def _build_repeat_save(
     location: str,
 ) -> domain.RepeatSave:
     if hasattr(value, "on_failure"):
-        spell_repeat = cast(_SpellRepeatSaveLike, value)
+        progressive_repeat = cast(_ProgressiveRepeatSaveLike, value)
         failure_effects: tuple[domain.CapabilityEffect, ...] = ()
-        authored_failure = spell_repeat.on_failure
+        authored_failure = progressive_repeat.on_failure
         if authored_failure is not None:
             failure_resolution = resolution_root(authored_failure)
             if not isinstance(
@@ -233,15 +233,18 @@ def _build_repeat_save(
                 location=f"{location}.repeat_save.on_failure.outcome",
             ).effects
         trigger_aliases = {"turn_end": "end_of_turn", "turn_start": "start_of_turn"}
-        trigger = trigger_aliases.get(spell_repeat.trigger, spell_repeat.trigger)
+        trigger = trigger_aliases.get(
+            progressive_repeat.trigger,
+            progressive_repeat.trigger,
+        )
         return domain.RepeatSave(
             trigger=trigger,
-            ability=normalize_ability(spell_repeat.ability or default_ability),
+            ability=normalize_ability(progressive_repeat.ability or default_ability),
             failure_effects=failure_effects,
-            successes_required=spell_repeat.successes_required,
-            failures_required=spell_repeat.failures_required,
+            successes_required=progressive_repeat.successes_required,
+            failures_required=progressive_repeat.failures_required,
             counters_need_not_be_consecutive=(
-                spell_repeat.counters_need_not_be_consecutive
+                progressive_repeat.counters_need_not_be_consecutive
             ),
         )
     action_repeat = cast(_ActionRepeatSaveLike, value)

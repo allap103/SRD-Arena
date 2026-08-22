@@ -11,6 +11,7 @@ from ...capabilities import (
     FreeHandRequirement,
     HitPointRequirement,
     PerceptionRequirement,
+    capability_chooses_area_targets,
     capability_geometry_mode,
     capability_target_requirements,
 )
@@ -26,7 +27,6 @@ from ...spells.rules import (
     parse_spell_action_slot,
     parse_spell_action_targets,
     parse_spell_action_value,
-    spell_chooses_area_targets,
 )
 from ..behaviors import DIRECTION_DELTAS
 from ..models import CreatureRef, EncounterAction
@@ -538,7 +538,7 @@ class SpellTargetSelectionRule:
             target.target_ref
             for target in (
                 state._spell_area_targets(actor, spell, aim_point=aim_point)
-                if spell_chooses_area_targets(spell)
+                if capability_chooses_area_targets(spell.definition)
                 else tuple(state._spell_action_targets(actor, spell))
             )
         }

@@ -1,10 +1,7 @@
 from srd_arena.content.common import SourceCatalog
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.spells import SpellSchema, build_spell, load_spell_catalog
-from srd_arena.domain.spells.rules import (
-    spell_duration_rounds,
-    spell_max_targets,
-)
+from srd_arena.domain.spells.rules import spell_duration_rounds
 from srd_arena.domain.capabilities import (
     AttackResolution,
     ArmorClassModifierEffect,
@@ -27,6 +24,7 @@ from srd_arena.domain.capabilities import (
     capability_damage_types,
     capability_effects,
     capability_geometry_mode,
+    capability_max_targets,
     primary_effects,
     capability_removable_conditions,
     capability_removable_effect_kinds,
@@ -111,8 +109,22 @@ def test_repeated_attack_and_removal_spells_translate_from_typed_capability() ->
     assert scorching_ray.definition.repetition is not None
     assert scorching_ray.definition.repetition.count == 3
     assert scorching_ray.definition.repetition.allocation == "same_or_different"
-    assert spell_max_targets(scorching_ray, 2) == 3
-    assert spell_max_targets(scorching_ray, 3) == 4
+    assert (
+        capability_max_targets(
+            scorching_ray.definition,
+            base_resource_level=scorching_ray.level,
+            resource_level=2,
+        )
+        == 3
+    )
+    assert (
+        capability_max_targets(
+            scorching_ray.definition,
+            base_resource_level=scorching_ray.level,
+            resource_level=3,
+        )
+        == 4
+    )
     assert capability_removable_conditions(lesser_restoration.definition) == (
         "blinded",
         "deafened",
@@ -157,8 +169,20 @@ def test_wave_1c_spells_translate_composed_capability() -> None:
         for effect in stage.effects
     )
     assert eldritch_blast.definition is not None
-    assert spell_max_targets(eldritch_blast, None, caster_level=1) == 1
-    assert spell_max_targets(eldritch_blast, None, caster_level=11) == 3
+    assert (
+        capability_max_targets(
+            eldritch_blast.definition,
+            actor_level=1,
+        )
+        == 1
+    )
+    assert (
+        capability_max_targets(
+            eldritch_blast.definition,
+            actor_level=11,
+        )
+        == 3
+    )
     assert weird.definition is not None
     assert weird.definition is not None
     assert isinstance(weird.definition.resolution, SavingThrowResolution)

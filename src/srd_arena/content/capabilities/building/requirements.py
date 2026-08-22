@@ -37,8 +37,6 @@ def build_requirement(
         return domain.WillingRequirement()
     if isinstance(value, requirements.FreeHandRequirementSchema):
         return domain.FreeHandRequirement()
-    if isinstance(value, requirements.SpellComponentRequirementSchema):
-        return domain.SpellComponentRequirement(value.component)
     if isinstance(value, requirements.PerceptionRequirementSchema):
         return domain.PerceptionRequirement(value.sense, value.subject)
     if isinstance(value, requirements.HitPointRequirementSchema):

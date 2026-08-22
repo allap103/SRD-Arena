@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..capabilities import HealingEffect, capability_effects
+from ..capabilities import (
+    HealingEffect,
+    capability_chooses_area_targets,
+    capability_effects,
+    capability_max_targets,
+    capability_repeats_target_allocations,
+    capability_requires_full_target_count,
+)
 from ..geometry import MovementBudget, Position
 from ..creatures import (
     AutomaticActionDefinition,
@@ -30,10 +37,6 @@ from ..spells.rules import (
     parse_spell_action_targets,
     parse_spell_action_value,
     spell_action_value,
-    spell_chooses_area_targets,
-    spell_max_targets,
-    spell_repeats_target_allocations,
-    spell_requires_full_target_count,
 )
 from .models import (
     ActionCost,
@@ -447,19 +450,22 @@ def execute_creature_action(
             else None
         )
         maximum_targets = (
-            spell_max_targets(
-                spell,
-                parse_spell_action_slot(action.value),
-                caster_level=enemy.creature.attributes.level,
+            capability_max_targets(
+                spell.definition,
+                base_resource_level=spell.level,
+                resource_level=parse_spell_action_slot(action.value),
+                actor_level=enemy.creature.attributes.level,
             )
             if spell is not None
             else 1
         )
         repeat_target_allocations = bool(
-            spell is not None and spell_repeats_target_allocations(spell)
+            spell is not None
+            and capability_repeats_target_allocations(spell.definition)
         )
         require_full_target_count = bool(
-            spell is not None and spell_requires_full_target_count(spell)
+            spell is not None
+            and capability_requires_full_target_count(spell.definition)
         )
         resource_pool_total = next(
             (
@@ -485,7 +491,7 @@ def execute_creature_action(
             maximum_targets = len(resource_allocation_limits)
         if (
             spell is not None
-            and spell_chooses_area_targets(spell)
+            and capability_chooses_area_targets(spell.definition)
             and aim_point is not None
         ):
             selected_targets = [
@@ -502,7 +508,7 @@ def execute_creature_action(
             or (maximum_targets > 1 and bool(selected_targets))
             or (
                 spell is not None
-                and spell_chooses_area_targets(spell)
+                and capability_chooses_area_targets(spell.definition)
                 and len(selected_targets) > 1
             )
         )
@@ -540,7 +546,7 @@ def execute_creature_action(
                 )
                 staged_selection_needed = False
                 automated_resolved = True
-            elif not spell_chooses_area_targets(spell):
+            elif not capability_chooses_area_targets(spell.definition):
                 selected_targets = [
                     target.target_ref
                     for target in self._spell_action_targets(

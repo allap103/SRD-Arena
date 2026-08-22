@@ -53,49 +53,6 @@ def spell_targets_self_only(spell: Spell) -> bool:
     ) or spell.range_data.get("type") == "self"
 
 
-def spell_chooses_area_targets(spell: Spell) -> bool:
-    if spell.definition is None:
-        return False
-    target = spell.definition.target
-    return target.kind == "area" and target.occupants == "chosen"
-
-
-def spell_target_disposition(spell: Spell) -> str:
-    if spell.definition is not None and spell.definition.target.kind == "creature":
-        return spell.definition.target.disposition
-    return "enemy"
-
-
-def spell_area_shape(spell: Spell) -> str | None:
-    if spell.definition is not None and spell.definition.target.kind == "area":
-        return spell.definition.target.shape
-    return None
-
-
-def spell_repeats_target_allocations(spell: Spell) -> bool:
-    if spell.definition is not None and spell.definition.repetition is not None:
-        return spell.definition.repetition.allocation in {
-            "same_target",
-            "same_or_different",
-        }
-    return False
-
-
-def spell_requires_full_target_count(spell: Spell) -> bool:
-    return bool(
-        spell.definition is not None and spell.definition.repetition is not None
-    )
-
-
-def spell_supports_higher_level(spell: Spell) -> bool:
-    if spell.definition is not None:
-        return any(
-            scaling.basis == "resource_level" and scaling.per_level
-            for scaling in spell.definition.scaling
-        )
-    return False
-
-
 def spell_duration_rounds(spell: Spell) -> int | None:
     """Return the spell metadata duration converted to encounter rounds."""
     rounds_per_unit = {
@@ -257,57 +214,6 @@ def parse_spell_action_targets(value: str) -> tuple[str, ...]:
     if target_ref is None:
         return ()
     return tuple(ref for ref in target_ref.split(",") if ref)
-
-
-def spell_max_targets(
-    spell: Spell,
-    cast_level: int | None,
-    *,
-    caster_level: int | None = None,
-) -> int:
-    if spell.definition is not None:
-        definition = spell.definition
-        target_maximum = definition.target.count.maximum
-        base_target_count = target_maximum if isinstance(target_maximum, int) else 1
-        if definition.repetition is not None and isinstance(
-            definition.repetition.count, int
-        ):
-            base_target_count = definition.repetition.count
-        if caster_level is not None:
-            actor_thresholds = sorted(
-                (
-                    threshold
-                    for scaling in definition.scaling
-                    if scaling.basis == "actor_level"
-                    for threshold in scaling.thresholds
-                    if threshold.minimum_level <= caster_level
-                    and any(
-                        increment.kind in {"target_count", "projectile_count"}
-                        and isinstance(increment.amount, int)
-                        for increment in threshold.increments
-                    )
-                ),
-                key=lambda threshold: threshold.minimum_level,
-            )
-            if actor_thresholds:
-                base_target_count = next(
-                    increment.amount
-                    for increment in actor_thresholds[-1].increments
-                    if increment.kind in {"target_count", "projectile_count"}
-                    and isinstance(increment.amount, int)
-                )
-        resolved_level = cast_level if cast_level is not None else spell.level
-        levels_above = max(0, resolved_level - spell.level)
-        per_level_increment = sum(
-            increment.amount
-            for scaling in definition.scaling
-            if scaling.basis == "resource_level"
-            for increment in scaling.per_level
-            if increment.kind in {"target_count", "projectile_count"}
-            and isinstance(increment.amount, int)
-        )
-        return base_target_count + levels_above * per_level_increment
-    return 1
 
 
 def parse_spell_action_condition(value: str) -> str | None:

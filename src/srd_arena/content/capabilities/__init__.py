@@ -44,7 +44,6 @@ from .schemas.requirements import (
     PerceptionRequirementSchema,
     RelationshipRequirementSchema,
     SizeRequirementSchema,
-    SpellComponentRequirementSchema,
     WillingRequirementSchema,
 )
 from .schemas.targets import (
@@ -111,7 +110,6 @@ __all__ = [
     "FreeHandRequirementSchema",
     "HitPointRequirementSchema",
     "PerceptionRequirementSchema",
-    "SpellComponentRequirementSchema",
     "WillingRequirementSchema",
     "ActionTargetSchema",
     "AreaTargetSchema",

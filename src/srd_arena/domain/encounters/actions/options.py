@@ -10,11 +10,15 @@ from ...capabilities import (
     RollModifierEffect,
     TemporaryHitPointsEffect,
     capability_area_size_feet,
+    capability_area_shape,
+    capability_chooses_area_targets,
     capability_effects,
     capability_geometry_mode,
     capability_removable_conditions,
     capability_removable_effect_kinds,
     capability_remove_effect_selection,
+    capability_supports_resource_scaling,
+    capability_target_disposition,
     primary_effects,
 )
 from ...creatures import Creature, Spellcasting
@@ -37,12 +41,8 @@ from ...spells.rules import (
     spell_action_id,
     spell_action_label,
     spell_action_value,
-    spell_area_shape,
     spell_cast_block_reason,
-    spell_chooses_area_targets,
     spell_range_squares,
-    spell_supports_higher_level,
-    spell_target_disposition,
     spell_targets_self_only,
 )
 from ...spells.rules import parse_spell_action_condition, parse_spell_action_value
@@ -266,7 +266,7 @@ def _append_spell_action_variants(
     actions.append(action)
     if spell.level == 0:
         return
-    if not spell_supports_higher_level(spell):
+    if not capability_supports_resource_scaling(spell.definition):
         return
     spell_id, target_ref, aim_point = parse_spell_action_value(str(action.value))
     selected_condition = parse_spell_action_condition(str(action.value))
@@ -322,7 +322,7 @@ def spell_target_selection_actions(
     )
     candidates = (
         state._spell_area_targets(actor, spell, aim_point=aim_point)
-        if spell_chooses_area_targets(spell)
+        if capability_chooses_area_targets(spell.definition)
         else tuple(state._spell_action_targets(actor, spell))
     )
     if pending.resource_pool_total is not None:
@@ -551,7 +551,7 @@ def spell_action_targets(
     for target_ref, target_state in self.creatures.items():
         if not target_state.is_alive:
             continue
-        disposition = spell_target_disposition(spell)
+        disposition = capability_target_disposition(spell.definition) or "enemy"
         is_opponent = self._creatures_are_opponents(creature_ref, target_ref)
         if disposition == "enemy" and not is_opponent:
             continue
@@ -668,7 +668,7 @@ def spell_area(
             self.definition.grid.distance_from_feet(radius_feet, minimum=1)
         )
         origin = Position(int(aim_point[0]), int(aim_point[1]))
-        if spell_area_shape(spell) == "cube":
+        if capability_area_shape(spell.definition) == "cube":
             return build_point_cube_area(origin, radius_squares, self.definition.grid)
         return build_radius_area(origin, radius_squares, self.definition.grid)
     if capability_geometry_mode(spell.definition) != "directional_area":
