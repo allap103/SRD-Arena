@@ -209,7 +209,23 @@ Außerdem wurden Regelabschnitte, die in JSON-Dateien noch in Prosaform gegeben 
 - Authored content in JSON-Dateien
 - Content/Domain/Runtime/GUI Layer
 
+#### 3.4.x Content Layer
+filesystem
+    │ load_spell_catalog()
+    ▼
+SpellCatalog containing SpellSchema objects (validated)
+    │ find()
+    ▼
+SpellSchema
+    │ build_spell()
+    ▼
+domain Spell
 
+JSON file
+   ↓ parse and validate
+SpellSchema
+   ↓ stored and indexed
+SpellCatalog
 ### 3.5 KI-Konsultation bei Designentscheidungen
 
 > **Vorgabe:** Darstellen, ob die KI bereits bei der Planung und Architektur des Projekts konsultiert wurde. Falls dies der Fall war, erläutern, welche Vorschläge übernommen wurden und an welchen Stellen bewusst von den Empfehlungen der KI abgewichen wurde, weil die eigene Einschätzung besser zum Projekt passte.
