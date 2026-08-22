@@ -5,7 +5,13 @@ from srd_arena.content.creatures.actions.schema import (
     CapabilitySchema,
 )
 from srd_arena.content.creatures.actions.builder import build_stat_block_actions
-from srd_arena.content.capabilities import SavingThrowResolutionSchema
+from srd_arena.content.capabilities import (
+    AreaTargetSchema,
+    CapabilitySchemaBase,
+    ResourceScalingSchema,
+    SavingThrowResolutionSchema,
+    build_capability,
+)
 from srd_arena.content.spells import build_spell, load_spell_catalog
 from srd_arena.domain.capabilities import (
     AttackResolution,
@@ -78,6 +84,28 @@ def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:
     assert spell_resolution.difficulty.type == "spell_save_dc"
     assert action_resolution.difficulty.type == "fixed"
     assert action_resolution.difficulty.value == 22
+
+
+def test_executable_spell_schema_builds_through_shared_capability_api() -> None:
+    spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    fireball = spells.find("Fireball", "XPHB")
+    assert fireball.capability is not None
+
+    capability = fireball.capability
+    assert isinstance(capability, CapabilitySchemaBase)
+    assert isinstance(capability.target, AreaTargetSchema)
+    assert isinstance(capability.scaling[0], ResourceScalingSchema)
+
+    definition = build_capability(
+        target=capability.target,
+        resolution=capability.resolution,
+        content="Fireball test",
+        condition_selection=capability.condition_application,
+        scaling_rules=capability.scaling,
+        triggers=capability.outcome_triggers,
+    )
+
+    assert definition == build_spell(fireball).definition
 
 
 def test_spells_and_stat_blocks_build_shared_domain_capabilities() -> None:

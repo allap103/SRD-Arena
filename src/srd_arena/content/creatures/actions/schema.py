@@ -4,11 +4,12 @@ from pydantic import Field, model_validator
 
 from srd_arena.content.capabilities import (
     Ability,
+    ActionCreatureTargetSchema,
     ActionEffectSchema,
     CapabilitySchemaModel,
     ActionTargetSchema,
     AutomaticResolutionSchema,
-    CreatureTargetSchema,
+    FixedAttackResolutionSchema,
     FixedDifficultyClassSchema,
     NonNegativeInt,
     OutcomeSchema,
@@ -49,9 +50,7 @@ StagedFailureSchema = Annotated[
     list[SaveOutcomeStageSchema],
     Field(min_length=1),
 ]
-AutomaticActionResolutionSchema = AutomaticResolutionSchema[
-    RequiredActionOutcomeSchema
-]
+AutomaticActionResolutionSchema = AutomaticResolutionSchema[RequiredActionOutcomeSchema]
 
 
 class SavingThrowActionResolutionSchema(
@@ -81,15 +80,11 @@ ActionResourceSchema = Annotated[
 ]
 
 
-class AttackCapabilitySchema(CapabilitySchemaModel):
-    type: Literal["attack"] = "attack"
-    attack_modes: list[Literal["melee", "ranged"]] = Field(min_length=1)
-    attack_bonus: int
-    target: CreatureTargetSchema
+class AttackCapabilitySchema(FixedAttackResolutionSchema):
+    target: ActionCreatureTargetSchema
     reach_feet: PositiveInt | None = None
     range_normal_feet: PositiveInt | None = None
     range_long_feet: PositiveInt | None = None
-    hit: list[ActionEffectSchema] = Field(min_length=1)
     resource: ActionResourceSchema | None = None
 
     @model_validator(mode="after")
@@ -129,8 +124,6 @@ class SpellcastingCapabilitySchema(CapabilitySchemaModel):
 
 
 NonMultiattackCapabilitySchema = Annotated[
-    AttackCapabilitySchema
-    | CapabilitySchema
-    | SpellcastingCapabilitySchema,
+    AttackCapabilitySchema | CapabilitySchema | SpellcastingCapabilitySchema,
     Field(discriminator="type"),
 ]

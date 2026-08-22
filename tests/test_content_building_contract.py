@@ -7,7 +7,7 @@ from srd_arena.content.creatures.actions.builder import (
 )
 from srd_arena.content.creatures.stat_block_schema import BestiaryMonsterSchema
 from srd_arena.content.spells import SpellSchema
-from srd_arena.content.spells.building import build_spell_definition
+from srd_arena.content.spells.builder import build_spell_definition
 
 
 def _ability_check_spell(status: str) -> SpellSchema:

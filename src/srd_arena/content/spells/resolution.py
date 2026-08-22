@@ -8,6 +8,7 @@ from pydantic import Field, RootModel, model_validator
 from srd_arena.content.capabilities import (
     Ability,
     ArmorClassModifierEffectSchema,
+    AttackResolutionSchema as SharedAttackResolutionSchema,
     AutomaticResolutionSchema as SharedAutomaticResolutionSchema,
     ConditionEffectSchema,
     ConditionImmunityEffectSchema,
@@ -25,10 +26,13 @@ from srd_arena.content.capabilities import (
     OutcomeSchema as SharedOutcomeSchema,
     PositiveInt,
     ProhibitReactionEffectSchema,
+    RepeatResolutionSchemaBase,
+    RepeatSaveProgressionSchemaBase,
     RemoveEffectSchema,
     RollModifierEffectSchema,
     SavingThrowResolutionSchema as SharedSavingThrowResolutionSchema,
     SenseEffectSchema,
+    SequenceResolutionSchemaBase,
     SpeedModifierEffectSchema,
     SpeedMultiplierEffectSchema,
     TemporaryHitPointsEffectSchema,
@@ -41,7 +45,6 @@ from .targeting import (
     AreaGeometrySchema,
     EventSpellTargetSchema,
     SpellRequirementSchema,
-    SpellSaveModifierSchema,
     SpellTargetSchema,
 )
 
@@ -418,7 +421,7 @@ class SpellEffectSchema(
 
 
 class OutcomeSchema(SharedOutcomeSchema[SpellEffectSchema]):
-    end_spell: bool = False
+    pass
 
 
 class AutomaticResolutionSchema(SharedAutomaticResolutionSchema[OutcomeSchema]):
@@ -433,19 +436,11 @@ class SavingThrowResolutionSchema(
         default_factory=lambda: DerivedDifficultyClassSchema(type="spell_save_dc")
     )
     use_spell_metadata_ability: bool = True
-    automatic_success: list[SpellRequirementSchema] = Field(default_factory=list)
-    automatic_failure: list[SpellRequirementSchema] = Field(default_factory=list)
-    save_modifiers: list[SpellSaveModifierSchema] = Field(default_factory=list)
     success: OutcomeSchema = Field(default_factory=OutcomeSchema)
     repeat_save: RepeatSaveProgressionSchema | None = None
 
 
-class SpellAttackResolutionSchema(SpellCapabilitySchemaModel):
-    type: Literal["spell_attack"]
-    mode: Literal["melee", "ranged"]
-    attacks: PositiveInt = 1
-    allocation: Literal["same_target", "same_or_different"] = "same_target"
-    hit: OutcomeSchema
+class SpellAttackResolutionSchema(SharedAttackResolutionSchema[OutcomeSchema]):
     miss: OutcomeSchema = Field(default_factory=OutcomeSchema)
 
 
@@ -479,22 +474,8 @@ class HitPointPoolResolutionSchema(SpellCapabilitySchemaModel):
     stop_when_next_target_exceeds_pool: bool = False
 
 
-class RepeatResolutionSchema(SpellCapabilitySchemaModel):
-    type: Literal["repeat"]
-    count: PositiveInt | Literal["spellcasting_modifier", "slot_scaled"]
-    allocation: Literal[
-        "same_target", "same_or_different", "different_targets", "propagating"
-    ] = "same_or_different"
-    simultaneous: bool = False
-    propagation_range_feet: PositiveInt | None = None
-    cannot_repeat_target: bool = False
+class RepeatResolutionSchema(RepeatResolutionSchemaBase):
     resolution: SpellResolutionSchema
-
-    @model_validator(mode="after")
-    def validate_propagation(self) -> "RepeatResolutionSchema":
-        if self.allocation == "propagating" and self.propagation_range_feet is None:
-            raise ValueError("Propagating resolution requires a propagation range.")
-        return self
 
 
 class SequenceStepSchema(SpellCapabilitySchemaModel):
@@ -502,8 +483,7 @@ class SequenceStepSchema(SpellCapabilitySchemaModel):
     target: SpellTargetSchema | None = None
 
 
-class SequenceResolutionSchema(SpellCapabilitySchemaModel):
-    type: Literal["sequence"]
+class SequenceResolutionSchema(SequenceResolutionSchemaBase):
     steps: list[SequenceStepSchema] = Field(min_length=1)
 
 
@@ -564,18 +544,13 @@ class SpellResolutionSchema(
     pass
 
 
-class RepeatSaveProgressionSchema(SpellCapabilitySchemaModel):
-    trigger: Literal["turn_start", "turn_end", "source_turn_start", "source_turn_end"]
-    ability: Ability | None = None
+class RepeatSaveProgressionSchema(RepeatSaveProgressionSchemaBase):
     on_success: SpellResolutionSchema = Field(
         default_factory=lambda: SpellResolutionSchema.model_validate(
             {"type": "automatic", "outcome": {"end_spell": True}}
         )
     )
     on_failure: SpellResolutionSchema | None = None
-    successes_required: PositiveInt = 1
-    failures_required: PositiveInt | None = None
-    counters_need_not_be_consecutive: bool = True
 
 
 class GrantedActionSchema(SpellCapabilitySchemaModel):

@@ -6,15 +6,7 @@ from .multiattack import MultiattackCapabilitySchema
 from srd_arena.content.capabilities import (
     AutomaticResolutionSchema,
     CapabilityBuildError,
-)
-from srd_arena.content.capabilities.builder import (
-    build_attack_resolution,
-    build_automatic_resolution,
-    build_definition,
-    build_duration,
-    build_outcome,
-    build_saving_throw_resolution,
-    build_target,
+    build_capability,
 )
 from srd_arena.content.creatures.stat_block_schema import (
     BestiaryActionSchema,
@@ -40,31 +32,22 @@ def build_stat_block_actions(
             definitions[action.name] = _attack_definition(action, capability)
         elif isinstance(capability, schema.CapabilitySchema):
             resolution = capability.resolution
+            definition = build_capability(
+                target=capability.target,
+                resolution=resolution,
+                content=(f"Monster '{stat_block.public_name}' action '{action.name}'"),
+            )
             if isinstance(
                 resolution,
                 schema.SavingThrowActionResolutionSchema,
             ):
-                failure = tuple(
-                    shared_domain.OutcomeStage(
-                        effects=build_outcome(stage.effects).effects,
-                        repeat_saves=tuple(
-                            _repeat_save(repeat) for repeat in stage.repeat_saves
-                        ),
-                    )
-                    for stage in resolution.failure
+                saving_resolution = cast(
+                    shared_domain.SavingThrowResolution,
+                    definition.resolution,
                 )
-                definition = build_definition(
-                    target=build_target(capability.target),
-                    resolution=build_saving_throw_resolution(
-                        ability=resolution.ability,
-                        difficulty=shared_domain.FixedDifficultyClass(
-                            resolution.difficulty.value
-                        ),
-                        failure=failure,
-                        success=build_outcome(resolution.success.effects),
-                        always=build_outcome(resolution.always.effects),
-                        success_damage=resolution.success_damage,
-                    ),
+                difficulty = cast(
+                    shared_domain.FixedDifficultyClass,
+                    saving_resolution.difficulty,
                 )
                 grant, resource_pool = _grant(
                     action.name,
@@ -74,21 +57,19 @@ def build_stat_block_actions(
                 definitions[action.name] = domain.SavingThrowActionDefinition(
                     name=action.name,
                     target=definition.target,
-                    ability=resolution.ability,
-                    dc=resolution.difficulty.value,
-                    failure=failure,
-                    success=build_outcome(resolution.success.effects).effects,
-                    success_damage=resolution.success_damage,
-                    always=build_outcome(resolution.always.effects).effects,
+                    ability=saving_resolution.ability,
+                    dc=difficulty.value,
+                    failure=saving_resolution.failure,
+                    success=saving_resolution.success.effects,
+                    success_damage=saving_resolution.success_damage,
+                    always=saving_resolution.always.effects,
                     grant=grant,
                     resource_pool=resource_pool,
                 )
             elif isinstance(resolution, AutomaticResolutionSchema):
-                definition = build_definition(
-                    target=build_target(capability.target),
-                    resolution=build_automatic_resolution(
-                        build_outcome(resolution.outcome.effects)
-                    ),
+                automatic_resolution = cast(
+                    shared_domain.AutomaticResolution,
+                    definition.resolution,
                 )
                 grant, resource_pool = _grant(
                     action.name,
@@ -98,7 +79,7 @@ def build_stat_block_actions(
                 definitions[action.name] = domain.AutomaticActionDefinition(
                     name=action.name,
                     target=definition.target,
-                    effects=build_outcome(resolution.outcome.effects).effects,
+                    effects=automatic_resolution.outcome.effects,
                     grant=grant,
                     resource_pool=resource_pool,
                 )
@@ -175,26 +156,22 @@ def _attack_definition(
     action: BestiaryActionSchema,
     capability: schema.AttackCapabilitySchema,
 ) -> domain.AttackActionDefinition:
-    target = build_target(capability.target)
-    hit = build_outcome(capability.hit)
-    definition = build_definition(
-        target=target,
-        resolution=build_attack_resolution(
-            modes=tuple(capability.attack_modes),
-            attack_bonus=shared_domain.FixedAttackBonus(capability.attack_bonus),
-            hit=hit,
-        ),
+    definition = build_capability(
+        target=capability.target,
+        resolution=capability,
+        content=f"Monster action '{action.name}'",
     )
+    resolution = cast(shared_domain.AttackResolution, definition.resolution)
     grant, resource_pool = _grant(action.name, definition, capability.resource)
     return domain.AttackActionDefinition(
         name=action.name,
         attack_modes=tuple(capability.attack_modes),
         attack_bonus=capability.attack_bonus,
-        target=target,
+        target=definition.target,
         reach_feet=capability.reach_feet,
         range_normal_feet=capability.range_normal_feet,
         range_long_feet=capability.range_long_feet,
-        hit=hit.effects,
+        hit=resolution.hit.effects,
         grant=grant,
         resource_pool=resource_pool,
     )
@@ -254,17 +231,6 @@ def _parse_attack_modes(value: str) -> tuple[str, ...]:
         if "r" in token and "ranged" not in modes:
             modes.append("ranged")
     return tuple(modes)
-
-
-def _repeat_save(value: schema.RepeatSaveSchema) -> shared_domain.RepeatSave:
-    return shared_domain.RepeatSave(
-        trigger=value.trigger,
-        interval_amount=value.interval_amount,
-        interval_unit=value.interval_unit,
-        distance_from_source_feet=value.distance_from_source_feet,
-        effects_end_on_success=value.effects_end_on_success,
-        automatic_success_after=build_duration(value.automatic_success_after),
-    )
 
 
 def _resource_pool(

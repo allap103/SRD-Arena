@@ -5,17 +5,21 @@ from typing import Annotated, Literal
 from pydantic import Field, model_validator
 
 from srd_arena.content.capabilities import (
-    Ability,
+    AreaGeometrySchema,
+    AreaTargetSchema,
     ConditionImmunityRequirementSchema,
     ConditionRequirementSchema,
     CreatureTraitRequirementSchema,
+    CreatureTargetSchema,
     CreatureTypeRequirementSchema,
-    EffectDurationSchema,
     NonNegativeInt,
     NotAffectedRequirementSchema,
     PositiveInt,
     RelationshipRequirementSchema,
+    SelfTargetSchema,
+    SavingThrowModifierSchema,
     SizeRequirementSchema,
+    TargetCountSchema,
 )
 
 from .base import SpellCapabilitySchemaModel
@@ -82,41 +86,11 @@ SpellRequirementSchema = Annotated[
 ]
 
 
-class SpellSaveModifierSchema(SpellCapabilitySchemaModel):
-    type: Literal["roll_modifier"]
-    roll: Literal["saving_throw"]
-    mode: Literal["advantage", "disadvantage", "add", "subtract"]
-    ability: Ability | None = None
-    dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
-    value: int | None = None
-    duration: EffectDurationSchema | None = None
-    requirements: list[SpellRequirementSchema] = Field(default_factory=list)
+SpellSaveModifierSchema = SavingThrowModifierSchema
 
 
-class TargetCountSchema(SpellCapabilitySchemaModel):
-    minimum: NonNegativeInt = 1
-    maximum: PositiveInt | Literal["spellcasting_modifier", "all"] = 1
-
-    @model_validator(mode="after")
-    def validate_bounds(self) -> "TargetCountSchema":
-        if isinstance(self.maximum, int) and self.minimum > self.maximum:
-            raise ValueError("Target count minimum cannot exceed maximum.")
-        return self
-
-
-class SelfSpellTargetSchema(SpellCapabilitySchemaModel):
-    type: Literal["self"]
-
-
-class CreatureSpellTargetSchema(SpellCapabilitySchemaModel):
-    type: Literal["creature"]
-    count: TargetCountSchema = Field(default_factory=TargetCountSchema)
-    disposition: Literal[
-        "any", "ally", "enemy", "willing", "source", "trigger_target"
-    ] = "any"
-    selection: Literal["all", "choose", "choose_up_to"] = "choose"
-    line_of_sight: bool = False
-    requirements: list[SpellRequirementSchema] = Field(default_factory=list)
+SelfSpellTargetSchema = SelfTargetSchema
+CreatureSpellTargetSchema = CreatureTargetSchema
 
 
 class ObjectSpellTargetSchema(SpellCapabilitySchemaModel):
@@ -145,66 +119,7 @@ class EventSpellTargetSchema(SpellCapabilitySchemaModel):
     ]
 
 
-class AreaGeometrySchema(SpellCapabilitySchemaModel):
-    shape: Literal[
-        "sphere", "cone", "cube", "line", "cylinder", "emanation", "wall", "ring"
-    ]
-    radius_feet: PositiveInt | None = None
-    length_feet: PositiveInt | None = None
-    width_feet: PositiveInt | None = None
-    height_feet: PositiveInt | None = None
-    diameter_feet: PositiveInt | None = None
-
-    @model_validator(mode="after")
-    def validate_dimensions(self) -> "AreaGeometrySchema":
-        if self.shape in {"sphere", "emanation"} and self.radius_feet is None:
-            raise ValueError(f"{self.shape.title()} geometry requires radius_feet.")
-        if self.shape == "cone" and self.length_feet is None:
-            raise ValueError("Cone geometry requires length_feet.")
-        if self.shape == "cube" and self.length_feet is None:
-            raise ValueError("Cube geometry requires length_feet.")
-        if self.shape == "line" and (
-            self.length_feet is None or self.width_feet is None
-        ):
-            raise ValueError("Line geometry requires length_feet and width_feet.")
-        if self.shape == "cylinder" and (
-            self.radius_feet is None or self.height_feet is None
-        ):
-            raise ValueError("Cylinder geometry requires radius_feet and height_feet.")
-        if self.shape == "wall" and (
-            self.length_feet is None
-            or self.width_feet is None
-            or self.height_feet is None
-        ):
-            raise ValueError(
-                "Wall geometry requires length_feet, width_feet, and height_feet."
-            )
-        if self.shape == "ring" and (
-            self.diameter_feet is None
-            or self.width_feet is None
-            or self.height_feet is None
-        ):
-            raise ValueError(
-                "Ring geometry requires diameter_feet, width_feet, and height_feet."
-            )
-        return self
-
-
-class AreaSpellTargetSchema(SpellCapabilitySchemaModel):
-    type: Literal["area"]
-    origin: Literal["self", "point_in_range", "target", "spell_entity", "event_target"]
-    geometry: AreaGeometrySchema
-    affects: Literal["creatures", "objects", "creatures_and_objects"] = "creatures"
-    occupants: Literal["all", "allies", "enemies", "chosen"] = "all"
-    chosen_count: TargetCountSchema | None = None
-    excludes_source: bool = False
-    requirements: list[SpellRequirementSchema] = Field(default_factory=list)
-
-    @model_validator(mode="after")
-    def validate_chosen_count(self) -> "AreaSpellTargetSchema":
-        if self.occupants == "chosen" and self.chosen_count is None:
-            raise ValueError("Chosen area occupants require chosen_count.")
-        return self
+AreaSpellTargetSchema = AreaTargetSchema
 
 
 class CompositeAreaComponentSchema(SpellCapabilitySchemaModel):

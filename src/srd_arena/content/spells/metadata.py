@@ -1,13 +1,16 @@
+"""Derive display and compatibility metadata from authored spell content."""
+
 import re
 
-from srd_arena.content.spells.schema import SpellSchema
 from srd_arena.content.capabilities import DamageEffectSchema, RemoveEffectSchema
-from srd_arena.content.spells.resolution import (
+
+from .resolution import (
     AutomaticResolutionSchema,
     RepeatResolutionSchema,
     SavingThrowResolutionSchema,
     SpellAttackResolutionSchema,
 )
+from .schema import SpellSchema
 
 
 def spell_damage_dice(raw: SpellSchema) -> str | None:
