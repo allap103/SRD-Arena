@@ -143,17 +143,28 @@ def test_spell_slot_cost_is_separate_from_spell_slot_pool() -> None:
 
 def test_spell_grants_describe_activation_and_slot_cost() -> None:
     spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    spellcasting = Spellcasting(
+        ability="int",
+        ability_modifier=4,
+        save_dc=15,
+        attack_bonus=7,
+        caster_progression="full",
+        spell_slots_max={1: 4, 2: 3, 3: 2},
+    )
 
     fireball = build_spell("Fireball", "XPHB", spells)
-    assert fireball.grant is not None
-    assert fireball.grant.activation == "action"
-    assert isinstance(fireball.grant.cost, SpellSlotCost)
-    assert fireball.grant.cost.minimum_level == 3
+    fireball_grant = spellcasting.grant_for(fireball)
+    assert fireball_grant is not None
+    assert fireball.activation == "action"
+    assert fireball_grant.activation == "action"
+    assert isinstance(fireball_grant.cost, SpellSlotCost)
+    assert fireball_grant.cost.minimum_level == 3
 
     fire_bolt = build_spell("Fire Bolt", "XPHB", spells)
-    assert fire_bolt.grant is not None
-    assert fire_bolt.grant.activation == "action"
-    assert fire_bolt.grant.cost is None
+    fire_bolt_grant = spellcasting.grant_for(fire_bolt)
+    assert fire_bolt_grant is not None
+    assert fire_bolt.activation == "action"
+    assert fire_bolt_grant.cost is None
 
 
 def test_npc_spell_uses_are_separate_from_player_spell_slots() -> None:
@@ -196,9 +207,10 @@ def test_npc_spell_uses_are_separate_from_player_spell_slots() -> None:
     assert fireball.resource_pool.refresh == "day"
     assert fireball.spell is not None
     assert fireball.spell.name == "Fireball"
-    assert fireball.spell.grant is not None
+    assert fireball.spell.capability is not None
+    assert fireball.spell.capability.definition is not None
     assert fireball.grant is not None
-    assert fireball.grant.definition == fireball.spell.grant.definition
+    assert fireball.grant.definition == fireball.spell.capability.definition
     assert isinstance(fireball.grant.cost, PoolUseCost)
     assert fireball.grant.cost.pool_id == fireball.resource_pool.id
     assert fire_bolt.resource_pool is None

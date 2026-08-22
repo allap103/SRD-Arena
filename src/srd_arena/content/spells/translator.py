@@ -112,15 +112,14 @@ def build_spell(
         ),
         target_requirements=_target_requirements(raw),
         capability=capability,
-        grant=_compile_grant(raw, capability),
+        activation=_compile_activation(raw),
     )
 
 
-def _compile_grant(
+def _compile_activation(
     raw: SpellSchema,
-    capability: SpellCapability | None,
-) -> capability_domain.CapabilityGrant | None:
-    if capability is None or capability.definition is None or not raw.time:
+) -> capability_domain.CapabilityActivation | None:
+    if not raw.time:
         return None
     activation_by_unit: dict[str, capability_domain.CapabilityActivation] = {
         "action": "action",
@@ -130,17 +129,7 @@ def _compile_grant(
     unit = raw.time[0].get("unit")
     if not isinstance(unit, str) or unit not in activation_by_unit:
         return None
-    cost = (
-        capability_domain.SpellSlotCost("spell_slots", raw.level)
-        if raw.level > 0
-        else None
-    )
-    return capability_domain.CapabilityGrant(
-        id=slug(raw.public_name),
-        definition=capability.definition,
-        activation=activation_by_unit[unit],
-        cost=cost,
-    )
+    return activation_by_unit[unit]
 
 
 def _translate_capability(raw: SpellSchema) -> SpellCapability | None:

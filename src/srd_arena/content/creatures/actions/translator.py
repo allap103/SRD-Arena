@@ -287,11 +287,16 @@ def _spell_option(
         )
         cost = shared_domain.PoolUseCost(pool_id)
     grant = None
-    if resolved is not None and resolved.grant is not None:
+    if (
+        resolved is not None
+        and resolved.capability is not None
+        and resolved.capability.definition is not None
+        and resolved.activation is not None
+    ):
         grant = shared_domain.CapabilityGrant(
-            id=resolved.grant.id,
-            definition=resolved.grant.definition,
-            activation=resolved.grant.activation,
+            id=f"stat_block_spell:{spell.name}",
+            definition=resolved.capability.definition,
+            activation=resolved.activation,
             cost=cost,
         )
     return domain.SpellOption(

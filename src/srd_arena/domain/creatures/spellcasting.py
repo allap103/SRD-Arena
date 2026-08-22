@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from ..capabilities import SpellSlotPool
+from ..capabilities import CapabilityGrant, SpellSlotCost, SpellSlotPool
 
 if TYPE_CHECKING:
     from ..spells.definitions import Spell
@@ -28,4 +28,23 @@ class Spellcasting:
         return SpellSlotPool(
             id="spell_slots",
             maximum_by_level=tuple(sorted(self.spell_slots_max.items())),
+        )
+
+    def grant_for(self, spell: Spell) -> CapabilityGrant | None:
+        if (
+            spell.capability is None
+            or spell.capability.definition is None
+            or spell.activation is None
+        ):
+            return None
+        cost = (
+            SpellSlotCost(self.spell_slot_pool.id, spell.level)
+            if spell.level > 0
+            else None
+        )
+        return CapabilityGrant(
+            id=spell.id,
+            definition=spell.capability.definition,
+            activation=spell.activation,
+            cost=cost,
         )
