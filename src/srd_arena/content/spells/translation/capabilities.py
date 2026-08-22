@@ -10,16 +10,53 @@ import srd_arena.domain.capabilities as domain
 from srd_arena.content.spells.resolution import (
     AutomaticResolutionSchema,
     OutcomeSchema,
+    RepeatResolutionSchema,
     SavingThrowResolutionSchema,
+    SequenceResolutionSchema,
     SpellAttackResolutionSchema,
 )
+from srd_arena.content.spells.schema import SpellSchema
 from srd_arena.content.spells.targeting import SpellTargetSchema
+from srd_arena.content.spells.targeting import (
+    AreaSpellTargetSchema,
+    CreatureSpellTargetSchema,
+)
 
 SpellResolutionSchema = (
     AutomaticResolutionSchema
     | SavingThrowResolutionSchema
     | SpellAttackResolutionSchema
 )
+
+
+def compile_spell_definition(
+    raw: SpellSchema,
+) -> domain.CapabilityDefinition | None:
+    """Compile the primary executable resolution of an authored spell."""
+    if raw.capability is None:
+        return None
+    resolution: object = raw.capability.resolution.root
+    if isinstance(resolution, SequenceResolutionSchema):
+        resolution = resolution.steps[0].resolution.root
+    if isinstance(resolution, RepeatResolutionSchema):
+        resolution = resolution.resolution.root
+    if not isinstance(
+        resolution,
+        (
+            AutomaticResolutionSchema,
+            SavingThrowResolutionSchema,
+            SpellAttackResolutionSchema,
+        ),
+    ):
+        return None
+    outcome = (
+        resolution.failure
+        if isinstance(resolution, SavingThrowResolutionSchema)
+        else resolution.hit
+        if isinstance(resolution, SpellAttackResolutionSchema)
+        else resolution.outcome
+    )
+    return compile_definition(raw.capability.target, resolution, outcome)
 
 
 def compile_definition(
@@ -117,13 +154,37 @@ def _compile_target(
 ) -> domain.CapabilityTarget | None:
     if target.type == "self":
         return domain.CapabilityTarget(kind="self")
-    if target.type == "creature":
-        return domain.CapabilityTarget(kind="creature")
-    if target.type != "area":
+    if isinstance(target, CreatureSpellTargetSchema):
+        maximum = (
+            "ability_modifier"
+            if target.count.maximum == "spellcasting_modifier"
+            else target.count.maximum
+        )
+        return domain.CapabilityTarget(
+            kind="creature",
+            count=domain.TargetCount(target.count.minimum, maximum),
+            line_of_sight=target.line_of_sight,
+            disposition=target.disposition,
+            selection=target.selection,
+        )
+    if not isinstance(target, AreaSpellTargetSchema):
         return None
     geometry = target.geometry
+    chosen_count = target.chosen_count
     return domain.CapabilityTarget(
         kind="area",
+        count=(
+            domain.TargetCount(
+                chosen_count.minimum,
+                (
+                    "ability_modifier"
+                    if chosen_count.maximum == "spellcasting_modifier"
+                    else chosen_count.maximum
+                ),
+            )
+            if chosen_count is not None
+            else domain.TargetCount()
+        ),
         shape=geometry.shape,
         size_feet=(
             geometry.radius_feet
@@ -132,4 +193,6 @@ def _compile_target(
         ),
         width_feet=geometry.width_feet,
         origin=target.origin,
+        occupants=target.occupants,
+        excludes_source=target.excludes_source,
     )

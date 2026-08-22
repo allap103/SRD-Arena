@@ -26,14 +26,21 @@ def is_shared_effect(value: object) -> TypeGuard[effects.ActionEffectSchema]:
 
 
 def compile_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
+    count = getattr(value, "count", 1)
+    affects = getattr(value, "affects", "creatures")
     return domain.CapabilityTarget(
         kind=value.type,
+        count=domain.TargetCount(maximum=count),
         range_feet=getattr(value, "range_feet", None),
         shape=getattr(value, "shape", None),
         size_feet=getattr(value, "size_feet", None),
         width_feet=getattr(value, "width_feet", None),
         origin=getattr(value, "origin", "self"),
         line_of_sight=getattr(value, "line_of_sight", False),
+        occupants=(
+            affects if affects in {"allies", "enemies"} else "all"
+        ),
+        excludes_source=getattr(value, "excludes_self", False),
         requirements=tuple(
             compile_requirement(requirement)
             for requirement in getattr(value, "requirements", ())

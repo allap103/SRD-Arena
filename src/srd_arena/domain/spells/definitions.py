@@ -107,8 +107,6 @@ class SpellCapability:
     condition_immunities: tuple[str, ...] = ()
     senses: tuple[tuple[str, int], ...] = ()
     roll_modifier_ability_choices: tuple[str, ...] = ()
-    definition: CapabilityDefinition | None = None
-
     @property
     def healing_pool(self) -> int | None:
         return next(
@@ -140,5 +138,6 @@ class Spell:
     area_size_feet: int | None = None
     concentration: bool = False
     target_requirements: tuple[CapabilityRequirement, ...] = ()
+    definition: CapabilityDefinition | None = None
     capability: SpellCapability | None = None
     activation: CapabilityActivation | None = None

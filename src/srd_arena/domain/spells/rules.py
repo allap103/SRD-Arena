@@ -48,7 +48,34 @@ def spell_cast_block_reason(
 
 
 def spell_targets_self_only(spell: Spell) -> bool:
-    return spell.range_data.get("type") == "self"
+    return (
+        spell.definition is not None and spell.definition.target.kind == "self"
+    ) or spell.range_data.get("type") == "self"
+
+
+def spell_chooses_area_targets(spell: Spell) -> bool:
+    if spell.definition is not None:
+        target = spell.definition.target
+        return target.kind == "area" and target.occupants == "chosen"
+    return bool(
+        spell.capability is not None and spell.capability.choose_area_targets
+    )
+
+
+def spell_target_disposition(spell: Spell) -> str:
+    if spell.definition is not None and spell.definition.target.kind == "creature":
+        return spell.definition.target.disposition
+    return (
+        spell.capability.target_disposition
+        if spell.capability is not None
+        else "enemy"
+    )
+
+
+def spell_area_shape(spell: Spell) -> str | None:
+    if spell.definition is not None and spell.definition.target.kind == "area":
+        return spell.definition.target.shape
+    return spell.capability.area_shape if spell.capability is not None else None
 
 
 def spell_range_squares(spell: Spell, grid: Grid) -> int | None:

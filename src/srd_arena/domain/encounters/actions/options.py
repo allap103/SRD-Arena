@@ -22,8 +22,11 @@ from ...spells.rules import (
     spell_action_id,
     spell_action_label,
     spell_action_value,
+    spell_area_shape,
     spell_cast_block_reason,
+    spell_chooses_area_targets,
     spell_range_squares,
+    spell_target_disposition,
     spell_targets_self_only,
 )
 from ...spells.rules import parse_spell_action_condition, parse_spell_action_value
@@ -284,7 +287,7 @@ def spell_target_selection_actions(
     )
     candidates = (
         state._spell_area_targets(actor, spell, aim_point=aim_point)
-        if spell.capability is not None and spell.capability.choose_area_targets
+        if spell_chooses_area_targets(spell)
         else tuple(state._spell_action_targets(actor, spell))
     )
     if pending.resource_pool_total is not None:
@@ -509,11 +512,7 @@ def spell_action_targets(
     for target_ref, target_state in self.creatures.items():
         if not target_state.is_alive:
             continue
-        disposition = (
-            spell.capability.target_disposition
-            if spell.capability is not None
-            else "enemy"
-        )
+        disposition = spell_target_disposition(spell)
         is_opponent = self._creatures_are_opponents(creature_ref, target_ref)
         if disposition == "enemy" and not is_opponent:
             continue
@@ -628,7 +627,7 @@ def spell_area(
             self.definition.grid.distance_from_feet(radius_feet, minimum=1)
         )
         origin = Position(int(aim_point[0]), int(aim_point[1]))
-        if spell.capability is not None and spell.capability.area_shape == "cube":
+        if spell_area_shape(spell) == "cube":
             return build_point_cube_area(origin, radius_squares, self.definition.grid)
         return build_radius_area(origin, radius_squares, self.definition.grid)
     if spell.geometry_mode != "directional_area":

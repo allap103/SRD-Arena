@@ -16,6 +16,7 @@ from ...spells.rules import (
     parse_spell_action_slot,
     parse_spell_action_targets,
     parse_spell_action_value,
+    spell_chooses_area_targets,
 )
 from ..behaviors import DIRECTION_DELTAS
 from ..models import CreatureRef, EncounterAction
@@ -526,7 +527,7 @@ class SpellTargetSelectionRule:
             target.target_ref
             for target in (
                 state._spell_area_targets(actor, spell, aim_point=aim_point)
-                if spell.capability is not None and spell.capability.choose_area_targets
+                if spell_chooses_area_targets(spell)
                 else tuple(state._spell_action_targets(actor, spell))
             )
         }

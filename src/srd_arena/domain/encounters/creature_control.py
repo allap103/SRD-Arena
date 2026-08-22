@@ -29,6 +29,7 @@ from ..spells.rules import (
     parse_spell_action_targets,
     parse_spell_action_value,
     spell_action_value,
+    spell_chooses_area_targets,
     spell_max_targets,
 )
 from .models import (
@@ -480,8 +481,7 @@ def execute_creature_action(
             maximum_targets = len(resource_allocation_limits)
         if (
             spell is not None
-            and spell.capability is not None
-            and spell.capability.choose_area_targets
+            and spell_chooses_area_targets(spell)
             and aim_point is not None
         ):
             selected_targets = [
@@ -497,8 +497,7 @@ def execute_creature_action(
             maximum_targets > 1 and bool(selected_targets)
         ) or (
             spell is not None
-            and spell.capability is not None
-            and spell.capability.choose_area_targets
+            and spell_chooses_area_targets(spell)
             and len(selected_targets) > 1
         )
         automated_resolved = False
@@ -536,7 +535,7 @@ def execute_creature_action(
                 )
                 staged_selection_needed = False
                 automated_resolved = True
-            elif not spell.capability.choose_area_targets:
+            elif not spell_chooses_area_targets(spell):
                 selected_targets = [
                     target.target_ref
                     for target in self._spell_action_targets(

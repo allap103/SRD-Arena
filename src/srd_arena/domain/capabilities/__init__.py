@@ -35,6 +35,7 @@ from .models import (
     RollModifierEffect,
     SizeRequirement,
     SpeedMultiplierEffect,
+    TargetCount,
     TurnEconomyRestrictionEffect,
 )
 from .grants import (
@@ -89,6 +90,7 @@ __all__ = [
     "SavingThrowResolution",
     "SizeRequirement",
     "SpeedMultiplierEffect",
+    "TargetCount",
     "SpellSlotCost",
     "SpellSlotPool",
     "TurnEconomyRestrictionEffect",

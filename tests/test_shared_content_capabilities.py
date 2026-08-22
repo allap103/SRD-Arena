@@ -57,11 +57,14 @@ def test_spells_and_stat_blocks_compile_shared_domain_capabilities() -> None:
 
     fireball = build_spell("Fireball", "XPHB", spells)
     assert fireball.capability is not None
-    assert fireball.capability.definition is not None
-    spell_resolution = fireball.capability.definition.resolution
+    assert fireball.definition is not None
+    spell_resolution = fireball.definition.resolution
     assert isinstance(spell_resolution, SavingThrowResolution)
     assert isinstance(spell_resolution.difficulty, DerivedDifficultyClass)
     assert spell_resolution.difficulty.derivation == "spell_save_dc"
+    assert fireball.definition.target.kind == "area"
+    assert fireball.definition.target.shape == "sphere"
+    assert fireball.definition.target.size_feet == 20
 
     dragon = monsters.find("Ancient White Dragon", "XMM")
     breath = next(
@@ -83,11 +86,13 @@ def test_spells_and_stat_blocks_compile_shared_attack_resolutions() -> None:
 
     fire_bolt = build_spell("Fire Bolt", "XPHB", spells)
     assert fire_bolt.capability is not None
-    assert fire_bolt.capability.definition is not None
-    spell_resolution = fire_bolt.capability.definition.resolution
+    assert fire_bolt.definition is not None
+    spell_resolution = fire_bolt.definition.resolution
     assert isinstance(spell_resolution, AttackResolution)
     assert isinstance(spell_resolution.attack_bonus, DerivedAttackBonus)
     assert spell_resolution.attack_bonus.derivation == "spell_attack_modifier"
+    assert fire_bolt.definition.target.kind == "creature"
+    assert fire_bolt.definition.target.disposition == "any"
 
     goblin = monsters.find("Goblin Warrior", "XMM")
     scimitar = build_stat_block_actions(goblin)["Scimitar"]
@@ -97,6 +102,18 @@ def test_spells_and_stat_blocks_compile_shared_attack_resolutions() -> None:
     assert isinstance(action_resolution, AttackResolution)
     assert isinstance(action_resolution.attack_bonus, FixedAttackBonus)
     assert action_resolution.attack_bonus.value == 4
+
+
+def test_spell_area_selection_compiles_into_shared_target() -> None:
+    spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+
+    sleep = build_spell("Sleep", "XPHB", spells)
+
+    assert sleep.definition is not None
+    assert sleep.definition.target.kind == "area"
+    assert sleep.definition.target.occupants == "chosen"
+    assert sleep.definition.target.count.minimum == 0
+    assert sleep.definition.target.count.maximum == "all"
 
 
 def test_stat_block_resources_belong_to_capability_grants() -> None:
@@ -208,9 +225,9 @@ def test_npc_spell_uses_are_separate_from_player_spell_slots() -> None:
     assert fireball.spell is not None
     assert fireball.spell.name == "Fireball"
     assert fireball.spell.capability is not None
-    assert fireball.spell.capability.definition is not None
+    assert fireball.spell.definition is not None
     assert fireball.grant is not None
-    assert fireball.grant.definition == fireball.spell.capability.definition
+    assert fireball.grant.definition == fireball.spell.definition
     assert isinstance(fireball.grant.cost, PoolUseCost)
     assert fireball.grant.cost.pool_id == fireball.resource_pool.id
     assert fire_bolt.resource_pool is None

@@ -1,8 +1,9 @@
 """Assemble loaded spells from authored content.
 
 The translator has three jobs: resolve the authored spell, compile intrinsic
-spell metadata and the shared executable capability definition, and produce the
-legacy ``SpellCapability`` projection still consumed by the encounter runtime.
+spell metadata and the shared executable capability definition, and separately
+produce the legacy ``SpellCapability`` projection still consumed by the
+encounter runtime.
 Provider-specific grants and resource costs do not belong here.
 
 Keep ``build_spell`` as the readable orchestration entrypoint. New translation
@@ -58,7 +59,7 @@ from .translation import (
     automatic_success_traits,
     cantrip_damage_by_level,
     compile_activation,
-    compile_definition,
+    compile_spell_definition,
     creature_types_from_requirements,
     damage_repeat_save_advantage,
     effect_duration_rounds,
@@ -124,6 +125,7 @@ def build_spell(
             if isinstance(duration, dict)
         ),
         target_requirements=target_requirements(raw),
+        definition=compile_spell_definition(raw),
         capability=capability,
         activation=compile_activation(raw),
     )
@@ -429,5 +431,4 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
             if isinstance(effect.root, RollModifierEffectSchema)
             for ability in effect.root.ability_options
         ),
-        definition=compile_definition(target, resolution, outcome),
     )

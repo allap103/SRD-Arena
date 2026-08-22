@@ -289,13 +289,12 @@ def _spell_option(
     grant = None
     if (
         resolved is not None
-        and resolved.capability is not None
-        and resolved.capability.definition is not None
+        and resolved.definition is not None
         and resolved.activation is not None
     ):
         grant = shared_domain.CapabilityGrant(
             id=f"stat_block_spell:{spell.name}",
-            definition=resolved.capability.definition,
+            definition=resolved.definition,
             activation=resolved.activation,
             cost=cost,
         )

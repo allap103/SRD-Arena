@@ -1,7 +1,7 @@
 """Concern-based compilation of authored spell content."""
 
 from .activation import compile_activation
-from .capabilities import compile_definition
+from .capabilities import compile_definition, compile_spell_definition
 from .scaling import (
     cantrip_damage_by_level,
     slot_damage_increment,
@@ -34,6 +34,7 @@ __all__ = [
     "automatic_success_traits",
     "compile_activation",
     "compile_definition",
+    "compile_spell_definition",
     "creature_types_from_requirements",
     "damage_repeat_save_advantage",
     "effect_duration_rounds",

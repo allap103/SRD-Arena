@@ -32,8 +32,7 @@ class Spellcasting:
 
     def grant_for(self, spell: Spell) -> CapabilityGrant | None:
         if (
-            spell.capability is None
-            or spell.capability.definition is None
+            spell.definition is None
             or spell.activation is None
         ):
             return None
@@ -44,7 +43,7 @@ class Spellcasting:
         )
         return CapabilityGrant(
             id=spell.id,
-            definition=spell.capability.definition,
+            definition=spell.definition,
             activation=spell.activation,
             cost=cost,
         )
