@@ -1,3 +1,15 @@
+"""Assemble loaded spells from authored content.
+
+The translator has three jobs: resolve the authored spell, compile intrinsic
+spell metadata and the shared executable capability definition, and produce the
+legacy ``SpellCapability`` projection still consumed by the encounter runtime.
+Provider-specific grants and resource costs do not belong here.
+
+Keep ``build_spell`` as the readable orchestration entrypoint. New translation
+rules belong in the concern-based ``translation`` package; the remaining legacy
+projection should shrink as runtime consumers move to shared capabilities.
+"""
+
 from typing import cast
 
 from .catalog import SpellCatalog
