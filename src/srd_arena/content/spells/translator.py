@@ -39,34 +39,34 @@ from srd_arena.domain.effects.modifiers import (
     RollModifier,
 )
 from .translation import (
+    automatic_success_condition_immunities,
+    automatic_success_traits,
     cantrip_damage_by_level,
     compile_activation,
     compile_definition,
+    damage_repeat_save_advantage,
+    effect_duration_rounds,
+    end_events,
+    repeat_failure_conditions,
+    repeat_failure_damage,
+    repeat_save_trigger,
+    save_advantage_against_opponents,
     slot_damage_increment,
     slot_scaling_value,
     slot_target_increment,
+    spell_duration_rounds,
     target_count_by_caster_level,
 )
 
 
 from .translation_helpers import (
-    _automatic_success_condition_immunities,
-    _automatic_success_traits,
     _creature_types_from_requirements,
-    _damage_repeat_save_advantage,
-    _end_events,
-    _effect_duration_rounds,
     _find_spell,
     _follow_up_resolution,
     _normalize_save_ability,
     _remove_effect_selection,
-    _repeat_failure_conditions,
-    _repeat_failure_damage,
-    _repeat_save_trigger,
-    _save_advantage_against_opponents,
     _spell_area_size_feet,
     _spell_damage_dice,
-    _spell_duration_rounds,
     _spell_geometry_mode,
     _spell_removable_conditions,
     _spell_removable_effect_kinds,
@@ -312,13 +312,13 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
         ),
         conditions=conditions,
         condition_choice=raw.capability.condition_application == "choose_one",
-        duration_rounds=_spell_duration_rounds(raw),
+        duration_rounds=spell_duration_rounds(raw),
         concentration=any(
             bool(duration.get("concentration"))
             for duration in raw.duration
             if isinstance(duration, dict)
         ),
-        repeat_save_trigger=_repeat_save_trigger(resolution),
+        repeat_save_trigger=repeat_save_trigger(resolution),
         expires_on_source_turn_end=any(
             isinstance(effect.root, ConditionEffectSchema)
             and effect.root.duration is not None
@@ -327,17 +327,17 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
             for effect in outcome.effects
         ),
         target_disposition=(target.disposition if target.type == "creature" else "any"),
-        repeat_failure_conditions=_repeat_failure_conditions(resolution),
-        repeat_failure_damage=_repeat_failure_damage(resolution),
-        end_events=_end_events(raw),
-        damage_repeat_save_advantage=_damage_repeat_save_advantage(raw),
+        repeat_failure_conditions=repeat_failure_conditions(resolution),
+        repeat_failure_damage=repeat_failure_damage(resolution),
+        end_events=end_events(raw),
+        damage_repeat_save_advantage=damage_repeat_save_advantage(raw),
         save_advantage_against_opponents=(
-            _save_advantage_against_opponents(resolution)
+            save_advantage_against_opponents(resolution)
         ),
         automatic_success_condition_immunities=(
-            _automatic_success_condition_immunities(resolution)
+            automatic_success_condition_immunities(resolution)
         ),
-        automatic_success_traits=_automatic_success_traits(resolution),
+        automatic_success_traits=automatic_success_traits(resolution),
         self_removal_blocked_conditions=tuple(
             raw.capability.self_removal_blocked_conditions
         ),
@@ -393,7 +393,7 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
         armor_class_modifier=armor_class_modifier,
         speed_modifier_feet=(speed_modifier.feet if speed_modifier is not None else 0),
         speed_modifier_duration_rounds=(
-            _effect_duration_rounds(speed_modifier.duration)
+            effect_duration_rounds(speed_modifier.duration)
             if speed_modifier is not None
             else None
         ),
