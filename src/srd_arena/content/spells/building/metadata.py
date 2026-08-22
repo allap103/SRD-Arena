@@ -1,11 +1,10 @@
 import re
 
 from srd_arena.content.spells.schema import SpellSchema
-from srd_arena.content.capabilities import DamageEffectSchema
+from srd_arena.content.capabilities import DamageEffectSchema, RemoveEffectSchema
 from srd_arena.content.spells.resolution import (
     AutomaticResolutionSchema,
     RepeatResolutionSchema,
-    RemoveEffectSchema,
     SavingThrowResolutionSchema,
     SpellAttackResolutionSchema,
 )

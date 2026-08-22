@@ -1,19 +1,27 @@
-from collections.abc import Iterable
 from dataclasses import replace
 from typing import Literal, cast
 
 from srd_arena.content.capabilities import (
     CapabilityBuildError,
     ConditionRequirementSchema,
+    ConditionImmunityRequirementSchema,
+    CreatureTraitRequirementSchema,
     CreatureTypeRequirementSchema,
     DerivedDifficultyClassSchema,
     FixedDifficultyClassSchema,
     NotAffectedRequirementSchema,
+    RelationshipRequirementSchema,
     SizeRequirementSchema,
 )
 from srd_arena.content.capabilities.builder import (
+    build_attack_resolution,
+    build_automatic_resolution,
+    build_capability_target,
+    build_definition as build_capability_definition,
     build_duration,
+    build_effects,
     build_requirement,
+    build_saving_throw_resolution,
 )
 import srd_arena.domain.capabilities as domain
 
@@ -30,15 +38,11 @@ from srd_arena.content.spells.schema import SpellSchema
 from srd_arena.content.spells.targeting import SpellTargetSchema
 from srd_arena.content.spells.targeting import (
     AreaSpellTargetSchema,
-    ConditionImmunityRequirementSchema,
-    CreatureTraitRequirementSchema,
     CreatureSpellTargetSchema,
-    RelationshipRequirementSchema,
     SpellSaveModifierSchema,
 )
 
 from .scaling import build_scaling
-from .effects import build_capability_effect, is_buildable_effect
 from .targeting import normalize_save_ability
 
 SpellResolutionSchema = (
@@ -146,17 +150,17 @@ def build_definition(
         if isinstance(resolution, SpellAttackResolutionSchema)
         else "outcome"
     )
-    built_effects = _build_effects(
+    built_effects = build_effects(
         effect_values,
         content=content,
         location=f"{location}.{outcome_name}.effects",
     )
-    built_success = _build_effects(
+    built_success = build_effects(
         success_values,
         content=content,
         location=f"{location}.success.effects",
     )
-    built_miss = _build_effects(
+    built_miss = build_effects(
         miss_values,
         content=content,
         location=f"{location}.miss.effects",
@@ -188,9 +192,9 @@ def build_definition(
         content=content,
         location=location,
     )
-    return domain.CapabilityDefinition(
-        built_target,
-        built_resolution,
+    return build_capability_definition(
+        target=built_target,
+        resolution=built_resolution,
         condition_selection=condition_selection,
     )
 
@@ -207,7 +211,7 @@ def _build_resolution(
     location: str,
 ) -> domain.CapabilityResolution:
     if isinstance(resolution, SpellAttackResolutionSchema):
-        return domain.AttackResolution(
+        return build_attack_resolution(
             modes=(resolution.mode,),
             attack_bonus=domain.DerivedAttackBonus("spell_attack_modifier"),
             hit=outcome,
@@ -216,7 +220,7 @@ def _build_resolution(
             allocation=resolution.allocation,
         )
     if isinstance(resolution, AutomaticResolutionSchema):
-        return domain.AutomaticResolution(outcome)
+        return build_automatic_resolution(outcome)
     if resolution.ability is None:
         raise CapabilityBuildError(
             content=content,
@@ -231,7 +235,7 @@ def _build_resolution(
     else:
         derived = cast(DerivedDifficultyClassSchema, difficulty)
         built_difficulty = domain.DerivedDifficultyClass(derived.type)
-    return domain.SavingThrowResolution(
+    return build_saving_throw_resolution(
         ability=normalize_save_ability(resolution.ability),
         difficulty=built_difficulty,
         failure=(
@@ -372,7 +376,7 @@ def _build_repeat_save(
                 location=f"{location}.on_failure",
                 mechanic=type(failure).__name__,
             )
-        failure_effects = _build_effects(
+        failure_effects = build_effects(
             (effect.root for effect in failure.outcome.effects),
             content=content,
             location=f"{location}.on_failure.outcome.effects",
@@ -391,44 +395,20 @@ def _build_repeat_save(
     )
 
 
-def _build_effects(
-    values: Iterable[object],
-    *,
-    content: str,
-    location: str,
-) -> tuple[domain.CapabilityEffect, ...]:
-    built: list[domain.CapabilityEffect] = []
-    for index, effect in enumerate(values):
-        if not is_buildable_effect(effect):
-            raise CapabilityBuildError(
-                content=content,
-                location=f"{location}[{index}]",
-                mechanic=type(effect).__name__,
-            )
-        built.append(build_capability_effect(effect))
-    return tuple(built)
-
-
 def _build_spell_requirement(value: object) -> domain.CapabilityRequirement:
     if isinstance(
         value,
         (
             ConditionRequirementSchema,
+            ConditionImmunityRequirementSchema,
+            CreatureTraitRequirementSchema,
             CreatureTypeRequirementSchema,
             NotAffectedRequirementSchema,
+            RelationshipRequirementSchema,
             SizeRequirementSchema,
         ),
     ):
         return build_requirement(value)
-    if isinstance(value, CreatureTraitRequirementSchema):
-        return domain.CreatureTraitRequirement(value.trait)
-    if isinstance(value, ConditionImmunityRequirementSchema):
-        return domain.ConditionImmunityRequirement(value.condition)
-    if isinstance(value, RelationshipRequirementSchema):
-        return domain.RelationshipRequirement(
-            value.relationship,
-            value.established_by,
-        )
     raise TypeError(f"Unsupported save requirement: {type(value).__name__}")
 
 
@@ -457,14 +437,14 @@ def _build_target(
     location: str,
 ) -> domain.CapabilityTarget:
     if target.type == "self":
-        return domain.CapabilityTarget(kind="self")
+        return build_capability_target(kind="self")
     if isinstance(target, CreatureSpellTargetSchema):
         maximum = (
             "ability_modifier"
             if target.count.maximum == "spellcasting_modifier"
             else target.count.maximum
         )
-        return domain.CapabilityTarget(
+        return build_capability_target(
             kind="creature",
             count=domain.TargetCount(target.count.minimum, maximum),
             line_of_sight=target.line_of_sight,
@@ -479,7 +459,7 @@ def _build_target(
         )
     geometry = target.geometry
     chosen_count = target.chosen_count
-    return domain.CapabilityTarget(
+    return build_capability_target(
         kind="area",
         count=(
             domain.TargetCount(

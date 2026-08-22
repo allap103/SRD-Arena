@@ -8,8 +8,12 @@ from srd_arena.content.capabilities import (
     CapabilityBuildError,
 )
 from srd_arena.content.capabilities.builder import (
+    build_attack_resolution,
+    build_automatic_resolution,
+    build_definition,
     build_duration,
     build_outcome,
+    build_saving_throw_resolution,
     build_target,
 )
 from srd_arena.content.creatures.stat_block_schema import (
@@ -49,9 +53,9 @@ def build_stat_block_actions(
                     )
                     for stage in resolution.failure
                 )
-                definition = shared_domain.CapabilityDefinition(
+                definition = build_definition(
                     target=build_target(capability.target),
-                    resolution=shared_domain.SavingThrowResolution(
+                    resolution=build_saving_throw_resolution(
                         ability=resolution.ability,
                         difficulty=shared_domain.FixedDifficultyClass(
                             resolution.difficulty.value
@@ -80,9 +84,9 @@ def build_stat_block_actions(
                     resource_pool=resource_pool,
                 )
             elif isinstance(resolution, AutomaticResolutionSchema):
-                definition = shared_domain.CapabilityDefinition(
+                definition = build_definition(
                     target=build_target(capability.target),
-                    resolution=shared_domain.AutomaticResolution(
+                    resolution=build_automatic_resolution(
                         build_outcome(resolution.outcome.effects)
                     ),
                 )
@@ -173,9 +177,9 @@ def _attack_definition(
 ) -> domain.AttackActionDefinition:
     target = build_target(capability.target)
     hit = build_outcome(capability.hit)
-    definition = shared_domain.CapabilityDefinition(
+    definition = build_definition(
         target=target,
-        resolution=shared_domain.AttackResolution(
+        resolution=build_attack_resolution(
             modes=tuple(capability.attack_modes),
             attack_bonus=shared_domain.FixedAttackBonus(capability.attack_bonus),
             hit=hit,

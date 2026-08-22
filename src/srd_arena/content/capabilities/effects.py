@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
 from .durations import EffectDurationSchema
@@ -19,6 +19,123 @@ class DamageEffectSchema(CapabilitySchemaModel):
     damage_type: str = Field(min_length=1)
     minimum: NonNegativeInt | None = None
     requirements: list[AttackHitRequirementSchema] = Field(default_factory=list)
+
+
+class HealingEffectSchema(CapabilitySchemaModel):
+    type: Literal["healing"]
+    dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
+    bonus: int = 0
+    modifier: Literal["none", "ability_modifier", "spellcasting_ability"] = "none"
+    from_damage: Literal["none", "half_damage_dealt", "all_damage_dealt"] = "none"
+    restore_to_maximum: bool = False
+    pool: PositiveInt | None = None
+
+    @model_validator(mode="after")
+    def validate_healing_source(self) -> "HealingEffectSchema":
+        if (
+            self.dice is None
+            and self.bonus == 0
+            and self.modifier == "none"
+            and self.from_damage == "none"
+            and not self.restore_to_maximum
+            and self.pool is None
+        ):
+            raise ValueError(
+                "Healing requires a roll, value, modifier, or damage source."
+            )
+        return self
+
+
+class TemporaryHitPointsEffectSchema(CapabilitySchemaModel):
+    type: Literal["temporary_hit_points"]
+    dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
+    value: NonNegativeInt = 0
+    modifier: Literal["none", "ability_modifier", "spellcasting_ability"] = "none"
+    trigger: Literal["application", "target_turn_start"] = "application"
+
+    @model_validator(mode="after")
+    def validate_temporary_hit_points(self) -> "TemporaryHitPointsEffectSchema":
+        if self.dice is None and self.value == 0 and self.modifier == "none":
+            raise ValueError("Temporary hit points require a roll, value, or modifier.")
+        return self
+
+
+class ArmorClassModifierEffectSchema(CapabilitySchemaModel):
+    type: Literal["armor_class_modifier"]
+    value: int
+    duration: EffectDurationSchema | None = None
+
+
+class RemoveEffectSchema(CapabilitySchemaModel):
+    type: Literal["remove_effect"]
+    selection: Literal["one", "all"] = "one"
+    removable: list[
+        Literal[
+            "condition",
+            "exhaustion_level",
+            "curse",
+            "ability_score_reduction",
+            "hit_point_maximum_reduction",
+            "ongoing_effect",
+        ]
+    ] = Field(min_length=1)
+    conditions: list[str] = Field(default_factory=list)
+
+
+class DamageResistanceEffectSchema(CapabilitySchemaModel):
+    type: Literal["damage_resistance"]
+    damage_types: list[str] = Field(min_length=1)
+    selection: Literal["all", "choose_one"] = "all"
+    duration: EffectDurationSchema | None = None
+
+
+class DamageReductionEffectSchema(CapabilitySchemaModel):
+    type: Literal["damage_reduction"]
+    damage_types: list[str] = Field(min_length=1)
+    selection: Literal["all", "choose_one"] = "all"
+    dice: str = Field(pattern=r"^\d+d\d+$")
+    limit: PositiveInt = 1
+    period: Literal["turn"] = "turn"
+    duration: EffectDurationSchema | None = None
+
+
+class SpeedModifierEffectSchema(CapabilitySchemaModel):
+    type: Literal["speed_modifier"]
+    feet: int
+    duration: EffectDurationSchema | None = None
+
+
+class ConditionSaveAdvantageEffectSchema(CapabilitySchemaModel):
+    type: Literal["condition_save_advantage"]
+    conditions: list[str] = Field(min_length=1)
+    duration: EffectDurationSchema | None = None
+
+
+class DamageImmunityEffectSchema(CapabilitySchemaModel):
+    type: Literal["damage_immunity"]
+    damage_types: list[str] = Field(min_length=1)
+    duration: EffectDurationSchema | None = None
+
+
+class ConditionImmunityEffectSchema(CapabilitySchemaModel):
+    type: Literal["condition_immunity"]
+    conditions: list[str] = Field(min_length=1)
+    suppress_existing: bool = False
+    duration: EffectDurationSchema | None = None
+
+
+class SenseEffectSchema(CapabilitySchemaModel):
+    type: Literal["sense"]
+    sense: Literal["blindsight", "darkvision", "truesight"]
+    range_feet: PositiveInt
+    duration: EffectDurationSchema | None = None
+
+
+class HitPointMaximumModifierEffectSchema(CapabilitySchemaModel):
+    type: Literal["hit_point_maximum_modifier"]
+    value: int
+    also_modify_current: bool = False
+    duration: EffectDurationSchema | None = None
 
 
 class ConditionEffectSchema(CapabilitySchemaModel):
@@ -77,9 +194,9 @@ class RollModifierEffectSchema(CapabilitySchemaModel):
     ]
     mode: Literal["advantage", "disadvantage", "add", "subtract"]
     subject: Literal["target", "attacks_against_target"] = "target"
-    ignored_by_senses: list[
-        Literal["blindsight", "darkvision", "truesight"]
-    ] = Field(default_factory=list)
+    ignored_by_senses: list[Literal["blindsight", "darkvision", "truesight"]] = Field(
+        default_factory=list
+    )
     ability: Ability | None = None
     ability_options: list[Ability] = Field(default_factory=list)
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
@@ -105,6 +222,18 @@ class GainMemoriesEffectSchema(CapabilitySchemaModel):
 
 ActionEffectSchema = Annotated[
     DamageEffectSchema
+    | HealingEffectSchema
+    | TemporaryHitPointsEffectSchema
+    | ArmorClassModifierEffectSchema
+    | RemoveEffectSchema
+    | DamageResistanceEffectSchema
+    | DamageReductionEffectSchema
+    | SpeedModifierEffectSchema
+    | ConditionSaveAdvantageEffectSchema
+    | DamageImmunityEffectSchema
+    | ConditionImmunityEffectSchema
+    | SenseEffectSchema
+    | HitPointMaximumModifierEffectSchema
     | ConditionEffectSchema
     | ForcedMovementEffectSchema
     | SpeedMultiplierEffectSchema

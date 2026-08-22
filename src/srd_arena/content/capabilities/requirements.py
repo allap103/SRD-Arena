@@ -28,11 +28,30 @@ class NotAffectedRequirementSchema(CapabilitySchemaModel):
     action: str = Field(min_length=1)
 
 
+class CreatureTraitRequirementSchema(CapabilitySchemaModel):
+    type: Literal["creature_trait"]
+    trait: str = Field(min_length=1)
+
+
+class ConditionImmunityRequirementSchema(CapabilitySchemaModel):
+    type: Literal["condition_immunity"]
+    condition: str = Field(min_length=1)
+
+
+class RelationshipRequirementSchema(CapabilitySchemaModel):
+    type: Literal["relationship"]
+    relationship: str = Field(min_length=1)
+    established_by: Literal["this_spell", "source", "any"] = "any"
+
+
 ActionRequirementSchema = Annotated[
     ConditionRequirementSchema
     | CreatureTypeRequirementSchema
     | SizeRequirementSchema
-    | NotAffectedRequirementSchema,
+    | NotAffectedRequirementSchema
+    | CreatureTraitRequirementSchema
+    | ConditionImmunityRequirementSchema
+    | RelationshipRequirementSchema,
     Field(discriminator="type"),
 ]
 

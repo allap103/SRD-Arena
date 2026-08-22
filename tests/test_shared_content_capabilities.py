@@ -13,6 +13,7 @@ from srd_arena.domain.capabilities import (
     DerivedAttackBonus,
     FixedAttackBonus,
     FixedDifficultyClass,
+    HealingEffect,
     LimitedUsePool,
     PoolUseCost,
     RechargePool,
@@ -21,10 +22,40 @@ from srd_arena.domain.capabilities import (
 )
 from srd_arena.domain.creatures import (
     AttackActionDefinition,
+    AutomaticActionDefinition,
     SavingThrowActionDefinition,
     Spellcasting,
     SpellcastingActionDefinition,
 )
+
+
+def test_non_spell_action_can_use_shared_healing_effect() -> None:
+    monster = BestiaryMonsterSchema.model_validate(
+        {
+            "name": "Test Healer",
+            "source": "TEST",
+            "action": [
+                {
+                    "name": "Restore",
+                    "capability": {
+                        "type": "capability",
+                        "target": {"type": "creature", "range_feet": 30},
+                        "resolution": {
+                            "type": "automatic",
+                            "outcome": {
+                                "effects": [{"type": "healing", "dice": "1d8"}]
+                            },
+                        },
+                    },
+                }
+            ],
+        }
+    )
+
+    restore = build_stat_block_actions(monster)["Restore"]
+
+    assert isinstance(restore, AutomaticActionDefinition)
+    assert restore.effects == (HealingEffect(dice="1d8"),)
 
 
 def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:

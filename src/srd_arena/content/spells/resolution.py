@@ -7,19 +7,31 @@ from pydantic import Field, RootModel, model_validator
 
 from srd_arena.content.capabilities import (
     Ability,
+    ArmorClassModifierEffectSchema,
     AutomaticResolutionSchema as SharedAutomaticResolutionSchema,
     ConditionEffectSchema,
+    ConditionImmunityEffectSchema,
+    ConditionSaveAdvantageEffectSchema,
     DamageEffectSchema,
+    DamageImmunityEffectSchema,
+    DamageReductionEffectSchema,
+    DamageResistanceEffectSchema,
     DerivedDifficultyClassSchema,
     EffectDurationSchema,
     ForcedMovementEffectSchema,
+    HealingEffectSchema,
+    HitPointMaximumModifierEffectSchema,
     NonNegativeInt,
     OutcomeSchema as SharedOutcomeSchema,
     PositiveInt,
     ProhibitReactionEffectSchema,
+    RemoveEffectSchema,
     RollModifierEffectSchema,
     SavingThrowResolutionSchema as SharedSavingThrowResolutionSchema,
+    SenseEffectSchema,
+    SpeedModifierEffectSchema,
     SpeedMultiplierEffectSchema,
+    TemporaryHitPointsEffectSchema,
     TurnEconomyRestrictionEffectSchema,
 )
 
@@ -51,51 +63,6 @@ def _validate_complete_roll_table(
         raise ValueError("Random-table ranges must cover every possible roll.")
 
 
-class HealingEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["healing"]
-    dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
-    bonus: int = 0
-    modifier: Literal["none", "spellcasting_ability"] = "none"
-    from_damage: Literal["none", "half_damage_dealt", "all_damage_dealt"] = "none"
-    restore_to_maximum: bool = False
-    pool: PositiveInt | None = None
-
-    @model_validator(mode="after")
-    def validate_healing_source(self) -> "HealingEffectSchema":
-        if (
-            self.dice is None
-            and self.bonus == 0
-            and self.modifier == "none"
-            and self.from_damage == "none"
-            and not self.restore_to_maximum
-            and self.pool is None
-        ):
-            raise ValueError(
-                "Healing requires a roll, value, modifier, or damage source."
-            )
-        return self
-
-
-class TemporaryHitPointsEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["temporary_hit_points"]
-    dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
-    value: NonNegativeInt = 0
-    modifier: Literal["none", "spellcasting_ability"] = "none"
-    trigger: Literal["application", "target_turn_start"] = "application"
-
-    @model_validator(mode="after")
-    def validate_temporary_hit_points(self) -> "TemporaryHitPointsEffectSchema":
-        if self.dice is None and self.value == 0 and self.modifier == "none":
-            raise ValueError("Temporary hit points require a roll, value, or modifier.")
-        return self
-
-
-class ArmorClassModifierEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["armor_class_modifier"]
-    value: int
-    duration: EffectDurationSchema | None = None
-
-
 class AttackLimitEffectSchema(SpellCapabilitySchemaModel):
     type: Literal["attack_action_limit"]
     maximum: PositiveInt
@@ -107,78 +74,6 @@ class ActionFailureChanceEffectSchema(SpellCapabilitySchemaModel):
     action: Literal["cast_spell", "attack", "magic_action", "any"]
     percent: Annotated[int, Field(ge=1, le=100)]
     requirements: list[SpellRequirementSchema] = Field(default_factory=list)
-    duration: EffectDurationSchema | None = None
-
-
-class RemoveEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["remove_effect"]
-    selection: Literal["one", "all"] = "one"
-    removable: list[
-        Literal[
-            "condition",
-            "exhaustion_level",
-            "curse",
-            "ability_score_reduction",
-            "hit_point_maximum_reduction",
-            "ongoing_effect",
-        ]
-    ] = Field(min_length=1)
-    conditions: list[str] = Field(default_factory=list)
-
-
-class DamageResistanceEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["damage_resistance"]
-    damage_types: list[str] = Field(min_length=1)
-    selection: Literal["all", "choose_one"] = "all"
-    duration: EffectDurationSchema | None = None
-
-
-class DamageReductionEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["damage_reduction"]
-    damage_types: list[str] = Field(min_length=1)
-    selection: Literal["all", "choose_one"] = "all"
-    dice: str = Field(pattern=r"^\d+d\d+$")
-    limit: PositiveInt = 1
-    period: Literal["turn"] = "turn"
-    duration: EffectDurationSchema | None = None
-
-
-class SpeedModifierEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["speed_modifier"]
-    feet: int
-    duration: EffectDurationSchema | None = None
-
-
-class ConditionSaveAdvantageEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["condition_save_advantage"]
-    conditions: list[str] = Field(min_length=1)
-    duration: EffectDurationSchema | None = None
-
-
-class DamageImmunityEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["damage_immunity"]
-    damage_types: list[str] = Field(min_length=1)
-    duration: EffectDurationSchema | None = None
-
-
-class ConditionImmunityEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["condition_immunity"]
-    conditions: list[str] = Field(min_length=1)
-    suppress_existing: bool = False
-    duration: EffectDurationSchema | None = None
-
-
-class SenseEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["sense"]
-    sense: Literal["blindsight", "darkvision", "truesight"]
-    range_feet: PositiveInt
-    duration: EffectDurationSchema | None = None
-
-
-class HitPointMaximumModifierEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["hit_point_maximum_modifier"]
-    value: int
-    also_modify_current: bool = False
     duration: EffectDurationSchema | None = None
 
 

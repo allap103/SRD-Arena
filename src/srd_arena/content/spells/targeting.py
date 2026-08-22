@@ -6,26 +6,19 @@ from pydantic import Field, model_validator
 
 from srd_arena.content.capabilities import (
     Ability,
+    ConditionImmunityRequirementSchema,
     ConditionRequirementSchema,
+    CreatureTraitRequirementSchema,
     CreatureTypeRequirementSchema,
     EffectDurationSchema,
     NonNegativeInt,
     NotAffectedRequirementSchema,
     PositiveInt,
+    RelationshipRequirementSchema,
     SizeRequirementSchema,
 )
 
 from .base import SpellCapabilitySchemaModel
-
-
-class CreatureTraitRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["creature_trait"]
-    trait: str = Field(min_length=1)
-
-
-class ConditionImmunityRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["condition_immunity"]
-    condition: str = Field(min_length=1)
 
 
 class SpellComponentRequirementSchema(SpellCapabilitySchemaModel):
@@ -57,12 +50,6 @@ class HitPointRequirementSchema(SpellCapabilitySchemaModel):
     type: Literal["hit_points"]
     comparison: Literal["less_than", "at_most", "at_least", "greater_than"]
     value: NonNegativeInt
-
-
-class RelationshipRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["relationship"]
-    relationship: str = Field(min_length=1)
-    established_by: Literal["this_spell", "source", "any"] = "any"
 
 
 class AnyRequirementSchema(SpellCapabilitySchemaModel):

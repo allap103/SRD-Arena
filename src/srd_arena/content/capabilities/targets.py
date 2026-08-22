@@ -25,9 +25,7 @@ class AreaTargetSchema(CapabilitySchemaModel):
     width_feet: PositiveInt | None = None
     origin: Literal["self", "point_in_range"] = "self"
     range_feet: NonNegativeInt | None = None
-    affects: Literal["creatures", "enemies", "allies", "objects", "all"] = (
-        "creatures"
-    )
+    affects: Literal["creatures", "enemies", "allies", "objects", "all"] = "creatures"
     excludes_self: bool = True
     requirements: list[ActionRequirementSchema] = Field(default_factory=list)
 
