@@ -2,6 +2,7 @@
 
 from .base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
 from .durations import EffectDurationSchema, TimedDurationSchema
+from .errors import CapabilityCompilationError
 from .effects import (
     ActionEffectSchema,
     ConditionEffectSchema,
@@ -42,6 +43,7 @@ __all__ = [
     "AutomaticResolutionSchema",
     "ActionEffectSchema",
     "CapabilitySchemaModel",
+    "CapabilityCompilationError",
     "ActionRequirementSchema",
     "ActionTargetSchema",
     "AreaTargetSchema",

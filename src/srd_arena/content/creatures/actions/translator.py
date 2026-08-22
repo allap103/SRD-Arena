@@ -2,7 +2,11 @@ import re
 from typing import TYPE_CHECKING, Literal, cast
 
 from . import schema
-from srd_arena.content.capabilities import AutomaticResolutionSchema
+from .multiattack import MultiattackCapabilitySchema
+from srd_arena.content.capabilities import (
+    AutomaticResolutionSchema,
+    CapabilityCompilationError,
+)
 from srd_arena.content.capabilities.compiler import (
     compile_duration,
     compile_outcome,
@@ -94,6 +98,14 @@ def build_stat_block_actions(
                     grant=grant,
                     resource_pool=resource_pool,
                 )
+            else:
+                raise CapabilityCompilationError(
+                    content=(
+                        f"Monster '{stat_block.public_name}' action '{action.name}'"
+                    ),
+                    location="capability.resolution",
+                    mechanic=type(resolution).__name__,
+                )
         elif isinstance(capability, schema.SpellcastingCapabilitySchema):
             definitions[action.name] = domain.SpellcastingActionDefinition(
                 name=action.name,
@@ -106,10 +118,18 @@ def build_stat_block_actions(
                     capability.shared_resource,
                 ),
             )
-        else:
+        elif isinstance(capability, MultiattackCapabilitySchema):
+            continue
+        elif capability is None:
             fallback = _parse_tagged_attack(action)
             if fallback is not None:
                 definitions[action.name] = fallback
+        else:
+            raise CapabilityCompilationError(
+                content=f"Monster '{stat_block.public_name}' action '{action.name}'",
+                location="capability",
+                mechanic=type(capability).__name__,
+            )
     return definitions
 
 

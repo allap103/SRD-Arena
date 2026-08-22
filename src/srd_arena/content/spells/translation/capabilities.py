@@ -1,7 +1,9 @@
+from collections.abc import Iterable
 from dataclasses import replace
 from typing import Literal, cast
 
 from srd_arena.content.capabilities import (
+    CapabilityCompilationError,
     ConditionRequirementSchema,
     CreatureTypeRequirementSchema,
     DerivedDifficultyClassSchema,
@@ -49,15 +51,20 @@ SpellResolutionSchema = (
 def compile_spell_definition(
     raw: SpellSchema,
 ) -> domain.CapabilityDefinition | None:
-    """Compile the primary executable resolution of an authored spell."""
-    if raw.capability is None:
+    """Compile an executable spell, rejecting unsupported structured mechanics."""
+    if not raw.executable:
         return None
+    assert raw.capability is not None
+    content = f"Spell '{raw.public_name}'"
     resolution: object = raw.capability.resolution.root
+    resolution_location = "capability.resolution"
     if isinstance(resolution, SequenceResolutionSchema):
         resolution = resolution.steps[0].resolution.root
+        resolution_location += ".steps[0].resolution"
     repeated = resolution if isinstance(resolution, RepeatResolutionSchema) else None
     if repeated is not None:
         resolution = repeated.resolution.root
+        resolution_location += ".resolution"
     if not isinstance(
         resolution,
         (
@@ -66,7 +73,11 @@ def compile_spell_definition(
             SpellAttackResolutionSchema,
         ),
     ):
-        return None
+        raise CapabilityCompilationError(
+            content=content,
+            location=resolution_location,
+            mechanic=type(resolution).__name__,
+        )
     outcome = (
         resolution.failure
         if isinstance(resolution, SavingThrowResolutionSchema)
@@ -79,9 +90,9 @@ def compile_spell_definition(
         resolution,
         outcome,
         raw.capability.condition_application,
+        content=content,
+        location=resolution_location,
     )
-    if definition is None:
-        return None
     repetition = (
         domain.CapabilityRepetition(
             count=(
@@ -113,7 +124,10 @@ def compile_definition(
     resolution: SpellResolutionSchema,
     outcome: OutcomeSchema,
     condition_selection: Literal["all", "choose_one"] = "all",
-) -> domain.CapabilityDefinition | None:
+    *,
+    content: str = "Spell capability",
+    location: str = "capability.resolution",
+) -> domain.CapabilityDefinition:
     effect_values = tuple(effect.root for effect in outcome.effects)
     success_values = (
         tuple(effect.root for effect in resolution.success.effects)
@@ -125,27 +139,42 @@ def compile_definition(
         if isinstance(resolution, SpellAttackResolutionSchema)
         else ()
     )
-    if not all(
-        is_compilable_effect(effect)
-        for effect in (*effect_values, *success_values, *miss_values)
-    ):
-        return None
-    compiled_target = _compile_target(target)
-    if compiled_target is None:
-        return None
+    outcome_name = (
+        "failure"
+        if isinstance(resolution, SavingThrowResolutionSchema)
+        else "hit"
+        if isinstance(resolution, SpellAttackResolutionSchema)
+        else "outcome"
+    )
+    compiled_effects = _compile_effects(
+        effect_values,
+        content=content,
+        location=f"{location}.{outcome_name}.effects",
+    )
+    compiled_success = _compile_effects(
+        success_values,
+        content=content,
+        location=f"{location}.success.effects",
+    )
+    compiled_miss = _compile_effects(
+        miss_values,
+        content=content,
+        location=f"{location}.miss.effects",
+    )
+    compiled_target = _compile_target(
+        target,
+        content=content,
+        location="capability.target",
+    )
     compiled_outcome = domain.Outcome(
-        tuple(
-            compile_capability_effect(effect)
-            for effect in effect_values
-            if is_compilable_effect(effect)
-        ),
+        compiled_effects,
         outcome.end_spell,
     )
     compiled_resolution = _compile_resolution(
         resolution,
         compiled_outcome,
-        success_values,
-        miss_values,
+        compiled_success,
+        compiled_miss,
         (
             resolution.success.end_spell
             if isinstance(resolution, SavingThrowResolutionSchema)
@@ -156,9 +185,9 @@ def compile_definition(
             if isinstance(resolution, SpellAttackResolutionSchema)
             else False
         ),
+        content=content,
+        location=location,
     )
-    if compiled_resolution is None:
-        return None
     return domain.CapabilityDefinition(
         compiled_target,
         compiled_resolution,
@@ -169,31 +198,31 @@ def compile_definition(
 def _compile_resolution(
     resolution: SpellResolutionSchema,
     outcome: domain.Outcome,
-    success_values: tuple[object, ...],
-    miss_values: tuple[object, ...],
+    success_effects: tuple[domain.CapabilityEffect, ...],
+    miss_effects: tuple[domain.CapabilityEffect, ...],
     success_ends_capability: bool,
     miss_ends_capability: bool,
-) -> domain.CapabilityResolution | None:
+    *,
+    content: str,
+    location: str,
+) -> domain.CapabilityResolution:
     if isinstance(resolution, SpellAttackResolutionSchema):
         return domain.AttackResolution(
             modes=(resolution.mode,),
             attack_bonus=domain.DerivedAttackBonus("spell_attack_modifier"),
             hit=outcome,
-            miss=domain.Outcome(
-                tuple(
-                    compile_capability_effect(effect)
-                    for effect in miss_values
-                    if is_compilable_effect(effect)
-                ),
-                miss_ends_capability,
-            ),
+            miss=domain.Outcome(miss_effects, miss_ends_capability),
             attacks=resolution.attacks,
             allocation=resolution.allocation,
         )
     if isinstance(resolution, AutomaticResolutionSchema):
         return domain.AutomaticResolution(outcome)
     if resolution.ability is None:
-        return None
+        raise CapabilityCompilationError(
+            content=content,
+            location=f"{location}.ability",
+            mechanic="saving throw without an ability",
+        )
     difficulty = resolution.difficulty
     if isinstance(difficulty, FixedDifficultyClassSchema):
         compiled_difficulty: domain.DifficultyClass = domain.FixedDifficultyClass(
@@ -208,17 +237,20 @@ def _compile_resolution(
         failure=(
             domain.OutcomeStage(
                 outcome.effects,
-                (_compile_repeat_save(resolution.repeat_save, resolution.ability),)
+                (
+                    _compile_repeat_save(
+                        resolution.repeat_save,
+                        resolution.ability,
+                        content=content,
+                        location=f"{location}.repeat_save",
+                    ),
+                )
                 if resolution.repeat_save is not None
                 else (),
             ),
         ),
         success=domain.Outcome(
-            tuple(
-                compile_capability_effect(effect)
-                for effect in success_values
-                if is_compilable_effect(effect)
-            ),
+            success_effects,
             success_ends_capability,
         ),
         success_damage=resolution.success_damage,
@@ -239,7 +271,9 @@ def _compile_resolution(
 def _compile_triggers(raw: SpellSchema) -> tuple[domain.CapabilityTrigger, ...]:
     assert raw.capability is not None
     compiled: list[domain.CapabilityTrigger] = []
-    for trigger in raw.capability.outcome_triggers:
+    content = f"Spell '{raw.public_name}'"
+    for index, trigger in enumerate(raw.capability.outcome_triggers):
+        location = f"capability.outcome_triggers[{index}].resolution"
         resolution = trigger.resolution.root
         if not isinstance(
             resolution,
@@ -249,7 +283,11 @@ def _compile_triggers(raw: SpellSchema) -> tuple[domain.CapabilityTrigger, ...]:
                 SpellAttackResolutionSchema,
             ),
         ):
-            continue
+            raise CapabilityCompilationError(
+                content=content,
+                location=location,
+                mechanic=type(resolution).__name__,
+            )
         outcome = (
             resolution.failure
             if isinstance(resolution, SavingThrowResolutionSchema)
@@ -257,9 +295,13 @@ def _compile_triggers(raw: SpellSchema) -> tuple[domain.CapabilityTrigger, ...]:
             if isinstance(resolution, SpellAttackResolutionSchema)
             else resolution.outcome
         )
-        nested = compile_definition(raw.capability.target, resolution, outcome)
-        if nested is None:
-            continue
+        nested = compile_definition(
+            raw.capability.target,
+            resolution,
+            outcome,
+            content=content,
+            location=location,
+        )
         compiled.append(
             domain.CapabilityTrigger(
                 event=trigger.event,
@@ -279,7 +321,9 @@ def _compile_follow_ups(raw: SpellSchema) -> tuple[domain.CapabilityStep, ...]:
     if not isinstance(outer, SequenceResolutionSchema):
         return ()
     compiled: list[domain.CapabilityStep] = []
-    for step in outer.steps[1:]:
+    content = f"Spell '{raw.public_name}'"
+    for index, step in enumerate(outer.steps[1:], start=1):
+        location = f"capability.resolution.steps[{index}].resolution"
         resolution = step.resolution.root
         if not isinstance(
             resolution,
@@ -289,7 +333,11 @@ def _compile_follow_ups(raw: SpellSchema) -> tuple[domain.CapabilityStep, ...]:
                 SpellAttackResolutionSchema,
             ),
         ):
-            continue
+            raise CapabilityCompilationError(
+                content=content,
+                location=location,
+                mechanic=type(resolution).__name__,
+            )
         outcome = (
             resolution.failure
             if isinstance(resolution, SavingThrowResolutionSchema)
@@ -301,25 +349,34 @@ def _compile_follow_ups(raw: SpellSchema) -> tuple[domain.CapabilityStep, ...]:
             step.target or raw.capability.target,
             resolution,
             outcome,
+            content=content,
+            location=location,
         )
-        if nested is not None:
-            compiled.append(domain.CapabilityStep(nested.target, nested.resolution))
+        compiled.append(domain.CapabilityStep(nested.target, nested.resolution))
     return tuple(compiled)
 
 
 def _compile_repeat_save(
     repeat: RepeatSaveProgressionSchema,
     default_ability: str,
+    *,
+    content: str,
+    location: str,
 ) -> domain.RepeatSave:
     failure_effects: tuple[domain.CapabilityEffect, ...] = ()
     if repeat.on_failure is not None:
         failure = repeat.on_failure.root
-        if isinstance(failure, AutomaticResolutionSchema):
-            failure_effects = tuple(
-                compile_capability_effect(effect.root)
-                for effect in failure.outcome.effects
-                if is_compilable_effect(effect.root)
+        if not isinstance(failure, AutomaticResolutionSchema):
+            raise CapabilityCompilationError(
+                content=content,
+                location=f"{location}.on_failure",
+                mechanic=type(failure).__name__,
             )
+        failure_effects = _compile_effects(
+            (effect.root for effect in failure.outcome.effects),
+            content=content,
+            location=f"{location}.on_failure.outcome.effects",
+        )
     trigger_aliases = {
         "turn_end": "end_of_turn",
         "turn_start": "start_of_turn",
@@ -332,6 +389,24 @@ def _compile_repeat_save(
         failures_required=repeat.failures_required,
         counters_need_not_be_consecutive=repeat.counters_need_not_be_consecutive,
     )
+
+
+def _compile_effects(
+    values: Iterable[object],
+    *,
+    content: str,
+    location: str,
+) -> tuple[domain.CapabilityEffect, ...]:
+    compiled: list[domain.CapabilityEffect] = []
+    for index, effect in enumerate(values):
+        if not is_compilable_effect(effect):
+            raise CapabilityCompilationError(
+                content=content,
+                location=f"{location}[{index}]",
+                mechanic=type(effect).__name__,
+            )
+        compiled.append(compile_capability_effect(effect))
+    return tuple(compiled)
 
 
 def _compile_spell_requirement(value: object) -> domain.CapabilityRequirement:
@@ -378,7 +453,10 @@ def _compile_save_modifier(
 
 def _compile_target(
     target: SpellTargetSchema,
-) -> domain.CapabilityTarget | None:
+    *,
+    content: str,
+    location: str,
+) -> domain.CapabilityTarget:
     if target.type == "self":
         return domain.CapabilityTarget(kind="self")
     if isinstance(target, CreatureSpellTargetSchema):
@@ -395,7 +473,11 @@ def _compile_target(
             selection=target.selection,
         )
     if not isinstance(target, AreaSpellTargetSchema):
-        return None
+        raise CapabilityCompilationError(
+            content=content,
+            location=location,
+            mechanic=type(target).__name__,
+        )
     geometry = target.geometry
     chosen_count = target.chosen_count
     return domain.CapabilityTarget(
