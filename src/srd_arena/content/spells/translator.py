@@ -8,6 +8,9 @@ Provider-specific grants and resource costs do not belong here.
 Keep ``build_spell`` as the readable orchestration entrypoint. New translation
 rules belong in the concern-based ``translation`` package; the remaining legacy
 projection should shrink as runtime consumers move to shared capabilities.
+
+# TODO: Move remaining encounter-runtime consumers from SpellCapability to
+# shared capability definitions, then remove the legacy projection.
 """
 
 from typing import cast
