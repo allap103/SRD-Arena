@@ -1,0 +1,65 @@
+"""Top-level authoring models for provider-neutral capabilities."""
+
+from typing import Literal
+
+from pydantic import AliasChoices, Field
+
+from .resolutions import CapabilityResolutionSchema
+from .targets import CapabilityTargetSchema, EventTargetSchema
+from srd_arena.content.capabilities.schemas.base import CapabilitySchemaModel
+from srd_arena.content.capabilities.schemas.definitions import (
+    CapabilitySchemaBase,
+    OutcomeTriggerSchemaBase,
+)
+from srd_arena.content.capabilities.schemas.requirements import (
+    CapabilityRequirementSchema,
+)
+
+
+class ActivationTriggerSchema(CapabilitySchemaModel):
+    event: Literal[
+        "attack_hit",
+        "creature_damaged",
+        "spell_cast",
+        "targeted_by_attack",
+        "falling",
+    ]
+    timing: Literal["before_resolution", "immediately_after", "after_resolution"]
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
+    target: EventTargetSchema | None = None
+
+
+class OutcomeTriggerSchema(OutcomeTriggerSchemaBase):
+    target: EventTargetSchema | None = None
+    resolution: CapabilityResolutionSchema
+
+
+class CapabilityDeclarationSchema(CapabilitySchemaBase):
+    target: CapabilityTargetSchema
+    resolution: CapabilityResolutionSchema
+    activation_requirements: list[CapabilityRequirementSchema] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices(
+            "activation_requirements",
+            "casting_requirements",
+        ),
+    )
+    activation_trigger: ActivationTriggerSchema | None = Field(
+        default=None,
+        validation_alias=AliasChoices("activation_trigger", "casting_trigger"),
+    )
+    outcome_triggers: list[OutcomeTriggerSchema] = Field(default_factory=list)
+    blocked_self_removal_conditions: list[str] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices(
+            "blocked_self_removal_conditions",
+            "self_removal_blocked_conditions",
+        ),
+    )
+    reactivation_ends_previous: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "reactivation_ends_previous",
+            "recast_ends_previous",
+        ),
+    )

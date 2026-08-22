@@ -2,7 +2,7 @@ from pydantic import Field, model_validator
 
 from srd_arena.content.common.schema import SourceModel
 from .capability import SpellCapabilitySchema
-from .implementation import SpellImplementationSchema
+from srd_arena.content.common.implementation import ImplementationSchema
 
 
 class SpellSchema(SourceModel):
@@ -23,9 +23,7 @@ class SpellSchema(SourceModel):
         default_factory=list,
         alias="affectsCreatureType",
     )
-    implementation: SpellImplementationSchema = Field(
-        default_factory=SpellImplementationSchema
-    )
+    implementation: ImplementationSchema = Field(default_factory=ImplementationSchema)
     capability: SpellCapabilitySchema | None = None
     srd: bool | str | None = None
     srd52: bool | str | None = None

@@ -184,7 +184,7 @@ def _build_outcome(
     )
     return domain.Outcome(
         build_effects(values, content=content, location=f"{location}.effects"),
-        bool(getattr(value, "end_spell", False)),
+        bool(getattr(value, "end_capability", False)),
     )
 
 

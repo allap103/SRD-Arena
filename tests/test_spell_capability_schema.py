@@ -379,8 +379,8 @@ def test_triggered_casts_links_interception_and_defeat_prevention_are_typed() ->
     )
 
     assert spell.capability is not None
-    assert spell.capability.casting_trigger is not None
-    assert spell.capability.casting_trigger.event == "attack_hit"
+    assert spell.capability.activation_trigger is not None
+    assert spell.capability.activation_trigger.event == "attack_hit"
     assert spell.capability.outcome_triggers[0].event == "attack_would_hit"
 
 

@@ -2,7 +2,7 @@
 
 from typing import Annotated, Generic, Literal, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from .base import Ability, PositiveInt
 from .durations import EffectDurationSchema
@@ -24,7 +24,10 @@ class OutcomeSchema(ResolutionSchemaModel, Generic[EffectSchemaT]):
     """Effects produced by one branch of an executable resolution."""
 
     effects: list[EffectSchemaT] = Field(default_factory=list)
-    end_spell: bool = False
+    end_capability: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("end_capability", "end_spell"),
+    )
 
 
 class FixedDifficultyClassSchema(ResolutionSchemaModel):

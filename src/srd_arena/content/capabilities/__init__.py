@@ -1,6 +1,15 @@
 """Schema vocabulary shared by independently authored content concepts."""
 
 from .schemas.base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
+from .schemas.authoring.resolutions import (
+    CapabilityEffectSchema,
+    CapabilityResolutionSchema,
+)
+from .schemas.authoring.targets import CapabilityTargetSchema
+from .schemas.authoring.declarations import (
+    ActivationTriggerSchema,
+    CapabilityDeclarationSchema,
+)
 from .schemas.durations import EffectDurationSchema, TimedDurationSchema
 from .building import CapabilityBuildError, build_capability
 from .schemas.definitions import CapabilitySchemaBase, OutcomeTriggerSchemaBase
@@ -43,6 +52,7 @@ from .schemas.requirements import (
     PerceptionRequirementSchema,
     RelationshipRequirementSchema,
     SizeRequirementSchema,
+    SpellComponentRequirementSchema,
     WillingRequirementSchema,
 )
 from .schemas.targets import (
@@ -90,6 +100,7 @@ from .building.supported import (
 
 __all__ = [
     "Ability",
+    "ActivationTriggerSchema",
     "ActorLevelScalingSchema",
     "ActorLevelScalingThresholdSchema",
     "AutomaticResolutionSchema",
@@ -106,9 +117,14 @@ __all__ = [
     "AnyRequirementSchema",
     "AttackSourceRequirementSchema",
     "CapabilityRequirementSchema",
+    "CapabilityDeclarationSchema",
+    "CapabilityEffectSchema",
+    "CapabilityResolutionSchema",
+    "CapabilityTargetSchema",
     "FreeHandRequirementSchema",
     "HitPointRequirementSchema",
     "PerceptionRequirementSchema",
+    "SpellComponentRequirementSchema",
     "WillingRequirementSchema",
     "ActionTargetSchema",
     "AreaTargetSchema",

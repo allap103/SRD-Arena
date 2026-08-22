@@ -60,6 +60,11 @@ class FreeHandRequirement:
 
 
 @dataclass(frozen=True)
+class SpellComponentRequirement:
+    component: Literal["verbal", "somatic", "material"]
+
+
+@dataclass(frozen=True)
 class PerceptionRequirement:
     sense: Literal["see", "hear"]
     subject: Literal["source", "target", "each_other"] = "source"
@@ -92,6 +97,7 @@ CapabilityRequirement = (
     | AttackSourceRequirement
     | WillingRequirement
     | FreeHandRequirement
+    | SpellComponentRequirement
     | PerceptionRequirement
     | HitPointRequirement
     | AnyRequirement

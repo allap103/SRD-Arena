@@ -46,12 +46,12 @@ def build_spell(spell_schema: SpellSchema) -> Spell:
             if isinstance(duration, dict)
         ),
         recast_ends_previous=(
-            spell_schema.capability.recast_ends_previous
+            spell_schema.capability.reactivation_ends_previous
             if spell_schema.capability is not None
             else False
         ),
         self_removal_blocked_conditions=(
-            tuple(spell_schema.capability.self_removal_blocked_conditions)
+            tuple(spell_schema.capability.blocked_self_removal_conditions)
             if spell_schema.capability is not None
             else ()
         ),

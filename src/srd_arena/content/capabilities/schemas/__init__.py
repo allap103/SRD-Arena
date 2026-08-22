@@ -1,6 +1,21 @@
 """Pydantic vocabulary for authored capability content."""
 
 from .base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
+from .authoring.resolutions import CapabilityEffectSchema, CapabilityResolutionSchema
+from .authoring.targets import (
+    CapabilityTargetSchema,
+    ChoiceTargetSchema,
+    CompositeAreaTargetSchema,
+    CreatedEntityTargetSchema,
+    EventTargetSchema,
+    ObjectTargetSchema,
+    PointTargetSchema,
+)
+from .authoring.declarations import (
+    ActivationTriggerSchema,
+    CapabilityDeclarationSchema,
+    OutcomeTriggerSchema,
+)
 from .definitions import CapabilitySchemaBase, OutcomeTriggerSchemaBase
 from .durations import EffectDurationSchema, TimedDurationSchema
 from .effects import (
@@ -42,6 +57,7 @@ from .requirements import (
     PerceptionRequirementSchema,
     RelationshipRequirementSchema,
     SizeRequirementSchema,
+    SpellComponentRequirementSchema,
     WillingRequirementSchema,
 )
 from .resolutions import (
@@ -83,6 +99,7 @@ from .targets import (
 
 __all__ = [
     "Ability",
+    "ActivationTriggerSchema",
     "ActionAreaTargetSchema",
     "ActionCreatureTargetSchema",
     "ActionEffectSchema",
@@ -90,9 +107,21 @@ __all__ = [
     "AnyRequirementSchema",
     "AttackSourceRequirementSchema",
     "CapabilityRequirementSchema",
+    "CapabilityDeclarationSchema",
+    "CapabilityEffectSchema",
+    "CapabilityResolutionSchema",
+    "CapabilityTargetSchema",
+    "ChoiceTargetSchema",
+    "CompositeAreaTargetSchema",
+    "CreatedEntityTargetSchema",
+    "EventTargetSchema",
+    "ObjectTargetSchema",
+    "OutcomeTriggerSchema",
+    "PointTargetSchema",
     "FreeHandRequirementSchema",
     "HitPointRequirementSchema",
     "PerceptionRequirementSchema",
+    "SpellComponentRequirementSchema",
     "WillingRequirementSchema",
     "ActionTargetSchema",
     "ActorLevelScalingSchema",

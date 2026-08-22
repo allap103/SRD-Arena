@@ -4,11 +4,11 @@ import re
 
 from srd_arena.content.capabilities import DamageEffectSchema, RemoveEffectSchema
 
-from .resolution import (
+from srd_arena.content.capabilities.schemas.authoring.resolutions import (
     AutomaticResolutionSchema,
+    DerivedAttackResolutionSchema,
     RepeatResolutionSchema,
     SavingThrowResolutionSchema,
-    SpellAttackResolutionSchema,
 )
 from .schema import SpellSchema
 
@@ -22,7 +22,7 @@ def spell_damage_dice(raw: SpellSchema) -> str | None:
             resolution.failure
             if isinstance(resolution, SavingThrowResolutionSchema)
             else resolution.hit
-            if isinstance(resolution, SpellAttackResolutionSchema)
+            if isinstance(resolution, DerivedAttackResolutionSchema)
             else resolution.outcome
             if isinstance(resolution, AutomaticResolutionSchema)
             else None

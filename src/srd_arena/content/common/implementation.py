@@ -1,8 +1,6 @@
 from typing import Literal
 
-from pydantic import Field, model_validator
-
-from .base import SpellCapabilitySchemaModel
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 ImplementationScope = Literal["combat", "exploration", "social", "world"]
 
@@ -11,12 +9,16 @@ def _default_implementation_scope() -> list[ImplementationScope]:
     return ["combat"]
 
 
-class ImplementationOmissionSchema(SpellCapabilitySchemaModel):
+class ImplementationSchemaModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class ImplementationOmissionSchema(ImplementationSchemaModel):
     mechanic: str = Field(min_length=1)
     reason: str = Field(min_length=1)
 
 
-class SpellImplementationSchema(SpellCapabilitySchemaModel):
+class ImplementationSchema(ImplementationSchemaModel):
     status: Literal[
         "complete",
         "partial",
@@ -32,7 +34,7 @@ class SpellImplementationSchema(SpellCapabilitySchemaModel):
     reason: str | None = None
 
     @model_validator(mode="after")
-    def validate_status_details(self) -> "SpellImplementationSchema":
+    def validate_status_details(self) -> "ImplementationSchema":
         if self.status == "partial" and not self.omissions:
             raise ValueError("Partial spell implementations must list omissions.")
         if self.status == "blocked" and not self.blocked_by:

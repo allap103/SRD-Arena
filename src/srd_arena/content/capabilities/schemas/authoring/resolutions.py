@@ -3,13 +3,31 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Annotated, Literal
 
-from pydantic import Field, RootModel, model_validator
+from pydantic import AliasChoices, Field, RootModel, model_validator
 
-from srd_arena.content.capabilities import (
+from srd_arena.content.common.implementation import ImplementationSchema
+
+from .targets import (
+    AreaGeometrySchema,
+    CapabilityTargetSchema,
+    EventTargetSchema,
+)
+from srd_arena.content.capabilities.schemas.base import (
     Ability,
+    CapabilitySchemaModel,
+    NonNegativeInt,
+    PositiveInt,
+)
+from srd_arena.content.capabilities.schemas.durations import EffectDurationSchema
+from srd_arena.content.capabilities.schemas.effects import (
+    AccumulateDiceEffectSchema,
+    AccumulatedDamageEffectSchema,
+    ActionFailureChanceEffectSchema,
     ArmorClassModifierEffectSchema,
-    AttackResolutionSchema as SharedAttackResolutionSchema,
-    AutomaticResolutionSchema as SharedAutomaticResolutionSchema,
+    AttackLimitEffectSchema,
+    BattlefieldRemovalEffectSchema,
+    CancelPendingEventEffectSchema,
+    CompelledBehaviorEffectSchema,
     ConditionEffectSchema,
     ConditionImmunityEffectSchema,
     ConditionSaveAdvantageEffectSchema,
@@ -17,35 +35,48 @@ from srd_arena.content.capabilities import (
     DamageImmunityEffectSchema,
     DamageReductionEffectSchema,
     DamageResistanceEffectSchema,
-    DerivedDifficultyClassSchema,
-    EffectDurationSchema,
+    DifficultTerrainEffectSchema,
+    CreatedEntityStatisticsSchema,
+    ExtraActionEffectSchema,
+    ExtraTurnsEffectSchema,
     ForcedMovementEffectSchema,
     HealingEffectSchema,
     HitPointMaximumModifierEffectSchema,
-    NonNegativeInt,
-    OutcomeSchema as SharedOutcomeSchema,
-    PositiveInt,
+    LightEffectSchema,
+    MirroredDamageEffectSchema,
+    MovementModeEffectSchema,
+    ObscurementEffectSchema,
+    PreventDefeatEffectSchema,
     ProhibitReactionEffectSchema,
-    RepeatResolutionSchemaBase,
-    RepeatSaveProgressionSchemaBase,
     RemoveEffectSchema,
+    RelationshipEffectSchema,
+    ReplaceWithCreatureEffectSchema,
+    RequireTargetReselectionEffectSchema,
+    RedirectPendingTargetEffectSchema,
     RollModifierEffectSchema,
-    SavingThrowResolutionSchema as SharedSavingThrowResolutionSchema,
     SenseEffectSchema,
-    SequenceResolutionSchemaBase,
     SpeedModifierEffectSchema,
     SpeedMultiplierEffectSchema,
+    SummonEffectSchema,
+    SuppressMagicEffectSchema,
+    TeleportEffectSchema,
     TemporaryHitPointsEffectSchema,
     TurnEconomyRestrictionEffectSchema,
+    TransformEffectSchema,
+    TransformObjectEffectSchema,
 )
-
-from .base import SpellCapabilitySchemaModel
-from .implementation import SpellImplementationSchema
-from .targeting import (
-    AreaGeometrySchema,
-    EventSpellTargetSchema,
-    SpellRequirementSchema,
-    SpellTargetSchema,
+from srd_arena.content.capabilities.schemas.requirements import (
+    CapabilityRequirementSchema,
+)
+from srd_arena.content.capabilities.schemas.resolutions import (
+    AttackResolutionSchema as SharedAttackResolutionSchema,
+    AutomaticResolutionSchema as SharedAutomaticResolutionSchema,
+    DerivedDifficultyClassSchema,
+    OutcomeSchema as SharedOutcomeSchema,
+    RepeatResolutionSchemaBase,
+    RepeatSaveProgressionSchemaBase,
+    SavingThrowResolutionSchema as SharedSavingThrowResolutionSchema,
+    SequenceResolutionSchemaBase,
 )
 
 
@@ -66,143 +97,19 @@ def _validate_complete_roll_table(
         raise ValueError("Random-table ranges must cover every possible roll.")
 
 
-class AttackLimitEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["attack_action_limit"]
-    maximum: PositiveInt
-    duration: EffectDurationSchema | None = None
-
-
-class ActionFailureChanceEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["action_failure_chance"]
-    action: Literal["cast_spell", "attack", "magic_action", "any"]
-    percent: Annotated[int, Field(ge=1, le=100)]
-    requirements: list[SpellRequirementSchema] = Field(default_factory=list)
-    duration: EffectDurationSchema | None = None
-
-
-class TeleportEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["teleport"]
-    distance_feet: NonNegativeInt | Literal["spell_range", "unlimited"]
-    destination: Literal[
-        "chosen_space", "origin_space", "nearest_free_space", "another_plane"
-    ]
-
-
-class ObscurementEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["obscurement"]
-    degree: Literal["light", "heavy"]
-
-
-class MovementModeEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["movement_mode"]
-    mode: Literal["walk", "fly", "swim", "climb", "burrow", "hover"]
-    speed_feet: PositiveInt | Literal["walking_speed"]
-    duration: EffectDurationSchema | None = None
-
-
-class DifficultTerrainEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["difficult_terrain"]
-    applies_to: Literal["all", "enemies", "creatures_on_ground"] = "all"
-
-
-class BattlefieldRemovalEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["battlefield_removal"]
-    destination: Literal["demiplane", "another_plane", "extradimensional", "off_board"]
-    return_trigger: Literal["spell_ends", "turn_start", "turn_end", "random_turn_start"]
-    return_position: Literal["origin", "nearest_free_space", "chosen_free_space"]
-
-
-class RelationshipEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["relationship"]
-    relationship: str = Field(min_length=1)
-    source_role: str = Field(default="source", min_length=1)
-    target_role: str = Field(default="target", min_length=1)
-    unique: Literal["none", "per_source", "per_target", "per_pair"] = "per_pair"
-
-
-class MirroredDamageEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["mirrored_damage"]
-    from_event: Literal["triggering_damage"] = "triggering_damage"
-    numerator: PositiveInt = 1
-    denominator: PositiveInt = 1
-    damage_type: Literal["same", "force"] = "same"
-    prevent_recursion: bool = True
-
-
-class CompelledBehaviorEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["compelled_behavior"]
-    behavior: Literal[
-        "authored_command",
-        "approach_source",
-        "flee_source",
-        "drop_prone",
-        "end_turn",
-        "controller_selected",
-    ]
-    decision_provider: Literal["source_controller", "rules_engine"] = "rules_engine"
-    command_id: str | None = None
-
-
-class CancelPendingEventEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["cancel_pending_event"]
-    event: Literal["attack", "damage", "spell", "defeat", "instant_death"]
-    consume_triggering_resources: bool = True
-
-
-class RedirectPendingTargetEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["redirect_pending_target"]
-    destination: Literal["random_spell_entity", "chosen_legal_target"]
-
-
-class RequireTargetReselectionEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["require_target_reselection"]
-    on_no_legal_target: Literal["cancel_action", "retain_target"] = "cancel_action"
-
-
-class LightEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["light"]
-    bright_radius_feet: NonNegativeInt = 0
-    dim_additional_feet: NonNegativeInt = 0
-
-
-class SpellEntityStatisticsSchema(SpellCapabilitySchemaModel):
-    armor_class: PositiveInt | Literal["caster"] | None = None
-    hit_points: PositiveInt | Literal["caster_maximum"] | None = None
-    size: str | None = None
-    ability_scores: dict[Ability, Annotated[int, Field(ge=1, le=30)]] = Field(
-        default_factory=dict
-    )
-    condition_immunities: list[str] = Field(default_factory=list)
-    damage_immunities: list[str] = Field(default_factory=list)
-
-
-class CreateSpellEntityEffectSchema(SpellCapabilitySchemaModel):
+class CreateEntityEffectSchema(CapabilitySchemaModel):
     type: Literal["create_spell_entity"]
     entity_id: str = Field(min_length=1)
     entity_kind: Literal["manifestation", "weapon", "hand", "hazard", "image"]
     targetable: bool = False
     occupies_space: bool = False
     geometry: AreaGeometrySchema | None = None
-    statistics: SpellEntityStatisticsSchema | None = None
+    statistics: CreatedEntityStatisticsSchema | None = None
     movement: AreaMovementSchema | None = None
     actions: list[GrantedActionSchema] = Field(default_factory=list)
 
 
-class TransformObjectEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["transform_object"]
-    creature_by_size: dict[str, str] = Field(min_length=1)
-    restore_object_on_end: bool = True
-    carry_damage_to_object: bool = True
-
-
-class AccumulateDiceEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["accumulate_dice"]
-    counter: str = Field(min_length=1)
-    dice: str = Field(pattern=r"^\d+d\d+$")
-    maximum_dice: PositiveInt | None = None
-
-
-class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
+class StoreCapabilityEffectSchema(CapabilitySchemaModel):
     type: Literal["store_spell"]
     maximum_level: NonNegativeInt | Literal["cast_level"]
     activation_trigger: Literal[
@@ -213,14 +120,14 @@ class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
         "source_turn_start",
         "source_turn_end",
     ]
-    activation_target: EventSpellTargetSchema | None = None
+    activation_target: EventTargetSchema | None = None
     inherit_casting_statistics: bool = True
     spell_name: str | None = None
     spell_source: str | None = None
-    stored_resolution: SpellResolutionSchema | None = None
+    stored_resolution: CapabilityResolutionSchema | None = None
 
     @model_validator(mode="after")
-    def validate_stored_payload(self) -> "StoreSpellEffectSchema":
+    def validate_stored_payload(self) -> "StoreCapabilityEffectSchema":
         if (self.spell_name is None) == (self.stored_resolution is None):
             raise ValueError(
                 "Stored spell effects require exactly one spell or authored resolution."
@@ -228,20 +135,12 @@ class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
         return self
 
 
-class AccumulatedDamageEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["accumulated_damage"]
-    base_dice: str = Field(pattern=r"^\d+d\d+$")
-    counter: str = Field(min_length=1)
-    dice_per_counter: str = Field(pattern=r"^\d+d\d+$")
-    damage_type: str = Field(min_length=1)
-
-
-class GrantActionEffectSchema(SpellCapabilitySchemaModel):
+class GrantActionEffectSchema(CapabilitySchemaModel):
     type: Literal["grant_action"]
     action: GrantedActionSchema
 
 
-class CreatePersistentAreaEffectSchema(SpellCapabilitySchemaModel):
+class CreatePersistentAreaEffectSchema(CapabilitySchemaModel):
     type: Literal["create_persistent_area"]
     geometry_from_target: bool = True
     properties: list[PersistentAreaPropertySchema] = Field(default_factory=list)
@@ -259,73 +158,12 @@ class CreatePersistentAreaEffectSchema(SpellCapabilitySchemaModel):
     ] = Field(default_factory=list)
 
 
-class SummonEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["summon"]
-    creature: str
-    source: str | None = None
-    count: PositiveInt | Literal["spellcasting_modifier"] = 1
-    team: Literal["source", "hostile"] = "source"
-    initiative: Literal["own", "source_after"] = "source_after"
-    command: Literal["verbal", "mental", "none"] = "verbal"
-
-
-class ReplaceWithCreatureEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["replace_with_creature"]
-    creature: str
-    source: str | None = None
-    position: Literal["target", "nearest_free_space"] = "target"
-    team: Literal["source", "target", "hostile"] = "source"
-
-
-class ExtraActionEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["extra_action"]
-    allowed_actions: list[str] = Field(min_length=1)
-    attack_limit: PositiveInt | None = None
-    duration: EffectDurationSchema | None = None
-
-
-class ExtraTurnsEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["extra_turns"]
-    count_dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
-    count: PositiveInt | None = None
-    consecutive: bool = True
-
-    @model_validator(mode="after")
-    def validate_count(self) -> "ExtraTurnsEffectSchema":
-        if (self.count_dice is None) == (self.count is None):
-            raise ValueError("Extra turns require exactly one count source.")
-        return self
-
-
-class PreventDefeatEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["prevent_defeat"]
-    prevent_drop_to_zero: bool = True
-    prevent_instant_death: bool = True
-    replacement_hit_points: PositiveInt = 1
-    uses: PositiveInt = 1
-    duration: EffectDurationSchema | None = None
-
-
-class SuppressMagicEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["suppress_magic"]
-    minimum_spell_level: NonNegativeInt = 0
-    exceptions: list[str] = Field(default_factory=list)
-
-
-class TransformEffectSchema(SpellCapabilitySchemaModel):
-    type: Literal["transform"]
-    forms: Literal["beast", "creature_catalog", "authored"]
-    maximum_rating: Literal["target_level_or_cr", "cast_level"]
-    statistics: Literal["replace", "overlay"] = "replace"
-    equipment: Literal["merge", "drop", "retain"] = "merge"
-
-
-class RandomOutcomeEffectSchema(SpellCapabilitySchemaModel):
+class RandomOutcomeEffectSchema(CapabilitySchemaModel):
     type: Literal["random_outcome"]
     table: RandomTableSchema
 
 
-class OngoingModifierGroupEffectSchema(SpellCapabilitySchemaModel):
+class OngoingModifierGroupEffectSchema(CapabilitySchemaModel):
     type: Literal["ongoing_modifier_group"]
     duration: EffectDurationSchema | None = None
     modifiers: list[OngoingModifierSchema] = Field(min_length=1)
@@ -361,7 +199,7 @@ OngoingModifierSchema = Annotated[
 ]
 
 
-class SpellEffectSchema(
+class CapabilityEffectSchema(
     RootModel[
         Annotated[
             DamageEffectSchema
@@ -397,11 +235,11 @@ class SpellEffectSchema(
             | RedirectPendingTargetEffectSchema
             | RequireTargetReselectionEffectSchema
             | LightEffectSchema
-            | CreateSpellEntityEffectSchema
+            | CreateEntityEffectSchema
             | TransformObjectEffectSchema
             | AccumulateDiceEffectSchema
             | AccumulatedDamageEffectSchema
-            | StoreSpellEffectSchema
+            | StoreCapabilityEffectSchema
             | GrantActionEffectSchema
             | CreatePersistentAreaEffectSchema
             | SummonEffectSchema
@@ -420,7 +258,7 @@ class SpellEffectSchema(
     pass
 
 
-class OutcomeSchema(SharedOutcomeSchema[SpellEffectSchema]):
+class OutcomeSchema(SharedOutcomeSchema[CapabilityEffectSchema]):
     pass
 
 
@@ -435,16 +273,22 @@ class SavingThrowResolutionSchema(
     difficulty: DerivedDifficultyClassSchema = Field(
         default_factory=lambda: DerivedDifficultyClassSchema(type="spell_save_dc")
     )
-    use_spell_metadata_ability: bool = True
+    use_provider_metadata_ability: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "use_provider_metadata_ability",
+            "use_spell_metadata_ability",
+        ),
+    )
     success: OutcomeSchema = Field(default_factory=OutcomeSchema)
     repeat_save: RepeatSaveProgressionSchema | None = None
 
 
-class SpellAttackResolutionSchema(SharedAttackResolutionSchema[OutcomeSchema]):
+class DerivedAttackResolutionSchema(SharedAttackResolutionSchema[OutcomeSchema]):
     miss: OutcomeSchema = Field(default_factory=OutcomeSchema)
 
 
-class AbilityCheckResolutionSchema(SpellCapabilitySchemaModel):
+class AbilityCheckResolutionSchema(CapabilitySchemaModel):
     type: Literal["ability_check"]
     ability: Ability | Literal["spellcasting"]
     dc: PositiveInt | Literal["spell_save_dc", "ten_plus_spell_level"]
@@ -452,7 +296,7 @@ class AbilityCheckResolutionSchema(SpellCapabilitySchemaModel):
     failure: OutcomeSchema = Field(default_factory=OutcomeSchema)
 
 
-class ContestedCheckResolutionSchema(SpellCapabilitySchemaModel):
+class ContestedCheckResolutionSchema(CapabilitySchemaModel):
     type: Literal["contested_check"]
     source_ability: Ability | Literal["spellcasting"]
     target_abilities: list[Ability] = Field(min_length=1)
@@ -462,7 +306,7 @@ class ContestedCheckResolutionSchema(SpellCapabilitySchemaModel):
     target_wins: OutcomeSchema = Field(default_factory=OutcomeSchema)
 
 
-class HitPointPoolResolutionSchema(SpellCapabilitySchemaModel):
+class HitPointPoolResolutionSchema(CapabilitySchemaModel):
     type: Literal["hit_point_pool"]
     dice: str = Field(pattern=r"^\d+d\d+$")
     bonus: int = 0
@@ -475,35 +319,35 @@ class HitPointPoolResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class RepeatResolutionSchema(RepeatResolutionSchemaBase):
-    resolution: SpellResolutionSchema
+    resolution: CapabilityResolutionSchema
 
 
-class SequenceStepSchema(SpellCapabilitySchemaModel):
-    resolution: SpellResolutionSchema
-    target: SpellTargetSchema | None = None
+class SequenceStepSchema(CapabilitySchemaModel):
+    resolution: CapabilityResolutionSchema
+    target: CapabilityTargetSchema | None = None
 
 
 class SequenceResolutionSchema(SequenceResolutionSchemaBase):
     steps: list[SequenceStepSchema] = Field(min_length=1)
 
 
-class ResolutionChoiceOptionSchema(SpellCapabilitySchemaModel):
+class ResolutionChoiceOptionSchema(CapabilitySchemaModel):
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
-    resolution: SpellResolutionSchema
-    implementation: SpellImplementationSchema | None = None
+    resolution: CapabilityResolutionSchema
+    implementation: ImplementationSchema | None = None
 
 
-class ChoiceResolutionSchema(SpellCapabilitySchemaModel):
+class ChoiceResolutionSchema(CapabilitySchemaModel):
     type: Literal["choice"]
     count: PositiveInt = 1
     options: list[ResolutionChoiceOptionSchema] = Field(min_length=1)
 
 
-class RandomResolutionEntrySchema(SpellCapabilitySchemaModel):
+class RandomResolutionEntrySchema(CapabilitySchemaModel):
     minimum: PositiveInt
     maximum: PositiveInt
-    resolution: SpellResolutionSchema
+    resolution: CapabilityResolutionSchema
 
     @model_validator(mode="after")
     def validate_range(self) -> "RandomResolutionEntrySchema":
@@ -512,7 +356,7 @@ class RandomResolutionEntrySchema(SpellCapabilitySchemaModel):
         return self
 
 
-class RandomTableResolutionSchema(SpellCapabilitySchemaModel):
+class RandomTableResolutionSchema(CapabilitySchemaModel):
     type: Literal["random_table"]
     die: str = Field(pattern=r"^\d+d\d+$")
     per_target: bool = False
@@ -524,12 +368,12 @@ class RandomTableResolutionSchema(SpellCapabilitySchemaModel):
         return self
 
 
-class SpellResolutionSchema(
+class CapabilityResolutionSchema(
     RootModel[
         Annotated[
             AutomaticResolutionSchema
             | SavingThrowResolutionSchema
-            | SpellAttackResolutionSchema
+            | DerivedAttackResolutionSchema
             | AbilityCheckResolutionSchema
             | ContestedCheckResolutionSchema
             | HitPointPoolResolutionSchema
@@ -545,27 +389,27 @@ class SpellResolutionSchema(
 
 
 class RepeatSaveProgressionSchema(RepeatSaveProgressionSchemaBase):
-    on_success: SpellResolutionSchema = Field(
-        default_factory=lambda: SpellResolutionSchema.model_validate(
-            {"type": "automatic", "outcome": {"end_spell": True}}
+    on_success: CapabilityResolutionSchema = Field(
+        default_factory=lambda: CapabilityResolutionSchema.model_validate(
+            {"type": "automatic", "outcome": {"end_capability": True}}
         )
     )
-    on_failure: SpellResolutionSchema | None = None
+    on_failure: CapabilityResolutionSchema | None = None
 
 
-class GrantedActionSchema(SpellCapabilitySchemaModel):
+class GrantedActionSchema(CapabilitySchemaModel):
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
     economy: Literal["action", "bonus_action", "reaction", "magic_action"]
-    target: SpellTargetSchema
-    resolution: SpellResolutionSchema
-    requirements: list[SpellRequirementSchema] = Field(default_factory=list)
+    target: CapabilityTargetSchema
+    resolution: CapabilityResolutionSchema
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
     target_history: Literal[
         "none", "exclude_successful_save", "exclude_any_previous_target"
     ] = "none"
 
 
-class AreaTriggerSchema(SpellCapabilitySchemaModel):
+class AreaTriggerSchema(CapabilitySchemaModel):
     event: Literal[
         "created",
         "creature_enters",
@@ -573,22 +417,22 @@ class AreaTriggerSchema(SpellCapabilitySchemaModel):
         "creature_turn_start",
         "creature_turn_end",
     ]
-    resolution: SpellResolutionSchema
+    resolution: CapabilityResolutionSchema
     per_target_limit: PositiveInt | None = None
     limit_period: Literal["turn", "round", "spell_instance"] | None = None
 
 
-class AreaMovementSchema(SpellCapabilitySchemaModel):
+class AreaMovementSchema(CapabilitySchemaModel):
     trigger: Literal["source_turn_start", "source_turn_end", "granted_action"]
     distance_feet: PositiveInt
     direction: Literal["away_from_source", "chosen", "fixed"]
     movement_mode: Literal["ground", "flying", "unrestricted"] = "unrestricted"
 
 
-class RandomTableEntrySchema(SpellCapabilitySchemaModel):
+class RandomTableEntrySchema(CapabilitySchemaModel):
     minimum: PositiveInt
     maximum: PositiveInt
-    resolution: SpellResolutionSchema
+    resolution: CapabilityResolutionSchema
 
     @model_validator(mode="after")
     def validate_range(self) -> "RandomTableEntrySchema":
@@ -597,7 +441,7 @@ class RandomTableEntrySchema(SpellCapabilitySchemaModel):
         return self
 
 
-class RandomTableSchema(SpellCapabilitySchemaModel):
+class RandomTableSchema(CapabilitySchemaModel):
     die: str = Field(pattern=r"^\d+d\d+$")
     entries: list[RandomTableEntrySchema] = Field(min_length=1)
 
@@ -609,8 +453,8 @@ class RandomTableSchema(SpellCapabilitySchemaModel):
 
 GrantActionEffectSchema.model_rebuild()
 CreatePersistentAreaEffectSchema.model_rebuild()
-CreateSpellEntityEffectSchema.model_rebuild()
-StoreSpellEffectSchema.model_rebuild()
+CreateEntityEffectSchema.model_rebuild()
+StoreCapabilityEffectSchema.model_rebuild()
 RandomOutcomeEffectSchema.model_rebuild()
 RepeatResolutionSchema.model_rebuild()
 SequenceResolutionSchema.model_rebuild()

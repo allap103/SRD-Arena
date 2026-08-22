@@ -4,53 +4,37 @@ from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
-from srd_arena.content.capabilities import (
+from srd_arena.content.capabilities.schemas.base import (
+    CapabilitySchemaModel,
+    PositiveInt,
+)
+from srd_arena.content.capabilities.schemas.requirements import (
+    CapabilityRequirementSchema,
+)
+from srd_arena.content.capabilities.schemas.targets import (
     AreaGeometrySchema,
     AreaTargetSchema,
-    CapabilityRequirementSchema,
     CreatureTargetSchema,
-    PositiveInt,
     SelfTargetSchema,
-    SavingThrowModifierSchema,
     TargetCountSchema,
 )
 
-from .base import SpellCapabilitySchemaModel
 
-
-class SpellComponentRequirementSchema(SpellCapabilitySchemaModel):
-    type: Literal["spell_component"]
-    component: Literal["verbal", "somatic", "material"]
-
-
-SpellRequirementSchema = Annotated[
-    CapabilityRequirementSchema | SpellComponentRequirementSchema,
-    Field(discriminator="type"),
-]
-
-
-SpellSaveModifierSchema = SavingThrowModifierSchema
-
-
-SelfSpellTargetSchema = SelfTargetSchema
-CreatureSpellTargetSchema = CreatureTargetSchema
-
-
-class ObjectSpellTargetSchema(SpellCapabilitySchemaModel):
+class ObjectTargetSchema(CapabilitySchemaModel):
     type: Literal["object"]
     count: TargetCountSchema = Field(default_factory=TargetCountSchema)
     carried: Literal["allowed", "required", "forbidden"] = "allowed"
     worn: Literal["allowed", "required", "forbidden"] = "allowed"
-    requirements: list[SpellRequirementSchema] = Field(default_factory=list)
+    requirements: list[CapabilityRequirementSchema] = Field(default_factory=list)
 
 
-class PointSpellTargetSchema(SpellCapabilitySchemaModel):
+class PointTargetSchema(CapabilitySchemaModel):
     type: Literal["point"]
     surface: Literal["any", "solid", "ground"] = "any"
     line_of_sight: bool = False
 
 
-class EventSpellTargetSchema(SpellCapabilitySchemaModel):
+class EventTargetSchema(CapabilitySchemaModel):
     type: Literal["event_target"]
     binding: Literal[
         "triggering_actor",
@@ -62,10 +46,7 @@ class EventSpellTargetSchema(SpellCapabilitySchemaModel):
     ]
 
 
-AreaSpellTargetSchema = AreaTargetSchema
-
-
-class CompositeAreaComponentSchema(SpellCapabilitySchemaModel):
+class CompositeAreaComponentSchema(CapabilitySchemaModel):
     geometry: AreaGeometrySchema
     minimum: PositiveInt = 1
     maximum: PositiveInt
@@ -77,7 +58,7 @@ class CompositeAreaComponentSchema(SpellCapabilitySchemaModel):
         return self
 
 
-class CompositeAreaSpellTargetSchema(SpellCapabilitySchemaModel):
+class CompositeAreaTargetSchema(CapabilitySchemaModel):
     type: Literal["composite_area"]
     origin: Literal["point_in_range"] = "point_in_range"
     component: CompositeAreaComponentSchema
@@ -87,35 +68,35 @@ class CompositeAreaSpellTargetSchema(SpellCapabilitySchemaModel):
     occupants: Literal["all", "allies", "enemies", "chosen"] = "all"
 
 
-class SpellEntityTargetSchema(SpellCapabilitySchemaModel):
+class CreatedEntityTargetSchema(CapabilitySchemaModel):
     type: Literal["spell_entity"]
     ownership: Literal["source", "any"] = "source"
     entity_kinds: list[str] = Field(default_factory=list)
 
 
-class TargetChoiceOptionSchema(SpellCapabilitySchemaModel):
+class TargetChoiceOptionSchema(CapabilitySchemaModel):
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
-    target: SpellTargetSchema
+    target: CapabilityTargetSchema
 
 
-class ChoiceSpellTargetSchema(SpellCapabilitySchemaModel):
+class ChoiceTargetSchema(CapabilitySchemaModel):
     type: Literal["choice"]
     options: list[TargetChoiceOptionSchema] = Field(min_length=1)
 
 
-SpellTargetSchema = Annotated[
-    SelfSpellTargetSchema
-    | CreatureSpellTargetSchema
-    | ObjectSpellTargetSchema
-    | PointSpellTargetSchema
-    | EventSpellTargetSchema
-    | AreaSpellTargetSchema
-    | CompositeAreaSpellTargetSchema
-    | SpellEntityTargetSchema
-    | ChoiceSpellTargetSchema,
+CapabilityTargetSchema = Annotated[
+    SelfTargetSchema
+    | CreatureTargetSchema
+    | ObjectTargetSchema
+    | PointTargetSchema
+    | EventTargetSchema
+    | AreaTargetSchema
+    | CompositeAreaTargetSchema
+    | CreatedEntityTargetSchema
+    | ChoiceTargetSchema,
     Field(discriminator="type"),
 ]
 
 TargetChoiceOptionSchema.model_rebuild()
-ChoiceSpellTargetSchema.model_rebuild()
+ChoiceTargetSchema.model_rebuild()

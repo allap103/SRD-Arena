@@ -2,7 +2,9 @@
 
 from .catalog import SpellCatalog
 from .capability import SpellCapabilitySchema
-from .implementation import SpellImplementationSchema
+from srd_arena.content.common.implementation import (
+    ImplementationSchema as SpellImplementationSchema,
+)
 from .schema import SpellFileSchema, SpellSchema
 from .builder import build_spell
 from .loader import load_spell_catalog
