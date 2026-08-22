@@ -1,3 +1,5 @@
+"""Authored scaling schemas for executable capabilities."""
+
 from typing import Annotated, Literal
 
 from pydantic import Field, model_validator

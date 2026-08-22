@@ -1,3 +1,5 @@
+"""Authored requirement schemas for capability use and targeting."""
+
 from typing import Annotated, Literal
 
 from pydantic import Field

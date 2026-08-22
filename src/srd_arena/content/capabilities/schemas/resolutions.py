@@ -1,3 +1,5 @@
+"""Authored resolution schemas for executable capabilities."""
+
 from typing import Annotated, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator

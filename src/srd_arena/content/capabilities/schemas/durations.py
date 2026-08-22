@@ -1,3 +1,5 @@
+"""Authored duration schemas for capability effects."""
+
 from typing import Annotated, Literal
 
 from pydantic import Field

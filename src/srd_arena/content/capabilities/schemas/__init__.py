@@ -1,10 +1,9 @@
-"""Schema vocabulary shared by independently authored content concepts."""
+"""Pydantic vocabulary for authored capability content."""
 
-from .schemas.base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
-from .schemas.durations import EffectDurationSchema, TimedDurationSchema
-from .building import CapabilityBuildError, build_capability
-from .schemas.definitions import CapabilitySchemaBase, OutcomeTriggerSchemaBase
-from .schemas.effects import (
+from .base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
+from .definitions import CapabilitySchemaBase, OutcomeTriggerSchemaBase
+from .durations import EffectDurationSchema, TimedDurationSchema
+from .effects import (
     ActionEffectSchema,
     ArmorClassModifierEffectSchema,
     ConditionEffectSchema,
@@ -28,7 +27,7 @@ from .schemas.effects import (
     TemporaryHitPointsEffectSchema,
     TurnEconomyRestrictionEffectSchema,
 )
-from .schemas.requirements import (
+from .requirements import (
     ActionRequirementSchema,
     ConditionImmunityRequirementSchema,
     ConditionRequirementSchema,
@@ -38,7 +37,32 @@ from .schemas.requirements import (
     RelationshipRequirementSchema,
     SizeRequirementSchema,
 )
-from .schemas.targets import (
+from .resolutions import (
+    AttackResolutionSchema,
+    AutomaticResolutionSchema,
+    DerivedDifficultyClassSchema,
+    DifficultyClassSchema,
+    FixedAttackResolutionSchema,
+    FixedDifficultyClassSchema,
+    OutcomeSchema,
+    RepeatResolutionSchemaBase,
+    RepeatSaveProgressionSchemaBase,
+    ResolutionSchemaModel,
+    SavingThrowModifierSchema,
+    SavingThrowResolutionSchema,
+    SequenceResolutionSchemaBase,
+)
+from .scaling import (
+    ActorLevelScalingSchema,
+    ActorLevelScalingThresholdSchema,
+    CapabilityScalingSchema,
+    CasterLevelScalingSchema,
+    ResourceScalingSchema,
+    ScalingIncrementSchema,
+    SlotScalingIncrementSchema,
+    SlotScalingSchema,
+)
+from .targets import (
     ActionAreaTargetSchema,
     ActionCreatureTargetSchema,
     ActionTargetSchema,
@@ -49,58 +73,25 @@ from .schemas.targets import (
     SelfTargetSchema,
     TargetCountSchema,
 )
-from .schemas.resolutions import (
-    AttackResolutionSchema,
-    AutomaticResolutionSchema,
-    DerivedDifficultyClassSchema,
-    DifficultyClassSchema,
-    FixedDifficultyClassSchema,
-    FixedAttackResolutionSchema,
-    OutcomeSchema,
-    RepeatResolutionSchemaBase,
-    RepeatSaveProgressionSchemaBase,
-    ResolutionSchemaModel,
-    SavingThrowResolutionSchema,
-    SavingThrowModifierSchema,
-    SequenceResolutionSchemaBase,
-)
-from .schemas.scaling import (
-    ActorLevelScalingSchema,
-    ActorLevelScalingThresholdSchema,
-    CapabilityScalingSchema,
-    CasterLevelScalingSchema,
-    ResourceScalingSchema,
-    ScalingIncrementSchema,
-    SlotScalingIncrementSchema,
-    SlotScalingSchema,
-)
-from .building.supported import (
-    EXECUTABLE_EFFECT_TYPES,
-    EXECUTABLE_REQUIREMENT_TYPES,
-    EXECUTABLE_RESOLUTION_TYPES,
-    EXECUTABLE_TARGET_TYPES,
-)
 
 __all__ = [
     "Ability",
-    "ActorLevelScalingSchema",
-    "ActorLevelScalingThresholdSchema",
-    "AutomaticResolutionSchema",
-    "ActionEffectSchema",
     "ActionAreaTargetSchema",
     "ActionCreatureTargetSchema",
-    "CapabilitySchemaModel",
-    "CapabilitySchemaBase",
-    "CapabilityScalingSchema",
-    "CasterLevelScalingSchema",
-    "build_capability",
-    "CapabilityBuildError",
+    "ActionEffectSchema",
     "ActionRequirementSchema",
     "ActionTargetSchema",
-    "AreaTargetSchema",
+    "ActorLevelScalingSchema",
+    "ActorLevelScalingThresholdSchema",
     "AreaGeometrySchema",
-    "AttackResolutionSchema",
+    "AreaTargetSchema",
     "ArmorClassModifierEffectSchema",
+    "AttackResolutionSchema",
+    "AutomaticResolutionSchema",
+    "CapabilityScalingSchema",
+    "CapabilitySchemaBase",
+    "CapabilitySchemaModel",
+    "CasterLevelScalingSchema",
     "ConditionEffectSchema",
     "ConditionImmunityEffectSchema",
     "ConditionImmunityRequirementSchema",
@@ -117,14 +108,10 @@ __all__ = [
     "DerivedDifficultyClassSchema",
     "DifficultyClassSchema",
     "EffectDurationSchema",
-    "EXECUTABLE_EFFECT_TYPES",
-    "EXECUTABLE_REQUIREMENT_TYPES",
-    "EXECUTABLE_RESOLUTION_TYPES",
-    "EXECUTABLE_TARGET_TYPES",
     "ExecutableTargetSchema",
-    "ForcedMovementEffectSchema",
-    "FixedDifficultyClassSchema",
     "FixedAttackResolutionSchema",
+    "FixedDifficultyClassSchema",
+    "ForcedMovementEffectSchema",
     "GainMemoriesEffectSchema",
     "HealingEffectSchema",
     "HitPointMaximumModifierEffectSchema",
@@ -134,26 +121,26 @@ __all__ = [
     "OutcomeTriggerSchemaBase",
     "PositiveInt",
     "ProhibitReactionEffectSchema",
+    "RelationshipRequirementSchema",
     "RemoveEffectSchema",
     "RepeatResolutionSchemaBase",
     "RepeatSaveProgressionSchemaBase",
-    "RelationshipRequirementSchema",
+    "ResolutionSchemaModel",
     "ResourceScalingSchema",
     "RollModifierEffectSchema",
-    "ResolutionSchemaModel",
-    "SavingThrowResolutionSchema",
     "SavingThrowModifierSchema",
+    "SavingThrowResolutionSchema",
     "ScalingIncrementSchema",
+    "SelfTargetSchema",
     "SenseEffectSchema",
     "SequenceResolutionSchemaBase",
-    "SelfTargetSchema",
     "SizeRequirementSchema",
     "SlotScalingIncrementSchema",
     "SlotScalingSchema",
     "SpeedModifierEffectSchema",
     "SpeedMultiplierEffectSchema",
+    "TargetCountSchema",
     "TemporaryHitPointsEffectSchema",
     "TimedDurationSchema",
-    "TargetCountSchema",
     "TurnEconomyRestrictionEffectSchema",
 ]

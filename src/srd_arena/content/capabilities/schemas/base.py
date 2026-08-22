@@ -1,3 +1,5 @@
+"""Validation primitives shared by authored capability schemas."""
+
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field

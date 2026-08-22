@@ -1,6 +1,11 @@
 """The authored capability schemas currently supported by the runtime builder."""
 
-from . import effects, requirements, resolutions, targets
+from srd_arena.content.capabilities.schemas import (
+    effects,
+    requirements,
+    resolutions,
+    targets,
+)
 
 EXECUTABLE_TARGET_TYPES = (
     targets.SelfTargetSchema,

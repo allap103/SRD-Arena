@@ -1,3 +1,6 @@
+"""Errors raised while converting authored capabilities into domain models."""
+
+
 class CapabilityBuildError(ValueError):
     """Report structured capability content that cannot be built."""
 
