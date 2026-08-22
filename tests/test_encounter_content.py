@@ -9,6 +9,15 @@ from srd_arena.content.encounters import EncounterDefinitionSchema
 from srd_arena.frontends.shared.config import load_encounter_presentation_config
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.domain.creatures import AttackActionDefinition
+from srd_arena.domain.spells.rules import (
+    spell_area_size_feet,
+    spell_damage_dice,
+    spell_damage_types,
+    spell_geometry_mode,
+    spell_inflicted_conditions,
+    spell_removable_conditions,
+    spell_saving_throw_abilities,
+)
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
@@ -45,9 +54,9 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
     (scenario_dir / "encounters").mkdir(parents=True)
     (scenario_dir / "player_characters").mkdir()
     (scenario_dir / "player_characters" / "player").write_text(
-        (
-            FIXTURE_ENCOUNTER_DIR / "player_characters" / "player"
-        ).read_text(encoding="utf-8"),
+        (FIXTURE_ENCOUNTER_DIR / "player_characters" / "player").read_text(
+            encoding="utf-8"
+        ),
         encoding="utf-8",
     )
     encounter_data = json.loads(
@@ -90,8 +99,7 @@ def test_full_control_showcase_gives_external_control_to_every_creature() -> Non
     assert scenario.get_creature("champion_2").subclass_ref is not None
     assert scenario.get_creature("champion_2").subclass_ref.name == "Champion"
     assert all(
-        participant.controller == "external"
-        for participant in encounter.participants
+        participant.controller == "external" for participant in encounter.participants
     )
     assert all(team.controller == "external" for team in encounter.teams)
     assert session.encounter_state is not None
@@ -141,7 +149,9 @@ def test_nested_creature_can_reference_system_stat_block() -> None:
     assert creature.token_image == "tokens/goblin.png"
 
 
-def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: Path) -> None:
+def test_game_uses_first_encounter_from_settings_when_not_overridden(
+    tmp_path: Path,
+) -> None:
     scenario_dir = tmp_path / "encounter_start"
     for subdir in ("encounters", "player_characters"):
         (scenario_dir / subdir).mkdir(parents=True, exist_ok=True)
@@ -150,11 +160,15 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(tmp_path: P
         encoding="utf-8",
     )
     (scenario_dir / "player_characters" / "player").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "player_characters" / "player").read_text(encoding="utf-8"),
+        (FIXTURE_ENCOUNTER_DIR / "player_characters" / "player").read_text(
+            encoding="utf-8"
+        ),
         encoding="utf-8",
     )
     (scenario_dir / "encounters" / "arena").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter").read_text(encoding="utf-8").replace(
+        (FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter")
+        .read_text(encoding="utf-8")
+        .replace(
             '"id":  "goblin_encounter"',
             '"id":  "arena"',
         ),
@@ -278,8 +292,7 @@ def test_fighter_level_five_resolves_extra_attack(tmp_path: Path) -> None:
     )
 
     assert any(
-        class_feature.id == "extra_attack"
-        for class_feature in upgraded.class_features
+        class_feature.id == "extra_attack" for class_feature in upgraded.class_features
     )
     assert upgraded.combat_profile.attacks_per_attack_action == 2
 
@@ -352,17 +365,22 @@ def test_creature_can_load_subclass_and_explicit_spellcasting(tmp_path: Path) ->
         "Lesser Restoration",
     ]
     assert creature.spellcasting.learned_spells[0].level == 1
-    assert creature.spellcasting.learned_spells[0].condition_inflict == ("blinded",)
-    assert creature.spellcasting.learned_spells[0].area_tags == ("N",)
-    assert creature.spellcasting.learned_spells[0].geometry_mode == "directional_area"
+    assert spell_inflicted_conditions(creature.spellcasting.learned_spells[0]) == (
+        "blinded",
+    )
+    assert spell_geometry_mode(creature.spellcasting.learned_spells[0]) == (
+        "directional_area"
+    )
     assert creature.spellcasting.learned_spells[1].level == 2
-    assert creature.spellcasting.learned_spells[1].removable_conditions == (
+    assert spell_removable_conditions(creature.spellcasting.learned_spells[1]) == (
         "blinded",
         "deafened",
         "paralyzed",
         "poisoned",
     )
-    assert creature.spellcasting.learned_spells[1].geometry_mode == "point_target"
+    assert (
+        spell_geometry_mode(creature.spellcasting.learned_spells[1]) == "point_target"
+    )
 
 
 def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) -> None:
@@ -408,17 +426,14 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(tmp_path: Path) ->
     assert creature.spellcasting is not None
     spells = {spell.name: spell for spell in creature.spellcasting.learned_spells}
 
-    assert spells["Burning Hands"].geometry_mode == "directional_area"
-    assert spells["Burning Hands"].area_tags == ("N",)
-    assert spells["Burning Hands"].saving_throw_abilities == ("dexterity",)
-    assert spells["Burning Hands"].damage_dice == "3d6"
-    assert spells["Burning Hands"].damage_inflict == ("fire",)
-    assert spells["Thunderwave"].geometry_mode == "directional_area"
-    assert spells["Thunderwave"].area_tags == ("C",)
-    assert spells["Lightning Bolt"].geometry_mode == "directional_area"
-    assert spells["Lightning Bolt"].area_tags == ("L",)
-    assert spells["Fireball"].geometry_mode == "point_area"
-    assert spells["Fireball"].area_size_feet == 20
-    assert spells["Fireball"].saving_throw_abilities == ("dexterity",)
-    assert spells["Fireball"].damage_dice == "8d6"
-    assert spells["Fireball"].damage_inflict == ("fire",)
+    assert spell_geometry_mode(spells["Burning Hands"]) == "directional_area"
+    assert spell_saving_throw_abilities(spells["Burning Hands"]) == ("dexterity",)
+    assert spell_damage_dice(spells["Burning Hands"]) == "3d6"
+    assert spell_damage_types(spells["Burning Hands"]) == ("fire",)
+    assert spells["Thunderwave"].definition is None
+    assert spell_geometry_mode(spells["Lightning Bolt"]) == "directional_area"
+    assert spell_geometry_mode(spells["Fireball"]) == "point_area"
+    assert spell_area_size_feet(spells["Fireball"]) == 20
+    assert spell_saving_throw_abilities(spells["Fireball"]) == ("dexterity",)
+    assert spell_damage_dice(spells["Fireball"]) == "8d6"
+    assert spell_damage_types(spells["Fireball"]) == ("fire",)

@@ -51,6 +51,7 @@ EXECUTABLE_EFFECT_TYPES = (
 EXECUTABLE_REQUIREMENT_TYPES = (
     requirements.AllRequirementSchema,
     requirements.AnyRequirementSchema,
+    requirements.AttackSourceRequirementSchema,
     requirements.ConditionRequirementSchema,
     requirements.ConditionImmunityRequirementSchema,
     requirements.CreatureTraitRequirementSchema,
@@ -61,4 +62,6 @@ EXECUTABLE_REQUIREMENT_TYPES = (
     requirements.PerceptionRequirementSchema,
     requirements.RelationshipRequirementSchema,
     requirements.SizeRequirementSchema,
+    requirements.SpellComponentRequirementSchema,
+    requirements.WillingRequirementSchema,
 )

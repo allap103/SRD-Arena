@@ -52,8 +52,11 @@ def build_target(
                 geometry.radius_feet or geometry.length_feet or geometry.diameter_feet
             ),
             width_feet=geometry.width_feet,
+            height_feet=geometry.height_feet,
+            diameter_feet=geometry.diameter_feet,
             origin=value.origin,
             occupants=value.occupants,
+            affects=value.affects,
             excludes_source=value.excludes_source,
             requirements=(
                 build_checked_requirement(
@@ -84,6 +87,13 @@ def _build_action_target(
 ) -> domain.CapabilityTarget:
     count = getattr(value, "count", 1)
     affects = getattr(value, "affects", "creatures")
+    affected_kinds = (
+        "objects"
+        if affects == "objects"
+        else "all"
+        if affects == "all"
+        else "creatures"
+    )
     return _build_target_model(
         kind=value.type,
         count=domain.TargetCount(maximum=count),
@@ -96,6 +106,10 @@ def _build_action_target(
         occupants=cast(
             Literal["all", "allies", "enemies", "chosen"],
             affects if affects in {"allies", "enemies"} else "all",
+        ),
+        affects=cast(
+            Literal["creatures", "objects", "creatures_and_objects", "all"],
+            affected_kinds,
         ),
         excludes_source=getattr(value, "excludes_self", False),
         requirements=(
@@ -117,6 +131,8 @@ def _build_target_model(
     shape: str | None = None,
     size_feet: int | None = None,
     width_feet: int | None = None,
+    height_feet: int | None = None,
+    diameter_feet: int | None = None,
     origin: str = "self",
     line_of_sight: bool = False,
     disposition: Literal[
@@ -124,6 +140,9 @@ def _build_target_model(
     ] = "any",
     selection: Literal["all", "choose", "choose_up_to"] = "choose",
     occupants: Literal["all", "allies", "enemies", "chosen"] = "all",
+    affects: Literal["creatures", "objects", "creatures_and_objects", "all"] = (
+        "creatures"
+    ),
     excludes_source: bool = False,
     requirements: Iterable[domain.CapabilityRequirement] = (),
 ) -> domain.CapabilityTarget:
@@ -134,11 +153,14 @@ def _build_target_model(
         shape=shape,
         size_feet=size_feet,
         width_feet=width_feet,
+        height_feet=height_feet,
+        diameter_feet=diameter_feet,
         origin=origin,
         line_of_sight=line_of_sight,
         disposition=disposition,
         selection=selection,
         occupants=occupants,
+        affects=affects,
         excludes_source=excludes_source,
         requirements=tuple(requirements),
     )

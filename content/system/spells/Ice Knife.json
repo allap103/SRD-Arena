@@ -66,7 +66,7 @@
       "steps": [
         {
           "resolution": {
-            "type": "spell_attack",
+            "type": "provider_attack",
             "mode": "ranged",
             "hit": {
               "effects": [

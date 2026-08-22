@@ -5,9 +5,7 @@ from .schemas.authoring.resolutions import (
     CapabilityEffectSchema,
     CapabilityResolutionSchema,
 )
-from .schemas.authoring.targets import CapabilityTargetSchema
 from .schemas.authoring.declarations import (
-    ActivationTriggerSchema,
     CapabilityDeclarationSchema,
 )
 from .schemas.durations import EffectDurationSchema, TimedDurationSchema
@@ -97,7 +95,6 @@ from .building.supported import (
 
 __all__ = [
     "Ability",
-    "ActivationTriggerSchema",
     "ActorLevelScalingSchema",
     "ActorLevelScalingThresholdSchema",
     "AutomaticResolutionSchema",
@@ -116,7 +113,6 @@ __all__ = [
     "CapabilityDeclarationSchema",
     "CapabilityEffectSchema",
     "CapabilityResolutionSchema",
-    "CapabilityTargetSchema",
     "FreeHandRequirementSchema",
     "HitPointRequirementSchema",
     "PerceptionRequirementSchema",

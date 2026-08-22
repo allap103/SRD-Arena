@@ -14,6 +14,7 @@ from srd_arena.content.capabilities import (
 )
 from srd_arena.content.spells import build_spell, load_spell_catalog
 from srd_arena.content.spells import SpellSchema
+from srd_arena.domain.spells.rules import spell_target_requirements
 from srd_arena.domain.capabilities import (
     AllRequirement,
     AttackResolution,
@@ -132,7 +133,7 @@ def test_spells_and_stat_blocks_share_perception_requirements() -> None:
             )
         ),
     )
-    assert spell.target_requirements == expected
+    assert spell_target_requirements(spell) == expected
     assert isinstance(action, AutomaticActionDefinition)
     assert action.target.requirements == expected
 
@@ -154,7 +155,7 @@ def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:
 
     assert isinstance(spell_resolution, SavingThrowResolutionSchema)
     assert isinstance(action_resolution, SavingThrowResolutionSchema)
-    assert spell_resolution.difficulty.type == "spell_save_dc"
+    assert spell_resolution.difficulty.type == "provider_save_dc"
     assert action_resolution.difficulty.type == "fixed"
     assert action_resolution.difficulty.value == 22
 
@@ -190,7 +191,7 @@ def test_spells_and_stat_blocks_build_shared_domain_capabilities() -> None:
     spell_resolution = fireball.definition.resolution
     assert isinstance(spell_resolution, SavingThrowResolution)
     assert isinstance(spell_resolution.difficulty, DerivedDifficultyClass)
-    assert spell_resolution.difficulty.derivation == "spell_save_dc"
+    assert spell_resolution.difficulty.derivation == "provider_save_dc"
     assert fireball.definition.target.kind == "area"
     assert fireball.definition.target.shape == "sphere"
     assert fireball.definition.target.size_feet == 20
@@ -218,7 +219,7 @@ def test_spells_and_stat_blocks_build_shared_attack_resolutions() -> None:
     spell_resolution = fire_bolt.definition.resolution
     assert isinstance(spell_resolution, AttackResolution)
     assert isinstance(spell_resolution.attack_bonus, DerivedAttackBonus)
-    assert spell_resolution.attack_bonus.derivation == "spell_attack_modifier"
+    assert spell_resolution.attack_bonus.derivation == "provider_attack_modifier"
     assert fire_bolt.definition.target.kind == "creature"
     assert fire_bolt.definition.target.disposition == "any"
 

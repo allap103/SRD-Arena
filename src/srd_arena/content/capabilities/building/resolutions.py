@@ -59,7 +59,7 @@ def build_resolution(
     if isinstance(value, resolutions.AttackResolutionSchema):
         return _build_attack_resolution(
             modes=(value.mode,),
-            attack_bonus=domain.DerivedAttackBonus("spell_attack_modifier"),
+            attack_bonus=domain.DerivedAttackBonus("provider_attack_modifier"),
             hit=_build_outcome(value.hit, content=content, location=f"{location}.hit"),
             miss=_build_outcome(
                 value.miss,

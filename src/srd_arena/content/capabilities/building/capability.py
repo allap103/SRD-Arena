@@ -48,6 +48,8 @@ def build_capability(
     condition_selection: Literal["all", "choose_one"] = "all",
     scaling_rules: Iterable[scaling.CapabilityScalingSchema] = (),
     triggers: Iterable[object] = (),
+    reactivation_ends_previous: bool = False,
+    blocked_self_removal_conditions: Iterable[str] = (),
     location: str = "capability.resolution",
 ) -> domain.CapabilityDefinition:
     """Build the executable subset of the shared capability vocabulary.
@@ -104,6 +106,8 @@ def build_capability(
             content=content,
             location=location,
         ),
+        reactivation_ends_previous=reactivation_ends_previous,
+        blocked_self_removal_conditions=tuple(blocked_self_removal_conditions),
     )
 
 

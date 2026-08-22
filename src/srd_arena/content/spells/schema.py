@@ -33,9 +33,12 @@ class SpellSchema(SourceModel):
     @model_validator(mode="after")
     def validate_implementation_state(self) -> "SpellSchema":
         status = self.implementation.status
-        if status in {"complete", "partial", "blocked"} and self.capability is None:
+        if status in {"complete", "partial"} and self.capability is None:
             raise ValueError(f"{status.title()} spells must define a capability.")
-        if status in {"unimplemented", "out_of_scope"} and self.capability is not None:
+        if (
+            status in {"blocked", "unimplemented", "out_of_scope"}
+            and self.capability is not None
+        ):
             raise ValueError(f"{status.title()} spells cannot define a capability.")
         return self
 

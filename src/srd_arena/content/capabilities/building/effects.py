@@ -20,14 +20,15 @@ def is_executable_effect(value: object) -> TypeGuard[effects.ActionEffectSchema]
 def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
     if isinstance(value, effects.DamageEffectSchema):
         return domain.DamageEffect(
-            value.dice,
-            value.bonus,
-            value.damage_type,
-            value.minimum,
-            tuple(
+            dice=value.dice,
+            bonus=value.bonus,
+            damage_type=value.damage_type,
+            minimum=value.minimum,
+            requirements=tuple(
                 domain.AttackRollModeRequirement(requirement.mode)
                 for requirement in value.requirements
             ),
+            modifier=value.modifier,
         )
     if isinstance(value, effects.HealingEffectSchema):
         return domain.HealingEffect(

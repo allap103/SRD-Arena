@@ -33,7 +33,7 @@ class FixedDifficultyClassSchema(ResolutionSchemaModel):
 
 
 class DerivedDifficultyClassSchema(ResolutionSchemaModel):
-    type: Literal["spell_save_dc", "ten_plus_spell_level"]
+    type: Literal["provider_save_dc", "ten_plus_resource_level"]
 
 
 DifficultyClassSchema = Annotated[
@@ -80,7 +80,7 @@ class AttackResolutionSchema(
     ResolutionSchemaModel,
     Generic[SuccessOutcomeT],
 ):
-    type: Literal["spell_attack"]
+    type: Literal["provider_attack"]
     mode: Literal["melee", "ranged"]
     attacks: PositiveInt = 1
     allocation: Literal["same_target", "same_or_different"] = "same_target"

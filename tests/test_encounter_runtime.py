@@ -40,6 +40,7 @@ from srd_arena.domain.spells.rules import (
     parse_spell_action_slot,
     parse_spell_action_value,
     spell_action_value,
+    spell_target_requirements,
 )
 from srd_arena.domain.capabilities import (
     CapabilityTarget,
@@ -832,7 +833,9 @@ def test_conditions_showcase_is_externally_controlled_and_uses_immunities() -> N
     hold_person = next(
         spell for spell in mage.spellcasting.learned_spells if spell.id == "hold_person"
     )
-    assert hold_person.target_requirements == (CreatureTypeRequirement(("humanoid",)),)
+    assert spell_target_requirements(hold_person) == (
+        CreatureTypeRequirement(("humanoid",)),
+    )
 
 
 def test_creature_type_restricted_spell_targets_are_visible_but_unavailable() -> None:

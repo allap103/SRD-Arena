@@ -63,7 +63,7 @@
       "line_of_sight": true
     },
     "resolution": {
-      "type": "spell_attack",
+      "type": "provider_attack",
       "mode": "ranged",
       "hit": {
         "effects": [

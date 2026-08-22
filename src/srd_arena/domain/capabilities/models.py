@@ -119,6 +119,8 @@ class CapabilityTarget:
     shape: str | None = None
     size_feet: int | None = None
     width_feet: int | None = None
+    height_feet: int | None = None
+    diameter_feet: int | None = None
     origin: str = "self"
     line_of_sight: bool = False
     disposition: Literal[
@@ -126,6 +128,9 @@ class CapabilityTarget:
     ] = "any"
     selection: Literal["all", "choose", "choose_up_to"] = "choose"
     occupants: Literal["all", "allies", "enemies", "chosen"] = "all"
+    affects: Literal["creatures", "objects", "creatures_and_objects", "all"] = (
+        "creatures"
+    )
     excludes_source: bool = False
     requirements: tuple[CapabilityRequirement, ...] = ()
 
@@ -155,6 +160,7 @@ class DamageEffect:
     damage_type: str
     minimum: int | None = None
     requirements: tuple[AttackHitRequirement, ...] = ()
+    modifier: Literal["none", "ability_modifier"] = "none"
 
 
 @dataclass(frozen=True)

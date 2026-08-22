@@ -32,10 +32,15 @@ from ...spells.rules import (
     spell_action_id,
     spell_action_label,
     spell_action_value,
+    spell_area_size_feet,
     spell_area_shape,
     spell_cast_block_reason,
     spell_chooses_area_targets,
+    spell_geometry_mode,
     spell_range_squares,
+    spell_removable_conditions,
+    spell_removable_effect_kinds,
+    spell_remove_effect_selection,
     spell_supports_higher_level,
     spell_target_disposition,
     spell_targets_self_only,
@@ -99,7 +104,7 @@ def available_spell_actions(
     actions: list[EncounterAction] = []
     for spell in spellcasting.learned_spells:
         cost = self._spell_action_cost(spell)
-        if spell.geometry_mode in {"directional_area", "point_area"}:
+        if spell_geometry_mode(spell) in {"directional_area", "point_area"}:
             _append_spell_action_variants(
                 actions,
                 spellcasting,
@@ -141,8 +146,8 @@ def available_spell_actions(
             removal_choices = _spell_removal_choices(self, target.target_ref, spell)
             selections = (
                 tuple(choice for choice, _label in removal_choices)
-                if spell.removable_effect_kinds
-                and spell.remove_effect_selection != "all"
+                if spell_removable_effect_kinds(spell)
+                and spell_remove_effect_selection(spell) != "all"
                 else conditions
                 if spell.definition is not None
                 and spell.definition.condition_selection == "choose_one"
@@ -478,7 +483,7 @@ def spell_cast_block_reason_for(
 
 
 def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
-    return spell.geometry_mode == "self_only" or spell_targets_self_only(spell)
+    return spell_geometry_mode(spell) == "self_only" or spell_targets_self_only(spell)
 
 
 def spell_range_squares_for(
@@ -494,7 +499,7 @@ def spell_action_targets(
 ) -> list[CapabilityTargetContext]:
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
-    if spell.removable_effect_kinds and not (
+    if spell_removable_effect_kinds(spell) and not (
         any(
             isinstance(effect, (HealingEffect, TemporaryHitPointsEffect))
             for effect in capability_effects(spell.definition)
@@ -515,7 +520,7 @@ def spell_action_targets(
             if target is not None and _spell_removal_choices(self, target_ref, spell):
                 restoration_targets.append(target)
         return restoration_targets
-    if spell.geometry_mode == "point_area":
+    if spell_geometry_mode(spell) == "point_area":
         max_range = self._spell_range_squares(spell, actor)
         if max_range is None:
             return []
@@ -578,9 +583,9 @@ def _spell_removal_choices(
     choices: list[tuple[str, str]] = [
         (condition, condition.title())
         for condition in dict.fromkeys(target.target_conditions)
-        if condition in spell.removable_conditions
+        if condition in spell_removable_conditions(spell)
     ]
-    if "curse" in spell.removable_effect_kinds:
+    if "curse" in spell_removable_effect_kinds(spell):
         choices.extend(
             (
                 f"curse@{effect.identity.id}",
@@ -589,7 +594,7 @@ def _spell_removal_choices(
             for effect in state.ongoing_effects
             if target_ref in effect.target_refs and effect.kind.value == "curse"
         )
-    if "hit_point_maximum_reduction" in spell.removable_effect_kinds and any(
+    if "hit_point_maximum_reduction" in spell_removable_effect_kinds(spell) and any(
         target_ref in effect.target_refs
         and isinstance(
             maximum_modifier := effect.parameters.get("maximum_hit_point_modifier"),
@@ -646,10 +651,10 @@ def spell_area(
 ) -> AreaOfEffect | None:
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
-    if spell.geometry_mode == "point_area":
+    if spell_geometry_mode(spell) == "point_area":
         if aim_point is None:
             return None
-        radius_feet = spell.area_size_feet
+        radius_feet = spell_area_size_feet(spell)
         if radius_feet is None:
             return None
         radius_squares = int(
@@ -659,7 +664,7 @@ def spell_area(
         if spell_area_shape(spell) == "cube":
             return build_point_cube_area(origin, radius_squares, self.definition.grid)
         return build_radius_area(origin, radius_squares, self.definition.grid)
-    if spell.geometry_mode != "directional_area":
+    if spell_geometry_mode(spell) != "directional_area":
         return None
     if aim_point is not None:
         if (

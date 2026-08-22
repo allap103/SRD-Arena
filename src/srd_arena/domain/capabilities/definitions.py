@@ -30,7 +30,7 @@ class FixedAttackBonus:
 
 @dataclass(frozen=True)
 class DerivedAttackBonus:
-    derivation: Literal["spell_attack_modifier"]
+    derivation: Literal["provider_attack_modifier"]
     kind: Literal["derived"] = "derived"
 
 
@@ -56,7 +56,7 @@ class FixedDifficultyClass:
 
 @dataclass(frozen=True)
 class DerivedDifficultyClass:
-    derivation: Literal["spell_save_dc", "ten_plus_spell_level"]
+    derivation: Literal["provider_save_dc", "ten_plus_resource_level"]
     kind: Literal["derived"] = "derived"
 
 
@@ -144,3 +144,5 @@ class CapabilityDefinition:
     scaling: tuple[CapabilityScaling, ...] = ()
     triggers: tuple[CapabilityTrigger, ...] = ()
     follow_ups: tuple[CapabilityStep, ...] = ()
+    reactivation_ends_previous: bool = False
+    blocked_self_removal_conditions: tuple[str, ...] = ()

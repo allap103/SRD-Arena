@@ -72,7 +72,7 @@
       "allocation": "same_or_different",
       "simultaneous": true,
       "resolution": {
-        "type": "spell_attack",
+        "type": "provider_attack",
         "mode": "ranged",
         "hit": {
           "effects": [

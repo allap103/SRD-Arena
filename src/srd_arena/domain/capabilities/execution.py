@@ -64,6 +64,9 @@ class CapabilityExecutionStatistics:
 class _CapabilityDamage:
     dice: str
     damage_type: str
+    bonus: int = 0
+    modifier: str = "none"
+    minimum: int | None = None
 
 
 @dataclass(frozen=True)
@@ -106,8 +109,6 @@ class CapabilityExecutionContext:
     concentration: bool = False
     activation_verb: str = "uses"
     source_kind: str = "capability"
-    reactivation_ends_previous: bool = False
-    blocked_self_removal_conditions: tuple[str, ...] = ()
     removable_conditions: tuple[str, ...] = ()
     removable_effect_kinds: tuple[str, ...] = ()
     remove_effect_selection: str | None = None
@@ -133,7 +134,15 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
     resolved_effects = primary_effects(definition)
     resolution = definition.resolution
     save_dc = (
-        _saving_throw_dc(resolution, context.statistics)
+        _saving_throw_dc(
+            resolution,
+            context.statistics,
+            (
+                context.resource_level
+                if context.resource_level is not None
+                else context.base_resource_level
+            ),
+        )
         if isinstance(resolution, SavingThrowResolution)
         else context.statistics.save_dc
     )
@@ -215,7 +224,13 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
         if isinstance(effect, ConditionEffect)
     )
     repeat_failure_damage = tuple(
-        _CapabilityDamage(effect.dice, effect.damage_type)
+        _CapabilityDamage(
+            effect.dice,
+            effect.damage_type,
+            effect.bonus,
+            effect.modifier,
+            effect.minimum,
+        )
         for effect in (repeat_save.failure_effects if repeat_save is not None else ())
         if isinstance(effect, DamageEffect)
     )
@@ -273,7 +288,13 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
     ]
     shared_damage_rolls: list[tuple[_CapabilityDamage, DicePoolResult]] = []
     damage_definitions = tuple(
-        _CapabilityDamage(effect.dice, effect.damage_type)
+        _CapabilityDamage(
+            effect.dice,
+            effect.damage_type,
+            effect.bonus,
+            effect.modifier,
+            effect.minimum,
+        )
         for effect in resolved_effects
         if isinstance(effect, DamageEffect)
     )
@@ -283,7 +304,13 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
     )
     if actor_damage_dice is not None:
         damage_definitions = tuple(
-            _CapabilityDamage(actor_damage_dice, damage.damage_type)
+            _CapabilityDamage(
+                actor_damage_dice,
+                damage.damage_type,
+                damage.bonus,
+                damage.modifier,
+                damage.minimum,
+            )
             for damage in damage_definitions
         )
     resource_level = (
@@ -312,13 +339,34 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
                     "Resource damage scaling must use the base damage die."
                 )
             count += increment_count * levels_above
-            scaled.append(_CapabilityDamage(f"{count}d{sides}", damage.damage_type))
+            scaled.append(
+                _CapabilityDamage(
+                    f"{count}d{sides}",
+                    damage.damage_type,
+                    damage.bonus,
+                    damage.modifier,
+                    damage.minimum,
+                )
+            )
         damage_definitions = tuple(scaled)
     if isinstance(resolution, (AutomaticResolution, SavingThrowResolution)):
         for damage in damage_definitions:
             count, sides = _parse_damage_dice(damage.dice)
             shared_damage_rolls.append(
-                (damage, resolve_dice(count, sides, roller=context.roller))
+                (
+                    damage,
+                    resolve_dice(
+                        count,
+                        sides,
+                        modifier=damage.bonus
+                        + (
+                            context.statistics.ability_modifier
+                            if damage.modifier == "ability_modifier"
+                            else 0
+                        ),
+                        roller=context.roller,
+                    ),
+                )
             )
     shared_healing_rolls = tuple(
         (
@@ -443,11 +491,24 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
                 if critical_hit:
                     count *= 2
                 target_damage_rolls.append(
-                    (damage, resolve_dice(count, sides, roller=context.roller))
+                    (
+                        damage,
+                        resolve_dice(
+                            count,
+                            sides,
+                            modifier=damage.bonus
+                            + (
+                                context.statistics.ability_modifier
+                                if damage.modifier == "ability_modifier"
+                                else 0
+                            ),
+                            roller=context.roller,
+                        ),
+                    )
                 )
         target_damage = 0
         for damage, roll in target_damage_rolls:
-            final_damage = roll.total
+            final_damage = max(roll.total, damage.minimum or roll.total)
             if successful_save:
                 final_damage = final_damage // 2 if half_damage_on_save else 0
             if isinstance(resolution, AttackResolution) and not hit:
@@ -729,7 +790,7 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
                     "source_ref": context.source_ref,
                     "source_label": context.creature.name,
                     "definition_id": context.capability_id,
-                    "reactivation_ends_previous": context.reactivation_ends_previous,
+                    "reactivation_ends_previous": definition.reactivation_ends_previous,
                     "target_refs": [target.target_ref for target in affected_targets],
                     "duration_rounds": (
                         duration_rounds
@@ -815,7 +876,7 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
                     "source_kind": context.source_kind,
                     "definition_id": context.capability_id,
                 }
-                if condition in context.blocked_self_removal_conditions:
+                if condition in definition.blocked_self_removal_conditions:
                     condition_data["metadata"] = {"blocks_self_removal": True}
                 if effects:
                     condition_data["parent_effect_kind"] = parent_kind
@@ -1027,7 +1088,13 @@ def _resolve_follow_up(
         follow_up.target.size_feet,
     )
     damage_definitions = tuple(
-        _CapabilityDamage(effect.dice, effect.damage_type)
+        _CapabilityDamage(
+            effect.dice,
+            effect.damage_type,
+            effect.bonus,
+            effect.modifier,
+            effect.minimum,
+        )
         for stage in follow_up.resolution.failure
         for effect in stage.effects
         if isinstance(effect, DamageEffect)
@@ -1054,13 +1121,25 @@ def _resolve_follow_up(
                         resource_level - context.base_resource_level,
                     ),
                     damage.damage_type,
+                    damage.bonus,
+                    damage.modifier,
+                    damage.minimum,
                 )
             )
         damage_definitions = tuple(scaled)
     shared_rolls = [
         (
             damage,
-            resolve_dice(*_parse_damage_dice(damage.dice), roller=context.roller),
+            resolve_dice(
+                *_parse_damage_dice(damage.dice),
+                modifier=damage.bonus
+                + (
+                    context.statistics.ability_modifier
+                    if damage.modifier == "ability_modifier"
+                    else 0
+                ),
+                roller=context.roller,
+            ),
         )
         for damage in damage_definitions
     ]
@@ -1071,7 +1150,11 @@ def _resolve_follow_up(
         save = resolve_saving_throw(
             cast(SavingThrowCreature, target.creature),
             cast(Ability, ability),
-            _saving_throw_dc(follow_up.resolution, context.statistics),
+            _saving_throw_dc(
+                follow_up.resolution,
+                context.statistics,
+                resource_level,
+            ),
             mode=context.save_roll_modes.get(target.target_ref, "normal"),
             roller=context.roller,
             automatic_failure_reasons=target.automatic_failure_reasons(ability),
@@ -1091,12 +1174,13 @@ def _resolve_follow_up(
             }
         )
         for damage, roll in shared_rolls:
+            rolled_damage = max(roll.total, damage.minimum or roll.total)
             final_damage = (
-                roll.total // 2
+                rolled_damage // 2
                 if save.check.success and follow_up.resolution.success_damage == "half"
                 else 0
                 if save.check.success
-                else roll.total
+                else rolled_damage
             )
             applied = target.creature.take_damage(final_damage, damage.damage_type)
             damage_details.append(
@@ -1220,13 +1304,14 @@ def _resource_int_increment(
 def _saving_throw_dc(
     resolution: SavingThrowResolution,
     statistics: CapabilityExecutionStatistics,
+    resource_level: int,
 ) -> int:
     difficulty = resolution.difficulty
-    return (
-        difficulty.value
-        if isinstance(difficulty, FixedDifficultyClass)
-        else statistics.save_dc
-    )
+    if isinstance(difficulty, FixedDifficultyClass):
+        return difficulty.value
+    if difficulty.derivation == "ten_plus_resource_level":
+        return 10 + resource_level
+    return statistics.save_dc
 
 
 def _attack_modifier(

@@ -1,7 +1,18 @@
 from srd_arena.content.common import SourceCatalog
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.spells import SpellSchema, build_spell, load_spell_catalog
-from srd_arena.domain.spells.rules import spell_duration_rounds, spell_max_targets
+from srd_arena.domain.spells.rules import (
+    spell_area_size_feet,
+    spell_damage_dice,
+    spell_damage_types,
+    spell_duration_rounds,
+    spell_geometry_mode,
+    spell_max_targets,
+    spell_removable_conditions,
+    spell_removable_effect_kinds,
+    spell_remove_effect_selection,
+    spell_saving_throw_abilities,
+)
 from srd_arena.domain.capabilities import (
     AttackResolution,
     ArmorClassModifierEffect,
@@ -73,11 +84,11 @@ def test_spell_builder_creates_combat_ready_domain_spell() -> None:
     assert fireball.name == "Fireball"
     assert fireball.source == "XPHB"
     assert fireball.level == 3
-    assert fireball.saving_throw_abilities == ("dexterity",)
-    assert fireball.damage_dice == "8d6"
-    assert fireball.damage_inflict == ("fire",)
-    assert fireball.geometry_mode == "point_area"
-    assert fireball.area_size_feet == 20
+    assert spell_saving_throw_abilities(fireball) == ("dexterity",)
+    assert spell_damage_dice(fireball) == "8d6"
+    assert spell_damage_types(fireball) == ("fire",)
+    assert spell_geometry_mode(fireball) == "point_area"
+    assert spell_area_size_feet(fireball) == 20
     assert fireball.definition is not None
     assert fireball.definition is not None
     assert isinstance(fireball.definition.resolution, SavingThrowResolution)
@@ -102,7 +113,7 @@ def test_repeated_attack_and_removal_spells_translate_from_typed_capability() ->
     assert scorching_ray.definition.repetition.allocation == "same_or_different"
     assert spell_max_targets(scorching_ray, 2) == 3
     assert spell_max_targets(scorching_ray, 3) == 4
-    assert lesser_restoration.removable_conditions == (
+    assert spell_removable_conditions(lesser_restoration) == (
         "blinded",
         "deafened",
         "paralyzed",
@@ -199,8 +210,8 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     assert mass_cure_wounds.definition.target.size_feet == 30
     heal = _build_catalog_spell(catalog, "Heal")
     power_word_heal = _build_catalog_spell(catalog, "Power Word Heal")
-    assert heal.remove_effect_selection == "all"
-    assert heal.removable_conditions == ("blinded", "deafened", "poisoned")
+    assert spell_remove_effect_selection(heal) == "all"
+    assert spell_removable_conditions(heal) == ("blinded", "deafened", "poisoned")
     assert heal.definition is not None
     assert any(
         isinstance(effect, HealingEffect) and effect.bonus == 70
@@ -208,7 +219,7 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     )
     assert heal.definition is not None
     assert heal.definition.scaling[0].per_level[0].amount == 10
-    assert power_word_heal.remove_effect_selection == "all"
+    assert spell_remove_effect_selection(power_word_heal) == "all"
     assert power_word_heal.definition is not None
     assert any(
         isinstance(effect, HealingEffect) and effect.restore_to_maximum
@@ -230,7 +241,7 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
         isinstance(effect, HealingEffect) and effect.pool == 700
         for effect in capability_effects(mass_heal.definition)
     )
-    assert mass_heal.remove_effect_selection == "all"
+    assert spell_remove_effect_selection(mass_heal) == "all"
 
 
 def test_restoration_spells_translate_source_aware_removal() -> None:
@@ -238,15 +249,15 @@ def test_restoration_spells_translate_source_aware_removal() -> None:
     greater = _build_catalog_spell(catalog, "Greater Restoration")
     remove_curse = _build_catalog_spell(catalog, "Remove Curse")
 
-    assert greater.removable_conditions == ("charmed", "petrified")
-    assert greater.removable_effect_kinds == (
+    assert spell_removable_conditions(greater) == ("charmed", "petrified")
+    assert spell_removable_effect_kinds(greater) == (
         "condition",
         "curse",
         "hit_point_maximum_reduction",
     )
-    assert greater.remove_effect_selection == "one"
-    assert remove_curse.removable_effect_kinds == ("curse",)
-    assert remove_curse.remove_effect_selection == "all"
+    assert spell_remove_effect_selection(greater) == "one"
+    assert spell_removable_effect_kinds(remove_curse) == ("curse",)
+    assert spell_remove_effect_selection(remove_curse) == "all"
 
 
 def test_protection_from_poison_translates_creature_modifiers() -> None:
@@ -254,8 +265,8 @@ def test_protection_from_poison_translates_creature_modifiers() -> None:
         load_spell_catalog(SYSTEM_CONTENT_ROOT), "Protection from Poison"
     )
 
-    assert spell.removable_conditions == ("poisoned",)
-    assert spell.remove_effect_selection == "all"
+    assert spell_removable_conditions(spell) == ("poisoned",)
+    assert spell_remove_effect_selection(spell) == "all"
     assert spell.definition is not None
     effects = capability_effects(spell.definition)
     assert any(
@@ -329,7 +340,7 @@ def test_foresight_translates_bidirectional_roll_modes() -> None:
         ("d20_test", "advantage", "target"),
         ("attack_roll", "disadvantage", "attacks_against_target"),
     ]
-    assert spell.recast_ends_previous
+    assert spell.definition.reactivation_ends_previous
     assert spell_duration_rounds(spell) == 4800
 
 
@@ -478,7 +489,7 @@ def test_enhance_ability_translates_ability_scoped_choices() -> None:
 def test_faerie_fire_translates_cube_and_incoming_attack_advantage() -> None:
     spell = _build_catalog_spell(load_spell_catalog(SYSTEM_CONTENT_ROOT), "Faerie Fire")
 
-    assert spell.geometry_mode == "point_area"
+    assert spell_geometry_mode(spell) == "point_area"
     assert spell.definition is not None
     assert spell.definition is not None
     assert spell.definition.target.shape == "cube"

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from srd_arena.content.spells import SpellSchema
+from srd_arena.content.spells import SpellSchema, build_spell
 
 
 def _spell(
@@ -23,19 +23,20 @@ def _spell(
 
 
 def _automatic(*effects: dict[str, object]) -> dict[str, object]:
-    return {
-        "type": "automatic",
-        "outcome": {"effects": list(effects)},
-    }
+    return {"type": "automatic", "outcome": {"effects": list(effects)}}
 
 
-def test_direct_area_damage_supports_half_damage_and_slot_scaling() -> None:
+def test_direct_area_damage_supports_geometry_modifier_and_scaling() -> None:
     spell = _spell(
         {
             "target": {
                 "type": "area",
                 "origin": "point_in_range",
-                "geometry": {"shape": "sphere", "radius_feet": 20},
+                "geometry": {
+                    "shape": "cylinder",
+                    "radius_feet": 20,
+                    "height_feet": 40,
+                },
                 "affects": "creatures_and_objects",
             },
             "resolution": {
@@ -46,6 +47,9 @@ def test_direct_area_damage_supports_half_damage_and_slot_scaling() -> None:
                         {
                             "type": "damage",
                             "dice": "8d6",
+                            "bonus": 2,
+                            "modifier": "ability_modifier",
+                            "minimum": 3,
                             "damage_type": "fire",
                         }
                     ]
@@ -74,21 +78,27 @@ def test_direct_area_damage_supports_half_damage_and_slot_scaling() -> None:
     assert spell.executable
     assert spell.capability is not None
     capability = spell.capability.model_dump()
-    assert capability["resolution"]["success_damage"] == "half"
-    assert capability["resolution"]["failure"]["effects"][0]["damage_type"] == "fire"
+    assert capability["target"]["geometry"]["height_feet"] == 40
+    assert capability["resolution"]["failure"]["effects"][0]["modifier"] == (
+        "ability_modifier"
+    )
+    definition = build_spell(spell).definition
+    assert definition is not None
+    assert definition.target.height_feet == 40
+    assert definition.target.affects == "creatures_and_objects"
+    damage = definition.resolution.failure[0].effects[0]
+    assert damage.modifier == "ability_modifier"
+    assert damage.minimum == 3
 
 
-def test_condition_spell_supports_type_requirement_and_repeat_save() -> None:
+def test_condition_spell_supports_requirements_and_repeat_save() -> None:
     spell = _spell(
         {
             "target": {
                 "type": "creature",
-                "line_of_sight": True,
                 "requirements": [
-                    {
-                        "type": "creature_type",
-                        "creature_types": ["humanoid"],
-                    }
+                    {"type": "creature_type", "creature_types": ["humanoid"]},
+                    {"type": "willing"},
                 ],
             },
             "resolution": {
@@ -99,338 +109,54 @@ def test_condition_spell_supports_type_requirement_and_repeat_save() -> None:
                 },
                 "repeat_save": {"trigger": "turn_end", "ability": "wis"},
             },
-            "scaling": [
-                {
-                    "type": "resource_level",
-                    "above_level": 2,
-                    "per_level": [{"type": "target_count", "amount": 1}],
-                }
-            ],
         },
         implementation={"status": "complete"},
     )
 
     assert spell.capability is not None
     capability = spell.capability.model_dump()
-    assert capability["target"]["requirements"][0]["creature_types"] == ["humanoid"]
+    assert capability["target"]["requirements"][1]["type"] == "willing"
     assert capability["resolution"]["repeat_save"]["trigger"] == "turn_end"
 
 
-def test_compound_spell_groups_shared_ongoing_modifiers() -> None:
-    one_minute = {"type": "timed", "amount": 1, "unit": "minute"}
-    spell = _spell(
-        {
-            "target": {
-                "type": "area",
-                "origin": "point_in_range",
-                "geometry": {"shape": "cube", "length_feet": 40},
-                "occupants": "chosen",
-                "chosen_count": {"minimum": 1, "maximum": 6},
-            },
-            "resolution": {
-                "type": "saving_throw",
-                "ability": "wis",
-                "failure": {
-                    "effects": [
-                        {
-                            "type": "ongoing_modifier_group",
-                            "modifiers": [
-                                {
-                                    "type": "speed_multiplier",
-                                    "numerator": 1,
-                                    "denominator": 2,
-                                    "duration": one_minute,
-                                },
-                                {
-                                    "type": "prohibit_reactions",
-                                    "duration": one_minute,
-                                },
-                                {
-                                    "type": "attack_action_limit",
-                                    "maximum": 1,
-                                },
-                                {
-                                    "type": "action_failure_chance",
-                                    "action": "cast_spell",
-                                    "percent": 25,
-                                    "requirements": [
-                                        {
-                                            "type": "spell_component",
-                                            "component": "somatic",
-                                        }
-                                    ],
-                                },
-                            ],
-                        }
-                    ]
-                },
-                "repeat_save": {"trigger": "turn_end", "ability": "wis"},
-            },
-        },
-        implementation={"status": "complete"},
-    )
-
-    assert spell.capability is not None
-    capability = spell.capability.model_dump()
-    modifiers = capability["resolution"]["failure"]["effects"][0]["modifiers"]
-    assert [modifier["type"] for modifier in modifiers] == [
-        "speed_multiplier",
-        "prohibit_reactions",
-        "attack_action_limit",
-        "action_failure_chance",
-    ]
-
-
-def test_hp_pool_and_random_table_are_first_class_resolutions() -> None:
-    hp_pool = _spell(
-        {
-            "target": {
-                "type": "area",
-                "origin": "point_in_range",
-                "geometry": {"shape": "sphere", "radius_feet": 20},
-            },
-            "resolution": {
-                "type": "hit_point_pool",
-                "dice": "5d8",
-                "on_covered": {
-                    "effects": [{"type": "condition", "condition": "unconscious"}]
-                },
-            },
-        },
-        implementation={"status": "complete"},
-    )
-    random = _spell(
-        {
-            "target": {"type": "creature"},
-            "resolution": {
-                "type": "random_table",
-                "die": "1d4",
-                "entries": [
-                    {"minimum": 1, "maximum": 1, "resolution": _automatic()},
-                    {"minimum": 2, "maximum": 3, "resolution": _automatic()},
-                    {"minimum": 4, "maximum": 4, "resolution": _automatic()},
-                ],
-            },
-        },
-        implementation={"status": "complete"},
-    )
-
-    assert hp_pool.capability is not None
-    assert hp_pool.capability.model_dump()["resolution"]["cost"] == "current_hit_points"
-    assert random.capability is not None
-    assert len(random.capability.model_dump()["resolution"]["entries"]) == 3
-
-
-def test_granted_actions_and_persistent_areas_share_capability_state() -> None:
-    spell = _spell(
-        {
-            "target": {"type": "self"},
-            "activation_requirements": [{"type": "free_hand"}],
-            "resolution": _automatic(
-                {
-                    "type": "create_entity",
-                    "entity_id": "flame_blade",
-                    "entity_kind": "weapon",
-                    "actions": [
-                        {
-                            "id": "attack",
-                            "label": "Attack with Flame Blade",
-                            "economy": "magic_action",
-                            "target": {"type": "creature"},
-                            "resolution": {
-                                "type": "spell_attack",
-                                "mode": "melee",
-                                "hit": {
-                                    "effects": [
-                                        {
-                                            "type": "damage",
-                                            "dice": "3d6",
-                                            "damage_type": "fire",
-                                        }
-                                    ]
-                                },
-                            },
-                        }
-                    ],
-                },
-                {
-                    "type": "grant_action",
-                    "action": {
-                        "id": "recreate_blade",
-                        "label": "Recreate Flame Blade",
-                        "economy": "bonus_action",
-                        "target": {"type": "self"},
-                        "resolution": _automatic(),
-                    },
-                },
-            ),
-        },
-        implementation={"status": "complete"},
-    )
-
-    assert spell.capability is not None
-    effects = spell.capability.model_dump()["resolution"]["outcome"]["effects"]
-    assert effects[0]["actions"][0]["id"] == "attack"
-    assert effects[1]["action"]["economy"] == "bonus_action"
-
-
-def test_composite_and_moving_areas_are_explicit() -> None:
-    fire_storm = _spell(
-        {
-            "target": {
-                "type": "composite_area",
-                "component": {
-                    "geometry": {"shape": "cube", "length_feet": 10},
-                    "maximum": 10,
-                },
-                "contiguity": "edge_or_corner",
-            },
-            "resolution": _automatic(),
-        },
-        implementation={"status": "complete"},
-    )
-    cloudkill = _spell(
-        {
-            "target": {
-                "type": "area",
-                "origin": "point_in_range",
-                "geometry": {"shape": "sphere", "radius_feet": 20},
-            },
-            "resolution": _automatic(
-                {
-                    "type": "create_persistent_area",
-                    "properties": [{"type": "obscurement", "degree": "heavy"}],
-                    "triggers": [
-                        {
-                            "event": "creature_turn_start",
-                            "resolution": _automatic(
-                                {
-                                    "type": "damage",
-                                    "dice": "5d8",
-                                    "damage_type": "poison",
-                                }
-                            ),
-                            "per_target_limit": 1,
-                            "limit_period": "turn",
-                        }
-                    ],
-                    "movement": {
-                        "trigger": "source_turn_start",
-                        "distance_feet": 10,
-                        "direction": "away_from_source",
-                    },
-                    "ends_on": ["strong_wind"],
-                }
-            ),
-        },
-        implementation={"status": "complete"},
-    )
-
-    assert fire_storm.capability is not None
-    fire_storm_capability = fire_storm.capability.model_dump()
-    assert fire_storm_capability["target"]["component"]["maximum"] == 10
-    assert cloudkill.capability is not None
-    cloudkill_capability = cloudkill.capability.model_dump()
-    area = cloudkill_capability["resolution"]["outcome"]["effects"][0]
-    assert area["movement"]["distance_feet"] == 10
-
-
-def test_triggered_casts_links_interception_and_defeat_prevention_are_typed() -> None:
-    spell = _spell(
-        {
-            "target": {"type": "event_target", "binding": "triggering_target"},
-            "activation_trigger": {
-                "event": "attack_hit",
-                "timing": "immediately_after",
-                "requirements": [{"type": "attack_source", "source": "weapon"}],
-                "target": {
-                    "type": "event_target",
-                    "binding": "triggering_target",
-                },
-            },
-            "resolution": _automatic(
-                {"type": "relationship", "relationship": "marked"},
-                {
-                    "type": "prevent_defeat",
-                    "replacement_hit_points": 1,
-                    "uses": 1,
-                },
-            ),
-            "outcome_triggers": [
-                {
-                    "event": "attack_would_hit",
-                    "target": {
-                        "type": "event_target",
-                        "binding": "triggering_attacker",
-                    },
-                    "resolution": _automatic(
-                        {"type": "cancel_pending_event", "event": "attack"}
-                    ),
-                }
-            ],
-        },
-        implementation={"status": "complete"},
-    )
-
-    assert spell.capability is not None
-    assert spell.capability.activation_trigger is not None
-    assert spell.capability.activation_trigger.event == "attack_hit"
-    assert spell.capability.outcome_triggers[0].event == "attack_would_hit"
-
-
-def test_implementation_status_cannot_hide_missing_or_extra_capability() -> None:
-    with pytest.raises(
-        ValidationError, match="Complete spells must define a capability"
-    ):
+def test_implementation_status_matches_executable_capability() -> None:
+    with pytest.raises(ValidationError, match="Complete spells must define"):
         _spell(None, implementation={"status": "complete"})
 
-    with pytest.raises(ValidationError, match="Unimplemented spells cannot define"):
+    with pytest.raises(ValidationError, match="Blocked spells cannot define"):
         _spell(
             {"target": {"type": "self"}, "resolution": _automatic()},
-        )
-
-    with pytest.raises(ValidationError, match="must list omissions"):
-        _spell(
-            {"target": {"type": "self"}, "resolution": _automatic()},
-            implementation={"status": "partial"},
+            implementation={"status": "blocked", "blocked_by": ["unsupported"]},
         )
 
 
-def test_schema_rejects_unknown_capability_and_invalid_structures() -> None:
-    with pytest.raises(ValidationError):
-        _spell(
-            {
-                "target": {"type": "self"},
-                "resolution": _automatic({"type": "interpret_prose"}),
-            },
-            implementation={"status": "complete"},
-        )
-
-    with pytest.raises(ValidationError, match="requires length_feet and width_feet"):
-        _spell(
-            {
-                "target": {
-                    "type": "area",
-                    "origin": "self",
-                    "geometry": {"shape": "line", "length_feet": 100},
-                },
-                "resolution": _automatic(),
-            },
-            implementation={"status": "complete"},
-        )
-
-    with pytest.raises(ValidationError, match="contiguous and non-overlapping"):
+@pytest.mark.parametrize(
+    "resolution_type",
+    ["ability_check", "hit_point_pool", "random_table", "choice"],
+)
+def test_schema_rejects_non_executable_resolution_types(
+    resolution_type: str,
+) -> None:
+    with pytest.raises(ValidationError, match=resolution_type):
         _spell(
             {
                 "target": {"type": "creature"},
-                "resolution": {
-                    "type": "random_table",
-                    "die": "1d4",
-                    "entries": [
-                        {"minimum": 1, "maximum": 1, "resolution": _automatic()},
-                        {"minimum": 3, "maximum": 4, "resolution": _automatic()},
-                    ],
-                },
+                "resolution": {"type": resolution_type},
+            },
+            implementation={"status": "complete"},
+        )
+
+
+@pytest.mark.parametrize(
+    "effect_type",
+    ["create_entity", "store_spell", "create_persistent_area", "grant_action"],
+)
+def test_schema_rejects_non_executable_effect_types(effect_type: str) -> None:
+    with pytest.raises(ValidationError, match=effect_type):
+        _spell(
+            {
+                "target": {"type": "self"},
+                "resolution": _automatic({"type": effect_type}),
             },
             implementation={"status": "complete"},
         )
