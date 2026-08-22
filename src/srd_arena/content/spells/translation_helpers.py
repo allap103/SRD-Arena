@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 import re
-from typing import overload
 
 from .catalog import SpellCatalog
 from .schema import SpellSchema
@@ -15,7 +14,7 @@ from .resolution import (
     SavingThrowResolutionSchema,
     SpellAttackResolutionSchema,
 )
-from .scaling import CasterLevelScalingSchema, SlotScalingSchema
+from srd_arena.content.spells.translation.scaling import slot_damage_increment
 from .targeting import (
     ConditionImmunityRequirementSchema,
     CreatureTraitRequirementSchema,
@@ -25,40 +24,6 @@ from srd_arena.domain.spells import (
     SpellDamage,
 )
 from srd_arena.domain.capabilities import CreatureTypeRequirement
-
-
-@overload
-def _slot_scaling_value(
-    raw: SpellSchema,
-    kind: str,
-    value_type: type[str],
-) -> str | None: ...
-
-
-@overload
-def _slot_scaling_value(
-    raw: SpellSchema,
-    kind: str,
-    value_type: type[int],
-) -> int | None: ...
-
-
-def _slot_scaling_value(
-    raw: SpellSchema,
-    kind: str,
-    value_type: type[str] | type[int],
-) -> str | int | None:
-    assert raw.capability is not None
-    return next(
-        (
-            increment.amount
-            for scaling in raw.capability.scaling
-            if isinstance(scaling, SlotScalingSchema)
-            for increment in scaling.per_level
-            if increment.type == kind and isinstance(increment.amount, value_type)
-        ),
-        None,
-    )
 
 
 def _follow_up_resolution(
@@ -88,7 +53,7 @@ def _follow_up_resolution(
         ),
         half_damage_on_save=resolution.success_damage == "half",
         area_radius_feet=target.geometry.radius_feet,
-        slot_damage_increment=_slot_damage_increment(
+        slot_damage_increment=slot_damage_increment(
             raw,
             damage_types={entry.damage_type for entry in damage},
         ),
@@ -103,66 +68,6 @@ def _creature_types_from_requirements(
         for requirement in requirements
         if getattr(requirement, "type", None) == "creature_type"
         for creature_type in getattr(requirement, "creature_types", ())
-    )
-
-
-def _cantrip_damage_by_level(raw: SpellSchema) -> tuple[tuple[int, str], ...]:
-    scaling_data = (raw.model_extra or {}).get("scalingLevelDice")
-    if not isinstance(scaling_data, dict):
-        return ()
-    scaling = scaling_data.get("scaling")
-    if not isinstance(scaling, dict):
-        return ()
-    return tuple(
-        sorted(
-            (int(level), dice)
-            for level, dice in scaling.items()
-            if isinstance(level, str) and level.isdigit() and isinstance(dice, str)
-        )
-    )
-
-
-def _slot_damage_increment(
-    raw: SpellSchema,
-    *,
-    damage_types: set[str],
-) -> str | None:
-    assert raw.capability is not None
-    for scaling in raw.capability.scaling:
-        if not isinstance(scaling, SlotScalingSchema):
-            continue
-        for increment in scaling.per_level:
-            if (
-                increment.type == "damage_dice"
-                and isinstance(increment.amount, str)
-                and (
-                    increment.damage_type is None
-                    or increment.damage_type in damage_types
-                )
-            ):
-                return increment.amount
-    return None
-
-
-def _slot_target_increment(raw: SpellSchema) -> int:
-    assert raw.capability is not None
-    return sum(
-        increment.amount
-        for scaling in raw.capability.scaling
-        if isinstance(scaling, SlotScalingSchema)
-        for increment in scaling.per_level
-        if increment.type in {"target_count", "projectile_count"}
-        and isinstance(increment.amount, int)
-    )
-
-
-def _target_count_by_caster_level(raw: SpellSchema) -> tuple[tuple[int, int], ...]:
-    assert raw.capability is not None
-    return tuple(
-        (threshold.minimum_level, threshold.projectile_count)
-        for scaling in raw.capability.scaling
-        if isinstance(scaling, CasterLevelScalingSchema)
-        for threshold in scaling.thresholds
     )
 
 
