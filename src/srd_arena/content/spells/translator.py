@@ -5,11 +5,8 @@ from .schema import SpellSchema
 from srd_arena.content.capabilities import (
     ConditionEffectSchema,
     DamageEffectSchema,
-    DerivedDifficultyClassSchema,
-    FixedDifficultyClassSchema,
     RollModifierEffectSchema,
 )
-from srd_arena.content.capabilities.compiler import compile_effect, is_shared_effect
 from .resolution import (
     ArmorClassModifierEffectSchema,
     AutomaticResolutionSchema,
@@ -26,9 +23,7 @@ from .resolution import (
     SequenceResolutionSchema,
     SpellAttackResolutionSchema,
     TemporaryHitPointsEffectSchema,
-    OutcomeSchema,
 )
-from .targeting import SpellTargetSchema
 from srd_arena.content.common.sources import slug
 from srd_arena.domain.spells import (
     SpellCapability,
@@ -43,7 +38,7 @@ from srd_arena.domain.effects.modifiers import (
     RollKind,
     RollModifier,
 )
-import srd_arena.domain.capabilities as capability_domain
+from .translation import compile_activation, compile_definition
 
 
 from .translation_helpers import (
@@ -112,24 +107,8 @@ def build_spell(
         ),
         target_requirements=_target_requirements(raw),
         capability=capability,
-        activation=_compile_activation(raw),
+        activation=compile_activation(raw),
     )
-
-
-def _compile_activation(
-    raw: SpellSchema,
-) -> capability_domain.CapabilityActivation | None:
-    if not raw.time:
-        return None
-    activation_by_unit: dict[str, capability_domain.CapabilityActivation] = {
-        "action": "action",
-        "bonus": "bonus_action",
-        "reaction": "reaction",
-    }
-    unit = raw.time[0].get("unit")
-    if not isinstance(unit, str) or unit not in activation_by_unit:
-        return None
-    return activation_by_unit[unit]
 
 
 def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
@@ -432,106 +411,5 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
             if isinstance(effect.root, RollModifierEffectSchema)
             for ability in effect.root.ability_options
         ),
-        definition=_compile_definition(target, resolution, outcome),
-    )
-
-
-def _compile_definition(
-    target: SpellTargetSchema,
-    resolution: AutomaticResolutionSchema | SavingThrowResolutionSchema | SpellAttackResolutionSchema,
-    outcome: OutcomeSchema,
-) -> capability_domain.CapabilityDefinition | None:
-    effect_values = tuple(effect.root for effect in outcome.effects)
-    success_values = (
-        tuple(effect.root for effect in resolution.success.effects)
-        if isinstance(resolution, SavingThrowResolutionSchema)
-        else ()
-    )
-    miss_values = (
-        tuple(effect.root for effect in resolution.miss.effects)
-        if isinstance(resolution, SpellAttackResolutionSchema)
-        else ()
-    )
-    if not all(
-        is_shared_effect(effect)
-        for effect in (*effect_values, *success_values, *miss_values)
-    ):
-        return None
-    compiled_target = _compile_target(target)
-    if compiled_target is None:
-        return None
-    compiled_outcome = capability_domain.Outcome(
-        tuple(compile_effect(effect) for effect in effect_values if is_shared_effect(effect))
-    )
-    if isinstance(resolution, SpellAttackResolutionSchema):
-        compiled_resolution: capability_domain.CapabilityResolution = (
-            capability_domain.AttackResolution(
-                modes=(resolution.mode,),
-                attack_bonus=capability_domain.DerivedAttackBonus(
-                    "spell_attack_modifier"
-                ),
-                hit=compiled_outcome,
-                miss=capability_domain.Outcome(
-                    tuple(
-                        compile_effect(effect)
-                        for effect in miss_values
-                        if is_shared_effect(effect)
-                    )
-                ),
-                attacks=resolution.attacks,
-                allocation=resolution.allocation,
-            )
-        )
-    elif isinstance(resolution, AutomaticResolutionSchema):
-        compiled_resolution = (
-            capability_domain.AutomaticResolution(compiled_outcome)
-        )
-    else:
-        ability = resolution.ability
-        if ability is None:
-            return None
-        difficulty = resolution.difficulty
-        if isinstance(difficulty, FixedDifficultyClassSchema):
-            compiled_difficulty: capability_domain.DifficultyClass = (
-                capability_domain.FixedDifficultyClass(difficulty.value)
-            )
-        else:
-            derived = cast(DerivedDifficultyClassSchema, difficulty)
-            compiled_difficulty = capability_domain.DerivedDifficultyClass(derived.type)
-        compiled_resolution = capability_domain.SavingThrowResolution(
-            ability=ability,
-            difficulty=compiled_difficulty,
-            failure=(capability_domain.OutcomeStage(compiled_outcome.effects),),
-            success=capability_domain.Outcome(
-                tuple(
-                    compile_effect(effect)
-                    for effect in success_values
-                    if is_shared_effect(effect)
-                )
-            ),
-            success_damage=resolution.success_damage,
-        )
-    return capability_domain.CapabilityDefinition(compiled_target, compiled_resolution)
-
-
-def _compile_target(
-    target: SpellTargetSchema,
-) -> capability_domain.CapabilityTarget | None:
-    if target.type == "self":
-        return capability_domain.CapabilityTarget(kind="self")
-    if target.type == "creature":
-        return capability_domain.CapabilityTarget(kind="creature")
-    if target.type != "area":
-        return None
-    geometry = target.geometry
-    return capability_domain.CapabilityTarget(
-        kind="area",
-        shape=geometry.shape,
-        size_feet=(
-            geometry.radius_feet
-            or geometry.length_feet
-            or geometry.diameter_feet
-        ),
-        width_feet=geometry.width_feet,
-        origin=target.origin,
+        definition=compile_definition(target, resolution, outcome),
     )
