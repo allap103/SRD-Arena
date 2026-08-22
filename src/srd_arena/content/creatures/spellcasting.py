@@ -5,6 +5,7 @@ from srd_arena.content.character_options.classes.schema import (
 )
 from srd_arena.content.spells import SpellCatalog, build_spell
 from srd_arena.domain.creatures import Attributes, Spellcasting
+from srd_arena.domain.spells import Spell
 
 from .schema import CreatureSchema
 
@@ -36,7 +37,7 @@ def build_spellcasting(
             spell_slots_max=spell_slots_max,
             spell_slots_remaining=dict(spell_slots_max),
             learned_spells=[
-                build_spell(reference.name, reference.source, spells)
+                _build_referenced_spell(reference.name, reference.source, spells)
                 for reference in schema.spells_known
             ],
         )
@@ -54,9 +55,7 @@ def build_spellcasting(
         return None
 
     level = attributes.level
-    ability_modifier = (
-        spellcasting_ability_score(attributes, ability) - 10
-    ) // 2
+    ability_modifier = (spellcasting_ability_score(attributes, ability) - 10) // 2
     spell_slots_max = spell_slots_progression(source_definition, level)
     return Spellcasting(
         ability=ability,
@@ -72,10 +71,22 @@ def build_spellcasting(
         spell_slots_max=spell_slots_max,
         spell_slots_remaining=dict(spell_slots_max),
         learned_spells=[
-            build_spell(reference.name, reference.source, spells)
+            _build_referenced_spell(reference.name, reference.source, spells)
             for reference in schema.spells_known
         ],
     )
+
+
+def _build_referenced_spell(
+    name: str,
+    source: str | None,
+    catalog: SpellCatalog | None,
+) -> Spell:
+    if catalog is None:
+        raise ValueError(
+            f"Creature references spell '{name}', but no spell catalog was loaded."
+        )
+    return build_spell(catalog.find(name, source))
 
 
 def _spellcasting_source_definition(
@@ -100,9 +111,12 @@ def _spellcasting_source_definition(
 
 def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
     ability_map = {
-        "str": attributes.strength, "dex": attributes.dexterity,
-        "con": attributes.constitution, "int": attributes.intelligence,
-        "wis": attributes.wisdom, "cha": attributes.charisma,
+        "str": attributes.strength,
+        "dex": attributes.dexterity,
+        "con": attributes.constitution,
+        "int": attributes.intelligence,
+        "wis": attributes.wisdom,
+        "cha": attributes.charisma,
     }
     return ability_map.get(ability.casefold(), 10)
 
@@ -150,10 +164,15 @@ def spell_count_progression(
     row_index = level - 1
     for group in block.table_groups:
         labels, rows = group.column_labels, group.rows
-        if not any(
-            isinstance(label, str) and ("Spells Known" in label or "Spells Prepared" in label)
-            for label in labels
-        ) or row_index < 0 or row_index >= len(rows):
+        if (
+            not any(
+                isinstance(label, str)
+                and ("Spells Known" in label or "Spells Prepared" in label)
+                for label in labels
+            )
+            or row_index < 0
+            or row_index >= len(rows)
+        ):
             continue
         row = rows[row_index]
         if row:

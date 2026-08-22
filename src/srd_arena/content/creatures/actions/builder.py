@@ -290,7 +290,7 @@ def _spell_option(
     if catalog is not None:
         from srd_arena.content.spells import build_spell
 
-        resolved = build_spell(spell.name, spell.source, catalog)
+        resolved = build_spell(catalog.find(spell.name, spell.source))
     pool = None
     cost = None
     if isinstance(spell.uses, int):

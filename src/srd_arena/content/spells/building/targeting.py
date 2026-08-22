@@ -1,18 +1,7 @@
 from collections.abc import Sequence
 
-from srd_arena.content.spells.catalog import SpellCatalog
 from srd_arena.content.spells.schema import SpellSchema
 from srd_arena.domain.capabilities import CreatureTypeRequirement
-
-
-def find_spell(
-    name: str, source: str | None, catalog: SpellCatalog | None
-) -> SpellSchema:
-    if catalog is None:
-        raise ValueError(
-            f"Creature references spell '{name}', but no spell catalog was loaded."
-        )
-    return catalog.find(name, source)
 
 
 def creature_types_from_requirements(

@@ -24,14 +24,14 @@ from srd_arena.domain.capabilities import (
 )
 
 
+def _build_catalog_spell(catalog, name: str, source: str = "XPHB"):
+    return build_spell(catalog.find(name, source))
+
+
 def test_every_bundled_executable_spell_has_a_shared_definition() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
 
-    spells = [
-        build_spell(raw.public_name, raw.source, catalog)
-        for raw in catalog
-        if raw.capability is not None
-    ]
+    spells = [build_spell(raw) for raw in catalog if raw.capability is not None]
 
     assert len(spells) >= 50
     assert [spell.name for spell in spells if spell.definition is None] == []
@@ -68,7 +68,7 @@ def test_spell_schema_preserves_unknown_source_fields() -> None:
 def test_spell_builder_creates_combat_ready_domain_spell() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
 
-    fireball = build_spell("Fireball", "XPHB", catalog)
+    fireball = _build_catalog_spell(catalog, "Fireball")
 
     assert fireball.name == "Fireball"
     assert fireball.source == "XPHB"
@@ -90,8 +90,8 @@ def test_spell_builder_creates_combat_ready_domain_spell() -> None:
 def test_repeated_attack_and_removal_spells_translate_from_typed_capability() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
 
-    scorching_ray = build_spell("Scorching Ray", "XPHB", catalog)
-    lesser_restoration = build_spell("Lesser Restoration", "XPHB", catalog)
+    scorching_ray = _build_catalog_spell(catalog, "Scorching Ray")
+    lesser_restoration = _build_catalog_spell(catalog, "Lesser Restoration")
 
     assert scorching_ray.definition is not None
     assert scorching_ray.definition is not None
@@ -115,10 +115,10 @@ def test_repeated_attack_and_removal_spells_translate_from_typed_capability() ->
 
 def test_wave_1c_spells_translate_composed_capability() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
-    ray = build_spell("Ray of Sickness", "XPHB", catalog)
-    ice_knife = build_spell("Ice Knife", "XPHB", catalog)
-    eldritch_blast = build_spell("Eldritch Blast", "XPHB", catalog)
-    weird = build_spell("Weird", "XPHB", catalog)
+    ray = _build_catalog_spell(catalog, "Ray of Sickness")
+    ice_knife = _build_catalog_spell(catalog, "Ice Knife")
+    eldritch_blast = _build_catalog_spell(catalog, "Eldritch Blast")
+    weird = _build_catalog_spell(catalog, "Weird")
 
     assert ray.definition is not None
     assert any(
@@ -161,8 +161,8 @@ def test_wave_1c_spells_translate_composed_capability() -> None:
 
 def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
-    cure_wounds = build_spell("Cure Wounds", "XPHB", catalog)
-    false_life = build_spell("False Life", "XPHB", catalog)
+    cure_wounds = _build_catalog_spell(catalog, "Cure Wounds")
+    false_life = _build_catalog_spell(catalog, "False Life")
 
     assert cure_wounds.definition is not None
     assert cure_wounds.definition is not None
@@ -183,9 +183,9 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
         for effect in capability_effects(false_life.definition)
     )
 
-    healing_word = build_spell("Healing Word", "XPHB", catalog)
-    mass_healing_word = build_spell("Mass Healing Word", "XPHB", catalog)
-    mass_cure_wounds = build_spell("Mass Cure Wounds", "XPHB", catalog)
+    healing_word = _build_catalog_spell(catalog, "Healing Word")
+    mass_healing_word = _build_catalog_spell(catalog, "Mass Healing Word")
+    mass_cure_wounds = _build_catalog_spell(catalog, "Mass Cure Wounds")
     assert healing_word.definition is not None
     assert healing_word.definition is not None
     assert healing_word.definition.scaling[0].per_level[0].amount == "2d4"
@@ -197,8 +197,8 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     assert mass_cure_wounds.definition is not None
     assert mass_cure_wounds.definition.target.occupants == "chosen"
     assert mass_cure_wounds.definition.target.size_feet == 30
-    heal = build_spell("Heal", "XPHB", catalog)
-    power_word_heal = build_spell("Power Word Heal", "XPHB", catalog)
+    heal = _build_catalog_spell(catalog, "Heal")
+    power_word_heal = _build_catalog_spell(catalog, "Power Word Heal")
     assert heal.remove_effect_selection == "all"
     assert heal.removable_conditions == ("blinded", "deafened", "poisoned")
     assert heal.definition is not None
@@ -214,7 +214,7 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
         isinstance(effect, HealingEffect) and effect.restore_to_maximum
         for effect in capability_effects(power_word_heal.definition)
     )
-    aid = build_spell("Aid", "XPHB", catalog)
+    aid = _build_catalog_spell(catalog, "Aid")
     assert aid.definition is not None
     assert any(
         isinstance(effect, HitPointMaximumModifierEffect)
@@ -224,7 +224,7 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
     )
     assert aid.definition is not None
     assert aid.definition.scaling[0].per_level[0].amount == 5
-    mass_heal = build_spell("Mass Heal", "XPHB", catalog)
+    mass_heal = _build_catalog_spell(catalog, "Mass Heal")
     assert mass_heal.definition is not None
     assert any(
         isinstance(effect, HealingEffect) and effect.pool == 700
@@ -235,8 +235,8 @@ def test_healing_spells_translate_restoration_and_slot_scaling() -> None:
 
 def test_restoration_spells_translate_source_aware_removal() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
-    greater = build_spell("Greater Restoration", "XPHB", catalog)
-    remove_curse = build_spell("Remove Curse", "XPHB", catalog)
+    greater = _build_catalog_spell(catalog, "Greater Restoration")
+    remove_curse = _build_catalog_spell(catalog, "Remove Curse")
 
     assert greater.removable_conditions == ("charmed", "petrified")
     assert greater.removable_effect_kinds == (
@@ -250,8 +250,8 @@ def test_restoration_spells_translate_source_aware_removal() -> None:
 
 
 def test_protection_from_poison_translates_creature_modifiers() -> None:
-    spell = build_spell(
-        "Protection from Poison", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    spell = _build_catalog_spell(
+        load_spell_catalog(SYSTEM_CONTENT_ROOT), "Protection from Poison"
     )
 
     assert spell.removable_conditions == ("poisoned",)
@@ -272,8 +272,8 @@ def test_protection_from_poison_translates_creature_modifiers() -> None:
 
 
 def test_protection_from_energy_translates_a_resistance_choice() -> None:
-    spell = build_spell(
-        "Protection from Energy", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    spell = _build_catalog_spell(
+        load_spell_catalog(SYSTEM_CONTENT_ROOT), "Protection from Energy"
     )
 
     assert spell.definition is not None
@@ -289,8 +289,8 @@ def test_protection_from_energy_translates_a_resistance_choice() -> None:
 
 def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
-    bless = build_spell("Bless", "XPHB", catalog)
-    bane = build_spell("Bane", "XPHB", catalog)
+    bless = _build_catalog_spell(catalog, "Bless")
+    bane = _build_catalog_spell(catalog, "Bane")
 
     assert bless.definition is not None
     assert [
@@ -318,7 +318,7 @@ def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
 
 
 def test_foresight_translates_bidirectional_roll_modes() -> None:
-    spell = build_spell("Foresight", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    spell = _build_catalog_spell(load_spell_catalog(SYSTEM_CONTENT_ROOT), "Foresight")
 
     assert spell.definition is not None
     assert [
@@ -334,8 +334,8 @@ def test_foresight_translates_bidirectional_roll_modes() -> None:
 
 
 def test_shield_of_faith_translates_sourced_armor_class() -> None:
-    spell = build_spell(
-        "Shield of Faith", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    spell = _build_catalog_spell(
+        load_spell_catalog(SYSTEM_CONTENT_ROOT), "Shield of Faith"
     )
 
     assert spell.definition is not None
@@ -349,9 +349,9 @@ def test_shield_of_faith_translates_sourced_armor_class() -> None:
 
 def test_sense_spells_and_blur_translate_directional_perception() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
-    darkvision = build_spell("Darkvision", "XPHB", catalog)
-    true_seeing = build_spell("True Seeing", "XPHB", catalog)
-    blur = build_spell("Blur", "XPHB", catalog)
+    darkvision = _build_catalog_spell(catalog, "Darkvision")
+    true_seeing = _build_catalog_spell(catalog, "True Seeing")
+    blur = _build_catalog_spell(catalog, "Blur")
 
     assert any(
         isinstance(effect, SenseEffect)
@@ -376,8 +376,8 @@ def test_sense_spells_and_blur_translate_directional_perception() -> None:
 
 def test_speed_spells_translate_additive_modifiers() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
-    longstrider = build_spell("Longstrider", "XPHB", catalog)
-    ray_of_frost = build_spell("Ray of Frost", "XPHB", catalog)
+    longstrider = _build_catalog_spell(catalog, "Longstrider")
+    ray_of_frost = _build_catalog_spell(catalog, "Ray of Frost")
 
     assert longstrider.definition is not None
     assert any(
@@ -405,7 +405,7 @@ def test_speed_spells_translate_additive_modifiers() -> None:
 
 
 def test_resistance_translates_typed_per_turn_damage_reduction() -> None:
-    spell = build_spell("Resistance", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    spell = _build_catalog_spell(load_spell_catalog(SYSTEM_CONTENT_ROOT), "Resistance")
 
     assert spell.definition is not None
     reduction = next(
@@ -422,7 +422,7 @@ def test_resistance_translates_typed_per_turn_damage_reduction() -> None:
 
 
 def test_heroism_translates_immunity_and_turn_start_temporary_hp() -> None:
-    spell = build_spell("Heroism", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    spell = _build_catalog_spell(load_spell_catalog(SYSTEM_CONTENT_ROOT), "Heroism")
 
     assert spell.definition is not None
     effects = capability_effects(spell.definition)
@@ -442,7 +442,7 @@ def test_heroism_translates_immunity_and_turn_start_temporary_hp() -> None:
 
 
 def test_stoneskin_translates_multiple_damage_resistances() -> None:
-    spell = build_spell("Stoneskin", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    spell = _build_catalog_spell(load_spell_catalog(SYSTEM_CONTENT_ROOT), "Stoneskin")
 
     assert spell.definition is not None
     assert any(
@@ -456,8 +456,8 @@ def test_stoneskin_translates_multiple_damage_resistances() -> None:
 
 
 def test_enhance_ability_translates_ability_scoped_choices() -> None:
-    spell = build_spell(
-        "Enhance Ability", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    spell = _build_catalog_spell(
+        load_spell_catalog(SYSTEM_CONTENT_ROOT), "Enhance Ability"
     )
 
     assert spell.definition is not None
@@ -476,7 +476,7 @@ def test_enhance_ability_translates_ability_scoped_choices() -> None:
 
 
 def test_faerie_fire_translates_cube_and_incoming_attack_advantage() -> None:
-    spell = build_spell("Faerie Fire", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
+    spell = _build_catalog_spell(load_spell_catalog(SYSTEM_CONTENT_ROOT), "Faerie Fire")
 
     assert spell.geometry_mode == "point_area"
     assert spell.definition is not None
@@ -493,8 +493,8 @@ def test_faerie_fire_translates_cube_and_incoming_attack_advantage() -> None:
 
 
 def test_phantasmal_killer_translates_repeat_damage_and_roll_disadvantage() -> None:
-    spell = build_spell(
-        "Phantasmal Killer", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+    spell = _build_catalog_spell(
+        load_spell_catalog(SYSTEM_CONTENT_ROOT), "Phantasmal Killer"
     )
 
     assert spell.definition is not None
@@ -543,10 +543,7 @@ def test_wave_1a_spells_define_executable_translate_capability() -> None:
     spells = [catalog.find(name, "XPHB") for name in names]
 
     assert all(spell.executable for spell in spells)
-    assert all(
-        build_spell(spell.public_name, spell.source, catalog).definition
-        for spell in spells
-    )
+    assert all(build_spell(spell).definition for spell in spells)
     assert catalog.find("Blight", "XPHB").implementation.status == "partial"
     assert catalog.find("Sacred Flame", "XPHB").implementation.status == "complete"
 
@@ -570,10 +567,7 @@ def test_wave_1b_spells_define_executable_condition_capability() -> None:
     spells = [catalog.find(name, "XPHB") for name in names]
 
     assert all(spell.executable for spell in spells)
-    assert all(
-        build_spell(spell.public_name, spell.source, catalog).definition
-        for spell in spells
-    )
+    assert all(build_spell(spell).definition for spell in spells)
 
 
 def test_spell_catalog_and_builder_use_srd_public_name() -> None:
@@ -592,7 +586,7 @@ def test_spell_catalog_and_builder_use_srd_public_name() -> None:
         source_of=lambda spell: spell.source,
     )
 
-    spell = build_spell("Arcane Hand", "TEST", catalog)
+    spell = build_spell(catalog.find("Arcane Hand", "TEST"))
 
     assert spell.id == "arcane_hand"
     assert spell.name == "Arcane Hand"

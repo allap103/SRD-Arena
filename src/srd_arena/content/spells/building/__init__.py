@@ -5,7 +5,6 @@ from .capabilities import build_definition, build_spell_definition
 from .scaling import build_scaling
 from .targeting import (
     creature_types_from_requirements,
-    find_spell,
     normalize_save_ability,
     target_requirements,
 )
@@ -16,7 +15,6 @@ __all__ = [
     "build_definition",
     "build_spell_definition",
     "creature_types_from_requirements",
-    "find_spell",
     "normalize_save_ability",
     "target_requirements",
 ]

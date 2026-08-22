@@ -53,7 +53,7 @@ def test_spells_and_stat_blocks_build_shared_domain_capabilities() -> None:
     spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     monsters = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
 
-    fireball = build_spell("Fireball", "XPHB", spells)
+    fireball = build_spell(spells.find("Fireball", "XPHB"))
     assert fireball.definition is not None
     spell_resolution = fireball.definition.resolution
     assert isinstance(spell_resolution, SavingThrowResolution)
@@ -81,7 +81,7 @@ def test_spells_and_stat_blocks_build_shared_attack_resolutions() -> None:
     spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     monsters = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
 
-    fire_bolt = build_spell("Fire Bolt", "XPHB", spells)
+    fire_bolt = build_spell(spells.find("Fire Bolt", "XPHB"))
     assert fire_bolt.definition is not None
     spell_resolution = fire_bolt.definition.resolution
     assert isinstance(spell_resolution, AttackResolution)
@@ -103,7 +103,7 @@ def test_spells_and_stat_blocks_build_shared_attack_resolutions() -> None:
 def test_spell_area_selection_compiles_into_shared_target() -> None:
     spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
 
-    sleep = build_spell("Sleep", "XPHB", spells)
+    sleep = build_spell(spells.find("Sleep", "XPHB"))
 
     assert sleep.definition is not None
     assert sleep.definition.target.kind == "area"
@@ -115,8 +115,8 @@ def test_spell_area_selection_compiles_into_shared_target() -> None:
 def test_spell_repetition_and_scaling_build_into_shared_definition() -> None:
     spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
 
-    scorching_ray = build_spell("Scorching Ray", "XPHB", spells)
-    eldritch_blast = build_spell("Eldritch Blast", "XPHB", spells)
+    scorching_ray = build_spell(spells.find("Scorching Ray", "XPHB"))
+    eldritch_blast = build_spell(spells.find("Eldritch Blast", "XPHB"))
 
     assert scorching_ray.definition is not None
     assert scorching_ray.definition.repetition is not None
@@ -201,7 +201,7 @@ def test_spell_grants_describe_activation_and_slot_cost() -> None:
         spell_slots_max={1: 4, 2: 3, 3: 2},
     )
 
-    fireball = build_spell("Fireball", "XPHB", spells)
+    fireball = build_spell(spells.find("Fireball", "XPHB"))
     fireball_grant = spellcasting.grant_for(fireball)
     assert fireball_grant is not None
     assert fireball.activation == "action"
@@ -209,7 +209,7 @@ def test_spell_grants_describe_activation_and_slot_cost() -> None:
     assert isinstance(fireball_grant.cost, SpellSlotCost)
     assert fireball_grant.cost.minimum_level == 3
 
-    fire_bolt = build_spell("Fire Bolt", "XPHB", spells)
+    fire_bolt = build_spell(spells.find("Fire Bolt", "XPHB"))
     fire_bolt_grant = spellcasting.grant_for(fire_bolt)
     assert fire_bolt_grant is not None
     assert fire_bolt.activation == "action"

@@ -1,10 +1,11 @@
 """Schemas, catalogs, loading, and building for authored spell content."""
 
-from .catalog import SpellCatalog, load_spell_catalog
+from .catalog import SpellCatalog
 from .capability import SpellCapabilitySchema
 from .implementation import SpellImplementationSchema
 from .schema import SpellFileSchema, SpellSchema
 from .builder import build_spell
+from .loader import load_spell_catalog
 
 __all__ = [
     "SpellCatalog",
