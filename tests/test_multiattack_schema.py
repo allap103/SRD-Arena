@@ -130,7 +130,7 @@ def test_replacement_can_invoke_action_or_specific_spell() -> None:
                             }
                         ],
                     }
-                ]
+                ],
             },
         }
     )
@@ -249,7 +249,7 @@ def test_bestiary_action_rejects_obsolete_multiattack_key() -> None:
         )
 
 
-def test_monster_validates_multiattack_references_across_sections() -> None:
+def test_monster_validates_action_references_without_spellcasting_wrapper() -> None:
     monster = BestiaryMonsterSchema.model_validate(
         {
             "name": "Test Dragon",
@@ -287,17 +287,38 @@ def test_monster_validates_multiattack_references_across_sections() -> None:
                                     }
                                 ],
                             }
-                        ]
+                        ],
                     },
                 },
                 {"name": "Rend"},
                 {"name": "Sleep Breath {@recharge 5}"},
             ],
-            "spellcasting": [{"name": "Spellcasting"}],
         }
     )
 
     assert monster.action[0].capability is not None
+
+
+def test_multiattack_rejects_non_action_stat_block_section() -> None:
+    with pytest.raises(ValidationError, match="section"):
+        MultiattackCapabilitySchema.model_validate(
+            {
+                "plans": [
+                    {
+                        "steps": [
+                            {
+                                "type": "invoke",
+                                "invocation": {
+                                    "type": "stat_block_action",
+                                    "name": "Tail Attack",
+                                    "section": "legendary",
+                                },
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
 
 
 def test_monster_rejects_missing_multiattack_reference() -> None:
@@ -319,13 +340,11 @@ def test_monster_rejects_missing_multiattack_reference() -> None:
                                     "steps": [
                                         {
                                             "type": "invoke",
-                                            "invocation": _action(
-                                                "Missing Attack"
-                                            ),
+                                            "invocation": _action("Missing Attack"),
                                         }
                                     ]
                                 }
-                            ]
+                            ],
                         },
                     }
                 ],

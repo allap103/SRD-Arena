@@ -15,13 +15,6 @@ from srd_arena.domain.creatures import (
 )
 
 PositiveInt = Annotated[int, Field(gt=0)]
-StatBlockSection = Literal[
-    "action",
-    "bonus",
-    "reaction",
-    "legendary",
-    "spellcasting",
-]
 
 
 class MultiattackSchemaModel(BaseModel):
@@ -58,14 +51,13 @@ class SpellReferenceSchema(MultiattackSchemaModel):
 class StatBlockActionInvocationSchema(MultiattackSchemaModel):
     type: Literal["stat_block_action"]
     name: str = Field(min_length=1)
-    section: StatBlockSection = "action"
 
 
 class CastSpellInvocationSchema(MultiattackSchemaModel):
+    """A declared spell replacement not yet executable by multiattack."""
+
     type: Literal["cast_spell"]
     spell: SpellReferenceSchema
-    via: str = Field(default="Spellcasting", min_length=1)
-    via_section: StatBlockSection = "spellcasting"
     cast_level: PositiveInt | None = None
 
 
@@ -79,18 +71,14 @@ class InvokeStepSchema(MultiattackSchemaModel):
     type: Literal["invoke"]
     invocation: MultiattackInvocationSchema
     times: RepeatCountSchema = 1
-    availability: Literal["required", "optional", "use_if_available"] = (
-        "required"
-    )
+    availability: Literal["required", "optional", "use_if_available"] = "required"
 
 
 class ChoiceStepSchema(MultiattackSchemaModel):
     type: Literal["choose"]
     options: list[MultiattackInvocationSchema] = Field(min_length=2)
     times: RepeatCountSchema = 1
-    availability: Literal["required", "optional", "use_if_available"] = (
-        "required"
-    )
+    availability: Literal["required", "optional", "use_if_available"] = "required"
 
 
 MultiattackStepSchema = Annotated[
@@ -106,7 +94,6 @@ class AnyAttackReplacementTargetSchema(MultiattackSchemaModel):
 class ActionReplacementTargetSchema(MultiattackSchemaModel):
     type: Literal["action"]
     name: str = Field(min_length=1)
-    section: StatBlockSection = "action"
 
 
 class StepReplacementTargetSchema(MultiattackSchemaModel):
@@ -134,17 +121,14 @@ class MultiattackPlanSchema(MultiattackSchemaModel):
     steps: list[MultiattackStepSchema] = Field(min_length=1)
     ordering: Literal["any", "strict"] = "any"
     requirement: ActionUsedThisTurnRequirementSchema | None = None
-    replacements: list[MultiattackReplacementSchema] = Field(
-        default_factory=list
-    )
+    replacements: list[MultiattackReplacementSchema] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_replacement_step_indexes(self) -> "MultiattackPlanSchema":
         for replacement in self.replacements:
             target = replacement.target
-            if (
-                isinstance(target, StepReplacementTargetSchema)
-                and target.index >= len(self.steps)
+            if isinstance(target, StepReplacementTargetSchema) and target.index >= len(
+                self.steps
             ):
                 raise ValueError(
                     f"Replacement references step {target.index}, but this "
@@ -158,9 +142,9 @@ class MultiattackCapabilitySchema(MultiattackSchemaModel):
     plans: list[MultiattackPlanSchema] = Field(min_length=1)
 
 
-def iter_stat_block_references(
+def iter_action_references(
     capability: MultiattackCapabilitySchema,
-) -> Iterator[tuple[StatBlockSection, str]]:
+) -> Iterator[str]:
     for plan in capability.plans:
         for step in plan.steps:
             invocations = (
@@ -172,18 +156,16 @@ def iter_stat_block_references(
                 yield from _invocation_references(invocation)
         for replacement in plan.replacements:
             if isinstance(replacement.target, ActionReplacementTargetSchema):
-                yield replacement.target.section, replacement.target.name
+                yield replacement.target.name
             for invocation in replacement.options:
                 yield from _invocation_references(invocation)
 
 
 def _invocation_references(
     invocation: MultiattackInvocationSchema,
-) -> Iterator[tuple[StatBlockSection, str]]:
+) -> Iterator[str]:
     if isinstance(invocation, StatBlockActionInvocationSchema):
-        yield invocation.section, invocation.name
-    else:
-        yield invocation.via_section, invocation.via
+        yield invocation.name
 
 
 def build_multiattack(
@@ -216,8 +198,7 @@ def build_multiattack(
                         target_name=getattr(replacement.target, "name", None),
                         target_step=getattr(replacement.target, "index", None),
                         options=tuple(
-                            _build_invocation(option)
-                            for option in replacement.options
+                            _build_invocation(option) for option in replacement.options
                         ),
                         replace_count=replacement.replace_count,
                         maximum_uses=replacement.maximum_uses,
@@ -258,13 +239,11 @@ def _build_invocation(
         return MultiattackInvocation(
             kind="stat_block_action",
             name=invocation.name,
-            section=invocation.section,
         )
     assert isinstance(invocation, CastSpellInvocationSchema)
     return MultiattackInvocation(
         kind="cast_spell",
         name=invocation.spell.name,
-        section=invocation.via_section,
         source=invocation.spell.source,
         cast_level=invocation.cast_level,
     )

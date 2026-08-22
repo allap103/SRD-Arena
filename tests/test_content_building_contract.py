@@ -67,3 +67,24 @@ def test_action_without_a_capability_is_declared_but_not_executable() -> None:
     [declaration] = build_declared_stat_block_actions(monster)
     assert declaration.name == "Unstructured Action"
     assert declaration.capability_type is None
+
+
+def test_bonus_action_only_validates_presentation_fields() -> None:
+    monster = BestiaryMonsterSchema.model_validate(
+        {
+            "name": "Example Monster",
+            "source": "TEST",
+            "bonus": [
+                {
+                    "name": "Unimplemented Dash",
+                    "entries": ["The monster moves without provoking attacks."],
+                    "capability": {"unsupported": "ignored"},
+                }
+            ],
+        }
+    )
+
+    [declaration] = build_declared_stat_block_actions(monster)
+    assert declaration.name == "Unimplemented Dash"
+    assert declaration.section == "bonus_action"
+    assert declaration.capability_type is None

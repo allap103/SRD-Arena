@@ -5,7 +5,7 @@ from pydantic import Field, model_validator
 from srd_arena.content.common.schema import SourceModel
 from .actions.multiattack import (
     MultiattackCapabilitySchema,
-    iter_stat_block_references,
+    iter_action_references,
 )
 from .actions.schema import NonMultiattackCapabilitySchema
 
@@ -52,9 +52,16 @@ class BestiarySpeedSchema(SourceModel):
         return None
 
 
-class BestiaryActionSchema(SourceModel):
+class BestiaryActionSummarySchema(SourceModel):
+    """Source text required to present a stat-block action."""
+
     name: str
     entries: list[object] = Field(default_factory=list)
+
+
+class BestiaryActionSchema(BestiaryActionSummarySchema):
+    """An ordinary action with an optional executable capability."""
+
     capability: BestiaryCapabilitySchema | None = Field(
         default=None,
         discriminator="type",
@@ -71,6 +78,8 @@ class BestiaryActionSchema(SourceModel):
 
 
 class BestiaryMonsterSchema(SourceModel):
+    """Runtime-relevant fields from an imported monster record."""
+
     name: str
     source: str
     size: str | list[str] = "M"
@@ -78,10 +87,7 @@ class BestiaryMonsterSchema(SourceModel):
     hp: BestiaryHitPointsSchema = Field(default_factory=BestiaryHitPointsSchema)
     ac: list[int | BestiaryArmorClassSchema] = Field(default_factory=list)
     action: list[BestiaryActionSchema] = Field(default_factory=list)
-    bonus: list[BestiaryActionSchema] = Field(default_factory=list)
-    reaction: list[BestiaryActionSchema] = Field(default_factory=list)
-    legendary: list[BestiaryActionSchema] = Field(default_factory=list)
-    spellcasting: list[BestiaryActionSchema] = Field(default_factory=list)
+    bonus: list[BestiaryActionSummarySchema] = Field(default_factory=list)
     type: str | BestiaryTypeSchema | None = None
     alignment: list[str | object] = Field(default_factory=list)
     cr: str | BestiaryChallengeRatingSchema | None = None
@@ -109,24 +115,15 @@ class BestiaryMonsterSchema(SourceModel):
 
     @model_validator(mode="after")
     def validate_multiattack_references(self) -> "BestiaryMonsterSchema":
-        sections = {
-            section: {_reference_name(entry.name) for entry in getattr(self, section)}
-            for section in (
-                "action",
-                "bonus",
-                "reaction",
-                "legendary",
-                "spellcasting",
-            )
-        }
+        action_names = {_reference_name(entry.name) for entry in self.action}
         for action in self.action:
             capability = action.capability
             if not isinstance(capability, MultiattackCapabilitySchema):
                 continue
-            for section, name in iter_stat_block_references(capability):
-                if _reference_name(name) not in sections[section]:
+            for name in iter_action_references(capability):
+                if _reference_name(name) not in action_names:
                     raise ValueError(
-                        f"Multiattack references missing {section} entry "
+                        "Multiattack references missing action entry "
                         f"'{name}' on '{self.public_name}'."
                     )
         return self

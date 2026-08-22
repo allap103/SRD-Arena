@@ -10,6 +10,7 @@ from srd_arena.content.capabilities import (
 )
 from srd_arena.content.creatures.stat_block_schema import (
     BestiaryActionSchema,
+    BestiaryActionSummarySchema,
     BestiaryMonsterSchema,
 )
 from srd_arena.domain.creatures import stat_block_actions as domain
@@ -134,13 +135,21 @@ def build_stat_block_actions(
 def build_declared_stat_block_actions(
     stat_block: BestiaryMonsterSchema | None,
 ) -> tuple[domain.DeclaredStatBlockAction, ...]:
+    """Build UI declarations for ordinary and disabled bonus actions."""
     if stat_block is None:
         return ()
     declarations: list[domain.DeclaredStatBlockAction] = []
-    for section, actions in (
-        ("action", stat_block.action),
-        ("bonus_action", stat_block.bonus),
-    ):
+    sections: tuple[
+        tuple[
+            Literal["action", "bonus_action"],
+            tuple[BestiaryActionSummarySchema, ...],
+        ],
+        ...,
+    ] = (
+        ("action", tuple(stat_block.action)),
+        ("bonus_action", tuple(stat_block.bonus)),
+    )
+    for section, actions in sections:
         declarations.extend(
             domain.DeclaredStatBlockAction(
                 name=action.name,
@@ -149,12 +158,12 @@ def build_declared_stat_block_actions(
                     entry for entry in action.entries if isinstance(entry, str)
                 ),
                 capability_type=(
-                    action.capability.type if action.capability is not None else None
+                    action.capability.type
+                    if isinstance(action, BestiaryActionSchema)
+                    and action.capability is not None
+                    else None
                 ),
-                section=cast(
-                    Literal["action", "bonus_action"],
-                    section,
-                ),
+                section=section,
             )
             for action in actions
         )

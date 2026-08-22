@@ -19,7 +19,6 @@ class MultiattackRequirement:
 class MultiattackInvocation:
     kind: Literal["stat_block_action", "cast_spell"]
     name: str
-    section: str = "action"
     source: str | None = None
     cast_level: int | None = None
 
@@ -62,7 +61,6 @@ class MultiattackPlan:
             invocation = step.options[0]
             if (
                 invocation.kind != "stat_block_action"
-                or invocation.section != "action"
                 or invocation.name not in attack_names
             ):
                 if step.availability == "required":
@@ -84,9 +82,7 @@ class MultiattackPlan:
             available = tuple(
                 option
                 for option in step.options
-                if option.kind == "stat_block_action"
-                and option.section == "action"
-                and option.name in attack_names
+                if option.kind == "stat_block_action" and option.name in attack_names
             )
             if not available:
                 if step.availability == "required":

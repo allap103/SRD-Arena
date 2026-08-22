@@ -568,10 +568,16 @@ def test_bestiary_schema_ignores_unknown_source_fields() -> None:
             "name": "Test Creature",
             "source": "TEST",
             "customFutureField": {"enabled": True},
+            "reaction": [{"name": "Parry"}],
+            "legendary": [{"name": "Tail Attack"}],
+            "spellcasting": [{"name": "Spellcasting"}],
         }
     )
 
     assert monster.model_extra is None
+    assert not hasattr(monster, "reaction")
+    assert not hasattr(monster, "legendary")
+    assert not hasattr(monster, "spellcasting")
 
 
 def test_bestiary_catalog_uses_srd_name_as_public_identity() -> None:
