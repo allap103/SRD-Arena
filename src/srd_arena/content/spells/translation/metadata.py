@@ -1,59 +1,17 @@
 import re
 
-from .schema import SpellSchema
-from srd_arena.content.capabilities import (
-    DamageEffectSchema,
-)
-from .resolution import (
+from srd_arena.content.spells.schema import SpellSchema
+from srd_arena.content.capabilities import DamageEffectSchema
+from srd_arena.content.spells.resolution import (
     AutomaticResolutionSchema,
     RepeatResolutionSchema,
     RemoveEffectSchema,
     SavingThrowResolutionSchema,
     SpellAttackResolutionSchema,
 )
-from srd_arena.content.spells.translation.scaling import slot_damage_increment
-from srd_arena.content.spells.translation.targeting import normalize_save_ability
-from srd_arena.domain.spells import (
-    FollowUpSpellResolution,
-    SpellDamage,
-)
 
 
-def _follow_up_resolution(
-    raw: SpellSchema,
-    step: object,
-) -> FollowUpSpellResolution:
-    target = getattr(step, "target", None)
-    resolution_wrapper = getattr(step, "resolution", None)
-    resolution = getattr(resolution_wrapper, "root", None)
-    if target is None or target.type != "area" or target.origin != "target":
-        raise ValueError("Follow-up spell resolutions require a target-origin area.")
-    if not isinstance(resolution, SavingThrowResolutionSchema):
-        raise ValueError("Only saving-throw follow-up resolutions are executable.")
-    damage = tuple(
-        SpellDamage(effect.root.dice, effect.root.damage_type)
-        for effect in resolution.failure.effects
-        if isinstance(effect.root, DamageEffectSchema)
-    )
-    return FollowUpSpellResolution(
-        resolution=resolution.type,
-        target=target.type,
-        damage=damage,
-        save_ability=(
-            normalize_save_ability(resolution.ability)
-            if resolution.ability is not None
-            else None
-        ),
-        half_damage_on_save=resolution.success_damage == "half",
-        area_radius_feet=target.geometry.radius_feet,
-        slot_damage_increment=slot_damage_increment(
-            raw,
-            damage_types={entry.damage_type for entry in damage},
-        ),
-    )
-
-
-def _spell_damage_dice(raw: SpellSchema) -> str | None:
+def spell_damage_dice(raw: SpellSchema) -> str | None:
     if raw.capability is not None:
         resolution = raw.capability.resolution.root
         if isinstance(resolution, RepeatResolutionSchema):
@@ -87,7 +45,7 @@ def _spell_damage_dice(raw: SpellSchema) -> str | None:
     return None
 
 
-def _spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
+def spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
     if raw.capability is not None:
         resolution = raw.capability.resolution.root
         if isinstance(resolution, RepeatResolutionSchema):
@@ -113,7 +71,7 @@ def _spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
     )
 
 
-def _remove_effect_selection(raw: SpellSchema) -> str | None:
+def remove_effect_selection(raw: SpellSchema) -> str | None:
     if raw.capability is None:
         return None
     resolution = raw.capability.resolution.root
@@ -132,7 +90,7 @@ def _remove_effect_selection(raw: SpellSchema) -> str | None:
     return removal.selection if removal is not None else None
 
 
-def _spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
+def spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
     if raw.capability is None:
         return ()
     resolution = raw.capability.resolution.root
@@ -151,7 +109,7 @@ def _spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
     return tuple(removal.removable) if removal is not None else ()
 
 
-def _spell_geometry_mode(raw: SpellSchema) -> str:
+def spell_geometry_mode(raw: SpellSchema) -> str:
     if raw.capability is not None and raw.capability.target.type == "area":
         return (
             "directional_area"
@@ -161,18 +119,18 @@ def _spell_geometry_mode(raw: SpellSchema) -> str:
     range_type = (
         raw.range.get("type") if isinstance(raw.range.get("type"), str) else None
     )
-    if _spell_removable_conditions(raw):
+    if spell_removable_conditions(raw):
         return "point_target"
     if range_type in {"cone", "line", "cube"}:
         return "directional_area"
     if range_type in {"radius", "sphere", "cylinder", "emanation"}:
         return "non_directional_area"
-    if range_type == "point" and _spell_area_size_feet(raw) is not None:
+    if range_type == "point" and spell_area_size_feet(raw) is not None:
         return "point_area"
     return "point_target"
 
 
-def _spell_area_size_feet(raw: SpellSchema) -> int | None:
+def spell_area_size_feet(raw: SpellSchema) -> int | None:
     if raw.capability is not None and raw.capability.target.type == "area":
         geometry = raw.capability.target.geometry
         return geometry.radius_feet or geometry.length_feet

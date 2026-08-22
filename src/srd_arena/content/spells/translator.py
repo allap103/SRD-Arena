@@ -1,4 +1,4 @@
-﻿from typing import cast
+from typing import cast
 
 from .catalog import SpellCatalog
 from .schema import SpellSchema
@@ -63,15 +63,15 @@ from .translation import (
 )
 
 
-from .translation_helpers import (
-    _follow_up_resolution,
-    _remove_effect_selection,
-    _spell_area_size_feet,
-    _spell_damage_dice,
-    _spell_geometry_mode,
-    _spell_removable_conditions,
-    _spell_removable_effect_kinds,
+from .translation.metadata import (
+    remove_effect_selection,
+    spell_area_size_feet,
+    spell_damage_dice,
+    spell_geometry_mode,
+    spell_removable_conditions,
+    spell_removable_effect_kinds,
 )
+from .translation.follow_ups import follow_up_resolution
 
 
 def build_spell(
@@ -95,14 +95,14 @@ def build_spell(
             normalize_save_ability(value) for value in raw.saving_throw
         ),
         condition_inflict=tuple(raw.condition_inflict),
-        removable_conditions=_spell_removable_conditions(raw),
-        removable_effect_kinds=_spell_removable_effect_kinds(raw),
-        remove_effect_selection=_remove_effect_selection(raw),
-        damage_dice=_spell_damage_dice(raw),
+        removable_conditions=spell_removable_conditions(raw),
+        removable_effect_kinds=spell_removable_effect_kinds(raw),
+        remove_effect_selection=remove_effect_selection(raw),
+        damage_dice=spell_damage_dice(raw),
         damage_inflict=tuple(raw.damage_inflict),
         area_tags=tuple(raw.area_tags),
-        geometry_mode=_spell_geometry_mode(raw),
-        area_size_feet=_spell_area_size_feet(raw),
+        geometry_mode=spell_geometry_mode(raw),
+        area_size_feet=spell_area_size_feet(raw),
         concentration=any(
             bool(duration.get("concentration"))
             for duration in raw.duration
@@ -359,7 +359,7 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
         require_full_target_count=repeated is not None,
         target_count_by_caster_level=target_count_by_caster_level(raw),
         follow_up_resolutions=(
-            tuple(_follow_up_resolution(raw, step) for step in sequence.steps[1:])
+            tuple(follow_up_resolution(raw, step) for step in sequence.steps[1:])
             if sequence is not None
             else ()
         ),
