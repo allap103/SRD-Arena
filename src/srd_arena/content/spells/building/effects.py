@@ -1,8 +1,8 @@
-"""Compile spell-authored effects into provider-neutral domain effects."""
+"""Build provider-neutral domain effects from spell-authored effects."""
 
-from srd_arena.content.capabilities.compiler import (
-    compile_duration,
-    compile_effect,
+from srd_arena.content.capabilities.builder import (
+    build_duration,
+    build_effect,
     is_shared_effect,
 )
 from srd_arena.content.spells import resolution as spell_effects
@@ -25,15 +25,15 @@ _SPELL_EFFECT_TYPES = (
 )
 
 
-def is_compilable_effect(value: object) -> bool:
+def is_buildable_effect(value: object) -> bool:
     """Return whether an authored effect has a shared domain representation."""
     return is_shared_effect(value) or isinstance(value, _SPELL_EFFECT_TYPES)
 
 
-def compile_capability_effect(value: object) -> domain.CapabilityEffect:
-    """Compile an authored action or spell effect into the shared model."""
+def build_capability_effect(value: object) -> domain.CapabilityEffect:
+    """Build a shared domain effect from an authored action or spell effect."""
     if is_shared_effect(value):
-        return compile_effect(value)
+        return build_effect(value)
     if isinstance(value, spell_effects.HealingEffectSchema):
         return domain.HealingEffect(
             dice=value.dice,
@@ -61,7 +61,7 @@ def compile_capability_effect(value: object) -> domain.CapabilityEffect:
     if isinstance(value, spell_effects.ArmorClassModifierEffectSchema):
         return domain.ArmorClassModifierEffect(
             value.value,
-            compile_duration(value.duration),
+            build_duration(value.duration),
         )
     if isinstance(value, spell_effects.RemoveEffectSchema):
         return domain.RemoveEffect(
@@ -73,7 +73,7 @@ def compile_capability_effect(value: object) -> domain.CapabilityEffect:
         return domain.DamageResistanceEffect(
             tuple(value.damage_types),
             value.selection,
-            compile_duration(value.duration),
+            build_duration(value.duration),
         )
     if isinstance(value, spell_effects.DamageReductionEffectSchema):
         return domain.DamageReductionEffect(
@@ -82,39 +82,39 @@ def compile_capability_effect(value: object) -> domain.CapabilityEffect:
             selection=value.selection,
             limit=value.limit,
             period=value.period,
-            duration=compile_duration(value.duration),
+            duration=build_duration(value.duration),
         )
     if isinstance(value, spell_effects.SpeedModifierEffectSchema):
         return domain.SpeedModifierEffect(
             value.feet,
-            compile_duration(value.duration),
+            build_duration(value.duration),
         )
     if isinstance(value, spell_effects.ConditionSaveAdvantageEffectSchema):
         return domain.ConditionSaveAdvantageEffect(
             tuple(value.conditions),
-            compile_duration(value.duration),
+            build_duration(value.duration),
         )
     if isinstance(value, spell_effects.DamageImmunityEffectSchema):
         return domain.DamageImmunityEffect(
             tuple(value.damage_types),
-            compile_duration(value.duration),
+            build_duration(value.duration),
         )
     if isinstance(value, spell_effects.ConditionImmunityEffectSchema):
         return domain.ConditionImmunityEffect(
             tuple(value.conditions),
             value.suppress_existing,
-            compile_duration(value.duration),
+            build_duration(value.duration),
         )
     if isinstance(value, spell_effects.SenseEffectSchema):
         return domain.SenseEffect(
             value.sense,
             value.range_feet,
-            compile_duration(value.duration),
+            build_duration(value.duration),
         )
     if isinstance(value, spell_effects.HitPointMaximumModifierEffectSchema):
         return domain.HitPointMaximumModifierEffect(
             value.value,
             value.also_modify_current,
-            compile_duration(value.duration),
+            build_duration(value.duration),
         )
     raise TypeError(f"Unsupported capability effect: {type(value).__name__}")

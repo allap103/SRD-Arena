@@ -1,5 +1,5 @@
-class CapabilityCompilationError(ValueError):
-    """Report structured capability content that cannot be compiled."""
+class CapabilityBuildError(ValueError):
+    """Report structured capability content that cannot be built."""
 
     def __init__(
         self,

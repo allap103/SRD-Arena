@@ -65,7 +65,7 @@ def test_spell_schema_preserves_unknown_source_fields() -> None:
     assert spell.model_extra == {"customFutureField": {"enabled": True}}
 
 
-def test_spell_translation_builds_combat_ready_domain_spell() -> None:
+def test_spell_builder_creates_combat_ready_domain_spell() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
 
     fireball = build_spell("Fireball", "XPHB", catalog)
@@ -576,7 +576,7 @@ def test_wave_1b_spells_define_executable_condition_capability() -> None:
     )
 
 
-def test_spell_catalog_and_translation_use_srd_public_name() -> None:
+def test_spell_catalog_and_builder_use_srd_public_name() -> None:
     source_spell = SpellSchema.model_validate(
         {
             "name": "Protected Hand",

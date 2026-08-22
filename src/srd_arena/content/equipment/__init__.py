@@ -1,4 +1,4 @@
-"""Schemas, catalogs, and translation for authored equipment content."""
+"""Schemas, catalogs, loading, and building for authored equipment content."""
 
 from .catalog import ItemCatalog, load_item_catalog
 from .loader import load_system_items
@@ -8,7 +8,7 @@ from .schema import (
     ItemPropertySchema,
     ItemSchema,
 )
-from .translator import build_item
+from .builder import build_item
 
 __all__ = [
     "BaseItemFileSchema",

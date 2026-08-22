@@ -2,7 +2,7 @@ from pathlib import Path
 
 from .catalog import load_item_catalog
 from srd_arena.content.common.sources import SOURCE_PRIORITY
-from .translator import build_item
+from .builder import build_item
 from srd_arena.domain.equipment import Item
 
 

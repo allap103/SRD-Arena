@@ -1,18 +1,18 @@
-"""Assemble spell metadata and shared executable capability definitions."""
+"""Build domain spells from authored spell schemas."""
 
 from .catalog import SpellCatalog
 from srd_arena.content.common.sources import slug
 from srd_arena.domain.spells import Spell
-from .translation import (
-    compile_activation,
-    compile_spell_definition,
+from .building import (
+    build_activation,
+    build_spell_definition,
     find_spell,
     normalize_save_ability,
     target_requirements,
 )
 
 
-from .translation.metadata import (
+from .building.metadata import (
     remove_effect_selection,
     spell_area_size_feet,
     spell_damage_dice,
@@ -64,6 +64,6 @@ def build_spell(
             else ()
         ),
         target_requirements=target_requirements(raw),
-        definition=compile_spell_definition(raw),
-        activation=compile_activation(raw),
+        definition=build_spell_definition(raw),
+        activation=build_activation(raw),
     )

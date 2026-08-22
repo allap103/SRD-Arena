@@ -15,7 +15,7 @@ from srd_arena.content.creatures.actions.schema import (
     AttackCapabilitySchema,
     CapabilitySchema,
 )
-from srd_arena.content.creatures.actions.translator import (
+from srd_arena.content.creatures.actions.builder import (
     build_stat_block_actions,
 )
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
@@ -81,10 +81,10 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     multiattack = aboleth.action[0].capability
     assert multiattack is not None
     assert multiattack.plans[0].steps[0].times == 2
-    assert [
-        option.name
-        for option in multiattack.plans[0].steps[1].options
-    ] == ["Consume Memories", "Dominate Mind (2/Day)"]
+    assert [option.name for option in multiattack.plans[0].steps[1].options] == [
+        "Consume Memories",
+        "Dominate Mind (2/Day)",
+    ]
 
     air_elemental = catalog.find("Air Elemental", "XMM")
     assert air_elemental.speed.walk == 10
@@ -179,9 +179,7 @@ def test_vampire_familiar_uses_unconditional_charmed_immunity() -> None:
         bestiary=catalog,
     )
 
-    assert familiar.statistics.condition_immunities == frozenset(
-        {Condition.CHARMED}
-    )
+    assert familiar.statistics.condition_immunities == frozenset({Condition.CHARMED})
 
 
 def test_goblin_conditional_damage_requires_resolved_advantage() -> None:
@@ -247,9 +245,7 @@ def test_bestiary_core_statistics_build_a_domain_creature() -> None:
     assert creature.statistics.skill_bonuses["perception"] == 10
     assert creature.statistics.senses == ("Darkvision 120 ft.",)
     assert creature.statistics.passive_perception == 20
-    assert creature.statistics.languages == (
-        "Deep Speech; telepathy 120 ft.",
-    )
+    assert creature.statistics.languages == ("Deep Speech; telepathy 120 ft.",)
     assert creature.multiattack is not None
     sequence = creature.multiattack.executable_sequence(
         {
@@ -297,9 +293,12 @@ def test_bestiary_core_statistics_build_a_domain_creature() -> None:
     assert air_elemental.attributes.movement.speed_feet == 10
     assert air_elemental.attributes.movement.fly_feet == 90
     assert air_elemental.attributes.movement.effective_speed_feet == 90
-    assert Grid(width=1, height=1).movement_budget(
-        air_elemental.attributes.movement.effective_speed_feet
-    ) == 18
+    assert (
+        Grid(width=1, height=1).movement_budget(
+            air_elemental.attributes.movement.effective_speed_feet
+        )
+        == 18
+    )
 
 
 def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
@@ -383,15 +382,12 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
     [assassin_slots] = assassin_plans
     assert len(assassin_slots) == 3
     assert all(
-        {option.name for option in slot.options}
-        == {"Shortsword", "Light Crossbow"}
+        {option.name for option in slot.options} == {"Shortsword", "Light Crossbow"}
         for slot in assassin_slots
     )
 
     black_dragon = catalog.find("Adult Black Dragon", "XMM")
-    black_replacement = (
-        black_dragon.action[0].capability.plans[0].replacements[0]
-    )
+    black_replacement = black_dragon.action[0].capability.plans[0].replacements[0]
     assert black_replacement.options[0].cast_level == 3
 
     white_dragon = catalog.find("Adult White Dragon", "XMM")
@@ -410,9 +406,7 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
     )
     rend = white_creature.stat_block_actions["Rend"]
     assert isinstance(rend, AttackActionDefinition)
-    damage = [
-        effect for effect in rend.hit if isinstance(effect, DamageEffect)
-    ]
+    damage = [effect for effect in rend.hit if isinstance(effect, DamageEffect)]
     assert damage == [
         DamageEffect("2d6", 6, "slashing"),
         DamageEffect("1d8", 0, "cold"),
@@ -450,8 +444,7 @@ def test_enriched_multiattack_action_references_have_typed_capability() -> None:
         multiattacks = [
             action.capability
             for action in monster.action
-            if action.capability is not None
-            and action.capability.type == "multiattack"
+            if action.capability is not None and action.capability.type == "multiattack"
         ]
         for multiattack in multiattacks:
             for plan in multiattack.plans:
@@ -477,7 +470,9 @@ def test_enriched_multiattack_action_references_have_typed_capability() -> None:
                             r"\s*\{@[^}]+\}",
                             "",
                             action.name,
-                        ).strip().casefold()
+                        )
+                        .strip()
+                        .casefold()
                         == invocation.name.casefold()
                     )
                     referenced_actions.append(referenced)
@@ -499,9 +494,7 @@ def test_enriched_multiattack_action_references_have_typed_capability() -> None:
     assert grapple.source_capacity == 4
 
     dominate = next(
-        action
-        for action in aboleth.action
-        if action.name == "Dominate Mind (2/Day)"
+        action for action in aboleth.action if action.name == "Dominate Mind (2/Day)"
     )
     assert dominate.capability.resource.maximum == 2
     assert [
@@ -511,9 +504,7 @@ def test_enriched_multiattack_action_references_have_typed_capability() -> None:
 
     ancient_gold = catalog.find("Ancient Gold Dragon", "XMM")
     weakening = next(
-        action
-        for action in ancient_gold.action
-        if action.name == "Weakening Breath"
+        action for action in ancient_gold.action if action.name == "Weakening Breath"
     )
     assert weakening.capability.resolution.difficulty.value == 24
     assert weakening.capability.resolution.failure[0].effects[1].dice == "1d10"

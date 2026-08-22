@@ -1,4 +1,4 @@
-"""Authored stat-block action schemas and domain translation."""
+"""Authored stat-block action schemas and domain builders."""
 
 from .multiattack import MultiattackCapabilitySchema
 from .schema import (
@@ -8,6 +8,7 @@ from .schema import (
     SavingThrowActionResolutionSchema,
     SpellcastingCapabilitySchema,
 )
+
 __all__ = [
     "AttackCapabilitySchema",
     "CapabilitySchema",

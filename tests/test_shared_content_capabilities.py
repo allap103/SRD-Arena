@@ -4,7 +4,7 @@ from srd_arena.content.creatures.stat_block_schema import BestiaryMonsterSchema
 from srd_arena.content.creatures.actions.schema import (
     CapabilitySchema,
 )
-from srd_arena.content.creatures.actions.translator import build_stat_block_actions
+from srd_arena.content.creatures.actions.builder import build_stat_block_actions
 from srd_arena.content.capabilities import SavingThrowResolutionSchema
 from srd_arena.content.spells import build_spell, load_spell_catalog
 from srd_arena.domain.capabilities import (
@@ -49,7 +49,7 @@ def test_spells_and_stat_blocks_share_saving_throw_resolution_schema() -> None:
     assert action_resolution.difficulty.value == 22
 
 
-def test_spells_and_stat_blocks_compile_shared_domain_capabilities() -> None:
+def test_spells_and_stat_blocks_build_shared_domain_capabilities() -> None:
     spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     monsters = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
 
@@ -77,7 +77,7 @@ def test_spells_and_stat_blocks_compile_shared_domain_capabilities() -> None:
     assert action_resolution.difficulty.value == 22
 
 
-def test_spells_and_stat_blocks_compile_shared_attack_resolutions() -> None:
+def test_spells_and_stat_blocks_build_shared_attack_resolutions() -> None:
     spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     monsters = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
 
@@ -112,7 +112,7 @@ def test_spell_area_selection_compiles_into_shared_target() -> None:
     assert sleep.definition.target.count.maximum == "all"
 
 
-def test_spell_repetition_and_scaling_compile_into_shared_definition() -> None:
+def test_spell_repetition_and_scaling_build_into_shared_definition() -> None:
     spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
 
     scorching_ray = build_spell("Scorching Ray", "XPHB", spells)

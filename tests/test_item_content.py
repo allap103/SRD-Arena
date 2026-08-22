@@ -30,7 +30,7 @@ def test_item_schema_preserves_unknown_source_fields() -> None:
     assert item.model_extra == {"customFutureField": {"enabled": True}}
 
 
-def test_item_translation_builds_combat_ready_weapon() -> None:
+def test_item_builder_creates_combat_ready_weapon() -> None:
     catalog = load_item_catalog(SYSTEM_CONTENT_ROOT)
 
     longbow = build_item(catalog.find("Longbow", "XPHB"))
@@ -45,7 +45,7 @@ def test_item_translation_builds_combat_ready_weapon() -> None:
     assert longbow.weapon_stat.range_long == 600
 
 
-def test_item_catalog_and_translation_use_srd_public_name() -> None:
+def test_item_catalog_and_builder_use_srd_public_name() -> None:
     source_item = ItemSchema.model_validate(
         {
             "name": "Protected Item",

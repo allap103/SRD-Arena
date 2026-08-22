@@ -83,7 +83,9 @@ def test_package_dependencies_follow_architecture() -> None:
                         f"({forbidden})"
                     )
 
-    assert not violations, "Architecture dependency violations:\n" + "\n".join(violations)
+    assert not violations, "Architecture dependency violations:\n" + "\n".join(
+        violations
+    )
 
 
 def test_relative_import_resolution() -> None:
@@ -122,6 +124,7 @@ def test_content_is_grouped_by_game_concept() -> None:
     content_dir = PACKAGE_ROOT / "content"
     legacy_layer_packages = (
         "catalogs",
+        "builders",
         "loaders",
         "normalization",
         "schemas",
@@ -142,11 +145,7 @@ def test_content_is_grouped_by_game_concept() -> None:
         "equipment",
         "capabilities",
         "spells",
-    } <= {
-        path.name
-        for path in content_dir.iterdir()
-        if path.is_dir()
-    }
+    } <= {path.name for path in content_dir.iterdir() if path.is_dir()}
 
     assert not (content_dir / "classes").exists(), (
         "Class content belongs under content.character_options."

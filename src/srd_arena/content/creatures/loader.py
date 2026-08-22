@@ -19,7 +19,7 @@ from .catalog import BestiaryCatalog
 from .schema import CreatureItemReferenceSchema, CreatureSchema
 from .stat_block_schema import BestiaryMonsterSchema
 from .actions.multiattack import MultiattackCapabilitySchema, build_multiattack
-from .actions.translator import (
+from .actions.builder import (
     build_declared_stat_block_actions,
     build_stat_block_actions,
 )
@@ -75,7 +75,9 @@ def build_creature(
             **Equipment().equipped_items,
             **{
                 slot: _creature_item_id(item)
-                for slot, item in cast(dict[str, object], dict(schema.equipment)).items()
+                for slot, item in cast(
+                    dict[str, object], dict(schema.equipment)
+                ).items()
             },
         }
     )
@@ -118,7 +120,9 @@ def build_creature(
         description=schema.description,
         token_image=schema.token_image,
         current_health=schema.current_health,
-        inventory=Inventory(items=[_creature_item_id(item) for item in schema.inventory]),
+        inventory=Inventory(
+            items=[_creature_item_id(item) for item in schema.inventory]
+        ),
         attributes=attributes,
         equipment=equipment,
         size=build_creature_size(schema, stat_block),
@@ -151,9 +155,7 @@ def build_creature(
         spellcasting=spellcasting,
         statistics=build_creature_statistics(stat_block),
         max_health_override=(
-            stat_block.average_hit_points
-            if stat_block is not None
-            else None
+            stat_block.average_hit_points if stat_block is not None else None
         ),
     )
 

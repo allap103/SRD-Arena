@@ -16,9 +16,7 @@ def build_item(source_item: ItemSchema) -> Item:
                 damage=source_item.damage or "1d4",
                 damage_type=_damage_type(source_item.damage_type),
                 properties=[
-                    _property_name(
-                        prop if isinstance(prop, str) else prop.uid
-                    )
+                    _property_name(prop if isinstance(prop, str) else prop.uid)
                     for prop in source_item.properties
                 ],
                 attack_type=_attack_type(source_item.type),

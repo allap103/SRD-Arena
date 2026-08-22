@@ -5,12 +5,12 @@ from . import schema
 from .multiattack import MultiattackCapabilitySchema
 from srd_arena.content.capabilities import (
     AutomaticResolutionSchema,
-    CapabilityCompilationError,
+    CapabilityBuildError,
 )
-from srd_arena.content.capabilities.compiler import (
-    compile_duration,
-    compile_outcome,
-    compile_target,
+from srd_arena.content.capabilities.builder import (
+    build_duration,
+    build_outcome,
+    build_target,
 )
 from srd_arena.content.creatures.stat_block_schema import (
     BestiaryActionSchema,
@@ -42,64 +42,64 @@ def build_stat_block_actions(
             ):
                 failure = tuple(
                     shared_domain.OutcomeStage(
-                        effects=compile_outcome(stage.effects).effects,
+                        effects=build_outcome(stage.effects).effects,
                         repeat_saves=tuple(
                             _repeat_save(repeat) for repeat in stage.repeat_saves
                         ),
                     )
                     for stage in resolution.failure
                 )
-                compiled = shared_domain.CapabilityDefinition(
-                    target=compile_target(capability.target),
+                definition = shared_domain.CapabilityDefinition(
+                    target=build_target(capability.target),
                     resolution=shared_domain.SavingThrowResolution(
                         ability=resolution.ability,
                         difficulty=shared_domain.FixedDifficultyClass(
                             resolution.difficulty.value
                         ),
                         failure=failure,
-                        success=compile_outcome(resolution.success.effects),
-                        always=compile_outcome(resolution.always.effects),
+                        success=build_outcome(resolution.success.effects),
+                        always=build_outcome(resolution.always.effects),
                         success_damage=resolution.success_damage,
                     ),
                 )
                 grant, resource_pool = _grant(
                     action.name,
-                    compiled,
+                    definition,
                     capability.resource,
                 )
                 definitions[action.name] = domain.SavingThrowActionDefinition(
                     name=action.name,
-                    target=compiled.target,
+                    target=definition.target,
                     ability=resolution.ability,
                     dc=resolution.difficulty.value,
                     failure=failure,
-                    success=compile_outcome(resolution.success.effects).effects,
+                    success=build_outcome(resolution.success.effects).effects,
                     success_damage=resolution.success_damage,
-                    always=compile_outcome(resolution.always.effects).effects,
+                    always=build_outcome(resolution.always.effects).effects,
                     grant=grant,
                     resource_pool=resource_pool,
                 )
             elif isinstance(resolution, AutomaticResolutionSchema):
-                compiled = shared_domain.CapabilityDefinition(
-                    target=compile_target(capability.target),
+                definition = shared_domain.CapabilityDefinition(
+                    target=build_target(capability.target),
                     resolution=shared_domain.AutomaticResolution(
-                        compile_outcome(resolution.outcome.effects)
+                        build_outcome(resolution.outcome.effects)
                     ),
                 )
                 grant, resource_pool = _grant(
                     action.name,
-                    compiled,
+                    definition,
                     capability.resource,
                 )
                 definitions[action.name] = domain.AutomaticActionDefinition(
                     name=action.name,
-                    target=compiled.target,
-                    effects=compile_outcome(resolution.outcome.effects).effects,
+                    target=definition.target,
+                    effects=build_outcome(resolution.outcome.effects).effects,
                     grant=grant,
                     resource_pool=resource_pool,
                 )
             else:
-                raise CapabilityCompilationError(
+                raise CapabilityBuildError(
                     content=(
                         f"Monster '{stat_block.public_name}' action '{action.name}'"
                     ),
@@ -125,7 +125,7 @@ def build_stat_block_actions(
             if fallback is not None:
                 definitions[action.name] = fallback
         else:
-            raise CapabilityCompilationError(
+            raise CapabilityBuildError(
                 content=f"Monster '{stat_block.public_name}' action '{action.name}'",
                 location="capability",
                 mechanic=type(capability).__name__,
@@ -171,9 +171,9 @@ def _attack_definition(
     action: BestiaryActionSchema,
     capability: schema.AttackCapabilitySchema,
 ) -> domain.AttackActionDefinition:
-    target = compile_target(capability.target)
-    hit = compile_outcome(capability.hit)
-    compiled = shared_domain.CapabilityDefinition(
+    target = build_target(capability.target)
+    hit = build_outcome(capability.hit)
+    definition = shared_domain.CapabilityDefinition(
         target=target,
         resolution=shared_domain.AttackResolution(
             modes=tuple(capability.attack_modes),
@@ -181,7 +181,7 @@ def _attack_definition(
             hit=hit,
         ),
     )
-    grant, resource_pool = _grant(action.name, compiled, capability.resource)
+    grant, resource_pool = _grant(action.name, definition, capability.resource)
     return domain.AttackActionDefinition(
         name=action.name,
         attack_modes=tuple(capability.attack_modes),
@@ -259,7 +259,7 @@ def _repeat_save(value: schema.RepeatSaveSchema) -> shared_domain.RepeatSave:
         interval_unit=value.interval_unit,
         distance_from_source_feet=value.distance_from_source_feet,
         effects_end_on_success=value.effects_end_on_success,
-        automatic_success_after=compile_duration(value.automatic_success_after),
+        automatic_success_after=build_duration(value.automatic_success_after),
     )
 
 

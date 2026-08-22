@@ -5,14 +5,14 @@ from srd_arena.content.spells.schema import SpellSchema
 import srd_arena.domain.capabilities as domain
 
 
-def compile_scaling(raw: SpellSchema) -> tuple[domain.CapabilityScaling, ...]:
-    """Compile provider-neutral resource- and actor-level scaling rules."""
+def build_scaling(raw: SpellSchema) -> tuple[domain.CapabilityScaling, ...]:
+    """Build provider-neutral resource- and actor-level scaling rules."""
     if raw.capability is None:
         return ()
-    compiled: list[domain.CapabilityScaling] = []
+    built: list[domain.CapabilityScaling] = []
     for scaling in raw.capability.scaling:
         if isinstance(scaling, SlotScalingSchema):
-            compiled.append(
+            built.append(
                 domain.CapabilityScaling(
                     basis="resource_level",
                     above_level=(
@@ -31,7 +31,7 @@ def compile_scaling(raw: SpellSchema) -> tuple[domain.CapabilityScaling, ...]:
                 )
             )
         else:
-            compiled.append(
+            built.append(
                 domain.CapabilityScaling(
                     basis="actor_level",
                     thresholds=tuple(
@@ -50,7 +50,7 @@ def compile_scaling(raw: SpellSchema) -> tuple[domain.CapabilityScaling, ...]:
             )
     damage_by_level = cantrip_damage_by_level(raw)
     if damage_by_level:
-        compiled.append(
+        built.append(
             domain.CapabilityScaling(
                 basis="actor_level",
                 thresholds=tuple(
@@ -62,7 +62,7 @@ def compile_scaling(raw: SpellSchema) -> tuple[domain.CapabilityScaling, ...]:
                 ),
             )
         )
-    return tuple(compiled)
+    return tuple(built)
 
 
 def cantrip_damage_by_level(raw: SpellSchema) -> tuple[tuple[int, str], ...]:

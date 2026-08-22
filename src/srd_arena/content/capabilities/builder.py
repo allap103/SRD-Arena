@@ -1,4 +1,4 @@
-"""Compile authored capability primitives into executable domain definitions."""
+"""Build domain capability primitives from authored schemas."""
 
 from typing import Literal, TypeGuard, cast
 from collections.abc import Iterable
@@ -25,7 +25,7 @@ def is_shared_effect(value: object) -> TypeGuard[effects.ActionEffectSchema]:
     return isinstance(value, _SHARED_EFFECT_TYPES)
 
 
-def compile_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
+def build_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
     count = getattr(value, "count", 1)
     affects = getattr(value, "affects", "creatures")
     return domain.CapabilityTarget(
@@ -43,13 +43,13 @@ def compile_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget
         ),
         excludes_source=getattr(value, "excludes_self", False),
         requirements=tuple(
-            compile_requirement(requirement)
+            build_requirement(requirement)
             for requirement in getattr(value, "requirements", ())
         ),
     )
 
 
-def compile_requirement(
+def build_requirement(
     value: requirements.ActionRequirementSchema,
 ) -> domain.CapabilityRequirement:
     if isinstance(value, requirements.SizeRequirementSchema):
@@ -65,7 +65,7 @@ def compile_requirement(
     return domain.NotAffectedRequirement(value.action)
 
 
-def compile_duration(
+def build_duration(
     value: EffectDurationSchema | None,
 ) -> domain.EffectDuration | None:
     if value is None:
@@ -80,7 +80,7 @@ def compile_duration(
     )
 
 
-def compile_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
+def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
     if isinstance(value, effects.DamageEffectSchema):
         return domain.DamageEffect(
             value.dice,
@@ -95,9 +95,9 @@ def compile_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect
     if isinstance(value, effects.ConditionEffectSchema):
         return domain.ConditionEffect(
             condition=value.condition,
-            duration=compile_duration(value.duration),
+            duration=build_duration(value.duration),
             requirements=tuple(
-                compile_requirement(requirement) for requirement in value.requirements
+                build_requirement(requirement) for requirement in value.requirements
             ),
             escape_dc=value.escape_dc,
             source_capacity=value.source_capacity,
@@ -129,7 +129,7 @@ def compile_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect
             ability=_normalize_ability(value.ability),
             dice=value.dice,
             value=value.value,
-            duration=compile_duration(value.duration),
+            duration=build_duration(value.duration),
             ability_options=tuple(
                 _normalize_ability(ability) or ability
                 for ability in value.ability_options
@@ -137,7 +137,7 @@ def compile_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect
             subject=value.subject,
             ignored_by_senses=tuple(value.ignored_by_senses),
             requirements=tuple(
-                compile_requirement(requirement) for requirement in value.requirements
+                build_requirement(requirement) for requirement in value.requirements
             ),
         )
     if isinstance(value, effects.ControlEffectSchema):
@@ -154,14 +154,14 @@ def compile_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect
     )
 
 
-def compile_outcome(
+def build_outcome(
     values: Iterable[effects.ActionEffectSchema],
 ) -> domain.Outcome:
-    return domain.Outcome(tuple(compile_effect(value) for value in values))
+    return domain.Outcome(tuple(build_effect(value) for value in values))
 
 
 def _required_duration(value: EffectDurationSchema) -> domain.EffectDuration:
-    duration = compile_duration(value)
+    duration = build_duration(value)
     if duration is None:
         raise ValueError("This effect requires a duration.")
     return duration

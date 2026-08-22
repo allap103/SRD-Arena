@@ -1,10 +1,10 @@
-"""Schemas, catalogs, and translation for authored spell content."""
+"""Schemas, catalogs, loading, and building for authored spell content."""
 
 from .catalog import SpellCatalog, load_spell_catalog
 from .capability import SpellCapabilitySchema
 from .implementation import SpellImplementationSchema
 from .schema import SpellFileSchema, SpellSchema
-from .translator import build_spell
+from .builder import build_spell
 
 __all__ = [
     "SpellCatalog",

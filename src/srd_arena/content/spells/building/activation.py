@@ -3,7 +3,7 @@ from srd_arena.domain.capabilities import CapabilityActivation
 from srd_arena.content.spells.schema import SpellSchema
 
 
-def compile_activation(raw: SpellSchema) -> CapabilityActivation | None:
+def build_activation(raw: SpellSchema) -> CapabilityActivation | None:
     if not raw.time:
         return None
     activation_by_unit: dict[str, CapabilityActivation] = {

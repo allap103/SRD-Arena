@@ -8,7 +8,7 @@ its combat-relevant behavior. This prevents spell-name handlers and avoids
 building several unrelated subsystems at once.
 
 Spell JSON remains the source of truth. Each batch includes schema enrichment,
-translation, execution, presentation, and tests for its spells. A spell is not
+domain building, execution, presentation, and tests for its spells. A spell is not
 considered implemented merely because its source fields can be loaded.
 
 The exhaustive, machine-validated assignment is maintained in

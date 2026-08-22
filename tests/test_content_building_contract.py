@@ -1,13 +1,13 @@
 import pytest
 
-from srd_arena.content.capabilities import CapabilityCompilationError
-from srd_arena.content.creatures.actions.translator import (
+from srd_arena.content.capabilities import CapabilityBuildError
+from srd_arena.content.creatures.actions.builder import (
     build_declared_stat_block_actions,
     build_stat_block_actions,
 )
 from srd_arena.content.creatures.stat_block_schema import BestiaryMonsterSchema
 from srd_arena.content.spells import SpellSchema
-from srd_arena.content.spells.translation import compile_spell_definition
+from srd_arena.content.spells.building import build_spell_definition
 
 
 def _ability_check_spell(status: str) -> SpellSchema:
@@ -37,8 +37,8 @@ def _ability_check_spell(status: str) -> SpellSchema:
 def test_executable_spell_rejects_an_unsupported_structured_resolution() -> None:
     spell = _ability_check_spell("complete")
 
-    with pytest.raises(CapabilityCompilationError) as raised:
-        compile_spell_definition(spell)
+    with pytest.raises(CapabilityBuildError) as raised:
+        build_spell_definition(spell)
 
     assert raised.value.content == "Spell 'Dispel Magic Example'"
     assert raised.value.location == "capability.resolution"
@@ -48,7 +48,7 @@ def test_executable_spell_rejects_an_unsupported_structured_resolution() -> None
 def test_blocked_spell_keeps_its_structured_draft_without_compiling_it() -> None:
     spell = _ability_check_spell("blocked")
 
-    assert compile_spell_definition(spell) is None
+    assert build_spell_definition(spell) is None
 
 
 def test_action_without_a_capability_is_declared_but_not_executable() -> None:
