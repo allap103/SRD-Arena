@@ -1,4 +1,4 @@
-from typing import cast
+﻿from typing import cast
 
 from .catalog import SpellCatalog
 from .schema import SpellSchema
@@ -44,9 +44,12 @@ from .translation import (
     cantrip_damage_by_level,
     compile_activation,
     compile_definition,
+    creature_types_from_requirements,
     damage_repeat_save_advantage,
     effect_duration_rounds,
     end_events,
+    find_spell,
+    normalize_save_ability,
     repeat_failure_conditions,
     repeat_failure_damage,
     repeat_save_trigger,
@@ -56,21 +59,18 @@ from .translation import (
     slot_target_increment,
     spell_duration_rounds,
     target_count_by_caster_level,
+    target_requirements,
 )
 
 
 from .translation_helpers import (
-    _creature_types_from_requirements,
-    _find_spell,
     _follow_up_resolution,
-    _normalize_save_ability,
     _remove_effect_selection,
     _spell_area_size_feet,
     _spell_damage_dice,
     _spell_geometry_mode,
     _spell_removable_conditions,
     _spell_removable_effect_kinds,
-    _target_requirements,
 )
 
 
@@ -79,7 +79,7 @@ def build_spell(
     source: str | None,
     catalog: SpellCatalog | None,
 ) -> Spell:
-    raw = _find_spell(name, source, catalog)
+    raw = find_spell(name, source, catalog)
     capability = _translate_capability(raw)
     return Spell(
         id=slug(raw.public_name),
@@ -92,7 +92,7 @@ def build_spell(
         duration_data=tuple(raw.duration),
         components=dict(raw.components),
         saving_throw_abilities=tuple(
-            _normalize_save_ability(value) for value in raw.saving_throw
+            normalize_save_ability(value) for value in raw.saving_throw
         ),
         condition_inflict=tuple(raw.condition_inflict),
         removable_conditions=_spell_removable_conditions(raw),
@@ -108,7 +108,7 @@ def build_spell(
             for duration in raw.duration
             if isinstance(duration, dict)
         ),
-        target_requirements=_target_requirements(raw),
+        target_requirements=target_requirements(raw),
         capability=capability,
         activation=compile_activation(raw),
     )
@@ -246,7 +246,7 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
             value=effect.root.value,
             subject=cast(ModifierSubject, effect.root.subject),
             ignored_by_senses=tuple(effect.root.ignored_by_senses),
-            ability=(_normalize_save_ability(ability) if ability is not None else None),
+            ability=(normalize_save_ability(ability) if ability is not None else None),
         )
         for effect in outcome.effects
         if isinstance(effect.root, RollModifierEffectSchema)
@@ -267,7 +267,7 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
         target=target.type,
         damage=damage,
         save_ability=(
-            _normalize_save_ability(resolution.ability)
+            normalize_save_ability(resolution.ability)
             if isinstance(resolution, SavingThrowResolutionSchema)
             and resolution.ability is not None
             else raw.saving_throw[0]
@@ -289,7 +289,7 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
         area_width_feet=geometry.width_feet if geometry is not None else None,
         area_height_feet=geometry.height_feet if geometry is not None else None,
         automatic_failure_creature_types=(
-            _creature_types_from_requirements(resolution.automatic_failure)
+            creature_types_from_requirements(resolution.automatic_failure)
             if isinstance(resolution, SavingThrowResolutionSchema)
             else ()
         ),
@@ -298,7 +298,7 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
                 creature_type
                 for modifier in resolution.save_modifiers
                 if modifier.mode == "disadvantage"
-                for creature_type in _creature_types_from_requirements(
+                for creature_type in creature_types_from_requirements(
                     modifier.requirements
                 )
             )
@@ -409,7 +409,7 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
         condition_immunities=condition_immunities,
         senses=senses,
         roll_modifier_ability_choices=tuple(
-            _normalize_save_ability(ability)
+            normalize_save_ability(ability)
             for effect in outcome.effects
             if isinstance(effect.root, RollModifierEffectSchema)
             for ability in effect.root.ability_options

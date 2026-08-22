@@ -1,7 +1,5 @@
-from collections.abc import Sequence
 import re
 
-from .catalog import SpellCatalog
 from .schema import SpellSchema
 from srd_arena.content.capabilities import (
     DamageEffectSchema,
@@ -14,11 +12,11 @@ from .resolution import (
     SpellAttackResolutionSchema,
 )
 from srd_arena.content.spells.translation.scaling import slot_damage_increment
+from srd_arena.content.spells.translation.targeting import normalize_save_ability
 from srd_arena.domain.spells import (
     FollowUpSpellResolution,
     SpellDamage,
 )
-from srd_arena.domain.capabilities import CreatureTypeRequirement
 
 
 def _follow_up_resolution(
@@ -42,7 +40,7 @@ def _follow_up_resolution(
         target=target.type,
         damage=damage,
         save_ability=(
-            _normalize_save_ability(resolution.ability)
+            normalize_save_ability(resolution.ability)
             if resolution.ability is not None
             else None
         ),
@@ -53,53 +51,6 @@ def _follow_up_resolution(
             damage_types={entry.damage_type for entry in damage},
         ),
     )
-
-
-def _creature_types_from_requirements(
-    requirements: Sequence[object],
-) -> tuple[str, ...]:
-    return tuple(
-        creature_type
-        for requirement in requirements
-        if getattr(requirement, "type", None) == "creature_type"
-        for creature_type in getattr(requirement, "creature_types", ())
-    )
-
-
-def _find_spell(
-    name: str,
-    source: str | None,
-    catalog: SpellCatalog | None,
-) -> SpellSchema:
-    if catalog is None:
-        raise ValueError(
-            f"Creature references spell '{name}', but no spell catalog was loaded."
-        )
-    return catalog.find(name, source)
-
-
-def _target_requirements(raw: SpellSchema) -> tuple[CreatureTypeRequirement, ...]:
-    creature_types = tuple(raw.affects_creature_type)
-    if raw.capability is not None and raw.capability.target.type == "creature":
-        capability_types = _creature_types_from_requirements(
-            raw.capability.target.requirements
-        )
-        if capability_types:
-            creature_types = capability_types
-    return (CreatureTypeRequirement(creature_types),) if creature_types else ()
-
-
-def _normalize_save_ability(value: str) -> str:
-    aliases = {
-        "str": "strength",
-        "dex": "dexterity",
-        "con": "constitution",
-        "int": "intelligence",
-        "wis": "wisdom",
-        "cha": "charisma",
-    }
-    normalized = value.casefold()
-    return aliases.get(normalized, normalized)
 
 
 def _spell_damage_dice(raw: SpellSchema) -> str | None:

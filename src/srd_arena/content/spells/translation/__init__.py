@@ -9,6 +9,12 @@ from .scaling import (
     slot_target_increment,
     target_count_by_caster_level,
 )
+from .targeting import (
+    creature_types_from_requirements,
+    find_spell,
+    normalize_save_ability,
+    target_requirements,
+)
 from .lifecycle import (
     automatic_success_condition_immunities,
     automatic_success_traits,
@@ -28,9 +34,12 @@ __all__ = [
     "automatic_success_traits",
     "compile_activation",
     "compile_definition",
+    "creature_types_from_requirements",
     "damage_repeat_save_advantage",
     "effect_duration_rounds",
     "end_events",
+    "find_spell",
+    "normalize_save_ability",
     "repeat_failure_conditions",
     "repeat_failure_damage",
     "repeat_save_trigger",
@@ -40,4 +49,5 @@ __all__ = [
     "slot_target_increment",
     "spell_duration_rounds",
     "target_count_by_caster_level",
+    "target_requirements",
 ]
