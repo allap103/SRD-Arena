@@ -44,7 +44,7 @@
   "implementation": {"status": "complete"},
   "capability": {
     "reactivation_ends_previous": true,
-    "target": {"type": "creature", "disposition": "willing"},
+    "target": {"type": "creature", "disposition": "willing", "range_feet": 5},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "roll_modifier", "roll": "d20_test", "mode": "advantage"},
       {
@@ -53,6 +53,7 @@
         "mode": "disadvantage",
         "subject": "attacks_against_target"
       }
-    ]}}
+    ]}},
+    "duration": {"type": "timed", "amount": 8, "unit": "hour"}
   }
 }

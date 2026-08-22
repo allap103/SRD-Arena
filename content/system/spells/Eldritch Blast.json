@@ -68,7 +68,8 @@
       "count": {"minimum": 1, "maximum": 4},
       "disposition": "enemy",
       "selection": "choose_up_to",
-      "line_of_sight": true
+      "line_of_sight": true,
+      "range_feet": 120
     },
     "resolution": {
       "type": "repeat",

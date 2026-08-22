@@ -11,6 +11,7 @@ from .models import (
     CapabilityRequirement,
     ConditionEffect,
     DamageEffect,
+    EffectDuration,
     RemoveEffect,
 )
 
@@ -68,6 +69,36 @@ def capability_area_size_feet(definition: CapabilityDefinition | None) -> int | 
     if definition is None or definition.target.kind != "area":
         return None
     return definition.target.size_feet
+
+
+def capability_range_feet(definition: CapabilityDefinition | None) -> int | None:
+    """Return the maximum distance to the selected target or area origin."""
+    return definition.target.range_feet if definition is not None else None
+
+
+def duration_rounds(duration: EffectDuration | None) -> int | None:
+    """Convert a timed capability duration to encounter rounds."""
+    if duration is None:
+        return None
+    if duration.kind in {"start_of_turn", "end_of_turn"}:
+        return 1
+    rounds_per_unit = {
+        "round": 1,
+        "minute": 10,
+        "hour": 600,
+        "day": 14_400,
+    }
+    if duration.kind != "timed" or duration.amount is None:
+        return None
+    multiplier = rounds_per_unit.get(duration.unit or "")
+    return duration.amount * multiplier if multiplier is not None else None
+
+
+def capability_duration_rounds(
+    definition: CapabilityDefinition | None,
+) -> int | None:
+    """Return a capability's authored lifetime in encounter rounds."""
+    return duration_rounds(definition.duration if definition is not None else None)
 
 
 def capability_area_shape(definition: CapabilityDefinition | None) -> str | None:

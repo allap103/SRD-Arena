@@ -21,9 +21,6 @@ from ..creatures import Creature
 from ..geometry import AreaOfEffect
 from ..rolls.dice import D20RollMode
 from .definitions import Spell
-from .rules import (
-    spell_duration_rounds,
-)
 
 DieRoller = Callable[[int], int]
 
@@ -92,7 +89,6 @@ def resolve_spell_action(
             automatic_critical_providers=context.automatic_critical_providers,
             base_resource_level=spell.level,
             resource_level=cast_level,
-            duration_rounds=spell_duration_rounds(spell),
             concentration=spell.concentration,
             activation_verb="casts",
             source_kind="spell",

@@ -10,9 +10,6 @@ class Spell:
     source: str | None
     level: int
     school: str | None = None
-    casting_time: tuple[dict[str, object], ...] = ()
-    range_data: dict[str, object] = field(default_factory=dict)
-    duration_data: tuple[dict[str, object], ...] = ()
     components: dict[str, object] = field(default_factory=dict)
     concentration: bool = False
     definition: CapabilityDefinition | None = None

@@ -41,9 +41,10 @@
   ],
   "implementation": {"status": "partial", "omissions": [{"mechanic": "special truesight perception", "reason": "Illusions, transformations, and Ethereal-plane perception are not modeled yet."}]},
   "capability": {
-    "target": {"type": "creature", "disposition": "willing"},
+    "target": {"type": "creature", "disposition": "willing", "range_feet": 5},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "sense", "sense": "truesight", "range_feet": 120}
-    ]}}
+    ]}},
+    "duration": {"type": "timed", "amount": 1, "unit": "hour"}
   }
 }

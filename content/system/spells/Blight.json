@@ -55,7 +55,7 @@
   ],
   "implementation": {"status": "partial", "omissions": [{"mechanic": "noncreature plant withering", "reason": "Objects are not encounter participants yet."}]},
   "capability": {
-    "target": {"type": "creature", "line_of_sight": true},
+    "target": {"type": "creature", "line_of_sight": true, "range_feet": 30},
     "resolution": {"type": "saving_throw", "ability": "con", "automatic_failure": [{"type": "creature_type", "creature_types": ["plant"]}], "failure": {"effects": [{"type": "damage", "dice": "8d8", "damage_type": "necrotic"}]}, "success_damage": "half"},
     "scaling": [{"type": "resource_level", "above_level": 4, "per_level": [{"type": "damage_dice", "amount": "1d8"}]}]
   }

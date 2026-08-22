@@ -55,12 +55,13 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "disposition": "any"},
+    "target": {"type": "creature", "disposition": "any", "range_feet": 5},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "speed_modifier", "feet": 10}
     ]}},
     "scaling": [{"type": "resource_level", "above_level": "base_level", "per_level": [
       {"type": "target_count", "amount": 1}
-    ]}]
+    ]}],
+    "duration": {"type": "timed", "amount": 1, "unit": "hour"}
   }
 }

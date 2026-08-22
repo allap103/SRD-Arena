@@ -66,7 +66,7 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "disposition": "enemy", "line_of_sight": true},
+    "target": {"type": "creature", "disposition": "enemy", "line_of_sight": true, "range_feet": 60},
     "resolution": {"type": "provider_attack", "mode": "ranged", "hit": {"effects": [
       {"type": "damage", "dice": "1d8", "damage_type": "cold"},
       {

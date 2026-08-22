@@ -61,8 +61,9 @@
   ]
   ,"implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "line_of_sight": true},
+    "target": {"type": "creature", "line_of_sight": true, "range_feet": 90},
     "resolution": {"type": "saving_throw", "ability": "wis", "failure": {"effects": [{"type": "condition", "condition": "paralyzed"}]}, "repeat_save": {"trigger": "turn_end", "ability": "wis"}},
-    "scaling": [{"type": "resource_level", "above_level": 5, "per_level": [{"type": "target_count", "amount": 1}]}]
+    "scaling": [{"type": "resource_level", "above_level": 5, "per_level": [{"type": "target_count", "amount": 1}]}],
+    "duration": {"type": "timed", "amount": 1, "unit": "minute"}
   }
 }

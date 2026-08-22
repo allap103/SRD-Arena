@@ -1,7 +1,6 @@
 from srd_arena.content.common import SourceCatalog
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.spells import SpellSchema, build_spell, load_spell_catalog
-from srd_arena.domain.spells.rules import spell_duration_rounds
 from srd_arena.domain.capabilities import (
     AttackResolution,
     ArmorClassModifierEffect,
@@ -22,6 +21,7 @@ from srd_arena.domain.capabilities import (
     capability_area_size_feet,
     capability_damage_dice,
     capability_damage_types,
+    capability_duration_rounds,
     capability_effects,
     capability_geometry_mode,
     capability_max_targets,
@@ -29,6 +29,7 @@ from srd_arena.domain.capabilities import (
     capability_removable_conditions,
     capability_removable_effect_kinds,
     capability_remove_effect_selection,
+    capability_range_feet,
     capability_saving_throw_abilities,
 )
 
@@ -87,6 +88,7 @@ def test_spell_builder_creates_combat_ready_domain_spell() -> None:
     assert capability_damage_types(fireball.definition) == ("fire",)
     assert capability_geometry_mode(fireball.definition) == "point_area"
     assert capability_area_size_feet(fireball.definition) == 20
+    assert capability_range_feet(fireball.definition) == 150
     assert fireball.definition is not None
     assert fireball.definition is not None
     assert isinstance(fireball.definition.resolution, SavingThrowResolution)
@@ -310,7 +312,7 @@ def test_protection_from_poison_translates_creature_modifiers() -> None:
         and effect.conditions == ("poisoned",)
         for effect in effects
     )
-    assert spell_duration_rounds(spell) == 600
+    assert capability_duration_rounds(spell.definition) == 600
 
 
 def test_protection_from_energy_translates_a_resistance_choice() -> None:
@@ -326,7 +328,7 @@ def test_protection_from_energy_translates_a_resistance_choice() -> None:
         for effect in capability_effects(spell.definition)
     )
     assert spell.concentration
-    assert spell_duration_rounds(spell) == 600
+    assert capability_duration_rounds(spell.definition) == 600
 
 
 def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
@@ -372,7 +374,7 @@ def test_foresight_translates_bidirectional_roll_modes() -> None:
         ("attack_roll", "disadvantage", "attacks_against_target"),
     ]
     assert spell.definition.reactivation_ends_previous
-    assert spell_duration_rounds(spell) == 4800
+    assert capability_duration_rounds(spell.definition) == 4800
 
 
 def test_shield_of_faith_translates_sourced_armor_class() -> None:
@@ -386,7 +388,7 @@ def test_shield_of_faith_translates_sourced_armor_class() -> None:
         for effect in capability_effects(spell.definition)
     )
     assert spell.concentration
-    assert spell_duration_rounds(spell) == 100
+    assert capability_duration_rounds(spell.definition) == 100
 
 
 def test_sense_spells_and_blur_translate_directional_perception() -> None:
@@ -426,7 +428,7 @@ def test_speed_spells_translate_additive_modifiers() -> None:
         isinstance(effect, SpeedModifierEffect) and effect.feet == 10
         for effect in capability_effects(longstrider.definition)
     )
-    assert spell_duration_rounds(longstrider) == 600
+    assert capability_duration_rounds(longstrider.definition) == 600
     assert longstrider.definition is not None
     assert longstrider.definition.scaling[0].per_level[0].kind == "target_count"
     assert ray_of_frost.definition is not None
@@ -460,7 +462,7 @@ def test_resistance_translates_typed_per_turn_damage_reduction() -> None:
     assert "fire" in reduction.damage_types
     assert "force" not in reduction.damage_types
     assert spell.concentration
-    assert spell_duration_rounds(spell) == 10
+    assert capability_duration_rounds(spell.definition) == 10
 
 
 def test_heroism_translates_immunity_and_turn_start_temporary_hp() -> None:
@@ -494,7 +496,7 @@ def test_stoneskin_translates_multiple_damage_resistances() -> None:
         for effect in capability_effects(spell.definition)
     )
     assert spell.concentration
-    assert spell_duration_rounds(spell) == 600
+    assert capability_duration_rounds(spell.definition) == 600
 
 
 def test_enhance_ability_translates_ability_scoped_choices() -> None:

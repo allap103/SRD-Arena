@@ -48,9 +48,10 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "disposition": "any"},
+    "target": {"type": "creature", "disposition": "any", "range_feet": 60},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "armor_class_modifier", "value": 2}
-    ]}}
+    ]}},
+    "duration": {"type": "timed", "amount": 10, "unit": "minute"}
   }
 }

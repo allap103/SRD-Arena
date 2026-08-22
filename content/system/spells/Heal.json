@@ -49,7 +49,7 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "disposition": "any", "line_of_sight": true},
+    "target": {"type": "creature", "disposition": "any", "line_of_sight": true, "range_feet": 60},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "healing", "bonus": 70},
       {

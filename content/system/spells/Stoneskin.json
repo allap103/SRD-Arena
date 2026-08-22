@@ -50,12 +50,13 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "disposition": "willing"},
+    "target": {"type": "creature", "disposition": "willing", "range_feet": 5},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {
         "type": "damage_resistance",
         "damage_types": ["bludgeoning", "piercing", "slashing"]
       }
-    ]}}
+    ]}},
+    "duration": {"type": "timed", "amount": 1, "unit": "hour"}
   }
 }

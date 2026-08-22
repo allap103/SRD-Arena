@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..creatures import Spellcasting
-from ..geometry import Grid
 from .definitions import Spell
 
 
@@ -15,13 +14,10 @@ class SpellActionEconomy:
 
 
 def spell_action_economy(spell: Spell) -> SpellActionEconomy:
-    units = {
-        entry.get("unit") for entry in spell.casting_time if isinstance(entry, dict)
-    }
     return SpellActionEconomy(
-        action=1 if "action" in units else 0,
-        bonus_action=1 if "bonus" in units else 0,
-        reaction=1 if "reaction" in units else 0,
+        action=1 if spell.activation == "action" else 0,
+        bonus_action=1 if spell.activation == "bonus_action" else 0,
+        reaction=1 if spell.activation == "reaction" else 0,
     )
 
 
@@ -45,45 +41,6 @@ def spell_cast_block_reason(
     if spell.level > 0 and spellcasting.spell_slots_remaining.get(slot_level, 0) <= 0:
         return f"You have no level {slot_level} spell slots remaining."
     return None
-
-
-def spell_targets_self_only(spell: Spell) -> bool:
-    return (
-        spell.definition is not None and spell.definition.target.kind == "self"
-    ) or spell.range_data.get("type") == "self"
-
-
-def spell_duration_rounds(spell: Spell) -> int | None:
-    """Return the spell metadata duration converted to encounter rounds."""
-    rounds_per_unit = {
-        "round": 1,
-        "minute": 10,
-        "hour": 600,
-        "day": 14_400,
-    }
-    for entry in spell.duration_data:
-        duration = entry.get("duration")
-        if not isinstance(duration, dict):
-            continue
-        unit = duration.get("type")
-        amount = duration.get("amount")
-        if isinstance(unit, str) and isinstance(amount, int):
-            multiplier = rounds_per_unit.get(unit)
-            if multiplier is not None:
-                return amount * multiplier
-    return None
-
-
-def spell_range_squares(spell: Spell, grid: Grid) -> int | None:
-    distance = spell.range_data.get("distance", {})
-    if not isinstance(distance, dict):
-        return None
-    amount = distance.get("amount")
-    if distance.get("type") == "touch":
-        return 1
-    if not isinstance(amount, int):
-        return None
-    return int(grid.distance_from_feet(amount, minimum=1))
 
 
 def spell_action_label(

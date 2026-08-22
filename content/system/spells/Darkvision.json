@@ -43,9 +43,10 @@
   ],
   "implementation": {"status": "partial", "omissions": [{"mechanic": "darkness perception", "reason": "Lighting and obscured-vision targeting are not modeled yet."}]},
   "capability": {
-    "target": {"type": "creature", "disposition": "willing"},
+    "target": {"type": "creature", "disposition": "willing", "range_feet": 5},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "sense", "sense": "darkvision", "range_feet": 150}
-    ]}}
+    ]}},
+    "duration": {"type": "timed", "amount": 8, "unit": "hour"}
   }
 }

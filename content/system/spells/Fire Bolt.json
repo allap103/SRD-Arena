@@ -70,7 +70,7 @@
   ],
   "implementation": {"status": "partial", "omissions": [{"mechanic": "object targeting and ignition", "reason": "Objects and environmental fire are not modeled yet."}]},
   "capability": {
-    "target": {"type": "creature", "line_of_sight": true},
+    "target": {"type": "creature", "line_of_sight": true, "range_feet": 120},
     "resolution": {"type": "provider_attack", "mode": "ranged", "hit": {"effects": [{"type": "damage", "dice": "1d10", "damage_type": "fire"}]}},
     "scaling": [{"type": "actor_level", "thresholds": [
       {"minimum_level": 1, "increments": [{"type": "damage_dice", "amount": "1d10"}]},

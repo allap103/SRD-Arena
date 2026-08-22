@@ -47,13 +47,14 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "disposition": "willing"},
+    "target": {"type": "creature", "disposition": "willing", "range_feet": 5},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {
         "type": "damage_resistance",
         "damage_types": ["acid", "cold", "fire", "lightning", "thunder"],
         "selection": "choose_one"
       }
-    ]}}
+    ]}},
+    "duration": {"type": "timed", "amount": 1, "unit": "hour"}
   }
 }

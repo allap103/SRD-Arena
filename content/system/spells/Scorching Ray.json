@@ -64,7 +64,8 @@
         "maximum": 3
       },
       "disposition": "enemy",
-      "selection": "choose_up_to"
+      "selection": "choose_up_to",
+      "range_feet": 120
     },
     "resolution": {
       "type": "repeat",

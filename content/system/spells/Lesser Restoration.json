@@ -43,7 +43,8 @@
   "capability": {
     "target": {
       "type": "creature",
-      "disposition": "any"
+      "disposition": "any",
+      "range_feet": 5
     },
     "resolution": {
       "type": "automatic",

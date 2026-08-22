@@ -87,6 +87,7 @@ def test_spells_and_stat_blocks_share_perception_requirements() -> None:
             "capability": {
                 "target": {
                     "type": "creature",
+                    "range_feet": 60,
                     "requirements": [requirement],
                 },
                 "resolution": {

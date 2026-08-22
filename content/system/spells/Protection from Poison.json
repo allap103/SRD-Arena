@@ -48,7 +48,7 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "disposition": "any"},
+    "target": {"type": "creature", "disposition": "any", "range_feet": 5},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {
         "type": "remove_effect",
@@ -61,6 +61,7 @@
         "type": "condition_save_advantage",
         "conditions": ["poisoned"]
       }
-    ]}}
+    ]}},
+    "duration": {"type": "timed", "amount": 1, "unit": "hour"}
   }
 }

@@ -16,9 +16,6 @@ def build_spell(spell_schema: SpellSchema) -> Spell:
         source=spell_schema.source,
         level=spell_schema.level,
         school=spell_schema.school,
-        casting_time=tuple(spell_schema.time),
-        range_data=dict(spell_schema.range),
-        duration_data=tuple(spell_schema.duration),
         components=dict(spell_schema.components),
         concentration=any(
             bool(duration.get("concentration"))
@@ -43,6 +40,7 @@ def build_spell_definition(
         resolution=capability.resolution,
         content=f"Spell '{spell_schema.public_name}'",
         condition_selection=capability.condition_application,
+        duration=capability.duration,
         scaling_rules=capability.scaling,
         triggers=capability.outcome_triggers,
         reactivation_ends_previous=capability.reactivation_ends_previous,

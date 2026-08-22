@@ -47,6 +47,10 @@ from ..rolls.saving_throws import (
     resolve_saving_throw,
 )
 from .results import CapabilityActionResult
+from .rules import (
+    capability_duration_rounds,
+    duration_rounds as resolve_duration_rounds,
+)
 
 DieRoller = Callable[[int], int]
 
@@ -105,7 +109,6 @@ class CapabilityExecutionContext:
     )
     base_resource_level: int = 0
     resource_level: int | None = None
-    duration_rounds: int | None = None
     concentration: bool = False
     activation_verb: str = "uses"
     source_kind: str = "capability"
@@ -677,7 +680,7 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
         else conditions
     )
     parent_kind = "concentration" if context.concentration else context.source_kind
-    duration_rounds = context.duration_rounds
+    resolved_duration_rounds = capability_duration_rounds(definition)
     maximum_hit_point_effect = next(
         (
             effect
@@ -776,7 +779,7 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
             or senses
         )
         and (
-            duration_rounds is not None
+            resolved_duration_rounds is not None
             or context.concentration
             or repeat_save is not None
         )
@@ -793,9 +796,9 @@ def _resolve_capability(context: CapabilityExecutionContext) -> CapabilityAction
                     "reactivation_ends_previous": definition.reactivation_ends_previous,
                     "target_refs": [target.target_ref for target in affected_targets],
                     "duration_rounds": (
-                        duration_rounds
-                        if duration_rounds is not None
-                        else _effect_duration_rounds(effect_duration)
+                        resolved_duration_rounds
+                        if resolved_duration_rounds is not None
+                        else resolve_duration_rounds(effect_duration)
                     ),
                     "parameters": {
                         "effect_label": context.capability_name,
@@ -1324,23 +1327,6 @@ def _attack_modifier(
         if isinstance(attack_bonus, FixedAttackBonus)
         else statistics.attack_bonus
     )
-
-
-def _effect_duration_rounds(duration: EffectDuration | None) -> int | None:
-    if duration is None:
-        return None
-    if duration.kind in {"start_of_turn", "end_of_turn"}:
-        return 1
-    rounds_per_unit = {
-        "round": 1,
-        "minute": 10,
-        "hour": 600,
-        "day": 14_400,
-    }
-    if duration.kind != "timed" or duration.amount is None:
-        return None
-    multiplier = rounds_per_unit.get(duration.unit or "")
-    return duration.amount * multiplier if multiplier is not None else None
 
 
 def _parse_damage_dice(expression: str) -> tuple[int, int]:

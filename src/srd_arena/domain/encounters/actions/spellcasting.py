@@ -7,6 +7,7 @@ from ...capabilities import (
     ConditionEffect,
     RelationshipRequirement,
     SavingThrowResolution,
+    capability_geometry_mode,
     primary_effects,
 )
 from ...creatures import Creature
@@ -107,6 +108,12 @@ def resolve_spell_action(
     area = self._spell_area(actor, spell, target_ref=target_ref, aim_point=aim_point)
     targets = (
         tuple(
+            target
+            for target in (self._spell_target_context(actor, creature_ref),)
+            if target is not None
+        )
+        if capability_geometry_mode(spell.definition) == "self_only"
+        else tuple(
             target
             for selected_ref in selected_target_refs
             if (target := self._spell_target_context(actor, selected_ref)) is not None

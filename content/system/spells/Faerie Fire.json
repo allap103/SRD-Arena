@@ -70,7 +70,8 @@
     "target": {
       "type": "area",
       "origin": "point_in_range",
-      "geometry": {"shape": "cube", "length_feet": 20}
+      "geometry": {"shape": "cube", "length_feet": 20},
+      "range_feet": 60
     },
     "resolution": {
       "type": "saving_throw",
@@ -83,6 +84,7 @@
           "subject": "attacks_against_target"
         }
       ]}
-    }
+    },
+    "duration": {"type": "timed", "amount": 1, "unit": "minute"}
   }
 }

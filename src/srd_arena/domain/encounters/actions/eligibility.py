@@ -483,7 +483,7 @@ class SpellActionRule:
                 return requirement_failure
         if (
             capability_geometry_mode(spell.definition)
-            not in {"directional_area", "point_area"}
+            not in {"directional_area", "point_area", "self_only"}
             and target_ref is None
             and aim_point is None
         ):

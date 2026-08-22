@@ -62,9 +62,10 @@
   ]
   ,"implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "line_of_sight": true, "requirements": [{"type": "creature_type", "creature_types": ["humanoid"]}]},
+    "target": {"type": "creature", "line_of_sight": true, "requirements": [{"type": "creature_type", "creature_types": ["humanoid"]}], "range_feet": 30},
     "resolution": {"type": "saving_throw", "ability": "wis", "save_modifiers": [{"type": "roll_modifier", "roll": "saving_throw", "mode": "advantage", "requirements": [{"type": "relationship", "relationship": "fighting_source_team", "established_by": "source"}]}], "failure": {"effects": [{"type": "condition", "condition": "charmed"}]}},
     "scaling": [{"type": "resource_level", "above_level": 1, "per_level": [{"type": "target_count", "amount": 1}]}],
-    "outcome_triggers": [{"event": "target_damaged", "requirements": [{"type": "relationship", "relationship": "ally_of_source", "established_by": "source"}], "resolution": {"type": "automatic", "outcome": {"end_capability": true}}}]
+    "outcome_triggers": [{"event": "target_damaged", "requirements": [{"type": "relationship", "relationship": "ally_of_source", "established_by": "source"}], "resolution": {"type": "automatic", "outcome": {"end_capability": true}}}],
+    "duration": {"type": "timed", "amount": 1, "unit": "hour"}
   }
 }

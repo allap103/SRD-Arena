@@ -53,7 +53,7 @@
   ]
   ,"implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 5}, "occupants": "chosen", "chosen_count": {"minimum": 0, "maximum": "all"}},
+    "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 5}, "occupants": "chosen", "chosen_count": {"minimum": 0, "maximum": "all"}, "range_feet": 60},
     "resolution": {
       "type": "saving_throw",
       "ability": "wis",
@@ -64,6 +64,7 @@
     "outcome_triggers": [
       {"event": "target_damaged", "resolution": {"type": "automatic", "outcome": {"end_capability": true}}},
       {"event": "adjacent_creature_wakes_target", "resolution": {"type": "automatic", "outcome": {"end_capability": true}}}
-    ]
+    ],
+    "duration": {"type": "timed", "amount": 1, "unit": "minute"}
   }
 }

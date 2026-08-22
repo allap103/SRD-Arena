@@ -60,7 +60,7 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "disposition": "enemy", "line_of_sight": true},
+    "target": {"type": "creature", "disposition": "enemy", "line_of_sight": true, "range_feet": 120},
     "resolution": {
       "type": "saving_throw",
       "ability": "wis",
@@ -90,6 +90,7 @@
         "above_level": 4,
         "per_level": [{"type": "damage_dice", "amount": "1d10"}]
       }
-    ]
+    ],
+    "duration": {"type": "timed", "amount": 1, "unit": "minute"}
   }
 }

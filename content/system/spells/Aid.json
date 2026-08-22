@@ -60,7 +60,8 @@
       "type": "creature",
       "count": {"minimum": 1, "maximum": 3},
       "disposition": "any",
-      "selection": "choose_up_to"
+      "selection": "choose_up_to",
+      "range_feet": 30
     },
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {
@@ -71,6 +72,7 @@
     ]}},
     "scaling": [{"type": "resource_level", "above_level": "base_level", "per_level": [
       {"type": "hit_point_maximum", "amount": 5}
-    ]}]
+    ]}],
+    "duration": {"type": "timed", "amount": 8, "unit": "hour"}
   }
 }

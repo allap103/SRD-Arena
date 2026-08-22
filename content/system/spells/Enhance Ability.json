@@ -62,7 +62,7 @@
     ]
   },
   "capability": {
-    "target": {"type": "creature", "disposition": "willing"},
+    "target": {"type": "creature", "disposition": "willing", "range_feet": 5},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {
         "type": "roll_modifier",
@@ -70,6 +70,7 @@
         "mode": "advantage",
         "ability_options": ["str", "dex", "int", "wis", "cha"]
       }
-    ]}}
+    ]}},
+    "duration": {"type": "timed", "amount": 1, "unit": "hour"}
   }
 }

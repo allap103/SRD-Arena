@@ -54,7 +54,8 @@
       "origin": "point_in_range",
       "geometry": {"shape": "sphere", "radius_feet": 30},
       "occupants": "chosen",
-      "chosen_count": {"minimum": 1, "maximum": 6}
+      "chosen_count": {"minimum": 1, "maximum": 6},
+      "range_feet": 60
     },
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "healing", "dice": "5d8", "modifier": "ability_modifier"}

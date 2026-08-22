@@ -62,6 +62,7 @@ class CreatureTargetSchema(CapabilitySchemaModel):
 
     type: Literal["creature"]
     count: TargetCountSchema = Field(default_factory=TargetCountSchema)
+    range_feet: NonNegativeInt
     disposition: Literal[
         "any", "ally", "enemy", "willing", "source", "trigger_target"
     ] = "any"
@@ -120,6 +121,7 @@ class AreaTargetSchema(CapabilitySchemaModel):
     origin: Literal[
         "self", "point_in_range", "target", "created_entity", "event_target"
     ]
+    range_feet: NonNegativeInt | None = None
     geometry: AreaGeometrySchema
     affects: Literal["creatures", "objects", "creatures_and_objects"] = "creatures"
     occupants: Literal["all", "allies", "enemies", "chosen"] = "all"
@@ -131,6 +133,8 @@ class AreaTargetSchema(CapabilitySchemaModel):
     def validate_chosen_count(self) -> "AreaTargetSchema":
         if self.occupants == "chosen" and self.chosen_count is None:
             raise ValueError("Chosen area occupants require chosen_count.")
+        if self.origin == "point_in_range" and self.range_feet is None:
+            raise ValueError("Point-origin areas require range_feet.")
         return self
 
 

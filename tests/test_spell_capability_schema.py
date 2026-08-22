@@ -32,6 +32,7 @@ def test_direct_area_damage_supports_geometry_modifier_and_scaling() -> None:
             "target": {
                 "type": "area",
                 "origin": "point_in_range",
+                "range_feet": 150,
                 "geometry": {
                     "shape": "cylinder",
                     "radius_feet": 20,
@@ -96,6 +97,7 @@ def test_condition_spell_supports_requirements_and_repeat_save() -> None:
         {
             "target": {
                 "type": "creature",
+                "range_feet": 60,
                 "requirements": [
                     {"type": "creature_type", "creature_types": ["humanoid"]},
                     {"type": "willing"},

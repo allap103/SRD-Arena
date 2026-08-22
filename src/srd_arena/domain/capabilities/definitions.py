@@ -4,6 +4,7 @@ from typing import Literal
 from .models import (
     CapabilityEffect,
     CapabilityRequirement,
+    EffectDuration,
     OutcomeStage,
     CapabilityTarget,
     RollModifierEffect,
@@ -139,6 +140,7 @@ class CapabilityRepetition:
 class CapabilityDefinition:
     target: CapabilityTarget
     resolution: CapabilityResolution
+    duration: EffectDuration | None = None
     condition_selection: Literal["all", "choose_one"] = "all"
     repetition: CapabilityRepetition | None = None
     scaling: tuple[CapabilityScaling, ...] = ()

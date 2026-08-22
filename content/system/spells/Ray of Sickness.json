@@ -60,7 +60,8 @@
     "target": {
       "type": "creature",
       "disposition": "enemy",
-      "line_of_sight": true
+      "line_of_sight": true,
+      "range_feet": 60
     },
     "resolution": {
       "type": "provider_attack",

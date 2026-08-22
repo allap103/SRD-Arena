@@ -56,7 +56,7 @@
   ],
   "implementation": {"status": "partial", "omissions": [{"mechanic": "unattended object damage", "reason": "Objects are not encounter participants yet."}]},
   "capability": {
-    "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 10}},
+    "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 10}, "range_feet": 60},
     "resolution": {"type": "saving_throw", "ability": "con", "save_modifiers": [{"type": "roll_modifier", "roll": "saving_throw", "mode": "disadvantage", "requirements": [{"type": "creature_type", "creature_types": ["construct"]}]}], "failure": {"effects": [{"type": "damage", "dice": "3d8", "damage_type": "thunder"}]}, "success_damage": "half"},
     "scaling": [{"type": "resource_level", "above_level": 2, "per_level": [{"type": "damage_dice", "amount": "1d8"}]}]
   }

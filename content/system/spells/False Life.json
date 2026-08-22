@@ -49,8 +49,7 @@
   "implementation": {"status": "complete"},
   "capability": {
     "target": {
-      "type": "creature",
-      "disposition": "source"
+      "type": "self"
     },
     "resolution": {
       "type": "automatic",

@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import Field
 
 from .base import CapabilitySchemaModel
+from .durations import EffectDurationSchema
 from .requirements import CapabilityRequirementSchema
 from .scaling import CapabilityScalingSchema
 
@@ -41,4 +42,5 @@ class CapabilitySchemaBase(CapabilitySchemaModel):
     """Fields shared by executable capability declarations."""
 
     scaling: list[CapabilityScalingSchema] = Field(default_factory=list)
+    duration: EffectDurationSchema | None = None
     condition_application: Literal["all", "choose_one"] = "all"

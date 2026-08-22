@@ -55,7 +55,7 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 60}},
+    "target": {"type": "area", "origin": "point_in_range", "geometry": {"shape": "sphere", "radius_feet": 60}, "range_feet": 150},
     "resolution": {"type": "saving_throw", "ability": "con", "failure": {"effects": [{"type": "damage", "dice": "8d8", "damage_type": "necrotic"}]}, "success_damage": "half"},
     "scaling": [{"type": "resource_level", "above_level": 6, "per_level": [{"type": "damage_dice", "amount": "2d8"}]}]
   }

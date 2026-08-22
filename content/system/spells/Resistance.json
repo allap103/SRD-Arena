@@ -40,7 +40,7 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "disposition": "willing"},
+    "target": {"type": "creature", "disposition": "willing", "range_feet": 5},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {
         "type": "damage_reduction",
@@ -53,6 +53,7 @@
         "limit": 1,
         "period": "turn"
       }
-    ]}}
+    ]}},
+    "duration": {"type": "timed", "amount": 1, "unit": "minute"}
   }
 }

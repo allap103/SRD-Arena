@@ -67,7 +67,7 @@
   ],
   "implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature", "line_of_sight": true},
+    "target": {"type": "creature", "line_of_sight": true, "range_feet": 60},
     "resolution": {"type": "saving_throw", "ability": "dex", "failure": {"effects": [{"type": "damage", "dice": "1d8", "damage_type": "radiant"}]}},
     "scaling": [{"type": "actor_level", "thresholds": [
       {"minimum_level": 1, "increments": [{"type": "damage_dice", "amount": "1d8"}]},

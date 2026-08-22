@@ -39,6 +39,7 @@
     "target": {"type": "self"},
     "resolution": {"type": "automatic", "outcome": {"effects": [
       {"type": "roll_modifier", "roll": "attack_roll", "mode": "disadvantage", "subject": "attacks_against_target", "ignored_by_senses": ["blindsight", "truesight"]}
-    ]}}
+    ]}},
+    "duration": {"type": "timed", "amount": 1, "unit": "minute"}
   }
 }

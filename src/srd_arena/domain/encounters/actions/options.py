@@ -17,6 +17,7 @@ from ...capabilities import (
     capability_removable_conditions,
     capability_removable_effect_kinds,
     capability_remove_effect_selection,
+    capability_range_feet,
     capability_supports_resource_scaling,
     capability_target_disposition,
     primary_effects,
@@ -42,8 +43,6 @@ from ...spells.rules import (
     spell_action_label,
     spell_action_value,
     spell_cast_block_reason,
-    spell_range_squares,
-    spell_targets_self_only,
 )
 from ...spells.rules import parse_spell_action_condition, parse_spell_action_value
 from ...spells.rules import parse_spell_action_damage_type
@@ -486,15 +485,20 @@ def spell_cast_block_reason_for(
 
 
 def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
-    return capability_geometry_mode(
-        spell.definition
-    ) == "self_only" or spell_targets_self_only(spell)
+    return capability_geometry_mode(spell.definition) == "self_only"
 
 
 def spell_range_squares_for(
     self: EncounterState, spell: Spell, creature: Creature
 ) -> int | None:
-    return spell_range_squares(spell, self.definition.grid)
+    distance_feet = (
+        capability_area_size_feet(spell.definition)
+        if capability_geometry_mode(spell.definition) == "directional_area"
+        else capability_range_feet(spell.definition)
+    )
+    if distance_feet is None:
+        return None
+    return int(self.definition.grid.distance_from_feet(distance_feet, minimum=1))
 
 
 def spell_action_targets(
@@ -698,7 +702,7 @@ def spell_area(
         return None
     coverage_threshold = self.geometry_config.directional_area_cell_coverage_threshold
     return build_directional_area(
-        spell.range_data.get("type"),
+        capability_area_shape(spell.definition),
         creature_position,
         direction,
         length,

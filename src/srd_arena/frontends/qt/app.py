@@ -5,7 +5,11 @@ import textwrap
 from collections import Counter, deque
 from datetime import datetime, timezone
 from ...domain.encounters.models import ActionCost, EncounterAction
-from ...domain.capabilities import capability_area_size_feet, capability_geometry_mode
+from ...domain.capabilities import (
+    capability_area_shape,
+    capability_area_size_feet,
+    capability_geometry_mode,
+)
 from ...domain.geometry import (
     Position,
     Vector2D,
@@ -17,7 +21,6 @@ from ...domain.spells.rules import (
     parse_spell_action_slot,
     parse_spell_action_value,
     spell_action_value,
-    spell_range_squares,
 )
 from ...runtime.scenario import DEFAULT_SCENARIO_DIR, Scenario
 from ..shared.dice import build_roll_views, without_roll_details
@@ -2021,9 +2024,10 @@ class GameWindow(QMainWindow):
             return serialize_area(
                 build_radius_area(Position(0, 0), radius_squares, grid)
             )
-        length = spell_range_squares(spell, grid)
-        if length is None:
+        length_feet = capability_area_size_feet(spell.definition)
+        if length_feet is None:
             return None
+        length = int(grid.distance_from_feet(length_feet, minimum=1))
         origin = Position(
             self.session.encounter_state.active_position.x,
             self.session.encounter_state.active_position.y,
@@ -2032,7 +2036,7 @@ class GameWindow(QMainWindow):
         coverage_threshold = self.session.encounter_state.geometry_config.directional_area_cell_coverage_threshold
         return serialize_area(
             build_directional_area(
-                spell.range_data.get("type"),
+                capability_area_shape(spell.definition),
                 origin,
                 default_direction,
                 length,

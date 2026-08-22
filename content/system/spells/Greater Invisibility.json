@@ -43,7 +43,8 @@
   ]
   ,"implementation": {"status": "complete"},
   "capability": {
-    "target": {"type": "creature"},
-    "resolution": {"type": "automatic", "outcome": {"effects": [{"type": "condition", "condition": "invisible"}]}}
+    "target": {"type": "creature", "range_feet": 5},
+    "resolution": {"type": "automatic", "outcome": {"effects": [{"type": "condition", "condition": "invisible"}]}},
+    "duration": {"type": "timed", "amount": 1, "unit": "minute"}
   }
 }

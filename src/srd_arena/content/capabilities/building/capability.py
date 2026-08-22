@@ -6,8 +6,8 @@ from typing import Literal, Protocol, cast
 
 import srd_arena.domain.capabilities as domain
 
-from srd_arena.content.capabilities.schemas import resolutions, scaling
-from .common import resolution_root
+from srd_arena.content.capabilities.schemas import durations, resolutions, scaling
+from .common import build_duration, resolution_root
 from .errors import CapabilityBuildError
 from .requirements import build_checked_requirement
 from .resolutions import build_resolution
@@ -46,6 +46,7 @@ def build_capability(
     resolution: object,
     content: str,
     condition_selection: Literal["all", "choose_one"] = "all",
+    duration: durations.EffectDurationSchema | None = None,
     scaling_rules: Iterable[scaling.CapabilityScalingSchema] = (),
     triggers: Iterable[object] = (),
     reactivation_ends_previous: bool = False,
@@ -93,6 +94,7 @@ def build_capability(
             content=content,
             location=primary_location,
         ),
+        duration=build_duration(duration),
         condition_selection=condition_selection,
     )
     return replace(
