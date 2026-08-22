@@ -74,7 +74,6 @@ from .translation import (
     slot_scaling_value,
     slot_target_increment,
     spell_duration_rounds,
-    target_count_by_caster_level,
     target_requirements,
 )
 
@@ -359,9 +358,7 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
             raw.capability.self_removal_blocked_conditions
         ),
         base_target_count=(
-            target_count_by_caster_level(raw)[0][1]
-            if target_count_by_caster_level(raw)
-            else repeated.count
+            repeated.count
             if repeated is not None and isinstance(repeated.count, int)
             else target.count.maximum
             if target.type == "creature" and isinstance(target.count.maximum, int)
@@ -369,12 +366,6 @@ def _translate_capability(raw: SpellSchema) -> SpellCapability | None:
         ),
         slot_target_increment=slot_target_increment(raw),
         choose_area_targets=(target.type == "area" and target.occupants == "chosen"),
-        repeat_target_allocations=(
-            repeated is not None
-            and repeated.allocation in {"same_target", "same_or_different"}
-        ),
-        require_full_target_count=repeated is not None,
-        target_count_by_caster_level=target_count_by_caster_level(raw),
         follow_up_resolutions=(
             tuple(follow_up_resolution(raw, step) for step in sequence.steps[1:])
             if sequence is not None

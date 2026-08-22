@@ -58,8 +58,10 @@ def test_repeated_attack_and_removal_spells_translate_from_typed_capability() ->
 
     assert scorching_ray.capability is not None
     assert scorching_ray.capability.resolution == "spell_attack"
-    assert scorching_ray.capability.repeat_target_allocations
-    assert scorching_ray.capability.require_full_target_count
+    assert scorching_ray.definition is not None
+    assert scorching_ray.definition.repetition is not None
+    assert scorching_ray.definition.repetition.count == 3
+    assert scorching_ray.definition.repetition.allocation == "same_or_different"
     assert spell_max_targets(scorching_ray, 2) == 3
     assert spell_max_targets(scorching_ray, 3) == 4
     assert lesser_restoration.removable_conditions == (
@@ -200,7 +202,8 @@ def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
         ("attack_roll", "add", "1d4"),
         ("saving_throw", "add", "1d4"),
     ]
-    assert bless.capability.base_target_count == 3
+    assert bless.definition is not None
+    assert bless.definition.target.count.maximum == 3
     assert bless.capability.slot_target_increment == 1
     assert bane.capability is not None
     assert [

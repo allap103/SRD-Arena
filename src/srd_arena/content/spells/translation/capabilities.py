@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import cast
 
 from srd_arena.content.capabilities import (
@@ -22,6 +23,8 @@ from srd_arena.content.spells.targeting import (
     CreatureSpellTargetSchema,
 )
 
+from .scaling import compile_scaling
+
 SpellResolutionSchema = (
     AutomaticResolutionSchema
     | SavingThrowResolutionSchema
@@ -38,7 +41,8 @@ def compile_spell_definition(
     resolution: object = raw.capability.resolution.root
     if isinstance(resolution, SequenceResolutionSchema):
         resolution = resolution.steps[0].resolution.root
-    if isinstance(resolution, RepeatResolutionSchema):
+    repeated = resolution if isinstance(resolution, RepeatResolutionSchema) else None
+    if repeated is not None:
         resolution = resolution.resolution.root
     if not isinstance(
         resolution,
@@ -56,7 +60,31 @@ def compile_spell_definition(
         if isinstance(resolution, SpellAttackResolutionSchema)
         else resolution.outcome
     )
-    return compile_definition(raw.capability.target, resolution, outcome)
+    definition = compile_definition(raw.capability.target, resolution, outcome)
+    if definition is None:
+        return None
+    repetition = (
+        domain.CapabilityRepetition(
+            count=(
+                "ability_modifier"
+                if repeated.count == "spellcasting_modifier"
+                else "resource_scaled"
+                if repeated.count == "slot_scaled"
+                else repeated.count
+            ),
+            allocation=repeated.allocation,
+            simultaneous=repeated.simultaneous,
+            propagation_range_feet=repeated.propagation_range_feet,
+            cannot_repeat_target=repeated.cannot_repeat_target,
+        )
+        if repeated is not None
+        else None
+    )
+    return replace(
+        definition,
+        repetition=repetition,
+        scaling=compile_scaling(raw),
+    )
 
 
 def compile_definition(

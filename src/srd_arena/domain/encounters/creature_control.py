@@ -31,6 +31,8 @@ from ..spells.rules import (
     spell_action_value,
     spell_chooses_area_targets,
     spell_max_targets,
+    spell_repeats_target_allocations,
+    spell_requires_full_target_count,
 )
 from .models import (
     ActionCost,
@@ -454,13 +456,11 @@ def execute_creature_action(
         )
         repeat_target_allocations = bool(
             spell is not None
-            and spell.capability is not None
-            and spell.capability.repeat_target_allocations
+            and spell_repeats_target_allocations(spell)
         )
         require_full_target_count = bool(
             spell is not None
-            and spell.capability is not None
-            and spell.capability.require_full_target_count
+            and spell_requires_full_target_count(spell)
         )
         resource_pool_total = (
             spell.capability.healing_pool

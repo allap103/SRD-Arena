@@ -116,6 +116,42 @@ def test_spell_area_selection_compiles_into_shared_target() -> None:
     assert sleep.definition.target.count.maximum == "all"
 
 
+def test_spell_repetition_and_scaling_compile_into_shared_definition() -> None:
+    spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
+
+    scorching_ray = build_spell("Scorching Ray", "XPHB", spells)
+    eldritch_blast = build_spell("Eldritch Blast", "XPHB", spells)
+
+    assert scorching_ray.definition is not None
+    assert scorching_ray.definition.repetition is not None
+    assert scorching_ray.definition.repetition.count == 3
+    resource_scaling = next(
+        scaling
+        for scaling in scorching_ray.definition.scaling
+        if scaling.basis == "resource_level"
+    )
+    assert resource_scaling.per_level[0].kind == "projectile_count"
+    assert resource_scaling.per_level[0].amount == 1
+
+    assert eldritch_blast.definition is not None
+    actor_scaling = next(
+        scaling
+        for scaling in eldritch_blast.definition.scaling
+        if scaling.basis == "actor_level"
+        and any(
+            increment.kind == "projectile_count"
+            for threshold in scaling.thresholds
+            for increment in threshold.increments
+        )
+    )
+    assert [threshold.minimum_level for threshold in actor_scaling.thresholds] == [
+        1,
+        5,
+        11,
+        17,
+    ]
+
+
 def test_stat_block_resources_belong_to_capability_grants() -> None:
     monsters = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
 

@@ -4,10 +4,10 @@ from .activation import compile_activation
 from .capabilities import compile_definition, compile_spell_definition
 from .scaling import (
     cantrip_damage_by_level,
+    compile_scaling,
     slot_damage_increment,
     slot_scaling_value,
     slot_target_increment,
-    target_count_by_caster_level,
 )
 from .targeting import (
     creature_types_from_requirements,
@@ -33,6 +33,7 @@ __all__ = [
     "automatic_success_condition_immunities",
     "automatic_success_traits",
     "compile_activation",
+    "compile_scaling",
     "compile_definition",
     "compile_spell_definition",
     "creature_types_from_requirements",
@@ -49,6 +50,5 @@ __all__ = [
     "slot_scaling_value",
     "slot_target_increment",
     "spell_duration_rounds",
-    "target_count_by_caster_level",
     "target_requirements",
 ]

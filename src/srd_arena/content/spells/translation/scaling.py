@@ -1,10 +1,70 @@
 from typing import overload
 
 from srd_arena.content.spells.scaling import (
-    CasterLevelScalingSchema,
     SlotScalingSchema,
 )
 from srd_arena.content.spells.schema import SpellSchema
+import srd_arena.domain.capabilities as domain
+
+
+def compile_scaling(raw: SpellSchema) -> tuple[domain.CapabilityScaling, ...]:
+    """Compile provider-neutral resource- and actor-level scaling rules."""
+    if raw.capability is None:
+        return ()
+    compiled: list[domain.CapabilityScaling] = []
+    for scaling in raw.capability.scaling:
+        if isinstance(scaling, SlotScalingSchema):
+            compiled.append(
+                domain.CapabilityScaling(
+                    basis="resource_level",
+                    above_level=(
+                        "base_level"
+                        if scaling.above_level == "spell_level"
+                        else scaling.above_level
+                    ),
+                    per_level=tuple(
+                        domain.ScalingIncrement(
+                            increment.type,
+                            increment.amount,
+                            increment.damage_type,
+                        )
+                        for increment in scaling.per_level
+                    ),
+                )
+            )
+        else:
+            compiled.append(
+                domain.CapabilityScaling(
+                    basis="actor_level",
+                    thresholds=tuple(
+                        domain.ScalingThreshold(
+                            threshold.minimum_level,
+                            (
+                                domain.ScalingIncrement(
+                                    "projectile_count",
+                                    threshold.projectile_count,
+                                ),
+                            ),
+                        )
+                        for threshold in scaling.thresholds
+                    ),
+                )
+            )
+    damage_by_level = cantrip_damage_by_level(raw)
+    if damage_by_level:
+        compiled.append(
+            domain.CapabilityScaling(
+                basis="actor_level",
+                thresholds=tuple(
+                    domain.ScalingThreshold(
+                        minimum_level,
+                        (domain.ScalingIncrement("damage_dice", dice),),
+                    )
+                    for minimum_level, dice in damage_by_level
+                ),
+            )
+        )
+    return tuple(compiled)
 
 
 @overload
@@ -89,16 +149,4 @@ def slot_target_increment(raw: SpellSchema) -> int:
         for increment in scaling.per_level
         if increment.type in {"target_count", "projectile_count"}
         and isinstance(increment.amount, int)
-    )
-
-
-def target_count_by_caster_level(
-    raw: SpellSchema,
-) -> tuple[tuple[int, int], ...]:
-    assert raw.capability is not None
-    return tuple(
-        (threshold.minimum_level, threshold.projectile_count)
-        for scaling in raw.capability.scaling
-        if isinstance(scaling, CasterLevelScalingSchema)
-        for threshold in scaling.thresholds
     )

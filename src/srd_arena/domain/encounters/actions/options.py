@@ -26,6 +26,7 @@ from ...spells.rules import (
     spell_cast_block_reason,
     spell_chooses_area_targets,
     spell_range_squares,
+    spell_supports_higher_level,
     spell_target_disposition,
     spell_targets_self_only,
 )
@@ -218,20 +219,9 @@ def _append_spell_action_variants(
     action: EncounterAction,
 ) -> None:
     actions.append(action)
-    if spell.level == 0 or spell.capability is None:
+    if spell.level == 0:
         return
-    if (
-        spell.capability.slot_damage_increment is None
-        and spell.capability.slot_target_increment == 0
-        and spell.capability.slot_healing_dice_increment is None
-        and spell.capability.slot_healing_bonus_increment == 0
-        and spell.capability.slot_temporary_hit_points_increment == 0
-        and spell.capability.slot_maximum_hit_point_increment == 0
-        and not any(
-            follow_up.slot_damage_increment is not None
-            for follow_up in spell.capability.follow_up_resolutions
-        )
-    ):
+    if not spell_supports_higher_level(spell):
         return
     spell_id, target_ref, aim_point = parse_spell_action_value(str(action.value))
     selected_condition = parse_spell_action_condition(str(action.value))

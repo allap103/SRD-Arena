@@ -78,6 +78,44 @@ def spell_area_shape(spell: Spell) -> str | None:
     return spell.capability.area_shape if spell.capability is not None else None
 
 
+def spell_repeats_target_allocations(spell: Spell) -> bool:
+    if spell.definition is not None and spell.definition.repetition is not None:
+        return spell.definition.repetition.allocation in {
+            "same_target",
+            "same_or_different",
+        }
+    return False
+
+
+def spell_requires_full_target_count(spell: Spell) -> bool:
+    return bool(
+        spell.definition is not None and spell.definition.repetition is not None
+    )
+
+
+def spell_supports_higher_level(spell: Spell) -> bool:
+    if spell.definition is not None:
+        return any(
+            scaling.basis == "resource_level" and scaling.per_level
+            for scaling in spell.definition.scaling
+        )
+    capability = spell.capability
+    if capability is None:
+        return False
+    return not (
+        capability.slot_damage_increment is None
+        and capability.slot_target_increment == 0
+        and capability.slot_healing_dice_increment is None
+        and capability.slot_healing_bonus_increment == 0
+        and capability.slot_temporary_hit_points_increment == 0
+        and capability.slot_maximum_hit_point_increment == 0
+        and not any(
+            follow_up.slot_damage_increment is not None
+            for follow_up in capability.follow_up_resolutions
+        )
+    )
+
+
 def spell_range_squares(spell: Spell, grid: Grid) -> int | None:
     distance = spell.range_data.get("distance", {})
     if not isinstance(distance, dict):
@@ -226,18 +264,54 @@ def spell_max_targets(
     *,
     caster_level: int | None = None,
 ) -> int:
+    if spell.definition is not None:
+        definition = spell.definition
+        target_maximum = definition.target.count.maximum
+        base_target_count = target_maximum if isinstance(target_maximum, int) else 1
+        if definition.repetition is not None and isinstance(
+            definition.repetition.count, int
+        ):
+            base_target_count = definition.repetition.count
+        if caster_level is not None:
+            actor_thresholds = sorted(
+                (
+                    threshold
+                    for scaling in definition.scaling
+                    if scaling.basis == "actor_level"
+                    for threshold in scaling.thresholds
+                    if threshold.minimum_level <= caster_level
+                    and any(
+                        increment.kind in {"target_count", "projectile_count"}
+                        and isinstance(increment.amount, int)
+                        for increment in threshold.increments
+                    )
+                ),
+                key=lambda threshold: threshold.minimum_level,
+            )
+            if actor_thresholds:
+                base_target_count = next(
+                    increment.amount
+                    for increment in actor_thresholds[-1].increments
+                    if increment.kind in {"target_count", "projectile_count"}
+                    and isinstance(increment.amount, int)
+                )
+        resolved_level = cast_level if cast_level is not None else spell.level
+        levels_above = max(0, resolved_level - spell.level)
+        per_level_increment = sum(
+            increment.amount
+            for scaling in definition.scaling
+            if scaling.basis == "resource_level"
+            for increment in scaling.per_level
+            if increment.kind in {"target_count", "projectile_count"}
+            and isinstance(increment.amount, int)
+        )
+        return base_target_count + levels_above * per_level_increment
     capability = spell.capability
     if capability is None:
         return 1
     resolved_level = cast_level if cast_level is not None else spell.level
     levels_above = max(0, resolved_level - spell.level)
     base_target_count = capability.base_target_count
-    if capability.target_count_by_caster_level and caster_level is not None:
-        base_target_count = max(
-            count
-            for minimum_level, count in capability.target_count_by_caster_level
-            if minimum_level <= caster_level
-        )
     return base_target_count + (levels_above * capability.slot_target_increment)
 
 

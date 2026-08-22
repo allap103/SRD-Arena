@@ -81,9 +81,6 @@ class SpellCapability:
     base_target_count: int = 1
     slot_target_increment: int = 0
     choose_area_targets: bool = False
-    repeat_target_allocations: bool = False
-    require_full_target_count: bool = False
-    target_count_by_caster_level: tuple[tuple[int, int], ...] = ()
     follow_up_resolutions: tuple[FollowUpSpellResolution, ...] = ()
     healing: tuple[SpellHealing, ...] = ()
     temporary_hit_points: tuple[SpellTemporaryHitPoints, ...] = ()
