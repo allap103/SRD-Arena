@@ -1,0 +1,12 @@
+{
+  "name": "Arcane Hand",
+  "source": "XPHB",
+  "implementation": {
+    "status": "blocked",
+    "blocked_by": [
+      "created-entity capability support",
+      "persistent bonus-action command support",
+      "multi-mode capability selection support"
+    ]
+  }
+}
