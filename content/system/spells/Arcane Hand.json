@@ -1,9 +1,7 @@
 {
   "name": "Arcane Hand",
   "source": "XPHB",
-  "page": 246,
   "srd52": "Arcane Hand",
-  "basicRules2024": true,
   "level": 5,
   "school": "V",
   "time": [
@@ -81,27 +79,5 @@
         "The damage of the Clenched Fist increases by {@scaledamage 5d8|5-9|2d8} and the damage of the Grasping Hand increases by {@scaledamage 4d6|5-9|2d6} for each spell slot level above 5."
       ]
     }
-  ],
-  "damageInflict": [
-    "bludgeoning",
-    "force"
-  ],
-  "conditionInflict": [
-    "grappled"
-  ],
-  "spellAttack": [
-    "M"
-  ],
-  "savingThrow": [
-    "dexterity",
-    "strength"
-  ],
-  "miscTags": [
-    "DFT",
-    "FMV",
-    "OBJ",
-    "SGT",
-    "UBA"
-  ],
-  "hasFluffImages": true
+  ]
 }

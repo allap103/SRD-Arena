@@ -1,0 +1,30 @@
+{
+  "name": "Arcane Hand",
+  "source": "XPHB",
+  "source_metadata": {
+    "page": 246,
+    "basicRules2024": true,
+    "damageInflict": [
+      "bludgeoning",
+      "force"
+    ],
+    "conditionInflict": [
+      "grappled"
+    ],
+    "spellAttack": [
+      "M"
+    ],
+    "savingThrow": [
+      "dexterity",
+      "strength"
+    ],
+    "miscTags": [
+      "DFT",
+      "FMV",
+      "OBJ",
+      "SGT",
+      "UBA"
+    ],
+    "hasFluffImages": true
+  }
+}
