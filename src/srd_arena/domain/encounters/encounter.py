@@ -32,6 +32,7 @@ from .serialization import (
 )
 from .models import (
     ActionCost,
+    CombatEvent,
     CreatureRef,
     DecisionFrame,
     EncounterAction,
@@ -123,7 +124,14 @@ from .state_runtime import (
 # `srd_arena.domain.encounters.encounter.roll_die` / `roll_dice`.
 roll_die = _roll_die
 roll_dice = _roll_dice
-__all__ = ["ActionCost", "EncounterAction", "EncounterState", "roll_die", "roll_dice"]
+__all__ = [
+    "ActionCost",
+    "CombatEvent",
+    "EncounterAction",
+    "EncounterState",
+    "roll_die",
+    "roll_dice",
+]
 
 
 class EncounterState(EncounterStateData):
