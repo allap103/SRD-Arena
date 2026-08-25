@@ -12,6 +12,18 @@ from .condition_rules import (
     SuppressedCondition,
 )
 from .results import EffectResult
+from .rule_effects import (
+    ActionEconomyKind,
+    ActionEconomyRestriction,
+    ArmorClassAdjustment,
+    AttackLimit,
+    InvocationFailureChance,
+    ReactionProhibition,
+    RollAdjustment,
+    RuntimeRuleEffect,
+    SpeedAdjustment,
+    SpeedMultiplier,
+)
 from .runtime import (
     CreatureRelationship,
     EffectSource,
@@ -24,6 +36,10 @@ from .triggered import TriggeredEffect, matching_effects, reroll_eligible_indice
 
 __all__ = [
     "AppliedCondition",
+    "ActionEconomyKind",
+    "ActionEconomyRestriction",
+    "ArmorClassAdjustment",
+    "AttackLimit",
     "CombatTrait",
     "Condition",
     "CreatureRelationship",
@@ -35,8 +51,14 @@ __all__ = [
     "EffectSource",
     "EffectSourceKind",
     "OngoingEffect",
+    "InvocationFailureChance",
+    "ReactionProhibition",
     "RelationshipKind",
+    "RollAdjustment",
+    "RuntimeRuleEffect",
     "RuntimeStateIdentity",
+    "SpeedAdjustment",
+    "SpeedMultiplier",
     "TriggeredEffect",
     "apply_effects",
     "build_applied_condition",

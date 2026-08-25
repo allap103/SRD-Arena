@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TypeAlias
 
+from .rule_effects import RuntimeRuleEffect
+
 
 class EffectSourceKind(StrEnum):
     CREATURE = "creature"
@@ -94,6 +96,7 @@ class OngoingEffect:
     parameters: dict[str, object] = field(default_factory=dict)
     dispellable: bool = False
     tags: frozenset[EffectTag] = frozenset()
+    rule_effects: tuple[RuntimeRuleEffect, ...] = ()
 
 
 class RelationshipKind(StrEnum):

@@ -25,6 +25,7 @@ from ...effects.runtime import (
 from ...geometry import MovementBudget
 from .concentration import end_concentration
 from .removal import _remove_effect_tree
+from .rule_effects import parse_runtime_rule_effects
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -67,6 +68,7 @@ def start_ongoing_effect(
         if isinstance(target_refs_data, list)
         else (result.target_ref,)
     )
+    effect_parameters = dict(parameters) if isinstance(parameters, dict) else {}
     effect = OngoingEffect(
         identity=RuntimeStateIdentity(
             id=f"ongoing:{kind.value}:{origin_id}",
@@ -79,8 +81,9 @@ def start_ongoing_effect(
             else Indefinite()
         ),
         kind=kind,
-        parameters=dict(parameters) if isinstance(parameters, dict) else {},
+        parameters=effect_parameters,
         dispellable=True,
+        rule_effects=parse_runtime_rule_effects(effect_parameters),
     )
     state.ongoing_effects.append(effect)
     _install_creature_modifiers(state, effect)
@@ -221,4 +224,3 @@ def _required_string(result: EffectResult, key: str) -> str:
     if not isinstance(value, str):
         raise ValueError(f"Ongoing effect requires string {key}.")
     return value
-
