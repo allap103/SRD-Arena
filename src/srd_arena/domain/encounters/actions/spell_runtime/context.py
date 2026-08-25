@@ -13,6 +13,7 @@ from ....capabilities import (
 )
 from ....geometry import AreaOfEffect, build_radius_area
 from ....spells.resolution import SpellActionContext, SpellTargetContext
+from ....rolls.dice import combine_roll_modes
 from ....spells.rules import (
     parse_spell_action_ability,
     parse_spell_action_condition,
@@ -65,6 +66,36 @@ def build_spell_action_context(
         )
         for modifier in definition.resolution.save_modifiers
     )
+    attack_roll_rules = (
+        {
+            candidate.target_ref: state.combat_rules.roll_modifiers(
+                state,
+                creature_ref,
+                "attack_roll",
+            )
+            for candidate in targets
+        }
+        if attack_mode is not None
+        else {}
+    )
+    save_ability = (
+        definition.resolution.ability
+        if isinstance(definition.resolution, SavingThrowResolution)
+        else None
+    )
+    save_roll_rules = (
+        {
+            candidate.target_ref: state.combat_rules.roll_modifiers(
+                state,
+                candidate.target_ref,
+                "saving_throw",
+                ability=save_ability,
+            )
+            for candidate in targets
+        }
+        if save_ability is not None
+        else {}
+    )
     return SpellActionContext(
         creature=actor,
         spell=spell,
@@ -79,25 +110,45 @@ def build_spell_action_context(
         selected_ability=parse_spell_action_ability(spell_value),
         attack_roll_modes=(
             {
-                candidate.target_ref: state._attack_roll_mode_for(
-                    creature_ref,
-                    candidate.target_ref,
-                    attack_mode,
-                    state._creature_position(creature_ref),
-                    tuple(
-                        creature_state.position
-                        for opponent_ref, creature_state in state.creatures.items()
-                        if creature_state.is_alive
-                        and state._creatures_are_opponents(
-                            creature_ref, opponent_ref
-                        )
+                candidate.target_ref: combine_roll_modes(
+                    state._attack_roll_mode_for(
+                        creature_ref,
+                        candidate.target_ref,
+                        attack_mode,
+                        state._creature_position(creature_ref),
+                        tuple(
+                            creature_state.position
+                            for opponent_ref, creature_state in state.creatures.items()
+                            if creature_state.is_alive
+                            and state._creatures_are_opponents(
+                                creature_ref, opponent_ref
+                            )
+                        ),
                     ),
+                    attack_roll_rules[candidate.target_ref].mode,
                 )
                 for candidate in targets
             }
             if attack_mode is not None
             else {}
         ),
+        attack_roll_modifier_for=lambda _target_ref: state.combat_rules.roll_modifiers(
+            state,
+            creature_ref,
+            "attack_roll",
+        ).resolve_modifier(roll_die),
+        target_armor_classes={
+            candidate.target_ref: state.combat_rules.effective_armor_class(
+                state,
+                candidate.target_ref,
+            ).value
+            for candidate in targets
+        },
+        damage_roll_modifier_for=lambda: state.combat_rules.roll_modifiers(
+            state,
+            creature_ref,
+            "damage_roll",
+        ).resolve_modifier(roll_die),
         automatic_critical_providers={
             candidate.target_ref: state._automatic_critical_provider_ids_for(
                 creature_ref, candidate.target_ref
@@ -126,6 +177,22 @@ def build_spell_action_context(
             if conditions or save_advantage_against_opponents
             else {}
         ),
+        save_roll_modifier_for=lambda target_ref, ability: state.combat_rules.roll_modifiers(
+            state,
+            target_ref,
+            "saving_throw",
+            ability=ability,
+        ).resolve_modifier(roll_die),
+        save_sourced_roll_modes={
+            target_ref: rules.mode
+            for target_ref, rules in save_roll_rules.items()
+        },
+        save_sourced_roll_mode_for=lambda target_ref, ability: state.combat_rules.roll_modifiers(
+            state,
+            target_ref,
+            "saving_throw",
+            ability=ability,
+        ).mode,
         area_targets_around=lambda center_ref, radius_feet: tuple(
             state._targets_in_area(
                 actor,
@@ -143,4 +210,3 @@ def build_spell_action_context(
         ),
         healing_allocations=parse_spell_healing_allocations(spell_value),
     )
-

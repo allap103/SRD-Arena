@@ -27,8 +27,6 @@ if TYPE_CHECKING:
 
 
 ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
-    ActorOwnershipRule(),
-    ActorReadyRule(),
     ResourceRule(),
     MovementRule(),
     AttackRule(),
@@ -45,7 +43,12 @@ def action_eligibility(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> ActionEligibility:
-    failures = tuple(
+    compatibility = state.combat_rules.action_compatibility(
+        state,
+        actor_ref,
+        action,
+    )
+    failures = compatibility.failures + tuple(
         failure
         for rule in ACTION_ELIGIBILITY_RULES
         if (failure := rule.check(state, actor_ref, action)) is not None

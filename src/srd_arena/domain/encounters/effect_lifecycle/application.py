@@ -2,16 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from ...effects.conditions import Condition
-from ...effects.modifiers import (
-    DamageReduction,
-    ModifierMode,
-    ModifierSubject,
-    RollKind,
-    RollModifier,
-)
+from ...effects.modifiers import DamageReduction
 from ...effects.results import EffectResult
 from ...effects.runtime import (
     EffectSource,
@@ -22,8 +16,8 @@ from ...effects.runtime import (
     Rounds,
     RuntimeStateIdentity,
 )
-from ...geometry import MovementBudget
 from .concentration import end_concentration
+from .movement import reconcile_remaining_movement
 from .removal import _remove_effect_tree
 from .rule_effects import parse_runtime_rule_effects
 
@@ -86,6 +80,7 @@ def start_ongoing_effect(
         rule_effects=parse_runtime_rule_effects(effect_parameters),
     )
     state.ongoing_effects.append(effect)
+    reconcile_remaining_movement(state, target_refs)
     _install_creature_modifiers(state, effect)
     return effect
 
@@ -118,45 +113,6 @@ def _install_creature_modifiers(
                     state.creatures[target_ref].creature.add_damage_resistance(
                         damage_type, origin_id
                     )
-    roll_modifiers = effect.parameters.get("roll_modifiers", [])
-    if isinstance(roll_modifiers, list):
-        parsed = tuple(
-            RollModifier(
-                roll=cast(RollKind, value["roll"]),
-                mode=cast(ModifierMode, value["mode"]),
-                dice=cast(str | None, value.get("dice")),
-                value=cast(int | None, value.get("value")),
-                subject=cast(ModifierSubject, value.get("subject", "target")),
-                ignored_by_senses=tuple(
-                    sense
-                    for sense in value.get("ignored_by_senses", [])
-                    if isinstance(sense, str)
-                ),
-                ability=cast(str | None, value.get("ability")),
-            )
-            for value in roll_modifiers
-            if isinstance(value, dict)
-            and value.get("roll")
-            in {"ability_check", "attack_roll", "damage_roll", "saving_throw"}
-            and value.get("mode")
-            in {"advantage", "disadvantage", "add", "subtract"}
-        )
-        for target_ref in effect.target_refs:
-            state.creatures[target_ref].creature.set_roll_modifiers(
-                definition_id, origin_id, parsed
-            )
-    armor_class_modifier = effect.parameters.get("armor_class_modifier")
-    if isinstance(armor_class_modifier, int) and armor_class_modifier:
-        for target_ref in effect.target_refs:
-            state.creatures[target_ref].creature.set_armor_class_modifier(
-                definition_id, origin_id, armor_class_modifier
-            )
-    speed_modifier = effect.parameters.get("speed_modifier_feet")
-    if isinstance(speed_modifier, int) and speed_modifier:
-        for target_ref in effect.target_refs:
-            _set_speed_modifier(
-                state, target_ref, definition_id, origin_id, speed_modifier
-            )
     damage_reduction_type = effect.parameters.get("damage_reduction_type")
     damage_reduction_dice = effect.parameters.get("damage_reduction_dice")
     if isinstance(damage_reduction_type, str) and isinstance(
@@ -196,27 +152,6 @@ def _install_creature_modifiers(
             state.creatures[target_ref].creature.set_senses(
                 definition_id, origin_id, parsed_senses
             )
-
-
-def _set_speed_modifier(
-    state: EncounterState,
-    target_ref: str,
-    definition_id: str,
-    origin_id: str,
-    feet: int,
-) -> None:
-    creature_state = state.creatures[target_ref]
-    before = state.definition.grid.movement_budget(
-        creature_state.creature.effective_speed_feet()
-    )
-    creature_state.creature.set_speed_modifier(definition_id, origin_id, feet)
-    after = state.definition.grid.movement_budget(
-        creature_state.creature.effective_speed_feet()
-    )
-    if creature_state.movement_remaining is not None:
-        creature_state.movement_remaining = MovementBudget(
-            max(0, int(creature_state.movement_remaining) + int(after) - int(before))
-        )
 
 
 def _required_string(result: EffectResult, key: str) -> str:

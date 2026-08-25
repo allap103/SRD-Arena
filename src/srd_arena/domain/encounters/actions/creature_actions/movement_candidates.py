@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...behaviors import DIRECTION_DELTAS, movement_budget_for
+from ...behaviors import DIRECTION_DELTAS
 from ...models import ActionCost, CreatureRef, EncounterAction
 
 if TYPE_CHECKING:
@@ -16,10 +16,10 @@ def movement_action_candidates(
     actor = state.creatures[creature_ref]
     movement_cost = state._movement_cost_for(creature_ref)
     if actor.movement_remaining is None:
-        actor.movement_remaining = movement_budget_for(
-            actor.creature,
-            state.definition.grid,
-        )
+        actor.movement_remaining = state.combat_rules.movement_budget(
+            state,
+            creature_ref,
+        ).budget
     if movement_cost is None:
         return []
     return [

@@ -53,10 +53,18 @@ def resolve_concentration_damage(
         end_concentration(state, creature_ref)
         return
     dc = max(10, damage // 2)
+    roll_rules = state.combat_rules.roll_modifiers(
+        state,
+        creature_ref,
+        "saving_throw",
+        ability="constitution",
+    )
     save = resolve_saving_throw(
         cast(SavingThrowCreature, creature),
         "constitution",
         dc,
+        sourced_modifier_override=roll_rules.resolve_modifier(roll_die),
+        sourced_mode_override=roll_rules.mode,
         roller=roll_die,
     )
     if progress is not None:
@@ -75,4 +83,3 @@ def resolve_concentration_damage(
         )
     if not save.check.success:
         end_concentration(state, creature_ref)
-

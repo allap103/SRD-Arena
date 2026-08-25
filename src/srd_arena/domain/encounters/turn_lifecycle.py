@@ -3,8 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..effects.runtime import UntilTurnEnd, UntilTurnStart
-from ..geometry import MovementBudget
-from .behaviors import movement_budget_for
+from ..geometry import MovementBudget, MovementCost
 from .models import (
     CreatureRef,
     EncounterProgress,
@@ -26,10 +25,7 @@ class TurnLifecycle:
         state: EncounterState,
         creature_ref: CreatureRef,
     ) -> MovementBudget:
-        return movement_budget_for(
-            state.creatures[creature_ref].creature,
-            state.definition.grid,
-        )
+        return state.combat_rules.movement_budget(state, creature_ref).budget
 
     def active_turn_creature(self, state: EncounterState) -> CreatureRef:
         return state.initiative_order[state.turn_index]
@@ -99,11 +95,14 @@ class TurnLifecycle:
 
         recharge_stat_block_actions(creature_state.creature)
         creature_state.movement_remaining = None
+        creature_state.movement_spent_this_turn = MovementCost(0)
         creature_state.actions_remaining = 1
+        creature_state.action_used_this_turn = False
         creature_state.magic_actions_remaining = 1
         creature_state.attacks_remaining = 0
         creature_state.pending_multiattack.clear()
         creature_state.bonus_action_available = True
+        creature_state.bonus_action_used_this_turn = False
         if progress is not None:
             progress.messages.append(
                 ("turn", f"{creature_state.creature.name}'s turn")
@@ -174,10 +173,10 @@ class TurnLifecycle:
         if state._is_grappled(creature_ref):
             return MovementBudget(0)
         if state.active_movement_remaining is None:
-            actor = state.creatures[creature_ref].creature
-            state.active_movement_remaining = movement_budget_for(
-                actor, state.definition.grid
-            )
+            state.active_movement_remaining = state.combat_rules.movement_budget(
+                state,
+                creature_ref,
+            ).budget
         return state.active_movement_remaining
 
     def turn_count(self, state: EncounterState) -> int:

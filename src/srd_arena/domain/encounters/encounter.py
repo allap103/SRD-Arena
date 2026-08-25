@@ -219,6 +219,8 @@ class EncounterState(EncounterStateData):
                 self.active_creature_state.actions_remaining,
             )
         else:
+            if self.active_creature_state.actions_remaining > 0:
+                self.active_creature_state.action_used_this_turn = True
             self.active_creature_state.actions_remaining = 0
 
     @property
@@ -227,6 +229,8 @@ class EncounterState(EncounterStateData):
 
     @active_actions_remaining.setter
     def active_actions_remaining(self, value: int) -> None:
+        if value < self.active_creature_state.actions_remaining:
+            self.active_creature_state.action_used_this_turn = True
         self.active_creature_state.actions_remaining = max(0, value)
 
     @property
@@ -251,6 +255,8 @@ class EncounterState(EncounterStateData):
 
     @active_bonus_action_available.setter
     def active_bonus_action_available(self, value: bool) -> None:
+        if self.active_creature_state.bonus_action_available and not value:
+            self.active_creature_state.bonus_action_used_this_turn = True
         self.active_creature_state.bonus_action_available = value
 
     @property

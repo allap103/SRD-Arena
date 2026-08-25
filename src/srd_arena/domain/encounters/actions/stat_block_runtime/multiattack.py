@@ -58,6 +58,12 @@ def resolve_multiattack_action(
     if selected_plan >= len(plans):
         raise RuntimeError("This creature has no executable Multiattack plan.")
     slots = plans[selected_plan]
+    attacks_allowed = state.combat_rules.attack_limit(
+        state,
+        creature_ref,
+        len(slots),
+    ).value
+    slots = slots[:attacks_allowed]
     state._consume_action(allow_magic=False)
     creature_state.pending_multiattack = list(slots)
     creature_state.attacks_remaining = len(slots)

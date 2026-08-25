@@ -66,6 +66,8 @@ def resolve_saving_throw(
     *,
     mode: D20RollMode = "normal",
     other_modifier: int = 0,
+    sourced_modifier_override: int | None = None,
+    sourced_mode_override: D20RollMode | None = None,
     roller: DieRoller = roll_die,
     automatic_failure_reasons: tuple[str, ...] = (),
 ) -> SavingThrowResult:
@@ -83,9 +85,13 @@ def resolve_saving_throw(
     )
     resolve_modifiers = getattr(creature, "resolve_roll_modifiers", None)
     sourced_modifier = (
-        resolve_modifiers("saving_throw", roller, ability)
-        if callable(resolve_modifiers)
-        else 0
+        (
+            resolve_modifiers("saving_throw", roller, ability)
+            if callable(resolve_modifiers)
+            else 0
+        )
+        if sourced_modifier_override is None
+        else sourced_modifier_override
     )
     modifiers = SavingThrowModifiers(
         ability=ability_modifier,
@@ -94,7 +100,14 @@ def resolve_saving_throw(
     )
     roll = resolve_d20(
         modifier=modifiers.total,
-        mode=combine_roll_modes(mode, _sourced_roll_mode(creature, ability)),
+        mode=combine_roll_modes(
+            mode,
+            (
+                _sourced_roll_mode(creature, ability)
+                if sourced_mode_override is None
+                else sourced_mode_override
+            ),
+        ),
         roller=roller,
     )
     check = resolve_check(roll, target)

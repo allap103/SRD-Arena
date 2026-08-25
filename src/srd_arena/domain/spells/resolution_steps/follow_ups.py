@@ -73,7 +73,15 @@ def resolve_follow_up(
     shared_rolls = [
         (
             damage,
-            resolve_dice(*parse_damage_dice(damage.dice), roller=context.roller),
+            resolve_dice(
+                *parse_damage_dice(damage.dice),
+                modifier=(
+                    context.damage_roll_modifier_for()
+                    if context.damage_roll_modifier_for is not None
+                    else context.damage_roll_modifier
+                ),
+                roller=context.roller,
+            ),
         )
         for damage in damage_definitions
     ]
@@ -86,6 +94,16 @@ def resolve_follow_up(
             cast(Ability, ability),
             context.creature.spellcasting.save_dc,
             mode=context.save_roll_modes.get(target.target_ref, "normal"),
+            sourced_modifier_override=(
+                context.save_roll_modifier_for(target.target_ref, ability)
+                if context.save_roll_modifier_for is not None
+                else context.save_roll_modifiers.get(target.target_ref)
+            ),
+            sourced_mode_override=(
+                context.save_sourced_roll_mode_for(target.target_ref, ability)
+                if context.save_sourced_roll_mode_for is not None
+                else context.save_sourced_roll_modes.get(target.target_ref)
+            ),
             roller=context.roller,
             automatic_failure_reasons=target.automatic_failure_reasons(ability),
         )

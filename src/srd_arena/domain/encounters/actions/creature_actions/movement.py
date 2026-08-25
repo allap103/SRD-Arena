@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....geometry import MovementBudget, Position
+from ....geometry import MovementBudget, MovementCost, Position
 from ...behaviors import DIRECTION_DELTAS
 from ...models import (
     ActionExecutionContext,
@@ -54,6 +54,7 @@ def execute_movement(
         from_position=Position(mover.position.x, mover.position.y),
         to_position=destination,
         remaining_movement_after=remaining,
+        movement_cost=movement_cost,
         companion_destinations=grappled_positions,
         progress=progress,
         external_only=True,
@@ -84,6 +85,9 @@ def execute_movement(
     for target_ref, target_position in grappled_positions.items():
         state.creatures[target_ref].position = target_position
     mover.movement_remaining = remaining
+    mover.movement_spent_this_turn = MovementCost(
+        int(mover.movement_spent_this_turn) + int(movement_cost)
+    )
     progress.messages.append(
         (
             "system",
@@ -103,4 +107,3 @@ def execute_movement(
         )
     )
     return None
-

@@ -71,6 +71,10 @@ def resolve_attack(
     preferred_attack_type: str | None = None,
     preferred_attack_name: str | None = None,
     attack_roll_mode_override: D20RollMode | None = None,
+    sourced_attack_modifier: int | None = None,
+    sourced_attack_roll_mode: D20RollMode | None = None,
+    target_armor_class: int | None = None,
+    sourced_damage_modifier_for: Callable[[], int] | None = None,
     d20_roller: Callable[[int], int] = roll_die,
     dice_roller: Callable[[int, int], int] = roll_dice,
     automatic_critical_provider_ids: tuple[str, ...] = (),
@@ -92,6 +96,9 @@ def resolve_attack(
         attacker_position=attacker_position,
         nearby_opponent_positions=nearby_opponent_positions,
         attack_roll_mode_override=attack_roll_mode_override,
+        sourced_modifier_override=sourced_attack_modifier,
+        sourced_roll_mode_override=sourced_attack_roll_mode,
+        target_armor_class=target_armor_class,
         roller=d20_roller,
         automatic_critical_provider_ids=automatic_critical_provider_ids,
     )
@@ -118,11 +125,18 @@ def resolve_attack(
             critical_hit=attack_roll.critical_hit,
         )
 
+    damage_modifier_for = sourced_damage_modifier_for or (
+        lambda: attacker.resolve_roll_modifiers(
+            "damage_roll",
+            lambda sides: dice_roller(1, sides),
+        )
+    )
     damage = roll_attack_damage(
         attack_source,
         critical_hit=attack_roll.critical_hit,
         attack_roll_mode=attack_roll.result.mode,
         roller=dice_roller,
+        sourced_modifier_for=damage_modifier_for,
     )
     messages = [("system", attack_detail_message)]
     if attack_roll.critical_hit:
@@ -138,7 +152,8 @@ def resolve_attack(
         attack_check=attack_roll.check,
         damage_roll=damage.roll,
         damage_dice=damage.dice,
-        damage_modifier=attack_source.damage_bonus,
+        damage_modifier=damage.roll.modifier,
+        sourced_damage_modifier=damage.sourced_modifier,
         damage_modifier_label=attack_source.damage_bonus_label,
         attack_type=attack_roll.attack_type,
         damage_type=attack_source.damage_type,

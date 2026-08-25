@@ -65,15 +65,6 @@ class ResourceRule:
                 "insufficient_movement",
                 "Not enough movement remains.",
             )
-        if action.cost.action > actor.actions_remaining:
-            return EligibilityFailure("action_spent", "No Action remains.")
-        if action.cost.bonus_action and not actor.bonus_action_available:
-            return EligibilityFailure(
-                "bonus_action_spent",
-                "No Bonus Action remains.",
-            )
-        if action.cost.reaction and not actor.reaction_available:
-            return EligibilityFailure("reaction_spent", "No Reaction remains.")
         return None
 
 

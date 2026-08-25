@@ -19,6 +19,7 @@ from ...spells.rules import (
 from ..models import EncounterProgress
 from .spell_runtime.aftermath import apply_spell_result
 from .spell_runtime.context import build_spell_action_context
+from .spell_runtime.invocation import begin_spell_invocation
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -132,6 +133,30 @@ def resolve_spell_action(
         )
         return
 
+    if spell.definition is None:
+        _record_failed_spell_action(
+            state,
+            progress,
+            creature_ref=creature_ref,
+            action_id=action_id,
+            message=f"{spell.name} is not implemented yet.",
+            spell_id=spell.id,
+        )
+        return
+
+    if not begin_spell_invocation(
+        state,
+        actor=actor,
+        spellcasting=spellcasting,
+        spell=spell,
+        cost=cost,
+        cast_level=cast_level,
+        creature_ref=creature_ref,
+        action_id=action_id,
+        progress=progress,
+    ):
+        return
+
     result = _resolve_spell_action_impl(
         build_spell_action_context(
             state,
@@ -158,10 +183,8 @@ def resolve_spell_action(
 
     apply_spell_result(
         state,
-        actor=actor,
         spellcasting=spellcasting,
         spell=spell,
-        cost=cost,
         cast_level=cast_level,
         creature_ref=creature_ref,
         action_id=action_id,

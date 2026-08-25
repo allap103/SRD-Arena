@@ -66,9 +66,11 @@ def reaction_eligibility(
         )
         if isinstance(rule_effect, ReactionProhibition)
         and (
-            reaction_kind is None
-            or not rule_effect.reaction_kinds
-            or reaction_kind in rule_effect.reaction_kinds
+            not rule_effect.reaction_kinds
+            or (
+                reaction_kind is not None
+                and reaction_kind in rule_effect.reaction_kinds
+            )
         )
     )
     return ActionEligibility(tuple(failures))
@@ -138,12 +140,12 @@ def action_compatibility(
             uses_action
             and ActionEconomyKind.ACTION in restricted
             and ActionEconomyKind.BONUS_ACTION in restricted
-            and not creature_state.bonus_action_available
+            and creature_state.bonus_action_used_this_turn
         ) or (
             uses_bonus_action
             and ActionEconomyKind.BONUS_ACTION in restricted
             and ActionEconomyKind.ACTION in restricted
-            and creature_state.actions_remaining <= 0
+            and creature_state.action_used_this_turn
         ) or (uses_action and uses_bonus_action)
         if conflicts:
             failures.append(

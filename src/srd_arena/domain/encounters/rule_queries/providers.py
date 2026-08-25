@@ -17,11 +17,23 @@ def ongoing_rule_effects(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> Iterator[tuple[str, EffectSource, RuntimeRuleEffect]]:
-    """Yield each typed rule effect currently applying to a creature."""
+    """Yield active typed rule effects, once per authored definition.
 
+    Multiple instances retain independent duration and provenance, but effects
+    from the same named rule do not stack.  When the active instance ends, the
+    next instance becomes the provider automatically.
+    """
+
+    active_definitions: set[str] = set()
     for ongoing in state.ongoing_effects:
-        if creature_ref not in ongoing.target_refs:
+        definition_id = ongoing.identity.source.definition_id
+        if (
+            creature_ref not in ongoing.target_refs
+            or not ongoing.rule_effects
+            or definition_id in active_definitions
+        ):
             continue
+        active_definitions.add(definition_id)
         for rule_effect in ongoing.rule_effects:
             yield ongoing.identity.id, ongoing.identity.source, rule_effect
 

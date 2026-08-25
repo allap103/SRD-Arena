@@ -10,7 +10,7 @@ from ...creatures.multiattack import MultiattackStep
 from ...effects.conditions import AppliedCondition
 from ...effects.runtime import CreatureRelationship, OngoingEffect
 from ...equipment import Item
-from ...geometry import GeometryConfig, MovementBudget, Position
+from ...geometry import GeometryConfig, MovementBudget, MovementCost, Position
 from ..definitions import EncounterBehavior, EncounterDefinition
 from .actions import CreatureRef
 from .decisions import InterruptState
@@ -51,11 +51,14 @@ class EncounterCreatureState:
     patrol_index: int = 0
     reaction_available: bool = True
     movement_remaining: MovementBudget | None = None
+    movement_spent_this_turn: MovementCost = MovementCost(0)
     actions_remaining: int = 1
+    action_used_this_turn: bool = False
     magic_actions_remaining: int = 1
     attacks_remaining: int = 0
     pending_multiattack: list[MultiattackStep] = field(default_factory=list)
     bonus_action_available: bool = True
+    bonus_action_used_this_turn: bool = False
 
     @property
     def is_alive(self) -> bool:

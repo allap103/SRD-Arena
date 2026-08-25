@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Collection
 from typing import TYPE_CHECKING
 
-from ...geometry import MovementBudget, Position
+from ...geometry import MovementBudget, MovementCost, Position
 from ..actions.attack_resolution import can_make_opportunity_attack
 from ..behaviors import is_adjacent as _is_adjacent
 from ..models import (
@@ -31,6 +31,7 @@ def queue_opportunity_attack(
     from_position: Position,
     to_position: Position,
     remaining_movement_after: MovementBudget,
+    movement_cost: MovementCost,
     companion_destinations: dict[str, Position],
     progress: EncounterProgress,
     external_only: bool,
@@ -52,6 +53,7 @@ def queue_opportunity_attack(
         and state.combat_rules.reaction_eligibility(
             state,
             creature_ref,
+            "opportunity_attack",
         ).allowed
         and can_make_opportunity_attack(
             creature_state.creature,
@@ -74,6 +76,7 @@ def queue_opportunity_attack(
         from_position=Position(from_position.x, from_position.y),
         to_position=Position(to_position.x, to_position.y),
         remaining_movement_after=remaining_movement_after,
+        movement_cost=movement_cost,
         trigger_id=trigger_id,
         companion_destinations={
             target_ref: Position(position.x, position.y)
@@ -134,6 +137,7 @@ def reaction_actions(state: EncounterState) -> list[EncounterAction]:
         state.combat_rules.reaction_eligibility(
             state,
             reactor_ref,
+            "opportunity_attack",
         ).allowed
         and target.is_alive
     ):
@@ -161,4 +165,3 @@ def reaction_actions(state: EncounterState) -> list[EncounterAction]:
         )
     )
     return actions
-

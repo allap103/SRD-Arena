@@ -12,7 +12,7 @@ from ..effects.runtime import (
     UntilTurnStart,
     WhileParentExists,
 )
-from .behaviors import movement_budget_for
+from .models import ActionCost, EncounterAction
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -113,13 +113,44 @@ def _export_creature(
 ) -> dict[str, object]:
     creature_state = state.creatures[creature_ref]
     creature = creature_state.creature
+    movement = state.combat_rules.movement_budget(state, creature_ref)
+    armor_class = state.combat_rules.effective_armor_class(state, creature_ref)
     movement_remaining = (
         creature_state.movement_remaining
         if creature_state.movement_remaining is not None
-        else movement_budget_for(creature, state.definition.grid)
+        else movement.budget
     )
     spellcasting = creature.spellcasting
     effective = state.effective_conditions_for(creature_ref)
+    action_available = state.combat_rules.action_compatibility(
+        state,
+        creature_ref,
+        EncounterAction(
+            "Action",
+            "action",
+            creature_ref=creature_ref,
+            cost=ActionCost(action=1),
+        ),
+    ).allowed
+    bonus_action_available = state.combat_rules.action_compatibility(
+        state,
+        creature_ref,
+        EncounterAction(
+            "Bonus Action",
+            "bonus_action",
+            creature_ref=creature_ref,
+            cost=ActionCost(bonus_action=1),
+        ),
+    ).allowed
+    reaction_available = state.combat_rules.reaction_eligibility(
+        state,
+        creature_ref,
+    ).allowed
+    attacks_per_attack_action = state.combat_rules.attack_limit(
+        state,
+        creature_ref,
+        creature.combat_profile.attacks_per_attack_action,
+    ).value
     return {
         "creature_ref": creature_ref,
         "creature_id": creature_state.creature_id,
@@ -133,6 +164,7 @@ def _export_creature(
         "health": creature.get_health(),
         "max_health": creature.get_max_health(),
         "temporary_hit_points": creature.temporary_hit_points,
+        "armor_class": armor_class.value,
         "statistics": {
             "creature_type": creature.statistics.creature_type,
             "type_tags": list(creature.statistics.type_tags),
@@ -150,19 +182,20 @@ def _export_creature(
             "languages": list(creature.statistics.languages),
         },
         "movement_remaining": movement_remaining,
-        "movement_total": movement_budget_for(creature, state.definition.grid),
+        "movement_total": movement.budget,
+        "movement_spent_this_turn": creature_state.movement_spent_this_turn,
         "movement_remaining_feet": (
             state.definition.grid.feet_for_squares(movement_remaining)
         ),
-        "movement_total_feet": creature.effective_speed_feet(),
-        "action_available": creature_state.actions_remaining > 0,
+        "movement_total_feet": movement.speed.value,
+        "action_available": action_available,
         "actions_remaining": creature_state.actions_remaining,
+        "action_used_this_turn": creature_state.action_used_this_turn,
         "attacks_remaining": creature_state.attacks_remaining,
-        "attacks_per_attack_action": (
-            creature.combat_profile.attacks_per_attack_action
-        ),
-        "bonus_action_available": creature_state.bonus_action_available,
-        "reaction_available": creature_state.reaction_available,
+        "attacks_per_attack_action": attacks_per_attack_action,
+        "bonus_action_available": bonus_action_available,
+        "bonus_action_used_this_turn": creature_state.bonus_action_used_this_turn,
+        "reaction_available": reaction_available,
         "conditions": [
             condition.condition.value
             for condition in state.conditions_for(creature_ref)
@@ -229,6 +262,7 @@ def export_pending_movement(self: EncounterState) -> dict[str, object] | None:
             "y": movement.to_position.y,
         },
         "remaining_movement_after": movement.remaining_movement_after,
+        "movement_cost": movement.movement_cost,
         "trigger_id": movement.trigger_id,
         "companion_destinations": {
             creature_ref: {"x": position.x, "y": position.y}

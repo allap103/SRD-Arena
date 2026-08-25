@@ -18,6 +18,7 @@ class AttackDamageResolution:
     roll: DicePoolResult
     dice: str
     damage: int
+    sourced_modifier: int
     additional_damage: int
     additional_damage_details: tuple[dict[str, object], ...]
     detail: dict[str, object]
@@ -29,6 +30,7 @@ def roll_attack_damage(
     critical_hit: bool,
     attack_roll_mode: D20RollMode,
     roller: Callable[[int, int], int],
+    sourced_modifier_for: Callable[[], int],
 ) -> AttackDamageResolution:
     """Roll primary and conditional additional damage in authored order."""
     damage_dice = attack_source.damage_dice
@@ -36,10 +38,11 @@ def roll_attack_damage(
     if critical_hit:
         damage_die_count *= 2
         damage_dice = f"{damage_die_count}d{damage_die_sides}"
+    sourced_modifier = sourced_modifier_for()
     damage_roll = resolve_dice(
         damage_die_count,
         damage_die_sides,
-        modifier=attack_source.damage_bonus,
+        modifier=attack_source.damage_bonus + sourced_modifier,
         roller=lambda sides: roller(1, sides),
     )
     damage_die_total = damage_roll.subtotal
@@ -56,10 +59,11 @@ def roll_attack_damage(
         if critical_hit:
             extra_count *= 2
             extra_dice = f"{extra_count}d{extra_sides}"
+        extra_sourced_modifier = sourced_modifier_for()
         extra_roll = resolve_dice(
             extra_count,
             extra_sides,
-            modifier=extra_bonus,
+            modifier=extra_bonus + extra_sourced_modifier,
             roller=lambda sides: roller(1, sides),
         )
         additional_damage += max(0, extra_roll.total)
@@ -69,7 +73,8 @@ def roll_attack_damage(
                 "dice_values": [die.result for die in extra_roll.dice],
                 "die_rolls": [list(die.rolls) for die in extra_roll.dice],
                 "dice_total": extra_roll.subtotal,
-                "modifier": extra_bonus,
+                "modifier": extra_bonus + extra_sourced_modifier,
+                "sourced_modifier": extra_sourced_modifier,
                 "total": extra_roll.total,
                 "damage_type": extra_type,
                 "critical_hit": critical_hit,
@@ -80,7 +85,8 @@ def roll_attack_damage(
         "dice_values": [die.result for die in damage_roll.dice],
         "die_rolls": [list(die.rolls) for die in damage_roll.dice],
         "dice_total": damage_die_total,
-        "modifier": attack_source.damage_bonus,
+        "modifier": attack_source.damage_bonus + sourced_modifier,
+        "sourced_modifier": sourced_modifier,
         "total": damage_total,
         "critical_hit": critical_hit,
         "damage_type": attack_source.damage_type,
@@ -94,6 +100,7 @@ def roll_attack_damage(
         roll=damage_roll,
         dice=damage_dice,
         damage=max(1, damage_total) + additional_damage,
+        sourced_modifier=sourced_modifier,
         additional_damage=additional_damage,
         additional_damage_details=tuple(additional_damage_details),
         detail=detail,
@@ -156,6 +163,7 @@ def damage_roll_detail(
         "die_rolls": [list(die.rolls) for die in attack.damage_roll.dice],
         "dice_total": attack.damage_roll.subtotal,
         "modifier": attack.damage_modifier,
+        "sourced_modifier": attack.sourced_damage_modifier,
         "total": attack.damage_roll.total,
         "critical_hit": attack.critical_hit,
         "damage_type": attack.damage_type,

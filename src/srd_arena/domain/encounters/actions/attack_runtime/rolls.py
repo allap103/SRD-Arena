@@ -42,12 +42,19 @@ def resolve_attack_roll(
     attacker_position: Position | None,
     nearby_opponent_positions: tuple[Position, ...],
     attack_roll_mode_override: D20RollMode | None,
+    sourced_modifier_override: int | None,
+    sourced_roll_mode_override: D20RollMode | None,
+    target_armor_class: int | None,
     roller: Callable[[int], int],
     automatic_critical_provider_ids: tuple[str, ...],
 ) -> AttackRollResolution:
     """Resolve hit, critical, and presentation data for an attack roll."""
     attack_type = attack_source.attack_modes[0]
-    sourced_modifier = attacker.resolve_roll_modifiers("attack_roll", roller)
+    sourced_modifier = (
+        attacker.resolve_roll_modifiers("attack_roll", roller)
+        if sourced_modifier_override is None
+        else sourced_modifier_override
+    )
     attack_modifier = attack_source.attack_bonus + sourced_modifier
     roll_mode = combine_roll_modes(
         attack_roll_mode_override
@@ -56,14 +63,22 @@ def resolve_attack_roll(
             attacker_position,
             nearby_opponent_positions,
         ),
-        attacker.roll_mode("attack_roll"),
+        (
+            attacker.roll_mode("attack_roll")
+            if sourced_roll_mode_override is None
+            else sourced_roll_mode_override
+        ),
     )
     attack_result = resolve_d20(
         modifier=attack_modifier,
         mode=roll_mode,
         roller=roller,
     )
-    target_ac = defender.get_armor_class()
+    target_ac = (
+        defender.get_armor_class()
+        if target_armor_class is None
+        else target_armor_class
+    )
     attack_check = resolve_check(attack_result, target_ac)
     critical_miss = attack_result.selected == 1
     natural_critical_hit = attack_result.selected == 20

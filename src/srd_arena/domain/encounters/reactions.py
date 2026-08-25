@@ -11,7 +11,7 @@ from collections.abc import Collection
 from typing import TYPE_CHECKING
 
 from ..effects.triggered import TriggeredEffect
-from ..geometry import MovementBudget, Position
+from ..geometry import MovementBudget, MovementCost, Position
 from .models import (
     AttackOutcome,
     DamageRerollRequest,
@@ -174,6 +174,7 @@ class ReactionEngine:
         from_position: Position,
         to_position: Position,
         remaining_movement_after: MovementBudget,
+        movement_cost: MovementCost,
         companion_destinations: dict[str, Position],
         progress: EncounterProgress,
         external_only: bool,
@@ -187,6 +188,7 @@ class ReactionEngine:
             from_position=from_position,
             to_position=to_position,
             remaining_movement_after=remaining_movement_after,
+            movement_cost=movement_cost,
             companion_destinations=companion_destinations,
             progress=progress,
             external_only=external_only,

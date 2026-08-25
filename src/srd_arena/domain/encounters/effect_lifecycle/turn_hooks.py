@@ -81,11 +81,19 @@ def resolve_end_turn_effects(
             )
             else "normal"
         )
+        roll_rules = state.combat_rules.roll_modifiers(
+            state,
+            creature_ref,
+            "saving_throw",
+            ability=ability,
+        )
         save = resolve_saving_throw(
             cast(SavingThrowCreature, target),
             cast(Ability, ability),
             dc,
             mode=save_mode,
+            sourced_modifier_override=roll_rules.resolve_modifier(roll_die),
+            sourced_mode_override=roll_rules.mode,
             roller=roll_die,
             automatic_failure_reasons=(
                 state._automatic_save_failure_provider_ids_for(
@@ -128,9 +136,20 @@ def resolve_end_turn_effects(
                         or not sides_text.isdigit()
                     ):
                         continue
+                    source_ref = effect.identity.source.applied_by_ref
+                    damage_modifier = (
+                        state.combat_rules.roll_modifiers(
+                            state,
+                            source_ref,
+                            "damage_roll",
+                        ).resolve_modifier(roll_die)
+                        if source_ref in state.creatures
+                        else 0
+                    )
                     roll = resolve_dice(
                         int(count_text),
                         int(sides_text),
+                        modifier=damage_modifier,
                         roller=roll_die,
                     )
                     applied = target.take_damage(roll.total, damage_type)
@@ -292,4 +311,3 @@ def _progressed_target_refs(effect: OngoingEffect) -> tuple[str, ...]:
     if not isinstance(value, list):
         return ()
     return tuple(ref for ref in value if isinstance(ref, str))
-

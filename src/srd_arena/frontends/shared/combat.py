@@ -1,4 +1,3 @@
-from ...domain.encounters.behaviors import movement_budget_for
 from ...domain.encounters.encounter import EncounterState
 
 
@@ -35,18 +34,26 @@ def render_encounter_text(encounter: EncounterState) -> str:
         and creature_state.is_alive
     ] or ["- No other creatures remaining."]
     movement = encounter._active_movement_remaining()
+    movement_total = encounter.combat_rules.movement_budget(
+        encounter,
+        actor_ref,
+    ).budget
+    reaction_available = encounter.combat_rules.reaction_eligibility(
+        encounter,
+        actor_ref,
+    ).allowed
     return "\n".join(
         [
             *rows,
             "",
             f"Round {encounter.round_number} - Turn: {encounter.current_turn_label()}",
             f"Movement remaining: "
-            f"{movement}/{movement_budget_for(actor, encounter.definition.grid)} squares",
+            f"{movement}/{movement_total} squares",
             f"Actor HP: {actor.get_health()}/{actor.get_max_health()} "
             f"at ({actor_position.x}, {actor_position.y})",
             f"Actions remaining: {encounter.active_actions_remaining}",
             f"Attacks remaining in action: {encounter.active_attacks_remaining}",
-            f"Reaction available: {'yes' if encounter.active_reaction_available else 'no'}",
+            f"Reaction available: {'yes' if reaction_available else 'no'}",
             "Other creatures:",
             *creatures,
         ]

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from ...effects.results import EffectResult
 from ...effects.runtime import OngoingEffect
-from ...geometry import MovementBudget
+from .movement import reconcile_remaining_movement
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -56,7 +56,10 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
         state.creatures[target_ref].creature.remove_armor_class_modifier(
             effect.identity.source.definition_id, origin_id
         )
-        _remove_speed_modifier(state, effect, target_ref)
+        state.creatures[target_ref].creature.remove_speed_modifier(
+            effect.identity.source.definition_id,
+            origin_id,
+        )
         state.creatures[target_ref].creature.remove_damage_reduction(
             effect.identity.source.definition_id, origin_id
         )
@@ -76,6 +79,7 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
         for condition in state.conditions
         if condition.identity.source.origin_id != origin_id
     ]
+    reconcile_remaining_movement(state, effect.target_refs)
 
 
 def _remove_effect_target(
@@ -95,7 +99,10 @@ def _remove_effect_target(
         effect.identity.source.definition_id,
         effect.identity.source.origin_id,
     )
-    _remove_speed_modifier(state, effect, target_ref)
+    state.creatures[target_ref].creature.remove_speed_modifier(
+        effect.identity.source.definition_id,
+        effect.identity.source.origin_id,
+    )
     state.creatures[target_ref].creature.remove_damage_reduction(
         effect.identity.source.definition_id,
         effect.identity.source.origin_id,
@@ -125,6 +132,7 @@ def _remove_effect_target(
             for existing in state.ongoing_effects
             if existing.identity.id != effect.identity.id
         ]
+        reconcile_remaining_movement(state, (target_ref,))
         return
     state.ongoing_effects = [
         replace(existing, target_refs=remaining_targets)
@@ -132,6 +140,7 @@ def _remove_effect_target(
         else existing
         for existing in state.ongoing_effects
     ]
+    reconcile_remaining_movement(state, (target_ref,))
 
 
 def _remove_maximum_hit_point_modifier(
@@ -164,26 +173,4 @@ def _remove_damage_resistances(
             state.creatures[target_ref].creature.remove_damage_resistance(
                 damage_type, effect.identity.source.origin_id
             )
-
-
-def _remove_speed_modifier(
-    state: EncounterState,
-    effect: OngoingEffect,
-    target_ref: str,
-) -> None:
-    creature_state = state.creatures[target_ref]
-    before = state.definition.grid.movement_budget(
-        creature_state.creature.effective_speed_feet()
-    )
-    creature_state.creature.remove_speed_modifier(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-    )
-    after = state.definition.grid.movement_budget(
-        creature_state.creature.effective_speed_feet()
-    )
-    if creature_state.movement_remaining is not None:
-        creature_state.movement_remaining = MovementBudget(
-            max(0, int(creature_state.movement_remaining) + int(after) - int(before))
-        )
 

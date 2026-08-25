@@ -33,6 +33,11 @@ def resolve_automatic_stat_block_action(
     consume_stat_block_action_resource(creature, definition.name)
     damage = 0
     damage_details: list[dict[str, object]] = []
+    damage_roll_rules = state.combat_rules.roll_modifiers(
+        state,
+        creature_ref,
+        "damage_roll",
+    )
     for effect in definition.effects:
         if not isinstance(effect, DamageEffect):
             raise NotImplementedError(
@@ -40,7 +45,13 @@ def resolve_automatic_stat_block_action(
             )
         count_text, sides_text = effect.dice.lower().split("d", 1)
         rolled = roll_dice(int(count_text), int(sides_text))
-        amount = max(effect.minimum or 0, rolled + effect.bonus)
+        sourced_modifier = damage_roll_rules.resolve_modifier(
+            lambda sides: roll_dice(1, sides)
+        )
+        amount = max(
+            effect.minimum or 0,
+            rolled + effect.bonus + sourced_modifier,
+        )
         applied = target.take_damage(amount, effect.damage_type)
         damage += applied
         damage_details.append(
@@ -48,6 +59,7 @@ def resolve_automatic_stat_block_action(
                 "damage_type": effect.damage_type,
                 "rolled": rolled,
                 "bonus": effect.bonus,
+                "sourced_modifier": sourced_modifier,
                 "applied": applied,
             }
         )

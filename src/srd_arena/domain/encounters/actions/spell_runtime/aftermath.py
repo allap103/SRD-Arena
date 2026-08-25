@@ -6,16 +6,15 @@ from typing import TYPE_CHECKING
 
 from ....creatures.feature_rules.types import CapabilityActionResult
 from ....effects import serialize_effects
-from ....effects.runtime import OngoingEffectKind
 from ....spells.resolution import SpellTargetContext
-from ...models import ActionCost, EncounterProgress
+from ...models import EncounterProgress
 from ...ongoing_effects import (
     resolve_concentration_damage,
     resolve_spell_lifecycle_event,
 )
 
 if TYPE_CHECKING:
-    from ....creatures import Creature, Spellcasting
+    from ....creatures import Spellcasting
     from ....spells.definitions import Spell
     from ...encounter import EncounterState
 
@@ -23,10 +22,8 @@ if TYPE_CHECKING:
 def apply_spell_result(
     state: EncounterState,
     *,
-    actor: Creature,
     spellcasting: Spellcasting,
     spell: Spell,
-    cost: ActionCost,
     cast_level: int | None,
     creature_ref: str,
     action_id: str,
@@ -35,25 +32,11 @@ def apply_spell_result(
     target_ref: str | None,
     target: SpellTargetContext,
 ) -> None:
-    """Spend resources, publish lifecycle effects, and record the cast event."""
+    """Publish resolved effects and record the completed cast."""
 
-    state._spend_spell_resources(spellcasting, spell, cost, cast_level)
     progress.messages.extend(result.messages)
     _apply_damage_lifecycle(
         state,
-        result,
-        creature_ref=creature_ref,
-        progress=progress,
-    )
-    resolve_spell_lifecycle_event(
-        state,
-        "target_casts_spell",
-        actor_ref=creature_ref,
-        progress=progress,
-    )
-    _log_replaced_concentration(
-        state,
-        actor,
         result,
         creature_ref=creature_ref,
         progress=progress,
@@ -146,37 +129,3 @@ def _apply_damage_lifecycle(
             applied_damage,
             progress,
         )
-
-
-def _log_replaced_concentration(
-    state: EncounterState,
-    actor: Creature,
-    result: CapabilityActionResult,
-    *,
-    creature_ref: str,
-    progress: EncounterProgress,
-) -> None:
-    starts_concentration = any(
-        effect.kind == "start_ongoing_effect"
-        and effect.data.get("effect_kind") == "concentration"
-        for effect in result.effects
-    )
-    if not starts_concentration:
-        return
-    for existing in state.ongoing_effects:
-        if (
-            existing.kind is OngoingEffectKind.CONCENTRATION
-            and existing.identity.source.applied_by_ref == creature_ref
-        ):
-            effect_label = existing.parameters.get("effect_label")
-            if not isinstance(effect_label, str):
-                effect_label = existing.identity.source.definition_id.replace(
-                    "_", " "
-                ).title()
-            progress.messages.append(
-                (
-                    "system",
-                    f"{actor.name} drops concentration on {effect_label}.",
-                )
-            )
-

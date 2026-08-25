@@ -79,6 +79,7 @@ class AttackOutcome:
     damage_roll: DicePoolResult | None = None
     damage_dice: str | None = None
     damage_modifier: int = 0
+    sourced_damage_modifier: int = 0
     damage_modifier_label: str = "STR mod"
     attack_type: str = "melee"
     damage_type: str = "damage"

@@ -37,11 +37,20 @@ class SpellActionContext:
     selected_damage_type: str | None = None
     selected_ability: str | None = None
     attack_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
+    attack_roll_modifiers: dict[str, int] = field(default_factory=dict)
+    attack_roll_modifier_for: Callable[[str], int] | None = None
+    target_armor_classes: dict[str, int] = field(default_factory=dict)
+    damage_roll_modifier: int = 0
+    damage_roll_modifier_for: Callable[[], int] | None = None
     automatic_critical_providers: dict[str, tuple[str, ...]] = field(
         default_factory=dict
     )
     cast_level: int | None = None
     save_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
+    save_roll_modifiers: dict[str, int] = field(default_factory=dict)
+    save_roll_modifier_for: Callable[[str, str], int] | None = None
+    save_sourced_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
+    save_sourced_roll_mode_for: Callable[[str, str], D20RollMode] | None = None
     area_targets_around: Callable[[str, int], tuple[SpellTargetContext, ...]] | None = (
         None
     )

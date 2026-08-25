@@ -71,29 +71,44 @@ def resolve_grapple_action(
 
     if creature_state.attacks_remaining == 0:
         self._consume_action(allow_magic=False)
+        attacks_allowed = self.combat_rules.attack_limit(
+            self,
+            creature_ref,
+            actor.combat_profile.attacks_per_attack_action,
+        ).value
         creature_state.attacks_remaining = max(
             0,
-            actor.combat_profile.attacks_per_attack_action - 1,
+            attacks_allowed - 1,
         )
     else:
         creature_state.attacks_remaining -= 1
 
+    actor_roll_rules = self.combat_rules.roll_modifiers(
+        self,
+        creature_ref,
+        "ability_check",
+        ability="strength",
+    )
+    target_roll_rules = self.combat_rules.roll_modifiers(
+        self,
+        target_ref,
+        "ability_check",
+        ability="strength",
+    )
     player_roll = resolve_d20(
         modifier=(
             actor.get_modifier(actor.attributes.strength)
-            + actor.resolve_roll_modifiers("ability_check", _roll_die, "strength")
+            + actor_roll_rules.resolve_modifier(_roll_die)
         ),
-        mode=actor.roll_mode("ability_check", "strength"),
+        mode=actor_roll_rules.mode,
         roller=_roll_die,
     )
     target_roll = resolve_d20(
         modifier=(
             target.creature.get_modifier(target.creature.attributes.strength)
-            + target.creature.resolve_roll_modifiers(
-                "ability_check", _roll_die, "strength"
-            )
+            + target_roll_rules.resolve_modifier(_roll_die)
         ),
-        mode=target.creature.roll_mode("ability_check", "strength"),
+        mode=target_roll_rules.mode,
         roller=_roll_die,
     )
     success = player_roll.total >= target_roll.total

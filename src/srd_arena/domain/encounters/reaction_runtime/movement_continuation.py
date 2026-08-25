@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...geometry import Position
+from ...geometry import MovementCost, Position
 from ..models import EncounterProgress, PendingMovement
 
 if TYPE_CHECKING:
@@ -33,6 +33,9 @@ def resume_movement(
                 target_position.x,
                 target_position.y,
             )
+        mover.movement_spent_this_turn = MovementCost(
+            int(mover.movement_spent_this_turn) + int(movement.movement_cost)
+        )
         progress.messages.append(
             (
                 "system",
@@ -57,4 +60,3 @@ def resume_movement(
         )
 
     mover.movement_remaining = movement.remaining_movement_after
-

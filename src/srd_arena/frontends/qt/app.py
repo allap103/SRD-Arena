@@ -2119,11 +2119,19 @@ class GameWindow(QMainWindow):
     def _attributes_text(self) -> str:
         actor = self.session.decision_creature
         attributes = actor.attributes
+        armor_class = actor.get_armor_class()
+        encounter = self.session.encounter_state
+        if encounter is not None:
+            creature_ref = encounter.current_decision().creature_ref
+            armor_class = encounter.combat_rules.effective_armor_class(
+                encounter,
+                creature_ref,
+            ).value
         return "\n".join(
             [
                 f"Name: {actor.name}",
                 f"HP: {actor.get_health()}/{actor.get_max_health()}",
-                f"AC: {actor.get_armor_class()}",
+                f"AC: {armor_class}",
                 f"Level: {attributes.level}",
                 f"STR: {attributes.strength}",
                 f"DEX: {attributes.dexterity}",

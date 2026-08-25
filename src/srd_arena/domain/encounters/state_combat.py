@@ -33,9 +33,13 @@ def attack_roll_mode_for(
         modes.append(base_mode)
     target_effective = state.effective_conditions_for(target_ref)
     modes.append(
-        state.creatures[target_ref].creature.incoming_attack_roll_mode(
-            state.creatures[attacker_ref].creature
-        )
+        state.combat_rules.roll_modifiers(
+            state,
+            target_ref,
+            "attack_roll",
+            subject="attacks_against_target",
+            opposing_ref=attacker_ref,
+        ).mode
     )
     if target_effective.has_trait(CombatTrait.ATTACKERS_HAVE_ADVANTAGE):
         modes.append("advantage")

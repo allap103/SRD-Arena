@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
 from ....capabilities import CapabilityEffect, ConditionEffect, DamageEffect
@@ -53,8 +54,20 @@ def resolve_saving_throw_stat_block_action(
         "cha": "charisma",
     }
     outcomes: list[dict[str, object]] = []
+    damage_roll_rules = state.combat_rules.roll_modifiers(
+        state,
+        creature_ref,
+        "damage_roll",
+    )
     for target_ref in target_refs:
         target = state.creatures[target_ref].creature
+        ability = cast(Ability, ability_names[definition.ability])
+        roll_rules = state.combat_rules.roll_modifiers(
+            state,
+            target_ref,
+            "saving_throw",
+            ability=ability,
+        )
         inflicted_conditions = tuple(
             effect.condition
             for stage in definition.failure
@@ -63,7 +76,7 @@ def resolve_saving_throw_stat_block_action(
         )
         saving_throw = resolve_saving_throw(
             cast(SavingThrowCreature, target),
-            cast(Ability, ability_names[definition.ability]),
+            ability,
             definition.dc,
             mode=(
                 "advantage"
@@ -74,6 +87,8 @@ def resolve_saving_throw_stat_block_action(
                 )
                 else "normal"
             ),
+            sourced_modifier_override=roll_rules.resolve_modifier(roll_die),
+            sourced_mode_override=roll_rules.mode,
             roller=roll_die,
             automatic_failure_reasons=(
                 state._automatic_save_failure_provider_ids_for(
@@ -96,6 +111,7 @@ def resolve_saving_throw_stat_block_action(
             target,
             damage_effects,
             half=(saving_throw.check.success and definition.success_damage == "half"),
+            modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
         )
         non_damage_effects = (*effects, *definition.always)
         if any(not isinstance(effect, DamageEffect) for effect in non_damage_effects):
@@ -111,6 +127,7 @@ def resolve_saving_throw_stat_block_action(
             target,
             definition.always,
             half=False,
+            modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
         )
         outcomes.append(
             {
@@ -204,6 +221,7 @@ def apply_damage_effects(
     effects: tuple[CapabilityEffect, ...],
     *,
     half: bool,
+    modifier_for_roll: Callable[[], int] | None = None,
 ) -> int:
     """Apply supported damage effects and return damage actually received."""
     total = 0
@@ -213,7 +231,9 @@ def apply_damage_effects(
         count_text, sides_text = effect.dice.lower().split("d", 1)
         amount = max(
             effect.minimum or 0,
-            roll_dice(int(count_text), int(sides_text)) + effect.bonus,
+            roll_dice(int(count_text), int(sides_text))
+            + effect.bonus
+            + (modifier_for_roll() if modifier_for_roll is not None else 0),
         )
         if half:
             amount //= 2

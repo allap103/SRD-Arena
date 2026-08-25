@@ -230,7 +230,19 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
         for damage in damage_definitions:
             count, sides = parse_damage_dice(damage.dice)
             shared_damage_rolls.append(
-                (damage, resolve_dice(count, sides, roller=context.roller))
+                (
+                    damage,
+                    resolve_dice(
+                        count,
+                        sides,
+                        modifier=(
+                            context.damage_roll_modifier_for()
+                            if context.damage_roll_modifier_for is not None
+                            else context.damage_roll_modifier
+                        ),
+                        roller=context.roller,
+                    ),
+                )
             )
     shared_healing_rolls = tuple(
         (

@@ -10,7 +10,7 @@ from ....spells.rules import (
     spell_range_squares,
     spell_targets_self_only,
 )
-from ...models import ActionCost
+from ...models import ActionCost, EncounterAction
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -32,13 +32,30 @@ def spell_cast_block_reason_for(
     cost: ActionCost,
     cast_level: int | None = None,
 ) -> str | None:
+    creature_ref = self.current_decision().creature_ref
+    compatibility = self.combat_rules.action_compatibility(
+        self,
+        creature_ref,
+        EncounterAction(
+            spell.name,
+            "spell",
+            creature_ref=creature_ref,
+            cost=cost,
+        ),
+    )
+    if not compatibility.allowed:
+        return compatibility.failures[0].message
     return spell_cast_block_reason(
         spellcasting,
         spell,
         spell_action_economy(spell),
         action_available=self.active_magic_actions_remaining > 0,
         bonus_action_available=self.active_bonus_action_available,
-        reaction_available=self.active_reaction_available,
+        reaction_available=self.combat_rules.reaction_eligibility(
+            self,
+            creature_ref,
+            "spell",
+        ).allowed,
         cast_level=cast_level,
     )
 

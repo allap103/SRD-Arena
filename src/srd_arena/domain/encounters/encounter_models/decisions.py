@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ...geometry import MovementBudget, Position
+from ...geometry import MovementBudget, MovementCost, Position
 from .actions import CreatureRef, EncounterAction
 
 
@@ -26,6 +26,7 @@ class PendingMovement:
     from_position: Position
     to_position: Position
     remaining_movement_after: MovementBudget
+    movement_cost: MovementCost
     trigger_id: str
     companion_destinations: dict[CreatureRef, Position] = field(default_factory=dict)
 

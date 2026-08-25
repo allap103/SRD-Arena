@@ -1,5 +1,6 @@
 from srd_arena.domain.creatures import Attributes, Creature, Equipment, Inventory
 from srd_arena.domain.effects.modifiers import RollModifier
+from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.effects.rule_effects import (
     ActionEconomyKind,
     ActionEconomyRestriction,
@@ -29,6 +30,7 @@ from srd_arena.domain.encounters.models import (
     EncounterAction,
     EncounterCreatureState,
 )
+from srd_arena.domain.encounters.ongoing_effects import remove_ongoing_effects
 from srd_arena.domain.encounters.rule_queries import (
     InvocationStartContext,
     action_compatibility,
@@ -41,7 +43,12 @@ from srd_arena.domain.encounters.rule_queries import (
     resolve_invocation_start,
     roll_modifiers,
 )
-from srd_arena.domain.geometry import Grid, Position
+from srd_arena.domain.geometry import (
+    Grid,
+    MovementBudget,
+    MovementCost,
+    Position,
+)
 
 
 ACTOR_REF = "participant:target"
@@ -146,13 +153,93 @@ def test_speed_composes_addition_and_multiplication_into_movement_budget() -> No
     assert movement.budget == 4
 
 
+def test_same_definition_rule_effects_do_not_stack_but_remain_independent() -> None:
+    state = _encounter()
+    first = _ongoing_effect(
+        "effect:longstrider:first",
+        SpeedAdjustment(10),
+        definition_id="longstrider",
+    )
+    second = _ongoing_effect(
+        "effect:longstrider:second",
+        SpeedAdjustment(10),
+        definition_id="longstrider",
+    )
+    state.ongoing_effects.extend((first, second))
+
+    active = effective_speed(state, ACTOR_REF)
+
+    assert active.value == 40
+    assert tuple(
+        contribution.provider_state_id for contribution in active.contributions
+    ) == (first.identity.id,)
+
+    state.ongoing_effects.remove(first)
+    remaining = effective_speed(state, ACTOR_REF)
+
+    assert remaining.value == 40
+    assert tuple(
+        contribution.provider_state_id for contribution in remaining.contributions
+    ) == (second.identity.id,)
+
+
+def test_effect_lifecycle_queries_speed_without_losing_movement_debt() -> None:
+    state = _encounter()
+    creature_state = state.creatures[ACTOR_REF]
+    creature_state.movement_spent_this_turn = MovementCost(4)
+    creature_state.movement_remaining = MovementBudget(2)
+    applied = state._start_ongoing_effect(
+        EffectResult(
+            kind="start_ongoing_effect",
+            target_ref=ACTOR_REF,
+            data={
+                "source_ref": "participant:caster",
+                "source_label": "Slowing effect",
+                "definition_id": "slowing_effect",
+                "effect_kind": "spell",
+                "parameters": {"speed_modifier_feet": -20},
+            },
+        ),
+        "origin:slowing-effect",
+    )
+
+    assert isinstance(applied.rule_effects[0], SpeedAdjustment)
+    assert creature_state.creature.speed_modifier_sources == {}
+    assert effective_speed(state, ACTOR_REF).value == 10
+    assert creature_state.movement_remaining == 0
+
+    remove_ongoing_effects(
+        state,
+        EffectResult(
+            kind="remove_ongoing_effect",
+            target_ref=ACTOR_REF,
+            data={"effect_id": applied.identity.id},
+        ),
+    )
+
+    assert effective_speed(state, ACTOR_REF).value == 30
+    assert creature_state.movement_remaining == 2
+
+
 def test_zero_speed_overrides_other_speed_contributions_and_movement() -> None:
     state = _encounter()
     state.ongoing_effects.extend(
         (
-            _ongoing_effect("effect:speed-bonus", SpeedAdjustment(10)),
-            _ongoing_effect("effect:speed-halved", SpeedMultiplier(1, 2)),
-            _ongoing_effect("effect:speed-zero", SpeedMultiplier(0, 1)),
+            _ongoing_effect(
+                "effect:speed-bonus",
+                SpeedAdjustment(10),
+                definition_id="speed-bonus",
+            ),
+            _ongoing_effect(
+                "effect:speed-halved",
+                SpeedMultiplier(1, 2),
+                definition_id="speed-halved",
+            ),
+            _ongoing_effect(
+                "effect:speed-zero",
+                SpeedMultiplier(0, 1),
+                definition_id="speed-zero",
+            ),
         )
     )
 
@@ -197,6 +284,7 @@ def test_action_and_bonus_action_become_incompatible_after_one_is_spent() -> Non
     actor = state.creatures[ACTOR_REF]
 
     actor.bonus_action_available = False
+    actor.bonus_action_used_this_turn = True
     action = EncounterAction(
         "Attack",
         "attack",
@@ -209,7 +297,9 @@ def test_action_and_bonus_action_become_incompatible_after_one_is_spent() -> Non
     assert any(slow.identity.id in failure.state_ids for failure in action_result.failures)
 
     actor.bonus_action_available = True
+    actor.bonus_action_used_this_turn = False
     actor.actions_remaining = 0
+    actor.action_used_this_turn = True
     bonus_action = EncounterAction(
         "Bonus action",
         "feature",
@@ -220,6 +310,19 @@ def test_action_and_bonus_action_become_incompatible_after_one_is_spent() -> Non
 
     assert bonus_result.allowed is False
     assert any(slow.identity.id in failure.state_ids for failure in bonus_result.failures)
+
+    actor.actions_remaining = 1
+    regained_action_result = action_compatibility(
+        state,
+        ACTOR_REF,
+        bonus_action,
+    )
+
+    assert regained_action_result.allowed is False
+    assert any(
+        slow.identity.id in failure.state_ids
+        for failure in regained_action_result.failures
+    )
 
 
 def test_attack_limit_caps_the_base_number_and_preserves_its_source() -> None:

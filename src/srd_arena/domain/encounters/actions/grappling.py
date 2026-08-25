@@ -80,10 +80,15 @@ def resolve_escape_action(
     dexterity_modifier = creature.get_modifier(creature.attributes.dexterity)
     ability = "strength" if strength_modifier >= dexterity_modifier else "dexterity"
     modifier = max(strength_modifier, dexterity_modifier)
+    roll_rules = state.combat_rules.roll_modifiers(
+        state,
+        creature_ref,
+        "ability_check",
+        ability=ability,
+    )
     check = resolve_d20(
-        modifier=modifier
-        + creature.resolve_roll_modifiers("ability_check", _roll_die, ability),
-        mode=creature.roll_mode("ability_check", ability),
+        modifier=modifier + roll_rules.resolve_modifier(_roll_die),
+        mode=roll_rules.mode,
         roller=_roll_die,
     )
     success = check.total >= escape_dc

@@ -48,9 +48,14 @@ def resolve_attack_action(
         if creature_state.actions_remaining <= 0:
             raise RuntimeError("No Action remains to make an attack.")
         state._consume_action(allow_magic=False)
+        attacks_allowed = state.combat_rules.attack_limit(
+            state,
+            creature_ref,
+            creature.combat_profile.attacks_per_attack_action,
+        ).value
         creature_state.attacks_remaining = max(
             0,
-            creature.combat_profile.attacks_per_attack_action - 1,
+            attacks_allowed - 1,
         )
     else:
         creature_state.attacks_remaining -= 1
@@ -66,6 +71,16 @@ def resolve_attack_action(
         for opponent_ref, candidate in state.creatures.items()
         if candidate.is_alive
         and state._creatures_are_opponents(creature_ref, opponent_ref)
+    )
+    attack_roll_rules = state.combat_rules.roll_modifiers(
+        state,
+        creature_ref,
+        "attack_roll",
+    )
+    damage_roll_rules = state.combat_rules.roll_modifiers(
+        state,
+        creature_ref,
+        "damage_roll",
     )
     outcome = resolve_attack(
         creature,
@@ -87,6 +102,15 @@ def resolve_attack_action(
             ),
             creature_state.position,
             nearby_opponent_positions,
+        ),
+        sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
+        sourced_attack_roll_mode=attack_roll_rules.mode,
+        target_armor_class=state.combat_rules.effective_armor_class(
+            state,
+            target_ref,
+        ).value,
+        sourced_damage_modifier_for=lambda: damage_roll_rules.resolve_modifier(
+            roll_die
         ),
         d20_roller=roll_die,
         dice_roller=roll_dice,

@@ -32,7 +32,19 @@ from srd_arena.frontends.qt.app import GameWindow
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
-from srd_arena.domain.effects.runtime import UntilTurnStart
+from srd_arena.domain.effects.modifiers import RollModifier
+from srd_arena.domain.effects.rule_effects import (
+    InvocationFailureChance,
+    RollAdjustment,
+)
+from srd_arena.domain.effects.runtime import (
+    EffectSource,
+    EffectSourceKind,
+    OngoingEffect,
+    OngoingEffectKind,
+    RuntimeStateIdentity,
+    UntilTurnStart,
+)
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.domain.spells.rules import (
@@ -631,6 +643,64 @@ def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical(
     assert event.data["attack_roll_detail"]["automatic_critical_provider_ids"] == [
         paralyzed.id
     ]
+
+
+def test_attack_damage_uses_sourced_damage_roll_modifier(monkeypatch) -> None:
+    session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session.current_scene_id = "goblin_encounter"
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    attacker_ref = state.current_decision().creature_ref
+    target_ref = "goblin_1"
+    state.creatures[target_ref].position = Position(
+        state.active_position.x + 1,
+        state.active_position.y,
+    )
+    state.creatures[target_ref].creature.attributes.base_armor_class = 0
+    weakening = OngoingEffect(
+        identity=RuntimeStateIdentity(
+            id="ongoing:weakening:test",
+            source=EffectSource(
+                kind=EffectSourceKind.ACTION,
+                definition_id="weakening_breath",
+                applied_by_ref="goblin_1",
+                label="Weakening Breath",
+                origin_id="weakening:test",
+            ),
+        ),
+        target_refs=(attacker_ref,),
+        kind=OngoingEffectKind.GENERIC,
+        rule_effects=(
+            RollAdjustment(
+                RollModifier(
+                    roll="damage_roll",
+                    mode="subtract",
+                    value=2,
+                )
+            ),
+        ),
+    )
+    state.ongoing_effects.append(weakening)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 10,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda count, _sides: 5 * count,
+    )
+    attack = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "attack" and action.value == target_ref
+    )
+
+    result = _ORCHESTRATOR.submit(state, attack)
+
+    event = next(event for event in result.events if event.type == "attack_resolved")
+    assert event.data["hit"] is True
+    assert event.data["damage_roll_detail"]["sourced_modifier"] == -2
 
 
 def test_paralyzed_target_automatically_fails_strength_and_dexterity_saves() -> None:
@@ -2547,8 +2617,24 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
     )
     _ORCHESTRATOR.submit(state, strength_action)
 
-    assert caster.roll_mode("ability_check", "strength") == "advantage"
-    assert caster.roll_mode("ability_check", "dexterity") == "normal"
+    assert (
+        state.combat_rules.roll_modifiers(
+            state,
+            "player",
+            "ability_check",
+            ability="strength",
+        ).mode
+        == "advantage"
+    )
+    assert (
+        state.combat_rules.roll_modifiers(
+            state,
+            "player",
+            "ability_check",
+            ability="dexterity",
+        ).mode
+        == "normal"
+    )
     assert state.ongoing_effects[0].parameters["roll_modifiers"] == [
         {
             "roll": "ability_check",
@@ -2590,11 +2676,25 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
     result = _choose_directional_spell(session, "Cast Faerie Fire", (3, 3))
 
     assert result.events
-    assert state.creatures["goblin_1"].creature.incoming_attack_roll_mode(caster) == (
-        "advantage"
+    assert (
+        state.combat_rules.roll_modifiers(
+            state,
+            "goblin_1",
+            "attack_roll",
+            subject="attacks_against_target",
+            opposing_ref="player",
+        ).mode
+        == "advantage"
     )
-    assert state.creatures["goblin_2"].creature.incoming_attack_roll_mode(caster) == (
-        "normal"
+    assert (
+        state.combat_rules.roll_modifiers(
+            state,
+            "goblin_2",
+            "attack_roll",
+            subject="attacks_against_target",
+            opposing_ref="player",
+        ).mode
+        == "normal"
     )
 
 
@@ -2631,8 +2731,22 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage(monkeypatch) -> None:
     _ORCHESTRATOR.submit(state, action)
 
     assert target.get_health() == 18
-    assert target.roll_mode("ability_check") == "disadvantage"
-    assert target.roll_mode("attack_roll") == "disadvantage"
+    assert (
+        state.combat_rules.roll_modifiers(
+            state,
+            "goblin_1",
+            "ability_check",
+        ).mode
+        == "disadvantage"
+    )
+    assert (
+        state.combat_rules.roll_modifiers(
+            state,
+            "goblin_1",
+            "attack_roll",
+        ).mode
+        == "disadvantage"
+    )
     assert state.ongoing_effects[0].parameters["repeat_failure_damage"] == [
         {"dice": "5d10", "damage_type": "psychic"}
     ]
@@ -3294,7 +3408,7 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
     )
 
     assert state.active_creature_state.movement_remaining == before + 2
-    assert state.active_creature_state.creature.effective_speed_feet() == 40
+    assert state.combat_rules.effective_speed(state, "player").value == 40
 
     remove_ongoing_effects(
         state,
@@ -3306,7 +3420,7 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
     )
 
     assert state.active_creature_state.movement_remaining == before
-    assert state.active_creature_state.creature.effective_speed_feet() == 30
+    assert state.combat_rules.effective_speed(state, "player").value == 30
 
 
 def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
@@ -4376,6 +4490,102 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell(
     assert state.ongoing_effects[0].parameters["effect_label"] == (
         "Protection from Energy"
     )
+
+
+def test_somatic_invocation_failure_spends_resources_before_resolution(
+    monkeypatch,
+) -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR),
+        start_scene="goblin_encounter",
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster_ref = state.current_decision().creature_ref
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        _build_referenced_spell(
+            "Cure Wounds",
+            "XPHB",
+            load_spell_catalog(SYSTEM_CONTENT_ROOT),
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[1] = 1
+    caster.current_health = caster.get_max_health() - 5
+    slow = OngoingEffect(
+        identity=RuntimeStateIdentity(
+            id="ongoing:slow:test",
+            source=EffectSource(
+                kind=EffectSourceKind.SPELL,
+                definition_id="slow",
+                applied_by_ref="goblin_1",
+                label="Slow",
+                origin_id="slow:test",
+            ),
+        ),
+        target_refs=(caster_ref,),
+        kind=OngoingEffectKind.SPELL,
+        rule_effects=(
+            InvocationFailureChance(
+                invocation_kinds=frozenset({"cast_spell"}),
+                required_components=frozenset({"somatic"}),
+                numerator=1,
+                denominator=4,
+                code="slow.somatic_spell_failure",
+                message="The spell fails because its gestures are too slow.",
+            ),
+        ),
+    )
+    state.ongoing_effects.append(slow)
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+    initial_health = caster.get_health()
+    action = next(
+        candidate
+        for candidate in state.available_actions()
+        if candidate.kind == "spell"
+        and str(candidate.value).startswith("cure_wounds:")
+    )
+
+    result = _ORCHESTRATOR.submit(state, action)
+
+    assert caster.get_health() == initial_health
+    assert caster.spellcasting.spell_slots_remaining[1] == 0
+    assert state.active_actions_remaining == 0
+    assert not any(event.type == "spell_cast" for event in result.events)
+    check = next(
+        event
+        for event in result.events
+        if event.type == "invocation_start_checked"
+    )
+    assert check.data["allowed"] is False
+    assert check.data["components"] == ["somatic", "verbal"]
+    assert check.data["checks"] == [
+        {
+            "provider_state_id": slow.identity.id,
+            "source": {
+                "kind": "spell",
+                "definition_id": "slow",
+                "applied_by_ref": "goblin_1",
+                "label": "Slow",
+                "origin_id": "slow:test",
+            },
+            "code": "slow.somatic_spell_failure",
+            "message": "The spell fails because its gestures are too slow.",
+            "numerator": 1,
+            "denominator": 4,
+            "roll": 1,
+            "failed": True,
+        }
+    ]
+    assert (
+        "system",
+        "The spell fails because its gestures are too slow.",
+    ) in result.messages
 
 
 def test_failed_damage_save_ends_concentration_and_its_conditions(

@@ -18,7 +18,6 @@ def _roll_die(sides: int) -> int:
 
 from .effect_lifecycle.application import (  # noqa: E402
     _required_string,
-    _set_speed_modifier,
     start_ongoing_effect,
 )
 from .effect_lifecycle.concentration import (  # noqa: E402
@@ -33,7 +32,6 @@ from .effect_lifecycle.removal import (  # noqa: E402
     _remove_effect_target,
     _remove_effect_tree,
     _remove_maximum_hit_point_modifier,
-    _remove_speed_modifier,
     remove_ongoing_effects,
 )
 from .effect_lifecycle.turn_hooks import (  # noqa: E402
@@ -50,11 +48,9 @@ __all__ = [
     "_remove_effect_target",
     "_remove_effect_tree",
     "_remove_maximum_hit_point_modifier",
-    "_remove_speed_modifier",
     "_required_string",
     "_roll_die",
     "_round_duration_expired",
-    "_set_speed_modifier",
     "end_concentration",
     "expire_ongoing_effects_for_turn_start",
     "has_condition_save_advantage",

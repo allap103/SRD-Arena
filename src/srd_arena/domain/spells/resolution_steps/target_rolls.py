@@ -87,6 +87,16 @@ def resolve_target_roll(
                 cast(Ability, ability),
                 context.creature.spellcasting.save_dc,
                 mode=save_mode,
+                sourced_modifier_override=(
+                    context.save_roll_modifier_for(target.target_ref, ability)
+                    if context.save_roll_modifier_for is not None
+                    else context.save_roll_modifiers.get(target.target_ref)
+                ),
+                sourced_mode_override=(
+                    context.save_sourced_roll_mode_for(target.target_ref, ability)
+                    if context.save_sourced_roll_mode_for is not None
+                    else context.save_sourced_roll_modes.get(target.target_ref)
+                ),
                 roller=context.roller,
                 automatic_failure_reasons=automatic_reasons,
             )
@@ -105,24 +115,36 @@ def resolve_target_roll(
             }
     elif isinstance(prepared.resolution, AttackResolution):
         attack = resolve_d20(
-            modifier=context.creature.spellcasting.attack_bonus,
+            modifier=(
+                context.creature.spellcasting.attack_bonus
+                + (
+                    context.attack_roll_modifier_for(target.target_ref)
+                    if context.attack_roll_modifier_for is not None
+                    else context.attack_roll_modifiers.get(target.target_ref, 0)
+                )
+            ),
             mode=context.attack_roll_modes.get(target.target_ref, "normal"),
             roller=context.roller,
         )
-        check = resolve_check(attack, target.creature.get_armor_class())
+        target_ac = context.target_armor_classes.get(
+            target.target_ref,
+            target.creature.get_armor_class(),
+        )
+        check = resolve_check(attack, target_ac)
         hit = attack.selected != 1 and (attack.selected == 20 or check.success)
         automatic_critical = context.automatic_critical_providers.get(
             target.target_ref, ()
         )
         critical_hit = hit and (attack.selected == 20 or bool(automatic_critical))
+        attack_modifier = attack.total - attack.selected
         attack_detail = {
             "projectile_index": projectile_index,
             "target_ref": target.target_ref,
             "target_label": target.target_label,
             "die": attack.selected,
-            "modifier": context.creature.spellcasting.attack_bonus,
+            "modifier": attack_modifier,
             "total": attack.total,
-            "target_ac": target.creature.get_armor_class(),
+            "target_ac": target_ac,
             "hit": hit,
             "critical_hit": critical_hit,
             "automatic_critical_provider_ids": list(automatic_critical),
@@ -132,7 +154,19 @@ def resolve_target_roll(
             if critical_hit:
                 count *= 2
             damage_rolls.append(
-                (damage, resolve_dice(count, sides, roller=context.roller))
+                (
+                    damage,
+                    resolve_dice(
+                        count,
+                        sides,
+                        modifier=(
+                            context.damage_roll_modifier_for()
+                            if context.damage_roll_modifier_for is not None
+                            else context.damage_roll_modifier
+                        ),
+                        roller=context.roller,
+                    ),
+                )
             )
 
     return TargetRollOutcome(

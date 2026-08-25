@@ -43,11 +43,19 @@ def resolve_spell_lifecycle_event(
             dc = effect.parameters.get("save_dc")
             if isinstance(ability, str) and isinstance(dc, int):
                 creature = state.creatures[affected_ref].creature
+                roll_rules = state.combat_rules.roll_modifiers(
+                    state,
+                    affected_ref,
+                    "saving_throw",
+                    ability=ability,
+                )
                 save = resolve_saving_throw(
                     cast(SavingThrowCreature, creature),
                     cast(Ability, ability),
                     dc,
                     mode="advantage",
+                    sourced_modifier_override=roll_rules.resolve_modifier(roll_die),
+                    sourced_mode_override=roll_rules.mode,
                     roller=roll_die,
                     automatic_failure_reasons=(
                         state._automatic_save_failure_provider_ids_for(
@@ -84,4 +92,3 @@ def resolve_spell_lifecycle_event(
                 continue
             _remove_effect_target(state, effect, affected_ref)
             break
-

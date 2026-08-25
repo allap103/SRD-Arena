@@ -60,7 +60,11 @@ def resolve_feature_action(
             )
         )
         return
-    if feature_action.economy == "reaction" and not self.active_reaction_available:
+    if feature_action.economy == "reaction" and not self.combat_rules.reaction_eligibility(
+        self,
+        creature_ref,
+        "feature",
+    ).allowed:
         progress.messages.append(("system", "You have already used your Reaction."))
         progress.events.append(
             self._event(
