@@ -10,4 +10,4 @@ if TYPE_CHECKING:
 
 def active_movement_remaining(state: EncounterState) -> MovementBudget:
     """Return the movement the current decision actor can still spend."""
-    return state.turn_engine.active_movement_remaining(state)
+    return state.turn_lifecycle.active_movement_remaining(state)

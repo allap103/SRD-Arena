@@ -7,6 +7,7 @@ from .definitions import (
 )
 from .encounter import EncounterState
 from .models import EncounterAction
+from .orchestration import EncounterOrchestrator
 
 __all__ = [
     "EncounterAction",
@@ -16,4 +17,5 @@ __all__ = [
     "EncounterState",
     "EncounterTeam",
     "EncounterTransition",
+    "EncounterOrchestrator",
 ]

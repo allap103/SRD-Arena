@@ -1,10 +1,12 @@
 from pathlib import Path
 
+from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.models import ActionExecutionOutcome
 from srd_arena.runtime.scenario import Scenario
 
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
+_ORCHESTRATOR = EncounterOrchestrator()
 
 
 def _encounter_state():
@@ -38,12 +40,12 @@ def test_action_execution_reports_lifecycle_without_advancing_turn() -> None:
     ]
 
 
-def test_turn_engine_interprets_end_turn_outcome() -> None:
+def test_orchestrator_interprets_end_turn_outcome() -> None:
     state = _encounter_state()
     wait = next(action for action in state.available_actions() if action.kind == "wait")
     starting_round = state.round.number
 
-    progress = state.apply_action(wait)
+    progress = _ORCHESTRATOR.submit(state, wait)
 
     assert progress.events[0].type == "action_declared"
     assert state.round.number > starting_round

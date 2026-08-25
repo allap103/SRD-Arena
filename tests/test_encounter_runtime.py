@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import (
     ActionCost,
     EncounterAction,
@@ -77,6 +78,8 @@ from srd_arena.frontends.qt.ui.encounter.config import (
     ActionMenuScope,
     TargetSelectionMode,
 )
+
+_ORCHESTRATOR = EncounterOrchestrator()
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
@@ -620,7 +623,7 @@ def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical(
         for action in state.available_actions()
         if action.kind == "attack" and action.value == target_ref
     )
-    result = state.apply_action(attack)
+    result = _ORCHESTRATOR.submit(state, attack)
     event = next(event for event in result.events if event.type == "attack_resolved")
 
     assert event.data["attack_roll_detail"]["mode"] == "advantage"
@@ -874,7 +877,7 @@ def test_execution_rechecks_action_eligibility() -> None:
     blocker.position = Position(actor.position.x + 1, actor.position.y)
 
     with pytest.raises(ValueError, match="destination is not free"):
-        state.apply_action(move)
+        _ORCHESTRATOR.submit(state, move)
 
 
 def test_cli_encounter_renderer_generates_grid_text() -> None:
@@ -1072,7 +1075,7 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
     assert multiattack.value is None
     assert any(action.kind == "attack" for action in initial_actions)
 
-    started = state.apply_action(multiattack)
+    started = _ORCHESTRATOR.submit(state, multiattack)
 
     assert state.active_creature_state.actions_remaining == 0
     assert state.active_creature_state.attacks_remaining == 2
@@ -1090,7 +1093,7 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
         if action.kind == "attack" and action.value == "goblin_1"
     )
     assert invocation.source_trigger_id == "Thunderous Slam"
-    first = state.apply_action(invocation)
+    first = _ORCHESTRATOR.submit(state, invocation)
 
     assert state.active_creature_state.attacks_remaining == 1
     assert [
@@ -1107,7 +1110,7 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
         for action in state.available_actions()
         if action.kind == "attack" and action.value == "goblin_1"
     )
-    second = state.apply_action(second_invocation)
+    second = _ORCHESTRATOR.submit(state, second_invocation)
 
     assert state.active_creature_state.attacks_remaining == 0
     assert state.active_creature_state.pending_multiattack == []
@@ -1156,7 +1159,7 @@ def test_assassin_multiattack_applies_independent_poisoned_conditions(
         action for action in state.available_actions() if action.kind == "multiattack"
     )
     assert state.action_eligibility(multiattack).allowed is True
-    state.apply_action(multiattack)
+    _ORCHESTRATOR.submit(state, multiattack)
 
     for _ in range(3):
         shortsword = next(
@@ -1166,7 +1169,7 @@ def test_assassin_multiattack_applies_independent_poisoned_conditions(
             and action.value == "goblin_1"
             and action.preferred_attack_name == "Shortsword"
         )
-        state.apply_action(shortsword)
+        _ORCHESTRATOR.submit(state, shortsword)
 
     poisoned = [
         condition
@@ -1180,11 +1183,11 @@ def test_assassin_multiattack_applies_independent_poisoned_conditions(
         condition.duration == UntilTurnStart("player", 2) for condition in poisoned
     )
 
-    state.turn_engine.expire_conditions_for_turn_start(state, "player", 1)
+    state.turn_lifecycle.expire_conditions_for_turn_start(state, "player", 1)
     assert state.has_condition("goblin_1", Condition.POISONED) is True
 
     state.round.number = 2
-    state.turn_engine.expire_conditions_for_turn_start(state, "player", 2)
+    state.turn_lifecycle.expire_conditions_for_turn_start(state, "player", 2)
     assert state.has_condition("goblin_1", Condition.POISONED) is False
 
 
@@ -1280,13 +1283,13 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
     multiattack = next(
         action for action in state.available_actions() if action.kind == "multiattack"
     )
-    state.apply_action(multiattack)
+    _ORCHESTRATOR.submit(state, multiattack)
     tentacle = next(
         action
         for action in state.available_actions()
         if action.kind == "attack" and action.value == "air_elemental"
     )
-    state.apply_action(tentacle)
+    _ORCHESTRATOR.submit(state, tentacle)
 
     grapple = next(
         condition
@@ -1303,7 +1306,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
         for action in state.available_actions()
         if action.kind == "attack" and action.value == "player"
     )
-    state.apply_action(huge_target_tentacle)
+    _ORCHESTRATOR.submit(state, huge_target_tentacle)
     assert state.has_condition("player", Condition.GRAPPLED) is False
 
     state.initiative_order = ["air_elemental", "aboleth", "player"]
@@ -1318,7 +1321,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
         "srd_arena.domain.encounters.encounter.roll_die",
         lambda _sides: 1,
     )
-    failed = state.apply_action(failed_escape)
+    failed = _ORCHESTRATOR.submit(state, failed_escape)
     assert state.has_condition("air_elemental", Condition.GRAPPLED) is True
     assert state.creatures["air_elemental"].actions_remaining == 0
     assert any("fails to escape" in text for _, text in failed.messages)
@@ -1333,7 +1336,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
         for action in state.available_actions()
         if action.kind == "escape_grapple"
     )
-    result = state.apply_action(escape)
+    result = _ORCHESTRATOR.submit(state, escape)
 
     assert escape.label == "Escape The Deep One (DC 14)"
     assert state.has_condition("air_elemental", Condition.GRAPPLED) is False
@@ -2397,20 +2400,20 @@ def test_mass_healing_word_uses_one_roll_for_selected_targets(monkeypatch) -> No
         for action in state.available_actions()
         if action.kind == "spell" and str(action.value) == "mass_healing_word:goblin_1"
     )
-    state.apply_action(initial)
+    _ORCHESTRATOR.submit(state, initial)
     add_second = next(
         action
         for action in state.available_actions()
         if action.kind == "toggle_spell_target" and action.value == "goblin_2"
     )
-    state.apply_action(add_second)
+    _ORCHESTRATOR.submit(state, add_second)
     confirm = next(
         action
         for action in state.available_actions()
         if action.kind == "confirm_spell_targets"
     )
 
-    result = state.apply_action(confirm)
+    result = _ORCHESTRATOR.submit(state, confirm)
 
     event = next(event for event in result.events if event.type == "spell_cast")
     details = event.data["healing_roll_details"]
@@ -2456,7 +2459,7 @@ def test_heal_upcasts_and_removes_every_listed_condition() -> None:
         and str(action.value).startswith("heal:player")
         and parse_spell_action_slot(str(action.value)) == 7
     )
-    result = state.apply_action(action)
+    result = _ORCHESTRATOR.submit(state, action)
 
     assert caster.get_health() == 130
     assert state.has_condition("player", Condition.BLINDED) is False
@@ -2500,7 +2503,7 @@ def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
         for action in actions
         if parse_spell_action_damage_type(str(action.value)) == "fire"
     )
-    state.apply_action(fire_action)
+    _ORCHESTRATOR.submit(state, fire_action)
 
     assert caster.has_damage_resistance("fire")
     assert not caster.has_damage_resistance("cold")
@@ -2542,7 +2545,7 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
         for action in actions
         if parse_spell_action_ability(str(action.value)) == "strength"
     )
-    state.apply_action(strength_action)
+    _ORCHESTRATOR.submit(state, strength_action)
 
     assert caster.roll_mode("ability_check", "strength") == "advantage"
     assert caster.roll_mode("ability_check", "dexterity") == "normal"
@@ -2625,7 +2628,7 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage(monkeypatch) -> None:
         and parse_spell_action_slot(str(action.value)) == 5
     )
 
-    state.apply_action(action)
+    _ORCHESTRATOR.submit(state, action)
 
     assert target.get_health() == 18
     assert target.roll_mode("ability_check") == "disadvantage"
@@ -2675,7 +2678,7 @@ def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
         if parse_spell_action_damage_type(str(action.value)) == "fire"
     )
 
-    state.apply_action(fire_action)
+    _ORCHESTRATOR.submit(state, fire_action)
 
     reduction = caster.damage_reduction_sources["resistance"].values()
     assert [entry.damage_type for entry in reduction] == ["fire"]
@@ -2711,19 +2714,19 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
         and str(action.value).startswith("aid:player")
         and parse_spell_action_slot(str(action.value)) == 3
     )
-    state.apply_action(initial)
+    _ORCHESTRATOR.submit(state, initial)
     add_target = next(
         action
         for action in state.available_actions()
         if action.kind == "toggle_spell_target" and action.value == "goblin_1"
     )
-    state.apply_action(add_target)
+    _ORCHESTRATOR.submit(state, add_target)
     confirm = next(
         action
         for action in state.available_actions()
         if action.kind == "confirm_spell_targets"
     )
-    state.apply_action(confirm)
+    _ORCHESTRATOR.submit(state, confirm)
 
     assert caster.get_max_health() == original["player"][0] + 10
     assert caster.get_health() == original["player"][1] + 10
@@ -2780,13 +2783,14 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
         for action in state.available_actions()
         if action.kind == "spell" and str(action.value).startswith("mass_heal:")
     )
-    opened = state.apply_action(initial)
+    opened = _ORCHESTRATOR.submit(state, initial)
 
     assert opened.paused_for_decision
     assert state.pending_spell_cast is not None
     assert state.pending_spell_cast.resource_pool_total == 700
     for target_ref, amount in (("player", 300), ("goblin_1", 400)):
-        state.apply_action(
+        _ORCHESTRATOR.submit(
+            state,
             EncounterAction(
                 label="Set healing allocation",
                 kind="set_spell_resource_allocation",
@@ -2796,7 +2800,8 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
             )
         )
     with pytest.raises(ValueError, match="remaining healing pool"):
-        state.apply_action(
+        _ORCHESTRATOR.submit(
+            state,
             EncounterAction(
                 label="Over-allocate healing",
                 kind="set_spell_resource_allocation",
@@ -2810,7 +2815,7 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
         for action in state.available_actions()
         if action.kind == "confirm_spell_targets"
     )
-    result = state.apply_action(confirm)
+    result = _ORCHESTRATOR.submit(state, confirm)
 
     assert caster.get_health() == 400
     assert target.creature.get_health() == 500
@@ -2875,7 +2880,7 @@ def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
         and str(action.value).startswith("greater_restoration:player")
         and "curse@" in str(action.value)
     )
-    result = state.apply_action(curse_action)
+    result = _ORCHESTRATOR.submit(state, curse_action)
 
     assert state.has_condition("player", Condition.CHARMED)
     assert not any(effect.kind.value == "curse" for effect in state.ongoing_effects)
@@ -2932,7 +2937,7 @@ def test_remove_curse_ends_every_curse_on_one_creature() -> None:
         for action in state.available_actions()
         if action.kind == "spell" and str(action.value) == "remove_curse:player"
     )
-    state.apply_action(action)
+    _ORCHESTRATOR.submit(state, action)
 
     assert not any(effect.kind.value == "curse" for effect in state.ongoing_effects)
 
@@ -2983,7 +2988,7 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
         for action in state.available_actions()
         if action.kind == "spell" and "hit_point_maximum_reduction" in str(action.value)
     )
-    state.apply_action(action)
+    _ORCHESTRATOR.submit(state, action)
 
     assert (caster.get_max_health(), caster.get_health()) == original
 
@@ -3035,7 +3040,7 @@ def test_lesser_restoration_explicitly_selects_the_condition_to_remove() -> None
         for action in state.available_actions()
         if action.kind == "spell" and str(action.value).endswith("#poisoned")
     )
-    state.apply_action(action)
+    _ORCHESTRATOR.submit(state, action)
 
     assert state.has_condition("player", Condition.POISONED) is False
     assert state.has_condition("player", Condition.BLINDED) is True
@@ -3080,7 +3085,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save(
         if action.kind == "spell"
         and str(action.value).startswith("hold_person:goblin_1")
     )
-    cast = state.apply_action(action)
+    cast = _ORCHESTRATOR.submit(state, action)
 
     assert state.has_condition("goblin_1", Condition.PARALYZED) is True
     assert state.effective_conditions_for("goblin_1").has(Condition.INCAPACITATED)
@@ -3096,7 +3101,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save(
 
     state.initiative_order = ["player", "goblin_1"]
     state.turn_index = 1
-    state.turn_engine.advance_turn(state, cast)
+    state.turn_lifecycle.advance_turn(state, cast)
 
     assert state.has_condition("goblin_1", Condition.PARALYZED) is False
     assert state.ongoing_effects == []
@@ -3422,7 +3427,7 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
         and str(action.value).startswith("hold_person:goblin_1")
         and parse_spell_action_slot(str(action.value)) == 3
     )
-    opened = state.apply_action(initial)
+    opened = _ORCHESTRATOR.submit(state, initial)
 
     assert opened.paused_for_decision
     assert state.current_decision().kind == "spell_targets"
@@ -3432,7 +3437,8 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
         for action in state.available_actions()
     )
     with pytest.raises(ValueError, match="creature types: humanoid"):
-        state.apply_action(
+        _ORCHESTRATOR.submit(
+            state,
             EncounterAction(
                 "Add invalid target",
                 "toggle_spell_target",
@@ -3446,13 +3452,13 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
         for action in state.available_actions()
         if action.kind == "toggle_spell_target" and action.value == "goblin_2"
     )
-    state.apply_action(add_second)
+    _ORCHESTRATOR.submit(state, add_second)
     confirm = next(
         action
         for action in state.available_actions()
         if action.kind == "confirm_spell_targets"
     )
-    resolved = state.apply_action(confirm)
+    resolved = _ORCHESTRATOR.submit(state, confirm)
 
     assert resolved.paused_for_decision is False
     assert state.current_decision().kind == "turn"
@@ -3489,7 +3495,7 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
         for action in state.available_actions()
         if action.kind == "spell" and str(action.value) == "scorching_ray:goblin_1"
     )
-    opened = state.apply_action(initial)
+    opened = _ORCHESTRATOR.submit(state, initial)
 
     assert opened.paused_for_decision
     assert state.pending_spell_cast is not None
@@ -3506,7 +3512,7 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
             and action.value == target_ref
             and action.id.endswith("-add")
         )
-        state.apply_action(add_ray)
+        _ORCHESTRATOR.submit(state, add_ray)
 
     assert state.pending_spell_cast is not None
     assert state.pending_spell_cast.selected_target_refs == [
@@ -3520,7 +3526,7 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
         for action in state.available_actions()
         if action.kind == "confirm_spell_targets"
     )
-    resolved = state.apply_action(confirm)
+    resolved = _ORCHESTRATOR.submit(state, confirm)
 
     spell_event = next(event for event in resolved.events if event.type == "spell_cast")
     assert spell_event.data["target_refs"] == [
@@ -3556,14 +3562,14 @@ def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() ->
         for action in state.available_actions()
         if action.kind == "spell" and str(action.value) == "scorching_ray:goblin_1"
     )
-    state.apply_action(initial)
+    _ORCHESTRATOR.submit(state, initial)
 
     cancel = next(
         action
         for action in state.available_actions()
         if action.kind == "cancel_spell_targets"
     )
-    state.apply_action(cancel)
+    _ORCHESTRATOR.submit(state, cancel)
 
     assert state.pending_spell_cast is None
     assert state.current_decision().kind == "turn"
@@ -3600,7 +3606,7 @@ def test_ray_of_sickness_combines_scaled_damage_and_timed_condition(
         and str(action.value).startswith("ray_of_sickness:goblin_1")
         and parse_spell_action_slot(str(action.value)) == 2
     )
-    resolved = state.apply_action(action)
+    resolved = _ORCHESTRATOR.submit(state, action)
 
     spell_event = next(event for event in resolved.events if event.type == "spell_cast")
     assert spell_event.data["damage_roll_detail"]["dice"] == "3d8"
@@ -3632,7 +3638,7 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation(monkeypatch) -> No
         for action in state.available_actions()
         if action.kind == "spell" and str(action.value) == "eldritch_blast:goblin_1"
     )
-    state.apply_action(initial)
+    _ORCHESTRATOR.submit(state, initial)
 
     assert state.pending_spell_cast is not None
     assert state.pending_spell_cast.maximum_targets == 3
@@ -3644,13 +3650,13 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation(monkeypatch) -> No
             and action.value == target_ref
             and action.id.endswith("-add")
         )
-        state.apply_action(add_beam)
+        _ORCHESTRATOR.submit(state, add_beam)
     confirm = next(
         action
         for action in state.available_actions()
         if action.kind == "confirm_spell_targets"
     )
-    resolved = state.apply_action(confirm)
+    resolved = _ORCHESTRATOR.submit(state, confirm)
 
     spell_event = next(event for event in resolved.events if event.type == "spell_cast")
     assert spell_event.data["target_refs"] == [
@@ -3701,7 +3707,7 @@ def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage(
         if str(action.value).startswith("ice_knife:goblin_1")
         and parse_spell_action_slot(str(action.value)) == 2
     )
-    resolved = state.apply_action(action)
+    resolved = _ORCHESTRATOR.submit(state, action)
 
     spell_event = next(event for event in resolved.events if event.type == "spell_cast")
     primary = next(
@@ -3791,7 +3797,7 @@ def test_sleep_progresses_from_incapacitated_to_unconscious(
     assert state.has_condition("goblin_1", Condition.INCAPACITATED)
     state.initiative_order = ["player", "goblin_1"]
     state.turn_index = 1
-    state.turn_engine.advance_turn(state, cast)
+    state.turn_lifecycle.advance_turn(state, cast)
     assert state.has_condition("goblin_1", Condition.UNCONSCIOUS)
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
 
@@ -3831,13 +3837,13 @@ def test_sleep_stages_choice_when_area_contains_multiple_creatures(
         for action in state.available_actions()
         if action.kind == "toggle_spell_target" and action.value == "goblin_2"
     )
-    state.apply_action(remove_second)
+    _ORCHESTRATOR.submit(state, remove_second)
     confirm = next(
         action
         for action in state.available_actions()
         if action.kind == "confirm_spell_targets"
     )
-    state.apply_action(confirm)
+    _ORCHESTRATOR.submit(state, confirm)
 
     assert state.has_condition("goblin_1", Condition.INCAPACITATED)
     assert state.has_condition("goblin_2", Condition.INCAPACITATED) is False
@@ -3942,7 +3948,7 @@ def test_charm_person_save_has_advantage_against_opponent(
         if action.kind == "spell"
         and str(action.value).startswith("charm_person:goblin_1")
     )
-    cast = state.apply_action(action)
+    cast = _ORCHESTRATOR.submit(state, action)
 
     assert state.has_condition("goblin_1", Condition.CHARMED) is False
     save = next(
@@ -4205,7 +4211,7 @@ def test_hideous_laughter_prevents_target_from_removing_its_own_prone(
         if action.kind == "spell"
         and str(action.value).startswith("hideous_laughter:goblin_1")
     )
-    state.apply_action(action)
+    _ORCHESTRATOR.submit(state, action)
 
     state._remove_condition(
         "goblin_1",
@@ -4249,7 +4255,7 @@ def test_hideous_laughter_success_is_reported_as_a_save(monkeypatch) -> None:
         and str(action.value).startswith("hideous_laughter:goblin_1")
     )
 
-    result = state.apply_action(action)
+    result = _ORCHESTRATOR.submit(state, action)
 
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
     assert any(
@@ -4349,7 +4355,7 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell(
         if action.kind == "spell"
         and str(action.value).startswith("hold_person:goblin_1")
     )
-    state.apply_action(hold)
+    _ORCHESTRATOR.submit(state, hold)
     state.creatures["player"].actions_remaining = 1
     state.creatures["player"].magic_actions_remaining = 1
     protection = next(
@@ -4360,7 +4366,7 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell(
         and parse_spell_action_damage_type(str(action.value)) == "fire"
     )
 
-    result = state.apply_action(protection)
+    result = _ORCHESTRATOR.submit(state, protection)
 
     assert (
         "system",
@@ -4425,7 +4431,7 @@ def test_failed_damage_save_ends_concentration_and_its_conditions(
     ) in progress.messages
 
 
-def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> None:
+def test_orchestrator_runs_enemy_turns_until_player_turn() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
@@ -4433,7 +4439,7 @@ def test_advance_until_next_decision_runs_enemy_turns_until_player_turn() -> Non
     assert session.encounter_state is not None
     session.encounter_state.turn_index = 1
 
-    progress = session.encounter_state.advance_until_next_decision()
+    progress = _ORCHESTRATOR.advance(session.encounter_state)
 
     assert progress.transition is None
     assert ("system", "Goblin Warrior moves down-left to (4, 3).") in progress.messages
@@ -4467,7 +4473,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
         "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 4
     )
 
-    progress = session.encounter_state.advance_until_next_decision()
+    progress = _ORCHESTRATOR.advance(session.encounter_state)
 
     attack_event = next(
         event
@@ -5039,7 +5045,7 @@ def test_movement_does_not_consume_pending_multiattack_slots() -> None:
     multiattack = next(
         action for action in state.available_actions() if action.kind == "multiattack"
     )
-    state.apply_action(multiattack)
+    _ORCHESTRATOR.submit(state, multiattack)
     slots_before = tuple(actor.pending_multiattack)
 
     move = next(
@@ -5047,7 +5053,7 @@ def test_movement_does_not_consume_pending_multiattack_slots() -> None:
         for action in state.available_actions()
         if action.kind == "move" and action.value == "left"
     )
-    state.apply_action(move)
+    _ORCHESTRATOR.submit(state, move)
 
     assert tuple(actor.pending_multiattack) == slots_before
     assert actor.attacks_remaining == len(slots_before)

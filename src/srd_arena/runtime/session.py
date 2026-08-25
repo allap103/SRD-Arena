@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from srd_arena.domain.creatures import Creature
-from srd_arena.domain.encounters import EncounterDefinition
+from srd_arena.domain.encounters import EncounterDefinition, EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterAction
 from srd_arena.domain.equipment import Item
@@ -29,6 +29,7 @@ class Session:
         start_scene_id: str = "goblin_encounter",
         automatic_action_limit: int | None = None,
         geometry_config: GeometryConfig | None = None,
+        encounter_orchestrator: EncounterOrchestrator | None = None,
     ):
         self.encounters = encounters
         self.creature_templates = creature_templates
@@ -38,6 +39,9 @@ class Session:
         self._initial_creature_templates = deepcopy(creature_templates)
         self.automatic_action_limit = automatic_action_limit
         self.geometry_config = geometry_config or GeometryConfig()
+        self.encounter_orchestrator = (
+            encounter_orchestrator or EncounterOrchestrator()
+        )
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
         self.pending_scene_transition: PendingSceneTransition | None = None
@@ -284,7 +288,10 @@ class Session:
         selected_choice_text: str,
     ) -> TurnResult:
         assert self.encounter_state is not None
-        progress = self.encounter_state.apply_action(action)
+        progress = self.encounter_orchestrator.submit(
+            self.encounter_state,
+            action,
+        )
         messages = progress.messages
         transition = progress.transition
 
@@ -323,7 +330,7 @@ class Session:
         if not self.encounter_state.requires_automatic_advance():
             raise RuntimeError("AI advancement requested while no AI creature is active.")
 
-        progress = self.encounter_state.advance_until_next_decision()
+        progress = self.encounter_orchestrator.advance(self.encounter_state)
         transition = progress.transition
 
         scene_changed = False

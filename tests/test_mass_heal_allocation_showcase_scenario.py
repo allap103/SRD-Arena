@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.runtime.scenario import Scenario
 
 
@@ -9,6 +10,7 @@ SCENARIO_DIR = (
     / "scenarios"
     / "mass_heal_allocation_showcase"
 )
+_ORCHESTRATOR = EncounterOrchestrator()
 
 
 def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> None:
@@ -35,7 +37,7 @@ def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> No
         for action in state.available_actions()
         if action.kind == "spell" and str(action.value).startswith("mass_heal:")
     )
-    result = state.apply_action(cast)
+    result = _ORCHESTRATOR.submit(state, cast)
 
     assert result.paused_for_decision
     assert state.pending_spell_cast is not None

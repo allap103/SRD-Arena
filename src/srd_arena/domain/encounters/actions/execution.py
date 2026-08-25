@@ -21,34 +21,6 @@ def _roll_die(sides: int) -> int:
     return encounter_module.roll_die(sides)
 
 
-def apply_action(
-    self: EncounterState,
-    action: EncounterAction,
-) -> EncounterProgress:
-    decision = self.current_decision()
-    actor = self.creatures[decision.creature_ref].creature
-    if action.creature_ref != decision.creature_ref:
-        raise ValueError(
-            f"Action '{action.id}' belongs to '{action.creature_ref}', "
-            f"not current decision actor '{decision.creature_ref}'."
-        )
-    if self._creature_controller(decision.creature_ref) != "external":
-        raise RuntimeError(
-            "External action requested for a scripted-controlled creature."
-        )
-    if decision.kind == "reroll_dice":
-        progress = self._apply_damage_reroll_action(actor, action, decision)
-        return self.turn_engine.continue_after_interrupt(self, progress)
-    if decision.kind == "reaction":
-        progress = self._apply_reaction_action(actor, action, decision)
-        return self.turn_engine.continue_after_interrupt(self, progress)
-    return self.turn_engine.apply_selected_action(
-        self,
-        action,
-        decision,
-    )
-
-
 def resolve_grapple_action(
     self: EncounterState,
     actor: Creature,

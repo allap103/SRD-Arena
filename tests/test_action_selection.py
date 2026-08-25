@@ -1,13 +1,15 @@
 from pathlib import Path
 
+from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.models import EncounterAction
 from srd_arena.runtime.scenario import Scenario
 
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
+_ORCHESTRATOR = EncounterOrchestrator()
 
 
-def test_turn_engine_delegates_scripted_choice_to_actor_selector() -> None:
+def test_orchestrator_delegates_scripted_choice_to_actor_selector() -> None:
     session = Scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.get_scene_view()
@@ -33,7 +35,7 @@ def test_turn_engine_delegates_scripted_choice_to_actor_selector() -> None:
 
     state._action_selectors[creature_ref] = RecordingSelector()
 
-    progress = state.advance_until_next_decision()
+    progress = _ORCHESTRATOR.advance(state)
 
     assert selections
     assert selections[0][0] == creature_ref

@@ -43,10 +43,7 @@ from .models import (
     TurnState,
     PendingAction,
 )
-from .actions.execution import (
-    apply_action as _apply_action_impl,
-    resolve_grapple_action as _resolve_grapple_action_impl,
-)
+from .actions.execution import resolve_grapple_action as _resolve_grapple_action_impl
 from .actions.eligibility import (
     ActionEligibility,
 )
@@ -69,7 +66,7 @@ from ..effects.conditions import AppliedCondition, CombatTrait, Condition
 from ..geometry import GeometryConfig, MovementBudget
 from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
 from ..effects.triggered import TriggeredEffect, matching_effects
-from .turn_flow import TURN_ENGINE, TurnEngine
+from .turn_lifecycle import TURN_LIFECYCLE, TurnLifecycle
 from .conditions import (
     apply_condition as _apply_condition_impl,
     apply_grapple as _apply_grapple_impl,
@@ -106,8 +103,8 @@ class EncounterState(EncounterStateData):
         return REACTION_ENGINE
 
     @property
-    def turn_engine(self) -> TurnEngine:
-        return TURN_ENGINE
+    def turn_lifecycle(self) -> TurnLifecycle:
+        return TURN_LIFECYCLE
 
     @property
     def combat_rules(self) -> CombatRules:
@@ -321,7 +318,7 @@ class EncounterState(EncounterStateData):
     def current_decision(self) -> DecisionFrame:
         if self.decision_stack:
             return self.decision_stack[-1]
-        creature_ref = self._active_turn_creature()
+        creature_ref = self.turn_lifecycle.active_turn_creature(self)
         return DecisionFrame(
             id=f"turn-{creature_ref.replace(':', '-')}",
             creature_ref=creature_ref,
@@ -457,7 +454,6 @@ class EncounterState(EncounterStateData):
             action,
         )
 
-    apply_action = _apply_action_impl
     export_decision = _export_decision_impl
     export_state = _export_state_impl
     available_actions = _available_actions_impl
@@ -511,49 +507,6 @@ class EncounterState(EncounterStateData):
     _creature_team_id = _creature_team_id_impl
     _creatures_are_opponents = _creatures_are_opponents_impl
 
-    def _open_damage_reroll_decision(self, **kwargs) -> None:
-        self.reaction_engine.open_damage_reroll_decision(self, **kwargs)
-
-    def _reroll_damage_actions(self) -> list[EncounterAction]:
-        return self.reaction_engine.reroll_damage_actions(self)
-
-    def _apply_damage_reroll_action(
-        self,
-        actor: Creature,
-        action: EncounterAction,
-        decision: DecisionFrame,
-    ) -> EncounterProgress:
-        return self.reaction_engine.apply_damage_reroll_action(
-            self,
-            actor,
-            action,
-            decision,
-        )
-
-    def _finalize_pending_attack(
-        self,
-        actor: Creature,
-        progress: EncounterProgress,
-        decision: DecisionFrame,
-    ) -> None:
-        self.reaction_engine.finalize_pending_attack(self, actor, progress, decision)
-
-    def _complete_parent_reaction(
-        self,
-        actor: Creature,
-        progress: EncounterProgress,
-        action_id: str,
-    ) -> None:
-        self.reaction_engine.complete_parent_reaction(
-            self,
-            actor,
-            progress,
-            action_id,
-        )
-
-    def _pending_attack_event_data(self) -> dict[str, object]:
-        return self.reaction_engine.pending_attack_event_data(self)
-
     def _consume_action(self, *, allow_magic: bool) -> None:
         if self.active_actions_remaining <= 0:
             raise RuntimeError("No Action remains to consume.")
@@ -569,66 +522,10 @@ class EncounterState(EncounterStateData):
             self.active_magic_actions_remaining -= 1
         self.active_actions_remaining -= 1
 
-    def advance_until_next_decision(self) -> EncounterProgress:
-        return self.turn_engine.advance_until_next_decision(self)
-
-    def _apply_reaction_action(
-        self,
-        actor: Creature,
-        action: EncounterAction,
-        decision: DecisionFrame,
-    ) -> EncounterProgress:
-        return self.reaction_engine.apply_reaction_action(
-            self,
-            actor,
-            action,
-            decision,
-        )
-
-    def _resume_pending_action(
-        self,
-        actor: Creature,
-        progress: EncounterProgress,
-    ) -> None:
-        self.reaction_engine.resume_pending_action(self, actor, progress)
-
-    def _reaction_actions(self) -> list[EncounterAction]:
-        return self.reaction_engine.reaction_actions(self)
-
-    def _active_turn_creature(self) -> CreatureRef:
-        return self.turn_engine.active_turn_creature(self)
-
-    def _check_transition(self) -> str | None:
-        return self.turn_engine.check_transition(self)
-
-    def _advance_turn(self) -> None:
-        self.turn_engine.advance_turn(self)
-
-    def _expire_conditions_for_turn_end(
-        self,
-        creature_ref: CreatureRef,
-        round_number: int,
-    ) -> None:
-        self.turn_engine.expire_conditions_for_turn_end(
-            self, creature_ref, round_number
-        )
-
-    def _maybe_reset_reactions(self) -> None:
-        self.turn_engine.maybe_reset_reactions(self)
-
-    def _normalize_turn(self) -> None:
-        self.turn_engine.normalize_turn(self)
-
     def _active_movement_remaining(self) -> MovementBudget:
         return self.active_movement_remaining_for()
 
     active_movement_remaining_for = _active_movement_remaining_query
-
-    def _turn_count(self) -> int:
-        return self.turn_engine.turn_count(self)
-
-    def _is_within_bounds(self, x: int, y: int) -> bool:
-        return self.turn_engine.is_within_bounds(self, x, y)
 
     def _next_action_id(self) -> str:
         action_id = f"action_{self.action_sequence}"

@@ -53,9 +53,9 @@ def available_actions(self: EncounterState) -> list[EncounterAction]:
     if self._creature_controller(decision.creature_ref) != "external":
         return []
     if decision.kind == "reroll_dice":
-        return self._reroll_damage_actions()
+        return self.reaction_engine.reroll_damage_actions(self)
     if decision.kind == "reaction":
-        return self._reaction_actions()
+        return self.reaction_engine.reaction_actions(self)
     if decision.kind == "spell_targets":
         return spell_target_selection_actions(self, decision.creature_ref)
     return self._available_creature_actions(decision.creature_ref)

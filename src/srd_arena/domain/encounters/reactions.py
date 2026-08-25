@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Collection
 from typing import TYPE_CHECKING
 
-from ..creatures import Creature
 from ..geometry import MovementBudget, Position
 from ..rolls.dice import reroll_dice
 from ..effects.triggered import TriggeredEffect, reroll_eligible_indices
@@ -80,6 +79,8 @@ def _roll_dice(count: int, sides: int) -> int:
 
 
 class ReactionEngine:
+    """Resolve interrupts while the orchestrator owns parent continuation."""
+
     def resolve_automatic_opportunity_attacks(
         self,
         state: EncounterState,
@@ -266,7 +267,6 @@ class ReactionEngine:
     def apply_damage_reroll_action(
         self,
         state: EncounterState,
-        actor: Creature,
         action: EncounterAction,
         decision: DecisionFrame,
     ) -> EncounterProgress:
@@ -325,13 +325,12 @@ class ReactionEngine:
         elif action.kind != "accept_roll":
             raise ValueError(f"Unsupported damage reroll action: {action.kind}")
 
-        self.finalize_pending_attack(state, actor, progress, decision)
+        self.finalize_pending_attack(state, progress, decision)
         return progress
 
     def finalize_pending_attack(
         self,
         state: EncounterState,
-        actor: Creature,
         progress: EncounterProgress,
         decision: DecisionFrame,
     ) -> None:
@@ -390,17 +389,12 @@ class ReactionEngine:
                 action_id=pending.action_id,
             )
         )
-        progress.transition = state.turn_engine.check_transition(state)
-        if (
-            pending.continuation == "complete_reaction"
-            and progress.transition is None
-        ):
-            self.complete_parent_reaction(state, actor, progress, pending.action_id)
+        if pending.continuation == "complete_reaction":
+            self.complete_parent_reaction(state, progress, pending.action_id)
 
     def complete_parent_reaction(
         self,
         state: EncounterState,
-        actor: Creature,
         progress: EncounterProgress,
         action_id: str,
     ) -> None:
@@ -419,8 +413,6 @@ class ReactionEngine:
                 action_id=action_id,
             )
         )
-        self.resume_pending_action(state, actor, progress)
-        progress.transition = state.turn_engine.check_transition(state)
 
     def pending_attack_event_data(self, state: EncounterState) -> dict[str, object]:
         pending = state.pending_attack
@@ -455,7 +447,6 @@ class ReactionEngine:
     def apply_reaction_action(
         self,
         state: EncounterState,
-        actor: Creature,
         action: EncounterAction,
         decision: DecisionFrame,
     ) -> EncounterProgress:
@@ -587,14 +578,11 @@ class ReactionEngine:
             )
         )
 
-        self.resume_pending_action(state, actor, progress)
-        progress.transition = state.turn_engine.check_transition(state)
         return progress
 
     def resume_pending_action(
         self,
         state: EncounterState,
-        actor: Creature,
         progress: EncounterProgress,
     ) -> None:
         pending_action = state.pending_action
@@ -636,20 +624,7 @@ class ReactionEngine:
                 )
             )
 
-        if state._creature_controller(pending_action.creature_ref) == "external":
-            mover.movement_remaining = pending_action.remaining_movement_after
-            return
         mover.movement_remaining = pending_action.remaining_movement_after
-        if state.automatic_action_limit is not None:
-            return
-        completed_turn, resumed, _ = state.turn_engine.run_creature_turn(
-            state,
-            pending_action.creature_ref,
-        )
-        state._merge_progress(progress, resumed)
-        if completed_turn and not progress.paused_for_decision:
-            state.turn_engine.advance_turn(state)
-            state.turn_engine.maybe_reset_reactions(state)
 
     def queue_opportunity_attack(
         self,

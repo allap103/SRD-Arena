@@ -730,7 +730,6 @@ def execute_creature_action(
     else:
         raise ValueError(f"Unsupported creature action: {action.kind}")
 
-    progress.transition = self._check_transition()
     return finish_action_execution(
         context,
         action_ends_turn=action_ends_turn,
