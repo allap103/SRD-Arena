@@ -10,10 +10,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .continuations import ContinuationRunner
 from .models import (
     ActionExecutionOutcome,
     CreatureRef,
     DecisionFrame,
+    DecisionExecutionResult,
     EncounterAction,
     EncounterProgress,
 )
@@ -24,6 +26,12 @@ if TYPE_CHECKING:
 
 class EncounterOrchestrator:
     """Drive an encounter until it finishes or requires a controller decision."""
+
+    def __init__(
+        self,
+        continuation_runner: ContinuationRunner | None = None,
+    ) -> None:
+        self._continuation_runner = continuation_runner or ContinuationRunner()
 
     def submit(
         self,
@@ -43,21 +51,19 @@ class EncounterOrchestrator:
             )
 
         if decision.kind == "reroll_dice":
-            progress = state.reaction_engine.apply_damage_reroll_action(
+            result = state.reaction_engine.apply_damage_reroll_action(
                 state,
                 action,
                 decision,
             )
-            self._record_transition(state, progress)
-            return self._continue_after_interrupt(state, progress)
+            return self._finish_decision_execution(state, decision, result)
         if decision.kind == "reaction":
-            progress = state.reaction_engine.apply_reaction_action(
+            result = state.reaction_engine.apply_reaction_action(
                 state,
                 action,
                 decision,
             )
-            self._record_transition(state, progress)
-            return self._continue_after_interrupt(state, progress)
+            return self._finish_decision_execution(state, decision, result)
         return self._apply_selected_action(state, action, decision)
 
     def advance(self, state: EncounterState) -> EncounterProgress:
@@ -130,13 +136,25 @@ class EncounterOrchestrator:
             or state.decision_stack
         ):
             return progress
-        if state.pending_action is not None:
-            state.reaction_engine.resume_pending_action(state, progress)
-            self._record_transition(state, progress)
-            if progress.transition is not None:
-                return progress
         state._merge_progress(progress, self.advance(state))
         return progress
+
+    def _finish_decision_execution(
+        self,
+        state: EncounterState,
+        decision: DecisionFrame,
+        result: DecisionExecutionResult,
+    ) -> EncounterProgress:
+        progress = result.progress
+        if result.completed:
+            self._continuation_runner.complete_decision(
+                state,
+                decision,
+                action_id=result.action_id,
+                progress=progress,
+            )
+        self._record_transition(state, progress)
+        return self._continue_after_interrupt(state, progress)
 
     def _record_transition(
         self,
@@ -223,7 +241,7 @@ class EncounterOrchestrator:
             actions_resolved += 1
             if progress.transition is not None:
                 return True, progress, actions_resolved
-            if result.outcome is ActionExecutionOutcome.PAUSE_FOR_REACTION:
+            if result.outcome is ActionExecutionOutcome.PAUSE_FOR_DECISION:
                 return False, progress, actions_resolved
             if result.outcome is ActionExecutionOutcome.END_TURN or (
                 action.kind == "attack"

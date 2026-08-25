@@ -116,7 +116,6 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
     result = session.choose(attack_id)
 
     assert session.encounter_state is not None
-    assert session.encounter_state.pending_attack is None
     assert any(event.type == "attack_resolved" for event in result.events)
     assert not any(event.type == "attack_pending" for event in result.events)
 

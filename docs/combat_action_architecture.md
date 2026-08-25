@@ -52,7 +52,25 @@ invocations.
 `EncounterAction` is already the common action-offer envelope.
 `ActionExecutionContext` is the closest current invocation shell, but there is
 not yet a persistent typed invocation model, and spell attacks and monster
-attacks still use separate resolution paths. The diagram above is the target.
+attacks still use separate resolution paths.
+
+`EncounterOrchestrator` is now the explicit high-level encounter flow.
+Interrupt decisions own typed request data and typed continuations on the
+decision stack. `ContinuationRunner` validates exact top-of-stack completion
+and unwinds nested decisions in LIFO order. Opportunity Attack movement and
+damage-reroll decisions use this path; neither relies on a global pending
+action, a global pending attack, or a string continuation name.
+
+Spell target and resource allocation remains pre-invocation input state. It is
+not yet a cancellable casting occurrence. Counterspell therefore still needs:
+
+1. a persistent invocation with an occurrence-specific ID and lifecycle state;
+2. a continuation that resumes that exact invocation;
+3. an ordered reaction window that can offer every eligible responder and
+   suspend while a nested invocation resolves.
+
+Reusable spell IDs and repeated turn-frame IDs must not stand in for invocation
+identity. The typed continuation hierarchy is the extension seam for this work.
 
 ## Declarative content and Python
 

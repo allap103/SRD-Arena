@@ -23,7 +23,7 @@ from .actions.options import (
 from ..effects.application import apply_effects
 from .serialization import (
     export_decision as _export_decision_impl,
-    export_pending_action as _export_pending_action_impl,
+    export_pending_movement as _export_pending_movement_impl,
     export_state as _export_state_impl,
 )
 from .models import (
@@ -37,11 +37,11 @@ from .models import (
     EncounterStateData,
     InitiativeEntry,
     InterruptState,
-    PendingAttack,
+    OpportunityAttackRequest,
+    PendingMovement,
     PendingSpellCast,
     RoundState,
     TurnState,
-    PendingAction,
 )
 from .actions.execution import resolve_grapple_action as _resolve_grapple_action_impl
 from .actions.eligibility import (
@@ -119,20 +119,11 @@ class EncounterState(EncounterStateData):
         self.interrupts.decision_stack = value
 
     @property
-    def pending_action(self) -> PendingAction | None:
-        return self.interrupts.pending_action
-
-    @pending_action.setter
-    def pending_action(self, value: PendingAction | None) -> None:
-        self.interrupts.pending_action = value
-
-    @property
-    def pending_attack(self) -> PendingAttack | None:
-        return self.interrupts.pending_attack
-
-    @pending_attack.setter
-    def pending_attack(self, value: PendingAttack | None) -> None:
-        self.interrupts.pending_attack = value
+    def pending_movement(self) -> PendingMovement | None:
+        for decision in reversed(self.decision_stack):
+            if isinstance(decision.request, OpportunityAttackRequest):
+                return decision.request.movement
+        return None
 
     @property
     def pending_spell_cast(self) -> PendingSpellCast | None:
@@ -573,7 +564,7 @@ class EncounterState(EncounterStateData):
         )
         target.paused_for_pacing = target.paused_for_pacing or source.paused_for_pacing
 
-    _export_pending_action = _export_pending_action_impl
+    _export_pending_movement = _export_pending_movement_impl
 
     def _creature_label(self, creature_ref: CreatureRef) -> str:
         creature_state = self.creatures[creature_ref]

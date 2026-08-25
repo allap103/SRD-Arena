@@ -4,17 +4,16 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from ..capabilities import CapabilityEffect, DamageEffect
 from ..creatures import Creature
-from ..equipment import Item
-from ..geometry import MovementBudget, MovementCost, Position
-from .definitions import EncounterBehavior, EncounterDefinition
+from ..creatures.multiattack import MultiattackStep
 from ..effects.conditions import AppliedCondition
 from ..effects.runtime import CreatureRelationship, OngoingEffect
-from ..geometry import GeometryConfig
-from ..rolls.dice import CheckResult, DicePoolResult
 from ..effects.triggered import TriggeredEffect
-from ..capabilities import CapabilityEffect, DamageEffect
-from ..creatures.multiattack import MultiattackStep
+from ..equipment import Item
+from ..geometry import GeometryConfig, MovementBudget, MovementCost, Position
+from ..rolls.dice import CheckResult, DicePoolResult
+from .definitions import EncounterBehavior, EncounterDefinition
 
 CreatureRef = str
 
@@ -46,6 +45,44 @@ class EncounterAction:
     cost: ActionCost = field(default_factory=ActionCost)
 
 
+class DecisionRequest:
+    """Typed state needed to resolve a decision frame."""
+
+
+class DecisionContinuation:
+    """Typed work resumed after a decision frame closes."""
+
+
+@dataclass
+class PendingMovement:
+    """One movement suspended while an interrupt decision resolves."""
+
+    action_id: str
+    creature_ref: CreatureRef
+    direction: str
+    from_position: Position
+    to_position: Position
+    remaining_movement_after: MovementBudget
+    trigger_id: str
+    companion_destinations: dict[CreatureRef, Position] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class OpportunityAttackRequest(DecisionRequest):
+    movement: PendingMovement
+
+
+@dataclass(frozen=True)
+class ResumeMovement(DecisionContinuation):
+    movement: PendingMovement
+
+
+@dataclass(frozen=True)
+class CloseParentDecision(DecisionContinuation):
+    frame_id: str
+    action_id: str
+
+
 @dataclass
 class DecisionFrame:
     id: str
@@ -55,6 +92,8 @@ class DecisionFrame:
     parent_frame_id: str | None = None
     parent_action_id: str | None = None
     can_pass: bool = False
+    request: DecisionRequest | None = None
+    continuation: DecisionContinuation | None = None
 
 
 @dataclass
@@ -79,7 +118,7 @@ class EncounterProgress:
 class ActionExecutionOutcome(str, Enum):
     CONTINUE_TURN = "continue_turn"
     END_TURN = "end_turn"
-    PAUSE_FOR_REACTION = "pause_for_reaction"
+    PAUSE_FOR_DECISION = "pause_for_decision"
     ENCOUNTER_COMPLETE = "encounter_complete"
 
 
@@ -104,6 +143,13 @@ class ActionExecutionResult:
 
 
 @dataclass
+class DecisionExecutionResult:
+    progress: EncounterProgress
+    action_id: str
+    completed: bool
+
+
+@dataclass
 class RoundState:
     number: int = 1
 
@@ -121,6 +167,8 @@ class TurnState:
 
 @dataclass
 class PendingSpellCast:
+    """Pre-invocation spell selection state; casting has not started yet."""
+
     action: EncounterAction
     spell_id: str
     selected_target_refs: list[CreatureRef]
@@ -135,8 +183,6 @@ class PendingSpellCast:
 @dataclass
 class InterruptState:
     decision_stack: list[DecisionFrame] = field(default_factory=list)
-    pending_action: PendingAction | None = None
-    pending_attack: PendingAttack | None = None
     pending_spell_cast: PendingSpellCast | None = None
 
 
@@ -145,18 +191,6 @@ class BehaviorContext:
     target_position: Position
     actor_position: Position
     can_attack: bool
-
-
-@dataclass
-class PendingAction:
-    id: str
-    kind: str
-    creature_ref: CreatureRef
-    direction: str
-    from_position: Position
-    to_position: Position
-    remaining_movement_after: MovementBudget | None = None
-    trigger_id: str | None = None
 
 
 @dataclass
@@ -213,7 +247,9 @@ class AttackOutcome:
 
 
 @dataclass
-class PendingAttack:
+class DamageRerollRequest(DecisionRequest):
+    """A resolved hit waiting for its optional damage rerolls."""
+
     action_id: str
     attacker_ref: CreatureRef
     target_ref: CreatureRef
@@ -222,7 +258,6 @@ class PendingAttack:
     attacks_remaining: int
     attack: AttackOutcome
     triggered_effect: TriggeredEffect
-    continuation: str = "return_to_turn"
     reaction: bool = False
 
 

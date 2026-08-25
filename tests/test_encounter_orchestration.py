@@ -4,6 +4,8 @@ import pytest
 
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.effects import EffectResult, TriggeredEffect
+from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.runtime.scenario import Scenario
 from srd_arena.runtime.session import Session
 
@@ -169,13 +171,24 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
     assert interrupted.decision is not None
     assert interrupted.decision["kind"] == "reaction"
     assert interrupted.decision["creature_ref"] == "red_blade"
-    assert state.pending_action is not None
-    assert state.pending_action.creature_ref == "champion_2"
-    assert state.pending_action.direction == "up"
+    assert state.pending_movement is not None
+    assert state.pending_movement.creature_ref == "champion_2"
+    assert state.pending_movement.direction == "up"
     assert (
-        state.pending_action.to_position.x,
-        state.pending_action.to_position.y,
+        state.pending_movement.to_position.x,
+        state.pending_movement.to_position.y,
     ) == (3, 2)
+    exported = state.export_state()
+    exported_decision = exported["decision"]
+    exported_movement = exported["pending_movement"]
+    assert isinstance(exported_decision, dict)
+    assert isinstance(exported_movement, dict)
+    assert (
+        exported_decision["pending_movement_id"]
+        == state.pending_movement.action_id
+    )
+    assert exported_movement["action_id"] == state.pending_movement.action_id
+    assert "pending_action" not in exported
     assert (mover.position.x, mover.position.y) == (3, 3)
     assert not any(event.type == "movement_resolved" for event in interrupted.events)
 
@@ -186,7 +199,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
     )
     resumed = session.choose_encounter_action(opportunity_attack)
 
-    assert state.pending_action is None
+    assert state.pending_movement is None
     assert state.current_decision().kind == "turn"
     assert state.current_decision().creature_ref == "champion_2"
     assert (mover.position.x, mover.position.y) == (3, 2)
@@ -196,6 +209,237 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
     )
     assert movement.creature_ref == "champion_2"
     assert movement.data["resumed"] is True
+
+
+def test_lethal_reaction_closes_the_frame_without_resuming_movement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 20,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda _count, sides: sides,
+    )
+    session = Scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session.get_scene_view()
+    state = session.encounter_state
+    assert state is not None
+    state.turn_index = state.initiative_order.index("champion_2")
+    mover = state.creatures["champion_2"]
+    reactor = state.creatures["red_blade"]
+    mover.creature.current_health = 1
+    mover.position.x, mover.position.y = 3, 3
+    reactor.position.x, reactor.position.y = 3, 4
+    move = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "move" and action.value == "up"
+    )
+
+    session.choose_encounter_action(move)
+    opportunity_attack = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "opportunity_attack"
+    )
+    resolved = session.choose_encounter_action(opportunity_attack)
+
+    assert mover.is_alive is False
+    assert (mover.position.x, mover.position.y) == (3, 3)
+    assert state.decision_stack == []
+    assert state.pending_movement is None
+    assert not any(event.type == "movement_resolved" for event in resolved.events)
+
+
+def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 15,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda _count, _sides: 1,
+    )
+    session = Scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session.get_scene_view()
+    state = session.encounter_state
+    assert state is not None
+    state.turn_index = state.initiative_order.index("champion_2")
+    mover = state.creatures["champion_2"]
+    reactor = state.creatures["red_blade"]
+    mover.position.x, mover.position.y = 3, 3
+    reactor.position.x, reactor.position.y = 3, 4
+    reactor.creature.triggered_effects.append(
+        TriggeredEffect(
+            id="test_damage_reroll",
+            source_type="test",
+            source_id="test",
+            trigger="weapon_damage_rolled",
+            operation="reroll_matching_dice",
+            parameters={"values": [1], "maximum_per_die": 2},
+        )
+    )
+    move = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "move" and action.value == "up"
+    )
+
+    session.choose_encounter_action(move)
+    reaction_frame = state.current_decision()
+    opportunity_attack = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "opportunity_attack"
+    )
+    interrupted_again = session.choose_encounter_action(opportunity_attack)
+
+    assert interrupted_again.decision is not None
+    assert interrupted_again.decision["kind"] == "reroll_dice"
+    assert [frame.kind for frame in state.decision_stack] == [
+        "reaction",
+        "reroll_dice",
+    ]
+    reroll_frame = state.current_decision()
+    reroll = next(
+        action for action in state.available_actions() if action.kind == "reroll_die"
+    )
+
+    still_interrupted = session.choose_encounter_action(reroll)
+
+    assert still_interrupted.decision is not None
+    assert still_interrupted.decision["frame_id"] == reroll_frame.id
+    assert [frame.id for frame in state.decision_stack] == [
+        reaction_frame.id,
+        reroll_frame.id,
+    ]
+    assert state.pending_movement is not None
+    assert (mover.position.x, mover.position.y) == (3, 3)
+    assert not any(
+        event.type in {"decision_closed", "movement_resolved"}
+        for event in still_interrupted.events
+    )
+    accept_damage = next(
+        action for action in state.available_actions() if action.kind == "accept_roll"
+    )
+
+    resumed = session.choose_encounter_action(accept_damage)
+
+    assert state.decision_stack == []
+    assert state.pending_movement is None
+    assert (mover.position.x, mover.position.y) == (3, 2)
+    closed_frame_ids = [
+        event.frame_id for event in resumed.events if event.type == "decision_closed"
+    ]
+    assert closed_frame_ids == [reroll_frame.id, reaction_frame.id]
+    movement_event_index = next(
+        index
+        for index, event in enumerate(resumed.events)
+        if event.type == "movement_resolved"
+    )
+    parent_close_index = next(
+        index
+        for index, event in enumerate(resumed.events)
+        if event.type == "decision_closed" and event.frame_id == reaction_frame.id
+    )
+    assert parent_close_index < movement_event_index
+
+
+def test_passing_reaction_closes_it_before_parent_movement_resumes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
+    session = Scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session.get_scene_view()
+    state = session.encounter_state
+    assert state is not None
+    state.turn_index = state.initiative_order.index("champion_2")
+    mover = state.creatures["champion_2"]
+    reactor = state.creatures["red_blade"]
+    mover.position.x, mover.position.y = 3, 3
+    reactor.position.x, reactor.position.y = 3, 4
+    move = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "move" and action.value == "up"
+    )
+
+    session.choose_encounter_action(move)
+    reaction_frame = state.current_decision()
+    assert state.pending_movement is not None
+    movement_action_id = state.pending_movement.action_id
+    pass_reaction = next(
+        action for action in state.available_actions() if action.kind == "pass"
+    )
+    resumed = session.choose_encounter_action(pass_reaction)
+
+    assert state.decision_stack == []
+    assert state.pending_movement is None
+    assert state.current_decision().creature_ref == "champion_2"
+    assert (mover.position.x, mover.position.y) == (3, 2)
+    assert reactor.reaction_available is True
+    relevant_events = [
+        event
+        for event in resumed.events
+        if event.type in {"decision_closed", "movement_resolved", "attack_resolved"}
+    ]
+    assert [event.type for event in relevant_events] == [
+        "decision_closed",
+        "movement_resolved",
+    ]
+    assert relevant_events[0].frame_id == reaction_frame.id
+    assert relevant_events[1].action_id == movement_action_id
+
+
+def test_resumed_movement_carries_a_grappled_creature() -> None:
+    session = Scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session.get_scene_view()
+    state = session.encounter_state
+    assert state is not None
+    state.turn_index = state.initiative_order.index("champion_2")
+    mover = state.creatures["champion_2"]
+    grappled = state.creatures["red_archer"]
+    reactor = state.creatures["red_blade"]
+    mover.position.x, mover.position.y = 3, 3
+    grappled.position.x, grappled.position.y = 4, 3
+    reactor.position.x, reactor.position.y = 3, 4
+    state._apply_grapple(
+        condition_from_effect(
+            EffectResult(
+                kind="apply_condition",
+                target_ref="red_archer",
+                data={
+                    "condition": "grappled",
+                    "source_ref": "champion_2",
+                    "source_label": mover.creature.name,
+                },
+            )
+        )
+    )
+    move = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "move" and action.value == "up"
+    )
+
+    session.choose_encounter_action(move)
+    assert state.pending_movement is not None
+    assert state.pending_movement.companion_destinations["red_archer"].x == 4
+    assert state.pending_movement.companion_destinations["red_archer"].y == 2
+    pass_reaction = next(
+        action for action in state.available_actions() if action.kind == "pass"
+    )
+    session.choose_encounter_action(pass_reaction)
+
+    assert (mover.position.x, mover.position.y) == (3, 2)
+    assert (grappled.position.x, grappled.position.y) == (4, 2)
 
 
 def test_reaction_to_scripted_movement_resumes_automatic_advancement(
@@ -232,12 +476,12 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
     assert interrupted.decision is not None
     assert interrupted.decision["kind"] == "reaction"
     assert interrupted.decision["creature_ref"] == "player"
-    assert state.pending_action is not None
-    assert state.pending_action.creature_ref == "goblin_2"
-    assert state.pending_action.direction == "up-right"
+    assert state.pending_movement is not None
+    assert state.pending_movement.creature_ref == "goblin_2"
+    assert state.pending_movement.direction == "up-right"
     assert (
-        state.pending_action.to_position.x,
-        state.pending_action.to_position.y,
+        state.pending_movement.to_position.x,
+        state.pending_movement.to_position.y,
     ) == (4, 2)
     assert (mover.position.x, mover.position.y) == (3, 3)
 
@@ -248,7 +492,7 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
     )
     resumed = session.choose_encounter_action(opportunity_attack)
 
-    assert state.pending_action is None
+    assert state.pending_movement is None
     assert resumed.decision is not None
     assert resumed.decision["kind"] == "turn"
     assert resumed.decision["creature_ref"] == "player"

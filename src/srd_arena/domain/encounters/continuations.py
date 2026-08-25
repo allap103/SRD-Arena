@@ -1,0 +1,115 @@
+"""Close decision frames and resume their typed continuations."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from .models import (
+    CloseParentDecision,
+    DecisionFrame,
+    EncounterProgress,
+    ResumeMovement,
+)
+
+if TYPE_CHECKING:
+    from .encounter import EncounterState
+
+
+class ContinuationRunner:
+    """Drain completed decisions in strict last-in, first-out order.
+
+    Continuations carry runtime occurrence data, rather than reusable content
+    identifiers. A future spell continuation should therefore reference an
+    exact invocation ID, just as movement references one suspended movement.
+    """
+
+    def complete_decision(
+        self,
+        state: EncounterState,
+        decision: DecisionFrame,
+        *,
+        action_id: str,
+        progress: EncounterProgress,
+    ) -> None:
+        current = decision
+        current_action_id = action_id
+        while True:
+            self._require_top(state, current.id)
+            continuation = current.continuation
+            if isinstance(continuation, CloseParentDecision):
+                if continuation.frame_id != current.parent_frame_id:
+                    raise RuntimeError(
+                        f"Decision '{current.id}' cannot complete unrelated frame "
+                        f"'{continuation.frame_id}'."
+                    )
+                if (
+                    len(state.decision_stack) < 2
+                    or state.decision_stack[-2].id != continuation.frame_id
+                ):
+                    raise RuntimeError(
+                        f"Decision '{current.id}' cannot complete frame "
+                        f"'{continuation.frame_id}' out of LIFO order."
+                    )
+            elif continuation is not None and not isinstance(
+                continuation,
+                ResumeMovement,
+            ):
+                raise TypeError(
+                    "ContinuationRunner has no handler for continuation "
+                    f"'{type(continuation).__name__}'."
+                )
+
+            self._pop_decision(
+                state,
+                expected_frame_id=current.id,
+                action_id=current_action_id,
+                progress=progress,
+            )
+            if isinstance(continuation, CloseParentDecision):
+                current = state.decision_stack[-1]
+                current_action_id = continuation.action_id
+                continue
+            if isinstance(continuation, ResumeMovement):
+                state.reaction_engine.resume_movement(
+                    state,
+                    continuation.movement,
+                    progress,
+                )
+            return
+
+    def _require_top(
+        self,
+        state: EncounterState,
+        expected_frame_id: str,
+    ) -> None:
+        if not state.decision_stack:
+            raise RuntimeError(
+                f"Cannot close decision '{expected_frame_id}': the stack is empty."
+            )
+        current = state.decision_stack[-1]
+        if current.id != expected_frame_id:
+            raise RuntimeError(
+                f"Cannot close decision '{expected_frame_id}' while "
+                f"'{current.id}' is active."
+            )
+
+    def _pop_decision(
+        self,
+        state: EncounterState,
+        *,
+        expected_frame_id: str,
+        action_id: str,
+        progress: EncounterProgress,
+    ) -> DecisionFrame:
+        self._require_top(state, expected_frame_id)
+        decision = state.decision_stack[-1]
+        state.decision_stack.pop()
+        progress.events.append(
+            state._event(
+                "decision_closed",
+                creature_ref=decision.creature_ref,
+                frame_id=decision.id,
+                action_id=action_id,
+            )
+        )
+        return decision

@@ -17,11 +17,16 @@ from .behaviors import is_adjacent as _is_adjacent
 from .models import (
     ActionCost,
     AttackOutcome,
+    CloseParentDecision,
+    DamageRerollRequest,
     DecisionFrame,
+    DecisionContinuation,
+    DecisionExecutionResult,
     EncounterAction,
     EncounterProgress,
-    PendingAction,
-    PendingAttack,
+    OpportunityAttackRequest,
+    PendingMovement,
+    ResumeMovement,
 )
 from .ongoing_effects import (
     resolve_concentration_damage,
@@ -76,6 +81,22 @@ def _roll_dice(count: int, sides: int) -> int:
     from . import encounter as encounter_module
 
     return encounter_module.roll_dice(count, sides)
+
+
+def _damage_reroll_request(decision: DecisionFrame) -> DamageRerollRequest:
+    if not isinstance(decision.request, DamageRerollRequest):
+        raise RuntimeError(
+            f"Decision '{decision.id}' does not contain a damage reroll request."
+        )
+    return decision.request
+
+
+def _opportunity_attack_request(decision: DecisionFrame) -> OpportunityAttackRequest:
+    if not isinstance(decision.request, OpportunityAttackRequest):
+        raise RuntimeError(
+            f"Decision '{decision.id}' does not contain an opportunity attack request."
+        )
+    return decision.request
 
 
 class ReactionEngine:
@@ -190,12 +211,12 @@ class ReactionEngine:
         target_label: str,
         action_id: str,
         progress: EncounterProgress,
-        continuation: str = "return_to_turn",
+        continuation: DecisionContinuation | None = None,
         reaction: bool = False,
     ) -> None:
         frame_id = state._next_frame_id()
         current_frame = state.current_decision()
-        state.pending_attack = PendingAttack(
+        request = DamageRerollRequest(
             action_id=action_id,
             attacker_ref=attacker_ref,
             target_ref=target_ref,
@@ -204,7 +225,6 @@ class ReactionEngine:
             attacks_remaining=state.active_attacks_remaining,
             attack=attack,
             triggered_effect=triggered_effect,
-            continuation=continuation,
             reaction=reaction,
         )
         state.decision_stack.append(
@@ -216,6 +236,8 @@ class ReactionEngine:
                 parent_frame_id=current_frame.id,
                 parent_action_id=action_id,
                 can_pass=True,
+                request=request,
+                continuation=continuation,
             )
         )
         progress.messages.extend(attack.messages)
@@ -232,34 +254,34 @@ class ReactionEngine:
                 creature_ref=attacker_ref,
                 frame_id=frame_id,
                 action_id=action_id,
-                data=self.pending_attack_event_data(state),
+                data=self.damage_reroll_event_data(request),
             )
         )
         progress.paused_for_decision = True
 
     def reroll_damage_actions(self, state: EncounterState) -> list[EncounterAction]:
-        pending = state.pending_attack
-        if pending is None or pending.attack.damage_roll is None:
+        request = _damage_reroll_request(state.current_decision())
+        if request.attack.damage_roll is None:
             return []
         actions = [
             EncounterAction(
-                f"Reroll damage die {index + 1} ({pending.attack.damage_roll.dice[index].result})",
+                f"Reroll damage die {index + 1} ({request.attack.damage_roll.dice[index].result})",
                 "reroll_die",
                 index,
-                id=_reroll_die_action_id(pending.action_id, index),
-                creature_ref=pending.attacker_ref,
+                id=_reroll_die_action_id(request.action_id, index),
+                creature_ref=request.attacker_ref,
             )
             for index in reroll_eligible_indices(
-                pending.triggered_effect,
-                pending.attack.damage_roll,
+                request.triggered_effect,
+                request.attack.damage_roll,
             )
         ]
         actions.append(
             EncounterAction(
                 "Use current damage",
                 "accept_roll",
-                id=f"{pending.action_id}-accept-damage",
-                creature_ref=pending.attacker_ref,
+                id=f"{request.action_id}-accept-damage",
+                creature_ref=request.attacker_ref,
             )
         )
         return actions
@@ -269,17 +291,17 @@ class ReactionEngine:
         state: EncounterState,
         action: EncounterAction,
         decision: DecisionFrame,
-    ) -> EncounterProgress:
-        pending = state.pending_attack
-        if pending is None or pending.attack.damage_roll is None:
+    ) -> DecisionExecutionResult:
+        request = _damage_reroll_request(decision)
+        if request.attack.damage_roll is None:
             raise RuntimeError("Damage reroll requested without a pending attack.")
         progress = EncounterProgress()
         progress.events.append(
             state._event(
                 "action_declared",
-                creature_ref=pending.attacker_ref,
+                creature_ref=request.attacker_ref,
                 frame_id=decision.id,
-                action_id=pending.action_id,
+                action_id=request.action_id,
                 data={"kind": action.kind, "selected_action_id": action.id},
             )
         )
@@ -288,19 +310,19 @@ class ReactionEngine:
             if not isinstance(action.value, int):
                 raise ValueError("Reroll die action requires an integer die index.")
             eligible = reroll_eligible_indices(
-                pending.triggered_effect,
-                pending.attack.damage_roll,
+                request.triggered_effect,
+                request.attack.damage_roll,
             )
             if action.value not in eligible:
                 raise ValueError(f"Damage die {action.value} is not eligible for reroll.")
-            previous = pending.attack.damage_roll.dice[action.value].result
-            pending.attack.damage_roll = reroll_dice(
-                pending.attack.damage_roll,
+            previous = request.attack.damage_roll.dice[action.value].result
+            request.attack.damage_roll = reroll_dice(
+                request.attack.damage_roll,
                 [action.value],
                 roller=lambda sides: _roll_dice(1, sides),
             )
-            replacement = pending.attack.damage_roll.dice[action.value].result
-            pending.attack.damage_roll_detail = damage_roll_detail(pending.attack)
+            replacement = request.attack.damage_roll.dice[action.value].result
+            request.attack.damage_roll_detail = damage_roll_detail(request.attack)
             progress.messages.append(
                 (
                     "system",
@@ -310,60 +332,66 @@ class ReactionEngine:
             progress.events.append(
                 state._event(
                     "damage_rerolled",
-                    creature_ref=pending.attacker_ref,
+                    creature_ref=request.attacker_ref,
                     frame_id=decision.id,
-                    action_id=pending.action_id,
-                    data=self.pending_attack_event_data(state),
+                    action_id=request.action_id,
+                    data=self.damage_reroll_event_data(request),
                 )
             )
             if reroll_eligible_indices(
-                pending.triggered_effect,
-                pending.attack.damage_roll,
+                request.triggered_effect,
+                request.attack.damage_roll,
             ):
                 progress.paused_for_decision = True
-                return progress
+                return DecisionExecutionResult(
+                    progress=progress,
+                    action_id=request.action_id,
+                    completed=False,
+                )
         elif action.kind != "accept_roll":
             raise ValueError(f"Unsupported damage reroll action: {action.kind}")
 
-        self.finalize_pending_attack(state, progress, decision)
-        return progress
+        self.finalize_damage_reroll(state, request, progress, decision)
+        return DecisionExecutionResult(
+            progress=progress,
+            action_id=request.action_id,
+            completed=True,
+        )
 
-    def finalize_pending_attack(
+    def finalize_damage_reroll(
         self,
         state: EncounterState,
+        request: DamageRerollRequest,
         progress: EncounterProgress,
         decision: DecisionFrame,
     ) -> None:
-        pending = state.pending_attack
-        if pending is None:
-            raise RuntimeError("Cannot finalize an attack that is not pending.")
-        attacker = state.creatures[pending.attacker_ref].creature
-        target = state.creatures[pending.target_ref]
+        attacker = state.creatures[request.attacker_ref].creature
+        target = state.creatures[request.target_ref]
         apply_attack_damage(
-            pending.attack,
+            request.attack,
             target.creature,
             attacker_label=attacker.name,
-            target_label=pending.target_label,
+            target_label=request.target_label,
         )
         _resolve_attack_lifecycle(
             state,
-            attacker_ref=pending.attacker_ref,
-            target_ref=pending.target_ref,
-            damage=pending.attack.damage,
+            attacker_ref=request.attacker_ref,
+            target_ref=request.target_ref,
+            damage=request.attack.damage,
             progress=progress,
         )
-        progress.messages.extend(pending.attack.messages)
+        progress.messages.extend(request.attack.messages)
         progress.events.append(
             state._event(
                 "attack_resolved",
-                creature_ref=pending.attacker_ref,
+                creature_ref=request.attacker_ref,
                 frame_id=decision.id,
-                action_id=pending.action_id,
+                action_id=request.action_id,
                 data={
-                    **self.pending_attack_event_data(state),
+                    **self.damage_reroll_event_data(request),
                     "hit": True,
-                    "damage": pending.attack.damage,
-                    "damage_roll_detail": pending.attack.damage_roll_detail,
+                    "damage": request.attack.damage,
+                    "damage_roll_detail": request.attack.damage_roll_detail,
                     "eligible_die_indices": [],
                     "reroll_action_ids": {},
                     "accept_action_id": None,
@@ -374,74 +402,42 @@ class ReactionEngine:
             progress.events.append(
                 state._event(
                     "creature_defeated",
-                    creature_ref=pending.target_ref,
+                    creature_ref=request.target_ref,
                     frame_id=decision.id,
-                    action_id=pending.action_id,
+                    action_id=request.action_id,
                 )
             )
-        state.pending_attack = None
-        state.decision_stack.pop()
-        progress.events.append(
-            state._event(
-                "decision_closed",
-                creature_ref=pending.attacker_ref,
-                frame_id=decision.id,
-                action_id=pending.action_id,
-            )
-        )
-        if pending.continuation == "complete_reaction":
-            self.complete_parent_reaction(state, progress, pending.action_id)
 
-    def complete_parent_reaction(
+    def damage_reroll_event_data(
         self,
-        state: EncounterState,
-        progress: EncounterProgress,
-        action_id: str,
-    ) -> None:
-        reaction = state.current_decision()
-        if reaction.kind != "reaction":
-            raise RuntimeError(
-                "Pending attack expected to resume a reaction, "
-                f"but current decision is '{reaction.kind}'."
-            )
-        state.decision_stack.pop()
-        progress.events.append(
-            state._event(
-                "decision_closed",
-                creature_ref=reaction.creature_ref,
-                frame_id=reaction.id,
-                action_id=action_id,
-            )
-        )
-
-    def pending_attack_event_data(self, state: EncounterState) -> dict[str, object]:
-        pending = state.pending_attack
-        if pending is None or pending.attack.damage_roll is None:
+        request: DamageRerollRequest,
+    ) -> dict[str, object]:
+        if request.attack.damage_roll is None:
             return {}
         eligible = reroll_eligible_indices(
-            pending.triggered_effect,
-            pending.attack.damage_roll,
+            request.triggered_effect,
+            request.attack.damage_roll,
         )
         return {
-            "attacker_label": pending.attacker_label,
-            "target_ref": pending.target_ref,
-            "target_label": pending.target_label,
-            "attacks_remaining": pending.attacks_remaining,
-            "attack_roll": pending.attack.attack_roll,
-            "attack_roll_detail": pending.attack.attack_roll_detail,
+            "attacker_label": request.attacker_label,
+            "target_ref": request.target_ref,
+            "target_label": request.target_label,
+            "attacks_remaining": request.attacks_remaining,
+            "attack_roll": request.attack.attack_roll,
+            "attack_roll_detail": request.attack.attack_roll_detail,
             "hit": True,
-            "critical_hit": pending.attack.critical_hit,
+            "critical_hit": request.attack.critical_hit,
             "damage": 0,
-            "damage_roll_detail": damage_roll_detail(pending.attack),
-            "roll_id": f"{pending.action_id}:damage",
-            "triggered_effect_id": pending.triggered_effect.id,
+            "damage_roll_detail": damage_roll_detail(request.attack),
+            "roll_id": f"{request.action_id}:damage",
+            "triggered_effect_id": request.triggered_effect.id,
             "eligible_die_indices": list(eligible),
             "reroll_action_ids": {
-                str(index): _reroll_die_action_id(pending.action_id, index)
+                str(index): _reroll_die_action_id(request.action_id, index)
                 for index in eligible
             },
-            "accept_action_id": f"{pending.action_id}-accept-damage",
-            "reaction": pending.reaction,
+            "accept_action_id": f"{request.action_id}-accept-damage",
+            "reaction": request.reaction,
         }
 
     def apply_reaction_action(
@@ -449,11 +445,8 @@ class ReactionEngine:
         state: EncounterState,
         action: EncounterAction,
         decision: DecisionFrame,
-    ) -> EncounterProgress:
+    ) -> DecisionExecutionResult:
         progress = EncounterProgress()
-        pending_action = state.pending_action
-        if pending_action is None:
-            raise RuntimeError("Reaction action requested without a pending action.")
         resolved_action_id = state._next_action_id()
 
         reactor_ref = decision.creature_ref
@@ -469,6 +462,8 @@ class ReactionEngine:
         )
 
         if action.kind == "opportunity_attack":
+            request = _opportunity_attack_request(decision)
+            movement = request.movement
             eligibility = state.combat_rules.reaction_eligibility(
                 state,
                 reactor_ref,
@@ -476,7 +471,7 @@ class ReactionEngine:
             if not eligibility.allowed:
                 raise ValueError(eligibility.failures[0].message)
             reactor.reaction_available = False
-            target_ref = pending_action.creature_ref
+            target_ref = movement.creature_ref
             target = state.creatures[target_ref]
             target_label = state._creature_label(target_ref)
             reactor_label = state._creature_label(reactor_ref)
@@ -518,10 +513,17 @@ class ReactionEngine:
                     target_label=target_label,
                     action_id=resolved_action_id,
                     progress=progress,
-                    continuation="complete_reaction",
+                    continuation=CloseParentDecision(
+                        frame_id=decision.id,
+                        action_id=resolved_action_id,
+                    ),
                     reaction=True,
                 )
-                return progress
+                return DecisionExecutionResult(
+                    progress=progress,
+                    action_id=resolved_action_id,
+                    completed=False,
+                )
             apply_attack_damage(
                 attack,
                 target.creature,
@@ -560,7 +562,7 @@ class ReactionEngine:
                 progress.events.append(
                     state._event(
                         "creature_defeated",
-                        creature_ref=pending_action.creature_ref,
+                        creature_ref=movement.creature_ref,
                         frame_id=decision.id,
                         action_id=resolved_action_id,
                     )
@@ -568,63 +570,57 @@ class ReactionEngine:
         elif action.kind != "pass":
             raise ValueError(f"Unsupported reaction action: {action.kind}")
 
-        state.decision_stack.pop()
-        progress.events.append(
-            state._event(
-                "decision_closed",
-                creature_ref=reactor_ref,
-                frame_id=decision.id,
-                action_id=resolved_action_id,
-            )
+        return DecisionExecutionResult(
+            progress=progress,
+            action_id=resolved_action_id,
+            completed=True,
         )
 
-        return progress
-
-    def resume_pending_action(
+    def resume_movement(
         self,
         state: EncounterState,
+        movement: PendingMovement,
         progress: EncounterProgress,
     ) -> None:
-        pending_action = state.pending_action
-        if pending_action is None:
-            return
-        state.pending_action = None
-        if pending_action.kind != "move":
-            return
-        mover = state.creatures[pending_action.creature_ref]
+        mover = state.creatures[movement.creature_ref]
         if mover.is_alive and state._position_is_free(
-            pending_action.to_position.x,
-            pending_action.to_position.y,
-            ignored_refs={pending_action.creature_ref},
+            movement.to_position.x,
+            movement.to_position.y,
+            ignored_refs={movement.creature_ref},
         ):
             mover.position = Position(
-                pending_action.to_position.x,
-                pending_action.to_position.y,
+                movement.to_position.x,
+                movement.to_position.y,
             )
+            for target_ref, target_position in movement.companion_destinations.items():
+                state.creatures[target_ref].position = Position(
+                    target_position.x,
+                    target_position.y,
+                )
             progress.messages.append(
                 (
                     "system",
-                    f"{mover.creature.name} moves {pending_action.direction} to "
-                    f"({pending_action.to_position.x}, {pending_action.to_position.y}).",
+                    f"{mover.creature.name} moves {movement.direction} to "
+                    f"({movement.to_position.x}, {movement.to_position.y}).",
                 )
             )
             progress.events.append(
                 state._event(
                     "movement_resolved",
-                    creature_ref=pending_action.creature_ref,
-                    action_id=pending_action.id,
+                    creature_ref=movement.creature_ref,
+                    action_id=movement.action_id,
                     data={
-                        "direction": pending_action.direction,
+                        "direction": movement.direction,
                         "to": {
-                            "x": pending_action.to_position.x,
-                            "y": pending_action.to_position.y,
+                            "x": movement.to_position.x,
+                            "y": movement.to_position.y,
                         },
                         "resumed": True,
                     },
                 )
             )
 
-        mover.movement_remaining = pending_action.remaining_movement_after
+        mover.movement_remaining = movement.remaining_movement_after
 
     def queue_opportunity_attack(
         self,
@@ -636,6 +632,7 @@ class ReactionEngine:
         from_position: Position,
         to_position: Position,
         remaining_movement_after: MovementBudget,
+        companion_destinations: dict[str, Position],
         progress: EncounterProgress,
         external_only: bool,
         excluded_reactor_refs: Collection[str] = (),
@@ -669,15 +666,18 @@ class ReactionEngine:
         frame_id = state._next_frame_id()
         trigger_id = state._next_frame_id(prefix="trigger")
         current_frame = state.current_decision()
-        state.pending_action = PendingAction(
-            id=action_id,
-            kind="move",
+        movement = PendingMovement(
+            action_id=action_id,
             creature_ref=mover_ref,
             direction=direction,
             from_position=Position(from_position.x, from_position.y),
             to_position=Position(to_position.x, to_position.y),
             remaining_movement_after=remaining_movement_after,
             trigger_id=trigger_id,
+            companion_destinations={
+                target_ref: Position(position.x, position.y)
+                for target_ref, position in companion_destinations.items()
+            },
         )
         state.decision_stack.append(
             DecisionFrame(
@@ -688,6 +688,8 @@ class ReactionEngine:
                 parent_frame_id=current_frame.id,
                 parent_action_id=action_id,
                 can_pass=True,
+                request=OpportunityAttackRequest(movement),
+                continuation=ResumeMovement(movement),
             )
         )
         progress.events.append(
@@ -706,9 +708,9 @@ class ReactionEngine:
         return True
 
     def reaction_actions(self, state: EncounterState) -> list[EncounterAction]:
-        pending_action = state.pending_action
-        if pending_action is None or pending_action.kind != "move":
-            creature_ref = state.current_decision().creature_ref
+        decision = state.current_decision()
+        if not isinstance(decision.request, OpportunityAttackRequest):
+            creature_ref = decision.creature_ref
             return [
                 EncounterAction(
                     "Pass reaction",
@@ -719,9 +721,10 @@ class ReactionEngine:
                 )
             ]
 
-        target_ref = pending_action.creature_ref
+        movement = decision.request.movement
+        target_ref = movement.creature_ref
         target = state.creatures[target_ref]
-        reactor_ref = state.current_decision().creature_ref
+        reactor_ref = decision.creature_ref
         actions: list[EncounterAction] = []
         if (
             state.combat_rules.reaction_eligibility(
@@ -740,7 +743,7 @@ class ReactionEngine:
                         f"{target_ref.replace(':', '-')}"
                     ),
                     creature_ref=reactor_ref,
-                    source_trigger_id=pending_action.trigger_id,
+                    source_trigger_id=movement.trigger_id,
                     cost=ActionCost(reaction=1),
                 )
             )
@@ -750,7 +753,7 @@ class ReactionEngine:
                 "pass",
                 id=f"{reactor_ref}-reaction-pass",
                 creature_ref=reactor_ref,
-                source_trigger_id=pending_action.trigger_id,
+                source_trigger_id=movement.trigger_id,
             )
         )
         return actions

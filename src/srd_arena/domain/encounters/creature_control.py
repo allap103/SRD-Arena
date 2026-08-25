@@ -328,6 +328,7 @@ def execute_creature_action(
             from_position=Position(enemy.position.x, enemy.position.y),
             to_position=destination,
             remaining_movement_after=remaining,
+            companion_destinations=grappled_positions,
             progress=progress,
             external_only=True,
             excluded_reactor_refs=grappled_refs,
@@ -335,7 +336,7 @@ def execute_creature_action(
             progress.paused_for_decision = True
             return ActionExecutionResult(
                 context,
-                ActionExecutionOutcome.PAUSE_FOR_REACTION,
+                ActionExecutionOutcome.PAUSE_FOR_DECISION,
             )
         progress.messages.extend(
             self.reaction_engine.resolve_automatic_opportunity_attacks(
@@ -773,7 +774,7 @@ def finish_action_execution(
     if context.progress.transition is not None:
         outcome = ActionExecutionOutcome.ENCOUNTER_COMPLETE
     elif context.progress.paused_for_decision:
-        outcome = ActionExecutionOutcome.PAUSE_FOR_REACTION
+        outcome = ActionExecutionOutcome.PAUSE_FOR_DECISION
     elif action_ends_turn:
         outcome = ActionExecutionOutcome.END_TURN
     else:

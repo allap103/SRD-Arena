@@ -29,8 +29,8 @@ def export_decision(self: EncounterState) -> dict[str, object]:
         "parent_frame_id": decision.parent_frame_id,
         "parent_action_id": decision.parent_action_id,
     }
-    if self.pending_action is not None:
-        payload["pending_action_id"] = self.pending_action.id
+    if self.pending_movement is not None:
+        payload["pending_movement_id"] = self.pending_movement.action_id
     return payload
 
 
@@ -103,7 +103,7 @@ def export_state(self: EncounterState) -> dict[str, object]:
             for relationship in self.relationships
         ],
         "decision": self.export_decision(),
-        "pending_action": self._export_pending_action(),
+        "pending_movement": self._export_pending_movement(),
     }
 
 
@@ -212,24 +212,28 @@ def _export_creature(
     }
 
 
-def export_pending_action(self: EncounterState) -> dict[str, object] | None:
-    if self.pending_action is None:
+def export_pending_movement(self: EncounterState) -> dict[str, object] | None:
+    movement = self.pending_movement
+    if movement is None:
         return None
     return {
-        "id": self.pending_action.id,
-        "kind": self.pending_action.kind,
-        "creature_ref": self.pending_action.creature_ref,
-        "direction": self.pending_action.direction,
+        "action_id": movement.action_id,
+        "creature_ref": movement.creature_ref,
+        "direction": movement.direction,
         "from": {
-            "x": self.pending_action.from_position.x,
-            "y": self.pending_action.from_position.y,
+            "x": movement.from_position.x,
+            "y": movement.from_position.y,
         },
         "to": {
-            "x": self.pending_action.to_position.x,
-            "y": self.pending_action.to_position.y,
+            "x": movement.to_position.x,
+            "y": movement.to_position.y,
         },
-        "remaining_movement_after": self.pending_action.remaining_movement_after,
-        "trigger_id": self.pending_action.trigger_id,
+        "remaining_movement_after": movement.remaining_movement_after,
+        "trigger_id": movement.trigger_id,
+        "companion_destinations": {
+            creature_ref: {"x": position.x, "y": position.y}
+            for creature_ref, position in movement.companion_destinations.items()
+        },
     }
 
 
