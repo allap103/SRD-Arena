@@ -1,5 +1,9 @@
 # Executable Spell Capability Schema
 
+> Current spell-specific representation reference, not a cross-source schema.
+> See [Combat Action Architecture](combat_action_architecture.md); do not extend
+> this schema merely to make spells resemble other source types.
+
 ## Purpose
 
 The spell JSON record is the single source of truth for both its original SRD

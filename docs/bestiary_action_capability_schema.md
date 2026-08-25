@@ -1,5 +1,10 @@
 # Bestiary Action Capability Schema
 
+> Current representation reference, not a statement of complete runtime
+> support. This remains a source-specific stat-block format rather than a
+> universal action schema. See
+> [Combat Action Architecture](combat_action_architecture.md).
+
 `capability` is an additive, machine-readable normalization of a stat-block
 entry. Original `entries` remain authoritative and are never replaced.
 
@@ -8,11 +13,11 @@ The canonical Pydantic models live in
 
 ## Action Families
 
-Non-Multiattack actions use one of four variants:
+Non-Multiattack entries use one of three top-level variants:
 
 - `attack`: an attack roll followed by one or more hit effects.
-- `saving_throw`: a save with success, failure, or staged-failure effects.
-- `automatic`: effects applied without an attack roll or saving throw.
+- `capability`: a target plus either a `saving_throw` or `automatic`
+  resolution.
 - `spellcasting`: a typed collection of spells the action can cast.
 
 Multiattack remains a separate composition schema. It invokes these actions
@@ -39,6 +44,13 @@ stage when one exists; once at the last stage, further failures retain that
 stage. Repeat saves state their trigger and automatic-success limit.
 
 Action resources are either fixed uses with a reset rule or die recharge.
+
+## Runtime boundary
+
+This schema establishes representation and validation. A variant being
+accepted by the model does not imply that its executor exists or supports every
+field. Only behavior explicitly covered by the translators, runtime, and tests
+should be treated as executable.
 
 ## Example Attack
 

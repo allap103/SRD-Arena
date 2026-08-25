@@ -1,4 +1,10 @@
-# Capability and Effect System Design
+# Historical: Capability and Effect System Design
+
+> Superseded design exploration. Do not follow its universal authored
+> `Capability`, source-normalization, or migration proposals. The useful
+> lessons about rule hooks, effect results, resource semantics, and custom
+> resolvers are retained in
+> [Combat Action Architecture](combat_action_architecture.md).
 
 ## Context
 
