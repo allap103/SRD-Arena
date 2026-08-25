@@ -1,0 +1,78 @@
+"""Own concentration replacement, damage saves, and termination."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, cast
+
+from ...effects.runtime import OngoingEffectKind
+from ...rolls.saving_throws import SavingThrowCreature, resolve_saving_throw
+from .removal import _remove_effect_tree
+from .rolls import roll_die
+
+if TYPE_CHECKING:
+    from ..encounter import EncounterState
+    from ..models import EncounterProgress
+
+
+def end_concentration(state: EncounterState, source_ref: str) -> None:
+    """End every concentration effect maintained by one creature."""
+
+    matching = tuple(
+        effect
+        for effect in state.ongoing_effects
+        if effect.kind is OngoingEffectKind.CONCENTRATION
+        and effect.identity.source.applied_by_ref == source_ref
+    )
+    for effect in matching:
+        _remove_effect_tree(state, effect)
+
+
+def resolve_concentration_damage(
+    state: EncounterState,
+    creature_ref: str,
+    damage: int,
+    progress: EncounterProgress | None = None,
+) -> None:
+    """Resolve the concentration save caused by one damage application."""
+
+    if damage <= 0:
+        return
+    concentrating = next(
+        (
+            effect
+            for effect in state.ongoing_effects
+            if effect.kind is OngoingEffectKind.CONCENTRATION
+            and effect.identity.source.applied_by_ref == creature_ref
+        ),
+        None,
+    )
+    if concentrating is None:
+        return
+    creature = state.creatures[creature_ref].creature
+    if creature.get_health() <= 0:
+        end_concentration(state, creature_ref)
+        return
+    dc = max(10, damage // 2)
+    save = resolve_saving_throw(
+        cast(SavingThrowCreature, creature),
+        "constitution",
+        dc,
+        roller=roll_die,
+    )
+    if progress is not None:
+        outcome = "maintains" if save.check.success else "loses"
+        effect_label = concentrating.parameters.get("effect_label")
+        if not isinstance(effect_label, str):
+            effect_label = concentrating.identity.source.definition_id.replace(
+                "_", " "
+            ).title()
+        progress.messages.append(
+            (
+                "system",
+                f"{creature.name} {outcome} concentration on {effect_label} "
+                f"(Constitution {save.check.roll.total} vs DC {dc}).",
+            )
+        )
+    if not save.check.success:
+        end_concentration(state, creature_ref)
+
