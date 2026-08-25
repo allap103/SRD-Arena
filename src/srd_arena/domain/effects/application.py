@@ -4,6 +4,7 @@ from collections.abc import Callable
 
 from .conditions import AppliedCondition, Condition, build_applied_condition
 from .results import EffectResult
+from .rule_effects import serialize_runtime_rule_effect
 from .runtime import EffectSourceKind
 
 ApplyCondition = Callable[[AppliedCondition], object]
@@ -59,15 +60,22 @@ def message_effects(effect: EffectResult) -> list[tuple[str, str]]:
 
 
 def serialize_effects(effects: list[EffectResult]) -> list[dict[str, object]]:
-    return [
-        {
-            "kind": effect.kind,
-            "target_ref": effect.target_ref,
-            "success": effect.success,
-            "data": effect.data,
-        }
-        for effect in effects
-    ]
+    return [_serialize_effect(effect) for effect in effects]
+
+
+def _serialize_effect(effect: EffectResult) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "kind": effect.kind,
+        "target_ref": effect.target_ref,
+        "success": effect.success,
+        "data": effect.data,
+    }
+    if effect.rule_effects:
+        payload["rule_effects"] = [
+            serialize_runtime_rule_effect(rule_effect)
+            for rule_effect in effect.rule_effects
+        ]
+    return payload
 
 
 def condition_from_effect(effect: EffectResult) -> AppliedCondition:

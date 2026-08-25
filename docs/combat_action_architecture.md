@@ -92,6 +92,13 @@ normal spell invocation and uses the common controller, action-economy,
 resource, reaction, event, randomness, and effect systems. Prefer handlers that
 return typed domain operations over unrestricted mutation of encounter state.
 
+Invocation facts that a provider can change belong to the concrete invocation,
+not permanently to the referenced spell. The current spellcasting path derives
+components from the spell definition. When stat-block spell grants become
+executable, they must be able to override those effective components; for
+example, the Stone Golem casts Slow without components and therefore must not
+make Slow's Somatic-component failure check against itself.
+
 > If supporting a spell declaratively requires a new construct that is highly
 > specific and unlikely to be reused, implement that spell in Python. If
 > several handlers later duplicate the same rule, extract it as a shared domain

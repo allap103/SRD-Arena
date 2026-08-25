@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ....creatures import Creature
+from ...attack_economy import spend_attack
 from ..attack_resolution import (
     apply_attack_damage,
     resolve_attack,
@@ -44,21 +45,12 @@ def resolve_attack_action(
             )
         creature_state.pending_multiattack.pop(0)
         creature_state.attacks_remaining = len(creature_state.pending_multiattack)
-    elif creature_state.attacks_remaining == 0:
-        if creature_state.actions_remaining <= 0:
-            raise RuntimeError("No Action remains to make an attack.")
-        state._consume_action(allow_magic=False)
-        attacks_allowed = state.combat_rules.attack_limit(
+    else:
+        spend_attack(
             state,
             creature_ref,
-            creature.combat_profile.attacks_per_attack_action,
-        ).value
-        creature_state.attacks_remaining = max(
-            0,
-            attacks_allowed - 1,
+            base_attacks=creature.combat_profile.attacks_per_attack_action,
         )
-    else:
-        creature_state.attacks_remaining -= 1
     if not isinstance(action.value, str):
         raise ValueError("Attack action requires a creature reference.")
     target_ref = action.value

@@ -87,6 +87,30 @@ def test_spell_builder_creates_combat_ready_domain_spell() -> None:
     )
 
 
+def test_slow_translates_common_casting_rules_and_registered_resolver() -> None:
+    slow = _build_catalog_spell(
+        load_spell_catalog(SYSTEM_CONTENT_ROOT),
+        "Slow",
+    )
+
+    assert slow.resolver_id == "slow"
+    assert slow.concentration
+    assert spell_duration_rounds(slow) == 10
+    assert slow.geometry_mode == "point_area"
+    assert slow.area_size_feet == 40
+    assert slow.definition is not None
+    assert slow.definition.target.kind == "area"
+    assert slow.definition.target.shape == "cube"
+    assert slow.definition.target.occupants == "chosen"
+    assert slow.definition.target.count.minimum == 1
+    assert slow.definition.target.count.maximum == 6
+    assert isinstance(slow.definition.resolution, SavingThrowResolution)
+    assert slow.definition.resolution.ability == "wisdom"
+    repeat = slow.definition.resolution.failure[0].repeat_saves[0]
+    assert repeat.trigger == "end_of_turn"
+    assert repeat.ability == "wisdom"
+
+
 def test_repeated_attack_and_removal_spells_translate_from_typed_capability() -> None:
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
 

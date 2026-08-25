@@ -30,6 +30,7 @@ class SpellImplementationSchema(SpellCapabilitySchemaModel):
     omissions: list[ImplementationOmissionSchema] = Field(default_factory=list)
     blocked_by: list[str] = Field(default_factory=list)
     reason: str | None = None
+    resolver: Literal["slow"] | None = None
 
     @model_validator(mode="after")
     def validate_status_details(self) -> "SpellImplementationSchema":
@@ -41,4 +42,10 @@ class SpellImplementationSchema(SpellCapabilitySchemaModel):
             raise ValueError("Out-of-scope spells must provide a reason.")
         if self.status == "complete" and (self.omissions or self.blocked_by):
             raise ValueError("Complete spell implementations cannot have omissions.")
+        if self.status in {"unimplemented", "blocked", "out_of_scope"} and (
+            self.resolver is not None
+        ):
+            raise ValueError(
+                f"{self.status.title()} spells cannot register a custom resolver."
+            )
         return self

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from ....creatures import Creature, MultiattackInvocation, MultiattackStep
 from ....creatures.stat_block_actions import AttackActionDefinition
+from ...attack_economy import clear_attack_action
 from ...models import EncounterAction, EncounterProgress
 
 if TYPE_CHECKING:
@@ -58,13 +59,8 @@ def resolve_multiattack_action(
     if selected_plan >= len(plans):
         raise RuntimeError("This creature has no executable Multiattack plan.")
     slots = plans[selected_plan]
-    attacks_allowed = state.combat_rules.attack_limit(
-        state,
-        creature_ref,
-        len(slots),
-    ).value
-    slots = slots[:attacks_allowed]
     state._consume_action(allow_magic=False)
+    clear_attack_action(creature_state)
     creature_state.pending_multiattack = list(slots)
     creature_state.attacks_remaining = len(slots)
     progress.messages.append(("system", f"{creature.name} begins Multiattack."))

@@ -124,3 +124,57 @@ RuntimeRuleEffect: TypeAlias = (
     | AttackLimit
     | InvocationFailureChance
 )
+
+
+def serialize_runtime_rule_effect(
+    effect: RuntimeRuleEffect,
+) -> dict[str, object]:
+    """Serialize one typed contribution for events and state inspection."""
+
+    if isinstance(effect, ArmorClassAdjustment):
+        return {"type": "armor_class_adjustment", "value": effect.value}
+    if isinstance(effect, SpeedAdjustment):
+        return {"type": "speed_adjustment", "feet": effect.feet}
+    if isinstance(effect, SpeedMultiplier):
+        return {
+            "type": "speed_multiplier",
+            "numerator": effect.numerator,
+            "denominator": effect.denominator,
+        }
+    if isinstance(effect, RollAdjustment):
+        modifier = effect.modifier
+        return {
+            "type": "roll_adjustment",
+            "roll": modifier.roll,
+            "mode": modifier.mode,
+            "dice": modifier.dice,
+            "value": modifier.value,
+            "subject": modifier.subject,
+            "ignored_by_senses": list(modifier.ignored_by_senses),
+            "ability": modifier.ability,
+        }
+    if isinstance(effect, ReactionProhibition):
+        return {
+            "type": "reaction_prohibition",
+            "reaction_kinds": sorted(effect.reaction_kinds),
+        }
+    if isinstance(effect, ActionEconomyRestriction):
+        return {
+            "type": "action_economy_restriction",
+            "choose_between": sorted(
+                kind.value for kind in effect.choose_between
+            ),
+        }
+    if isinstance(effect, AttackLimit):
+        return {"type": "attack_limit", "maximum": effect.maximum}
+    if isinstance(effect, InvocationFailureChance):
+        return {
+            "type": "invocation_failure_chance",
+            "invocation_kinds": sorted(effect.invocation_kinds),
+            "required_components": sorted(effect.required_components),
+            "numerator": effect.numerator,
+            "denominator": effect.denominator,
+            "code": effect.code,
+            "message": effect.message,
+        }
+    raise TypeError(f"Unsupported runtime rule effect: {effect!r}")

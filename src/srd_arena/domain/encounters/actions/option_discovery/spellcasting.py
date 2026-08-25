@@ -10,6 +10,7 @@ from ....spells.rules import (
     spell_range_squares,
     spell_targets_self_only,
 )
+from ...attack_economy import clear_attack_action
 from ...models import ActionCost, EncounterAction
 
 if TYPE_CHECKING:
@@ -79,7 +80,7 @@ def spend_spell_resources(
 ) -> None:
     if cost.action > 0:
         self._consume_action(allow_magic=True)
-        self.active_attacks_remaining = 0
+        clear_attack_action(self.active_creature_state)
     if cost.bonus_action > 0:
         self.active_bonus_action_available = False
     if cost.reaction > 0:

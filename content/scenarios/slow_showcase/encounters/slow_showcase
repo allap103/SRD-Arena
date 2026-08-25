@@ -1,0 +1,163 @@
+{
+  "id": "slow_showcase",
+  "grid": {
+    "width": 22,
+    "height": 14
+  },
+  "creatures": [
+    {
+      "id": "tempo_archmage",
+      "name": "Tempo Archmage",
+      "description": "Casts Slow and demonstrates its grouped, source-aware ongoing rules.",
+      "stat_block": {
+        "name": "Mage",
+        "source": "XMM"
+      },
+      "attributes": {
+        "level": 9
+      },
+      "spellcasting": {
+        "ability": "int",
+        "caster_progression": "full",
+        "spell_slots": {
+          "3": 4
+        }
+      },
+      "spells_known": [
+        {
+          "name": "Slow",
+          "source": "XPHB"
+        }
+      ],
+      "start": {
+        "x": 2,
+        "y": 7
+      },
+      "team_id": "experimenters"
+    },
+    {
+      "id": "extra_attack_fighter",
+      "token_image": "tokens/human_fighter.png",
+      "player_character": "extra_attack_fighter",
+      "start": {
+        "x": 12,
+        "y": 5
+      },
+      "team_id": "subjects"
+    },
+    {
+      "id": "somatic_caster",
+      "name": "Somatic Caster",
+      "description": "Knows a Somatic Action spell and a verbal-only Bonus Action spell.",
+      "stat_block": {
+        "name": "Mage",
+        "source": "XMM"
+      },
+      "attributes": {
+        "base_health": 80,
+        "level": 5
+      },
+      "spellcasting": {
+        "ability": "int",
+        "caster_progression": "full",
+        "spell_slots": {
+          "1": 4
+        }
+      },
+      "spells_known": [
+        {
+          "name": "Cure Wounds",
+          "source": "XPHB"
+        },
+        {
+          "name": "Healing Word",
+          "source": "XPHB"
+        }
+      ],
+      "start": {
+        "x": 13,
+        "y": 5
+      },
+      "team_id": "subjects"
+    },
+    {
+      "id": "multiattack_subject",
+      "name": "Multiattack Subject",
+      "description": "Shows that the named Multiattack action is distinct from the Attack action.",
+      "stat_block": {
+        "name": "Assassin",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 14,
+        "y": 5
+      },
+      "team_id": "subjects"
+    },
+    {
+      "id": "subject_one",
+      "name": "Slow Subject One",
+      "stat_block": {
+        "name": "Warrior Veteran",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 12,
+        "y": 7
+      },
+      "team_id": "subjects"
+    },
+    {
+      "id": "subject_two",
+      "name": "Slow Subject Two",
+      "stat_block": {
+        "name": "Warrior Veteran",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 14,
+        "y": 7
+      },
+      "team_id": "subjects"
+    },
+    {
+      "id": "subject_three",
+      "name": "Slow Subject Three",
+      "stat_block": {
+        "name": "Giant Ape",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 16,
+        "y": 7
+      },
+      "team_id": "subjects"
+    },
+    {
+      "id": "seventh_candidate",
+      "name": "Seventh Cube Candidate",
+      "description": "Makes Slow's choose-six-of-seven target allocation visible.",
+      "stat_block": {
+        "name": "Warrior Veteran",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 13,
+        "y": 9
+      },
+      "team_id": "subjects"
+    }
+  ],
+  "teams": [
+    {
+      "id": "experimenters",
+      "name": "Tempo Experimenters",
+      "controller": "external"
+    },
+    {
+      "id": "subjects",
+      "name": "Slow Subjects",
+      "controller": "external"
+    }
+  ]
+}

@@ -94,7 +94,7 @@ def execute_spell_invocation(
         and spell_chooses_area_targets(spell)
         and aim_point is not None
     ):
-        selected_targets = [
+        area_target_refs = [
             target.target_ref
             for target in state._spell_area_targets(
                 actor,
@@ -102,7 +102,16 @@ def execute_spell_invocation(
                 aim_point=aim_point,
             )
         ]
-        maximum_targets = len(selected_targets)
+        selects_every_occupant = bool(
+            spell.definition is not None
+            and spell.definition.target.count.maximum == "all"
+        )
+        maximum_targets = (
+            len(area_target_refs)
+            if selects_every_occupant
+            else min(maximum_targets, len(area_target_refs))
+        )
+        selected_targets = area_target_refs[:maximum_targets]
     staged_selection_needed = (
         resource_pool_total is not None
         or (maximum_targets > 1 and bool(selected_targets))
@@ -205,4 +214,3 @@ def execute_spell_invocation(
             progress,
             action_id,
         )
-

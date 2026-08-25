@@ -4,6 +4,7 @@ from typing import cast
 
 from ..creatures.feature_rules.types import CapabilityActionResult
 from ..geometry import serialize_area
+from .custom import resolve_custom_spell
 from .resolution_steps.context import (
     DieRoller,
     SpellActionContext,
@@ -28,11 +29,13 @@ def resolve_spell_action(
 ) -> CapabilityActionResult | None:
     spell = context.spell
     if spell.definition is not None:
-        return _resolve_immediate_spell(context)
+        return resolve_custom_spell(context, _resolve_declarative_spell)
     return None
 
 
-def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionResult:
+def _resolve_declarative_spell(
+    context: SpellActionContext,
+) -> CapabilityActionResult:
     spell = context.spell
     assert context.creature.spellcasting is not None
     assert context.roller is not None
@@ -85,6 +88,10 @@ def _resolve_immediate_spell(context: SpellActionContext) -> CapabilityActionRes
             "target_label": context.target.target_label,
             "target_refs": [target.target_ref for target in targets],
             "target_labels": [target.target_label for target in targets],
+            "affected_target_refs": [
+                target.target_ref
+                for target in resolved_targets.affected_targets
+            ],
             "area": serialize_area(context.area),
             "spell_level": spell.level,
             "slot_level": cast_level,

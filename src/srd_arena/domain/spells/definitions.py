@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Literal
 
 from ..capabilities import CapabilityRequirement
 from ..capabilities import CapabilityActivation, CapabilityDefinition
@@ -43,3 +44,4 @@ class Spell:
     target_requirements: tuple[CapabilityRequirement, ...] = ()
     definition: CapabilityDefinition | None = None
     activation: CapabilityActivation | None = None
+    resolver_id: Literal["slow"] | None = None

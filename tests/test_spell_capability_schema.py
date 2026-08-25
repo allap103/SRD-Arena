@@ -118,6 +118,34 @@ def test_condition_spell_supports_type_requirement_and_repeat_save() -> None:
     assert capability["resolution"]["repeat_save"]["trigger"] == "turn_end"
 
 
+def test_custom_spell_resolver_ids_are_closed_and_require_executable_status() -> None:
+    capability = {
+        "target": {"type": "creature"},
+        "resolution": {
+            "type": "saving_throw",
+            "ability": "wis",
+            "failure": {"effects": []},
+        },
+    }
+
+    spell = _spell(
+        capability,
+        implementation={"status": "complete", "resolver": "slow"},
+    )
+
+    assert spell.implementation.resolver == "slow"
+    with pytest.raises(ValidationError):
+        _spell(
+            capability,
+            implementation={"status": "complete", "resolver": "unknown"},
+        )
+    with pytest.raises(ValidationError):
+        _spell(
+            None,
+            implementation={"status": "unimplemented", "resolver": "slow"},
+        )
+
+
 def test_compound_spell_groups_shared_ongoing_modifiers() -> None:
     one_minute = {"type": "timed", "amount": 1, "unit": "minute"}
     spell = _spell(

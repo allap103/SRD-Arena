@@ -4894,6 +4894,11 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
     assert event.data["feature_id"] == "action_surge"
     assert event.data["granted_actions"] == 1
 
+    second_attack = _action_id(session, "attack", "goblin_1")
+    session.choose(second_attack)
+
+    assert session.encounter_state.active_actions_remaining == 0
+
 
 def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> None:
     session = Scenario(

@@ -95,7 +95,7 @@ def resolve_spell_targets(
                 for detail in temporary_hit_point_details
             )
             else "affects"
-            if affected and prepared.conditions
+            if affected
             else "does not affect"
         )
         if not context.spell.removable_conditions:

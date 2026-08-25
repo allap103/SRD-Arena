@@ -6,6 +6,7 @@ from ...creatures.feature_rules.actions import (
     resolve_feature_action as _resolve_feature_action_impl,
 )
 from ...creatures import Creature
+from ..attack_economy import clear_attack_action
 from ..models import EncounterProgress
 
 if TYPE_CHECKING:
@@ -106,7 +107,7 @@ def resolve_feature_action(
         self.active_bonus_action_available = False
     elif feature_action.economy == "action":
         self._consume_action(allow_magic=False)
-        self.active_attacks_remaining = 0
+        clear_attack_action(self.active_creature_state)
     elif feature_action.economy == "reaction":
         self.active_reaction_available = False
 

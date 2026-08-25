@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from ...effects.results import EffectResult
 from ...effects.runtime import OngoingEffect
+from ..attack_economy import reconcile_remaining_attacks
 from .movement import reconcile_remaining_movement
 
 if TYPE_CHECKING:
@@ -79,6 +80,7 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
         for condition in state.conditions
         if condition.identity.source.origin_id != origin_id
     ]
+    reconcile_remaining_attacks(state, effect.target_refs)
     reconcile_remaining_movement(state, effect.target_refs)
 
 
@@ -132,6 +134,7 @@ def _remove_effect_target(
             for existing in state.ongoing_effects
             if existing.identity.id != effect.identity.id
         ]
+        reconcile_remaining_attacks(state, (target_ref,))
         reconcile_remaining_movement(state, (target_ref,))
         return
     state.ongoing_effects = [
@@ -140,6 +143,7 @@ def _remove_effect_target(
         else existing
         for existing in state.ongoing_effects
     ]
+    reconcile_remaining_attacks(state, (target_ref,))
     reconcile_remaining_movement(state, (target_ref,))
 
 
@@ -173,4 +177,3 @@ def _remove_damage_resistances(
             state.creatures[target_ref].creature.remove_damage_resistance(
                 damage_type, effect.identity.source.origin_id
             )
-

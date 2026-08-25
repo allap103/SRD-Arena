@@ -16,6 +16,7 @@ from ...effects.runtime import (
     Rounds,
     RuntimeStateIdentity,
 )
+from ..attack_economy import reconcile_remaining_attacks
 from .concentration import end_concentration
 from .movement import reconcile_remaining_movement
 from .removal import _remove_effect_tree
@@ -77,9 +78,13 @@ def start_ongoing_effect(
         kind=kind,
         parameters=effect_parameters,
         dispellable=True,
-        rule_effects=parse_runtime_rule_effects(effect_parameters),
+        rule_effects=(
+            *parse_runtime_rule_effects(effect_parameters),
+            *result.rule_effects,
+        ),
     )
     state.ongoing_effects.append(effect)
+    reconcile_remaining_attacks(state, target_refs)
     reconcile_remaining_movement(state, target_refs)
     _install_creature_modifiers(state, effect)
     return effect

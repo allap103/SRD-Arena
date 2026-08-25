@@ -63,4 +63,5 @@ def build_spell(spell_schema: SpellSchema) -> Spell:
         target_requirements=target_requirements(spell_schema),
         definition=build_spell_definition(spell_schema),
         activation=build_activation(spell_schema),
+        resolver_id=spell_schema.implementation.resolver,
     )

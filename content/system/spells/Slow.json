@@ -48,5 +48,35 @@
   "areaTags": [
     "C",
     "MT"
-  ]
+  ],
+  "implementation": {
+    "status": "complete",
+    "resolver": "slow"
+  },
+  "capability": {
+    "target": {
+      "type": "area",
+      "origin": "point_in_range",
+      "geometry": {
+        "shape": "cube",
+        "length_feet": 40
+      },
+      "occupants": "chosen",
+      "chosen_count": {
+        "minimum": 1,
+        "maximum": 6
+      }
+    },
+    "resolution": {
+      "type": "saving_throw",
+      "ability": "wis",
+      "failure": {
+        "effects": []
+      },
+      "repeat_save": {
+        "trigger": "turn_end",
+        "ability": "wis"
+      }
+    }
+  }
 }

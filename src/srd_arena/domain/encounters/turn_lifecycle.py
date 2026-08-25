@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from ..effects.runtime import UntilTurnEnd, UntilTurnStart
 from ..geometry import MovementBudget, MovementCost
+from .attack_economy import clear_attack_action
 from .models import (
     CreatureRef,
     EncounterProgress,
@@ -99,7 +100,7 @@ class TurnLifecycle:
         creature_state.actions_remaining = 1
         creature_state.action_used_this_turn = False
         creature_state.magic_actions_remaining = 1
-        creature_state.attacks_remaining = 0
+        clear_attack_action(creature_state)
         creature_state.pending_multiattack.clear()
         creature_state.bonus_action_available = True
         creature_state.bonus_action_used_this_turn = False

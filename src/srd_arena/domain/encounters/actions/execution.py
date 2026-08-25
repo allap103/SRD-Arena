@@ -9,6 +9,7 @@ from ...effects.results import EffectResult
 from ...effects.application import condition_from_effect_with_origin
 from .attack_resolution import has_free_hand
 from ..behaviors import is_adjacent as _is_adjacent
+from ..attack_economy import spend_attack
 from ..models import EncounterAction, EncounterProgress
 
 if TYPE_CHECKING:
@@ -69,19 +70,11 @@ def resolve_grapple_action(
         progress.messages.append(("system", "The target is too large to grapple."))
         return
 
-    if creature_state.attacks_remaining == 0:
-        self._consume_action(allow_magic=False)
-        attacks_allowed = self.combat_rules.attack_limit(
-            self,
-            creature_ref,
-            actor.combat_profile.attacks_per_attack_action,
-        ).value
-        creature_state.attacks_remaining = max(
-            0,
-            attacks_allowed - 1,
-        )
-    else:
-        creature_state.attacks_remaining -= 1
+    spend_attack(
+        self,
+        creature_ref,
+        base_attacks=actor.combat_profile.attacks_per_attack_action,
+    )
 
     actor_roll_rules = self.combat_rules.roll_modifiers(
         self,

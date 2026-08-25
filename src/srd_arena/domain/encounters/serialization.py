@@ -12,6 +12,7 @@ from ..effects.runtime import (
     UntilTurnStart,
     WhileParentExists,
 )
+from ..effects.rule_effects import serialize_runtime_rule_effect
 from .models import ActionCost, EncounterAction
 
 if TYPE_CHECKING:
@@ -86,6 +87,10 @@ def export_state(self: EncounterState) -> dict[str, object]:
                 "parameters": dict(effect.parameters),
                 "dispellable": effect.dispellable,
                 "tags": sorted(tag.value for tag in effect.tags),
+                "rule_effects": [
+                    serialize_runtime_rule_effect(rule_effect)
+                    for rule_effect in effect.rule_effects
+                ],
             }
             for effect in self.ongoing_effects
         ],
@@ -192,6 +197,8 @@ def _export_creature(
         "actions_remaining": creature_state.actions_remaining,
         "action_used_this_turn": creature_state.action_used_this_turn,
         "attacks_remaining": creature_state.attacks_remaining,
+        "attack_action_base_attacks": creature_state.attack_action_base_attacks,
+        "attack_action_attacks_used": creature_state.attack_action_attacks_used,
         "attacks_per_attack_action": attacks_per_attack_action,
         "bonus_action_available": bonus_action_available,
         "bonus_action_used_this_turn": creature_state.bonus_action_used_this_turn,

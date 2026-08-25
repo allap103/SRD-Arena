@@ -56,6 +56,8 @@ class EncounterCreatureState:
     action_used_this_turn: bool = False
     magic_actions_remaining: int = 1
     attacks_remaining: int = 0
+    attack_action_base_attacks: int = 0
+    attack_action_attacks_used: int = 0
     pending_multiattack: list[MultiattackStep] = field(default_factory=list)
     bonus_action_available: bool = True
     bonus_action_used_this_turn: bool = False

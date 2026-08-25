@@ -1,0 +1,39 @@
+{
+  "id": "extra_attack_fighter",
+  "name": "Tempo Breaker",
+  "description": "A fifth-level Fighter who demonstrates Slow's Attack and Bonus Action restrictions.",
+  "class_ref": {
+    "name": "Fighter",
+    "source": "XPHB"
+  },
+  "subclass_ref": {
+    "name": "Champion",
+    "source": "XPHB",
+    "class_name": "Fighter",
+    "class_source": "XPHB"
+  },
+  "attributes": {
+    "base_health": 72,
+    "level": 5,
+    "movement": {
+      "speed_feet": 30
+    },
+    "strength": 18,
+    "dexterity": 14,
+    "constitution": 16,
+    "wisdom": 8,
+    "intelligence": 10,
+    "charisma": 10,
+    "base_armor_class": 15
+  },
+  "equipment": {
+    "right_hand": {
+      "name": "Greatsword",
+      "source": "XPHB"
+    },
+    "body": {
+      "name": "Chain Mail",
+      "source": "XPHB"
+    }
+  }
+}
