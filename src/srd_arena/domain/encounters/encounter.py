@@ -1,9 +1,14 @@
+"""Encounter state facade and its stable service bindings.
+
+Turn flow lives in orchestration and turn_lifecycle. This class owns state
+construction, compatibility views over structured state containers, and the
+explicit bindings to focused encounter services.
+"""
+
 from __future__ import annotations
 
 from copy import deepcopy
 
-from .action_selection import build_action_selector
-from .behaviors import is_adjacent as _is_adjacent
 from .actions.options import (
     available_actions as _available_actions_impl,
     available_feature_actions as _available_feature_actions_impl,
@@ -20,7 +25,6 @@ from .actions.options import (
     spend_spell_resources as _spend_spell_resources_impl,
     targets_in_area as _targets_in_area_impl,
 )
-from ..effects.application import apply_effects
 from .serialization import (
     export_decision as _export_decision_impl,
     export_pending_movement as _export_pending_movement_impl,
@@ -29,13 +33,10 @@ from .serialization import (
 from .models import (
     ActionCost,
     CreatureRef,
-    CombatEvent,
     DecisionFrame,
     EncounterAction,
     EncounterCreatureState,
-    EncounterProgress,
     EncounterStateData,
-    InitiativeEntry,
     InterruptState,
     OpportunityAttackRequest,
     PendingMovement,
@@ -44,9 +45,6 @@ from .models import (
     TurnState,
 )
 from .actions.execution import resolve_grapple_action as _resolve_grapple_action_impl
-from .actions.eligibility import (
-    ActionEligibility,
-)
 from .actions.features import resolve_feature_action as _resolve_feature_action_impl
 from .actions.items import resolve_utilize_action as _resolve_utilize_action_impl
 from .actions.spellcasting import resolve_spell_action as _resolve_spell_action_impl
@@ -57,15 +55,12 @@ from .creature_control import (
 )
 from .reactions import REACTION_ENGINE, ReactionEngine
 from .rules import COMBAT_RULES, CombatRules
-from ..effects.condition_rules import EffectiveConditionSet
 from ..creatures import Creature
 from ..equipment import Item
 from ..geometry import Position
 from .definitions import EncounterBehavior, EncounterDefinition
-from ..effects.conditions import AppliedCondition, CombatTrait, Condition
 from ..geometry import GeometryConfig, MovementBudget
-from ..rolls.dice import D20RollMode, roll_dice as _roll_dice, roll_die as _roll_die
-from ..effects.triggered import TriggeredEffect, matching_effects
+from ..rolls.dice import roll_dice as _roll_dice, roll_die as _roll_die
 from .turn_lifecycle import TURN_LIFECYCLE, TurnLifecycle
 from .conditions import (
     apply_condition as _apply_condition_impl,
@@ -81,7 +76,6 @@ from .conditions import (
     remove_relationships_for_creature as _remove_relationships_for_creature_impl,
 )
 from .ongoing_effects import start_ongoing_effect as _start_ongoing_effect_impl
-from .ongoing_effects import remove_ongoing_effects
 from .participants import (
     creatures_are_opponents as _creatures_are_opponents_impl,
     creature_controller as _creature_controller_impl,
@@ -89,6 +83,41 @@ from .participants import (
     creature_team_id as _creature_team_id_impl,
 )
 from .queries import active_movement_remaining as _active_movement_remaining_query
+from .state_combat import (
+    active_status_effects as _active_status_effects_impl,
+    attack_roll_mode_for as _attack_roll_mode_for_impl,
+    automatic_critical_provider_ids_for as _automatic_critical_provider_ids_for_impl,
+    automatic_save_failure_provider_ids_for,
+)
+from .state_initialization import (
+    initialize_action_selectors as _initialize_action_selectors_impl,
+    roll_initiative as _roll_initiative_impl,
+)
+from .state_queries import (
+    action_eligibility as _action_eligibility_impl,
+    active_creature as _active_creature_impl,
+    conditions_for as _conditions_for_impl,
+    current_decision as _current_decision_impl,
+    current_turn_label as _current_turn_label_impl,
+    effective_conditions_for as _effective_conditions_for_impl,
+    has_condition as _has_condition_impl,
+    requires_automatic_advance as _requires_automatic_advance_impl,
+)
+from .state_runtime import (
+    active_movement_remaining as _active_movement_remaining_impl,
+    apply_encounter_effects as _apply_effects_impl,
+    consume_action as _consume_action_impl,
+    create_event as _event_impl,
+    creature_label as _creature_label_impl,
+    creature_position as _creature_position_impl,
+    creature_size as _creature_size_impl,
+    living_creature_refs as _living_creature_refs_impl,
+    merge_progress as _merge_progress_impl,
+    next_action_id as _next_action_id_impl,
+    next_frame_id as _next_frame_id_impl,
+    next_runtime_origin_id as _next_runtime_origin_id_impl,
+    position_is_free as _position_is_free_impl,
+)
 
 # Keep these module-level names for tests and helpers that monkeypatch
 # `srd_arena.domain.encounters.encounter.roll_die` / `roll_dice`.
@@ -98,6 +127,7 @@ __all__ = ["ActionCost", "EncounterAction", "EncounterState", "roll_die", "roll_
 
 
 class EncounterState(EncounterStateData):
+    # Engines are stateless rule/orchestration collaborators.
     @property
     def reaction_engine(self) -> ReactionEngine:
         return REACTION_ENGINE
@@ -110,6 +140,8 @@ class EncounterState(EncounterStateData):
     def combat_rules(self) -> CombatRules:
         return COMBAT_RULES
 
+    # Compatibility views expose structured interrupt, round, turn, and
+    # active-creature state through the established EncounterState API.
     @property
     def decision_stack(self) -> list[DecisionFrame]:
         return self.interrupts.decision_stack
@@ -255,196 +287,32 @@ class EncounterState(EncounterStateData):
         state._initialize_action_selectors()
         return state
 
-    def _initialize_action_selectors(self) -> None:
-        self._action_selectors = {}
-        for creature_ref, creature_state in self.creatures.items():
-            self._action_selectors[creature_ref] = build_action_selector(
-                self._creature_controller(creature_ref),
-                creature_state,
-            )
+    _initialize_action_selectors = _initialize_action_selectors_impl
 
     def _roll_initiative(self) -> None:
-        entries: list[InitiativeEntry] = []
-        for creature_ref, creature_state in self.creatures.items():
-            participant = next(
-                participant
-                for participant in self.definition.participants
-                if participant.creature_id == creature_ref
-            )
-            if not participant.takes_turns:
-                continue
-            roll = roll_die(20)
-            if self.effective_conditions_for(creature_ref).has_trait(
-                CombatTrait.INITIATIVE_DISADVANTAGE
-            ):
-                roll = min(roll, roll_die(20))
-            entries.append(
-                InitiativeEntry(
-                creature_ref=creature_ref,
-                roll=roll,
-                modifier=creature_state.creature.get_modifier(
-                    creature_state.creature.attributes.dexterity
-                ),
-                total=0,
-                )
-            )
-        for entry in entries:
-            entry.total = entry.roll + entry.modifier
-        entries.sort(
-            key=lambda entry: (
-                -entry.total,
-                -entry.modifier,
-                entry.creature_ref,
-            )
-        )
-        self.initiative_entries = entries
-        self.initiative_order = [entry.creature_ref for entry in entries]
+        # Resolve the module-level name at call time so tests and simulations can
+        # still replace encounter.roll_die deterministically.
+        _roll_initiative_impl(self, roll_die)
 
-    def current_turn_label(self) -> str:
-        decision = self.current_decision()
-        if decision.kind == "reaction":
-            return f"{self._creature_label(decision.creature_ref)} (Reaction)"
-        return self._creature_label(decision.creature_ref)
+    # Read-only state and combat queries.
+    current_turn_label = _current_turn_label_impl
+    current_decision = _current_decision_impl
+    conditions_for = _conditions_for_impl
+    has_condition = _has_condition_impl
+    effective_conditions_for = _effective_conditions_for_impl
+    _attack_roll_mode_for = _attack_roll_mode_for_impl
+    _automatic_critical_provider_ids_for = (
+        _automatic_critical_provider_ids_for_impl
+    )
+    _automatic_save_failure_provider_ids_for = (
+        automatic_save_failure_provider_ids_for
+    )
+    _active_status_effects = _active_status_effects_impl
+    active_creature = _active_creature_impl
+    requires_automatic_advance = _requires_automatic_advance_impl
+    action_eligibility = _action_eligibility_impl
 
-    def current_decision(self) -> DecisionFrame:
-        if self.decision_stack:
-            return self.decision_stack[-1]
-        creature_ref = self.turn_lifecycle.active_turn_creature(self)
-        return DecisionFrame(
-            id=f"turn-{creature_ref.replace(':', '-')}",
-            creature_ref=creature_ref,
-            kind="turn",
-            reason="normal_turn",
-        )
-
-    def conditions_for(
-        self,
-        creature_ref: CreatureRef,
-    ) -> tuple[AppliedCondition, ...]:
-        return tuple(
-            condition
-            for condition in self.conditions
-            if condition.target_ref == creature_ref
-        )
-
-    def has_condition(
-        self,
-        creature_ref: CreatureRef,
-        condition: Condition,
-    ) -> bool:
-        return any(
-            applied.condition is condition
-            for applied in self.conditions_for(creature_ref)
-        )
-
-    def effective_conditions_for(
-        self,
-        creature_ref: CreatureRef,
-    ) -> EffectiveConditionSet:
-        return self.combat_rules.effective_conditions(self, creature_ref)
-
-    def _attack_roll_mode_for(
-        self,
-        attacker_ref: CreatureRef,
-        target_ref: CreatureRef,
-        attack_type: str,
-        attacker_position: Position | None,
-        nearby_opponent_positions: tuple[Position, ...],
-    ) -> D20RollMode:
-        modes: list[D20RollMode] = []
-        base_mode = _attack_roll_mode(
-            attack_type,
-            attacker_position,
-            nearby_opponent_positions,
-        )
-        if base_mode != "normal":
-            modes.append(base_mode)
-        target_effective = self.effective_conditions_for(target_ref)
-        modes.append(
-            self.creatures[target_ref].creature.incoming_attack_roll_mode(
-                self.creatures[attacker_ref].creature
-            )
-        )
-        if target_effective.has_trait(
-            CombatTrait.ATTACKERS_HAVE_ADVANTAGE
-        ):
-            modes.append("advantage")
-        context = {
-            "attacker_ref": attacker_ref,
-            "target_ref": target_ref,
-            "attack_type": attack_type,
-        }
-        if any(
-            condition.condition is Condition.GRAPPLED
-            and condition.target_ref == attacker_ref
-            and condition.source_ref != target_ref
-            for condition in self.conditions
-        ):
-            modes.append("disadvantage")
-        for effect in matching_effects(
-            self._active_status_effects(),
-            "attack_roll_created",
-            context,
-        ):
-            if effect.operation == "grant_advantage":
-                modes.append("advantage")
-            elif effect.operation == "grant_disadvantage":
-                modes.append("disadvantage")
-        return _combine_roll_modes(modes)
-
-    def _automatic_critical_provider_ids_for(
-        self,
-        attacker_ref: CreatureRef,
-        target_ref: CreatureRef,
-    ) -> tuple[str, ...]:
-        if not _is_adjacent(
-            self._creature_position(attacker_ref),
-            self._creature_position(target_ref),
-        ):
-            return ()
-        return self.effective_conditions_for(target_ref).providers_for_trait(
-            CombatTrait.HITS_WITHIN_5_FEET_ARE_CRITICAL
-        )
-
-    def _automatic_save_failure_provider_ids_for(
-        self,
-        target_ref: CreatureRef,
-        ability: str,
-    ) -> tuple[str, ...]:
-        trait = {
-            "strength": CombatTrait.AUTO_FAIL_STRENGTH_SAVES,
-            "dexterity": CombatTrait.AUTO_FAIL_DEXTERITY_SAVES,
-        }.get(ability)
-        if trait is None:
-            return ()
-        return self.effective_conditions_for(target_ref).providers_for_trait(
-            trait
-        )
-
-    def _active_status_effects(self) -> list[TriggeredEffect]:
-        return [
-            effect for status in self.conditions for effect in status.triggered_effects
-        ]
-
-    def active_creature(self) -> CreatureRef:
-        return self.current_decision().creature_ref
-
-    def requires_automatic_advance(self) -> bool:
-        return (
-            self._creature_controller(self.current_decision().creature_ref)
-            == "scripted"
-        )
-
-    def action_eligibility(
-        self,
-        action: EncounterAction,
-    ) -> ActionEligibility:
-        return self.combat_rules.action_eligibility(
-            self,
-            self.current_decision().creature_ref,
-            action,
-        )
-
+    # Serialization, action discovery, and action execution entry points.
     export_decision = _export_decision_impl
     export_state = _export_state_impl
     available_actions = _available_actions_impl
@@ -470,23 +338,8 @@ class EncounterState(EncounterStateData):
 
     _spell_target_context = _spell_target_context_impl
 
-    def _apply_effects(
-        self,
-        effects,
-        *,
-        origin_id: str | None = None,
-    ) -> list[tuple[str, str]]:
-        resolved_origin_id = origin_id or self._next_runtime_origin_id()
-        return apply_effects(
-            effects,
-            apply_condition=self._apply_condition,
-            remove_condition=self._remove_condition,
-            apply_ongoing_effect=self._start_ongoing_effect,
-            remove_ongoing_effects=lambda effect: remove_ongoing_effects(
-                self, effect
-            ),
-            origin_id=resolved_origin_id,
-        )
+    # Effect, condition, participant, and runtime-state services.
+    _apply_effects = _apply_effects_impl
 
     _apply_condition = _apply_condition_impl
     _start_ongoing_effect = _start_ongoing_effect_impl
@@ -498,111 +351,20 @@ class EncounterState(EncounterStateData):
     _creature_team_id = _creature_team_id_impl
     _creatures_are_opponents = _creatures_are_opponents_impl
 
-    def _consume_action(self, *, allow_magic: bool) -> None:
-        if self.active_actions_remaining <= 0:
-            raise RuntimeError("No Action remains to consume.")
-        non_magic_only_actions = max(
-            0,
-            self.active_actions_remaining - self.active_magic_actions_remaining,
-        )
-        if allow_magic:
-            if self.active_magic_actions_remaining <= 0:
-                raise RuntimeError("No spell-capable Action remains to consume.")
-            self.active_magic_actions_remaining -= 1
-        elif non_magic_only_actions <= 0 and self.active_magic_actions_remaining > 0:
-            self.active_magic_actions_remaining -= 1
-        self.active_actions_remaining -= 1
-
-    def _active_movement_remaining(self) -> MovementBudget:
-        return self.active_movement_remaining_for()
-
+    _consume_action = _consume_action_impl
+    _active_movement_remaining = _active_movement_remaining_impl
     active_movement_remaining_for = _active_movement_remaining_query
-
-    def _next_action_id(self) -> str:
-        action_id = f"action_{self.action_sequence}"
-        self.action_sequence += 1
-        return action_id
-
-    def _next_runtime_origin_id(self) -> str:
-        origin_id = f"effect_{self.runtime_state_sequence}"
-        self.runtime_state_sequence += 1
-        return origin_id
-
-    def _next_frame_id(self, prefix: str = "frame") -> str:
-        frame_id = f"{prefix}_{self.frame_sequence}"
-        self.frame_sequence += 1
-        return frame_id
-
-    def _event(
-        self,
-        event_type: str,
-        creature_ref: CreatureRef | None = None,
-        frame_id: str | None = None,
-        action_id: str | None = None,
-        data: dict[str, object] | None = None,
-    ) -> CombatEvent:
-        event = CombatEvent(
-            seq=self.event_sequence,
-            type=event_type,
-            creature_ref=creature_ref,
-            frame_id=frame_id,
-            action_id=action_id,
-            data=data or {},
-        )
-        self.event_sequence += 1
-        return event
-
-    def _merge_progress(
-        self, target: EncounterProgress, source: EncounterProgress
-    ) -> None:
-        target.messages.extend(source.messages)
-        target.events.extend(source.events)
-        if source.transition is not None:
-            target.transition = source.transition
-        target.paused_for_decision = (
-            target.paused_for_decision or source.paused_for_decision
-        )
-        target.paused_for_pacing = target.paused_for_pacing or source.paused_for_pacing
-
+    _next_action_id = _next_action_id_impl
+    _next_runtime_origin_id = _next_runtime_origin_id_impl
+    _next_frame_id = _next_frame_id_impl
+    _event = _event_impl
+    _merge_progress = _merge_progress_impl
     _export_pending_movement = _export_pending_movement_impl
-
-    def _creature_label(self, creature_ref: CreatureRef) -> str:
-        creature_state = self.creatures[creature_ref]
-        return f"{creature_state.creature.name} ({creature_state.creature_id})"
-
-    def _living_creature_refs(self) -> list[CreatureRef]:
-        return [
-            creature_ref
-            for creature_ref, creature_state in self.creatures.items()
-            if creature_state.is_alive
-        ]
-
-    def _creature_position(self, creature_ref: CreatureRef) -> Position:
-        return self.creatures[creature_ref].position
-
-    def _position_is_free(
-        self,
-        x: int,
-        y: int,
-        *,
-        ignored_refs: set[CreatureRef] | frozenset[CreatureRef] = frozenset(),
-    ) -> bool:
-        if (
-            x < 0
-            or y < 0
-            or x >= self.definition.grid.width
-            or y >= self.definition.grid.height
-        ):
-            return False
-        for creature_ref, creature_state in self.creatures.items():
-            if creature_ref in ignored_refs or not creature_state.is_alive:
-                continue
-            if creature_state.position.x == x and creature_state.position.y == y:
-                return False
-        return True
-
-    def _creature_size(self, creature_ref: CreatureRef) -> str:
-        return self.creatures[creature_ref].creature.size
+    _creature_label = _creature_label_impl
+    _living_creature_refs = _living_creature_refs_impl
+    _creature_position = _creature_position_impl
+    _position_is_free = _position_is_free_impl
+    _creature_size = _creature_size_impl
 
     _condition_sources_for = _condition_sources_for_impl
     _grappled_sources_for = _grappled_sources_for_impl
@@ -611,30 +373,3 @@ class EncounterState(EncounterStateData):
     _movement_cost_for = _movement_cost_for_impl
     _creature_for_ref = _creature_for_ref_impl
     _condition_replaces = staticmethod(_condition_replaces_impl)
-
-
-def _attack_roll_mode(
-    attack_type: str,
-    attacker_position: Position | None,
-    nearby_opponent_positions: tuple[Position, ...],
-) -> D20RollMode:
-    if attack_type != "ranged" or attacker_position is None:
-        return "normal"
-    if any(
-        _is_adjacent(attacker_position, position)
-        for position in nearby_opponent_positions
-    ):
-        return "disadvantage"
-    return "normal"
-
-
-def _combine_roll_modes(modes: list[D20RollMode]) -> D20RollMode:
-    advantages = sum(1 for mode in modes if mode == "advantage")
-    disadvantages = sum(1 for mode in modes if mode == "disadvantage")
-    if advantages and disadvantages:
-        return "normal"
-    if advantages:
-        return "advantage"
-    if disadvantages:
-        return "disadvantage"
-    return "normal"
