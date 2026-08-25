@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from ...capabilities import ConditionEffect, DamageEffect
-from ...creatures.stat_block_actions import (
+from ....capabilities import ConditionEffect, DamageEffect
+from ....creatures.stat_block_actions import (
     AttackActionDefinition,
     AutomaticActionDefinition,
     SavingThrowActionDefinition,
 )
-from ...effects.conditions import Condition
+from ....effects.conditions import Condition
 
 
 def stat_block_action_runtime_issue(definition: object) -> str | None:
@@ -27,13 +27,11 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
                     )
                 if effect.condition != "grappled" and effect.requirements:
                     return (
-                        "Conditional attack-applied conditions are not "
-                        "executable yet."
+                        "Conditional attack-applied conditions are not executable yet."
                     )
                 if effect.condition != "grappled" and effect.ends_on:
                     return (
-                        "Event-ended attack-applied conditions are not "
-                        "executable yet."
+                        "Event-ended attack-applied conditions are not executable yet."
                     )
                 if effect.duration is not None and effect.duration.kind not in {
                     "start_of_turn",
@@ -44,10 +42,7 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
                         "executable for attack actions yet."
                     )
                 continue
-            return (
-                f"{type(effect).__name__} is not executable for attack "
-                "actions yet."
-            )
+            return f"{type(effect).__name__} is not executable for attack actions yet."
         return None
     if isinstance(definition, AutomaticActionDefinition):
         effects = definition.effects

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from ...capabilities import RechargePool
-from ...creatures import Creature
-from .stat_block_rolls import roll_die
+from ....capabilities import RechargePool
+from ....creatures import Creature
+from .rolls import roll_die
 
 
 def stat_block_action_resource_available(

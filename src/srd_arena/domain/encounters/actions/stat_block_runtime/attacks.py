@@ -4,23 +4,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from .attack_resolution import (
+from ....creatures import Creature
+from ..attack_resolution import (
     apply_attack_damage,
     resolve_attack,
     selected_attack_type,
 )
-from .hit_effects import apply_attack_hit_effects
-from .stat_block_resources import consume_stat_block_action_resource
-from .stat_block_rolls import roll_dice, roll_die
-from ..models import EncounterAction, EncounterProgress
-from ..ongoing_effects import (
+from ..hit_effects import apply_attack_hit_effects
+from .resources import consume_stat_block_action_resource
+from .rolls import roll_dice, roll_die
+from ...models import EncounterAction, EncounterProgress
+from ...ongoing_effects import (
     resolve_concentration_damage,
     resolve_spell_lifecycle_event,
 )
 
 if TYPE_CHECKING:
-    from ..encounter import EncounterState
+    from ...encounter import EncounterState
 
 
 def resolve_attack_action(

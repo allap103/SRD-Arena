@@ -1,8 +1,8 @@
 """Stable facade and high-level coordinator for attack resolution.
 
 Source selection, attack rolls, damage, and triggered-effect matching live in
-focused neighboring modules. Callers import this facade so the readable attack
-pipeline can evolve without exposing those implementation boundaries.
+the focused ``attack_runtime`` package. Callers import this facade so the
+readable attack pipeline can evolve without exposing those boundaries.
 """
 
 from __future__ import annotations
@@ -13,14 +13,14 @@ from ...creatures import Creature
 from ...equipment import Item
 from ...geometry import Position
 from ...rolls.dice import D20RollMode, roll_dice, roll_die
-from .attack_damage import (
+from .attack_runtime.damage import (
     apply_attack_damage,
     damage_roll_detail,
     parse_damage_dice,
     roll_attack_damage,
 )
-from .attack_rolls import attack_roll_mode, resolve_attack_roll
-from .attack_sources import (
+from .attack_runtime.rolls import attack_roll_mode, resolve_attack_roll
+from .attack_runtime.sources import (
     attack_range_squares,
     attack_sources,
     can_make_opportunity_attack,
@@ -34,7 +34,7 @@ from .attack_sources import (
     weapon_attack_source,
     weapon_proficiency_bonus,
 )
-from .attack_triggers import matching_damage_reroll_rule
+from .attack_runtime.triggers import matching_damage_reroll_rule
 from ..models import AttackOutcome
 
 __all__ = [

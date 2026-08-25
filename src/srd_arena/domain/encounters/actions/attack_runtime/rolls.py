@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from ...creatures import Creature
-from ...geometry import Position
-from ...rolls.dice import (
+from ....creatures import Creature
+from ....geometry import Position
+from ....rolls.dice import (
     CheckResult,
     D20RollMode,
     D20RollResult,
@@ -15,8 +15,8 @@ from ...rolls.dice import (
     resolve_check,
     resolve_d20,
 )
-from ..behaviors import is_adjacent
-from ..models import AttackSource
+from ...behaviors import is_adjacent
+from ...models import AttackSource
 
 
 @dataclass(frozen=True)

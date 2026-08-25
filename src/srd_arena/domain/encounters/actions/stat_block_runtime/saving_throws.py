@@ -4,22 +4,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from ...capabilities import CapabilityEffect, ConditionEffect, DamageEffect
-from ...creatures import Creature
-from ...creatures.stat_block_actions import SavingThrowActionDefinition
-from ...geometry import Vector2D, build_directional_area, vector_between_positions
-from ...rolls.saving_throws import (
+from ....capabilities import CapabilityEffect, ConditionEffect, DamageEffect
+from ....creatures import Creature
+from ....creatures.stat_block_actions import SavingThrowActionDefinition
+from ....geometry import Vector2D, build_directional_area, vector_between_positions
+from ....rolls.saving_throws import (
     Ability,
     SavingThrowCreature,
     resolve_saving_throw,
 )
-from .stat_block_resources import consume_stat_block_action_resource
-from .stat_block_rolls import roll_dice, roll_die
-from ..models import EncounterAction, EncounterProgress
-from ..ongoing_effects import has_condition_save_advantage
+from .resources import consume_stat_block_action_resource
+from .rolls import roll_dice, roll_die
+from ...models import EncounterAction, EncounterProgress
+from ...ongoing_effects import has_condition_save_advantage
 
 if TYPE_CHECKING:
-    from ..encounter import EncounterState
+    from ...encounter import EncounterState
 
 
 def resolve_saving_throw_stat_block_action(

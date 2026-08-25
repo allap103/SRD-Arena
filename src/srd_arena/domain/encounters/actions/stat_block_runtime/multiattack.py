@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature, MultiattackInvocation, MultiattackStep
-from ...creatures.stat_block_actions import AttackActionDefinition
-from ..models import EncounterAction, EncounterProgress
+from ....creatures import Creature, MultiattackInvocation, MultiattackStep
+from ....creatures.stat_block_actions import AttackActionDefinition
+from ...models import EncounterAction, EncounterProgress
 
 if TYPE_CHECKING:
-    from ..encounter import EncounterState
+    from ...encounter import EncounterState
 
 
 def executable_multiattack_sequence(

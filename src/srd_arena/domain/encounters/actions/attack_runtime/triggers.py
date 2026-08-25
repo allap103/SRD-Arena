@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from ...creatures import Creature
-from ...effects.triggered import (
+from ....creatures import Creature
+from ....effects.triggered import (
     TriggeredEffect,
     matching_effects,
     reroll_eligible_indices,
 )
-from ..models import AttackOutcome
+from ...models import AttackOutcome
 
 
 def matching_damage_reroll_rule(

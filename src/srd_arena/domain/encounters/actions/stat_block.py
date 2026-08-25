@@ -1,8 +1,8 @@
 """Stable facade for authored stat-block action runtime behavior.
 
-The implementation is grouped by responsibility in neighboring
-``stat_block_*`` modules. Encounter action dispatch and eligibility import this
-facade so those internal boundaries can evolve without spreading imports.
+The implementation is grouped by responsibility in the ``stat_block_runtime``
+package. Encounter action dispatch and eligibility import this facade so those
+internal boundaries can evolve without spreading imports.
 """
 
 from __future__ import annotations
@@ -14,20 +14,22 @@ from ...creatures.stat_block_actions import (
     AutomaticActionDefinition,
     SavingThrowActionDefinition,
 )
-from .stat_block_attacks import resolve_attack_action
-from .stat_block_automatic import resolve_automatic_stat_block_action
-from .stat_block_multiattack import (
+from .stat_block_runtime.attacks import resolve_attack_action
+from .stat_block_runtime.automatic import resolve_automatic_stat_block_action
+from .stat_block_runtime.multiattack import (
     executable_multiattack_sequence,
     executable_multiattack_slot_plans,
     resolve_multiattack_action,
 )
-from .stat_block_resources import (
+from .stat_block_runtime.resources import (
     consume_stat_block_action_resource,
     recharge_stat_block_actions,
     stat_block_action_resource_available,
 )
-from .stat_block_saving_throws import resolve_saving_throw_stat_block_action
-from .stat_block_validation import stat_block_action_runtime_issue
+from .stat_block_runtime.saving_throws import (
+    resolve_saving_throw_stat_block_action,
+)
+from .stat_block_runtime.validation import stat_block_action_runtime_issue
 from ..models import EncounterAction, EncounterProgress
 
 if TYPE_CHECKING:
