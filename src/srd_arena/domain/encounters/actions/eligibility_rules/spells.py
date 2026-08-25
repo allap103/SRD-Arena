@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...spells.rules import (
+from ....spells.rules import (
     parse_spell_action_slot,
     parse_spell_action_targets,
     parse_spell_action_value,
     spell_chooses_area_targets,
 )
-from ..models import CreatureRef, EncounterAction
-from .eligibility_common import target_requirement_failure
-from .eligibility_models import EligibilityFailure
+from ...models import CreatureRef, EncounterAction
+from .common import target_requirement_failure
+from .models import EligibilityFailure
 
 if TYPE_CHECKING:
-    from ..encounter import EncounterState
+    from ...encounter import EncounterState
 
 
 class SpellActionRule:

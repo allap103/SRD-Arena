@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...capabilities import ConditionRequirement, CreatureTypeRequirement
-from ...effects.conditions import CombatTrait, Condition
-from ...geometry import Position
-from ..behaviors import DIRECTION_DELTAS
-from ..models import CreatureRef, EncounterAction
-from .eligibility_models import EligibilityFailure
+from ....capabilities import ConditionRequirement, CreatureTypeRequirement
+from ....effects.conditions import CombatTrait, Condition
+from ....geometry import Position
+from ...behaviors import DIRECTION_DELTAS
+from ...models import CreatureRef, EncounterAction
+from .models import EligibilityFailure
 
 if TYPE_CHECKING:
-    from ..encounter import EncounterState
+    from ...encounter import EncounterState
 
 
 class ActorReadyRule:

@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import AutomaticActionDefinition, SavingThrowActionDefinition
-from ...geometry import grid_distance_between
-from ..models import CreatureRef, EncounterAction
-from .eligibility_common import opposing_target_failure, target_requirement_failure
-from .eligibility_models import EligibilityFailure
-from .stat_block import (
+from ....creatures import AutomaticActionDefinition, SavingThrowActionDefinition
+from ....geometry import grid_distance_between
+from ...models import CreatureRef, EncounterAction
+from ..stat_block import (
     stat_block_action_resource_available,
     stat_block_action_runtime_issue,
 )
+from .common import opposing_target_failure, target_requirement_failure
+from .models import EligibilityFailure
 
 if TYPE_CHECKING:
-    from ..encounter import EncounterState
+    from ...encounter import EncounterState
 
 
 class StatBlockActionRule:

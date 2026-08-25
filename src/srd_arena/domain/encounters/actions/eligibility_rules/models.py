@@ -3,10 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from ..models import CreatureRef, EncounterAction
+from ...models import CreatureRef, EncounterAction
 
 if TYPE_CHECKING:
-    from ..encounter import EncounterState
+    from ...encounter import EncounterState
 
 
 @dataclass(frozen=True)

@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..models import CreatureRef, EncounterAction
-from .eligibility_attacks import AttackRule, GrappleRule
-from .eligibility_capabilities import FeatureActionRule, StatBlockActionRule
-from .eligibility_common import (
+from .eligibility_rules.attacks import AttackRule, GrappleRule
+from .eligibility_rules.capabilities import FeatureActionRule, StatBlockActionRule
+from .eligibility_rules.common import (
     ActorOwnershipRule,
     ActorReadyRule,
     MovementRule,
@@ -15,12 +15,12 @@ from .eligibility_common import (
     opposing_target_failure,
     target_requirement_failure,
 )
-from .eligibility_models import (
+from .eligibility_rules.models import (
     ActionEligibility,
     EligibilityFailure,
     EligibilityRule,
 )
-from .eligibility_spells import SpellActionRule, SpellTargetSelectionRule
+from .eligibility_rules.spells import SpellActionRule, SpellTargetSelectionRule
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
