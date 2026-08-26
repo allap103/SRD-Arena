@@ -1,25 +1,9 @@
-"""Extract display-ready condition names from serialized creature state."""
+"""Extract display-ready condition names from observed creature state."""
 
-from typing import Any
+from ...application.observations import CreatureObservation
 
 
-def effective_condition_names(creature: dict[str, Any]) -> tuple[str, ...]:
-    """Return deduplicated effective conditions, falling back to raw state."""
+def effective_condition_names(creature: CreatureObservation) -> tuple[str, ...]:
+    """Return the effective conditions calculated by the game engine."""
 
-    effective = creature.get("effective_conditions")
-    if isinstance(effective, list):
-        return tuple(
-            dict.fromkeys(
-                condition["condition"]
-                for condition in effective
-                if isinstance(condition, dict)
-                and isinstance(condition.get("condition"), str)
-            )
-        )
-    return tuple(
-        dict.fromkeys(
-            condition
-            for condition in creature.get("conditions", [])
-            if isinstance(condition, str)
-        )
-    )
+    return creature.effective_conditions

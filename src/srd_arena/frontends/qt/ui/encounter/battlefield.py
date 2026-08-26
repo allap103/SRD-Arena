@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
-from .....content.common.paths import IMAGES_ROOT
 from .....domain.geometry import continuous_area_outline
-from .....runtime.scenario import DEFAULT_SCENARIO_DIR
 from ....shared.models import BattlefieldCreatureView, BattlefieldView
 from ...floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
 from .area_previews import (
@@ -58,8 +57,9 @@ class BattlefieldWidget(QWidget):
     MAX_ZOOM = 4.0
     ZOOM_STEP = 1.15
 
-    def __init__(self, scenario_dir: str | Path = DEFAULT_SCENARIO_DIR):
+    def __init__(self, *, image_root: Path | None = None):
         super().__init__()
+        self._image_root = image_root
         self._battlefield: BattlefieldView | None = None
         self._creature_positions: dict[str, tuple[float, float, float]] = {}
         self._status_marker_hits: list[StatusMarkerHit] = []
@@ -69,7 +69,7 @@ class BattlefieldWidget(QWidget):
         self._selected_creature_ref: str | None = None
         self._target_allocation_counts: dict[str, int] = {}
         self._targeting_label: str | None = None
-        self._area_overlay: dict[str, object] | None = None
+        self._area_overlay: Mapping[str, object] | None = None
         self._hover_cell: tuple[int, int] | None = None
         self._hover_point: tuple[float, float] | None = None
         self._board_metrics: tuple[float, float, float, int, int] | None = None
@@ -107,7 +107,7 @@ class BattlefieldWidget(QWidget):
         self._invalidate_status_marker_hits()
         self.update()
 
-    def set_area_overlay(self, area: dict[str, object] | None) -> None:
+    def set_area_overlay(self, area: Mapping[str, object] | None) -> None:
         self._area_overlay = area
         if self._battlefield is not None:
             self.set_battlefield(self._battlefield)
@@ -735,8 +735,12 @@ class BattlefieldWidget(QWidget):
         if image_reference is None:
             return None
         if image_reference not in self._image_cache:
-            path = IMAGES_ROOT / image_reference
-            pixmap = QPixmap(str(path)) if path.is_file() else None
+            path = (
+                self._image_root / image_reference
+                if self._image_root is not None
+                else None
+            )
+            pixmap = QPixmap(str(path)) if path is not None and path.is_file() else None
             self._image_cache[image_reference] = (
                 pixmap if pixmap is not None and not pixmap.isNull() else None
             )

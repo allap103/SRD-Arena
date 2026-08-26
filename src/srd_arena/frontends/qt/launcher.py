@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
-from ...application.startup import AvailableScenario, GameStartup
+from ...application.scenarios import ScenarioSummary
+from ...application.startup import GameStartup
 from .app import GameWindow, _require_pyside6
 from .theme import apply_fantasy_theme
 
@@ -27,10 +29,11 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
 
 
 class ScenarioPickerWindow(QMainWindow):
-    def __init__(self, startup: GameStartup) -> None:
+    def __init__(self, startup: GameStartup, *, image_root: Path | None = None) -> None:
         _require_pyside6()
         super().__init__()
         self._startup = startup
+        self._image_root = image_root
         self._game_window: GameWindow | None = None
         self.setWindowTitle("Choose Scenario")
         self.resize(520, 420)
@@ -72,18 +75,27 @@ class ScenarioPickerWindow(QMainWindow):
             layout.addWidget(button)
         layout.addStretch(1)
 
-    def _open_scenario(self, scenario: AvailableScenario) -> None:
+    def _open_scenario(self, scenario: ScenarioSummary) -> None:
         self._game_window = GameWindow(
-            self._startup.start_scenario(scenario.directory),
+            self._startup.start_scenario(
+                scenario.id,
+                automatic_action_limit=1,
+            ),
+            image_root=self._image_root,
+            presentation_config=scenario.presentation,
         )
         self._game_window.show()
         self.close()
 
 
-def run_pyside6_app(startup: GameStartup) -> None:
+def run_pyside6_app(
+    startup: GameStartup,
+    *,
+    image_root: Path | None = None,
+) -> None:
     _require_pyside6()
     app = QApplication.instance() or QApplication(sys.argv)
     apply_fantasy_theme(app)
-    window = ScenarioPickerWindow(startup)
+    window = ScenarioPickerWindow(startup, image_root=image_root)
     window.show()
     app.exec()

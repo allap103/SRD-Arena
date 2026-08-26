@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from srd_arena.domain.spells.rules import spell_max_targets
-from srd_arena.runtime.scenario import Scenario
+from srd_arena.infrastructure.scenarios import load_scenario
 
 
 SCENARIO_DIR = (
@@ -13,7 +13,7 @@ SCENARIO_DIR = (
 
 
 def test_eldritch_blast_scaling_showcase_loads_all_caster_thresholds() -> None:
-    session = Scenario(str(SCENARIO_DIR)).create_session()
+    session = load_scenario(str(SCENARIO_DIR)).create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None

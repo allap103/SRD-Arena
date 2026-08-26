@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.application.observations import observe_session
 from srd_arena.frontends.qt.app import GameWindow
 from srd_arena.frontends.qt.ui.encounter.area_previews import (
     area_overlay_label,
@@ -9,7 +10,7 @@ from srd_arena.frontends.qt.ui.encounter.area_previews import (
     preview_area_overlay,
 )
 from srd_arena.frontends.shared.models import BattlefieldView
-from srd_arena.runtime.scenario import Scenario
+from srd_arena.infrastructure.scenarios import load_scenario
 
 
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
@@ -42,16 +43,19 @@ def test_slow_pending_area_preview_is_an_eight_square_cube(monkeypatch) -> None:
         ]
 
     monkeypatch.setattr(EncounterState, "_roll_initiative", _tempo_archmage_first)
-    session = Scenario(SCENARIOS_ROOT / "slow_showcase").create_session()
-    scene = session.get_scene_view()
+    session = load_scenario(SCENARIOS_ROOT / "slow_showcase").create_session()
+    session.get_scene_view()
+    observation = observe_session(session)
     slow_action = next(
-        action for action in scene.action_details if action.label == "Cast Slow"
+        action
+        for action in observation.scene.action_details
+        if action.label == "Cast Slow"
     )
 
     window = GameWindow.__new__(GameWindow)
-    window.session = session
+    window._observation = observation
     window._pending_target_mode = window._target_mode_for_action(slow_action)
-    overlay = window._pending_area_overlay(scene.action_details)
+    overlay = window._pending_area_overlay(list(observation.scene.action_details))
 
     assert overlay is not None
     assert overlay["shape"] == "cube"

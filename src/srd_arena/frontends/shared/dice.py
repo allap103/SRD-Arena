@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 import re
 
-from ...domain.encounters.models import CombatEvent
+from ...application.commands import GameEvent
 
 
 @dataclass(frozen=True)
@@ -27,7 +28,7 @@ class RollView:
     resolution_notes: tuple[str, ...] = ()
 
 
-def build_roll_views(events: list[CombatEvent]) -> list[RollView]:
+def build_roll_views(events: list[GameEvent]) -> list[RollView]:
     views: list[RollView] = []
     resolved_roll_ids = {
         event.data.get("roll_id")
@@ -107,9 +108,9 @@ def without_roll_details(
     ]
 
 
-def _attack_roll_view(event: CombatEvent) -> RollView | None:
+def _attack_roll_view(event: GameEvent) -> RollView | None:
     detail = event.data.get("attack_roll_detail")
-    if not isinstance(detail, dict):
+    if not isinstance(detail, Mapping):
         return None
     die = detail.get("die")
     dice = detail.get("dice")
@@ -117,7 +118,11 @@ def _attack_roll_view(event: CombatEvent) -> RollView | None:
     modifier = detail.get("modifier")
     total = detail.get("total")
     target = detail.get("target_ac")
-    if not all(isinstance(value, int) for value in (die, modifier, total)):
+    if not (
+        isinstance(die, int)
+        and isinstance(modifier, int)
+        and isinstance(total, int)
+    ):
         return None
     attacker = event.data.get("attacker_label")
     target_label = event.data.get("target_label")
@@ -129,25 +134,26 @@ def _attack_roll_view(event: CombatEvent) -> RollView | None:
         dice=dice,
         selected_index=selected_index,
     )
+    hit = event.data.get("hit")
     return RollView(
         label=label,
         dice=rendered_dice,
         modifier=modifier,
         total=total,
         target=target if isinstance(target, int) else None,
-        success=event.data.get("hit") if isinstance(event.data.get("hit"), bool) else None,
+        success=hit if isinstance(hit, bool) else None,
     )
 
 
 def _additional_attack_damage_roll_views(detail: object) -> list[RollView]:
-    if not isinstance(detail, dict):
+    if not isinstance(detail, Mapping):
         return []
     additional = detail.get("additional_damage")
-    if not isinstance(additional, list):
+    if not isinstance(additional, (list, tuple)):
         return []
     views: list[RollView] = []
     for component in additional:
-        if not isinstance(component, dict):
+        if not isinstance(component, Mapping):
             continue
         damage_type = component.get("damage_type")
         label = (
@@ -162,7 +168,7 @@ def _additional_attack_damage_roll_views(detail: object) -> list[RollView]:
 
 
 def _attack_damage_label(detail: object) -> str:
-    if not isinstance(detail, dict):
+    if not isinstance(detail, Mapping):
         return "Damage"
     damage_type = detail.get("damage_type")
     return (
@@ -172,15 +178,17 @@ def _attack_damage_label(detail: object) -> str:
     )
 
 
-def _saving_throw_roll_views(event: CombatEvent) -> list[RollView]:
-    details = event.data.get("save_details")
-    if not isinstance(details, list):
+def _saving_throw_roll_views(event: GameEvent) -> list[RollView]:
+    raw_details = event.data.get("save_details")
+    if isinstance(raw_details, (list, tuple)):
+        details = raw_details
+    else:
         detail = event.data.get("save_detail")
-        details = [detail] if isinstance(detail, dict) else []
+        details = (detail,) if isinstance(detail, Mapping) else ()
     views: list[RollView] = []
     spell_name = event.data.get("spell_name")
     for detail in details:
-        if not isinstance(detail, dict):
+        if not isinstance(detail, Mapping):
             continue
         roll_view = _saving_throw_roll_view(detail, spell_name)
         if roll_view is not None:
@@ -188,13 +196,13 @@ def _saving_throw_roll_views(event: CombatEvent) -> list[RollView]:
     return views
 
 
-def _invocation_start_roll_views(event: CombatEvent) -> list[RollView]:
+def _invocation_start_roll_views(event: GameEvent) -> list[RollView]:
     checks = event.data.get("checks")
-    if not isinstance(checks, list):
+    if not isinstance(checks, (list, tuple)):
         return []
     views: list[RollView] = []
     for check in checks:
-        if not isinstance(check, dict):
+        if not isinstance(check, Mapping):
             continue
         denominator = check.get("denominator")
         numerator = check.get("numerator")
@@ -210,13 +218,13 @@ def _invocation_start_roll_views(event: CombatEvent) -> list[RollView]:
             continue
         source = check.get("source")
         source_definition_id = (
-            source.get("definition_id") if isinstance(source, dict) else None
+            source.get("definition_id") if isinstance(source, Mapping) else None
         )
         source_label = (
             source_definition_id.replace("_", " ").replace("-", " ").title()
             if isinstance(source_definition_id, str)
             else source.get("label")
-            if isinstance(source, dict) and isinstance(source.get("label"), str)
+            if isinstance(source, Mapping) and isinstance(source.get("label"), str)
             else None
         )
         check_kind = (
@@ -243,7 +251,7 @@ def _invocation_start_roll_views(event: CombatEvent) -> list[RollView]:
 
 
 def _saving_throw_roll_view(
-    detail: dict[str, object],
+    detail: Mapping[str, object],
     spell_name: object,
 ) -> RollView | None:
     die = detail.get("die")
@@ -255,7 +263,11 @@ def _saving_throw_roll_view(
     success = detail.get("success")
     target_label = detail.get("target_label")
     ability = detail.get("ability")
-    if not all(isinstance(value, int) for value in (die, modifier, total)):
+    if not (
+        isinstance(die, int)
+        and isinstance(modifier, int)
+        and isinstance(total, int)
+    ):
         return None
     label = "Saving Throw"
     if isinstance(target_label, str) and isinstance(ability, str):
@@ -277,15 +289,17 @@ def _saving_throw_roll_view(
     )
 
 
-def _spell_damage_roll_views(event: CombatEvent) -> list[RollView]:
-    details = event.data.get("damage_roll_details")
-    if not isinstance(details, list):
+def _spell_damage_roll_views(event: GameEvent) -> list[RollView]:
+    raw_details = event.data.get("damage_roll_details")
+    if isinstance(raw_details, (list, tuple)):
+        details = raw_details
+    else:
         detail = event.data.get("damage_roll_detail")
-        details = [detail] if isinstance(detail, dict) else []
+        details = (detail,) if isinstance(detail, Mapping) else ()
     views: list[RollView] = []
     spell_name = event.data.get("spell_name")
     for detail in details:
-        if not isinstance(detail, dict):
+        if not isinstance(detail, Mapping):
             continue
         label = "Spell Damage"
         target_label = detail.get("target_label")
@@ -305,12 +319,17 @@ def _attack_dice_views(
     dice: object,
     selected_index: object,
 ) -> tuple[DieView, ...]:
+    integer_dice = (
+        tuple(value for value in dice if isinstance(value, int))
+        if isinstance(dice, (list, tuple))
+        else ()
+    )
     if (
-        isinstance(dice, list)
-        and len(dice) >= 1
-        and all(isinstance(value, int) for value in dice)
+        integer_dice
+        and isinstance(dice, (list, tuple))
+        and len(integer_dice) == len(dice)
         and isinstance(selected_index, int)
-        and 0 <= selected_index < len(dice)
+        and 0 <= selected_index < len(integer_dice)
     ):
         return tuple(
             DieView(
@@ -318,7 +337,7 @@ def _attack_dice_views(
                 value=value,
                 selected=index == selected_index,
             )
-            for index, value in enumerate(dice)
+            for index, value in enumerate(integer_dice)
         )
     return (DieView(expression="d20", value=die),)
 
@@ -330,7 +349,7 @@ def _pool_roll_view(
     roll_id: object = None,
     reroll_action_ids: object = None,
 ) -> RollView | None:
-    if not isinstance(detail, dict):
+    if not isinstance(detail, Mapping):
         return None
     expression = detail.get("dice")
     dice_total = detail.get("dice_total")
@@ -360,7 +379,7 @@ def _pool_roll_view(
 
 
 def _damage_resolution_notes(
-    detail: dict[str, object],
+    detail: Mapping[str, object],
     rolled_total: int,
 ) -> tuple[str, ...]:
     notes: list[str] = []
@@ -384,22 +403,23 @@ def _individual_dice_views(
     reroll_action_ids: object,
 ) -> tuple[DieView, ...]:
     match = re.fullmatch(r"(\d+)d(\d+)", expression)
-    if match is None or not isinstance(values, list):
+    if match is None or not isinstance(values, (list, tuple)):
         return ()
     count, sides = (int(part) for part in match.groups())
-    if len(values) != count or not all(isinstance(value, int) for value in values):
+    integer_values = tuple(value for value in values if isinstance(value, int))
+    if len(values) != count or len(integer_values) != len(values):
         return ()
-    history_values = histories if isinstance(histories, list) else []
-    action_ids = reroll_action_ids if isinstance(reroll_action_ids, dict) else {}
+    history_values = histories if isinstance(histories, (list, tuple)) else []
+    action_ids = (
+        reroll_action_ids if isinstance(reroll_action_ids, Mapping) else {}
+    )
     return tuple(
         DieView(
             expression=f"d{sides}",
             value=value,
             history=(
-                tuple(history_values[index])
+                _integer_tuple(history_values[index])
                 if index < len(history_values)
-                and isinstance(history_values[index], list)
-                and all(isinstance(item, int) for item in history_values[index])
                 else ()
             ),
             action_id=(
@@ -408,5 +428,12 @@ def _individual_dice_views(
                 else None
             ),
         )
-        for index, value in enumerate(values)
+        for index, value in enumerate(integer_values)
     )
+
+
+def _integer_tuple(value: object) -> tuple[int, ...]:
+    if not isinstance(value, (list, tuple)):
+        return ()
+    integers = tuple(item for item in value if isinstance(item, int))
+    return integers if len(integers) == len(value) else ()

@@ -9,7 +9,7 @@ from srd_arena.domain.encounters.models import (
     DecisionFrame,
     EncounterProgress,
 )
-from srd_arena.runtime.scenario import Scenario
+from srd_arena.infrastructure.scenarios import load_scenario
 
 
 FULL_CONTROL_SCENARIO_DIR = (
@@ -18,7 +18,7 @@ FULL_CONTROL_SCENARIO_DIR = (
 
 
 def _encounter_state() -> EncounterState:
-    session = Scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session = load_scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     return session.encounter_state

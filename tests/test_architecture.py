@@ -17,6 +17,7 @@ RULES = (
     DependencyRule(
         package="srd_arena.domain",
         forbidden=(
+            "srd_arena.application",
             "srd_arena.content",
             "srd_arena.frontends",
             "srd_arena.infrastructure",
@@ -26,7 +27,9 @@ RULES = (
     DependencyRule(
         package="srd_arena.content",
         forbidden=(
+            "srd_arena.application",
             "srd_arena.frontends",
+            "srd_arena.infrastructure",
             "srd_arena.runtime",
         ),
     ),
@@ -36,11 +39,55 @@ RULES = (
     ),
     DependencyRule(
         package="srd_arena.runtime",
-        forbidden=("srd_arena.frontends",),
+        forbidden=(
+            "srd_arena.application",
+            "srd_arena.content",
+            "srd_arena.frontends",
+            "srd_arena.infrastructure",
+        ),
     ),
     DependencyRule(
         package="srd_arena.application",
-        forbidden=("srd_arena.frontends",),
+        forbidden=(
+            "srd_arena.content",
+            "srd_arena.frontends",
+            "srd_arena.infrastructure",
+        ),
+    ),
+    DependencyRule(
+        package="srd_arena.frontends.shared",
+        forbidden=(
+            "srd_arena.content",
+            "srd_arena.domain",
+            "srd_arena.infrastructure",
+            "srd_arena.runtime",
+        ),
+    ),
+    DependencyRule(
+        package="srd_arena.infrastructure",
+        forbidden=(
+            "srd_arena.frontends",
+            "srd_arena.runtime",
+        ),
+    ),
+    DependencyRule(
+        package="srd_arena.frontends.qt",
+        forbidden=(
+            "srd_arena.content",
+            "srd_arena.domain.encounters",
+            "srd_arena.infrastructure",
+            "srd_arena.runtime",
+        ),
+    ),
+    DependencyRule(
+        package="srd_arena.frontends.headless",
+        forbidden=(
+            "srd_arena.content",
+            "srd_arena.domain",
+            "srd_arena.frontends.qt",
+            "srd_arena.infrastructure",
+            "srd_arena.runtime",
+        ),
     ),
     DependencyRule(
         package="srd_arena.domain.geometry",
@@ -90,6 +137,23 @@ def test_package_dependencies_follow_architecture() -> None:
     assert not violations, "Architecture dependency violations:\n" + "\n".join(
         violations
     )
+
+
+def test_qt_domain_imports_are_limited_to_pure_geometry() -> None:
+    violations: list[str] = []
+    package_dir = PACKAGE_ROOT / "frontends" / "qt"
+    for path in sorted(package_dir.rglob("*.py")):
+        module = _module_name(path)
+        for line, imported_module in _imports(path, module):
+            if imported_module.startswith("srd_arena.domain") and not (
+                imported_module == "srd_arena.domain.geometry"
+                or imported_module.startswith("srd_arena.domain.geometry.")
+            ):
+                violations.append(
+                    f"{path.relative_to(PACKAGE_ROOT.parent)}:{line} imports "
+                    f"{imported_module}; Qt may import only pure domain geometry."
+                )
+    assert not violations, "\n".join(violations)
 
 
 def test_relative_import_resolution() -> None:
@@ -219,6 +283,20 @@ def test_domain_root_is_namespace_only() -> None:
     assert not violations, "Domain-root imports hide concept ownership:\n" + "\n".join(
         violations
     )
+
+
+def test_package_and_runtime_roots_do_not_reexport_engine_types() -> None:
+    for path in (
+        PACKAGE_ROOT / "__init__.py",
+        PACKAGE_ROOT / "runtime" / "__init__.py",
+    ):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        assert (
+            len(tree.body) == 1
+            and isinstance(tree.body[0], ast.Expr)
+            and isinstance(tree.body[0].value, ast.Constant)
+            and isinstance(tree.body[0].value.value, str)
+        ), f"{path.relative_to(PACKAGE_ROOT.parent)} must remain namespace-only."
 
 
 def _imports(path: Path, module: str) -> list[tuple[int, str]]:

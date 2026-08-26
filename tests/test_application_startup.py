@@ -1,50 +1,74 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
-from srd_arena.application import startup
+from typing import cast
+from srd_arena.application.scenarios import (
+    LoadedScenario,
+    ScenarioRepository,
+    ScenarioSummary,
+)
 from srd_arena.application.startup import GameStartup
 
 
-def test_game_startup_lists_frontend_neutral_scenario_summaries(tmp_path: Path) -> None:
-    scenario_directory = tmp_path / "example"
-    (scenario_directory / "encounters").mkdir(parents=True)
-    (scenario_directory / "config.json").write_text(
-        json.dumps({"display_name": "Example Encounter"}),
-        encoding="utf-8",
+class ScenarioRepositoryStub:
+    def __init__(
+        self,
+        *,
+        summaries: tuple[ScenarioSummary, ...] = (),
+        loaded: LoadedScenario | None = None,
+    ) -> None:
+        self.summaries = summaries
+        self.loaded = loaded
+        self.loaded_ids: list[str] = []
+
+    def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
+        return self.summaries
+
+    def load_scenario(
+        self,
+        scenario_id: str,
+    ) -> LoadedScenario:
+        self.loaded_ids.append(scenario_id)
+        if self.loaded is None:
+            raise AssertionError("No loaded scenario was configured.")
+        return self.loaded
+
+
+def test_game_startup_lists_frontend_neutral_scenario_summaries() -> None:
+    summary = ScenarioSummary(
+        id="example",
+        label="Example Encounter",
     )
+    repository = ScenarioRepositoryStub(summaries=(summary,))
 
-    scenarios = GameStartup(tmp_path).available_scenarios()
+    scenarios = GameStartup(repository).available_scenarios()
 
-    assert len(scenarios) == 1
-    assert scenarios[0].id == "example"
-    assert scenarios[0].label == "Example Encounter"
-    assert scenarios[0].directory == scenario_directory.resolve()
+    assert scenarios == (summary,)
 
 
-def test_game_startup_loads_scenario_before_creating_session(
-    monkeypatch,
-    tmp_path: Path,
+def test_game_startup_creates_session_from_repository_result(
 ) -> None:
     session = object()
-    item = object()
-    constructed_with: list[str | Path] = []
+    received_limits: list[int | None] = []
 
-    class ScenarioStub:
-        def __init__(self, directory: str | Path) -> None:
-            constructed_with.append(directory)
-            self.directory = Path(directory)
-            self.items = [item]
-
-        def create_session(self):
+    class LoadedScenarioStub:
+        @staticmethod
+        def create_session(
+            *,
+            automatic_action_limit: int | None = None,
+        ):
+            received_limits.append(automatic_action_limit)
             return session
 
-    monkeypatch.setattr(startup, "Scenario", ScenarioStub)
+    repository = ScenarioRepositoryStub(
+        loaded=cast(LoadedScenario, LoadedScenarioStub())
+    )
 
-    running_game = GameStartup().start_scenario(tmp_path)
+    running_game = GameStartup(cast(ScenarioRepository, repository)).start_scenario(
+        "example",
+        automatic_action_limit=1,
+    )
 
-    assert constructed_with == [tmp_path]
-    assert running_game.scenario_directory == tmp_path
-    assert running_game.items == (item,)
-    assert running_game.session is session
+    assert repository.loaded_ids == ["example"]
+    assert received_limits == [1]
+    assert not hasattr(running_game, "session")
+    assert not hasattr(running_game, "_session")

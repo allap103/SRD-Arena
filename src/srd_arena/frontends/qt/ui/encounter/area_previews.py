@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from .....domain.geometry import (
     ContinuousArea,
     Grid,
@@ -13,7 +15,7 @@ from .....domain.geometry import (
 )
 from ....shared.models import BattlefieldView
 
-AreaPayload = dict[str, object]
+AreaPayload = Mapping[str, object]
 
 
 def display_area_overlay(
@@ -39,15 +41,15 @@ def display_area_overlay(
 def overlay_cells(area: AreaPayload | None) -> set[tuple[int, int]]:
     """Read valid grid cells from a serialized area payload."""
 
-    if not isinstance(area, dict):
+    if not isinstance(area, Mapping):
         return set()
     cells = area.get("cells")
-    if not isinstance(cells, list):
+    if not isinstance(cells, (list, tuple)):
         return set()
     return {
         (cell["x"], cell["y"])
         for cell in cells
-        if isinstance(cell, dict)
+        if isinstance(cell, Mapping)
         and isinstance(cell.get("x"), int)
         and isinstance(cell.get("y"), int)
     }
@@ -56,10 +58,10 @@ def overlay_cells(area: AreaPayload | None) -> set[tuple[int, int]]:
 def overlay_origin(area: AreaPayload | None) -> tuple[int, int] | None:
     """Read a valid grid origin from a serialized area payload."""
 
-    if not isinstance(area, dict):
+    if not isinstance(area, Mapping):
         return None
     origin = area.get("origin")
-    if not isinstance(origin, dict):
+    if not isinstance(origin, Mapping):
         return None
     x = origin.get("x")
     y = origin.get("y")
@@ -71,7 +73,7 @@ def overlay_origin(area: AreaPayload | None) -> tuple[int, int] | None:
 def continuous_area(area: AreaPayload | None) -> ContinuousArea | None:
     """Deserialize the continuous geometry carried by an overlay payload."""
 
-    if not isinstance(area, dict):
+    if not isinstance(area, Mapping):
         return None
     return deserialize_continuous_area(area.get("continuous_area"))
 
@@ -94,7 +96,7 @@ def preview_area_overlay(
     if area is None or hover_point is None or battlefield is None:
         return None
     origin = area.get("origin")
-    if not isinstance(origin, dict):
+    if not isinstance(origin, Mapping):
         return None
     origin_x = origin.get("x")
     origin_y = origin.get("y")

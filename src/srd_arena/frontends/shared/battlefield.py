@@ -1,9 +1,8 @@
-"""Project serialized encounter state into a battlefield presentation."""
+"""Project an observed encounter into a battlefield presentation."""
 
 from __future__ import annotations
 
-from typing import Any
-
+from ...application.observations import EncounterObservation
 from .conditions import effective_condition_names
 from .models import BattlefieldCreatureView, BattlefieldView, GridPositionView
 
@@ -11,7 +10,7 @@ TEAM_COLORS = ("#3f7fd5", "#d64545", "#3fa45b", "#d5ad36", "#8a5bd1")
 
 
 def build_battlefield_view(
-    combat_state: dict[str, Any],
+    encounter: EncounterObservation,
     *,
     background_image: str | None = None,
     grid_color: str = "#d3d3d3",
@@ -21,37 +20,34 @@ def build_battlefield_view(
     if len(team_ids) > len(TEAM_COLORS):
         raise ValueError("Battlefield presentation supports at most five teams.")
     team_colors = dict(zip(team_ids, TEAM_COLORS[: len(team_ids)], strict=True))
-    decision = combat_state["decision"]
-    concentrating_refs, buffs_by_ref, debuffs_by_ref = _battlefield_statuses(
-        combat_state
-    )
+    concentrating_refs, buffs_by_ref, debuffs_by_ref = _battlefield_statuses(encounter)
     creatures = [
         BattlefieldCreatureView(
-            creature_ref=creature_ref,
-            creature_id=creature["creature_id"],
-            name=creature["name"],
-            label=creature["label"],
-            token_image=creature.get("token_image"),
-            team_color=team_colors.get(creature.get("team_id"), TEAM_COLORS[0]),
+            creature_ref=creature.creature_ref,
+            creature_id=creature.creature_id,
+            name=creature.name,
+            label=creature.label,
+            token_image=creature.token_image,
+            team_color=team_colors.get(creature.team_id, TEAM_COLORS[0]),
             position=GridPositionView(
-                x=creature["position"]["x"],
-                y=creature["position"]["y"],
+                x=creature.position.x,
+                y=creature.position.y,
             ),
-            health=creature["health"],
+            health=creature.health,
             conditions=effective_condition_names(creature),
-            is_concentrating=creature_ref in concentrating_refs,
-            buffs=buffs_by_ref.get(creature_ref, ()),
-            debuffs=debuffs_by_ref.get(creature_ref, ()),
-            is_active=decision["creature_ref"] == creature_ref,
+            is_concentrating=creature.creature_ref in concentrating_refs,
+            buffs=buffs_by_ref.get(creature.creature_ref, ()),
+            debuffs=debuffs_by_ref.get(creature.creature_ref, ()),
+            is_active=encounter.decision.creature_ref == creature.creature_ref,
         )
-        for creature_ref, creature in combat_state["creatures"].items()
-        if creature["is_alive"]
+        for creature in encounter.creatures
+        if creature.is_alive
     ]
     return BattlefieldView(
-        width=combat_state["grid"]["width"],
-        height=combat_state["grid"]["height"],
+        width=encounter.grid.width,
+        height=encounter.grid.height,
         creatures=creatures,
-        summary_text=_render_battlefield_text(combat_state),
+        summary_text=_render_battlefield_text(encounter),
         background_image=background_image,
         grid_color=grid_color,
         grid_opacity=grid_opacity,
@@ -59,7 +55,7 @@ def build_battlefield_view(
 
 
 def _battlefield_statuses(
-    combat_state: dict[str, Any],
+    encounter: EncounterObservation,
 ) -> tuple[
     frozenset[str],
     dict[str, tuple[str, ...]],
@@ -67,45 +63,25 @@ def _battlefield_statuses(
 ]:
     """Collect concentration plus explicitly classified ongoing effects."""
 
-    creatures = combat_state.get("creatures")
-    if not isinstance(creatures, dict):
-        return frozenset(), {}, {}
-
     concentrating_refs: set[str] = set()
     buffs: dict[str, list[str]] = {}
     debuffs: dict[str, list[str]] = {}
-    ongoing_effects = combat_state.get("ongoing_effects")
-    if not isinstance(ongoing_effects, list):
-        return frozenset(), {}, {}
-
-    for effect in ongoing_effects:
-        if not isinstance(effect, dict):
-            continue
-        source = effect.get("source")
-        if not isinstance(source, dict):
-            continue
-        source_ref = source.get("applied_by_ref")
-        if effect.get("kind") == "concentration" and isinstance(source_ref, str):
+    for effect in encounter.ongoing_effects:
+        source_ref = effect.applied_by_ref
+        if effect.kind == "concentration" and source_ref is not None:
             concentrating_refs.add(source_ref)
 
-        polarity = effect.get("polarity")
-        if polarity == "beneficial":
+        if effect.polarity == "beneficial":
             collection = buffs
-        elif polarity == "harmful":
+        elif effect.polarity == "harmful":
             collection = debuffs
         else:
             continue
 
-        label = _ongoing_effect_label(effect, source)
-        target_refs = effect.get("target_refs")
-        if label is None or not isinstance(target_refs, list):
-            continue
-        for target_ref in target_refs:
-            if not isinstance(target_ref, str):
-                continue
+        for target_ref in effect.target_refs:
             labels = collection.setdefault(target_ref, [])
-            if label not in labels:
-                labels.append(label)
+            if effect.label not in labels:
+                labels.append(effect.label)
 
     return (
         frozenset(concentrating_refs),
@@ -114,46 +90,30 @@ def _battlefield_statuses(
     )
 
 
-def _ongoing_effect_label(
-    effect: dict[str, Any],
-    source: dict[str, Any],
-) -> str | None:
-    parameters = effect.get("parameters")
-    if isinstance(parameters, dict):
-        label = parameters.get("effect_label")
-        if isinstance(label, str) and label.strip():
-            return label
-    definition_id = source.get("definition_id")
-    if not isinstance(definition_id, str) or not definition_id.strip():
-        return None
-    return definition_id.replace("_", " ").replace("-", " ").title()
-
-
-def _render_battlefield_text(combat_state: dict[str, Any]) -> str:
-    width = combat_state["grid"]["width"]
-    height = combat_state["grid"]["height"]
-    creatures = combat_state["creatures"]
-    actor_ref = combat_state["decision"]["creature_ref"]
-    actor_state = creatures[actor_ref]
-    actor_position = actor_state["position"]
+def _render_battlefield_text(encounter: EncounterObservation) -> str:
+    width = encounter.grid.width
+    height = encounter.grid.height
+    actor_ref = encounter.decision.creature_ref
+    actor_state = encounter.creature(actor_ref)
+    actor_position = actor_state.position
     live_others = [
         creature
-        for creature_ref, creature in creatures.items()
-        if creature_ref != actor_ref and creature["is_alive"]
+        for creature in encounter.creatures
+        if creature.creature_ref != actor_ref and creature.is_alive
     ]
 
     rows: list[str] = []
     for y in range(height):
         row: list[str] = []
         for x in range(width):
-            if actor_position["x"] == x and actor_position["y"] == y:
+            if actor_position.x == x and actor_position.y == y:
                 row.append("A")
                 continue
             creature_here = next(
                 (
                     creature
                     for creature in live_others
-                    if creature["position"]["x"] == x and creature["position"]["y"] == y
+                    if creature.position.x == x and creature.position.y == y
                 ),
                 None,
             )
@@ -162,26 +122,26 @@ def _render_battlefield_text(combat_state: dict[str, Any]) -> str:
 
     creature_lines = [
         (
-            f"- Enemy {index + 1} ({enemy['name']}): {enemy['health']} HP at "
-            f"({enemy['position']['x']}, {enemy['position']['y']})"
+            f"- Enemy {index + 1} ({enemy.name}): {enemy.health} HP at "
+            f"({enemy.position.x}, {enemy.position.y})"
             f"{_condition_suffix(effective_condition_names(enemy))}"
         )
         for index, enemy in enumerate(live_others)
-        if enemy["is_alive"]
+        if enemy.is_alive
     ]
     if not creature_lines:
         creature_lines = ["- No other creatures remaining."]
 
-    turn_label = _turn_label(combat_state)
+    turn_label = _turn_label(encounter)
     return "\n".join(
         [
             *rows,
             "",
-            f"Round {combat_state['round_number']} - Turn: {turn_label}",
+            f"Round {encounter.round_number} - Turn: {turn_label}",
             (
-                f"{actor_state['name']} HP: "
-                f"{actor_state['health']}/{actor_state['max_health']} "
-                f"at ({actor_position['x']}, {actor_position['y']})"
+                f"{actor_state.name} HP: "
+                f"{actor_state.health}/{actor_state.max_health} "
+                f"at ({actor_position.x}, {actor_position.y})"
                 f"{_condition_suffix(effective_condition_names(actor_state))}"
             ),
             "Other creatures:",
@@ -190,11 +150,10 @@ def _render_battlefield_text(combat_state: dict[str, Any]) -> str:
     )
 
 
-def _turn_label(combat_state: dict[str, Any]) -> str:
-    decision = combat_state["decision"]
-    creature_ref = decision["creature_ref"]
-    label = combat_state["creatures"][creature_ref]["label"]
-    if decision["kind"] == "reaction":
+def _turn_label(encounter: EncounterObservation) -> str:
+    decision = encounter.decision
+    label = encounter.creature(decision.creature_ref).label
+    if decision.kind == "reaction":
         return f"{label} (Reaction)"
     return label
 

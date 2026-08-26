@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ...runtime.models import ActionView
+from ...application.observations import ActionObservation
 
 
 @dataclass(frozen=True)
@@ -99,19 +99,19 @@ class EncounterView:
     narrative_text: str | None
     battlefield: BattlefieldView
     resources: ResourceSummaryView
-    movement_actions: dict[str, ActionView]
-    non_movement_actions: list[ActionView]
-    feature_actions: list[ActionView]
-    end_turn_action: ActionView | None
+    movement_actions: dict[str, ActionObservation]
+    non_movement_actions: list[ActionObservation]
+    feature_actions: list[ActionObservation]
+    end_turn_action: ActionObservation | None
     action_pane_title: str
     transition_message: str | None = None
-    transition_action: ActionView | None = None
+    transition_action: ActionObservation | None = None
 
 
 @dataclass
 class SessionPresentation:
     scene_id: str
     story_text: str | None
-    story_actions: list[ActionView]
-    system_actions: list[ActionView]
+    story_actions: list[ActionObservation]
+    system_actions: list[ActionObservation]
     encounter: EncounterView | None = None

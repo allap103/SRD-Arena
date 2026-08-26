@@ -1,9 +1,9 @@
 from srd_arena.frontends.shared.dice import build_roll_views, without_roll_details
-from srd_arena.domain.encounters.encounter import CombatEvent
+from srd_arena.application.commands import GameEvent
 
 
 def test_build_roll_views_extracts_attack_and_damage():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="attack_resolved",
         data={
@@ -40,7 +40,7 @@ def test_build_roll_views_extracts_attack_and_damage():
 
 
 def test_build_roll_views_displays_additional_typed_attack_damage():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="attack_resolved",
         data={
@@ -85,7 +85,7 @@ def test_build_roll_views_displays_additional_typed_attack_damage():
 
 
 def test_build_roll_views_shows_both_d20s_for_advantage_or_disadvantage():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="attack_resolved",
         data={
@@ -111,7 +111,7 @@ def test_build_roll_views_shows_both_d20s_for_advantage_or_disadvantage():
 
 
 def test_build_roll_views_shows_full_attack_pool_for_three_d20s():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="attack_resolved",
         data={
@@ -137,7 +137,7 @@ def test_build_roll_views_shows_full_attack_pool_for_three_d20s():
 
 
 def test_build_roll_views_extracts_feature_healing():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="feature_used",
         data={
@@ -158,7 +158,7 @@ def test_build_roll_views_extracts_feature_healing():
 
 
 def test_build_roll_views_extracts_spell_save_dice():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="spell_cast",
         data={
@@ -191,7 +191,7 @@ def test_build_roll_views_extracts_spell_save_dice():
 
 
 def test_build_roll_views_extracts_spell_damage_dice():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="spell_cast",
         data={
@@ -220,7 +220,7 @@ def test_build_roll_views_extracts_spell_damage_dice():
 
 
 def test_spell_damage_view_explains_save_and_defense_reductions():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="spell_cast",
         data={
@@ -252,7 +252,7 @@ def test_spell_damage_view_explains_save_and_defense_reductions():
 
 
 def test_build_roll_views_extracts_ongoing_spell_save_and_damage():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="ongoing_effect_resolved",
         data={
@@ -293,7 +293,7 @@ def test_build_roll_views_extracts_ongoing_spell_save_and_damage():
 
 
 def test_build_roll_views_extracts_each_invocation_start_check():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="invocation_start_checked",
         data={
@@ -340,7 +340,7 @@ def test_build_roll_views_extracts_each_invocation_start_check():
 
 
 def test_build_roll_views_exposes_individual_rerollable_damage_dice():
-    event = CombatEvent(
+    event = GameEvent(
         seq=1,
         type="attack_pending",
         data={

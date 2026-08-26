@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.runtime.scenario import Scenario
+from srd_arena.infrastructure.scenarios import load_scenario
 from srd_arena.domain.effects import (
     TriggeredEffect,
     matching_effects,
@@ -87,7 +87,7 @@ def test_reroll_matching_dice_enforces_maximum_per_die():
 
 
 def test_tactical_fighter_loads_great_weapon_fighting_effect():
-    player = Scenario(
+    player = load_scenario(
         TACTICAL_SCENARIO_DIR
     ).create_session().decision_creature
 
@@ -121,7 +121,7 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
 
 
 def _adjacent_tactical_encounter():
-    session = Scenario(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter").create_session()
+    session = load_scenario(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter").create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4

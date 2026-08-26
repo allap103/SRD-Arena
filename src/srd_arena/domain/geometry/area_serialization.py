@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from .area_models import (
     RASTERIZATION_POLICY,
     AreaOfEffect,
@@ -47,13 +49,13 @@ def serialize_continuous_area(area: ContinuousArea) -> dict[str, object]:
 
 
 def deserialize_continuous_area(payload: object) -> ContinuousArea | None:
-    if not isinstance(payload, dict):
+    if not isinstance(payload, Mapping):
         return None
     shape = payload.get("shape")
     origin = payload.get("origin")
     if (
         not isinstance(shape, str)
-        or not isinstance(origin, dict)
+        or not isinstance(origin, Mapping)
         or not isinstance(origin.get("x"), (int, float))
         or not isinstance(origin.get("y"), (int, float))
     ):
@@ -61,7 +63,7 @@ def deserialize_continuous_area(payload: object) -> ContinuousArea | None:
     direction_payload = payload.get("direction")
     direction = None
     if (
-        isinstance(direction_payload, dict)
+        isinstance(direction_payload, Mapping)
         and isinstance(direction_payload.get("x"), (int, float))
         and isinstance(direction_payload.get("y"), (int, float))
     ):
