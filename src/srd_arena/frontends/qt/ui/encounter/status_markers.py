@@ -1,4 +1,4 @@
-"""Pure presentation helpers for battlefield status markers."""
+"""Pure presentation helpers for battlefield token overlays."""
 
 from dataclasses import dataclass
 from typing import Literal
@@ -120,6 +120,35 @@ def target_allocation_badge_position(
     if top_right_reserved:
         return center_x, center_y
     return center_x + token_radius * 0.72, center_y - token_radius * 0.72
+
+
+def creature_name_label_rect(
+    *,
+    center_x: float,
+    center_y: float,
+    token_radius: float,
+    cell_size: float,
+    text_width: float,
+    viewport_width: float,
+    viewport_height: float,
+) -> tuple[float, float, float, float]:
+    """Size a floating name badge to its text and keep it in the viewport."""
+
+    margin = 3.0
+    available_width = max(1.0, viewport_width - margin * 2)
+    available_height = max(1.0, viewport_height - margin * 2)
+    label_width = min(max(cell_size - 6.0, text_width + 12.0), available_width)
+    label_height = min(max(16.0, cell_size * 0.22), available_height)
+    label_x = min(
+        max(margin, center_x - label_width / 2),
+        max(margin, viewport_width - margin - label_width),
+    )
+    preferred_y = center_y - token_radius - label_height - 4.0
+    label_y = min(
+        max(margin, preferred_y),
+        max(margin, viewport_height - margin - label_height),
+    )
+    return label_x, label_y, label_width, label_height
 
 
 def status_marker_tooltip(

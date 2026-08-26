@@ -1,6 +1,7 @@
 from srd_arena.frontends.qt.ui.encounter.status_markers import (
     StatusMarkerHit,
     build_status_marker_specs,
+    creature_name_label_rect,
     status_marker_hit_radius,
     status_marker_positions,
     status_marker_tooltip,
@@ -260,3 +261,30 @@ def test_overlapping_marker_hit_prefers_last_painted_marker() -> None:
     ]
 
     assert status_marker_tooltip(hits, 10.0, 10.0) == "Last"
+
+
+def test_creature_name_label_expands_beyond_cell_and_stays_in_viewport() -> None:
+    label_x, label_y, label_width, label_height = creature_name_label_rect(
+        center_x=136.0,
+        center_y=236.0,
+        token_radius=27.0,
+        cell_size=72.0,
+        text_width=140.0,
+        viewport_width=300.0,
+        viewport_height=300.0,
+    )
+
+    assert label_width == 152.0
+    assert label_width > 72.0
+    assert (label_x, label_y, label_height) == (60.0, 189.0, 16.0)
+
+    edge_rect = creature_name_label_rect(
+        center_x=12.0,
+        center_y=12.0,
+        token_radius=27.0,
+        cell_size=72.0,
+        text_width=400.0,
+        viewport_width=220.0,
+        viewport_height=160.0,
+    )
+    assert edge_rect == (3.0, 3.0, 214.0, 16.0)

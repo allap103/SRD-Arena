@@ -20,6 +20,7 @@ from ....shared.session import BattlefieldCreatureView, BattlefieldView
 from .status_markers import (
     StatusMarkerHit,
     build_status_marker_specs,
+    creature_name_label_rect,
     status_marker_hit_radius,
     status_marker_positions,
     status_marker_tooltip,
@@ -740,36 +741,39 @@ class BattlefieldWidget(QWidget):
                 creature.position.x,
                 creature.position.y,
             ):
-                label_x = origin_x + creature.position.x * cell_size + 3
-                label_y = origin_y + creature.position.y * cell_size + 3
-                label_width = max(1, int(cell_size - 6))
-                label_height = max(16, int(cell_size * 0.22))
+                font = QFont()
+                font.setBold(True)
+                font.setPointSize(max(7, min(11, int(cell_size * 0.13))))
+                painter.setFont(font)
+                label_x, label_y, label_width, label_height = (
+                    creature_name_label_rect(
+                        center_x=center_x,
+                        center_y=center_y,
+                        token_radius=radius,
+                        cell_size=cell_size,
+                        text_width=painter.fontMetrics().horizontalAdvance(
+                            creature.name,
+                        ),
+                        viewport_width=self.width(),
+                        viewport_height=self.height(),
+                    )
+                )
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.setBrush(QColor(16, 14, 11, 175))
                 painter.drawRoundedRect(
                     int(label_x),
                     int(label_y),
-                    label_width,
-                    label_height,
+                    int(label_width),
+                    int(label_height),
                     4,
                     4,
                 )
                 painter.setPen(QColor("#f7edd9"))
-                font = QFont()
-                font.setBold(True)
-                font.setPointSize(max(7, min(11, int(cell_size * 0.13))))
-                painter.setFont(font)
-                left_text_inset = (
-                    max(3, int(cell_size * 0.23)) if creature.buffs else 3
-                )
-                right_text_inset = (
-                    max(3, int(cell_size * 0.23)) if creature.debuffs else 3
-                )
                 painter.drawText(
-                    int(label_x + left_text_inset),
+                    int(label_x + 6),
                     int(label_y),
-                    max(1, label_width - left_text_inset - right_text_inset),
-                    label_height,
+                    max(1, int(label_width - 12)),
+                    int(label_height),
                     Qt.AlignmentFlag.AlignCenter,
                     creature.name,
                 )
@@ -1154,6 +1158,13 @@ class BattlefieldWidget(QWidget):
         )
         if hovered_tooltip != self._visible_status_tooltip:
             self._hide_status_tooltip()
+            if hovered_tooltip is not None:
+                QToolTip.showText(
+                    event.globalPosition().toPoint(),
+                    hovered_tooltip,
+                    self,
+                )
+                self._visible_status_tooltip = hovered_tooltip
         previous_hover = self._hover_cell
         previous_point = self._hover_point
         self._hover_cell = self._cell_at_point(event.position().x(), event.position().y())
