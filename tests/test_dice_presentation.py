@@ -292,6 +292,53 @@ def test_build_roll_views_extracts_ongoing_spell_save_and_damage():
     assert damage.total == 20
 
 
+def test_build_roll_views_extracts_each_invocation_start_check():
+    event = CombatEvent(
+        seq=1,
+        type="invocation_start_checked",
+        data={
+            "kind": "cast_spell",
+            "checks": [
+                {
+                    "source": {
+                        "definition_id": "slow",
+                        "label": "Tempo Archmage",
+                    },
+                    "numerator": 1,
+                    "denominator": 4,
+                    "roll": 1,
+                    "failed": True,
+                },
+                {
+                    "source": {
+                        "definition_id": "arcane_interference",
+                        "label": "Interference Adept",
+                    },
+                    "numerator": 2,
+                    "denominator": 6,
+                    "roll": 5,
+                    "failed": False,
+                },
+            ],
+        },
+    )
+
+    slow, interference = build_roll_views([event])
+
+    assert slow.label == "Slow spellcasting check"
+    assert slow.dice[0].expression == "d4"
+    assert slow.dice[0].value == 1
+    assert slow.modifier == 0
+    assert slow.total == 1
+    assert slow.target == 2
+    assert slow.success is False
+    assert interference.label == "Arcane Interference spellcasting check"
+    assert interference.dice[0].expression == "d6"
+    assert interference.dice[0].value == 5
+    assert interference.target == 3
+    assert interference.success is True
+
+
 def test_build_roll_views_exposes_individual_rerollable_damage_dice():
     event = CombatEvent(
         seq=1,

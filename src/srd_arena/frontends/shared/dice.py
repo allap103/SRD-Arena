@@ -81,6 +81,10 @@ def build_roll_views(events: list[CombatEvent]) -> list[RollView]:
                 views.append(healing)
             continue
 
+        if event.type == "invocation_start_checked":
+            views.extend(_invocation_start_roll_views(event))
+            continue
+
         if event.type in {"spell_cast", "ongoing_effect_resolved"}:
             views.extend(_saving_throw_roll_views(event))
             views.extend(_spell_damage_roll_views(event))
@@ -181,6 +185,60 @@ def _saving_throw_roll_views(event: CombatEvent) -> list[RollView]:
         roll_view = _saving_throw_roll_view(detail, spell_name)
         if roll_view is not None:
             views.append(roll_view)
+    return views
+
+
+def _invocation_start_roll_views(event: CombatEvent) -> list[RollView]:
+    checks = event.data.get("checks")
+    if not isinstance(checks, list):
+        return []
+    views: list[RollView] = []
+    for check in checks:
+        if not isinstance(check, dict):
+            continue
+        denominator = check.get("denominator")
+        numerator = check.get("numerator")
+        roll = check.get("roll")
+        failed = check.get("failed")
+        if not (
+            isinstance(denominator, int)
+            and denominator > 0
+            and isinstance(numerator, int)
+            and isinstance(roll, int)
+            and isinstance(failed, bool)
+        ):
+            continue
+        source = check.get("source")
+        source_definition_id = (
+            source.get("definition_id") if isinstance(source, dict) else None
+        )
+        source_label = (
+            source_definition_id.replace("_", " ").replace("-", " ").title()
+            if isinstance(source_definition_id, str)
+            else source.get("label")
+            if isinstance(source, dict) and isinstance(source.get("label"), str)
+            else None
+        )
+        check_kind = (
+            "spellcasting check"
+            if event.data.get("kind") == "cast_spell"
+            else "invocation check"
+        )
+        label = (
+            f"{source_label} {check_kind}"
+            if source_label
+            else check_kind.capitalize()
+        )
+        views.append(
+            RollView(
+                label=label,
+                dice=(DieView(expression=f"d{denominator}", value=roll),),
+                modifier=0,
+                total=roll,
+                target=numerator + 1,
+                success=not failed,
+            )
+        )
     return views
 
 
