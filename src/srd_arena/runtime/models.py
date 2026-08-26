@@ -30,6 +30,7 @@ class ActionView:
         "unavailable",
         "unimplemented",
     ] = "available"
+    unavailable_codes: tuple[str, ...] = ()
     unavailable_reasons: tuple[str, ...] = ()
     source_trigger_id: str | None = None
     preferred_attack_type: str | None = None

@@ -1,59 +1,52 @@
-from ...domain.encounters.encounter import EncounterState
+from ...application.observations import EncounterObservation
 
 
-def render_encounter_text(encounter: EncounterState) -> str:
-    actor_ref = encounter.current_decision().creature_ref
-    actor = encounter.active_creature_state.creature
-    actor_position = encounter.active_position
+def render_encounter_text(encounter: EncounterObservation) -> str:
+    """Render a compact text alternative from the public encounter snapshot."""
+
+    actor_ref = encounter.decision.creature_ref
+    actor = encounter.creature(actor_ref)
+    actor_position = actor.position
     rows: list[str] = []
-    for y in range(encounter.definition.grid.height):
+    for y in range(encounter.grid.height):
         cells: list[str] = []
-        for x in range(encounter.definition.grid.width):
+        for x in range(encounter.grid.width):
             if actor_position.x == x and actor_position.y == y:
                 cells.append("A")
             else:
                 cells.append(
                     "E"
                     if any(
-                        creature_ref != actor_ref
-                        and creature_state.is_alive
-                        and creature_state.position.x == x
-                        and creature_state.position.y == y
-                        for creature_ref, creature_state in encounter.creatures.items()
+                        creature.creature_ref != actor_ref
+                        and creature.is_alive
+                        and creature.position.x == x
+                        and creature.position.y == y
+                        for creature in encounter.creatures
                     )
                     else "."
                 )
         rows.append(" ".join(cells))
 
     creatures = [
-        f"- {encounter._creature_label(creature_ref)}: "
-        f"{creature_state.creature.get_health()} HP "
-        f"at ({creature_state.position.x}, {creature_state.position.y})"
-        for creature_ref, creature_state in encounter.creatures.items()
-        if creature_ref != actor_ref
-        and creature_state.is_alive
+        f"- {creature.label}: {creature.health} HP "
+        f"at ({creature.position.x}, {creature.position.y})"
+        for creature in encounter.creatures
+        if creature.creature_ref != actor_ref and creature.is_alive
     ] or ["- No other creatures remaining."]
-    movement = encounter._active_movement_remaining()
-    movement_total = encounter.combat_rules.movement_budget(
-        encounter,
-        actor_ref,
-    ).budget
-    reaction_available = encounter.combat_rules.reaction_eligibility(
-        encounter,
-        actor_ref,
-    ).allowed
+    turn_label = actor.label
+    if encounter.decision.kind == "reaction":
+        turn_label = f"{turn_label} (Reaction)"
     return "\n".join(
         [
             *rows,
             "",
-            f"Round {encounter.round_number} - Turn: {encounter.current_turn_label()}",
-            f"Movement remaining: "
-            f"{movement}/{movement_total} squares",
-            f"Actor HP: {actor.get_health()}/{actor.get_max_health()} "
+            f"Round {encounter.round_number} - Turn: {turn_label}",
+            f"Movement remaining: {actor.movement_remaining}/{actor.movement_total} squares",
+            f"Actor HP: {actor.health}/{actor.max_health} "
             f"at ({actor_position.x}, {actor_position.y})",
-            f"Actions remaining: {encounter.active_actions_remaining}",
-            f"Attacks remaining in action: {encounter.active_attacks_remaining}",
-            f"Reaction available: {'yes' if reaction_available else 'no'}",
+            f"Action available: {'yes' if actor.action_available else 'no'}",
+            f"Attacks remaining in action: {actor.attacks_remaining}",
+            f"Reaction available: {'yes' if actor.reaction_available else 'no'}",
             "Other creatures:",
             *creatures,
         ]

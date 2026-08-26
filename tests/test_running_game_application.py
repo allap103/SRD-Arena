@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import cast
 
 from srd_arena.application.game import RunningGame
+from srd_arena.application.observations import ActionObservation
 from srd_arena.application.startup import GameStartup
 from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
 from srd_arena.runtime.models import ActionView, SceneView, TurnResult
@@ -14,17 +15,9 @@ FULL_CONTROL_SCENARIO_DIR = (
 )
 
 
-class EncounterStateStub:
-    def __init__(self, requires_automatic_advance: bool) -> None:
-        self._requires_automatic_advance = requires_automatic_advance
-
-    def requires_automatic_advance(self) -> bool:
-        return self._requires_automatic_advance
-
-
 class SessionStub:
     def __init__(self) -> None:
-        self.encounter_state = EncounterStateStub(False)
+        self.encounter_state = None
         self.pending_scene_transition = None
         self.selected_action_ids: list[str] = []
         self.advance_count = 0
@@ -38,7 +31,18 @@ class SessionStub:
                     label="Wait",
                     kind="wait",
                     creature_ref="actor",
-                )
+                ),
+                ActionView(
+                    id="actor-blocked",
+                    label="Blocked",
+                    kind="attack",
+                    creature_ref="actor",
+                    enabled=False,
+                    unavailable_reason="No Action remains.",
+                    availability="unavailable",
+                    unavailable_codes=("action_unavailable",),
+                    unavailable_reasons=("No Action remains.",),
+                ),
             ],
         )
 
@@ -69,13 +73,16 @@ def test_running_game_observes_controller_requirement() -> None:
     session = SessionStub()
     game = _running_game(session)
 
-    external = game.observe()
-    session.encounter_state = EncounterStateStub(True)
-    automatic = game.observe()
+    observation = game.observe()
 
-    assert external.scene is session.scene
-    assert external.requires_automatic_advance is False
-    assert automatic.requires_automatic_advance is True
+    assert observation.scene.scene_id == session.scene.scene_id
+    assert observation.encounter is None
+    assert observation.requires_automatic_advance is False
+    assert isinstance(observation.scene.action_details[0], ActionObservation)
+    assert observation.scene.action_details[1].reasons[0].code == "action_unavailable"
+    assert (
+        observation.scene.action_details[1].reasons[0].message == "No Action remains."
+    )
 
 
 def test_running_game_exposes_headless_decision_workflow() -> None:
@@ -89,7 +96,7 @@ def test_running_game_exposes_headless_decision_workflow() -> None:
 
     assert selected.selected_action_id == action_id
     assert advanced.scene is session.scene
-    assert reset.scene is session.scene
+    assert reset.scene.scene_id == session.scene.scene_id
     assert session.selected_action_ids == [action_id]
     assert session.advance_count == 1
     assert session.reset_count == 1
@@ -110,5 +117,8 @@ def test_headless_client_can_start_observe_and_select_by_stable_id() -> None:
     next_observation = game.observe()
 
     assert observation.requires_automatic_advance is False
+    assert observation.encounter is not None
+    assert observation.encounter.decision.creature_ref
+    assert observation.encounter.creatures
     assert result.selected_action_id == wait.id
     assert next_observation.scene.scene_id == observation.scene.scene_id

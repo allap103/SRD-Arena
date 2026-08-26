@@ -1,3 +1,11 @@
+from srd_arena.application.observations import (
+    CreatureObservation,
+    DecisionObservation,
+    EncounterObservation,
+    GridObservation,
+    OngoingEffectObservation,
+    PositionObservation,
+)
 from srd_arena.frontends.qt.ui.encounter.status_markers import (
     StatusMarkerHit,
     build_status_marker_specs,
@@ -22,101 +30,81 @@ def _creature(
     creature_id: str,
     team_id: str,
     *,
-    conditions: list[str] | None = None,
     effective_conditions: list[str] | None = None,
-) -> dict[str, object]:
-    return {
-        "creature_id": creature_id,
-        "name": creature_id.replace("_", " ").title(),
-        "label": creature_id,
-        "token_image": None,
-        "team_id": team_id,
-        "position": {"x": 0, "y": 0},
-        "health": 10,
-        "max_health": 10,
-        "conditions": list(conditions or ()),
-        "effective_conditions": [
-            {"condition": condition, "provider_ids": []}
-            for condition in effective_conditions or ()
-        ],
-        "is_alive": True,
-    }
+) -> CreatureObservation:
+    return CreatureObservation(
+        creature_ref=creature_id,
+        creature_id=creature_id,
+        name=creature_id.replace("_", " ").title(),
+        label=creature_id,
+        token_image=None,
+        team_id=team_id,
+        position=PositionObservation(0, 0),
+        health=10,
+        max_health=10,
+        is_alive=True,
+        action_available=True,
+        bonus_action_available=True,
+        reaction_available=True,
+        attacks_remaining=0,
+        attacks_per_attack_action=1,
+        movement_remaining=6,
+        movement_total=6,
+        movement_remaining_feet=30,
+        movement_total_feet=30,
+        effective_conditions=tuple(dict.fromkeys(effective_conditions or ())),
+        spell_slots=(),
+        feature_actions=(),
+    )
 
 
 def test_battlefield_view_groups_concentration_buffs_debuffs_and_conditions() -> None:
-    combat_state = {
-        "grid": {"width": 4, "height": 4},
-        "round_number": 1,
-        "decision": {"creature_ref": "caster", "kind": "turn"},
-        "creatures": {
-            "caster": _creature("caster", "heroes"),
-            "ally": _creature(
+    encounter = EncounterObservation(
+        encounter_id="status_test",
+        grid=GridObservation(4, 4),
+        round_number=1,
+        decision=DecisionObservation(creature_ref="caster", kind="turn"),
+        creatures=(
+            _creature("caster", "heroes"),
+            _creature(
                 "ally",
                 "heroes",
-                conditions=["paralyzed"],
                 effective_conditions=[
                     "paralyzed",
                     "incapacitated",
                     "incapacitated",
                 ],
             ),
-            "enemy": _creature("enemy", "monsters"),
-        },
-        "ongoing_effects": [
-            {
-                "kind": "concentration",
-                "polarity": "beneficial",
-                "source": {
-                    "applied_by_ref": "caster",
-                    "definition_id": "bless",
-                },
-                "target_refs": ["ally"],
-                "parameters": {"effect_label": "Bless"},
-            },
-            {
-                "kind": "concentration",
-                "polarity": "harmful",
-                "source": {
-                    "applied_by_ref": "enemy",
-                    "definition_id": "slow",
-                },
-                "target_refs": ["ally"],
-                "parameters": {"effect_label": "Slow"},
-            },
-            {
-                "kind": "spell",
-                "polarity": "beneficial",
-                "source": {
-                    "applied_by_ref": "caster",
-                    "definition_id": "bless",
-                },
-                "target_refs": ["ally"],
-                "parameters": {"effect_label": "Bless"},
-            },
-            {
-                "kind": "spell",
-                "polarity": "beneficial",
-                "source": {
-                    "definition_id": "magic_zone",
-                },
-                "target_refs": ["ally"],
-                "parameters": {"effect_label": "Magic Zone"},
-            },
-            {
-                "kind": "spell",
-                "polarity": "neutral",
-                "source": {
-                    "applied_by_ref": "caster",
-                    "definition_id": "ambiguous_effect",
-                },
-                "target_refs": ["ally"],
-                "parameters": {"effect_label": "Ambiguous Effect"},
-            },
-        ],
-    }
+            _creature("enemy", "monsters"),
+        ),
+        initiative=(),
+        ongoing_effects=(
+            OngoingEffectObservation(
+                "concentration", "beneficial", "caster", "bless", ("ally",), "Bless"
+            ),
+            OngoingEffectObservation(
+                "concentration", "harmful", "enemy", "slow", ("ally",), "Slow"
+            ),
+            OngoingEffectObservation(
+                "spell", "beneficial", "caster", "bless", ("ally",), "Bless"
+            ),
+            OngoingEffectObservation(
+                "spell", "beneficial", None, "magic_zone", ("ally",), "Magic Zone"
+            ),
+            OngoingEffectObservation(
+                "spell",
+                "neutral",
+                "caster",
+                "ambiguous_effect",
+                ("ally",),
+                "Ambiguous Effect",
+            ),
+        ),
+        team_ids=("heroes", "monsters"),
+    )
 
     battlefield = build_battlefield_view(
-        combat_state,
+        encounter,
         team_ids=("heroes", "monsters"),
     )
     creatures = {creature.creature_ref: creature for creature in battlefield.creatures}
@@ -178,17 +166,13 @@ def test_status_markers_are_absent_without_statuses() -> None:
 
 
 def test_effective_conditions_override_raw_conditions_and_are_deduplicated() -> None:
-    suppressed = _creature(
+    creature = _creature(
         "target",
         "heroes",
-        conditions=["prone"],
-        effective_conditions=[],
+        effective_conditions=["prone", "prone", "incapacitated"],
     )
-    fallback = _creature("target", "heroes", conditions=["prone"])
-    fallback.pop("effective_conditions")
 
-    assert effective_condition_names(suppressed) == ()
-    assert effective_condition_names(fallback) == ("prone",)
+    assert effective_condition_names(creature) == ("prone", "incapacitated")
 
 
 def test_status_marker_geometry_and_hit_testing_scale_with_the_board() -> None:

@@ -52,6 +52,13 @@ RULES = (
         ),
     ),
     DependencyRule(
+        package="srd_arena.frontends.shared",
+        forbidden=(
+            "srd_arena.domain.encounters.encounter",
+            "srd_arena.runtime.session",
+        ),
+    ),
+    DependencyRule(
         package="srd_arena.domain.geometry",
         forbidden=(
             "srd_arena.domain.encounters",

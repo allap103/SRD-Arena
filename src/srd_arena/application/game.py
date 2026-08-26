@@ -6,16 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from srd_arena.domain.equipment import Item
-from srd_arena.runtime.models import SceneView, TurnResult
+from srd_arena.runtime.models import TurnResult
 from srd_arena.runtime.session import Session
 
-
-@dataclass(frozen=True)
-class GameObservation:
-    """Initial application-level view of a running game's decision state."""
-
-    scene: SceneView
-    requires_automatic_advance: bool
+from .observations import GameObservation, observe_session
 
 
 @dataclass(frozen=True)
@@ -32,19 +26,9 @@ class RunningGame:
     session: Session
 
     def observe(self) -> GameObservation:
-        """Return the current selectable scene and controller requirement."""
+        """Return a read-only snapshot of the current decision point."""
 
-        scene = self.session.get_scene_view()
-        encounter = self.session.encounter_state
-        requires_automatic_advance = (
-            self.session.pending_scene_transition is None
-            and encounter is not None
-            and encounter.requires_automatic_advance()
-        )
-        return GameObservation(
-            scene=scene,
-            requires_automatic_advance=requires_automatic_advance,
-        )
+        return observe_session(self.session)
 
     def select_action(self, action_id: str) -> TurnResult:
         """Select an action advertised by the current observation."""

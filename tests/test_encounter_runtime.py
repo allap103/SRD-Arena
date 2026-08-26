@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from srd_arena.application.observations import observe_session
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import (
     ActionCost,
@@ -956,7 +957,9 @@ def test_cli_encounter_renderer_generates_grid_text() -> None:
     session.get_scene_view()
     assert session.encounter_state is not None
 
-    scene_text = render_encounter_text(session.encounter_state)
+    observation = observe_session(session)
+    assert observation.encounter is not None
+    scene_text = render_encounter_text(observation.encounter)
 
     assert "A" in scene_text
     assert "E" in scene_text
@@ -1027,7 +1030,7 @@ def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
     session = load_scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
 
-    presentation = build_session_presentation(session)
+    presentation = build_session_presentation(observe_session(session))
 
     assert presentation.encounter is not None
     assert [
@@ -1755,7 +1758,7 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting(
     )
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 2))
-    presentation = build_session_presentation(session)
+    presentation = build_session_presentation(observe_session(session))
 
     assert presentation.encounter is not None
     assert presentation.encounter.resources.spell_slots == (
@@ -2122,7 +2125,7 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(
     )
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
-    presentation = build_session_presentation(session)
+    presentation = build_session_presentation(observe_session(session))
 
     assert presentation.encounter is not None
     original_area = next(
@@ -4874,7 +4877,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable(
     second_wind_index = _action_id_by_label(session, "Second Wind")
     session.choose(second_wind_index)
 
-    presentation = build_session_presentation(session)
+    presentation = build_session_presentation(observe_session(session))
 
     assert presentation.encounter is not None
     assert "Second Wind" in _action_labels(session)
@@ -4951,7 +4954,7 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
     )
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 2))
-    presentation = build_session_presentation(session)
+    presentation = build_session_presentation(observe_session(session))
 
     assert presentation.encounter is not None
     assert "Blinded" in presentation.encounter.battlefield.summary_text
@@ -5135,6 +5138,7 @@ def test_follow_up_attack_is_queued_only_with_attacks_and_targets(
 ) -> None:
     window = GameWindow.__new__(GameWindow)
     window.session = object()
+    window.game = SimpleNamespace(observe=lambda: object())
     presentation = SimpleNamespace(
         encounter=SimpleNamespace(
             resources=SimpleNamespace(attacks_available=attacks_available),
@@ -5255,7 +5259,7 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
 
     window = GameWindow.__new__(GameWindow)
     window.session = session
-    window._presentation = build_session_presentation(session)
+    window._presentation = build_session_presentation(observe_session(session))
     window._pending_target_mode = TargetSelectionMode(
         kind="toggle_spell_target",
         source_trigger_id="eldritch_blast",
