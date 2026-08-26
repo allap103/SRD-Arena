@@ -84,5 +84,5 @@ def test_game_startup_creates_session_from_repository_result(
     assert repository.loaded_directories == [tmp_path]
     assert received_limits == [1]
     assert running_game.scenario_directory == tmp_path
-    assert running_game.items == (item,)
-    assert running_game.session is session
+    assert not hasattr(running_game, "session")
+    assert running_game._session is session

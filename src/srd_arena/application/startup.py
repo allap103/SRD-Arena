@@ -27,8 +27,7 @@ class GameStartup:
         scenario = self.scenarios.load_scenario(scenario_directory)
         return RunningGame(
             scenario_directory=scenario.directory,
-            items=scenario.items,
-            session=scenario.create_session(
+            _session=scenario.create_session(
                 automatic_action_limit=automatic_action_limit
             ),
         )

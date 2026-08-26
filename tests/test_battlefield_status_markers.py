@@ -1,4 +1,5 @@
 from srd_arena.application.observations import (
+    AttributeObservation,
     CreatureObservation,
     DecisionObservation,
     EncounterObservation,
@@ -55,6 +56,18 @@ def _creature(
         effective_conditions=tuple(dict.fromkeys(effective_conditions or ())),
         spell_slots=(),
         feature_actions=(),
+        armor_class=10,
+        attributes=AttributeObservation(
+            level=1,
+            strength=10,
+            dexterity=10,
+            constitution=10,
+            wisdom=10,
+            intelligence=10,
+            charisma=10,
+            proficiency_bonus=2,
+        ),
+        inventory=(),
     )
 
 

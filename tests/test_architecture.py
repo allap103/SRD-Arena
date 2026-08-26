@@ -60,7 +60,10 @@ RULES = (
     ),
     DependencyRule(
         package="srd_arena.frontends.qt",
-        forbidden=("srd_arena.domain.encounters.models",),
+        forbidden=(
+            "srd_arena.domain.encounters",
+            "srd_arena.runtime",
+        ),
     ),
     DependencyRule(
         package="srd_arena.domain.geometry",

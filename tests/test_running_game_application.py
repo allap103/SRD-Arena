@@ -79,8 +79,7 @@ class SessionStub:
 def _running_game(session: SessionStub) -> RunningGame:
     return RunningGame(
         scenario_directory=Path("arena"),
-        items=(),
-        session=cast(Session, session),
+        _session=cast(Session, session),
     )
 
 
@@ -165,9 +164,9 @@ def test_application_aims_an_advertised_area_action() -> None:
         SPELL_DAMAGE_SCENARIO_DIR
     )
     game.observe()
-    assert game.session.encounter_state is not None
-    game.session.encounter_state.turn_index = (
-        game.session.encounter_state.initiative_order.index("spectrum_adept")
+    assert game._session.encounter_state is not None
+    game._session.encounter_state.turn_index = (
+        game._session.encounter_state.initiative_order.index("spectrum_adept")
     )
     observation = game.observe()
     assert observation.encounter is not None
@@ -175,10 +174,14 @@ def test_application_aims_an_advertised_area_action() -> None:
         action
         for action in observation.scene.action_details
         if action.kind == "spell"
-        and isinstance(action.value, str)
-        and action.value.startswith("fireball")
+        and action.source_id == "fireball"
         and action.enabled
     )
+    assert fireball.source_label == "Fireball"
+    assert fireball.source_level == 3
+    assert fireball.target_ref is None
+    assert fireball.area_preview is not None
+    assert fireball.area_preview["shape"] == "radius"
 
     result = game.execute(
         AimAction(

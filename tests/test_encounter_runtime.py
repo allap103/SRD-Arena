@@ -7,7 +7,12 @@ import pytest
 
 from srd_arena.application.commands import ChangeTarget, CommandFailure, CommandResult
 from srd_arena.application.game import RunningGame
-from srd_arena.application.observations import observe_session
+from srd_arena.application.interactions import game_update
+from srd_arena.application.observations import (
+    ActionObservation,
+    ActionReasonObservation,
+    observe_session,
+)
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import (
     ActionCost,
@@ -75,7 +80,6 @@ from srd_arena.domain.creatures import (
 )
 from srd_arena.frontends.shared.models import SpellSlotTrackView
 from srd_arena.frontends.shared.session import build_session_presentation
-from srd_arena.runtime.models import ActionView
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.creatures import (
     CreatureSchema,
@@ -2085,10 +2089,12 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
         SimpleNamespace(singleShot=lambda _delay, callback: callback()),
     )
 
-    result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
+    result = game_update(
+        session,
+        _choose_directional_spell(session, "Cast Color Spray", (4, 3)),
+    )
 
     window = GameWindow.__new__(GameWindow)
-    window.session = session
     window._presentation = SimpleNamespace(encounter=object())
     window._combat_log_scene_id = state.encounter_id
     window._logged_round_number = state.round_number
@@ -3152,7 +3158,7 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:
     bucket = GameWindow._action_bucket_key(
         None,
-        ActionView(
+        ActionObservation(
             id="spell-lesser-restoration-player",
             label="Cast Lesser Restoration",
             kind="spell",
@@ -4970,7 +4976,7 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
 def test_spell_actions_map_to_magic_menu_bucket() -> None:
     bucket = GameWindow._action_bucket_key(
         None,
-        ActionView(
+        ActionObservation(
             id="spell-color_spray",
             label="Cast Color Spray",
             kind="spell",
@@ -4986,7 +4992,7 @@ def test_spell_actions_map_to_magic_menu_bucket() -> None:
 def test_grapple_actions_map_to_attack_menu_bucket() -> None:
     bucket = GameWindow._action_bucket_key(
         None,
-        ActionView(
+        ActionObservation(
             id="player-grapple-0",
             label="Grapple enemy 1 (Goblin Warrior)",
             kind="grapple",
@@ -5002,13 +5008,14 @@ def test_grapple_actions_map_to_attack_menu_bucket() -> None:
 def test_grapple_actions_share_one_board_targeting_mode() -> None:
     window = GameWindow.__new__(GameWindow)
     actions = [
-        ActionView(
+        ActionObservation(
             id=f"player-grapple-{index}",
             label=f"Grapple target {index}",
             kind="grapple",
             creature_ref="player",
             value=f"goblin_{index + 1}",
             cost={"action": 1},
+            target_ref=f"goblin_{index + 1}",
         )
         for index in range(2)
     ]
@@ -5024,7 +5031,7 @@ def test_grapple_actions_share_one_board_targeting_mode() -> None:
 def test_attack_sources_have_distinct_board_targeting_modes() -> None:
     window = GameWindow.__new__(GameWindow)
     actions = [
-        ActionView(
+        ActionObservation(
             id="goblin-scimitar-player",
             label="Scimitar player",
             kind="attack",
@@ -5032,8 +5039,9 @@ def test_attack_sources_have_distinct_board_targeting_modes() -> None:
             value="player",
             cost={"action": 1},
             preferred_attack_name="Scimitar",
+            target_ref="player",
         ),
-        ActionView(
+        ActionObservation(
             id="goblin-shortbow-player",
             label="Shortbow player",
             kind="attack",
@@ -5041,6 +5049,7 @@ def test_attack_sources_have_distinct_board_targeting_modes() -> None:
             value="player",
             cost={"action": 1},
             preferred_attack_name="Shortbow",
+            target_ref="player",
         ),
     ]
 
@@ -5073,28 +5082,32 @@ def test_unavailable_button_tooltip_lists_all_reasons() -> None:
 
     button = Button()
     actions = [
-        ActionView(
+        ActionObservation(
             id="rend-target-1",
             label="Rend",
             kind="attack",
             creature_ref="dragon",
             enabled=False,
             availability="unavailable",
-            unavailable_reasons=(
-                "No Action remains.",
-                "The target is out of range.",
+            reasons=(
+                ActionReasonObservation("unavailable", "No Action remains."),
+                ActionReasonObservation(
+                    "unavailable", "The target is out of range."
+                ),
             ),
         ),
-        ActionView(
+        ActionObservation(
             id="rend-target-2",
             label="Rend",
             kind="attack",
             creature_ref="dragon",
             enabled=False,
             availability="unavailable",
-            unavailable_reasons=(
-                "No Action remains.",
-                "The target is not available.",
+            reasons=(
+                ActionReasonObservation("unavailable", "No Action remains."),
+                ActionReasonObservation(
+                    "unavailable", "The target is not available."
+                ),
             ),
         ),
     ]
@@ -5117,13 +5130,14 @@ def test_unavailable_button_tooltip_lists_all_reasons() -> None:
         (
             1,
             [
-                ActionView(
+                ActionObservation(
                     id="attack-goblin",
                     label="Attack Goblin",
                     kind="attack",
                     creature_ref="player",
                     value="goblin_1",
                     cost={"action": 1},
+                    target_ref="goblin_1",
                 )
             ],
             TargetSelectionMode(kind="attack", source_trigger_id="attack"),
@@ -5139,7 +5153,6 @@ def test_follow_up_attack_is_queued_only_with_attacks_and_targets(
     expected,
 ) -> None:
     window = GameWindow.__new__(GameWindow)
-    window.session = object()
     window.game = SimpleNamespace(observe=lambda: object())
     presentation = SimpleNamespace(
         encounter=SimpleNamespace(
@@ -5184,21 +5197,25 @@ def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
     window._presentation = SimpleNamespace(
         encounter=SimpleNamespace(
             non_movement_actions=[
-                ActionView(
+                ActionObservation(
                     id="caster-spell-target-dummy-remove",
                     label="Remove Target Dummy (1)",
                     kind="toggle_spell_target",
                     creature_ref="caster",
                     value="target_dummy",
                     source_trigger_id="eldritch_blast",
+                    source_id="eldritch_blast",
+                    target_ref="target_dummy",
                 ),
-                ActionView(
+                ActionObservation(
                     id="caster-spell-target-dummy-add",
                     label="Add Target Dummy (2)",
                     kind="toggle_spell_target",
                     creature_ref="caster",
                     value="target_dummy",
                     source_trigger_id="eldritch_blast",
+                    source_id="eldritch_blast",
+                    target_ref="target_dummy",
                 ),
             ]
         )
@@ -5279,11 +5296,9 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
     )
 
     window = GameWindow.__new__(GameWindow)
-    window.session = session
     window.game = RunningGame(
         scenario_directory=TACTICAL_SCENARIO_DIR,
-        items=tuple(session.item_templates.values()),
-        session=session,
+        _session=session,
     )
     window._observation = observe_session(session)
     window._presentation = build_session_presentation(window._observation)
@@ -5348,13 +5363,15 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
         source_trigger_id="color_spray",
     )
     actions = [
-        ActionView(
+        ActionObservation(
             id="spell-color_spray",
             label="Cast Color Spray",
             kind="spell",
             creature_ref="player",
             value="color_spray",
             cost={"action": 1},
+            source_id="color_spray",
+            area_preview={"shape": "cone"},
         )
     ]
 
@@ -5364,13 +5381,20 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
 def test_spell_target_modes_preserve_selected_cast_level() -> None:
     window = GameWindow.__new__(GameWindow)
     actions = [
-        ActionView(
+        ActionObservation(
             id=f"blight-{suffix}",
             label=label,
             kind="spell",
             creature_ref="spectrum_adept",
             value=value,
             cost={"action": 1},
+            source_id="blight",
+            resource_level=(
+                None
+                if "#slot=" not in value
+                else int(value.rsplit("#slot=", 1)[1])
+            ),
+            target_ref="plant_target",
         )
         for suffix, label, value in (
             ("base", "Cast Blight", "blight:plant_target"),
