@@ -16,7 +16,7 @@ def test_action_observation_values_are_recursively_immutable() -> None:
         area_preview={
             "shape": "radius",
             "origin": {"x": 0, "y": 0},
-            "cells": [{"x": 0, "y": 0}],
+            "cells": ({"x": 0, "y": 0},),
         },
     )
 
@@ -33,7 +33,7 @@ def test_game_event_values_are_recursively_immutable() -> None:
     event = GameEvent(
         seq=1,
         type="example",
-        data={"detail": {"rolls": [4, 5]}},
+        data={"detail": {"rolls": (4, 5)}},
     )
 
     detail = event.data["detail"]

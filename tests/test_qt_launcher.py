@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QApplication, QPushButton
 from srd_arena.application.scenarios import ScenarioPresentation, ScenarioSummary
 from srd_arena.application.game import RunningGame
 from srd_arena.application.startup import GameStartup
-from srd_arena.frontends.qt import launcher
+import srd_arena.frontends.qt.launcher as launcher
 
 
 def test_scenario_picker_delegates_game_creation_to_application_startup(

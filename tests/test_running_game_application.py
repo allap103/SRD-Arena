@@ -138,6 +138,7 @@ def test_running_game_can_start_observe_and_select_by_stable_id() -> None:
         FULL_CONTROL_SCENARIO_DIR.name
     )
     observation = game.observe()
+    assert observation.encounter is not None
     wait = next(
         action
         for action in observation.scene.action_details
@@ -150,7 +151,6 @@ def test_running_game_can_start_observe_and_select_by_stable_id() -> None:
     next_observation = game.observe()
 
     assert observation.requires_automatic_advance is False
-    assert observation.encounter is not None
     assert observation.encounter.decision.creature_ref
     assert observation.encounter.creatures
     assert result.update is not None
