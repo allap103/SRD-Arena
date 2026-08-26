@@ -13,7 +13,8 @@ pytest.importorskip("PySide6")
 from PySide6.QtWidgets import QApplication, QPushButton
 
 from srd_arena.application.scenarios import ScenarioSummary
-from srd_arena.application.startup import GameStartup, RunningGame
+from srd_arena.application.game import RunningGame
+from srd_arena.application.startup import GameStartup
 from srd_arena.frontends.qt import launcher
 
 
@@ -36,8 +37,14 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
         def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
             return (scenario,)
 
-        def start_scenario(self, directory: str | Path) -> RunningGame:
+        def start_scenario(
+            self,
+            directory: str | Path,
+            *,
+            automatic_action_limit: int | None = None,
+        ) -> RunningGame:
             self.started.append(Path(directory))
+            assert automatic_action_limit == 1
             return running_game
 
     created_windows: list[GameWindowStub] = []

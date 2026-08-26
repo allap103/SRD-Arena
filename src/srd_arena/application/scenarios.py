@@ -43,7 +43,11 @@ class LoadedScenario:
                 return creature
         raise KeyError(f"Creature '{creature_id}' not found.")
 
-    def create_session(self) -> Session:
+    def create_session(
+        self,
+        *,
+        automatic_action_limit: int | None = None,
+    ) -> Session:
         """Create an isolated runtime session from the loaded definitions."""
 
         return Session(
@@ -51,6 +55,7 @@ class LoadedScenario:
             creature_templates={creature.id: creature for creature in self.creatures},
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
+            automatic_action_limit=automatic_action_limit,
             geometry_config=self.geometry_config,
         )
 

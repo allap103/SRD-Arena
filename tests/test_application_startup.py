@@ -58,13 +58,18 @@ def test_game_startup_creates_session_from_repository_result(
 ) -> None:
     session = object()
     item = object()
+    received_limits: list[int | None] = []
 
     class LoadedScenarioStub:
         directory = tmp_path
         items = (item,)
 
         @staticmethod
-        def create_session():
+        def create_session(
+            *,
+            automatic_action_limit: int | None = None,
+        ):
+            received_limits.append(automatic_action_limit)
             return session
 
     repository = ScenarioRepositoryStub(
@@ -72,10 +77,12 @@ def test_game_startup_creates_session_from_repository_result(
     )
 
     running_game = GameStartup(cast(ScenarioRepository, repository)).start_scenario(
-        tmp_path
+        tmp_path,
+        automatic_action_limit=1,
     )
 
     assert repository.loaded_directories == [tmp_path]
+    assert received_limits == [1]
     assert running_game.scenario_directory == tmp_path
     assert running_game.items == (item,)
     assert running_game.session is session

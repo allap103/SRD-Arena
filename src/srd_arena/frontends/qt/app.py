@@ -20,7 +20,7 @@ from ...domain.spells.rules import (
     spell_area_shape,
     spell_range_squares,
 )
-from ...application.startup import RunningGame
+from ...application.game import RunningGame
 from ..shared.dice import build_roll_views, without_roll_details
 from ..shared.config import load_encounter_presentation_config
 from ..shared.models import SessionPresentation
@@ -144,7 +144,6 @@ class GameWindow(QMainWindow):
         self._encounter_presentation_config = load_encounter_presentation_config(
             game.scenario_directory
         )
-        self.session.automatic_action_limit = 1
         self._items_by_id = {item.id: item for item in game.items}
         self._presentation: SessionPresentation | None = None
         self._pending_target_mode: TargetSelectionMode | None = None

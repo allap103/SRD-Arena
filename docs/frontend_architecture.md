@@ -20,6 +20,12 @@ srd_arena.main
 starting games. A future model-training adapter can use the same service without
 importing Qt.
 
+The returned `RunningGame` is the application facade for observing the current
+decision, selecting an advertised stable action ID, advancing scripted
+controllers, and resetting the session. Qt still reads the underlying runtime
+session for richer presentation and targeting data; the observation and command
+milestones will remove that explicitly transitional access.
+
 ## Responsibilities
 
 | Component | Responsibility |
@@ -27,6 +33,7 @@ importing Qt.
 | `main` | Compose concrete repositories, application services, and the selected frontend adapter. |
 | `application.scenarios` | Define scenario summaries, loaded scenario data, and the scenario source port. |
 | `application.startup` | Coordinate scenario discovery and create a runtime session from loaded definitions. |
+| `application.game` | Expose frontend-independent observation and game-control use cases. |
 | `infrastructure.scenarios` | Discover and assemble filesystem-backed scenarios using content loaders. |
 | `runtime` | Advance scenes and encounters in response to explicit decisions. |
 | `frontends.qt.launcher` | Display available scenarios and forward the user's selection. |
