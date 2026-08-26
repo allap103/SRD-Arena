@@ -13,7 +13,6 @@ from ...application.commands import (
 )
 from ...application.game import RunningGame
 from ...application.observations import (
-    ActionObservation,
     EncounterObservation,
     GameObservation,
 )
@@ -23,9 +22,7 @@ from ..shared.models import SessionPresentation
 from ..shared.session import build_session_presentation
 from .ui.encounter import (
     ActionMenuScope,
-    BattlefieldWidget,
     TargetSelectionMode,
-    clear_layout,
 )
 from .ui.encounter.movement import (
     MovementPlan,
@@ -49,43 +46,26 @@ from .ui.encounter.targeting import (
     selection_modes,
     target_creature_ref,
 )
+from .ui.game_surface import GameSurface, GameSurfaceCallbacks
 from .ui.sidebar import GameSidebar, SidebarCallbacks
 
 
 try:
-    from PySide6.QtCore import QSize, Qt, QTimer, Signal
-    from PySide6.QtGui import QFont
+    from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import (
         QApplication,
-        QFrame,
         QHBoxLayout,
-        QLabel,
         QMainWindow,
-        QPushButton,
-        QScrollArea,
-        QTextEdit,
-        QVBoxLayout,
         QWidget,
     )
 except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
-
-    def Signal(*args, **kwargs):  # type: ignore[no-untyped-def]
-        return None
-
     QApplication = None  # type: ignore[assignment]
-    QSize = object  # type: ignore[assignment]
-    Qt = object  # type: ignore[assignment]
     QTimer = object  # type: ignore[assignment]
-    QFont = object  # type: ignore[assignment]
-    QFrame = object  # type: ignore[assignment]
     QHBoxLayout = object  # type: ignore[assignment]
-    QLabel = object  # type: ignore[assignment]
     QMainWindow = object  # type: ignore[assignment]
-    QPushButton = object  # type: ignore[assignment]
-    QScrollArea = object  # type: ignore[assignment]
-    QTextEdit = object  # type: ignore[assignment]
-    QVBoxLayout = object  # type: ignore[assignment]
     QWidget = object  # type: ignore[assignment]
+
+
 def _require_pyside6() -> None:
     if QApplication is None:
         raise RuntimeError(
@@ -105,7 +85,6 @@ class GameWindow(QMainWindow):
         _require_pyside6()
         super().__init__()
         self.game = game
-        self._image_root = image_root
         self._observation: GameObservation | None = None
         self._encounter_presentation_config = (
             presentation_config or ScenarioPresentation()
@@ -130,7 +109,18 @@ class GameWindow(QMainWindow):
         root_layout.setContentsMargins(12, 12, 12, 12)
         root_layout.setSpacing(12)
 
-        root_layout.addWidget(self._build_main_content(), stretch=1)
+        self.surface = GameSurface(
+            GameSurfaceCallbacks(
+                select_story_action=self._select_action,
+                creature_clicked=self._handle_battlefield_creature_clicked,
+                cell_clicked=self._handle_battlefield_cell_clicked,
+                point_clicked=self._handle_battlefield_point_clicked,
+                interaction_cancelled=self._cancel_battlefield_interaction,
+                continue_transition=self._continue_pending_transition,
+            ),
+            image_root=image_root,
+        )
+        root_layout.addWidget(self.surface, stretch=1)
         self.sidebar = GameSidebar(
             SidebarCallbacks(
                 select_log_action=self._select_action_by_id,
@@ -139,7 +129,7 @@ class GameWindow(QMainWindow):
                 set_team_outlines_visible=self._set_team_outlines_visible,
                 set_creature_names_visible=self._set_always_show_creature_names,
             ),
-            initiative_layout=self.initiative_layout,
+            initiative_layout=self.surface.initiative_layout,
             show_encounter_json=show_encounter_json,
             show_team_outlines=self._show_team_outlines,
             show_creature_names=self._always_show_creature_names,
@@ -158,159 +148,15 @@ class GameWindow(QMainWindow):
 
         self.refresh_view()
 
-    def _build_main_content(self) -> QWidget:
-        container = QWidget()
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
-
-        self.scene_group = self._build_group("Scene")
-        self.scene_group.setObjectName("scenePanel")
-        self.scene_text = self._build_readonly_text(minimum_height=180)
-        self.scene_group.layout().addWidget(self.scene_text)
-
-        self.story_choices_group = self._build_group("Choices")
-        self.story_choices_group.setObjectName("choicesPanel")
-        self.story_choices_layout = QVBoxLayout()
-        self.story_choices_layout.setSpacing(8)
-        story_scroll = self._wrap_in_scroll(self.story_choices_layout)
-        self.story_choices_group.layout().addWidget(story_scroll)
-
-        self.encounter_panel = QWidget()
-        self.encounter_panel.setObjectName("encounterPanel")
-        encounter_layout = QVBoxLayout(self.encounter_panel)
-        encounter_layout.setContentsMargins(0, 0, 0, 0)
-        encounter_layout.setSpacing(10)
-
-        battlefield_area = QWidget()
-        battlefield_layout = QHBoxLayout(battlefield_area)
-        battlefield_layout.setContentsMargins(0, 0, 0, 0)
-        battlefield_layout.setSpacing(10)
-
-        self.battlefield_widget = BattlefieldWidget(image_root=self._image_root)
-        self.battlefield_widget.setObjectName("combatBoard")
-        self.battlefield_widget.creature_clicked.connect(
-            self._handle_battlefield_creature_clicked
-        )
-        self.battlefield_widget.cell_clicked.connect(
-            self._handle_battlefield_cell_clicked
-        )
-        self.battlefield_widget.point_clicked.connect(
-            self._handle_battlefield_point_clicked
-        )
-        self.battlefield_widget.interaction_cancelled.connect(
-            self._cancel_battlefield_interaction
-        )
-
-        self.initiative_rail = QFrame()
-        self.initiative_rail.setObjectName("rollRail")
-        self.initiative_rail.setFrameShape(QFrame.Shape.StyledPanel)
-        self.initiative_rail.setFixedWidth(110)
-        initiative_layout = QVBoxLayout(self.initiative_rail)
-        initiative_layout.setContentsMargins(6, 6, 6, 6)
-        initiative_layout.setSpacing(4)
-        initiative_title = QLabel("Initiative")
-        initiative_title.setObjectName("initiativeTitle")
-        initiative_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        initiative_layout.addWidget(initiative_title)
-        self.initiative_scroll = QScrollArea()
-        self.initiative_scroll.setWidgetResizable(True)
-        self.initiative_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.initiative_content = QWidget()
-        self.initiative_layout = QVBoxLayout(self.initiative_content)
-        self.initiative_layout.setContentsMargins(0, 0, 0, 0)
-        self.initiative_layout.setSpacing(4)
-        self.initiative_scroll.setWidget(self.initiative_content)
-        initiative_layout.addWidget(self.initiative_scroll, stretch=1)
-        battlefield_layout.addWidget(self.initiative_rail)
-        battlefield_layout.addWidget(self.battlefield_widget, stretch=1)
-
-        encounter_layout.addWidget(battlefield_area, stretch=1)
-
-        self.victory_overlay = QFrame(self.encounter_panel)
-        self.victory_overlay.setObjectName("victoryOverlay")
-        self.victory_overlay.setStyleSheet(
-            "QFrame { background: rgba(12, 10, 6, 190); }"
-            "QLabel { color: #f6edd9; }"
-            "QPushButton { min-width: 140px; min-height: 40px; }"
-        )
-        self.victory_overlay.hide()
-        overlay_layout = QVBoxLayout(self.victory_overlay)
-        overlay_layout.setContentsMargins(40, 40, 40, 40)
-        overlay_layout.setSpacing(12)
-        overlay_layout.addStretch(1)
-        overlay_card = QFrame()
-        overlay_card.setObjectName("overlayCard")
-        overlay_card.setStyleSheet(
-            "QFrame { background: #1d1710; border: 2px solid #c9a227; border-radius: 10px; }"
-        )
-        overlay_card_layout = QVBoxLayout(overlay_card)
-        overlay_card_layout.setContentsMargins(24, 24, 24, 24)
-        overlay_card_layout.setSpacing(12)
-        overlay_title = QLabel("Victory")
-        overlay_title.setObjectName("overlayTitle")
-        overlay_title_font = QFont()
-        overlay_title_font.setPointSize(18)
-        overlay_title_font.setBold(True)
-        overlay_title.setFont(overlay_title_font)
-        overlay_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        overlay_card_layout.addWidget(overlay_title)
-        self.victory_overlay_message = QLabel("")
-        self.victory_overlay_message.setWordWrap(True)
-        self.victory_overlay_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        overlay_card_layout.addWidget(self.victory_overlay_message)
-        self.victory_overlay_button = QPushButton("Continue")
-        self.victory_overlay_button.clicked.connect(self._continue_pending_transition)
-        overlay_card_layout.addWidget(
-            self.victory_overlay_button, alignment=Qt.AlignmentFlag.AlignCenter
-        )
-        overlay_layout.addWidget(overlay_card, alignment=Qt.AlignmentFlag.AlignCenter)
-        overlay_layout.addStretch(1)
-
-        layout.addWidget(self.scene_group, stretch=1)
-        layout.addWidget(self.story_choices_group, stretch=1)
-        layout.addWidget(self.encounter_panel, stretch=2)
-        return container
-
     def _set_team_outlines_visible(self, visible: bool) -> None:
         self._show_team_outlines = visible
-        self.battlefield_widget.set_team_outlines_visible(visible)
+        self.surface.battlefield.set_team_outlines_visible(visible)
         self.sidebar.set_team_outlines_checked(visible)
 
     def _set_always_show_creature_names(self, visible: bool) -> None:
         self._always_show_creature_names = visible
-        self.battlefield_widget.set_always_show_creature_names(visible)
+        self.surface.battlefield.set_always_show_creature_names(visible)
         self.sidebar.set_creature_names_checked(visible)
-
-    def _build_group(self, title: str) -> QFrame:
-        group = QFrame()
-        group.setObjectName("panel")
-        group.setFrameShape(QFrame.Shape.StyledPanel)
-        layout = QVBoxLayout(group)
-        layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(8)
-        return group
-
-    def _wrap_in_scroll(self, content_layout: QVBoxLayout) -> QScrollArea:
-        container = QWidget()
-        container.setLayout(content_layout)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setWidget(container)
-        return scroll
-
-    def _build_readonly_text(
-        self,
-        minimum_height: int = 100,
-        maximum_height: int | None = None,
-    ) -> QTextEdit:
-        text = QTextEdit()
-        text.setReadOnly(True)
-        text.setMinimumHeight(minimum_height)
-        if maximum_height is not None:
-            text.setMaximumHeight(maximum_height)
-        return text
 
     def refresh_view(self) -> None:
         presentation = self._build_session_presentation()
@@ -321,44 +167,33 @@ class GameWindow(QMainWindow):
             self._pending_target_mode = None
             self._action_menu_scope = None
 
-        self.scene_text.setPlainText(presentation.story_text or "")
-
         if presentation.encounter is None:
             self.sidebar.leave_encounter()
-            self.scene_group.show()
-            self.story_choices_group.show()
-            self.encounter_panel.hide()
-            self.victory_overlay.hide()
-            self.battlefield_widget.set_area_overlay(None)
-            self._render_story_actions(presentation.story_actions)
+            self.surface.show_story(
+                presentation.story_text,
+                presentation.story_actions,
+            )
         else:
             self.sidebar.enter_encounter()
-            self.scene_group.hide()
-            self.story_choices_group.hide()
-            self.encounter_panel.show()
+            self.surface.show_encounter()
             assert self._observation is not None
             assert self._observation.encounter is not None
             self._sync_combat_log_round(self._observation.encounter)
             self._render_encounter(presentation)
-        self._sync_victory_overlay(presentation)
+        encounter = presentation.encounter
+        self.surface.sync_victory_overlay(
+            encounter.transition_message if encounter is not None else None,
+            can_continue=(
+                encounter is not None and encounter.transition_action is not None
+            ),
+        )
         self._schedule_ai_step_if_needed()
-
-    def _render_story_actions(self, actions: list[ActionObservation]) -> None:
-        clear_layout(self.story_choices_layout)
-        for action in actions:
-            button = QPushButton(action.label)
-            button.clicked.connect(
-                lambda _checked=False, action_id=action.id: self._select_action(
-                    action_id
-                )
-            )
-            self.story_choices_layout.addWidget(button)
-        self.story_choices_layout.addStretch(1)
 
     def _render_encounter(self, presentation: SessionPresentation) -> None:
         encounter = presentation.encounter
         assert encounter is not None
-        self.battlefield_widget.set_battlefield(encounter.battlefield)
+        battlefield = self.surface.battlefield
+        battlefield.set_battlefield(encounter.battlefield)
         if not movement_plan_is_current(
             self._movement_plan,
             encounter.battlefield,
@@ -372,14 +207,14 @@ class GameWindow(QMainWindow):
             self._pending_target_mode,
         ):
             self._pending_target_mode = None
-        self.battlefield_widget.set_cell_targeting_enabled(
+        battlefield.set_cell_targeting_enabled(
             pending_area_action(
                 encounter.non_movement_actions,
                 self._pending_target_mode,
             )
             is not None
         )
-        self.battlefield_widget.set_area_overlay(
+        battlefield.set_area_overlay(
             pending_area_overlay(
                 encounter.non_movement_actions,
                 self._pending_target_mode,
@@ -399,7 +234,7 @@ class GameWindow(QMainWindow):
         observation = self._observation or self.game.observe()
         target_allocations = allocation_counts(observation)
         targeting_status = allocation_status(observation)
-        self.battlefield_widget.set_targeting_state(
+        battlefield.set_targeting_state(
             targetable_refs,
             allocation_counts=target_allocations,
             targeting_label=targeting_status,
@@ -411,22 +246,6 @@ class GameWindow(QMainWindow):
             pending_target_mode=self._pending_target_mode,
             action_menu_scope=self._action_menu_scope,
         )
-
-    def _sync_victory_overlay(self, presentation: SessionPresentation) -> None:
-        encounter = presentation.encounter
-        if encounter is None or encounter.transition_message is None:
-            self.victory_overlay.hide()
-            return
-        self.victory_overlay_message.setText(encounter.transition_message)
-        self.victory_overlay_button.setEnabled(encounter.transition_action is not None)
-        self._update_victory_overlay_geometry()
-        self.victory_overlay.show()
-        self.victory_overlay.raise_()
-
-    def _update_victory_overlay_geometry(self) -> None:
-        if not hasattr(self, "victory_overlay"):
-            return
-        self.victory_overlay.setGeometry(self.encounter_panel.rect())
 
     def _continue_pending_transition(self) -> None:
         if self._presentation is None or self._presentation.encounter is None:
@@ -616,7 +435,7 @@ class GameWindow(QMainWindow):
         self._movement_plan = plan
         self._pending_target_mode = None
         self._action_menu_scope = None
-        self.battlefield_widget.set_movement_plan(plan)
+        self.surface.battlefield.set_movement_plan(plan)
 
     def _confirm_movement_path(self, path: tuple[str, ...]) -> None:
         plan = self._movement_plan
@@ -644,8 +463,8 @@ class GameWindow(QMainWindow):
 
     def _clear_movement_plan(self) -> None:
         self._movement_plan = None
-        if hasattr(self, "battlefield_widget"):
-            self.battlefield_widget.set_movement_plan(None)
+        if hasattr(self, "surface"):
+            self.surface.battlefield.set_movement_plan(None)
 
     def _cancel_battlefield_interaction(self) -> None:
         self._clear_movement_plan()
@@ -818,7 +637,3 @@ class GameWindow(QMainWindow):
         ):
             return
         self._apply_turn_result(self.game.advance_automatic())
-
-    def resizeEvent(self, event) -> None:
-        super().resizeEvent(event)
-        self._update_victory_overlay_geometry()

@@ -232,13 +232,25 @@ def test_qt_encounter_widgets_are_grouped_by_responsibility() -> None:
     encounter_ui = PACKAGE_ROOT / "frontends" / "qt" / "ui" / "encounter"
 
     assert {
+        "action_menus.py",
         "area_previews.py",
         "battlefield.py",
         "dice_log.py",
         "layout.py",
+        "movement.py",
+        "panel_renderer.py",
         "resource_formatting.py",
+        "targeting.py",
     } <= {path.name for path in encounter_ui.glob("*.py")}
     assert not (encounter_ui / "widgets.py").exists()
+
+
+def test_qt_window_views_are_grouped_by_responsibility() -> None:
+    qt_ui = PACKAGE_ROOT / "frontends" / "qt" / "ui"
+
+    assert {"game_surface.py", "sidebar.py"} <= {
+        path.name for path in qt_ui.glob("*.py")
+    }
 
 
 def test_domain_root_is_namespace_only() -> None:

@@ -12,6 +12,16 @@ plus presentation metadata from the launcher and interacts through application
 observations and commands. It does not receive a scenario directory, parse
 scenario JSON, or inspect the engine session.
 
+`GameWindow` is the Qt composition and orchestration shell. It wires application
+commands to three view components and owns only transient interaction state such
+as the selected targeting mode and movement preview:
+
+| Component | Responsibility |
+| --- | --- |
+| `ui.game_surface` | Story choices, battlefield surface, initiative rail, and encounter transition overlay. |
+| `ui.sidebar` | Sidebar navigation, auxiliary creature views, settings, encounter JSON, and combat log. |
+| `ui.encounter.panel_renderer` | Populate encounter actions, resources, status, and allocation controls. |
+
 Qt may reuse the pure `domain.geometry` package for pointer-driven area-preview
 rasterization. It must not import runtime or mutable encounter implementation
 packages. This exception keeps one definition of grid geometry without moving
@@ -38,15 +48,15 @@ domain encounter implementation.
 | Module | Responsibility |
 | --- | --- |
 | `battlefield` | Draw the combat grid and emit pointer-derived signals. |
+| `action_menus` | Group advertised actions for menu presentation. |
 | `area_previews` | Re-aim serialized area templates for the hovered cell. |
 | `dice_log` | Render combat messages, dice results, and reroll controls. |
 | `status_markers` | Calculate markers, labels, tooltips, and badges. |
+| `movement` | Build immutable movement-preview ownership and shortest paths. |
+| `targeting` | Derive target-selection modes and battlefield click actions. |
+| `panel_renderer` | Render encounter controls through explicit bindings and callbacks. |
 | `layout` | Clear nested Qt layouts. |
 | `resource_formatting` | Format resource values for Qt labels. |
-
-The remaining size of `frontends.qt.app` is a frontend readability concern,
-not an application-boundary leak. Future extraction should move cohesive Qt
-components without changing the `RunningGame` contract.
 
 ## Headless adapter
 
