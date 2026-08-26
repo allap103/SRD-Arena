@@ -3,6 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
+from srd_arena.application.commands import (
+    AimAction,
+    ConfirmTargeting,
+    SelectAction,
+    SetResourceAllocation,
+)
 from srd_arena.application.game import RunningGame
 from srd_arena.application.observations import ActionObservation
 from srd_arena.application.startup import GameStartup
@@ -12,6 +18,15 @@ from srd_arena.runtime.session import Session
 
 FULL_CONTROL_SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
+)
+MASS_HEAL_SCENARIO_DIR = (
+    Path(__file__).parents[1]
+    / "content"
+    / "scenarios"
+    / "mass_heal_allocation_showcase"
+)
+SPELL_DAMAGE_SCENARIO_DIR = (
+    Path(__file__).parents[1] / "content" / "scenarios" / "spell_damage_showcase"
 )
 
 
@@ -95,7 +110,7 @@ def test_running_game_exposes_headless_decision_workflow() -> None:
     reset = game.reset()
 
     assert selected.selected_action_id == action_id
-    assert advanced.scene is session.scene
+    assert advanced.observation.scene.scene_id == session.scene.scene_id
     assert reset.scene.scene_id == session.scene.scene_id
     assert session.selected_action_ids == [action_id]
     assert session.advance_count == 1
@@ -122,3 +137,103 @@ def test_headless_client_can_start_observe_and_select_by_stable_id() -> None:
     assert observation.encounter.creatures
     assert result.selected_action_id == wait.id
     assert next_observation.scene.scene_id == observation.scene.scene_id
+
+
+def test_stale_application_command_is_rejected_without_reaching_engine() -> None:
+    session = SessionStub()
+    game = _running_game(session)
+
+    result = game.execute(
+        SelectAction(action_id="actor-wait", expected_decision_id="old-decision")
+    )
+
+    assert result.accepted is False
+    assert result.failure is not None
+    assert result.failure.code == "stale_decision"
+    assert session.selected_action_ids == []
+
+    unavailable = game.execute(
+        SelectAction(action_id="actor-blocked", expected_decision_id=None)
+    )
+    assert unavailable.failure is not None
+    assert unavailable.failure.code == "action_unavailable"
+    assert session.selected_action_ids == []
+
+
+def test_application_aims_an_advertised_area_action() -> None:
+    game = GameStartup(FilesystemScenarioRepository()).start_scenario(
+        SPELL_DAMAGE_SCENARIO_DIR
+    )
+    game.observe()
+    assert game.session.encounter_state is not None
+    game.session.encounter_state.turn_index = (
+        game.session.encounter_state.initiative_order.index("spectrum_adept")
+    )
+    observation = game.observe()
+    assert observation.encounter is not None
+    fireball = next(
+        action
+        for action in observation.scene.action_details
+        if action.kind == "spell"
+        and isinstance(action.value, str)
+        and action.value.startswith("fireball")
+        and action.enabled
+    )
+
+    result = game.execute(
+        AimAction(
+            action_id=fireball.id,
+            x=6.5,
+            y=3.5,
+            expected_decision_id=observation.encounter.decision.id,
+        )
+    )
+
+    assert result.accepted is True
+    assert result.update is not None
+    assert result.update.selected_action_id == fireball.id
+
+
+def test_application_controls_numeric_target_allocation() -> None:
+    game = GameStartup(FilesystemScenarioRepository()).start_scenario(
+        MASS_HEAL_SCENARIO_DIR
+    )
+    observation = game.observe()
+    assert observation.encounter is not None
+    cast = next(
+        action
+        for action in observation.scene.action_details
+        if action.kind == "spell" and action.enabled
+    )
+    started = game.execute(SelectAction(cast.id, observation.encounter.decision.id))
+    assert started.update is not None
+    targeting = started.update.observation.encounter
+    assert targeting is not None and targeting.targeting is not None
+    assert targeting.targeting.resource_pool_total == 700
+
+    allocation = game.execute(
+        SetResourceAllocation(
+            target_ref="healer",
+            amount=200,
+            expected_decision_id=targeting.decision.id,
+        )
+    )
+    assert allocation.update is not None
+    allocated_encounter = allocation.update.observation.encounter
+    assert allocated_encounter is not None and allocated_encounter.targeting is not None
+    assert allocated_encounter.targeting.resource_allocations[0].amount == 200
+
+    invalid = game.execute(
+        SetResourceAllocation(
+            target_ref="healer",
+            amount=201,
+            expected_decision_id=allocated_encounter.decision.id,
+        )
+    )
+    assert invalid.failure is not None
+    assert invalid.failure.code == "invalid_allocation"
+
+    confirmed = game.execute(
+        ConfirmTargeting(expected_decision_id=allocated_encounter.decision.id)
+    )
+    assert confirmed.accepted is True

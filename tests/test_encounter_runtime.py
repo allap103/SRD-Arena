@@ -5,6 +5,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from srd_arena.application.commands import ChangeTarget, CommandFailure, CommandResult
+from srd_arena.application.game import RunningGame
 from srd_arena.application.observations import observe_session
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import (
@@ -5201,8 +5203,17 @@ def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
             ]
         )
     )
-    selected: list[str] = []
-    window._select_action = selected.append
+    commands: list[ChangeTarget] = []
+    window.game = SimpleNamespace(
+        execute=lambda command: (
+            commands.append(command)
+            or CommandResult(
+                failure=CommandFailure("test_stop", "Stop after command capture.")
+            )
+        )
+    )
+    window._required_decision_id = lambda: "decision-1"
+    window._accepted_update = lambda _result: None
     window._begin_movement_plan = lambda _creature_ref: None
 
     GameWindow._handle_battlefield_creature_clicked(
@@ -5215,9 +5226,19 @@ def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
         remove_allocation=True,
     )
 
-    assert selected == [
-        "caster-spell-target-dummy-add",
-        "caster-spell-target-dummy-remove",
+    assert commands == [
+        ChangeTarget(
+            target_ref="target_dummy",
+            remove=False,
+            expected_decision_id="decision-1",
+            source_trigger_id="eldritch_blast",
+        ),
+        ChangeTarget(
+            target_ref="target_dummy",
+            remove=True,
+            expected_decision_id="decision-1",
+            source_trigger_id="eldritch_blast",
+        ),
     ]
 
 
@@ -5259,7 +5280,13 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
 
     window = GameWindow.__new__(GameWindow)
     window.session = session
-    window._presentation = build_session_presentation(observe_session(session))
+    window.game = RunningGame(
+        scenario_directory=TACTICAL_SCENARIO_DIR,
+        items=tuple(session.item_templates.values()),
+        session=session,
+    )
+    window._observation = observe_session(session)
+    window._presentation = build_session_presentation(window._observation)
     window._pending_target_mode = TargetSelectionMode(
         kind="toggle_spell_target",
         source_trigger_id="eldritch_blast",

@@ -63,7 +63,9 @@ def test_battlefield_view_groups_concentration_buffs_debuffs_and_conditions() ->
         encounter_id="status_test",
         grid=GridObservation(4, 4),
         round_number=1,
-        decision=DecisionObservation(creature_ref="caster", kind="turn"),
+        decision=DecisionObservation(
+            id="decision-1", creature_ref="caster", kind="turn"
+        ),
         creatures=(
             _creature("caster", "heroes"),
             _creature(
@@ -101,6 +103,7 @@ def test_battlefield_view_groups_concentration_buffs_debuffs_and_conditions() ->
             ),
         ),
         team_ids=("heroes", "monsters"),
+        targeting=None,
     )
 
     battlefield = build_battlefield_view(

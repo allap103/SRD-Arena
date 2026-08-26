@@ -63,6 +63,7 @@ class PositionObservation:
 
 @dataclass(frozen=True)
 class DecisionObservation:
+    id: str
     kind: str
     creature_ref: str
 
@@ -124,6 +125,31 @@ class OngoingEffectObservation:
 
 
 @dataclass(frozen=True)
+class TargetResourceLimitObservation:
+    target_ref: str
+    maximum: int
+
+
+@dataclass(frozen=True)
+class TargetResourceAllocationObservation:
+    target_ref: str
+    amount: int
+
+
+@dataclass(frozen=True)
+class TargetingObservation:
+    source_id: str
+    source_label: str
+    selected_target_refs: tuple[str, ...]
+    maximum_targets: int
+    repeat_target_allocations: bool
+    require_full_target_count: bool
+    resource_pool_total: int | None
+    resource_allocations: tuple[TargetResourceAllocationObservation, ...]
+    resource_limits: tuple[TargetResourceLimitObservation, ...]
+
+
+@dataclass(frozen=True)
 class EncounterObservation:
     encounter_id: str
     grid: GridObservation
@@ -133,6 +159,7 @@ class EncounterObservation:
     initiative: tuple[InitiativeObservation, ...]
     ongoing_effects: tuple[OngoingEffectObservation, ...]
     team_ids: tuple[str, ...]
+    targeting: TargetingObservation | None
 
     def creature(self, creature_ref: str) -> CreatureObservation:
         """Return a combatant by its stable encounter reference."""
@@ -233,6 +260,7 @@ def _observe_encounter(session: Session) -> EncounterObservation:
         grid=GridObservation(width=grid["width"], height=grid["height"]),
         round_number=int(exported["round_number"]),
         decision=DecisionObservation(
+            id=str(decision["frame_id"]),
             kind=str(decision["kind"]),
             creature_ref=str(decision["creature_ref"]),
         ),
@@ -249,6 +277,43 @@ def _observe_encounter(session: Session) -> EncounterObservation:
         ),
         ongoing_effects=tuple(_observe_effect(effect) for effect in ongoing_effects),
         team_ids=tuple(team.id for team in session.current_encounter.teams),
+        targeting=_observe_targeting(state),
+    )
+
+
+def _observe_targeting(state: Any) -> TargetingObservation | None:
+    pending = state.pending_spell_cast
+    if pending is None:
+        return None
+    actor = state.creatures[state.current_decision().creature_ref].creature
+    spell = (
+        next(
+            (
+                spell
+                for spell in actor.spellcasting.learned_spells
+                if spell.id == pending.spell_id
+            ),
+            None,
+        )
+        if actor.spellcasting is not None
+        else None
+    )
+    return TargetingObservation(
+        source_id=pending.spell_id,
+        source_label=spell.name if spell is not None else pending.spell_id,
+        selected_target_refs=tuple(pending.selected_target_refs),
+        maximum_targets=pending.maximum_targets,
+        repeat_target_allocations=pending.repeat_target_allocations,
+        require_full_target_count=pending.require_full_target_count,
+        resource_pool_total=pending.resource_pool_total,
+        resource_allocations=tuple(
+            TargetResourceAllocationObservation(target_ref=target_ref, amount=amount)
+            for target_ref, amount in pending.resource_allocations.items()
+        ),
+        resource_limits=tuple(
+            TargetResourceLimitObservation(target_ref=target_ref, maximum=maximum)
+            for target_ref, maximum in pending.resource_allocation_limits.items()
+        ),
     )
 
 

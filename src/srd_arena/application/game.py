@@ -6,9 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from srd_arena.domain.equipment import Item
-from srd_arena.runtime.models import TurnResult
 from srd_arena.runtime.session import Session
 
+from .commands import CommandResult, GameCommand, GameUpdate, SelectAction
+from .interactions import decision_id, execute_game_command, game_update
 from .observations import GameObservation, observe_session
 
 
@@ -30,15 +31,29 @@ class RunningGame:
 
         return observe_session(self.session)
 
-    def select_action(self, action_id: str) -> TurnResult:
+    def select_action(self, action_id: str) -> GameUpdate:
         """Select an action advertised by the current observation."""
 
-        return self.session.choose(action_id)
+        result = self.execute(
+            SelectAction(
+                action_id=action_id,
+                expected_decision_id=decision_id(self.observe()),
+            )
+        )
+        if result.update is None:
+            assert result.failure is not None
+            raise RuntimeError(result.failure.message)
+        return result.update
 
-    def advance_automatic(self) -> TurnResult:
+    def advance_automatic(self) -> GameUpdate:
         """Advance scripted controllers until the engine yields control."""
 
-        return self.session.advance_until_input_required()
+        return game_update(self.session, self.session.advance_until_input_required())
+
+    def execute(self, command: GameCommand) -> CommandResult:
+        """Validate and execute one explicit interaction command."""
+
+        return execute_game_command(self.session, command)
 
     def reset(self) -> GameObservation:
         """Reset the running game and return its initial observation."""
