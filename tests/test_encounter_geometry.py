@@ -44,6 +44,10 @@ def test_point_cube_area_uses_exact_grid_aligned_dimensions() -> None:
     area = build_point_cube_area(Position(3, 3), 4, Grid(width=8, height=8))
 
     assert area.shape == "cube"
+    assert area.continuous_area is not None
+    assert area.continuous_area.shape == "cube"
+    assert area.continuous_area.direction is None
+    assert area.continuous_area.length == 4.0
     assert len(area.cells) == 16
     assert _coords(area) == {
         (x, y) for y in range(2, 6) for x in range(2, 6)

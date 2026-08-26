@@ -9,6 +9,7 @@ from ...domain.geometry import (
     Position,
     Vector2D,
     build_directional_area,
+    build_point_cube_area,
     build_radius_area,
     serialize_area,
 )
@@ -16,6 +17,7 @@ from ...domain.spells.rules import (
     parse_spell_action_slot,
     parse_spell_action_value,
     spell_action_value,
+    spell_area_shape,
     spell_range_squares,
 )
 from ...runtime.scenario import DEFAULT_SCENARIO_DIR, Scenario
@@ -1986,13 +1988,18 @@ class GameWindow(QMainWindow):
             return None
         grid = self.session.encounter_state.definition.grid
         if spell.geometry_mode == "point_area":
-            radius_feet = spell.area_size_feet
-            if radius_feet is None:
+            size_feet = spell.area_size_feet
+            if size_feet is None:
                 return None
-            radius_squares = int(
-                grid.distance_from_feet(radius_feet, minimum=1)
+            size_squares = int(
+                grid.distance_from_feet(size_feet, minimum=1)
             )
-            return serialize_area(build_radius_area(Position(0, 0), radius_squares, grid))
+            area = (
+                build_point_cube_area(Position(0, 0), size_squares, grid)
+                if spell_area_shape(spell) == "cube"
+                else build_radius_area(Position(0, 0), size_squares, grid)
+            )
+            return serialize_area(area)
         length = spell_range_squares(spell, grid)
         if length is None:
             return None

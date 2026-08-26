@@ -114,7 +114,16 @@ def build_point_cube_area(
         for x in range(start_x, start_x + size_squares)
         if 0 <= x < grid.width and 0 <= y < grid.height
     )
-    return AreaOfEffect(shape="cube", origin=origin, cells=cells)
+    return AreaOfEffect(
+        shape="cube",
+        origin=origin,
+        cells=cells,
+        continuous_area=ContinuousArea(
+            shape="cube",
+            origin=point_from_position(origin),
+            length=float(size_squares),
+        ),
+    )
 
 
 def build_cone_area(

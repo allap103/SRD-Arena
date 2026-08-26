@@ -195,6 +195,8 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     spell_event = next(
         event for event in resolved.events if event.type == "spell_cast"
     )
+    assert spell_event.data["area"]["shape"] == "cube"
+    assert len(spell_event.data["area"]["cells"]) == 64
     assert spell_event.data["target_refs"] == [
         "goblin_1",
         "goblin_2",

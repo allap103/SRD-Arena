@@ -9,6 +9,7 @@ from .....domain.geometry import (
     Position,
     Vector2D,
     build_directional_area,
+    build_point_cube_area,
     build_radius_area,
     continuous_area_outline,
     deserialize_continuous_area,
@@ -852,7 +853,11 @@ class BattlefieldWidget(QWidget):
         if preview is not None:
             return preview
         continuous_area = self._continuous_area(self._area_overlay)
-        if continuous_area is not None and continuous_area.shape == "radius":
+        if (
+            continuous_area is not None
+            and continuous_area.direction is None
+            and continuous_area.shape in {"radius", "cube"}
+        ):
             return None
         return self._area_overlay
 
@@ -908,20 +913,32 @@ class BattlefieldWidget(QWidget):
         if not isinstance(origin_x, int) or not isinstance(origin_y, int):
             return None
         continuous_area = deserialize_continuous_area(area.get("continuous_area"))
+        if continuous_area is None:
+            return None
+        preview_origin = Position(int(hover_point[0]), int(hover_point[1]))
+        grid = Grid(width=battlefield.width, height=battlefield.height)
         if (
-            continuous_area is None
+            continuous_area.shape == "cube"
+            and continuous_area.direction is None
+            and continuous_area.length is not None
         ):
-            return None
-        if int(hover_point[0]) == origin_x and int(hover_point[1]) == origin_y:
-            return None
+            return serialize_area(
+                build_point_cube_area(
+                    preview_origin,
+                    max(1, int(round(continuous_area.length))),
+                    grid,
+                )
+            )
         if continuous_area.shape == "radius" and continuous_area.radius is not None:
             return serialize_area(
                 build_radius_area(
-                    Position(int(hover_point[0]), int(hover_point[1])),
+                    preview_origin,
                     max(1, int(round(continuous_area.radius))),
-                    Grid(width=battlefield.width, height=battlefield.height),
+                    grid,
                 )
             )
+        if preview_origin == Position(origin_x, origin_y):
+            return None
         if (
             continuous_area.direction is None
             or continuous_area.shape not in {"cone", "line", "cube"}
@@ -933,7 +950,6 @@ class BattlefieldWidget(QWidget):
             hover_point[1] - continuous_area.origin.y,
         )
         origin_position = Position(origin_x, origin_y)
-        grid = Grid(width=battlefield.width, height=battlefield.height)
         size = max(1, int(round(continuous_area.length)))
         coverage_threshold = (
             continuous_area.coverage_threshold
