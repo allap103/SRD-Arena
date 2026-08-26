@@ -25,6 +25,15 @@ QLabel {
     color: #eadfca;
 }
 
+QToolTip {
+    background-color: rgba(16, 14, 11, 175);
+    color: #f7edd9;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-weight: 700;
+}
+
 QFrame#panel,
 QFrame#untitledPanel,
 QFrame#sidebarPanel,

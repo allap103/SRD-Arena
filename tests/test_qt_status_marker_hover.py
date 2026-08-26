@@ -12,6 +12,16 @@ from PySide6.QtWidgets import QApplication
 
 from srd_arena.frontends.qt.ui.encounter import widgets
 from srd_arena.frontends.qt.ui.encounter.status_markers import StatusMarkerHit
+from srd_arena.frontends.qt.theme import FANTASY_STYLESHEET
+
+
+def test_qt_tooltips_match_floating_name_style() -> None:
+    tooltip_style = FANTASY_STYLESHEET.split("QToolTip {", 1)[1].split("}", 1)[0]
+
+    assert "background-color: rgba(16, 14, 11, 175);" in tooltip_style
+    assert "color: #f7edd9;" in tooltip_style
+    assert "border-radius: 4px;" in tooltip_style
+    assert "font-weight: 700;" in tooltip_style
 
 
 def test_real_mouse_move_shows_status_marker_tooltip(monkeypatch) -> None:
