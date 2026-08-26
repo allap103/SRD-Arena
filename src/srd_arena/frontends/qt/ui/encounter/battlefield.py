@@ -3,20 +3,17 @@ from __future__ import annotations
 from pathlib import Path
 
 from .....content.common.paths import IMAGES_ROOT
-from .....domain.geometry import (
-    Grid,
-    Position,
-    Vector2D,
-    build_directional_area,
-    build_point_cube_area,
-    build_radius_area,
-    continuous_area_outline,
-    deserialize_continuous_area,
-    serialize_area,
-)
+from .....domain.geometry import continuous_area_outline
 from .....runtime.scenario import DEFAULT_SCENARIO_DIR
 from ....shared.session import BattlefieldCreatureView, BattlefieldView
 from ...floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
+from .area_previews import (
+    area_overlay_label,
+    continuous_area,
+    display_area_overlay,
+    overlay_cells as area_overlay_cells,
+    overlay_origin as area_overlay_origin,
+)
 from .status_markers import (
     StatusMarkerHit,
     build_status_marker_specs,
@@ -173,7 +170,11 @@ class BattlefieldWidget(QWidget):
         origin_x = rect.x() + (rect.width() - board_width) / 2 + self._pan_offset[0]
         origin_y = rect.y() + (rect.height() - board_height) / 2 + self._pan_offset[1]
         self._board_metrics = (origin_x, origin_y, cell_size, cols, rows)
-        display_overlay = self._display_area_overlay()
+        display_overlay = display_area_overlay(
+            self._area_overlay,
+            self._hover_point,
+            self._battlefield,
+        )
 
         board_x = int(origin_x)
         board_y = int(origin_y)
@@ -290,8 +291,8 @@ class BattlefieldWidget(QWidget):
                 )
             )
 
-        overlay_cells = self._overlay_cells(display_overlay)
-        overlay_origin = self._overlay_origin(display_overlay)
+        overlay_cells = area_overlay_cells(display_overlay)
+        overlay_origin = area_overlay_origin(display_overlay)
         if overlay_cells:
             painter.setPen(Qt.PenStyle.NoPen)
             for cell_x, cell_y in overlay_cells:
@@ -304,9 +305,9 @@ class BattlefieldWidget(QWidget):
                     max(1, int(cell_size - 2)),
                     QColor(72, 142, 212, 95),
                 )
-            continuous_area = self._continuous_area(display_overlay)
-            if continuous_area is not None:
-                outline = continuous_area_outline(continuous_area)
+            continuous = continuous_area(display_overlay)
+            if continuous is not None:
+                outline = continuous_area_outline(continuous)
                 if outline is not None:
                     painter.setBrush(QColor(132, 188, 234, 55))
                     outline_pen = QPen(QColor("#1c4e80"), 2)
@@ -563,7 +564,7 @@ class BattlefieldWidget(QWidget):
                 badge_width - 24,
                 badge_height,
                 Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
-                self._area_overlay_label(display_overlay),
+                area_overlay_label(display_overlay),
             )
 
         if self._targeting_label is not None:
@@ -719,130 +720,6 @@ class BattlefieldWidget(QWidget):
     def _invalidate_status_marker_hits(self) -> None:
         self._status_marker_hits = []
         self._hide_status_tooltip()
-
-    def _display_area_overlay(self) -> dict[str, object] | None:
-        preview = self._preview_area_overlay(
-            self._area_overlay,
-            self._hover_point,
-            self._battlefield,
-        )
-        if preview is not None:
-            return preview
-        continuous_area = self._continuous_area(self._area_overlay)
-        if (
-            continuous_area is not None
-            and continuous_area.direction is None
-            and continuous_area.shape in {"radius", "cube"}
-        ):
-            return None
-        return self._area_overlay
-
-    def _overlay_cells(self, area: dict[str, object] | None) -> set[tuple[int, int]]:
-        if not isinstance(area, dict):
-            return set()
-        cells = area.get("cells")
-        if not isinstance(cells, list):
-            return set()
-        return {
-            (cell["x"], cell["y"])
-            for cell in cells
-            if isinstance(cell, dict)
-            and isinstance(cell.get("x"), int)
-            and isinstance(cell.get("y"), int)
-        }
-
-    def _overlay_origin(self, area: dict[str, object] | None) -> tuple[int, int] | None:
-        if not isinstance(area, dict):
-            return None
-        origin = area.get("origin")
-        if not isinstance(origin, dict):
-            return None
-        x = origin.get("x")
-        y = origin.get("y")
-        if not isinstance(x, int) or not isinstance(y, int):
-            return None
-        return (x, y)
-
-    def _continuous_area(self, area: dict[str, object] | None):
-        if not isinstance(area, dict):
-            return None
-        return deserialize_continuous_area(area.get("continuous_area"))
-
-    def _area_overlay_label(self, area: dict[str, object]) -> str:
-        shape = area.get("shape")
-        label = str(shape).capitalize() if isinstance(shape, str) else "Area"
-        return f"{label} AoE"
-
-    @staticmethod
-    def _preview_area_overlay(
-        area: dict[str, object] | None,
-        hover_point: tuple[float, float] | None,
-        battlefield: BattlefieldView | None,
-    ) -> dict[str, object] | None:
-        if area is None or hover_point is None or battlefield is None:
-            return None
-        origin = area.get("origin")
-        if not isinstance(origin, dict):
-            return None
-        origin_x = origin.get("x")
-        origin_y = origin.get("y")
-        if not isinstance(origin_x, int) or not isinstance(origin_y, int):
-            return None
-        continuous_area = deserialize_continuous_area(area.get("continuous_area"))
-        if continuous_area is None:
-            return None
-        preview_origin = Position(int(hover_point[0]), int(hover_point[1]))
-        grid = Grid(width=battlefield.width, height=battlefield.height)
-        if (
-            continuous_area.shape == "cube"
-            and continuous_area.direction is None
-            and continuous_area.length is not None
-        ):
-            return serialize_area(
-                build_point_cube_area(
-                    preview_origin,
-                    max(1, int(round(continuous_area.length))),
-                    grid,
-                )
-            )
-        if continuous_area.shape == "radius" and continuous_area.radius is not None:
-            return serialize_area(
-                build_radius_area(
-                    preview_origin,
-                    max(1, int(round(continuous_area.radius))),
-                    grid,
-                )
-            )
-        if preview_origin == Position(origin_x, origin_y):
-            return None
-        if (
-            continuous_area.direction is None
-            or continuous_area.shape not in {"cone", "line", "cube"}
-            or continuous_area.length is None
-        ):
-            return None
-        direction = Vector2D(
-            hover_point[0] - continuous_area.origin.x,
-            hover_point[1] - continuous_area.origin.y,
-        )
-        origin_position = Position(origin_x, origin_y)
-        size = max(1, int(round(continuous_area.length)))
-        coverage_threshold = (
-            continuous_area.coverage_threshold
-            if continuous_area.coverage_threshold is not None
-            else 0.5
-        )
-        return serialize_area(
-            build_directional_area(
-                continuous_area.shape,
-                origin_position,
-                direction,
-                size,
-                grid,
-                width_squares=continuous_area.width,
-                coverage_threshold=coverage_threshold,
-            )
-        )
 
     @staticmethod
     def _fallback_token_colors(team_color: str) -> tuple[QColor, QColor]:

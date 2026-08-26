@@ -168,6 +168,7 @@ def test_qt_encounter_widgets_are_grouped_by_responsibility() -> None:
     encounter_ui = PACKAGE_ROOT / "frontends" / "qt" / "ui" / "encounter"
 
     assert {
+        "area_previews.py",
         "battlefield.py",
         "dice_log.py",
         "layout.py",

@@ -35,6 +35,7 @@ importing Qt.
 | Module | Responsibility |
 | --- | --- |
 | `battlefield` | Draw the combat grid and translate pointer events into battlefield signals. |
+| `area_previews` | Build display-ready area templates from serialized geometry and pointer positions. |
 | `dice_log` | Render combat log entries, dice results, and reroll controls. |
 | `status_markers` | Calculate status-marker, floating-label, and allocation-badge geometry. |
 | `layout` | Provide recursive Qt layout cleanup. |

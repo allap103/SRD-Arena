@@ -87,6 +87,7 @@ from srd_arena.content.spells import (
     load_spell_catalog,
 )
 from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
+from srd_arena.frontends.qt.ui.encounter.area_previews import preview_area_overlay
 from srd_arena.frontends.qt.ui.encounter.config import (
     ActionMenuScope,
     TargetSelectionMode,
@@ -2129,7 +2130,7 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(
     original_area = next(
         event.data["area"] for event in result.events if event.type == "spell_cast"
     )
-    preview = BattlefieldWidget._preview_area_overlay(
+    preview = preview_area_overlay(
         original_area,
         (6, 4),
         presentation.encounter.battlefield,
@@ -2949,7 +2950,7 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
                 value=f"{target_ref}~{amount}",
                 id=f"player-spell-allocation-{target_ref}",
                 creature_ref="player",
-            )
+            ),
         )
     with pytest.raises(ValueError, match="remaining healing pool"):
         _ORCHESTRATOR.submit(
@@ -2960,7 +2961,7 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
                 value="player~301",
                 id="player-spell-allocation-player",
                 creature_ref="player",
-            )
+            ),
         )
     confirm = next(
         action
@@ -3597,7 +3598,7 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
                 "goblin_3",
                 id="crafted-invalid-spell-target",
                 creature_ref="player",
-            )
+            ),
         )
     add_second = next(
         action
@@ -4585,8 +4586,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution(
     action = next(
         candidate
         for candidate in state.available_actions()
-        if candidate.kind == "spell"
-        and str(candidate.value).startswith("cure_wounds:")
+        if candidate.kind == "spell" and str(candidate.value).startswith("cure_wounds:")
     )
 
     result = _ORCHESTRATOR.submit(state, action)
@@ -4596,9 +4596,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution(
     assert state.active_actions_remaining == 0
     assert not any(event.type == "spell_cast" for event in result.events)
     check = next(
-        event
-        for event in result.events
-        if event.type == "invocation_start_checked"
+        event for event in result.events if event.type == "invocation_start_checked"
     )
     assert check.data["allowed"] is False
     assert check.data["components"] == ["somatic", "verbal"]
