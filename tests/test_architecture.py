@@ -228,29 +228,51 @@ def test_encounter_actions_have_no_legacy_peer_package() -> None:
     )
 
 
-def test_qt_encounter_widgets_are_grouped_by_responsibility() -> None:
+def test_qt_interaction_planning_stays_independent_of_qt() -> None:
     encounter_ui = PACKAGE_ROOT / "frontends" / "qt" / "ui" / "encounter"
+    violations: list[str] = []
 
-    assert {
-        "action_menus.py",
-        "area_previews.py",
-        "battlefield.py",
-        "dice_log.py",
-        "layout.py",
-        "movement.py",
-        "panel_renderer.py",
-        "resource_formatting.py",
-        "targeting.py",
-    } <= {path.name for path in encounter_ui.glob("*.py")}
-    assert not (encounter_ui / "widgets.py").exists()
+    for name in ("action_menus.py", "movement.py", "targeting.py"):
+        path = encounter_ui / name
+        module = _module_name(path)
+        for line, imported_module in _imports(path, module):
+            if imported_module == "PySide6" or imported_module.startswith("PySide6."):
+                violations.append(f"{path.name}:{line} imports {imported_module}")
+
+    assert not violations, "Interaction planning must stay Qt-independent:\n" + "\n".join(
+        violations
+    )
 
 
-def test_qt_window_views_are_grouped_by_responsibility() -> None:
-    qt_ui = PACKAGE_ROOT / "frontends" / "qt" / "ui"
-
-    assert {"game_surface.py", "sidebar.py"} <= {
-        path.name for path in qt_ui.glob("*.py")
+def test_qt_window_imports_only_composition_widgets() -> None:
+    path = PACKAGE_ROOT / "frontends" / "qt" / "app.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    qt_widget_imports = {
+        alias.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom) and node.module == "PySide6.QtWidgets"
+        for alias in node.names
     }
+
+    assert qt_widget_imports == {
+        "QHBoxLayout",
+        "QMainWindow",
+        "QWidget",
+    }
+
+
+def test_initiative_rendering_has_one_view_owner() -> None:
+    qt_root = PACKAGE_ROOT / "frontends" / "qt"
+    non_owners = (
+        qt_root / "app.py",
+        qt_root / "ui" / "sidebar.py",
+        qt_root / "ui" / "encounter" / "panel_renderer.py",
+    )
+
+    assert all(
+        "initiative_layout" not in path.read_text(encoding="utf-8")
+        for path in non_owners
+    )
 
 
 def test_domain_root_is_namespace_only() -> None:

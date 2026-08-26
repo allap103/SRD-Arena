@@ -10,7 +10,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 pytest.importorskip("PySide6")
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QFrame
 
 from srd_arena.application.game import RunningGame
 from srd_arena.frontends.qt.app import GameWindow
@@ -33,7 +33,7 @@ def test_game_window_delegates_encounter_controls_to_panel_renderer() -> None:
     bindings = window.sidebar.encounter_bindings
     assert bindings.health_layout.count() == 1
     assert bindings.movement_layout.count() == 1
-    assert bindings.initiative_layout.count() > 1
+    assert len(window.surface.findChildren(QFrame, "initiativeCard")) > 1
     assert bindings.actions_layout.count() > 0
     assert bindings.end_turn_button.text() in {"End Turn", "Pass Reaction"}
 

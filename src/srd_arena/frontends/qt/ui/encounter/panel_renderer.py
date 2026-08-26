@@ -24,36 +24,21 @@ from .targeting import (
     mode_label,
 )
 
-try:
-    from PySide6.QtCore import Qt
-    from PySide6.QtGui import QFont
-    from PySide6.QtWidgets import (
-        QComboBox,
-        QFrame,
-        QGridLayout,
-        QHBoxLayout,
-        QLabel,
-        QLineEdit,
-        QPushButton,
-        QSpinBox,
-        QToolButton,
-        QVBoxLayout,
-        QWidget,
-    )
-except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
-    Qt = object  # type: ignore[misc, assignment]
-    QFont = object  # type: ignore[misc, assignment]
-    QComboBox = object  # type: ignore[misc, assignment]
-    QFrame = object  # type: ignore[misc, assignment]
-    QGridLayout = object  # type: ignore[misc, assignment]
-    QHBoxLayout = object  # type: ignore[misc, assignment]
-    QLabel = object  # type: ignore[misc, assignment]
-    QLineEdit = object  # type: ignore[misc, assignment]
-    QPushButton = object  # type: ignore[misc, assignment]
-    QSpinBox = object  # type: ignore[misc, assignment]
-    QToolButton = object  # type: ignore[misc, assignment]
-    QVBoxLayout = object  # type: ignore[misc, assignment]
-    QWidget = object  # type: ignore[misc, assignment]
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QComboBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QSpinBox,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 @dataclass(frozen=True)
@@ -62,7 +47,6 @@ class EncounterPanelBindings:
 
     health_layout: QVBoxLayout
     movement_layout: QVBoxLayout
-    initiative_layout: QVBoxLayout
     actions_layout: QVBoxLayout
     bonus_actions_layout: QVBoxLayout
     features_layout: QVBoxLayout
@@ -116,7 +100,6 @@ class EncounterPanelRenderer:
         )
 
         self._render_resource_summary(encounter.resources)
-        self._render_initiative(encounter.resources)
         self._set_accordion_status("Actions", encounter.resources.action_status)
         self._set_accordion_status(
             "Bonus Actions",
@@ -427,31 +410,6 @@ class EncounterPanelRenderer:
                 height=RESOURCE_BAR_HEIGHT,
             )
         )
-
-    def _render_initiative(self, resources: ResourceSummaryView) -> None:
-        clear_layout(self._bindings.initiative_layout)
-        if not resources.initiative:
-            empty = QLabel("No initiative order.")
-            empty.setEnabled(False)
-            self._bindings.initiative_layout.addWidget(empty)
-            self._bindings.initiative_layout.addStretch(1)
-            return
-        for entry in resources.initiative:
-            card = QFrame()
-            card.setObjectName("initiativeCard")
-            card.setProperty("active", entry.is_active)
-            layout = QVBoxLayout(card)
-            layout.setContentsMargins(10, 7, 10, 7)
-            layout.setSpacing(2)
-            name = QLabel(entry.name)
-            name.setObjectName("initiativeName")
-            name.setWordWrap(True)
-            layout.addWidget(name)
-            score = QLabel(str(entry.total))
-            score.setObjectName("initiativeScore")
-            layout.addWidget(score)
-            self._bindings.initiative_layout.addWidget(card)
-        self._bindings.initiative_layout.addStretch(1)
 
     def _build_action_button(
         self,

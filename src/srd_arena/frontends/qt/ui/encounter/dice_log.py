@@ -1,37 +1,21 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 from ....shared.dice import RollView
 from .layout import clear_layout
 
-try:
-    from PySide6.QtCore import Qt, Signal
-    from PySide6.QtGui import QColor, QFont, QPainter, QPen
-    from PySide6.QtSvg import QSvgRenderer
-    from PySide6.QtWidgets import (
-        QFrame,
-        QHBoxLayout,
-        QLabel,
-        QVBoxLayout,
-        QWidget,
-    )
-except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
-
-    def Signal(*args, **kwargs):  # type: ignore[no-untyped-def]
-        return None
-
-    Qt = object  # type: ignore[assignment]
-    QColor = object  # type: ignore[assignment]
-    QFont = object  # type: ignore[assignment]
-    QPainter = object  # type: ignore[assignment]
-    QPen = object  # type: ignore[assignment]
-    QSvgRenderer = object  # type: ignore[assignment]
-    QFrame = object  # type: ignore[assignment]
-    QHBoxLayout = object  # type: ignore[assignment]
-    QLabel = object  # type: ignore[assignment]
-    QVBoxLayout = object  # type: ignore[assignment]
-    QWidget = object  # type: ignore[assignment]
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtSvg import QSvgRenderer
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class DieSvgWidget(QWidget):
@@ -83,7 +67,10 @@ class DieSvgWidget(QWidget):
 
 
 class DiceRollPanel(QWidget):
-    def __init__(self, action_callback=None):
+    def __init__(
+        self,
+        action_callback: Callable[[str], None] | None = None,
+    ) -> None:
         super().__init__()
         self.setObjectName("dicePanel")
         self._action_callback = action_callback

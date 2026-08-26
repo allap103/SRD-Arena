@@ -5,32 +5,22 @@ from pathlib import Path
 
 from ...application.scenarios import ScenarioSummary
 from ...application.startup import GameStartup
-from .app import GameWindow, _require_pyside6
+from .app import GameWindow
 from .theme import apply_fantasy_theme
 
-try:
-    from PySide6.QtGui import QFont
-    from PySide6.QtWidgets import (
-        QApplication,
-        QLabel,
-        QMainWindow,
-        QPushButton,
-        QVBoxLayout,
-        QWidget,
-    )
-except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
-    QApplication = None  # type: ignore[assignment]
-    QFont = object  # type: ignore[assignment]
-    QLabel = object  # type: ignore[assignment]
-    QMainWindow = object  # type: ignore[assignment]
-    QPushButton = object  # type: ignore[assignment]
-    QVBoxLayout = object  # type: ignore[assignment]
-    QWidget = object  # type: ignore[assignment]
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class ScenarioPickerWindow(QMainWindow):
     def __init__(self, startup: GameStartup, *, image_root: Path | None = None) -> None:
-        _require_pyside6()
         super().__init__()
         self._startup = startup
         self._image_root = image_root
@@ -93,8 +83,8 @@ def run_pyside6_app(
     *,
     image_root: Path | None = None,
 ) -> None:
-    _require_pyside6()
-    app = QApplication.instance() or QApplication(sys.argv)
+    instance = QApplication.instance()
+    app = instance if isinstance(instance, QApplication) else QApplication(sys.argv)
     apply_fantasy_theme(app)
     window = ScenarioPickerWindow(startup, image_root=image_root)
     window.show()

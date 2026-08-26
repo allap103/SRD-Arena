@@ -18,7 +18,7 @@ as the selected targeting mode and movement preview:
 
 | Component | Responsibility |
 | --- | --- |
-| `ui.game_surface` | Story choices, battlefield surface, initiative rail, and encounter transition overlay. |
+| `ui.game_surface` | Story choices, battlefield surface, owned initiative rail, and encounter transition overlay. |
 | `ui.sidebar` | Sidebar navigation, auxiliary creature views, settings, encounter JSON, and combat log. |
 | `ui.encounter.panel_renderer` | Populate encounter actions, resources, status, and allocation controls. |
 
@@ -51,10 +51,11 @@ domain encounter implementation.
 | `action_menus` | Group advertised actions for menu presentation. |
 | `area_previews` | Re-aim serialized area templates for the hovered cell. |
 | `dice_log` | Render combat messages, dice results, and reroll controls. |
+| `initiative` | Own and render the battlefield's initiative rail. |
 | `status_markers` | Calculate markers, labels, tooltips, and badges. |
 | `movement` | Build immutable movement-preview ownership and shortest paths. |
 | `targeting` | Derive target-selection modes and battlefield click actions. |
-| `panel_renderer` | Render encounter controls through explicit bindings and callbacks. |
+| `panel_renderer` | Render sidebar encounter controls through explicit bindings and callbacks. |
 | `layout` | Clear nested Qt layouts. |
 | `resource_formatting` | Format resource values for Qt labels. |
 

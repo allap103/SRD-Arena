@@ -13,40 +13,23 @@ from .encounter import DiceRollPanel
 from .encounter.config import ENCOUNTER_BUTTON_HEIGHT
 from .encounter.panel_renderer import EncounterPanelBindings
 
-try:
-    from PySide6.QtCore import Qt
-    from PySide6.QtWidgets import (
-        QCheckBox,
-        QFileDialog,
-        QFrame,
-        QHBoxLayout,
-        QLabel,
-        QMessageBox,
-        QPushButton,
-        QScrollArea,
-        QSizePolicy,
-        QStackedWidget,
-        QTextEdit,
-        QToolButton,
-        QVBoxLayout,
-        QWidget,
-    )
-except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
-    Qt = object  # type: ignore[misc, assignment]
-    QCheckBox = object  # type: ignore[misc, assignment]
-    QFileDialog = object  # type: ignore[misc, assignment]
-    QFrame = object  # type: ignore[misc, assignment]
-    QHBoxLayout = object  # type: ignore[misc, assignment]
-    QLabel = object  # type: ignore[misc, assignment]
-    QMessageBox = object  # type: ignore[misc, assignment]
-    QPushButton = object  # type: ignore[misc, assignment]
-    QScrollArea = object  # type: ignore[misc, assignment]
-    QSizePolicy = object  # type: ignore[misc, assignment]
-    QStackedWidget = object  # type: ignore[misc, assignment]
-    QTextEdit = object  # type: ignore[misc, assignment]
-    QToolButton = object  # type: ignore[misc, assignment]
-    QVBoxLayout = object  # type: ignore[misc, assignment]
-    QWidget = object  # type: ignore[misc, assignment]
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QFileDialog,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QStackedWidget,
+    QTextEdit,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 SIDEBAR_WIDTH = 320
@@ -71,7 +54,6 @@ class GameSidebar(QFrame):
         self,
         callbacks: SidebarCallbacks,
         *,
-        initiative_layout: QVBoxLayout,
         show_encounter_json: bool = False,
         show_team_outlines: bool = True,
         show_creature_names: bool = False,
@@ -86,7 +68,6 @@ class GameSidebar(QFrame):
         self._show_team_outlines = show_team_outlines
         self._show_creature_names = show_creature_names
         self._json_payload: dict[str, object] = {}
-        self._initiative_layout = initiative_layout
 
         self.setObjectName("sidebarPanel")
         self.setFrameShape(QFrame.Shape.StyledPanel)
@@ -114,7 +95,6 @@ class GameSidebar(QFrame):
         return EncounterPanelBindings(
             health_layout=self._health_layout,
             movement_layout=self._movement_layout,
-            initiative_layout=self._initiative_layout,
             actions_layout=self._actions_layout,
             bonus_actions_layout=self._bonus_actions_layout,
             features_layout=self._features_layout,

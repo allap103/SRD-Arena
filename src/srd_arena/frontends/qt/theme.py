@@ -2,12 +2,8 @@ from __future__ import annotations
 
 from .floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
 
-try:
-    from PySide6.QtGui import QFont
-    from PySide6.QtWidgets import QApplication
-except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
-    QApplication = None  # type: ignore[assignment]
-    QFont = object  # type: ignore[assignment]
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QApplication
 
 
 FANTASY_STYLESHEET = (

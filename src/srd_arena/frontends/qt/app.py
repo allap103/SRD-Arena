@@ -49,28 +49,8 @@ from .ui.encounter.targeting import (
 from .ui.game_surface import GameSurface, GameSurfaceCallbacks
 from .ui.sidebar import GameSidebar, SidebarCallbacks
 
-
-try:
-    from PySide6.QtCore import QTimer
-    from PySide6.QtWidgets import (
-        QApplication,
-        QHBoxLayout,
-        QMainWindow,
-        QWidget,
-    )
-except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
-    QApplication = None  # type: ignore[assignment]
-    QTimer = object  # type: ignore[assignment]
-    QHBoxLayout = object  # type: ignore[assignment]
-    QMainWindow = object  # type: ignore[assignment]
-    QWidget = object  # type: ignore[assignment]
-
-
-def _require_pyside6() -> None:
-    if QApplication is None:
-        raise RuntimeError(
-            "PySide6 is not installed. Install project dependencies including PySide6 to use this frontend."
-        )
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 
 
 class GameWindow(QMainWindow):
@@ -82,7 +62,6 @@ class GameWindow(QMainWindow):
         presentation_config: ScenarioPresentation | None = None,
         show_encounter_json: bool = False,
     ):
-        _require_pyside6()
         super().__init__()
         self.game = game
         self._observation: GameObservation | None = None
@@ -125,11 +104,10 @@ class GameWindow(QMainWindow):
             SidebarCallbacks(
                 select_log_action=self._select_action_by_id,
                 end_turn=self._end_turn,
-                close_window=self.close,
+                close_window=self._close_window,
                 set_team_outlines_visible=self._set_team_outlines_visible,
                 set_creature_names_visible=self._set_always_show_creature_names,
             ),
-            initiative_layout=self.surface.initiative_layout,
             show_encounter_json=show_encounter_json,
             show_team_outlines=self._show_team_outlines,
             show_creature_names=self._always_show_creature_names,
@@ -147,6 +125,9 @@ class GameWindow(QMainWindow):
         )
 
         self.refresh_view()
+
+    def _close_window(self) -> None:
+        self.close()
 
     def _set_team_outlines_visible(self, visible: bool) -> None:
         self._show_team_outlines = visible
@@ -194,6 +175,7 @@ class GameWindow(QMainWindow):
         assert encounter is not None
         battlefield = self.surface.battlefield
         battlefield.set_battlefield(encounter.battlefield)
+        self.surface.render_initiative(encounter.resources.initiative)
         if not movement_plan_is_current(
             self._movement_plan,
             encounter.battlefield,

@@ -25,26 +25,9 @@ from .status_markers import (
     target_allocation_badge_position,
 )
 
-try:
-    from PySide6.QtCore import QPointF, QSize, Qt, Signal
-    from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap, QPolygonF
-    from PySide6.QtWidgets import QSizePolicy, QWidget
-except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
-
-    def Signal(*args, **kwargs):  # type: ignore[no-untyped-def]
-        return None
-
-    QPointF = object  # type: ignore[assignment]
-    QSize = object  # type: ignore[assignment]
-    Qt = object  # type: ignore[assignment]
-    QColor = object  # type: ignore[assignment]
-    QFont = object  # type: ignore[assignment]
-    QPainter = object  # type: ignore[assignment]
-    QPen = object  # type: ignore[assignment]
-    QPixmap = object  # type: ignore[assignment]
-    QPolygonF = object  # type: ignore[assignment]
-    QSizePolicy = object  # type: ignore[assignment]
-    QWidget = object  # type: ignore[assignment]
+from PySide6.QtCore import QPointF, QSize, Qt, Signal
+from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap, QPolygonF
+from PySide6.QtWidgets import QSizePolicy, QWidget
 
 
 class BattlefieldWidget(QWidget):
@@ -243,7 +226,11 @@ class BattlefieldWidget(QWidget):
                     QColor(63, 127, 213, 70),
                 )
 
-        preview_path = movement_paths.get(self._hover_cell)
+        preview_path = (
+            movement_paths.get(self._hover_cell)
+            if self._hover_cell is not None
+            else None
+        )
         planner = next(
             (
                 creature

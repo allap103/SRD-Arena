@@ -7,32 +7,22 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ....application.observations import ActionObservation
+from ...shared.models import InitiativeTrackEntryView
 from .encounter import BattlefieldWidget, clear_layout
+from .encounter.initiative import InitiativeRail
 
-try:
-    from PySide6.QtCore import Qt
-    from PySide6.QtGui import QFont
-    from PySide6.QtWidgets import (
-        QFrame,
-        QHBoxLayout,
-        QLabel,
-        QPushButton,
-        QScrollArea,
-        QTextEdit,
-        QVBoxLayout,
-        QWidget,
-    )
-except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
-    Qt = object  # type: ignore[misc, assignment]
-    QFont = object  # type: ignore[misc, assignment]
-    QFrame = object  # type: ignore[misc, assignment]
-    QHBoxLayout = object  # type: ignore[misc, assignment]
-    QLabel = object  # type: ignore[misc, assignment]
-    QPushButton = object  # type: ignore[misc, assignment]
-    QScrollArea = object  # type: ignore[misc, assignment]
-    QTextEdit = object  # type: ignore[misc, assignment]
-    QVBoxLayout = object  # type: ignore[misc, assignment]
-    QWidget = object  # type: ignore[misc, assignment]
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 @dataclass(frozen=True)
@@ -65,6 +55,7 @@ class GameSurface(QWidget):
         self._scene_group, scene_layout = _build_group()
         self._scene_group.setObjectName("scenePanel")
         self._scene_text = _readonly_text(minimum_height=180)
+        self._scene_text.setObjectName("sceneText")
         scene_layout.addWidget(self._scene_text)
 
         self._story_choices_group, story_group_layout = _build_group()
@@ -96,11 +87,13 @@ class GameSurface(QWidget):
 
         return self._battlefield
 
-    @property
-    def initiative_layout(self) -> QVBoxLayout:
-        """Return the initiative layout populated by the encounter renderer."""
+    def render_initiative(
+        self,
+        entries: Sequence[InitiativeTrackEntryView],
+    ) -> None:
+        """Render initiative through the rail owned by this surface."""
 
-        return self._initiative_layout
+        self._initiative_rail.set_entries(entries)
 
     def show_story(
         self,
@@ -165,28 +158,8 @@ class GameSurface(QWidget):
             self._callbacks.interaction_cancelled
         )
 
-        initiative_rail = QFrame()
-        initiative_rail.setObjectName("rollRail")
-        initiative_rail.setFrameShape(QFrame.Shape.StyledPanel)
-        initiative_rail.setFixedWidth(110)
-        initiative_rail_layout = QVBoxLayout(initiative_rail)
-        initiative_rail_layout.setContentsMargins(6, 6, 6, 6)
-        initiative_rail_layout.setSpacing(4)
-        initiative_title = QLabel("Initiative")
-        initiative_title.setObjectName("initiativeTitle")
-        initiative_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        initiative_rail_layout.addWidget(initiative_title)
-        initiative_scroll = QScrollArea()
-        initiative_scroll.setWidgetResizable(True)
-        initiative_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        initiative_content = QWidget()
-        self._initiative_layout = QVBoxLayout(initiative_content)
-        self._initiative_layout.setContentsMargins(0, 0, 0, 0)
-        self._initiative_layout.setSpacing(4)
-        initiative_scroll.setWidget(initiative_content)
-        initiative_rail_layout.addWidget(initiative_scroll, stretch=1)
-
-        battlefield_layout.addWidget(initiative_rail)
+        self._initiative_rail = InitiativeRail()
+        battlefield_layout.addWidget(self._initiative_rail)
         battlefield_layout.addWidget(self._battlefield, stretch=1)
         return battlefield_area
 
@@ -221,10 +194,12 @@ class GameSurface(QWidget):
         overlay_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         overlay_card_layout.addWidget(overlay_title)
         self._victory_overlay_message = QLabel("")
+        self._victory_overlay_message.setObjectName("transitionMessage")
         self._victory_overlay_message.setWordWrap(True)
         self._victory_overlay_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
         overlay_card_layout.addWidget(self._victory_overlay_message)
         self._victory_overlay_button = QPushButton("Continue")
+        self._victory_overlay_button.setObjectName("transitionButton")
         self._victory_overlay_button.clicked.connect(
             self._callbacks.continue_transition
         )
