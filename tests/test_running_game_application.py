@@ -116,7 +116,7 @@ def test_running_game_exposes_headless_decision_workflow() -> None:
     assert session.reset_count == 1
 
 
-def test_headless_client_can_start_observe_and_select_by_stable_id() -> None:
+def test_running_game_can_start_observe_and_select_by_stable_id() -> None:
     game = GameStartup(FilesystemScenarioRepository()).start_scenario(
         FULL_CONTROL_SCENARIO_DIR
     )
