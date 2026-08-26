@@ -164,6 +164,18 @@ def test_encounter_actions_have_no_legacy_peer_package() -> None:
     )
 
 
+def test_qt_encounter_widgets_are_grouped_by_responsibility() -> None:
+    encounter_ui = PACKAGE_ROOT / "frontends" / "qt" / "ui" / "encounter"
+
+    assert {
+        "battlefield.py",
+        "dice_log.py",
+        "layout.py",
+        "resource_formatting.py",
+    } <= {path.name for path in encounter_ui.glob("*.py")}
+    assert not (encounter_ui / "widgets.py").exists()
+
+
 def test_domain_root_is_namespace_only() -> None:
     violations: list[str] = []
     search_roots = (PACKAGE_ROOT, Path(__file__).parent)

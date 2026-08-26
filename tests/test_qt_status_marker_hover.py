@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QApplication
 from srd_arena.frontends.qt.floating_labels import (
     BATTLEFIELD_FLOATING_LABEL_STYLE,
 )
-from srd_arena.frontends.qt.ui.encounter import widgets
+from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
 from srd_arena.frontends.qt.ui.encounter.status_markers import StatusMarkerHit
 from srd_arena.frontends.qt.theme import FANTASY_STYLESHEET
 
@@ -24,7 +24,7 @@ def test_qt_tooltips_match_floating_name_style() -> None:
 
 def test_real_mouse_move_shows_painted_status_marker_tooltip() -> None:
     app = QApplication.instance() or QApplication([])
-    widget = widgets.BattlefieldWidget()
+    widget = BattlefieldWidget()
     widget._status_marker_hits = [
         StatusMarkerHit(
             10.0,

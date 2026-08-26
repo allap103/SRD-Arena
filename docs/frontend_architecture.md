@@ -30,6 +30,19 @@ importing Qt.
 | `frontends.qt.app` | Present a running game and translate Qt events into runtime decisions. |
 | `frontends.shared` | Build frontend-neutral presentation models. |
 
+## Encounter UI modules
+
+| Module | Responsibility |
+| --- | --- |
+| `battlefield` | Draw the combat grid and translate pointer events into battlefield signals. |
+| `dice_log` | Render combat log entries, dice results, and reroll controls. |
+| `status_markers` | Calculate status-marker, floating-label, and allocation-badge geometry. |
+| `layout` | Provide recursive Qt layout cleanup. |
+| `resource_formatting` | Format resource values for Qt labels. |
+
+The package exports its public widgets from `frontends.qt.ui.encounter`; callers
+do not depend on the implementation modules directly.
+
 ## Dependency rule
 
 The application and runtime packages must not import a frontend. Frontends may
