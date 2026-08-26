@@ -131,19 +131,64 @@ def creature_name_label_rect(
     text_width: float,
     viewport_width: float,
     viewport_height: float,
+    text_height: float = 0.0,
+    horizontal_padding: float = 6.0,
+    vertical_padding: float = 0.0,
 ) -> tuple[float, float, float, float]:
     """Size a floating name badge to its text and keep it in the viewport."""
 
     margin = 3.0
     available_width = max(1.0, viewport_width - margin * 2)
     available_height = max(1.0, viewport_height - margin * 2)
-    label_width = min(max(cell_size - 6.0, text_width + 12.0), available_width)
-    label_height = min(max(16.0, cell_size * 0.22), available_height)
+    label_width = min(
+        max(cell_size - 6.0, text_width + horizontal_padding * 2),
+        available_width,
+    )
+    label_height = min(
+        max(16.0, text_height + vertical_padding * 2),
+        available_height,
+    )
     label_x = min(
         max(margin, center_x - label_width / 2),
         max(margin, viewport_width - margin - label_width),
     )
     preferred_y = center_y - token_radius - label_height - 4.0
+    label_y = min(
+        max(margin, preferred_y),
+        max(margin, viewport_height - margin - label_height),
+    )
+    return label_x, label_y, label_width, label_height
+
+
+def status_tooltip_label_rect(
+    *,
+    anchor_x: float,
+    anchor_y: float,
+    text_width: float,
+    text_height: float,
+    horizontal_padding: float,
+    vertical_padding: float,
+    viewport_width: float,
+    viewport_height: float,
+) -> tuple[float, float, float, float]:
+    """Place a painted status tooltip beside its marker and inside the viewport."""
+
+    margin = 3.0
+    offset = 12.0
+    available_width = max(1.0, viewport_width - margin * 2)
+    available_height = max(1.0, viewport_height - margin * 2)
+    label_width = min(text_width + horizontal_padding * 2, available_width)
+    label_height = min(text_height + vertical_padding * 2, available_height)
+    preferred_x = anchor_x + offset
+    preferred_y = anchor_y + offset
+    if preferred_x + label_width > viewport_width - margin:
+        preferred_x = anchor_x - offset - label_width
+    if preferred_y + label_height > viewport_height - margin:
+        preferred_y = anchor_y - offset - label_height
+    label_x = min(
+        max(margin, preferred_x),
+        max(margin, viewport_width - margin - label_width),
+    )
     label_y = min(
         max(margin, preferred_y),
         max(margin, viewport_height - margin - label_height),
@@ -164,7 +209,9 @@ def status_marker_tooltip(
 
 
 def _status_list_tooltip(title: str, labels: tuple[str, ...]) -> str:
-    display_labels = tuple(dict.fromkeys(_status_display_name(label) for label in labels))
+    display_labels = tuple(
+        dict.fromkeys(_status_display_name(label) for label in labels)
+    )
     return "\n".join((f"{title}:", *(f"- {label}" for label in display_labels)))
 
 
@@ -172,4 +219,3 @@ def _status_display_name(label: str) -> str:
     if "_" in label or label.islower():
         return label.replace("_", " ").title()
     return label
-

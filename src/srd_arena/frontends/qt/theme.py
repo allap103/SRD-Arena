@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
+
 try:
     from PySide6.QtGui import QFont
     from PySide6.QtWidgets import QApplication
@@ -8,7 +10,8 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QFont = object  # type: ignore[assignment]
 
 
-FANTASY_STYLESHEET = """
+FANTASY_STYLESHEET = (
+    """
 QWidget {
     background: #1b1712;
     color: #eadfca;
@@ -24,16 +27,9 @@ QLabel {
     background: transparent;
     color: #eadfca;
 }
-
-QToolTip {
-    background-color: rgba(16, 14, 11, 175);
-    color: #f7edd9;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 8px;
-    font-weight: 700;
-}
-
+"""
+    + BATTLEFIELD_FLOATING_LABEL_STYLE.qt_tooltip_rule()
+    + """
 QFrame#panel,
 QFrame#untitledPanel,
 QFrame#sidebarPanel,
@@ -240,6 +236,7 @@ QFrame#victoryOverlay {
     border-radius: 16px;
 }
 """
+)
 
 
 def apply_fantasy_theme(app: QApplication) -> None:

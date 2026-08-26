@@ -5,6 +5,7 @@ from srd_arena.frontends.qt.ui.encounter.status_markers import (
     status_marker_hit_radius,
     status_marker_positions,
     status_marker_tooltip,
+    status_tooltip_label_rect,
     target_allocation_badge_position,
 )
 from srd_arena.frontends.shared.session import (
@@ -116,9 +117,7 @@ def test_battlefield_view_groups_concentration_buffs_debuffs_and_conditions() ->
         combat_state,
         team_ids=("heroes", "monsters"),
     )
-    creatures = {
-        creature.creature_ref: creature for creature in battlefield.creatures
-    }
+    creatures = {creature.creature_ref: creature for creature in battlefield.creatures}
 
     assert creatures["caster"].is_concentrating is True
     assert creatures["enemy"].is_concentrating is True
@@ -210,10 +209,13 @@ def test_status_marker_geometry_and_hit_testing_scale_with_the_board() -> None:
     assert positions["top_left"] == (113.86, 213.86)
     assert positions["bottom_right"] == (158.14, 258.14)
     assert positions["bottom_left"] == (107.68, 264.32)
-    assert status_marker_tooltip(
-        hits,
-        *positions["bottom_left"],
-    ) == "Concentrating"
+    assert (
+        status_marker_tooltip(
+            hits,
+            *positions["bottom_left"],
+        )
+        == "Concentrating"
+    )
     assert status_marker_tooltip(hits, 136.0, 236.0) is None
 
 
@@ -246,12 +248,15 @@ def test_status_markers_do_not_overlap_target_allocation_badge() -> None:
             center_x + token_radius * 0.72,
             center_y - token_radius * 0.72,
         )
-        assert target_allocation_badge_position(
-            center_x=center_x,
-            center_y=center_y,
-            token_radius=token_radius,
-            top_right_reserved=False,
-        ) == expected_unreserved_position
+        assert (
+            target_allocation_badge_position(
+                center_x=center_x,
+                center_y=center_y,
+                token_radius=token_radius,
+                top_right_reserved=False,
+            )
+            == expected_unreserved_position
+        )
 
 
 def test_overlapping_marker_hit_prefers_last_painted_marker() -> None:
@@ -270,13 +275,16 @@ def test_creature_name_label_expands_beyond_cell_and_stays_in_viewport() -> None
         token_radius=27.0,
         cell_size=72.0,
         text_width=140.0,
+        text_height=15.0,
+        horizontal_padding=8.0,
+        vertical_padding=6.0,
         viewport_width=300.0,
         viewport_height=300.0,
     )
 
-    assert label_width == 152.0
+    assert label_width == 156.0
     assert label_width > 72.0
-    assert (label_x, label_y, label_height) == (60.0, 189.0, 16.0)
+    assert (label_x, label_y, label_height) == (58.0, 178.0, 27.0)
 
     edge_rect = creature_name_label_rect(
         center_x=12.0,
@@ -288,3 +296,26 @@ def test_creature_name_label_expands_beyond_cell_and_stays_in_viewport() -> None
         viewport_height=160.0,
     )
     assert edge_rect == (3.0, 3.0, 214.0, 16.0)
+
+
+def test_status_tooltip_label_stays_beside_marker_and_inside_viewport() -> None:
+    assert status_tooltip_label_rect(
+        anchor_x=50.0,
+        anchor_y=60.0,
+        text_width=100.0,
+        text_height=30.0,
+        horizontal_padding=8.0,
+        vertical_padding=6.0,
+        viewport_width=300.0,
+        viewport_height=200.0,
+    ) == (62.0, 72.0, 116.0, 42.0)
+    assert status_tooltip_label_rect(
+        anchor_x=295.0,
+        anchor_y=195.0,
+        text_width=100.0,
+        text_height=30.0,
+        horizontal_padding=8.0,
+        vertical_padding=6.0,
+        viewport_width=300.0,
+        viewport_height=200.0,
+    ) == (167.0, 141.0, 116.0, 42.0)

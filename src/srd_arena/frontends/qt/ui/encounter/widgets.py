@@ -17,6 +17,7 @@ from .....domain.geometry import (
 )
 from .....runtime.scenario import DEFAULT_SCENARIO_DIR
 from ....shared.session import BattlefieldCreatureView, BattlefieldView
+from ...floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
 from .status_markers import (
     StatusMarkerHit,
     build_status_marker_specs,
@@ -24,11 +25,12 @@ from .status_markers import (
     status_marker_hit_radius,
     status_marker_positions,
     status_marker_tooltip,
+    status_tooltip_label_rect,
     target_allocation_badge_position,
 )
 
 try:
-    from PySide6.QtCore import QEvent, QPointF, QSize, Qt, Signal
+    from PySide6.QtCore import QPointF, QSize, Qt, Signal
     from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap, QPolygonF
     from PySide6.QtSvg import QSvgRenderer
     from PySide6.QtWidgets import (
@@ -38,15 +40,14 @@ try:
         QLabel,
         QScrollArea,
         QSizePolicy,
-        QToolTip,
         QVBoxLayout,
         QWidget,
     )
 except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
+
     def Signal(*args, **kwargs):  # type: ignore[no-untyped-def]
         return None
 
-    QEvent = object  # type: ignore[assignment]
     QPointF = object  # type: ignore[assignment]
     QSize = object  # type: ignore[assignment]
     Qt = object  # type: ignore[assignment]
@@ -62,7 +63,6 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QHBoxLayout = object  # type: ignore[assignment]
     QLabel = object  # type: ignore[assignment]
     QScrollArea = object  # type: ignore[assignment]
-    QToolTip = object  # type: ignore[assignment]
     QSizePolicy = object  # type: ignore[assignment]
     QVBoxLayout = object  # type: ignore[assignment]
     QWidget = object  # type: ignore[assignment]
@@ -105,6 +105,7 @@ class DieSvgWidget(QWidget):
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        self._status_marker_hits = []
         if self._action_id is not None and self.isEnabled():
             painter.setBrush(QColor("#fff3c4"))
             painter.setPen(QPen(QColor("#c9a227"), 2))
@@ -332,6 +333,7 @@ class BattlefieldWidget(QWidget):
         self._creature_positions: dict[str, tuple[float, float, float]] = {}
         self._status_marker_hits: list[StatusMarkerHit] = []
         self._visible_status_tooltip: str | None = None
+        self._status_tooltip_anchor: tuple[float, float] | None = None
         self._targetable_creature_refs: set[str] = set()
         self._selected_creature_ref: str | None = None
         self._target_allocation_counts: dict[str, int] = {}
@@ -362,12 +364,9 @@ class BattlefieldWidget(QWidget):
         )
 
     def set_battlefield(self, battlefield: BattlefieldView) -> None:
-        dimensions_changed = (
-            self._battlefield is not None
-            and (
-                self._battlefield.width != battlefield.width
-                or self._battlefield.height != battlefield.height
-            )
+        dimensions_changed = self._battlefield is not None and (
+            self._battlefield.width != battlefield.width
+            or self._battlefield.height != battlefield.height
         )
         if dimensions_changed:
             self._zoom = self.MIN_ZOOM
@@ -375,7 +374,6 @@ class BattlefieldWidget(QWidget):
         self._battlefield = battlefield
         self._creature_positions = {}
         self._invalidate_status_marker_hits()
-        self.setToolTip("")
         self.update()
 
     def set_area_overlay(self, area: dict[str, object] | None) -> None:
@@ -438,16 +436,8 @@ class BattlefieldWidget(QWidget):
             board_width,
             board_height,
         )
-        origin_x = (
-            rect.x()
-            + (rect.width() - board_width) / 2
-            + self._pan_offset[0]
-        )
-        origin_y = (
-            rect.y()
-            + (rect.height() - board_height) / 2
-            + self._pan_offset[1]
-        )
+        origin_x = rect.x() + (rect.width() - board_width) / 2 + self._pan_offset[0]
+        origin_y = rect.y() + (rect.height() - board_height) / 2 + self._pan_offset[1]
         self._board_metrics = (origin_x, origin_y, cell_size, cols, rows)
         display_overlay = self._display_area_overlay()
 
@@ -485,7 +475,9 @@ class BattlefieldWidget(QWidget):
             for x in range(cols):
                 cell_x = origin_x + x * cell_size
                 cell_y = origin_y + y * cell_size
-                painter.drawRect(int(cell_x), int(cell_y), int(cell_size), int(cell_size))
+                painter.drawRect(
+                    int(cell_x), int(cell_y), int(cell_size), int(cell_size)
+                )
 
         if self._show_team_outlines:
             for creature in self._battlefield.creatures:
@@ -628,7 +620,11 @@ class BattlefieldWidget(QWidget):
             center_y = origin_y + (creature.position.y + 0.5) * cell_size
             radius = max(14, int(cell_size * 0.38))
             fill, border = self._fallback_token_colors(creature.team_color)
-            self._creature_positions[creature.creature_ref] = (center_x, center_y, radius)
+            self._creature_positions[creature.creature_ref] = (
+                center_x,
+                center_y,
+                radius,
+            )
 
             if creature.is_active:
                 painter.setBrush(QColor(255, 215, 0, 70))
@@ -741,41 +737,27 @@ class BattlefieldWidget(QWidget):
                 creature.position.x,
                 creature.position.y,
             ):
-                font = QFont()
-                font.setBold(True)
-                font.setPointSize(max(7, min(11, int(cell_size * 0.13))))
-                painter.setFont(font)
-                label_x, label_y, label_width, label_height = (
-                    creature_name_label_rect(
-                        center_x=center_x,
-                        center_y=center_y,
-                        token_radius=radius,
-                        cell_size=cell_size,
-                        text_width=painter.fontMetrics().horizontalAdvance(
-                            creature.name,
-                        ),
-                        viewport_width=self.width(),
-                        viewport_height=self.height(),
-                    )
+                label_style = BATTLEFIELD_FLOATING_LABEL_STYLE
+                painter.setFont(self._floating_label_font())
+                label_x, label_y, label_width, label_height = creature_name_label_rect(
+                    center_x=center_x,
+                    center_y=center_y,
+                    token_radius=radius,
+                    cell_size=cell_size,
+                    text_width=painter.fontMetrics().horizontalAdvance(
+                        creature.name,
+                    ),
+                    text_height=painter.fontMetrics().height(),
+                    horizontal_padding=label_style.horizontal_padding,
+                    vertical_padding=label_style.vertical_padding,
+                    viewport_width=self.width(),
+                    viewport_height=self.height(),
                 )
-                painter.setPen(Qt.PenStyle.NoPen)
-                painter.setBrush(QColor(16, 14, 11, 175))
-                painter.drawRoundedRect(
-                    int(label_x),
-                    int(label_y),
-                    int(label_width),
-                    int(label_height),
-                    4,
-                    4,
-                )
-                painter.setPen(QColor("#f7edd9"))
-                painter.drawText(
-                    int(label_x + 6),
-                    int(label_y),
-                    max(1, int(label_width - 12)),
-                    int(label_height),
-                    Qt.AlignmentFlag.AlignCenter,
+                self._paint_floating_label(
+                    painter,
                     creature.name,
+                    rect=(label_x, label_y, label_width, label_height),
+                    alignment=Qt.AlignmentFlag.AlignCenter,
                 )
 
             self._paint_status_markers(
@@ -881,7 +863,76 @@ class BattlefieldWidget(QWidget):
                 self._targeting_label,
             )
 
+        self._paint_status_tooltip(painter)
+
         painter.end()
+
+    @staticmethod
+    def _floating_label_font():
+        style = BATTLEFIELD_FLOATING_LABEL_STYLE
+        font = QFont()
+        font.setWeight(QFont.Weight(style.font_weight))
+        font.setPointSize(style.font_point_size)
+        return font
+
+    def _paint_floating_label(
+        self,
+        painter,
+        text: str,
+        *,
+        rect: tuple[float, float, float, float],
+        alignment,
+    ) -> None:
+        style = BATTLEFIELD_FLOATING_LABEL_STYLE
+        label_x, label_y, label_width, label_height = rect
+        painter.save()
+        painter.setFont(self._floating_label_font())
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(*style.background_rgba))
+        painter.drawRoundedRect(
+            int(label_x),
+            int(label_y),
+            int(label_width),
+            int(label_height),
+            style.corner_radius,
+            style.corner_radius,
+        )
+        painter.setPen(QColor(style.foreground))
+        painter.drawText(
+            int(label_x + style.horizontal_padding),
+            int(label_y + style.vertical_padding),
+            max(1, int(label_width - style.horizontal_padding * 2)),
+            max(1, int(label_height - style.vertical_padding * 2)),
+            alignment,
+            text,
+        )
+        painter.restore()
+
+    def _paint_status_tooltip(self, painter) -> None:
+        text = self._visible_status_tooltip
+        anchor = self._status_tooltip_anchor
+        if text is None or anchor is None:
+            return
+        style = BATTLEFIELD_FLOATING_LABEL_STYLE
+        painter.setFont(self._floating_label_font())
+        metrics = painter.fontMetrics()
+        lines = text.splitlines() or [""]
+        label_rect = status_tooltip_label_rect(
+            anchor_x=anchor[0],
+            anchor_y=anchor[1],
+            text_width=max(metrics.horizontalAdvance(line) for line in lines),
+            text_height=metrics.height() * len(lines),
+            horizontal_padding=style.horizontal_padding,
+            vertical_padding=style.vertical_padding,
+            viewport_width=self.width(),
+            viewport_height=self.height(),
+        )
+        self._paint_floating_label(
+            painter,
+            text,
+            rect=label_rect,
+            alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
+        )
 
     def _paint_status_markers(
         self,
@@ -922,26 +973,14 @@ class BattlefieldWidget(QWidget):
                 StatusMarkerHit(marker_x, marker_y, hit_radius, spec.tooltip)
             )
 
-    def event(self, event) -> bool:  # pragma: no cover - GUI interaction
-        if event.type() == QEvent.Type.ToolTip:
-            tooltip = status_marker_tooltip(
-                self._status_marker_hits,
-                event.pos().x(),
-                event.pos().y(),
-            )
-            if tooltip is not None:
-                QToolTip.showText(event.globalPos(), tooltip, self)
-                self._visible_status_tooltip = tooltip
-            else:
-                self._hide_status_tooltip()
-                event.ignore()
-            return True
-        return super().event(event)
-
     def _hide_status_tooltip(self) -> None:
-        if self._visible_status_tooltip is not None:
-            QToolTip.hideText()
+        if (
+            self._visible_status_tooltip is not None
+            or self._status_tooltip_anchor is not None
+        ):
             self._visible_status_tooltip = None
+            self._status_tooltip_anchor = None
+            self.update()
 
     def _invalidate_status_marker_hits(self) -> None:
         self._status_marker_hits = []
@@ -1101,8 +1140,7 @@ class BattlefieldWidget(QWidget):
             event.accept()
             return
         if (
-            event.button()
-            in {Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton}
+            event.button() in {Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton}
             and self._zoom > self.MIN_ZOOM
         ):
             self._pan_anchor = (event.position().x(), event.position().y())
@@ -1119,7 +1157,11 @@ class BattlefieldWidget(QWidget):
         cell = self._cell_at_point(event.position().x(), event.position().y())
         if cell is not None:
             self.cell_clicked.emit(cell[0], cell[1])
-        for creature_ref, (center_x, center_y, radius) in self._creature_positions.items():
+        for creature_ref, (
+            center_x,
+            center_y,
+            radius,
+        ) in self._creature_positions.items():
             dx = event.position().x() - center_x
             dy = event.position().y() - center_y
             if dx * dx + dy * dy <= radius * radius:
@@ -1157,18 +1199,21 @@ class BattlefieldWidget(QWidget):
             event.position().y(),
         )
         if hovered_tooltip != self._visible_status_tooltip:
-            self._hide_status_tooltip()
-            if hovered_tooltip is not None:
-                QToolTip.showText(
-                    event.globalPosition().toPoint(),
-                    hovered_tooltip,
-                    self,
-                )
-                self._visible_status_tooltip = hovered_tooltip
+            self._visible_status_tooltip = hovered_tooltip
+            self._status_tooltip_anchor = (
+                (event.position().x(), event.position().y())
+                if hovered_tooltip is not None
+                else None
+            )
+            self.update()
         previous_hover = self._hover_cell
         previous_point = self._hover_point
-        self._hover_cell = self._cell_at_point(event.position().x(), event.position().y())
-        self._hover_point = self._point_at_pixel(event.position().x(), event.position().y())
+        self._hover_cell = self._cell_at_point(
+            event.position().x(), event.position().y()
+        )
+        self._hover_point = self._point_at_pixel(
+            event.position().x(), event.position().y()
+        )
         if self._hover_cell != previous_hover or self._hover_point != previous_point:
             self.update()
         super().mouseMoveEvent(event)
