@@ -9,6 +9,7 @@ dependencies = [
 
 [project.scripts]
 srd-arena = "srd_arena.main:main"
+content-schema-docs = "srd_arena.tools.content_schema_docs:main"
 
 [build-system]
 requires = ["setuptools>=61"]
@@ -26,7 +27,9 @@ package = true
 
 [dependency-groups]
 dev = [
+    "erdantic>=1.2.1",
     "hypothesis>=6.0,<7",
+    "json-schema-for-humans>=1.5.1",
     "mypy>=2.1.0",
     "pytest>=7.4,<9",
     "pytest-cov>=7.1.0",
