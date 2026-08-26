@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ....creatures import Creature
-from ...attack_economy import spend_attack
+from ...attack_economy import spend_attack, spend_current_attack
 from ..attack_resolution import (
     apply_attack_damage,
     resolve_attack,
@@ -43,8 +43,8 @@ def resolve_attack_action(
             raise ValueError(
                 "The selected attack is not available for this Multiattack slot."
             )
+        spend_current_attack(state, creature_ref)
         creature_state.pending_multiattack.pop(0)
-        creature_state.attacks_remaining = len(creature_state.pending_multiattack)
     else:
         spend_attack(
             state,

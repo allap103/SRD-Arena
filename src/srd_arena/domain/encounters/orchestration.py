@@ -246,7 +246,6 @@ class EncounterOrchestrator:
             if result.outcome is ActionExecutionOutcome.END_TURN or (
                 action.kind == "attack"
                 and actor.attacks_remaining == 0
-                and not actor.pending_multiattack
             ):
                 return True, progress, actions_resolved
             if action_limit is not None and actions_resolved >= action_limit:

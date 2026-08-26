@@ -79,7 +79,7 @@ class ActionEconomyRestriction:
 
 @dataclass(frozen=True)
 class AttackLimit:
-    """Limit how many attacks an action can make."""
+    """Limit how many attacks one Attack action can make."""
 
     maximum: int
 

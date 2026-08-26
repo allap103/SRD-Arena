@@ -7,6 +7,19 @@ value remains authoritative and must not be changed by normalization.
 The canonical Pydantic models live in
 `src/srd_arena/content/creatures/actions/multiattack.py`.
 
+## Rules Semantics
+
+Under SRD 5.2, a creature's Multiattack entry describes the attacks and
+additional abilities it can use as part of the Attack action. Rules that limit
+attacks within the Attack action therefore also limit attack-producing
+Multiattack invocations.
+
+The current executable runtime supports typed attack slots. Authored
+non-attack steps, spell invocations, and replacements remain representation
+work until their execution pipeline is completed. That future pipeline must
+count actual attacks against the enclosing Attack-action budget while
+preserving non-attack abilities.
+
 ## Composition
 
 A definition contains one or more alternative plans. Each plan contains:

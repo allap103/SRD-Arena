@@ -82,8 +82,8 @@
     },
     {
       "id": "multiattack_subject",
-      "name": "Multiattack Subject",
-      "description": "Shows that the named Multiattack action is distinct from the Attack action.",
+      "name": "Multiattack Test Subject",
+      "description": "Shows that Slow limits attacks made through a creature's Multiattack entry.",
       "stat_block": {
         "name": "Assassin",
         "source": "XMM"

@@ -314,7 +314,7 @@ def test_slow_chosen_area_never_exceeds_six_targets(monkeypatch) -> None:
     assert len(state.pending_spell_cast.selected_target_refs) == 6
 
 
-def test_slow_attack_limit_does_not_truncate_multiattack() -> None:
+def _assassin_showcase_state() -> EncounterState:
     session = Scenario(
         str(STAT_BLOCK_ACTION_SCENARIO_DIR),
         start_scene="stat_block_action_showcase",
@@ -327,7 +327,16 @@ def test_slow_attack_limit_does_not_truncate_multiattack() -> None:
     assassin = state.active_creature_state
     assassin.actions_remaining = 1
     assassin.attacks_remaining = 0
+    assassin.attack_action_base_attacks = 0
+    assassin.attack_action_attacks_used = 0
     assassin.pending_multiattack.clear()
+    state.creatures["assassin_target"].creature.current_health = 500
+    return state
+
+
+def test_slow_limits_attacks_made_through_multiattack(monkeypatch) -> None:
+    state = _assassin_showcase_state()
+    assassin = state.active_creature_state
     state._apply_effects(
         [
             EffectResult(
@@ -352,7 +361,93 @@ def test_slow_attack_limit_does_not_truncate_multiattack() -> None:
     _ORCHESTRATOR.submit(state, multiattack)
 
     assert len(assassin.pending_multiattack) == 3
-    assert assassin.attacks_remaining == 3
+    assert assassin.attack_action_base_attacks == 3
+    assert assassin.attack_action_attacks_used == 0
+    assert assassin.attacks_remaining == 1
+
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 20,
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda count, _sides: count,
+    )
+    light_crossbow = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "attack"
+        and action.value == "assassin_target"
+        and action.preferred_attack_name == "Light Crossbow"
+    )
+    resolved = _ORCHESTRATOR.submit(state, light_crossbow)
+
+    assert len(assassin.pending_multiattack) == 2
+    assert assassin.attack_action_attacks_used == 1
+    assert assassin.attacks_remaining == 0
+    assert not any(action.kind == "attack" for action in state.available_actions())
+    attack_event = next(
+        event for event in resolved.events if event.type == "attack_resolved"
+    )
+    assert attack_event.data["attacks_remaining"] == 0
+
+
+def test_ending_slow_mid_multiattack_restores_pending_attacks(
+    monkeypatch,
+) -> None:
+    state = _assassin_showcase_state()
+    assassin = state.active_creature_state
+    state._apply_effects(
+        [
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref="assassin",
+                data={
+                    "effect_kind": "concentration",
+                    "source_ref": "assassin_target",
+                    "source_label": "Slow",
+                    "definition_id": "slow",
+                    "parameters": {"effect_label": "Slow"},
+                },
+                rule_effects=(AttackLimit(1),),
+            )
+        ],
+        origin_id="slow-breakable-multiattack",
+    )
+    rolls = iter((20, 1))
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: next(rolls),
+    )
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_dice",
+        lambda count, _sides: count,
+    )
+
+    multiattack = next(
+        action for action in state.available_actions() if action.kind == "multiattack"
+    )
+    _ORCHESTRATOR.submit(state, multiattack)
+    assert assassin.attacks_remaining == 1
+
+    light_crossbow = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "attack"
+        and action.value == "assassin_target"
+        and action.preferred_attack_name == "Light Crossbow"
+    )
+    resolved = _ORCHESTRATOR.submit(state, light_crossbow)
+
+    assert state.ongoing_effects == []
+    assert len(assassin.pending_multiattack) == 2
+    assert assassin.attack_action_attacks_used == 1
+    assert assassin.attacks_remaining == 2
+    assert (
+        "system",
+        "Assassin Target loses concentration on Slow "
+        "(Constitution 1 vs DC 10).",
+    ) in resolved.messages
 
 
 def test_slow_from_a_real_cast_can_fail_a_somatic_spell(

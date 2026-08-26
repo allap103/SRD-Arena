@@ -1,4 +1,4 @@
-"""Track attacks made as part of an ordinary Attack action."""
+"""Track attacks made as part of an Attack action."""
 
 from __future__ import annotations
 
@@ -28,9 +28,41 @@ def spend_attack(
     )
     if starts_new_attack_action:
         state._consume_action(allow_magic=False)
-        creature_state.attack_action_base_attacks = base_attacks
-        creature_state.attack_action_attacks_used = 0
+        begin_attack_action(
+            state,
+            creature_ref,
+            base_attacks=base_attacks,
+        )
     elif creature_state.attacks_remaining <= 0:
+        raise RuntimeError("No attack remains in this Attack action.")
+    spend_current_attack(state, creature_ref)
+
+
+def begin_attack_action(
+    state: EncounterState,
+    creature_ref: CreatureRef,
+    *,
+    base_attacks: int,
+) -> None:
+    """Initialize the attack budget for one Attack action."""
+
+    creature_state = state.creatures[creature_ref]
+    creature_state.attack_action_base_attacks = base_attacks
+    creature_state.attack_action_attacks_used = 0
+    reconcile_remaining_attacks(state, (creature_ref,))
+
+
+def spend_current_attack(
+    state: EncounterState,
+    creature_ref: CreatureRef,
+) -> None:
+    """Record one attack within the Attack action already in progress."""
+
+    creature_state = state.creatures[creature_ref]
+    if (
+        creature_state.attack_action_base_attacks <= 0
+        or creature_state.attacks_remaining <= 0
+    ):
         raise RuntimeError("No attack remains in this Attack action.")
     creature_state.attack_action_attacks_used += 1
     reconcile_remaining_attacks(state, (creature_ref,))
@@ -42,6 +74,7 @@ def clear_attack_action(creature_state: EncounterCreatureState) -> None:
     creature_state.attacks_remaining = 0
     creature_state.attack_action_base_attacks = 0
     creature_state.attack_action_attacks_used = 0
+    creature_state.pending_multiattack.clear()
 
 
 def reconcile_remaining_attacks(
@@ -53,14 +86,17 @@ def reconcile_remaining_attacks(
     for creature_ref in creature_refs:
         creature_state = state.creatures[creature_ref]
         base = creature_state.attack_action_base_attacks
-        if base <= 0 or creature_state.pending_multiattack:
+        if base <= 0:
             continue
         allowed = state.combat_rules.attack_limit(
             state,
             creature_ref,
             base,
         ).value
-        creature_state.attacks_remaining = max(
+        remaining = max(
             0,
             allowed - creature_state.attack_action_attacks_used,
         )
+        if creature_state.pending_multiattack:
+            remaining = min(remaining, len(creature_state.pending_multiattack))
+        creature_state.attacks_remaining = remaining

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from ....creatures import Creature, MultiattackInvocation, MultiattackStep
 from ....creatures.stat_block_actions import AttackActionDefinition
-from ...attack_economy import clear_attack_action
+from ...attack_economy import begin_attack_action, clear_attack_action
 from ...models import EncounterAction, EncounterProgress
 
 if TYPE_CHECKING:
@@ -62,7 +62,11 @@ def resolve_multiattack_action(
     state._consume_action(allow_magic=False)
     clear_attack_action(creature_state)
     creature_state.pending_multiattack = list(slots)
-    creature_state.attacks_remaining = len(slots)
+    begin_attack_action(
+        state,
+        creature_ref,
+        base_attacks=len(slots),
+    )
     progress.messages.append(("system", f"{creature.name} begins Multiattack."))
     progress.events.append(
         state._event(
