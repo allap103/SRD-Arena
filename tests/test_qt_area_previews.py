@@ -2,12 +2,15 @@ from pathlib import Path
 
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.application.observations import observe_session
-from srd_arena.frontends.qt.app import GameWindow
 from srd_arena.frontends.qt.ui.encounter.area_previews import (
     area_overlay_label,
     overlay_cells,
     overlay_origin,
     preview_area_overlay,
+)
+from srd_arena.frontends.qt.ui.encounter.targeting import (
+    mode_for_action,
+    pending_area_overlay,
 )
 from srd_arena.frontends.shared.models import BattlefieldView
 from srd_arena.infrastructure.scenarios import load_scenario
@@ -52,10 +55,8 @@ def test_slow_pending_area_preview_is_an_eight_square_cube(monkeypatch) -> None:
         if action.label == "Cast Slow"
     )
 
-    window = GameWindow.__new__(GameWindow)
-    window._observation = observation
-    window._pending_target_mode = window._target_mode_for_action(slow_action)
-    overlay = window._pending_area_overlay(list(observation.scene.action_details))
+    mode = mode_for_action(slow_action)
+    overlay = pending_area_overlay(observation.scene.action_details, mode)
 
     assert overlay is not None
     assert overlay["shape"] == "cube"

@@ -93,9 +93,17 @@ from srd_arena.content.spells import (
 )
 from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
 from srd_arena.frontends.qt.ui.encounter.area_previews import preview_area_overlay
+from srd_arena.frontends.qt.ui.encounter.action_menus import action_bucket
 from srd_arena.frontends.qt.ui.encounter.config import (
     ActionMenuScope,
     TargetSelectionMode,
+)
+from srd_arena.frontends.qt.ui.encounter.targeting import (
+    allocation_counts,
+    allocation_status,
+    mode_label,
+    mode_is_available,
+    selection_modes,
 )
 
 _ORCHESTRATOR = EncounterOrchestrator()
@@ -3156,8 +3164,7 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
 
 
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:
-    bucket = GameWindow._action_bucket_key(
-        None,
+    bucket = action_bucket(
         ActionObservation(
             id="spell-lesser-restoration-player",
             label="Cast Lesser Restoration",
@@ -4975,8 +4982,7 @@ def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> Non
 
 
 def test_spell_actions_map_to_magic_menu_bucket() -> None:
-    bucket = GameWindow._action_bucket_key(
-        None,
+    bucket = action_bucket(
         ActionObservation(
             id="spell-color_spray",
             label="Cast Color Spray",
@@ -4991,8 +4997,7 @@ def test_spell_actions_map_to_magic_menu_bucket() -> None:
 
 
 def test_grapple_actions_map_to_attack_menu_bucket() -> None:
-    bucket = GameWindow._action_bucket_key(
-        None,
+    bucket = action_bucket(
         ActionObservation(
             id="player-grapple-0",
             label="Grapple enemy 1 (Goblin Warrior)",
@@ -5006,7 +5011,6 @@ def test_grapple_actions_map_to_attack_menu_bucket() -> None:
 
 
 def test_grapple_actions_share_one_board_targeting_mode() -> None:
-    window = GameWindow.__new__(GameWindow)
     actions = [
         ActionObservation(
             id=f"player-grapple-{index}",
@@ -5019,16 +5023,15 @@ def test_grapple_actions_share_one_board_targeting_mode() -> None:
         for index in range(2)
     ]
 
-    modes = GameWindow._target_selection_modes(window, actions)
+    modes = selection_modes(actions)
 
     mode = TargetSelectionMode(kind="grapple", source_trigger_id="grapple")
     assert set(modes) == {mode}
     assert set(modes[mode]) == {"goblin_1", "goblin_2"}
-    assert GameWindow._target_mode_label(window, mode) == "Grapple"
+    assert mode_label(mode, actions) == "Grapple"
 
 
 def test_attack_sources_have_distinct_board_targeting_modes() -> None:
-    window = GameWindow.__new__(GameWindow)
     actions = [
         ActionObservation(
             id="goblin-scimitar-player",
@@ -5050,15 +5053,15 @@ def test_attack_sources_have_distinct_board_targeting_modes() -> None:
         ),
     ]
 
-    modes = GameWindow._target_selection_modes(window, actions)
+    modes = selection_modes(actions)
 
     scimitar = TargetSelectionMode(kind="attack", source_trigger_id="Scimitar")
     shortbow = TargetSelectionMode(kind="attack", source_trigger_id="Shortbow")
     assert set(modes) == {scimitar, shortbow}
     assert modes[scimitar]["player"].preferred_attack_name == "Scimitar"
     assert modes[shortbow]["player"].preferred_attack_name == "Shortbow"
-    assert GameWindow._target_mode_label(window, scimitar) == "Scimitar"
-    assert GameWindow._target_mode_label(window, shortbow) == "Shortbow"
+    assert mode_label(scimitar, actions) == "Scimitar"
+    assert mode_label(shortbow, actions) == "Shortbow"
 
 
 def test_unavailable_button_tooltip_lists_all_reasons() -> None:
@@ -5300,8 +5303,8 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
     window._action_menu_scope = ActionMenuScope("action", "magic")
     window._apply_turn_result = lambda _result, **_kwargs: None
 
-    assert GameWindow._pending_spell_allocation_counts(window) == {"goblin_1": 1}
-    assert GameWindow._pending_spell_allocation_status(window) == (
+    assert allocation_counts(window._observation) == {"goblin_1": 1}
+    assert allocation_status(window._observation) == (
         "Eldritch Blast: 1 allocation remaining (1/2 assigned)"
     )
 
@@ -5348,8 +5351,7 @@ def test_movement_does_not_consume_pending_multiattack_slots() -> None:
 def test_directional_spell_target_mode_stays_available_without_creature_target_map() -> (
     None
 ):
-    window = GameWindow.__new__(GameWindow)
-    window._pending_target_mode = TargetSelectionMode(
+    pending_mode = TargetSelectionMode(
         kind="spell",
         source_trigger_id="color_spray",
     )
@@ -5365,11 +5367,10 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
         )
     ]
 
-    assert GameWindow._target_mode_is_available(window, actions, {}) is True
+    assert mode_is_available(actions, {}, pending_mode) is True
 
 
 def test_spell_target_modes_preserve_selected_cast_level() -> None:
-    window = GameWindow.__new__(GameWindow)
     actions = [
         ActionObservation(
             id=f"blight-{suffix}",
@@ -5388,7 +5389,7 @@ def test_spell_target_modes_preserve_selected_cast_level() -> None:
         )
     ]
 
-    modes = GameWindow._target_selection_modes(window, actions)
+    modes = selection_modes(actions)
 
     assert (
         modes[TargetSelectionMode(kind="spell", source_trigger_id="blight")][

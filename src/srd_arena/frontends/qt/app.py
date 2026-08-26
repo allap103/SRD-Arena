@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 import json
 import textwrap
-from collections import Counter, deque
+from collections import deque
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -38,14 +37,25 @@ from .ui.encounter import (
     clear_layout,
     spell_slot_rich_text,
 )
+from .ui.encounter.action_menus import (
+    group_actions,
+)
+from .ui.encounter.targeting import (
+    actions_for_mode,
+    allocation_counts,
+    allocation_status,
+    completed_allocation_action,
+    mode_for_action,
+    mode_is_available,
+    mode_label,
+    pending_area_action,
+    pending_area_overlay,
+    selection_modes,
+    target_creature_ref,
+)
 
 
 EXIT_CHOICE_TEXT = "Exit game"
-
-
-def _spell_slot_variant(action: ActionObservation) -> str | None:
-    slot_level = action.resource_level
-    return f"Level {slot_level}" if slot_level is not None else None
 
 
 try:
@@ -676,16 +686,25 @@ class GameWindow(QMainWindow):
         ):
             self._clear_movement_plan()
 
-        target_modes = self._target_selection_modes(encounter.non_movement_actions)
-        if not self._target_mode_is_available(
-            encounter.non_movement_actions, target_modes
+        target_modes = selection_modes(encounter.non_movement_actions)
+        if not mode_is_available(
+            encounter.non_movement_actions,
+            target_modes,
+            self._pending_target_mode,
         ):
             self._pending_target_mode = None
         self.battlefield_widget.set_cell_targeting_enabled(
-            self._pending_area_action(encounter.non_movement_actions) is not None
+            pending_area_action(
+                encounter.non_movement_actions,
+                self._pending_target_mode,
+            )
+            is not None
         )
         self.battlefield_widget.set_area_overlay(
-            self._pending_area_overlay(encounter.non_movement_actions)
+            pending_area_overlay(
+                encounter.non_movement_actions,
+                self._pending_target_mode,
+            )
         )
         selected_targetable_actions = (
             target_modes.get(self._pending_target_mode, {})
@@ -696,21 +715,22 @@ class GameWindow(QMainWindow):
             target_ref
             for action in selected_targetable_actions.values()
             if action.enabled
-            if (target_ref := self._target_creature_ref(action)) is not None
+            if (target_ref := target_creature_ref(action)) is not None
         }
-        allocation_counts = self._pending_spell_allocation_counts()
-        allocation_status = self._pending_spell_allocation_status()
+        observation = self._observation or self.game.observe()
+        target_allocations = allocation_counts(observation)
+        targeting_status = allocation_status(observation)
         self.battlefield_widget.set_targeting_state(
             targetable_refs,
-            allocation_counts=allocation_counts,
-            targeting_label=allocation_status,
+            allocation_counts=target_allocations,
+            targeting_label=targeting_status,
         )
 
         self._render_movement_status(encounter.resources)
         self._render_health_status(encounter.resources)
         self._render_initiative_rail(encounter.resources)
 
-        action_groups = self._action_groups(encounter.non_movement_actions)
+        action_groups = group_actions(encounter.non_movement_actions)
         self._set_accordion_status(
             "Actions",
             encounter.resources.action_status,
@@ -1213,16 +1233,22 @@ class GameWindow(QMainWindow):
         action: ActionObservation,
         rendered_target_modes: set[TargetSelectionMode],
     ) -> QPushButton | None:
-        target_mode = self._target_mode_for_action(action)
+        target_mode = mode_for_action(action)
         if target_mode is not None:
             if target_mode in rendered_target_modes:
                 return None
             rendered_target_modes.add(target_mode)
-            button = QPushButton(self._target_mode_label(target_mode))
+            mode_actions = actions_for_mode(
+                self._presentation.encounter.non_movement_actions
+                if self._presentation is not None
+                and self._presentation.encounter is not None
+                else (),
+                target_mode,
+            )
+            button = QPushButton(mode_label(target_mode, mode_actions))
             button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
             button.setCheckable(True)
             button.setChecked(target_mode == self._pending_target_mode)
-            mode_actions = self._actions_for_target_mode(target_mode)
             self._configure_action_button(button, mode_actions)
             if not button.isEnabled():
                 return button
@@ -1242,18 +1268,6 @@ class GameWindow(QMainWindow):
             lambda _checked=False, action_id=action.id: self._select_action(action_id)
         )
         return button
-
-    def _actions_for_target_mode(
-        self,
-        mode: TargetSelectionMode,
-    ) -> list[ActionObservation]:
-        if self._presentation is None or self._presentation.encounter is None:
-            return []
-        return [
-            action
-            for action in self._presentation.encounter.non_movement_actions
-            if self._target_mode_for_action(action) == mode
-        ]
 
     @staticmethod
     def _configure_action_button(
@@ -1322,31 +1336,6 @@ class GameWindow(QMainWindow):
             button.setText(f"{button.text()}  {dot}")
         return button
 
-    def _action_groups(
-        self,
-        actions: list[ActionObservation],
-    ) -> dict[str, dict[str, list[ActionObservation]]]:
-        groups = {
-            economy: {bucket: [] for bucket, _ in self._action_buckets()}
-            for economy in ("action", "bonus_action", "reaction")
-        }
-        for action in actions:
-            if action.kind == "set_spell_resource_allocation":
-                continue
-            groups[self._action_economy_key(action)][
-                self._action_bucket_key(action)
-            ].append(action)
-        return groups
-
-    def _action_buckets(self) -> tuple[tuple[str, str], ...]:
-        return (
-            ("attack", "Attack"),
-            ("magic", "Magic"),
-            ("class", "Class"),
-            ("utilize", "Utilize"),
-            ("other", "Other"),
-        )
-
     def _open_action_menu(self, economy: str, bucket: str) -> None:
         self._clear_movement_plan()
         self._pending_target_mode = None
@@ -1360,27 +1349,6 @@ class GameWindow(QMainWindow):
             return
         self._action_menu_scope = None
         self.refresh_view()
-
-    def _action_economy_key(self, action: ActionObservation) -> str:
-        if action.cost.get("bonus_action", 0) > 0:
-            return "bonus_action"
-        if action.cost.get("reaction", 0) > 0 or action.kind in {
-            "opportunity_attack",
-            "pass",
-        }:
-            return "reaction"
-        return "action"
-
-    def _action_bucket_key(self, action: ActionObservation) -> str:
-        if action.kind in {"attack", "multiattack", "opportunity_attack", "grapple"}:
-            return "attack"
-        if action.kind in {"magic", "spell"}:
-            return "magic"
-        if action.kind == "feature":
-            return "class"
-        if action.kind == "utilize":
-            return "utilize"
-        return "other"
 
     def _end_turn(self) -> None:
         if self._presentation is None or self._presentation.encounter is None:
@@ -1418,7 +1386,7 @@ class GameWindow(QMainWindow):
         result = self._accepted_update(command_result)
         if result is None:
             return
-        completed_allocation = self._completed_spell_allocation_action()
+        completed_allocation = completed_allocation_action(result.observation)
         if completed_allocation is not None:
             confirmation = self.game.execute(
                 ConfirmTargeting(
@@ -1433,9 +1401,7 @@ class GameWindow(QMainWindow):
             and selected_action.kind == "toggle_spell_target"
         ):
             if completed_allocation is None:
-                self._pending_target_mode = self._target_mode_for_action(
-                    selected_action
-                )
+                self._pending_target_mode = mode_for_action(selected_action)
         elif (
             selected_action is not None
             and selected_action.kind == "spell"
@@ -1454,7 +1420,7 @@ class GameWindow(QMainWindow):
         self._apply_turn_result(
             result,
             follow_up_attack_mode=(
-                self._target_mode_for_action(selected_action)
+                mode_for_action(selected_action)
                 if selected_action is not None and selected_action.kind == "attack"
                 else None
             ),
@@ -1492,8 +1458,8 @@ class GameWindow(QMainWindow):
         matching_actions = [
             action
             for action in self._presentation.encounter.non_movement_actions
-            if self._target_mode_for_action(action) == self._pending_target_mode
-            and self._target_creature_ref(action) == creature_ref
+            if mode_for_action(action) == self._pending_target_mode
+            and target_creature_ref(action) == creature_ref
         ]
         action = next(
             (
@@ -1523,7 +1489,7 @@ class GameWindow(QMainWindow):
             )
             update = self._accepted_update(result)
             if update is not None:
-                completed = self._completed_spell_allocation_action()
+                completed = completed_allocation_action(update.observation)
                 if completed is not None:
                     confirmed = self._accepted_update(
                         self.game.execute(
@@ -1671,54 +1637,6 @@ class GameWindow(QMainWindow):
         self._pending_target_mode = None
         self.refresh_view()
 
-    def _completed_spell_allocation_action(self) -> ActionObservation | None:
-        observation = self._observation or self.game.observe()
-        encounter = observation.encounter
-        pending = encounter.targeting if encounter is not None else None
-        if (
-            pending is None
-            or not pending.require_full_target_count
-            or len(pending.selected_target_refs) != pending.maximum_targets
-        ):
-            return None
-        return next(
-            (
-                action
-                for action in observation.scene.action_details
-                if action.kind == "confirm_spell_targets"
-            ),
-            None,
-        )
-
-    def _pending_spell_allocation_counts(self) -> dict[str, int]:
-        observation = self._observation or self.game.observe()
-        encounter = observation.encounter
-        pending = encounter.targeting if encounter is not None else None
-        if pending is None:
-            return {}
-        return dict(Counter(pending.selected_target_refs))
-
-    def _pending_spell_allocation_status(self) -> str | None:
-        observation = self._observation or self.game.observe()
-        encounter = observation.encounter
-        pending = encounter.targeting if encounter is not None else None
-        if pending is None:
-            return None
-        if pending.resource_pool_total is not None:
-            allocated = sum(item.amount for item in pending.resource_allocations)
-            return (
-                f"Healing allocated: {allocated}/{pending.resource_pool_total} HP "
-                f"({pending.resource_pool_total - allocated} remaining)"
-            )
-        spell_name = pending.source_label
-        selected = len(pending.selected_target_refs)
-        remaining = max(0, pending.maximum_targets - selected)
-        allocation_label = "allocation" if remaining == 1 else "allocations"
-        return (
-            f"{spell_name}: {remaining} {allocation_label} remaining "
-            f"({selected}/{pending.maximum_targets} assigned)"
-        )
-
     def _render_spell_resource_allocation_controls(self) -> None:
         observation = self._observation or self.game.observe()
         encounter = observation.encounter
@@ -1776,8 +1694,9 @@ class GameWindow(QMainWindow):
     def _handle_battlefield_point_clicked(self, x: float, y: float) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
-        action = self._pending_area_action(
-            self._presentation.encounter.non_movement_actions
+        action = pending_area_action(
+            self._presentation.encounter.non_movement_actions,
+            self._pending_target_mode,
         )
         if action is None:
             return
@@ -1797,176 +1716,6 @@ class GameWindow(QMainWindow):
         update = self._accepted_update(result)
         if update is not None:
             self._apply_turn_result(update)
-
-    def _target_selection_modes(
-        self,
-        actions: list[ActionObservation],
-    ) -> dict[TargetSelectionMode, dict[str, ActionObservation]]:
-        modes: dict[TargetSelectionMode, dict[str, ActionObservation]] = {}
-        for action in actions:
-            target_mode = self._target_mode_for_action(action)
-            target_creature_ref = self._target_creature_ref(action)
-            if target_mode is None or target_creature_ref is None:
-                continue
-            modes.setdefault(target_mode, {})[target_creature_ref] = action
-        return modes
-
-    def _target_mode_for_action(
-        self, action: ActionObservation
-    ) -> TargetSelectionMode | None:
-        if action.kind == "toggle_spell_target":
-            return TargetSelectionMode(
-                kind=action.kind,
-                source_trigger_id=action.source_trigger_id,
-            )
-        if action.kind == "spell" and action.source_id is not None:
-            return TargetSelectionMode(
-                kind=action.kind,
-                source_trigger_id=action.source_id,
-                variant_id=_spell_slot_variant(action),
-            )
-        if action.kind == "stat_block" and self._is_area_stat_block_action(action):
-            return TargetSelectionMode(
-                kind=action.kind,
-                source_trigger_id=action.preferred_attack_name,
-            )
-        if self._target_creature_ref(action) is None:
-            return None
-        return TargetSelectionMode(
-            kind=action.kind,
-            source_trigger_id=(
-                (
-                    action.source_trigger_id
-                    or action.preferred_attack_name
-                    or action.kind
-                )
-                if action.kind == "attack"
-                else action.source_trigger_id or action.kind
-                if action.kind == "grapple"
-                else action.preferred_attack_name
-                if action.kind == "stat_block"
-                else action.source_trigger_id
-            ),
-        )
-
-    def _target_mode_label(self, mode: TargetSelectionMode) -> str:
-        if mode.kind == "toggle_spell_target":
-            spell_name = self._source_label(mode.source_trigger_id)
-            return (
-                f"Choose {spell_name} targets"
-                if spell_name is not None
-                else "Choose targets"
-            )
-        if mode.kind == "spell" and mode.source_trigger_id is not None:
-            spell_name = self._source_label(mode.source_trigger_id)
-            if spell_name is not None:
-                if mode.variant_id is not None:
-                    return f"{spell_name} ({mode.variant_id})"
-                return spell_name
-        if mode.kind == "opportunity_attack":
-            return "Opportunity attack"
-        if mode.kind == "grapple":
-            return "Grapple"
-        if mode.kind == "stat_block" and mode.source_trigger_id is not None:
-            return mode.source_trigger_id
-        if mode.kind == "attack" and mode.source_trigger_id not in {
-            None,
-            "attack",
-        }:
-            assert mode.source_trigger_id is not None
-            return mode.source_trigger_id
-        return "Attack"
-
-    def _source_label(self, source_id: str | None) -> str | None:
-        if source_id is None:
-            return None
-        observation = self._observation or self.game.observe()
-        return next(
-            (
-                action.source_label
-                for action in observation.scene.action_details
-                if action.source_id == source_id and action.source_label is not None
-            ),
-            None,
-        )
-
-    def _target_creature_ref(self, action: ActionObservation | None) -> str | None:
-        if action is None:
-            return None
-        if action.kind not in {
-            "spell",
-            "toggle_spell_target",
-            "attack",
-            "grapple",
-            "opportunity_attack",
-            "stat_block",
-        }:
-            return None
-        return action.target_ref
-
-    def _is_area_spell_action(self, action: ActionObservation) -> bool:
-        return action.kind == "spell" and action.area_preview is not None
-
-    def _pending_area_spell_action(
-        self,
-        actions: list[ActionObservation],
-        *,
-        mode: TargetSelectionMode | None = None,
-    ) -> ActionObservation | None:
-        pending_mode = mode or self._pending_target_mode
-        if pending_mode is None or pending_mode.kind != "spell":
-            return None
-        return next(
-            (
-                action
-                for action in actions
-                if action.kind == "spell"
-                and action.source_id == pending_mode.source_trigger_id
-                and _spell_slot_variant(action) == pending_mode.variant_id
-                and self._is_area_spell_action(action)
-            ),
-            None,
-        )
-
-    def _is_area_stat_block_action(self, action: ActionObservation) -> bool:
-        return action.kind == "stat_block" and action.area_preview is not None
-
-    def _pending_area_stat_block_action(
-        self,
-        actions: list[ActionObservation],
-    ) -> ActionObservation | None:
-        mode = self._pending_target_mode
-        if mode is None or mode.kind != "stat_block":
-            return None
-        return next(
-            (
-                action
-                for action in actions
-                if action.kind == "stat_block"
-                and action.preferred_attack_name == mode.source_trigger_id
-                and self._is_area_stat_block_action(action)
-            ),
-            None,
-        )
-
-    def _pending_area_action(
-        self,
-        actions: list[ActionObservation],
-    ) -> ActionObservation | None:
-        return self._pending_area_spell_action(
-            actions
-        ) or self._pending_area_stat_block_action(actions)
-
-    def _target_mode_is_available(
-        self,
-        actions: list[ActionObservation],
-        target_modes: dict[TargetSelectionMode, dict[str, ActionObservation]],
-    ) -> bool:
-        if self._pending_target_mode is None:
-            return False
-        if self._pending_target_mode in target_modes:
-            return True
-        return self._pending_area_action(actions) is not None
 
     def _apply_turn_result(
         self,
@@ -2005,7 +1754,7 @@ class GameWindow(QMainWindow):
         encounter = presentation.encounter
         if encounter is None or encounter.resources.attacks_available <= 0:
             return None
-        target_modes = self._target_selection_modes(encounter.non_movement_actions)
+        target_modes = selection_modes(encounter.non_movement_actions)
         return attack_mode if target_modes.get(attack_mode) else None
 
     def _build_session_presentation(self) -> SessionPresentation:
@@ -2055,16 +1804,6 @@ class GameWindow(QMainWindow):
                 f"{encounter.creature(creature_ref).name}'s turn"
             )
         QTimer.singleShot(20, self._scroll_roll_log_to_bottom)
-
-    def _pending_area_overlay(
-        self,
-        actions: list[ActionObservation],
-    ) -> Mapping[str, object] | None:
-        stat_block_action = self._pending_area_stat_block_action(actions)
-        if stat_block_action is not None:
-            return stat_block_action.area_preview
-        action = self._pending_area_spell_action(actions)
-        return action.area_preview if action is not None else None
 
     def _scroll_roll_log_to_bottom(self) -> None:
         scrollbar = self.roll_scroll.verticalScrollBar()
