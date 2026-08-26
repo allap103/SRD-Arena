@@ -1,22 +1,13 @@
+"""Application use cases for discovering and starting games."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
 
-from srd_arena.content.common.paths import SCENARIOS_ROOT
-from srd_arena.content.encounters import list_scenarios
+from srd_arena.application.scenarios import ScenarioRepository, ScenarioSummary
 from srd_arena.domain.equipment.items import Item
-from srd_arena.runtime.scenario import Scenario
 from srd_arena.runtime.session import Session
-
-
-@dataclass(frozen=True)
-class AvailableScenario:
-    """Scenario information needed by a frontend selection screen."""
-
-    id: str
-    label: str
-    directory: Path
 
 
 @dataclass(frozen=True)
@@ -30,24 +21,17 @@ class RunningGame:
 
 @dataclass(frozen=True)
 class GameStartup:
-    """Discover scenarios and create frontend-independent game sessions."""
+    """Discover scenarios and create sessions through an injected source."""
 
-    scenario_root: Path = SCENARIOS_ROOT
+    scenarios: ScenarioRepository
 
-    def available_scenarios(self) -> tuple[AvailableScenario, ...]:
-        return tuple(
-            AvailableScenario(
-                id=scenario.id,
-                label=scenario.label,
-                directory=scenario.directory,
-            )
-            for scenario in list_scenarios(self.scenario_root)
-        )
+    def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
+        return self.scenarios.available_scenarios()
 
     def start_scenario(self, scenario_directory: str | Path) -> RunningGame:
-        scenario = Scenario(scenario_directory)
+        scenario = self.scenarios.load_scenario(scenario_directory)
         return RunningGame(
             scenario_directory=scenario.directory,
-            items=tuple(scenario.items),
+            items=scenario.items,
             session=scenario.create_session(),
         )

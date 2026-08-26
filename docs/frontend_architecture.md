@@ -8,10 +8,11 @@ sessions.
 
 ```text
 srd_arena.main
-    -> creates GameStartup
+    -> creates FilesystemScenarioRepository and GameStartup
     -> starts the Qt adapter
     -> ScenarioPickerWindow requests available scenario summaries
-    -> GameStartup loads the selected scenario and creates its Session
+    -> GameStartup requests the scenario from the repository
+    -> GameStartup creates its Session from the loaded definitions
     -> GameWindow receives the resulting RunningGame
 ```
 
@@ -23,8 +24,10 @@ importing Qt.
 
 | Component | Responsibility |
 | --- | --- |
-| `main` | Compose application services and select the frontend adapter. |
-| `application.startup` | Discover scenarios, load the selected scenario, and create a runtime session. |
+| `main` | Compose concrete repositories, application services, and the selected frontend adapter. |
+| `application.scenarios` | Define scenario summaries, loaded scenario data, and the scenario source port. |
+| `application.startup` | Coordinate scenario discovery and create a runtime session from loaded definitions. |
+| `infrastructure.scenarios` | Discover and assemble filesystem-backed scenarios using content loaders. |
 | `runtime` | Advance scenes and encounters in response to explicit decisions. |
 | `frontends.qt.launcher` | Display available scenarios and forward the user's selection. |
 | `frontends.qt.app` | Present a running game and translate Qt events into runtime decisions. |

@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from .....content.common.paths import IMAGES_ROOT
 from .....domain.geometry import continuous_area_outline
-from .....runtime.scenario import DEFAULT_SCENARIO_DIR
 from ....shared.models import BattlefieldCreatureView, BattlefieldView
 from ...floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
 from .area_previews import (
@@ -58,7 +55,7 @@ class BattlefieldWidget(QWidget):
     MAX_ZOOM = 4.0
     ZOOM_STEP = 1.15
 
-    def __init__(self, scenario_dir: str | Path = DEFAULT_SCENARIO_DIR):
+    def __init__(self):
         super().__init__()
         self._battlefield: BattlefieldView | None = None
         self._creature_positions: dict[str, tuple[float, float, float]] = {}

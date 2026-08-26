@@ -9,7 +9,7 @@ from srd_arena.frontends.qt.ui.encounter.area_previews import (
     preview_area_overlay,
 )
 from srd_arena.frontends.shared.models import BattlefieldView
-from srd_arena.runtime.scenario import Scenario
+from srd_arena.infrastructure.scenarios import load_scenario
 
 
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
@@ -42,7 +42,7 @@ def test_slow_pending_area_preview_is_an_eight_square_cube(monkeypatch) -> None:
         ]
 
     monkeypatch.setattr(EncounterState, "_roll_initiative", _tempo_archmage_first)
-    session = Scenario(SCENARIOS_ROOT / "slow_showcase").create_session()
+    session = load_scenario(SCENARIOS_ROOT / "slow_showcase").create_session()
     scene = session.get_scene_view()
     slow_action = next(
         action for action in scene.action_details if action.label == "Cast Slow"

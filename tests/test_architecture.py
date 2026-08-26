@@ -36,11 +36,20 @@ RULES = (
     ),
     DependencyRule(
         package="srd_arena.runtime",
-        forbidden=("srd_arena.frontends",),
+        forbidden=(
+            "srd_arena.application",
+            "srd_arena.content",
+            "srd_arena.frontends",
+            "srd_arena.infrastructure",
+        ),
     ),
     DependencyRule(
         package="srd_arena.application",
-        forbidden=("srd_arena.frontends",),
+        forbidden=(
+            "srd_arena.content",
+            "srd_arena.frontends",
+            "srd_arena.infrastructure",
+        ),
     ),
     DependencyRule(
         package="srd_arena.domain.geometry",

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import sys
 
-from ...application.startup import AvailableScenario, GameStartup
+from ...application.scenarios import ScenarioSummary
+from ...application.startup import GameStartup
 from .app import GameWindow, _require_pyside6
 from .theme import apply_fantasy_theme
 
@@ -72,7 +73,7 @@ class ScenarioPickerWindow(QMainWindow):
             layout.addWidget(button)
         layout.addStretch(1)
 
-    def _open_scenario(self, scenario: AvailableScenario) -> None:
+    def _open_scenario(self, scenario: ScenarioSummary) -> None:
         self._game_window = GameWindow(
             self._startup.start_scenario(scenario.directory),
         )

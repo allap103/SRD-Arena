@@ -146,7 +146,6 @@ class GameWindow(QMainWindow):
         )
         self.session.automatic_action_limit = 1
         self._items_by_id = {item.id: item for item in game.items}
-        self._scenario_directory = game.scenario_directory
         self._presentation: SessionPresentation | None = None
         self._pending_target_mode: TargetSelectionMode | None = None
         self._action_menu_scope: ActionMenuScope | None = None
@@ -206,7 +205,7 @@ class GameWindow(QMainWindow):
         battlefield_layout.setContentsMargins(0, 0, 0, 0)
         battlefield_layout.setSpacing(10)
 
-        self.battlefield_widget = BattlefieldWidget(self._scenario_directory)
+        self.battlefield_widget = BattlefieldWidget()
         self.battlefield_widget.setObjectName("combatBoard")
         self.battlefield_widget.creature_clicked.connect(
             self._handle_battlefield_creature_clicked

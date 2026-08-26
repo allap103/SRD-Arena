@@ -1,50 +1,81 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
+from typing import cast
 
-from srd_arena.application import startup
+from srd_arena.application.scenarios import (
+    LoadedScenario,
+    ScenarioRepository,
+    ScenarioSummary,
+)
 from srd_arena.application.startup import GameStartup
 
 
-def test_game_startup_lists_frontend_neutral_scenario_summaries(tmp_path: Path) -> None:
-    scenario_directory = tmp_path / "example"
-    (scenario_directory / "encounters").mkdir(parents=True)
-    (scenario_directory / "config.json").write_text(
-        json.dumps({"display_name": "Example Encounter"}),
-        encoding="utf-8",
+class ScenarioRepositoryStub:
+    def __init__(
+        self,
+        *,
+        summaries: tuple[ScenarioSummary, ...] = (),
+        loaded: LoadedScenario | None = None,
+    ) -> None:
+        self.summaries = summaries
+        self.loaded = loaded
+        self.loaded_directories: list[Path] = []
+
+    def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
+        return self.summaries
+
+    def load_scenario(
+        self,
+        scenario_directory: str | Path,
+        *,
+        start_scene: str | None = None,
+    ) -> LoadedScenario:
+        del start_scene
+        self.loaded_directories.append(Path(scenario_directory))
+        if self.loaded is None:
+            raise AssertionError("No loaded scenario was configured.")
+        return self.loaded
+
+
+def test_game_startup_lists_frontend_neutral_scenario_summaries(
+    tmp_path: Path,
+) -> None:
+    summary = ScenarioSummary(
+        id="example",
+        label="Example Encounter",
+        directory=tmp_path / "example",
     )
+    repository = ScenarioRepositoryStub(summaries=(summary,))
 
-    scenarios = GameStartup(tmp_path).available_scenarios()
+    scenarios = GameStartup(repository).available_scenarios()
 
-    assert len(scenarios) == 1
-    assert scenarios[0].id == "example"
-    assert scenarios[0].label == "Example Encounter"
-    assert scenarios[0].directory == scenario_directory.resolve()
+    assert scenarios == (summary,)
 
 
-def test_game_startup_loads_scenario_before_creating_session(
-    monkeypatch,
+def test_game_startup_creates_session_from_repository_result(
     tmp_path: Path,
 ) -> None:
     session = object()
     item = object()
-    constructed_with: list[str | Path] = []
 
-    class ScenarioStub:
-        def __init__(self, directory: str | Path) -> None:
-            constructed_with.append(directory)
-            self.directory = Path(directory)
-            self.items = [item]
+    class LoadedScenarioStub:
+        directory = tmp_path
+        items = (item,)
 
-        def create_session(self):
+        @staticmethod
+        def create_session():
             return session
 
-    monkeypatch.setattr(startup, "Scenario", ScenarioStub)
+    repository = ScenarioRepositoryStub(
+        loaded=cast(LoadedScenario, LoadedScenarioStub())
+    )
 
-    running_game = GameStartup().start_scenario(tmp_path)
+    running_game = GameStartup(cast(ScenarioRepository, repository)).start_scenario(
+        tmp_path
+    )
 
-    assert constructed_with == [tmp_path]
+    assert repository.loaded_directories == [tmp_path]
     assert running_game.scenario_directory == tmp_path
     assert running_game.items == (item,)
     assert running_game.session is session
