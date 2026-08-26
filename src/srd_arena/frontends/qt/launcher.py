@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
-from ...content.encounters import ScenarioInfo, list_scenarios
-from ...runtime.scenario import Scenario
+from ...application.startup import AvailableScenario, GameStartup
 from .app import GameWindow, _require_pyside6
 from .theme import apply_fantasy_theme
 
 try:
     from PySide6.QtGui import QFont
-    from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget
+    from PySide6.QtWidgets import (
+        QApplication,
+        QLabel,
+        QMainWindow,
+        QPushButton,
+        QVBoxLayout,
+        QWidget,
+    )
 except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QApplication = None  # type: ignore[assignment]
     QFont = object  # type: ignore[assignment]
@@ -22,9 +27,10 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
 
 
 class ScenarioPickerWindow(QMainWindow):
-    def __init__(self) -> None:
+    def __init__(self, startup: GameStartup) -> None:
         _require_pyside6()
         super().__init__()
+        self._startup = startup
         self._game_window: GameWindow | None = None
         self.setWindowTitle("Choose Scenario")
         self.resize(520, 420)
@@ -49,7 +55,7 @@ class ScenarioPickerWindow(QMainWindow):
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
 
-        scenarios = list_scenarios()
+        scenarios = self._startup.available_scenarios()
         if not scenarios:
             empty = QLabel("No valid scenarios were found in app/content/scenarios/.")
             empty.setWordWrap(True)
@@ -66,24 +72,18 @@ class ScenarioPickerWindow(QMainWindow):
             layout.addWidget(button)
         layout.addStretch(1)
 
-    def _open_scenario(self, scenario: ScenarioInfo) -> None:
+    def _open_scenario(self, scenario: AvailableScenario) -> None:
         self._game_window = GameWindow(
-            create_scenario(scenario.directory),
+            self._startup.start_scenario(scenario.directory),
         )
         self._game_window.show()
         self.close()
 
 
-def create_scenario(
-    scenario_dir: str | Path,
-) -> Scenario:
-    return Scenario(str(scenario_dir))
-
-
-def run_pyside6_app() -> None:
+def run_pyside6_app(startup: GameStartup) -> None:
     _require_pyside6()
     app = QApplication.instance() or QApplication(sys.argv)
     apply_fantasy_theme(app)
-    window = ScenarioPickerWindow()
+    window = ScenarioPickerWindow(startup)
     window.show()
     app.exec()
