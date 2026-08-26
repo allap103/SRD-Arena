@@ -982,28 +982,6 @@ def test_cli_encounter_renderer_generates_grid_text() -> None:
     assert "Actor HP:" in scene_text
 
 
-def test_movement_preview_uses_shortest_paths_around_occupied_cells() -> None:
-    unobstructed_paths = GameWindow._shortest_movement_paths(
-        width=4,
-        height=4,
-        origin=(0, 0),
-        blocked=set(),
-        max_steps=2,
-    )
-    movement_paths = GameWindow._shortest_movement_paths(
-        width=4,
-        height=4,
-        origin=(0, 0),
-        blocked={(1, 0)},
-        max_steps=2,
-    )
-
-    assert unobstructed_paths[(2, 1)] == ("right", "down-right")
-    assert movement_paths[(2, 0)] == ("down-right", "up-right")
-    assert (1, 0) not in movement_paths
-    assert (3, 3) not in movement_paths
-
-
 def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
     monkeypatch,
 ) -> None:

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import textwrap
-from collections import deque
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,10 +39,17 @@ from .ui.encounter import (
 from .ui.encounter.action_menus import (
     group_actions,
 )
+from .ui.encounter.movement import (
+    MovementPlan,
+    build_movement_plan,
+    movement_plan_is_current,
+)
 from .ui.encounter.targeting import (
+    action_for_target_click,
     actions_for_mode,
     allocation_counts,
     allocation_status,
+    cancel_targeting_action,
     completed_allocation_action,
     mode_for_action,
     mode_is_available,
@@ -113,26 +119,6 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QVBoxLayout = object  # type: ignore[assignment]
     QWidget = object  # type: ignore[assignment]
 SIDEBAR_WIDTH = 320
-MOVE_DELTAS = {
-    "up-left": (-1, -1),
-    "up": (0, -1),
-    "up-right": (1, -1),
-    "left": (-1, 0),
-    "right": (1, 0),
-    "down-left": (-1, 1),
-    "down": (0, 1),
-    "down-right": (1, 1),
-}
-MOVEMENT_PATH_DIRECTIONS = (
-    "up",
-    "right",
-    "down",
-    "left",
-    "up-right",
-    "down-right",
-    "down-left",
-    "up-left",
-)
 
 
 def _require_pyside6() -> None:
@@ -170,8 +156,7 @@ class GameWindow(QMainWindow):
         self._always_show_creature_names = False
         self._team_outline_toggles: list[QCheckBox] = []
         self._creature_name_toggles: list[QCheckBox] = []
-        self._movement_plan: dict[tuple[int, int], tuple[str, ...]] = {}
-        self._movement_planner_ref: str | None = None
+        self._movement_plan: MovementPlan | None = None
         self._accordion_toggles: dict[str, QToolButton] = {}
 
         self.setWindowTitle("SRD Arena")
@@ -680,9 +665,9 @@ class GameWindow(QMainWindow):
         encounter = presentation.encounter
         assert encounter is not None
         self.battlefield_widget.set_battlefield(encounter.battlefield)
-        if self._movement_planner_ref is not None and not any(
-            creature.creature_ref == self._movement_planner_ref and creature.is_active
-            for creature in encounter.battlefield.creatures
+        if not movement_plan_is_current(
+            self._movement_plan,
+            encounter.battlefield,
         ):
             self._clear_movement_plan()
 
@@ -1455,19 +1440,11 @@ class GameWindow(QMainWindow):
         if self._pending_target_mode is None:
             self._begin_movement_plan(creature_ref)
             return
-        matching_actions = [
-            action
-            for action in self._presentation.encounter.non_movement_actions
-            if mode_for_action(action) == self._pending_target_mode
-            and target_creature_ref(action) == creature_ref
-        ]
-        action = next(
-            (
-                candidate
-                for candidate in matching_actions
-                if candidate.id.endswith("-remove" if remove_allocation else "-add")
-            ),
-            matching_actions[0] if matching_actions and not remove_allocation else None,
+        action = action_for_target_click(
+            self._presentation.encounter.non_movement_actions,
+            self._pending_target_mode,
+            creature_ref,
+            remove_allocation=remove_allocation,
         )
         if action is None:
             # Follow-up attack targeting remains active while a Multiattack has
@@ -1505,7 +1482,11 @@ class GameWindow(QMainWindow):
         self._select_action(action.id)
 
     def _handle_battlefield_cell_clicked(self, x: int, y: int) -> None:
-        path = self._movement_plan.get((x, y))
+        path = (
+            self._movement_plan.path_to((x, y))
+            if self._movement_plan is not None
+            else None
+        )
         if path:
             self._confirm_movement_path(path)
             return
@@ -1515,80 +1496,18 @@ class GameWindow(QMainWindow):
         if self._presentation is None or self._presentation.encounter is None:
             return
         encounter = self._presentation.encounter
-        planner = next(
-            (
-                creature
-                for creature in encounter.battlefield.creatures
-                if creature.creature_ref == creature_ref and creature.is_active
-            ),
-            None,
-        )
-        movement_costs = [
-            action.cost.get("movement", 0)
-            for action in encounter.movement_actions.values()
-            if action.cost.get("movement", 0) > 0
-        ]
-        if planner is None or not movement_costs:
+        plan = build_movement_plan(encounter, creature_ref)
+        if plan is None:
             return
-        step_cost = min(movement_costs)
-        max_steps = encounter.resources.movement_remaining // step_cost
-        blocked = {
-            (creature.position.x, creature.position.y)
-            for creature in encounter.battlefield.creatures
-            if creature.creature_ref != creature_ref
-        }
-        origin = (planner.position.x, planner.position.y)
-        self._movement_plan = self._shortest_movement_paths(
-            encounter.battlefield.width,
-            encounter.battlefield.height,
-            origin,
-            blocked,
-            max_steps,
-        )
-        self._movement_planner_ref = creature_ref
+        self._movement_plan = plan
         self._pending_target_mode = None
         self._action_menu_scope = None
-        self.battlefield_widget.set_movement_plan(
-            creature_ref,
-            self._movement_plan,
-        )
-
-    @staticmethod
-    def _shortest_movement_paths(
-        width: int,
-        height: int,
-        origin: tuple[int, int],
-        blocked: set[tuple[int, int]],
-        max_steps: int,
-    ) -> dict[tuple[int, int], tuple[str, ...]]:
-        paths = {origin: ()}
-        frontier = deque([origin])
-        while frontier:
-            position = frontier.popleft()
-            path = paths[position]
-            if len(path) >= max_steps:
-                continue
-            for direction in MOVEMENT_PATH_DIRECTIONS:
-                delta_x, delta_y = MOVE_DELTAS[direction]
-                destination = (
-                    position[0] + delta_x,
-                    position[1] + delta_y,
-                )
-                if (
-                    destination in paths
-                    or destination in blocked
-                    or not 0 <= destination[0] < width
-                    or not 0 <= destination[1] < height
-                ):
-                    continue
-                paths[destination] = (*path, direction)
-                frontier.append(destination)
-        return paths
+        self.battlefield_widget.set_movement_plan(plan)
 
     def _confirm_movement_path(self, path: tuple[str, ...]) -> None:
-        planner_ref = self._movement_planner_ref
+        plan = self._movement_plan
         self._clear_movement_plan()
-        if planner_ref is None:
+        if plan is None:
             return
         for direction in path:
             presentation = self._build_session_presentation()
@@ -1596,7 +1515,7 @@ class GameWindow(QMainWindow):
             if encounter is None:
                 break
             action = encounter.movement_actions.get(direction)
-            if action is None or action.creature_ref != planner_ref:
+            if action is None or action.creature_ref != plan.creature_ref:
                 break
             result = self.game.execute(
                 SelectAction(
@@ -1610,21 +1529,15 @@ class GameWindow(QMainWindow):
             self._apply_turn_result(update)
 
     def _clear_movement_plan(self) -> None:
-        self._movement_plan = {}
-        self._movement_planner_ref = None
+        self._movement_plan = None
         if hasattr(self, "battlefield_widget"):
-            self.battlefield_widget.set_movement_plan(None, {})
+            self.battlefield_widget.set_movement_plan(None)
 
     def _cancel_battlefield_interaction(self) -> None:
         self._clear_movement_plan()
         if self._presentation is not None and self._presentation.encounter is not None:
-            cancel = next(
-                (
-                    action
-                    for action in self._presentation.encounter.non_movement_actions
-                    if action.kind == "cancel_spell_targets"
-                ),
-                None,
+            cancel = cancel_targeting_action(
+                self._presentation.encounter.non_movement_actions
             )
             if cancel is not None:
                 result = self.game.execute(

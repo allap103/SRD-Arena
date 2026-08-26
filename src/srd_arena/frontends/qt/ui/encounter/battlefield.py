@@ -13,6 +13,7 @@ from .area_previews import (
     overlay_cells as area_overlay_cells,
     overlay_origin as area_overlay_origin,
 )
+from .movement import MOVE_DELTAS, MovementPlan
 from .status_markers import (
     StatusMarkerHit,
     build_status_marker_specs,
@@ -80,8 +81,7 @@ class BattlefieldWidget(QWidget):
         self._pan_anchor: tuple[float, float] | None = None
         self._show_team_outlines = True
         self._always_show_creature_names = False
-        self._movement_planner_ref: str | None = None
-        self._movement_paths: dict[tuple[int, int], tuple[str, ...]] = {}
+        self._movement_plan: MovementPlan | None = None
         self.setMinimumHeight(self.MINIMUM_HEIGHT)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMouseTracking(True)
@@ -139,13 +139,8 @@ class BattlefieldWidget(QWidget):
         self._always_show_creature_names = visible
         self.update()
 
-    def set_movement_plan(
-        self,
-        creature_ref: str | None,
-        paths: dict[tuple[int, int], tuple[str, ...]],
-    ) -> None:
-        self._movement_planner_ref = creature_ref
-        self._movement_paths = dict(paths)
+    def set_movement_plan(self, plan: MovementPlan | None) -> None:
+        self._movement_plan = plan
         self.update()
 
     def paintEvent(self, event) -> None:  # pragma: no cover - GUI painting
@@ -232,10 +227,11 @@ class BattlefieldWidget(QWidget):
                     max(1, int(cell_size - inset * 2)),
                 )
 
-        if self._movement_paths:
+        movement_paths = self._movement_plan.paths if self._movement_plan else {}
+        if movement_paths:
             painter.setPen(Qt.PenStyle.NoPen)
-            for cell_x, cell_y in self._movement_paths:
-                if not self._movement_paths[(cell_x, cell_y)]:
+            for cell_x, cell_y in movement_paths:
+                if not movement_paths[(cell_x, cell_y)]:
                     continue
                 draw_x = origin_x + cell_x * cell_size
                 draw_y = origin_y + cell_y * cell_size
@@ -247,12 +243,13 @@ class BattlefieldWidget(QWidget):
                     QColor(63, 127, 213, 70),
                 )
 
-        preview_path = self._movement_paths.get(self._hover_cell)
+        preview_path = movement_paths.get(self._hover_cell)
         planner = next(
             (
                 creature
                 for creature in self._battlefield.creatures
-                if creature.creature_ref == self._movement_planner_ref
+                if self._movement_plan is not None
+                and creature.creature_ref == self._movement_plan.creature_ref
             ),
             None,
         )
@@ -262,16 +259,7 @@ class BattlefieldWidget(QWidget):
             preview_y = planner.position.y
             preview_cells.append((preview_x, preview_y))
             for direction in preview_path:
-                delta_x, delta_y = {
-                    "up-left": (-1, -1),
-                    "up": (0, -1),
-                    "up-right": (1, -1),
-                    "left": (-1, 0),
-                    "right": (1, 0),
-                    "down-left": (-1, 1),
-                    "down": (0, 1),
-                    "down-right": (1, 1),
-                }[direction]
+                delta_x, delta_y = MOVE_DELTAS[direction]
                 preview_x += delta_x
                 preview_y += delta_y
                 preview_cells.append((preview_x, preview_y))
@@ -789,7 +777,8 @@ class BattlefieldWidget(QWidget):
 
     def _interaction_is_pending(self) -> bool:
         return bool(
-            self._movement_paths
+            self._movement_plan is not None
+            and self._movement_plan.paths
             or self._targetable_creature_refs
             or self._cell_targeting_enabled
         )

@@ -109,6 +109,43 @@ def target_creature_ref(action: ActionObservation | None) -> str | None:
     return action.target_ref
 
 
+def action_for_target_click(
+    actions: Sequence[ActionObservation],
+    mode: TargetSelectionMode,
+    creature_ref: str,
+    *,
+    remove_allocation: bool = False,
+) -> ActionObservation | None:
+    """Choose the action represented by a click on a target creature."""
+
+    matching_actions = [
+        action
+        for action in actions
+        if mode_for_action(action) == mode
+        and target_creature_ref(action) == creature_ref
+    ]
+    allocation_suffix = "-remove" if remove_allocation else "-add"
+    return next(
+        (
+            action
+            for action in matching_actions
+            if action.id.endswith(allocation_suffix)
+        ),
+        matching_actions[0] if matching_actions and not remove_allocation else None,
+    )
+
+
+def cancel_targeting_action(
+    actions: Sequence[ActionObservation],
+) -> ActionObservation | None:
+    """Return the advertised cancellation action for active targeting."""
+
+    return next(
+        (action for action in actions if action.kind == "cancel_spell_targets"),
+        None,
+    )
+
+
 def pending_area_action(
     actions: Sequence[ActionObservation],
     mode: TargetSelectionMode | None,
