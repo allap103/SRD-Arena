@@ -5,6 +5,7 @@ import textwrap
 from collections import Counter, deque
 from dataclasses import asdict
 from datetime import datetime, timezone
+from pathlib import Path
 from ...application.commands import (
     AimAction,
     CancelTargeting,
@@ -135,11 +136,13 @@ class GameWindow(QMainWindow):
         self,
         game: RunningGame,
         *,
+        image_root: Path | None = None,
         show_encounter_json: bool = False,
     ):
         _require_pyside6()
         super().__init__()
         self.game = game
+        self._image_root = image_root
         self._observation: GameObservation | None = None
         self._encounter_presentation_config = load_encounter_presentation_config(
             game.scenario_directory
@@ -203,7 +206,7 @@ class GameWindow(QMainWindow):
         battlefield_layout.setContentsMargins(0, 0, 0, 0)
         battlefield_layout.setSpacing(10)
 
-        self.battlefield_widget = BattlefieldWidget()
+        self.battlefield_widget = BattlefieldWidget(image_root=self._image_root)
         self.battlefield_widget.setObjectName("combatBoard")
         self.battlefield_widget.creature_clicked.connect(
             self._handle_battlefield_creature_clicked

@@ -3163,8 +3163,9 @@ def test_lesser_restoration_uses_magic_menu_bucket() -> None:
             label="Cast Lesser Restoration",
             kind="spell",
             creature_ref="player",
-            value="lesser_restoration:player",
             cost={"bonus_action": 1},
+            source_id="lesser_restoration",
+            target_ref="player",
         ),
     )
 
@@ -4981,8 +4982,8 @@ def test_spell_actions_map_to_magic_menu_bucket() -> None:
             label="Cast Color Spray",
             kind="spell",
             creature_ref="player",
-            value="color_spray",
             cost={"action": 1},
+            source_id="color_spray",
         ),
     )
 
@@ -4997,7 +4998,6 @@ def test_grapple_actions_map_to_attack_menu_bucket() -> None:
             label="Grapple enemy 1 (Goblin Warrior)",
             kind="grapple",
             creature_ref="player",
-            value=0,
             cost={"action": 1},
         ),
     )
@@ -5013,7 +5013,6 @@ def test_grapple_actions_share_one_board_targeting_mode() -> None:
             label=f"Grapple target {index}",
             kind="grapple",
             creature_ref="player",
-            value=f"goblin_{index + 1}",
             cost={"action": 1},
             target_ref=f"goblin_{index + 1}",
         )
@@ -5036,7 +5035,6 @@ def test_attack_sources_have_distinct_board_targeting_modes() -> None:
             label="Scimitar player",
             kind="attack",
             creature_ref="goblin",
-            value="player",
             cost={"action": 1},
             preferred_attack_name="Scimitar",
             target_ref="player",
@@ -5046,7 +5044,6 @@ def test_attack_sources_have_distinct_board_targeting_modes() -> None:
             label="Shortbow player",
             kind="attack",
             creature_ref="goblin",
-            value="player",
             cost={"action": 1},
             preferred_attack_name="Shortbow",
             target_ref="player",
@@ -5135,7 +5132,6 @@ def test_unavailable_button_tooltip_lists_all_reasons() -> None:
                     label="Attack Goblin",
                     kind="attack",
                     creature_ref="player",
-                    value="goblin_1",
                     cost={"action": 1},
                     target_ref="goblin_1",
                 )
@@ -5202,7 +5198,6 @@ def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
                     label="Remove Target Dummy (1)",
                     kind="toggle_spell_target",
                     creature_ref="caster",
-                    value="target_dummy",
                     source_trigger_id="eldritch_blast",
                     source_id="eldritch_blast",
                     target_ref="target_dummy",
@@ -5212,7 +5207,6 @@ def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
                     label="Add Target Dummy (2)",
                     kind="toggle_spell_target",
                     creature_ref="caster",
-                    value="target_dummy",
                     source_trigger_id="eldritch_blast",
                     source_id="eldritch_blast",
                     target_ref="target_dummy",
@@ -5368,7 +5362,6 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
             label="Cast Color Spray",
             kind="spell",
             creature_ref="player",
-            value="color_spray",
             cost={"action": 1},
             source_id="color_spray",
             area_preview={"shape": "cone"},
@@ -5386,20 +5379,15 @@ def test_spell_target_modes_preserve_selected_cast_level() -> None:
             label=label,
             kind="spell",
             creature_ref="spectrum_adept",
-            value=value,
             cost={"action": 1},
             source_id="blight",
-            resource_level=(
-                None
-                if "#slot=" not in value
-                else int(value.rsplit("#slot=", 1)[1])
-            ),
+            resource_level=resource_level,
             target_ref="plant_target",
         )
-        for suffix, label, value in (
-            ("base", "Cast Blight", "blight:plant_target"),
-            ("level-5", "Cast Blight (Level 5)", "blight:plant_target#slot=5"),
-            ("level-6", "Cast Blight (Level 6)", "blight:plant_target#slot=6"),
+        for suffix, label, resource_level in (
+            ("base", "Cast Blight", None),
+            ("level-5", "Cast Blight (Level 5)", 5),
+            ("level-6", "Cast Blight (Level 6)", 6),
         )
     ]
 

@@ -54,14 +54,18 @@ RULES = (
     DependencyRule(
         package="srd_arena.frontends.shared",
         forbidden=(
-            "srd_arena.domain.encounters.encounter",
-            "srd_arena.runtime.session",
+            "srd_arena.content",
+            "srd_arena.domain",
+            "srd_arena.infrastructure",
+            "srd_arena.runtime",
         ),
     ),
     DependencyRule(
         package="srd_arena.frontends.qt",
         forbidden=(
+            "srd_arena.content",
             "srd_arena.domain.encounters",
+            "srd_arena.infrastructure",
             "srd_arena.runtime",
         ),
     ),
@@ -252,6 +256,20 @@ def test_domain_root_is_namespace_only() -> None:
     assert not violations, "Domain-root imports hide concept ownership:\n" + "\n".join(
         violations
     )
+
+
+def test_package_and_runtime_roots_do_not_reexport_engine_types() -> None:
+    for path in (
+        PACKAGE_ROOT / "__init__.py",
+        PACKAGE_ROOT / "runtime" / "__init__.py",
+    ):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        assert (
+            len(tree.body) == 1
+            and isinstance(tree.body[0], ast.Expr)
+            and isinstance(tree.body[0].value, ast.Constant)
+            and isinstance(tree.body[0].value.value, str)
+        ), f"{path.relative_to(PACKAGE_ROOT.parent)} must remain namespace-only."
 
 
 def _imports(path: Path, module: str) -> list[tuple[int, str]]:

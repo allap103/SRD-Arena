@@ -11,9 +11,15 @@ def test_main_launches_qt_scenario_picker(monkeypatch) -> None:
     monkeypatch.setitem(
         sys.modules,
         "srd_arena.frontends.qt.launcher",
-        SimpleNamespace(run_pyside6_app=lambda received: launched.append(received)),
+        SimpleNamespace(
+            run_pyside6_app=lambda received, **kwargs: launched.append(
+                (received, kwargs)
+            )
+        ),
     )
 
     launcher.main()
 
-    assert launched == [startup]
+    assert len(launched) == 1
+    assert launched[0][0] is startup
+    assert launched[0][1]["image_root"].name == "images"

@@ -50,8 +50,14 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
     created_windows: list[GameWindowStub] = []
 
     class GameWindowStub:
-        def __init__(self, received: RunningGame) -> None:
+        def __init__(
+            self,
+            received: RunningGame,
+            *,
+            image_root: Path | None = None,
+        ) -> None:
             self.received = received
+            self.image_root = image_root
             self.was_shown = False
             created_windows.append(self)
 
@@ -60,7 +66,11 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
 
     startup = StartupStub()
     monkeypatch.setattr(launcher, "GameWindow", GameWindowStub)
-    picker = launcher.ScenarioPickerWindow(cast(GameStartup, startup))
+    image_root = tmp_path / "images"
+    picker = launcher.ScenarioPickerWindow(
+        cast(GameStartup, startup),
+        image_root=image_root,
+    )
 
     buttons = picker.findChildren(QPushButton)
     assert [button.text() for button in buttons] == ["Example Encounter"]
@@ -70,6 +80,7 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
     assert startup.started == [tmp_path]
     assert len(created_windows) == 1
     assert created_windows[0].received is running_game
+    assert created_windows[0].image_root == image_root
     assert created_windows[0].was_shown is True
     picker.deleteLater()
     app.processEvents()

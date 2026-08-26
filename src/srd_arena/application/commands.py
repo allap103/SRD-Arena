@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
-from srd_arena.domain.encounters.models import CombatEvent
+from dataclasses import dataclass, field
+from types import MappingProxyType
+from typing import Mapping
 
 from .observations import GameObservation
 
@@ -59,12 +59,26 @@ GameCommand = (
 
 
 @dataclass(frozen=True)
+class GameEvent:
+    """Application-owned record of an event emitted while resolving a command."""
+
+    seq: int
+    type: str
+    creature_ref: str | None = None
+    frame_id: str | None = None
+    action_id: str | None = None
+    data: Mapping[str, object] = field(
+        default_factory=lambda: MappingProxyType({})
+    )
+
+
+@dataclass(frozen=True)
 class GameUpdate:
     """Application-owned result of one accepted game command."""
 
     observation: GameObservation
     messages: tuple[tuple[str, str], ...]
-    events: tuple[CombatEvent, ...]
+    events: tuple[GameEvent, ...]
     selected_action_id: str | None
     selected_choice_text: str | None
     scene_changed: bool

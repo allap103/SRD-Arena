@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 
-from ...domain.encounters.models import CombatEvent
+from ...application.commands import GameEvent
 
 
 @dataclass(frozen=True)
@@ -27,7 +27,7 @@ class RollView:
     resolution_notes: tuple[str, ...] = ()
 
 
-def build_roll_views(events: list[CombatEvent]) -> list[RollView]:
+def build_roll_views(events: list[GameEvent]) -> list[RollView]:
     views: list[RollView] = []
     resolved_roll_ids = {
         event.data.get("roll_id")
@@ -107,7 +107,7 @@ def without_roll_details(
     ]
 
 
-def _attack_roll_view(event: CombatEvent) -> RollView | None:
+def _attack_roll_view(event: GameEvent) -> RollView | None:
     detail = event.data.get("attack_roll_detail")
     if not isinstance(detail, dict):
         return None
@@ -172,7 +172,7 @@ def _attack_damage_label(detail: object) -> str:
     )
 
 
-def _saving_throw_roll_views(event: CombatEvent) -> list[RollView]:
+def _saving_throw_roll_views(event: GameEvent) -> list[RollView]:
     details = event.data.get("save_details")
     if not isinstance(details, list):
         detail = event.data.get("save_detail")
@@ -188,7 +188,7 @@ def _saving_throw_roll_views(event: CombatEvent) -> list[RollView]:
     return views
 
 
-def _invocation_start_roll_views(event: CombatEvent) -> list[RollView]:
+def _invocation_start_roll_views(event: GameEvent) -> list[RollView]:
     checks = event.data.get("checks")
     if not isinstance(checks, list):
         return []
@@ -277,7 +277,7 @@ def _saving_throw_roll_view(
     )
 
 
-def _spell_damage_roll_views(event: CombatEvent) -> list[RollView]:
+def _spell_damage_roll_views(event: GameEvent) -> list[RollView]:
     details = event.data.get("damage_roll_details")
     if not isinstance(details, list):
         detail = event.data.get("damage_roll_detail")

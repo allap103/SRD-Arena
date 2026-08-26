@@ -102,13 +102,15 @@ def test_running_game_observes_controller_requirement() -> None:
 def test_running_game_exposes_headless_decision_workflow() -> None:
     session = SessionStub()
     game = _running_game(session)
-    action_id = game.observe().scene.action_details[0].id
+    observation = game.observe()
+    action_id = observation.scene.action_details[0].id
 
-    selected = game.select_action(action_id)
+    selected = game.execute(SelectAction(action_id, expected_decision_id=None))
     advanced = game.advance_automatic()
     reset = game.reset()
 
-    assert selected.selected_action_id == action_id
+    assert selected.update is not None
+    assert selected.update.selected_action_id == action_id
     assert advanced.observation.scene.scene_id == session.scene.scene_id
     assert reset.scene.scene_id == session.scene.scene_id
     assert session.selected_action_ids == [action_id]
@@ -127,14 +129,17 @@ def test_running_game_can_start_observe_and_select_by_stable_id() -> None:
         if action.kind == "wait" and action.enabled
     )
 
-    result = game.select_action(wait.id)
+    result = game.execute(
+        SelectAction(wait.id, observation.encounter.decision.id)
+    )
     next_observation = game.observe()
 
     assert observation.requires_automatic_advance is False
     assert observation.encounter is not None
     assert observation.encounter.decision.creature_ref
     assert observation.encounter.creatures
-    assert result.selected_action_id == wait.id
+    assert result.update is not None
+    assert result.update.selected_action_id == wait.id
     assert next_observation.scene.scene_id == observation.scene.scene_id
 
 
@@ -182,6 +187,7 @@ def test_application_aims_an_advertised_area_action() -> None:
     assert fireball.target_ref is None
     assert fireball.area_preview is not None
     assert fireball.area_preview["shape"] == "radius"
+    assert not hasattr(fireball, "value")
 
     result = game.execute(
         AimAction(

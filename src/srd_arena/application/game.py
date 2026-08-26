@@ -7,8 +7,8 @@ from pathlib import Path
 
 from srd_arena.runtime.session import Session
 
-from .commands import CommandResult, GameCommand, GameUpdate, SelectAction
-from .interactions import decision_id, execute_game_command, game_update
+from .commands import CommandResult, GameCommand, GameUpdate
+from .interactions import execute_game_command, game_update
 from .observations import GameObservation, observe_session
 
 
@@ -23,20 +23,6 @@ class RunningGame:
         """Return a read-only snapshot of the current decision point."""
 
         return observe_session(self._session)
-
-    def select_action(self, action_id: str) -> GameUpdate:
-        """Select an action advertised by the current observation."""
-
-        result = self.execute(
-            SelectAction(
-                action_id=action_id,
-                expected_decision_id=decision_id(self.observe()),
-            )
-        )
-        if result.update is None:
-            assert result.failure is not None
-            raise RuntimeError(result.failure.message)
-        return result.update
 
     def advance_automatic(self) -> GameUpdate:
         """Advance scripted controllers until the engine yields control."""

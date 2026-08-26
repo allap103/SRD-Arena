@@ -15,9 +15,9 @@ def build_feature_actions(
     creature_ref = encounter.decision.creature_ref
     creature = encounter.creature(creature_ref)
     available_feature_actions = {
-        str(action.value): action
+        action.feature_id: action
         for action in story_actions
-        if action.kind == "feature" and isinstance(action.value, str)
+        if action.kind == "feature" and action.feature_id is not None
     }
     feature_actions: list[ActionObservation] = []
     for definition in creature.feature_actions:
@@ -42,7 +42,7 @@ def _build_unavailable_feature_action(
         label=definition.label,
         kind="feature",
         creature_ref=creature_ref,
-        value=definition.feature_id,
+        feature_id=definition.feature_id,
         cost=cost,
         enabled=False,
         availability="unavailable",

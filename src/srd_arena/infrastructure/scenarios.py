@@ -12,7 +12,11 @@ from srd_arena.content.character_options.classes import (
     load_optional_feature_catalog,
     load_subclass_catalog,
 )
-from srd_arena.content.common.paths import SCENARIOS_ROOT, SYSTEM_CONTENT_ROOT
+from srd_arena.content.common.paths import (
+    IMAGES_ROOT,
+    SCENARIOS_ROOT,
+    SYSTEM_CONTENT_ROOT,
+)
 from srd_arena.content.creatures import (
     load_bestiary_catalog,
     load_player_character_templates,
@@ -37,6 +41,7 @@ class FilesystemScenarioRepository:
 
     scenario_root: Path = SCENARIOS_ROOT
     system_directory: Path = SYSTEM_CONTENT_ROOT
+    image_root: Path = IMAGES_ROOT
 
     def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
         return tuple(

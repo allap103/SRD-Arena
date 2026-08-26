@@ -1,81 +1,62 @@
 # Frontend architecture
 
-The frontend is an adapter around application and runtime services. It owns Qt
-widgets and user interaction, but it does not construct scenarios or runtime
-sessions.
+The frontends are driving adapters around the application API. The broader
+layering, startup flow, and public game contract are documented in
+[Application architecture](application_architecture.md).
 
-## Startup sequence
+## Qt adapter
 
-```text
-srd_arena.main
-    -> creates FilesystemScenarioRepository and GameStartup
-    -> starts the Qt adapter
-    -> ScenarioPickerWindow requests available scenario summaries
-    -> GameStartup requests the scenario from the repository
-    -> GameStartup creates its Session from the loaded definitions
-    -> GameWindow receives the resulting RunningGame
-```
+`frontends.qt` owns widgets, painting, pointer interaction, action menus, and
+Qt-specific presentation configuration. `GameWindow` receives a `RunningGame`
+from the launcher and interacts through application observations and commands.
+It does not receive or inspect the engine session.
 
-`GameStartup` is the frontend-independent entry point for discovering and
-starting games. A future model-training adapter can use the same service without
-importing Qt.
+Qt may reuse the pure `domain.geometry` package for pointer-driven area-preview
+rasterization. It must not import runtime or mutable encounter implementation
+packages. This exception keeps one definition of grid geometry without moving
+widget behavior into the application layer.
 
-The returned `RunningGame` is the application facade for observing the current
-decision, selecting an advertised stable action ID, advancing scripted
-controllers, and resetting the session. Qt still reads the underlying runtime
-session for richer presentation and targeting data; the observation and command
-milestones will remove that explicitly transitional access.
+## Shared presentation
 
-## Responsibilities
-
-| Component | Responsibility |
-| --- | --- |
-| `main` | Compose concrete repositories, application services, and the selected frontend adapter. |
-| `application.scenarios` | Define scenario summaries, loaded scenario data, and the scenario source port. |
-| `application.startup` | Coordinate scenario discovery and create a runtime session from loaded definitions. |
-| `application.game` | Expose frontend-independent observation and game-control use cases. |
-| `infrastructure.scenarios` | Discover and assemble filesystem-backed scenarios using content loaders. |
-| `runtime` | Advance scenes and encounters in response to explicit decisions. |
-| `frontends.qt.launcher` | Display available scenarios and forward the user's selection. |
-| `frontends.qt.app` | Present a running game and translate Qt events into runtime decisions. |
-| `frontends.shared` | Build frontend-neutral presentation models. |
-
-## Shared presentation modules
+`frontends.shared` turns application observations and events into display-ready
+models used by Qt. It contains no Qt widgets and imports neither runtime nor
+domain encounter implementation.
 
 | Module | Responsibility |
 | --- | --- |
-| `models` | Define frontend-neutral, display-ready view models. |
-| `session` | Compose one session presentation from runtime state. |
-| `actions` | Project available and unavailable feature actions. |
-| `battlefield` | Project creatures, statuses, and grid summaries. |
-| `conditions` | Extract effective condition names from serialized creature state. |
+| `models` | Display-ready view models. |
+| `session` | Compose one presentation from a `GameObservation`. |
+| `actions` | Group available and unavailable feature actions. |
+| `battlefield` | Project combatants, status markers, and grid summaries. |
+| `conditions` | Format effective conditions. |
 | `resources` | Project turn resources, initiative, and spell slots. |
+| `dice` | Turn application `GameEvent` records into roll-log views. |
 
-## Encounter UI modules
+## Encounter UI
 
 | Module | Responsibility |
 | --- | --- |
-| `battlefield` | Draw the combat grid and translate pointer events into battlefield signals. |
-| `area_previews` | Build display-ready area templates from serialized geometry and pointer positions. |
-| `dice_log` | Render combat log entries, dice results, and reroll controls. |
-| `status_markers` | Calculate status-marker, floating-label, and allocation-badge geometry. |
-| `layout` | Provide recursive Qt layout cleanup. |
+| `battlefield` | Draw the combat grid and emit pointer-derived signals. |
+| `area_previews` | Re-aim serialized area templates for the hovered cell. |
+| `dice_log` | Render combat messages, dice results, and reroll controls. |
+| `status_markers` | Calculate markers, labels, tooltips, and badges. |
+| `layout` | Clear nested Qt layouts. |
 | `resource_formatting` | Format resource values for Qt labels. |
 
-The package exports its public widgets from `frontends.qt.ui.encounter`; callers
-do not depend on the implementation modules directly.
+The remaining size of `frontends.qt.app` is a frontend readability concern,
+not an application-boundary leak. Future extraction should move cohesive Qt
+components without changing the `RunningGame` contract.
 
-## Dependency rule
+## Headless adapter
 
-The application and runtime packages must not import a frontend. Frontends may
-depend on the application boundary, shared presentation models, and runtime
-interfaces. This direction is enforced by the architecture tests.
+`frontends.headless.HeadlessGameAdapter` is the Python/ML-facing driving
+adapter. It:
 
-## Refactor constraints
+- lists scenarios without exposing filesystem paths;
+- starts a scenario by stable ID;
+- returns typed observations and legal action IDs;
+- submits direct choices or any typed application command;
+- preserves stale-decision validation;
+- advances scripted controllers without owning action-selection policy.
 
-- Preserve visible behavior while reorganizing the frontend.
-- Move complete responsibilities in small commits.
-- Keep game rules out of Qt event handlers and painting code.
-- Prefer pure geometry and presentation helpers where ordinary unit tests are
-  sufficient.
-- Use Qt-focused tests for signal wiring, event handling, and painting behavior.
+It is intentionally not a CLI and does not load Qt.

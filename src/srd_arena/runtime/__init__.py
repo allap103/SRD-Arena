@@ -1,9 +1,1 @@
-from .models import ActionView, SceneView, TurnResult
-from .session import Session
-
-__all__ = [
-    "ActionView",
-    "SceneView",
-    "Session",
-    "TurnResult",
-]
+"""Mutable game engine internals used by the application layer."""

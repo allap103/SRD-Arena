@@ -32,9 +32,9 @@ def build_session_presentation(
     encounter = observation.encounter
     resources = build_resource_summary(encounter)
     movement_actions = {
-        str(action.value): action
+        action.movement_direction: action
         for action in story_actions
-        if action.kind == "move" and isinstance(action.value, str)
+        if action.kind == "move" and action.movement_direction is not None
     }
     non_movement_actions = [
         action

@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from srd_arena.domain.encounters.models import ActionCost, EncounterAction
-from srd_arena.domain.geometry import MovementCost
-from srd_arena.domain.spells.rules import (
-    parse_spell_action_slot,
-    parse_spell_action_value,
-    spell_action_value,
+from types import MappingProxyType
+
+from srd_arena.domain.encounters.models import (
+    ActionCost,
+    CombatEvent,
+    EncounterAction,
 )
+from srd_arena.domain.geometry import MovementCost
+from srd_arena.domain.spells.rules import spell_action_value
 from srd_arena.runtime.models import TurnResult
 from srd_arena.runtime.session import Session
 
@@ -20,6 +22,7 @@ from .commands import (
     CommandResult,
     ConfirmTargeting,
     GameCommand,
+    GameEvent,
     GameUpdate,
     SelectAction,
     SetResourceAllocation,
@@ -70,11 +73,22 @@ def game_update(session: Session, result: TurnResult) -> GameUpdate:
     return GameUpdate(
         observation=observe_session(session),
         messages=tuple(result.messages),
-        events=tuple(result.events),
+        events=tuple(_observe_event(event) for event in result.events),
         selected_action_id=result.selected_action_id,
         selected_choice_text=result.selected_choice_text,
         scene_changed=result.scene_changed,
         should_exit=result.should_exit,
+    )
+
+
+def _observe_event(event: CombatEvent) -> GameEvent:
+    return GameEvent(
+        seq=event.seq,
+        type=event.type,
+        creature_ref=event.creature_ref,
+        frame_id=event.frame_id,
+        action_id=event.action_id,
+        data=MappingProxyType(dict(event.data)),
     )
 
 
@@ -125,11 +139,16 @@ def _aim_action(
         )
     value: str | tuple[float, float]
     if option.kind == "spell":
-        spell_id = parse_spell_action_value(str(option.value))[0]
+        spell_id = option.source_id
+        if spell_id is None:
+            raise _CommandRejected(
+                "action_unavailable",
+                f"Spell action '{command.action_id}' has no source identifier.",
+            )
         value = spell_action_value(
             spell_id,
             aim_point=(command.x, command.y),
-            slot_level=parse_spell_action_slot(str(option.value)),
+            slot_level=option.resource_level,
         )
     else:
         value = (command.x, command.y)
@@ -157,7 +176,7 @@ def _change_target(
         option
         for option in observation.scene.action_details
         if option.kind == "toggle_spell_target"
-        and option.value == command.target_ref
+        and option.target_ref == command.target_ref
         and option.enabled
         and (
             command.source_trigger_id is None
@@ -227,8 +246,7 @@ def _set_resource_allocation(
             for option in observation.scene.action_details
             if option.kind == "set_spell_resource_allocation"
             and option.enabled
-            and isinstance(option.value, str)
-            and option.value.rpartition("~")[0] == command.target_ref
+            and option.target_ref == command.target_ref
         ),
         None,
     )

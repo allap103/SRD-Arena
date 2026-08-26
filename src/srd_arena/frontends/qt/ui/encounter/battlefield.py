@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from .....content.common.paths import IMAGES_ROOT
+from pathlib import Path
+
 from .....domain.geometry import continuous_area_outline
 from ....shared.models import BattlefieldCreatureView, BattlefieldView
 from ...floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
@@ -55,8 +56,9 @@ class BattlefieldWidget(QWidget):
     MAX_ZOOM = 4.0
     ZOOM_STEP = 1.15
 
-    def __init__(self):
+    def __init__(self, *, image_root: Path | None = None):
         super().__init__()
+        self._image_root = image_root
         self._battlefield: BattlefieldView | None = None
         self._creature_positions: dict[str, tuple[float, float, float]] = {}
         self._status_marker_hits: list[StatusMarkerHit] = []
@@ -732,8 +734,12 @@ class BattlefieldWidget(QWidget):
         if image_reference is None:
             return None
         if image_reference not in self._image_cache:
-            path = IMAGES_ROOT / image_reference
-            pixmap = QPixmap(str(path)) if path.is_file() else None
+            path = (
+                self._image_root / image_reference
+                if self._image_root is not None
+                else None
+            )
+            pixmap = QPixmap(str(path)) if path is not None and path.is_file() else None
             self._image_cache[image_reference] = (
                 pixmap if pixmap is not None and not pixmap.isNull() else None
             )
