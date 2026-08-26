@@ -87,6 +87,9 @@ class BattlefieldCreatureView:
     position: GridPositionView
     health: int
     conditions: tuple[str, ...] = ()
+    is_concentrating: bool = False
+    buffs: tuple[str, ...] = ()
+    debuffs: tuple[str, ...] = ()
     is_active: bool = False
 
 
@@ -291,11 +294,7 @@ def _build_resource_summary(combat_state: dict[str, Any]) -> ResourceSummaryView
             if normal_turn and creature_state["action_available"]
             else 0
         ),
-        conditions=tuple(
-            condition
-            for condition in creature_state.get("conditions", [])
-            if isinstance(condition, str)
-        ),
+        conditions=_effective_condition_names(creature_state),
         spell_slots=_build_spell_slot_tracks(creature_state),
         movement_remaining=creature_state["movement_remaining"],
         movement_total=creature_state["movement_total"],
@@ -319,6 +318,9 @@ def _build_battlefield_view(
         zip(team_ids, TEAM_COLORS[: len(team_ids)], strict=True)
     )
     decision = combat_state["decision"]
+    concentrating_refs, buffs_by_ref, debuffs_by_ref = _battlefield_statuses(
+        combat_state
+    )
     creatures = [
         BattlefieldCreatureView(
             creature_ref=creature_ref,
@@ -332,11 +334,10 @@ def _build_battlefield_view(
                 y=creature["position"]["y"],
             ),
             health=creature["health"],
-            conditions=tuple(
-                condition
-                for condition in creature.get("conditions", [])
-                if isinstance(condition, str)
-            ),
+            conditions=_effective_condition_names(creature),
+            is_concentrating=creature_ref in concentrating_refs,
+            buffs=buffs_by_ref.get(creature_ref, ()),
+            debuffs=debuffs_by_ref.get(creature_ref, ()),
             is_active=decision["creature_ref"] == creature_ref,
         )
         for creature_ref, creature in combat_state["creatures"].items()
@@ -351,6 +352,97 @@ def _build_battlefield_view(
         grid_color=grid_color,
         grid_opacity=grid_opacity,
     )
+
+
+def _battlefield_statuses(
+    combat_state: dict[str, Any],
+) -> tuple[
+    frozenset[str],
+    dict[str, tuple[str, ...]],
+    dict[str, tuple[str, ...]],
+]:
+    """Collect concentration plus explicitly classified ongoing effects."""
+
+    creatures = combat_state.get("creatures")
+    if not isinstance(creatures, dict):
+        return frozenset(), {}, {}
+
+    concentrating_refs: set[str] = set()
+    buffs: dict[str, list[str]] = {}
+    debuffs: dict[str, list[str]] = {}
+    ongoing_effects = combat_state.get("ongoing_effects")
+    if not isinstance(ongoing_effects, list):
+        return frozenset(), {}, {}
+
+    for effect in ongoing_effects:
+        if not isinstance(effect, dict):
+            continue
+        source = effect.get("source")
+        if not isinstance(source, dict):
+            continue
+        source_ref = source.get("applied_by_ref")
+        if effect.get("kind") == "concentration" and isinstance(source_ref, str):
+            concentrating_refs.add(source_ref)
+
+        polarity = effect.get("polarity")
+        if polarity == "beneficial":
+            collection = buffs
+        elif polarity == "harmful":
+            collection = debuffs
+        else:
+            continue
+
+        label = _ongoing_effect_label(effect, source)
+        target_refs = effect.get("target_refs")
+        if label is None or not isinstance(target_refs, list):
+            continue
+        for target_ref in target_refs:
+            if not isinstance(target_ref, str):
+                continue
+            labels = collection.setdefault(target_ref, [])
+            if label not in labels:
+                labels.append(label)
+
+    return (
+        frozenset(concentrating_refs),
+        {creature_ref: tuple(labels) for creature_ref, labels in buffs.items()},
+        {creature_ref: tuple(labels) for creature_ref, labels in debuffs.items()},
+    )
+
+
+def _effective_condition_names(creature: dict[str, Any]) -> tuple[str, ...]:
+    effective = creature.get("effective_conditions")
+    if isinstance(effective, list):
+        return tuple(
+            dict.fromkeys(
+                condition["condition"]
+                for condition in effective
+                if isinstance(condition, dict)
+                and isinstance(condition.get("condition"), str)
+            )
+        )
+    return tuple(
+        dict.fromkeys(
+            condition
+            for condition in creature.get("conditions", [])
+            if isinstance(condition, str)
+        )
+    )
+
+
+def _ongoing_effect_label(
+    effect: dict[str, Any],
+    source: dict[str, Any],
+) -> str | None:
+    parameters = effect.get("parameters")
+    if isinstance(parameters, dict):
+        label = parameters.get("effect_label")
+        if isinstance(label, str) and label.strip():
+            return label
+    definition_id = source.get("definition_id")
+    if not isinstance(definition_id, str) or not definition_id.strip():
+        return None
+    return definition_id.replace("_", " ").replace("-", " ").title()
 
 
 def _render_battlefield_text(combat_state: dict[str, Any]) -> str:
@@ -389,7 +481,7 @@ def _render_battlefield_text(combat_state: dict[str, Any]) -> str:
         (
             f"- Enemy {index + 1} ({enemy['name']}): {enemy['health']} HP at "
             f"({enemy['position']['x']}, {enemy['position']['y']})"
-            f"{_condition_suffix(enemy.get('conditions', []))}"
+            f"{_condition_suffix(_effective_condition_names(enemy))}"
         )
         for index, enemy in enumerate(live_others)
         if enemy["is_alive"]
@@ -407,7 +499,7 @@ def _render_battlefield_text(combat_state: dict[str, Any]) -> str:
                 f"{actor_state['name']} HP: "
                 f"{actor_state['health']}/{actor_state['max_health']} "
                 f"at ({actor_position['x']}, {actor_position['y']})"
-                f"{_condition_suffix(actor_state.get('conditions', []))}"
+                f"{_condition_suffix(_effective_condition_names(actor_state))}"
             ),
             "Other creatures:",
             *creature_lines,

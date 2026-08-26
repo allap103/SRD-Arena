@@ -82,6 +82,12 @@ class OngoingEffectKind(StrEnum):
     SPELL = "spell"
 
 
+class EffectPolarity(StrEnum):
+    BENEFICIAL = "beneficial"
+    HARMFUL = "harmful"
+    NEUTRAL = "neutral"
+
+
 class EffectTag(StrEnum):
     CURSE = "curse"
     DISPELLABLE = "dispellable"
@@ -93,6 +99,7 @@ class OngoingEffect:
     target_refs: tuple[str, ...]
     duration: EffectDuration = field(default_factory=Indefinite)
     kind: OngoingEffectKind = OngoingEffectKind.GENERIC
+    polarity: EffectPolarity = EffectPolarity.NEUTRAL
     parameters: dict[str, object] = field(default_factory=dict)
     dispellable: bool = False
     tags: frozenset[EffectTag] = frozenset()

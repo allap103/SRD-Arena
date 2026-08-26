@@ -38,6 +38,7 @@ from srd_arena.domain.effects.rule_effects import (
     RollAdjustment,
 )
 from srd_arena.domain.effects.runtime import (
+    EffectPolarity,
     EffectSource,
     EffectSourceKind,
     OngoingEffect,
@@ -2577,7 +2578,43 @@ def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
 
     assert caster.has_damage_resistance("fire")
     assert not caster.has_damage_resistance("cold")
+    assert state.ongoing_effects[0].polarity is EffectPolarity.BENEFICIAL
     assert state.ongoing_effects[0].parameters["damage_resistances"] == ["fire"]
+
+
+def test_invisibility_is_classified_and_exported_as_beneficial() -> None:
+    session = Scenario(
+        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
+    ).create_session()
+    session.get_scene_view()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    caster = session.decision_creature
+    assert caster.spellcasting is not None
+    caster.spellcasting.learned_spells.append(
+        _build_referenced_spell(
+            "Invisibility", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
+        )
+    )
+    caster.spellcasting.spell_slots_remaining[2] = 1
+
+    action = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "spell"
+        and str(action.value).startswith("invisibility:player")
+    )
+    _ORCHESTRATOR.submit(state, action)
+
+    assert state.has_condition("player", Condition.INVISIBLE)
+    effect = state.ongoing_effects[0]
+    assert effect.polarity is EffectPolarity.BENEFICIAL
+    exported = next(
+        item
+        for item in state.export_state()["ongoing_effects"]
+        if item["id"] == effect.identity.id
+    )
+    assert exported["polarity"] == "beneficial"
 
 
 def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
@@ -2676,6 +2713,7 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
     result = _choose_directional_spell(session, "Cast Faerie Fire", (3, 3))
 
     assert result.events
+    assert state.ongoing_effects[0].polarity is EffectPolarity.HARMFUL
     assert (
         state.combat_rules.roll_modifiers(
             state,

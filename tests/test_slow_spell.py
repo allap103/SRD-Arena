@@ -11,7 +11,7 @@ from srd_arena.content.spells import (
 )
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.rule_effects import AttackLimit
-from srd_arena.domain.effects.runtime import OngoingEffectKind
+from srd_arena.domain.effects.runtime import EffectPolarity, OngoingEffectKind
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import (
     ActionCost,
@@ -148,6 +148,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     assert len(state.ongoing_effects) == 1
     slow = state.ongoing_effects[0]
     assert slow.kind is OngoingEffectKind.CONCENTRATION
+    assert slow.polarity is EffectPolarity.HARMFUL
     assert slow.identity.source.definition_id == "slow"
     assert slow.identity.source.applied_by_ref == "player"
     assert slow.target_refs == ("goblin_1", "goblin_3")

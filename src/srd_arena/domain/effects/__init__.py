@@ -26,6 +26,7 @@ from .rule_effects import (
 )
 from .runtime import (
     CreatureRelationship,
+    EffectPolarity,
     EffectSource,
     EffectSourceKind,
     OngoingEffect,
@@ -43,6 +44,7 @@ __all__ = [
     "CombatTrait",
     "Condition",
     "CreatureRelationship",
+    "EffectPolarity",
     "EffectResult",
     "EffectiveCondition",
     "EffectiveConditionSet",

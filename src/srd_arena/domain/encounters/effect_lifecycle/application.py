@@ -8,6 +8,7 @@ from ...effects.conditions import Condition
 from ...effects.modifiers import DamageReduction
 from ...effects.results import EffectResult
 from ...effects.runtime import (
+    EffectPolarity,
     EffectSource,
     EffectSourceKind,
     Indefinite,
@@ -37,6 +38,7 @@ def start_ongoing_effect(
     source_label = _required_string(result, "source_label")
     definition_id = _required_string(result, "definition_id")
     kind = OngoingEffectKind(_required_string(result, "effect_kind"))
+    polarity = EffectPolarity(str(result.data.get("polarity", "neutral")))
     if kind is OngoingEffectKind.CONCENTRATION:
         end_concentration(state, source_ref)
     source = EffectSource(
@@ -77,6 +79,7 @@ def start_ongoing_effect(
         ),
         kind=kind,
         parameters=effect_parameters,
+        polarity=polarity,
         dispellable=True,
         rule_effects=(
             *parse_runtime_rule_effects(effect_parameters),

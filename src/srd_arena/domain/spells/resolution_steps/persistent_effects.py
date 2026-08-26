@@ -17,6 +17,7 @@ from .context import SpellActionContext
 from .details import effect_duration_rounds, serialize_roll_modifiers
 from .preparation import PreparedSpellResolution
 from .scaling import resource_dice_increment, resource_int_increment, scale_dice
+from .polarity import persistent_spell_effect_polarity
 from .targets import ResolvedSpellTargets
 
 
@@ -153,6 +154,9 @@ def build_persistent_spell_effects(
                 data={
                     "effect_kind": parent_kind,
                     "source_ref": context.source_ref,
+                    "polarity": persistent_spell_effect_polarity(
+                        prepared,
+                    ).value,
                     "source_label": context.creature.name,
                     "definition_id": spell.id,
                     "recast_ends_previous": spell.recast_ends_previous,

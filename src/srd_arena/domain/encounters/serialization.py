@@ -80,6 +80,7 @@ def export_state(self: EncounterState) -> dict[str, object]:
                 "id": effect.identity.id,
                 "kind": effect.kind.value,
                 "source": _export_source(effect.identity.source),
+                "polarity": effect.polarity.value,
                 "target_refs": list(effect.target_refs),
                 "duration": _export_duration(effect.duration),
                 "root_id": effect.identity.root_id,

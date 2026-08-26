@@ -1,0 +1,146 @@
+"""Pure presentation helpers for battlefield status markers."""
+
+from dataclasses import dataclass
+from typing import Literal
+
+from ....shared.session import BattlefieldCreatureView
+
+MarkerCorner = Literal["top_left", "top_right", "bottom_left", "bottom_right"]
+
+
+@dataclass(frozen=True)
+class StatusMarkerSpec:
+    corner: MarkerCorner
+    color: str
+    tooltip: str
+
+
+@dataclass(frozen=True)
+class StatusMarkerHit:
+    center_x: float
+    center_y: float
+    radius: float
+    tooltip: str
+
+    def contains(self, x: float, y: float) -> bool:
+        delta_x = x - self.center_x
+        delta_y = y - self.center_y
+        return delta_x * delta_x + delta_y * delta_y <= self.radius * self.radius
+
+
+def build_status_marker_specs(
+    creature: BattlefieldCreatureView,
+) -> tuple[StatusMarkerSpec, ...]:
+    specs: list[StatusMarkerSpec] = []
+    if creature.buffs:
+        specs.append(
+            StatusMarkerSpec(
+                corner="top_left",
+                color="#2eaf62",
+                tooltip=_status_list_tooltip("Buffs", creature.buffs),
+            )
+        )
+    if creature.debuffs:
+        specs.append(
+            StatusMarkerSpec(
+                corner="top_right",
+                color="#e05252",
+                tooltip=_status_list_tooltip("Debuffs", creature.debuffs),
+            )
+        )
+    if creature.is_concentrating:
+        specs.append(
+            StatusMarkerSpec(
+                corner="bottom_left",
+                color="#3887e8",
+                tooltip="Concentrating on a spell",
+            )
+        )
+    if creature.conditions:
+        specs.append(
+            StatusMarkerSpec(
+                corner="bottom_right",
+                color="#efc84a",
+                tooltip=_status_list_tooltip("Conditions", creature.conditions),
+            )
+        )
+    return tuple(specs)
+
+
+def status_marker_positions(
+    *,
+    cell_x: float,
+    cell_y: float,
+    center_x: float,
+    center_y: float,
+    token_radius: float,
+    cell_size: float,
+) -> tuple[dict[MarkerCorner, tuple[float, float]], float]:
+    marker_radius = max(4.0, cell_size * 0.065)
+    token_offset = token_radius * 0.82
+    cell_inset = max(marker_radius + 3.0, cell_size * 0.1)
+    return (
+        {
+            "top_left": (
+                center_x - token_offset,
+                center_y - token_offset,
+            ),
+            "top_right": (
+                center_x + token_offset,
+                center_y - token_offset,
+            ),
+            "bottom_left": (
+                cell_x + cell_inset,
+                cell_y + cell_size - cell_inset,
+            ),
+            "bottom_right": (
+                center_x + token_offset,
+                center_y + token_offset,
+            ),
+        },
+        marker_radius,
+    )
+
+
+def status_marker_hit_radius(marker_radius: float) -> float:
+    """Return a comfortably hoverable radius without enlarging the marker."""
+
+    return max(7.0, marker_radius * 1.5)
+
+
+def target_allocation_badge_position(
+    *,
+    center_x: float,
+    center_y: float,
+    token_radius: float,
+    top_right_reserved: bool,
+) -> tuple[float, float]:
+    """Keep the transient target-count badge clear of status markers."""
+
+    if top_right_reserved:
+        return center_x, center_y
+    return center_x + token_radius * 0.72, center_y - token_radius * 0.72
+
+
+def status_marker_tooltip(
+    marker_hits: list[StatusMarkerHit],
+    x: float,
+    y: float,
+) -> str | None:
+    hit = next(
+        (candidate for candidate in reversed(marker_hits) if candidate.contains(x, y)),
+        None,
+    )
+    return hit.tooltip if hit is not None else None
+
+
+def _status_list_tooltip(title: str, labels: tuple[str, ...]) -> str:
+    display_labels = tuple(dict.fromkeys(_status_display_name(label) for label in labels))
+    return "\n".join((f"{title}:", *(f"- {label}" for label in display_labels)))
+
+
+def _status_display_name(label: str) -> str:
+    if "_" in label or label.islower():
+        return label.replace("_", " ").title()
+    return label
+

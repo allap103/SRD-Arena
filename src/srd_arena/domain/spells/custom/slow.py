@@ -40,6 +40,7 @@ def resolve_slow(
         data={
             "effect_kind": "concentration",
             "source_ref": context.source_ref,
+            "polarity": "harmful",
             "source_label": context.creature.name,
             "definition_id": context.spell.id,
             "target_refs": list(affected_target_refs),

@@ -16,10 +16,18 @@ from .....domain.geometry import (
     serialize_area,
 )
 from .....runtime.scenario import DEFAULT_SCENARIO_DIR
-from ....shared.session import BattlefieldView
+from ....shared.session import BattlefieldCreatureView, BattlefieldView
+from .status_markers import (
+    StatusMarkerHit,
+    build_status_marker_specs,
+    status_marker_hit_radius,
+    status_marker_positions,
+    status_marker_tooltip,
+    target_allocation_badge_position,
+)
 
 try:
-    from PySide6.QtCore import QPointF, QSize, Qt, Signal
+    from PySide6.QtCore import QEvent, QPointF, QSize, Qt, Signal
     from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap, QPolygonF
     from PySide6.QtSvg import QSvgRenderer
     from PySide6.QtWidgets import (
@@ -29,6 +37,7 @@ try:
         QLabel,
         QScrollArea,
         QSizePolicy,
+        QToolTip,
         QVBoxLayout,
         QWidget,
     )
@@ -36,6 +45,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     def Signal(*args, **kwargs):  # type: ignore[no-untyped-def]
         return None
 
+    QEvent = object  # type: ignore[assignment]
     QPointF = object  # type: ignore[assignment]
     QSize = object  # type: ignore[assignment]
     Qt = object  # type: ignore[assignment]
@@ -51,6 +61,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
     QHBoxLayout = object  # type: ignore[assignment]
     QLabel = object  # type: ignore[assignment]
     QScrollArea = object  # type: ignore[assignment]
+    QToolTip = object  # type: ignore[assignment]
     QSizePolicy = object  # type: ignore[assignment]
     QVBoxLayout = object  # type: ignore[assignment]
     QWidget = object  # type: ignore[assignment]
@@ -318,6 +329,8 @@ class BattlefieldWidget(QWidget):
         super().__init__()
         self._battlefield: BattlefieldView | None = None
         self._creature_positions: dict[str, tuple[float, float, float]] = {}
+        self._status_marker_hits: list[StatusMarkerHit] = []
+        self._visible_status_tooltip: str | None = None
         self._targetable_creature_refs: set[str] = set()
         self._selected_creature_ref: str | None = None
         self._target_allocation_counts: dict[str, int] = {}
@@ -360,6 +373,7 @@ class BattlefieldWidget(QWidget):
             self._pan_offset = (0.0, 0.0)
         self._battlefield = battlefield
         self._creature_positions = {}
+        self._invalidate_status_marker_hits()
         self.setToolTip("")
         self.update()
 
@@ -607,6 +621,7 @@ class BattlefieldWidget(QWidget):
             )
 
         self._creature_positions = {}
+        self._status_marker_hits = []
         for creature in self._battlefield.creatures:
             center_x = origin_x + (creature.position.x + 0.5) * cell_size
             center_y = origin_y + (creature.position.y + 0.5) * cell_size
@@ -693,8 +708,12 @@ class BattlefieldWidget(QWidget):
             )
             if allocation_count:
                 badge_radius = max(9, int(cell_size * 0.16))
-                badge_x = center_x + radius * 0.72
-                badge_y = center_y - radius * 0.72
+                badge_x, badge_y = target_allocation_badge_position(
+                    center_x=center_x,
+                    center_y=center_y,
+                    token_radius=radius,
+                    top_right_reserved=bool(creature.debuffs),
+                )
                 painter.setBrush(QColor("#f4d35e"))
                 painter.setPen(QPen(QColor("#4b3900"), 2))
                 painter.drawEllipse(
@@ -740,15 +759,31 @@ class BattlefieldWidget(QWidget):
                 font.setBold(True)
                 font.setPointSize(max(7, min(11, int(cell_size * 0.13))))
                 painter.setFont(font)
+                left_text_inset = (
+                    max(3, int(cell_size * 0.23)) if creature.buffs else 3
+                )
+                right_text_inset = (
+                    max(3, int(cell_size * 0.23)) if creature.debuffs else 3
+                )
                 painter.drawText(
-                    int(label_x + 3),
+                    int(label_x + left_text_inset),
                     int(label_y),
-                    max(1, label_width - 6),
+                    max(1, label_width - left_text_inset - right_text_inset),
                     label_height,
                     Qt.AlignmentFlag.AlignCenter,
                     creature.name,
                 )
 
+            self._paint_status_markers(
+                painter,
+                creature,
+                cell_x=origin_x + creature.position.x * cell_size,
+                cell_y=origin_y + creature.position.y * cell_size,
+                center_x=center_x,
+                center_y=center_y,
+                token_radius=radius,
+                cell_size=cell_size,
+            )
         if planner is not None and len(preview_cells) > 1:
             destination_x, destination_y = preview_cells[-1]
             center_x = origin_x + (destination_x + 0.5) * cell_size
@@ -843,6 +878,70 @@ class BattlefieldWidget(QWidget):
             )
 
         painter.end()
+
+    def _paint_status_markers(
+        self,
+        painter,
+        creature: BattlefieldCreatureView,
+        *,
+        cell_x: float,
+        cell_y: float,
+        center_x: float,
+        center_y: float,
+        token_radius: float,
+        cell_size: float,
+    ) -> None:
+        specs = build_status_marker_specs(creature)
+        if not specs:
+            return
+        positions, marker_radius = status_marker_positions(
+            cell_x=cell_x,
+            cell_y=cell_y,
+            center_x=center_x,
+            center_y=center_y,
+            token_radius=token_radius,
+            cell_size=cell_size,
+        )
+        outline_width = max(1, min(3, int(cell_size * 0.025)))
+        hit_radius = status_marker_hit_radius(marker_radius)
+        for spec in specs:
+            marker_x, marker_y = positions[spec.corner]
+            painter.setBrush(QColor(spec.color))
+            painter.setPen(QPen(QColor("#161616"), outline_width))
+            painter.drawEllipse(
+                int(marker_x - marker_radius),
+                int(marker_y - marker_radius),
+                max(1, int(marker_radius * 2)),
+                max(1, int(marker_radius * 2)),
+            )
+            self._status_marker_hits.append(
+                StatusMarkerHit(marker_x, marker_y, hit_radius, spec.tooltip)
+            )
+
+    def event(self, event) -> bool:  # pragma: no cover - GUI interaction
+        if event.type() == QEvent.Type.ToolTip:
+            tooltip = status_marker_tooltip(
+                self._status_marker_hits,
+                event.pos().x(),
+                event.pos().y(),
+            )
+            if tooltip is not None:
+                QToolTip.showText(event.globalPos(), tooltip, self)
+                self._visible_status_tooltip = tooltip
+            else:
+                self._hide_status_tooltip()
+                event.ignore()
+            return True
+        return super().event(event)
+
+    def _hide_status_tooltip(self) -> None:
+        if self._visible_status_tooltip is not None:
+            QToolTip.hideText()
+            self._visible_status_tooltip = None
+
+    def _invalidate_status_marker_hits(self) -> None:
+        self._status_marker_hits = []
+        self._hide_status_tooltip()
 
     def _display_area_overlay(self) -> dict[str, object] | None:
         preview = self._preview_area_overlay(
@@ -1036,6 +1135,7 @@ class BattlefieldWidget(QWidget):
 
     def mouseMoveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
         if self._pan_anchor is not None:
+            self._invalidate_status_marker_hits()
             current = (event.position().x(), event.position().y())
             delta_x = current[0] - self._pan_anchor[0]
             delta_y = current[1] - self._pan_anchor[1]
@@ -1047,6 +1147,13 @@ class BattlefieldWidget(QWidget):
             self.update()
             event.accept()
             return
+        hovered_tooltip = status_marker_tooltip(
+            self._status_marker_hits,
+            event.position().x(),
+            event.position().y(),
+        )
+        if hovered_tooltip != self._visible_status_tooltip:
+            self._hide_status_tooltip()
         previous_hover = self._hover_cell
         previous_point = self._hover_point
         self._hover_cell = self._cell_at_point(event.position().x(), event.position().y())
@@ -1087,6 +1194,7 @@ class BattlefieldWidget(QWidget):
             return
 
         self._zoom = new_zoom
+        self._invalidate_status_marker_hits()
         if self._zoom == self.MIN_ZOOM:
             self._pan_offset = (0.0, 0.0)
         else:
@@ -1159,6 +1267,7 @@ class BattlefieldWidget(QWidget):
         )
 
     def leaveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+        self._hide_status_tooltip()
         if self._hover_cell is not None or self._hover_point is not None:
             self._hover_cell = None
             self._hover_point = None
