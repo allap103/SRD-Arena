@@ -70,10 +70,8 @@ from srd_arena.domain.creatures import (
     AttackActionDefinition,
     SavingThrowActionDefinition,
 )
-from srd_arena.frontends.shared.session import (
-    SpellSlotTrackView,
-    build_session_presentation,
-)
+from srd_arena.frontends.shared.models import SpellSlotTrackView
+from srd_arena.frontends.shared.session import build_session_presentation
 from srd_arena.runtime.models import ActionView
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.creatures import (

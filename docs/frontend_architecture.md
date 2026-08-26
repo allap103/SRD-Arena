@@ -30,6 +30,17 @@ importing Qt.
 | `frontends.qt.app` | Present a running game and translate Qt events into runtime decisions. |
 | `frontends.shared` | Build frontend-neutral presentation models. |
 
+## Shared presentation modules
+
+| Module | Responsibility |
+| --- | --- |
+| `models` | Define frontend-neutral, display-ready view models. |
+| `session` | Compose one session presentation from runtime state. |
+| `actions` | Project available and unavailable feature actions. |
+| `battlefield` | Project creatures, statuses, and grid summaries. |
+| `conditions` | Extract effective condition names from serialized creature state. |
+| `resources` | Project turn resources, initiative, and spell slots. |
+
 ## Encounter UI modules
 
 | Module | Responsibility |

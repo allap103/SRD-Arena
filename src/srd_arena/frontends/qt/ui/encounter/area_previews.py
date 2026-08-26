@@ -11,7 +11,7 @@ from .....domain.geometry import (
     deserialize_continuous_area,
     serialize_area,
 )
-from ....shared.session import BattlefieldView
+from ....shared.models import BattlefieldView
 
 AreaPayload = dict[str, object]
 

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
-from ....shared.session import BattlefieldCreatureView
+from ....shared.models import BattlefieldCreatureView
 
 MarkerCorner = Literal["top_left", "top_right", "bottom_left", "bottom_right"]
 

@@ -8,7 +8,7 @@ from srd_arena.frontends.qt.ui.encounter.area_previews import (
     overlay_origin,
     preview_area_overlay,
 )
-from srd_arena.frontends.shared.session import BattlefieldView
+from srd_arena.frontends.shared.models import BattlefieldView
 from srd_arena.runtime.scenario import Scenario
 
 

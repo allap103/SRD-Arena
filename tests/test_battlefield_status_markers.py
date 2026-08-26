@@ -8,11 +8,13 @@ from srd_arena.frontends.qt.ui.encounter.status_markers import (
     status_tooltip_label_rect,
     target_allocation_badge_position,
 )
-from srd_arena.frontends.shared.session import (
+from srd_arena.frontends.shared.battlefield import (
+    build_battlefield_view,
+)
+from srd_arena.frontends.shared.conditions import effective_condition_names
+from srd_arena.frontends.shared.models import (
     BattlefieldCreatureView,
     GridPositionView,
-    _build_battlefield_view,
-    _effective_condition_names,
 )
 
 
@@ -113,7 +115,7 @@ def test_battlefield_view_groups_concentration_buffs_debuffs_and_conditions() ->
         ],
     }
 
-    battlefield = _build_battlefield_view(
+    battlefield = build_battlefield_view(
         combat_state,
         team_ids=("heroes", "monsters"),
     )
@@ -185,8 +187,8 @@ def test_effective_conditions_override_raw_conditions_and_are_deduplicated() -> 
     fallback = _creature("target", "heroes", conditions=["prone"])
     fallback.pop("effective_conditions")
 
-    assert _effective_condition_names(suppressed) == ()
-    assert _effective_condition_names(fallback) == ("prone",)
+    assert effective_condition_names(suppressed) == ()
+    assert effective_condition_names(fallback) == ("prone",)
 
 
 def test_status_marker_geometry_and_hit_testing_scale_with_the_board() -> None:

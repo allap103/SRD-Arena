@@ -23,10 +23,8 @@ from ...domain.spells.rules import (
 from ...application.startup import RunningGame
 from ..shared.dice import build_roll_views, without_roll_details
 from ..shared.config import load_encounter_presentation_config
-from ..shared.session import (
-    SessionPresentation,
-    build_session_presentation,
-)
+from ..shared.models import SessionPresentation
+from ..shared.session import build_session_presentation
 from ...runtime.models import ActionView
 from ...runtime.session import (
     EXIT_CHOICE_TEXT,

@@ -5,7 +5,7 @@ from pathlib import Path
 from .....content.common.paths import IMAGES_ROOT
 from .....domain.geometry import continuous_area_outline
 from .....runtime.scenario import DEFAULT_SCENARIO_DIR
-from ....shared.session import BattlefieldCreatureView, BattlefieldView
+from ....shared.models import BattlefieldCreatureView, BattlefieldView
 from ...floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
 from .area_previews import (
     area_overlay_label,
