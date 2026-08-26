@@ -53,9 +53,11 @@ main
   -> adapter interacts only through RunningGame
 ```
 
-Scenario filesystem paths are composition details. The headless adapter maps
-public scenario IDs back to the summaries advertised by `GameStartup`, so a
-model does not need to know the content layout.
+Scenario filesystem paths are infrastructure details. Both Qt and headless
+clients select the stable IDs advertised by `GameStartup`; the filesystem
+repository resolves those IDs internally. Optional board presentation metadata
+is attached to the scenario summary and injected into Qt. It never enters the
+running game or engine session.
 
 ## Public game interaction
 
@@ -95,9 +97,10 @@ Qt or headless client
     -> engine Session
 ```
 
-The observation is a deliberate public read model, not a save format and not a
-copy of `EncounterState.__dict__`. Likewise, `GameEvent` is an application-owned
-event record; engine `CombatEvent` objects do not cross the boundary.
+The observation is a deliberate, recursively immutable public read model, not
+a save format and not a copy of `EncounterState.__dict__`. Likewise,
+`GameEvent` is an application-owned event record with recursively immutable
+payload values; engine `CombatEvent` objects do not cross the boundary.
 
 There is intentionally no `get_session()` or `get_encounter_state()` escape
 hatch. `RunningGame` owns its session privately, and frontend dependency tests

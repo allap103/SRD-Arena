@@ -78,10 +78,11 @@ class ScenarioPickerWindow(QMainWindow):
     def _open_scenario(self, scenario: ScenarioSummary) -> None:
         self._game_window = GameWindow(
             self._startup.start_scenario(
-                scenario.directory,
+                scenario.id,
                 automatic_action_limit=1,
             ),
             image_root=self._image_root,
+            presentation_config=scenario.presentation,
         )
         self._game_window.show()
         self.close()

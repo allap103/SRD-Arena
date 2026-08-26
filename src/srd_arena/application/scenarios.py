@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Protocol
 
 from srd_arena.domain.creatures import Creature
@@ -12,6 +11,17 @@ from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import GeometryConfig
 from srd_arena.runtime.session import Session
 
+DEFAULT_GRID_COLOR = "#d3d3d3"
+
+
+@dataclass(frozen=True)
+class ScenarioPresentation:
+    """Optional visual metadata supplied to graphical driving adapters."""
+
+    background_image: str | None = None
+    grid_color: str = DEFAULT_GRID_COLOR
+    grid_opacity: float = 1.0
+
 
 @dataclass(frozen=True)
 class ScenarioSummary:
@@ -19,14 +29,13 @@ class ScenarioSummary:
 
     id: str
     label: str
-    directory: Path
+    presentation: ScenarioPresentation = ScenarioPresentation()
 
 
 @dataclass(frozen=True)
 class LoadedScenario:
     """Domain definitions required to start one game session."""
 
-    directory: Path
     display_name: str
     encounters: dict[str, EncounterDefinition]
     creatures: tuple[Creature, ...]
@@ -67,7 +76,5 @@ class ScenarioRepository(Protocol):
 
     def load_scenario(
         self,
-        scenario_directory: str | Path,
-        *,
-        start_scene: str | None = None,
+        scenario_id: str,
     ) -> LoadedScenario: ...

@@ -6,7 +6,12 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from srd_arena.application.scenarios import LoadedScenario, ScenarioSummary
+from srd_arena.application.scenarios import (
+    DEFAULT_GRID_COLOR,
+    LoadedScenario,
+    ScenarioPresentation,
+    ScenarioSummary,
+)
 from srd_arena.content.character_options.classes import (
     load_class_catalog,
     load_optional_feature_catalog,
@@ -33,6 +38,7 @@ class _ScenarioConfig:
     display_name: str = "Unnamed Scenario"
     encounters: tuple[str, ...] = ("goblin_encounter",)
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
+    presentation: ScenarioPresentation = field(default_factory=ScenarioPresentation)
 
 
 @dataclass(frozen=True)
@@ -48,18 +54,35 @@ class FilesystemScenarioRepository:
             ScenarioSummary(
                 id=scenario.id,
                 label=scenario.label,
-                directory=scenario.directory,
+                presentation=_load_config(
+                    scenario.directory / "config.json"
+                ).presentation,
             )
             for scenario in list_scenarios(self.scenario_root)
         )
 
     def load_scenario(
         self,
-        scenario_directory: str | Path,
+        scenario_id: str,
+    ) -> LoadedScenario:
+        scenario = next(
+            (
+                candidate
+                for candidate in list_scenarios(self.scenario_root)
+                if candidate.id == scenario_id
+            ),
+            None,
+        )
+        if scenario is None:
+            raise KeyError(f"Unknown scenario '{scenario_id}'.")
+        return self._load_directory(scenario.directory)
+
+    def _load_directory(
+        self,
+        directory: Path,
         *,
         start_scene: str | None = None,
     ) -> LoadedScenario:
-        directory = Path(scenario_directory)
         config = _load_config(directory / "config.json")
         bestiary = load_bestiary_catalog(self.system_directory)
         classes = load_class_catalog(self.system_directory)
@@ -92,7 +115,6 @@ class FilesystemScenarioRepository:
         }
         _link_encounters(encounters, config.encounters)
         return LoadedScenario(
-            directory=directory,
             display_name=config.display_name,
             encounters=encounters,
             creatures=tuple(creatures_by_id.values()),
@@ -113,8 +135,8 @@ def load_scenario(
 
     return FilesystemScenarioRepository(
         system_directory=Path(system_directory)
-    ).load_scenario(
-        scenario_directory,
+    )._load_directory(
+        Path(scenario_directory),
         start_scene=start_scene,
     )
 
@@ -154,6 +176,14 @@ def _load_config(path: Path) -> _ScenarioConfig:
         payload = json.load(config_file)
     encounters = payload.get("encounters")
     geometry = payload.get("geometry", {})
+    configured_opacity = payload.get("grid_opacity", 1.0)
+    grid_opacity = (
+        min(max(float(configured_opacity), 0.0), 1.0)
+        if isinstance(configured_opacity, (int, float))
+        else 1.0
+    )
+    background_image = payload.get("background_image")
+    grid_color = payload.get("grid_color")
     threshold = GeometryConfig().directional_area_cell_coverage_threshold
     if isinstance(geometry, dict):
         configured = geometry.get("directional_area_cell_coverage_threshold")
@@ -168,5 +198,18 @@ def _load_config(path: Path) -> _ScenarioConfig:
         ),
         geometry_config=GeometryConfig(
             directional_area_cell_coverage_threshold=threshold
+        ),
+        presentation=ScenarioPresentation(
+            background_image=(
+                background_image
+                if isinstance(background_image, str) and background_image
+                else None
+            ),
+            grid_color=(
+                grid_color
+                if isinstance(grid_color, str) and grid_color
+                else DEFAULT_GRID_COLOR
+            ),
+            grid_opacity=grid_opacity,
         ),
     )

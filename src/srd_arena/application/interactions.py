@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from types import MappingProxyType
-
 from srd_arena.domain.encounters.models import (
     ActionCost,
     CombatEvent,
@@ -28,6 +26,7 @@ from .commands import (
     SetResourceAllocation,
 )
 from .observations import ActionObservation, GameObservation, observe_session
+from .values import freeze_mapping
 
 
 class _CommandRejected(Exception):
@@ -88,7 +87,7 @@ def _observe_event(event: CombatEvent) -> GameEvent:
         creature_ref=event.creature_ref,
         frame_id=event.frame_id,
         action_id=event.action_id,
-        data=MappingProxyType(dict(event.data)),
+        data=freeze_mapping(event.data),
     )
 
 

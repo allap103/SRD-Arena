@@ -12,7 +12,7 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QApplication, QPushButton
 
-from srd_arena.application.scenarios import ScenarioSummary
+from srd_arena.application.scenarios import ScenarioPresentation, ScenarioSummary
 from srd_arena.application.game import RunningGame
 from srd_arena.application.startup import GameStartup
 from srd_arena.frontends.qt import launcher
@@ -26,24 +26,24 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
     scenario = ScenarioSummary(
         id="example",
         label="Example Encounter",
-        directory=tmp_path,
+        presentation=ScenarioPresentation(grid_color="#123456"),
     )
     running_game = cast(RunningGame, object())
 
     class StartupStub:
         def __init__(self) -> None:
-            self.started: list[Path] = []
+            self.started: list[str] = []
 
         def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
             return (scenario,)
 
         def start_scenario(
             self,
-            directory: str | Path,
+            scenario_id: str,
             *,
             automatic_action_limit: int | None = None,
         ) -> RunningGame:
-            self.started.append(Path(directory))
+            self.started.append(scenario_id)
             assert automatic_action_limit == 1
             return running_game
 
@@ -55,9 +55,11 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
             received: RunningGame,
             *,
             image_root: Path | None = None,
+            presentation_config: ScenarioPresentation | None = None,
         ) -> None:
             self.received = received
             self.image_root = image_root
+            self.presentation_config = presentation_config
             self.was_shown = False
             created_windows.append(self)
 
@@ -77,10 +79,11 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
 
     picker._open_scenario(scenario)
 
-    assert startup.started == [tmp_path]
+    assert startup.started == ["example"]
     assert len(created_windows) == 1
     assert created_windows[0].received is running_game
     assert created_windows[0].image_root == image_root
+    assert created_windows[0].presentation_config == scenario.presentation
     assert created_windows[0].was_shown is True
     picker.deleteLater()
     app.processEvents()

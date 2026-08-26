@@ -8,8 +8,9 @@ layering, startup flow, and public game contract are documented in
 
 `frontends.qt` owns widgets, painting, pointer interaction, action menus, and
 Qt-specific presentation configuration. `GameWindow` receives a `RunningGame`
-from the launcher and interacts through application observations and commands.
-It does not receive or inspect the engine session.
+plus presentation metadata from the launcher and interacts through application
+observations and commands. It does not receive a scenario directory, parse
+scenario JSON, or inspect the engine session.
 
 Qt may reuse the pure `domain.geometry` package for pointer-driven area-preview
 rasterization. It must not import runtime or mutable encounter implementation

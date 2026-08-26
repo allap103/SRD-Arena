@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Literal, Mapping
 
+from .values import ApplicationValue, freeze_mapping
+
 
 @dataclass(frozen=True)
 class ActionReasonObservation:
@@ -36,7 +38,16 @@ class ActionObservation:
     movement_direction: str | None = None
     target_ref: str | None = None
     aim_point: tuple[float, float] | None = None
-    area_preview: dict[str, object] | None = None
+    area_preview: Mapping[str, ApplicationValue] | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "cost", freeze_mapping(self.cost))
+        if self.area_preview is not None:
+            object.__setattr__(
+                self,
+                "area_preview",
+                freeze_mapping(self.area_preview),
+            )
 
     @property
     def unavailable_reason(self) -> str | None:

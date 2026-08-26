@@ -18,8 +18,10 @@ from srd_arena.content.creatures import (
 )
 from srd_arena.content.encounters import EncounterDefinitionSchema
 from srd_arena.content.spells import load_spell_catalog
-from srd_arena.frontends.shared.config import load_encounter_presentation_config
-from srd_arena.infrastructure.scenarios import load_scenario
+from srd_arena.infrastructure.scenarios import (
+    FilesystemScenarioRepository,
+    load_scenario,
+)
 from srd_arena.domain.creatures import AttackActionDefinition
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
@@ -208,7 +210,13 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(
 
 def test_game_loads_geometry_settings_from_config_json() -> None:
     scenario = load_scenario(str(TACTICAL_SCENARIO_DIR))
-    presentation = load_encounter_presentation_config(TACTICAL_SCENARIO_DIR)
+    presentation = next(
+        summary.presentation
+        for summary in FilesystemScenarioRepository(
+            scenario_root=TACTICAL_SCENARIO_DIR.parent
+        ).available_scenarios()
+        if summary.id == TACTICAL_SCENARIO_DIR.name
+    )
 
     assert scenario.display_name == "Tactical Test Game"
     assert scenario.geometry_config.directional_area_cell_coverage_threshold == 0.1
@@ -225,7 +233,13 @@ def test_game_loads_geometry_settings_from_config_json() -> None:
 
 
 def test_game_uses_default_board_presentation_settings() -> None:
-    presentation = load_encounter_presentation_config(FIXTURE_ENCOUNTER_DIR)
+    presentation = next(
+        summary.presentation
+        for summary in FilesystemScenarioRepository(
+            scenario_root=FIXTURE_ENCOUNTER_DIR.parent
+        ).available_scenarios()
+        if summary.id == FIXTURE_ENCOUNTER_DIR.name
+    )
 
     assert presentation.background_image is None
     assert presentation.grid_color == "#d3d3d3"

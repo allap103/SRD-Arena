@@ -7,6 +7,7 @@ from types import MappingProxyType
 from typing import Mapping
 
 from .observations import GameObservation
+from .values import ApplicationValue, freeze_mapping
 
 
 @dataclass(frozen=True)
@@ -67,9 +68,12 @@ class GameEvent:
     creature_ref: str | None = None
     frame_id: str | None = None
     action_id: str | None = None
-    data: Mapping[str, object] = field(
+    data: Mapping[str, ApplicationValue] = field(
         default_factory=lambda: MappingProxyType({})
     )
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "data", freeze_mapping(self.data))
 
 
 @dataclass(frozen=True)

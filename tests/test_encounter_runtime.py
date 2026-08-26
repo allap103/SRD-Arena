@@ -5290,10 +5290,7 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
     )
 
     window = GameWindow.__new__(GameWindow)
-    window.game = RunningGame(
-        scenario_directory=TACTICAL_SCENARIO_DIR,
-        _session=session,
-    )
+    window.game = RunningGame(session)
     window._observation = observe_session(session)
     window._presentation = build_session_presentation(window._observation)
     window._pending_target_mode = TargetSelectionMode(

@@ -17,6 +17,7 @@ RULES = (
     DependencyRule(
         package="srd_arena.domain",
         forbidden=(
+            "srd_arena.application",
             "srd_arena.content",
             "srd_arena.frontends",
             "srd_arena.infrastructure",
@@ -26,7 +27,9 @@ RULES = (
     DependencyRule(
         package="srd_arena.content",
         forbidden=(
+            "srd_arena.application",
             "srd_arena.frontends",
+            "srd_arena.infrastructure",
             "srd_arena.runtime",
         ),
     ),
@@ -57,6 +60,13 @@ RULES = (
             "srd_arena.content",
             "srd_arena.domain",
             "srd_arena.infrastructure",
+            "srd_arena.runtime",
+        ),
+    ),
+    DependencyRule(
+        package="srd_arena.infrastructure",
+        forbidden=(
+            "srd_arena.frontends",
             "srd_arena.runtime",
         ),
     ),
@@ -127,6 +137,23 @@ def test_package_dependencies_follow_architecture() -> None:
     assert not violations, "Architecture dependency violations:\n" + "\n".join(
         violations
     )
+
+
+def test_qt_domain_imports_are_limited_to_pure_geometry() -> None:
+    violations: list[str] = []
+    package_dir = PACKAGE_ROOT / "frontends" / "qt"
+    for path in sorted(package_dir.rglob("*.py")):
+        module = _module_name(path)
+        for line, imported_module in _imports(path, module):
+            if imported_module.startswith("srd_arena.domain") and not (
+                imported_module == "srd_arena.domain.geometry"
+                or imported_module.startswith("srd_arena.domain.geometry.")
+            ):
+                violations.append(
+                    f"{path.relative_to(PACKAGE_ROOT.parent)}:{line} imports "
+                    f"{imported_module}; Qt may import only pure domain geometry."
+                )
+    assert not violations, "\n".join(violations)
 
 
 def test_relative_import_resolution() -> None:

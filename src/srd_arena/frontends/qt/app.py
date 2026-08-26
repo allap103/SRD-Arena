@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 import json
 import textwrap
 from collections import Counter, deque
@@ -23,8 +24,8 @@ from ...application.observations import (
     EncounterObservation,
     GameObservation,
 )
+from ...application.scenarios import ScenarioPresentation
 from ..shared.dice import build_roll_views, without_roll_details
-from ..shared.config import load_encounter_presentation_config
 from ..shared.models import SessionPresentation
 from ..shared.session import build_session_presentation
 from .ui.encounter import (
@@ -137,6 +138,7 @@ class GameWindow(QMainWindow):
         game: RunningGame,
         *,
         image_root: Path | None = None,
+        presentation_config: ScenarioPresentation | None = None,
         show_encounter_json: bool = False,
     ):
         _require_pyside6()
@@ -144,8 +146,8 @@ class GameWindow(QMainWindow):
         self.game = game
         self._image_root = image_root
         self._observation: GameObservation | None = None
-        self._encounter_presentation_config = load_encounter_presentation_config(
-            game.scenario_directory
+        self._encounter_presentation_config = (
+            presentation_config or ScenarioPresentation()
         )
         self._presentation: SessionPresentation | None = None
         self._pending_target_mode: TargetSelectionMode | None = None
@@ -2057,7 +2059,7 @@ class GameWindow(QMainWindow):
     def _pending_area_overlay(
         self,
         actions: list[ActionObservation],
-    ) -> dict[str, object] | None:
+    ) -> Mapping[str, object] | None:
         stat_block_action = self._pending_area_stat_block_action(actions)
         if stat_block_action is not None:
             return stat_block_action.area_preview

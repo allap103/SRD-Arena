@@ -61,7 +61,7 @@ class HeadlessGameAdapter:
         if summary is None:
             raise KeyError(f"Unknown scenario '{scenario_id}'.")
         game = self.startup.start_scenario(
-            summary.directory,
+            summary.id,
             automatic_action_limit=automatic_action_limit,
         )
         observation = game.observe()

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from ...application.observations import GameObservation
+from ...application.scenarios import ScenarioPresentation
 from .actions import build_feature_actions
 from .battlefield import build_battlefield_view
-from .config import EncounterPresentationConfig
 from .models import EncounterView, SessionPresentation
 from .resources import build_resource_summary
 
@@ -14,9 +14,9 @@ SYSTEM_ACTION_COUNT = 1
 
 def build_session_presentation(
     observation: GameObservation,
-    config: EncounterPresentationConfig | None = None,
+    config: ScenarioPresentation | None = None,
 ) -> SessionPresentation:
-    presentation_config = config or EncounterPresentationConfig()
+    presentation_config = config or ScenarioPresentation()
     view = observation.scene
     story_actions = list(view.action_details[:-SYSTEM_ACTION_COUNT])
     system_actions = list(view.action_details[-SYSTEM_ACTION_COUNT:])

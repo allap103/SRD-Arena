@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import cast
-
 from srd_arena.application.scenarios import (
     LoadedScenario,
     ScenarioRepository,
@@ -20,31 +18,25 @@ class ScenarioRepositoryStub:
     ) -> None:
         self.summaries = summaries
         self.loaded = loaded
-        self.loaded_directories: list[Path] = []
+        self.loaded_ids: list[str] = []
 
     def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
         return self.summaries
 
     def load_scenario(
         self,
-        scenario_directory: str | Path,
-        *,
-        start_scene: str | None = None,
+        scenario_id: str,
     ) -> LoadedScenario:
-        del start_scene
-        self.loaded_directories.append(Path(scenario_directory))
+        self.loaded_ids.append(scenario_id)
         if self.loaded is None:
             raise AssertionError("No loaded scenario was configured.")
         return self.loaded
 
 
-def test_game_startup_lists_frontend_neutral_scenario_summaries(
-    tmp_path: Path,
-) -> None:
+def test_game_startup_lists_frontend_neutral_scenario_summaries() -> None:
     summary = ScenarioSummary(
         id="example",
         label="Example Encounter",
-        directory=tmp_path / "example",
     )
     repository = ScenarioRepositoryStub(summaries=(summary,))
 
@@ -54,16 +46,11 @@ def test_game_startup_lists_frontend_neutral_scenario_summaries(
 
 
 def test_game_startup_creates_session_from_repository_result(
-    tmp_path: Path,
 ) -> None:
     session = object()
-    item = object()
     received_limits: list[int | None] = []
 
     class LoadedScenarioStub:
-        directory = tmp_path
-        items = (item,)
-
         @staticmethod
         def create_session(
             *,
@@ -77,12 +64,11 @@ def test_game_startup_creates_session_from_repository_result(
     )
 
     running_game = GameStartup(cast(ScenarioRepository, repository)).start_scenario(
-        tmp_path,
+        "example",
         automatic_action_limit=1,
     )
 
-    assert repository.loaded_directories == [tmp_path]
+    assert repository.loaded_ids == ["example"]
     assert received_limits == [1]
-    assert running_game.scenario_directory == tmp_path
     assert not hasattr(running_game, "session")
-    assert running_game._session is session
+    assert not hasattr(running_game, "_session")

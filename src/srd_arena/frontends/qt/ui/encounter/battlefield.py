@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from .....domain.geometry import continuous_area_outline
@@ -68,7 +69,7 @@ class BattlefieldWidget(QWidget):
         self._selected_creature_ref: str | None = None
         self._target_allocation_counts: dict[str, int] = {}
         self._targeting_label: str | None = None
-        self._area_overlay: dict[str, object] | None = None
+        self._area_overlay: Mapping[str, object] | None = None
         self._hover_cell: tuple[int, int] | None = None
         self._hover_point: tuple[float, float] | None = None
         self._board_metrics: tuple[float, float, float, int, int] | None = None
@@ -106,7 +107,7 @@ class BattlefieldWidget(QWidget):
         self._invalidate_status_marker_hits()
         self.update()
 
-    def set_area_overlay(self, area: dict[str, object] | None) -> None:
+    def set_area_overlay(self, area: Mapping[str, object] | None) -> None:
         self._area_overlay = area
         if self._battlefield is not None:
             self.set_battlefield(self._battlefield)

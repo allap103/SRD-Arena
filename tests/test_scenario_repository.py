@@ -26,6 +26,6 @@ def test_filesystem_repository_lists_valid_scenarios(tmp_path: Path) -> None:
         scenario_root=tmp_path
     ).available_scenarios()
 
-    assert [
-        (scenario.id, scenario.label, scenario.directory) for scenario in scenarios
-    ] == [("valid", "Valid Scenario", valid.resolve())]
+    assert [(scenario.id, scenario.label) for scenario in scenarios] == [
+        ("valid", "Valid Scenario")
+    ]

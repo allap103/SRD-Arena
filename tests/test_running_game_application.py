@@ -77,10 +77,25 @@ class SessionStub:
 
 
 def _running_game(session: SessionStub) -> RunningGame:
-    return RunningGame(
-        scenario_directory=Path("arena"),
-        _session=cast(Session, session),
-    )
+    return RunningGame(cast(Session, session))
+
+
+def _advance_to_actor(game: RunningGame, creature_ref: str):
+    for _ in range(20):
+        observation = game.observe()
+        assert observation.encounter is not None
+        if observation.encounter.decision.creature_ref == creature_ref:
+            return observation
+        wait = next(
+            action
+            for action in observation.scene.action_details
+            if action.kind == "wait" and action.enabled
+        )
+        result = game.execute(
+            SelectAction(wait.id, observation.encounter.decision.id)
+        )
+        assert result.update is not None
+    raise AssertionError(f"Creature '{creature_ref}' did not receive a turn.")
 
 
 def test_running_game_observes_controller_requirement() -> None:
@@ -120,7 +135,7 @@ def test_running_game_exposes_headless_decision_workflow() -> None:
 
 def test_running_game_can_start_observe_and_select_by_stable_id() -> None:
     game = GameStartup(FilesystemScenarioRepository()).start_scenario(
-        FULL_CONTROL_SCENARIO_DIR
+        FULL_CONTROL_SCENARIO_DIR.name
     )
     observation = game.observe()
     wait = next(
@@ -166,14 +181,9 @@ def test_stale_application_command_is_rejected_without_reaching_engine() -> None
 
 def test_application_aims_an_advertised_area_action() -> None:
     game = GameStartup(FilesystemScenarioRepository()).start_scenario(
-        SPELL_DAMAGE_SCENARIO_DIR
+        SPELL_DAMAGE_SCENARIO_DIR.name
     )
-    game.observe()
-    assert game._session.encounter_state is not None
-    game._session.encounter_state.turn_index = (
-        game._session.encounter_state.initiative_order.index("spectrum_adept")
-    )
-    observation = game.observe()
+    observation = _advance_to_actor(game, "spectrum_adept")
     assert observation.encounter is not None
     fireball = next(
         action
@@ -205,7 +215,7 @@ def test_application_aims_an_advertised_area_action() -> None:
 
 def test_application_controls_numeric_target_allocation() -> None:
     game = GameStartup(FilesystemScenarioRepository()).start_scenario(
-        MASS_HEAL_SCENARIO_DIR
+        MASS_HEAL_SCENARIO_DIR.name
     )
     observation = game.observe()
     assert observation.encounter is not None

@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
-
 from srd_arena.application.game import RunningGame
 from srd_arena.application.scenarios import ScenarioRepository, ScenarioSummary
 
@@ -20,14 +18,13 @@ class GameStartup:
 
     def start_scenario(
         self,
-        scenario_directory: str | Path,
+        scenario_id: str,
         *,
         automatic_action_limit: int | None = None,
     ) -> RunningGame:
-        scenario = self.scenarios.load_scenario(scenario_directory)
+        scenario = self.scenarios.load_scenario(scenario_id)
         return RunningGame(
-            scenario_directory=scenario.directory,
-            _session=scenario.create_session(
-                automatic_action_limit=automatic_action_limit
-            ),
+            scenario.create_session(
+                automatic_action_limit=automatic_action_limit,
+            )
         )
