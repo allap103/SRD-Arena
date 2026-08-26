@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import textwrap
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,32 +27,30 @@ from ..shared.models import SessionPresentation
 from ..shared.session import build_session_presentation
 from .ui.encounter import (
     ENCOUNTER_BUTTON_HEIGHT,
-    RESOURCE_BAR_HEIGHT,
     ActionMenuScope,
     BattlefieldWidget,
     DiceRollPanel,
     TargetSelectionMode,
     clear_layout,
-    spell_slot_rich_text,
-)
-from .ui.encounter.action_menus import (
-    group_actions,
 )
 from .ui.encounter.movement import (
     MovementPlan,
     build_movement_plan,
     movement_plan_is_current,
 )
+from .ui.encounter.panel_renderer import (
+    EncounterPanelBindings,
+    EncounterPanelCallbacks,
+    EncounterPanelRenderer,
+)
 from .ui.encounter.targeting import (
     action_for_target_click,
-    actions_for_mode,
     allocation_counts,
     allocation_status,
     cancel_targeting_action,
     completed_allocation_action,
     mode_for_action,
     mode_is_available,
-    mode_label,
     pending_area_action,
     pending_area_overlay,
     selection_modes,
@@ -70,18 +67,14 @@ try:
     from PySide6.QtWidgets import (
         QApplication,
         QCheckBox,
-        QComboBox,
         QFrame,
         QFileDialog,
-        QGridLayout,
         QHBoxLayout,
         QLabel,
-        QLineEdit,
         QMainWindow,
         QMessageBox,
         QPushButton,
         QScrollArea,
-        QSpinBox,
         QSizePolicy,
         QStackedWidget,
         QTextEdit,
@@ -96,22 +89,18 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency at runtime
 
     QApplication = None  # type: ignore[assignment]
     QCheckBox = object  # type: ignore[assignment]
-    QComboBox = object  # type: ignore[assignment]
     QSize = object  # type: ignore[assignment]
     Qt = object  # type: ignore[assignment]
     QTimer = object  # type: ignore[assignment]
     QFont = object  # type: ignore[assignment]
     QFrame = object  # type: ignore[assignment]
     QFileDialog = object  # type: ignore[assignment]
-    QGridLayout = object  # type: ignore[assignment]
     QHBoxLayout = object  # type: ignore[assignment]
     QLabel = object  # type: ignore[assignment]
-    QLineEdit = object  # type: ignore[assignment]
     QMainWindow = object  # type: ignore[assignment]
     QMessageBox = object  # type: ignore[assignment]
     QPushButton = object  # type: ignore[assignment]
     QScrollArea = object  # type: ignore[assignment]
-    QSpinBox = object  # type: ignore[assignment]
     QSizePolicy = object  # type: ignore[assignment]
     QStackedWidget = object  # type: ignore[assignment]
     QTextEdit = object  # type: ignore[assignment]
@@ -171,6 +160,26 @@ class GameWindow(QMainWindow):
 
         root_layout.addWidget(self._build_main_content(), stretch=1)
         root_layout.addWidget(self._build_sidebar())
+        self._encounter_panel_renderer = EncounterPanelRenderer(
+            EncounterPanelBindings(
+                health_layout=self.health_status_layout,
+                movement_layout=self.movement_status_layout,
+                initiative_layout=self.initiative_layout,
+                actions_layout=self.actions_section_layout,
+                bonus_actions_layout=self.bonus_actions_section_layout,
+                features_layout=self.features_section_layout,
+                status_layout=self.status_section_layout,
+                end_turn_button=self.end_turn_button,
+                accordion_toggles=self._accordion_toggles,
+            ),
+            EncounterPanelCallbacks(
+                select_action=self._select_action,
+                toggle_target=self._toggle_target_action,
+                open_action_menu=self._open_action_menu,
+                close_action_menu=self._close_action_menu,
+                set_resource_allocation=self._set_spell_resource_allocation,
+            ),
+        )
 
         self.refresh_view()
 
@@ -711,91 +720,13 @@ class GameWindow(QMainWindow):
             targeting_label=targeting_status,
         )
 
-        self._render_movement_status(encounter.resources)
-        self._render_health_status(encounter.resources)
-        self._render_initiative_rail(encounter.resources)
-
-        action_groups = group_actions(encounter.non_movement_actions)
-        self._set_accordion_status(
-            "Actions",
-            encounter.resources.action_status,
-        )
-        self._set_accordion_status(
-            "Bonus Actions",
-            encounter.resources.bonus_action_status,
-        )
-        if (
-            self._action_menu_scope is not None
-            and encounter.action_pane_title != "Actions"
-        ):
-            self._action_menu_scope = None
-        if self._action_menu_scope is not None and not action_groups.get(
-            self._action_menu_scope.economy, {}
-        ).get(
-            self._action_menu_scope.bucket,
-        ):
-            self._action_menu_scope = None
-
-        for section_layout in (
-            self.actions_section_layout,
-            self.bonus_actions_section_layout,
-            self.features_section_layout,
-            self.status_section_layout,
-        ):
-            clear_layout(section_layout)
-        if allocation_status is not None:
-            allocation_label = QLabel(allocation_status)
-            allocation_label.setObjectName("targetAllocationStatus")
-            allocation_label.setWordWrap(True)
-            allocation_label.setToolTip(
-                "Click a highlighted target to allocate. "
-                "Shift-click removes one allocation; right-click cancels."
-            )
-            self.actions_section_layout.addWidget(allocation_label)
-            self._render_spell_resource_allocation_controls()
-        rendered_target_modes: set[TargetSelectionMode] = set()
-        if encounter.action_pane_title != "Actions":
-            self._render_action_detail_column(
-                encounter.action_pane_title,
-                encounter.non_movement_actions,
-                rendered_target_modes,
-                scope=None,
-                target_layout=self.actions_section_layout,
-            )
-        else:
-            self._render_action_economy_column(
-                economy="action",
-                bucket_actions=action_groups["action"],
-                rendered_target_modes=rendered_target_modes,
-                target_layout=self.actions_section_layout,
-            )
-            self._render_action_economy_column(
-                economy="bonus_action",
-                bucket_actions=action_groups["bonus_action"],
-                rendered_target_modes=rendered_target_modes,
-                target_layout=self.bonus_actions_section_layout,
-            )
-            self._render_feature_column(
-                encounter.feature_actions,
-                rendered_target_modes,
-                self.features_section_layout,
-            )
-        self._render_status_column(
-            encounter.resources,
-            self.status_section_layout,
+        self._action_menu_scope = self._encounter_panel_renderer.render(
+            encounter,
+            observation,
+            pending_target_mode=self._pending_target_mode,
+            action_menu_scope=self._action_menu_scope,
         )
         self._sync_combat_sidebar_details()
-
-        if encounter.end_turn_action is None:
-            self.end_turn_button.setEnabled(False)
-            self.end_turn_button.setText("End Turn")
-        else:
-            self.end_turn_button.setEnabled(True)
-            self.end_turn_button.setText(
-                "Pass Reaction"
-                if encounter.end_turn_action.kind == "pass"
-                else "End Turn"
-            )
 
     def _sync_victory_overlay(self, presentation: SessionPresentation) -> None:
         encounter = presentation.encounter
@@ -819,507 +750,6 @@ class GameWindow(QMainWindow):
         action = self._presentation.encounter.transition_action
         if action is not None:
             self._select_action(action.id)
-
-    def _render_action_economy_column(
-        self,
-        economy: str,
-        bucket_actions: dict[str, list[ActionObservation]],
-        rendered_target_modes: set[TargetSelectionMode],
-        target_layout: QVBoxLayout,
-    ) -> None:
-        if (
-            self._action_menu_scope is not None
-            and self._action_menu_scope.economy == economy
-            and self._action_menu_scope.bucket == "magic"
-        ):
-            self._render_spell_browser(
-                bucket_actions["magic"],
-                rendered_target_modes,
-                target_layout,
-            )
-            return
-        actions = [
-            action
-            for bucket in bucket_actions.values()
-            for action in bucket
-            if action.kind not in {"spell", "feature"}
-        ]
-        spells = [
-            action for action in bucket_actions["magic"] if action.kind == "spell"
-        ]
-        self._render_direct_actions(
-            actions,
-            spells,
-            economy,
-            rendered_target_modes,
-            target_layout,
-        )
-
-    def _render_direct_actions(
-        self,
-        actions: list[ActionObservation],
-        spells: list[ActionObservation],
-        economy: str,
-        rendered_target_modes: set[TargetSelectionMode],
-        target_layout: QVBoxLayout,
-    ) -> None:
-        for action in actions:
-            button = self._build_encounter_action_button(
-                action,
-                rendered_target_modes,
-            )
-            if button is not None:
-                target_layout.addWidget(button)
-
-        spell_ids = {action.source_id for action in spells if action.source_id}
-        if spell_ids:
-            spells_button = QPushButton(f"Spells ({len(spell_ids)})")
-            spells_button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
-            spells_button.clicked.connect(
-                lambda _checked=False, selected_economy=economy: self._open_action_menu(
-                    selected_economy, "magic"
-                )
-            )
-            target_layout.addWidget(spells_button)
-
-        if not actions and not spell_ids:
-            empty = QLabel("None")
-            empty.setEnabled(False)
-            target_layout.addWidget(empty)
-
-    def _set_accordion_status(self, title: str, text: str) -> None:
-        toggle = self._accordion_toggles.get(title)
-        if toggle is None:
-            return
-        availability_dot = "⚪" if text in {"Spent", "Waiting"} else "🟢"
-        toggle.setText(f"{title} {availability_dot}")
-
-    def _render_spell_browser(
-        self,
-        actions: list[ActionObservation],
-        rendered_target_modes: set[TargetSelectionMode],
-        target_layout: QVBoxLayout,
-    ) -> None:
-        header = QLabel("Spells")
-        header.setObjectName("sectionSubtitle")
-        target_layout.addWidget(header)
-
-        search = QLineEdit()
-        search.setPlaceholderText("Search spells...")
-        target_layout.addWidget(search)
-
-        spell_actions: dict[tuple[str, int | None], ActionObservation] = {}
-        spell_details: dict[str, tuple[str, int | None]] = {}
-        for action in actions:
-            spell_id = action.source_id
-            if spell_id is None:
-                continue
-            slot_level = action.resource_level
-            spell_actions.setdefault((spell_id, slot_level), action)
-            spell_details[spell_id] = (
-                action.source_label or action.label,
-                action.source_level,
-            )
-
-        level_filter = QComboBox()
-        level_filter.addItem("All levels", None)
-        for spell_level in sorted(
-            level for _name, level in spell_details.values() if level is not None
-        ):
-            level_filter.addItem(
-                "Cantrips" if spell_level == 0 else f"Level {spell_level}",
-                spell_level,
-            )
-        target_layout.addWidget(level_filter)
-
-        rows: list[tuple[QPushButton, str, int | None]] = []
-        for (spell_id, slot_level), action in sorted(
-            spell_actions.items(),
-            key=lambda item: (
-                spell_details[item[0][0]][1]
-                if item[0][0] in spell_details
-                and spell_details[item[0][0]][1] is not None
-                else 99,
-                spell_details[item[0][0]][0].casefold()
-                if item[0][0] in spell_details
-                else item[1].label.casefold(),
-                item[0][1] or 0,
-            ),
-        ):
-            spell = spell_details.get(spell_id)
-            button = self._build_encounter_action_button(
-                action,
-                rendered_target_modes,
-            )
-            if button is None:
-                continue
-            name = spell[0] if spell is not None else action.label
-            if slot_level is not None:
-                name = f"{name} (Level {slot_level})"
-            row_level = spell[1] if spell is not None else None
-            self._set_compact_button_text(button, name)
-            target_layout.addWidget(button)
-            rows.append((button, name.casefold(), row_level))
-
-        def apply_filters() -> None:
-            query = search.text().strip().casefold()
-            selected_level = level_filter.currentData()
-            for button, name, level in rows:
-                button.setVisible(
-                    (not query or query in name)
-                    and (selected_level is None or level == selected_level)
-                )
-
-        search.textChanged.connect(lambda _text: apply_filters())
-        level_filter.currentIndexChanged.connect(lambda _index: apply_filters())
-
-        back = QPushButton("Back")
-        back.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
-        back.clicked.connect(
-            lambda _checked=False: self._close_action_menu(self._action_menu_scope)
-        )
-        target_layout.addWidget(back)
-
-    def _render_action_detail_column(
-        self,
-        title: str,
-        actions: list[ActionObservation],
-        rendered_target_modes: set[TargetSelectionMode],
-        scope: ActionMenuScope | None,
-        target_layout: QVBoxLayout,
-    ) -> None:
-        column = QWidget()
-        column_layout = QVBoxLayout(column)
-        column_layout.setContentsMargins(0, 0, 0, 0)
-        column_layout.setSpacing(8)
-        header = QLabel(title)
-        header_font = QFont()
-        header_font.setBold(True)
-        header.setFont(header_font)
-        column_layout.addWidget(header)
-
-        if not actions:
-            empty = QLabel("None")
-            empty.setEnabled(False)
-            column_layout.addWidget(empty)
-        for action in actions:
-            button = self._build_encounter_action_button(action, rendered_target_modes)
-            if button is not None:
-                column_layout.addWidget(button)
-        column_layout.addStretch(1)
-        if scope is not None:
-            back = QPushButton("Back")
-            back.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
-            back.clicked.connect(
-                lambda _checked=False, selected_scope=scope: self._close_action_menu(
-                    selected_scope
-                )
-            )
-            column_layout.addWidget(back)
-        target_layout.addWidget(column)
-
-    def _render_feature_column(
-        self,
-        feature_actions: list[ActionObservation],
-        rendered_target_modes: set[TargetSelectionMode],
-        target_layout: QVBoxLayout,
-    ) -> None:
-        column = QWidget()
-        column_layout = QVBoxLayout(column)
-        column_layout.setContentsMargins(0, 0, 0, 0)
-        column_layout.setSpacing(8)
-
-        if not feature_actions:
-            empty = QLabel("None")
-            empty.setEnabled(False)
-            column_layout.addWidget(empty)
-        else:
-            for action in feature_actions:
-                widget = self._build_feature_action_widget(
-                    action, rendered_target_modes
-                )
-                if widget is not None:
-                    column_layout.addWidget(widget)
-
-        column_layout.addStretch(1)
-        target_layout.addWidget(column)
-
-    def _render_status_column(
-        self,
-        resources,
-        target_layout: QVBoxLayout,
-    ) -> None:
-        column = QWidget()
-        column_layout = QVBoxLayout(column)
-        column_layout.setContentsMargins(0, 0, 0, 0)
-        column_layout.setSpacing(8)
-
-        if resources.spell_slots:
-            column_layout.addWidget(self._build_spell_slot_section(resources))
-        conditions = QLabel(
-            f"Conditions: {', '.join(condition.capitalize() for condition in resources.conditions) if resources.conditions else 'None'}"
-        )
-        conditions.setWordWrap(True)
-        column_layout.addWidget(conditions)
-        column_layout.addStretch(1)
-        target_layout.addWidget(column)
-
-    def _render_movement_status(self, resources) -> None:
-        clear_layout(self.movement_status_layout)
-        self.movement_status_layout.addWidget(
-            self._build_resource_bar(
-                resources.movement_remaining_feet,
-                resources.movement_total_feet,
-                "#2f6f9d",
-                f"{resources.movement_remaining_feet}/{resources.movement_total_feet} ft",
-                height=RESOURCE_BAR_HEIGHT,
-            )
-        )
-
-    def _render_health_status(self, resources) -> None:
-        clear_layout(self.health_status_layout)
-        self.health_status_layout.addWidget(
-            self._build_resource_bar(
-                resources.current_health,
-                resources.max_health,
-                "#9d2f2f",
-                f"{resources.current_health} / {resources.max_health} HP",
-                height=RESOURCE_BAR_HEIGHT,
-            )
-        )
-
-    def _render_initiative_rail(self, resources) -> None:
-        clear_layout(self.initiative_layout)
-        if not resources.initiative:
-            empty = QLabel("No initiative order.")
-            empty.setEnabled(False)
-            self.initiative_layout.addWidget(empty)
-            self.initiative_layout.addStretch(1)
-            return
-        for entry in resources.initiative:
-            self.initiative_layout.addWidget(self._build_initiative_entry_widget(entry))
-        self.initiative_layout.addStretch(1)
-
-    def _build_initiative_entry_widget(self, entry) -> QWidget:
-        card = QFrame()
-        card.setObjectName("initiativeCard")
-        card.setProperty("active", entry.is_active)
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(10, 7, 10, 7)
-        layout.setSpacing(2)
-
-        name = QLabel(entry.name)
-        name.setObjectName("initiativeName")
-        name.setWordWrap(True)
-        layout.addWidget(name)
-
-        score = QLabel(str(entry.total))
-        score.setObjectName("initiativeScore")
-        layout.addWidget(score)
-        return card
-
-    def _build_action_header(
-        self,
-        title: str,
-        available: bool,
-        indicator_color: str,
-        *,
-        show_indicator: bool = True,
-    ) -> QWidget:
-        container = QWidget()
-        container.setObjectName("actionHeader")
-        layout = QHBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(6)
-
-        if show_indicator:
-            indicator = QFrame()
-            indicator.setFixedSize(10, 10)
-            if available:
-                indicator.setStyleSheet(
-                    f"QFrame {{ background: {indicator_color}; border: 1px solid {indicator_color}; border-radius: 5px; }}"
-                )
-            else:
-                indicator.setStyleSheet(
-                    "QFrame { background: #9d2f2f; border: 1px solid #9d2f2f; border-radius: 5px; }"
-                )
-            layout.addWidget(indicator)
-
-        header = QLabel(title)
-        header.setObjectName("sectionTitle")
-        header_font = QFont()
-        header_font.setBold(True)
-        header.setFont(header_font)
-        layout.addWidget(header)
-        layout.addStretch(1)
-        return container
-
-    def _build_resource_bar(
-        self,
-        current: int,
-        maximum: int,
-        color: str,
-        value_text: str,
-        height: int = 24,
-    ) -> QWidget:
-        container = QWidget()
-        container.setFixedHeight(height)
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        bar = QFrame()
-        bar.setMinimumHeight(height)
-        bar.setMaximumHeight(height)
-        bar.setStyleSheet(
-            "QFrame {border: 1px solid #9c8b68;background: #efe4c8;border-radius: 4px;}"
-        )
-        bar_layout = QGridLayout(bar)
-        bar_layout.setContentsMargins(0, 0, 0, 0)
-        bar_layout.setSpacing(0)
-        filled = QFrame()
-        filled.setStyleSheet(f"QFrame {{ background: {color}; border-radius: 3px; }}")
-        empty = QFrame()
-        empty.setStyleSheet("QFrame { background: transparent; }")
-        filled_units = max(0, min(current, maximum))
-        empty_units = max(0, maximum - filled_units)
-        bar_layout.addWidget(filled, 0, 0)
-        bar_layout.addWidget(empty, 0, 1)
-        bar_layout.setColumnStretch(0, max(filled_units, 1 if maximum == 0 else 0))
-        bar_layout.setColumnStretch(1, max(empty_units, 1 if maximum == 0 else 0))
-        value = QLabel(value_text, bar)
-        value.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        value.setStyleSheet(
-            "QLabel { color: white; font-weight: bold; background: transparent; }"
-        )
-        bar_layout.addWidget(value, 0, 0, 1, 2)
-        layout.addWidget(bar)
-        return container
-
-    def _build_spell_slot_section(self, resources) -> QWidget:
-        container = QWidget()
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-        title = QLabel("Spell Slots")
-        title.setStyleSheet("QLabel { font-weight: 600; }")
-        layout.addWidget(title)
-        for track in resources.spell_slots:
-            row = QLabel(
-                spell_slot_rich_text(track.level, track.remaining, track.maximum)
-            )
-            row.setTextFormat(Qt.TextFormat.RichText)
-            row.setStyleSheet("QLabel { font-family: Menlo, Monaco, monospace; }")
-            layout.addWidget(row)
-        return container
-
-    def _build_encounter_action_button(
-        self,
-        action: ActionObservation,
-        rendered_target_modes: set[TargetSelectionMode],
-    ) -> QPushButton | None:
-        target_mode = mode_for_action(action)
-        if target_mode is not None:
-            if target_mode in rendered_target_modes:
-                return None
-            rendered_target_modes.add(target_mode)
-            mode_actions = actions_for_mode(
-                self._presentation.encounter.non_movement_actions
-                if self._presentation is not None
-                and self._presentation.encounter is not None
-                else (),
-                target_mode,
-            )
-            button = QPushButton(mode_label(target_mode, mode_actions))
-            button.setFixedHeight(ENCOUNTER_BUTTON_HEIGHT)
-            button.setCheckable(True)
-            button.setChecked(target_mode == self._pending_target_mode)
-            self._configure_action_button(button, mode_actions)
-            if not button.isEnabled():
-                return button
-            button.clicked.connect(
-                lambda _checked=False, mode=target_mode: self._toggle_target_action(
-                    mode
-                )
-            )
-            return button
-
-        button = QPushButton(action.label)
-        self._set_compact_button_text(button, action.label)
-        self._configure_action_button(button, [action])
-        if not button.isEnabled():
-            return button
-        button.clicked.connect(
-            lambda _checked=False, action_id=action.id: self._select_action(action_id)
-        )
-        return button
-
-    @staticmethod
-    def _configure_action_button(
-        button: QPushButton,
-        actions: list[ActionObservation],
-    ) -> None:
-        availability = (
-            "available"
-            if any(action.enabled for action in actions)
-            else "unimplemented"
-            if any(action.availability == "unimplemented" for action in actions)
-            else "unavailable"
-        )
-        reasons = tuple(
-            dict.fromkeys(
-                reason for action in actions for reason in action.unavailable_reasons
-            )
-        )
-        button.setProperty("availability", availability)
-        button.setEnabled(availability == "available")
-        if reasons and availability != "available":
-            heading = (
-                "Not implemented:"
-                if availability == "unimplemented"
-                else "Unavailable:"
-            )
-            button.setToolTip(
-                "\n".join((heading, *(f"• {reason}" for reason in reasons)))
-            )
-
-    @staticmethod
-    def _set_compact_button_text(button: QPushButton, label: str) -> None:
-        lines = textwrap.wrap(
-            label,
-            width=28,
-            max_lines=2,
-            placeholder="...",
-        ) or [label]
-        button.setText("\n".join(lines))
-        button.setFixedHeight(
-            ENCOUNTER_BUTTON_HEIGHT
-            if len(lines) == 1
-            else ENCOUNTER_BUTTON_HEIGHT * 2 - 6
-        )
-
-    def _build_feature_action_widget(
-        self,
-        action: ActionObservation,
-        rendered_target_modes: set[TargetSelectionMode],
-    ) -> QPushButton | None:
-        button = self._build_encounter_action_button(action, rendered_target_modes)
-        if button is None:
-            return None
-        dot = (
-            "🟡"
-            if action.cost.get("bonus_action", 0) > 0
-            else "🔵"
-            if action.cost.get("action", 0) > 0
-            else "🔴"
-            if action.cost.get("reaction", 0) > 0
-            else "⚪"
-        )
-        if action.cost.get("bonus_action", 0) > 0:
-            button.setText(f"{button.text()}  {dot}")
-        else:
-            button.setText(f"{button.text()}  {dot}")
-        return button
 
     def _open_action_menu(self, economy: str, bucket: str) -> None:
         self._clear_movement_plan()
@@ -1549,45 +979,6 @@ class GameWindow(QMainWindow):
                 return
         self._pending_target_mode = None
         self.refresh_view()
-
-    def _render_spell_resource_allocation_controls(self) -> None:
-        observation = self._observation or self.game.observe()
-        encounter = observation.encounter
-        pending = encounter.targeting if encounter is not None else None
-        if pending is None or pending.resource_pool_total is None or encounter is None:
-            return
-        allocations = {
-            item.target_ref: item.amount for item in pending.resource_allocations
-        }
-        allocated_total = sum(allocations.values())
-        for limit in pending.resource_limits:
-            target_ref = limit.target_ref
-            missing_hit_points = limit.maximum
-            row = QWidget()
-            layout = QHBoxLayout(row)
-            layout.setContentsMargins(0, 0, 0, 0)
-            target = encounter.creature(target_ref)
-            label = QLabel(f"{target.name} ({missing_hit_points} missing)")
-            spin = QSpinBox()
-            current = allocations.get(target_ref, 0)
-            remaining_with_current = (
-                pending.resource_pool_total - allocated_total + current
-            )
-            spin.setRange(0, min(missing_hit_points, remaining_with_current))
-            spin.setValue(current)
-            spin.setSuffix(" HP")
-            spin.setToolTip(
-                f"Allocate 0–{min(missing_hit_points, remaining_with_current)} "
-                "Hit Points to this creature."
-            )
-            spin.editingFinished.connect(
-                lambda ref=target_ref, control=spin: (
-                    self._set_spell_resource_allocation(ref, control.value())
-                )
-            )
-            layout.addWidget(label, 1)
-            layout.addWidget(spin)
-            self.actions_section_layout.addWidget(row)
 
     def _set_spell_resource_allocation(self, target_ref: str, amount: int) -> None:
         decision_id = self._current_decision_id()

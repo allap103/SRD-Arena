@@ -98,6 +98,9 @@ from srd_arena.frontends.qt.ui.encounter.config import (
     ActionMenuScope,
     TargetSelectionMode,
 )
+from srd_arena.frontends.qt.ui.encounter.panel_renderer import (
+    configure_action_button,
+)
 from srd_arena.frontends.qt.ui.encounter.targeting import (
     allocation_counts,
     allocation_status,
@@ -5090,7 +5093,7 @@ def test_unavailable_button_tooltip_lists_all_reasons() -> None:
         ),
     ]
 
-    GameWindow._configure_action_button(button, actions)
+    configure_action_button(button, actions)
 
     assert button.enabled is False
     assert button.properties["availability"] == "unavailable"
