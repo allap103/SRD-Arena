@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -26,14 +27,25 @@ def test_game_window_delegates_encounter_controls_to_panel_renderer() -> None:
     app = QApplication.instance() or QApplication([])
     session = load_scenario(SCENARIOS_ROOT / "slow_showcase").create_session()
 
-    window = GameWindow(RunningGame(session))
+    window = GameWindow(RunningGame(session), show_encounter_json=True)
 
     assert isinstance(window._encounter_panel_renderer, EncounterPanelRenderer)
-    assert window.health_status_layout.count() == 1
-    assert window.movement_status_layout.count() == 1
-    assert window.initiative_layout.count() > 1
-    assert window.actions_section_layout.count() > 0
-    assert window.end_turn_button.text() in {"End Turn", "Pass Reaction"}
+    bindings = window.sidebar.encounter_bindings
+    assert bindings.health_layout.count() == 1
+    assert bindings.movement_layout.count() == 1
+    assert bindings.initiative_layout.count() > 1
+    assert bindings.actions_layout.count() > 0
+    assert bindings.end_turn_button.text() in {"End Turn", "Pass Reaction"}
+
+    window.sidebar.show_attributes()
+    assert "Name:" in window.sidebar._attributes_text.toPlainText()
+    window.sidebar.show_inventory()
+    assert window.sidebar._inventory_text.toPlainText()
+    window.sidebar.show_json()
+    payload = json.loads(window.sidebar._json_text.toPlainText())
+    assert payload["encounter_active"] is True
+    window.sidebar.show_root()
+    assert window.sidebar._stack.currentIndex() == window.sidebar._combat_index
 
     window.close()
     window.deleteLater()

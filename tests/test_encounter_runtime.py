@@ -2087,8 +2087,8 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
     window._presentation = SimpleNamespace(encounter=object())
     window._combat_log_scene_id = state.encounter_id
     window._logged_round_number = state.round_number
-    window.dice_roll_panel = SimpleNamespace(
-        append_entry=lambda _messages, _rolls: None,
+    window.sidebar = SimpleNamespace(
+        append_combat_log=lambda _messages, _rolls: None,
     )
     window._scroll_roll_log_to_bottom = lambda: None
     window.refresh_view = lambda: None
