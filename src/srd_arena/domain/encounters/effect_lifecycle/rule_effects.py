@@ -21,7 +21,17 @@ from ...effects.rule_effects import (
 def parse_runtime_rule_effects(
     parameters: dict[str, object],
 ) -> tuple[RuntimeRuleEffect, ...]:
-    """Build typed query contributions from existing serialized parameters."""
+    """Build typed query contributions from existing serialized parameters.
+
+    >>> effects = parse_runtime_rule_effects({
+    ...     "armor_class_modifier": -2,
+    ...     "speed_modifier_feet": -10,
+    ... })
+    >>> [type(effect).__name__ for effect in effects]
+    ['ArmorClassAdjustment', 'SpeedAdjustment']
+    >>> (effects[0].value, effects[1].feet)
+    (-2, -10)
+    """
 
     effects: list[RuntimeRuleEffect] = []
     armor_class_modifier = parameters.get("armor_class_modifier")
@@ -40,7 +50,17 @@ def parse_runtime_rule_effects(
 
 
 def parse_roll_modifiers(value: object) -> tuple[RollModifier, ...]:
-    """Parse the serialized roll modifiers currently stored in effect data."""
+    """Parse valid serialized roll modifiers and ignore malformed entries.
+
+    >>> modifiers = parse_roll_modifiers([
+    ...     {"roll": "attack_roll", "mode": "disadvantage"},
+    ...     {"roll": "unknown", "mode": "advantage"},
+    ... ])
+    >>> [(modifier.roll, modifier.mode) for modifier in modifiers]
+    [('attack_roll', 'disadvantage')]
+    >>> parse_roll_modifiers("not a list")
+    ()
+    """
 
     if not isinstance(value, list):
         return ()

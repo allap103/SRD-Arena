@@ -28,7 +28,19 @@ def has_condition_save_advantage(
     target_ref: str,
     conditions: tuple[str, ...],
 ) -> bool:
-    """Return whether ongoing state grants advantage against the conditions."""
+    """Return whether ongoing state grants advantage against the conditions.
+
+    >>> from types import SimpleNamespace
+    >>> effect = SimpleNamespace(
+    ...     target_refs=("hero",),
+    ...     parameters={"condition_save_advantages": ["Poisoned"]},
+    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[effect])
+    >>> has_condition_save_advantage(state, "hero", ("poisoned",))
+    True
+    >>> has_condition_save_advantage(state, "other", ("poisoned",))
+    False
+    """
 
     requested = {condition.casefold() for condition in conditions}
     if not requested:

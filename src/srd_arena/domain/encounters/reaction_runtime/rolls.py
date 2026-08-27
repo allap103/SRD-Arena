@@ -2,7 +2,15 @@
 
 
 def roll_die(sides: int) -> int:
-    """Roll one die through the encounter's injectable random source."""
+    """Roll one die through the encounter's injectable random source.
+
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.reactions._roll_die", return_value=3
+    ... ):
+    ...     roll_die(6)
+    3
+    """
 
     from .. import reactions as reaction_facade
 
@@ -10,7 +18,15 @@ def roll_die(sides: int) -> int:
 
 
 def roll_dice(count: int, sides: int) -> int:
-    """Roll and sum identical dice through the encounter's random source."""
+    """Roll and sum identical dice through the encounter's random source.
+
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.reactions._roll_dice", return_value=9
+    ... ):
+    ...     roll_dice(2, 6)
+    9
+    """
 
     from .. import reactions as reaction_facade
 
