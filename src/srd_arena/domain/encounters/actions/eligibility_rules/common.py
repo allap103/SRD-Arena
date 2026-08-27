@@ -1,3 +1,5 @@
+"""Provide common support for the eligibility rules package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -14,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class ActorReadyRule:
+    """Represent an actor ready rule."""
+
     def check(
         self,
         state: EncounterState,
@@ -38,6 +42,8 @@ class ActorReadyRule:
 
 
 class ActorOwnershipRule:
+    """Represent an actor ownership rule."""
+
     def check(
         self,
         state: EncounterState,
@@ -53,6 +59,8 @@ class ActorOwnershipRule:
 
 
 class ResourceRule:
+    """Represent a resource rule."""
+
     def check(
         self,
         state: EncounterState,
@@ -69,6 +77,8 @@ class ResourceRule:
 
 
 class MovementRule:
+    """Represent a movement rule."""
+
     def check(
         self,
         state: EncounterState,
@@ -118,6 +128,8 @@ def opposing_target_failure(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> EligibilityFailure | None:
+    """Handle opposing target failure."""
+
     if not isinstance(action.value, str):
         return EligibilityFailure("target_required", "A creature target is required.")
     target = state.creatures.get(action.value)
@@ -137,6 +149,8 @@ def target_requirement_failure(
     target_ref: CreatureRef,
     requirements: tuple[object, ...],
 ) -> EligibilityFailure | None:
+    """Handle target requirement failure."""
+
     for requirement in requirements:
         if isinstance(requirement, CreatureTypeRequirement):
             creature_type = state.creatures[

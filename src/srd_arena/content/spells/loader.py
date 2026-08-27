@@ -1,3 +1,5 @@
+"""Provide loader support for the spells package."""
+
 from pathlib import Path
 
 from srd_arena.content.common.catalog import SourceCatalog

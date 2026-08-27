@@ -38,6 +38,8 @@ def build_directional_area(
     width_squares: float | None = None,
     coverage_threshold: float | None = None,
 ) -> AreaOfEffect | None:
+    """Build directional area."""
+
     threshold = (
         coverage_threshold
         if coverage_threshold is not None
@@ -76,6 +78,8 @@ def build_radius_area(
     radius_squares: int,
     grid: Grid,
 ) -> AreaOfEffect:
+    """Build radius area."""
+
     origin_point = point_from_position(origin)
     continuous_area = ContinuousArea(
         shape="radius",
@@ -132,6 +136,8 @@ def build_cone_area(
     length_squares: int,
     grid: Grid,
 ) -> AreaOfEffect:
+    """Build cone area."""
+
     return build_cone_area_from_vector(
         origin,
         vector_from_direction(direction),
@@ -148,6 +154,8 @@ def build_cone_area_from_vector(
     *,
     coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
+    """Build cone area from vector."""
+
     unit_direction = normalize_vector(direction)
     origin_point = directional_origin_point(origin, unit_direction)
     polygon = cone_polygon(
@@ -191,6 +199,8 @@ def build_line_area(
     width_squares: float = 1.0,
     coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
+    """Build line area."""
+
     return build_line_area_from_vector(
         origin,
         vector_from_direction(direction),
@@ -210,6 +220,8 @@ def build_line_area_from_vector(
     width_squares: float = 1.0,
     coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
+    """Build line area from vector."""
+
     unit_direction = normalize_vector(direction)
     origin_point = directional_origin_point(origin, unit_direction)
     polygon = line_polygon(
@@ -252,6 +264,8 @@ def build_cube_area(
     size_squares: int,
     grid: Grid,
 ) -> AreaOfEffect:
+    """Build cube area."""
+
     return build_cube_area_from_vector(
         origin,
         vector_from_direction(direction),
@@ -268,6 +282,8 @@ def build_cube_area_from_vector(
     *,
     coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
+    """Build cube area from vector."""
+
     unit_direction = normalize_vector(direction)
     origin_point = directional_origin_point(origin, unit_direction)
     polygon = cube_polygon(

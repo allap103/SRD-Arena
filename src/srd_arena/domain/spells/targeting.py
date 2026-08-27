@@ -1,14 +1,20 @@
+"""Provide targeting support for the spells package."""
+
 from ..geometry import Grid
 from .definitions import Spell
 
 
 def spell_targets_self_only(spell: Spell) -> bool:
+    """Handle spell targets self only."""
+
     return (
         spell.definition is not None and spell.definition.target.kind == "self"
     ) or spell.range_data.get("type") == "self"
 
 
 def spell_chooses_area_targets(spell: Spell) -> bool:
+    """Handle spell chooses area targets."""
+
     if spell.definition is None:
         return False
     target = spell.definition.target
@@ -16,18 +22,24 @@ def spell_chooses_area_targets(spell: Spell) -> bool:
 
 
 def spell_target_disposition(spell: Spell) -> str:
+    """Handle spell target disposition."""
+
     if spell.definition is not None and spell.definition.target.kind == "creature":
         return spell.definition.target.disposition
     return "enemy"
 
 
 def spell_area_shape(spell: Spell) -> str | None:
+    """Handle spell area shape."""
+
     if spell.definition is not None and spell.definition.target.kind == "area":
         return spell.definition.target.shape
     return None
 
 
 def spell_repeats_target_allocations(spell: Spell) -> bool:
+    """Handle spell repeats target allocations."""
+
     if spell.definition is not None and spell.definition.repetition is not None:
         return spell.definition.repetition.allocation in {
             "same_target",
@@ -37,12 +49,16 @@ def spell_repeats_target_allocations(spell: Spell) -> bool:
 
 
 def spell_requires_full_target_count(spell: Spell) -> bool:
+    """Handle spell requires full target count."""
+
     return bool(
         spell.definition is not None and spell.definition.repetition is not None
     )
 
 
 def spell_range_squares(spell: Spell, grid: Grid) -> int | None:
+    """Handle spell range squares."""
+
     distance = spell.range_data.get("distance", {})
     if not isinstance(distance, dict):
         return None
@@ -60,6 +76,8 @@ def spell_max_targets(
     *,
     caster_level: int | None = None,
 ) -> int:
+    """Handle spell max targets."""
+
     if spell.definition is not None:
         definition = spell.definition
         target_maximum = definition.target.count.maximum

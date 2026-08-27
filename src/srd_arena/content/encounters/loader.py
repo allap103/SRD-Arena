@@ -1,3 +1,5 @@
+"""Provide loader support for the encounters package."""
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -29,6 +31,8 @@ from .schema import EncounterDefinitionSchema, PositionSchema
 
 @dataclass(frozen=True)
 class LoadedEncounter:
+    """Represent a loaded encounter."""
+
     definition: EncounterDefinition
     creatures: tuple[Creature, ...]
 
@@ -105,6 +109,8 @@ def load_encounter(
     subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> LoadedEncounter:
+    """Load encounter."""
+
     schema = EncounterDefinitionSchema.model_validate(load_json(path))
     return LoadedEncounter(
         definition=_build_encounter(schema),

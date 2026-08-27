@@ -1,3 +1,5 @@
+"""Provide combat support for the shared package."""
+
 from srd_arena.application.api import EncounterObservation
 
 

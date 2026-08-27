@@ -1,3 +1,5 @@
+"""Provide items support for the actions package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -23,6 +25,8 @@ def resolve_utilize_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
+    """Resolve utilize action."""
+
     creature_ref = self.current_decision().creature_ref
     item = self.item_templates.get(item_id)
     if item is None or not actor.inventory.has_item(item_id):

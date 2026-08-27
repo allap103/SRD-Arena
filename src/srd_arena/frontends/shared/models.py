@@ -9,6 +9,8 @@ from srd_arena.application.api import ActionObservation
 
 @dataclass(frozen=True)
 class SpellSlotTrackView:
+    """Represent a spell slot track view."""
+
     level: int
     remaining: int
     maximum: int
@@ -16,6 +18,8 @@ class SpellSlotTrackView:
 
 @dataclass(frozen=True)
 class InitiativeTrackEntryView:
+    """Represent an initiative track entry view."""
+
     creature_ref: str
     name: str
     total: int
@@ -24,6 +28,8 @@ class InitiativeTrackEntryView:
 
 @dataclass
 class ResourceSummaryView:
+    """Represent a resource summary view."""
+
     current_health: int
     max_health: int
     action_status: str
@@ -62,12 +68,16 @@ class ResourceSummaryView:
 
 @dataclass
 class GridPositionView:
+    """Represent a grid position view."""
+
     x: int
     y: int
 
 
 @dataclass
 class BattlefieldCreatureView:
+    """Represent a battlefield creature view."""
+
     creature_ref: str
     creature_id: str
     name: str
@@ -85,6 +95,8 @@ class BattlefieldCreatureView:
 
 @dataclass
 class BattlefieldView:
+    """Represent a battlefield view."""
+
     width: int
     height: int
     creatures: list[BattlefieldCreatureView]
@@ -96,6 +108,8 @@ class BattlefieldView:
 
 @dataclass
 class EncounterView:
+    """Represent an encounter view."""
+
     narrative_text: str | None
     battlefield: BattlefieldView
     resources: ResourceSummaryView
@@ -110,6 +124,8 @@ class EncounterView:
 
 @dataclass
 class SessionPresentation:
+    """Represent a session presentation."""
+
     scene_id: str
     story_text: str | None
     story_actions: list[ActionObservation]

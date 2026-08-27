@@ -1,3 +1,5 @@
+"""Expose the public rolls package API."""
+
 from .dice import (
     CheckResult,
     D20PoolResult,

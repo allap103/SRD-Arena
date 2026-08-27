@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
 
 def initialize_action_selectors(state: EncounterState) -> None:
+    """Handle initialize action selectors."""
+
     state._action_selectors = {}
     for creature_ref, creature_state in state.creatures.items():
         state._action_selectors[creature_ref] = build_action_selector(
@@ -26,6 +28,8 @@ def roll_initiative(
     state: EncounterState,
     roll: Callable[[int], int],
 ) -> None:
+    """Handle roll initiative."""
+
     entries: list[InitiativeEntry] = []
     for creature_ref, creature_state in state.creatures.items():
         participant = next(

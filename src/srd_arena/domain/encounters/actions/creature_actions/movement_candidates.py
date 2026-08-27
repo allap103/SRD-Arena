@@ -1,3 +1,5 @@
+"""Provide movement candidates support for the creature actions package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -13,6 +15,8 @@ def movement_action_candidates(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> list[EncounterAction]:
+    """Handle movement action candidates."""
+
     actor = state.creatures[creature_ref]
     movement_cost = state._movement_cost_for(creature_ref)
     if actor.movement_remaining is None:

@@ -1,3 +1,5 @@
+"""Provide schema support for the spells package."""
+
 from pydantic import Field, model_validator
 
 from srd_arena.content.common.schema import SourceModel
@@ -7,6 +9,8 @@ from .implementation import SpellImplementationSchema
 
 
 class SpellSchema(SourceModel):
+    """Validate authored spell data."""
+
     name: str
     source: str
     level: int
@@ -56,4 +60,6 @@ class SpellSchema(SourceModel):
 
 
 class SpellFileSchema(SourceModel):
+    """Validate authored spell file data."""
+
     spell: list[SpellSchema] = Field(default_factory=list)

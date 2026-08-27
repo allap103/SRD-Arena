@@ -1,3 +1,5 @@
+"""Expose the public creatures package API."""
+
 from .attributes import Attributes, Movement
 from .class_features import ClassFeature
 from .classes import ClassRef, SubclassRef

@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class RoundState:
+    """Represent a round state."""
+
     number: int = 1
 
     def advance(self) -> None:
@@ -32,11 +34,15 @@ class RoundState:
 
 @dataclass
 class TurnState:
+    """Represent a turn state."""
+
     index: int = 0
 
 
 @dataclass
 class BehaviorContext:
+    """Represent a behavior context."""
+
     target_position: Position
     actor_position: Position
     can_attack: bool
@@ -44,6 +50,8 @@ class BehaviorContext:
 
 @dataclass
 class EncounterCreatureState:
+    """Represent an encounter creature state."""
+
     creature_id: str
     creature: Creature
     position: Position
@@ -71,6 +79,8 @@ class EncounterCreatureState:
 
 @dataclass
 class InitiativeEntry:
+    """Represent an initiative entry."""
+
     creature_ref: CreatureRef
     roll: int
     modifier: int
@@ -79,6 +89,8 @@ class InitiativeEntry:
 
 @dataclass
 class EncounterStateData:
+    """Represent an encounter state data."""
+
     encounter_id: str
     definition: EncounterDefinition
     creatures: dict[CreatureRef, EncounterCreatureState]

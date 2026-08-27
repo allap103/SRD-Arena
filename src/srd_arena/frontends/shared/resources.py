@@ -13,6 +13,8 @@ from .models import (
 
 
 def build_resource_summary(encounter: EncounterObservation) -> ResourceSummaryView:
+    """Build resource summary."""
+
     decision = encounter.decision
     creature_state = encounter.creature(decision.creature_ref)
     normal_turn = decision.kind == "turn"

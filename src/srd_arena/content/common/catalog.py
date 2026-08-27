@@ -1,3 +1,5 @@
+"""Provide catalog support for the common package."""
+
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Iterator

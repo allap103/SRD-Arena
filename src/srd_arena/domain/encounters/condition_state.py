@@ -1,3 +1,5 @@
+"""Provide condition state support for the encounters package."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -17,12 +19,16 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class ConditionRejection:
+    """Represent a condition rejection."""
+
     condition: Condition
     reason: str
 
 
 @dataclass(frozen=True)
 class ConditionApplicationResult:
+    """Represent a condition application result."""
+
     requested_condition: Condition
     applied: tuple[AppliedCondition, ...] = ()
     rejections: tuple[ConditionRejection, ...] = ()
@@ -38,6 +44,8 @@ def apply_condition(
     state: EncounterState,
     applied: AppliedCondition,
 ) -> ConditionApplicationResult:
+    """Apply condition."""
+
     target = state.creatures[applied.target_ref].creature
     if applied.condition in target.condition_immunities():
         return ConditionApplicationResult(
@@ -95,6 +103,8 @@ def remove_condition(
     *,
     removed_by_ref: CreatureRef | None = None,
 ) -> None:
+    """Remove condition."""
+
     remove_condition_from_source(
         state,
         target_ref,
@@ -111,6 +121,8 @@ def remove_condition_from_source(
     *,
     removed_by_ref: CreatureRef | None = None,
 ) -> None:
+    """Remove condition from source."""
+
     removed_ids = {
         applied.id
         for applied in state.conditions
@@ -138,6 +150,8 @@ def condition_sources_for(
     creature_ref: CreatureRef,
     condition: Condition,
 ) -> tuple[CreatureRef, ...]:
+    """Handle condition sources for."""
+
     return tuple(
         applied.source_ref
         for applied in state.conditions
@@ -151,4 +165,6 @@ def condition_replaces(
     existing: AppliedCondition,
     applied: AppliedCondition,
 ) -> bool:
+    """Handle condition replaces."""
+
     return existing.id == applied.id

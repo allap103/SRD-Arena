@@ -27,6 +27,8 @@ from .targeting import CapabilityTarget
 
 @dataclass(frozen=True)
 class CapabilityTrigger:
+    """Represent a capability trigger."""
+
     event: str
     resolution: CapabilityResolution
     requirements: tuple[CapabilityRequirement, ...] = ()
@@ -34,12 +36,16 @@ class CapabilityTrigger:
 
 @dataclass(frozen=True)
 class CapabilityStep:
+    """Represent a capability step."""
+
     target: CapabilityTarget
     resolution: CapabilityResolution
 
 
 @dataclass(frozen=True)
 class CapabilityRepetition:
+    """Represent a capability repetition."""
+
     count: int | Literal["ability_modifier", "resource_scaled"]
     allocation: Literal[
         "same_target", "same_or_different", "different_targets", "propagating"
@@ -51,6 +57,8 @@ class CapabilityRepetition:
 
 @dataclass(frozen=True)
 class CapabilityDefinition:
+    """Represent a capability definition."""
+
     target: CapabilityTarget
     resolution: CapabilityResolution
     condition_selection: Literal["all", "choose_one"] = "all"

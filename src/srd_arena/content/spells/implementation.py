@@ -1,3 +1,5 @@
+"""Provide implementation support for the spells package."""
+
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -12,11 +14,15 @@ def _default_implementation_scope() -> list[ImplementationScope]:
 
 
 class ImplementationOmissionSchema(SpellCapabilitySchemaModel):
+    """Validate authored implementation omission data."""
+
     mechanic: str = Field(min_length=1)
     reason: str = Field(min_length=1)
 
 
 class SpellImplementationSchema(SpellCapabilitySchemaModel):
+    """Validate authored spell implementation data."""
+
     status: Literal[
         "complete",
         "partial",

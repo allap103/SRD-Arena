@@ -18,6 +18,8 @@ CONTINUE_CHOICE_TEXT = "Continue"
 
 @dataclass(frozen=True)
 class SpellOptionDetails:
+    """Represent a spell option details."""
+
     source_id: str | None
     target_ref: str | None
     target_refs: tuple[str, ...]
@@ -31,27 +33,37 @@ class SpellOptionDetails:
 
 @dataclass(frozen=True)
 class StatBlockOptionDetails:
+    """Represent a stat block option details."""
+
     source_id: str | None
     target_ref: str | None
 
 
 @dataclass(frozen=True)
 class DirectTargetOptionDetails:
+    """Represent a direct target option details."""
+
     target_ref: str | None
 
 
 @dataclass(frozen=True)
 class FeatureOptionDetails:
+    """Represent a feature option details."""
+
     feature_id: str
 
 
 @dataclass(frozen=True)
 class MovementOptionDetails:
+    """Represent a movement option details."""
+
     direction: str
 
 
 @dataclass(frozen=True)
 class ResourceAllocationOptionDetails:
+    """Represent a resource allocation option details."""
+
     target_ref: str
 
 
@@ -67,12 +79,16 @@ ActionOptionDetails = (
 
 @dataclass(frozen=True)
 class ActionAim:
+    """Represent an action aim."""
+
     x: float
     y: float
 
 
 @dataclass(frozen=True)
 class ActionResourceAllocation:
+    """Represent an action resource allocation."""
+
     target_ref: str
     amount: int
 
@@ -82,6 +98,8 @@ ActionConfiguration = ActionAim | ActionResourceAllocation
 
 @dataclass(frozen=True)
 class ActionOptionCost:
+    """Represent an action option cost."""
+
     movement: int = 0
     action: int = 0
     bonus_action: int = 0

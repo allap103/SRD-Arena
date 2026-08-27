@@ -1,8 +1,12 @@
+"""Provide equipment support for the creatures package."""
+
 from dataclasses import dataclass, field
 
 
 @dataclass
 class Equipment:
+    """Represent an equipment."""
+
     equipped_items: dict[str, str | None] = field(
         default_factory=lambda: {
             "head": None,

@@ -1,3 +1,5 @@
+"""Provide spellcasting support for the creatures package."""
+
 from srd_arena.content.character_options.classes import ClassRecord, SubclassRecord
 from srd_arena.content.character_options.classes.schema import (
     ClassSchema,
@@ -19,6 +21,8 @@ def build_spellcasting(
     subclass_record: SubclassRecord | None,
     spells: SpellCatalog | None,
 ) -> Spellcasting | None:
+    """Build spellcasting."""
+
     if schema.spellcasting is not None:
         config = schema.spellcasting
         ability_modifier = (
@@ -110,6 +114,8 @@ def _spellcasting_source_definition(
 
 
 def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
+    """Handle spellcasting ability score."""
+
     ability_map = {
         "str": attributes.strength,
         "dex": attributes.dexterity,
@@ -123,10 +129,14 @@ def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
 
 def spell_preparation_mode(block: SpellcastingSource) -> str:
     # The supported source formats currently describe fixed known/prepared lists.
+    """Handle spell preparation mode."""
+
     return "fixed"
 
 
 def progression_value(progression: object, level: int) -> int | None:
+    """Handle progression value."""
+
     if not isinstance(progression, list):
         return None
     row_index = level - 1
@@ -140,6 +150,8 @@ def spell_slots_progression(
     block: SpellcastingSource,
     level: int,
 ) -> dict[int, int]:
+    """Handle spell slots progression."""
+
     row_index = level - 1
     for group in block.table_groups:
         rows = group.spell_progression_rows
@@ -158,6 +170,8 @@ def spell_count_progression(
     block: SpellcastingSource,
     level: int,
 ) -> int | None:
+    """Handle spell count progression."""
+
     direct = progression_value(block.spells_known_progression, level)
     if direct is not None:
         return direct

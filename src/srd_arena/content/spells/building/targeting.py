@@ -1,3 +1,5 @@
+"""Provide targeting support for the building package."""
+
 from collections.abc import Sequence
 
 from srd_arena.content.spells.schema import SpellSchema
@@ -7,6 +9,8 @@ from srd_arena.domain.capabilities import CreatureTypeRequirement
 def creature_types_from_requirements(
     requirements: Sequence[object],
 ) -> tuple[str, ...]:
+    """Handle creature types from requirements."""
+
     return tuple(
         creature_type
         for requirement in requirements
@@ -16,6 +20,8 @@ def creature_types_from_requirements(
 
 
 def target_requirements(raw: SpellSchema) -> tuple[CreatureTypeRequirement, ...]:
+    """Handle target requirements."""
+
     creature_types = tuple(raw.affects_creature_type)
     if raw.capability is not None and raw.capability.target.type == "creature":
         capability_types = creature_types_from_requirements(
@@ -27,6 +33,8 @@ def target_requirements(raw: SpellSchema) -> tuple[CreatureTypeRequirement, ...]
 
 
 def normalize_save_ability(value: str) -> str:
+    """Normalize save ability."""
+
     aliases = {
         "str": "strength",
         "dex": "dexterity",

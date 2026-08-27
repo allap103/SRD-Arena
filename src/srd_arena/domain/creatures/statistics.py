@@ -1,3 +1,5 @@
+"""Provide statistics support for the creatures package."""
+
 from dataclasses import dataclass, field
 
 from ..effects.conditions import Condition
@@ -5,6 +7,8 @@ from ..effects.conditions import Condition
 
 @dataclass(frozen=True)
 class CreatureStatistics:
+    """Represent a creature statistics."""
+
     creature_type: str | None = None
     type_tags: tuple[str, ...] = ()
     alignment: tuple[str, ...] = ()

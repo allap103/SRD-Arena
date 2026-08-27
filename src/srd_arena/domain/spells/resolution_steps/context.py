@@ -13,6 +13,8 @@ DieRoller = Callable[[int], int]
 
 @dataclass(frozen=True)
 class SpellTargetContext:
+    """Represent a spell target context."""
+
     creature: Creature
     target_ref: str
     target_label: str
@@ -25,6 +27,8 @@ class SpellTargetContext:
 
 @dataclass(frozen=True)
 class SpellActionContext:
+    """Represent a spell action context."""
+
     creature: Creature
     spell: Spell
     target: SpellTargetContext

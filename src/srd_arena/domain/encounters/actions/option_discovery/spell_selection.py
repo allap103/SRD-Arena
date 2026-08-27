@@ -1,3 +1,5 @@
+"""Provide spell selection support for the option discovery package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -13,6 +15,8 @@ def spell_target_selection_actions(
     state: EncounterState,
     creature_ref: str,
 ) -> list[EncounterAction]:
+    """Handle spell target selection actions."""
+
     pending = state.pending_spell_cast
     if pending is None:
         return []

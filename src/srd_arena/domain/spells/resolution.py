@@ -1,3 +1,5 @@
+"""Provide resolution support for the spells package."""
+
 from __future__ import annotations
 
 from typing import cast
@@ -27,6 +29,8 @@ __all__ = [
 def resolve_spell_action(
     context: SpellActionContext,
 ) -> CapabilityActionResult | None:
+    """Resolve spell action."""
+
     spell = context.spell
     if spell.definition is not None:
         return resolve_custom_spell(context, _resolve_declarative_spell)

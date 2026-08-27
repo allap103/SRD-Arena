@@ -1,3 +1,5 @@
+"""Provide resource formatting support for the encounter package."""
+
 from __future__ import annotations
 
 

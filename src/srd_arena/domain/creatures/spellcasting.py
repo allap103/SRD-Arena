@@ -1,3 +1,5 @@
+"""Provide spellcasting support for the creatures package."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -11,6 +13,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class Spellcasting:
+    """Represent a spellcasting."""
+
     ability: str
     ability_modifier: int
     save_dc: int

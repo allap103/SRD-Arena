@@ -1,3 +1,5 @@
+"""Provide primitives support for the geometry package."""
+
 from dataclasses import dataclass
 
 
@@ -30,12 +32,16 @@ class MovementCost(int):
 
 @dataclass
 class Position:
+    """Represent a position."""
+
     x: int
     y: int
 
 
 @dataclass
 class Grid:
+    """Represent a grid."""
+
     width: int
     height: int
     square_size_feet: int = 5
@@ -72,8 +78,12 @@ class Grid:
 
 
 def manhattan_distance(a: Position, b: Position) -> GridDistance:
+    """Handle manhattan distance."""
+
     return GridDistance(abs(a.x - b.x) + abs(a.y - b.y))
 
 
 def grid_distance_between(a: Position, b: Position) -> GridDistance:
+    """Handle grid distance between."""
+
     return GridDistance(max(abs(a.x - b.x), abs(a.y - b.y)))

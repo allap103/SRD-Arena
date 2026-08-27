@@ -24,6 +24,8 @@ def resolve_follow_up(
     cast_level: int,
     sequence_step: int,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    """Resolve follow up."""
+
     if (
         follow_up.target.kind != "area"
         or follow_up.target.origin != "target"

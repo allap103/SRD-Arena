@@ -1,3 +1,5 @@
+"""Provide action payloads support for the spells package."""
+
 from __future__ import annotations
 
 from .definitions import Spell
@@ -10,12 +12,16 @@ def spell_action_label(
     target_ref: str | None = None,
     target_label: str | None = None,
 ) -> str:
+    """Handle spell action label."""
+
     if target_ref is None or target_ref == actor_ref or target_label is None:
         return f"Cast {spell.name}"
     return f"Cast {spell.name} on {target_label[:1].lower()}{target_label[1:]}"
 
 
 def spell_action_id(spell: Spell, *, target_ref: str | None = None) -> str:
+    """Handle spell action id."""
+
     if target_ref is None:
         return f"spell-{spell.id}"
     if target_ref.startswith("participant:"):
@@ -33,6 +39,8 @@ def spell_action_value(
     slot_level: int | None = None,
     healing_allocations: dict[str, int] | None = None,
 ) -> str:
+    """Handle spell action value."""
+
     if aim_point is not None:
         value = f"{spell_id}@{aim_point[0]:.4f},{aim_point[1]:.4f}"
         if isinstance(target_ref, tuple) and target_ref:
@@ -106,6 +114,8 @@ def _with_spell_selections(
 def parse_spell_action_value(
     value: str,
 ) -> tuple[str, str | None, tuple[float, float] | None]:
+    """Parse spell action value."""
+
     value, _, _selection = value.partition("#")
     if "@" in value:
         spell_id, _, aim = value.partition("@")
@@ -123,6 +133,8 @@ def parse_spell_action_value(
 
 
 def parse_spell_action_targets(value: str) -> tuple[str, ...]:
+    """Parse spell action targets."""
+
     base, _, _selection = value.partition("#")
     if "|" in base:
         _aim_payload, _, targets = base.partition("|")
@@ -134,6 +146,8 @@ def parse_spell_action_targets(value: str) -> tuple[str, ...]:
 
 
 def parse_spell_action_condition(value: str) -> str | None:
+    """Parse spell action condition."""
+
     _base, separator, selections = value.partition("#")
     if not separator:
         return None
@@ -145,6 +159,8 @@ def parse_spell_action_condition(value: str) -> str | None:
 
 
 def parse_spell_action_damage_type(value: str) -> str | None:
+    """Parse spell action damage type."""
+
     _base, separator, selections = value.partition("#")
     if not separator:
         return None
@@ -156,6 +172,8 @@ def parse_spell_action_damage_type(value: str) -> str | None:
 
 
 def parse_spell_action_ability(value: str) -> str | None:
+    """Parse spell action ability."""
+
     _base, separator, selections = value.partition("#")
     if not separator:
         return None
@@ -167,6 +185,8 @@ def parse_spell_action_ability(value: str) -> str | None:
 
 
 def parse_spell_action_slot(value: str) -> int | None:
+    """Parse spell action slot."""
+
     _base, separator, selections = value.partition("#")
     if not separator:
         return None
@@ -178,6 +198,8 @@ def parse_spell_action_slot(value: str) -> int | None:
 
 
 def parse_spell_healing_allocations(value: str) -> dict[str, int]:
+    """Parse spell healing allocations."""
+
     _base, separator, selections = value.partition("#")
     if not separator:
         return {}

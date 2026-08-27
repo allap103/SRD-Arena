@@ -20,6 +20,8 @@ def apply_encounter_effects(
     *,
     origin_id: str | None = None,
 ) -> list[tuple[str, str]]:
+    """Apply encounter effects."""
+
     resolved_origin_id = origin_id or state._next_runtime_origin_id()
     return apply_effects(
         effects,
@@ -32,6 +34,8 @@ def apply_encounter_effects(
 
 
 def consume_action(state: EncounterState, *, allow_magic: bool) -> None:
+    """Handle consume action."""
+
     if state.active_actions_remaining <= 0:
         raise RuntimeError("No Action remains to consume.")
     non_magic_only_actions = max(
@@ -48,22 +52,30 @@ def consume_action(state: EncounterState, *, allow_magic: bool) -> None:
 
 
 def active_movement_remaining(state: EncounterState) -> MovementBudget:
+    """Handle active movement remaining."""
+
     return state.active_movement_remaining_for()
 
 
 def next_action_id(state: EncounterState) -> str:
+    """Handle next action id."""
+
     action_id = f"action_{state.action_sequence}"
     state.action_sequence += 1
     return action_id
 
 
 def next_runtime_origin_id(state: EncounterState) -> str:
+    """Handle next runtime origin id."""
+
     origin_id = f"effect_{state.runtime_state_sequence}"
     state.runtime_state_sequence += 1
     return origin_id
 
 
 def next_frame_id(state: EncounterState, prefix: str = "frame") -> str:
+    """Handle next frame id."""
+
     frame_id = f"{prefix}_{state.frame_sequence}"
     state.frame_sequence += 1
     return frame_id
@@ -77,6 +89,8 @@ def create_event(
     action_id: str | None = None,
     data: dict[str, object] | None = None,
 ) -> CombatEvent:
+    """Create event."""
+
     event = CombatEvent(
         seq=state.event_sequence,
         type=event_type,
@@ -94,6 +108,8 @@ def merge_progress(
     target: EncounterProgress,
     source: EncounterProgress,
 ) -> None:
+    """Handle merge progress."""
+
     target.messages.extend(source.messages)
     target.events.extend(source.events)
     if source.transition is not None:
@@ -105,11 +121,15 @@ def merge_progress(
 
 
 def creature_label(state: EncounterState, creature_ref: CreatureRef) -> str:
+    """Handle creature label."""
+
     creature_state = state.creatures[creature_ref]
     return f"{creature_state.creature.name} ({creature_state.creature_id})"
 
 
 def living_creature_refs(state: EncounterState) -> list[CreatureRef]:
+    """Handle living creature refs."""
+
     return [
         creature_ref
         for creature_ref, creature_state in state.creatures.items()
@@ -118,6 +138,8 @@ def living_creature_refs(state: EncounterState) -> list[CreatureRef]:
 
 
 def creature_position(state: EncounterState, creature_ref: CreatureRef) -> Position:
+    """Handle creature position."""
+
     return state.creatures[creature_ref].position
 
 
@@ -128,6 +150,8 @@ def position_is_free(
     *,
     ignored_refs: set[CreatureRef] | frozenset[CreatureRef] = frozenset(),
 ) -> bool:
+    """Handle position is free."""
+
     if (
         x < 0
         or y < 0
@@ -144,4 +168,6 @@ def position_is_free(
 
 
 def creature_size(state: EncounterState, creature_ref: CreatureRef) -> str:
+    """Handle creature size."""
+
     return state.creatures[creature_ref].creature.size

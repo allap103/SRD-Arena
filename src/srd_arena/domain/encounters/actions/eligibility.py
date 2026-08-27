@@ -43,6 +43,8 @@ def action_eligibility(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> ActionEligibility:
+    """Handle action eligibility."""
+
     compatibility = state.combat_rules.action_compatibility(
         state,
         actor_ref,
@@ -61,6 +63,8 @@ def require_action_eligible(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> None:
+    """Handle require action eligible."""
+
     eligibility = state.combat_rules.action_eligibility(
         state,
         actor_ref,

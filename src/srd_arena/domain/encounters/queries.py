@@ -1,3 +1,5 @@
+"""Provide queries support for the encounters package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

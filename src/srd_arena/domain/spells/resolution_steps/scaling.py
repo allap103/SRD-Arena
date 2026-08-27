@@ -10,6 +10,8 @@ def scale_dice(
     increment: str | None,
     levels_above: int,
 ) -> str | None:
+    """Handle scale dice."""
+
     if base is None or increment is None or levels_above <= 0:
         return base
     base_count, base_sides = parse_damage_dice(base)
@@ -25,6 +27,8 @@ def scaled_damage_dice(
     increment_sides: int,
     levels_above: int,
 ) -> str:
+    """Handle scaled damage dice."""
+
     count, sides = parse_damage_dice(dice)
     if sides != increment_sides:
         raise ValueError("Slot damage scaling must use the base damage die.")
@@ -35,6 +39,8 @@ def actor_level_damage_dice(
     definition: CapabilityDefinition,
     actor_level: int,
 ) -> str | None:
+    """Handle actor level damage dice."""
+
     thresholds = sorted(
         (
             threshold
@@ -57,6 +63,8 @@ def resource_dice_increment(
     kind: str,
     damage_type: str | None = None,
 ) -> str | None:
+    """Handle resource dice increment."""
+
     return next(
         (
             increment.amount
@@ -79,6 +87,8 @@ def resource_int_increment(
     definition: CapabilityDefinition,
     kind: str,
 ) -> int:
+    """Handle resource int increment."""
+
     return sum(
         increment.amount
         for scaling in definition.scaling
@@ -89,6 +99,8 @@ def resource_int_increment(
 
 
 def parse_damage_dice(expression: str) -> tuple[int, int]:
+    """Parse damage dice."""
+
     match = re.fullmatch(r"(\d+)d(\d+)", expression)
     if match is None:
         raise ValueError(f"Unsupported damage dice expression: {expression!r}")

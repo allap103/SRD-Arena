@@ -1,3 +1,5 @@
+"""Provide catalog support for the classes package."""
+
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,12 +18,16 @@ from .schema import (
 
 @dataclass(frozen=True)
 class ClassRecord:
+    """Represent a class record."""
+
     definition: ClassSchema
     features: tuple[ClassFeatureSchema, ...]
 
 
 @dataclass(frozen=True)
 class SubclassRecord:
+    """Represent a subclass record."""
+
     definition: SubclassSchema
     features: tuple[SubclassFeatureSchema, ...]
 
@@ -30,6 +36,8 @@ ClassCatalog = SourceCatalog[ClassRecord]
 
 
 class SubclassCatalog:
+    """Represent a subclass catalog."""
+
     def __init__(self, records: list[SubclassRecord]) -> None:
         self._records = records
         self._by_identity = {
@@ -80,6 +88,8 @@ class SubclassCatalog:
 
 
 def load_class_catalog(directory: str | Path) -> ClassCatalog:
+    """Load class catalog."""
+
     system_dir = Path(directory)
     class_dir = system_dir / "classes"
     definitions = _load_paths(
@@ -111,6 +121,8 @@ def load_class_catalog(directory: str | Path) -> ClassCatalog:
 
 
 def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
+    """Load subclass catalog."""
+
     system_dir = Path(directory)
     definitions = _load_records(system_dir / "subclasses", SubclassSchema)
     features = _load_records(

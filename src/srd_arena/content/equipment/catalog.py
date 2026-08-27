@@ -1,3 +1,5 @@
+"""Provide catalog support for the equipment package."""
+
 from pathlib import Path
 
 from srd_arena.content.common.catalog import SourceCatalog
@@ -9,6 +11,8 @@ ItemCatalog = SourceCatalog[ItemSchema]
 
 
 def load_item_catalog(directory: str | Path) -> ItemCatalog:
+    """Load item catalog."""
+
     system_dir = Path(directory)
     base_items_dir = system_dir / "items_base"
     items_dir = system_dir / "items"

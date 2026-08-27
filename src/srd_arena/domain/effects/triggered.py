@@ -1,3 +1,5 @@
+"""Provide triggered support for the effects package."""
+
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 
@@ -22,6 +24,8 @@ def matching_effects(
     trigger: str,
     context: Mapping[str, object],
 ) -> list[TriggeredEffect]:
+    """Handle matching effects."""
+
     return [
         effect
         for effect in effects
@@ -33,6 +37,8 @@ def reroll_eligible_indices(
     effect: TriggeredEffect,
     pool: DicePoolResult,
 ) -> tuple[int, ...]:
+    """Handle reroll eligible indices."""
+
     if effect.operation != "reroll_matching_dice":
         return ()
     values = effect.parameters.get("values", [])

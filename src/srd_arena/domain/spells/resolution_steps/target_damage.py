@@ -10,6 +10,8 @@ from .target_rolls import TargetRollOutcome
 
 @dataclass
 class TargetDamageResult:
+    """Represent a target damage result."""
+
     total_applied: int
     details: list[dict[str, object]]
 
@@ -19,6 +21,8 @@ def apply_target_damage(
     prepared: PreparedSpellResolution,
     roll_outcome: TargetRollOutcome,
 ) -> TargetDamageResult:
+    """Apply target damage."""
+
     total_applied = 0
     details: list[dict[str, object]] = []
     for damage, roll in roll_outcome.damage_rolls:

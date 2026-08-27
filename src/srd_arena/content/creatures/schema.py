@@ -1,3 +1,5 @@
+"""Provide schema support for the creatures package."""
+
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -25,6 +27,8 @@ EquipmentSlot = Literal[
 
 
 class CreatureItemReferenceSchema(BaseModel):
+    """Validate authored creature item reference data."""
+
     model_config = ConfigDict(extra="forbid")
 
     name: str
@@ -35,6 +39,8 @@ ItemIdOrReference = str | CreatureItemReferenceSchema
 
 
 class AttributesSchema(BaseModel):
+    """Validate authored attributes data."""
+
     model_config = ConfigDict(extra="forbid")
 
     base_health: int = 10
@@ -51,12 +57,16 @@ class AttributesSchema(BaseModel):
 
 
 class MovementSchema(BaseModel):
+    """Validate authored movement data."""
+
     model_config = ConfigDict(extra="forbid")
 
     speed_feet: int = 30
 
 
 class SpellcastingSchema(BaseModel):
+    """Validate authored spellcasting data."""
+
     model_config = ConfigDict(extra="forbid")
 
     ability: Literal["str", "dex", "con", "int", "wis", "cha"]
@@ -68,6 +78,8 @@ class SpellcastingSchema(BaseModel):
 
 
 class CreatureSchema(BaseModel):
+    """Validate authored creature data."""
+
     model_config = ConfigDict(extra="forbid")
 
     id: str
@@ -89,6 +101,8 @@ class CreatureSchema(BaseModel):
 
 
 class StatBlockReferenceSchema(BaseModel):
+    """Validate authored stat block reference data."""
+
     model_config = ConfigDict(extra="forbid")
 
     name: str
@@ -96,6 +110,8 @@ class StatBlockReferenceSchema(BaseModel):
 
 
 class SubclassReferenceSchema(BaseModel):
+    """Validate authored subclass reference data."""
+
     model_config = ConfigDict(extra="forbid")
 
     name: str

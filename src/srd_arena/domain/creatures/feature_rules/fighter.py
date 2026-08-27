@@ -1,3 +1,5 @@
+"""Provide fighter support for the feature rules package."""
+
 from __future__ import annotations
 
 from ...effects.results import EffectResult
@@ -10,6 +12,8 @@ def resolve_fighter_feature(
     feature_id: str,
     roll_dice: DiceRoller,
 ) -> CapabilityActionResult | None:
+    """Resolve fighter feature."""
+
     if feature_id == "second_wind":
         return _resolve_second_wind(creature, roll_dice)
     if feature_id == "action_surge":

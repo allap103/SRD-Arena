@@ -1,3 +1,5 @@
+"""Provide results support for the effects package."""
+
 from dataclasses import dataclass, field
 
 from .rule_effects import RuntimeRuleEffect

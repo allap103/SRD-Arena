@@ -1,13 +1,19 @@
+"""Provide schema support for the classes package."""
+
 from pydantic import Field
 
 from srd_arena.content.common.schema import SourceModel
 
 
 class ClassFeatureReferenceSchema(SourceModel):
+    """Validate authored class feature reference data."""
+
     class_feature: str = Field(alias="classFeature")
 
 
 class ClassTableGroupSchema(SourceModel):
+    """Validate authored class table group data."""
+
     column_labels: list[object] = Field(default_factory=list, alias="colLabels")
     rows: list[list[object]] = Field(default_factory=list)
     spell_progression_rows: list[list[object]] = Field(
@@ -17,10 +23,14 @@ class ClassTableGroupSchema(SourceModel):
 
 
 class StartingProficienciesSchema(SourceModel):
+    """Validate authored starting proficiencies data."""
+
     weapons: list[object] = Field(default_factory=list)
 
 
 class ClassFeatureSchema(SourceModel):
+    """Validate authored class feature data."""
+
     name: str
     source: str
     class_name: str = Field(alias="className")
@@ -39,11 +49,15 @@ class ClassFeatureSchema(SourceModel):
 
 
 class SubclassFeatureSchema(ClassFeatureSchema):
+    """Validate authored subclass feature data."""
+
     subclass_short_name: str = Field(alias="subclassShortName")
     subclass_source: str = Field(alias="subclassSource")
 
 
 class ClassSchema(SourceModel):
+    """Validate authored class data."""
+
     name: str
     source: str
     proficiency: list[str] = Field(default_factory=list)
@@ -87,6 +101,8 @@ class ClassSchema(SourceModel):
 
 
 class SubclassSchema(SourceModel):
+    """Validate authored subclass data."""
+
     name: str
     short_name: str = Field(default="", alias="shortName")
     source: str
@@ -128,6 +144,8 @@ class SubclassSchema(SourceModel):
 
 
 class ClassFileSchema(SourceModel):
+    """Validate authored class file data."""
+
     classes: list[ClassSchema] = Field(default_factory=list, alias="class")
     subclasses: list[SubclassSchema] = Field(default_factory=list, alias="subclass")
     class_features: list[ClassFeatureSchema] = Field(

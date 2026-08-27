@@ -1,3 +1,5 @@
+"""Provide app support for the gui package."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -45,6 +47,8 @@ from .ui.sidebar import GameSidebar, SidebarCallbacks
 
 
 class GameWindow(QMainWindow):
+    """Represent a game window."""
+
     def __init__(
         self,
         presenter: GamePresenter,

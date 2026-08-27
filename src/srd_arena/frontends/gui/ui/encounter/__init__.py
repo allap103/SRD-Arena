@@ -1,3 +1,5 @@
+"""Expose the public encounter package API."""
+
 from .battlefield import BattlefieldWidget
 from .config import (
     ARROW_LABELS,

@@ -1,3 +1,5 @@
+"""Provide paths support for the common package."""
+
 from pathlib import Path
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[2]

@@ -1,3 +1,5 @@
+"""Provide capabilities support for the building package."""
+
 from collections.abc import Iterable
 from dataclasses import replace
 from typing import Literal
@@ -126,6 +128,8 @@ def build_definition(
     content: str = "Spell capability",
     location: str = "capability.resolution",
 ) -> domain.CapabilityDefinition:
+    """Build definition."""
+
     effect_values = tuple(effect.root for effect in outcome.effects)
     success_values = (
         tuple(effect.root for effect in resolution.success.effects)

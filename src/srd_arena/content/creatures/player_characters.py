@@ -1,3 +1,5 @@
+"""Provide player characters support for the creatures package."""
+
 from pathlib import Path
 
 from srd_arena.content.common.sources import load_json
@@ -10,6 +12,8 @@ type PlayerCharacterTemplates = dict[str, CreatureSchema]
 def load_player_character_templates(
     directory: str | Path,
 ) -> PlayerCharacterTemplates:
+    """Load player character templates."""
+
     player_characters_dir = Path(directory)
     if not player_characters_dir.is_dir():
         return {}

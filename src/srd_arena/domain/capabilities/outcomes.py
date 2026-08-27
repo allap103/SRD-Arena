@@ -7,6 +7,8 @@ from .effects import CapabilityEffect, EffectDuration
 
 @dataclass(frozen=True)
 class RepeatSave:
+    """Represent a repeat save."""
+
     trigger: str
     ability: str | None = None
     interval_amount: int | None = None
@@ -22,5 +24,7 @@ class RepeatSave:
 
 @dataclass(frozen=True)
 class OutcomeStage:
+    """Represent an outcome stage."""
+
     effects: tuple[CapabilityEffect, ...]
     repeat_saves: tuple[RepeatSave, ...] = ()

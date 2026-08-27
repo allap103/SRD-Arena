@@ -1,3 +1,5 @@
+"""Provide grappling support for the actions package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -21,6 +23,8 @@ def available_escape_actions(
     state: EncounterState,
     creature_ref: str,
 ) -> list[EncounterAction]:
+    """Return available escape actions."""
+
     creature_state = state.creatures[creature_ref]
     if creature_state.actions_remaining <= 0:
         return []
@@ -54,6 +58,8 @@ def resolve_escape_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
+    """Resolve escape action."""
+
     creature_ref = state.current_decision().creature_ref
     creature_state = state.creatures[creature_ref]
     if creature_state.actions_remaining <= 0:

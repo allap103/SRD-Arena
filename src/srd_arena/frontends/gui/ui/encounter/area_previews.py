@@ -1,3 +1,5 @@
+"""Provide area previews support for the encounter package."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping

@@ -1,3 +1,5 @@
+"""Provide layout support for the encounter package."""
+
 from __future__ import annotations
 
 from PySide6.QtWidgets import QLayout

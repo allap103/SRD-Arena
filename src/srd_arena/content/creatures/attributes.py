@@ -1,3 +1,5 @@
+"""Provide attributes support for the creatures package."""
+
 from srd_arena.content.character_options.classes import ClassRecord
 from srd_arena.domain.creatures import Attributes, Movement, normalize_size
 
@@ -11,6 +13,8 @@ def build_creature_attributes(
     stat_block: BestiaryMonsterSchema | None,
     class_record: ClassRecord | None,
 ) -> Attributes:
+    """Build creature attributes."""
+
     if stat_block is None:
         attributes = schema.attributes.model_dump(exclude={"movement"})
         attributes["proficiencies"] = _merge_proficiencies(
@@ -63,6 +67,8 @@ def build_creature_size(
     schema: CreatureSchema,
     stat_block: BestiaryMonsterSchema | None,
 ) -> str:
+    """Build creature size."""
+
     if stat_block is not None:
         return normalize_size(stat_block.primary_size)
     return _normalize_size_value(schema.metadata.get("size"))

@@ -10,6 +10,8 @@ def roll_optional_dice(
     dice: str | None,
     roller: DieRoller,
 ) -> DicePoolResult | None:
+    """Handle roll optional dice."""
+
     if dice is None:
         return None
     count, sides = parse_damage_dice(dice)
@@ -25,6 +27,8 @@ def restoration_detail(
     total: int,
     applied: int,
 ) -> dict[str, object]:
+    """Handle restoration detail."""
+
     return {
         "target_ref": target.target_ref,
         "target_label": target.target_label,
@@ -41,6 +45,8 @@ def serialize_roll_modifiers(
     modifiers: tuple[RollModifierEffect, ...],
     selected_ability: str | None,
 ) -> list[dict[str, object]]:
+    """Serialize roll modifiers."""
+
     serialized: list[dict[str, object]] = []
     for modifier in modifiers:
         abilities = modifier.ability_options or (modifier.ability,)
@@ -68,6 +74,8 @@ def serialize_roll_modifiers(
 
 
 def effect_duration_rounds(duration: EffectDuration | None) -> int | None:
+    """Handle effect duration rounds."""
+
     if duration is None:
         return None
     if duration.kind in {"start_of_turn", "end_of_turn"}:

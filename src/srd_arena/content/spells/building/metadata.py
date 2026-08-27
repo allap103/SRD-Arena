@@ -1,3 +1,5 @@
+"""Provide metadata support for the building package."""
+
 import re
 
 from srd_arena.content.capabilities import DamageEffectSchema
@@ -12,6 +14,8 @@ from srd_arena.content.spells.schema import SpellSchema
 
 
 def spell_damage_dice(raw: SpellSchema) -> str | None:
+    """Handle spell damage dice."""
+
     if raw.capability is not None:
         resolution = raw.capability.resolution.root
         if isinstance(resolution, RepeatResolutionSchema):
@@ -46,6 +50,8 @@ def spell_damage_dice(raw: SpellSchema) -> str | None:
 
 
 def spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
+    """Handle spell removable conditions."""
+
     if raw.capability is not None:
         resolution = raw.capability.resolution.root
         if isinstance(resolution, RepeatResolutionSchema):
@@ -72,6 +78,8 @@ def spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
 
 
 def remove_effect_selection(raw: SpellSchema) -> str | None:
+    """Remove effect selection."""
+
     if raw.capability is None:
         return None
     resolution = raw.capability.resolution.root
@@ -91,6 +99,8 @@ def remove_effect_selection(raw: SpellSchema) -> str | None:
 
 
 def spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
+    """Handle spell removable effect kinds."""
+
     if raw.capability is None:
         return ()
     resolution = raw.capability.resolution.root
@@ -110,6 +120,8 @@ def spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
 
 
 def spell_geometry_mode(raw: SpellSchema) -> str:
+    """Handle spell geometry mode."""
+
     if raw.capability is not None and raw.capability.target.type == "area":
         return (
             "directional_area"
@@ -131,6 +143,8 @@ def spell_geometry_mode(raw: SpellSchema) -> str:
 
 
 def spell_area_size_feet(raw: SpellSchema) -> int | None:
+    """Handle spell area size feet."""
+
     if raw.capability is not None and raw.capability.target.type == "area":
         geometry = raw.capability.target.geometry
         return geometry.radius_feet or geometry.length_feet

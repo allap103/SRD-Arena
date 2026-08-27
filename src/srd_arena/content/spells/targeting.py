@@ -1,3 +1,5 @@
+"""Provide targeting support for the spells package."""
+
 from __future__ import annotations
 
 from typing import Annotated, Literal
@@ -19,58 +21,80 @@ from .base import SpellCapabilitySchemaModel
 
 
 class CreatureTraitRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored creature trait requirement data."""
+
     type: Literal["creature_trait"]
     trait: str = Field(min_length=1)
 
 
 class ConditionImmunityRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored condition immunity requirement data."""
+
     type: Literal["condition_immunity"]
     condition: str = Field(min_length=1)
 
 
 class SpellComponentRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored spell component requirement data."""
+
     type: Literal["spell_component"]
     component: Literal["verbal", "somatic", "material"]
 
 
 class AttackSourceRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored attack source requirement data."""
+
     type: Literal["attack_source"]
     source: Literal["weapon", "unarmed_strike", "spell", "any"]
     mode: Literal["melee", "ranged", "any"] = "any"
 
 
 class WillingRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored willing requirement data."""
+
     type: Literal["willing"]
 
 
 class FreeHandRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored free hand requirement data."""
+
     type: Literal["free_hand"]
 
 
 class PerceptionRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored perception requirement data."""
+
     type: Literal["perception"]
     sense: Literal["see", "hear"]
     subject: Literal["source", "target", "each_other"] = "source"
 
 
 class HitPointRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored hit point requirement data."""
+
     type: Literal["hit_points"]
     comparison: Literal["less_than", "at_most", "at_least", "greater_than"]
     value: NonNegativeInt
 
 
 class RelationshipRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored relationship requirement data."""
+
     type: Literal["relationship"]
     relationship: str = Field(min_length=1)
     established_by: Literal["this_spell", "source", "any"] = "any"
 
 
 class AnyRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored any requirement data."""
+
     type: Literal["any"]
     requirements: list[SpellRequirementSchema] = Field(min_length=1)
 
 
 class AllRequirementSchema(SpellCapabilitySchemaModel):
+    """Validate authored all requirement data."""
+
     type: Literal["all"]
     requirements: list[SpellRequirementSchema] = Field(min_length=1)
 
@@ -96,6 +120,8 @@ SpellRequirementSchema = Annotated[
 
 
 class SpellSaveModifierSchema(SpellCapabilitySchemaModel):
+    """Validate authored spell save modifier data."""
+
     type: Literal["roll_modifier"]
     roll: Literal["saving_throw"]
     mode: Literal["advantage", "disadvantage", "add", "subtract"]
@@ -107,6 +133,8 @@ class SpellSaveModifierSchema(SpellCapabilitySchemaModel):
 
 
 class TargetCountSchema(SpellCapabilitySchemaModel):
+    """Validate authored target count data."""
+
     minimum: NonNegativeInt = 1
     maximum: PositiveInt | Literal["spellcasting_modifier", "all"] = 1
 
@@ -118,10 +146,14 @@ class TargetCountSchema(SpellCapabilitySchemaModel):
 
 
 class SelfSpellTargetSchema(SpellCapabilitySchemaModel):
+    """Validate authored self spell target data."""
+
     type: Literal["self"]
 
 
 class CreatureSpellTargetSchema(SpellCapabilitySchemaModel):
+    """Validate authored creature spell target data."""
+
     type: Literal["creature"]
     count: TargetCountSchema = Field(default_factory=TargetCountSchema)
     disposition: Literal[
@@ -133,6 +165,8 @@ class CreatureSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class ObjectSpellTargetSchema(SpellCapabilitySchemaModel):
+    """Validate authored object spell target data."""
+
     type: Literal["object"]
     count: TargetCountSchema = Field(default_factory=TargetCountSchema)
     carried: Literal["allowed", "required", "forbidden"] = "allowed"
@@ -141,12 +175,16 @@ class ObjectSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class PointSpellTargetSchema(SpellCapabilitySchemaModel):
+    """Validate authored point spell target data."""
+
     type: Literal["point"]
     surface: Literal["any", "solid", "ground"] = "any"
     line_of_sight: bool = False
 
 
 class EventSpellTargetSchema(SpellCapabilitySchemaModel):
+    """Validate authored event spell target data."""
+
     type: Literal["event_target"]
     binding: Literal[
         "triggering_actor",
@@ -159,6 +197,8 @@ class EventSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class AreaGeometrySchema(SpellCapabilitySchemaModel):
+    """Validate authored area geometry data."""
+
     shape: Literal[
         "sphere", "cone", "cube", "line", "cylinder", "emanation", "wall", "ring"
     ]
@@ -204,6 +244,8 @@ class AreaGeometrySchema(SpellCapabilitySchemaModel):
 
 
 class AreaSpellTargetSchema(SpellCapabilitySchemaModel):
+    """Validate authored area spell target data."""
+
     type: Literal["area"]
     origin: Literal["self", "point_in_range", "target", "spell_entity", "event_target"]
     geometry: AreaGeometrySchema
@@ -221,6 +263,8 @@ class AreaSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class CompositeAreaComponentSchema(SpellCapabilitySchemaModel):
+    """Validate authored composite area component data."""
+
     geometry: AreaGeometrySchema
     minimum: PositiveInt = 1
     maximum: PositiveInt
@@ -233,6 +277,8 @@ class CompositeAreaComponentSchema(SpellCapabilitySchemaModel):
 
 
 class CompositeAreaSpellTargetSchema(SpellCapabilitySchemaModel):
+    """Validate authored composite area spell target data."""
+
     type: Literal["composite_area"]
     origin: Literal["point_in_range"] = "point_in_range"
     component: CompositeAreaComponentSchema
@@ -243,18 +289,24 @@ class CompositeAreaSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class SpellEntityTargetSchema(SpellCapabilitySchemaModel):
+    """Validate authored spell entity target data."""
+
     type: Literal["spell_entity"]
     ownership: Literal["source", "any"] = "source"
     entity_kinds: list[str] = Field(default_factory=list)
 
 
 class TargetChoiceOptionSchema(SpellCapabilitySchemaModel):
+    """Validate authored target choice option data."""
+
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
     target: SpellTargetSchema
 
 
 class ChoiceSpellTargetSchema(SpellCapabilitySchemaModel):
+    """Validate authored choice spell target data."""
+
     type: Literal["choice"]
     options: list[TargetChoiceOptionSchema] = Field(min_length=1)
 

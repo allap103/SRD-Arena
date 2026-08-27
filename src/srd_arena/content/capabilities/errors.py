@@ -1,3 +1,6 @@
+"""Provide errors support for the capabilities package."""
+
+
 class CapabilityBuildError(ValueError):
     """Report structured capability content that cannot be built."""
 

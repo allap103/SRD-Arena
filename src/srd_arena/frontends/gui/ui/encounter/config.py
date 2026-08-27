@@ -1,3 +1,5 @@
+"""Provide config support for the encounter package."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -18,6 +20,8 @@ ARROW_LABELS = {
 
 @dataclass(frozen=True)
 class TargetSelectionMode:
+    """Represent a target selection mode."""
+
     kind: str
     source_trigger_id: str | None = None
     variant_id: str | None = None
@@ -25,5 +29,7 @@ class TargetSelectionMode:
 
 @dataclass(frozen=True)
 class ActionMenuScope:
+    """Represent an action menu scope."""
+
     economy: str
     bucket: str

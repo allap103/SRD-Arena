@@ -1,3 +1,5 @@
+"""Provide modifiers support for the effects package."""
+
 from dataclasses import dataclass
 from typing import Literal, cast
 
@@ -10,6 +12,8 @@ ModifierSubject = Literal["target", "attacks_against_target"]
 
 @dataclass(frozen=True)
 class RollModifier:
+    """Represent a roll modifier."""
+
     roll: RollKind
     mode: ModifierMode
     dice: str | None = None
@@ -36,6 +40,8 @@ class RollModifier:
 
 @dataclass
 class DamageReduction:
+    """Represent a damage reduction."""
+
     damage_type: str
     dice: str
     available: bool = True

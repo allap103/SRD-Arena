@@ -1,3 +1,5 @@
+"""Provide models support for the eligibility rules package."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,6 +13,8 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class EligibilityFailure:
+    """Represent an eligibility failure."""
+
     code: str
     message: str
     state_ids: tuple[str, ...] = ()
@@ -18,6 +22,8 @@ class EligibilityFailure:
 
 @dataclass(frozen=True)
 class ActionEligibility:
+    """Represent an action eligibility."""
+
     failures: tuple[EligibilityFailure, ...] = ()
 
     @property
@@ -26,6 +32,8 @@ class ActionEligibility:
 
 
 class EligibilityRule(Protocol):
+    """Define the eligibility rule contract."""
+
     def check(
         self,
         state: EncounterState,

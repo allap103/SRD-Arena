@@ -18,6 +18,8 @@ from .scaling import parse_damage_dice
 
 @dataclass
 class TargetRollOutcome:
+    """Represent a target roll outcome."""
+
     successful_save: bool
     automatic_success_reasons: tuple[str, ...]
     hit: bool
@@ -33,6 +35,8 @@ def resolve_target_roll(
     *,
     projectile_index: int,
 ) -> TargetRollOutcome:
+    """Resolve target roll."""
+
     assert context.creature.spellcasting is not None
     assert context.roller is not None
 

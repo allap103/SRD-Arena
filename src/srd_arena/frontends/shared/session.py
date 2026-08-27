@@ -16,6 +16,8 @@ def build_session_presentation(
     observation: GameObservation,
     config: ScenarioPresentation | None = None,
 ) -> SessionPresentation:
+    """Build session presentation."""
+
     presentation_config = config or ScenarioPresentation()
     view = observation.scene
     story_actions = list(view.action_details[:-SYSTEM_ACTION_COUNT])

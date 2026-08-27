@@ -1,3 +1,5 @@
+"""Provide standard support for the option discovery package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -14,6 +16,8 @@ def available_feature_actions(
     self: EncounterState,
     creature: Creature,
 ) -> list[EncounterAction]:
+    """Return available feature actions."""
+
     creature_ref = self.current_decision().creature_ref
     actions: list[EncounterAction] = []
     for feature_id, definition in creature.combat_profile.feature_actions.items():
@@ -42,6 +46,8 @@ def feature_action_available(
     actor: Creature,
     definition: FeatureActionDefinition,
 ) -> bool:
+    """Handle feature action available."""
+
     if definition.economy == "bonus_action" and not self.active_bonus_action_available:
         return False
     if definition.economy == "action" and self.active_actions_remaining <= 0:

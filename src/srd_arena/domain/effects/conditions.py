@@ -1,3 +1,5 @@
+"""Provide conditions support for the effects package."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -15,6 +17,8 @@ from .triggered import TriggeredEffect
 
 
 class Condition(StrEnum):
+    """Enumerate supported condition values."""
+
     BLINDED = "blinded"
     CHARMED = "charmed"
     DEAFENED = "deafened"
@@ -33,6 +37,8 @@ class Condition(StrEnum):
 
 
 class CombatTrait(StrEnum):
+    """Enumerate supported combat trait values."""
+
     CANNOT_TAKE_ACTIONS = "cannot_take_actions"
     CANNOT_TAKE_REACTIONS = "cannot_take_reactions"
     SPEED_ZERO = "speed_zero"
@@ -45,6 +51,8 @@ class CombatTrait(StrEnum):
 
 @dataclass(frozen=True)
 class AppliedCondition:
+    """Represent an applied condition."""
+
     identity: RuntimeStateIdentity
     condition: Condition
     target_ref: str
@@ -96,6 +104,8 @@ def build_applied_condition(
     parent_id: str | None = None,
     root_id: str | None = None,
 ) -> AppliedCondition:
+    """Build applied condition."""
+
     resolved_origin_id = origin_id or f"source:{source_ref}"
     condition_id = f"condition:{condition.value}:{resolved_origin_id}:{target_ref}"
     if duration is None:

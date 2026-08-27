@@ -1,3 +1,5 @@
+"""Provide multiattack support for the actions package."""
+
 from collections.abc import Iterator
 from typing import Annotated, Literal
 
@@ -24,15 +26,21 @@ StatBlockSection = Literal[
 
 
 class MultiattackSchemaModel(BaseModel):
+    """Represent a multiattack schema model."""
+
     model_config = ConfigDict(extra="forbid")
 
 
 class CreatureStatCountSchema(MultiattackSchemaModel):
+    """Validate authored creature stat count data."""
+
     type: Literal["creature_stat"]
     stat: str = Field(min_length=1)
 
 
 class HalfSpellLevelCountSchema(MultiattackSchemaModel):
+    """Validate authored half spell level count data."""
+
     type: Literal["half_spell_level"]
     round: Literal["down", "up"] = "down"
 
@@ -45,22 +53,30 @@ RepeatCountSchema = PositiveInt | DynamicCountSchema
 
 
 class ActionUsedThisTurnRequirementSchema(MultiattackSchemaModel):
+    """Validate authored action used this turn requirement data."""
+
     type: Literal["action_used_this_turn"]
     action: str = Field(min_length=1)
 
 
 class SpellReferenceSchema(MultiattackSchemaModel):
+    """Validate authored spell reference data."""
+
     name: str = Field(min_length=1)
     source: str | None = None
 
 
 class StatBlockActionInvocationSchema(MultiattackSchemaModel):
+    """Validate authored stat block action invocation data."""
+
     type: Literal["stat_block_action"]
     name: str = Field(min_length=1)
     section: StatBlockSection = "action"
 
 
 class CastSpellInvocationSchema(MultiattackSchemaModel):
+    """Validate authored cast spell invocation data."""
+
     type: Literal["cast_spell"]
     spell: SpellReferenceSchema
     via: str = Field(default="Spellcasting", min_length=1)
@@ -75,6 +91,8 @@ MultiattackInvocationSchema = Annotated[
 
 
 class InvokeStepSchema(MultiattackSchemaModel):
+    """Validate authored invoke step data."""
+
     type: Literal["invoke"]
     invocation: MultiattackInvocationSchema
     times: RepeatCountSchema = 1
@@ -82,6 +100,8 @@ class InvokeStepSchema(MultiattackSchemaModel):
 
 
 class ChoiceStepSchema(MultiattackSchemaModel):
+    """Validate authored choice step data."""
+
     type: Literal["choose"]
     options: list[MultiattackInvocationSchema] = Field(min_length=2)
     times: RepeatCountSchema = 1
@@ -95,16 +115,22 @@ MultiattackStepSchema = Annotated[
 
 
 class AnyAttackReplacementTargetSchema(MultiattackSchemaModel):
+    """Validate authored any attack replacement target data."""
+
     type: Literal["any_attack"]
 
 
 class ActionReplacementTargetSchema(MultiattackSchemaModel):
+    """Validate authored action replacement target data."""
+
     type: Literal["action"]
     name: str = Field(min_length=1)
     section: StatBlockSection = "action"
 
 
 class StepReplacementTargetSchema(MultiattackSchemaModel):
+    """Validate authored step replacement target data."""
+
     type: Literal["step"]
     index: int = Field(ge=0)
 
@@ -118,6 +144,8 @@ ReplacementTargetSchema = Annotated[
 
 
 class MultiattackReplacementSchema(MultiattackSchemaModel):
+    """Validate authored multiattack replacement data."""
+
     target: ReplacementTargetSchema
     replace_count: PositiveInt = 1
     maximum_uses: PositiveInt | Literal["unbounded"] = 1
@@ -126,6 +154,8 @@ class MultiattackReplacementSchema(MultiattackSchemaModel):
 
 
 class MultiattackPlanSchema(MultiattackSchemaModel):
+    """Validate authored multiattack plan data."""
+
     steps: list[MultiattackStepSchema] = Field(min_length=1)
     ordering: Literal["any", "strict"] = "any"
     requirement: ActionUsedThisTurnRequirementSchema | None = None
@@ -146,6 +176,8 @@ class MultiattackPlanSchema(MultiattackSchemaModel):
 
 
 class MultiattackCapabilitySchema(MultiattackSchemaModel):
+    """Validate authored multiattack capability data."""
+
     type: Literal["multiattack"] = "multiattack"
     plans: list[MultiattackPlanSchema] = Field(min_length=1)
 
@@ -153,6 +185,8 @@ class MultiattackCapabilitySchema(MultiattackSchemaModel):
 def iter_stat_block_references(
     capability: MultiattackCapabilitySchema,
 ) -> Iterator[tuple[StatBlockSection, str]]:
+    """Iterate over stat block references."""
+
     for plan in capability.plans:
         for step in plan.steps:
             invocations = (
@@ -181,6 +215,8 @@ def _invocation_references(
 def build_multiattack(
     capability: MultiattackCapabilitySchema | None,
 ) -> Multiattack | None:
+    """Build multiattack."""
+
     if capability is None:
         return None
     return Multiattack(

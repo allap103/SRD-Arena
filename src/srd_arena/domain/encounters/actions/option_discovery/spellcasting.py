@@ -1,3 +1,5 @@
+"""Provide spellcasting support for the option discovery package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -18,6 +20,8 @@ if TYPE_CHECKING:
 
 
 def spell_action_cost(self: EncounterState, spell: Spell) -> ActionCost:
+    """Handle spell action cost."""
+
     economy = spell_action_economy(spell)
     return ActionCost(
         action=economy.action,
@@ -33,6 +37,8 @@ def spell_cast_block_reason_for(
     cost: ActionCost,
     cast_level: int | None = None,
 ) -> str | None:
+    """Handle spell cast block reason for."""
+
     creature_ref = self.current_decision().creature_ref
     compatibility = self.combat_rules.action_compatibility(
         self,
@@ -62,12 +68,16 @@ def spell_cast_block_reason_for(
 
 
 def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
+    """Handle spell targets self only for."""
+
     return spell.geometry_mode == "self_only" or spell_targets_self_only(spell)
 
 
 def spell_range_squares_for(
     self: EncounterState, spell: Spell, creature: Creature
 ) -> int | None:
+    """Handle spell range squares for."""
+
     return spell_range_squares(spell, self.definition.grid)
 
 
@@ -78,6 +88,8 @@ def spend_spell_resources(
     cost: ActionCost,
     cast_level: int | None = None,
 ) -> None:
+    """Spend spell resources."""
+
     if cost.action > 0:
         self._consume_action(allow_magic=True)
         clear_attack_action(self.active_creature_state)

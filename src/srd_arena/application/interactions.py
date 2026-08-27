@@ -90,6 +90,8 @@ def _observe_event(event: CombatEvent) -> GameEvent:
 
 
 def decision_id(observation: GameObservation) -> str | None:
+    """Handle decision id."""
+
     return (
         observation.encounter.decision.id if observation.encounter is not None else None
     )

@@ -15,6 +15,8 @@ from .state import EncounterCreatureState
 
 @dataclass
 class CombatEvent:
+    """Represent a combat event."""
+
     seq: int
     type: str
     creature_ref: CreatureRef | None = None
@@ -25,6 +27,8 @@ class CombatEvent:
 
 @dataclass
 class EncounterProgress:
+    """Represent an encounter progress."""
+
     messages: list[tuple[str, str]] = field(default_factory=list)
     transition: str | None = None
     events: list[CombatEvent] = field(default_factory=list)
@@ -33,6 +37,8 @@ class EncounterProgress:
 
 
 class ActionExecutionOutcome(StrEnum):
+    """Enumerate supported action execution outcome values."""
+
     CONTINUE_TURN = "continue_turn"
     END_TURN = "end_turn"
     PAUSE_FOR_DECISION = "pause_for_decision"
@@ -41,6 +47,8 @@ class ActionExecutionOutcome(StrEnum):
 
 @dataclass
 class ActionExecutionContext:
+    """Represent an action execution context."""
+
     actor_ref: CreatureRef
     actor: EncounterCreatureState
     decision: DecisionFrame
@@ -51,6 +59,8 @@ class ActionExecutionContext:
 
 @dataclass
 class ActionExecutionResult:
+    """Represent an action execution result."""
+
     context: ActionExecutionContext
     outcome: ActionExecutionOutcome
 
@@ -61,6 +71,8 @@ class ActionExecutionResult:
 
 @dataclass
 class DecisionExecutionResult:
+    """Represent a decision execution result."""
+
     progress: EncounterProgress
     action_id: str
     completed: bool
@@ -68,6 +80,8 @@ class DecisionExecutionResult:
 
 @dataclass
 class AttackOutcome:
+    """Represent an attack outcome."""
+
     messages: list[tuple[str, str]]
     hit: bool
     attack_roll: int
@@ -109,6 +123,8 @@ class DamageRerollRequest(DecisionRequest):
 
 @dataclass(frozen=True)
 class AttackSource:
+    """Represent an attack source."""
+
     name: str
     damage_dice: str
     damage_bonus: int

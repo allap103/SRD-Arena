@@ -1,3 +1,5 @@
+"""Provide special support for the creature actions package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -15,6 +17,8 @@ def special_action_candidates(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> list[EncounterAction]:
+    """Handle special action candidates."""
+
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
     actions.extend(state._available_feature_actions(actor.creature))

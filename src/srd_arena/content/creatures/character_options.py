@@ -1,3 +1,5 @@
+"""Provide character options support for the creatures package."""
+
 import re
 
 from srd_arena.content.character_options.classes import (
@@ -26,6 +28,8 @@ def resolve_optional_feature_effects(
     schema: CreatureSchema,
     catalog: OptionalFeatureCatalog | None,
 ) -> list[TriggeredEffect]:
+    """Resolve optional feature effects."""
+
     effects: list[TriggeredEffect] = []
     for reference in schema.optional_features:
         if catalog is None:
@@ -54,6 +58,8 @@ def find_class_record(
     schema: CreatureSchema,
     classes: ClassCatalog | None,
 ) -> ClassRecord | None:
+    """Find class record."""
+
     if schema.class_ref is None:
         return None
     if classes is None:
@@ -69,6 +75,8 @@ def find_subclass_record(
     subclasses: SubclassCatalog | None,
     class_record: ClassRecord | None,
 ) -> SubclassRecord | None:
+    """Find subclass record."""
+
     reference = schema.subclass_ref
     if reference is None:
         return None
@@ -97,6 +105,8 @@ def resolve_class_features(
     class_record: ClassRecord | None,
     level: int,
 ) -> list[ClassFeature]:
+    """Resolve class features."""
+
     if class_record is None:
         return []
     resolved: list[ClassFeature] = []
@@ -122,6 +132,8 @@ def resolve_subclass_features(
     *,
     class_name: str | None,
 ) -> list[ClassFeature]:
+    """Resolve subclass features."""
+
     if subclass_record is None:
         return []
     definition = subclass_record.definition

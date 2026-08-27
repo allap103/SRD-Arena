@@ -1,3 +1,5 @@
+"""Provide stat block actions support for the creatures package."""
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
@@ -15,6 +17,8 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class DeclaredStatBlockAction:
+    """Represent a declared stat block action."""
+
     name: str
     display_name: str
     description: str
@@ -24,6 +28,8 @@ class DeclaredStatBlockAction:
 
 @dataclass(frozen=True)
 class AttackActionDefinition:
+    """Represent an attack action definition."""
+
     name: str
     attack_modes: tuple[str, ...]
     attack_bonus: int
@@ -38,6 +44,8 @@ class AttackActionDefinition:
 
 @dataclass(frozen=True)
 class SavingThrowActionDefinition:
+    """Represent a saving throw action definition."""
+
     name: str
     target: CapabilityTarget
     ability: str
@@ -52,6 +60,8 @@ class SavingThrowActionDefinition:
 
 @dataclass(frozen=True)
 class AutomaticActionDefinition:
+    """Represent an automatic action definition."""
+
     name: str
     target: CapabilityTarget
     effects: tuple[CapabilityEffect, ...]
@@ -61,6 +71,8 @@ class AutomaticActionDefinition:
 
 @dataclass(frozen=True)
 class SpellOption:
+    """Represent a spell option."""
+
     name: str
     source: str | None = None
     cast_level: int | None = None
@@ -72,6 +84,8 @@ class SpellOption:
 
 @dataclass(frozen=True)
 class SpellcastingActionDefinition:
+    """Represent a spellcasting action definition."""
+
     name: str
     ability: str
     spells: tuple[SpellOption, ...]

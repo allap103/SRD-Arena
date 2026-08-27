@@ -1,3 +1,5 @@
+"""Provide rules support for the encounters package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -36,6 +38,8 @@ if TYPE_CHECKING:
 
 
 class CombatRules:
+    """Represent a combat rules."""
+
     def effective_conditions(
         self,
         state: EncounterState,

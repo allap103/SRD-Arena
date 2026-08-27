@@ -1,3 +1,5 @@
+"""Provide loader support for the creatures package."""
+
 from pathlib import Path
 from typing import cast
 
@@ -47,6 +49,8 @@ def load_creature(
     subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> Creature:
+    """Load creature."""
+
     return build_creature(
         CreatureSchema.model_validate(load_json(path)),
         bestiary,
@@ -67,6 +71,8 @@ def build_creature(
     subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> Creature:
+    """Build creature."""
+
     schema = _resolve_creature_schema(schema, player_characters)
     stat_block = _find_bestiary_monster(schema, bestiary)
     class_record = find_class_record(schema, classes)

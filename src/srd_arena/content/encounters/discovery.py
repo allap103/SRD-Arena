@@ -1,3 +1,5 @@
+"""Provide discovery support for the encounters package."""
+
 from __future__ import annotations
 
 import json
@@ -11,12 +13,16 @@ VALID_SCENARIO_SUBDIRS = ("encounters",)
 
 @dataclass(frozen=True)
 class ScenarioInfo:
+    """Represent a scenario info."""
+
     id: str
     directory: Path
     label: str
 
 
 def list_scenarios(root: Path = SCENARIOS_ROOT) -> list[ScenarioInfo]:
+    """List scenarios."""
+
     scenarios: list[ScenarioInfo] = []
     if not root.exists():
         return scenarios

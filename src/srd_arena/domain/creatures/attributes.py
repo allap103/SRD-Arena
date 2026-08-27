@@ -1,8 +1,12 @@
+"""Provide attributes support for the creatures package."""
+
 from dataclasses import dataclass, field
 
 
 @dataclass
 class Movement:
+    """Represent a movement."""
+
     speed_feet: int = 30
     burrow_feet: int | None = None
     climb_feet: int | None = None
@@ -16,6 +20,8 @@ class Movement:
 
 @dataclass
 class Attributes:
+    """Represent an attributes."""
+
     base_health: int
     level: int
     strength: int

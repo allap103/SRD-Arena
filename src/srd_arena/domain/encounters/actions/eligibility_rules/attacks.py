@@ -1,3 +1,5 @@
+"""Provide attacks support for the eligibility rules package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -19,6 +21,8 @@ if TYPE_CHECKING:
 
 
 class AttackRule:
+    """Represent an attack rule."""
+
     def check(
         self,
         state: EncounterState,
@@ -130,6 +134,8 @@ class AttackRule:
 
 
 class GrappleRule:
+    """Represent a grapple rule."""
+
     def check(
         self,
         state: EncounterState,

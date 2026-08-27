@@ -13,18 +13,24 @@ DEFAULT_CELL_COVERAGE_THRESHOLD = 0.5
 
 @dataclass(frozen=True)
 class Point2D:
+    """Represent a point2 d."""
+
     x: float
     y: float
 
 
 @dataclass(frozen=True)
 class Vector2D:
+    """Represent a vector2 d."""
+
     x: float
     y: float
 
 
 @dataclass(frozen=True)
 class ContinuousArea:
+    """Represent a continuous area."""
+
     shape: str
     origin: Point2D
     direction: Vector2D | None = None
@@ -37,6 +43,8 @@ class ContinuousArea:
 
 @dataclass(frozen=True)
 class AreaOfEffect:
+    """Represent an area of effect."""
+
     shape: str
     origin: Position
     cells: tuple[Position, ...]

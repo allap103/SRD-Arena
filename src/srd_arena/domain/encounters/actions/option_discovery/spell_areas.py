@@ -1,3 +1,5 @@
+"""Provide spell areas support for the option discovery package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -27,6 +29,8 @@ def spell_area_targets(
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
 ) -> tuple[SpellTargetContext, ...]:
+    """Handle spell area targets."""
+
     area = self._spell_area(actor, spell, target_ref=target_ref, aim_point=aim_point)
     if area is None:
         if target_ref is None:
@@ -43,6 +47,8 @@ def spell_area(
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
 ) -> AreaOfEffect | None:
+    """Handle spell area."""
+
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
     if spell.geometry_mode == "point_area":
@@ -99,6 +105,8 @@ def targets_in_area(
     actor: Creature,
     area: AreaOfEffect,
 ) -> list[SpellTargetContext]:
+    """Handle targets in area."""
+
     occupied_cells = {(cell.x, cell.y) for cell in area.cells}
     targets: list[SpellTargetContext] = []
     for target_ref, target_state in self.creatures.items():

@@ -26,6 +26,8 @@ def build_persistent_spell_effects(
     prepared: PreparedSpellResolution,
     resolved: ResolvedSpellTargets,
 ) -> list[EffectResult]:
+    """Build persistent spell effects."""
+
     spell = context.spell
     assert context.creature.spellcasting is not None
 

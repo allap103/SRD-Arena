@@ -1,3 +1,5 @@
+"""Provide size support for the creatures package."""
+
 from __future__ import annotations
 
 SIZE_ORDER = ("T", "S", "M", "L", "H", "G", "C")
@@ -13,6 +15,8 @@ SIZE_ALIASES = {
 
 
 def normalize_size(value: object, default: str = "M") -> str:
+    """Normalize size."""
+
     if not isinstance(value, str):
         return default
     normalized = value.strip().casefold()
@@ -24,6 +28,8 @@ def normalize_size(value: object, default: str = "M") -> str:
 
 
 def size_rank(size: str) -> int:
+    """Handle size rank."""
+
     try:
         return SIZE_ORDER.index(size.upper())
     except ValueError:
@@ -31,8 +37,12 @@ def size_rank(size: str) -> int:
 
 
 def is_two_sizes_smaller(target_size: str, grappler_size: str) -> bool:
+    """Return whether two sizes smaller."""
+
     return size_rank(target_size) <= size_rank(grappler_size) - 2
 
 
 def can_grapple(target_size: str, grappler_size: str) -> bool:
+    """Return whether grapple."""
+
     return size_rank(target_size) <= size_rank(grappler_size) + 1

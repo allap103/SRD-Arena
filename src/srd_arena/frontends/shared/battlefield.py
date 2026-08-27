@@ -18,6 +18,8 @@ def build_battlefield_view(
     grid_opacity: float = 1.0,
     team_ids: tuple[str, ...] = (),
 ) -> BattlefieldView:
+    """Build battlefield view."""
+
     if len(team_ids) > len(TEAM_COLORS):
         raise ValueError("Battlefield presentation supports at most five teams.")
     team_colors = dict(zip(team_ids, TEAM_COLORS[: len(team_ids)], strict=True))

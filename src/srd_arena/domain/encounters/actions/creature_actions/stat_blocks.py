@@ -1,3 +1,5 @@
+"""Provide stat blocks support for the creature actions package."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -19,6 +21,8 @@ def stat_block_action_candidates(
     creature_ref: CreatureRef,
     display_name: Callable[[Creature, str], str],
 ) -> list[EncounterAction]:
+    """Handle stat block action candidates."""
+
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
     for definition in actor.creature.stat_block_actions.values():

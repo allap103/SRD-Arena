@@ -1,3 +1,5 @@
+"""Provide session support for the engine package."""
+
 from copy import deepcopy
 from dataclasses import dataclass
 
@@ -22,11 +24,15 @@ from srd_arena.engine.session_queries import read_session
 
 @dataclass
 class PendingSceneTransition:
+    """Represent a pending scene transition."""
+
     next_scene_id: str
     message: str
 
 
 class Session:
+    """Represent a session."""
+
     def __init__(
         self,
         encounters: dict[str, EncounterDefinition],

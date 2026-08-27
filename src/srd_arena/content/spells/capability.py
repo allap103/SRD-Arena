@@ -1,3 +1,5 @@
+"""Provide capability support for the spells package."""
+
 from __future__ import annotations
 
 from typing import Annotated, Literal
@@ -20,6 +22,8 @@ from .targeting import (
 
 
 class CastingTriggerSchema(SpellCapabilitySchemaModel):
+    """Validate authored casting trigger data."""
+
     event: Literal[
         "attack_hit",
         "creature_damaged",
@@ -33,6 +37,8 @@ class CastingTriggerSchema(SpellCapabilitySchemaModel):
 
 
 class OutcomeTriggerSchema(SpellCapabilitySchemaModel):
+    """Validate authored outcome trigger data."""
+
     event: Literal[
         "targeted_by_attack",
         "attack_would_hit",
@@ -70,6 +76,8 @@ class OutcomeTriggerSchema(SpellCapabilitySchemaModel):
 
 
 class SpellCapabilitySchema(SpellCapabilitySchemaModel):
+    """Validate authored spell capability data."""
+
     target: SpellTargetSchema
     resolution: SpellResolutionSchema
     casting_requirements: list[SpellRequirementSchema] = Field(default_factory=list)

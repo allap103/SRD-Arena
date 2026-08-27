@@ -8,12 +8,16 @@ from .requirements import CapabilityRequirement
 
 @dataclass(frozen=True)
 class TargetCount:
+    """Represent a target count."""
+
     minimum: int = 1
     maximum: int | Literal["all", "ability_modifier"] = 1
 
 
 @dataclass(frozen=True)
 class CapabilityTarget:
+    """Represent a capability target."""
+
     kind: Literal["self", "creature", "area"]
     count: TargetCount = TargetCount()
     range_feet: int | None = None

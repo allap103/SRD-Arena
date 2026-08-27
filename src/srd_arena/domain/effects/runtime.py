@@ -1,3 +1,5 @@
+"""Provide runtime support for the effects package."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,6 +9,8 @@ from .rule_effects import RuntimeRuleEffect
 
 
 class EffectSourceKind(StrEnum):
+    """Enumerate supported effect source kind values."""
+
     CREATURE = "creature"
     ACTION = "action"
     SPELL = "spell"
@@ -18,6 +22,8 @@ class EffectSourceKind(StrEnum):
 
 @dataclass(frozen=True)
 class EffectSource:
+    """Represent an effect source."""
+
     kind: EffectSourceKind
     definition_id: str
     applied_by_ref: str | None = None
@@ -27,6 +33,8 @@ class EffectSource:
 
 @dataclass(frozen=True)
 class RuntimeStateIdentity:
+    """Represent a runtime state identity."""
+
     id: str
     source: EffectSource
     parent_id: str | None = None
@@ -39,23 +47,31 @@ class RuntimeStateIdentity:
 
 @dataclass(frozen=True)
 class Indefinite:
+    """Represent an indefinite."""
+
     pass
 
 
 @dataclass(frozen=True)
 class UntilTurnStart:
+    """Represent an until turn start."""
+
     creature_ref: str
     round_number: int | None = None
 
 
 @dataclass(frozen=True)
 class UntilTurnEnd:
+    """Represent an until turn end."""
+
     creature_ref: str
     round_number: int | None = None
 
 
 @dataclass(frozen=True)
 class Rounds:
+    """Represent a rounds."""
+
     count: int
 
     def __post_init__(self) -> None:
@@ -65,6 +81,8 @@ class Rounds:
 
 @dataclass(frozen=True)
 class WhileParentExists:
+    """Represent a while parent exists."""
+
     pass
 
 
@@ -74,6 +92,8 @@ type EffectDuration = (
 
 
 class OngoingEffectKind(StrEnum):
+    """Enumerate supported ongoing effect kind values."""
+
     GENERIC = "generic"
     CONCENTRATION = "concentration"
     CURSE = "curse"
@@ -82,18 +102,24 @@ class OngoingEffectKind(StrEnum):
 
 
 class EffectPolarity(StrEnum):
+    """Enumerate supported effect polarity values."""
+
     BENEFICIAL = "beneficial"
     HARMFUL = "harmful"
     NEUTRAL = "neutral"
 
 
 class EffectTag(StrEnum):
+    """Enumerate supported effect tag values."""
+
     CURSE = "curse"
     DISPELLABLE = "dispellable"
 
 
 @dataclass(frozen=True)
 class OngoingEffect:
+    """Represent an ongoing effect."""
+
     identity: RuntimeStateIdentity
     target_refs: tuple[str, ...]
     duration: EffectDuration = field(default_factory=Indefinite)
@@ -106,12 +132,16 @@ class OngoingEffect:
 
 
 class RelationshipKind(StrEnum):
+    """Enumerate supported relationship kind values."""
+
     GRAPPLING = "grappling"
     SWALLOWED = "swallowed"
 
 
 @dataclass(frozen=True)
 class CreatureRelationship:
+    """Represent a creature relationship."""
+
     identity: RuntimeStateIdentity
     kind: RelationshipKind
     source_ref: str

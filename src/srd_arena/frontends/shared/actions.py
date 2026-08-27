@@ -12,6 +12,8 @@ def build_feature_actions(
     encounter: EncounterObservation,
     story_actions: list[ActionObservation],
 ) -> list[ActionObservation]:
+    """Build feature actions."""
+
     creature_ref = encounter.decision.creature_ref
     creature = encounter.creature(creature_ref)
     available_feature_actions = {

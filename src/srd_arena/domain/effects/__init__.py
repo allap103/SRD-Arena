@@ -1,3 +1,5 @@
+"""Expose the public effects package API."""
+
 from .application import apply_effects, message_effects, serialize_effects
 from .condition_rules import (
     EffectiveCondition,

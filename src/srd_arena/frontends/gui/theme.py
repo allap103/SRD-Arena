@@ -1,3 +1,5 @@
+"""Provide theme support for the gui package."""
+
 from __future__ import annotations
 
 from PySide6.QtGui import QFont
@@ -235,6 +237,8 @@ QFrame#victoryOverlay {
 
 
 def apply_fantasy_theme(app: QApplication) -> None:
+    """Apply fantasy theme."""
+
     app.setStyleSheet(FANTASY_STYLESHEET)
     font = QFont("Palatino")
     font.setPointSize(11)

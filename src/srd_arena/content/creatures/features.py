@@ -1,8 +1,12 @@
+"""Provide features support for the creatures package."""
+
 from srd_arena.domain.creatures import ClassFeature, CombatProfile
 from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
 
 
 def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
+    """Build combat profile."""
+
     profile = CombatProfile()
     for class_feature in class_features:
         if class_feature.id == "extra_attack":
@@ -54,4 +58,6 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
 
 
 def build_feature_uses_remaining(combat_profile: CombatProfile) -> dict[str, int]:
+    """Build feature uses remaining."""
+
     return dict(combat_profile.feature_uses_max)

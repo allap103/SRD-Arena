@@ -1,3 +1,5 @@
+"""Provide schema support for the encounters package."""
+
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -6,6 +8,8 @@ from srd_arena.content.creatures.schema import CreatureSchema
 
 
 class PositionSchema(BaseModel):
+    """Validate authored position data."""
+
     model_config = ConfigDict(extra="forbid")
 
     x: int
@@ -13,6 +17,8 @@ class PositionSchema(BaseModel):
 
 
 class GridSchema(BaseModel):
+    """Validate authored grid data."""
+
     model_config = ConfigDict(extra="forbid")
 
     width: int
@@ -20,6 +26,8 @@ class GridSchema(BaseModel):
 
 
 class BehaviorSchema(BaseModel):
+    """Validate authored behavior data."""
+
     model_config = ConfigDict(extra="forbid")
 
     type: str
@@ -29,6 +37,8 @@ class BehaviorSchema(BaseModel):
 
 
 class EncounterCreatureSchema(CreatureSchema):
+    """Validate authored encounter creature data."""
+
     model_config = ConfigDict(extra="forbid")
 
     start: PositionSchema
@@ -39,6 +49,8 @@ class EncounterCreatureSchema(CreatureSchema):
 
 
 class EncounterTeamSchema(BaseModel):
+    """Validate authored encounter team data."""
+
     model_config = ConfigDict(extra="forbid")
 
     id: str
@@ -47,6 +59,8 @@ class EncounterTeamSchema(BaseModel):
 
 
 class EncounterDefinitionSchema(BaseModel):
+    """Validate authored encounter definition data."""
+
     model_config = ConfigDict(extra="forbid")
 
     id: str

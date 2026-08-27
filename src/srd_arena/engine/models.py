@@ -1,3 +1,5 @@
+"""Provide models support for the engine package."""
+
 from dataclasses import dataclass
 
 from srd_arena.domain.encounters.models import CombatEvent

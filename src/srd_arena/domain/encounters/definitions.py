@@ -1,3 +1,5 @@
+"""Provide definitions support for the encounters package."""
+
 from dataclasses import dataclass, field
 
 from ..geometry import Grid, Position
@@ -5,6 +7,8 @@ from ..geometry import Grid, Position
 
 @dataclass
 class EncounterBehavior:
+    """Represent an encounter behavior."""
+
     type: str
     anchor: Position | None = None
     radius: int | None = None
@@ -13,6 +17,8 @@ class EncounterBehavior:
 
 @dataclass
 class EncounterParticipant:
+    """Represent an encounter participant."""
+
     creature_id: str
     start: Position
     controller: str | None = None
@@ -22,6 +28,8 @@ class EncounterParticipant:
 
 @dataclass
 class EncounterTeam:
+    """Represent an encounter team."""
+
     id: str
     name: str
     members: list[str]
@@ -30,11 +38,15 @@ class EncounterTeam:
 
 @dataclass
 class EncounterTransition:
+    """Represent an encounter transition."""
+
     next_encounter_id: str
 
 
 @dataclass
 class EncounterDefinition:
+    """Represent an encounter definition."""
+
     id: str
     grid: Grid
     participants: list[EncounterParticipant] = field(default_factory=list)

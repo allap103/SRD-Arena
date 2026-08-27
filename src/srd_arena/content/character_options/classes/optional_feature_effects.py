@@ -1,3 +1,5 @@
+"""Provide optional feature effects support for the classes package."""
+
 from srd_arena.domain.effects.triggered import TriggeredEffect
 
 from .optional_feature_schema import OptionalFeatureSchema
@@ -6,6 +8,8 @@ from .optional_feature_schema import OptionalFeatureSchema
 def normalize_optional_feature_effects(
     feature: OptionalFeatureSchema,
 ) -> list[TriggeredEffect]:
+    """Normalize optional feature effects."""
+
     name = feature.public_name
     source = feature.source
     canonical_id = f"{name.casefold().replace(' ', '_')}|{source.casefold()}"

@@ -1,3 +1,5 @@
+"""Provide catalog support for the creatures package."""
+
 from pathlib import Path
 
 from srd_arena.content.common.catalog import SourceCatalog
@@ -9,6 +11,8 @@ BestiaryCatalog = SourceCatalog[BestiaryMonsterSchema]
 
 
 def load_bestiary_catalog(directory: str | Path) -> BestiaryCatalog:
+    """Load bestiary catalog."""
+
     system_dir = Path(directory)
     monsters_dir = system_dir / "monsters"
     records = [

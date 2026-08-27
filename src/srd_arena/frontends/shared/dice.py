@@ -1,3 +1,5 @@
+"""Provide dice support for the shared package."""
+
 from __future__ import annotations
 
 import re
@@ -9,6 +11,8 @@ from srd_arena.application.api import GameEvent
 
 @dataclass(frozen=True)
 class DieView:
+    """Represent a die view."""
+
     expression: str
     value: int
     selected: bool = True
@@ -18,6 +22,8 @@ class DieView:
 
 @dataclass(frozen=True)
 class RollView:
+    """Represent a roll view."""
+
     label: str
     dice: tuple[DieView, ...]
     modifier: int
@@ -29,6 +35,8 @@ class RollView:
 
 
 def build_roll_views(events: list[GameEvent]) -> list[RollView]:
+    """Build roll views."""
+
     views: list[RollView] = []
     resolved_roll_ids = {
         event.data.get("roll_id")

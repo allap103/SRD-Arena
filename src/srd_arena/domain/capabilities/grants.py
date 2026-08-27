@@ -1,3 +1,5 @@
+"""Provide grants support for the capabilities package."""
+
 from dataclasses import dataclass
 from typing import Literal
 
@@ -6,6 +8,8 @@ from .definitions import CapabilityDefinition
 
 @dataclass(frozen=True)
 class LimitedUsePool:
+    """Represent a limited use pool."""
+
     id: str
     maximum: int
     refresh: Literal["short_rest", "long_rest", "day"]
@@ -14,6 +18,8 @@ class LimitedUsePool:
 
 @dataclass(frozen=True)
 class RechargePool:
+    """Represent a recharge pool."""
+
     id: str
     die_sides: int
     minimum: int
@@ -22,6 +28,8 @@ class RechargePool:
 
 @dataclass(frozen=True)
 class SpellSlotPool:
+    """Represent a spell slot pool."""
+
     id: str
     maximum_by_level: tuple[tuple[int, int], ...]
     refresh: Literal["short_rest", "long_rest"] = "long_rest"
@@ -33,6 +41,8 @@ ResourcePoolDefinition = LimitedUsePool | RechargePool | SpellSlotPool
 
 @dataclass(frozen=True)
 class PoolUseCost:
+    """Represent a pool use cost."""
+
     pool_id: str
     amount: int = 1
     kind: Literal["pool_use"] = "pool_use"
@@ -40,6 +50,8 @@ class PoolUseCost:
 
 @dataclass(frozen=True)
 class SpellSlotCost:
+    """Represent a spell slot cost."""
+
     pool_id: str
     minimum_level: int
     allow_higher_level: bool = True
@@ -58,6 +70,8 @@ CapabilityActivation = Literal[
 
 @dataclass(frozen=True)
 class CapabilityGrant:
+    """Represent a capability grant."""
+
     id: str
     definition: CapabilityDefinition
     activation: CapabilityActivation

@@ -1,3 +1,5 @@
+"""Provide schema support for the common package."""
+
 from pydantic import BaseModel, ConfigDict
 
 

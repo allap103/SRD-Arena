@@ -1,3 +1,5 @@
+"""Provide action selection support for the encounters package."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -17,6 +19,8 @@ if TYPE_CHECKING:
 
 
 class ActionSelector(Protocol):
+    """Define the action selector contract."""
+
     def select_action(
         self,
         state: EncounterState,
@@ -26,6 +30,8 @@ class ActionSelector(Protocol):
 
 
 class ExternalActionSelector:
+    """Represent an external action selector."""
+
     def select_action(
         self,
         state: EncounterState,
@@ -36,6 +42,8 @@ class ExternalActionSelector:
 
 
 class ScriptedActionSelector:
+    """Represent a scripted action selector."""
+
     def __init__(self, participant: EncounterCreatureState) -> None:
         self._behavior = build_behavior(participant)
         next(self._behavior)
@@ -112,6 +120,8 @@ def build_action_selector(
     controller: str,
     participant: EncounterCreatureState,
 ) -> ActionSelector:
+    """Build action selector."""
+
     if controller == "external":
         return ExternalActionSelector()
     return ScriptedActionSelector(participant)

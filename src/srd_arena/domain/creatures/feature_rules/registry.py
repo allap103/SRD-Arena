@@ -1,3 +1,5 @@
+"""Provide registry support for the feature rules package."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -18,6 +20,8 @@ def resolve_feature_action(
     feature_id: str,
     roll_dice: DiceRoller,
 ) -> CapabilityActionResult | None:
+    """Resolve feature action."""
+
     class_name = (
         creature.class_ref.name.casefold() if creature.class_ref is not None else ""
     )

@@ -1,3 +1,5 @@
+"""Provide durations support for the capabilities package."""
+
 from typing import Annotated, Literal
 
 from pydantic import Field
@@ -6,24 +8,32 @@ from .base import CapabilitySchemaModel, NonNegativeInt, PositiveInt
 
 
 class EndOfTurnDurationSchema(CapabilitySchemaModel):
+    """Validate authored end of turn duration data."""
+
     type: Literal["end_of_turn"]
     creature: Literal["source", "target"]
     turn_offset: NonNegativeInt = 0
 
 
 class StartOfTurnDurationSchema(CapabilitySchemaModel):
+    """Validate authored start of turn duration data."""
+
     type: Literal["start_of_turn"]
     creature: Literal["source", "target"]
     turn_offset: NonNegativeInt = 0
 
 
 class TimedDurationSchema(CapabilitySchemaModel):
+    """Validate authored timed duration data."""
+
     type: Literal["timed"]
     amount: PositiveInt
     unit: Literal["round", "minute", "hour", "day"]
 
 
 class UntilEventDurationSchema(CapabilitySchemaModel):
+    """Validate authored until event duration data."""
+
     type: Literal["until_event"]
     events: list[
         Literal[
@@ -37,6 +47,8 @@ class UntilEventDurationSchema(CapabilitySchemaModel):
 
 
 class PermanentDurationSchema(CapabilitySchemaModel):
+    """Validate authored permanent duration data."""
+
     type: Literal["permanent"]
 
 

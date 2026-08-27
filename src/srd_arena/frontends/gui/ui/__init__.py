@@ -1,3 +1,5 @@
+"""Expose the public ui package API."""
+
 from .encounter import (
     ARROW_LABELS,
     ENCOUNTER_BUTTON_HEIGHT,

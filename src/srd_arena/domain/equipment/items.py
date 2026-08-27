@@ -1,3 +1,5 @@
+"""Provide items support for the equipment package."""
+
 from dataclasses import dataclass
 
 from .armor import ArmorStat
@@ -6,6 +8,8 @@ from .weapons import WeaponStat
 
 @dataclass
 class Item:
+    """Represent an item."""
+
     id: str
     name: str
     description: str

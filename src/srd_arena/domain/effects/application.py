@@ -1,3 +1,5 @@
+"""Provide application support for the effects package."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -22,6 +24,8 @@ def apply_effects(
     remove_ongoing_effects: RemoveOngoingEffects | None = None,
     origin_id: str | None = None,
 ) -> list[tuple[str, str]]:
+    """Apply effects."""
+
     messages: list[tuple[str, str]] = []
     for effect in effects:
         if effect.kind == "apply_condition":
@@ -52,6 +56,8 @@ def apply_effects(
 
 
 def message_effects(effect: EffectResult) -> list[tuple[str, str]]:
+    """Handle message effects."""
+
     channel = effect.data.get("channel", "system")
     text = effect.data.get("text")
     if not isinstance(channel, str) or not isinstance(text, str):
@@ -60,6 +66,8 @@ def message_effects(effect: EffectResult) -> list[tuple[str, str]]:
 
 
 def serialize_effects(effects: list[EffectResult]) -> list[dict[str, object]]:
+    """Serialize effects."""
+
     return [_serialize_effect(effect) for effect in effects]
 
 
@@ -79,6 +87,8 @@ def _serialize_effect(effect: EffectResult) -> dict[str, object]:
 
 
 def condition_from_effect(effect: EffectResult) -> AppliedCondition:
+    """Handle condition from effect."""
+
     return condition_from_effect_with_origin(effect, origin_id=None)
 
 
@@ -87,6 +97,8 @@ def condition_from_effect_with_origin(
     *,
     origin_id: str | None,
 ) -> AppliedCondition:
+    """Handle condition from effect with origin."""
+
     source_ref = effect.data.get("source_ref")
     source_label = effect.data.get("source_label")
     if not isinstance(source_ref, str) or not isinstance(source_label, str):

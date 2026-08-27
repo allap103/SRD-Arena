@@ -9,6 +9,8 @@ from .targets import ResolvedSpellTargets
 
 @dataclass
 class SpellRemovalResults:
+    """Represent a spell removal results."""
+
     messages: list[tuple[str, str]]
     effects: list[EffectResult]
     removed_conditions: list[str]
@@ -18,6 +20,8 @@ def build_spell_removals(
     context: SpellActionContext,
     resolved: ResolvedSpellTargets,
 ) -> SpellRemovalResults:
+    """Build spell removals."""
+
     spell = context.spell
     messages: list[tuple[str, str]] = []
     effects: list[EffectResult] = []

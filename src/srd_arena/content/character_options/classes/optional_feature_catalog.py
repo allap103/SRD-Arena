@@ -1,3 +1,5 @@
+"""Provide optional feature catalog support for the classes package."""
+
 from pathlib import Path
 
 from srd_arena.content.common.catalog import SourceCatalog
@@ -9,6 +11,8 @@ OptionalFeatureCatalog = SourceCatalog[OptionalFeatureSchema]
 
 
 def load_optional_feature_catalog(directory: str | Path) -> OptionalFeatureCatalog:
+    """Load optional feature catalog."""
+
     system_dir = Path(directory)
     features_dir = system_dir / "optional_features"
     records = [

@@ -1,3 +1,5 @@
+"""Provide schema support for the actions package."""
+
 from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
@@ -19,6 +21,8 @@ from srd_arena.content.capabilities import (
 
 
 class RepeatSaveSchema(CapabilitySchemaModel):
+    """Validate authored repeat save data."""
+
     trigger: Literal["end_of_turn", "on_damage", "elapsed"]
     interval_amount: PositiveInt | None = None
     interval_unit: Literal["hour", "day"] | None = None
@@ -36,11 +40,15 @@ class RepeatSaveSchema(CapabilitySchemaModel):
 
 
 class SaveOutcomeStageSchema(OutcomeSchema[ActionEffectSchema]):
+    """Validate authored save outcome stage data."""
+
     effects: list[ActionEffectSchema] = Field(min_length=1)
     repeat_saves: list[RepeatSaveSchema] = Field(default_factory=list)
 
 
 class RequiredActionOutcomeSchema(OutcomeSchema[ActionEffectSchema]):
+    """Validate authored required action outcome data."""
+
     effects: list[ActionEffectSchema] = Field(min_length=1)
 
 
@@ -55,6 +63,8 @@ AutomaticActionResolutionSchema = AutomaticResolutionSchema[RequiredActionOutcom
 class SavingThrowActionResolutionSchema(
     SavingThrowResolutionSchema[StagedFailureSchema, ActionOutcomeSchema]
 ):
+    """Validate authored saving throw action resolution data."""
+
     ability: Ability
     difficulty: FixedDifficultyClassSchema
     success: ActionOutcomeSchema = Field(default_factory=ActionOutcomeSchema)
@@ -62,12 +72,16 @@ class SavingThrowActionResolutionSchema(
 
 
 class UsesResourceSchema(CapabilitySchemaModel):
+    """Validate authored uses resource data."""
+
     type: Literal["uses"]
     maximum: PositiveInt
     reset: Literal["short_rest", "long_rest", "day"]
 
 
 class RechargeResourceSchema(CapabilitySchemaModel):
+    """Validate authored recharge resource data."""
+
     type: Literal["recharge"]
     die: Literal["d6"] = "d6"
     minimum: int = Field(ge=2, le=6)
@@ -80,6 +94,8 @@ ActionResourceSchema = Annotated[
 
 
 class AttackCapabilitySchema(CapabilitySchemaModel):
+    """Validate authored attack capability data."""
+
     type: Literal["attack"] = "attack"
     attack_modes: list[Literal["melee", "ranged"]] = Field(min_length=1)
     attack_bonus: int
@@ -106,6 +122,8 @@ CreatureActionResolutionSchema = Annotated[
 
 
 class CapabilitySchema(CapabilitySchemaModel):
+    """Validate authored capability data."""
+
     type: Literal["capability"] = "capability"
     target: ActionTargetSchema
     resolution: CreatureActionResolutionSchema
@@ -113,6 +131,8 @@ class CapabilitySchema(CapabilitySchemaModel):
 
 
 class SpellOptionSchema(CapabilitySchemaModel):
+    """Validate authored spell option data."""
+
     name: str = Field(min_length=1)
     source: str | None = None
     cast_level: PositiveInt | None = None
@@ -120,6 +140,8 @@ class SpellOptionSchema(CapabilitySchemaModel):
 
 
 class SpellcastingCapabilitySchema(CapabilitySchemaModel):
+    """Validate authored spellcasting capability data."""
+
     type: Literal["spellcasting"] = "spellcasting"
     ability: Ability
     spells: list[SpellOptionSchema] = Field(min_length=1)

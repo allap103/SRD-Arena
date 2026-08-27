@@ -1,3 +1,5 @@
+"""Provide definitions support for the spells package."""
+
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -10,18 +12,24 @@ from ..capabilities import (
 
 @dataclass(frozen=True)
 class SpellRef:
+    """Represent a spell ref."""
+
     name: str
     source: str | None = None
 
 
 @dataclass(frozen=True)
 class SpellDamage:
+    """Represent a spell damage."""
+
     dice: str
     damage_type: str
 
 
 @dataclass(frozen=True)
 class Spell:
+    """Represent a spell."""
+
     id: str
     name: str
     source: str | None

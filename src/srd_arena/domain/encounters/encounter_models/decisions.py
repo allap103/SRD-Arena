@@ -33,22 +33,30 @@ class PendingMovement:
 
 @dataclass(frozen=True)
 class OpportunityAttackRequest(DecisionRequest):
+    """Represent an opportunity attack request."""
+
     movement: PendingMovement
 
 
 @dataclass(frozen=True)
 class ResumeMovement(DecisionContinuation):
+    """Represent a resume movement."""
+
     movement: PendingMovement
 
 
 @dataclass(frozen=True)
 class CloseParentDecision(DecisionContinuation):
+    """Represent a close parent decision."""
+
     frame_id: str
     action_id: str
 
 
 @dataclass
 class DecisionFrame:
+    """Represent a decision frame."""
+
     id: str
     creature_ref: CreatureRef
     kind: str
@@ -77,5 +85,7 @@ class PendingSpellCast:
 
 @dataclass
 class InterruptState:
+    """Represent an interrupt state."""
+
     decision_stack: list[DecisionFrame] = field(default_factory=list)
     pending_spell_cast: PendingSpellCast | None = None

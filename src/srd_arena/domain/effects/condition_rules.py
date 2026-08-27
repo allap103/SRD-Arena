@@ -1,3 +1,5 @@
+"""Provide condition rules support for the effects package."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,6 +9,8 @@ from .conditions import AppliedCondition, CombatTrait, Condition
 
 @dataclass(frozen=True)
 class ConditionDefinition:
+    """Represent a condition definition."""
+
     implied_conditions: frozenset[Condition] = frozenset()
     traits: frozenset[CombatTrait] = frozenset()
 
@@ -67,18 +71,24 @@ CONDITION_DEFINITIONS: dict[Condition, ConditionDefinition] = {
 
 @dataclass(frozen=True)
 class EffectiveCondition:
+    """Represent an effective condition."""
+
     condition: Condition
     provider_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class EffectiveTrait:
+    """Represent an effective trait."""
+
     trait: CombatTrait
     provider_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class SuppressedCondition:
+    """Represent a suppressed condition."""
+
     condition: Condition
     provider_ids: tuple[str, ...]
     reason: str
@@ -86,6 +96,8 @@ class SuppressedCondition:
 
 @dataclass(frozen=True)
 class EffectiveConditionSet:
+    """Represent an effective condition set."""
+
     conditions: tuple[EffectiveCondition, ...]
     traits: tuple[EffectiveTrait, ...]
     suppressed_conditions: tuple[SuppressedCondition, ...] = ()
@@ -117,6 +129,8 @@ def effective_conditions(
     applied_conditions: tuple[AppliedCondition, ...],
     condition_immunities: frozenset[Condition] = frozenset(),
 ) -> EffectiveConditionSet:
+    """Handle effective conditions."""
+
     condition_providers: dict[Condition, set[str]] = {}
     trait_providers: dict[CombatTrait, set[str]] = {}
     suppressed_providers: dict[Condition, set[str]] = {}

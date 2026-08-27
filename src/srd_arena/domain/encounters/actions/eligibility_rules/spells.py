@@ -1,3 +1,5 @@
+"""Provide spells support for the eligibility rules package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -17,6 +19,8 @@ if TYPE_CHECKING:
 
 
 class SpellActionRule:
+    """Represent a spell action rule."""
+
     def check(
         self,
         state: EncounterState,
@@ -81,6 +85,8 @@ class SpellActionRule:
 
 
 class SpellTargetSelectionRule:
+    """Represent a spell target selection rule."""
+
     def check(
         self,
         state: EncounterState,

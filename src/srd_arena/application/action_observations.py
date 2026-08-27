@@ -56,6 +56,8 @@ class _ActionSemantics:
 
 
 def observe_scene(read: SessionRead) -> SceneObservation:
+    """Observe scene."""
+
     return SceneObservation(
         scene_id=read.scene_id,
         scene_text=read.scene_text,

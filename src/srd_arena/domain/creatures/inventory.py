@@ -1,8 +1,12 @@
+"""Provide inventory support for the creatures package."""
+
 from dataclasses import dataclass, field
 
 
 @dataclass
 class Inventory:
+    """Represent an inventory."""
+
     items: list[str] = field(default_factory=list)
 
     def add_item(self, item: str) -> None:

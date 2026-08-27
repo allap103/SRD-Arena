@@ -1,3 +1,5 @@
+"""Provide dice support for the rolls package."""
+
 import random
 from collections.abc import Callable, Collection
 from dataclasses import dataclass
@@ -8,6 +10,8 @@ D20RollMode = Literal["normal", "advantage", "disadvantage"]
 
 
 def combine_roll_modes(*modes: D20RollMode) -> D20RollMode:
+    """Handle combine roll modes."""
+
     has_advantage = "advantage" in modes
     has_disadvantage = "disadvantage" in modes
     if has_advantage == has_disadvantage:
@@ -17,6 +21,8 @@ def combine_roll_modes(*modes: D20RollMode) -> D20RollMode:
 
 @dataclass(frozen=True)
 class DieRollResult:
+    """Represent a die roll result."""
+
     sides: int
     rolls: tuple[int, ...]
 
@@ -27,6 +33,8 @@ class DieRollResult:
 
 @dataclass(frozen=True)
 class DieReplacement:
+    """Represent a die replacement."""
+
     die_index: int
     previous: int
     replacement: int
@@ -34,6 +42,8 @@ class DieReplacement:
 
 @dataclass(frozen=True)
 class DicePoolResult:
+    """Represent a dice pool result."""
+
     dice: tuple[DieRollResult, ...]
     modifier: int
     subtotal: int
@@ -43,11 +53,15 @@ class DicePoolResult:
 
 @dataclass(frozen=True)
 class D20PoolResult:
+    """Represent a d20 pool result."""
+
     dice: tuple[int, ...]
 
 
 @dataclass(frozen=True)
 class D20RollResult:
+    """Represent a d20 roll result."""
+
     mode: D20RollMode
     dice: tuple[int, ...]
     selected_index: int
@@ -61,6 +75,8 @@ class D20RollResult:
 
 @dataclass(frozen=True)
 class CheckResult:
+    """Represent a check result."""
+
     roll: D20RollResult
     target: int
     success: bool
@@ -68,6 +84,8 @@ class CheckResult:
 
 @dataclass(frozen=True)
 class RollResolution[RollResultT]:
+    """Represent a roll resolution."""
+
     attempts: tuple[RollResultT, ...]
     selected_attempt: int
     reason: str
@@ -78,6 +96,8 @@ class RollResolution[RollResultT]:
 
 
 def roll_dice(num_dice: int, sides: int) -> int:
+    """Handle roll dice."""
+
     total = 0
     for _ in range(num_dice):
         total += roll_die(sides)

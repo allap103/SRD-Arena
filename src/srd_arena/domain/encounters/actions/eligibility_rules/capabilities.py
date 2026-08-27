@@ -1,3 +1,5 @@
+"""Provide capabilities support for the eligibility rules package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -17,6 +19,8 @@ if TYPE_CHECKING:
 
 
 class StatBlockActionRule:
+    """Represent a stat block action rule."""
+
     def check(
         self,
         state: EncounterState,
@@ -104,6 +108,8 @@ class StatBlockActionRule:
 
 
 class FeatureActionRule:
+    """Represent a feature action rule."""
+
     def check(
         self,
         state: EncounterState,

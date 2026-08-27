@@ -35,6 +35,8 @@ from .scaling import (
 
 @dataclass(frozen=True)
 class PreparedSpellResolution:
+    """Represent a prepared spell resolution."""
+
     definition: CapabilityDefinition
     resolution: CapabilityResolution
     definition_effects: tuple[CapabilityEffect, ...]
@@ -65,6 +67,8 @@ class PreparedSpellResolution:
 
 
 def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolution:
+    """Handle prepare spell resolution."""
+
     spell = context.spell
     definition = spell.definition
     assert definition is not None

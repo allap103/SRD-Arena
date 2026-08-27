@@ -1,3 +1,5 @@
+"""Provide types support for the feature rules package."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -10,6 +12,8 @@ DiceRoller = Callable[[int, int], int]
 
 @dataclass(frozen=True)
 class CapabilityActionResult:
+    """Represent a capability action result."""
+
     capability_id: str
     capability_name: str
     messages: list[tuple[str, str]]

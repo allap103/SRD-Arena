@@ -1,3 +1,5 @@
+"""Provide saving throws support for the rolls package."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -25,6 +27,8 @@ Ability = Literal[
 
 
 class SavingThrowCreature(Protocol):
+    """Define the saving throw creature contract."""
+
     attributes: Any
 
     def get_modifier(self, attribute_value: int) -> int: ...
@@ -38,6 +42,8 @@ class SavingThrowCreature(Protocol):
 
 @dataclass(frozen=True)
 class SavingThrowModifiers:
+    """Represent a saving throw modifiers."""
+
     ability: int
     proficiency: int
     other: int = 0
@@ -49,6 +55,8 @@ class SavingThrowModifiers:
 
 @dataclass(frozen=True)
 class SavingThrowResult:
+    """Represent a saving throw result."""
+
     ability: Ability
     proficient: bool
     modifiers: SavingThrowModifiers

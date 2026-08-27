@@ -22,14 +22,20 @@ DIRECTION_VECTORS = {
 
 
 def point_from_position(position: Position) -> Point2D:
+    """Handle point from position."""
+
     return Point2D(float(position.x) + 0.5, float(position.y) + 0.5)
 
 
 def directional_origin_point(origin: Position, direction: Vector2D) -> Point2D:
+    """Handle directional origin point."""
+
     return translate(point_from_position(origin), direction, 0.5)
 
 
 def vector_from_direction(direction: str) -> Vector2D:
+    """Handle vector from direction."""
+
     if direction not in DIRECTION_VECTORS:
         raise ValueError(f"Unsupported direction: {direction!r}.")
     dx, dy = DIRECTION_VECTORS[direction]
@@ -37,12 +43,16 @@ def vector_from_direction(direction: str) -> Vector2D:
 
 
 def vector_between_positions(origin: Position, target: Position) -> Vector2D:
+    """Handle vector between positions."""
+
     dx = float(target.x - origin.x)
     dy = float(target.y - origin.y)
     return normalize_vector(Vector2D(dx, dy))
 
 
 def normalize_vector(vector: Vector2D) -> Vector2D:
+    """Normalize vector."""
+
     magnitude = math.hypot(vector.x, vector.y)
     if magnitude <= EPSILON:
         raise ValueError("Direction vector must be non-zero.")
@@ -50,6 +60,8 @@ def normalize_vector(vector: Vector2D) -> Vector2D:
 
 
 def translate(point: Point2D, direction: Vector2D, distance: float) -> Point2D:
+    """Handle translate."""
+
     return Point2D(
         point.x + (direction.x * distance),
         point.y + (direction.y * distance),
@@ -57,10 +69,14 @@ def translate(point: Point2D, direction: Vector2D, distance: float) -> Point2D:
 
 
 def perpendicular(direction: Vector2D) -> Vector2D:
+    """Handle perpendicular."""
+
     return Vector2D(-direction.y, direction.x)
 
 
 def distance_squared(point_a: Point2D, point_b: Point2D) -> float:
+    """Handle distance squared."""
+
     delta_x = point_a.x - point_b.x
     delta_y = point_a.y - point_b.y
     return (delta_x * delta_x) + (delta_y * delta_y)

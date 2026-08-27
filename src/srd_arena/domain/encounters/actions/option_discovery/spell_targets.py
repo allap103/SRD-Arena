@@ -1,3 +1,5 @@
+"""Provide spell targets support for the option discovery package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -23,6 +25,8 @@ def spell_action_targets(
     actor: Creature,
     spell: Spell,
 ) -> list[SpellTargetContext]:
+    """Handle spell action targets."""
+
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
     if spell.removable_effect_kinds and not (
@@ -138,6 +142,8 @@ def spell_target_context(
     actor: Creature,
     target_ref: str,
 ) -> SpellTargetContext | None:
+    """Handle spell target context."""
+
     target_state = self.creatures.get(target_ref)
     if target_state is None or not target_state.is_alive:
         return None

@@ -1,3 +1,5 @@
+"""Provide targets support for the capabilities package."""
+
 from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
@@ -7,10 +9,14 @@ from .requirements import ActionRequirementSchema
 
 
 class SelfTargetSchema(CapabilitySchemaModel):
+    """Validate authored self target data."""
+
     type: Literal["self"]
 
 
 class CreatureTargetSchema(CapabilitySchemaModel):
+    """Validate authored creature target data."""
+
     type: Literal["creature"]
     count: PositiveInt = 1
     range_feet: NonNegativeInt
@@ -19,6 +25,8 @@ class CreatureTargetSchema(CapabilitySchemaModel):
 
 
 class AreaTargetSchema(CapabilitySchemaModel):
+    """Validate authored area target data."""
+
     type: Literal["area"]
     shape: Literal["cone", "cube", "line", "radius"]
     size_feet: PositiveInt

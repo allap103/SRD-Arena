@@ -1,3 +1,5 @@
+"""Provide dice log support for the encounter package."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -19,6 +21,8 @@ from .layout import clear_layout
 
 
 class DieSvgWidget(QWidget):
+    """Represent a die svg widget."""
+
     clicked = Signal(str)
     SIZE = 58
 
@@ -67,6 +71,8 @@ class DieSvgWidget(QWidget):
 
 
 class DiceRollPanel(QWidget):
+    """Represent a dice roll panel."""
+
     def __init__(
         self,
         action_callback: Callable[[str], None] | None = None,

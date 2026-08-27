@@ -1,3 +1,5 @@
+"""Provide model support for the creatures package."""
+
 import re
 from dataclasses import dataclass, field
 
@@ -20,6 +22,8 @@ from .statistics import CreatureStatistics
 
 @dataclass
 class Creature:
+    """Represent a creature."""
+
     id: str
     name: str
     description: str

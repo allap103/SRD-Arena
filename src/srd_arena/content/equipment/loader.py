@@ -1,3 +1,5 @@
+"""Provide loader support for the equipment package."""
+
 from pathlib import Path
 
 from srd_arena.content.common.sources import SOURCE_PRIORITY
@@ -8,6 +10,8 @@ from .catalog import load_item_catalog
 
 
 def load_system_items(directory: str | Path) -> list[Item]:
+    """Load system items."""
+
     items_by_id: dict[str, tuple[int, Item]] = {}
     for source_item in load_item_catalog(directory):
         item = build_item(source_item)

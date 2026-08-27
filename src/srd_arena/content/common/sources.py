@@ -1,3 +1,5 @@
+"""Provide sources support for the common package."""
+
 import json
 from pathlib import Path
 
@@ -12,6 +14,8 @@ SOURCE_PRIORITY = {
 
 
 def load_json(path: str | Path) -> dict[str, object]:
+    """Load json."""
+
     with Path(path).open(encoding="utf-8") as source_file:
         payload = json.load(source_file)
     if not isinstance(payload, dict):
@@ -20,4 +24,6 @@ def load_json(path: str | Path) -> dict[str, object]:
 
 
 def slug(value: str) -> str:
+    """Handle slug."""
+
     return value.lower().replace("'", "").replace(",", "").replace(" ", "_")

@@ -1,3 +1,5 @@
+"""Provide battlefield support for the encounter package."""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -46,6 +48,8 @@ from .status_markers import (
 
 
 class BattlefieldWidget(QWidget):
+    """Represent a battlefield widget."""
+
     creature_clicked = Signal(str, bool)
     cell_clicked = Signal(int, int)
     point_clicked = Signal(float, float)

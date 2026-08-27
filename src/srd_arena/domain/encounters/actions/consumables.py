@@ -1,3 +1,5 @@
+"""Provide consumables support for the actions package."""
+
 from __future__ import annotations
 
 import re
@@ -9,6 +11,8 @@ from ...equipment import Item
 def healing_potions_in_inventory(
     creature: Creature, items_by_id: dict[str, Item]
 ) -> list[Item]:
+    """Handle healing potions in inventory."""
+
     seen: set[str] = set()
     potions: list[Item] = []
     for item_id in creature.inventory.items:
@@ -22,6 +26,8 @@ def healing_potions_in_inventory(
 
 
 def healing_potion_dice(item: Item) -> tuple[int, int, int] | None:
+    """Handle healing potion dice."""
+
     if not item.item_type.startswith("P"):
         return None
     if not item.has_misc_tag("CNS"):

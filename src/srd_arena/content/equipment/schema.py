@@ -1,14 +1,20 @@
+"""Provide schema support for the equipment package."""
+
 from pydantic import Field
 
 from srd_arena.content.common.schema import SourceModel
 
 
 class ItemPropertySchema(SourceModel):
+    """Validate authored item property data."""
+
     uid: str
     note: str | None = None
 
 
 class ItemSchema(SourceModel):
+    """Validate authored item data."""
+
     name: str
     source: str
     type: str = ""
@@ -49,8 +55,12 @@ class ItemSchema(SourceModel):
 
 
 class BaseItemFileSchema(SourceModel):
+    """Validate authored base item file data."""
+
     base_items: list[ItemSchema] = Field(default_factory=list, alias="baseitem")
 
 
 class ItemFileSchema(SourceModel):
+    """Validate authored item file data."""
+
     items: list[ItemSchema] = Field(default_factory=list, alias="item")

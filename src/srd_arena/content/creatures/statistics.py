@@ -1,3 +1,5 @@
+"""Provide statistics support for the creatures package."""
+
 from fractions import Fraction
 
 from srd_arena.domain.creatures import CreatureStatistics
@@ -18,6 +20,8 @@ ABILITY_NAMES = {
 def build_creature_statistics(
     stat_block: BestiaryMonsterSchema | None,
 ) -> CreatureStatistics:
+    """Build creature statistics."""
+
     if stat_block is None:
         return CreatureStatistics()
     return CreatureStatistics(
@@ -48,6 +52,8 @@ def build_creature_statistics(
 
 
 def challenge_rating_proficiency_bonus(challenge_rating: str | None) -> int:
+    """Handle challenge rating proficiency bonus."""
+
     if challenge_rating is None:
         return 2
     rating = Fraction(challenge_rating)

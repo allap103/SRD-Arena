@@ -11,6 +11,8 @@ CreatureRef = str
 
 @dataclass
 class ActionCost:
+    """Represent an action cost."""
+
     movement: MovementCost = field(default_factory=lambda: MovementCost(0))
     action: int = 0
     bonus_action: int = 0
@@ -22,6 +24,8 @@ class ActionCost:
 
 @dataclass
 class EncounterAction:
+    """Represent an encounter action."""
+
     label: str
     kind: str
     value: str | int | tuple[float, float] | None = None

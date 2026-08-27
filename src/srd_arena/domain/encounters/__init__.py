@@ -1,3 +1,5 @@
+"""Expose the public encounters package API."""
+
 from .definitions import (
     EncounterBehavior,
     EncounterDefinition,

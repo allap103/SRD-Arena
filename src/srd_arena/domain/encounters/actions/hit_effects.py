@@ -1,3 +1,5 @@
+"""Provide hit effects support for the actions package."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -35,6 +37,8 @@ def apply_attack_hit_effects(
     progress: EncounterProgress,
     origin_id: str | None = None,
 ) -> None:
+    """Apply attack hit effects."""
+
     resolved_origin_id = origin_id or f"attack:{attacker_ref}:{target_ref}"
     for effect in effects:
         handler = _HIT_EFFECT_HANDLERS.get(type(effect))

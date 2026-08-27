@@ -1,3 +1,5 @@
+"""Provide execution support for the actions package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -28,6 +30,8 @@ def resolve_grapple_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
+    """Resolve grapple action."""
+
     creature_ref = self.current_decision().creature_ref
     creature_state = self.creatures[creature_ref]
     if creature_state.actions_remaining <= 0 and creature_state.attacks_remaining <= 0:

@@ -1,3 +1,5 @@
+"""Provide behaviors support for the encounters package."""
+
 from __future__ import annotations
 
 from collections.abc import Generator
@@ -27,6 +29,8 @@ DIRECTION_DELTAS = {
 def build_behavior(
     participant: EncounterCreatureState,
 ) -> Generator[EncounterAction | None, BehaviorContext]:
+    """Build behavior."""
+
     if participant.behavior.type == "wait":
         return _wait_behavior()
     if participant.behavior.type == "archer":
@@ -138,6 +142,8 @@ def _patrol_behavior(
 
 
 def step_toward(start: Position, target: Position) -> str | None:
+    """Handle step toward."""
+
     dx = sign(target.x - start.x)
     dy = sign(target.y - start.y)
     for direction, (delta_x, delta_y) in DIRECTION_DELTAS.items():
@@ -147,6 +153,8 @@ def step_toward(start: Position, target: Position) -> str | None:
 
 
 def sign(value: int) -> int:
+    """Handle sign."""
+
     if value < 0:
         return -1
     if value > 0:
@@ -155,8 +163,12 @@ def sign(value: int) -> int:
 
 
 def is_adjacent(a: Position, b: Position) -> bool:
+    """Return whether adjacent."""
+
     return grid_distance_between(a, b) == 1
 
 
 def movement_budget_for(creature: Creature, grid: Grid) -> MovementBudget:
+    """Handle movement budget for."""
+
     return grid.movement_budget(creature.effective_speed_feet())

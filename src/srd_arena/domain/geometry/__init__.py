@@ -1,3 +1,5 @@
+"""Expose the public geometry package API."""
+
 from .areas import (
     RASTERIZATION_POLICY,
     TOUCHED_CELL_POLICY,

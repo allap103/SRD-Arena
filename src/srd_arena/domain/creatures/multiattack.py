@@ -1,9 +1,13 @@
+"""Provide multiattack support for the creatures package."""
+
 from dataclasses import dataclass, field
 from typing import Literal
 
 
 @dataclass(frozen=True)
 class MultiattackCount:
+    """Represent a multiattack count."""
+
     kind: Literal["creature_stat", "half_spell_level"]
     stat: str | None = None
     rounding: Literal["down", "up"] = "down"
@@ -11,12 +15,16 @@ class MultiattackCount:
 
 @dataclass(frozen=True)
 class MultiattackRequirement:
+    """Represent a multiattack requirement."""
+
     kind: Literal["action_used_this_turn"]
     action: str
 
 
 @dataclass(frozen=True)
 class MultiattackInvocation:
+    """Represent a multiattack invocation."""
+
     kind: Literal["stat_block_action", "cast_spell"]
     name: str
     section: str = "action"
@@ -26,6 +34,8 @@ class MultiattackInvocation:
 
 @dataclass(frozen=True)
 class MultiattackStep:
+    """Represent a multiattack step."""
+
     options: tuple[MultiattackInvocation, ...]
     times: int | MultiattackCount = 1
     availability: Literal["required", "optional", "use_if_available"] = "required"
@@ -33,6 +43,8 @@ class MultiattackStep:
 
 @dataclass(frozen=True)
 class MultiattackReplacement:
+    """Represent a multiattack replacement."""
+
     target_kind: Literal["any_attack", "action", "step"]
     target_name: str | None
     target_step: int | None
@@ -44,6 +56,8 @@ class MultiattackReplacement:
 
 @dataclass(frozen=True)
 class MultiattackPlan:
+    """Represent a multiattack plan."""
+
     steps: tuple[MultiattackStep, ...]
     ordering: Literal["any", "strict"] = "any"
     replacements: tuple[MultiattackReplacement, ...] = field(default_factory=tuple)
@@ -104,6 +118,8 @@ class MultiattackPlan:
 
 @dataclass(frozen=True)
 class Multiattack:
+    """Represent a multiattack."""
+
     plans: tuple[MultiattackPlan, ...]
 
     def executable_sequence(

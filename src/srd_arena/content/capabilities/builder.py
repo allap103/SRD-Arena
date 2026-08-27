@@ -22,10 +22,14 @@ _SHARED_EFFECT_TYPES = (
 
 
 def is_shared_effect(value: object) -> TypeGuard[effects.ActionEffectSchema]:
+    """Return whether shared effect."""
+
     return isinstance(value, _SHARED_EFFECT_TYPES)
 
 
 def build_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
+    """Build target."""
+
     count = getattr(value, "count", 1)
     affects = getattr(value, "affects", "creatures")
     return domain.CapabilityTarget(
@@ -52,6 +56,8 @@ def build_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
 def build_requirement(
     value: requirements.ActionRequirementSchema,
 ) -> domain.CapabilityRequirement:
+    """Build requirement."""
+
     if isinstance(value, requirements.SizeRequirementSchema):
         return domain.SizeRequirement(value.maximum, value.minimum)
     if isinstance(value, requirements.ConditionRequirementSchema):
@@ -68,6 +74,8 @@ def build_requirement(
 def build_duration(
     value: EffectDurationSchema | None,
 ) -> domain.EffectDuration | None:
+    """Build duration."""
+
     if value is None:
         return None
     return domain.EffectDuration(
@@ -81,6 +89,8 @@ def build_duration(
 
 
 def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
+    """Build effect."""
+
     if isinstance(value, effects.DamageEffectSchema):
         return domain.DamageEffect(
             value.dice,
@@ -157,6 +167,8 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
 def build_outcome(
     values: Iterable[effects.ActionEffectSchema],
 ) -> domain.Outcome:
+    """Build outcome."""
+
     return domain.Outcome(tuple(build_effect(value) for value in values))
 
 

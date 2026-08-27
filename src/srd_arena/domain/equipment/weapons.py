@@ -1,8 +1,12 @@
+"""Provide weapons support for the equipment package."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class WeaponStat:
+    """Represent a weapon stat."""
+
     slot: list[str]
     damage: str
     damage_type: str

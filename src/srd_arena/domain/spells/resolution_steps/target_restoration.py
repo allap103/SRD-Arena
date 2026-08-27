@@ -10,6 +10,8 @@ from .scaling import resource_int_increment
 
 @dataclass
 class TargetRestorationResult:
+    """Represent a target restoration result."""
+
     healing_details: list[dict[str, object]]
     temporary_hit_point_details: list[dict[str, object]]
 
@@ -19,6 +21,8 @@ def restore_target(
     prepared: PreparedSpellResolution,
     target: SpellTargetContext,
 ) -> TargetRestorationResult:
+    """Handle restore target."""
+
     assert context.creature.spellcasting is not None
     assert context.roller is not None
 

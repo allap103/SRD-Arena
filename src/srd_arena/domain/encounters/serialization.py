@@ -1,3 +1,5 @@
+"""Provide serialization support for the encounters package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -20,6 +22,8 @@ if TYPE_CHECKING:
 
 
 def export_decision(self: EncounterState) -> dict[str, object]:
+    """Export decision."""
+
     decision = self.current_decision()
     payload: dict[str, object] = {
         "frame_id": decision.id,
@@ -36,6 +40,8 @@ def export_decision(self: EncounterState) -> dict[str, object]:
 
 
 def export_state(self: EncounterState) -> dict[str, object]:
+    """Export state."""
+
     active_creature_ref = self.current_decision().creature_ref
     return {
         "encounter_id": self.encounter_id,
@@ -253,6 +259,8 @@ def _export_creature(
 
 
 def export_pending_movement(self: EncounterState) -> dict[str, object] | None:
+    """Export pending movement."""
+
     movement = self.pending_movement
     if movement is None:
         return None

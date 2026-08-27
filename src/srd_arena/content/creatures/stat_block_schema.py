@@ -1,3 +1,5 @@
+"""Provide stat block schema support for the creatures package."""
+
 import re
 
 from pydantic import Field, model_validator
@@ -14,36 +16,50 @@ BestiaryCapabilitySchema = MultiattackCapabilitySchema | NonMultiattackCapabilit
 
 
 class BestiaryHitPointsSchema(SourceModel):
+    """Validate authored bestiary hit points data."""
+
     average: int | None = None
     formula: str | None = None
     special: str | None = None
 
 
 class BestiaryArmorClassSchema(SourceModel):
+    """Validate authored bestiary armor class data."""
+
     ac: int | None = None
     special: str | None = None
 
 
 class BestiaryTypeChoiceSchema(SourceModel):
+    """Validate authored bestiary type choice data."""
+
     choose: list[str] = Field(default_factory=list)
 
 
 class BestiaryTypeSchema(SourceModel):
+    """Validate authored bestiary type data."""
+
     type: str | BestiaryTypeChoiceSchema
     tags: list[str | object] = Field(default_factory=list)
 
 
 class BestiaryChallengeRatingSchema(SourceModel):
+    """Validate authored bestiary challenge rating data."""
+
     cr: str
 
 
 class BestiaryConditionalImmunitySchema(SourceModel):
+    """Validate authored bestiary conditional immunity data."""
+
     condition_immune: list[str] = Field(alias="conditionImmune")
     note: str | None = None
     conditional: bool = Field(default=True, alias="cond")
 
 
 class BestiaryConditionalSpeedSchema(SourceModel):
+    """Validate authored bestiary conditional speed data."""
+
     number: int
     condition: str | None = None
 
@@ -52,6 +68,8 @@ BestiarySpeedValue = int | BestiaryConditionalSpeedSchema
 
 
 class BestiarySpeedSchema(SourceModel):
+    """Validate authored bestiary speed data."""
+
     walk: BestiarySpeedValue | None = None
     burrow: BestiarySpeedValue | None = None
     climb: BestiarySpeedValue | None = None
@@ -71,6 +89,8 @@ class BestiarySpeedSchema(SourceModel):
 
 
 class BestiaryActionSchema(SourceModel):
+    """Validate authored bestiary action data."""
+
     name: str
     entries: list[object] = Field(default_factory=list)
     capability: BestiaryCapabilitySchema | None = Field(
@@ -89,6 +109,8 @@ class BestiaryActionSchema(SourceModel):
 
 
 class BestiaryMonsterSchema(SourceModel):
+    """Validate authored bestiary monster data."""
+
     name: str
     source: str
     size: str | list[str] = "M"
@@ -199,6 +221,8 @@ class BestiaryMonsterSchema(SourceModel):
 
 
 class BestiaryFileSchema(SourceModel):
+    """Validate authored bestiary file data."""
+
     monster: list[BestiaryMonsterSchema] = Field(default_factory=list)
 
 

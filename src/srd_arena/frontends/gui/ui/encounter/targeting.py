@@ -163,6 +163,8 @@ def pending_area_spell_action(
     actions: Sequence[ActionObservation],
     mode: TargetSelectionMode | None,
 ) -> ActionObservation | None:
+    """Handle pending area spell action."""
+
     if mode is None or mode.kind != "spell":
         return None
     return next(
@@ -182,6 +184,8 @@ def pending_area_stat_block_action(
     actions: Sequence[ActionObservation],
     mode: TargetSelectionMode | None,
 ) -> ActionObservation | None:
+    """Handle pending area stat block action."""
+
     if mode is None or mode.kind != "stat_block":
         return None
     return next(
@@ -200,6 +204,8 @@ def pending_area_overlay(
     actions: Sequence[ActionObservation],
     mode: TargetSelectionMode | None,
 ) -> Mapping[str, object] | None:
+    """Handle pending area overlay."""
+
     action = pending_area_action(actions, mode)
     return action.area_preview if action is not None else None
 
@@ -272,10 +278,14 @@ def allocation_status(observation: GameObservation) -> str | None:
 
 
 def is_area_spell_action(action: ActionObservation) -> bool:
+    """Return whether area spell action."""
+
     return action.kind == "spell" and action.area_preview is not None
 
 
 def is_area_stat_block_action(action: ActionObservation) -> bool:
+    """Return whether area stat block action."""
+
     return action.kind == "stat_block" and action.area_preview is not None
 
 

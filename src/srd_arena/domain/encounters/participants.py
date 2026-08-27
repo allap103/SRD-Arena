@@ -1,3 +1,5 @@
+"""Provide participants support for the encounters package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -10,6 +12,8 @@ if TYPE_CHECKING:
 
 
 def creature_controller(state: EncounterState, creature_ref: CreatureRef) -> str:
+    """Handle creature controller."""
+
     creature_id = creature_id_for_ref(state, creature_ref)
     participant = next(
         (
@@ -29,10 +33,14 @@ def creature_controller(state: EncounterState, creature_ref: CreatureRef) -> str
 
 
 def creature_id_for_ref(state: EncounterState, creature_ref: CreatureRef) -> str:
+    """Handle creature id for ref."""
+
     return state.creatures[creature_ref].creature_id
 
 
 def creature_team_id(state: EncounterState, creature_ref: CreatureRef) -> str:
+    """Handle creature team id."""
+
     creature_id = creature_id_for_ref(state, creature_ref)
     team = next(
         (team for team in state.definition.teams if creature_id in team.members),
@@ -46,10 +54,14 @@ def creatures_are_opponents(
     first_creature_ref: CreatureRef,
     second_creature_ref: CreatureRef,
 ) -> bool:
+    """Handle creatures are opponents."""
+
     return creature_team_id(state, first_creature_ref) != creature_team_id(
         state, second_creature_ref
     )
 
 
 def creature_for_ref(state: EncounterState, creature_ref: CreatureRef) -> Creature:
+    """Handle creature for ref."""
+
     return state.creatures[creature_ref].creature

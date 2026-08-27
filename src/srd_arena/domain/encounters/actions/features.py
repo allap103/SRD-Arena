@@ -1,3 +1,5 @@
+"""Provide features support for the actions package."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -26,6 +28,8 @@ def resolve_feature_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
+    """Resolve feature action."""
+
     creature_ref = self.current_decision().creature_ref
     feature_action = creature.combat_profile.feature_actions.get(feature_id)
     if feature_action is None:

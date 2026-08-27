@@ -1,8 +1,12 @@
+"""Provide main support for the srd arena package."""
+
 from srd_arena.application.api import GameStartup
 from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
 
 
 def main() -> None:
+    """Start the SRD Arena application."""
+
     from srd_arena.frontends.gui.launcher import run_gui
 
     repository = FilesystemScenarioRepository()

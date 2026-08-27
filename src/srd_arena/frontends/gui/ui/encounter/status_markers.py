@@ -10,6 +10,8 @@ MarkerCorner = Literal["top_left", "top_right", "bottom_left", "bottom_right"]
 
 @dataclass(frozen=True)
 class StatusMarkerSpec:
+    """Represent a status marker spec."""
+
     corner: MarkerCorner
     color: str
     tooltip: str
@@ -17,6 +19,8 @@ class StatusMarkerSpec:
 
 @dataclass(frozen=True)
 class StatusMarkerHit:
+    """Represent a status marker hit."""
+
     center_x: float
     center_y: float
     radius: float
@@ -31,6 +35,8 @@ class StatusMarkerHit:
 def build_status_marker_specs(
     creature: BattlefieldCreatureView,
 ) -> tuple[StatusMarkerSpec, ...]:
+    """Build status marker specs."""
+
     specs: list[StatusMarkerSpec] = []
     if creature.buffs:
         specs.append(
@@ -76,6 +82,8 @@ def status_marker_positions(
     token_radius: float,
     cell_size: float,
 ) -> tuple[dict[MarkerCorner, tuple[float, float]], float]:
+    """Handle status marker positions."""
+
     marker_radius = max(4.0, cell_size * 0.065)
     token_offset = token_radius * 0.82
     cell_inset = max(marker_radius + 3.0, cell_size * 0.1)
@@ -201,6 +209,8 @@ def status_marker_tooltip(
     x: float,
     y: float,
 ) -> str | None:
+    """Handle status marker tooltip."""
+
     hit = next(
         (candidate for candidate in reversed(marker_hits) if candidate.contains(x, y)),
         None,

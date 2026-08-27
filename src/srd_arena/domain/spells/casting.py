@@ -1,3 +1,5 @@
+"""Provide casting support for the spells package."""
+
 from dataclasses import dataclass
 
 from ..creatures import Spellcasting
@@ -6,12 +8,16 @@ from .definitions import Spell
 
 @dataclass(frozen=True)
 class SpellActionEconomy:
+    """Represent a spell action economy."""
+
     action: int = 0
     bonus_action: int = 0
     reaction: int = 0
 
 
 def spell_action_economy(spell: Spell) -> SpellActionEconomy:
+    """Handle spell action economy."""
+
     units = {
         entry.get("unit") for entry in spell.casting_time if isinstance(entry, dict)
     }
@@ -32,6 +38,8 @@ def spell_cast_block_reason(
     reaction_available: bool,
     cast_level: int | None = None,
 ) -> str | None:
+    """Handle spell cast block reason."""
+
     if economy.action > 0 and not action_available:
         return "You have already used your Action."
     if economy.bonus_action > 0 and not bonus_action_available:

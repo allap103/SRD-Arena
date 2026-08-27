@@ -241,6 +241,8 @@ __all__ = [
 
 
 class EncounterState(EncounterStateData):
+    """Represent the mutable state of a running encounter."""
+
     # Engines are stateless rule/orchestration collaborators.
     @property
     def reaction_engine(self) -> ReactionEngine:

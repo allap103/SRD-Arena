@@ -1,3 +1,5 @@
+"""Provide scaling support for the spells package."""
+
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -8,6 +10,8 @@ from .base import SpellCapabilitySchemaModel
 
 
 class SlotScalingIncrementSchema(SpellCapabilitySchemaModel):
+    """Validate authored slot scaling increment data."""
+
     type: Literal[
         "damage_dice",
         "healing_dice",
@@ -24,17 +28,23 @@ class SlotScalingIncrementSchema(SpellCapabilitySchemaModel):
 
 
 class SlotScalingSchema(SpellCapabilitySchemaModel):
+    """Validate authored slot scaling data."""
+
     type: Literal["slot_level"] = "slot_level"
     above_level: NonNegativeInt | Literal["spell_level"] = "spell_level"
     per_level: list[SlotScalingIncrementSchema] = Field(min_length=1)
 
 
 class CasterLevelScalingThresholdSchema(SpellCapabilitySchemaModel):
+    """Validate authored caster level scaling threshold data."""
+
     minimum_level: PositiveInt
     projectile_count: PositiveInt
 
 
 class CasterLevelScalingSchema(SpellCapabilitySchemaModel):
+    """Validate authored caster level scaling data."""
+
     type: Literal["caster_level"]
     thresholds: list[CasterLevelScalingThresholdSchema] = Field(min_length=1)
 

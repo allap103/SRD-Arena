@@ -1,3 +1,5 @@
+"""Provide scaling support for the building package."""
+
 import srd_arena.domain.capabilities as domain
 from srd_arena.content.spells.scaling import (
     SlotScalingSchema,
@@ -66,6 +68,8 @@ def build_scaling(raw: SpellSchema) -> tuple[domain.CapabilityScaling, ...]:
 
 
 def cantrip_damage_by_level(raw: SpellSchema) -> tuple[tuple[int, str], ...]:
+    """Handle cantrip damage by level."""
+
     scaling_data = (raw.model_extra or {}).get("scalingLevelDice")
     if not isinstance(scaling_data, dict):
         return ()

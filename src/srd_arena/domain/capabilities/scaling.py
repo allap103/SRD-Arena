@@ -6,6 +6,8 @@ from typing import Literal
 
 @dataclass(frozen=True)
 class ScalingIncrement:
+    """Represent a scaling increment."""
+
     kind: Literal[
         "damage_dice",
         "healing_dice",
@@ -23,12 +25,16 @@ class ScalingIncrement:
 
 @dataclass(frozen=True)
 class ScalingThreshold:
+    """Represent a scaling threshold."""
+
     minimum_level: int
     increments: tuple[ScalingIncrement, ...]
 
 
 @dataclass(frozen=True)
 class CapabilityScaling:
+    """Represent a capability scaling."""
+
     basis: Literal["resource_level", "actor_level"]
     above_level: int | Literal["base_level"] = "base_level"
     per_level: tuple[ScalingIncrement, ...] = ()
