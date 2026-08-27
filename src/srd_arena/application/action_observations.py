@@ -56,7 +56,18 @@ class _ActionSemantics:
 
 
 def observe_scene(read: SessionRead) -> SceneObservation:
-    """Project the engine's advertised choices into immutable client action data."""
+    """Project the engine's advertised choices into immutable client action data.
+
+    >>> read = SessionRead(
+    ...     scene_id="demo", scene_text="Choose", action_options=(
+    ...         ActionOption("exit", "Exit", "system_exit", ""),),
+    ...     encounter_state=None, transition_message=None, team_ids=(),
+    ...     creature_labels={}, creature_team_ids={}, item_names={},
+    ...     requires_automatic_advance=False)
+    >>> scene = observe_scene(read)
+    >>> (scene.scene_id, scene.action_details[0].label)
+    ('demo', 'Exit')
+    """
 
     return SceneObservation(
         scene_id=read.scene_id,

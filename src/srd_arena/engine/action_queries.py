@@ -24,7 +24,14 @@ from srd_arena.engine.queries import (
 
 
 def option_details(action: EncounterAction) -> ActionOptionDetails | None:
-    """Describe an action without exposing its overloaded encoded value."""
+    """Describe an action without exposing its overloaded encoded value.
+
+    >>> movement = EncounterAction("Move", "move", value="up")
+    >>> option_details(movement)
+    MovementOptionDetails(direction='up')
+    >>> option_details(EncounterAction("Wait", "wait")) is None
+    True
+    """
 
     if action.kind == "spell" and isinstance(action.value, str):
         source_id, target_ref, aim_point = parse_spell_action_value(action.value)

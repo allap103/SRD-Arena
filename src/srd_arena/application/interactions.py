@@ -34,7 +34,22 @@ def execute_game_command(
     session: GameEngine,
     command: GameCommand,
 ) -> CommandResult:
-    """Execute a command if it still matches the advertised decision."""
+    """Execute a command if it still matches the advertised decision.
+
+    A stale command is rejected before it can reach the engine.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.engine.queries import SessionRead
+    >>> read = SessionRead(
+    ...     scene_id="intro", scene_text=None, action_options=(),
+    ...     encounter_state=None, transition_message=None, team_ids=(),
+    ...     creature_labels={}, creature_team_ids={}, item_names={},
+    ...     requires_automatic_advance=False)
+    >>> session = SimpleNamespace(read=lambda: read)
+    >>> result = execute_game_command(session, SelectAction("wait", "old"))
+    >>> (result.accepted, result.failure.code)
+    (False, 'stale_decision')
+    """
 
     observation = observe_session(session)
     if command.expected_decision_id != decision_id(observation):
@@ -65,7 +80,21 @@ def execute_game_command(
 
 
 def game_update(session: GameEngine, result: EngineOutcome) -> GameUpdate:
-    """Translate an accepted engine result into an application update."""
+    """Translate an accepted engine result into an application update.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.engine.queries import SessionRead
+    >>> read = SessionRead(
+    ...     scene_id="intro", scene_text=None, action_options=(),
+    ...     encounter_state=None, transition_message=None, team_ids=(),
+    ...     creature_labels={}, creature_team_ids={}, item_names={},
+    ...     requires_automatic_advance=False)
+    >>> update = game_update(
+    ...     SimpleNamespace(read=lambda: read),
+    ...     EngineOutcome(selected_action_id="wait", messages=(("Hero", "Waits"),)))
+    >>> (update.selected_action_id, update.messages)
+    ('wait', (('Hero', 'Waits'),))
+    """
 
     return GameUpdate(
         observation=observe_session(session),
@@ -90,7 +119,13 @@ def _observe_event(event: CombatEvent) -> GameEvent:
 
 
 def decision_id(observation: GameObservation) -> str | None:
-    """Return the decision token clients must echo with their next command."""
+    """Return the decision token clients must echo with their next command.
+
+    >>> from srd_arena.application.observation_models import GameObservation, SceneObservation
+    >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
+    >>> decision_id(observation) is None
+    True
+    """
 
     return (
         observation.encounter.decision.id if observation.encounter is not None else None

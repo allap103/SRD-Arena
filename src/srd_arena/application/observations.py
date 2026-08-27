@@ -60,7 +60,18 @@ __all__ = [
 
 
 def observe_session(session: GameEngine) -> GameObservation:
-    """Translate mutable engine state into a frontend-neutral snapshot."""
+    """Translate mutable engine state into a frontend-neutral snapshot.
+
+    >>> from types import SimpleNamespace
+    >>> read = SessionRead(
+    ...     scene_id="intro", scene_text="Ready", action_options=(),
+    ...     encounter_state=None, transition_message=None, team_ids=(),
+    ...     creature_labels={}, creature_team_ids={}, item_names={},
+    ...     requires_automatic_advance=False)
+    >>> observation = observe_session(SimpleNamespace(read=lambda: read))
+    >>> (observation.scene.scene_id, observation.encounter)
+    ('intro', None)
+    """
 
     read = session.read()
     state = read.encounter_state

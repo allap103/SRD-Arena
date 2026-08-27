@@ -23,7 +23,19 @@ if TYPE_CHECKING:
 
 
 def read_session(session: Session) -> SessionRead:
-    """Return the intentional typed inputs for application observation."""
+    """Return the intentional typed inputs for application observation.
+
+    A pending transition advertises only Continue and system-level choices.
+
+    >>> from types import SimpleNamespace
+    >>> session = SimpleNamespace(
+    ...     pending_scene_transition=SimpleNamespace(message="Victory!"),
+    ...     encounter_state=None,
+    ...     current_encounter=SimpleNamespace(id="demo", teams=[]),
+    ...     item_templates={})
+    >>> [option.label for option in read_session(session).action_options]
+    ['Continue', 'Exit game']
+    """
 
     if session.pending_scene_transition is not None:
         action_options = [

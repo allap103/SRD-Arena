@@ -24,7 +24,18 @@ def configure_action(
     action_id: str,
     configuration: ActionConfiguration,
 ) -> EngineOutcome:
-    """Apply typed configuration to an advertised executable action."""
+    """Apply typed configuration to an advertised executable action.
+
+    Configuration is accepted only for an action in the latest engine read.
+
+    >>> from types import SimpleNamespace
+    >>> session = SimpleNamespace(
+    ...     _ensure_encounter_state=lambda: None, _encounter_actions=[])
+    >>> configure_action(session, "missing", ActionAim(2, 3))
+    Traceback (most recent call last):
+    ...
+    KeyError: "Action 'missing' is unavailable."
+    """
 
     session._ensure_encounter_state()
     action = next(
