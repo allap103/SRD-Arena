@@ -35,8 +35,12 @@ class RunningGame:
 
         return execute_game_command(self.__session, command)
 
-    def reset(self) -> GameObservation:
-        """Reset the running game and return its initial observation."""
+def reset(self) -> GameObservation:
+        """Start a fresh episode of the same game.
+
+        This supports clients that repeatedly run the same scenario, such as
+        headless simulations, without reloading its authored content.
+        """
 
         self.__session.reset()
         return self.observe()
