@@ -36,7 +36,14 @@ class HeadlessGameAdapter:
     _game: RunningGame | None = field(default=None, init=False, repr=False)
 
     def available_scenarios(self) -> tuple[ScenarioOption, ...]:
-        """Return selectable scenarios without exposing filesystem paths."""
+        """Return selectable scenarios without exposing filesystem paths.
+
+        >>> from unittest.mock import Mock
+        >>> startup = Mock()
+        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> HeadlessGameAdapter(startup).available_scenarios()
+        (ScenarioOption(id='demo', label='Demo'),)
+        """
 
         return tuple(
             ScenarioOption(id=scenario.id, label=scenario.label)
@@ -49,7 +56,18 @@ class HeadlessGameAdapter:
         *,
         automatic_action_limit: int | None = None,
     ) -> GameObservation:
-        """Start a scenario selected by its advertised stable ID."""
+        """Start a scenario selected by its advertised stable ID.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.application.api import SceneObservation
+        >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
+        >>> startup, game = Mock(), Mock()
+        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> startup.start_scenario.return_value = game
+        >>> game.observe.return_value = observation
+        >>> HeadlessGameAdapter(startup).start_scenario("demo").scene.scene_id
+        'intro'
+        """
 
         summary = next(
             (
@@ -70,12 +88,39 @@ class HeadlessGameAdapter:
         return observation
 
     def observe(self) -> GameObservation:
-        """Return the current structured game observation."""
+        """Return the current structured game observation.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.application.api import SceneObservation
+        >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
+        >>> startup, game = Mock(), Mock()
+        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> startup.start_scenario.return_value = game
+        >>> game.observe.return_value = observation
+        >>> adapter = HeadlessGameAdapter(startup)
+        >>> _ = adapter.start_scenario("demo")
+        >>> adapter.observe().scene.scene_id
+        'intro'
+        """
 
         return self._require_game().observe()
 
     def available_actions(self) -> tuple[ActionObservation, ...]:
-        """Return the legal actions at the current decision point."""
+        """Return implemented, eligible actions at the current decision point.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.application.api import SceneObservation
+        >>> action = ActionObservation("dodge", "Dodge", "action", "hero")
+        >>> observation = GameObservation(SceneObservation("fight", None, (action,)), None, None, False)
+        >>> startup, game = Mock(), Mock()
+        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> startup.start_scenario.return_value = game
+        >>> game.observe.return_value = observation
+        >>> adapter = HeadlessGameAdapter(startup)
+        >>> _ = adapter.start_scenario("demo")
+        >>> adapter.available_actions()[0].id
+        'dodge'
+        """
 
         return tuple(
             action
@@ -84,7 +129,21 @@ class HeadlessGameAdapter:
         )
 
     def available_action_ids(self) -> tuple[str, ...]:
-        """Return stable IDs suitable for an action mask or model choice."""
+        """Return stable IDs suitable for an action mask or model choice.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.application.api import SceneObservation
+        >>> action = ActionObservation("dodge", "Dodge", "action", "hero")
+        >>> observation = GameObservation(SceneObservation("fight", None, (action,)), None, None, False)
+        >>> startup, game = Mock(), Mock()
+        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> startup.start_scenario.return_value = game
+        >>> game.observe.return_value = observation
+        >>> adapter = HeadlessGameAdapter(startup)
+        >>> _ = adapter.start_scenario("demo")
+        >>> adapter.available_action_ids()
+        ('dodge',)
+        """
 
         return tuple(action.id for action in self.available_actions())
 
@@ -94,7 +153,21 @@ class HeadlessGameAdapter:
         *,
         expected_decision_id: str | None,
     ) -> CommandResult:
-        """Submit one advertised action against the observed decision."""
+        """Submit one advertised action against the observed decision.
+
+        >>> from unittest.mock import Mock
+        >>> startup, game = Mock(), Mock()
+        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> startup.start_scenario.return_value = game
+        >>> game.observe.return_value = Mock()
+        >>> game.execute.return_value = CommandResult()
+        >>> adapter = HeadlessGameAdapter(startup)
+        >>> _ = adapter.start_scenario("demo")
+        >>> adapter.select_action("dodge", expected_decision_id="turn:1").accepted
+        False
+        >>> game.execute.call_args.args[0].action_id
+        'dodge'
+        """
 
         return self.submit(
             SelectAction(
@@ -104,17 +177,55 @@ class HeadlessGameAdapter:
         )
 
     def submit(self, command: GameCommand) -> CommandResult:
-        """Submit any application command, including staged targeting."""
+        """Submit any application command, including staged targeting.
+
+        >>> from unittest.mock import Mock
+        >>> startup, game = Mock(), Mock()
+        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> startup.start_scenario.return_value = game
+        >>> game.observe.return_value = Mock()
+        >>> expected = CommandResult()
+        >>> game.execute.return_value = expected
+        >>> adapter = HeadlessGameAdapter(startup)
+        >>> _ = adapter.start_scenario("demo")
+        >>> adapter.submit(SelectAction("dodge", "turn:1")) is expected
+        True
+        """
 
         return self._require_game().execute(command)
 
     def advance_automatic(self) -> GameUpdate:
-        """Advance scripted controllers until external input is required."""
+        """Advance scripted controllers until external input is required.
+
+        >>> from unittest.mock import Mock
+        >>> startup, game = Mock(), Mock()
+        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> startup.start_scenario.return_value = game
+        >>> game.observe.return_value = Mock()
+        >>> update = Mock()
+        >>> game.advance_automatic.return_value = update
+        >>> adapter = HeadlessGameAdapter(startup)
+        >>> _ = adapter.start_scenario("demo")
+        >>> adapter.advance_automatic() is update
+        True
+        """
 
         return self._require_game().advance_automatic()
 
     def reset(self) -> GameObservation:
-        """Reset the active game to its initial observation."""
+        """Reset the active game to its initial observation.
+
+        >>> from unittest.mock import Mock
+        >>> startup, game = Mock(), Mock()
+        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> startup.start_scenario.return_value = game
+        >>> game.observe.return_value = Mock()
+        >>> game.reset.return_value = "initial snapshot"
+        >>> adapter = HeadlessGameAdapter(startup)
+        >>> _ = adapter.start_scenario("demo")
+        >>> adapter.reset()
+        'initial snapshot'
+        """
 
         return self._require_game().reset()
 
