@@ -1,11 +1,11 @@
-"""Provide equipment support for the creatures package."""
+"""Track which item identifiers occupy a creature's equipment slots."""
 
 from dataclasses import dataclass, field
 
 
 @dataclass
 class Equipment:
-    """Represent an equipment."""
+    """Map body and hand slots to the item identifiers currently equipped."""
 
     equipped_items: dict[str, str | None] = field(
         default_factory=lambda: {

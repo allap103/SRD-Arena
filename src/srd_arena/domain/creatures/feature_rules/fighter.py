@@ -1,4 +1,4 @@
-"""Provide fighter support for the feature rules package."""
+"""Implement fighter-specific feature mechanics that remain clearer in Python."""
 
 from __future__ import annotations
 

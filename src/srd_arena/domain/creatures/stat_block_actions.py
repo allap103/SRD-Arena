@@ -1,4 +1,4 @@
-"""Provide stat block actions support for the creatures package."""
+"""Model declared and executable actions originating in creature stat blocks."""
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
@@ -17,7 +17,11 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class DeclaredStatBlockAction:
-    """Represent a declared stat block action."""
+    """Preserve an authored stat-block entry even when it is not executable yet.
+
+    The frontend uses declarations to display unavailable or unimplemented
+    actions instead of silently hiding rules text that lacks structured mechanics.
+    """
 
     name: str
     display_name: str
@@ -28,7 +32,7 @@ class DeclaredStatBlockAction:
 
 @dataclass(frozen=True)
 class AttackActionDefinition:
-    """Represent an attack action definition."""
+    """Describe an executable stat-block attack and its hit capability effects."""
 
     name: str
     attack_modes: tuple[str, ...]
@@ -44,7 +48,7 @@ class AttackActionDefinition:
 
 @dataclass(frozen=True)
 class SavingThrowActionDefinition:
-    """Represent a saving throw action definition."""
+    """Describe a stat-block action resolved by a fixed Difficulty Class save."""
 
     name: str
     target: CapabilityTarget
@@ -60,7 +64,7 @@ class SavingThrowActionDefinition:
 
 @dataclass(frozen=True)
 class AutomaticActionDefinition:
-    """Represent an automatic action definition."""
+    """Describe a stat-block action whose effects require no attack or save."""
 
     name: str
     target: CapabilityTarget
@@ -71,7 +75,7 @@ class AutomaticActionDefinition:
 
 @dataclass(frozen=True)
 class SpellOption:
-    """Represent a spell option."""
+    """Bind one NPC spell choice to its cast level and per-stat-block resources."""
 
     name: str
     source: str | None = None
@@ -84,7 +88,7 @@ class SpellOption:
 
 @dataclass(frozen=True)
 class SpellcastingActionDefinition:
-    """Represent a spellcasting action definition."""
+    """Collect the spells available through an NPC stat-block casting action."""
 
     name: str
     ability: str

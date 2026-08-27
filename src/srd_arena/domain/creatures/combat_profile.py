@@ -1,4 +1,4 @@
-"""Provide combat profile support for the creatures package."""
+"""Collect creature-specific action economy and feature-action configuration."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class CombatProfile:
-    """Represent a combat profile."""
+    """Describe combat options and resource limits beyond base creature statistics."""
 
     attacks_per_attack_action: int = 1
     bonus_action_options: set[str] = field(default_factory=set)

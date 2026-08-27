@@ -1,11 +1,11 @@
-"""Provide inventory support for the creatures package."""
+"""Track item identifiers carried by a creature independently of equipment."""
 
 from dataclasses import dataclass, field
 
 
 @dataclass
 class Inventory:
-    """Represent an inventory."""
+    """Store carried item identifiers, including repeated consumable items."""
 
     items: list[str] = field(default_factory=list)
 

@@ -1,4 +1,4 @@
-"""Provide registry support for the feature rules package."""
+"""Map class-feature identifiers to their Python rule handlers."""
 
 from __future__ import annotations
 

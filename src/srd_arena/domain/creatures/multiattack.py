@@ -1,4 +1,4 @@
-"""Provide multiattack support for the creatures package."""
+"""Describe legal compositions of actions within a creature's Multiattack."""
 
 from dataclasses import dataclass, field
 from typing import Literal
@@ -6,7 +6,7 @@ from typing import Literal
 
 @dataclass(frozen=True)
 class MultiattackCount:
-    """Represent a multiattack count."""
+    """Derive a repeated-step count from creature or spellcasting context."""
 
     kind: Literal["creature_stat", "half_spell_level"]
     stat: str | None = None
@@ -15,7 +15,7 @@ class MultiattackCount:
 
 @dataclass(frozen=True)
 class MultiattackRequirement:
-    """Represent a multiattack requirement."""
+    """Require a named action occurrence before a plan or replacement is legal."""
 
     kind: Literal["action_used_this_turn"]
     action: str
@@ -23,7 +23,7 @@ class MultiattackRequirement:
 
 @dataclass(frozen=True)
 class MultiattackInvocation:
-    """Represent a multiattack invocation."""
+    """Reference one stat-block action or spell cast used inside Multiattack."""
 
     kind: Literal["stat_block_action", "cast_spell"]
     name: str
@@ -34,7 +34,7 @@ class MultiattackInvocation:
 
 @dataclass(frozen=True)
 class MultiattackStep:
-    """Represent a multiattack step."""
+    """Offer one or more interchangeable invocations for a repeated plan step."""
 
     options: tuple[MultiattackInvocation, ...]
     times: int | MultiattackCount = 1
@@ -43,7 +43,7 @@ class MultiattackStep:
 
 @dataclass(frozen=True)
 class MultiattackReplacement:
-    """Represent a multiattack replacement."""
+    """Allow configured invocations to replace eligible attacks or plan steps."""
 
     target_kind: Literal["any_attack", "action", "step"]
     target_name: str | None
@@ -56,7 +56,7 @@ class MultiattackReplacement:
 
 @dataclass(frozen=True)
 class MultiattackPlan:
-    """Represent a multiattack plan."""
+    """Describe one legal ordered or freely arranged Multiattack composition."""
 
     steps: tuple[MultiattackStep, ...]
     ordering: Literal["any", "strict"] = "any"
@@ -136,7 +136,7 @@ class MultiattackPlan:
 
 @dataclass(frozen=True)
 class Multiattack:
-    """Represent a multiattack."""
+    """Collect alternative plans advertised by one creature's Multiattack entry."""
 
     plans: tuple[MultiattackPlan, ...]
 

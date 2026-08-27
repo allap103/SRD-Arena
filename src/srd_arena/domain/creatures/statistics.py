@@ -1,4 +1,4 @@
-"""Provide statistics support for the creatures package."""
+"""Store descriptive and rules-relevant statistics beyond ability scores."""
 
 from dataclasses import dataclass, field
 
@@ -7,7 +7,7 @@ from ..effects.conditions import Condition
 
 @dataclass(frozen=True)
 class CreatureStatistics:
-    """Represent a creature statistics."""
+    """Hold creature type, proficiencies, senses, immunities, and mechanical traits."""
 
     creature_type: str | None = None
     type_tags: tuple[str, ...] = ()

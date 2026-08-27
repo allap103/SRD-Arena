@@ -1,4 +1,4 @@
-"""Provide model support for the creatures package."""
+"""Aggregate persistent creature statistics, possessions, features, and health."""
 
 import re
 from dataclasses import dataclass, field
@@ -22,7 +22,12 @@ from .statistics import CreatureStatistics
 
 @dataclass
 class Creature:
-    """Represent a creature."""
+    """Own a creature's intrinsic identity, statistics, abilities, and health.
+
+    A creature is independent of any particular encounter. Position, controller,
+    team membership, and per-turn resources belong to ``EncounterCreatureState``
+    so the same creature template can be instantiated safely in multiple games.
+    """
 
     id: str
     name: str

@@ -1,4 +1,4 @@
-"""Provide spellcasting support for the creatures package."""
+"""Track a creature's spellcasting statistics, known spells, and spell slots."""
 
 from __future__ import annotations
 
@@ -13,7 +13,12 @@ if TYPE_CHECKING:
 
 @dataclass
 class Spellcasting:
-    """Represent a spellcasting."""
+    """Own creature-specific casting context and player-style spell-slot state.
+
+    Spells retain universal metadata and mechanics; this component supplies the
+    ability modifier, save DC, attack bonus, learned set, and resources used by
+    this particular creature when it casts them.
+    """
 
     ability: str
     ability_modifier: int

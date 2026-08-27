@@ -1,4 +1,4 @@
-"""Provide size support for the creatures package."""
+"""Translate creature size categories into occupied grid footprints and rules."""
 
 from __future__ import annotations
 

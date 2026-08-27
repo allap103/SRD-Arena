@@ -1,11 +1,11 @@
-"""Provide class features support for the creatures package."""
+"""Attach loaded class-feature identity and descriptive metadata to creatures."""
 
 from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
 class ClassFeature:
-    """Represent a class feature."""
+    """Describe one class feature granted at a particular class level."""
 
     id: str
     name: str

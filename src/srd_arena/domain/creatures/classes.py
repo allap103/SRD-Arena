@@ -1,11 +1,11 @@
-"""Provide classes support for the creatures package."""
+"""Reference authored class and subclass content from creature templates."""
 
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class ClassRef:
-    """Represent a class ref."""
+    """Identify a class and the level a creature has reached in it."""
 
     name: str
     source: str | None = None
@@ -13,7 +13,7 @@ class ClassRef:
 
 @dataclass(frozen=True)
 class SubclassRef:
-    """Represent a subclass ref."""
+    """Identify the subclass selected for a creature's class progression."""
 
     name: str
     source: str | None = None

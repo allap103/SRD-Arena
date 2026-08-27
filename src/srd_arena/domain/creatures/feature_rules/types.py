@@ -1,4 +1,4 @@
-"""Provide types support for the feature rules package."""
+"""Define the structured boundary returned by Python feature-rule handlers."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ DiceRoller = Callable[[int, int], int]
 
 @dataclass(frozen=True)
 class CapabilityActionResult:
-    """Represent a capability action result."""
+    """Return messages, effects, resources, and details from a feature action."""
 
     capability_id: str
     capability_name: str

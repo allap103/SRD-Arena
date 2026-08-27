@@ -1,11 +1,11 @@
-"""Provide attributes support for the creatures package."""
+"""Store a creature's core ability scores, defenses, health, and movement modes."""
 
 from dataclasses import dataclass, field
 
 
 @dataclass
 class Movement:
-    """Represent a movement."""
+    """Describe the creature's walking speed and optional alternate movement modes."""
 
     speed_feet: int = 30
     burrow_feet: int | None = None
@@ -27,7 +27,7 @@ class Movement:
 
 @dataclass
 class Attributes:
-    """Represent an attributes."""
+    """Hold the base numerical statistics from which combat values are derived."""
 
     base_health: int
     level: int
