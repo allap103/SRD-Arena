@@ -58,20 +58,57 @@ class Session:
 
     @property
     def decision_creature(self) -> Creature:
+        """Return the creature that owns the engine's current decision.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {}, start_scene_id="demo")
+        >>> hero = Mock()
+        >>> session.encounter_state = Mock(
+        ...     encounter_id="demo", active_creature_state=Mock(creature=hero))
+        >>> session.decision_creature is hero
+        True
+        """
         self._ensure_encounter_state()
         assert self.encounter_state is not None
         return self.encounter_state.active_creature_state.creature
 
     @property
     def current_encounter(self) -> EncounterDefinition:
+        """Return the authored definition for the active scene.
+
+        >>> from srd_arena.domain.geometry import Grid
+        >>> encounter = EncounterDefinition("demo", Grid(1, 1))
+        >>> Session({"demo": encounter}, {}, start_scene_id="demo").current_encounter is encounter
+        True
+        """
         return self.encounters[self.current_scene_id]
 
     def read(self) -> SessionRead:
-        """Return the typed internal inputs for application observation."""
+        """Return the typed internal inputs for application observation.
+
+        >>> from srd_arena.domain.geometry import Grid
+        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {}, start_scene_id="demo")
+        >>> session.pending_scene_transition = PendingSceneTransition("next", "Victory!")
+        >>> session.read().scene_text
+        'Victory!'
+        """
 
         return read_session(self)
 
     def choose(self, action_id: str) -> EngineOutcome:
+        """Execute one action advertised by the current engine read.
+
+        System exit remains available at an encounter decision point.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {}, start_scene_id="demo")
+        >>> session.encounter_state = Mock(encounter_id="demo")
+        >>> outcome = session.choose("system-exit")
+        >>> (outcome.selected_action_id, outcome.should_exit)
+        ('system-exit', True)
+        """
         if self.pending_scene_transition is not None:
             if action_id == "system-continue-scene-transition":
                 return self._continue_scene_transition()
@@ -89,6 +126,15 @@ class Session:
         raise RuntimeError("No encounter is active.")
 
     def reset(self) -> None:
+        """Restore the session to its initially loaded content and scene.
+
+        >>> from srd_arena.domain.geometry import Grid
+        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {}, start_scene_id="demo")
+        >>> session.current_scene_id = "later"
+        >>> session.reset()
+        >>> (session.current_scene_id, session.encounter_state)
+        ('demo', None)
+        """
         self.creature_templates = deepcopy(self._initial_creature_templates)
         self.current_scene_id = self.start_scene_id
         self.pending_scene_transition = None
@@ -129,6 +175,23 @@ class Session:
         *,
         selected_choice_text: str | None = None,
     ) -> EngineOutcome:
+        """Execute a fully constructed encounter action.
+
+        This entry point supports trusted controllers that already hold the
+        structured action rather than selecting it by advertised ID.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.encounters.models import EncounterProgress
+        >>> from srd_arena.domain.geometry import Grid
+        >>> orchestrator = Mock()
+        >>> orchestrator.submit.return_value = EncounterProgress()
+        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {},
+        ...     start_scene_id="demo", encounter_orchestrator=orchestrator)
+        >>> session.encounter_state = Mock(encounter_id="demo")
+        >>> action = EncounterAction("Wait", "wait", id="wait")
+        >>> session.choose_encounter_action(action).selected_action_id
+        'wait'
+        """
         self._ensure_encounter_state()
         if self.encounter_state is None:
             raise RuntimeError(
@@ -144,7 +207,20 @@ class Session:
         action_id: str,
         configuration: ActionConfiguration,
     ) -> EngineOutcome:
-        """Apply typed configuration to an advertised executable action."""
+        """Apply typed configuration to an advertised executable action.
+
+        Configuration is accepted only for an action from the latest read.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> from srd_arena.engine.queries import ActionAim
+        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {}, start_scene_id="demo")
+        >>> session.encounter_state = Mock(encounter_id="demo")
+        >>> session.configure_action("missing", ActionAim(1, 1))
+        Traceback (most recent call last):
+        ...
+        KeyError: "Action 'missing' is unavailable."
+        """
 
         return configure_engine_action(self, action_id, configuration)
 
@@ -180,6 +256,20 @@ class Session:
         )
 
     def advance_until_input_required(self) -> EngineOutcome:
+        """Advance automatic controllers until an external decision is needed.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.encounters.models import EncounterProgress
+        >>> from srd_arena.domain.geometry import Grid
+        >>> orchestrator = Mock()
+        >>> orchestrator.advance.return_value = EncounterProgress(messages=[("Goblin", "Waits")])
+        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {},
+        ...     start_scene_id="demo", encounter_orchestrator=orchestrator)
+        >>> session.encounter_state = Mock(
+        ...     encounter_id="demo", requires_automatic_advance=Mock(return_value=True))
+        >>> session.advance_until_input_required().messages
+        (('Goblin', 'Waits'),)
+        """
         self._ensure_encounter_state()
         if self.encounter_state is None:
             raise RuntimeError("AI advancement requested without an active encounter.")

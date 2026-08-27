@@ -247,7 +247,18 @@ class EncounterObservation:
     targeting: TargetingObservation | None
 
     def creature(self, creature_ref: str) -> CreatureObservation:
-        """Return a combatant by its stable encounter reference."""
+        """Return a combatant by its stable encounter reference.
+
+        >>> from unittest.mock import Mock
+        >>> hero = Mock(creature_ref="hero")
+        >>> encounter = EncounterObservation(
+        ...     "demo", GridObservation(5, 5), 1,
+        ...     DecisionObservation("turn:1", "turn", "hero"),
+        ...     (hero,), (), (), ("heroes",), None,
+        ... )
+        >>> encounter.creature("hero") is hero
+        True
+        """
 
         return next(
             creature

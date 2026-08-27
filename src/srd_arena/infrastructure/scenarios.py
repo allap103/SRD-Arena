@@ -50,7 +50,19 @@ class FilesystemScenarioRepository:
     image_root: Path = IMAGES_ROOT
 
     def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
-        """Describe scenarios selectable through this repository by stable ID."""
+        """Describe scenarios selectable through this repository by stable ID.
+
+        >>> from tempfile import TemporaryDirectory
+        >>> with TemporaryDirectory() as temporary_directory:
+        ...     root = Path(temporary_directory)
+        ...     scenario = root / "demo"
+        ...     (scenario / "encounters").mkdir(parents=True)
+        ...     _ = (scenario / "config.json").write_text(
+        ...         '{"display_name": "Demo"}', encoding="utf-8")
+        ...     summaries = FilesystemScenarioRepository(scenario_root=root).available_scenarios()
+        >>> [(summary.id, summary.label) for summary in summaries]
+        [('demo', 'Demo')]
+        """
 
         return tuple(
             ScenarioSummary(
@@ -67,7 +79,20 @@ class FilesystemScenarioRepository:
         self,
         scenario_id: str,
     ) -> LoadedScenario:
-        """Load one repository scenario selected by its advertised stable ID."""
+        """Load one repository scenario selected by its advertised stable ID.
+
+        Unknown IDs fail before any system content is loaded.
+
+        >>> from tempfile import TemporaryDirectory
+        >>> with TemporaryDirectory() as temporary_directory:
+        ...     repository = FilesystemScenarioRepository(
+        ...         scenario_root=Path(temporary_directory))
+        ...     try:
+        ...         repository.load_scenario("missing")
+        ...     except KeyError as error:
+        ...         "Unknown scenario 'missing'." in str(error)
+        True
+        """
 
         scenario = next(
             (
