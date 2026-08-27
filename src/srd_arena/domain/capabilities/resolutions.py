@@ -10,7 +10,7 @@ from .requirements import CapabilityRequirement
 
 @dataclass(frozen=True)
 class Outcome:
-    """Represent an outcome."""
+    """Collect state-changing effects produced by one resolution branch."""
 
     effects: tuple[CapabilityEffect, ...] = ()
     end_capability: bool = False
@@ -18,7 +18,7 @@ class Outcome:
 
 @dataclass(frozen=True)
 class AutomaticResolution:
-    """Represent an automatic resolution."""
+    """Apply an outcome without an attack roll or saving throw."""
 
     outcome: Outcome
     kind: Literal["automatic"] = "automatic"
@@ -26,7 +26,7 @@ class AutomaticResolution:
 
 @dataclass(frozen=True)
 class FixedAttackBonus:
-    """Represent a fixed attack bonus."""
+    """Use an explicitly authored modifier for a capability attack roll."""
 
     value: int
     kind: Literal["fixed"] = "fixed"
@@ -34,7 +34,7 @@ class FixedAttackBonus:
 
 @dataclass(frozen=True)
 class DerivedAttackBonus:
-    """Represent a derived attack bonus."""
+    """Derive an attack modifier from the invocation's actor context."""
 
     derivation: Literal["spell_attack_modifier"]
     kind: Literal["derived"] = "derived"
@@ -45,7 +45,7 @@ AttackBonus = FixedAttackBonus | DerivedAttackBonus
 
 @dataclass(frozen=True)
 class AttackResolution:
-    """Represent an attack resolution."""
+    """Resolve one or more attack rolls into hit and miss outcomes."""
 
     modes: tuple[Literal["melee", "ranged"], ...]
     attack_bonus: AttackBonus
@@ -58,7 +58,7 @@ class AttackResolution:
 
 @dataclass(frozen=True)
 class FixedDifficultyClass:
-    """Represent a fixed difficulty class."""
+    """Use an explicitly authored Difficulty Class for a saving throw."""
 
     value: int
     kind: Literal["fixed"] = "fixed"
@@ -66,7 +66,7 @@ class FixedDifficultyClass:
 
 @dataclass(frozen=True)
 class DerivedDifficultyClass:
-    """Represent a derived difficulty class."""
+    """Derive a Difficulty Class from spell or invocation context."""
 
     derivation: Literal["spell_save_dc", "ten_plus_spell_level"]
     kind: Literal["derived"] = "derived"
@@ -77,7 +77,11 @@ DifficultyClass = FixedDifficultyClass | DerivedDifficultyClass
 
 @dataclass(frozen=True)
 class SavingThrowResolution:
-    """Represent a saving throw resolution."""
+    """Resolve a save into staged failure, success, and unconditional outcomes.
+
+    Staged failures support effects that progress across repeated saves, while
+    ``always`` captures mechanics applied regardless of the initial result.
+    """
 
     ability: str
     difficulty: DifficultyClass

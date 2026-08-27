@@ -1,10 +1,10 @@
-"""Provide properties support for the spells package."""
+"""Derive convenient spell properties from metadata and capability scaling."""
 
 from .definitions import Spell
 
 
 def spell_supports_higher_level(spell: Spell) -> bool:
-    """Handle spell supports higher level."""
+    """Return whether resource-level scaling gives the spell an upcast benefit."""
 
     if spell.definition is not None:
         return any(

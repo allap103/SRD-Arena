@@ -18,7 +18,7 @@ from .scaling import parse_damage_dice
 
 @dataclass
 class TargetRollOutcome:
-    """Represent a target roll outcome."""
+    """Collect one target's save/attack result and resulting damage rolls."""
 
     successful_save: bool
     automatic_success_reasons: tuple[str, ...]

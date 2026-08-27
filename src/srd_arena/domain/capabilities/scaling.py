@@ -6,7 +6,7 @@ from typing import Literal
 
 @dataclass(frozen=True)
 class ScalingIncrement:
-    """Represent a scaling increment."""
+    """Describe one numeric or dice change applied by capability scaling."""
 
     kind: Literal[
         "damage_dice",
@@ -25,7 +25,7 @@ class ScalingIncrement:
 
 @dataclass(frozen=True)
 class ScalingThreshold:
-    """Represent a scaling threshold."""
+    """Apply scaling increments once a basis reaches a minimum level."""
 
     minimum_level: int
     increments: tuple[ScalingIncrement, ...]
@@ -33,7 +33,7 @@ class ScalingThreshold:
 
 @dataclass(frozen=True)
 class CapabilityScaling:
-    """Represent a capability scaling."""
+    """Describe level-based changes without duplicating a capability definition."""
 
     basis: Literal["resource_level", "actor_level"]
     above_level: int | Literal["base_level"] = "base_level"

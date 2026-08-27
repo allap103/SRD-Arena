@@ -10,7 +10,7 @@ def roll_optional_dice(
     dice: str | None,
     roller: DieRoller,
 ) -> DicePoolResult | None:
-    """Handle roll optional dice."""
+    """Resolve an optional dice expression, returning no roll when absent."""
 
     if dice is None:
         return None
@@ -27,7 +27,7 @@ def restoration_detail(
     total: int,
     applied: int,
 ) -> dict[str, object]:
-    """Handle restoration detail."""
+    """Build the stable event payload for healing or temporary Hit Points."""
 
     return {
         "target_ref": target.target_ref,
@@ -74,7 +74,7 @@ def serialize_roll_modifiers(
 
 
 def effect_duration_rounds(duration: EffectDuration | None) -> int | None:
-    """Handle effect duration rounds."""
+    """Convert a capability duration into encounter rounds when possible."""
 
     if duration is None:
         return None

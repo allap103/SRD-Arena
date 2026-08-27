@@ -1,4 +1,4 @@
-"""Provide resolution support for the spells package."""
+"""Coordinate capability-driven and custom spell resolution into effect output."""
 
 from __future__ import annotations
 

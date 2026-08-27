@@ -6,7 +6,7 @@ from typing import Literal
 
 @dataclass(frozen=True)
 class SizeRequirement:
-    """Represent a size requirement."""
+    """Restrict a target to an inclusive creature-size range."""
 
     maximum: str | None = None
     minimum: str | None = None
@@ -14,7 +14,7 @@ class SizeRequirement:
 
 @dataclass(frozen=True)
 class ConditionRequirement:
-    """Represent a condition requirement."""
+    """Require target conditions, optionally applied by this capability's source."""
 
     conditions: tuple[str, ...]
     match: Literal["any", "all"] = "any"
@@ -23,35 +23,35 @@ class ConditionRequirement:
 
 @dataclass(frozen=True)
 class CreatureTypeRequirement:
-    """Represent a creature type requirement."""
+    """Restrict a capability to one of the listed creature types."""
 
     creature_types: tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class NotAffectedRequirement:
-    """Represent a not affected requirement."""
+    """Require that the target is not already affected by a named action."""
 
     action: str
 
 
 @dataclass(frozen=True)
 class CreatureTraitRequirement:
-    """Represent a creature trait requirement."""
+    """Require a named mechanical trait on the target creature."""
 
     trait: str
 
 
 @dataclass(frozen=True)
 class ConditionImmunityRequirement:
-    """Represent a condition immunity requirement."""
+    """Require the target to possess immunity to a named condition."""
 
     condition: str
 
 
 @dataclass(frozen=True)
 class RelationshipRequirement:
-    """Represent a relationship requirement."""
+    """Require a directional creature relationship with constrained provenance."""
 
     relationship: str
     established_by: Literal["this_spell", "source", "any"] = "any"

@@ -7,7 +7,7 @@ from .effects import CapabilityEffect, EffectDuration
 
 @dataclass(frozen=True)
 class RepeatSave:
-    """Represent a repeat save."""
+    """Schedule later saves that can progress or end an ongoing outcome."""
 
     trigger: str
     ability: str | None = None
@@ -24,7 +24,7 @@ class RepeatSave:
 
 @dataclass(frozen=True)
 class OutcomeStage:
-    """Represent an outcome stage."""
+    """Group effects applied at one stage of a progressive failed save."""
 
     effects: tuple[CapabilityEffect, ...]
     repeat_saves: tuple[RepeatSave, ...] = ()

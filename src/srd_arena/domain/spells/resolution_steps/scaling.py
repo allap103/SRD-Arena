@@ -10,7 +10,7 @@ def scale_dice(
     increment: str | None,
     levels_above: int,
 ) -> str | None:
-    """Handle scale dice."""
+    """Increase a dice expression by a number of additional dice."""
 
     if base is None or increment is None or levels_above <= 0:
         return base
@@ -27,7 +27,7 @@ def scaled_damage_dice(
     increment_sides: int,
     levels_above: int,
 ) -> str:
-    """Handle scaled damage dice."""
+    """Apply resource-level damage-dice scaling to a base expression."""
 
     count, sides = parse_damage_dice(dice)
     if sides != increment_sides:
@@ -39,7 +39,7 @@ def actor_level_damage_dice(
     definition: CapabilityDefinition,
     actor_level: int,
 ) -> str | None:
-    """Handle actor level damage dice."""
+    """Resolve the highest damage-dice threshold reached by the actor."""
 
     thresholds = sorted(
         (
@@ -63,7 +63,7 @@ def resource_dice_increment(
     kind: str,
     damage_type: str | None = None,
 ) -> str | None:
-    """Handle resource dice increment."""
+    """Sum per-resource-level dice increments of a requested kind."""
 
     return next(
         (
@@ -87,7 +87,7 @@ def resource_int_increment(
     definition: CapabilityDefinition,
     kind: str,
 ) -> int:
-    """Handle resource int increment."""
+    """Sum per-resource-level integer increments of a requested kind."""
 
     return sum(
         increment.amount

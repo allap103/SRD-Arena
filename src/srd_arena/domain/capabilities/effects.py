@@ -8,7 +8,7 @@ from .requirements import CapabilityRequirement, CreatureTypeRequirement
 
 @dataclass(frozen=True)
 class EffectDuration:
-    """Represent an effect duration."""
+    """Declare when state created by a capability effect should expire."""
 
     kind: str
     amount: int | None = None
@@ -20,7 +20,7 @@ class EffectDuration:
 
 @dataclass(frozen=True)
 class AttackRollModeRequirement:
-    """Represent an attack roll mode requirement."""
+    """Apply an effect only when its attack used the required roll mode."""
 
     mode: Literal["normal", "advantage", "disadvantage"]
 
@@ -30,7 +30,7 @@ AttackHitRequirement = AttackRollModeRequirement
 
 @dataclass(frozen=True)
 class DamageEffect:
-    """Represent a damage effect."""
+    """Deal typed dice damage when the containing outcome resolves."""
 
     dice: str
     bonus: int
@@ -41,7 +41,7 @@ class DamageEffect:
 
 @dataclass(frozen=True)
 class HealingEffect:
-    """Represent a healing effect."""
+    """Restore Hit Points from dice, a pool, or damage already dealt."""
 
     dice: str | None = None
     bonus: int = 0
@@ -53,7 +53,7 @@ class HealingEffect:
 
 @dataclass(frozen=True)
 class TemporaryHitPointsEffect:
-    """Represent a temporary hit points effect."""
+    """Grant temporary Hit Points immediately or at a later turn trigger."""
 
     dice: str | None = None
     value: int = 0
@@ -63,7 +63,7 @@ class TemporaryHitPointsEffect:
 
 @dataclass(frozen=True)
 class ArmorClassModifierEffect:
-    """Represent an armor class modifier effect."""
+    """Contribute a temporary numeric adjustment to effective Armor Class."""
 
     value: int
     duration: EffectDuration | None = None
@@ -71,7 +71,7 @@ class ArmorClassModifierEffect:
 
 @dataclass(frozen=True)
 class RemoveEffect:
-    """Represent a remove effect."""
+    """Remove selected conditions or ongoing-effect categories from a target."""
 
     removable: tuple[str, ...]
     selection: Literal["one", "all"] = "one"
@@ -80,7 +80,7 @@ class RemoveEffect:
 
 @dataclass(frozen=True)
 class DamageResistanceEffect:
-    """Represent a damage resistance effect."""
+    """Grant resistance to all or one selected damage type for a duration."""
 
     damage_types: tuple[str, ...]
     selection: Literal["all", "choose_one"] = "all"
@@ -89,7 +89,7 @@ class DamageResistanceEffect:
 
 @dataclass(frozen=True)
 class DamageReductionEffect:
-    """Represent a damage reduction effect."""
+    """Grant a limited dice-based reduction against matching incoming damage."""
 
     damage_types: tuple[str, ...]
     dice: str
@@ -101,7 +101,7 @@ class DamageReductionEffect:
 
 @dataclass(frozen=True)
 class SpeedModifierEffect:
-    """Represent a speed modifier effect."""
+    """Add or subtract feet from effective Speed for a duration."""
 
     feet: int
     duration: EffectDuration | None = None
@@ -109,7 +109,7 @@ class SpeedModifierEffect:
 
 @dataclass(frozen=True)
 class ConditionSaveAdvantageEffect:
-    """Represent a condition save advantage effect."""
+    """Grant advantage on saves made to avoid or end named conditions."""
 
     conditions: tuple[str, ...]
     duration: EffectDuration | None = None
@@ -117,7 +117,7 @@ class ConditionSaveAdvantageEffect:
 
 @dataclass(frozen=True)
 class DamageImmunityEffect:
-    """Represent a damage immunity effect."""
+    """Grant immunity to the listed damage types for a duration."""
 
     damage_types: tuple[str, ...]
     duration: EffectDuration | None = None
@@ -125,7 +125,7 @@ class DamageImmunityEffect:
 
 @dataclass(frozen=True)
 class ConditionImmunityEffect:
-    """Represent a condition immunity effect."""
+    """Prevent named conditions and optionally suppress existing applications."""
 
     conditions: tuple[str, ...]
     suppress_existing: bool = False
@@ -134,7 +134,7 @@ class ConditionImmunityEffect:
 
 @dataclass(frozen=True)
 class SenseEffect:
-    """Represent a sense effect."""
+    """Grant a named special sense with a finite range for a duration."""
 
     sense: Literal["blindsight", "darkvision", "truesight"]
     range_feet: int
@@ -143,7 +143,7 @@ class SenseEffect:
 
 @dataclass(frozen=True)
 class HitPointMaximumModifierEffect:
-    """Represent a hit point maximum modifier effect."""
+    """Adjust maximum Hit Points, optionally changing current Hit Points too."""
 
     value: int
     also_modify_current: bool = False
@@ -152,7 +152,7 @@ class HitPointMaximumModifierEffect:
 
 @dataclass(frozen=True)
 class ConditionEffect:
-    """Represent a condition effect."""
+    """Apply one condition with provenance, duration, and optional escape rules."""
 
     condition: str
     duration: EffectDuration | None = None
@@ -164,7 +164,7 @@ class ConditionEffect:
 
 @dataclass(frozen=True)
 class ForcedMovementEffect:
-    """Represent a forced movement effect."""
+    """Move a target in a required direction without spending its movement."""
 
     direction: str
     distance_feet: int
@@ -173,7 +173,7 @@ class ForcedMovementEffect:
 
 @dataclass(frozen=True)
 class SpeedMultiplierEffect:
-    """Represent a speed multiplier effect."""
+    """Multiply effective Speed by a rational value for a duration."""
 
     numerator: int
     denominator: int
@@ -182,14 +182,14 @@ class SpeedMultiplierEffect:
 
 @dataclass(frozen=True)
 class ProhibitReactionsEffect:
-    """Represent a prohibit reactions effect."""
+    """Prevent a target from taking reactions for a duration."""
 
     duration: EffectDuration
 
 
 @dataclass(frozen=True)
 class TurnEconomyRestrictionEffect:
-    """Represent a turn economy restriction effect."""
+    """Force a target to choose between specified turn resources."""
 
     choose_between: tuple[str, ...]
     duration: EffectDuration
@@ -197,7 +197,7 @@ class TurnEconomyRestrictionEffect:
 
 @dataclass(frozen=True)
 class RollModifierEffect:
-    """Represent a roll modifier effect."""
+    """Contribute a contextual numeric or advantage-state roll adjustment."""
 
     roll: str
     mode: str
@@ -213,7 +213,7 @@ class RollModifierEffect:
 
 @dataclass(frozen=True)
 class ControlEffect:
-    """Represent a control effect."""
+    """Grant remote control of a target subject to communication and range."""
 
     communication: str | None
     communication_range_feet: int | Literal["unlimited"] | None
@@ -223,7 +223,7 @@ class ControlEffect:
 
 @dataclass(frozen=True)
 class GainMemoriesEffect:
-    """Represent a gain memories effect."""
+    """Gain a qualifying target's memories when the configured event occurs."""
 
     requirement: CreatureTypeRequirement
     trigger: str

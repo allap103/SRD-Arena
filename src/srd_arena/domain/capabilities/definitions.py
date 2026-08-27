@@ -27,7 +27,7 @@ from .targeting import CapabilityTarget
 
 @dataclass(frozen=True)
 class CapabilityTrigger:
-    """Represent a capability trigger."""
+    """Resolve additional mechanics when an invocation emits a matching event."""
 
     event: str
     resolution: CapabilityResolution
@@ -36,7 +36,7 @@ class CapabilityTrigger:
 
 @dataclass(frozen=True)
 class CapabilityStep:
-    """Represent a capability step."""
+    """Run a follow-up resolution against its own target declaration."""
 
     target: CapabilityTarget
     resolution: CapabilityResolution
@@ -44,7 +44,7 @@ class CapabilityStep:
 
 @dataclass(frozen=True)
 class CapabilityRepetition:
-    """Represent a capability repetition."""
+    """Describe how many invocations are allocated across eligible targets."""
 
     count: int | Literal["ability_modifier", "resource_scaled"]
     allocation: Literal[
@@ -57,7 +57,12 @@ class CapabilityRepetition:
 
 @dataclass(frozen=True)
 class CapabilityDefinition:
-    """Represent a capability definition."""
+    """Describe reusable executable mechanics independent of their rules source.
+
+    Spells, monster actions, and features can expose the same capability shape.
+    Their identity, activation, resource cost, and spell-specific metadata live
+    outside this definition.
+    """
 
     target: CapabilityTarget
     resolution: CapabilityResolution

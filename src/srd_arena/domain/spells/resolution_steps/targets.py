@@ -16,7 +16,7 @@ from .target_rolls import resolve_target_roll
 
 @dataclass
 class ResolvedSpellTargets:
-    """Represent a resolved spell targets."""
+    """Collect messages, roll details, damage, restoration, and affected targets."""
 
     messages: list[tuple[str, str]]
     save_details: list[dict[str, object]]

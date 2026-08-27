@@ -10,7 +10,7 @@ from .target_rolls import TargetRollOutcome
 
 @dataclass
 class TargetDamageResult:
-    """Represent a target damage result."""
+    """Collect damage applied to one target and its structured roll details."""
 
     total_applied: int
     details: list[dict[str, object]]

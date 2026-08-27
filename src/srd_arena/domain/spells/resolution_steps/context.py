@@ -13,7 +13,7 @@ DieRoller = Callable[[int], int]
 
 @dataclass(frozen=True)
 class SpellTargetContext:
-    """Represent a spell target context."""
+    """Supply one target and its encounter-derived facts to spell resolution."""
 
     creature: Creature
     target_ref: str
@@ -39,7 +39,11 @@ class SpellTargetContext:
 
 @dataclass(frozen=True)
 class SpellActionContext:
-    """Represent a spell action context."""
+    """Supply one spell invocation with caster, targets, choices, and rule queries.
+
+    The encounter assembles this immutable boundary object before resolution so
+    spell code does not reach back into mutable encounter state.
+    """
 
     creature: Creature
     spell: Spell

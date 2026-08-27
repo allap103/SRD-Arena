@@ -1,4 +1,4 @@
-"""Provide grants support for the capabilities package."""
+"""Bind reusable capabilities to activation and resource-consumption rules."""
 
 from dataclasses import dataclass
 from typing import Literal
@@ -8,7 +8,7 @@ from .definitions import CapabilityDefinition
 
 @dataclass(frozen=True)
 class LimitedUsePool:
-    """Represent a limited use pool."""
+    """Define a fixed number of uses restored at a named refresh boundary."""
 
     id: str
     maximum: int
@@ -18,7 +18,7 @@ class LimitedUsePool:
 
 @dataclass(frozen=True)
 class RechargePool:
-    """Represent a recharge pool."""
+    """Define availability restored by meeting a threshold on a recharge roll."""
 
     id: str
     die_sides: int
@@ -28,7 +28,7 @@ class RechargePool:
 
 @dataclass(frozen=True)
 class SpellSlotPool:
-    """Represent a spell slot pool."""
+    """Define level-indexed spell-slot capacities sharing one refresh rule."""
 
     id: str
     maximum_by_level: tuple[tuple[int, int], ...]
@@ -41,7 +41,7 @@ ResourcePoolDefinition = LimitedUsePool | RechargePool | SpellSlotPool
 
 @dataclass(frozen=True)
 class PoolUseCost:
-    """Represent a pool use cost."""
+    """Spend a fixed amount from a referenced limited-use resource pool."""
 
     pool_id: str
     amount: int = 1
@@ -50,7 +50,7 @@ class PoolUseCost:
 
 @dataclass(frozen=True)
 class SpellSlotCost:
-    """Represent a spell slot cost."""
+    """Spend a spell slot at or above the capability's minimum level."""
 
     pool_id: str
     minimum_level: int
@@ -70,7 +70,11 @@ CapabilityActivation = Literal[
 
 @dataclass(frozen=True)
 class CapabilityGrant:
-    """Represent a capability grant."""
+    """Expose a capability through one activation and optional resource cost.
+
+    The definition contains reusable mechanics; the grant describes how a
+    particular creature-facing option invokes and pays for those mechanics.
+    """
 
     id: str
     definition: CapabilityDefinition

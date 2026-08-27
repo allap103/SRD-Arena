@@ -1,4 +1,4 @@
-"""Provide casting support for the spells package."""
+"""Derive action-economy costs and immediate blockers for spell casting."""
 
 from dataclasses import dataclass
 
@@ -8,7 +8,7 @@ from .definitions import Spell
 
 @dataclass(frozen=True)
 class SpellActionEconomy:
-    """Represent a spell action economy."""
+    """Count the turn resources consumed when a spell invocation starts."""
 
     action: int = 0
     bonus_action: int = 0
@@ -16,7 +16,7 @@ class SpellActionEconomy:
 
 
 def spell_action_economy(spell: Spell) -> SpellActionEconomy:
-    """Handle spell action economy."""
+    """Translate authored casting-time units into turn-resource costs."""
 
     units = {
         entry.get("unit") for entry in spell.casting_time if isinstance(entry, dict)
@@ -38,7 +38,7 @@ def spell_cast_block_reason(
     reaction_available: bool,
     cast_level: int | None = None,
 ) -> str | None:
-    """Handle spell cast block reason."""
+    """Return the first missing turn resource or spell slot preventing a cast."""
 
     if economy.action > 0 and not action_available:
         return "You have already used your Action."

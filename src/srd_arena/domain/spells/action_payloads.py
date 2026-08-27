@@ -1,4 +1,4 @@
-"""Provide action payloads support for the spells package."""
+"""Encode spell choices into stable action IDs, labels, and command payloads."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ def spell_action_label(
     target_ref: str | None = None,
     target_label: str | None = None,
 ) -> str:
-    """Handle spell action label."""
+    """Build a readable cast label, including a direct target when useful."""
 
     if target_ref is None or target_ref == actor_ref or target_label is None:
         return f"Cast {spell.name}"
@@ -20,7 +20,7 @@ def spell_action_label(
 
 
 def spell_action_id(spell: Spell, *, target_ref: str | None = None) -> str:
-    """Handle spell action id."""
+    """Build a stable selectable-action ID for a spell and optional target."""
 
     if target_ref is None:
         return f"spell-{spell.id}"
@@ -39,7 +39,7 @@ def spell_action_value(
     slot_level: int | None = None,
     healing_allocations: dict[str, int] | None = None,
 ) -> str:
-    """Handle spell action value."""
+    """Encode runtime targeting, upcasting, and allocation choices for execution."""
 
     if aim_point is not None:
         value = f"{spell_id}@{aim_point[0]:.4f},{aim_point[1]:.4f}"

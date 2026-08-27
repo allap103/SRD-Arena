@@ -1,11 +1,11 @@
-"""Provide targeting support for the spells package."""
+"""Derive runtime targeting behavior from spell metadata and capabilities."""
 
 from ..geometry import Grid
 from .definitions import Spell
 
 
 def spell_targets_self_only(spell: Spell) -> bool:
-    """Handle spell targets self only."""
+    """Return whether the caster is the spell's only legal target."""
 
     return (
         spell.definition is not None and spell.definition.target.kind == "self"
@@ -13,7 +13,7 @@ def spell_targets_self_only(spell: Spell) -> bool:
 
 
 def spell_chooses_area_targets(spell: Spell) -> bool:
-    """Handle spell chooses area targets."""
+    """Return whether an area affects selected rather than all occupants."""
 
     if spell.definition is None:
         return False
@@ -22,7 +22,7 @@ def spell_chooses_area_targets(spell: Spell) -> bool:
 
 
 def spell_target_disposition(spell: Spell) -> str:
-    """Handle spell target disposition."""
+    """Return the ally, enemy, willing, or unrestricted target relationship."""
 
     if spell.definition is not None and spell.definition.target.kind == "creature":
         return spell.definition.target.disposition
@@ -30,7 +30,7 @@ def spell_target_disposition(spell: Spell) -> str:
 
 
 def spell_area_shape(spell: Spell) -> str | None:
-    """Handle spell area shape."""
+    """Return the capability's geometric area shape, if it has one."""
 
     if spell.definition is not None and spell.definition.target.kind == "area":
         return spell.definition.target.shape
@@ -38,7 +38,7 @@ def spell_area_shape(spell: Spell) -> str | None:
 
 
 def spell_repeats_target_allocations(spell: Spell) -> bool:
-    """Handle spell repeats target allocations."""
+    """Return whether repeated effects may be assigned to the same target."""
 
     if spell.definition is not None and spell.definition.repetition is not None:
         return spell.definition.repetition.allocation in {
@@ -49,7 +49,7 @@ def spell_repeats_target_allocations(spell: Spell) -> bool:
 
 
 def spell_requires_full_target_count(spell: Spell) -> bool:
-    """Handle spell requires full target count."""
+    """Return whether every repeated effect must be allocated before casting."""
 
     return bool(
         spell.definition is not None and spell.definition.repetition is not None
@@ -57,7 +57,7 @@ def spell_requires_full_target_count(spell: Spell) -> bool:
 
 
 def spell_range_squares(spell: Spell, grid: Grid) -> int | None:
-    """Handle spell range squares."""
+    """Convert authored spell range into the encounter grid's square metric."""
 
     distance = spell.range_data.get("distance", {})
     if not isinstance(distance, dict):
@@ -76,7 +76,7 @@ def spell_max_targets(
     *,
     caster_level: int | None = None,
 ) -> int:
-    """Handle spell max targets."""
+    """Resolve target or projectile count after actor-level and slot scaling."""
 
     if spell.definition is not None:
         definition = spell.definition

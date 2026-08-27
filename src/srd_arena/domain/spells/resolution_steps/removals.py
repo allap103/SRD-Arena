@@ -9,7 +9,7 @@ from .targets import ResolvedSpellTargets
 
 @dataclass
 class SpellRemovalResults:
-    """Represent a spell removal results."""
+    """Collect condition and ongoing-effect removals produced by a spell."""
 
     messages: list[tuple[str, str]]
     effects: list[EffectResult]

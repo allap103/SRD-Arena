@@ -35,7 +35,7 @@ from .scaling import (
 
 @dataclass(frozen=True)
 class PreparedSpellResolution:
-    """Represent a prepared spell resolution."""
+    """Cache the normalized mechanics and shared rolls for one spell invocation."""
 
     definition: CapabilityDefinition
     resolution: CapabilityResolution
@@ -67,7 +67,7 @@ class PreparedSpellResolution:
 
 
 def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolution:
-    """Handle prepare spell resolution."""
+    """Normalize capability mechanics and perform rolls shared by all targets."""
 
     spell = context.spell
     definition = spell.definition
