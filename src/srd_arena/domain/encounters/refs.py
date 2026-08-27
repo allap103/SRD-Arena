@@ -1,9 +1,9 @@
-"""Provide refs support for the encounters package."""
+"""Construct stable identifiers for generated encounter actions."""
 
 from __future__ import annotations
 
 
 def reroll_die_action_id(action_id: str, die_index: int) -> str:
-    """Handle reroll die action id."""
+    """Build the action identifier for rerolling one die in a pending roll."""
 
     return f"{action_id}-reroll-damage-{die_index}"

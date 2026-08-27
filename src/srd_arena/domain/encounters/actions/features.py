@@ -1,4 +1,4 @@
-"""Provide features support for the actions package."""
+"""Execute creature-feature actions after shared eligibility checks."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def resolve_feature_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Resolve feature action."""
+    """Dispatch a supported creature feature to its registered Python rule."""
 
     creature_ref = self.current_decision().creature_ref
     feature_action = creature.combat_profile.feature_actions.get(feature_id)

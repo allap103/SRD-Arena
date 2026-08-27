@@ -1,4 +1,4 @@
-"""Provide combat support for the shared package."""
+"""Project application combat observations into frontend presentation models."""
 
 from srd_arena.application.api import EncounterObservation
 

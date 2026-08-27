@@ -12,7 +12,7 @@ def resolve_fighter_feature(
     feature_id: str,
     roll_dice: DiceRoller,
 ) -> CapabilityActionResult | None:
-    """Resolve fighter feature."""
+    """Execute the supported fighter feature identified by an action grant."""
 
     if feature_id == "second_wind":
         return _resolve_second_wind(creature, roll_dice)

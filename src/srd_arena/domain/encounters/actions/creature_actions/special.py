@@ -1,4 +1,4 @@
-"""Provide special support for the creature actions package."""
+"""Discover standard and feature-derived actions outside attacks and movement."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def special_action_candidates(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> list[EncounterAction]:
-    """Handle special action candidates."""
+    """Build currently relevant non-attack action candidates for the actor."""
 
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []

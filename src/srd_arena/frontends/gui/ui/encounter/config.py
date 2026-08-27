@@ -1,4 +1,4 @@
-"""Provide config support for the encounter package."""
+"""Define GUI-only layout constants and transient interaction state."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ ARROW_LABELS = {
 
 @dataclass(frozen=True)
 class TargetSelectionMode:
-    """Represent a target selection mode."""
+    """Track which staged targeting interaction battlefield clicks configure."""
 
     kind: str
     source_trigger_id: str | None = None
@@ -29,7 +29,7 @@ class TargetSelectionMode:
 
 @dataclass(frozen=True)
 class ActionMenuScope:
-    """Represent an action menu scope."""
+    """Identify an action-economy section and its expandable menu bucket."""
 
     economy: str
     bucket: str

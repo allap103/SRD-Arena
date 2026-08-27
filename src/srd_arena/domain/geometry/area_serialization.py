@@ -14,7 +14,7 @@ from .area_models import (
 
 
 def serialize_area(area: AreaOfEffect | None) -> dict[str, object] | None:
-    """Serialize area."""
+    """Convert a rasterized area and optional exact geometry into event data."""
 
     if area is None:
         return None
@@ -32,7 +32,7 @@ def serialize_area(area: AreaOfEffect | None) -> dict[str, object] | None:
 
 
 def serialize_continuous_area(area: ContinuousArea) -> dict[str, object]:
-    """Serialize continuous area."""
+    """Convert an exact geometric template into primitive event-safe fields."""
 
     payload: dict[str, object] = {
         "shape": area.shape,
@@ -53,7 +53,7 @@ def serialize_continuous_area(area: ContinuousArea) -> dict[str, object]:
 
 
 def deserialize_continuous_area(payload: object) -> ContinuousArea | None:
-    """Handle deserialize continuous area."""
+    """Reconstruct a continuous area from its event-safe serialized fields."""
 
     if not isinstance(payload, Mapping):
         return None

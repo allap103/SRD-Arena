@@ -1,4 +1,4 @@
-"""Provide items support for the equipment package."""
+"""Define inventory items and their optional combat statistics."""
 
 from dataclasses import dataclass
 
@@ -8,7 +8,7 @@ from .weapons import WeaponStat
 
 @dataclass
 class Item:
-    """Represent an item."""
+    """Describe an inventory object that may supply weapon or armor rules."""
 
     id: str
     name: str

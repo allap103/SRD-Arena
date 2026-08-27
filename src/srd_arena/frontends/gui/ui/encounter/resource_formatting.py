@@ -1,4 +1,4 @@
-"""Provide resource formatting support for the encounter package."""
+"""Format turn resources and spell slots for compact GUI labels."""
 
 from __future__ import annotations
 

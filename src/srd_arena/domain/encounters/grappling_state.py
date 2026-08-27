@@ -1,4 +1,4 @@
-"""Provide grappling state support for the encounters package."""
+"""Query grapple relationships and their effect on encounter movement."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ def apply_grapple(
     state: EncounterState,
     applied: AppliedCondition,
 ) -> ConditionApplicationResult:
-    """Apply grapple."""
+    """Apply Grappled to a target and record the grappler-target relationship."""
 
     if applied.condition is not Condition.GRAPPLED:
         raise ValueError("A grapple relationship requires Grappled.")
@@ -71,7 +71,7 @@ def remove_relationships_for_creature(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> None:
-    """Remove relationships for creature."""
+    """End grapple relationships in which a removed creature appears on either side."""
 
     from .ongoing_effects import end_concentration
 
@@ -109,7 +109,7 @@ def grappled_sources_for(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> tuple[CreatureRef, ...]:
-    """Handle grappled sources for."""
+    """Return creatures currently imposing Grappled on the target."""
 
     return condition_sources_for(state, creature_ref, Condition.GRAPPLED)
 
@@ -118,7 +118,7 @@ def grappling_targets_for(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> tuple[CreatureRef, ...]:
-    """Handle grappling targets for."""
+    """Return living creatures currently grappled by the source."""
 
     return tuple(
         relationship.target_ref
@@ -129,7 +129,7 @@ def grappling_targets_for(
 
 
 def is_grappled(state: EncounterState, creature_ref: CreatureRef) -> bool:
-    """Return whether grappled."""
+    """Return whether any active source currently grapples the creature."""
 
     return bool(grappled_sources_for(state, creature_ref))
 
@@ -138,7 +138,7 @@ def movement_cost_for(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> MovementCost | None:
-    """Handle movement cost for."""
+    """Include the cost of dragging grappled creatures in a movement step."""
 
     if is_grappled(state, creature_ref):
         return None

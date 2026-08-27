@@ -1,4 +1,4 @@
-"""Provide hit effects support for the actions package."""
+"""Apply damage and secondary effects after an attack has hit."""
 
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ def apply_attack_hit_effects(
     progress: EncounterProgress,
     origin_id: str | None = None,
 ) -> None:
-    """Apply attack hit effects."""
+    """Apply an attack's damage and sourced conditions to its confirmed target."""
 
     resolved_origin_id = origin_id or f"attack:{attacker_ref}:{target_ref}"
     for effect in effects:

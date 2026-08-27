@@ -18,7 +18,7 @@ BOUNDARY_SHRINK = 1e-6
 
 
 def continuous_area_outline(area: ContinuousArea) -> tuple[Point2D, ...] | None:
-    """Handle continuous area outline."""
+    """Return the polygon used to preview a continuous directional area."""
 
     if area.direction is None:
         return None
@@ -41,7 +41,7 @@ def rasterize_cells(
     grid: Grid,
     includes_cell: Callable[[Position], bool],
 ) -> tuple[Position, ...]:
-    """Handle rasterize cells."""
+    """Select grid cells affected by a continuous area under its stated policy."""
 
     return sorted_positions(
         Position(x, y)
@@ -52,7 +52,7 @@ def rasterize_cells(
 
 
 def sorted_positions(positions: Iterable[Position]) -> tuple[Position, ...]:
-    """Handle sorted positions."""
+    """Return affected cells in stable row-major order."""
 
     return tuple(sorted(positions, key=lambda position: (position.y, position.x)))
 
@@ -61,7 +61,7 @@ def filter_origin_cell(
     origin: Position,
     cells: tuple[Position, ...],
 ) -> tuple[Position, ...]:
-    """Handle filter origin cell."""
+    """Exclude the source cell when the area's rules do not affect its origin."""
 
     return tuple(cell for cell in cells if cell.x != origin.x or cell.y != origin.y)
 
@@ -71,7 +71,7 @@ def cone_polygon(
     direction: Vector2D,
     length: float,
 ) -> tuple[Point2D, ...]:
-    """Handle cone polygon."""
+    """Construct the continuous triangular footprint of a cone."""
 
     side = perpendicular(direction)
     far_center = translate(origin, direction, length)
@@ -89,7 +89,7 @@ def line_polygon(
     length: float,
     width: float = 1.0,
 ) -> tuple[Point2D, ...]:
-    """Handle line polygon."""
+    """Construct the continuous rectangular footprint of a line."""
 
     side = perpendicular(direction)
     end = translate(origin, direction, length)
@@ -107,7 +107,7 @@ def cube_polygon(
     direction: Vector2D,
     size: float,
 ) -> tuple[Point2D, ...]:
-    """Handle cube polygon."""
+    """Construct the continuous square footprint of a grid-aligned cube."""
 
     side = perpendicular(direction)
     center = translate(origin, direction, (size / 2.0) + BOUNDARY_SHRINK)
@@ -124,7 +124,7 @@ def cell_intersects_circle(
     center: Point2D,
     radius: float,
 ) -> bool:
-    """Handle cell intersects circle."""
+    """Return whether any part of a grid cell intersects a circular area."""
 
     min_x, max_x, min_y, max_y = cell_bounds(cell)
     closest_x = min(max(center.x, min_x), max_x)
@@ -141,7 +141,7 @@ def cell_meets_polygon_coverage_threshold(
     *,
     coverage_threshold: float,
 ) -> bool:
-    """Handle cell meets polygon coverage threshold."""
+    """Return whether polygon overlap covers the required fraction of a cell."""
 
     return cell_polygon_overlap_area(cell, polygon) >= (coverage_threshold - EPSILON)
 
@@ -150,7 +150,7 @@ def cell_polygon_overlap_area(
     cell: Position,
     polygon: tuple[Point2D, ...],
 ) -> float:
-    """Handle cell polygon overlap area."""
+    """Measure how much of a grid cell is covered by a polygon."""
 
     clipped = clip_polygon_to_cell(polygon, cell)
     if len(clipped) < 3:
@@ -162,7 +162,7 @@ def clip_polygon_to_cell(
     polygon: tuple[Point2D, ...],
     cell: Position,
 ) -> tuple[Point2D, ...]:
-    """Handle clip polygon to cell."""
+    """Clip a polygon to a cell boundary for overlap measurement."""
 
     min_x, max_x, min_y, max_y = cell_bounds(cell)
     clipped = list(polygon)
@@ -238,7 +238,7 @@ def _intersect_horizontal(
 
 
 def polygon_area(points: tuple[Point2D, ...]) -> float:
-    """Handle polygon area."""
+    """Return the unsigned area of a polygon using the shoelace formula."""
 
     signed_area = sum(
         (start.x * end.y) - (end.x * start.y) for start, end in polygon_edges(points)
@@ -249,7 +249,7 @@ def polygon_area(points: tuple[Point2D, ...]) -> float:
 def polygon_edges(
     points: tuple[Point2D, ...],
 ) -> tuple[tuple[Point2D, Point2D], ...]:
-    """Handle polygon edges."""
+    """Yield each directed polygon edge, including the closing edge."""
 
     return tuple(
         (points[index], points[(index + 1) % len(points)])
@@ -258,7 +258,7 @@ def polygon_edges(
 
 
 def cell_bounds(cell: Position) -> tuple[float, float, float, float]:
-    """Handle cell bounds."""
+    """Return the continuous bounds occupied by one grid cell."""
 
     return (
         float(cell.x),

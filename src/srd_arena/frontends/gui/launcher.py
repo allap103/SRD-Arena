@@ -1,4 +1,4 @@
-"""Provide launcher support for the gui package."""
+"""Let a user choose a discovered scenario before constructing the game window."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from .theme import apply_fantasy_theme
 
 
 class ScenarioPickerWindow(QMainWindow):
-    """Represent a scenario picker window."""
+    """Display loadable scenarios and launch the selected game configuration."""
 
     def __init__(self, startup: GameStartup, *, image_root: Path | None = None) -> None:
         super().__init__()
@@ -90,7 +90,7 @@ def run_gui(
     *,
     image_root: Path | None = None,
 ) -> None:
-    """Run gui."""
+    """Start Qt, present scenario discovery, and enter the desktop event loop."""
 
     instance = QApplication.instance()
     app = instance if isinstance(instance, QApplication) else QApplication(sys.argv)

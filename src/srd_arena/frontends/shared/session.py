@@ -16,7 +16,7 @@ def build_session_presentation(
     observation: GameObservation,
     config: ScenarioPresentation | None = None,
 ) -> SessionPresentation:
-    """Build session presentation."""
+    """Convert one application observation into a complete frontend snapshot."""
 
     presentation_config = config or ScenarioPresentation()
     view = observation.scene

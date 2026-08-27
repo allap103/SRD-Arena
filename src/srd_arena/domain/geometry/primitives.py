@@ -1,4 +1,4 @@
-"""Provide primitives support for the geometry package."""
+"""Define square-grid positions, dimensions, distances, and movement units."""
 
 from dataclasses import dataclass
 
@@ -32,7 +32,7 @@ class MovementCost(int):
 
 @dataclass
 class Position:
-    """Represent a position."""
+    """Locate one cell by its zero-based grid coordinates."""
 
     x: int
     y: int
@@ -40,7 +40,7 @@ class Position:
 
 @dataclass
 class Grid:
-    """Represent a grid."""
+    """Define battlefield dimensions and conversions between feet and cells."""
 
     width: int
     height: int

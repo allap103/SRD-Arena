@@ -140,7 +140,7 @@ def build_action_selector(
     controller: str,
     participant: EncounterCreatureState,
 ) -> ActionSelector:
-    """Build action selector."""
+    """Construct the controller-specific selector used for a creature's decisions."""
 
     if controller == "external":
         return ExternalActionSelector()

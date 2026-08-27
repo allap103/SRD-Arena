@@ -20,7 +20,7 @@ def apply_encounter_effects(
     *,
     origin_id: str | None = None,
 ) -> list[tuple[str, str]]:
-    """Apply encounter effects."""
+    """Apply resolved conditions and ongoing effects to encounter-owned state."""
 
     resolved_origin_id = origin_id or state._next_runtime_origin_id()
     return apply_effects(
@@ -34,7 +34,7 @@ def apply_encounter_effects(
 
 
 def consume_action(state: EncounterState, *, allow_magic: bool) -> None:
-    """Handle consume action."""
+    """Spend the active creature's Action while enforcing magic-action restrictions."""
 
     if state.active_actions_remaining <= 0:
         raise RuntimeError("No Action remains to consume.")
@@ -52,13 +52,13 @@ def consume_action(state: EncounterState, *, allow_magic: bool) -> None:
 
 
 def active_movement_remaining(state: EncounterState) -> MovementBudget:
-    """Handle active movement remaining."""
+    """Return the active creature's remaining movement in grid cells."""
 
     return state.active_movement_remaining_for()
 
 
 def next_action_id(state: EncounterState) -> str:
-    """Handle next action id."""
+    """Allocate a unique action identifier within this encounter runtime."""
 
     action_id = f"action_{state.action_sequence}"
     state.action_sequence += 1
@@ -66,7 +66,7 @@ def next_action_id(state: EncounterState) -> str:
 
 
 def next_runtime_origin_id(state: EncounterState) -> str:
-    """Handle next runtime origin id."""
+    """Allocate an identity for one runtime application of a rule source."""
 
     origin_id = f"effect_{state.runtime_state_sequence}"
     state.runtime_state_sequence += 1
@@ -74,7 +74,7 @@ def next_runtime_origin_id(state: EncounterState) -> str:
 
 
 def next_frame_id(state: EncounterState, prefix: str = "frame") -> str:
-    """Handle next frame id."""
+    """Allocate an identity for one invocation on the decision stack."""
 
     frame_id = f"{prefix}_{state.frame_sequence}"
     state.frame_sequence += 1
@@ -89,7 +89,7 @@ def create_event(
     action_id: str | None = None,
     data: dict[str, object] | None = None,
 ) -> CombatEvent:
-    """Create event."""
+    """Append a sequence-numbered combat event and return the stored event."""
 
     event = CombatEvent(
         seq=state.event_sequence,
@@ -108,7 +108,7 @@ def merge_progress(
     target: EncounterProgress,
     source: EncounterProgress,
 ) -> None:
-    """Handle merge progress."""
+    """Append messages, events, and transitions from nested encounter progress."""
 
     target.messages.extend(source.messages)
     target.events.extend(source.events)
@@ -121,14 +121,14 @@ def merge_progress(
 
 
 def creature_label(state: EncounterState, creature_ref: CreatureRef) -> str:
-    """Handle creature label."""
+    """Return a user-facing label for a runtime creature reference."""
 
     creature_state = state.creatures[creature_ref]
     return f"{creature_state.creature.name} ({creature_state.creature_id})"
 
 
 def living_creature_refs(state: EncounterState) -> list[CreatureRef]:
-    """Handle living creature refs."""
+    """Return runtime references for creatures that still have hit points."""
 
     return [
         creature_ref
@@ -138,7 +138,7 @@ def living_creature_refs(state: EncounterState) -> list[CreatureRef]:
 
 
 def creature_position(state: EncounterState, creature_ref: CreatureRef) -> Position:
-    """Handle creature position."""
+    """Return the current grid position of a runtime creature."""
 
     return state.creatures[creature_ref].position
 
@@ -150,7 +150,7 @@ def position_is_free(
     *,
     ignored_refs: set[CreatureRef] | frozenset[CreatureRef] = frozenset(),
 ) -> bool:
-    """Handle position is free."""
+    """Return whether a creature may end movement at a grid position."""
 
     if (
         x < 0
@@ -168,6 +168,6 @@ def position_is_free(
 
 
 def creature_size(state: EncounterState, creature_ref: CreatureRef) -> str:
-    """Handle creature size."""
+    """Return the size category of a runtime creature."""
 
     return state.creatures[creature_ref].creature.size

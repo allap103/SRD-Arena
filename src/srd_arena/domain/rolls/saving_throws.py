@@ -1,4 +1,4 @@
-"""Provide saving throws support for the rolls package."""
+"""Resolve saving throws from creature statistics and active rule modifiers."""
 
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ class SavingThrowCreature(Protocol):
 
 @dataclass(frozen=True)
 class SavingThrowModifiers:
-    """Represent a saving throw modifiers."""
+    """Separate ability, proficiency, and situational contributions to a save."""
 
     ability: int
     proficiency: int
@@ -60,7 +60,7 @@ class SavingThrowModifiers:
 
 @dataclass(frozen=True)
 class SavingThrowResult:
-    """Represent a saving throw result."""
+    """Record a saving throw's inputs, roll, outcome, and forced-failure reasons."""
 
     ability: Ability
     proficient: bool
@@ -81,7 +81,7 @@ def resolve_saving_throw(
     roller: DieRoller = roll_die,
     automatic_failure_reasons: tuple[str, ...] = (),
 ) -> SavingThrowResult:
-    """Resolve an creature's saving throw against a target."""
+    """Resolve a creature's saving throw against a difficulty class."""
     ability_score = getattr(creature.attributes, ability)
     ability_modifier = creature.get_modifier(ability_score)
     explicit_bonus = _explicit_saving_throw_bonus(creature, ability)

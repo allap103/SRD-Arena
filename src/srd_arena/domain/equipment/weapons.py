@@ -1,11 +1,11 @@
-"""Provide weapons support for the equipment package."""
+"""Define the attack statistics that an equippable weapon can contribute."""
 
 from dataclasses import dataclass
 
 
 @dataclass
 class WeaponStat:
-    """Represent a weapon stat."""
+    """Describe a weapon's damage, reach or range, and rules properties."""
 
     slot: list[str]
     damage: str

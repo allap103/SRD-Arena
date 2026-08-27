@@ -1,4 +1,4 @@
-"""Provide battlefield support for the encounter package."""
+"""Render the combat grid and emit pointer interactions in grid coordinates."""
 
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ from .status_markers import (
 
 
 class BattlefieldWidget(QWidget):
-    """Represent a battlefield widget."""
+    """Draw a battlefield snapshot and expose map interactions to its presenter."""
 
     creature_clicked = Signal(str, bool)
     cell_clicked = Signal(int, int)

@@ -1,4 +1,4 @@
-"""Provide movement candidates support for the creature actions package."""
+"""Discover legal one-cell movement choices for the acting creature."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ def movement_action_candidates(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> list[EncounterAction]:
-    """Handle movement action candidates."""
+    """Build movement candidates that fit the grid and remaining movement budget."""
 
     actor = state.creatures[creature_ref]
     movement_cost = state._movement_cost_for(creature_ref)

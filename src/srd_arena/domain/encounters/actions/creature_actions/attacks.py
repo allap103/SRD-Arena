@@ -1,4 +1,4 @@
-"""Provide attacks support for the creature actions package."""
+"""Discover ordinary weapon attacks available to the acting creature."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ def attack_action_candidates(
     creature_ref: CreatureRef,
     display_name: Callable[[Creature, str], str],
 ) -> list[EncounterAction]:
-    """Handle attack action candidates."""
+    """Build target-relative action candidates for the creature's equipped attacks."""
 
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []

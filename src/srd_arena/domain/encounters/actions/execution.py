@@ -1,4 +1,4 @@
-"""Provide execution support for the actions package."""
+"""Route accepted encounter actions into the matching execution pipeline."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def resolve_grapple_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Resolve grapple action."""
+    """Route a grapple or escape action through its contested-check resolver."""
 
     creature_ref = self.current_decision().creature_ref
     creature_state = self.creatures[creature_ref]

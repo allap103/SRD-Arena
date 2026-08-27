@@ -1,4 +1,4 @@
-"""Provide consumables support for the actions package."""
+"""Discover and interpret consumable items that grant encounter actions."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from ...equipment import Item
 def healing_potions_in_inventory(
     creature: Creature, items_by_id: dict[str, Item]
 ) -> list[Item]:
-    """Handle healing potions in inventory."""
+    """Return inventory items whose tags identify them as healing potions."""
 
     seen: set[str] = set()
     potions: list[Item] = []
@@ -26,7 +26,7 @@ def healing_potions_in_inventory(
 
 
 def healing_potion_dice(item: Item) -> tuple[int, int, int] | None:
-    """Handle healing potion dice."""
+    """Return the healing dice encoded by a supported potion's rules tags."""
 
     if not item.item_type.startswith("P"):
         return None

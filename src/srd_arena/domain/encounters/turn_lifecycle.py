@@ -1,4 +1,4 @@
-"""Provide turn lifecycle support for the encounters package."""
+"""Start, end, and advance creature turns in initiative order."""
 
 from __future__ import annotations
 

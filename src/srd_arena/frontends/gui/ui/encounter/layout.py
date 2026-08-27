@@ -1,4 +1,4 @@
-"""Provide layout support for the encounter package."""
+"""Build the encounter screen's widget hierarchy and resizable panes."""
 
 from __future__ import annotations
 

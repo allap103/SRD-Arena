@@ -1,4 +1,4 @@
-"""Provide spell targets support for the option discovery package."""
+"""Resolve legal spell targets and the context passed to target requirements."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def spell_action_targets(
     actor: Creature,
     spell: Spell,
 ) -> list[SpellTargetContext]:
-    """Handle spell action targets."""
+    """Return target sets for direct, self, area, and staged spell selection."""
 
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
@@ -142,7 +142,7 @@ def spell_target_context(
     actor: Creature,
     target_ref: str,
 ) -> SpellTargetContext | None:
-    """Handle spell target context."""
+    """Build target facts needed to evaluate authored spell requirements."""
 
     target_state = self.creatures.get(target_ref)
     if target_state is None or not target_state.is_alive:

@@ -1,4 +1,4 @@
-"""Provide spell selection support for the option discovery package."""
+"""Advertise the staged add, remove, confirm, and cancel actions for spell targets."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ def spell_target_selection_actions(
     state: EncounterState,
     creature_ref: str,
 ) -> list[EncounterAction]:
-    """Handle spell target selection actions."""
+    """Build actions that mutate or confirm the current staged target selection."""
 
     pending = state.pending_spell_cast
     if pending is None:

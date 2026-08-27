@@ -1,4 +1,4 @@
-"""Provide behaviors support for the encounters package."""
+"""Choose deterministic actions for encounter-controlled creature behaviors."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ DIRECTION_DELTAS = {
 def build_behavior(
     participant: EncounterCreatureState,
 ) -> Generator[EncounterAction | None, BehaviorContext]:
-    """Build behavior."""
+    """Construct an automatic decision policy from an encounter behavior definition."""
 
     if participant.behavior.type == "wait":
         return _wait_behavior()
@@ -142,7 +142,7 @@ def _patrol_behavior(
 
 
 def step_toward(start: Position, target: Position) -> str | None:
-    """Handle step toward."""
+    """Return the adjacent grid step that approaches a destination."""
 
     dx = sign(target.x - start.x)
     dy = sign(target.y - start.y)
@@ -153,7 +153,7 @@ def step_toward(start: Position, target: Position) -> str | None:
 
 
 def sign(value: int) -> int:
-    """Handle sign."""
+    """Reduce an integer displacement to its direction component."""
 
     if value < 0:
         return -1
@@ -163,12 +163,12 @@ def sign(value: int) -> int:
 
 
 def is_adjacent(a: Position, b: Position) -> bool:
-    """Return whether adjacent."""
+    """Return whether two cells share an edge or corner."""
 
     return grid_distance_between(a, b) == 1
 
 
 def movement_budget_for(creature: Creature, grid: Grid) -> MovementBudget:
-    """Handle movement budget for."""
+    """Return the movement budget available to the behavior's creature."""
 
     return grid.movement_budget(creature.effective_speed_feet())

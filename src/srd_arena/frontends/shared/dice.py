@@ -1,4 +1,4 @@
-"""Provide dice support for the shared package."""
+"""Convert combat roll events into frontend-neutral die presentations."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from srd_arena.application.api import GameEvent
 
 @dataclass(frozen=True)
 class DieView:
-    """Represent a die view."""
+    """Describe one displayed die, including its result and visual state."""
 
     expression: str
     value: int
@@ -22,7 +22,7 @@ class DieView:
 
 @dataclass(frozen=True)
 class RollView:
-    """Represent a roll view."""
+    """Group the dice and modifier shown for one resolved rules roll."""
 
     label: str
     dice: tuple[DieView, ...]
@@ -35,7 +35,7 @@ class RollView:
 
 
 def build_roll_views(events: list[GameEvent]) -> list[RollView]:
-    """Build roll views."""
+    """Convert roll-bearing combat events into display-ready roll groups."""
 
     views: list[RollView] = []
     resolved_roll_ids = {

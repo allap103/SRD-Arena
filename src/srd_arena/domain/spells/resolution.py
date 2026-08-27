@@ -29,7 +29,7 @@ __all__ = [
 def resolve_spell_action(
     context: SpellActionContext,
 ) -> CapabilityActionResult | None:
-    """Resolve spell action."""
+    """Execute a configured spell invocation through its declarative or custom resolver."""
 
     spell = context.spell
     if spell.definition is not None:

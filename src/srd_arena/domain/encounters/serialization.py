@@ -1,4 +1,4 @@
-"""Provide serialization support for the encounters package."""
+"""Convert encounter values into immutable event payloads."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 def export_decision(self: EncounterState) -> dict[str, object]:
-    """Export decision."""
+    """Convert a pending decision and its invocation stack into immutable data."""
 
     decision = self.current_decision()
     payload: dict[str, object] = {
@@ -40,7 +40,7 @@ def export_decision(self: EncounterState) -> dict[str, object]:
 
 
 def export_state(self: EncounterState) -> dict[str, object]:
-    """Export state."""
+    """Snapshot mutable encounter state into client-safe primitive values."""
 
     active_creature_ref = self.current_decision().creature_ref
     return {
@@ -259,7 +259,7 @@ def _export_creature(
 
 
 def export_pending_movement(self: EncounterState) -> dict[str, object] | None:
-    """Export pending movement."""
+    """Serialize an in-progress movement path and its remaining budget."""
 
     movement = self.pending_movement
     if movement is None:

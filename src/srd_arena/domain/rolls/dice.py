@@ -1,4 +1,4 @@
-"""Provide dice support for the rolls package."""
+"""Resolve dice pools while retaining enough detail for reactions and clients."""
 
 import random
 from collections.abc import Callable, Collection
@@ -27,7 +27,7 @@ def combine_roll_modes(*modes: D20RollMode) -> D20RollMode:
 
 @dataclass(frozen=True)
 class DieRollResult:
-    """Represent a die roll result."""
+    """Retain one die's original result and any ordered replacements."""
 
     sides: int
     rolls: tuple[int, ...]
@@ -44,7 +44,7 @@ class DieRollResult:
 
 @dataclass(frozen=True)
 class DieReplacement:
-    """Represent a die replacement."""
+    """Record which die result a reroll replaced in a resolved pool."""
 
     die_index: int
     previous: int
@@ -53,7 +53,7 @@ class DieReplacement:
 
 @dataclass(frozen=True)
 class DicePoolResult:
-    """Represent a dice pool result."""
+    """Record every die, modifier, and replacement contributing to a total."""
 
     dice: tuple[DieRollResult, ...]
     modifier: int
@@ -64,14 +64,14 @@ class DicePoolResult:
 
 @dataclass(frozen=True)
 class D20PoolResult:
-    """Represent a d20 pool result."""
+    """Hold unresolved d20 values until a rule selects one of them."""
 
     dice: tuple[int, ...]
 
 
 @dataclass(frozen=True)
 class D20RollResult:
-    """Represent a d20 roll result."""
+    """Record a selected d20 and the roll mode and modifier that produced its total."""
 
     mode: D20RollMode
     dice: tuple[int, ...]
@@ -91,7 +91,7 @@ class D20RollResult:
 
 @dataclass(frozen=True)
 class CheckResult:
-    """Represent a check result."""
+    """Record whether a completed d20 roll met a target number."""
 
     roll: D20RollResult
     target: int
@@ -100,7 +100,7 @@ class CheckResult:
 
 @dataclass(frozen=True)
 class RollResolution[RollResultT]:
-    """Represent a roll resolution."""
+    """Retain multiple complete attempts and the rule-selected final attempt."""
 
     attempts: tuple[RollResultT, ...]
     selected_attempt: int

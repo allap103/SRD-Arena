@@ -1,4 +1,4 @@
-"""Provide floating labels support for the gui package."""
+"""Paint viewport-aware labels shared by creature names and status tooltips."""
 
 from __future__ import annotations
 

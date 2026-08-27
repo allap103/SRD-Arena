@@ -1,4 +1,4 @@
-"""Provide grappling support for the actions package."""
+"""Resolve Grapple and escape actions together with their source relationships."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ def available_escape_actions(
     state: EncounterState,
     creature_ref: str,
 ) -> list[EncounterAction]:
-    """Return available escape actions."""
+    """Advertise one escape choice for each creature currently grappling the actor."""
 
     creature_state = state.creatures[creature_ref]
     if creature_state.actions_remaining <= 0:
@@ -58,7 +58,7 @@ def resolve_escape_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Resolve escape action."""
+    """Resolve an escape contest and remove only the selected grapple source on success."""
 
     creature_ref = state.current_decision().creature_ref
     creature_state = state.creatures[creature_ref]

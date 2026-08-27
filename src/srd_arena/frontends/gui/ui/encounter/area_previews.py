@@ -1,4 +1,4 @@
-"""Provide area previews support for the encounter package."""
+"""Compute screen-space overlays for aimed area capabilities."""
 
 from __future__ import annotations
 

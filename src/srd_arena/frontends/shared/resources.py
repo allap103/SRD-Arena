@@ -13,7 +13,7 @@ from .models import (
 
 
 def build_resource_summary(encounter: EncounterObservation) -> ResourceSummaryView:
-    """Build resource summary."""
+    """Project the active combatant's health, economy, movement, and slots."""
 
     decision = encounter.decision
     creature_state = encounter.creature(decision.creature_ref)

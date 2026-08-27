@@ -53,7 +53,7 @@ def apply_condition(
     state: EncounterState,
     applied: AppliedCondition,
 ) -> ConditionApplicationResult:
-    """Apply condition."""
+    """Store one sourced condition application unless immunity prevents it."""
 
     target = state.creatures[applied.target_ref].creature
     if applied.condition in target.condition_immunities():
@@ -112,7 +112,7 @@ def remove_condition(
     *,
     removed_by_ref: CreatureRef | None = None,
 ) -> None:
-    """Remove condition."""
+    """Remove all applications of a condition kind from a creature."""
 
     remove_condition_from_source(
         state,
@@ -130,7 +130,7 @@ def remove_condition_from_source(
     *,
     removed_by_ref: CreatureRef | None = None,
 ) -> None:
-    """Remove condition from source."""
+    """Remove only applications matching both condition kind and source identity."""
 
     removed_ids = {
         applied.id

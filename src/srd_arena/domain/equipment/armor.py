@@ -1,11 +1,11 @@
-"""Provide armor support for the equipment package."""
+"""Define the armor statistics that an equippable item can contribute."""
 
 from dataclasses import dataclass
 
 
 @dataclass
 class ArmorStat:
-    """Represent an armor stat."""
+    """Describe an armor item's slot, base AC, and ability-modifier cap."""
 
     slot: str
     type: str

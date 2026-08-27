@@ -1,4 +1,4 @@
-"""Provide app support for the gui package."""
+"""Coordinate the PySide window with frontend-neutral application updates."""
 
 from __future__ import annotations
 
@@ -47,7 +47,11 @@ from .ui.sidebar import GameSidebar, SidebarCallbacks
 
 
 class GameWindow(QMainWindow):
-    """Represent a game window."""
+    """Render a running game and translate Qt interactions into app commands.
+
+    The window owns widget state only. Combat decisions and validation pass
+    through the application boundary rather than being implemented here.
+    """
 
     def __init__(
         self,

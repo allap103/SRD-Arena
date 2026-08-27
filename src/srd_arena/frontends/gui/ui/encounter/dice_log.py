@@ -1,4 +1,4 @@
-"""Provide dice log support for the encounter package."""
+"""Render structured attack, damage, and saving-throw rolls in the combat log."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from .layout import clear_layout
 
 
 class DieSvgWidget(QWidget):
-    """Represent a die svg widget."""
+    """Draw one die result using the matching SVG polyhedron."""
 
     clicked = Signal(str)
     SIZE = 58
@@ -71,7 +71,7 @@ class DieSvgWidget(QWidget):
 
 
 class DiceRollPanel(QWidget):
-    """Represent a dice roll panel."""
+    """Lay out a complete roll with dice, modifier, total, and outcome context."""
 
     def __init__(
         self,

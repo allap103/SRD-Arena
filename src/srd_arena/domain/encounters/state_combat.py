@@ -23,7 +23,7 @@ def attack_roll_mode_for(
     attacker_position: Position | None,
     nearby_opponent_positions: tuple[Position, ...],
 ) -> D20RollMode:
-    """Handle attack roll mode for."""
+    """Resolve advantage or disadvantage for an attacker-target pair."""
 
     modes: list[D20RollMode] = []
     base_mode = attack_roll_mode(
@@ -74,7 +74,7 @@ def automatic_critical_provider_ids_for(
     attacker_ref: CreatureRef,
     target_ref: CreatureRef,
 ) -> tuple[str, ...]:
-    """Handle automatic critical provider ids for."""
+    """Return active rules that make a qualifying hit automatically critical."""
 
     if not is_adjacent(
         state._creature_position(attacker_ref),
@@ -91,7 +91,7 @@ def automatic_save_failure_provider_ids_for(
     target_ref: CreatureRef,
     ability: str,
 ) -> tuple[str, ...]:
-    """Handle automatic save failure provider ids for."""
+    """Return active rules that force a creature to fail the specified save."""
 
     trait = {
         "strength": CombatTrait.AUTO_FAIL_STRENGTH_SAVES,
@@ -103,7 +103,7 @@ def automatic_save_failure_provider_ids_for(
 
 
 def active_status_effects(state: EncounterState) -> list[TriggeredEffect]:
-    """Handle active status effects."""
+    """Return triggered rules exposed by all active conditions and ongoing effects."""
 
     return [
         effect for status in state.conditions for effect in status.triggered_effects
@@ -115,7 +115,7 @@ def attack_roll_mode(
     attacker_position: Position | None,
     nearby_opponent_positions: tuple[Position, ...],
 ) -> D20RollMode:
-    """Handle attack roll mode."""
+    """Combine all active modifiers that affect an attack roll's mode."""
 
     if attack_type != "ranged" or attacker_position is None:
         return "normal"
@@ -128,7 +128,7 @@ def attack_roll_mode(
 
 
 def combine_roll_modes(modes: list[D20RollMode]) -> D20RollMode:
-    """Handle combine roll modes."""
+    """Collapse multiple advantage and disadvantage sources by cancellation."""
 
     advantages = sum(1 for mode in modes if mode == "advantage")
     disadvantages = sum(1 for mode in modes if mode == "disadvantage")

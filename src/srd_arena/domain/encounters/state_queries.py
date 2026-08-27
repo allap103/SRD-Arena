@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def current_turn_label(state: EncounterState) -> str:
-    """Handle current turn label."""
+    """Return the display label of the creature whose turn is active."""
 
     decision = state.current_decision()
     if decision.kind == "reaction":
@@ -23,7 +23,7 @@ def current_turn_label(state: EncounterState) -> str:
 
 
 def current_decision(state: EncounterState) -> DecisionFrame:
-    """Handle current decision."""
+    """Return the unresolved decision at the top of the encounter stack."""
 
     if state.decision_stack:
         return state.decision_stack[-1]
@@ -40,7 +40,7 @@ def conditions_for(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> tuple[AppliedCondition, ...]:
-    """Handle conditions for."""
+    """Return stored condition applications for a creature, including suppressed ones."""
 
     return tuple(
         condition
@@ -54,7 +54,7 @@ def has_condition(
     creature_ref: CreatureRef,
     condition: Condition,
 ) -> bool:
-    """Return whether condition."""
+    """Return whether the condition's mechanics currently affect the creature."""
 
     return any(
         applied.condition is condition for applied in state.conditions_for(creature_ref)
@@ -65,19 +65,19 @@ def effective_conditions_for(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> EffectiveConditionSet:
-    """Handle effective conditions for."""
+    """Return condition kinds whose mechanics currently apply to a creature."""
 
     return state.combat_rules.effective_conditions(state, creature_ref)
 
 
 def active_creature(state: EncounterState) -> CreatureRef:
-    """Handle active creature."""
+    """Return the creature owning the current initiative turn."""
 
     return state.current_decision().creature_ref
 
 
 def requires_automatic_advance(state: EncounterState) -> bool:
-    """Handle requires automatic advance."""
+    """Return whether the current decision belongs to an automatic controller."""
 
     return (
         state._creature_controller(state.current_decision().creature_ref) == "scripted"
@@ -88,7 +88,7 @@ def action_eligibility(
     state: EncounterState,
     action: EncounterAction,
 ) -> ActionEligibility:
-    """Handle action eligibility."""
+    """Evaluate a candidate action against the encounter's eligibility rules."""
 
     return state.combat_rules.action_eligibility(
         state,

@@ -1,4 +1,4 @@
-"""Frontend-neutral presentation models."""
+"""Define read-only presentation projections shared by every frontend adapter."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from srd_arena.application.api import ActionObservation
 
 @dataclass(frozen=True)
 class SpellSlotTrackView:
-    """Represent a spell slot track view."""
+    """Report remaining and maximum uses for one spell-slot level."""
 
     level: int
     remaining: int
@@ -18,7 +18,7 @@ class SpellSlotTrackView:
 
 @dataclass(frozen=True)
 class InitiativeTrackEntryView:
-    """Represent an initiative track entry view."""
+    """Describe one combatant's position in the displayed initiative order."""
 
     creature_ref: str
     name: str
@@ -28,7 +28,7 @@ class InitiativeTrackEntryView:
 
 @dataclass
 class ResourceSummaryView:
-    """Represent a resource summary view."""
+    """Collect the active creature resources a frontend should summarize."""
 
     current_health: int
     max_health: int
@@ -75,7 +75,7 @@ class ResourceSummaryView:
 
 @dataclass
 class GridPositionView:
-    """Represent a grid position view."""
+    """Expose a creature's grid coordinates without leaking domain geometry."""
 
     x: int
     y: int
@@ -83,7 +83,7 @@ class GridPositionView:
 
 @dataclass
 class BattlefieldCreatureView:
-    """Represent a battlefield creature view."""
+    """Contain the read-only creature data needed to draw one battlefield token."""
 
     creature_ref: str
     creature_id: str
@@ -102,7 +102,7 @@ class BattlefieldCreatureView:
 
 @dataclass
 class BattlefieldView:
-    """Represent a battlefield view."""
+    """Contain the complete frontend-neutral snapshot of the combat grid."""
 
     width: int
     height: int
@@ -115,7 +115,7 @@ class BattlefieldView:
 
 @dataclass
 class EncounterView:
-    """Represent an encounter view."""
+    """Group battlefield state and advertised actions for an encounter screen."""
 
     narrative_text: str | None
     battlefield: BattlefieldView
@@ -131,7 +131,7 @@ class EncounterView:
 
 @dataclass
 class SessionPresentation:
-    """Represent a session presentation."""
+    """Describe the current scene in the form consumed by any frontend."""
 
     scene_id: str
     story_text: str | None

@@ -21,7 +21,7 @@ def apply_target_damage(
     prepared: PreparedSpellResolution,
     roll_outcome: TargetRollOutcome,
 ) -> TargetDamageResult:
-    """Apply target damage."""
+    """Apply resolved spell damage after immunity, resistance, and save scaling."""
 
     total_applied = 0
     details: list[dict[str, object]] = []

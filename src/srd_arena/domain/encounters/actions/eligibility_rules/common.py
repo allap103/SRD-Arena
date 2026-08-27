@@ -160,7 +160,7 @@ def opposing_target_failure(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> EligibilityFailure | None:
-    """Handle opposing target failure."""
+    """Return a failure when a rule requires the target to be an opponent."""
 
     if not isinstance(action.value, str):
         return EligibilityFailure("target_required", "A creature target is required.")
@@ -181,7 +181,7 @@ def target_requirement_failure(
     target_ref: CreatureRef,
     requirements: tuple[object, ...],
 ) -> EligibilityFailure | None:
-    """Handle target requirement failure."""
+    """Return the first authored target requirement the candidate violates."""
 
     for requirement in requirements:
         if isinstance(requirement, CreatureTypeRequirement):

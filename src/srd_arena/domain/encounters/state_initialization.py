@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def initialize_action_selectors(state: EncounterState) -> None:
-    """Handle initialize action selectors."""
+    """Install the selectors used for external and automatic creature decisions."""
 
     state._action_selectors = {}
     for creature_ref, creature_state in state.creatures.items():
@@ -28,7 +28,7 @@ def roll_initiative(
     state: EncounterState,
     roll: Callable[[int], int],
 ) -> None:
-    """Handle roll initiative."""
+    """Roll participants, order ties deterministically, and select the first turn."""
 
     entries: list[InitiativeEntry] = []
     for creature_ref, creature_state in state.creatures.items():

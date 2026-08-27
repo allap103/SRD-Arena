@@ -1,4 +1,4 @@
-"""Provide spellcasting support for the option discovery package."""
+"""Derive casting costs and eligibility facts for a creature's spell grants."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 def spell_action_cost(self: EncounterState, spell: Spell) -> ActionCost:
-    """Handle spell action cost."""
+    """Map a spell's activation time to the turn resource it consumes."""
 
     economy = spell_action_economy(spell)
     return ActionCost(
@@ -37,7 +37,7 @@ def spell_cast_block_reason_for(
     cost: ActionCost,
     cast_level: int | None = None,
 ) -> str | None:
-    """Handle spell cast block reason for."""
+    """Return the rule reason that prevents this creature from casting a spell."""
 
     creature_ref = self.current_decision().creature_ref
     compatibility = self.combat_rules.action_compatibility(
@@ -68,7 +68,7 @@ def spell_cast_block_reason_for(
 
 
 def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
-    """Handle spell targets self only for."""
+    """Return whether the spell's target contract permits only its caster."""
 
     return spell.geometry_mode == "self_only" or spell_targets_self_only(spell)
 
@@ -76,7 +76,7 @@ def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
 def spell_range_squares_for(
     self: EncounterState, spell: Spell, creature: Creature
 ) -> int | None:
-    """Handle spell range squares for."""
+    """Convert the spell's authored range into grid cells for this caster."""
 
     return spell_range_squares(spell, self.definition.grid)
 
@@ -88,7 +88,7 @@ def spend_spell_resources(
     cost: ActionCost,
     cast_level: int | None = None,
 ) -> None:
-    """Spend spell resources."""
+    """Commit the grant-specific daily use or slot cost for an accepted casting."""
 
     if cost.action > 0:
         self._consume_action(allow_magic=True)

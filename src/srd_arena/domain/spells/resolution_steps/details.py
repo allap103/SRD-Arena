@@ -45,7 +45,7 @@ def serialize_roll_modifiers(
     modifiers: tuple[RollModifierEffect, ...],
     selected_ability: str | None,
 ) -> list[dict[str, object]]:
-    """Serialize roll modifiers."""
+    """Expose the sources and totals of roll modifiers in event-safe form."""
 
     serialized: list[dict[str, object]] = []
     for modifier in modifiers:

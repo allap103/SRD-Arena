@@ -2,7 +2,7 @@
 
 
 def roll_die(sides: int) -> int:
-    """Handle roll die."""
+    """Roll one die through the encounter's injectable random source."""
 
     from .. import reactions as reaction_facade
 
@@ -10,7 +10,7 @@ def roll_die(sides: int) -> int:
 
 
 def roll_dice(count: int, sides: int) -> int:
-    """Handle roll dice."""
+    """Roll and sum identical dice through the encounter's random source."""
 
     from .. import reactions as reaction_facade
 

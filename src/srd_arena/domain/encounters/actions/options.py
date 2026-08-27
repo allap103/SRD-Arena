@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 
 def available_actions(self: EncounterState) -> list[EncounterAction]:
-    """Return available actions."""
+    """Discover and normalize every action candidate for the current decision actor."""
 
     decision = self.current_decision()
     if self._creature_controller(decision.creature_ref) != "external":

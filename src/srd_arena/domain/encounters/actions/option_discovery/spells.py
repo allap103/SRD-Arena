@@ -1,4 +1,4 @@
-"""Provide spells support for the option discovery package."""
+"""Discover executable spell actions from the acting creature's casting grants."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ def available_spell_actions(
     self: EncounterState,
     actor: Creature,
 ) -> list[EncounterAction]:
-    """Return available spell actions."""
+    """Advertise castable spell grants with target-relative configurations."""
 
     spellcasting = actor.spellcasting
     creature_ref = self.current_decision().creature_ref

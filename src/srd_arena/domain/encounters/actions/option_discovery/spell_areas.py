@@ -1,4 +1,4 @@
-"""Provide spell areas support for the option discovery package."""
+"""Construct spell areas and resolve the creatures whose footprints intersect them."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ def spell_area_targets(
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
 ) -> tuple[SpellTargetContext, ...]:
-    """Handle spell area targets."""
+    """Return legal creature targets intersected by an aimed spell area."""
 
     area = self._spell_area(actor, spell, target_ref=target_ref, aim_point=aim_point)
     if area is None:
@@ -47,7 +47,7 @@ def spell_area(
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
 ) -> AreaOfEffect | None:
-    """Handle spell area."""
+    """Construct the continuous and rasterized area for an aimed spell."""
 
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
@@ -105,7 +105,7 @@ def targets_in_area(
     actor: Creature,
     area: AreaOfEffect,
 ) -> list[SpellTargetContext]:
-    """Handle targets in area."""
+    """Return living creature references whose footprints intersect affected cells."""
 
     occupied_cells = {(cell.x, cell.y) for cell in area.cells}
     targets: list[SpellTargetContext] = []

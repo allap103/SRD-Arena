@@ -1,4 +1,4 @@
-"""Provide items support for the actions package."""
+"""Execute encounter actions granted by inventory items."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def resolve_utilize_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Resolve utilize action."""
+    """Consume a supported inventory item and apply its action outcome."""
 
     creature_ref = self.current_decision().creature_ref
     item = self.item_templates.get(item_id)

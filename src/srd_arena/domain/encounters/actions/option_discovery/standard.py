@@ -1,4 +1,4 @@
-"""Provide standard support for the option discovery package."""
+"""Discover universal combat actions and feature-provided action grants."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ def available_feature_actions(
     self: EncounterState,
     creature: Creature,
 ) -> list[EncounterAction]:
-    """Return available feature actions."""
+    """Advertise supported feature actions whose use and economy permit activation."""
 
     creature_ref = self.current_decision().creature_ref
     actions: list[EncounterAction] = []
@@ -46,7 +46,7 @@ def feature_action_available(
     actor: Creature,
     definition: FeatureActionDefinition,
 ) -> bool:
-    """Handle feature action available."""
+    """Return whether a creature feature may currently supply its action."""
 
     if definition.economy == "bonus_action" and not self.active_bonus_action_available:
         return False

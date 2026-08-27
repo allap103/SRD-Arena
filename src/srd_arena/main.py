@@ -1,4 +1,4 @@
-"""Provide main support for the srd arena package."""
+"""Compose the production adapters and launch the SRD Arena GUI."""
 
 from srd_arena.application.api import GameStartup
 from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository

@@ -20,7 +20,7 @@ def resolve_feature_action(
     feature_id: str,
     roll_dice: DiceRoller,
 ) -> CapabilityActionResult | None:
-    """Resolve feature action."""
+    """Dispatch a feature identifier to the domain handler registered for it."""
 
     class_name = (
         creature.class_ref.name.casefold() if creature.class_ref is not None else ""

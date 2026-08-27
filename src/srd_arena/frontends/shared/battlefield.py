@@ -18,7 +18,7 @@ def build_battlefield_view(
     grid_opacity: float = 1.0,
     team_ids: tuple[str, ...] = (),
 ) -> BattlefieldView:
-    """Build battlefield view."""
+    """Project an encounter observation into drawable grid and token data."""
 
     if len(team_ids) > len(TEAM_COLORS):
         raise ValueError("Battlefield presentation supports at most five teams.")

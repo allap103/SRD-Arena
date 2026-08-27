@@ -1,4 +1,4 @@
-"""Provide stat blocks support for the creature actions package."""
+"""Discover executable actions authored in a creature's stat block."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def stat_block_action_candidates(
     creature_ref: CreatureRef,
     display_name: Callable[[Creature, str], str],
 ) -> list[EncounterAction]:
-    """Handle stat block action candidates."""
+    """Build actor-relative candidates from all supported stat-block sections."""
 
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []

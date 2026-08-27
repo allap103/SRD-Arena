@@ -13,7 +13,7 @@ DEFAULT_CELL_COVERAGE_THRESHOLD = 0.5
 
 @dataclass(frozen=True)
 class Point2D:
-    """Represent a point2 d."""
+    """Locate a point in continuous battlefield coordinates."""
 
     x: float
     y: float
@@ -21,7 +21,7 @@ class Point2D:
 
 @dataclass(frozen=True)
 class Vector2D:
-    """Represent a vector2 d."""
+    """Describe a direction or displacement in continuous battlefield space."""
 
     x: float
     y: float
@@ -29,7 +29,7 @@ class Vector2D:
 
 @dataclass(frozen=True)
 class ContinuousArea:
-    """Represent a continuous area."""
+    """Describe an exact geometric template before it is assigned grid cells."""
 
     shape: str
     origin: Point2D
@@ -43,7 +43,7 @@ class ContinuousArea:
 
 @dataclass(frozen=True)
 class AreaOfEffect:
-    """Represent an area of effect."""
+    """Pair an exact area template with the grid cells affected by policy."""
 
     shape: str
     origin: Position

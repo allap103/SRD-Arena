@@ -1,4 +1,4 @@
-"""Provide theme support for the gui package."""
+"""Centralize colors and widget styles used across the GUI."""
 
 from __future__ import annotations
 
@@ -237,7 +237,7 @@ QFrame#victoryOverlay {
 
 
 def apply_fantasy_theme(app: QApplication) -> None:
-    """Apply fantasy theme."""
+    """Apply the shared palette and stylesheet to the Qt application."""
 
     app.setStyleSheet(FANTASY_STYLESHEET)
     font = QFont("Palatino")

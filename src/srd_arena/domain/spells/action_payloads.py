@@ -114,7 +114,7 @@ def _with_spell_selections(
 def parse_spell_action_value(
     value: str,
 ) -> tuple[str, str | None, tuple[float, float] | None]:
-    """Parse spell action value."""
+    """Extract a named scalar selection from a structured spell action payload."""
 
     value, _, _selection = value.partition("#")
     if "@" in value:
@@ -133,7 +133,7 @@ def parse_spell_action_value(
 
 
 def parse_spell_action_targets(value: str) -> tuple[str, ...]:
-    """Parse spell action targets."""
+    """Extract the ordered creature references selected for a spell action."""
 
     base, _, _selection = value.partition("#")
     if "|" in base:
@@ -146,7 +146,7 @@ def parse_spell_action_targets(value: str) -> tuple[str, ...]:
 
 
 def parse_spell_action_condition(value: str) -> str | None:
-    """Parse spell action condition."""
+    """Extract and validate the condition kind chosen for a flexible spell."""
 
     _base, separator, selections = value.partition("#")
     if not separator:
@@ -159,7 +159,7 @@ def parse_spell_action_condition(value: str) -> str | None:
 
 
 def parse_spell_action_damage_type(value: str) -> str | None:
-    """Parse spell action damage type."""
+    """Extract the damage-type selection encoded in a spell action identifier."""
 
     _base, separator, selections = value.partition("#")
     if not separator:
@@ -172,7 +172,7 @@ def parse_spell_action_damage_type(value: str) -> str | None:
 
 
 def parse_spell_action_ability(value: str) -> str | None:
-    """Parse spell action ability."""
+    """Extract and validate the ability chosen for a flexible spell."""
 
     _base, separator, selections = value.partition("#")
     if not separator:
@@ -185,7 +185,7 @@ def parse_spell_action_ability(value: str) -> str | None:
 
 
 def parse_spell_action_slot(value: str) -> int | None:
-    """Parse spell action slot."""
+    """Extract the spell-slot level selected for this casting invocation."""
 
     _base, separator, selections = value.partition("#")
     if not separator:
@@ -198,7 +198,7 @@ def parse_spell_action_slot(value: str) -> int | None:
 
 
 def parse_spell_healing_allocations(value: str) -> dict[str, int]:
-    """Parse spell healing allocations."""
+    """Extract per-target healing amounts from a resource-allocation payload."""
 
     _base, separator, selections = value.partition("#")
     if not separator:

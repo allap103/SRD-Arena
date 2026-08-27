@@ -35,7 +35,7 @@ def resolve_target_roll(
     *,
     projectile_index: int,
 ) -> TargetRollOutcome:
-    """Resolve target roll."""
+    """Resolve the attack roll or saving throw required for one spell target."""
 
     assert context.creature.spellcasting is not None
     assert context.roller is not None

@@ -1,4 +1,4 @@
-"""Provide queries support for the encounters package."""
+"""Expose read-only encounter queries used by orchestration and clients."""
 
 from __future__ import annotations
 

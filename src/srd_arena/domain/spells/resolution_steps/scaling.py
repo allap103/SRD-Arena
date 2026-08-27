@@ -99,7 +99,7 @@ def resource_int_increment(
 
 
 def parse_damage_dice(expression: str) -> tuple[int, int]:
-    """Parse damage dice."""
+    """Parse an authored dice expression into count, sides, and flat modifier."""
 
     match = re.fullmatch(r"(\d+)d(\d+)", expression)
     if match is None:

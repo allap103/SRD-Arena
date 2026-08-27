@@ -20,7 +20,7 @@ def build_spell_removals(
     context: SpellActionContext,
     resolved: ResolvedSpellTargets,
 ) -> SpellRemovalResults:
-    """Build spell removals."""
+    """Select condition and ongoing-effect applications removed by the spell."""
 
     spell = context.spell
     messages: list[tuple[str, str]] = []

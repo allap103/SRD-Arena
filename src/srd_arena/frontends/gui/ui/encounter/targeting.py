@@ -163,7 +163,7 @@ def pending_area_spell_action(
     actions: Sequence[ActionObservation],
     mode: TargetSelectionMode | None,
 ) -> ActionObservation | None:
-    """Handle pending area spell action."""
+    """Return the advertised spell action currently waiting for an aim point."""
 
     if mode is None or mode.kind != "spell":
         return None
@@ -184,7 +184,7 @@ def pending_area_stat_block_action(
     actions: Sequence[ActionObservation],
     mode: TargetSelectionMode | None,
 ) -> ActionObservation | None:
-    """Handle pending area stat block action."""
+    """Return the stat-block action currently waiting for an aim point."""
 
     if mode is None or mode.kind != "stat_block":
         return None
@@ -204,7 +204,7 @@ def pending_area_overlay(
     actions: Sequence[ActionObservation],
     mode: TargetSelectionMode | None,
 ) -> Mapping[str, object] | None:
-    """Handle pending area overlay."""
+    """Build the area preview for the action currently being aimed."""
 
     action = pending_area_action(actions, mode)
     return action.area_preview if action is not None else None
@@ -278,13 +278,13 @@ def allocation_status(observation: GameObservation) -> str | None:
 
 
 def is_area_spell_action(action: ActionObservation) -> bool:
-    """Return whether area spell action."""
+    """Return whether a spell action supplies geometry for map-based aiming."""
 
     return action.kind == "spell" and action.area_preview is not None
 
 
 def is_area_stat_block_action(action: ActionObservation) -> bool:
-    """Return whether area stat block action."""
+    """Return whether a stat-block action supplies geometry for map-based aiming."""
 
     return action.kind == "stat_block" and action.area_preview is not None
 

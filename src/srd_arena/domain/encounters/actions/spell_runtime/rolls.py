@@ -2,7 +2,7 @@
 
 
 def roll_die(sides: int) -> int:
-    """Handle roll die."""
+    """Roll one die through the spell runtime's injectable random source."""
 
     from .. import spellcasting as spellcasting_facade
 

@@ -43,7 +43,7 @@ def action_eligibility(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> ActionEligibility:
-    """Handle action eligibility."""
+    """Collect every reason a candidate action is currently unavailable."""
 
     compatibility = state.combat_rules.action_compatibility(
         state,
@@ -63,7 +63,7 @@ def require_action_eligible(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> None:
-    """Handle require action eligible."""
+    """Raise when an action fails eligibility, preserving all failure reasons."""
 
     eligibility = state.combat_rules.action_eligibility(
         state,
