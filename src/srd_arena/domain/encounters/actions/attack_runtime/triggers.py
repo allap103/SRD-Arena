@@ -15,7 +15,14 @@ def matching_damage_reroll_rule(
     attacker: Creature,
     attack: AttackOutcome,
 ) -> TriggeredEffect | None:
-    """Return the first applicable rule that can reroll current damage dice."""
+    """Return the first applicable rule that can reroll current damage dice.
+
+    >>> from types import SimpleNamespace
+    >>> attacker = SimpleNamespace(triggered_effects=[])
+    >>> attack = AttackOutcome([], True, 15, 0, False, {})
+    >>> matching_damage_reroll_rule(attacker, attack) is None
+    True
+    """
     if attack.damage_roll is None:
         return None
     wielded_with = (

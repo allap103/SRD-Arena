@@ -32,7 +32,19 @@ def roll_attack_damage(
     roller: Callable[[int, int], int],
     sourced_modifier_for: Callable[[], int],
 ) -> AttackDamageResolution:
-    """Roll primary and conditional additional damage in authored order."""
+    """Roll primary and conditional additional damage in authored order.
+
+    >>> source = AttackSource(
+    ...     "Sword", "1d8", 3, "STR mod", "slashing", 5,
+    ...     "STR mod + proficiency", ("melee",),
+    ... )
+    >>> resolved = roll_attack_damage(
+    ...     source, critical_hit=False, attack_roll_mode="normal",
+    ...     roller=lambda count, sides: 4, sourced_modifier_for=lambda: 0,
+    ... )
+    >>> (resolved.dice, resolved.roll.total, resolved.damage)
+    ('1d8', 7, 7)
+    """
     damage_dice = attack_source.damage_dice
     damage_die_count, damage_die_sides = parse_damage_dice(damage_dice)
     if critical_hit:
@@ -114,7 +126,23 @@ def apply_attack_damage(
     attacker_label: str,
     target_label: str,
 ) -> None:
-    """Apply a rolled attack to defenses and append its combat messages."""
+    """Apply a rolled attack to defenses and append its combat messages.
+
+    >>> from types import SimpleNamespace
+    >>> from ....rolls.dice import DicePoolResult, DieRollResult
+    >>> roll = DicePoolResult((DieRollResult(8, (4,)),), 3, 4, 7)
+    >>> attack = AttackOutcome([], True, 15, 0, False, {}, damage_roll=roll,
+    ...     damage_dice="1d8", damage_modifier=3, damage_type="slashing")
+    >>> defender = SimpleNamespace(
+    ...     take_damage=lambda amount, kind=None: amount,
+    ...     get_health=lambda: 5,
+    ... )
+    >>> apply_attack_damage(
+    ...     attack, defender, attacker_label="Hero", target_label="Goblin"
+    ... )
+    >>> (attack.damage, attack.messages[-1])
+    (7, ('system', 'Hero hits Goblin for 7 damage.'))
+    """
     if not attack.hit or attack.damage_roll is None or attack.damage_dice is None:
         return
     damage_total = attack.damage_roll.total
@@ -155,7 +183,16 @@ def damage_roll_detail(
     attack: AttackOutcome,
     applied_damage: int | None = None,
 ) -> dict[str, object]:
-    """Build the stable event payload for an attack's damage roll."""
+    """Build the stable event payload for an attack's damage roll.
+
+    >>> from ....rolls.dice import DicePoolResult, DieRollResult
+    >>> roll = DicePoolResult((DieRollResult(6, (5,)),), 2, 5, 7)
+    >>> attack = AttackOutcome([], True, 15, 7, False, {}, damage_roll=roll,
+    ...     damage_dice="1d6", damage_modifier=2, damage_type="piercing")
+    >>> detail = damage_roll_detail(attack, 7)
+    >>> (detail["dice_values"], detail["applied_damage"])
+    ([5], 7)
+    """
     assert attack.damage_roll is not None
     detail: dict[str, object] = {
         "dice": attack.damage_dice,
@@ -183,11 +220,26 @@ def damage_effect_requirements_met(
     effect: DamageEffect,
     roll_mode: D20RollMode,
 ) -> bool:
-    """Return whether conditional damage matches the resolved attack mode."""
+    """Return whether conditional damage matches the resolved attack mode.
+
+    >>> from ....capabilities import AttackRollModeRequirement
+    >>> effect = DamageEffect(
+    ...     "1d6", 0, "fire",
+    ...     requirements=(AttackRollModeRequirement("advantage"),),
+    ... )
+    >>> damage_effect_requirements_met(effect, "advantage")
+    True
+    >>> damage_effect_requirements_met(effect, "normal")
+    False
+    """
     return all(requirement.mode == roll_mode for requirement in effect.requirements)
 
 
 def parse_damage_dice(damage: str) -> tuple[int, int]:
-    """Parse a simple NdS damage expression."""
+    """Parse a simple NdS damage expression.
+
+    >>> parse_damage_dice("2d10")
+    (2, 10)
+    """
     count_text, sides_text = damage.lower().split("d", 1)
     return int(count_text), int(sides_text)
