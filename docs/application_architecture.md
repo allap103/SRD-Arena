@@ -8,21 +8,28 @@ session or mutable encounter state.
 ## Package roles
 
 ```text
-                            main
-                             |
-                    composition / wiring
-                      /              \
-        filesystem scenario adapter   driving adapter
-                 |                    /           \
-              content               Qt         headless
-                 |                    \           /
-                 v                     application
-              domain                /             \
-                                    engine ------> domain
+main
+├── application
+├── infrastructure
+└── selected frontend
+    ├── Qt
+    └── headless
+
+Qt/headless ───────> application
+infrastructure ────> application
+infrastructure ────> content
+infrastructure ────> domain
+content ───────────> domain
+application ───────> engine
+application ───────> domain
+engine ────────────> domain
+Qt ────────────────> domain.geometry
 ```
 
 The arrows show dependencies. `main` is the composition root and chooses the
-concrete filesystem and frontend adapters.
+concrete filesystem and frontend adapters. Infrastructure implements the
+scenario-repository port owned by the application layer and assembles domain
+definitions from authored content.
 
 | Package | Responsibility |
 | --- | --- |
@@ -38,6 +45,26 @@ concrete filesystem and frontend adapters.
 `application` is orchestration glue, not a parent folder for the other
 packages. Content, infrastructure, and frontends are adapters around ports and
 contracts owned by the application/domain core.
+
+## Shared spatial kernel
+
+Qt has one deliberate, narrow dependency on `domain.geometry`. Area previews
+must use the same cone, line, cube, radius, rasterization, and outline
+calculations as combat resolution; duplicating those rules in the frontend
+could make the displayed template disagree with the affected cells.
+
+This exception does not grant Qt access to mutable encounter state or combat
+orchestration. The geometry package is a stateless calculation kernel made of
+value objects and pure operations. Pointer movement remains local presentation
+behavior, so routing every transient hover position through an application
+command would add ceremony without changing game state.
+
+If spatial behavior later becomes an independently reusable subsystem—for
+example when three-dimensional movement, creature footprints, cover, and line
+of effect are implemented—it may be promoted to a top-level `spatial`
+package shared by domain and frontend code. Until that boundary is justified
+by responsibility rather than diagram symmetry, the explicit geometry
+exception is preferred.
 
 ## Startup flow
 
@@ -118,8 +145,8 @@ prevent engine access from returning.
 - Shared presentation imports application contracts, not engine or encounter
   implementation packages.
 - Qt imports application contracts and may reuse pure domain geometry for
-  pointer-driven area rendering; it imports neither engine nor encounter
-  implementation packages.
+  pointer-driven area rendering. It imports neither engine nor mutable
+  encounter implementation packages; no other domain dependency is intended.
 - The headless adapter imports application contracts only.
 - Package roots do not re-export engine types and thereby hide ownership.
 - Imports crossing top-level `srd_arena` packages use the full absolute path.
