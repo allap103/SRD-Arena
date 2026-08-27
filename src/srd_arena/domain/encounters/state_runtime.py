@@ -20,7 +20,21 @@ def apply_encounter_effects(
     *,
     origin_id: str | None = None,
 ) -> list[tuple[str, str]]:
-    """Apply resolved conditions and ongoing effects to encounter-owned state."""
+    """Apply resolved conditions and ongoing effects to encounter-owned state.
+
+    >>> from types import SimpleNamespace
+    >>> effect = EffectResult(
+    ...     "message", "hero", data={"channel": "combat", "text": "Hit!"}
+    ... )
+    >>> state = SimpleNamespace(
+    ...     _next_runtime_origin_id=lambda: "effect_1",
+    ...     _apply_condition=lambda condition: None,
+    ...     _remove_condition=lambda target, condition: None,
+    ...     _start_ongoing_effect=lambda effect, origin: None,
+    ... )
+    >>> apply_encounter_effects(state, [effect])
+    [('combat', 'Hit!')]
+    """
 
     resolved_origin_id = origin_id or state._next_runtime_origin_id()
     return apply_effects(
@@ -34,7 +48,16 @@ def apply_encounter_effects(
 
 
 def consume_action(state: EncounterState, *, allow_magic: bool) -> None:
-    """Spend the active creature's Action while enforcing magic-action restrictions."""
+    """Spend the active creature's Action while enforcing magic-action restrictions.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(
+    ...     active_actions_remaining=1, active_magic_actions_remaining=1
+    ... )
+    >>> consume_action(state, allow_magic=True)
+    >>> (state.active_actions_remaining, state.active_magic_actions_remaining)
+    (0, 0)
+    """
 
     if state.active_actions_remaining <= 0:
         raise RuntimeError("No Action remains to consume.")
@@ -52,13 +75,26 @@ def consume_action(state: EncounterState, *, allow_magic: bool) -> None:
 
 
 def active_movement_remaining(state: EncounterState) -> MovementBudget:
-    """Return the active creature's remaining movement in grid cells."""
+    """Return the active creature's remaining movement in grid cells.
+
+    >>> from types import SimpleNamespace
+    >>> active_movement_remaining(
+    ...     SimpleNamespace(active_movement_remaining_for=lambda: MovementBudget(4))
+    ... )
+    4
+    """
 
     return state.active_movement_remaining_for()
 
 
 def next_action_id(state: EncounterState) -> str:
-    """Allocate a unique action identifier within this encounter runtime."""
+    """Allocate a unique action identifier within this encounter runtime.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(action_sequence=3)
+    >>> (next_action_id(state), state.action_sequence)
+    ('action_3', 4)
+    """
 
     action_id = f"action_{state.action_sequence}"
     state.action_sequence += 1
@@ -66,7 +102,13 @@ def next_action_id(state: EncounterState) -> str:
 
 
 def next_runtime_origin_id(state: EncounterState) -> str:
-    """Allocate an identity for one runtime application of a rule source."""
+    """Allocate an identity for one runtime application of a rule source.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(runtime_state_sequence=2)
+    >>> (next_runtime_origin_id(state), state.runtime_state_sequence)
+    ('effect_2', 3)
+    """
 
     origin_id = f"effect_{state.runtime_state_sequence}"
     state.runtime_state_sequence += 1
@@ -74,7 +116,13 @@ def next_runtime_origin_id(state: EncounterState) -> str:
 
 
 def next_frame_id(state: EncounterState, prefix: str = "frame") -> str:
-    """Allocate an identity for one invocation on the decision stack."""
+    """Allocate an identity for one invocation on the decision stack.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(frame_sequence=5)
+    >>> (next_frame_id(state, "reaction"), state.frame_sequence)
+    ('reaction_5', 6)
+    """
 
     frame_id = f"{prefix}_{state.frame_sequence}"
     state.frame_sequence += 1
@@ -89,7 +137,14 @@ def create_event(
     action_id: str | None = None,
     data: dict[str, object] | None = None,
 ) -> CombatEvent:
-    """Append a sequence-numbered combat event and return the stored event."""
+    """Create a sequence-numbered combat event and advance the counter.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(event_sequence=7)
+    >>> event = create_event(state, "turn_started", "hero")
+    >>> (event.seq, event.type, event.creature_ref, state.event_sequence)
+    (7, 'turn_started', 'hero', 8)
+    """
 
     event = CombatEvent(
         seq=state.event_sequence,
@@ -108,7 +163,17 @@ def merge_progress(
     target: EncounterProgress,
     source: EncounterProgress,
 ) -> None:
-    """Append messages, events, and transitions from nested encounter progress."""
+    """Append messages, events, and transitions from nested encounter progress.
+
+    >>> target = EncounterProgress(messages=[("system", "Start")])
+    >>> source = EncounterProgress(
+    ...     messages=[("system", "Done")], transition="victory",
+    ...     paused_for_decision=True,
+    ... )
+    >>> merge_progress(None, target, source)
+    >>> (target.messages, target.transition, target.paused_for_decision)
+    ([('system', 'Start'), ('system', 'Done')], 'victory', True)
+    """
 
     target.messages.extend(source.messages)
     target.events.extend(source.events)
@@ -121,14 +186,33 @@ def merge_progress(
 
 
 def creature_label(state: EncounterState, creature_ref: CreatureRef) -> str:
-    """Return a user-facing label for a runtime creature reference."""
+    """Return a user-facing label for a runtime creature reference.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(creatures={
+    ...     "hero": SimpleNamespace(
+    ...         creature=SimpleNamespace(name="Aria"), creature_id="wizard"
+    ...     )
+    ... })
+    >>> creature_label(state, "hero")
+    'Aria (wizard)'
+    """
 
     creature_state = state.creatures[creature_ref]
     return f"{creature_state.creature.name} ({creature_state.creature_id})"
 
 
 def living_creature_refs(state: EncounterState) -> list[CreatureRef]:
-    """Return runtime references for creatures that still have hit points."""
+    """Return runtime references for creatures that still have hit points.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(creatures={
+    ...     "hero": SimpleNamespace(is_alive=True),
+    ...     "goblin": SimpleNamespace(is_alive=False),
+    ... })
+    >>> living_creature_refs(state)
+    ['hero']
+    """
 
     return [
         creature_ref
@@ -138,7 +222,15 @@ def living_creature_refs(state: EncounterState) -> list[CreatureRef]:
 
 
 def creature_position(state: EncounterState, creature_ref: CreatureRef) -> Position:
-    """Return the current grid position of a runtime creature."""
+    """Return the current grid position of a runtime creature.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(position=Position(2, 3))}
+    ... )
+    >>> creature_position(state, "hero")
+    Position(x=2, y=3)
+    """
 
     return state.creatures[creature_ref].position
 
@@ -150,7 +242,22 @@ def position_is_free(
     *,
     ignored_refs: set[CreatureRef] | frozenset[CreatureRef] = frozenset(),
 ) -> bool:
-    """Return whether a creature may end movement at a grid position."""
+    """Return whether a creature may end movement at a grid position.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(
+    ...     definition=SimpleNamespace(
+    ...         grid=SimpleNamespace(width=5, height=5)
+    ...     ),
+    ...     creatures={
+    ...         "hero": SimpleNamespace(is_alive=True, position=Position(2, 2))
+    ...     },
+    ... )
+    >>> position_is_free(state, 1, 1)
+    True
+    >>> position_is_free(state, 2, 2)
+    False
+    """
 
     if (
         x < 0
@@ -168,6 +275,14 @@ def position_is_free(
 
 
 def creature_size(state: EncounterState, creature_ref: CreatureRef) -> str:
-    """Return the size category of a runtime creature."""
+    """Return the size category of a runtime creature.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(creatures={
+    ...     "ogre": SimpleNamespace(creature=SimpleNamespace(size="L"))
+    ... })
+    >>> creature_size(state, "ogre")
+    'L'
+    """
 
     return state.creatures[creature_ref].creature.size
