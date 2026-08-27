@@ -168,7 +168,13 @@ def spell_slots_progression(
     block: SpellcastingSource,
     level: int,
 ) -> dict[int, int]:
-    """Derive per-level spell-slot maxima from a class progression table."""
+    """Derive per-level spell-slot maxima from a class progression table.
+
+    >>> from types import SimpleNamespace
+    >>> group = SimpleNamespace(spell_progression_rows=[[2, 1, 0]])
+    >>> spell_slots_progression(SimpleNamespace(table_groups=[group]), 1)
+    {1: 2, 2: 1}
+    """
 
     row_index = level - 1
     for group in block.table_groups:
@@ -188,7 +194,13 @@ def spell_count_progression(
     block: SpellcastingSource,
     level: int,
 ) -> int | None:
-    """Derive the known or prepared spell count across class levels."""
+    """Derive the known or prepared spell count across class levels.
+
+    >>> from types import SimpleNamespace
+    >>> block = SimpleNamespace(spells_known_progression=[2, 3], table_groups=[])
+    >>> spell_count_progression(block, 2)
+    3
+    """
 
     direct = progression_value(block.spells_known_progression, level)
     if direct is not None:

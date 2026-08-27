@@ -96,7 +96,18 @@ class SubclassCatalog:
 
 
 def load_class_catalog(directory: str | Path) -> ClassCatalog:
-    """Group each authored class with features matching its name and source."""
+    """Group each authored class with features matching its name and source.
+
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     root = Path(directory)
+    ...     fighter = root / "classes" / "fighter"
+    ...     fighter.mkdir(parents=True)
+    ...     _ = (fighter / "class.json").write_text(
+    ...         '{"name": "Fighter", "source": "X"}', encoding="utf-8")
+    ...     load_class_catalog(root).find("fighter", None).definition.name
+    'Fighter'
+    """
 
     system_dir = Path(directory)
     class_dir = system_dir / "classes"
@@ -129,7 +140,19 @@ def load_class_catalog(directory: str | Path) -> ClassCatalog:
 
 
 def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
-    """Group each subclass with features matching it and its parent class."""
+    """Group each subclass with features matching it and its parent class.
+
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     root = Path(directory)
+    ...     (root / "subclasses").mkdir()
+    ...     _ = (root / "subclasses" / "champion.json").write_text(
+    ...         '{"name": "Champion", "source": "X", '
+    ...         '"className": "Fighter", "classSource": "X"}', encoding="utf-8")
+    ...     catalog = load_subclass_catalog(root)
+    ...     catalog.find("champion", None, "fighter", None).definition.name
+    'Champion'
+    """
 
     system_dir = Path(directory)
     definitions = _load_records(system_dir / "subclasses", SubclassSchema)

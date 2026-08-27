@@ -11,7 +11,17 @@ OptionalFeatureCatalog = SourceCatalog[OptionalFeatureSchema]
 
 
 def load_optional_feature_catalog(directory: str | Path) -> OptionalFeatureCatalog:
-    """Validate and index optional class features from a system directory."""
+    """Validate and index optional class features from a system directory.
+
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     root = Path(directory)
+    ...     (root / "optional_features").mkdir()
+    ...     _ = (root / "optional_features" / "style.json").write_text(
+    ...         '{"name": "Defense", "source": "X"}', encoding="utf-8")
+    ...     load_optional_feature_catalog(root).find("defense", None).name
+    'Defense'
+    """
 
     system_dir = Path(directory)
     features_dir = system_dir / "optional_features"
