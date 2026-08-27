@@ -35,7 +35,7 @@ class RunningGame:
 
         return execute_game_command(self.__session, command)
 
-def reset(self) -> GameObservation:
+    def reset(self) -> GameObservation:
         """Start a fresh episode of the same game.
 
         This supports clients that repeatedly run the same scenario, such as
