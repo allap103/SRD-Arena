@@ -49,7 +49,17 @@ def load_creature(
     subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> Creature:
-    """Validate one creature document and translate it with the supplied catalogs."""
+    """Validate one creature document and translate it with the supplied catalogs.
+
+    >>> from pathlib import Path
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     path = Path(directory) / "hero.json"
+    ...     _ = path.write_text('{"id": "hero", "name": "Hero"}')
+    ...     creature = load_creature(path)
+    >>> (creature.id, creature.name)
+    ('hero', 'Hero')
+    """
 
     return build_creature(
         CreatureSchema.model_validate(load_json(path)),
@@ -71,7 +81,12 @@ def build_creature(
     subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> Creature:
-    """Assemble a domain creature from authored statistics, actions, and options."""
+    """Assemble a domain creature from authored statistics, actions, and options.
+
+    >>> creature = build_creature(CreatureSchema(id="hero", name="Hero"))
+    >>> (creature.id, creature.attributes.base_health)
+    ('hero', 10)
+    """
 
     schema = _resolve_creature_schema(schema, player_characters)
     stat_block = _find_bestiary_monster(schema, bestiary)

@@ -21,7 +21,31 @@ def build_spellcasting(
     subclass_record: SubclassRecord | None,
     spells: SpellCatalog | None,
 ) -> Spellcasting | None:
-    """Bind spell definitions to a creature's casting statistics and resource pools."""
+    """Bind spell definitions to a creature's casting statistics and resource pools.
+
+    >>> schema = CreatureSchema(
+    ...     id="mage",
+    ...     spellcasting={
+    ...         "ability": "int",
+    ...         "caster_progression": "full",
+    ...         "spell_slots": {1: 2},
+    ...     },
+    ... )
+    >>> attributes = Attributes(
+    ...     base_health=10,
+    ...     level=1,
+    ...     strength=10,
+    ...     dexterity=10,
+    ...     constitution=10,
+    ...     wisdom=10,
+    ...     intelligence=16,
+    ...     charisma=10,
+    ...     base_armor_class=10,
+    ... )
+    >>> casting = build_spellcasting(schema, attributes, None, None, None)
+    >>> (casting.save_dc, casting.spell_slots_remaining) if casting else None
+    (13, {1: 2})
+    """
 
     if schema.spellcasting is not None:
         config = schema.spellcasting

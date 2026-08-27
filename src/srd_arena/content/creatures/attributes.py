@@ -13,7 +13,18 @@ def build_creature_attributes(
     stat_block: BestiaryMonsterSchema | None,
     class_record: ClassRecord | None,
 ) -> Attributes:
-    """Translate authored ability scores, proficiencies, and movement into domain attributes."""
+    """Translate authored ability scores, proficiencies, and movement into domain attributes.
+
+    A creature without a referenced stat block uses its directly authored values.
+
+    >>> schema = CreatureSchema(
+    ...     id="scout",
+    ...     attributes={"dexterity": 14, "movement": {"speed_feet": 25}},
+    ... )
+    >>> attributes = build_creature_attributes(schema, None, None)
+    >>> (attributes.dexterity, attributes.movement.speed_feet)
+    (14, 25)
+    """
 
     if stat_block is None:
         attributes = schema.attributes.model_dump(exclude={"movement"})
@@ -67,7 +78,12 @@ def build_creature_size(
     schema: CreatureSchema,
     stat_block: BestiaryMonsterSchema | None,
 ) -> str:
-    """Normalize an authored size label to the supported domain size category."""
+    """Normalize an authored size label to the supported domain size category.
+
+    >>> schema = CreatureSchema(id="ogre", metadata={"size": "large"})
+    >>> build_creature_size(schema, None)
+    'L'
+    """
 
     if stat_block is not None:
         return normalize_size(stat_block.primary_size)

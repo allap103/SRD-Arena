@@ -12,7 +12,16 @@ type PlayerCharacterTemplates = dict[str, CreatureSchema]
 def load_player_character_templates(
     directory: str | Path,
 ) -> PlayerCharacterTemplates:
-    """Load each authored player-character file as a reusable domain template."""
+    """Load each authored player-character file as a reusable domain template.
+
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     path = Path(directory) / "hero.json"
+    ...     _ = path.write_text('{"id": "hero", "name": "Hero"}')
+    ...     templates = load_player_character_templates(directory)
+    >>> templates["hero"].name
+    'Hero'
+    """
 
     player_characters_dir = Path(directory)
     if not player_characters_dir.is_dir():
