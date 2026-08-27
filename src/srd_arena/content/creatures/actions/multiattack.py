@@ -163,6 +163,18 @@ class MultiattackPlanSchema(MultiattackSchemaModel):
 
     @model_validator(mode="after")
     def validate_replacement_step_indexes(self) -> MultiattackPlanSchema:
+        """Reject replacement targets outside the plan's step list.
+
+        >>> from pydantic import ValidationError
+        >>> step = {"type": "invoke", "invocation": {"type": "stat_block_action", "name": "Bite"}}
+        >>> replacement = {"target": {"type": "step", "index": 1},
+        ...     "options": [{"type": "stat_block_action", "name": "Claw"}]}
+        >>> try:
+        ...     MultiattackPlanSchema(steps=[step], replacements=[replacement])
+        ... except ValidationError as error:
+        ...     "references step 1" in str(error)
+        True
+        """
         for replacement in self.replacements:
             target = replacement.target
             if isinstance(target, StepReplacementTargetSchema) and target.index >= len(

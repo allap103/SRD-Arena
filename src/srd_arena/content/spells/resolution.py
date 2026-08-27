@@ -72,6 +72,17 @@ class HealingEffectSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_healing_source(self) -> HealingEffectSchema:
+        """Require at least one source for the healing amount.
+
+        >>> HealingEffectSchema(type="healing", dice="2d8").dice
+        '2d8'
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     HealingEffectSchema(type="healing")
+        ... except ValidationError as error:
+        ...     "requires a roll" in str(error)
+        True
+        """
         if (
             self.dice is None
             and self.bonus == 0
@@ -97,6 +108,17 @@ class TemporaryHitPointsEffectSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_temporary_hit_points(self) -> TemporaryHitPointsEffectSchema:
+        """Require a roll, value, or modifier for temporary hit points.
+
+        >>> TemporaryHitPointsEffectSchema(type="temporary_hit_points", value=5).value
+        5
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     TemporaryHitPointsEffectSchema(type="temporary_hit_points")
+        ... except ValidationError as error:
+        ...     "require a roll" in str(error)
+        True
+        """
         if self.dice is None and self.value == 0 and self.modifier == "none":
             raise ValueError("Temporary hit points require a roll, value, or modifier.")
         return self
@@ -393,6 +415,20 @@ class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_stored_payload(self) -> StoreSpellEffectSchema:
+        """Require exactly one referenced spell or authored resolution.
+
+        >>> stored = StoreSpellEffectSchema(type="store_spell", maximum_level=3,
+        ...     activation_trigger="object_touched", spell_name="Fireball")
+        >>> stored.spell_name
+        'Fireball'
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     StoreSpellEffectSchema(type="store_spell", maximum_level=3,
+        ...         activation_trigger="object_touched")
+        ... except ValidationError as error:
+        ...     "exactly one" in str(error)
+        True
+        """
         if (self.spell_name is None) == (self.stored_resolution is None):
             raise ValueError(
                 "Stored spell effects require exactly one spell or authored resolution."
@@ -478,6 +514,17 @@ class ExtraTurnsEffectSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_count(self) -> ExtraTurnsEffectSchema:
+        """Require exactly one fixed or rolled extra-turn count.
+
+        >>> ExtraTurnsEffectSchema(type="extra_turns", count=2).count
+        2
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     ExtraTurnsEffectSchema(type="extra_turns", count=2, count_dice="1d4")
+        ... except ValidationError as error:
+        ...     "exactly one count source" in str(error)
+        True
+        """
         if (self.count_dice is None) == (self.count is None):
             raise ValueError("Extra turns require exactly one count source.")
         return self
@@ -709,6 +756,20 @@ class RepeatResolutionSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_propagation(self) -> RepeatResolutionSchema:
+        """Require a range when repeated resolution propagates between targets.
+
+        >>> nested = {"type": "automatic", "outcome": {}}
+        >>> RepeatResolutionSchema(type="repeat", count=2, allocation="propagating",
+        ...     propagation_range_feet=30, resolution=nested).propagation_range_feet
+        30
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     RepeatResolutionSchema(type="repeat", count=2,
+        ...         allocation="propagating", resolution=nested)
+        ... except ValidationError as error:
+        ...     "requires a propagation range" in str(error)
+        True
+        """
         if self.allocation == "propagating" and self.propagation_range_feet is None:
             raise ValueError("Propagating resolution requires a propagation range.")
         return self
@@ -754,6 +815,16 @@ class RandomResolutionEntrySchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_range(self) -> RandomResolutionEntrySchema:
+        """Reject a random-resolution range whose minimum exceeds its maximum.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     RandomResolutionEntrySchema(minimum=2, maximum=1,
+        ...         resolution={"type": "automatic", "outcome": {}})
+        ... except ValidationError as error:
+        ...     "minimum cannot exceed maximum" in str(error)
+        True
+        """
         if self.minimum > self.maximum:
             raise ValueError("Random result minimum cannot exceed maximum.")
         return self
@@ -769,6 +840,16 @@ class RandomTableResolutionSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_entries(self) -> RandomTableResolutionSchema:
+        """Require contiguous entries covering every result on the table die.
+
+        >>> automatic = {"type": "automatic", "outcome": {}}
+        >>> table = RandomTableResolutionSchema(type="random_table", die="1d2", entries=[
+        ...     {"minimum": 1, "maximum": 1, "resolution": automatic},
+        ...     {"minimum": 2, "maximum": 2, "resolution": automatic},
+        ... ])
+        >>> len(table.entries)
+        2
+        """
         _validate_complete_roll_table(self.die, self.entries)
         return self
 
@@ -858,6 +939,16 @@ class RandomTableEntrySchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_range(self) -> RandomTableEntrySchema:
+        """Reject a random-effect range whose minimum exceeds its maximum.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     RandomTableEntrySchema(minimum=2, maximum=1,
+        ...         resolution={"type": "automatic", "outcome": {}})
+        ... except ValidationError as error:
+        ...     "minimum cannot exceed maximum" in str(error)
+        True
+        """
         if self.minimum > self.maximum:
             raise ValueError("Random result minimum cannot exceed maximum.")
         return self
@@ -871,6 +962,16 @@ class RandomTableSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_entries(self) -> RandomTableSchema:
+        """Require contiguous effect entries covering every die result.
+
+        >>> automatic = {"type": "automatic", "outcome": {}}
+        >>> table = RandomTableSchema(die="1d2", entries=[
+        ...     {"minimum": 1, "maximum": 1, "resolution": automatic},
+        ...     {"minimum": 2, "maximum": 2, "resolution": automatic},
+        ... ])
+        >>> len(table.entries)
+        2
+        """
         _validate_complete_roll_table(self.die, self.entries)
         return self
 

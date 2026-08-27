@@ -165,6 +165,18 @@ class BestiaryMonsterSchema(SourceModel):
 
     @model_validator(mode="after")
     def validate_multiattack_references(self) -> BestiaryMonsterSchema:
+        """Require every multiattack invocation to reference a declared entry.
+
+        >>> from pydantic import ValidationError
+        >>> multiattack = {"name": "Multiattack", "capability": {
+        ...     "type": "multiattack", "plans": [{"steps": [{"type": "invoke",
+        ...     "invocation": {"type": "stat_block_action", "name": "Bite"}}]}]}}
+        >>> try:
+        ...     BestiaryMonsterSchema(name="Wolf", source="X", action=[multiattack])
+        ... except ValidationError as error:
+        ...     "missing action entry 'Bite'" in str(error)
+        True
+        """
         sections = {
             section: {_reference_name(entry.name) for entry in getattr(self, section)}
             for section in (

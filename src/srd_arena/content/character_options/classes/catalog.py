@@ -59,6 +59,14 @@ class SubclassCatalog:
         class_name: str,
         class_source: str | None,
     ) -> SubclassRecord:
+        """Find a subclass by its own and its parent class identities.
+
+        >>> champion = SubclassSchema(name="Champion", source="X",
+        ...     className="Fighter", classSource="X")
+        >>> catalog = SubclassCatalog([SubclassRecord(champion, ())])
+        >>> catalog.find("champion", None, "fighter", None).definition.name
+        'Champion'
+        """
         name_key = name.casefold()
         class_name_key = class_name.casefold()
         candidates = [

@@ -37,6 +37,16 @@ class SpellSchema(SourceModel):
 
     @model_validator(mode="after")
     def validate_implementation_state(self) -> SpellSchema:
+        """Keep implementation status consistent with capability presence.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     SpellSchema(name="Fireball", source="X", level=3, school="V",
+        ...         implementation={"status": "complete"})
+        ... except ValidationError as error:
+        ...     "must define a capability" in str(error)
+        True
+        """
         status = self.implementation.status
         if status in {"complete", "partial", "blocked"} and self.capability is None:
             raise ValueError(f"{status.title()} spells must define a capability.")

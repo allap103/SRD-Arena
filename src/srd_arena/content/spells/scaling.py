@@ -50,6 +50,22 @@ class CasterLevelScalingSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_thresholds(self) -> CasterLevelScalingSchema:
+        """Require sorted unique thresholds beginning at level one.
+
+        >>> scaling = CasterLevelScalingSchema(type="caster_level", thresholds=[
+        ...     {"minimum_level": 1, "projectile_count": 1},
+        ...     {"minimum_level": 5, "projectile_count": 2},
+        ... ])
+        >>> [entry.minimum_level for entry in scaling.thresholds]
+        [1, 5]
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     CasterLevelScalingSchema(type="caster_level", thresholds=[
+        ...         {"minimum_level": 5, "projectile_count": 2}])
+        ... except ValidationError as error:
+        ...     "level 1 baseline" in str(error)
+        True
+        """
         levels = [threshold.minimum_level for threshold in self.thresholds]
         if levels != sorted(set(levels)):
             raise ValueError("Caster-level thresholds must be unique and sorted.")

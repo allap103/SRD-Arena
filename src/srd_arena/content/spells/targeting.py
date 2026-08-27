@@ -140,6 +140,15 @@ class TargetCountSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_bounds(self) -> TargetCountSchema:
+        """Reject a numeric minimum greater than the maximum.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     TargetCountSchema(minimum=3, maximum=2)
+        ... except ValidationError as error:
+        ...     "minimum cannot exceed maximum" in str(error)
+        True
+        """
         if isinstance(self.maximum, int) and self.minimum > self.maximum:
             raise ValueError("Target count minimum cannot exceed maximum.")
         return self
@@ -210,6 +219,17 @@ class AreaGeometrySchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_dimensions(self) -> AreaGeometrySchema:
+        """Require the dimensions needed by the selected area shape.
+
+        >>> AreaGeometrySchema(shape="line", length_feet=100, width_feet=5).width_feet
+        5
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     AreaGeometrySchema(shape="sphere")
+        ... except ValidationError as error:
+        ...     "requires radius_feet" in str(error)
+        True
+        """
         if self.shape in {"sphere", "emanation"} and self.radius_feet is None:
             raise ValueError(f"{self.shape.title()} geometry requires radius_feet.")
         if self.shape == "cone" and self.length_feet is None:
@@ -257,6 +277,16 @@ class AreaSpellTargetSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_chosen_count(self) -> AreaSpellTargetSchema:
+        """Require a target count when area occupants are chosen.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     AreaSpellTargetSchema(type="area", origin="self",
+        ...         geometry={"shape": "sphere", "radius_feet": 10}, occupants="chosen")
+        ... except ValidationError as error:
+        ...     "require chosen_count" in str(error)
+        True
+        """
         if self.occupants == "chosen" and self.chosen_count is None:
             raise ValueError("Chosen area occupants require chosen_count.")
         return self
@@ -271,6 +301,16 @@ class CompositeAreaComponentSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_bounds(self) -> CompositeAreaComponentSchema:
+        """Reject a composite minimum greater than its maximum.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     CompositeAreaComponentSchema(
+        ...         geometry={"shape": "cube", "length_feet": 10}, minimum=3, maximum=2)
+        ... except ValidationError as error:
+        ...     "minimum cannot exceed maximum" in str(error)
+        True
+        """
         if self.minimum > self.maximum:
             raise ValueError("Composite area minimum cannot exceed maximum.")
         return self

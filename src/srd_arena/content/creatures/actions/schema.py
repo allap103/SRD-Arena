@@ -32,6 +32,17 @@ class RepeatSaveSchema(CapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_elapsed_interval(self) -> RepeatSaveSchema:
+        """Require an amount and unit for elapsed repeat saves.
+
+        >>> RepeatSaveSchema(trigger="elapsed", interval_amount=1, interval_unit="hour").interval_unit
+        'hour'
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     RepeatSaveSchema(trigger="elapsed")
+        ... except ValidationError as error:
+        ...     "require an interval" in str(error)
+        True
+        """
         if self.trigger == "elapsed" and (
             self.interval_amount is None or self.interval_unit is None
         ):
@@ -108,6 +119,17 @@ class AttackCapabilitySchema(CapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_attack_distances(self) -> AttackCapabilitySchema:
+        """Require reach or range for each declared attack mode.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     AttackCapabilitySchema(attack_modes=["melee"], attack_bonus=5,
+        ...         target={"type": "creature", "range_feet": 5},
+        ...         hit=[{"type": "damage", "dice": "1d6", "damage_type": "slashing"}])
+        ... except ValidationError as error:
+        ...     "require reach_feet" in str(error)
+        True
+        """
         if "melee" in self.attack_modes and self.reach_feet is None:
             raise ValueError("Melee attacks require reach_feet.")
         if "ranged" in self.attack_modes and self.range_normal_feet is None:

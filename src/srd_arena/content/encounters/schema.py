@@ -70,6 +70,17 @@ class EncounterDefinitionSchema(BaseModel):
 
     @model_validator(mode="after")
     def require_unique_creature_ids(self) -> EncounterDefinitionSchema:
+        """Require unique creature IDs and at least one turn-taking creature.
+
+        >>> from pydantic import ValidationError
+        >>> creature = {"id": "hero", "start": {"x": 0, "y": 0}, "team_id": "heroes"}
+        >>> try:
+        ...     EncounterDefinitionSchema(id="test", grid={"width": 5, "height": 5},
+        ...         creatures=[creature, creature])
+        ... except ValidationError as error:
+        ...     "IDs must be unique" in str(error)
+        True
+        """
         creature_ids = [creature.id for creature in self.creatures]
         duplicate_ids = sorted(
             creature_id

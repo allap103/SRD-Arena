@@ -39,6 +39,17 @@ class AreaTargetSchema(CapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_area_dimensions(self) -> AreaTargetSchema:
+        """Require line width and point-origin range where applicable.
+
+        >>> AreaTargetSchema(type="area", shape="line", size_feet=60, width_feet=5).width_feet
+        5
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     AreaTargetSchema(type="area", shape="line", size_feet=60)
+        ... except ValidationError as error:
+        ...     "require width_feet" in str(error)
+        True
+        """
         if self.shape == "line" and self.width_feet is None:
             raise ValueError("Line areas require width_feet.")
         if self.origin == "point_in_range" and self.range_feet is None:

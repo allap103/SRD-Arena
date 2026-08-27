@@ -40,6 +40,19 @@ class SpellImplementationSchema(SpellCapabilitySchemaModel):
 
     @model_validator(mode="after")
     def validate_status_details(self) -> SpellImplementationSchema:
+        """Require the explanatory details implied by implementation status.
+
+        >>> SpellImplementationSchema(status="partial", omissions=[
+        ...     {"mechanic": "mounted travel", "reason": "Mounted combat is out of scope"}
+        ... ]).status
+        'partial'
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     SpellImplementationSchema(status="partial")
+        ... except ValidationError as error:
+        ...     "must list omissions" in str(error)
+        True
+        """
         if self.status == "partial" and not self.omissions:
             raise ValueError("Partial spell implementations must list omissions.")
         if self.status == "blocked" and not self.blocked_by:
