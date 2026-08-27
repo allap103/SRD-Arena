@@ -1,4 +1,4 @@
-"""Provide scaling support for the spells package."""
+"""Validate how authored spell values change with cast or creature level."""
 
 from typing import Literal
 
@@ -10,7 +10,7 @@ from .base import SpellCapabilitySchemaModel
 
 
 class SlotScalingIncrementSchema(SpellCapabilitySchemaModel):
-    """Validate authored slot scaling increment data."""
+    """Define the authored spell-scaling fields with amount and damage type."""
 
     type: Literal[
         "damage_dice",
@@ -28,7 +28,7 @@ class SlotScalingIncrementSchema(SpellCapabilitySchemaModel):
 
 
 class SlotScalingSchema(SpellCapabilitySchemaModel):
-    """Validate authored slot scaling data."""
+    """Encode the ``slot_level`` spell-scaling variant with above level and per level."""
 
     type: Literal["slot_level"] = "slot_level"
     above_level: NonNegativeInt | Literal["spell_level"] = "spell_level"
@@ -36,14 +36,14 @@ class SlotScalingSchema(SpellCapabilitySchemaModel):
 
 
 class CasterLevelScalingThresholdSchema(SpellCapabilitySchemaModel):
-    """Validate authored caster level scaling threshold data."""
+    """Define the authored spell-scaling fields with minimum level."""
 
     minimum_level: PositiveInt
     projectile_count: PositiveInt
 
 
 class CasterLevelScalingSchema(SpellCapabilitySchemaModel):
-    """Validate authored caster level scaling data."""
+    """Encode the ``caster_level`` spell-scaling variant with thresholds."""
 
     type: Literal["caster_level"]
     thresholds: list[CasterLevelScalingThresholdSchema] = Field(min_length=1)

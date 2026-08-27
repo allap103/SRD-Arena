@@ -1,4 +1,4 @@
-"""Provide durations support for the capabilities package."""
+"""Validate the lifetimes and ending rules of authored effects."""
 
 from typing import Annotated, Literal
 
@@ -8,7 +8,7 @@ from .base import CapabilitySchemaModel, NonNegativeInt, PositiveInt
 
 
 class EndOfTurnDurationSchema(CapabilitySchemaModel):
-    """Validate authored end of turn duration data."""
+    """Encode the ``end_of_turn`` effect-duration variant with creature."""
 
     type: Literal["end_of_turn"]
     creature: Literal["source", "target"]
@@ -16,7 +16,7 @@ class EndOfTurnDurationSchema(CapabilitySchemaModel):
 
 
 class StartOfTurnDurationSchema(CapabilitySchemaModel):
-    """Validate authored start of turn duration data."""
+    """Encode the ``start_of_turn`` effect-duration variant with creature."""
 
     type: Literal["start_of_turn"]
     creature: Literal["source", "target"]
@@ -24,7 +24,7 @@ class StartOfTurnDurationSchema(CapabilitySchemaModel):
 
 
 class TimedDurationSchema(CapabilitySchemaModel):
-    """Validate authored timed duration data."""
+    """Encode the ``timed`` effect-duration variant with amount and unit."""
 
     type: Literal["timed"]
     amount: PositiveInt
@@ -32,7 +32,7 @@ class TimedDurationSchema(CapabilitySchemaModel):
 
 
 class UntilEventDurationSchema(CapabilitySchemaModel):
-    """Validate authored until event duration data."""
+    """Encode the ``until_event`` effect-duration variant with events and match."""
 
     type: Literal["until_event"]
     events: list[
@@ -47,7 +47,7 @@ class UntilEventDurationSchema(CapabilitySchemaModel):
 
 
 class PermanentDurationSchema(CapabilitySchemaModel):
-    """Validate authored permanent duration data."""
+    """Encode the ``permanent`` effect-duration variant."""
 
     type: Literal["permanent"]
 

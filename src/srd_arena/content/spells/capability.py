@@ -1,4 +1,4 @@
-"""Provide capability support for the spells package."""
+"""Validate the reusable capability definition embedded in an authored spell."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from .targeting import (
 
 
 class CastingTriggerSchema(SpellCapabilitySchemaModel):
-    """Validate authored casting trigger data."""
+    """Define the authored spell-capability fields with event and timing."""
 
     event: Literal[
         "attack_hit",
@@ -37,7 +37,7 @@ class CastingTriggerSchema(SpellCapabilitySchemaModel):
 
 
 class OutcomeTriggerSchema(SpellCapabilitySchemaModel):
-    """Validate authored outcome trigger data."""
+    """Define the authored spell-capability fields with event and attribution."""
 
     event: Literal[
         "targeted_by_attack",
@@ -76,7 +76,7 @@ class OutcomeTriggerSchema(SpellCapabilitySchemaModel):
 
 
 class SpellCapabilitySchema(SpellCapabilitySchemaModel):
-    """Validate authored spell capability data."""
+    """Define the authored spell-capability fields with target and resolution."""
 
     target: SpellTargetSchema
     resolution: SpellResolutionSchema

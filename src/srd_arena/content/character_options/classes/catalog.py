@@ -1,4 +1,4 @@
-"""Provide catalog support for the classes package."""
+"""Group class and subclass definitions with their separately authored features."""
 
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -18,7 +18,7 @@ from .schema import (
 
 @dataclass(frozen=True)
 class ClassRecord:
-    """Represent a class record."""
+    """Bundle one class definition with the features that belong to it."""
 
     definition: ClassSchema
     features: tuple[ClassFeatureSchema, ...]
@@ -26,7 +26,7 @@ class ClassRecord:
 
 @dataclass(frozen=True)
 class SubclassRecord:
-    """Represent a subclass record."""
+    """Bundle one subclass definition with the features that belong to it."""
 
     definition: SubclassSchema
     features: tuple[SubclassFeatureSchema, ...]
@@ -36,7 +36,7 @@ ClassCatalog = SourceCatalog[ClassRecord]
 
 
 class SubclassCatalog:
-    """Represent a subclass catalog."""
+    """Resolve subclasses using both their own and their parent class identities."""
 
     def __init__(self, records: list[SubclassRecord]) -> None:
         self._records = records
@@ -96,7 +96,7 @@ class SubclassCatalog:
 
 
 def load_class_catalog(directory: str | Path) -> ClassCatalog:
-    """Load class catalog."""
+    """Group each authored class with features matching its name and source."""
 
     system_dir = Path(directory)
     class_dir = system_dir / "classes"
@@ -129,7 +129,7 @@ def load_class_catalog(directory: str | Path) -> ClassCatalog:
 
 
 def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
-    """Load subclass catalog."""
+    """Group each subclass with features matching it and its parent class."""
 
     system_dir = Path(directory)
     definitions = _load_records(system_dir / "subclasses", SubclassSchema)

@@ -1,4 +1,4 @@
-"""Provide loader support for the equipment package."""
+"""Load validated equipment records from system content."""
 
 from pathlib import Path
 
@@ -10,7 +10,7 @@ from .catalog import load_item_catalog
 
 
 def load_system_items(directory: str | Path) -> list[Item]:
-    """Load system items."""
+    """Build all domain item templates available in a system content directory."""
 
     items_by_id: dict[str, tuple[int, Item]] = {}
     for source_item in load_item_catalog(directory):

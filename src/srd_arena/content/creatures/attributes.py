@@ -1,4 +1,4 @@
-"""Provide attributes support for the creatures package."""
+"""Translate authored creature attributes into domain values."""
 
 from srd_arena.content.character_options.classes import ClassRecord
 from srd_arena.domain.creatures import Attributes, Movement, normalize_size
@@ -13,7 +13,7 @@ def build_creature_attributes(
     stat_block: BestiaryMonsterSchema | None,
     class_record: ClassRecord | None,
 ) -> Attributes:
-    """Build creature attributes."""
+    """Translate authored ability scores, proficiencies, and movement into domain attributes."""
 
     if stat_block is None:
         attributes = schema.attributes.model_dump(exclude={"movement"})
@@ -67,7 +67,7 @@ def build_creature_size(
     schema: CreatureSchema,
     stat_block: BestiaryMonsterSchema | None,
 ) -> str:
-    """Build creature size."""
+    """Normalize an authored size label to the supported domain size category."""
 
     if stat_block is not None:
         return normalize_size(stat_block.primary_size)

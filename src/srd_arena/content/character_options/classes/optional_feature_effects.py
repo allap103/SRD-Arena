@@ -1,4 +1,4 @@
-"""Provide optional feature effects support for the classes package."""
+"""Apply supported optional-feature changes while building a creature."""
 
 from srd_arena.domain.effects.triggered import TriggeredEffect
 
@@ -8,7 +8,7 @@ from .optional_feature_schema import OptionalFeatureSchema
 def normalize_optional_feature_effects(
     feature: OptionalFeatureSchema,
 ) -> list[TriggeredEffect]:
-    """Normalize optional feature effects."""
+    """Convert authored optional-feature changes into stable creature-build operations."""
 
     name = feature.public_name
     source = feature.source

@@ -1,4 +1,4 @@
-"""Provide targeting support for the building package."""
+"""Translate authored spell targeting into domain target requirements."""
 
 from collections.abc import Sequence
 
@@ -9,7 +9,7 @@ from srd_arena.domain.capabilities import CreatureTypeRequirement
 def creature_types_from_requirements(
     requirements: Sequence[object],
 ) -> tuple[str, ...]:
-    """Handle creature types from requirements."""
+    """Extract allowed creature types from authored target requirements."""
 
     return tuple(
         creature_type
@@ -20,7 +20,7 @@ def creature_types_from_requirements(
 
 
 def target_requirements(raw: SpellSchema) -> tuple[CreatureTypeRequirement, ...]:
-    """Handle target requirements."""
+    """Build domain eligibility requirements for a spell's selected targets."""
 
     creature_types = tuple(raw.affects_creature_type)
     if raw.capability is not None and raw.capability.target.type == "creature":
@@ -33,7 +33,7 @@ def target_requirements(raw: SpellSchema) -> tuple[CreatureTypeRequirement, ...]
 
 
 def normalize_save_ability(value: str) -> str:
-    """Normalize save ability."""
+    """Expand an abbreviated authored save ability to its domain name."""
 
     aliases = {
         "str": "strength",

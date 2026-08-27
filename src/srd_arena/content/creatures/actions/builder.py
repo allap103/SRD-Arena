@@ -1,4 +1,4 @@
-"""Provide builder support for the actions package."""
+"""Translate authored stat-block actions into executable creature capabilities."""
 
 import re
 from typing import TYPE_CHECKING, Literal, cast
@@ -30,7 +30,7 @@ def build_stat_block_actions(
     stat_block: BestiaryMonsterSchema | None,
     spells: SpellCatalog | None = None,
 ) -> dict[str, domain.StatBlockActionDefinition]:
-    """Build stat block actions."""
+    """Translate all authored stat-block sections and validate cross-references."""
 
     if stat_block is None:
         return {}
@@ -141,7 +141,7 @@ def build_stat_block_actions(
 def build_declared_stat_block_actions(
     stat_block: BestiaryMonsterSchema | None,
 ) -> tuple[domain.DeclaredStatBlockAction, ...]:
-    """Build declared stat block actions."""
+    """Preserve action and bonus-action entries for availability and UI reporting."""
 
     if stat_block is None:
         return ()

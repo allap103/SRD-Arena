@@ -1,4 +1,4 @@
-"""Provide optional feature catalog support for the classes package."""
+"""Index optional class features independently of a creature build."""
 
 from pathlib import Path
 
@@ -11,7 +11,7 @@ OptionalFeatureCatalog = SourceCatalog[OptionalFeatureSchema]
 
 
 def load_optional_feature_catalog(directory: str | Path) -> OptionalFeatureCatalog:
-    """Load optional feature catalog."""
+    """Validate and index optional class features from a system directory."""
 
     system_dir = Path(directory)
     features_dir = system_dir / "optional_features"

@@ -1,4 +1,4 @@
-"""Provide builder support for the equipment package."""
+"""Translate validated equipment records into domain item templates."""
 
 from srd_arena.content.common.sources import slug
 from srd_arena.domain.equipment import ArmorStat, Item, WeaponStat
@@ -7,7 +7,7 @@ from .schema import ItemSchema
 
 
 def build_item(source_item: ItemSchema) -> Item:
-    """Build item."""
+    """Translate one equipment schema into a domain inventory template."""
 
     if source_item.is_weapon:
         normal_range, long_range = _weapon_range(source_item.range)

@@ -1,4 +1,4 @@
-"""Provide paths support for the common package."""
+"""Locate bundled SRD content independently of the process working directory."""
 
 from pathlib import Path
 

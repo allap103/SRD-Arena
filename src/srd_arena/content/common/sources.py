@@ -1,4 +1,4 @@
-"""Provide sources support for the common package."""
+"""Load JSON and normalize source-aware content identifiers."""
 
 import json
 from pathlib import Path
@@ -14,7 +14,7 @@ SOURCE_PRIORITY = {
 
 
 def load_json(path: str | Path) -> dict[str, object]:
-    """Load json."""
+    """Read one UTF-8 JSON document from a content path."""
 
     with Path(path).open(encoding="utf-8") as source_file:
         payload = json.load(source_file)
@@ -24,6 +24,6 @@ def load_json(path: str | Path) -> dict[str, object]:
 
 
 def slug(value: str) -> str:
-    """Handle slug."""
+    """Normalize a content label into a stable lowercase identifier fragment."""
 
     return value.lower().replace("'", "").replace(",", "").replace(" ", "_")

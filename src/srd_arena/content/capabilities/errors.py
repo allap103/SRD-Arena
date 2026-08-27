@@ -1,4 +1,4 @@
-"""Provide errors support for the capabilities package."""
+"""Report content errors that require an authored capability to be corrected."""
 
 
 class CapabilityBuildError(ValueError):

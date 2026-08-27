@@ -1,4 +1,4 @@
-"""Provide resolution support for the spells package."""
+"""Validate spell outcomes that require spell-specific authoring fields."""
 
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ def _validate_complete_roll_table(
 
 
 class HealingEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored healing effect data."""
+    """Encode the ``healing`` spell-resolution variant with dice and bonus."""
 
     type: Literal["healing"]
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
@@ -98,7 +98,7 @@ class HealingEffectSchema(SpellCapabilitySchemaModel):
 
 
 class TemporaryHitPointsEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored temporary hit points effect data."""
+    """Encode the ``temporary_hit_points`` spell-resolution variant with dice."""
 
     type: Literal["temporary_hit_points"]
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
@@ -125,7 +125,7 @@ class TemporaryHitPointsEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ArmorClassModifierEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored armor class modifier effect data."""
+    """Encode the ``armor_class_modifier`` spell-resolution variant with value."""
 
     type: Literal["armor_class_modifier"]
     value: int
@@ -133,7 +133,7 @@ class ArmorClassModifierEffectSchema(SpellCapabilitySchemaModel):
 
 
 class AttackLimitEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored attack limit effect data."""
+    """Encode the ``attack_action_limit`` spell-resolution variant with maximum."""
 
     type: Literal["attack_action_limit"]
     maximum: PositiveInt
@@ -141,7 +141,7 @@ class AttackLimitEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ActionFailureChanceEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored action failure chance effect data."""
+    """Encode the ``action_failure_chance`` spell-resolution variant with action."""
 
     type: Literal["action_failure_chance"]
     action: Literal["cast_spell", "attack", "magic_action", "any"]
@@ -151,7 +151,7 @@ class ActionFailureChanceEffectSchema(SpellCapabilitySchemaModel):
 
 
 class RemoveEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored remove effect data."""
+    """Encode the ``remove_effect`` spell-resolution variant with selection."""
 
     type: Literal["remove_effect"]
     selection: Literal["one", "all"] = "one"
@@ -169,7 +169,7 @@ class RemoveEffectSchema(SpellCapabilitySchemaModel):
 
 
 class DamageResistanceEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored damage resistance effect data."""
+    """Encode the ``damage_resistance`` spell-resolution variant with damage types."""
 
     type: Literal["damage_resistance"]
     damage_types: list[str] = Field(min_length=1)
@@ -178,7 +178,7 @@ class DamageResistanceEffectSchema(SpellCapabilitySchemaModel):
 
 
 class DamageReductionEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored damage reduction effect data."""
+    """Encode the ``damage_reduction`` spell-resolution variant with damage types."""
 
     type: Literal["damage_reduction"]
     damage_types: list[str] = Field(min_length=1)
@@ -190,7 +190,7 @@ class DamageReductionEffectSchema(SpellCapabilitySchemaModel):
 
 
 class SpeedModifierEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored speed modifier effect data."""
+    """Encode the ``speed_modifier`` spell-resolution variant with feet and duration."""
 
     type: Literal["speed_modifier"]
     feet: int
@@ -198,7 +198,7 @@ class SpeedModifierEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ConditionSaveAdvantageEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored condition save advantage effect data."""
+    """Encode the ``condition_save_advantage`` spell-resolution variant."""
 
     type: Literal["condition_save_advantage"]
     conditions: list[str] = Field(min_length=1)
@@ -206,7 +206,7 @@ class ConditionSaveAdvantageEffectSchema(SpellCapabilitySchemaModel):
 
 
 class DamageImmunityEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored damage immunity effect data."""
+    """Encode the ``damage_immunity`` spell-resolution variant with damage types."""
 
     type: Literal["damage_immunity"]
     damage_types: list[str] = Field(min_length=1)
@@ -214,7 +214,7 @@ class DamageImmunityEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ConditionImmunityEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored condition immunity effect data."""
+    """Encode the ``condition_immunity`` spell-resolution variant with conditions."""
 
     type: Literal["condition_immunity"]
     conditions: list[str] = Field(min_length=1)
@@ -223,7 +223,7 @@ class ConditionImmunityEffectSchema(SpellCapabilitySchemaModel):
 
 
 class SenseEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored sense effect data."""
+    """Encode the ``sense`` spell-resolution variant with sense and range feet."""
 
     type: Literal["sense"]
     sense: Literal["blindsight", "darkvision", "truesight"]
@@ -232,7 +232,7 @@ class SenseEffectSchema(SpellCapabilitySchemaModel):
 
 
 class HitPointMaximumModifierEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored hit point maximum modifier effect data."""
+    """Encode the ``hit_point_maximum_modifier`` spell-resolution variant with value."""
 
     type: Literal["hit_point_maximum_modifier"]
     value: int
@@ -241,7 +241,7 @@ class HitPointMaximumModifierEffectSchema(SpellCapabilitySchemaModel):
 
 
 class TeleportEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored teleport effect data."""
+    """Encode the ``teleport`` spell-resolution variant with distance feet."""
 
     type: Literal["teleport"]
     distance_feet: NonNegativeInt | Literal["spell_range", "unlimited"]
@@ -251,14 +251,14 @@ class TeleportEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ObscurementEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored obscurement effect data."""
+    """Encode the ``obscurement`` spell-resolution variant with degree."""
 
     type: Literal["obscurement"]
     degree: Literal["light", "heavy"]
 
 
 class MovementModeEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored movement mode effect data."""
+    """Encode the ``movement_mode`` spell-resolution variant with mode and speed feet."""
 
     type: Literal["movement_mode"]
     mode: Literal["walk", "fly", "swim", "climb", "burrow", "hover"]
@@ -267,14 +267,14 @@ class MovementModeEffectSchema(SpellCapabilitySchemaModel):
 
 
 class DifficultTerrainEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored difficult terrain effect data."""
+    """Encode the ``difficult_terrain`` spell-resolution variant with applies to."""
 
     type: Literal["difficult_terrain"]
     applies_to: Literal["all", "enemies", "creatures_on_ground"] = "all"
 
 
 class BattlefieldRemovalEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored battlefield removal effect data."""
+    """Encode the ``battlefield_removal`` spell-resolution variant with destination."""
 
     type: Literal["battlefield_removal"]
     destination: Literal["demiplane", "another_plane", "extradimensional", "off_board"]
@@ -283,7 +283,7 @@ class BattlefieldRemovalEffectSchema(SpellCapabilitySchemaModel):
 
 
 class RelationshipEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored relationship effect data."""
+    """Encode the ``relationship`` spell-resolution variant with relationship."""
 
     type: Literal["relationship"]
     relationship: str = Field(min_length=1)
@@ -293,7 +293,7 @@ class RelationshipEffectSchema(SpellCapabilitySchemaModel):
 
 
 class MirroredDamageEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored mirrored damage effect data."""
+    """Encode the ``mirrored_damage`` spell-resolution variant with from event."""
 
     type: Literal["mirrored_damage"]
     from_event: Literal["triggering_damage"] = "triggering_damage"
@@ -304,7 +304,7 @@ class MirroredDamageEffectSchema(SpellCapabilitySchemaModel):
 
 
 class CompelledBehaviorEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored compelled behavior effect data."""
+    """Encode the ``compelled_behavior`` spell-resolution variant with behavior."""
 
     type: Literal["compelled_behavior"]
     behavior: Literal[
@@ -320,7 +320,7 @@ class CompelledBehaviorEffectSchema(SpellCapabilitySchemaModel):
 
 
 class CancelPendingEventEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored cancel pending event effect data."""
+    """Encode the ``cancel_pending_event`` spell-resolution variant with event."""
 
     type: Literal["cancel_pending_event"]
     event: Literal["attack", "damage", "spell", "defeat", "instant_death"]
@@ -328,21 +328,21 @@ class CancelPendingEventEffectSchema(SpellCapabilitySchemaModel):
 
 
 class RedirectPendingTargetEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored redirect pending target effect data."""
+    """Encode the ``redirect_pending_target`` spell-resolution variant."""
 
     type: Literal["redirect_pending_target"]
     destination: Literal["random_spell_entity", "chosen_legal_target"]
 
 
 class RequireTargetReselectionEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored require target reselection effect data."""
+    """Encode the ``require_target_reselection`` spell-resolution variant."""
 
     type: Literal["require_target_reselection"]
     on_no_legal_target: Literal["cancel_action", "retain_target"] = "cancel_action"
 
 
 class LightEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored light effect data."""
+    """Encode the ``light`` spell-resolution variant with bright radius feet."""
 
     type: Literal["light"]
     bright_radius_feet: NonNegativeInt = 0
@@ -350,7 +350,7 @@ class LightEffectSchema(SpellCapabilitySchemaModel):
 
 
 class SpellEntityStatisticsSchema(SpellCapabilitySchemaModel):
-    """Validate authored spell entity statistics data."""
+    """Define the authored spell-resolution fields with armor class and hit points."""
 
     armor_class: PositiveInt | Literal["caster"] | None = None
     hit_points: PositiveInt | Literal["caster_maximum"] | None = None
@@ -363,7 +363,7 @@ class SpellEntityStatisticsSchema(SpellCapabilitySchemaModel):
 
 
 class CreateSpellEntityEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored create spell entity effect data."""
+    """Encode the ``create_spell_entity`` spell-resolution variant with entity id."""
 
     type: Literal["create_spell_entity"]
     entity_id: str = Field(min_length=1)
@@ -377,7 +377,7 @@ class CreateSpellEntityEffectSchema(SpellCapabilitySchemaModel):
 
 
 class TransformObjectEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored transform object effect data."""
+    """Encode the ``transform_object`` spell-resolution variant with creature by size."""
 
     type: Literal["transform_object"]
     creature_by_size: dict[str, str] = Field(min_length=1)
@@ -386,7 +386,7 @@ class TransformObjectEffectSchema(SpellCapabilitySchemaModel):
 
 
 class AccumulateDiceEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored accumulate dice effect data."""
+    """Encode the ``accumulate_dice`` spell-resolution variant with counter and dice."""
 
     type: Literal["accumulate_dice"]
     counter: str = Field(min_length=1)
@@ -395,7 +395,7 @@ class AccumulateDiceEffectSchema(SpellCapabilitySchemaModel):
 
 
 class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored store spell effect data."""
+    """Encode the ``store_spell`` spell-resolution variant with maximum level."""
 
     type: Literal["store_spell"]
     maximum_level: NonNegativeInt | Literal["cast_level"]
@@ -437,7 +437,7 @@ class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
 
 
 class AccumulatedDamageEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored accumulated damage effect data."""
+    """Encode the ``accumulated_damage`` spell-resolution variant with base dice."""
 
     type: Literal["accumulated_damage"]
     base_dice: str = Field(pattern=r"^\d+d\d+$")
@@ -447,14 +447,14 @@ class AccumulatedDamageEffectSchema(SpellCapabilitySchemaModel):
 
 
 class GrantActionEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored grant action effect data."""
+    """Encode the ``grant_action`` spell-resolution variant with action."""
 
     type: Literal["grant_action"]
     action: GrantedActionSchema
 
 
 class CreatePersistentAreaEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored create persistent area effect data."""
+    """Encode the ``create_persistent_area`` spell-resolution variant."""
 
     type: Literal["create_persistent_area"]
     geometry_from_target: bool = True
@@ -474,7 +474,7 @@ class CreatePersistentAreaEffectSchema(SpellCapabilitySchemaModel):
 
 
 class SummonEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored summon effect data."""
+    """Encode the ``summon`` spell-resolution variant with creature and source."""
 
     type: Literal["summon"]
     creature: str
@@ -486,7 +486,7 @@ class SummonEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ReplaceWithCreatureEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored replace with creature effect data."""
+    """Encode the ``replace_with_creature`` spell-resolution variant with creature."""
 
     type: Literal["replace_with_creature"]
     creature: str
@@ -496,7 +496,7 @@ class ReplaceWithCreatureEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ExtraActionEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored extra action effect data."""
+    """Encode the ``extra_action`` spell-resolution variant with allowed actions."""
 
     type: Literal["extra_action"]
     allowed_actions: list[str] = Field(min_length=1)
@@ -505,7 +505,7 @@ class ExtraActionEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ExtraTurnsEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored extra turns effect data."""
+    """Encode the ``extra_turns`` spell-resolution variant with count dice and count."""
 
     type: Literal["extra_turns"]
     count_dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
@@ -531,7 +531,7 @@ class ExtraTurnsEffectSchema(SpellCapabilitySchemaModel):
 
 
 class PreventDefeatEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored prevent defeat effect data."""
+    """Encode the ``prevent_defeat`` spell-resolution variant."""
 
     type: Literal["prevent_defeat"]
     prevent_drop_to_zero: bool = True
@@ -542,7 +542,7 @@ class PreventDefeatEffectSchema(SpellCapabilitySchemaModel):
 
 
 class SuppressMagicEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored suppress magic effect data."""
+    """Encode the ``suppress_magic`` spell-resolution variant with minimum spell level."""
 
     type: Literal["suppress_magic"]
     minimum_spell_level: NonNegativeInt = 0
@@ -550,7 +550,7 @@ class SuppressMagicEffectSchema(SpellCapabilitySchemaModel):
 
 
 class TransformEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored transform effect data."""
+    """Encode the ``transform`` spell-resolution variant with forms and maximum rating."""
 
     type: Literal["transform"]
     forms: Literal["beast", "creature_catalog", "authored"]
@@ -560,14 +560,14 @@ class TransformEffectSchema(SpellCapabilitySchemaModel):
 
 
 class RandomOutcomeEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored random outcome effect data."""
+    """Encode the ``random_outcome`` spell-resolution variant with table."""
 
     type: Literal["random_outcome"]
     table: RandomTableSchema
 
 
 class OngoingModifierGroupEffectSchema(SpellCapabilitySchemaModel):
-    """Validate authored ongoing modifier group effect data."""
+    """Encode the ``ongoing_modifier_group`` spell-resolution variant with duration."""
 
     type: Literal["ongoing_modifier_group"]
     duration: EffectDurationSchema | None = None
@@ -660,19 +660,19 @@ class SpellEffectSchema(
         ]
     ]
 ):
-    """Validate authored spell effect data."""
+    """Define the authored spell-resolution fields."""
 
     pass
 
 
 class OutcomeSchema(SharedOutcomeSchema[SpellEffectSchema]):
-    """Validate authored outcome data."""
+    """Validate the ordered effects produced by one spell-resolution branch."""
 
     end_spell: bool = False
 
 
 class AutomaticResolutionSchema(SharedAutomaticResolutionSchema[OutcomeSchema]):
-    """Validate authored automatic resolution data."""
+    """Define the authored spell-resolution fields."""
 
     pass
 
@@ -680,7 +680,7 @@ class AutomaticResolutionSchema(SharedAutomaticResolutionSchema[OutcomeSchema]):
 class SavingThrowResolutionSchema(
     SharedSavingThrowResolutionSchema[OutcomeSchema, OutcomeSchema]
 ):
-    """Validate authored saving throw resolution data."""
+    """Define the authored spell-resolution fields with ability and difficulty."""
 
     ability: Ability | None = None
     difficulty: DerivedDifficultyClassSchema = Field(
@@ -695,7 +695,7 @@ class SavingThrowResolutionSchema(
 
 
 class SpellAttackResolutionSchema(SpellCapabilitySchemaModel):
-    """Validate authored spell attack resolution data."""
+    """Encode the ``spell_attack`` spell-resolution variant with mode and attacks."""
 
     type: Literal["spell_attack"]
     mode: Literal["melee", "ranged"]
@@ -706,7 +706,7 @@ class SpellAttackResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class AbilityCheckResolutionSchema(SpellCapabilitySchemaModel):
-    """Validate authored ability check resolution data."""
+    """Encode the ``ability_check`` spell-resolution variant with ability and dc."""
 
     type: Literal["ability_check"]
     ability: Ability | Literal["spellcasting"]
@@ -716,7 +716,7 @@ class AbilityCheckResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class ContestedCheckResolutionSchema(SpellCapabilitySchemaModel):
-    """Validate authored contested check resolution data."""
+    """Encode the ``contested_check`` spell-resolution variant with source ability."""
 
     type: Literal["contested_check"]
     source_ability: Ability | Literal["spellcasting"]
@@ -728,7 +728,7 @@ class ContestedCheckResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class HitPointPoolResolutionSchema(SpellCapabilitySchemaModel):
-    """Validate authored hit point pool resolution data."""
+    """Encode the ``hit_point_pool`` spell-resolution variant with dice and bonus."""
 
     type: Literal["hit_point_pool"]
     dice: str = Field(pattern=r"^\d+d\d+$")
@@ -742,7 +742,7 @@ class HitPointPoolResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class RepeatResolutionSchema(SpellCapabilitySchemaModel):
-    """Validate authored repeat resolution data."""
+    """Encode the ``repeat`` spell-resolution variant with count and allocation."""
 
     type: Literal["repeat"]
     count: PositiveInt | Literal["spellcasting_modifier", "slot_scaled"]
@@ -776,21 +776,21 @@ class RepeatResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class SequenceStepSchema(SpellCapabilitySchemaModel):
-    """Validate authored sequence step data."""
+    """Define the authored spell-resolution fields with resolution and target."""
 
     resolution: SpellResolutionSchema
     target: SpellTargetSchema | None = None
 
 
 class SequenceResolutionSchema(SpellCapabilitySchemaModel):
-    """Validate authored sequence resolution data."""
+    """Encode the ``sequence`` spell-resolution variant with steps."""
 
     type: Literal["sequence"]
     steps: list[SequenceStepSchema] = Field(min_length=1)
 
 
 class ResolutionChoiceOptionSchema(SpellCapabilitySchemaModel):
-    """Validate authored resolution choice option data."""
+    """Define the authored spell-resolution fields with id and label."""
 
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
@@ -799,7 +799,7 @@ class ResolutionChoiceOptionSchema(SpellCapabilitySchemaModel):
 
 
 class ChoiceResolutionSchema(SpellCapabilitySchemaModel):
-    """Validate authored choice resolution data."""
+    """Encode the ``choice`` spell-resolution variant with count and options."""
 
     type: Literal["choice"]
     count: PositiveInt = 1
@@ -807,7 +807,7 @@ class ChoiceResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class RandomResolutionEntrySchema(SpellCapabilitySchemaModel):
-    """Validate authored random resolution entry data."""
+    """Define the authored spell-resolution fields with minimum and maximum."""
 
     minimum: PositiveInt
     maximum: PositiveInt
@@ -831,7 +831,7 @@ class RandomResolutionEntrySchema(SpellCapabilitySchemaModel):
 
 
 class RandomTableResolutionSchema(SpellCapabilitySchemaModel):
-    """Validate authored random table resolution data."""
+    """Encode the ``random_table`` spell-resolution variant with die and per target."""
 
     type: Literal["random_table"]
     die: str = Field(pattern=r"^\d+d\d+$")
@@ -871,13 +871,13 @@ class SpellResolutionSchema(
         ]
     ]
 ):
-    """Validate authored spell resolution data."""
+    """Define the authored spell-resolution fields."""
 
     pass
 
 
 class RepeatSaveProgressionSchema(SpellCapabilitySchemaModel):
-    """Validate authored repeat save progression data."""
+    """Define the authored spell-resolution fields with trigger and ability."""
 
     trigger: Literal["turn_start", "turn_end", "source_turn_start", "source_turn_end"]
     ability: Ability | None = None
@@ -893,7 +893,7 @@ class RepeatSaveProgressionSchema(SpellCapabilitySchemaModel):
 
 
 class GrantedActionSchema(SpellCapabilitySchemaModel):
-    """Validate authored granted action data."""
+    """Define the authored spell-resolution fields with id and label."""
 
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
@@ -907,7 +907,7 @@ class GrantedActionSchema(SpellCapabilitySchemaModel):
 
 
 class AreaTriggerSchema(SpellCapabilitySchemaModel):
-    """Validate authored area trigger data."""
+    """Define the authored spell-resolution fields with event and resolution."""
 
     event: Literal[
         "created",
@@ -922,7 +922,7 @@ class AreaTriggerSchema(SpellCapabilitySchemaModel):
 
 
 class AreaMovementSchema(SpellCapabilitySchemaModel):
-    """Validate authored area movement data."""
+    """Define the authored spell-resolution fields with trigger and distance feet."""
 
     trigger: Literal["source_turn_start", "source_turn_end", "granted_action"]
     distance_feet: PositiveInt
@@ -931,7 +931,7 @@ class AreaMovementSchema(SpellCapabilitySchemaModel):
 
 
 class RandomTableEntrySchema(SpellCapabilitySchemaModel):
-    """Validate authored random table entry data."""
+    """Define the authored spell-resolution fields with minimum and maximum."""
 
     minimum: PositiveInt
     maximum: PositiveInt
@@ -955,7 +955,7 @@ class RandomTableEntrySchema(SpellCapabilitySchemaModel):
 
 
 class RandomTableSchema(SpellCapabilitySchemaModel):
-    """Validate authored random table data."""
+    """Define the authored spell-resolution fields with die and entries."""
 
     die: str = Field(pattern=r"^\d+d\d+$")
     entries: list[RandomTableEntrySchema] = Field(min_length=1)

@@ -1,4 +1,4 @@
-"""Provide metadata support for the building package."""
+"""Extract normalized rule metadata from validated spell content."""
 
 import re
 
@@ -14,7 +14,7 @@ from srd_arena.content.spells.schema import SpellSchema
 
 
 def spell_damage_dice(raw: SpellSchema) -> str | None:
-    """Handle spell damage dice."""
+    """Return the base damage expression authored for a spell outcome."""
 
     if raw.capability is not None:
         resolution = raw.capability.resolution.root
@@ -50,7 +50,7 @@ def spell_damage_dice(raw: SpellSchema) -> str | None:
 
 
 def spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
-    """Handle spell removable conditions."""
+    """Collect condition kinds that the spell can explicitly remove."""
 
     if raw.capability is not None:
         resolution = raw.capability.resolution.root
@@ -78,7 +78,7 @@ def spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
 
 
 def remove_effect_selection(raw: SpellSchema) -> str | None:
-    """Remove effect selection."""
+    """Return the spell's authored choice among removable effect categories."""
 
     if raw.capability is None:
         return None
@@ -99,7 +99,7 @@ def remove_effect_selection(raw: SpellSchema) -> str | None:
 
 
 def spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
-    """Handle spell removable effect kinds."""
+    """Collect non-condition effect kinds that the spell can remove."""
 
     if raw.capability is None:
         return ()
@@ -120,7 +120,7 @@ def spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
 
 
 def spell_geometry_mode(raw: SpellSchema) -> str:
-    """Handle spell geometry mode."""
+    """Map authored area metadata to the domain's grid geometry mode."""
 
     if raw.capability is not None and raw.capability.target.type == "area":
         return (
@@ -143,7 +143,7 @@ def spell_geometry_mode(raw: SpellSchema) -> str:
 
 
 def spell_area_size_feet(raw: SpellSchema) -> int | None:
-    """Handle spell area size feet."""
+    """Return the authored linear size used to construct the spell's area."""
 
     if raw.capability is not None and raw.capability.target.type == "area":
         geometry = raw.capability.target.geometry

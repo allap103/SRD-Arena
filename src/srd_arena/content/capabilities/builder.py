@@ -22,13 +22,13 @@ _SHARED_EFFECT_TYPES = (
 
 
 def is_shared_effect(value: object) -> TypeGuard[effects.ActionEffectSchema]:
-    """Return whether shared effect."""
+    """Return whether an authored effect belongs to the cross-content capability grammar."""
 
     return isinstance(value, _SHARED_EFFECT_TYPES)
 
 
 def build_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
-    """Build target."""
+    """Translate an authored target selector into its domain targeting contract."""
 
     count = getattr(value, "count", 1)
     affects = getattr(value, "affects", "creatures")
@@ -56,7 +56,7 @@ def build_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
 def build_requirement(
     value: requirements.ActionRequirementSchema,
 ) -> domain.CapabilityRequirement:
-    """Build requirement."""
+    """Translate an authored eligibility clause into a domain requirement."""
 
     if isinstance(value, requirements.SizeRequirementSchema):
         return domain.SizeRequirement(value.maximum, value.minimum)
@@ -74,7 +74,7 @@ def build_requirement(
 def build_duration(
     value: EffectDurationSchema | None,
 ) -> domain.EffectDuration | None:
-    """Build duration."""
+    """Translate authored timing and ending fields into an effect duration."""
 
     if value is None:
         return None
@@ -89,7 +89,7 @@ def build_duration(
 
 
 def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
-    """Build effect."""
+    """Translate one declarative effect while preserving source-relative semantics."""
 
     if isinstance(value, effects.DamageEffectSchema):
         return domain.DamageEffect(
@@ -167,7 +167,7 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
 def build_outcome(
     values: Iterable[effects.ActionEffectSchema],
 ) -> domain.Outcome:
-    """Build outcome."""
+    """Translate an ordered authored outcome into domain resolution effects."""
 
     return domain.Outcome(tuple(build_effect(value) for value in values))
 

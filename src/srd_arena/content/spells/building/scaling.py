@@ -1,4 +1,4 @@
-"""Provide scaling support for the building package."""
+"""Translate authored spell scaling into domain value progressions."""
 
 import srd_arena.domain.capabilities as domain
 from srd_arena.content.spells.scaling import (
@@ -68,7 +68,7 @@ def build_scaling(raw: SpellSchema) -> tuple[domain.CapabilityScaling, ...]:
 
 
 def cantrip_damage_by_level(raw: SpellSchema) -> tuple[tuple[int, str], ...]:
-    """Handle cantrip damage by level."""
+    """Expand cantrip damage tiers into a caster-level lookup."""
 
     scaling_data = (raw.model_extra or {}).get("scalingLevelDice")
     if not isinstance(scaling_data, dict):

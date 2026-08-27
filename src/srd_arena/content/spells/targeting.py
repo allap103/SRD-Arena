@@ -1,4 +1,4 @@
-"""Provide targeting support for the spells package."""
+"""Validate spell-specific targeting and area metadata."""
 
 from __future__ import annotations
 
@@ -21,28 +21,28 @@ from .base import SpellCapabilitySchemaModel
 
 
 class CreatureTraitRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored creature trait requirement data."""
+    """Encode the ``creature_trait`` spell-targeting variant with trait."""
 
     type: Literal["creature_trait"]
     trait: str = Field(min_length=1)
 
 
 class ConditionImmunityRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored condition immunity requirement data."""
+    """Encode the ``condition_immunity`` spell-targeting variant with condition."""
 
     type: Literal["condition_immunity"]
     condition: str = Field(min_length=1)
 
 
 class SpellComponentRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored spell component requirement data."""
+    """Encode the ``spell_component`` spell-targeting variant with component."""
 
     type: Literal["spell_component"]
     component: Literal["verbal", "somatic", "material"]
 
 
 class AttackSourceRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored attack source requirement data."""
+    """Encode the ``attack_source`` spell-targeting variant with source and mode."""
 
     type: Literal["attack_source"]
     source: Literal["weapon", "unarmed_strike", "spell", "any"]
@@ -50,19 +50,19 @@ class AttackSourceRequirementSchema(SpellCapabilitySchemaModel):
 
 
 class WillingRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored willing requirement data."""
+    """Encode the ``willing`` spell-targeting variant."""
 
     type: Literal["willing"]
 
 
 class FreeHandRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored free hand requirement data."""
+    """Encode the ``free_hand`` spell-targeting variant."""
 
     type: Literal["free_hand"]
 
 
 class PerceptionRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored perception requirement data."""
+    """Encode the ``perception`` spell-targeting variant with sense and subject."""
 
     type: Literal["perception"]
     sense: Literal["see", "hear"]
@@ -70,7 +70,7 @@ class PerceptionRequirementSchema(SpellCapabilitySchemaModel):
 
 
 class HitPointRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored hit point requirement data."""
+    """Encode the ``hit_points`` spell-targeting variant with comparison and value."""
 
     type: Literal["hit_points"]
     comparison: Literal["less_than", "at_most", "at_least", "greater_than"]
@@ -78,7 +78,7 @@ class HitPointRequirementSchema(SpellCapabilitySchemaModel):
 
 
 class RelationshipRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored relationship requirement data."""
+    """Encode the ``relationship`` spell-targeting variant with relationship."""
 
     type: Literal["relationship"]
     relationship: str = Field(min_length=1)
@@ -86,14 +86,14 @@ class RelationshipRequirementSchema(SpellCapabilitySchemaModel):
 
 
 class AnyRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored any requirement data."""
+    """Encode the ``any`` spell-targeting variant with requirements."""
 
     type: Literal["any"]
     requirements: list[SpellRequirementSchema] = Field(min_length=1)
 
 
 class AllRequirementSchema(SpellCapabilitySchemaModel):
-    """Validate authored all requirement data."""
+    """Encode the ``all`` spell-targeting variant with requirements."""
 
     type: Literal["all"]
     requirements: list[SpellRequirementSchema] = Field(min_length=1)
@@ -120,7 +120,7 @@ SpellRequirementSchema = Annotated[
 
 
 class SpellSaveModifierSchema(SpellCapabilitySchemaModel):
-    """Validate authored spell save modifier data."""
+    """Encode the ``roll_modifier`` spell-targeting variant with roll and mode."""
 
     type: Literal["roll_modifier"]
     roll: Literal["saving_throw"]
@@ -133,7 +133,7 @@ class SpellSaveModifierSchema(SpellCapabilitySchemaModel):
 
 
 class TargetCountSchema(SpellCapabilitySchemaModel):
-    """Validate authored target count data."""
+    """Define the authored spell-targeting fields with minimum and maximum."""
 
     minimum: NonNegativeInt = 1
     maximum: PositiveInt | Literal["spellcasting_modifier", "all"] = 1
@@ -155,13 +155,13 @@ class TargetCountSchema(SpellCapabilitySchemaModel):
 
 
 class SelfSpellTargetSchema(SpellCapabilitySchemaModel):
-    """Validate authored self spell target data."""
+    """Encode the ``self`` spell-targeting variant."""
 
     type: Literal["self"]
 
 
 class CreatureSpellTargetSchema(SpellCapabilitySchemaModel):
-    """Validate authored creature spell target data."""
+    """Encode the ``creature`` spell-targeting variant with count and disposition."""
 
     type: Literal["creature"]
     count: TargetCountSchema = Field(default_factory=TargetCountSchema)
@@ -174,7 +174,7 @@ class CreatureSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class ObjectSpellTargetSchema(SpellCapabilitySchemaModel):
-    """Validate authored object spell target data."""
+    """Encode the ``object`` spell-targeting variant with count and carried."""
 
     type: Literal["object"]
     count: TargetCountSchema = Field(default_factory=TargetCountSchema)
@@ -184,7 +184,7 @@ class ObjectSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class PointSpellTargetSchema(SpellCapabilitySchemaModel):
-    """Validate authored point spell target data."""
+    """Encode the ``point`` spell-targeting variant with surface and line of sight."""
 
     type: Literal["point"]
     surface: Literal["any", "solid", "ground"] = "any"
@@ -192,7 +192,7 @@ class PointSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class EventSpellTargetSchema(SpellCapabilitySchemaModel):
-    """Validate authored event spell target data."""
+    """Encode the ``event_target`` spell-targeting variant with binding."""
 
     type: Literal["event_target"]
     binding: Literal[
@@ -206,7 +206,7 @@ class EventSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class AreaGeometrySchema(SpellCapabilitySchemaModel):
-    """Validate authored area geometry data."""
+    """Define the authored spell-targeting fields with shape and radius feet."""
 
     shape: Literal[
         "sphere", "cone", "cube", "line", "cylinder", "emanation", "wall", "ring"
@@ -264,7 +264,7 @@ class AreaGeometrySchema(SpellCapabilitySchemaModel):
 
 
 class AreaSpellTargetSchema(SpellCapabilitySchemaModel):
-    """Validate authored area spell target data."""
+    """Encode the ``area`` spell-targeting variant with origin and geometry."""
 
     type: Literal["area"]
     origin: Literal["self", "point_in_range", "target", "spell_entity", "event_target"]
@@ -293,7 +293,7 @@ class AreaSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class CompositeAreaComponentSchema(SpellCapabilitySchemaModel):
-    """Validate authored composite area component data."""
+    """Define the authored spell-targeting fields with geometry and minimum."""
 
     geometry: AreaGeometrySchema
     minimum: PositiveInt = 1
@@ -317,7 +317,7 @@ class CompositeAreaComponentSchema(SpellCapabilitySchemaModel):
 
 
 class CompositeAreaSpellTargetSchema(SpellCapabilitySchemaModel):
-    """Validate authored composite area spell target data."""
+    """Encode the ``composite_area`` spell-targeting variant with origin and component."""
 
     type: Literal["composite_area"]
     origin: Literal["point_in_range"] = "point_in_range"
@@ -329,7 +329,7 @@ class CompositeAreaSpellTargetSchema(SpellCapabilitySchemaModel):
 
 
 class SpellEntityTargetSchema(SpellCapabilitySchemaModel):
-    """Validate authored spell entity target data."""
+    """Encode the ``spell_entity`` spell-targeting variant with ownership."""
 
     type: Literal["spell_entity"]
     ownership: Literal["source", "any"] = "source"
@@ -337,7 +337,7 @@ class SpellEntityTargetSchema(SpellCapabilitySchemaModel):
 
 
 class TargetChoiceOptionSchema(SpellCapabilitySchemaModel):
-    """Validate authored target choice option data."""
+    """Define the authored spell-targeting fields with id and label."""
 
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
@@ -345,7 +345,7 @@ class TargetChoiceOptionSchema(SpellCapabilitySchemaModel):
 
 
 class ChoiceSpellTargetSchema(SpellCapabilitySchemaModel):
-    """Validate authored choice spell target data."""
+    """Encode the ``choice`` spell-targeting variant with options."""
 
     type: Literal["choice"]
     options: list[TargetChoiceOptionSchema] = Field(min_length=1)

@@ -1,4 +1,4 @@
-"""Provide loader support for the spells package."""
+"""Load authored spell records and translate them into domain definitions."""
 
 from pathlib import Path
 

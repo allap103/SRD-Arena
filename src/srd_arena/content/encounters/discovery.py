@@ -1,4 +1,4 @@
-"""Provide discovery support for the encounters package."""
+"""Discover scenario directories that contain the required authored files."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ VALID_SCENARIO_SUBDIRS = ("encounters",)
 
 @dataclass(frozen=True)
 class ScenarioInfo:
-    """Represent a scenario info."""
+    """Describe a loadable scenario without parsing its encounter content."""
 
     id: str
     directory: Path
@@ -21,7 +21,7 @@ class ScenarioInfo:
 
 
 def list_scenarios(root: Path = SCENARIOS_ROOT) -> list[ScenarioInfo]:
-    """List scenarios."""
+    """Return valid scenario directories for a launcher or other client."""
 
     scenarios: list[ScenarioInfo] = []
     if not root.exists():

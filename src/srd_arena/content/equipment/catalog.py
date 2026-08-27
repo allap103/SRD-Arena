@@ -1,4 +1,4 @@
-"""Provide catalog support for the equipment package."""
+"""Discover and index authored equipment by name and source."""
 
 from pathlib import Path
 
@@ -11,7 +11,7 @@ ItemCatalog = SourceCatalog[ItemSchema]
 
 
 def load_item_catalog(directory: str | Path) -> ItemCatalog:
-    """Load item catalog."""
+    """Validate equipment files and index them by source-aware identity."""
 
     system_dir = Path(directory)
     base_items_dir = system_dir / "items_base"

@@ -1,4 +1,4 @@
-"""Provide spellcasting support for the creatures package."""
+"""Build creature-specific spellcasting grants from authored progressions."""
 
 from srd_arena.content.character_options.classes import ClassRecord, SubclassRecord
 from srd_arena.content.character_options.classes.schema import (
@@ -21,7 +21,7 @@ def build_spellcasting(
     subclass_record: SubclassRecord | None,
     spells: SpellCatalog | None,
 ) -> Spellcasting | None:
-    """Build spellcasting."""
+    """Bind spell definitions to a creature's casting statistics and resource pools."""
 
     if schema.spellcasting is not None:
         config = schema.spellcasting
@@ -114,7 +114,7 @@ def _spellcasting_source_definition(
 
 
 def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
-    """Handle spellcasting ability score."""
+    """Return the creature ability score used by an authored spellcasting entry."""
 
     ability_map = {
         "str": attributes.strength,
@@ -129,13 +129,13 @@ def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
 
 def spell_preparation_mode(block: SpellcastingSource) -> str:
     # The supported source formats currently describe fixed known/prepared lists.
-    """Handle spell preparation mode."""
+    """Return the fixed-list preparation mode supported by current source formats."""
 
     return "fixed"
 
 
 def progression_value(progression: object, level: int) -> int | None:
-    """Handle progression value."""
+    """Read the value in effect at a level from a sparse authored progression."""
 
     if not isinstance(progression, list):
         return None
@@ -150,7 +150,7 @@ def spell_slots_progression(
     block: SpellcastingSource,
     level: int,
 ) -> dict[int, int]:
-    """Handle spell slots progression."""
+    """Derive per-level spell-slot maxima from a class progression table."""
 
     row_index = level - 1
     for group in block.table_groups:
@@ -170,7 +170,7 @@ def spell_count_progression(
     block: SpellcastingSource,
     level: int,
 ) -> int | None:
-    """Handle spell count progression."""
+    """Derive the known or prepared spell count across class levels."""
 
     direct = progression_value(block.spells_known_progression, level)
     if direct is not None:

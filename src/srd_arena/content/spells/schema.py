@@ -1,4 +1,4 @@
-"""Provide schema support for the spells package."""
+"""Validate spell metadata together with its embedded capability definition."""
 
 from pydantic import Field, model_validator
 
@@ -9,7 +9,7 @@ from .implementation import SpellImplementationSchema
 
 
 class SpellSchema(SourceModel):
-    """Validate authored spell data."""
+    """Validate spell metadata and the capability invoked when it is cast."""
 
     name: str
     source: str
@@ -80,6 +80,6 @@ class SpellSchema(SourceModel):
 
 
 class SpellFileSchema(SourceModel):
-    """Validate authored spell file data."""
+    """Define the authored spell-file fields with spell."""
 
     spell: list[SpellSchema] = Field(default_factory=list)

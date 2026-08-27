@@ -1,4 +1,4 @@
-"""Provide implementation support for the spells package."""
+"""Validate whether a spell uses declarative rules or a Python resolver."""
 
 from typing import Literal
 
@@ -14,14 +14,14 @@ def _default_implementation_scope() -> list[ImplementationScope]:
 
 
 class ImplementationOmissionSchema(SpellCapabilitySchemaModel):
-    """Validate authored implementation omission data."""
+    """Define the authored spell-implementation fields with mechanic and reason."""
 
     mechanic: str = Field(min_length=1)
     reason: str = Field(min_length=1)
 
 
 class SpellImplementationSchema(SpellCapabilitySchemaModel):
-    """Validate authored spell implementation data."""
+    """Define the authored spell-implementation fields with status and scope."""
 
     status: Literal[
         "complete",

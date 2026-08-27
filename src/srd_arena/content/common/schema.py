@@ -1,4 +1,4 @@
-"""Provide schema support for the common package."""
+"""Define validation fields shared by independently sourced content records."""
 
 from pydantic import BaseModel, ConfigDict
 

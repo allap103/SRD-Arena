@@ -1,4 +1,4 @@
-"""Provide catalog support for the creatures package."""
+"""Discover and index validated monster definitions from the bestiary."""
 
 from pathlib import Path
 
@@ -11,7 +11,7 @@ BestiaryCatalog = SourceCatalog[BestiaryMonsterSchema]
 
 
 def load_bestiary_catalog(directory: str | Path) -> BestiaryCatalog:
-    """Load bestiary catalog."""
+    """Validate monster files and index them by source-aware content identity."""
 
     system_dir = Path(directory)
     monsters_dir = system_dir / "monsters"

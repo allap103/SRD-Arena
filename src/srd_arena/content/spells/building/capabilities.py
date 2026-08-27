@@ -1,4 +1,4 @@
-"""Provide capabilities support for the building package."""
+"""Assemble executable domain capabilities from validated spell records."""
 
 from collections.abc import Iterable
 from dataclasses import replace
@@ -128,7 +128,7 @@ def build_definition(
     content: str = "Spell capability",
     location: str = "capability.resolution",
 ) -> domain.CapabilityDefinition:
-    """Build definition."""
+    """Translate a spell's capability fields into its reusable domain definition."""
 
     effect_values = tuple(effect.root for effect in outcome.effects)
     success_values = (

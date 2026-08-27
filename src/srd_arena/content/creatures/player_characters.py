@@ -1,4 +1,4 @@
-"""Provide player characters support for the creatures package."""
+"""Load reusable player-character templates from scenario content."""
 
 from pathlib import Path
 
@@ -12,7 +12,7 @@ type PlayerCharacterTemplates = dict[str, CreatureSchema]
 def load_player_character_templates(
     directory: str | Path,
 ) -> PlayerCharacterTemplates:
-    """Load player character templates."""
+    """Load each authored player-character file as a reusable domain template."""
 
     player_characters_dir = Path(directory)
     if not player_characters_dir.is_dir():

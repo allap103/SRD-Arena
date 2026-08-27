@@ -1,4 +1,4 @@
-"""Provide schema support for the encounters package."""
+"""Validate authored maps, teams, participants, and encounter behavior."""
 
 from typing import Literal
 
@@ -8,7 +8,7 @@ from srd_arena.content.creatures.schema import CreatureSchema
 
 
 class PositionSchema(BaseModel):
-    """Validate authored position data."""
+    """Validate one participant's integer grid coordinates."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -17,7 +17,7 @@ class PositionSchema(BaseModel):
 
 
 class GridSchema(BaseModel):
-    """Validate authored grid data."""
+    """Validate positive battlefield dimensions for an encounter."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -26,7 +26,7 @@ class GridSchema(BaseModel):
 
 
 class BehaviorSchema(BaseModel):
-    """Validate authored behavior data."""
+    """Validate parameters for an automatically controlled participant policy."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -37,7 +37,7 @@ class BehaviorSchema(BaseModel):
 
 
 class EncounterCreatureSchema(CreatureSchema):
-    """Validate authored encounter creature data."""
+    """Define the authored encounter fields with start and team id."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -49,7 +49,7 @@ class EncounterCreatureSchema(CreatureSchema):
 
 
 class EncounterTeamSchema(BaseModel):
-    """Validate authored encounter team data."""
+    """Define the authored encounter fields with id and name."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -59,7 +59,7 @@ class EncounterTeamSchema(BaseModel):
 
 
 class EncounterDefinitionSchema(BaseModel):
-    """Validate authored encounter definition data."""
+    """Define the authored encounter fields with id and grid."""
 
     model_config = ConfigDict(extra="forbid")
 

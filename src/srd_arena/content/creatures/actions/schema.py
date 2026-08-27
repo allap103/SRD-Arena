@@ -1,4 +1,4 @@
-"""Provide schema support for the actions package."""
+"""Validate authored stat-block action and attack capability fields."""
 
 from typing import Annotated, Literal
 
@@ -21,7 +21,7 @@ from srd_arena.content.capabilities import (
 
 
 class RepeatSaveSchema(CapabilitySchemaModel):
-    """Validate authored repeat save data."""
+    """Define the authored stat-block action fields with trigger and interval amount."""
 
     trigger: Literal["end_of_turn", "on_damage", "elapsed"]
     interval_amount: PositiveInt | None = None
@@ -51,14 +51,14 @@ class RepeatSaveSchema(CapabilitySchemaModel):
 
 
 class SaveOutcomeStageSchema(OutcomeSchema[ActionEffectSchema]):
-    """Validate authored save outcome stage data."""
+    """Define the authored stat-block action fields with effects and repeat saves."""
 
     effects: list[ActionEffectSchema] = Field(min_length=1)
     repeat_saves: list[RepeatSaveSchema] = Field(default_factory=list)
 
 
 class RequiredActionOutcomeSchema(OutcomeSchema[ActionEffectSchema]):
-    """Validate authored required action outcome data."""
+    """Define the authored stat-block action fields with effects."""
 
     effects: list[ActionEffectSchema] = Field(min_length=1)
 
@@ -74,7 +74,7 @@ AutomaticActionResolutionSchema = AutomaticResolutionSchema[RequiredActionOutcom
 class SavingThrowActionResolutionSchema(
     SavingThrowResolutionSchema[StagedFailureSchema, ActionOutcomeSchema]
 ):
-    """Validate authored saving throw action resolution data."""
+    """Define the authored stat-block action fields with ability and difficulty."""
 
     ability: Ability
     difficulty: FixedDifficultyClassSchema
@@ -83,7 +83,7 @@ class SavingThrowActionResolutionSchema(
 
 
 class UsesResourceSchema(CapabilitySchemaModel):
-    """Validate authored uses resource data."""
+    """Encode the ``uses`` stat-block action variant with maximum and reset."""
 
     type: Literal["uses"]
     maximum: PositiveInt
@@ -91,7 +91,7 @@ class UsesResourceSchema(CapabilitySchemaModel):
 
 
 class RechargeResourceSchema(CapabilitySchemaModel):
-    """Validate authored recharge resource data."""
+    """Encode the ``recharge`` stat-block action variant with die and minimum."""
 
     type: Literal["recharge"]
     die: Literal["d6"] = "d6"
@@ -105,7 +105,7 @@ ActionResourceSchema = Annotated[
 
 
 class AttackCapabilitySchema(CapabilitySchemaModel):
-    """Validate authored attack capability data."""
+    """Encode the ``attack`` stat-block action variant with attack modes."""
 
     type: Literal["attack"] = "attack"
     attack_modes: list[Literal["melee", "ranged"]] = Field(min_length=1)
@@ -144,7 +144,7 @@ CreatureActionResolutionSchema = Annotated[
 
 
 class CapabilitySchema(CapabilitySchemaModel):
-    """Validate authored capability data."""
+    """Validate the attack, save, target, and outcome fields of a stat-block action."""
 
     type: Literal["capability"] = "capability"
     target: ActionTargetSchema
@@ -153,7 +153,7 @@ class CapabilitySchema(CapabilitySchemaModel):
 
 
 class SpellOptionSchema(CapabilitySchemaModel):
-    """Validate authored spell option data."""
+    """Define the authored stat-block action fields with name and source."""
 
     name: str = Field(min_length=1)
     source: str | None = None
@@ -162,7 +162,7 @@ class SpellOptionSchema(CapabilitySchemaModel):
 
 
 class SpellcastingCapabilitySchema(CapabilitySchemaModel):
-    """Validate authored spellcasting capability data."""
+    """Encode the ``spellcasting`` stat-block action variant with ability and spells."""
 
     type: Literal["spellcasting"] = "spellcasting"
     ability: Ability

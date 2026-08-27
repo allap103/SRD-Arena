@@ -1,4 +1,4 @@
-"""Provide requirements support for the capabilities package."""
+"""Validate declarative restrictions on capability actors and targets."""
 
 from typing import Annotated, Literal
 
@@ -8,7 +8,7 @@ from .base import CapabilitySchemaModel
 
 
 class ConditionRequirementSchema(CapabilitySchemaModel):
-    """Validate authored condition requirement data."""
+    """Encode the ``condition`` capability-requirement variant with conditions."""
 
     type: Literal["condition"]
     conditions: list[str] = Field(min_length=1)
@@ -17,14 +17,14 @@ class ConditionRequirementSchema(CapabilitySchemaModel):
 
 
 class CreatureTypeRequirementSchema(CapabilitySchemaModel):
-    """Validate authored creature type requirement data."""
+    """Encode the ``creature_type`` capability-requirement variant with creature types."""
 
     type: Literal["creature_type"]
     creature_types: list[str] = Field(min_length=1)
 
 
 class SizeRequirementSchema(CapabilitySchemaModel):
-    """Validate authored size requirement data."""
+    """Encode the ``size`` capability-requirement variant with maximum and minimum."""
 
     type: Literal["size"]
     maximum: str | None = None
@@ -32,7 +32,7 @@ class SizeRequirementSchema(CapabilitySchemaModel):
 
 
 class NotAffectedRequirementSchema(CapabilitySchemaModel):
-    """Validate authored not affected requirement data."""
+    """Encode the ``not_affected_by`` capability-requirement variant with action."""
 
     type: Literal["not_affected_by"]
     action: str = Field(min_length=1)
@@ -48,7 +48,7 @@ ActionRequirementSchema = Annotated[
 
 
 class AttackRollModeRequirementSchema(CapabilitySchemaModel):
-    """Validate authored attack roll mode requirement data."""
+    """Encode the ``attack_roll_mode`` capability-requirement variant with mode."""
 
     type: Literal["attack_roll_mode"]
     mode: Literal["normal", "advantage", "disadvantage"]

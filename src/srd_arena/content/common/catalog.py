@@ -1,4 +1,4 @@
-"""Provide catalog support for the common package."""
+"""Index authored records by stable name and source identity."""
 
 from __future__ import annotations
 

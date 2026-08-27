@@ -1,4 +1,4 @@
-"""Provide multiattack support for the actions package."""
+"""Validate and translate composed Multiattack plans from creature content."""
 
 from collections.abc import Iterator
 from typing import Annotated, Literal
@@ -26,20 +26,20 @@ StatBlockSection = Literal[
 
 
 class MultiattackSchemaModel(BaseModel):
-    """Represent a multiattack schema model."""
+    """Reject unknown fields throughout the authored Multiattack grammar."""
 
     model_config = ConfigDict(extra="forbid")
 
 
 class CreatureStatCountSchema(MultiattackSchemaModel):
-    """Validate authored creature stat count data."""
+    """Encode the ``creature_stat`` Multiattack variant with stat."""
 
     type: Literal["creature_stat"]
     stat: str = Field(min_length=1)
 
 
 class HalfSpellLevelCountSchema(MultiattackSchemaModel):
-    """Validate authored half spell level count data."""
+    """Encode the ``half_spell_level`` Multiattack variant with round."""
 
     type: Literal["half_spell_level"]
     round: Literal["down", "up"] = "down"
@@ -53,21 +53,21 @@ RepeatCountSchema = PositiveInt | DynamicCountSchema
 
 
 class ActionUsedThisTurnRequirementSchema(MultiattackSchemaModel):
-    """Validate authored action used this turn requirement data."""
+    """Encode the ``action_used_this_turn`` Multiattack variant with action."""
 
     type: Literal["action_used_this_turn"]
     action: str = Field(min_length=1)
 
 
 class SpellReferenceSchema(MultiattackSchemaModel):
-    """Validate authored spell reference data."""
+    """Define the authored Multiattack fields with name and source."""
 
     name: str = Field(min_length=1)
     source: str | None = None
 
 
 class StatBlockActionInvocationSchema(MultiattackSchemaModel):
-    """Validate authored stat block action invocation data."""
+    """Encode the ``stat_block_action`` Multiattack variant with name and section."""
 
     type: Literal["stat_block_action"]
     name: str = Field(min_length=1)
@@ -75,7 +75,7 @@ class StatBlockActionInvocationSchema(MultiattackSchemaModel):
 
 
 class CastSpellInvocationSchema(MultiattackSchemaModel):
-    """Validate authored cast spell invocation data."""
+    """Encode the ``cast_spell`` Multiattack variant with spell and via."""
 
     type: Literal["cast_spell"]
     spell: SpellReferenceSchema
@@ -91,7 +91,7 @@ MultiattackInvocationSchema = Annotated[
 
 
 class InvokeStepSchema(MultiattackSchemaModel):
-    """Validate authored invoke step data."""
+    """Encode the ``invoke`` Multiattack variant with invocation and times."""
 
     type: Literal["invoke"]
     invocation: MultiattackInvocationSchema
@@ -100,7 +100,7 @@ class InvokeStepSchema(MultiattackSchemaModel):
 
 
 class ChoiceStepSchema(MultiattackSchemaModel):
-    """Validate authored choice step data."""
+    """Encode the ``choose`` Multiattack variant with options and times."""
 
     type: Literal["choose"]
     options: list[MultiattackInvocationSchema] = Field(min_length=2)
@@ -115,13 +115,13 @@ MultiattackStepSchema = Annotated[
 
 
 class AnyAttackReplacementTargetSchema(MultiattackSchemaModel):
-    """Validate authored any attack replacement target data."""
+    """Encode the ``any_attack`` Multiattack variant."""
 
     type: Literal["any_attack"]
 
 
 class ActionReplacementTargetSchema(MultiattackSchemaModel):
-    """Validate authored action replacement target data."""
+    """Encode the ``action`` Multiattack variant with name and section."""
 
     type: Literal["action"]
     name: str = Field(min_length=1)
@@ -129,7 +129,7 @@ class ActionReplacementTargetSchema(MultiattackSchemaModel):
 
 
 class StepReplacementTargetSchema(MultiattackSchemaModel):
-    """Validate authored step replacement target data."""
+    """Encode the ``step`` Multiattack variant with index."""
 
     type: Literal["step"]
     index: int = Field(ge=0)
@@ -144,7 +144,7 @@ ReplacementTargetSchema = Annotated[
 
 
 class MultiattackReplacementSchema(MultiattackSchemaModel):
-    """Validate authored multiattack replacement data."""
+    """Define the authored Multiattack fields with target and replace count."""
 
     target: ReplacementTargetSchema
     replace_count: PositiveInt = 1
@@ -154,7 +154,7 @@ class MultiattackReplacementSchema(MultiattackSchemaModel):
 
 
 class MultiattackPlanSchema(MultiattackSchemaModel):
-    """Validate authored multiattack plan data."""
+    """Define the authored Multiattack fields with steps and ordering."""
 
     steps: list[MultiattackStepSchema] = Field(min_length=1)
     ordering: Literal["any", "strict"] = "any"
@@ -188,7 +188,7 @@ class MultiattackPlanSchema(MultiattackSchemaModel):
 
 
 class MultiattackCapabilitySchema(MultiattackSchemaModel):
-    """Validate authored multiattack capability data."""
+    """Encode the ``multiattack`` Multiattack variant with plans."""
 
     type: Literal["multiattack"] = "multiattack"
     plans: list[MultiattackPlanSchema] = Field(min_length=1)
@@ -197,7 +197,7 @@ class MultiattackCapabilitySchema(MultiattackSchemaModel):
 def iter_stat_block_references(
     capability: MultiattackCapabilitySchema,
 ) -> Iterator[tuple[StatBlockSection, str]]:
-    """Iterate over stat block references."""
+    """Yield every stat-block entry a Multiattack plan can invoke."""
 
     for plan in capability.plans:
         for step in plan.steps:
@@ -227,7 +227,7 @@ def _invocation_references(
 def build_multiattack(
     capability: MultiattackCapabilitySchema | None,
 ) -> Multiattack | None:
-    """Build multiattack."""
+    """Translate an authored Multiattack capability into its domain plan."""
 
     if capability is None:
         return None

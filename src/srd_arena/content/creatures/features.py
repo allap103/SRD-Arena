@@ -1,11 +1,11 @@
-"""Provide features support for the creatures package."""
+"""Translate authored creature features into executable domain rules."""
 
 from srd_arena.domain.creatures import ClassFeature, CombatProfile
 from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
 
 
 def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
-    """Build combat profile."""
+    """Translate authored proficiencies and combat metadata into a creature profile."""
 
     profile = CombatProfile()
     for class_feature in class_features:
@@ -58,6 +58,6 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
 
 
 def build_feature_uses_remaining(combat_profile: CombatProfile) -> dict[str, int]:
-    """Build feature uses remaining."""
+    """Initialize tracked uses for creature features that declare a finite maximum."""
 
     return dict(combat_profile.feature_uses_max)

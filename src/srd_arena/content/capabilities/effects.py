@@ -1,4 +1,4 @@
-"""Provide effects support for the capabilities package."""
+"""Validate declarative effects produced by authored capabilities."""
 
 from typing import Annotated, Literal
 
@@ -14,7 +14,7 @@ from .requirements import (
 
 
 class DamageEffectSchema(CapabilitySchemaModel):
-    """Validate authored damage effect data."""
+    """Encode the ``damage`` capability-effect variant with dice and bonus."""
 
     type: Literal["damage"]
     dice: str = Field(pattern=r"^\d+d\d+$")
@@ -26,7 +26,7 @@ class DamageEffectSchema(CapabilitySchemaModel):
 
 
 class ConditionEffectSchema(CapabilitySchemaModel):
-    """Validate authored condition effect data."""
+    """Encode the ``condition`` capability-effect variant with condition and duration."""
 
     type: Literal["condition"]
     condition: str = Field(min_length=1)
@@ -45,7 +45,7 @@ class ConditionEffectSchema(CapabilitySchemaModel):
 
 
 class ForcedMovementEffectSchema(CapabilitySchemaModel):
-    """Validate authored forced movement effect data."""
+    """Encode the ``forced_movement`` capability-effect variant with direction."""
 
     type: Literal["forced_movement"]
     direction: Literal["away", "toward", "chosen"]
@@ -54,7 +54,7 @@ class ForcedMovementEffectSchema(CapabilitySchemaModel):
 
 
 class SpeedMultiplierEffectSchema(CapabilitySchemaModel):
-    """Validate authored speed multiplier effect data."""
+    """Encode the ``speed_multiplier`` capability-effect variant with numerator."""
 
     type: Literal["speed_multiplier"]
     numerator: NonNegativeInt
@@ -63,14 +63,14 @@ class SpeedMultiplierEffectSchema(CapabilitySchemaModel):
 
 
 class ProhibitReactionEffectSchema(CapabilitySchemaModel):
-    """Validate authored prohibit reaction effect data."""
+    """Encode the ``prohibit_reactions`` capability-effect variant with duration."""
 
     type: Literal["prohibit_reactions"]
     duration: EffectDurationSchema
 
 
 class TurnEconomyRestrictionEffectSchema(CapabilitySchemaModel):
-    """Validate authored turn economy restriction effect data."""
+    """Encode the ``turn_economy_restriction`` capability-effect variant."""
 
     type: Literal["turn_economy_restriction"]
     choose_between: list[Literal["action", "bonus_action"]] = Field(
@@ -81,7 +81,7 @@ class TurnEconomyRestrictionEffectSchema(CapabilitySchemaModel):
 
 
 class RollModifierEffectSchema(CapabilitySchemaModel):
-    """Validate authored roll modifier effect data."""
+    """Encode the ``roll_modifier`` capability-effect variant with roll and mode."""
 
     type: Literal["roll_modifier"]
     roll: Literal[
@@ -105,7 +105,7 @@ class RollModifierEffectSchema(CapabilitySchemaModel):
 
 
 class ControlEffectSchema(CapabilitySchemaModel):
-    """Validate authored control effect data."""
+    """Encode the ``control`` capability-effect variant with controller."""
 
     type: Literal["control"]
     controller: Literal["source"]
@@ -116,7 +116,7 @@ class ControlEffectSchema(CapabilitySchemaModel):
 
 
 class GainMemoriesEffectSchema(CapabilitySchemaModel):
-    """Validate authored gain memories effect data."""
+    """Encode the ``gain_memories`` capability-effect variant with requirement."""
 
     type: Literal["gain_memories"]
     requirement: CreatureTypeRequirementSchema

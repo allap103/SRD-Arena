@@ -1,11 +1,11 @@
-"""Provide activation support for the building package."""
+"""Translate authored casting time and duration into activation rules."""
 
 from srd_arena.content.spells.schema import SpellSchema
 from srd_arena.domain.capabilities import CapabilityActivation
 
 
 def build_activation(raw: SpellSchema) -> CapabilityActivation | None:
-    """Build activation."""
+    """Derive action economy, concentration, and duration from a spell record."""
 
     if not raw.time:
         return None

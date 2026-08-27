@@ -1,4 +1,4 @@
-"""Provide targets support for the capabilities package."""
+"""Validate how an authored capability selects creatures or areas."""
 
 from typing import Annotated, Literal
 
@@ -9,13 +9,13 @@ from .requirements import ActionRequirementSchema
 
 
 class SelfTargetSchema(CapabilitySchemaModel):
-    """Validate authored self target data."""
+    """Encode the ``self`` capability-target variant."""
 
     type: Literal["self"]
 
 
 class CreatureTargetSchema(CapabilitySchemaModel):
-    """Validate authored creature target data."""
+    """Encode the ``creature`` capability-target variant with count and range feet."""
 
     type: Literal["creature"]
     count: PositiveInt = 1
@@ -25,7 +25,7 @@ class CreatureTargetSchema(CapabilitySchemaModel):
 
 
 class AreaTargetSchema(CapabilitySchemaModel):
-    """Validate authored area target data."""
+    """Encode the ``area`` capability-target variant with shape and size feet."""
 
     type: Literal["area"]
     shape: Literal["cone", "cube", "line", "radius"]

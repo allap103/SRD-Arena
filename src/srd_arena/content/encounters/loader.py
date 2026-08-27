@@ -1,4 +1,4 @@
-"""Provide loader support for the encounters package."""
+"""Translate an authored encounter and its participants into domain templates."""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,7 +31,7 @@ from .schema import EncounterDefinitionSchema, PositionSchema
 
 @dataclass(frozen=True)
 class LoadedEncounter:
-    """Represent a loaded encounter."""
+    """Bundle an encounter definition with the creature templates it references."""
 
     definition: EncounterDefinition
     creatures: tuple[Creature, ...]
@@ -109,7 +109,7 @@ def load_encounter(
     subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> LoadedEncounter:
-    """Load encounter."""
+    """Validate one encounter file and build all referenced domain objects."""
 
     schema = EncounterDefinitionSchema.model_validate(load_json(path))
     return LoadedEncounter(

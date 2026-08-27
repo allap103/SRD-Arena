@@ -1,4 +1,4 @@
-"""Provide stat block schema support for the creatures package."""
+"""Validate authored monster stat-block sections and action entries."""
 
 import re
 
@@ -16,7 +16,7 @@ BestiaryCapabilitySchema = MultiattackCapabilitySchema | NonMultiattackCapabilit
 
 
 class BestiaryHitPointsSchema(SourceModel):
-    """Validate authored bestiary hit points data."""
+    """Define the authored stat-block fields with average and formula."""
 
     average: int | None = None
     formula: str | None = None
@@ -24,33 +24,33 @@ class BestiaryHitPointsSchema(SourceModel):
 
 
 class BestiaryArmorClassSchema(SourceModel):
-    """Validate authored bestiary armor class data."""
+    """Define the authored stat-block fields with ac and special."""
 
     ac: int | None = None
     special: str | None = None
 
 
 class BestiaryTypeChoiceSchema(SourceModel):
-    """Validate authored bestiary type choice data."""
+    """Define the authored stat-block fields with choose."""
 
     choose: list[str] = Field(default_factory=list)
 
 
 class BestiaryTypeSchema(SourceModel):
-    """Validate authored bestiary type data."""
+    """Define the authored stat-block fields with type and tags."""
 
     type: str | BestiaryTypeChoiceSchema
     tags: list[str | object] = Field(default_factory=list)
 
 
 class BestiaryChallengeRatingSchema(SourceModel):
-    """Validate authored bestiary challenge rating data."""
+    """Define the authored stat-block fields with cr."""
 
     cr: str
 
 
 class BestiaryConditionalImmunitySchema(SourceModel):
-    """Validate authored bestiary conditional immunity data."""
+    """Define the authored stat-block fields with condition immune and note."""
 
     condition_immune: list[str] = Field(alias="conditionImmune")
     note: str | None = None
@@ -58,7 +58,7 @@ class BestiaryConditionalImmunitySchema(SourceModel):
 
 
 class BestiaryConditionalSpeedSchema(SourceModel):
-    """Validate authored bestiary conditional speed data."""
+    """Define the authored stat-block fields with number and condition."""
 
     number: int
     condition: str | None = None
@@ -68,7 +68,7 @@ BestiarySpeedValue = int | BestiaryConditionalSpeedSchema
 
 
 class BestiarySpeedSchema(SourceModel):
-    """Validate authored bestiary speed data."""
+    """Define the authored stat-block fields with walk and burrow."""
 
     walk: BestiarySpeedValue | None = None
     burrow: BestiarySpeedValue | None = None
@@ -96,7 +96,7 @@ class BestiarySpeedSchema(SourceModel):
 
 
 class BestiaryActionSchema(SourceModel):
-    """Validate authored bestiary action data."""
+    """Define the authored stat-block fields with name and entries."""
 
     name: str
     entries: list[object] = Field(default_factory=list)
@@ -125,7 +125,7 @@ class BestiaryActionSchema(SourceModel):
 
 
 class BestiaryMonsterSchema(SourceModel):
-    """Validate authored bestiary monster data."""
+    """Define the authored stat-block fields with name and source."""
 
     name: str
     source: str
@@ -290,7 +290,7 @@ class BestiaryMonsterSchema(SourceModel):
 
 
 class BestiaryFileSchema(SourceModel):
-    """Validate authored bestiary file data."""
+    """Define the authored stat-block fields with monster."""
 
     monster: list[BestiaryMonsterSchema] = Field(default_factory=list)
 

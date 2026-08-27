@@ -1,4 +1,4 @@
-"""Provide loader support for the creatures package."""
+"""Assemble creature domain templates from validated authored records."""
 
 from pathlib import Path
 from typing import cast
@@ -49,7 +49,7 @@ def load_creature(
     subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> Creature:
-    """Load creature."""
+    """Validate one creature document and translate it with the supplied catalogs."""
 
     return build_creature(
         CreatureSchema.model_validate(load_json(path)),
@@ -71,7 +71,7 @@ def build_creature(
     subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> Creature:
-    """Build creature."""
+    """Assemble a domain creature from authored statistics, actions, and options."""
 
     schema = _resolve_creature_schema(schema, player_characters)
     stat_block = _find_bestiary_monster(schema, bestiary)

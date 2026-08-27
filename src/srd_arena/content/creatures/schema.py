@@ -1,4 +1,4 @@
-"""Provide schema support for the creatures package."""
+"""Validate the authored structure shared by monsters and player characters."""
 
 from typing import Literal
 
@@ -27,7 +27,7 @@ EquipmentSlot = Literal[
 
 
 class CreatureItemReferenceSchema(BaseModel):
-    """Validate authored creature item reference data."""
+    """Define the authored creature-reference fields with name and source."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -39,7 +39,7 @@ ItemIdOrReference = str | CreatureItemReferenceSchema
 
 
 class AttributesSchema(BaseModel):
-    """Validate authored attributes data."""
+    """Validate a creature's scores, proficiencies, movement, and defenses."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -57,7 +57,7 @@ class AttributesSchema(BaseModel):
 
 
 class MovementSchema(BaseModel):
-    """Validate authored movement data."""
+    """Validate each movement speed supplied by an authored creature."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -65,7 +65,7 @@ class MovementSchema(BaseModel):
 
 
 class SpellcastingSchema(BaseModel):
-    """Validate authored spellcasting data."""
+    """Validate creature-specific casting ability, slots, and spell references."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -78,7 +78,7 @@ class SpellcastingSchema(BaseModel):
 
 
 class CreatureSchema(BaseModel):
-    """Validate authored creature data."""
+    """Validate a complete creature template before domain construction."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -101,7 +101,7 @@ class CreatureSchema(BaseModel):
 
 
 class StatBlockReferenceSchema(BaseModel):
-    """Validate authored stat block reference data."""
+    """Define the authored creature-reference fields with name and source."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -110,7 +110,7 @@ class StatBlockReferenceSchema(BaseModel):
 
 
 class SubclassReferenceSchema(BaseModel):
-    """Validate authored subclass reference data."""
+    """Define the authored creature-reference fields with name and source."""
 
     model_config = ConfigDict(extra="forbid")
 

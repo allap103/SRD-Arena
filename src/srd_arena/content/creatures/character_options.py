@@ -1,4 +1,4 @@
-"""Provide character options support for the creatures package."""
+"""Apply authored class and subclass choices while building a creature."""
 
 import re
 
@@ -28,7 +28,7 @@ def resolve_optional_feature_effects(
     schema: CreatureSchema,
     catalog: OptionalFeatureCatalog | None,
 ) -> list[TriggeredEffect]:
-    """Resolve optional feature effects."""
+    """Collect the optional-feature changes selected by a creature build."""
 
     effects: list[TriggeredEffect] = []
     for reference in schema.optional_features:
@@ -58,7 +58,7 @@ def find_class_record(
     schema: CreatureSchema,
     classes: ClassCatalog | None,
 ) -> ClassRecord | None:
-    """Find class record."""
+    """Resolve the class record referenced by a creature's character levels."""
 
     if schema.class_ref is None:
         return None
@@ -75,7 +75,7 @@ def find_subclass_record(
     subclasses: SubclassCatalog | None,
     class_record: ClassRecord | None,
 ) -> SubclassRecord | None:
-    """Find subclass record."""
+    """Resolve the subclass record within its referenced parent class."""
 
     reference = schema.subclass_ref
     if reference is None:
@@ -105,7 +105,7 @@ def resolve_class_features(
     class_record: ClassRecord | None,
     level: int,
 ) -> list[ClassFeature]:
-    """Resolve class features."""
+    """Collect class features earned at or below the creature's class level."""
 
     if class_record is None:
         return []
@@ -132,7 +132,7 @@ def resolve_subclass_features(
     *,
     class_name: str | None,
 ) -> list[ClassFeature]:
-    """Resolve subclass features."""
+    """Collect subclass features earned at or below the creature's class level."""
 
     if subclass_record is None:
         return []

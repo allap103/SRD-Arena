@@ -1,4 +1,4 @@
-"""Provide base support for the capabilities package."""
+"""Define strict validation conventions shared by authored capabilities."""
 
 from typing import Annotated, Literal
 
@@ -10,6 +10,10 @@ Ability = Literal["str", "dex", "con", "int", "wis", "cha"]
 
 
 class CapabilitySchemaModel(BaseModel):
-    """Represent a capability schema model."""
+    """Reject unknown fields in every authored capability schema model.
+
+    Strict models keep misspelled or obsolete rules data from silently entering
+    the domain translation layer.
+    """
 
     model_config = ConfigDict(extra="forbid")

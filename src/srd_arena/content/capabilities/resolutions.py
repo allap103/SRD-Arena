@@ -1,4 +1,4 @@
-"""Provide resolutions support for the capabilities package."""
+"""Validate the ordered rule steps that resolve authored capabilities."""
 
 from typing import Annotated, Literal
 
@@ -20,14 +20,14 @@ class OutcomeSchema[EffectSchemaT](ResolutionSchemaModel):
 
 
 class FixedDifficultyClassSchema(ResolutionSchemaModel):
-    """Validate authored fixed difficulty class data."""
+    """Encode the ``fixed`` capability-resolution variant with value."""
 
     type: Literal["fixed"]
     value: int = Field(gt=0)
 
 
 class DerivedDifficultyClassSchema(ResolutionSchemaModel):
-    """Validate authored derived difficulty class data."""
+    """Define the authored capability-resolution fields."""
 
     type: Literal["spell_save_dc", "ten_plus_spell_level"]
 
@@ -39,7 +39,7 @@ DifficultyClassSchema = Annotated[
 
 
 class AutomaticResolutionSchema[SuccessOutcomeT](ResolutionSchemaModel):
-    """Validate authored automatic resolution data."""
+    """Encode the ``automatic`` capability-resolution variant with outcome."""
 
     type: Literal["automatic"]
     outcome: SuccessOutcomeT
@@ -48,7 +48,7 @@ class AutomaticResolutionSchema[SuccessOutcomeT](ResolutionSchemaModel):
 class SavingThrowResolutionSchema[FailureOutcomeT, SuccessOutcomeT](
     ResolutionSchemaModel
 ):
-    """Validate authored saving throw resolution data."""
+    """Encode the ``saving_throw`` capability-resolution variant with ability."""
 
     type: Literal["saving_throw"]
     ability: Ability | None = None

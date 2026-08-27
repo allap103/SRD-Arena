@@ -1,4 +1,4 @@
-"""Provide optional feature schema support for the classes package."""
+"""Validate authored optional class-feature selections and effects."""
 
 from pydantic import Field
 
@@ -6,7 +6,7 @@ from srd_arena.content.common.schema import SourceModel
 
 
 class OptionalFeatureSchema(SourceModel):
-    """Validate authored optional feature data."""
+    """Define the authored optional-feature fields with name and source."""
 
     name: str
     source: str
@@ -29,7 +29,7 @@ class OptionalFeatureSchema(SourceModel):
 
 
 class OptionalFeatureFileSchema(SourceModel):
-    """Validate authored optional feature file data."""
+    """Define the authored optional-feature fields with optional features."""
 
     optional_features: list[OptionalFeatureSchema] = Field(
         default_factory=list,

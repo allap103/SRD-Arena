@@ -1,4 +1,4 @@
-"""Provide schema support for the classes package."""
+"""Validate authored class, subclass, and feature records."""
 
 from pydantic import Field
 
@@ -6,13 +6,13 @@ from srd_arena.content.common.schema import SourceModel
 
 
 class ClassFeatureReferenceSchema(SourceModel):
-    """Validate authored class feature reference data."""
+    """Define the authored character-option fields with class feature."""
 
     class_feature: str = Field(alias="classFeature")
 
 
 class ClassTableGroupSchema(SourceModel):
-    """Validate authored class table group data."""
+    """Define the authored character-option fields with column labels and rows."""
 
     column_labels: list[object] = Field(default_factory=list, alias="colLabels")
     rows: list[list[object]] = Field(default_factory=list)
@@ -23,13 +23,13 @@ class ClassTableGroupSchema(SourceModel):
 
 
 class StartingProficienciesSchema(SourceModel):
-    """Validate authored starting proficiencies data."""
+    """Define the authored character-option fields with weapons."""
 
     weapons: list[object] = Field(default_factory=list)
 
 
 class ClassFeatureSchema(SourceModel):
-    """Validate authored class feature data."""
+    """Define the authored character-option fields with name and source."""
 
     name: str
     source: str
@@ -55,14 +55,14 @@ class ClassFeatureSchema(SourceModel):
 
 
 class SubclassFeatureSchema(ClassFeatureSchema):
-    """Validate authored subclass feature data."""
+    """Define the authored character-option fields with subclass short name."""
 
     subclass_short_name: str = Field(alias="subclassShortName")
     subclass_source: str = Field(alias="subclassSource")
 
 
 class ClassSchema(SourceModel):
-    """Validate authored class data."""
+    """Validate a class identity, progression table, and spellcasting metadata."""
 
     name: str
     source: str
@@ -112,7 +112,7 @@ class ClassSchema(SourceModel):
 
 
 class SubclassSchema(SourceModel):
-    """Validate authored subclass data."""
+    """Validate a subclass together with the parent class identity it extends."""
 
     name: str
     short_name: str = Field(default="", alias="shortName")
@@ -161,7 +161,7 @@ class SubclassSchema(SourceModel):
 
 
 class ClassFileSchema(SourceModel):
-    """Validate authored class file data."""
+    """Define the authored character-option fields with classes and subclasses."""
 
     classes: list[ClassSchema] = Field(default_factory=list, alias="class")
     subclasses: list[SubclassSchema] = Field(default_factory=list, alias="subclass")
