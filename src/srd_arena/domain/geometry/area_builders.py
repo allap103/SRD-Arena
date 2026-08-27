@@ -38,7 +38,16 @@ def build_directional_area(
     width_squares: float | None = None,
     coverage_threshold: float | None = None,
 ) -> AreaOfEffect | None:
-    """Dispatch a directional shape to its continuous and rasterized constructor."""
+    """Dispatch a directional shape to its continuous and rasterized constructor.
+
+    >>> area = build_directional_area(
+    ...     "line", Position(1, 1), Vector2D(1, 0), 2, Grid(5, 3))
+    >>> (area.shape, len(area.cells))
+    ('line', 2)
+    >>> build_directional_area(
+    ...     "sphere", Position(1, 1), Vector2D(1, 0), 2, Grid(5, 3)) is None
+    True
+    """
 
     threshold = (
         coverage_threshold
@@ -78,7 +87,12 @@ def build_radius_area(
     radius_squares: int,
     grid: Grid,
 ) -> AreaOfEffect:
-    """Construct a circular template and select intersected grid cells."""
+    """Construct a circular template and select every touched grid cell.
+
+    >>> area = build_radius_area(Position(3, 3), 1, Grid(7, 7))
+    >>> (area.shape, len(area.cells), area.rasterization_policy)
+    ('radius', 9, 'touched_cell')
+    """
 
     origin_point = point_from_position(origin)
     continuous_area = ContinuousArea(
@@ -109,7 +123,12 @@ def build_point_cube_area(
     size_squares: int,
     grid: Grid,
 ) -> AreaOfEffect:
-    """Build a grid-aligned cube centered on a selected battlefield cell."""
+    """Build a grid-aligned cube centered on a selected battlefield cell.
+
+    >>> area = build_point_cube_area(Position(3, 3), 3, Grid(7, 7))
+    >>> (len(area.cells), area.cells[0], area.cells[-1])
+    (9, Position(x=2, y=2), Position(x=4, y=4))
+    """
     start_x = origin.x - ((size_squares - 1) // 2)
     start_y = origin.y - ((size_squares - 1) // 2)
     cells = tuple(
@@ -136,7 +155,12 @@ def build_cone_area(
     length_squares: int,
     grid: Grid,
 ) -> AreaOfEffect:
-    """Construct a cone from its origin toward an aim point and rasterize it."""
+    """Construct a cone from a named grid direction and rasterize it.
+
+    >>> area = build_cone_area(Position(3, 3), "right", 3, Grid(7, 7))
+    >>> (area.shape, len(area.cells), Position(3, 3) in area.cells)
+    ('cone', 5, False)
+    """
 
     return build_cone_area_from_vector(
         origin,
@@ -154,7 +178,13 @@ def build_cone_area_from_vector(
     *,
     coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
-    """Rasterize a cone from an explicit direction using the configured threshold."""
+    """Rasterize a cone from an explicit direction using the configured threshold.
+
+    >>> area = build_cone_area_from_vector(
+    ...     Position(3, 3), Vector2D(1, 0), 3, Grid(7, 7))
+    >>> (area.continuous_area.direction, len(area.cells))
+    (Vector2D(x=1.0, y=0.0), 5)
+    """
 
     unit_direction = normalize_vector(direction)
     origin_point = directional_origin_point(origin, unit_direction)
@@ -199,7 +229,11 @@ def build_line_area(
     width_squares: float = 1.0,
     coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
-    """Construct a fixed-width line toward an aim point and rasterize it."""
+    """Construct a fixed-width line from a named direction and rasterize it.
+
+    >>> build_line_area(Position(3, 3), "right", 3, Grid(7, 7)).cells
+    (Position(x=4, y=3), Position(x=5, y=3), Position(x=6, y=3))
+    """
 
     return build_line_area_from_vector(
         origin,
@@ -220,7 +254,13 @@ def build_line_area_from_vector(
     width_squares: float = 1.0,
     coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
-    """Rasterize a fixed-width line from an explicit direction."""
+    """Rasterize a fixed-width line from an explicit direction.
+
+    >>> area = build_line_area_from_vector(
+    ...     Position(3, 3), Vector2D(1, 0), 3, Grid(7, 7))
+    >>> (area.continuous_area.width, len(area.cells))
+    (1.0, 3)
+    """
 
     unit_direction = normalize_vector(direction)
     origin_point = directional_origin_point(origin, unit_direction)
@@ -264,7 +304,12 @@ def build_cube_area(
     size_squares: int,
     grid: Grid,
 ) -> AreaOfEffect:
-    """Construct a grid-aligned cubic footprint anchored by an aim point."""
+    """Construct a directional cubic footprint from a named direction.
+
+    >>> area = build_cube_area(Position(3, 3), "right", 3, Grid(7, 7))
+    >>> (len(area.cells), area.cells[0], area.cells[-1])
+    (9, Position(x=4, y=2), Position(x=6, y=4))
+    """
 
     return build_cube_area_from_vector(
         origin,
@@ -282,7 +327,13 @@ def build_cube_area_from_vector(
     *,
     coverage_threshold: float = DEFAULT_CELL_COVERAGE_THRESHOLD,
 ) -> AreaOfEffect:
-    """Rasterize a directional square footprint from an explicit direction."""
+    """Rasterize a directional square footprint from an explicit direction.
+
+    >>> area = build_cube_area_from_vector(
+    ...     Position(3, 3), Vector2D(1, 0), 3, Grid(7, 7))
+    >>> (area.continuous_area.length, len(area.cells))
+    (3.0, 9)
+    """
 
     unit_direction = normalize_vector(direction)
     origin_point = directional_origin_point(origin, unit_direction)

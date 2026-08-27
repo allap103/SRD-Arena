@@ -18,7 +18,13 @@ BOUNDARY_SHRINK = 1e-6
 
 
 def continuous_area_outline(area: ContinuousArea) -> tuple[Point2D, ...] | None:
-    """Return the polygon used to preview a continuous directional area."""
+    """Return the polygon used to preview a continuous directional area.
+
+    >>> area = ContinuousArea(
+    ...     "line", Point2D(0.0, 0.0), Vector2D(1.0, 0.0), length=2.0)
+    >>> len(continuous_area_outline(area))
+    4
+    """
 
     if area.direction is None:
         return None
@@ -41,7 +47,11 @@ def rasterize_cells(
     grid: Grid,
     includes_cell: Callable[[Position], bool],
 ) -> tuple[Position, ...]:
-    """Select grid cells affected by a continuous area under its stated policy."""
+    """Select grid cells accepted by a geometric inclusion predicate.
+
+    >>> rasterize_cells(Grid(3, 2), lambda cell: cell.x == 1)
+    (Position(x=1, y=0), Position(x=1, y=1))
+    """
 
     return sorted_positions(
         Position(x, y)
@@ -52,7 +62,11 @@ def rasterize_cells(
 
 
 def sorted_positions(positions: Iterable[Position]) -> tuple[Position, ...]:
-    """Return affected cells in stable row-major order."""
+    """Return affected cells in stable row-major order.
+
+    >>> sorted_positions([Position(0, 1), Position(2, 0), Position(1, 0)])
+    (Position(x=1, y=0), Position(x=2, y=0), Position(x=0, y=1))
+    """
 
     return tuple(sorted(positions, key=lambda position: (position.y, position.x)))
 
@@ -61,7 +75,12 @@ def filter_origin_cell(
     origin: Position,
     cells: tuple[Position, ...],
 ) -> tuple[Position, ...]:
-    """Exclude the source cell when the area's rules do not affect its origin."""
+    """Exclude the source cell when an area does not affect its origin.
+
+    >>> filter_origin_cell(
+    ...     Position(0, 0), (Position(0, 0), Position(1, 0)))
+    (Position(x=1, y=0),)
+    """
 
     return tuple(cell for cell in cells if cell.x != origin.x or cell.y != origin.y)
 
@@ -71,7 +90,12 @@ def cone_polygon(
     direction: Vector2D,
     length: float,
 ) -> tuple[Point2D, ...]:
-    """Construct the continuous triangular footprint of a cone."""
+    """Construct the continuous triangular footprint of a cone.
+
+    >>> polygon = cone_polygon(Point2D(0.0, 0.0), Vector2D(1.0, 0.0), 4.0)
+    >>> (len(polygon), polygon_area(polygon))
+    (3, 8.0)
+    """
 
     side = perpendicular(direction)
     far_center = translate(origin, direction, length)
@@ -89,7 +113,13 @@ def line_polygon(
     length: float,
     width: float = 1.0,
 ) -> tuple[Point2D, ...]:
-    """Construct the continuous rectangular footprint of a line."""
+    """Construct the continuous rectangular footprint of a line.
+
+    >>> polygon = line_polygon(
+    ...     Point2D(0.0, 0.0), Vector2D(1.0, 0.0), 3.0, 1.0)
+    >>> round(polygon_area(polygon), 5)
+    2.99999
+    """
 
     side = perpendicular(direction)
     end = translate(origin, direction, length)
@@ -107,7 +137,13 @@ def cube_polygon(
     direction: Vector2D,
     size: float,
 ) -> tuple[Point2D, ...]:
-    """Construct the continuous square footprint of a grid-aligned cube."""
+    """Construct the continuous square footprint of a directional cube.
+
+    >>> polygon = cube_polygon(
+    ...     Point2D(0.0, 0.0), Vector2D(1.0, 0.0), 2.0)
+    >>> polygon_area(polygon)
+    4.0
+    """
 
     side = perpendicular(direction)
     center = translate(origin, direction, (size / 2.0) + BOUNDARY_SHRINK)
@@ -124,7 +160,13 @@ def cell_intersects_circle(
     center: Point2D,
     radius: float,
 ) -> bool:
-    """Return whether any part of a grid cell intersects a circular area."""
+    """Return whether any part of a grid cell intersects a circular area.
+
+    >>> cell_intersects_circle(Position(1, 0), Point2D(0.5, 0.5), 0.5)
+    True
+    >>> cell_intersects_circle(Position(2, 0), Point2D(0.5, 0.5), 0.5)
+    False
+    """
 
     min_x, max_x, min_y, max_y = cell_bounds(cell)
     closest_x = min(max(center.x, min_x), max_x)
@@ -141,7 +183,14 @@ def cell_meets_polygon_coverage_threshold(
     *,
     coverage_threshold: float,
 ) -> bool:
-    """Return whether polygon overlap covers the required fraction of a cell."""
+    """Return whether polygon overlap covers the required fraction of a cell.
+
+    >>> square = (Point2D(0.0, 0.0), Point2D(1.0, 0.0),
+    ...           Point2D(1.0, 1.0), Point2D(0.0, 1.0))
+    >>> cell_meets_polygon_coverage_threshold(
+    ...     Position(0, 0), square, coverage_threshold=1.0)
+    True
+    """
 
     return cell_polygon_overlap_area(cell, polygon) >= (coverage_threshold - EPSILON)
 
@@ -150,7 +199,13 @@ def cell_polygon_overlap_area(
     cell: Position,
     polygon: tuple[Point2D, ...],
 ) -> float:
-    """Measure how much of a grid cell is covered by a polygon."""
+    """Measure how much of a grid cell is covered by a polygon.
+
+    >>> square = (Point2D(-1.0, -1.0), Point2D(2.0, -1.0),
+    ...           Point2D(2.0, 2.0), Point2D(-1.0, 2.0))
+    >>> cell_polygon_overlap_area(Position(0, 0), square)
+    1.0
+    """
 
     clipped = clip_polygon_to_cell(polygon, cell)
     if len(clipped) < 3:
@@ -162,7 +217,13 @@ def clip_polygon_to_cell(
     polygon: tuple[Point2D, ...],
     cell: Position,
 ) -> tuple[Point2D, ...]:
-    """Clip a polygon to a cell boundary for overlap measurement."""
+    """Clip a polygon to a cell boundary for overlap measurement.
+
+    >>> square = (Point2D(-1.0, -1.0), Point2D(2.0, -1.0),
+    ...           Point2D(2.0, 2.0), Point2D(-1.0, 2.0))
+    >>> polygon_area(clip_polygon_to_cell(square, Position(0, 0)))
+    1.0
+    """
 
     min_x, max_x, min_y, max_y = cell_bounds(cell)
     clipped = list(polygon)
@@ -238,7 +299,11 @@ def _intersect_horizontal(
 
 
 def polygon_area(points: tuple[Point2D, ...]) -> float:
-    """Return the unsigned area of a polygon using the shoelace formula."""
+    """Return the unsigned area of a polygon using the shoelace formula.
+
+    >>> polygon_area((Point2D(0, 0), Point2D(2, 0), Point2D(0, 2)))
+    2.0
+    """
 
     signed_area = sum(
         (start.x * end.y) - (end.x * start.y) for start, end in polygon_edges(points)
@@ -249,7 +314,13 @@ def polygon_area(points: tuple[Point2D, ...]) -> float:
 def polygon_edges(
     points: tuple[Point2D, ...],
 ) -> tuple[tuple[Point2D, Point2D], ...]:
-    """Yield each directed polygon edge, including the closing edge."""
+    """Return each directed polygon edge, including the closing edge.
+
+    >>> points = (Point2D(0, 0), Point2D(1, 0), Point2D(0, 1))
+    >>> edges = polygon_edges(points)
+    >>> (len(edges), edges[-1])
+    (3, (Point2D(x=0, y=1), Point2D(x=0, y=0)))
+    """
 
     return tuple(
         (points[index], points[(index + 1) % len(points)])
@@ -258,7 +329,11 @@ def polygon_edges(
 
 
 def cell_bounds(cell: Position) -> tuple[float, float, float, float]:
-    """Return the continuous bounds occupied by one grid cell."""
+    """Return the continuous bounds occupied by one grid cell.
+
+    >>> cell_bounds(Position(2, 3))
+    (2.0, 3.0, 3.0, 4.0)
+    """
 
     return (
         float(cell.x),
