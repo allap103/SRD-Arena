@@ -1,4 +1,4 @@
-"""Provide condition rules support for the effects package."""
+"""Project stored condition applications into their effective rule state."""
 
 from __future__ import annotations
 
@@ -9,7 +9,11 @@ from .conditions import AppliedCondition, CombatTrait, Condition
 
 @dataclass(frozen=True)
 class ConditionDefinition:
-    """Represent a condition definition."""
+    """Describe conditions and reusable combat traits implied by a condition.
+
+    This is static rules knowledge. It does not identify a creature, source,
+    duration, or individual runtime application.
+    """
 
     implied_conditions: frozenset[Condition] = frozenset()
     traits: frozenset[CombatTrait] = frozenset()
@@ -71,7 +75,7 @@ CONDITION_DEFINITIONS: dict[Condition, ConditionDefinition] = {
 
 @dataclass(frozen=True)
 class EffectiveCondition:
-    """Represent an effective condition."""
+    """Aggregate the runtime applications currently providing one condition."""
 
     condition: Condition
     provider_ids: tuple[str, ...]
@@ -79,7 +83,7 @@ class EffectiveCondition:
 
 @dataclass(frozen=True)
 class EffectiveTrait:
-    """Represent an effective trait."""
+    """Aggregate the condition applications currently providing one rule trait."""
 
     trait: CombatTrait
     provider_ids: tuple[str, ...]
@@ -87,7 +91,12 @@ class EffectiveTrait:
 
 @dataclass(frozen=True)
 class SuppressedCondition:
-    """Represent a suppressed condition."""
+    """Record a condition excluded from the effective projection and why.
+
+    This currently captures immunity encountered while expanding a stored
+    condition into implied conditions and traits; it is diagnostic query data,
+    not a dormant condition waiting to activate later.
+    """
 
     condition: Condition
     provider_ids: tuple[str, ...]
@@ -96,7 +105,12 @@ class SuppressedCondition:
 
 @dataclass(frozen=True)
 class EffectiveConditionSet:
-    """Represent an effective condition set."""
+    """Provide a derived, source-aware view of a creature's condition rules.
+
+    Encounter state stores individual :class:`AppliedCondition` instances.
+    Rule queries use this projection to collapse duplicate effects, expand
+    implied conditions, and retain the providers responsible for each result.
+    """
 
     conditions: tuple[EffectiveCondition, ...]
     traits: tuple[EffectiveTrait, ...]

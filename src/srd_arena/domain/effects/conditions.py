@@ -1,4 +1,4 @@
-"""Provide conditions support for the effects package."""
+"""Define condition vocabulary and sourced condition applications."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from .triggered import TriggeredEffect
 
 
 class Condition(StrEnum):
-    """Enumerate supported condition values."""
+    """Name the rules conditions that can affect a creature."""
 
     BLINDED = "blinded"
     CHARMED = "charmed"
@@ -37,7 +37,7 @@ class Condition(StrEnum):
 
 
 class CombatTrait(StrEnum):
-    """Enumerate supported combat trait values."""
+    """Name reusable rule consequences supplied by one or more conditions."""
 
     CANNOT_TAKE_ACTIONS = "cannot_take_actions"
     CANNOT_TAKE_REACTIONS = "cannot_take_reactions"
@@ -51,7 +51,12 @@ class CombatTrait(StrEnum):
 
 @dataclass(frozen=True)
 class AppliedCondition:
-    """Represent an applied condition."""
+    """Track one sourced application of a condition to a creature.
+
+    Applications remain separate so their sources and durations can be
+    resolved independently, even though a condition's mechanical effects
+    apply only once.
+    """
 
     identity: RuntimeStateIdentity
     condition: Condition

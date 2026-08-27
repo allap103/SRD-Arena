@@ -1,4 +1,4 @@
-"""Provide application support for the effects package."""
+"""Translate resolved effects into encounter mutations and display messages."""
 
 from __future__ import annotations
 
@@ -24,7 +24,12 @@ def apply_effects(
     remove_ongoing_effects: RemoveOngoingEffects | None = None,
     origin_id: str | None = None,
 ) -> list[tuple[str, str]]:
-    """Apply effects."""
+    """Dispatch resolved effects through the supplied state-mutation services.
+
+    Condition and ongoing-effect state remains owned by the encounter. This
+    function only interprets resolution output and returns any message effects
+    that should be presented to clients.
+    """
 
     messages: list[tuple[str, str]] = []
     for effect in effects:
@@ -56,7 +61,7 @@ def apply_effects(
 
 
 def message_effects(effect: EffectResult) -> list[tuple[str, str]]:
-    """Handle message effects."""
+    """Validate and extract one presentation message from an effect result."""
 
     channel = effect.data.get("channel", "system")
     text = effect.data.get("text")
@@ -66,7 +71,7 @@ def message_effects(effect: EffectResult) -> list[tuple[str, str]]:
 
 
 def serialize_effects(effects: list[EffectResult]) -> list[dict[str, object]]:
-    """Serialize effects."""
+    """Convert resolved effects into stable event-friendly dictionaries."""
 
     return [_serialize_effect(effect) for effect in effects]
 
@@ -87,7 +92,7 @@ def _serialize_effect(effect: EffectResult) -> dict[str, object]:
 
 
 def condition_from_effect(effect: EffectResult) -> AppliedCondition:
-    """Handle condition from effect."""
+    """Build a sourced condition application without a shared occurrence ID."""
 
     return condition_from_effect_with_origin(effect, origin_id=None)
 
@@ -97,7 +102,11 @@ def condition_from_effect_with_origin(
     *,
     origin_id: str | None,
 ) -> AppliedCondition:
-    """Handle condition from effect with origin."""
+    """Build a condition application linked to its resolving occurrence.
+
+    The origin and optional parent identity let later removal target every
+    piece of runtime state produced by the same spell or action occurrence.
+    """
 
     source_ref = effect.data.get("source_ref")
     source_label = effect.data.get("source_label")

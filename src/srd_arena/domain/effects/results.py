@@ -1,4 +1,4 @@
-"""Provide results support for the effects package."""
+"""Carry resolved capability output from rule evaluation to state application."""
 
 from dataclasses import dataclass, field
 

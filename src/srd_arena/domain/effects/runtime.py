@@ -1,4 +1,4 @@
-"""Provide runtime support for the effects package."""
+"""Model sourced, durable effect state owned by a running encounter."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from .rule_effects import RuntimeRuleEffect
 
 
 class EffectSourceKind(StrEnum):
-    """Enumerate supported effect source kind values."""
+    """Classify the rules object responsible for creating runtime state."""
 
     CREATURE = "creature"
     ACTION = "action"
@@ -22,7 +22,11 @@ class EffectSourceKind(StrEnum):
 
 @dataclass(frozen=True)
 class EffectSource:
-    """Represent an effect source."""
+    """Identify the definition, applier, and occurrence that produced state.
+
+    ``definition_id`` names reusable rules content, while ``origin_id``
+    distinguishes one runtime occurrence of that content.
+    """
 
     kind: EffectSourceKind
     definition_id: str
@@ -33,7 +37,12 @@ class EffectSource:
 
 @dataclass(frozen=True)
 class RuntimeStateIdentity:
-    """Represent a runtime state identity."""
+    """Give runtime state a stable ID and optional effect-tree ancestry.
+
+    Parent and root identities allow a single spell or action occurrence to
+    own several conditions, relationships, and ongoing effects that can later
+    be removed together.
+    """
 
     id: str
     source: EffectSource
@@ -47,14 +56,14 @@ class RuntimeStateIdentity:
 
 @dataclass(frozen=True)
 class Indefinite:
-    """Represent an indefinite."""
+    """Mark state that persists until an explicit rule removes it."""
 
     pass
 
 
 @dataclass(frozen=True)
 class UntilTurnStart:
-    """Represent an until turn start."""
+    """Expire state when the named creature reaches the configured turn start."""
 
     creature_ref: str
     round_number: int | None = None
@@ -62,7 +71,7 @@ class UntilTurnStart:
 
 @dataclass(frozen=True)
 class UntilTurnEnd:
-    """Represent an until turn end."""
+    """Expire state when the named creature reaches the configured turn end."""
 
     creature_ref: str
     round_number: int | None = None
@@ -70,7 +79,7 @@ class UntilTurnEnd:
 
 @dataclass(frozen=True)
 class Rounds:
-    """Represent a rounds."""
+    """Keep state for a positive number of encounter rounds."""
 
     count: int
 
@@ -81,7 +90,7 @@ class Rounds:
 
 @dataclass(frozen=True)
 class WhileParentExists:
-    """Represent a while parent exists."""
+    """Keep child state only while its parent runtime state exists."""
 
     pass
 
@@ -92,7 +101,7 @@ type EffectDuration = (
 
 
 class OngoingEffectKind(StrEnum):
-    """Enumerate supported ongoing effect kind values."""
+    """Classify durable non-condition state for lifecycle operations."""
 
     GENERIC = "generic"
     CONCENTRATION = "concentration"
@@ -102,7 +111,7 @@ class OngoingEffectKind(StrEnum):
 
 
 class EffectPolarity(StrEnum):
-    """Enumerate supported effect polarity values."""
+    """Describe whether an effect benefits, harms, or neutrally affects a target."""
 
     BENEFICIAL = "beneficial"
     HARMFUL = "harmful"
@@ -110,7 +119,7 @@ class EffectPolarity(StrEnum):
 
 
 class EffectTag(StrEnum):
-    """Enumerate supported effect tag values."""
+    """Mark cross-cutting properties used to find or remove ongoing effects."""
 
     CURSE = "curse"
     DISPELLABLE = "dispellable"
@@ -118,7 +127,13 @@ class EffectTag(StrEnum):
 
 @dataclass(frozen=True)
 class OngoingEffect:
-    """Represent an ongoing effect."""
+    """Track sourced non-condition state that persists across rule events.
+
+    Ongoing effects cover concentration, curses, spell-specific state, and
+    other mechanics whose lifecycle or rule contributions cannot be expressed
+    as a condition alone. Encounter rule queries interpret ``rule_effects``;
+    this value does not modify creatures by itself.
+    """
 
     identity: RuntimeStateIdentity
     target_refs: tuple[str, ...]
@@ -132,7 +147,7 @@ class OngoingEffect:
 
 
 class RelationshipKind(StrEnum):
-    """Enumerate supported relationship kind values."""
+    """Name directional relationships maintained between encounter creatures."""
 
     GRAPPLING = "grappling"
     SWALLOWED = "swallowed"
@@ -140,7 +155,12 @@ class RelationshipKind(StrEnum):
 
 @dataclass(frozen=True)
 class CreatureRelationship:
-    """Represent a creature relationship."""
+    """Track one sourced, directional relationship between two creatures.
+
+    Relationships record facts such as who is grappling whom. They remain
+    separate from target-side conditions because their source and target have
+    different rule responsibilities.
+    """
 
     identity: RuntimeStateIdentity
     kind: RelationshipKind

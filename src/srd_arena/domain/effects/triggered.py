@@ -1,4 +1,4 @@
-"""Provide triggered support for the effects package."""
+"""Match conditional mechanics against events produced during resolution."""
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
@@ -8,7 +8,11 @@ from ..rolls.dice import DicePoolResult
 
 @dataclass(frozen=True)
 class TriggeredEffect:
-    """A conditional mechanical effect contributed by a rules source."""
+    """Describe an operation offered when an event matches its conditions.
+
+    Triggered effects are reusable rule declarations. Runtime orchestration
+    supplies the event context and performs the named operation.
+    """
 
     id: str
     source_type: str
@@ -24,7 +28,7 @@ def matching_effects(
     trigger: str,
     context: Mapping[str, object],
 ) -> list[TriggeredEffect]:
-    """Handle matching effects."""
+    """Return effects whose trigger and conditions match an event context."""
 
     return [
         effect
@@ -37,7 +41,7 @@ def reroll_eligible_indices(
     effect: TriggeredEffect,
     pool: DicePoolResult,
 ) -> tuple[int, ...]:
-    """Handle reroll eligible indices."""
+    """Return dice that still satisfy a triggered reroll rule."""
 
     if effect.operation != "reroll_matching_dice":
         return ()

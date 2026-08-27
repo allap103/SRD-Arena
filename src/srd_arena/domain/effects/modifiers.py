@@ -1,4 +1,4 @@
-"""Provide modifiers support for the effects package."""
+"""Define reusable adjustments to dice rolls and incoming damage."""
 
 from dataclasses import dataclass
 from typing import Literal, cast
@@ -12,7 +12,11 @@ ModifierSubject = Literal["target", "attacks_against_target"]
 
 @dataclass(frozen=True)
 class RollModifier:
-    """Represent a roll modifier."""
+    """Describe an adjustment matched to a particular roll context.
+
+    A modifier either changes advantage state or contributes a fixed/dice-based
+    numeric amount. Runtime effect state supplies its provenance separately.
+    """
 
     roll: RollKind
     mode: ModifierMode
@@ -54,7 +58,11 @@ class RollModifier:
 
 @dataclass
 class DamageReduction:
-    """Represent a damage reduction."""
+    """Track a dice-based damage reduction that can be consumed once.
+
+    The owning creature or effect lifecycle is responsible for restoring its
+    availability at the appropriate rules boundary.
+    """
 
     damage_type: str
     dice: str
