@@ -17,7 +17,27 @@ def special_action_candidates(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> list[EncounterAction]:
-    """Build currently relevant non-attack action candidates for the actor."""
+    """Build currently relevant non-attack action candidates for the actor.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> actor = SimpleNamespace(
+    ...     creature=SimpleNamespace(inventory=SimpleNamespace(items=[])),
+    ...     position=SimpleNamespace(x=0, y=0),
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": actor}, ongoing_effects=[], item_templates={},
+    ...     _available_feature_actions=lambda creature: [],
+    ...     _available_spell_actions=lambda creature: [],
+    ... )
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.special.available_escape_actions",
+    ...     return_value=[],
+    ... ):
+    ...     actions = special_action_candidates(state, "hero")
+    >>> [(action.label, action.kind) for action in actions]
+    [('Wait', 'wait')]
+    """
 
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []

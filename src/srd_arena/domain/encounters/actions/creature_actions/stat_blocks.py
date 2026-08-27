@@ -21,7 +21,19 @@ def stat_block_action_candidates(
     creature_ref: CreatureRef,
     display_name: Callable[[Creature, str], str],
 ) -> list[EncounterAction]:
-    """Build actor-relative candidates from all supported stat-block sections."""
+    """Build actor-relative candidates from all supported stat-block sections.
+
+    >>> from types import SimpleNamespace
+    >>> actor = SimpleNamespace(
+    ...     creature=SimpleNamespace(stat_block_actions={}),
+    ...     position=SimpleNamespace(x=0, y=0),
+    ... )
+    >>> state = SimpleNamespace(creatures={"hero": actor})
+    >>> stat_block_action_candidates(
+    ...     state, "hero", lambda creature, name: name
+    ... )
+    []
+    """
 
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []

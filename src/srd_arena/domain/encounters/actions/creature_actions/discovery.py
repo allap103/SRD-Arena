@@ -22,7 +22,23 @@ def available_creature_actions(
     *,
     include_attack_alternatives: bool = False,
 ) -> list[EncounterAction]:
-    """Return candidates that pass every current eligibility rule."""
+    """Return candidates that pass every current eligibility rule.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> candidate = EncounterAction("Wait", "wait", creature_ref="hero")
+    >>> allowed = SimpleNamespace(allowed=True)
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.discovery.creature_action_candidates",
+    ...     return_value=[candidate],
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.discovery.action_eligibility",
+    ...     return_value=allowed,
+    ... ):
+    ...     actions = available_creature_actions(SimpleNamespace(), "hero")
+    >>> actions == [candidate]
+    True
+    """
 
     return [
         action
@@ -41,7 +57,29 @@ def creature_action_candidates(
     *,
     include_attack_alternatives: bool = False,
 ) -> list[EncounterAction]:
-    """Describe every generally available action before eligibility filtering."""
+    """Describe every generally available action before eligibility filtering.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> move = EncounterAction("Move", "move")
+    >>> wait = EncounterAction("Wait", "wait")
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.discovery.movement_action_candidates",
+    ...     return_value=[move],
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.discovery.attack_action_candidates",
+    ...     return_value=[],
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.discovery.stat_block_action_candidates",
+    ...     return_value=[],
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.discovery.special_action_candidates",
+    ...     return_value=[wait],
+    ... ):
+    ...     actions = creature_action_candidates(SimpleNamespace(), "hero")
+    >>> [action.kind for action in actions]
+    ['move', 'wait']
+    """
 
     # This order is also the stable presentation order used by frontends.
     actions: list[EncounterAction] = []
