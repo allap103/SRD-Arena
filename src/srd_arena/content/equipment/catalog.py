@@ -11,7 +11,18 @@ ItemCatalog = SourceCatalog[ItemSchema]
 
 
 def load_item_catalog(directory: str | Path) -> ItemCatalog:
-    """Validate equipment files and index them by source-aware identity."""
+    """Validate equipment files and index them by source-aware identity.
+
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     root = Path(directory)
+    ...     (root / "items").mkdir()
+    ...     _ = (root / "items" / "rope.json").write_text(
+    ...         '{"name": "Rope", "source": "X"}', encoding="utf-8")
+    ...     catalog = load_item_catalog(root)
+    ...     catalog.find("rope", None).name
+    'Rope'
+    """
 
     system_dir = Path(directory)
     base_items_dir = system_dir / "items_base"

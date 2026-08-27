@@ -10,7 +10,17 @@ from .catalog import load_item_catalog
 
 
 def load_system_items(directory: str | Path) -> list[Item]:
-    """Build all domain item templates available in a system content directory."""
+    """Build all domain item templates available in a system content directory.
+
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     root = Path(directory)
+    ...     (root / "items").mkdir()
+    ...     _ = (root / "items" / "rope.json").write_text(
+    ...         '{"name": "Rope", "source": "X"}', encoding="utf-8")
+    ...     [(item.id, item.category) for item in load_system_items(root)]
+    [('rope', 'other')]
+    """
 
     items_by_id: dict[str, tuple[int, Item]] = {}
     for source_item in load_item_catalog(directory):

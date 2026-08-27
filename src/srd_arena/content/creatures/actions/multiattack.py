@@ -197,7 +197,14 @@ class MultiattackCapabilitySchema(MultiattackSchemaModel):
 def iter_stat_block_references(
     capability: MultiattackCapabilitySchema,
 ) -> Iterator[tuple[StatBlockSection, str]]:
-    """Yield every stat-block entry a Multiattack plan can invoke."""
+    """Yield every stat-block entry a Multiattack plan can invoke.
+
+    >>> capability = MultiattackCapabilitySchema(plans=[{"steps": [{
+    ...     "type": "invoke", "invocation": {
+    ...         "type": "stat_block_action", "name": "Claw"}}]}])
+    >>> list(iter_stat_block_references(capability))
+    [('action', 'Claw')]
+    """
 
     for plan in capability.plans:
         for step in plan.steps:
@@ -227,7 +234,18 @@ def _invocation_references(
 def build_multiattack(
     capability: MultiattackCapabilitySchema | None,
 ) -> Multiattack | None:
-    """Translate an authored Multiattack capability into its domain plan."""
+    """Translate an authored Multiattack capability into its domain plan.
+
+    >>> capability = MultiattackCapabilitySchema(plans=[{"steps": [{
+    ...     "type": "invoke", "invocation": {
+    ...         "type": "stat_block_action", "name": "Claw"}, "times": 2}]}])
+    >>> multiattack = build_multiattack(capability)
+    >>> (multiattack.plans[0].steps[0].times,
+    ...  multiattack.plans[0].steps[0].options[0].name)
+    (2, 'Claw')
+    >>> build_multiattack(None) is None
+    True
+    """
 
     if capability is None:
         return None

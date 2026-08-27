@@ -141,7 +141,16 @@ def build_stat_block_actions(
 def build_declared_stat_block_actions(
     stat_block: BestiaryMonsterSchema | None,
 ) -> tuple[domain.DeclaredStatBlockAction, ...]:
-    """Preserve action and bonus-action entries for availability and UI reporting."""
+    """Preserve authored entries for availability and UI reporting.
+
+    >>> from ..stat_block_schema import BestiaryMonsterSchema
+    >>> monster = BestiaryMonsterSchema(
+    ...     name="Goblin", source="X",
+    ...     bonus=[{"name": "Nimble Escape", "entries": ["The goblin hides."]}])
+    >>> declaration = build_declared_stat_block_actions(monster)[0]
+    >>> (declaration.display_name, declaration.section, declaration.description)
+    ('Nimble Escape', 'bonus_action', 'The goblin hides.')
+    """
 
     if stat_block is None:
         return ()

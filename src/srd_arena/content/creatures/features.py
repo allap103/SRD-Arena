@@ -5,7 +5,14 @@ from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
 
 
 def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
-    """Translate authored proficiencies and combat metadata into a creature profile."""
+    """Translate supported class features into a creature combat profile.
+
+    >>> feature = ClassFeature(
+    ...     "extra_attack", "Extra Attack", "Fighter", 5,
+    ...     data={"attacks": 2})
+    >>> build_combat_profile([feature]).attacks_per_attack_action
+    2
+    """
 
     profile = CombatProfile()
     for class_feature in class_features:
@@ -58,6 +65,11 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
 
 
 def build_feature_uses_remaining(combat_profile: CombatProfile) -> dict[str, int]:
-    """Initialize tracked uses for creature features that declare a finite maximum."""
+    """Initialize tracked uses from a combat profile's finite maxima.
+
+    >>> profile = CombatProfile(feature_uses_max={"second_wind": 2})
+    >>> build_feature_uses_remaining(profile)
+    {'second_wind': 2}
+    """
 
     return dict(combat_profile.feature_uses_max)

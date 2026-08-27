@@ -7,7 +7,15 @@ from .schema import ItemSchema
 
 
 def build_item(source_item: ItemSchema) -> Item:
-    """Translate one equipment schema into a domain inventory template."""
+    """Translate one equipment schema into a domain inventory template.
+
+    >>> schema = ItemSchema(
+    ...     name="Shortbow", source="X", type="R", dmg1="1d6",
+    ...     dmgType="P", range="80/320", property=["2H"])
+    >>> item = build_item(schema)
+    >>> (item.id, item.weapon_stat.attack_type, item.weapon_stat.range_long)
+    ('shortbow', 'ranged', 320)
+    """
 
     if source_item.is_weapon:
         normal_range, long_range = _weapon_range(source_item.range)

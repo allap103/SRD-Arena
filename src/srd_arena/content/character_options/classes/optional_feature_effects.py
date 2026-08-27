@@ -8,7 +8,17 @@ from .optional_feature_schema import OptionalFeatureSchema
 def normalize_optional_feature_effects(
     feature: OptionalFeatureSchema,
 ) -> list[TriggeredEffect]:
-    """Convert authored optional-feature changes into stable creature-build operations."""
+    """Convert supported optional features into stable triggered effects.
+
+    >>> feature = OptionalFeatureSchema(
+    ...     name="Great Weapon Fighting", source="PHB")
+    >>> effect = normalize_optional_feature_effects(feature)[0]
+    >>> (effect.trigger, effect.parameters["values"])
+    ('weapon_damage_rolled', [1, 2])
+    >>> normalize_optional_feature_effects(
+    ...     OptionalFeatureSchema(name="Unknown", source="X"))
+    []
+    """
 
     name = feature.public_name
     source = feature.source
