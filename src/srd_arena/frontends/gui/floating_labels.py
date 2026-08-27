@@ -18,6 +18,14 @@ class FloatingLabelStyle:
     font_weight: int
 
     def qt_tooltip_rule(self) -> str:
+        """Render this shared visual style as a Qt tooltip stylesheet.
+
+        >>> style = FloatingLabelStyle((1, 2, 3, 200), "#ffffff", 4, 8, 6, 10, 700)
+        >>> "rgba(1, 2, 3, 200)" in style.qt_tooltip_rule()
+        True
+        >>> "font-weight: 700" in style.qt_tooltip_rule()
+        True
+        """
         red, green, blue, alpha = self.background_rgba
         return f"""
 QToolTip {{

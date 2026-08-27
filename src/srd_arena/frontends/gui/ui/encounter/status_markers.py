@@ -27,6 +27,14 @@ class StatusMarkerHit:
     tooltip: str
 
     def contains(self, x: float, y: float) -> bool:
+        """Return whether a point lies within the marker's hover target.
+
+        >>> marker = StatusMarkerHit(10.0, 10.0, 3.0, "Prone")
+        >>> marker.contains(12.0, 10.0)
+        True
+        >>> marker.contains(14.0, 10.0)
+        False
+        """
         delta_x = x - self.center_x
         delta_y = y - self.center_y
         return delta_x * delta_x + delta_y * delta_y <= self.radius * self.radius

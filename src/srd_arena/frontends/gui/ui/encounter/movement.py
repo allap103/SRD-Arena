@@ -40,7 +40,14 @@ class MovementPlan:
     paths: dict[GridCell, MovementPath]
 
     def path_to(self, destination: GridCell) -> MovementPath | None:
-        """Return the previewed path to a destination, if one exists."""
+        """Return the previewed path to a destination, if one exists.
+
+        >>> plan = MovementPlan("hero", {(1, 1): ("right", "down")})
+        >>> plan.path_to((1, 1))
+        ('right', 'down')
+        >>> plan.path_to((9, 9)) is None
+        True
+        """
 
         return self.paths.get(destination)
 

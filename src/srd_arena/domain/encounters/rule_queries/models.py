@@ -194,18 +194,50 @@ class InvocationStartRoll:
 
     @property
     def provider_state_id(self) -> str:
+        """Return the runtime state responsible for this roll.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
+        >>> chance = InvocationFailureChanceContribution("slow:cast", source, 1, 4, "slow", "Too slow")
+        >>> InvocationStartRoll(chance, 1, True).provider_state_id
+        'slow:cast'
+        """
         return self.contribution.provider_state_id
 
     @property
     def source(self) -> EffectSource:
+        """Return the rules source responsible for this roll.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
+        >>> chance = InvocationFailureChanceContribution("slow:cast", source, 1, 4, "slow", "Too slow")
+        >>> InvocationStartRoll(chance, 1, True).source.definition_id
+        'slow'
+        """
         return self.contribution.source
 
     @property
     def code(self) -> str:
+        """Return the machine-readable failure code.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
+        >>> chance = InvocationFailureChanceContribution("slow:cast", source, 1, 4, "slow", "Too slow")
+        >>> InvocationStartRoll(chance, 1, True).code
+        'slow'
+        """
         return self.contribution.code
 
     @property
     def message(self) -> str:
+        """Return the human-readable failure explanation.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
+        >>> chance = InvocationFailureChanceContribution("slow:cast", source, 1, 4, "slow", "Too slow")
+        >>> InvocationStartRoll(chance, 1, True).message
+        'Too slow'
+        """
         return self.contribution.message
 
 
