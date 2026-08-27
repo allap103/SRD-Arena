@@ -129,7 +129,11 @@ type RuntimeRuleEffect = (
 def serialize_runtime_rule_effect(
     effect: RuntimeRuleEffect,
 ) -> dict[str, object]:
-    """Serialize one typed contribution for events and state inspection."""
+    """Serialize one typed contribution for events and state inspection.
+
+    >>> serialize_runtime_rule_effect(ArmorClassAdjustment(2))
+    {'type': 'armor_class_adjustment', 'value': 2}
+    """
 
     if isinstance(effect, ArmorClassAdjustment):
         return {"type": "armor_class_adjustment", "value": effect.value}

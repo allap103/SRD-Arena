@@ -28,7 +28,17 @@ def matching_effects(
     trigger: str,
     context: Mapping[str, object],
 ) -> list[TriggeredEffect]:
-    """Return effects whose trigger and conditions match an event context."""
+    """Return effects whose trigger and conditions match an event context.
+
+    >>> effect = TriggeredEffect(
+    ...     "gwm", "feature", "great_weapon_fighting", "damage_roll",
+    ...     "reroll_matching_dice", {"damage_types_any": ["slashing"]}
+    ... )
+    >>> matching_effects(
+    ...     [effect], "damage_roll", {"damage_types": ["slashing", "fire"]}
+    ... ) == [effect]
+    True
+    """
 
     return [
         effect
@@ -41,7 +51,19 @@ def reroll_eligible_indices(
     effect: TriggeredEffect,
     pool: DicePoolResult,
 ) -> tuple[int, ...]:
-    """Return dice that still satisfy a triggered reroll rule."""
+    """Return dice that still satisfy a triggered reroll rule.
+
+    >>> from ..rolls.dice import DicePoolResult, DieRollResult
+    >>> effect = TriggeredEffect(
+    ...     "gwm", "feature", "great_weapon_fighting", "damage_roll",
+    ...     "reroll_matching_dice", parameters={"values": [1, 2]}
+    ... )
+    >>> pool = DicePoolResult(
+    ...     (DieRollResult(6, (1,)), DieRollResult(6, (5,))), 0, 6, 6
+    ... )
+    >>> reroll_eligible_indices(effect, pool)
+    (0,)
+    """
 
     if effect.operation != "reroll_matching_dice":
         return ()

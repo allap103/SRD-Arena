@@ -12,7 +12,22 @@ def resolve_fighter_feature(
     feature_id: str,
     roll_dice: DiceRoller,
 ) -> CapabilityActionResult | None:
-    """Execute the supported fighter feature identified by an action grant."""
+    """Execute the supported fighter feature identified by an action grant.
+
+    >>> from ..attributes import Attributes
+    >>> from ..equipment import Equipment
+    >>> from ..inventory import Inventory
+    >>> fighter = Creature(
+    ...     "fighter", "Fighter", "", Inventory(),
+    ...     Attributes(20, 1, 10, 10, 10, 10, 10, 10, 10), Equipment(),
+    ...     feature_uses_remaining={"action_surge": 1},
+    ... )
+    >>> result = resolve_fighter_feature(
+    ...     fighter, "action_surge", lambda count, sides: count
+    ... )
+    >>> (result.details["grant_actions"], fighter.feature_uses_remaining)
+    (1, {'action_surge': 0})
+    """
 
     if feature_id == "second_wind":
         return _resolve_second_wind(creature, roll_dice)

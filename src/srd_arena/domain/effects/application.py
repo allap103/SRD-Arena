@@ -29,6 +29,16 @@ def apply_effects(
     Condition and ongoing-effect state remains owned by the encounter. This
     function only interprets resolution output and returns any message effects
     that should be presented to clients.
+
+    >>> effect = EffectResult(
+    ...     "message", "hero", data={"channel": "combat", "text": "Hit!"}
+    ... )
+    >>> apply_effects(
+    ...     [effect],
+    ...     apply_condition=lambda condition: None,
+    ...     remove_condition=lambda target, condition: None,
+    ... )
+    [('combat', 'Hit!')]
     """
 
     messages: list[tuple[str, str]] = []
@@ -61,7 +71,12 @@ def apply_effects(
 
 
 def message_effects(effect: EffectResult) -> list[tuple[str, str]]:
-    """Validate and extract one presentation message from an effect result."""
+    """Validate and extract one presentation message from an effect result.
+
+    >>> effect = EffectResult("message", "hero", data={"text": "Ready."})
+    >>> message_effects(effect)
+    [('system', 'Ready.')]
+    """
 
     channel = effect.data.get("channel", "system")
     text = effect.data.get("text")
@@ -71,7 +86,11 @@ def message_effects(effect: EffectResult) -> list[tuple[str, str]]:
 
 
 def serialize_effects(effects: list[EffectResult]) -> list[dict[str, object]]:
-    """Convert resolved effects into stable event-friendly dictionaries."""
+    """Convert resolved effects into stable event-friendly dictionaries.
+
+    >>> serialize_effects([EffectResult("healing", "hero", data={"amount": 4})])
+    [{'kind': 'healing', 'target_ref': 'hero', 'success': True, 'data': {'amount': 4}}]
+    """
 
     return [_serialize_effect(effect) for effect in effects]
 
@@ -92,7 +111,15 @@ def _serialize_effect(effect: EffectResult) -> dict[str, object]:
 
 
 def condition_from_effect(effect: EffectResult) -> AppliedCondition:
-    """Build a sourced condition application without a shared occurrence ID."""
+    """Build a sourced condition application without a shared occurrence ID.
+
+    >>> effect = EffectResult("apply_condition", "hero", data={
+    ...     "condition": "prone", "source_ref": "ogre", "source_label": "Ogre"
+    ... })
+    >>> applied = condition_from_effect(effect)
+    >>> (applied.condition.value, applied.target_ref, applied.source_ref)
+    ('prone', 'hero', 'ogre')
+    """
 
     return condition_from_effect_with_origin(effect, origin_id=None)
 
@@ -106,6 +133,13 @@ def condition_from_effect_with_origin(
 
     The origin and optional parent identity let later removal target every
     piece of runtime state produced by the same spell or action occurrence.
+
+    >>> effect = EffectResult("apply_condition", "hero", data={
+    ...     "condition": "stunned", "source_ref": "monk", "source_label": "Monk"
+    ... })
+    >>> applied = condition_from_effect_with_origin(effect, origin_id="use-7")
+    >>> applied.identity.source.origin_id
+    'use-7'
     """
 
     source_ref = effect.data.get("source_ref")
