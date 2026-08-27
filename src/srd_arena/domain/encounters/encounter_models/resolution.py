@@ -15,7 +15,7 @@ from .state import EncounterCreatureState
 
 @dataclass
 class CombatEvent:
-    """Represent a combat event."""
+    """Record a sequenced, machine-readable occurrence emitted during combat."""
 
     seq: int
     type: str
@@ -27,7 +27,7 @@ class CombatEvent:
 
 @dataclass
 class EncounterProgress:
-    """Represent an encounter progress."""
+    """Accumulate messages, events, pauses, and transitions during orchestration."""
 
     messages: list[tuple[str, str]] = field(default_factory=list)
     transition: str | None = None
@@ -47,7 +47,7 @@ class ActionExecutionOutcome(StrEnum):
 
 @dataclass
 class ActionExecutionContext:
-    """Represent an action execution context."""
+    """Carry one selected action and its accumulating progress through execution."""
 
     actor_ref: CreatureRef
     actor: EncounterCreatureState
@@ -59,7 +59,7 @@ class ActionExecutionContext:
 
 @dataclass
 class ActionExecutionResult:
-    """Represent an action execution result."""
+    """Return action progress together with the next orchestration state."""
 
     context: ActionExecutionContext
     outcome: ActionExecutionOutcome
@@ -80,7 +80,7 @@ class ActionExecutionResult:
 
 @dataclass
 class DecisionExecutionResult:
-    """Represent a decision execution result."""
+    """Report whether an interrupt choice completed its current decision frame."""
 
     progress: EncounterProgress
     action_id: str
@@ -89,7 +89,11 @@ class DecisionExecutionResult:
 
 @dataclass
 class AttackOutcome:
-    """Represent an attack outcome."""
+    """Collect resolved attack, damage, critical, and hit-effect details.
+
+    The outcome remains mutable while optional damage rerolls are pending; it
+    becomes the source for damage application and combat events once accepted.
+    """
 
     messages: list[tuple[str, str]]
     hit: bool
@@ -132,7 +136,7 @@ class DamageRerollRequest(DecisionRequest):
 
 @dataclass(frozen=True)
 class AttackSource:
-    """Represent an attack source."""
+    """Normalize weapon or stat-block data required to resolve an attack."""
 
     name: str
     damage_dice: str

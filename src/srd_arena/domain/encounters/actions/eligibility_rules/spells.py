@@ -1,4 +1,4 @@
-"""Provide spells support for the eligibility rules package."""
+"""Validate spell invocation and staged target-selection candidates."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class SpellActionRule:
-    """Represent a spell action rule."""
+    """Check spell knowledge, resources, target requirements, and chosen geometry."""
 
     def check(
         self,
@@ -95,7 +95,7 @@ class SpellActionRule:
 
 
 class SpellTargetSelectionRule:
-    """Represent a spell target selection rule."""
+    """Check staged target counts, allocations, and changing target eligibility."""
 
     def check(
         self,

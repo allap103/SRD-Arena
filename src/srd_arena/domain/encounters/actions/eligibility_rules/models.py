@@ -1,4 +1,4 @@
-"""Provide models support for the eligibility rules package."""
+"""Return structured, source-aware reasons why actions cannot be selected."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class EligibilityFailure:
-    """Represent an eligibility failure."""
+    """Explain one rejected rule and retain runtime states responsible for it."""
 
     code: str
     message: str
@@ -22,7 +22,7 @@ class EligibilityFailure:
 
 @dataclass(frozen=True)
 class ActionEligibility:
-    """Represent an action eligibility."""
+    """Collect every rule failure discovered for one candidate action."""
 
     failures: tuple[EligibilityFailure, ...] = ()
 

@@ -1,4 +1,4 @@
-"""Provide attacks support for the eligibility rules package."""
+"""Validate attack and grapple candidates against economy, targets, and reach."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class AttackRule:
-    """Represent an attack rule."""
+    """Reject attacks lacking economy, a legal target, supported mechanics, or range."""
 
     def check(
         self,
@@ -142,7 +142,7 @@ class AttackRule:
 
 
 class GrappleRule:
-    """Represent a grapple rule."""
+    """Reject grapples lacking economy, reach, a free hand, or a valid-sized target."""
 
     def check(
         self,

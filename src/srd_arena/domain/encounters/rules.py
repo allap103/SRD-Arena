@@ -1,4 +1,4 @@
-"""Provide rules support for the encounters package."""
+"""Expose source-aware combat rule queries through one stable service facade."""
 
 from __future__ import annotations
 
@@ -38,7 +38,11 @@ if TYPE_CHECKING:
 
 
 class CombatRules:
-    """Represent a combat rules."""
+    """Answer combat questions by composing creature, condition, and effect state.
+
+    The service is stateless: encounter data remains on ``EncounterState`` and
+    each query returns a value carrying the contributions behind its answer.
+    """
 
     def effective_conditions(
         self,

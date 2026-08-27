@@ -1,4 +1,4 @@
-"""Provide capabilities support for the eligibility rules package."""
+"""Validate stat-block and feature capability candidates before execution."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class StatBlockActionRule:
-    """Represent a stat block action rule."""
+    """Check stat-block implementation support, resources, targeting, and range."""
 
     def check(
         self,
@@ -118,7 +118,7 @@ class StatBlockActionRule:
 
 
 class FeatureActionRule:
-    """Represent a feature action rule."""
+    """Check that a feature action exists and retains a consumable use."""
 
     def check(
         self,

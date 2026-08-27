@@ -1,4 +1,4 @@
-"""Provide common support for the eligibility rules package."""
+"""Validate actor ownership, readiness, resources, movement, and target predicates."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class ActorReadyRule:
-    """Represent an actor ready rule."""
+    """Reject actions by defeated creatures or creatures unable to act."""
 
     def check(
         self,
@@ -50,7 +50,7 @@ class ActorReadyRule:
 
 
 class ActorOwnershipRule:
-    """Represent an actor ownership rule."""
+    """Reject actions whose recorded owner is not the current actor."""
 
     def check(
         self,
@@ -74,7 +74,7 @@ class ActorOwnershipRule:
 
 
 class ResourceRule:
-    """Represent a resource rule."""
+    """Reject actions that exceed the actor's remaining movement budget."""
 
     def check(
         self,
@@ -102,7 +102,7 @@ class ResourceRule:
 
 
 class MovementRule:
-    """Represent a movement rule."""
+    """Validate movement direction, cost, carried creatures, and occupancy."""
 
     def check(
         self,

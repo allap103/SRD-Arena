@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class RoundState:
-    """Represent a round state."""
+    """Track the encounter's mutable one-based round number."""
 
     number: int = 1
 
@@ -48,14 +48,14 @@ class RoundState:
 
 @dataclass
 class TurnState:
-    """Represent a turn state."""
+    """Track the current position within initiative order."""
 
     index: int = 0
 
 
 @dataclass
 class BehaviorContext:
-    """Represent a behavior context."""
+    """Supply a scripted controller with positions and immediate attack access."""
 
     target_position: Position
     actor_position: Position
@@ -64,7 +64,11 @@ class BehaviorContext:
 
 @dataclass
 class EncounterCreatureState:
-    """Represent an encounter creature state."""
+    """Wrap a creature with encounter-specific position and turn resources.
+
+    Controller and team ownership are derived from the encounter definition.
+    Intrinsic statistics, health, equipment, and features stay on ``creature``.
+    """
 
     creature_id: str
     creature: Creature
@@ -106,7 +110,7 @@ class EncounterCreatureState:
 
 @dataclass
 class InitiativeEntry:
-    """Represent an initiative entry."""
+    """Retain one creature's initiative roll, modifier, and resolved total."""
 
     creature_ref: CreatureRef
     roll: int
@@ -116,7 +120,12 @@ class InitiativeEntry:
 
 @dataclass
 class EncounterStateData:
-    """Represent an encounter state data."""
+    """Store all mutable aggregate state for one encounter instance.
+
+    The data includes combatants, clocks, nested decisions, sourced effects,
+    relationships, runtime sequences, and action selectors. ``EncounterState``
+    adds the service facade used to operate on this aggregate.
+    """
 
     encounter_id: str
     definition: EncounterDefinition

@@ -241,7 +241,12 @@ __all__ = [
 
 
 class EncounterState(EncounterStateData):
-    """Represent the mutable state of a running encounter."""
+    """Own one running encounter and expose its stable orchestration facade.
+
+    Aggregate data lives in ``EncounterStateData`` while focused services own
+    turn flow, reactions, and rule queries. This facade binds those services to
+    the state instance and retains the public API consumed by the engine.
+    """
 
     # Engines are stateless rule/orchestration collaborators.
     @property

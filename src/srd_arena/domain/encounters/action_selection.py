@@ -1,4 +1,4 @@
-"""Provide action selection support for the encounters package."""
+"""Choose advertised actions for external and simple scripted controllers."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ class ActionSelector(Protocol):
 
 
 class ExternalActionSelector:
-    """Represent an external action selector."""
+    """Yield control instead of selecting on behalf of a user or external agent."""
 
     def select_action(
         self,
@@ -48,7 +48,7 @@ class ExternalActionSelector:
 
 
 class ScriptedActionSelector:
-    """Represent a scripted action selector."""
+    """Select legal actions using a participant's configured deterministic behavior."""
 
     def __init__(self, participant: EncounterCreatureState) -> None:
         self._behavior = build_behavior(participant)

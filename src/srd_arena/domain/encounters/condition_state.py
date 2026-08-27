@@ -1,4 +1,4 @@
-"""Provide condition state support for the encounters package."""
+"""Apply and remove sourced conditions from mutable encounter state."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class ConditionRejection:
-    """Represent a condition rejection."""
+    """Explain why one requested condition application did not take hold."""
 
     condition: Condition
     reason: str
@@ -27,7 +27,7 @@ class ConditionRejection:
 
 @dataclass(frozen=True)
 class ConditionApplicationResult:
-    """Represent a condition application result."""
+    """Report applied condition instances and rejected derived consequences."""
 
     requested_condition: Condition
     applied: tuple[AppliedCondition, ...] = ()
@@ -159,7 +159,7 @@ def condition_sources_for(
     creature_ref: CreatureRef,
     condition: Condition,
 ) -> tuple[CreatureRef, ...]:
-    """Handle condition sources for."""
+    """Return creatures responsible for matching condition applications."""
 
     return tuple(
         applied.source_ref
@@ -174,6 +174,6 @@ def condition_replaces(
     existing: AppliedCondition,
     applied: AppliedCondition,
 ) -> bool:
-    """Handle condition replaces."""
+    """Return whether a new application replaces the same runtime occurrence."""
 
     return existing.id == applied.id

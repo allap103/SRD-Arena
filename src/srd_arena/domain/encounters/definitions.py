@@ -1,4 +1,4 @@
-"""Provide definitions support for the encounters package."""
+"""Describe authored encounter setup independently of its mutable runtime state."""
 
 from dataclasses import dataclass, field
 
@@ -7,7 +7,7 @@ from ..geometry import Grid, Position
 
 @dataclass
 class EncounterBehavior:
-    """Represent an encounter behavior."""
+    """Configure the simple scripted policy used by an automatic participant."""
 
     type: str
     anchor: Position | None = None
@@ -17,7 +17,7 @@ class EncounterBehavior:
 
 @dataclass
 class EncounterParticipant:
-    """Represent an encounter participant."""
+    """Place one creature template in an encounter and assign its controller."""
 
     creature_id: str
     start: Position
@@ -28,7 +28,7 @@ class EncounterParticipant:
 
 @dataclass
 class EncounterTeam:
-    """Represent an encounter team."""
+    """Group participant IDs under shared allegiance and controller ownership."""
 
     id: str
     name: str
@@ -38,14 +38,19 @@ class EncounterTeam:
 
 @dataclass
 class EncounterTransition:
-    """Represent an encounter transition."""
+    """Name the encounter entered after a configured outcome."""
 
     next_encounter_id: str
 
 
 @dataclass
 class EncounterDefinition:
-    """Represent an encounter definition."""
+    """Describe an encounter's grid, participants, teams, and outcome links.
+
+    Definitions are loaded content. ``EncounterState`` copies their creature
+    templates and creates the mutable initiative, turn, and effect state used
+    by one running game.
+    """
 
     id: str
     grid: Grid
