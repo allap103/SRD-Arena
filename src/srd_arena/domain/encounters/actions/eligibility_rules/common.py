@@ -24,6 +24,14 @@ class ActorReadyRule:
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Reject actions by defeated or incapacitated actors.
+
+        >>> from unittest.mock import Mock
+        >>> actor = Mock(is_alive=False)
+        >>> ActorReadyRule().check(Mock(creatures={"hero": actor}), "hero",
+        ...     EncounterAction("Wait", "wait", creature_ref="hero")).code
+        'actor_defeated'
+        """
         actor = state.creatures[actor_ref]
         if not actor.is_alive:
             return EligibilityFailure(
@@ -50,6 +58,13 @@ class ActorOwnershipRule:
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Reject actions owned by a different encounter creature.
+
+        >>> from unittest.mock import Mock
+        >>> action = EncounterAction("Wait", "wait", creature_ref="goblin")
+        >>> ActorOwnershipRule().check(Mock(), "hero", action).code
+        'wrong_actor'
+        """
         if action.creature_ref != actor_ref:
             return EligibilityFailure(
                 "wrong_actor",
@@ -67,6 +82,16 @@ class ResourceRule:
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Reject an action whose movement cost exceeds the remaining budget.
+
+        >>> from unittest.mock import Mock
+        >>> from ...models import ActionCost
+        >>> from ....geometry import MovementCost
+        >>> action = EncounterAction("Move", "move", cost=ActionCost(movement=MovementCost(2)))
+        >>> ResourceRule().check(Mock(creatures={"hero": Mock(movement_remaining=1)}),
+        ...     "hero", action).code
+        'insufficient_movement'
+        """
         actor = state.creatures[actor_ref]
         if action.cost.movement > (actor.movement_remaining or 0):
             return EligibilityFailure(
@@ -85,6 +110,13 @@ class MovementRule:
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate movement direction, budget, and destination occupancy.
+
+        >>> from unittest.mock import Mock
+        >>> action = EncounterAction("Move", "move", value="sideways")
+        >>> MovementRule().check(Mock(), "hero", action).code
+        'invalid_direction'
+        """
         if action.kind != "move":
             return None
         if not isinstance(action.value, str) or action.value not in DIRECTION_DELTAS:

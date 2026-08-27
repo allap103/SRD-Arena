@@ -29,6 +29,14 @@ class AttackRule:
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate attack economy, target, capability, and range.
+
+        >>> from unittest.mock import Mock
+        >>> actor = Mock(actions_remaining=0, attacks_remaining=0)
+        >>> action = EncounterAction("Strike", "attack", value="goblin")
+        >>> AttackRule().check(Mock(creatures={"hero": actor}), "hero", action).code
+        'action_spent'
+        """
         if action.kind not in {"attack", "multiattack"}:
             return None
         actor = state.creatures[actor_ref]
@@ -142,6 +150,14 @@ class GrappleRule:
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate grapple economy, target, reach, hand, and relative size.
+
+        >>> from unittest.mock import Mock
+        >>> actor = Mock(actions_remaining=0, attacks_remaining=0)
+        >>> action = EncounterAction("Grapple", "grapple", value="goblin")
+        >>> GrappleRule().check(Mock(creatures={"hero": actor}), "hero", action).code
+        'action_spent'
+        """
         if action.kind != "grapple":
             return None
         actor = state.creatures[actor_ref]

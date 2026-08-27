@@ -27,6 +27,16 @@ class StatBlockActionRule:
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate executable stat-block capability and its resources.
+
+        >>> from unittest.mock import Mock
+        >>> actor = Mock()
+        >>> actor.creature.stat_block_actions = {}
+        >>> action = EncounterAction("Roar", "stat_block", preferred_attack_name="roar")
+        >>> StatBlockActionRule().check(
+        ...     Mock(creatures={"dragon": actor}), "dragon", action).code
+        'stat_block_action_unavailable'
+        """
         if action.kind != "stat_block":
             return None
         actor = state.creatures[actor_ref]
@@ -116,6 +126,16 @@ class FeatureActionRule:
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate that a feature action exists and retains uses.
+
+        >>> from unittest.mock import Mock
+        >>> creature = Mock()
+        >>> creature.combat_profile.feature_actions = {}
+        >>> action = EncounterAction("Feature", "feature", value="missing")
+        >>> FeatureActionRule().check(
+        ...     Mock(creatures={"hero": Mock(creature=creature)}), "hero", action).code
+        'feature_unavailable'
+        """
         if action.kind != "feature" or not isinstance(action.value, str):
             return None
         actor = state.creatures[actor_ref].creature

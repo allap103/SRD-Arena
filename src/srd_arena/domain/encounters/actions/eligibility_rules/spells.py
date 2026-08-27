@@ -27,6 +27,16 @@ class SpellActionRule:
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate spell access, resources, targeting, and requirements.
+
+        >>> from unittest.mock import Mock
+        >>> actor = Mock()
+        >>> actor.creature.spellcasting = None
+        >>> action = EncounterAction("Cast", "spell", value="fireball")
+        >>> SpellActionRule().check(
+        ...     Mock(creatures={"hero": actor}), "hero", action).code
+        'spellcasting_unavailable'
+        """
         if action.kind != "spell" or not isinstance(action.value, str):
             return None
         actor = state.creatures[actor_ref].creature
@@ -93,6 +103,14 @@ class SpellTargetSelectionRule:
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate staged spell target and resource-allocation choices.
+
+        >>> from unittest.mock import Mock
+        >>> action = EncounterAction("Confirm", "confirm_spell_targets")
+        >>> SpellTargetSelectionRule().check(
+        ...     Mock(pending_spell_cast=None), "hero", action).code
+        'spell_selection_unavailable'
+        """
         if action.kind not in {
             "toggle_spell_target",
             "set_spell_resource_allocation",
