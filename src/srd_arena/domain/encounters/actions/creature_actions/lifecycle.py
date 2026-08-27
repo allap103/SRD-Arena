@@ -22,7 +22,25 @@ def begin_action_execution(
     action: EncounterAction,
     decision: DecisionFrame,
 ) -> ActionExecutionContext:
-    """Validate and record the declaration of a selected action."""
+    """Validate and record the declaration of a selected action.
+
+    >>> from types import SimpleNamespace
+    >>> from ..eligibility_rules.models import ActionEligibility
+    >>> decision = DecisionFrame("turn-hero", "hero", "turn", "normal_turn")
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": object()},
+    ...     combat_rules=SimpleNamespace(
+    ...         action_eligibility=lambda *args: ActionEligibility()
+    ...     ),
+    ...     _next_action_id=lambda: "action-1",
+    ...     _event=lambda event_type, **kwargs: (event_type, kwargs),
+    ... )
+    >>> context = begin_action_execution(
+    ...     state, EncounterAction("Wait", "wait"), decision
+    ... )
+    >>> (context.action_id, context.progress.events[0][0])
+    ('action-1', 'action_declared')
+    """
 
     require_action_eligible(state, decision.creature_ref, action)
     actor = state.creatures[decision.creature_ref]
@@ -53,7 +71,14 @@ def finish_action_execution(
     *,
     action_ends_turn: bool,
 ) -> ActionExecutionResult:
-    """Translate accumulated progress into the orchestrator's action outcome."""
+    """Translate accumulated progress into the orchestrator's action outcome.
+
+    >>> from types import SimpleNamespace
+    >>> from ...models import EncounterProgress
+    >>> context = SimpleNamespace(progress=EncounterProgress())
+    >>> finish_action_execution(context, action_ends_turn=True).outcome.value
+    'end_turn'
+    """
 
     if context.progress.transition is not None:
         outcome = ActionExecutionOutcome.ENCOUNTER_COMPLETE
