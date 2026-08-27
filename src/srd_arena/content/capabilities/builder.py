@@ -22,13 +22,24 @@ _SHARED_EFFECT_TYPES = (
 
 
 def is_shared_effect(value: object) -> TypeGuard[effects.ActionEffectSchema]:
-    """Return whether an authored effect belongs to the cross-content capability grammar."""
+    """Return whether an effect belongs to the cross-content capability grammar.
+
+    >>> damage = effects.DamageEffectSchema(
+    ...     type="damage", dice="1d6", damage_type="fire")
+    >>> is_shared_effect(damage)
+    True
+    """
 
     return isinstance(value, _SHARED_EFFECT_TYPES)
 
 
 def build_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
-    """Translate an authored target selector into its domain targeting contract."""
+    """Translate an authored target selector into its domain targeting contract.
+
+    >>> target = build_target(targets.SelfTargetSchema(type="self"))
+    >>> (target.kind, target.count.maximum, target.origin)
+    ('self', 1, 'self')
+    """
 
     count = getattr(value, "count", 1)
     affects = getattr(value, "affects", "creatures")
@@ -56,7 +67,13 @@ def build_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
 def build_requirement(
     value: requirements.ActionRequirementSchema,
 ) -> domain.CapabilityRequirement:
-    """Translate an authored eligibility clause into a domain requirement."""
+    """Translate an authored eligibility clause into a domain requirement.
+
+    >>> schema = requirements.CreatureTypeRequirementSchema(
+    ...     type="creature_type", creature_types=["humanoid"])
+    >>> build_requirement(schema).creature_types
+    ('humanoid',)
+    """
 
     if isinstance(value, requirements.SizeRequirementSchema):
         return domain.SizeRequirement(value.maximum, value.minimum)
@@ -74,7 +91,16 @@ def build_requirement(
 def build_duration(
     value: EffectDurationSchema | None,
 ) -> domain.EffectDuration | None:
-    """Translate authored timing and ending fields into an effect duration."""
+    """Translate authored timing and ending fields into an effect duration.
+
+    >>> from .durations import TimedDurationSchema
+    >>> duration = build_duration(
+    ...     TimedDurationSchema(type="timed", amount=1, unit="minute"))
+    >>> (duration.kind, duration.amount, duration.unit)
+    ('timed', 1, 'minute')
+    >>> build_duration(None) is None
+    True
+    """
 
     if value is None:
         return None
@@ -89,7 +115,14 @@ def build_duration(
 
 
 def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
-    """Translate one declarative effect while preserving source-relative semantics."""
+    """Translate one declarative effect while preserving source-relative semantics.
+
+    >>> schema = effects.DamageEffectSchema(
+    ...     type="damage", dice="1d6", damage_type="fire")
+    >>> effect = build_effect(schema)
+    >>> (effect.dice, effect.damage_type)
+    ('1d6', 'fire')
+    """
 
     if isinstance(value, effects.DamageEffectSchema):
         return domain.DamageEffect(
@@ -167,7 +200,13 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
 def build_outcome(
     values: Iterable[effects.ActionEffectSchema],
 ) -> domain.Outcome:
-    """Translate an ordered authored outcome into domain resolution effects."""
+    """Translate an ordered authored outcome into domain resolution effects.
+
+    >>> damage = effects.DamageEffectSchema(
+    ...     type="damage", dice="1d6", damage_type="cold")
+    >>> [type(effect).__name__ for effect in build_outcome([damage]).effects]
+    ['DamageEffect']
+    """
 
     return domain.Outcome(tuple(build_effect(value) for value in values))
 

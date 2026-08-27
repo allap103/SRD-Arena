@@ -5,7 +5,14 @@ from srd_arena.domain.capabilities import CapabilityActivation
 
 
 def build_activation(raw: SpellSchema) -> CapabilityActivation | None:
-    """Derive action economy, concentration, and duration from a spell record."""
+    """Derive action economy from a spell's first casting-time entry.
+
+    >>> spell = SpellSchema.model_construct(time=[{"unit": "bonus"}])
+    >>> build_activation(spell)
+    'bonus_action'
+    >>> build_activation(SpellSchema.model_construct(time=[])) is None
+    True
+    """
 
     if not raw.time:
         return None

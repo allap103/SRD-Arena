@@ -20,7 +20,15 @@ ABILITY_NAMES = {
 def build_creature_statistics(
     stat_block: BestiaryMonsterSchema | None,
 ) -> CreatureStatistics:
-    """Translate authored AC, hit points, challenge, and save bonuses into domain state."""
+    """Translate authored combat metadata into domain statistics.
+
+    An absent stat block produces the neutral statistics used by custom
+    player-character templates.
+
+    >>> statistics = build_creature_statistics(None)
+    >>> (statistics.creature_type, statistics.condition_immunities)
+    (None, frozenset())
+    """
 
     if stat_block is None:
         return CreatureStatistics()
@@ -52,7 +60,13 @@ def build_creature_statistics(
 
 
 def challenge_rating_proficiency_bonus(challenge_rating: str | None) -> int:
-    """Convert an SRD challenge rating into its proficiency bonus."""
+    """Convert an SRD challenge rating into its proficiency bonus.
+
+    >>> challenge_rating_proficiency_bonus("1/4")
+    2
+    >>> challenge_rating_proficiency_bonus("17")
+    6
+    """
 
     if challenge_rating is None:
         return 2

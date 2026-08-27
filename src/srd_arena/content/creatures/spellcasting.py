@@ -114,7 +114,14 @@ def _spellcasting_source_definition(
 
 
 def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
-    """Return the creature ability score used by an authored spellcasting entry."""
+    """Return the creature ability score used by an authored spellcasting entry.
+
+    >>> attributes = Attributes(10, 5, 8, 12, 10, 14, 16, 10, 10)
+    >>> spellcasting_ability_score(attributes, "int")
+    16
+    >>> spellcasting_ability_score(attributes, "unknown")
+    10
+    """
 
     ability_map = {
         "str": attributes.strength,
@@ -129,13 +136,24 @@ def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
 
 def spell_preparation_mode(block: SpellcastingSource) -> str:
     # The supported source formats currently describe fixed known/prepared lists.
-    """Return the fixed-list preparation mode supported by current source formats."""
+    """Return the fixed-list preparation mode supported by current source formats.
+
+    >>> from types import SimpleNamespace
+    >>> spell_preparation_mode(SimpleNamespace())
+    'fixed'
+    """
 
     return "fixed"
 
 
 def progression_value(progression: object, level: int) -> int | None:
-    """Read the value in effect at a level from a sparse authored progression."""
+    """Read the value in effect at a level from a sparse authored progression.
+
+    >>> progression_value([2, 3, None], 2)
+    3
+    >>> progression_value([2, 3, None], 3) is None
+    True
+    """
 
     if not isinstance(progression, list):
         return None
