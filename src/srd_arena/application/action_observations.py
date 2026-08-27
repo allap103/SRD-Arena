@@ -19,7 +19,7 @@ from srd_arena.domain.spells.rules import (
     spell_area_shape,
     spell_range_squares,
 )
-from srd_arena.runtime.models import ActionView, SceneView
+from srd_arena.engine.models import ActionView, SceneView
 
 from .observation_models import (
     ActionObservation,

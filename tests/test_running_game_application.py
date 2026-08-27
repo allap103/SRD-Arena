@@ -13,8 +13,8 @@ from srd_arena.application.game import RunningGame
 from srd_arena.application.observations import ActionObservation
 from srd_arena.application.startup import GameStartup
 from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
-from srd_arena.runtime.models import ActionView, SceneView, TurnResult
-from srd_arena.runtime.session import Session
+from srd_arena.engine.models import ActionView, SceneView, TurnResult
+from srd_arena.engine.session import Session
 
 FULL_CONTROL_SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"

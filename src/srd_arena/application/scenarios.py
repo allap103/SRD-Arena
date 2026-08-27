@@ -9,7 +9,7 @@ from srd_arena.domain.creatures import Creature
 from srd_arena.domain.encounters import EncounterDefinition
 from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import GeometryConfig
-from srd_arena.runtime.session import Session
+from srd_arena.engine.session import Session
 
 DEFAULT_GRID_COLOR = "#d3d3d3"
 
@@ -57,7 +57,7 @@ class LoadedScenario:
         *,
         automatic_action_limit: int | None = None,
     ) -> Session:
-        """Create an isolated runtime session from the loaded definitions."""
+        """Create an isolated engine session from the loaded definitions."""
 
         return Session(
             encounters=self.encounters,

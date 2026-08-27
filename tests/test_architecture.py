@@ -21,7 +21,7 @@ RULES = (
             "srd_arena.content",
             "srd_arena.frontends",
             "srd_arena.infrastructure",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -30,7 +30,7 @@ RULES = (
             "srd_arena.application",
             "srd_arena.frontends",
             "srd_arena.infrastructure",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -38,7 +38,7 @@ RULES = (
         forbidden=("srd_arena.content.creatures",),
     ),
     DependencyRule(
-        package="srd_arena.runtime",
+        package="srd_arena.engine",
         forbidden=(
             "srd_arena.application",
             "srd_arena.content",
@@ -60,14 +60,14 @@ RULES = (
             "srd_arena.content",
             "srd_arena.domain",
             "srd_arena.infrastructure",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
         package="srd_arena.infrastructure",
         forbidden=(
             "srd_arena.frontends",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -76,7 +76,7 @@ RULES = (
             "srd_arena.content",
             "srd_arena.domain.encounters",
             "srd_arena.infrastructure",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -86,7 +86,7 @@ RULES = (
             "srd_arena.domain",
             "srd_arena.frontends.qt",
             "srd_arena.infrastructure",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -327,10 +327,11 @@ def test_domain_root_is_namespace_only() -> None:
     )
 
 
-def test_package_and_runtime_roots_do_not_reexport_engine_types() -> None:
+def test_package_and_engine_roots_do_not_reexport_engine_types() -> None:
+    assert not (PACKAGE_ROOT / "runtime").exists()
     for path in (
         PACKAGE_ROOT / "__init__.py",
-        PACKAGE_ROOT / "runtime" / "__init__.py",
+        PACKAGE_ROOT / "engine" / "__init__.py",
     ):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         assert (

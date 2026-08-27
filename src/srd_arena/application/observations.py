@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from srd_arena.runtime.session import Session
+from srd_arena.engine.session import Session
 
 from .action_observations import observe_scene
 from .observation_models import (

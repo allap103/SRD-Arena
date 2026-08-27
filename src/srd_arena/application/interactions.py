@@ -9,8 +9,8 @@ from srd_arena.domain.encounters.models import (
 )
 from srd_arena.domain.geometry import MovementCost
 from srd_arena.domain.spells.rules import spell_action_value
-from srd_arena.runtime.models import TurnResult
-from srd_arena.runtime.session import Session
+from srd_arena.engine.models import TurnResult
+from srd_arena.engine.session import Session
 
 from .commands import (
     AimAction,

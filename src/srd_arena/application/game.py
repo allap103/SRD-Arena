@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from srd_arena.runtime.session import Session
+from srd_arena.engine.session import Session
 
 from .commands import CommandResult, GameCommand, GameUpdate
 from .interactions import execute_game_command, game_update

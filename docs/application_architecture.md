@@ -18,7 +18,7 @@ session or mutable encounter state.
                  |                    \           /
                  v                     application
               domain                /             \
-                                   runtime ------> domain
+                                    engine ------> domain
 ```
 
 The arrows show dependencies. `main` is the composition root and chooses the
@@ -27,7 +27,7 @@ concrete filesystem and frontend adapters.
 | Package | Responsibility |
 | --- | --- |
 | `domain` | Rules, creatures, effects, geometry, capabilities, and encounter behavior. It has no dependency on application or delivery technology. |
-| `runtime` | Mutable engine session and scene progression. It depends on domain rules and is private to the application layer. |
+| `engine` | Mutable game session and scene progression. It depends on domain rules and is private to the application layer. |
 | `application` | Scenario source port, startup use cases, the running-game facade, observations, commands, and result translation. |
 | `content` | Parse authored system and scenario data into domain definitions. |
 | `infrastructure` | Implement the application scenario-source port using filesystem content. |
@@ -104,21 +104,21 @@ payload values; engine `CombatEvent` objects do not cross the boundary.
 
 There is intentionally no `get_session()` or `get_encounter_state()` escape
 hatch. `RunningGame` owns its session privately, and frontend dependency tests
-prevent runtime access from returning.
+prevent engine access from returning.
 
 ## Enforced dependency rules
 
-- Domain imports no application, content, infrastructure, runtime, or frontend.
-- Runtime imports domain but no application, content, infrastructure, or
+- Domain imports no application, content, engine, infrastructure, or frontend.
+- Engine imports domain but no application, content, infrastructure, or
   frontend.
-- Application imports runtime/domain contracts but no concrete content,
+- Application imports engine/domain contracts but no concrete content,
   infrastructure, or frontend.
 - The filesystem scenario adapter may import application ports, content, and
   domain definitions.
-- Shared presentation imports application contracts, not runtime or encounter
+- Shared presentation imports application contracts, not engine or encounter
   implementation packages.
 - Qt imports application contracts and may reuse pure domain geometry for
-  pointer-driven area rendering; it imports neither runtime nor encounter
+  pointer-driven area rendering; it imports neither engine nor encounter
   implementation packages.
 - The headless adapter imports application contracts only.
 - Package roots do not re-export engine types and thereby hide ownership.
@@ -129,8 +129,6 @@ These rules are executable in `tests/test_architecture.py`.
 
 ## Deliberately deferred
 
-- Renaming `runtime` to `engine` is cosmetic and should be considered
-  separately.
 - The headless adapter is an in-process Python API, not REST, a Gym environment,
   reward shaping, batching, or a training framework.
 - Observation versioning and wire-format compatibility become relevant only if

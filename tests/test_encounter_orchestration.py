@@ -7,7 +7,7 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.effects import EffectResult, TriggeredEffect
 from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.infrastructure.scenarios import load_scenario
-from srd_arena.runtime.session import Session
+from srd_arena.engine.session import Session
 
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
