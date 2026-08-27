@@ -10,7 +10,14 @@ def roll_optional_dice(
     dice: str | None,
     roller: DieRoller,
 ) -> DicePoolResult | None:
-    """Resolve an optional dice expression, returning no roll when absent."""
+    """Resolve an optional dice expression, returning no roll when absent.
+
+    >>> roll = roll_optional_dice("2d6", lambda sides: 4)
+    >>> (roll.subtotal, roll.total) if roll else None
+    (8, 8)
+    >>> roll_optional_dice(None, lambda sides: 4) is None
+    True
+    """
 
     if dice is None:
         return None
@@ -27,7 +34,16 @@ def restoration_detail(
     total: int,
     applied: int,
 ) -> dict[str, object]:
-    """Build the stable event payload for healing or temporary Hit Points."""
+    """Build the stable event payload for healing or temporary Hit Points.
+
+    >>> from types import SimpleNamespace
+    >>> target = SimpleNamespace(target_ref="hero", target_label="Hero")
+    >>> detail = restoration_detail(
+    ...     target, dice=None, roll=None, modifier=5, total=5, applied=3
+    ... )
+    >>> (detail["target_ref"], detail["total"], detail["applied"])
+    ('hero', 5, 3)
+    """
 
     return {
         "target_ref": target.target_ref,
@@ -45,7 +61,16 @@ def serialize_roll_modifiers(
     modifiers: tuple[RollModifierEffect, ...],
     selected_ability: str | None,
 ) -> list[dict[str, object]]:
-    """Expose the sources and totals of roll modifiers in event-safe form."""
+    """Expose the sources and totals of roll modifiers in event-safe form.
+
+    >>> modifier = RollModifierEffect(
+    ...     roll="saving_throw", mode="advantage", ability="wisdom"
+    ... )
+    >>> serialize_roll_modifiers((modifier,), "wisdom")[0]["mode"]
+    'advantage'
+    >>> serialize_roll_modifiers((modifier,), "strength")
+    []
+    """
 
     serialized: list[dict[str, object]] = []
     for modifier in modifiers:
@@ -74,7 +99,13 @@ def serialize_roll_modifiers(
 
 
 def effect_duration_rounds(duration: EffectDuration | None) -> int | None:
-    """Convert a capability duration into encounter rounds when possible."""
+    """Convert a capability duration into encounter rounds when possible.
+
+    >>> effect_duration_rounds(EffectDuration("timed", 2, "minute"))
+    20
+    >>> effect_duration_rounds(EffectDuration("end_of_turn"))
+    1
+    """
 
     if duration is None:
         return None

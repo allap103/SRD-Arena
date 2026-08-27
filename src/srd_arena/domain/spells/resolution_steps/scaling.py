@@ -10,7 +10,13 @@ def scale_dice(
     increment: str | None,
     levels_above: int,
 ) -> str | None:
-    """Increase a dice expression by a number of additional dice."""
+    """Increase a dice expression by a number of additional dice.
+
+    >>> scale_dice("2d8", "1d8", 3)
+    '5d8'
+    >>> scale_dice("2d8", "1d8", 0)
+    '2d8'
+    """
 
     if base is None or increment is None or levels_above <= 0:
         return base
@@ -27,7 +33,11 @@ def scaled_damage_dice(
     increment_sides: int,
     levels_above: int,
 ) -> str:
-    """Apply resource-level damage-dice scaling to a base expression."""
+    """Apply resource-level damage-dice scaling to a base expression.
+
+    >>> scaled_damage_dice("8d6", 1, 6, 2)
+    '10d6'
+    """
 
     count, sides = parse_damage_dice(dice)
     if sides != increment_sides:
@@ -39,7 +49,22 @@ def actor_level_damage_dice(
     definition: CapabilityDefinition,
     actor_level: int,
 ) -> str | None:
-    """Resolve the highest damage-dice threshold reached by the actor."""
+    """Resolve the highest damage-dice threshold reached by the actor.
+
+    >>> from ...capabilities import (
+    ...     AutomaticResolution, CapabilityScaling, CapabilityTarget, Outcome,
+    ...     ScalingIncrement, ScalingThreshold,
+    ... )
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget("self"), AutomaticResolution(Outcome()),
+    ...     scaling=(CapabilityScaling("actor_level", thresholds=(
+    ...         ScalingThreshold(1, (ScalingIncrement("damage_dice", "1d10"),)),
+    ...         ScalingThreshold(5, (ScalingIncrement("damage_dice", "2d10"),)),
+    ...     )),),
+    ... )
+    >>> actor_level_damage_dice(definition, 7)
+    '2d10'
+    """
 
     thresholds = sorted(
         (
@@ -63,7 +88,21 @@ def resource_dice_increment(
     kind: str,
     damage_type: str | None = None,
 ) -> str | None:
-    """Sum per-resource-level dice increments of a requested kind."""
+    """Return a matching per-resource-level dice increment.
+
+    >>> from ...capabilities import (
+    ...     AutomaticResolution, CapabilityScaling, CapabilityTarget, Outcome,
+    ...     ScalingIncrement,
+    ... )
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget("self"), AutomaticResolution(Outcome()),
+    ...     scaling=(CapabilityScaling("resource_level", per_level=(
+    ...         ScalingIncrement("damage_dice", "1d6", "fire"),
+    ...     )),),
+    ... )
+    >>> resource_dice_increment(definition, "damage_dice", "fire")
+    '1d6'
+    """
 
     return next(
         (
@@ -87,7 +126,22 @@ def resource_int_increment(
     definition: CapabilityDefinition,
     kind: str,
 ) -> int:
-    """Sum per-resource-level integer increments of a requested kind."""
+    """Sum per-resource-level integer increments of a requested kind.
+
+    >>> from ...capabilities import (
+    ...     AutomaticResolution, CapabilityScaling, CapabilityTarget, Outcome,
+    ...     ScalingIncrement,
+    ... )
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget("self"), AutomaticResolution(Outcome()),
+    ...     scaling=(CapabilityScaling("resource_level", per_level=(
+    ...         ScalingIncrement("target_count", 1),
+    ...         ScalingIncrement("target_count", 2),
+    ...     )),),
+    ... )
+    >>> resource_int_increment(definition, "target_count")
+    3
+    """
 
     return sum(
         increment.amount
@@ -99,7 +153,13 @@ def resource_int_increment(
 
 
 def parse_damage_dice(expression: str) -> tuple[int, int]:
-    """Parse an authored dice expression into count, sides, and flat modifier."""
+    """Parse an authored dice expression into its count and die size.
+
+    >>> parse_damage_dice("8d6")
+    (8, 6)
+    >>> parse_damage_dice("2d10")
+    (2, 10)
+    """
 
     match = re.fullmatch(r"(\d+)d(\d+)", expression)
     if match is None:
