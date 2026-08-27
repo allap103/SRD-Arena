@@ -60,6 +60,20 @@ class ScriptedActionSelector:
         creature_ref: CreatureRef,
         actions: Sequence[EncounterAction],
     ) -> EncounterAction:
+        """Select an action from the participant's authored behavior.
+
+        A scripted creature with no living opponent safely waits.
+
+        >>> from unittest.mock import Mock
+        >>> participant = Mock()
+        >>> participant.behavior.type = "wait"
+        >>> selector = ScriptedActionSelector(participant)
+        >>> state = Mock()
+        >>> state._creature_position.return_value = Position(0, 0)
+        >>> state._living_creature_refs.return_value = []
+        >>> selector.select_action(state, "guard", (EncounterAction("Wait", "wait"),)).kind
+        'wait'
+        """
         wait = next(action for action in actions if action.kind == "wait")
         target_ref = self._nearest_opponent(state, creature_ref)
         if target_ref is None:

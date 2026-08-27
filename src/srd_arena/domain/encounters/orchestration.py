@@ -38,7 +38,20 @@ class EncounterOrchestrator:
         state: EncounterState,
         action: EncounterAction,
     ) -> EncounterProgress:
-        """Apply one externally selected action and continue as far as possible."""
+        """Apply one externally selected action and continue as far as possible.
+
+        Actions cannot be submitted on behalf of a different decision actor.
+
+        >>> from unittest.mock import Mock
+        >>> decision = DecisionFrame("turn-hero", "hero", "turn", "active_turn")
+        >>> state = Mock()
+        >>> state.current_decision.return_value = decision
+        >>> action = EncounterAction("Wait", "wait", id="wait", creature_ref="goblin")
+        >>> EncounterOrchestrator().submit(state, action)
+        Traceback (most recent call last):
+        ...
+        ValueError: Action 'wait' belongs to 'goblin', not current decision actor 'hero'.
+        """
         decision = state.current_decision()
         if action.creature_ref != decision.creature_ref:
             raise ValueError(
@@ -67,7 +80,17 @@ class EncounterOrchestrator:
         return self._apply_selected_action(state, action, decision)
 
     def advance(self, state: EncounterState) -> EncounterProgress:
-        """Resolve scripted actions until input, pacing, or a transition stops us."""
+        """Resolve scripted actions until input, pacing, or a transition stops us.
+
+        An already completed encounter returns its transition without selecting
+        another action.
+
+        >>> from unittest.mock import Mock
+        >>> state = Mock(decision_stack=[])
+        >>> state.turn_lifecycle.check_transition.return_value = "victory-scene"
+        >>> EncounterOrchestrator().advance(state).transition
+        'victory-scene'
+        """
         progress = EncounterProgress()
         automatic_actions_resolved = 0
         while True:
