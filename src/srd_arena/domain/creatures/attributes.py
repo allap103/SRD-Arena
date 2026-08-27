@@ -15,6 +15,13 @@ class Movement:
 
     @property
     def effective_speed_feet(self) -> int:
+        """Return the faster of walking and flying speed.
+
+        >>> Movement(speed_feet=30, fly_feet=60).effective_speed_feet
+        60
+        >>> Movement(speed_feet=30).effective_speed_feet
+        30
+        """
         return max(self.speed_feet, self.fly_feet or 0)
 
 

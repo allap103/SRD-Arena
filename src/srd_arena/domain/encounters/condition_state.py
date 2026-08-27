@@ -35,6 +35,15 @@ class ConditionApplicationResult:
 
     @property
     def accepted(self) -> bool:
+        """Return whether the requested condition was actually applied.
+
+        >>> applied = build_applied_condition(condition=Condition.PRONE,
+        ...     source_ref="fall", source_label="Fall", target_ref="hero")
+        >>> ConditionApplicationResult(Condition.PRONE, (applied,)).accepted
+        True
+        >>> ConditionApplicationResult(Condition.PRONE).accepted
+        False
+        """
         return any(
             applied.condition is self.requested_condition for applied in self.applied
         )

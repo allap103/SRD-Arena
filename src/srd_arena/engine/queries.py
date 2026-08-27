@@ -124,12 +124,28 @@ class ActionOption:
 
     @property
     def enabled(self) -> bool:
+        """Return whether the action is implemented and passes eligibility.
+
+        >>> ActionOption("dodge", "Dodge", "action", "hero").enabled
+        True
+        >>> from srd_arena.domain.encounters.actions.eligibility_rules.models import EligibilityFailure
+        >>> failure = ActionEligibility((EligibilityFailure("stunned", "Actor is stunned"),))
+        >>> ActionOption("dodge", "Dodge", "action", "hero", eligibility=failure).enabled
+        False
+        """
         return self.implemented and self.eligibility.allowed
 
     @property
     def availability(
         self,
     ) -> Literal["available", "unavailable", "unimplemented"]:
+        """Return the action's three-state client presentation status.
+
+        >>> ActionOption("dodge", "Dodge", "action", "hero").availability
+        'available'
+        >>> ActionOption("future", "Future", "action", "hero", implemented=False).availability
+        'unimplemented'
+        """
         if not self.implemented:
             return "unimplemented"
         return "available" if self.eligibility.allowed else "unavailable"

@@ -67,6 +67,15 @@ class MultiattackPlan:
         self,
         attack_names: set[str],
     ) -> tuple[MultiattackInvocation, ...] | None:
+        """Resolve a deterministic plan into its executable invocation sequence.
+
+        >>> bite = MultiattackInvocation("stat_block_action", "Bite")
+        >>> plan = MultiattackPlan((MultiattackStep((bite,), times=2),))
+        >>> [entry.name for entry in plan.executable_sequence({"Bite"}) or ()]
+        ['Bite', 'Bite']
+        >>> plan.executable_sequence({"Claw"}) is None
+        True
+        """
         sequence: list[MultiattackInvocation] = []
         for step in self.steps:
             if len(step.options) != 1:
@@ -91,6 +100,15 @@ class MultiattackPlan:
         self,
         attack_names: set[str],
     ) -> tuple[MultiattackStep, ...] | None:
+        """Expand a plan into slots containing only available options.
+
+        >>> bite = MultiattackInvocation("stat_block_action", "Bite")
+        >>> claw = MultiattackInvocation("stat_block_action", "Claw")
+        >>> plan = MultiattackPlan((MultiattackStep((bite, claw), times=2),))
+        >>> slots = plan.executable_slots({"Claw"})
+        >>> [[option.name for option in slot.options] for slot in slots or ()]
+        [['Claw'], ['Claw']]
+        """
         slots: list[MultiattackStep] = []
         for step in self.steps:
             if not isinstance(step.times, int):
@@ -126,6 +144,13 @@ class Multiattack:
         self,
         attack_names: set[str],
     ) -> tuple[MultiattackInvocation, ...] | None:
+        """Return the first plan that forms a deterministic legal sequence.
+
+        >>> bite = MultiattackInvocation("stat_block_action", "Bite")
+        >>> multiattack = Multiattack((MultiattackPlan((MultiattackStep((bite,),),)),))
+        >>> [entry.name for entry in multiattack.executable_sequence({"Bite"}) or ()]
+        ['Bite']
+        """
         for plan in self.plans:
             sequence = plan.executable_sequence(attack_names)
             if sequence is not None:
@@ -136,6 +161,15 @@ class Multiattack:
         self,
         attack_names: set[str],
     ) -> tuple[tuple[MultiattackStep, ...], ...]:
+        """Return every plan whose required slots have legal options.
+
+        >>> bite = MultiattackInvocation("stat_block_action", "Bite")
+        >>> claw = MultiattackInvocation("stat_block_action", "Claw")
+        >>> plans = (MultiattackPlan((MultiattackStep((bite,),),)),
+        ...          MultiattackPlan((MultiattackStep((claw,),),)))
+        >>> len(Multiattack(plans).executable_slot_plans({"Bite"}))
+        1
+        """
         return tuple(
             slots
             for plan in self.plans

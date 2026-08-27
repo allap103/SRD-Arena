@@ -26,9 +26,23 @@ class RoundState:
     number: int = 1
 
     def advance(self) -> None:
+        """Advance the mutable round counter by one.
+
+        >>> round_state = RoundState()
+        >>> round_state.advance()
+        >>> round_state.number
+        2
+        """
         self.number += 1
 
     def matches(self, round_number: int | None) -> bool:
+        """Return whether a possibly absent round number is current.
+
+        >>> RoundState(number=3).matches(3)
+        True
+        >>> RoundState(number=3).matches(None)
+        False
+        """
         return round_number == self.number
 
 

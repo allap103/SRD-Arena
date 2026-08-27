@@ -54,10 +54,25 @@ class ActionObservation:
 
     @property
     def unavailable_reason(self) -> str | None:
+        """Join all human-readable unavailability reasons for display.
+
+        >>> reason = ActionReasonObservation("stunned", "Actor is stunned")
+        >>> ActionObservation("wait", "Wait", "action", "hero", reasons=(reason,)).unavailable_reason
+        'Actor is stunned'
+        >>> ActionObservation("wait", "Wait", "action", "hero").unavailable_reason is None
+        True
+        """
         return "\n".join(reason.message for reason in self.reasons) or None
 
     @property
     def unavailable_reasons(self) -> tuple[str, ...]:
+        """Return unavailability messages without presentation formatting.
+
+        >>> reasons = (ActionReasonObservation("a", "First"),
+        ...            ActionReasonObservation("b", "Second"))
+        >>> ActionObservation("wait", "Wait", "action", "hero", reasons=reasons).unavailable_reasons
+        ('First', 'Second')
+        """
         return tuple(reason.message for reason in self.reasons)
 
 

@@ -28,6 +28,13 @@ class ActionEligibility:
 
     @property
     def allowed(self) -> bool:
+        """Return whether no eligibility rule rejected the action.
+
+        >>> ActionEligibility().allowed
+        True
+        >>> ActionEligibility((EligibilityFailure("stunned", "Actor is stunned"),)).allowed
+        False
+        """
         return not self.failures
 
 

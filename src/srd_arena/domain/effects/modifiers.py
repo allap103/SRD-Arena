@@ -23,6 +23,13 @@ class RollModifier:
     ability: str | None = None
 
     def resolve(self, roller: DieRoller) -> int:
+        """Resolve an additive or subtractive modifier.
+
+        >>> RollModifier("saving_throw", "add", dice="1d4").resolve(lambda _: 3)
+        3
+        >>> RollModifier("attack_roll", "subtract", value=2).resolve(lambda _: 1)
+        -2
+        """
         if self.mode not in {"add", "subtract"}:
             return 0
         total = self.value or 0
@@ -33,6 +40,13 @@ class RollModifier:
 
     @property
     def roll_mode(self) -> D20RollMode | None:
+        """Return the advantage mode contributed by this modifier, if any.
+
+        >>> RollModifier("attack_roll", "advantage").roll_mode
+        'advantage'
+        >>> RollModifier("attack_roll", "add", value=1).roll_mode is None
+        True
+        """
         if self.mode in {"advantage", "disadvantage"}:
             return cast(D20RollMode, self.mode)
         return None
@@ -47,6 +61,14 @@ class DamageReduction:
     available: bool = True
 
     def resolve(self, roller: DieRoller) -> int:
+        """Resolve this reduction once, consuming its availability.
+
+        >>> reduction = DamageReduction("bludgeoning", "1d10")
+        >>> reduction.resolve(lambda _: 4)
+        4
+        >>> reduction.resolve(lambda _: 9)
+        0
+        """
         if not self.available:
             return 0
         count_text, sides_text = self.dice.casefold().split("d", 1)

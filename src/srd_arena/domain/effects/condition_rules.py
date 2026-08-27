@@ -103,12 +103,30 @@ class EffectiveConditionSet:
     suppressed_conditions: tuple[SuppressedCondition, ...] = ()
 
     def has(self, condition: Condition) -> bool:
+        """Return whether a condition is currently effective.
+
+        >>> state = EffectiveConditionSet((EffectiveCondition(Condition.PRONE, ("a",)),), ())
+        >>> state.has(Condition.PRONE)
+        True
+        """
         return any(entry.condition is condition for entry in self.conditions)
 
     def has_trait(self, trait: CombatTrait) -> bool:
+        """Return whether any effective condition supplies a combat trait.
+
+        >>> state = EffectiveConditionSet((), (EffectiveTrait(CombatTrait.SPEED_ZERO, ("a",)),))
+        >>> state.has_trait(CombatTrait.SPEED_ZERO)
+        True
+        """
         return any(entry.trait is trait for entry in self.traits)
 
     def providers_for(self, condition: Condition) -> tuple[str, ...]:
+        """Return the runtime states providing an effective condition.
+
+        >>> state = EffectiveConditionSet((EffectiveCondition(Condition.PRONE, ("fall",)),), ())
+        >>> state.providers_for(Condition.PRONE)
+        ('fall',)
+        """
         return next(
             (
                 entry.provider_ids
@@ -119,6 +137,12 @@ class EffectiveConditionSet:
         )
 
     def providers_for_trait(self, trait: CombatTrait) -> tuple[str, ...]:
+        """Return the runtime states providing an effective trait.
+
+        >>> trait = EffectiveTrait(CombatTrait.SPEED_ZERO, ("grapple",))
+        >>> EffectiveConditionSet((), (trait,)).providers_for_trait(CombatTrait.SPEED_ZERO)
+        ('grapple',)
+        """
         return next(
             (entry.provider_ids for entry in self.traits if entry.trait is trait),
             (),
@@ -129,7 +153,17 @@ def effective_conditions(
     applied_conditions: tuple[AppliedCondition, ...],
     condition_immunities: frozenset[Condition] = frozenset(),
 ) -> EffectiveConditionSet:
-    """Handle effective conditions."""
+    """Expand applied conditions into effective conditions and traits.
+
+    >>> from srd_arena.domain.effects.conditions import build_applied_condition
+    >>> paralyzed = build_applied_condition(condition=Condition.PARALYZED,
+    ...     source_ref="mage", source_label="Mage", target_ref="ogre")
+    >>> effective = effective_conditions((paralyzed,))
+    >>> effective.has(Condition.INCAPACITATED)
+    True
+    >>> effective.has_trait(CombatTrait.SPEED_ZERO)
+    True
+    """
 
     condition_providers: dict[Condition, set[str]] = {}
     trait_providers: dict[CombatTrait, set[str]] = {}

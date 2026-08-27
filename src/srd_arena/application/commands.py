@@ -118,4 +118,9 @@ class CommandResult:
 
     @property
     def accepted(self) -> bool:
+        """Return whether the command produced an application update.
+
+        >>> CommandResult(failure=CommandFailure("stale", "Decision changed")).accepted
+        False
+        """
         return self.update is not None

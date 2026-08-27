@@ -50,6 +50,11 @@ class SavingThrowModifiers:
 
     @property
     def total(self) -> int:
+        """Return the combined saving-throw modifier.
+
+        >>> SavingThrowModifiers(ability=3, proficiency=2, other=1).total
+        6
+        """
         return self.ability + self.proficiency + self.other
 
 
