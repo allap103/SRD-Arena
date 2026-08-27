@@ -22,6 +22,18 @@ class SpellTargetContext:
     automatic_save_failures: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
     def automatic_failure_reasons(self, ability: str) -> tuple[str, ...]:
+        """Return condition-derived automatic save failures for an ability.
+
+        >>> from srd_arena.domain.creatures import Attributes, Equipment, Inventory
+        >>> creature = Creature("hero", "Hero", "", Inventory(),
+        ...     Attributes(10, 1, 10, 10, 10, 10, 10, 10, 10), Equipment())
+        >>> target = SpellTargetContext(creature, "hero", "Hero",
+        ...     automatic_save_failures={"dexterity": ("stunned",)})
+        >>> target.automatic_failure_reasons("dexterity")
+        ('stunned',)
+        >>> target.automatic_failure_reasons("wisdom")
+        ()
+        """
         return self.automatic_save_failures.get(ability, ())
 
 

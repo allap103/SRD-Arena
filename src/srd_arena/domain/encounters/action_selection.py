@@ -38,6 +38,12 @@ class ExternalActionSelector:
         creature_ref: CreatureRef,
         actions: Sequence[EncounterAction],
     ) -> None:
+        """Decline automatic selection so an external controller can choose.
+
+        >>> from unittest.mock import Mock
+        >>> ExternalActionSelector().select_action(Mock(), "hero", ()) is None
+        True
+        """
         return None
 
 

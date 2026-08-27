@@ -66,6 +66,15 @@ class ActionExecutionResult:
 
     @property
     def progress(self) -> EncounterProgress:
+        """Return progress accumulated on the execution context.
+
+        >>> from unittest.mock import Mock
+        >>> progress = EncounterProgress(messages=[("Hero", "Dodges")])
+        >>> context = Mock(progress=progress)
+        >>> result = ActionExecutionResult(context, ActionExecutionOutcome.CONTINUE_TURN)
+        >>> result.progress is progress
+        True
+        """
         return self.context.progress
 
 

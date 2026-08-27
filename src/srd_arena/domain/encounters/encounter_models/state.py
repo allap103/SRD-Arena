@@ -88,6 +88,19 @@ class EncounterCreatureState:
 
     @property
     def is_alive(self) -> bool:
+        """Return whether the encounter creature still has hit points.
+
+        >>> from srd_arena.domain.creatures import Attributes, Equipment, Inventory
+        >>> creature = Creature("hero", "Hero", "", Inventory(),
+        ...     Attributes(10, 1, 10, 10, 10, 10, 10, 10, 10), Equipment())
+        >>> state = EncounterCreatureState("hero", creature, Position(0, 0), EncounterBehavior("hold"))
+        >>> state.is_alive
+        True
+        >>> creature.take_damage(10)
+        10
+        >>> state.is_alive
+        False
+        """
         return self.creature.get_health() > 0
 
 

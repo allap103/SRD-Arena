@@ -246,20 +246,50 @@ class EncounterState(EncounterStateData):
     # Engines are stateless rule/orchestration collaborators.
     @property
     def reaction_engine(self) -> ReactionEngine:
+        """Return the stateless reaction-orchestration service.
+
+        >>> from srd_arena.domain.geometry import Grid
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
+        >>> isinstance(state.reaction_engine, ReactionEngine)
+        True
+        """
         return REACTION_ENGINE
 
     @property
     def turn_lifecycle(self) -> TurnLifecycle:
+        """Return the stateless turn-lifecycle service.
+
+        >>> from srd_arena.domain.geometry import Grid
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
+        >>> isinstance(state.turn_lifecycle, TurnLifecycle)
+        True
+        """
         return TURN_LIFECYCLE
 
     @property
     def combat_rules(self) -> CombatRules:
+        """Return the stateless combat-rule query service.
+
+        >>> from srd_arena.domain.geometry import Grid
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
+        >>> isinstance(state.combat_rules, CombatRules)
+        True
+        """
         return COMBAT_RULES
 
     # Compatibility views expose structured interrupt, round, turn, and
     # active-creature state through the established EncounterState API.
     @property
     def decision_stack(self) -> list[DecisionFrame]:
+        """Expose the interrupt state's nested decision frames.
+
+        >>> from srd_arena.domain.geometry import Grid
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
+        >>> frame = DecisionFrame("reaction-1", "hero", "reaction", "counterspell")
+        >>> state.decision_stack = [frame]
+        >>> state.decision_stack[-1].reason
+        'counterspell'
+        """
         return self.interrupts.decision_stack
 
     @decision_stack.setter
@@ -268,6 +298,17 @@ class EncounterState(EncounterStateData):
 
     @property
     def pending_movement(self) -> PendingMovement | None:
+        """Return movement suspended by the newest opportunity-attack decision.
+
+        >>> from srd_arena.domain.geometry import Grid, MovementCost
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
+        >>> movement = PendingMovement("move", "hero", "right", Position(0, 0),
+        ...     Position(1, 0), MovementBudget(5), MovementCost(1), "trigger")
+        >>> state.decision_stack = [DecisionFrame("reaction", "enemy", "reaction", "opportunity",
+        ...     request=OpportunityAttackRequest(movement))]
+        >>> state.pending_movement is movement
+        True
+        """
         for decision in reversed(self.decision_stack):
             if isinstance(decision.request, OpportunityAttackRequest):
                 return decision.request.movement
@@ -275,6 +316,15 @@ class EncounterState(EncounterStateData):
 
     @property
     def pending_spell_cast(self) -> PendingSpellCast | None:
+        """Expose spell targeting staged before invocation begins.
+
+        >>> from srd_arena.domain.geometry import Grid
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
+        >>> pending = PendingSpellCast(EncounterAction("Cast", "spell"), "fireball", [], 1)
+        >>> state.pending_spell_cast = pending
+        >>> state.pending_spell_cast.spell_id if state.pending_spell_cast else None
+        'fireball'
+        """
         return self.interrupts.pending_spell_cast
 
     @pending_spell_cast.setter
@@ -283,6 +333,14 @@ class EncounterState(EncounterStateData):
 
     @property
     def turn_index(self) -> int:
+        """Expose the current index within initiative order.
+
+        >>> from srd_arena.domain.geometry import Grid
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
+        >>> state.turn_index = 2
+        >>> state.turn_index
+        2
+        """
         return self.turn.index
 
     @turn_index.setter
@@ -291,6 +349,14 @@ class EncounterState(EncounterStateData):
 
     @property
     def round_number(self) -> int:
+        """Expose the current one-based encounter round.
+
+        >>> from srd_arena.domain.geometry import Grid
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
+        >>> state.round_number = 3
+        >>> state.round_number
+        3
+        """
         return self.round.number
 
     @round_number.setter
@@ -299,14 +365,45 @@ class EncounterState(EncounterStateData):
 
     @property
     def active_creature_state(self) -> EncounterCreatureState:
+        """Return state for the creature owning the current decision.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> active = Mock()
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)),
+        ...     {"hero": active}, initiative_order=["hero"])
+        >>> state.active_creature_state is active
+        True
+        """
         return self.creatures[self.current_decision().creature_ref]
 
     @property
     def active_position(self) -> Position:
+        """Return the current decision owner's grid position.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> active = Mock(position=Position(2, 3))
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)),
+        ...     {"hero": active}, initiative_order=["hero"])
+        >>> state.active_position
+        Position(x=2, y=3)
+        """
         return self.active_creature_state.position
 
     @property
     def active_movement_remaining(self) -> MovementBudget | None:
+        """Expose the current decision owner's remaining movement budget.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> active = Mock(movement_remaining=MovementBudget(4))
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)),
+        ...     {"hero": active}, initiative_order=["hero"])
+        >>> state.active_movement_remaining = 3
+        >>> state.active_movement_remaining
+        3
+        """
         return self.active_creature_state.movement_remaining
 
     @active_movement_remaining.setter
@@ -317,6 +414,19 @@ class EncounterState(EncounterStateData):
 
     @property
     def active_action_available(self) -> bool:
+        """Return whether the active creature retains at least one action.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> active = Mock(actions_remaining=1, action_used_this_turn=False)
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)),
+        ...     {"hero": active}, initiative_order=["hero"])
+        >>> state.active_action_available
+        True
+        >>> state.active_action_available = False
+        >>> state.active_actions_remaining
+        0
+        """
         return self.active_creature_state.actions_remaining > 0
 
     @active_action_available.setter
@@ -333,6 +443,17 @@ class EncounterState(EncounterStateData):
 
     @property
     def active_actions_remaining(self) -> int:
+        """Expose the active creature's remaining ordinary actions.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> active = Mock(actions_remaining=2, action_used_this_turn=False)
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)),
+        ...     {"hero": active}, initiative_order=["hero"])
+        >>> state.active_actions_remaining = 1
+        >>> (state.active_actions_remaining, active.action_used_this_turn)
+        (1, True)
+        """
         return self.active_creature_state.actions_remaining
 
     @active_actions_remaining.setter
@@ -343,6 +464,17 @@ class EncounterState(EncounterStateData):
 
     @property
     def active_magic_actions_remaining(self) -> int:
+        """Expose the active creature's remaining Magic actions.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> active = Mock(magic_actions_remaining=1)
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)),
+        ...     {"hero": active}, initiative_order=["hero"])
+        >>> state.active_magic_actions_remaining = -1
+        >>> state.active_magic_actions_remaining
+        0
+        """
         return self.active_creature_state.magic_actions_remaining
 
     @active_magic_actions_remaining.setter
@@ -351,6 +483,17 @@ class EncounterState(EncounterStateData):
 
     @property
     def active_attacks_remaining(self) -> int:
+        """Expose attacks remaining within the active Attack action.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> active = Mock(attacks_remaining=2)
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)),
+        ...     {"hero": active}, initiative_order=["hero"])
+        >>> state.active_attacks_remaining = 1
+        >>> state.active_attacks_remaining
+        1
+        """
         return self.active_creature_state.attacks_remaining
 
     @active_attacks_remaining.setter
@@ -359,6 +502,17 @@ class EncounterState(EncounterStateData):
 
     @property
     def active_bonus_action_available(self) -> bool:
+        """Expose whether the active creature retains its Bonus Action.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> active = Mock(bonus_action_available=True, bonus_action_used_this_turn=False)
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)),
+        ...     {"hero": active}, initiative_order=["hero"])
+        >>> state.active_bonus_action_available = False
+        >>> (state.active_bonus_action_available, active.bonus_action_used_this_turn)
+        (False, True)
+        """
         return self.active_creature_state.bonus_action_available
 
     @active_bonus_action_available.setter
@@ -369,6 +523,17 @@ class EncounterState(EncounterStateData):
 
     @property
     def active_reaction_available(self) -> bool:
+        """Expose whether the active creature retains its Reaction.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.geometry import Grid
+        >>> active = Mock(reaction_available=True)
+        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)),
+        ...     {"hero": active}, initiative_order=["hero"])
+        >>> state.active_reaction_available = False
+        >>> state.active_reaction_available
+        False
+        """
         return self.active_creature_state.reaction_available
 
     @active_reaction_available.setter
@@ -384,6 +549,21 @@ class EncounterState(EncounterStateData):
         item_templates: dict[str, Item] | None = None,
         geometry_config: GeometryConfig | None = None,
     ) -> EncounterState:
+        """Create isolated runtime state from an authored encounter definition.
+
+        Creature templates are copied so an encounter cannot mutate loaded content.
+
+        >>> from srd_arena.domain.creatures import Attributes, Equipment, Inventory
+        >>> from srd_arena.domain.encounters.definitions import EncounterParticipant
+        >>> from srd_arena.domain.geometry import Grid
+        >>> hero = Creature("hero", "Hero", "", Inventory(),
+        ...     Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
+        >>> definition = EncounterDefinition("demo", Grid(5, 5),
+        ...     participants=[EncounterParticipant("hero", Position(1, 2), "external")])
+        >>> state = EncounterState.from_definition("demo", definition, {"hero": hero})
+        >>> (state.creatures["hero"].position, state.creatures["hero"].creature is hero)
+        (Position(x=1, y=2), False)
+        """
         creatures: dict[CreatureRef, EncounterCreatureState] = {}
         for participant in definition.participants:
             creature = creature_templates[participant.creature_id]

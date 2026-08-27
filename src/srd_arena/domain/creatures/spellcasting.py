@@ -29,12 +29,25 @@ class Spellcasting:
 
     @property
     def spell_slot_pool(self) -> SpellSlotPool:
+        """Project maximum slots as a capability resource pool.
+
+        >>> casting = Spellcasting("int", 4, 15, 7, "full", spell_slots_max={1: 4, 2: 3})
+        >>> casting.spell_slot_pool.maximum_by_level
+        ((1, 4), (2, 3))
+        """
         return SpellSlotPool(
             id="spell_slots",
             maximum_by_level=tuple(sorted(self.spell_slots_max.items())),
         )
 
     def grant_for(self, spell: Spell) -> CapabilityGrant | None:
+        """Create a castable grant when the spell has executable mechanics.
+
+        >>> from srd_arena.domain.spells import Spell
+        >>> casting = Spellcasting("int", 4, 15, 7, "full")
+        >>> casting.grant_for(Spell("unknown", "Unknown", None, 1)) is None
+        True
+        """
         if spell.definition is None or spell.activation is None:
             return None
         cost = (
