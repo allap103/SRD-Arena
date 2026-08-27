@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any
+from typing import cast
 
+from srd_arena.domain.creatures import Creature, StatBlockActionDefinition
+from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.encounters.models import EncounterCreatureState
 from srd_arena.domain.geometry import (
     Position,
     Vector2D,
@@ -14,131 +19,151 @@ from srd_arena.domain.geometry import (
     serialize_area,
 )
 from srd_arena.domain.spells.rules import (
-    parse_spell_action_slot,
-    parse_spell_action_value,
     spell_area_shape,
     spell_range_squares,
 )
-from srd_arena.engine.models import ActionView, SceneView
+from srd_arena.domain.spells import Spell
+from srd_arena.engine.queries import (
+    ActionOption,
+    DirectTargetOptionDetails,
+    FeatureOptionDetails,
+    MovementOptionDetails,
+    ResourceAllocationOptionDetails,
+    SessionRead,
+    SpellOptionDetails,
+    StatBlockOptionDetails,
+)
 
 from .observation_models import (
     ActionObservation,
     ActionReasonObservation,
     SceneObservation,
 )
+from .values import ApplicationValue
 
 
-def observe_scene(scene: SceneView, state: Any | None) -> SceneObservation:
+@dataclass(frozen=True)
+class _ActionSemantics:
+    source_id: str | None = None
+    source_label: str | None = None
+    source_level: int | None = None
+    resource_level: int | None = None
+    feature_id: str | None = None
+    movement_direction: str | None = None
+    target_ref: str | None = None
+    aim_point: tuple[float, float] | None = None
+    area_preview: Mapping[str, ApplicationValue] | None = None
+
+
+def observe_scene(read: SessionRead) -> SceneObservation:
     return SceneObservation(
-        scene_id=scene.scene_id,
-        scene_text=scene.scene_text,
+        scene_id=read.scene_id,
+        scene_text=read.scene_text,
         action_details=tuple(
-            _observe_action(action, state) for action in scene.action_details
+            _observe_action(option, read.encounter_state)
+            for option in read.action_options
         ),
     )
 
 
-def _observe_action(action: ActionView, state: Any | None) -> ActionObservation:
-    reason_messages = action.unavailable_reasons or (
-        (action.unavailable_reason,) if action.unavailable_reason else ()
+def _observe_action(
+    option: ActionOption,
+    state: EncounterState | None,
+) -> ActionObservation:
+    reason_entries = tuple(
+        dict.fromkeys(
+            (failure.code, failure.message)
+            for failure in option.eligibility.failures
+        )
     )
-    reason_codes = action.unavailable_codes or tuple(
-        action.availability for _ in reason_messages
-    )
-    semantics = _action_semantics(action, state)
+    semantics = _action_semantics(option, state)
     return ActionObservation(
-        id=action.id,
-        label=action.label,
-        kind=action.kind,
-        creature_ref=action.creature_ref,
-        cost=MappingProxyType(dict(action.cost)),
-        enabled=action.enabled,
-        availability=action.availability,
+        id=option.id,
+        label=option.label,
+        kind=option.kind,
+        creature_ref=option.creature_ref,
+        cost=MappingProxyType(
+            {
+                "movement": option.cost.movement,
+                "action": option.cost.action,
+                "bonus_action": option.cost.bonus_action,
+                "reaction": option.cost.reaction,
+            }
+        ),
+        enabled=option.enabled,
+        availability=option.availability,
         reasons=tuple(
             ActionReasonObservation(code=code, message=message)
-            for code, message in zip(reason_codes, reason_messages, strict=False)
+            for code, message in reason_entries
         ),
-        source_trigger_id=action.source_trigger_id,
-        preferred_attack_type=action.preferred_attack_type,
-        preferred_attack_name=action.preferred_attack_name,
-        **semantics,
+        source_trigger_id=option.source_trigger_id,
+        preferred_attack_type=option.preferred_attack_type,
+        preferred_attack_name=option.preferred_attack_name,
+        source_id=semantics.source_id,
+        source_label=semantics.source_label,
+        source_level=semantics.source_level,
+        resource_level=semantics.resource_level,
+        feature_id=semantics.feature_id,
+        movement_direction=semantics.movement_direction,
+        target_ref=semantics.target_ref,
+        aim_point=semantics.aim_point,
+        area_preview=semantics.area_preview,
     )
 
 
 def _action_semantics(
-    action: ActionView,
-    state: Any | None,
-) -> dict[str, Any]:
+    action: ActionOption,
+    state: EncounterState | None,
+) -> _ActionSemantics:
     if state is None:
-        return {}
+        return _ActionSemantics()
     creature_state = state.creatures.get(action.creature_ref)
     if creature_state is None:
-        return {}
+        return _ActionSemantics()
     creature = creature_state.creature
-    if action.kind in {"spell", "toggle_spell_target"}:
-        source_id, target_ref, aim_point = _spell_action_parts(action)
-        spell = _find_spell(creature, source_id)
-        return {
-            "source_id": source_id,
-            "source_label": spell.name if spell is not None else source_id,
-            "source_level": spell.level if spell is not None else None,
-            "resource_level": (
-                parse_spell_action_slot(action.value)
-                if action.kind == "spell" and isinstance(action.value, str)
-                else None
+    details = action.details
+    if isinstance(details, SpellOptionDetails):
+        spell = _find_spell(creature, details.source_id)
+        return _ActionSemantics(
+            source_id=details.source_id,
+            source_label=(
+                spell.name if spell is not None else details.source_id
             ),
-            "target_ref": target_ref,
-            "aim_point": aim_point,
-            "area_preview": _spell_area_preview(state, creature_state, spell, aim_point),
-        }
-    if action.kind == "stat_block":
-        definition = creature.stat_block_actions.get(action.preferred_attack_name or "")
-        return {
-            "source_id": action.preferred_attack_name,
-            "source_label": action.preferred_attack_name,
-            "target_ref": _direct_target_ref(action.value),
-            "area_preview": _stat_block_area_preview(
+            source_level=spell.level if spell is not None else None,
+            resource_level=details.resource_level,
+            target_ref=details.target_ref,
+            aim_point=details.aim_point,
+            area_preview=_spell_area_preview(
+                state,
+                creature_state,
+                spell,
+                details.aim_point,
+            ),
+        )
+    if isinstance(details, StatBlockOptionDetails):
+        definition = creature.stat_block_actions.get(details.source_id or "")
+        return _ActionSemantics(
+            source_id=details.source_id,
+            source_label=details.source_id,
+            target_ref=details.target_ref,
+            area_preview=_stat_block_area_preview(
                 state,
                 creature_state,
                 definition,
             ),
-        }
-    if action.kind == "feature" and isinstance(action.value, str):
-        return {"feature_id": action.value}
-    if action.kind == "move" and isinstance(action.value, str):
-        return {"movement_direction": action.value}
-    if action.kind == "set_spell_resource_allocation" and isinstance(
-        action.value, str
-    ):
-        return {"target_ref": action.value.rpartition("~")[0]}
-    if action.kind in {"attack", "grapple", "opportunity_attack"}:
-        return {"target_ref": _direct_target_ref(action.value)}
-    return {}
+        )
+    if isinstance(details, FeatureOptionDetails):
+        return _ActionSemantics(feature_id=details.feature_id)
+    if isinstance(details, MovementOptionDetails):
+        return _ActionSemantics(movement_direction=details.direction)
+    if isinstance(details, ResourceAllocationOptionDetails):
+        return _ActionSemantics(target_ref=details.target_ref)
+    if isinstance(details, DirectTargetOptionDetails):
+        return _ActionSemantics(target_ref=details.target_ref)
+    return _ActionSemantics()
 
 
-def _spell_action_parts(
-    action: ActionView,
-) -> tuple[str | None, str | None, tuple[float, float] | None]:
-    if action.kind == "spell" and isinstance(action.value, str):
-        return parse_spell_action_value(action.value)
-    return (
-        action.source_trigger_id,
-        action.value if isinstance(action.value, str) else None,
-        None,
-    )
-
-
-def _direct_target_ref(
-    value: str | int | tuple[float, float] | None,
-) -> str | None:
-    if isinstance(value, str):
-        return value
-    if isinstance(value, int):
-        return f"participant:{value}"
-    return None
-
-
-def _find_spell(creature: Any, spell_id: str | None) -> Any | None:
+def _find_spell(creature: Creature, spell_id: str | None) -> Spell | None:
     if spell_id is None or creature.spellcasting is None:
         return None
     return next(
@@ -152,11 +177,11 @@ def _find_spell(creature: Any, spell_id: str | None) -> Any | None:
 
 
 def _spell_area_preview(
-    state: Any,
-    creature_state: Any,
-    spell: Any | None,
+    state: EncounterState,
+    creature_state: EncounterCreatureState,
+    spell: Spell | None,
     aim_point: tuple[float, float] | None,
-) -> dict[str, object] | None:
+) -> Mapping[str, ApplicationValue] | None:
     if spell is None or aim_point is not None:
         return None
     grid = state.definition.grid
@@ -171,31 +196,37 @@ def _spell_area_preview(
             if spell_area_shape(spell) == "cube"
             else build_radius_area(Position(0, 0), size_squares, grid)
         )
-        return serialize_area(area)
+        return cast(
+            Mapping[str, ApplicationValue] | None,
+            serialize_area(area),
+        )
     if spell.geometry_mode != "directional_area":
         return None
     length = spell_range_squares(spell, grid)
     if length is None:
         return None
-    return serialize_area(
-        build_directional_area(
-            spell.range_data.get("type"),
-            Position(creature_state.position.x, creature_state.position.y),
-            Vector2D(1.0, 0.0),
-            length,
-            grid,
-            coverage_threshold=(
-                state.geometry_config.directional_area_cell_coverage_threshold
-            ),
+    return cast(
+        Mapping[str, ApplicationValue] | None,
+        serialize_area(
+            build_directional_area(
+                spell.range_data.get("type"),
+                Position(creature_state.position.x, creature_state.position.y),
+                Vector2D(1.0, 0.0),
+                length,
+                grid,
+                coverage_threshold=(
+                    state.geometry_config.directional_area_cell_coverage_threshold
+                ),
+            )
         )
     )
 
 
 def _stat_block_area_preview(
-    state: Any,
-    creature_state: Any,
-    definition: Any | None,
-) -> dict[str, object] | None:
+    state: EncounterState,
+    creature_state: EncounterCreatureState,
+    definition: StatBlockActionDefinition | None,
+) -> Mapping[str, ApplicationValue] | None:
     target = getattr(definition, "target", None)
     shape = getattr(target, "shape", None)
     size_feet = getattr(target, "size_feet", None)
@@ -212,16 +243,19 @@ def _stat_block_area_preview(
         (width_feet if isinstance(width_feet, int) else grid.square_size_feet)
         / grid.square_size_feet,
     )
-    return serialize_area(
-        build_directional_area(
-            shape,
-            Position(creature_state.position.x, creature_state.position.y),
-            Vector2D(1.0, 0.0),
-            int(grid.distance_from_feet(size_feet, minimum=1)),
-            grid,
-            width_squares=width_squares,
-            coverage_threshold=(
-                state.geometry_config.directional_area_cell_coverage_threshold
-            ),
+    return cast(
+        Mapping[str, ApplicationValue] | None,
+        serialize_area(
+            build_directional_area(
+                shape,
+                Position(creature_state.position.x, creature_state.position.y),
+                Vector2D(1.0, 0.0),
+                int(grid.distance_from_feet(size_feet, minimum=1)),
+                grid,
+                width_squares=width_squares,
+                coverage_threshold=(
+                    state.geometry_config.directional_area_cell_coverage_threshold
+                ),
+            )
         )
     )

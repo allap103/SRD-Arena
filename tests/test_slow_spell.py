@@ -13,19 +13,11 @@ from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.rule_effects import AttackLimit
 from srd_arena.domain.effects.runtime import EffectPolarity, OngoingEffectKind
 from srd_arena.domain.encounters import EncounterOrchestrator
-from srd_arena.domain.encounters.encounter import (
-    ActionCost,
-    EncounterAction,
-    EncounterState,
-)
+from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import resolve_end_turn_effects
 from srd_arena.domain.geometry import Position
-from srd_arena.domain.spells.rules import (
-    parse_spell_action_slot,
-    parse_spell_action_value,
-    spell_action_value,
-)
+from srd_arena.engine.queries import ActionAim
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 _ORCHESTRATOR = EncounterOrchestrator()
@@ -66,29 +58,13 @@ def _player_first_initiative(monkeypatch):
 
 
 def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
-    scene_view = session.get_scene_view()
+    scene_view = session.read()
     action = next(
-        detail for detail in scene_view.action_details if detail.label == label
+        detail for detail in scene_view.action_options if detail.label == label
     )
-    return session.choose_encounter_action(
-        EncounterAction(
-            label=action.label,
-            kind=action.kind,
-            value=spell_action_value(
-                parse_spell_action_value(str(action.value))[0],
-                aim_point=(aim_cell[0] + 0.5, aim_cell[1] + 0.5),
-                slot_level=parse_spell_action_slot(str(action.value)),
-            ),
-            id=action.id,
-            creature_ref=action.creature_ref,
-            cost=ActionCost(
-                movement=action.cost.get("movement", 0),
-                action=action.cost.get("action", 0),
-                bonus_action=action.cost.get("bonus_action", 0),
-                reaction=action.cost.get("reaction", 0),
-            ),
-            source_trigger_id=action.source_trigger_id,
-        )
+    return session.configure_action(
+        action.id,
+        ActionAim(x=aim_cell[0] + 0.5, y=aim_cell[1] + 0.5),
     )
 
 
@@ -99,7 +75,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -264,7 +240,7 @@ def test_slow_chosen_area_never_exceeds_six_targets(monkeypatch) -> None:
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -320,7 +296,7 @@ def _assassin_showcase_state() -> EncounterState:
         str(STAT_BLOCK_ACTION_SCENARIO_DIR),
         start_scene="stat_block_action_showcase",
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -458,7 +434,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -533,7 +509,7 @@ def test_ending_slow_mid_attack_restores_unused_extra_attack(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

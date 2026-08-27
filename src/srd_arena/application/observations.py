@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any, cast
-
-from srd_arena.engine.session import Session
+from srd_arena.domain.effects.runtime import OngoingEffect
+from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.encounters.models import (
+    ActionCost,
+    EncounterAction,
+    EncounterCreatureState,
+)
+from srd_arena.engine.api import GameEngine
+from srd_arena.engine.queries import SessionRead
 
 from .action_observations import observe_scene
 from .observation_models import (
@@ -53,67 +59,61 @@ __all__ = [
 ]
 
 
-def observe_session(session: Session) -> GameObservation:
+def observe_session(session: GameEngine) -> GameObservation:
     """Translate mutable engine state into a frontend-neutral snapshot."""
 
-    scene_view = session.get_scene_view()
-    state = session.encounter_state
-    scene = observe_scene(scene_view, state)
+    read = session.read()
+    state = read.encounter_state
+    scene = observe_scene(read)
     transition = (
-        TransitionObservation(message=session.pending_scene_transition.message)
-        if session.pending_scene_transition is not None
+        TransitionObservation(message=read.transition_message)
+        if read.transition_message is not None
         else None
     )
     return GameObservation(
         scene=scene,
-        encounter=_observe_encounter(session) if state is not None else None,
+        encounter=_observe_encounter(read) if state is not None else None,
         transition=transition,
-        requires_automatic_advance=(
-            transition is None
-            and state is not None
-            and state.requires_automatic_advance()
-        ),
+        requires_automatic_advance=read.requires_automatic_advance,
     )
 
 
-def _observe_encounter(session: Session) -> EncounterObservation:
-    state = session.encounter_state
+def _observe_encounter(read: SessionRead) -> EncounterObservation:
+    state = read.encounter_state
     if state is None:
         raise RuntimeError("Cannot observe an encounter before it has started.")
-    exported = cast(dict[str, Any], state.export_state())
-    creatures = cast(dict[str, dict[str, Any]], exported["creatures"])
-    grid = cast(dict[str, int], exported["grid"])
-    decision = cast(dict[str, Any], exported["decision"])
-    initiative = cast(list[dict[str, Any]], exported["initiative"])
-    ongoing_effects = cast(list[dict[str, Any]], exported["ongoing_effects"])
+    grid = state.definition.grid
+    decision = state.current_decision()
 
     return EncounterObservation(
-        encounter_id=str(exported["encounter_id"]),
-        grid=GridObservation(width=grid["width"], height=grid["height"]),
-        round_number=int(exported["round_number"]),
+        encounter_id=state.encounter_id,
+        grid=GridObservation(width=grid.width, height=grid.height),
+        round_number=state.round_number,
         decision=DecisionObservation(
-            id=str(decision["frame_id"]),
-            kind=str(decision["kind"]),
-            creature_ref=str(decision["creature_ref"]),
+            id=decision.id,
+            kind=decision.kind,
+            creature_ref=decision.creature_ref,
         ),
         creatures=tuple(
-            _observe_creature(session, state, creature_ref, creature)
-            for creature_ref, creature in creatures.items()
+            _observe_creature(read, state, creature_ref, creature_state)
+            for creature_ref, creature_state in state.creatures.items()
         ),
         initiative=tuple(
             InitiativeObservation(
-                creature_ref=str(entry["creature_ref"]),
-                total=int(entry["total"]),
+                creature_ref=entry.creature_ref,
+                total=entry.total,
             )
-            for entry in initiative
+            for entry in state.initiative_entries
         ),
-        ongoing_effects=tuple(_observe_effect(effect) for effect in ongoing_effects),
-        team_ids=tuple(team.id for team in session.current_encounter.teams),
+        ongoing_effects=tuple(
+            _observe_effect(effect) for effect in state.ongoing_effects
+        ),
+        team_ids=read.team_ids,
         targeting=_observe_targeting(state),
     )
 
 
-def _observe_targeting(state: Any) -> TargetingObservation | None:
+def _observe_targeting(state: EncounterState) -> TargetingObservation | None:
     pending = state.pending_spell_cast
     if pending is None:
         return None
@@ -150,54 +150,96 @@ def _observe_targeting(state: Any) -> TargetingObservation | None:
 
 
 def _observe_creature(
-    session: Session,
-    state: Any,
+    read: SessionRead,
+    state: EncounterState,
     creature_ref: str,
-    creature: dict[str, Any],
+    creature_state: EncounterCreatureState,
 ) -> CreatureObservation:
-    position = cast(dict[str, int], creature["position"])
-    slots_max = cast(dict[str, int], creature["spell_slots_max"])
-    slots_remaining = cast(dict[str, int], creature["spell_slots_remaining"])
-    effective_conditions = cast(list[dict[str, Any]], creature["effective_conditions"])
-    feature_definitions = state.creatures[
-        creature_ref
-    ].creature.combat_profile.feature_actions
-    domain_creature = state.creatures[creature_ref].creature
-    attributes = domain_creature.attributes
+    creature = creature_state.creature
+    attributes = creature.attributes
+    feature_definitions = creature.combat_profile.feature_actions
+    spellcasting = creature.spellcasting
+    slots_max = spellcasting.spell_slots_max if spellcasting is not None else {}
+    slots_remaining = (
+        spellcasting.spell_slots_remaining if spellcasting is not None else {}
+    )
+    movement = state.combat_rules.movement_budget(state, creature_ref)
+    movement_remaining = (
+        creature_state.movement_remaining
+        if creature_state.movement_remaining is not None
+        else movement.budget
+    )
+    action_available = state.combat_rules.action_compatibility(
+        state,
+        creature_ref,
+        EncounterAction(
+            label="Action",
+            kind="action",
+            creature_ref=creature_ref,
+            cost=ActionCost(action=1),
+        ),
+    ).allowed
+    bonus_action_available = state.combat_rules.action_compatibility(
+        state,
+        creature_ref,
+        EncounterAction(
+            label="Bonus Action",
+            kind="bonus_action",
+            creature_ref=creature_ref,
+            cost=ActionCost(bonus_action=1),
+        ),
+    ).allowed
+    reaction_available = state.combat_rules.reaction_eligibility(
+        state,
+        creature_ref,
+    ).allowed
+    attacks_per_attack_action = state.combat_rules.attack_limit(
+        state,
+        creature_ref,
+        creature.combat_profile.attacks_per_attack_action,
+    ).value
+    effective_conditions = state.effective_conditions_for(creature_ref).conditions
+    armor_class = state.combat_rules.effective_armor_class(
+        state,
+        creature_ref,
+    ).value
     return CreatureObservation(
         creature_ref=creature_ref,
-        creature_id=str(creature["creature_id"]),
-        name=str(creature["name"]),
-        label=str(creature["label"]),
-        token_image=cast(str | None, creature["token_image"]),
-        team_id=str(creature["team_id"]),
-        position=PositionObservation(x=position["x"], y=position["y"]),
-        health=int(creature["health"]),
-        max_health=int(creature["max_health"]),
-        is_alive=bool(creature["is_alive"]),
-        action_available=bool(creature["action_available"]),
-        bonus_action_available=bool(creature["bonus_action_available"]),
-        reaction_available=bool(creature["reaction_available"]),
-        attacks_remaining=int(creature["attacks_remaining"]),
-        attacks_per_attack_action=int(creature["attacks_per_attack_action"]),
-        movement_remaining=int(creature["movement_remaining"]),
-        movement_total=int(creature["movement_total"]),
-        movement_remaining_feet=int(creature["movement_remaining_feet"]),
-        movement_total_feet=int(creature["movement_total_feet"]),
+        creature_id=creature_state.creature_id,
+        name=creature.name,
+        label=read.creature_labels[creature_ref],
+        token_image=creature.token_image,
+        team_id=read.creature_team_ids[creature_ref],
+        position=PositionObservation(
+            x=creature_state.position.x,
+            y=creature_state.position.y,
+        ),
+        health=creature.get_health(),
+        max_health=creature.get_max_health(),
+        is_alive=creature_state.is_alive,
+        action_available=action_available,
+        bonus_action_available=bonus_action_available,
+        reaction_available=reaction_available,
+        attacks_remaining=creature_state.attacks_remaining,
+        attacks_per_attack_action=attacks_per_attack_action,
+        movement_remaining=movement_remaining,
+        movement_total=movement.budget,
+        movement_remaining_feet=state.definition.grid.feet_for_squares(
+            movement_remaining
+        ),
+        movement_total_feet=movement.speed.value,
         effective_conditions=tuple(
             dict.fromkeys(
-                str(condition["condition"]) for condition in effective_conditions
+                condition.condition.value for condition in effective_conditions
             )
         ),
         spell_slots=tuple(
             SpellSlotObservation(
-                level=int(level),
-                remaining=int(slots_remaining.get(level, maximum)),
+                level=level,
+                remaining=slots_remaining.get(level, maximum),
                 maximum=maximum,
             )
-            for level, maximum in sorted(
-                slots_max.items(), key=lambda item: int(item[0])
-            )
+            for level, maximum in sorted(slots_max.items())
             if maximum > 0
         ),
         feature_actions=tuple(
@@ -208,7 +250,7 @@ def _observe_creature(
             )
             for definition in feature_definitions.values()
         ),
-        armor_class=int(creature["armor_class"]),
+        armor_class=armor_class,
         attributes=AttributeObservation(
             level=attributes.level,
             strength=attributes.strength,
@@ -223,31 +265,30 @@ def _observe_creature(
             InventoryItemObservation(
                 item_id=item_id,
                 name=(
-                    session.item_templates[item_id].name
-                    if item_id in session.item_templates
+                    read.item_names[item_id]
+                    if item_id in read.item_names
                     else item_id
                 ),
             )
-            for item_id in domain_creature.inventory.items
+            for item_id in creature.inventory.items
         ),
     )
 
 
-def _observe_effect(effect: dict[str, Any]) -> OngoingEffectObservation:
-    source = cast(dict[str, Any], effect["source"])
-    parameters = cast(dict[str, Any], effect["parameters"])
-    definition_id = str(source["definition_id"])
-    explicit_label = parameters.get("effect_label")
+def _observe_effect(effect: OngoingEffect) -> OngoingEffectObservation:
+    source = effect.identity.source
+    definition_id = source.definition_id
+    explicit_label = effect.parameters.get("effect_label")
     label = (
         explicit_label
         if isinstance(explicit_label, str) and explicit_label.strip()
         else definition_id.replace("_", " ").replace("-", " ").title()
     )
     return OngoingEffectObservation(
-        kind=str(effect["kind"]),
-        polarity=str(effect["polarity"]),
-        applied_by_ref=cast(str | None, source.get("applied_by_ref")),
+        kind=effect.kind.value,
+        polarity=effect.polarity.value,
+        applied_by_ref=source.applied_by_ref,
         definition_id=definition_id,
-        target_refs=tuple(str(ref) for ref in effect["target_refs"]),
+        target_refs=effect.target_refs,
         label=label,
     )

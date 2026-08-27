@@ -1,6 +1,6 @@
 """Project observed encounter actions into display-ready action views."""
 
-from srd_arena.application.observations import (
+from srd_arena.application.api import (
     ActionObservation,
     ActionReasonObservation,
     EncounterObservation,

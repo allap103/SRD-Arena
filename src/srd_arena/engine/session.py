@@ -1,6 +1,5 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Literal
 
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.encounters import EncounterDefinition, EncounterOrchestrator
@@ -8,10 +7,17 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterAction
 from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import GeometryConfig
-from .models import ActionView, SceneView, TurnResult
-
-EXIT_CHOICE_TEXT = "Exit game"
-CONTINUE_CHOICE_TEXT = "Continue"
+from srd_arena.engine.action_configuration import (
+    configure_action as configure_engine_action,
+)
+from srd_arena.engine.models import EngineOutcome
+from srd_arena.engine.queries import (
+    ActionConfiguration,
+    CONTINUE_CHOICE_TEXT,
+    EXIT_CHOICE_TEXT,
+    SessionRead,
+)
+from srd_arena.engine.session_queries import read_session
 
 
 @dataclass
@@ -54,161 +60,12 @@ class Session:
     def current_encounter(self) -> EncounterDefinition:
         return self.encounters[self.current_scene_id]
 
-    def get_scene_view(self) -> SceneView:
-        if self.pending_scene_transition is not None:
-            action_details = [
-                ActionView(
-                    id="system-continue-scene-transition",
-                    label=CONTINUE_CHOICE_TEXT,
-                    kind="system_continue_transition",
-                    creature_ref=self._system_action_creature_ref(),
-                    value=None,
-                )
-            ]
-            system_action_details = self._system_action_details()
-            return SceneView(
-                scene_id=self.current_encounter.id,
-                scene_text=self.pending_scene_transition.message,
-                action_details=action_details + system_action_details,
-            )
+    def read(self) -> SessionRead:
+        """Return the typed internal inputs for application observation."""
 
-        self._ensure_encounter_state()
-        encounter = self.current_encounter
-        assert self.encounter_state is not None
-        self._encounter_actions = self.encounter_state.available_actions()
-        action_ids = [action.id for action in self._encounter_actions]
-        if len(action_ids) != len(set(action_ids)):
-            raise ValueError("Available encounter action IDs must be unique.")
-        decision = self.encounter_state.current_decision()
-        if (
-            decision.kind == "turn"
-            and self.encounter_state._creature_controller(decision.creature_ref)
-            == "external"
-        ):
-            candidates = self.encounter_state._creature_action_candidates(
-                decision.creature_ref
-            )
-            action_details = [
-                self._action_view(
-                    action,
-                    self.encounter_state.action_eligibility(action),
-                )
-                for action in candidates
-            ]
-            action_details.extend(
-                self._unimplemented_stat_block_action_views(
-                    decision.creature_ref,
-                    candidates,
-                )
-            )
-        else:
-            action_details = [
-                self._action_view(action) for action in self._encounter_actions
-            ]
+        return read_session(self)
 
-        system_action_details = self._system_action_details()
-        return SceneView(
-            scene_id=encounter.id,
-            scene_text=None,
-            action_details=action_details + system_action_details,
-        )
-
-    @staticmethod
-    def _action_view(action, eligibility=None) -> ActionView:
-        failures = eligibility.failures if eligibility is not None else ()
-        unimplemented = any(
-            failure.code == "unsupported_stat_block_capability" for failure in failures
-        )
-        reason_entries = tuple(
-            dict.fromkeys((failure.code, failure.message) for failure in failures)
-        )
-        reason_codes = tuple(code for code, _message in reason_entries)
-        reasons = tuple(message for _code, message in reason_entries)
-        availability: Literal[
-            "available",
-            "unavailable",
-            "unimplemented",
-        ] = (
-            "unimplemented"
-            if unimplemented
-            else "unavailable"
-            if reasons
-            else "available"
-        )
-        return ActionView(
-            id=action.id,
-            label=action.label,
-            kind=action.kind,
-            creature_ref=action.creature_ref,
-            value=action.value,
-            cost={
-                "movement": action.cost.movement,
-                "action": action.cost.action,
-                "bonus_action": action.cost.bonus_action,
-                "reaction": action.cost.reaction,
-            },
-            enabled=availability == "available",
-            unavailable_reason=("\n".join(reasons) if reasons else None),
-            availability=availability,
-            unavailable_codes=reason_codes,
-            unavailable_reasons=reasons,
-            source_trigger_id=action.source_trigger_id,
-            preferred_attack_type=action.preferred_attack_type,
-            preferred_attack_name=action.preferred_attack_name,
-        )
-
-    def _unimplemented_stat_block_action_views(
-        self,
-        creature_ref: str,
-        candidates,
-    ) -> list[ActionView]:
-        assert self.encounter_state is not None
-        creature = self.encounter_state.creatures[creature_ref].creature
-        represented_names = {
-            action.preferred_attack_name
-            for action in candidates
-            if action.preferred_attack_name is not None
-        }
-        if any(action.kind == "multiattack" for action in candidates):
-            represented_names.update(
-                declaration.name
-                for declaration in creature.declared_stat_block_actions
-                if declaration.capability_type == "multiattack"
-            )
-        views: list[ActionView] = []
-        for index, declaration in enumerate(creature.declared_stat_block_actions):
-            if declaration.name in represented_names:
-                continue
-            reason = (
-                "No structured capability are available for this action."
-                if declaration.capability_type is None
-                else (
-                    f"Actions using '{declaration.capability_type}' capability "
-                    "are not executable yet."
-                )
-            )
-            views.append(
-                ActionView(
-                    id=(f"{creature_ref}-unimplemented-stat-block-{index}"),
-                    label=declaration.display_name,
-                    kind="stat_block",
-                    creature_ref=creature_ref,
-                    cost=(
-                        {"bonus_action": 1}
-                        if declaration.section == "bonus_action"
-                        else {"action": 1}
-                    ),
-                    enabled=False,
-                    unavailable_reason=reason,
-                    availability="unimplemented",
-                    unavailable_codes=("unsupported_stat_block_capability",),
-                    unavailable_reasons=(reason,),
-                    preferred_attack_name=declaration.name,
-                )
-            )
-        return views
-
-    def choose(self, action_id: str) -> TurnResult:
+    def choose(self, action_id: str) -> EngineOutcome:
         if self.pending_scene_transition is not None:
             if action_id == "system-continue-scene-transition":
                 return self._continue_scene_transition()
@@ -232,18 +89,15 @@ class Session:
         self.encounter_state = None
         self._encounter_actions = []
 
-    def _exit_game(self) -> TurnResult:
-        return TurnResult(
-            scene=self.get_scene_view(),
+    def _exit_game(self) -> EngineOutcome:
+        return EngineOutcome(
             selected_choice_text=EXIT_CHOICE_TEXT,
             selected_action_id="system-exit",
-            messages=[("system", "Exiting srd_arena.")],
-            next_scene_id=self.current_scene_id,
+            messages=(("system", "Exiting srd_arena."),),
             scene_changed=False,
             should_exit=True,
         )
-
-    def _choose_encounter(self, action_id: str) -> TurnResult:
+    def _choose_encounter(self, action_id: str) -> EngineOutcome:
         if self.encounter_state is None:
             raise RuntimeError(
                 "Encounter action requested without an active encounter."
@@ -267,7 +121,7 @@ class Session:
         action: EncounterAction,
         *,
         selected_choice_text: str | None = None,
-    ) -> TurnResult:
+    ) -> EngineOutcome:
         self._ensure_encounter_state()
         if self.encounter_state is None:
             raise RuntimeError(
@@ -278,12 +132,21 @@ class Session:
             selected_choice_text=selected_choice_text or action.label,
         )
 
+    def configure_action(
+        self,
+        action_id: str,
+        configuration: ActionConfiguration,
+    ) -> EngineOutcome:
+        """Apply typed configuration to an advertised executable action."""
+
+        return configure_engine_action(self, action_id, configuration)
+
     def _apply_encounter_action(
         self,
         action: EncounterAction,
         *,
         selected_choice_text: str,
-    ) -> TurnResult:
+    ) -> EngineOutcome:
         assert self.encounter_state is not None
         progress = self.encounter_orchestrator.submit(
             self.encounter_state,
@@ -301,29 +164,15 @@ class Session:
                     ("system", self.pending_scene_transition.message),
                 ]
 
-        combat_state = (
-            self.encounter_state.export_state()
-            if self.encounter_state is not None
-            else None
-        )
-        decision = (
-            self.encounter_state.export_decision()
-            if self.encounter_state is not None
-            else None
-        )
-        return TurnResult(
-            scene=self.get_scene_view(),
+        return EngineOutcome(
             selected_choice_text=selected_choice_text,
             selected_action_id=action.id,
-            messages=messages,
-            next_scene_id=self.current_scene_id,
+            messages=tuple(messages),
             scene_changed=scene_changed,
-            events=progress.events,
-            decision=decision,
-            combat_state=combat_state,
+            events=tuple(progress.events),
         )
 
-    def advance_until_input_required(self) -> TurnResult:
+    def advance_until_input_required(self) -> EngineOutcome:
         self._ensure_encounter_state()
         if self.encounter_state is None:
             raise RuntimeError("AI advancement requested without an active encounter.")
@@ -344,24 +193,10 @@ class Session:
                     ("system", self.pending_scene_transition.message),
                 ]
 
-        combat_state = (
-            self.encounter_state.export_state()
-            if self.encounter_state is not None
-            else None
-        )
-        decision = (
-            self.encounter_state.export_decision()
-            if self.encounter_state is not None
-            else None
-        )
-        return TurnResult(
-            scene=self.get_scene_view(),
-            messages=progress.messages,
-            next_scene_id=self.current_scene_id,
+        return EngineOutcome(
+            messages=tuple(progress.messages),
             scene_changed=scene_changed,
-            events=progress.events,
-            decision=decision,
-            combat_state=combat_state,
+            events=tuple(progress.events),
         )
 
     def _ensure_encounter_state(self) -> None:
@@ -388,7 +223,7 @@ class Session:
             self.encounter_state = None
             self._encounter_actions = []
 
-    def _continue_scene_transition(self) -> TurnResult:
+    def _continue_scene_transition(self) -> EngineOutcome:
         pending = self.pending_scene_transition
         if pending is None:
             raise RuntimeError("Continue requested without a pending scene transition.")
@@ -397,11 +232,10 @@ class Session:
         self.pending_scene_transition = None
         self.encounter_state = None
         self._encounter_actions = []
-        return TurnResult(
-            scene=self.get_scene_view(),
+        self._ensure_encounter_state()
+        return EngineOutcome(
             selected_choice_text=CONTINUE_CHOICE_TEXT,
             selected_action_id="system-continue-scene-transition",
-            next_scene_id=self.current_scene_id,
             scene_changed=previous_scene_id != self.current_scene_id,
         )
 
@@ -425,19 +259,3 @@ class Session:
         self.encounter_state = None
         self._encounter_actions = []
         return previous_scene_id != self.current_scene_id
-
-    def _system_action_details(self) -> list[ActionView]:
-        return [
-            ActionView(
-                id="system-exit",
-                label=EXIT_CHOICE_TEXT,
-                kind="system_exit",
-                creature_ref=self._system_action_creature_ref(),
-                value=None,
-            ),
-        ]
-
-    def _system_action_creature_ref(self) -> str:
-        if self.encounter_state is None:
-            return ""
-        return self.encounter_state.current_decision().creature_ref

@@ -4,15 +4,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from srd_arena.application.commands import (
+from srd_arena.application.api import (
+    ActionObservation,
     CommandResult,
     GameCommand,
+    GameObservation,
+    GameStartup,
     GameUpdate,
+    RunningGame,
     SelectAction,
 )
-from srd_arena.application.game import RunningGame
-from srd_arena.application.observations import ActionObservation, GameObservation
-from srd_arena.application.startup import GameStartup
 
 
 @dataclass(frozen=True)

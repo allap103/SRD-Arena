@@ -1,25 +1,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from srd_arena.application.commands import (
-    AimAction,
-    CancelTargeting,
-    ChangeTarget,
-    CommandResult,
-    ConfirmTargeting,
-    GameUpdate,
-    SelectAction,
-    SetResourceAllocation,
-)
-from srd_arena.application.game import RunningGame
-from srd_arena.application.observations import (
+from srd_arena.application.api import (
     EncounterObservation,
-    GameObservation,
+    GameUpdate,
+    ScenarioPresentation,
 )
-from srd_arena.application.scenarios import ScenarioPresentation
 from ..shared.dice import build_roll_views, without_roll_details
 from ..shared.models import SessionPresentation
 from ..shared.session import build_session_presentation
+from .presenter import GamePresenter
 from .ui.encounter import (
     ActionMenuScope,
     TargetSelectionMode,
@@ -38,7 +28,6 @@ from .ui.encounter.targeting import (
     allocation_counts,
     allocation_status,
     cancel_targeting_action,
-    completed_allocation_action,
     mode_for_action,
     mode_is_available,
     pending_area_action,
@@ -56,20 +45,18 @@ from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 class GameWindow(QMainWindow):
     def __init__(
         self,
-        game: RunningGame,
+        presenter: GamePresenter,
         *,
         image_root: Path | None = None,
         presentation_config: ScenarioPresentation | None = None,
         show_encounter_json: bool = False,
     ):
         super().__init__()
-        self.game = game
-        self._observation: GameObservation | None = None
+        self.presenter = presenter
         self._encounter_presentation_config = (
             presentation_config or ScenarioPresentation()
         )
         self._presentation: SessionPresentation | None = None
-        self._pending_target_mode: TargetSelectionMode | None = None
         self._action_menu_scope: ActionMenuScope | None = None
         self._combat_log_scene_id: str | None = None
         self._logged_round_number: int | None = None
@@ -142,10 +129,10 @@ class GameWindow(QMainWindow):
     def refresh_view(self) -> None:
         presentation = self._build_session_presentation()
         self._presentation = presentation
-        assert self._observation is not None
-        self.sidebar.sync(self._observation)
+        observation = self.presenter.observation
+        self.sidebar.sync(observation)
         if presentation.encounter is None:
-            self._pending_target_mode = None
+            self.presenter.clear_target_mode()
             self._action_menu_scope = None
 
         if presentation.encounter is None:
@@ -157,9 +144,8 @@ class GameWindow(QMainWindow):
         else:
             self.sidebar.enter_encounter()
             self.surface.show_encounter()
-            assert self._observation is not None
-            assert self._observation.encounter is not None
-            self._sync_combat_log_round(self._observation.encounter)
+            assert observation.encounter is not None
+            self._sync_combat_log_round(observation.encounter)
             self._render_encounter(presentation)
         encounter = presentation.encounter
         self.surface.sync_victory_overlay(
@@ -183,28 +169,30 @@ class GameWindow(QMainWindow):
             self._clear_movement_plan()
 
         target_modes = selection_modes(encounter.non_movement_actions)
+        pending_target_mode = self.presenter.pending_target_mode
         if not mode_is_available(
             encounter.non_movement_actions,
             target_modes,
-            self._pending_target_mode,
+            pending_target_mode,
         ):
-            self._pending_target_mode = None
+            self.presenter.clear_target_mode()
+            pending_target_mode = None
         battlefield.set_cell_targeting_enabled(
             pending_area_action(
                 encounter.non_movement_actions,
-                self._pending_target_mode,
+                pending_target_mode,
             )
             is not None
         )
         battlefield.set_area_overlay(
             pending_area_overlay(
                 encounter.non_movement_actions,
-                self._pending_target_mode,
+                pending_target_mode,
             )
         )
         selected_targetable_actions = (
-            target_modes.get(self._pending_target_mode, {})
-            if self._pending_target_mode is not None
+            target_modes.get(pending_target_mode, {})
+            if pending_target_mode is not None
             else {}
         )
         targetable_refs = {
@@ -213,7 +201,7 @@ class GameWindow(QMainWindow):
             if action.enabled
             if (target_ref := target_creature_ref(action)) is not None
         }
-        observation = self._observation or self.game.observe()
+        observation = self.presenter.observation
         target_allocations = allocation_counts(observation)
         targeting_status = allocation_status(observation)
         battlefield.set_targeting_state(
@@ -225,7 +213,7 @@ class GameWindow(QMainWindow):
         self._action_menu_scope = self._encounter_panel_renderer.render(
             encounter,
             observation,
-            pending_target_mode=self._pending_target_mode,
+            pending_target_mode=pending_target_mode,
             action_menu_scope=self._action_menu_scope,
         )
 
@@ -238,13 +226,13 @@ class GameWindow(QMainWindow):
 
     def _open_action_menu(self, economy: str, bucket: str) -> None:
         self._clear_movement_plan()
-        self._pending_target_mode = None
+        self.presenter.clear_target_mode()
         self._action_menu_scope = ActionMenuScope(economy=economy, bucket=bucket)
         self.refresh_view()
 
     def _close_action_menu(self, scope: ActionMenuScope | None = None) -> None:
         self._clear_movement_plan()
-        self._pending_target_mode = None
+        self.presenter.clear_target_mode()
         if scope is not None and self._action_menu_scope != scope:
             return
         self._action_menu_scope = None
@@ -253,7 +241,7 @@ class GameWindow(QMainWindow):
     def _end_turn(self) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
-        self._pending_target_mode = None
+        self.presenter.clear_target_mode()
         self._action_menu_scope = None
         action = self._presentation.encounter.end_turn_action
         if action is not None:
@@ -262,56 +250,15 @@ class GameWindow(QMainWindow):
     def _select_action(self, action_id: str) -> None:
         self._clear_movement_plan()
         previous_scope = self._action_menu_scope
-        selected_action = (
-            next(
-                (
-                    action
-                    for action in self._presentation.encounter.non_movement_actions
-                    if action.id == action_id
-                ),
-                None,
-            )
-            if self._presentation is not None
-            and self._presentation.encounter is not None
-            else None
-        )
-        self._pending_target_mode = None
         self._action_menu_scope = None
-        command_result = self.game.execute(
-            SelectAction(
-                action_id=action_id,
-                expected_decision_id=self._current_decision_id(),
-            )
+        selection = self.presenter.select_action(action_id)
+        result = self._handle_command_update(
+            selection.update if selection is not None else None
         )
-        result = self._accepted_update(command_result)
         if result is None:
             return
-        completed_allocation = completed_allocation_action(result.observation)
-        if completed_allocation is not None:
-            confirmation = self.game.execute(
-                ConfirmTargeting(
-                    expected_decision_id=self._required_decision_id(),
-                )
-            )
-            confirmed = self._accepted_update(confirmation)
-            if confirmed is not None:
-                result = confirmed
-        if (
-            selected_action is not None
-            and selected_action.kind == "toggle_spell_target"
-        ):
-            if completed_allocation is None:
-                self._pending_target_mode = mode_for_action(selected_action)
-        elif (
-            selected_action is not None
-            and selected_action.kind == "spell"
-            and result.observation.encounter is not None
-            and result.observation.encounter.decision.kind == "spell_targets"
-        ):
-            self._pending_target_mode = TargetSelectionMode(
-                kind="toggle_spell_target",
-                source_trigger_id=selected_action.source_id,
-            )
+        assert selection is not None
+        selected_action = selection.selected_action
         if (
             result.observation.encounter is not None
             and result.observation.encounter.decision.kind == "spell_targets"
@@ -342,7 +289,7 @@ class GameWindow(QMainWindow):
 
     def _toggle_target_action(self, mode: TargetSelectionMode) -> None:
         self._clear_movement_plan()
-        self._pending_target_mode = None if self._pending_target_mode == mode else mode
+        self.presenter.toggle_target_mode(mode)
         self.refresh_view()
 
     def _handle_battlefield_creature_clicked(
@@ -352,12 +299,13 @@ class GameWindow(QMainWindow):
     ) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
-        if self._pending_target_mode is None:
+        pending_target_mode = self.presenter.pending_target_mode
+        if pending_target_mode is None:
             self._begin_movement_plan(creature_ref)
             return
         action = action_for_target_click(
             self._presentation.encounter.non_movement_actions,
-            self._pending_target_mode,
+            pending_target_mode,
             creature_ref,
             remove_allocation=remove_allocation,
         )
@@ -371,27 +319,14 @@ class GameWindow(QMainWindow):
         if not action.enabled:
             return
         if action.kind == "toggle_spell_target":
-            result = self.game.execute(
-                ChangeTarget(
-                    target_ref=creature_ref,
+            update = self._handle_command_update(
+                self.presenter.change_target(
+                    creature_ref,
                     remove=remove_allocation,
-                    expected_decision_id=self._required_decision_id(),
                     source_trigger_id=action.source_trigger_id,
                 )
             )
-            update = self._accepted_update(result)
             if update is not None:
-                completed = completed_allocation_action(update.observation)
-                if completed is not None:
-                    confirmed = self._accepted_update(
-                        self.game.execute(
-                            ConfirmTargeting(
-                                expected_decision_id=self._required_decision_id()
-                            )
-                        )
-                    )
-                    if confirmed is not None:
-                        update = confirmed
                 self._apply_turn_result(update)
             return
         self._select_action(action.id)
@@ -415,7 +350,7 @@ class GameWindow(QMainWindow):
         if plan is None:
             return
         self._movement_plan = plan
-        self._pending_target_mode = None
+        self.presenter.clear_target_mode()
         self._action_menu_scope = None
         self.surface.battlefield.set_movement_plan(plan)
 
@@ -432,13 +367,10 @@ class GameWindow(QMainWindow):
             action = encounter.movement_actions.get(direction)
             if action is None or action.creature_ref != plan.creature_ref:
                 break
-            result = self.game.execute(
-                SelectAction(
-                    action_id=action.id,
-                    expected_decision_id=self._current_decision_id(),
-                )
+            selection = self.presenter.select_action(action.id)
+            update = self._handle_command_update(
+                selection.update if selection is not None else None
             )
-            update = self._accepted_update(result)
             if update is None:
                 break
             self._apply_turn_result(update)
@@ -455,28 +387,19 @@ class GameWindow(QMainWindow):
                 self._presentation.encounter.non_movement_actions
             )
             if cancel is not None:
-                result = self.game.execute(
-                    CancelTargeting(expected_decision_id=self._required_decision_id())
+                update = self._handle_command_update(
+                    self.presenter.cancel_targeting()
                 )
-                update = self._accepted_update(result)
                 if update is not None:
                     self._apply_turn_result(update)
                 return
-        self._pending_target_mode = None
+        self.presenter.clear_target_mode()
         self.refresh_view()
 
     def _set_spell_resource_allocation(self, target_ref: str, amount: int) -> None:
-        decision_id = self._current_decision_id()
-        if decision_id is None:
-            return
-        result = self.game.execute(
-            SetResourceAllocation(
-                target_ref=target_ref,
-                amount=amount,
-                expected_decision_id=decision_id,
-            )
+        update = self._handle_command_update(
+            self.presenter.set_resource_allocation(target_ref, amount)
         )
-        update = self._accepted_update(result)
         if update is not None:
             self._apply_turn_result(update)
 
@@ -485,24 +408,14 @@ class GameWindow(QMainWindow):
             return
         action = pending_area_action(
             self._presentation.encounter.non_movement_actions,
-            self._pending_target_mode,
+            self.presenter.pending_target_mode,
         )
         if action is None:
             return
-        decision_id = self._current_decision_id()
-        if decision_id is None:
-            return
-        self._pending_target_mode = None
         self._action_menu_scope = None
-        result = self.game.execute(
-            AimAction(
-                action_id=action.id,
-                x=x,
-                y=y,
-                expected_decision_id=decision_id,
-            )
+        update = self._handle_command_update(
+            self.presenter.aim_action(action.id, x, y)
         )
-        update = self._accepted_update(result)
         if update is not None:
             self._apply_turn_result(update)
 
@@ -530,8 +443,8 @@ class GameWindow(QMainWindow):
             self.close()
             return
         if follow_up_attack_mode is not None:
-            self._pending_target_mode = self._available_follow_up_attack_mode(
-                follow_up_attack_mode
+            self.presenter.set_target_mode(
+                self._available_follow_up_attack_mode(follow_up_attack_mode)
             )
         self.refresh_view()
 
@@ -547,35 +460,19 @@ class GameWindow(QMainWindow):
         return attack_mode if target_modes.get(attack_mode) else None
 
     def _build_session_presentation(self) -> SessionPresentation:
-        observation = self.game.observe()
-        self._observation = observation
+        observation = self.presenter.observation
         config = getattr(self, "_encounter_presentation_config", None)
         if config is None:
             return build_session_presentation(observation)
         return build_session_presentation(observation, config=config)
 
-    def _accepted_update(self, result: CommandResult) -> GameUpdate | None:
-        if result.update is None:
+    def _handle_command_update(self, update: GameUpdate | None) -> GameUpdate | None:
+        if update is None:
             self._clear_movement_plan()
-            self._pending_target_mode = None
+            self.presenter.clear_target_mode()
             self.refresh_view()
             return None
-        self._observation = result.update.observation
-        return result.update
-
-    def _current_decision_id(self) -> str | None:
-        observation = self._observation or self.game.observe()
-        return (
-            observation.encounter.decision.id
-            if observation.encounter is not None
-            else None
-        )
-
-    def _required_decision_id(self) -> str:
-        decision_id = self._current_decision_id()
-        if decision_id is None:
-            raise RuntimeError("No encounter decision is active.")
-        return decision_id
+        return update
 
     def _sync_combat_log_round(self, encounter: EncounterObservation) -> None:
         entering_encounter = self._combat_log_scene_id != encounter.encounter_id
@@ -598,7 +495,7 @@ class GameWindow(QMainWindow):
         self.sidebar.scroll_combat_log_to_bottom()
 
     def _schedule_ai_step_if_needed(self) -> None:
-        observation = self._observation or self.game.observe()
+        observation = self.presenter.observation
         if (
             self._automatic_step_scheduled
             or observation.encounter is None
@@ -611,11 +508,10 @@ class GameWindow(QMainWindow):
 
     def _advance_automatic_step(self) -> None:
         self._automatic_step_scheduled = False
-        observation = self.game.observe()
-        self._observation = observation
+        observation = self.presenter.refresh()
         if (
             observation.encounter is None
             or not observation.requires_automatic_advance
         ):
             return
-        self._apply_turn_result(self.game.advance_automatic())
+        self._apply_turn_result(self.presenter.advance_automatic())

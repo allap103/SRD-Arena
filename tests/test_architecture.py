@@ -252,6 +252,80 @@ def test_gui_interaction_planning_stays_independent_of_pyside6() -> None:
     )
 
 
+def test_gui_presenter_stays_independent_of_pyside6() -> None:
+    path = PACKAGE_ROOT / "frontends" / "gui" / "presenter.py"
+    module = _module_name(path)
+
+    assert not [
+        imported_module
+        for _line, imported_module in _imports(path, module)
+        if imported_module == "PySide6"
+        or imported_module.startswith("PySide6.")
+    ]
+
+
+def test_gui_window_delegates_application_commands_to_presenter() -> None:
+    path = PACKAGE_ROOT / "frontends" / "gui" / "app.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    application_imports = {
+        alias.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom)
+        and node.module == "srd_arena.application.api"
+        for alias in node.names
+    }
+    imported_modules = {
+        imported_module
+        for _line, imported_module in _imports(path, _module_name(path))
+    }
+
+    assert application_imports == {
+        "EncounterObservation",
+        "GameUpdate",
+        "ScenarioPresentation",
+    }
+    assert "srd_arena.application.game" not in imported_modules
+
+
+def test_driving_adapters_use_only_the_public_application_api() -> None:
+    violations: list[str] = []
+
+    paths = [
+        *sorted((PACKAGE_ROOT / "frontends").rglob("*.py")),
+        PACKAGE_ROOT / "main.py",
+    ]
+    for path in paths:
+        module = _module_name(path)
+        for line, imported_module in _imports(path, module):
+            if (
+                imported_module.startswith("srd_arena.application.")
+                and imported_module != "srd_arena.application.api"
+            ):
+                violations.append(
+                    f"{path.relative_to(PACKAGE_ROOT.parent)}:{line} imports "
+                    f"{imported_module}"
+                )
+
+    assert not violations, (
+        "Driving adapters must use srd_arena.application.api exclusively:\n"
+        + "\n".join(violations)
+    )
+
+
+def test_application_api_exports_only_application_owned_contracts() -> None:
+    from srd_arena.application import api
+
+    assert api.__all__
+    assert len(api.__all__) == len(set(api.__all__))
+    assert all(hasattr(api, name) for name in api.__all__)
+    assert not {"Session", "SessionRead", "EncounterState"} & set(api.__all__)
+    assert all(
+        exported.__doc__
+        for name in api.__all__
+        if isinstance(exported := getattr(api, name), type)
+    )
+
+
 def test_gui_window_imports_only_composition_widgets() -> None:
     path = PACKAGE_ROOT / "frontends" / "gui" / "app.py"
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -340,6 +414,62 @@ def test_package_and_engine_roots_do_not_reexport_engine_types() -> None:
             and isinstance(tree.body[0].value, ast.Constant)
             and isinstance(tree.body[0].value.value, str)
         ), f"{path.relative_to(PACKAGE_ROOT.parent)} must remain namespace-only."
+
+
+def test_application_boundary_does_not_import_concrete_session() -> None:
+    boundary_modules = (
+        "action_observations.py",
+        "game.py",
+        "interactions.py",
+        "observations.py",
+    )
+    violations: list[str] = []
+
+    for name in boundary_modules:
+        path = PACKAGE_ROOT / "application" / name
+        module = _module_name(path)
+        for line, imported_module in _imports(path, module):
+            if imported_module == "srd_arena.engine.session":
+                violations.append(f"{name}:{line} imports concrete Session")
+
+    assert not violations, (
+        "Application boundary modules must use the GameEngine protocol:\n"
+        + "\n".join(violations)
+    )
+
+
+def test_engine_does_not_define_presentation_views() -> None:
+    violations: list[str] = []
+
+    for path in sorted((PACKAGE_ROOT / "engine").rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name.endswith("View"):
+                violations.append(f"{path.name}:{node.lineno}: {node.name}")
+
+    assert not violations, (
+        "Application observations are the sole client read model; engine "
+        "must expose typed queries instead of presentation views:\n"
+        + "\n".join(violations)
+    )
+
+
+def test_engine_action_options_do_not_expose_domain_action_payloads() -> None:
+    path = PACKAGE_ROOT / "engine" / "queries.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    action_option = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "ActionOption"
+    )
+    fields = {
+        node.target.id
+        for node in action_option.body
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+    }
+
+    assert "action" not in fields
+    assert "value" not in fields
 
 
 def _imports(path: Path, module: str) -> list[tuple[int, str]]:

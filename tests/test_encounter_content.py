@@ -93,7 +93,7 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
     scenario = load_scenario_directory(scenario_dir)
     participant = scenario.encounters["goblin_encounter"].participants[1]
     session = scenario.create_session()
-    session.get_scene_view()
+    session.read()
 
     assert participant.creature_id == "goblin_1"
     assert participant.controller == "external"
@@ -104,7 +104,7 @@ def test_full_control_showcase_gives_external_control_to_every_creature() -> Non
     scenario = load_scenario_directory(GOBLIN_SKIRMISH_DIR)
     encounter = scenario.encounters["full_control_showcase"]
     session = scenario.create_session()
-    session.get_scene_view()
+    session.read()
 
     assert {creature.name for creature in scenario.creatures} == {
         "Aldren",
@@ -135,7 +135,7 @@ def test_encounter_can_be_fully_scripted() -> None:
         team.controller = "scripted"
 
     session = scenario.create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     assert session.encounter_state.requires_automatic_advance() is True
@@ -225,7 +225,7 @@ def test_game_loads_geometry_settings_from_config_json() -> None:
     assert presentation.grid_opacity == 0.65
 
     session = scenario.create_session()
-    session.get_scene_view()
+    session.read()
 
     assert not hasattr(session, "background_image")
     assert not hasattr(session, "grid_color")

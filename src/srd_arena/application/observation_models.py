@@ -11,6 +11,8 @@ from .values import ApplicationValue, freeze_mapping
 
 @dataclass(frozen=True)
 class ActionReasonObservation:
+    """Machine-readable reason why an advertised action cannot be selected."""
+
     code: str
     message: str
 
@@ -60,6 +62,8 @@ class ActionObservation:
 
 @dataclass(frozen=True)
 class SceneObservation:
+    """Current scene text and all actions the client may display."""
+
     scene_id: str
     scene_text: str | None
     action_details: tuple[ActionObservation, ...]
@@ -67,18 +71,24 @@ class SceneObservation:
 
 @dataclass(frozen=True)
 class GridObservation:
+    """Dimensions of the current encounter grid in cells."""
+
     width: int
     height: int
 
 
 @dataclass(frozen=True)
 class PositionObservation:
+    """One creature's grid-cell position."""
+
     x: int
     y: int
 
 
 @dataclass(frozen=True)
 class DecisionObservation:
+    """Stable identity and actor of the decision awaiting resolution."""
+
     id: str
     kind: str
     creature_ref: str
@@ -86,12 +96,16 @@ class DecisionObservation:
 
 @dataclass(frozen=True)
 class InitiativeObservation:
+    """One creature's place in encounter initiative."""
+
     creature_ref: str
     total: int
 
 
 @dataclass(frozen=True)
 class SpellSlotObservation:
+    """Remaining and maximum spell slots at one slot level."""
+
     level: int
     remaining: int
     maximum: int
@@ -99,6 +113,8 @@ class SpellSlotObservation:
 
 @dataclass(frozen=True)
 class FeatureActionObservation:
+    """Action granted by a creature feature and its action-economy cost."""
+
     feature_id: str
     label: str
     economy: str
@@ -106,6 +122,8 @@ class FeatureActionObservation:
 
 @dataclass(frozen=True)
 class AttributeObservation:
+    """Client-visible level, abilities, and proficiency of one creature."""
+
     level: int
     strength: int
     dexterity: int
@@ -118,12 +136,16 @@ class AttributeObservation:
 
 @dataclass(frozen=True)
 class InventoryItemObservation:
+    """Stable identity and display name of one carried item."""
+
     item_id: str
     name: str
 
 
 @dataclass(frozen=True)
 class CreatureObservation:
+    """Frontend-neutral snapshot of one encounter combatant."""
+
     creature_ref: str
     creature_id: str
     name: str
@@ -153,6 +175,8 @@ class CreatureObservation:
 
 @dataclass(frozen=True)
 class OngoingEffectObservation:
+    """Client-visible summary of one ongoing buff, debuff, or other effect."""
+
     kind: str
     polarity: str
     applied_by_ref: str | None
@@ -163,18 +187,24 @@ class OngoingEffectObservation:
 
 @dataclass(frozen=True)
 class TargetResourceLimitObservation:
+    """Maximum resource amount assignable to one staged target."""
+
     target_ref: str
     maximum: int
 
 
 @dataclass(frozen=True)
 class TargetResourceAllocationObservation:
+    """Resource amount currently assigned to one staged target."""
+
     target_ref: str
     amount: int
 
 
 @dataclass(frozen=True)
 class TargetingObservation:
+    """Current staged target selection and optional resource allocation."""
+
     source_id: str
     source_label: str
     selected_target_refs: tuple[str, ...]
@@ -188,6 +218,8 @@ class TargetingObservation:
 
 @dataclass(frozen=True)
 class EncounterObservation:
+    """Complete client-visible snapshot of the active encounter."""
+
     encounter_id: str
     grid: GridObservation
     round_number: int
@@ -210,6 +242,8 @@ class EncounterObservation:
 
 @dataclass(frozen=True)
 class TransitionObservation:
+    """Message presented while the game moves between scenes."""
+
     message: str
 
 

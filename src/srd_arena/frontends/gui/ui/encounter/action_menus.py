@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from srd_arena.application.observations import ActionObservation
+from srd_arena.application.api import ActionObservation
 
 ACTION_BUCKETS = (
     ("attack", "Attack"),

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
 
 from srd_arena.application.commands import (
     AimAction,
@@ -12,9 +11,17 @@ from srd_arena.application.commands import (
 from srd_arena.application.game import RunningGame
 from srd_arena.application.observations import ActionObservation
 from srd_arena.application.startup import GameStartup
+from srd_arena.domain.encounters.actions.eligibility_rules.models import (
+    ActionEligibility,
+    EligibilityFailure,
+)
+from srd_arena.engine.models import EngineOutcome
+from srd_arena.engine.queries import (
+    ActionConfiguration,
+    ActionOption,
+    SessionRead,
+)
 from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
-from srd_arena.engine.models import ActionView, SceneView, TurnResult
-from srd_arena.engine.session import Session
 
 FULL_CONTROL_SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
@@ -32,52 +39,69 @@ SPELL_DAMAGE_SCENARIO_DIR = (
 
 class SessionStub:
     def __init__(self) -> None:
-        self.encounter_state = None
-        self.pending_scene_transition = None
         self.selected_action_ids: list[str] = []
         self.advance_count = 0
         self.reset_count = 0
-        self.scene = SceneView(
+        self.read_state = SessionRead(
             scene_id="arena",
             scene_text=None,
-            action_details=[
-                ActionView(
+            action_options=(
+                ActionOption(
                     id="actor-wait",
                     label="Wait",
                     kind="wait",
                     creature_ref="actor",
                 ),
-                ActionView(
+                ActionOption(
                     id="actor-blocked",
                     label="Blocked",
                     kind="attack",
                     creature_ref="actor",
-                    enabled=False,
-                    unavailable_reason="No Action remains.",
-                    availability="unavailable",
-                    unavailable_codes=("action_unavailable",),
-                    unavailable_reasons=("No Action remains.",),
+                    eligibility=ActionEligibility(
+                        (
+                            EligibilityFailure(
+                                code="action_unavailable",
+                                message="No Action remains.",
+                            ),
+                        )
+                    ),
                 ),
-            ],
+            ),
+            encounter_state=None,
+            transition_message=None,
+            team_ids=(),
+            creature_labels={},
+            creature_team_ids={},
+            item_names={},
+            requires_automatic_advance=False,
         )
 
-    def get_scene_view(self) -> SceneView:
-        return self.scene
+    def read(self) -> SessionRead:
+        return self.read_state
 
-    def choose(self, action_id: str) -> TurnResult:
+    def choose(self, action_id: str) -> EngineOutcome:
         self.selected_action_ids.append(action_id)
-        return TurnResult(scene=self.scene, selected_action_id=action_id)
+        return EngineOutcome(selected_action_id=action_id)
 
-    def advance_until_input_required(self) -> TurnResult:
+    def advance_until_input_required(self) -> EngineOutcome:
         self.advance_count += 1
-        return TurnResult(scene=self.scene)
+        return EngineOutcome()
+
+    def configure_action(
+        self,
+        action_id: str,
+        configuration: ActionConfiguration,
+    ) -> EngineOutcome:
+        raise AssertionError(
+            f"Stub action '{action_id}' does not accept {configuration!r}."
+        )
 
     def reset(self) -> None:
         self.reset_count += 1
 
 
 def _running_game(session: SessionStub) -> RunningGame:
-    return RunningGame(cast(Session, session))
+    return RunningGame(session)
 
 
 def _advance_to_actor(game: RunningGame, creature_ref: str):
@@ -104,7 +128,7 @@ def test_running_game_observes_controller_requirement() -> None:
 
     observation = game.observe()
 
-    assert observation.scene.scene_id == session.scene.scene_id
+    assert observation.scene.scene_id == session.read_state.scene_id
     assert observation.encounter is None
     assert observation.requires_automatic_advance is False
     assert isinstance(observation.scene.action_details[0], ActionObservation)
@@ -126,8 +150,8 @@ def test_running_game_exposes_headless_decision_workflow() -> None:
 
     assert selected.update is not None
     assert selected.update.selected_action_id == action_id
-    assert advanced.observation.scene.scene_id == session.scene.scene_id
-    assert reset.scene.scene_id == session.scene.scene_id
+    assert advanced.observation.scene.scene_id == session.read_state.scene_id
+    assert reset.scene.scene_id == session.read_state.scene_id
     assert session.selected_action_ids == [action_id]
     assert session.advance_count == 1
     assert session.reset_count == 1

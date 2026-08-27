@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from srd_arena.application.observations import EncounterObservation
+from srd_arena.application.api import EncounterObservation
 from .conditions import effective_condition_names
 from .models import (
     InitiativeTrackEntryView,

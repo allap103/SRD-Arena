@@ -6,7 +6,7 @@ import textwrap
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
-from srd_arena.application.observations import ActionObservation, GameObservation
+from srd_arena.application.api import ActionObservation, GameObservation
 from ....shared.models import EncounterView, ResourceSummaryView
 from .action_menus import group_actions
 from .config import (

@@ -1,4 +1,4 @@
-from srd_arena.application.startup import GameStartup
+from srd_arena.application.api import GameStartup
 from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
 
 

@@ -14,7 +14,7 @@ SCENARIO_DIR = (
 
 def test_eldritch_blast_scaling_showcase_loads_all_caster_thresholds() -> None:
     session = load_scenario_directory(str(SCENARIO_DIR)).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

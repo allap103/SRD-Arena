@@ -12,7 +12,7 @@ _ORCHESTRATOR = EncounterOrchestrator()
 def _encounter_state():
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
-    session.get_scene_view()
+    session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
     external_ref = next(

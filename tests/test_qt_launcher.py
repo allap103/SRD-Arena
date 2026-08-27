@@ -47,12 +47,19 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
             assert automatic_action_limit == 1
             return running_game
 
+    created_presenters: list[GamePresenterStub] = []
+
+    class GamePresenterStub:
+        def __init__(self, received: RunningGame) -> None:
+            self.received = received
+            created_presenters.append(self)
+
     created_windows: list[GameWindowStub] = []
 
     class GameWindowStub:
         def __init__(
             self,
-            received: RunningGame,
+            received: GamePresenterStub,
             *,
             image_root: Path | None = None,
             presentation_config: ScenarioPresentation | None = None,
@@ -67,6 +74,7 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
             self.was_shown = True
 
     startup = StartupStub()
+    monkeypatch.setattr(launcher, "GamePresenter", GamePresenterStub)
     monkeypatch.setattr(launcher, "GameWindow", GameWindowStub)
     image_root = tmp_path / "images"
     picker = launcher.ScenarioPickerWindow(
@@ -80,8 +88,10 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
     picker._open_scenario(scenario)
 
     assert startup.started == ["example"]
+    assert len(created_presenters) == 1
+    assert created_presenters[0].received is running_game
     assert len(created_windows) == 1
-    assert created_windows[0].received is running_game
+    assert created_windows[0].received is created_presenters[0]
     assert created_windows[0].image_root == image_root
     assert created_windows[0].presentation_config == scenario.presentation
     assert created_windows[0].was_shown is True

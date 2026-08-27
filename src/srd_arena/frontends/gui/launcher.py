@@ -3,9 +3,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from srd_arena.application.scenarios import ScenarioSummary
-from srd_arena.application.startup import GameStartup
+from srd_arena.application.api import GameStartup, ScenarioSummary
 from .app import GameWindow
+from .presenter import GamePresenter
 from .theme import apply_fantasy_theme
 
 from PySide6.QtGui import QFont
@@ -67,9 +67,11 @@ class ScenarioPickerWindow(QMainWindow):
 
     def _open_scenario(self, scenario: ScenarioSummary) -> None:
         self._game_window = GameWindow(
-            self._startup.start_scenario(
-                scenario.id,
-                automatic_action_limit=1,
+            GamePresenter(
+                self._startup.start_scenario(
+                    scenario.id,
+                    automatic_action_limit=1,
+                )
             ),
             image_root=self._image_root,
             presentation_config=scenario.presentation,

@@ -10,7 +10,7 @@ SCENARIO_DIR = (
 
 def test_spell_damage_showcase_loads_wave_1a_demo_spellcaster() -> None:
     session = load_scenario_directory(str(SCENARIO_DIR)).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     adept = session.encounter_state.creatures["spectrum_adept"].creature

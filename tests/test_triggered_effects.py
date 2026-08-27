@@ -10,6 +10,7 @@ from srd_arena.domain.effects import (
     reroll_eligible_indices,
 )
 from srd_arena.domain.rolls.dice import reroll_dice, resolve_dice
+from srd_arena.engine.queries import DirectTargetOptionDetails
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
@@ -109,8 +110,10 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1)
     attack_id = next(
         action.id
-        for action in session.get_scene_view().action_details
-        if action.kind == "attack" and action.value == "goblin_1"
+        for action in session.read().action_options
+        if action.kind == "attack"
+        and isinstance(action.details, DirectTargetOptionDetails)
+        and action.details.target_ref == "goblin_1"
     )
 
     result = session.choose(attack_id)
@@ -122,7 +125,7 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
 
 def _adjacent_tactical_encounter():
     session = load_scenario_directory(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter").create_session()
-    session.get_scene_view()
+    session.read()
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4
     session.encounter_state.active_position.y = 3

@@ -34,7 +34,7 @@ def _all_external_session() -> Session:
     for team in scenario.encounters["goblin_encounter"].teams:
         team.controller = "external"
     session = scenario.create_session()
-    session.get_scene_view()
+    session.read()
     return session
 
 
@@ -49,18 +49,14 @@ def test_manual_action_submission_returns_to_the_same_turn_until_wait() -> None:
     moved = session.choose_encounter_action(move)
 
     assert moved.selected_action_id == move.id
-    assert moved.decision is not None
-    assert moved.decision["kind"] == "turn"
-    assert moved.decision["creature_ref"] == actor_ref
+    assert state.current_decision().kind == "turn"
     assert state.current_decision().creature_ref == actor_ref
     assert (state.active_position.x, state.active_position.y) != start
     assert state.active_movement_remaining == 5
 
     wait = next(action for action in state.available_actions() if action.kind == "wait")
-    ended = session.choose_encounter_action(wait)
+    session.choose_encounter_action(wait)
 
-    assert ended.decision is not None
-    assert ended.decision["creature_ref"] == "goblin_1"
     assert state.current_decision().creature_ref == "goblin_1"
 
 
@@ -75,16 +71,14 @@ def test_scripted_turns_advance_until_the_next_external_decision(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     ).create_session()
-    session.get_scene_view()
+    session.read()
     state = session.encounter_state
     assert state is not None
     wait = next(action for action in state.available_actions() if action.kind == "wait")
 
     result = session.choose_encounter_action(wait)
 
-    assert result.decision is not None
-    assert result.decision["kind"] == "turn"
-    assert result.decision["creature_ref"] == "player"
+    assert state.current_decision().kind == "turn"
     assert state.current_decision().creature_ref == "player"
     assert state.requires_automatic_advance() is False
     scripted_actors = {
@@ -109,7 +103,7 @@ def test_pacing_pause_skips_defeated_initiative_slots_first() -> None:
     goblin.behavior.type = "wait"
     session = scenario.create_session()
     session.automatic_action_limit = 1
-    session.get_scene_view()
+    session.read()
     state = session.encounter_state
     assert state is not None
     state.turn_index = state.initiative_order.index("goblin_1")
@@ -152,7 +146,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
         lambda _sides: 1,
     )
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
-    session.get_scene_view()
+    session.read()
     state = session.encounter_state
     assert state is not None
     state.turn_index = state.initiative_order.index("champion_2")
@@ -168,9 +162,8 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
 
     interrupted = session.choose_encounter_action(move)
 
-    assert interrupted.decision is not None
-    assert interrupted.decision["kind"] == "reaction"
-    assert interrupted.decision["creature_ref"] == "red_blade"
+    assert state.current_decision().kind == "reaction"
+    assert state.current_decision().creature_ref == "red_blade"
     assert state.pending_movement is not None
     assert state.pending_movement.creature_ref == "champion_2"
     assert state.pending_movement.direction == "up"
@@ -223,7 +216,7 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement(
         lambda _count, sides: sides,
     )
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
-    session.get_scene_view()
+    session.read()
     state = session.encounter_state
     assert state is not None
     state.turn_index = state.initiative_order.index("champion_2")
@@ -265,7 +258,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
         lambda _count, _sides: 1,
     )
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
-    session.get_scene_view()
+    session.read()
     state = session.encounter_state
     assert state is not None
     state.turn_index = state.initiative_order.index("champion_2")
@@ -296,10 +289,9 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    interrupted_again = session.choose_encounter_action(opportunity_attack)
+    session.choose_encounter_action(opportunity_attack)
 
-    assert interrupted_again.decision is not None
-    assert interrupted_again.decision["kind"] == "reroll_dice"
+    assert state.current_decision().kind == "reroll_dice"
     assert [frame.kind for frame in state.decision_stack] == [
         "reaction",
         "reroll_dice",
@@ -311,8 +303,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
 
     still_interrupted = session.choose_encounter_action(reroll)
 
-    assert still_interrupted.decision is not None
-    assert still_interrupted.decision["frame_id"] == reroll_frame.id
+    assert state.current_decision().id == reroll_frame.id
     assert [frame.id for frame in state.decision_stack] == [
         reaction_frame.id,
         reroll_frame.id,
@@ -357,7 +348,7 @@ def test_passing_reaction_closes_it_before_parent_movement_resumes(
         lambda _sides: 1,
     )
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
-    session.get_scene_view()
+    session.read()
     state = session.encounter_state
     assert state is not None
     state.turn_index = state.initiative_order.index("champion_2")
@@ -400,7 +391,7 @@ def test_passing_reaction_closes_it_before_parent_movement_resumes(
 
 def test_resumed_movement_carries_a_grappled_creature() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
-    session.get_scene_view()
+    session.read()
     state = session.encounter_state
     assert state is not None
     state.turn_index = state.initiative_order.index("champion_2")
@@ -461,7 +452,7 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
     assert goblin.behavior is not None
     goblin.behavior.type = "guard"
     session = scenario.create_session()
-    session.get_scene_view()
+    session.read()
     state = session.encounter_state
     assert state is not None
     state.turn_index = state.initiative_order.index("goblin_2")
@@ -471,11 +462,10 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
     mover.actions_remaining = 0
     reactor.position.x, reactor.position.y = 3, 4
 
-    interrupted = session.advance_until_input_required()
+    session.advance_until_input_required()
 
-    assert interrupted.decision is not None
-    assert interrupted.decision["kind"] == "reaction"
-    assert interrupted.decision["creature_ref"] == "player"
+    assert state.current_decision().kind == "reaction"
+    assert state.current_decision().creature_ref == "player"
     assert state.pending_movement is not None
     assert state.pending_movement.creature_ref == "goblin_2"
     assert state.pending_movement.direction == "up-right"
@@ -493,9 +483,7 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
     resumed = session.choose_encounter_action(opportunity_attack)
 
     assert state.pending_movement is None
-    assert resumed.decision is not None
-    assert resumed.decision["kind"] == "turn"
-    assert resumed.decision["creature_ref"] == "player"
+    assert state.current_decision().kind == "turn"
     assert state.current_decision().creature_ref == "player"
     assert (mover.position.x, mover.position.y) != (3, 3)
     assert any(

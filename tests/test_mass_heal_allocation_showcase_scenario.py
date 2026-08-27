@@ -17,7 +17,7 @@ def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> No
     session = load_scenario_directory(
         str(SCENARIO_DIR), start_scene="mass_heal_allocation_showcase"
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

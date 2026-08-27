@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from srd_arena.engine.session import Session
+from srd_arena.engine.api import GameEngine
 
 from .commands import CommandResult, GameCommand, GameUpdate
 from .interactions import execute_game_command, game_update
@@ -14,7 +14,7 @@ class RunningGame:
 
     __slots__ = ("__session",)
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: GameEngine) -> None:
         self.__session = session
 
     def observe(self) -> GameObservation:
