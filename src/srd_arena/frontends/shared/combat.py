@@ -1,4 +1,4 @@
-from ...application.observations import EncounterObservation
+from srd_arena.application.observations import EncounterObservation
 
 
 def render_encounter_text(encounter: EncounterObservation) -> str:

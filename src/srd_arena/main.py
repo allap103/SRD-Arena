@@ -1,9 +1,9 @@
-from .application.startup import GameStartup
-from .infrastructure.scenarios import FilesystemScenarioRepository
+from srd_arena.application.startup import GameStartup
+from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
 
 
 def main() -> None:
-    from .frontends.qt.launcher import run_pyside6_app
+    from srd_arena.frontends.qt.launcher import run_pyside6_app
 
     repository = FilesystemScenarioRepository()
     run_pyside6_app(

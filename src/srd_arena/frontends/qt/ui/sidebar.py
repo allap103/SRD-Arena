@@ -7,7 +7,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 
-from ....application.observations import CreatureObservation, GameObservation
+from srd_arena.application.observations import CreatureObservation, GameObservation
 from ...shared.dice import RollView
 from .encounter import DiceRollPanel
 from .encounter.config import ENCOUNTER_BUTTON_HEIGHT

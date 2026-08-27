@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ...application.observations import ActionObservation
+from srd_arena.application.observations import ActionObservation
 
 
 @dataclass(frozen=True)

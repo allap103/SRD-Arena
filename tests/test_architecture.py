@@ -169,21 +169,29 @@ def test_relative_import_resolution() -> None:
     )
 
 
-def test_content_and_runtime_use_absolute_cross_package_imports() -> None:
+def test_cross_package_imports_are_absolute() -> None:
     violations: list[str] = []
 
-    for package_name in ("content", "runtime"):
-        package_dir = PACKAGE_ROOT / package_name
-        for path in sorted(package_dir.rglob("*.py")):
-            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ImportFrom) and node.level > 1:
-                    violations.append(
-                        f"{path.relative_to(PACKAGE_ROOT.parent)}:{node.lineno}"
-                    )
+    for path in sorted(PACKAGE_ROOT.rglob("*.py")):
+        module = _module_name(path)
+        source_package = _top_level_package(module)
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom) or node.level == 0:
+                continue
+            imported_module = _resolve_from_import(
+                module,
+                path.name == "__init__.py",
+                node,
+            )
+            if _top_level_package(imported_module) != source_package:
+                violations.append(
+                    f"{path.relative_to(PACKAGE_ROOT.parent)}:{node.lineno}: "
+                    f"{module} imports {imported_module} relatively"
+                )
 
     assert not violations, (
-        "Use absolute imports across content/runtime package boundaries:\n"
+        "Use absolute imports across top-level srd_arena package boundaries:\n"
         + "\n".join(violations)
     )
 
@@ -371,6 +379,11 @@ def _module_name(path: Path) -> str:
     if parts[-1] == "__init__":
         parts.pop()
     return ".".join(parts)
+
+
+def _top_level_package(module: str) -> str:
+    parts = module.split(".")
+    return parts[1] if len(parts) > 1 else ""
 
 
 def _is_package_or_child(module: str, package: str) -> bool:

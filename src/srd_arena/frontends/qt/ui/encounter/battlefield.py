@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-from .....domain.geometry import continuous_area_outline
+from srd_arena.domain.geometry import continuous_area_outline
 from ....shared.models import BattlefieldCreatureView, BattlefieldView
 from ...floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
 from .area_previews import (

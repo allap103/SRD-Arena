@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from ...application.commands import (
+from srd_arena.application.commands import (
     AimAction,
     CancelTargeting,
     ChangeTarget,
@@ -11,12 +11,12 @@ from ...application.commands import (
     SelectAction,
     SetResourceAllocation,
 )
-from ...application.game import RunningGame
-from ...application.observations import (
+from srd_arena.application.game import RunningGame
+from srd_arena.application.observations import (
     EncounterObservation,
     GameObservation,
 )
-from ...application.scenarios import ScenarioPresentation
+from srd_arena.application.scenarios import ScenarioPresentation
 from ..shared.dice import build_roll_views, without_roll_details
 from ..shared.models import SessionPresentation
 from ..shared.session import build_session_presentation

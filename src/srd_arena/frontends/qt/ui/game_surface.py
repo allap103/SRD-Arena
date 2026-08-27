@@ -6,7 +6,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from ....application.observations import ActionObservation
+from srd_arena.application.observations import ActionObservation
 from ...shared.models import InitiativeTrackEntryView
 from .encounter import BattlefieldWidget, clear_layout
 from .encounter.initiative import InitiativeRail

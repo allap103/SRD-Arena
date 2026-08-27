@@ -122,6 +122,8 @@ prevent runtime access from returning.
   implementation packages.
 - The headless adapter imports application contracts only.
 - Package roots do not re-export engine types and thereby hide ownership.
+- Imports crossing top-level `srd_arena` packages use the full absolute path.
+  Relative imports are reserved for modules within the same top-level package.
 
 These rules are executable in `tests/test_architecture.py`.
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from ...application.scenarios import ScenarioSummary
-from ...application.startup import GameStartup
+from srd_arena.application.scenarios import ScenarioSummary
+from srd_arena.application.startup import GameStartup
 from .app import GameWindow
 from .theme import apply_fantasy_theme
 
