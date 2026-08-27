@@ -16,7 +16,17 @@ def resolve_custom_spell(
     context: SpellActionContext,
     resolve_declarative: DeclarativeSpellResolver,
 ) -> CapabilityActionResult:
-    """Resolve one spell through its validated registered Python handler."""
+    """Resolve one spell through its validated registered Python handler.
+
+    Spells without an escape-hatch resolver remain fully declarative.
+
+    >>> from types import SimpleNamespace
+    >>> context = SimpleNamespace(
+    ...     spell=SimpleNamespace(resolver_id=None)
+    ... )
+    >>> resolve_custom_spell(context, lambda current: "declarative")
+    'declarative'
+    """
 
     resolver_id = context.spell.resolver_id
     if resolver_id is None:

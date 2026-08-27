@@ -25,7 +25,20 @@ _BENEFICIAL_CONDITIONS = frozenset({"invisible"})
 def persistent_spell_effect_polarity(
     prepared: PreparedSpellResolution,
 ) -> EffectPolarity:
-    """Classify the persistent part of one resolved spell."""
+    """Classify the persistent part of one resolved spell.
+
+    >>> from types import SimpleNamespace
+    >>> prepared = SimpleNamespace(
+    ...     repeat_failure_damage=(), conditions=(),
+    ...     repeat_failure_conditions=(),
+    ...     definition_effects=(ArmorClassModifierEffect(2),),
+    ...     definition=SimpleNamespace(
+    ...         target=SimpleNamespace(disposition="any")
+    ...     ),
+    ... )
+    >>> persistent_spell_effect_polarity(prepared)
+    <EffectPolarity.BENEFICIAL: 'beneficial'>
+    """
 
     beneficial = False
     harmful = bool(prepared.repeat_failure_damage)

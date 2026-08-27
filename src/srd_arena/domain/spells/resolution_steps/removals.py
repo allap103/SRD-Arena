@@ -20,7 +20,26 @@ def build_spell_removals(
     context: SpellActionContext,
     resolved: ResolvedSpellTargets,
 ) -> SpellRemovalResults:
-    """Select condition and ongoing-effect applications removed by the spell."""
+    """Select condition and ongoing-effect applications removed by the spell.
+
+    >>> from types import SimpleNamespace
+    >>> from ..definitions import Spell
+    >>> spell = Spell(
+    ...     "restoration", "Restoration", "TEST", 2,
+    ...     removable_conditions=("prone",),
+    ...     removable_effect_kinds=("condition",),
+    ...     remove_effect_selection="one",
+    ... )
+    >>> context = SimpleNamespace(spell=spell, selected_condition="prone")
+    >>> target = SimpleNamespace(
+    ...     target_ref="hero", target_label="Hero",
+    ...     target_conditions=("prone",),
+    ... )
+    >>> resolved = SimpleNamespace(affected_targets=(target,))
+    >>> removal = build_spell_removals(context, resolved)
+    >>> (removal.removed_conditions, removal.effects[0].kind)
+    (['prone'], 'remove_condition')
+    """
 
     spell = context.spell
     messages: list[tuple[str, str]] = []

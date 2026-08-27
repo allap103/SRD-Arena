@@ -26,7 +26,16 @@ def resolve_slow(
     context: SpellActionContext,
     resolve_declarative: DeclarativeSpellResolver,
 ) -> CapabilityActionResult:
-    """Resolve common targeting/saves, then attach Slow's grouped rule state."""
+    """Resolve common targeting/saves, then attach Slow's grouped rule state.
+
+    A casting that affects no targets retains only its declarative result.
+
+    >>> from types import SimpleNamespace
+    >>> result = CapabilityActionResult("slow", "Slow", [], [], details={})
+    >>> context = SimpleNamespace()
+    >>> resolve_slow(context, lambda current: result) is result
+    True
+    """
 
     result = resolve_declarative(context)
     affected_target_refs = _affected_target_refs(result)
