@@ -4,15 +4,17 @@ The frontends are driving adapters around the application API. The broader
 layering, startup flow, and public game contract are documented in
 [Application architecture](application_architecture.md).
 
-## Qt adapter
+## GUI adapter
 
-`frontends.qt` owns widgets, painting, pointer interaction, action menus, and
-Qt-specific presentation configuration. `GameWindow` receives a `RunningGame`
+`frontends.gui` owns widgets, painting, pointer interaction, action menus, and
+GUI-specific presentation configuration. PySide6 is its current implementation
+toolkit rather than part of the adapter's public identity. `GameWindow`
+receives a `RunningGame`
 plus presentation metadata from the launcher and interacts through application
 observations and commands. It does not receive a scenario directory, parse
 scenario JSON, or inspect the engine session.
 
-`GameWindow` is the Qt composition and orchestration shell. It wires application
+`GameWindow` is the GUI composition and orchestration shell. It wires application
 commands to three view components and owns only transient interaction state such
 as the selected targeting mode and movement preview:
 
@@ -22,16 +24,16 @@ as the selected targeting mode and movement preview:
 | `ui.sidebar` | Sidebar navigation, auxiliary creature views, settings, encounter JSON, and combat log. |
 | `ui.encounter.panel_renderer` | Populate encounter actions, resources, status, and allocation controls. |
 
-Qt may reuse the pure `domain.geometry` package for pointer-driven area-preview
-rasterization. It must not import runtime or mutable encounter implementation
-packages. This exception keeps one definition of grid geometry without moving
-widget behavior into the application layer.
+The GUI may reuse the pure `domain.geometry` package for pointer-driven
+area-preview rasterization. It must not import the engine or mutable encounter
+implementation packages. This exception keeps one definition of grid geometry
+without moving widget behavior into the application layer.
 
 ## Shared presentation
 
 `frontends.shared` turns application observations and events into display-ready
-models used by Qt. It contains no Qt widgets and imports neither runtime nor
-domain encounter implementation.
+models used by the GUI. It contains no PySide6 widgets and imports neither engine
+nor domain encounter implementation.
 
 | Module | Responsibility |
 | --- | --- |
@@ -56,8 +58,8 @@ domain encounter implementation.
 | `movement` | Build immutable movement-preview ownership and shortest paths. |
 | `targeting` | Derive target-selection modes and battlefield click actions. |
 | `panel_renderer` | Render sidebar encounter controls through explicit bindings and callbacks. |
-| `layout` | Clear nested Qt layouts. |
-| `resource_formatting` | Format resource values for Qt labels. |
+| `layout` | Clear nested GUI layouts. |
+| `resource_formatting` | Format resource values for GUI labels. |
 
 ## Headless adapter
 
@@ -71,4 +73,4 @@ adapter. It:
 - preserves stale-decision validation;
 - advances scripted controllers without owning action-selection policy.
 
-It is intentionally not a CLI and does not load Qt.
+It is intentionally not a CLI and does not load the GUI toolkit.

@@ -7,7 +7,7 @@ from srd_arena.application.observations import (
     OngoingEffectObservation,
     PositionObservation,
 )
-from srd_arena.frontends.qt.ui.encounter.status_markers import (
+from srd_arena.frontends.gui.ui.encounter.status_markers import (
     StatusMarkerHit,
     build_status_marker_specs,
     creature_name_label_rect,

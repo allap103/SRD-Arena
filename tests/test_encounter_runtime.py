@@ -36,7 +36,7 @@ from srd_arena.domain.encounters.ongoing_effects import (
 )
 from srd_arena.frontends.shared.combat import render_encounter_text
 from srd_arena.infrastructure.scenarios import load_scenario
-from srd_arena.frontends.qt.app import GameWindow
+from srd_arena.frontends.gui.app import GameWindow
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
@@ -91,17 +91,17 @@ from srd_arena.content.spells import (
     build_spell as build_spell_schema,
     load_spell_catalog,
 )
-from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
-from srd_arena.frontends.qt.ui.encounter.area_previews import preview_area_overlay
-from srd_arena.frontends.qt.ui.encounter.action_menus import action_bucket
-from srd_arena.frontends.qt.ui.encounter.config import (
+from srd_arena.frontends.gui.ui.encounter import BattlefieldWidget
+from srd_arena.frontends.gui.ui.encounter.area_previews import preview_area_overlay
+from srd_arena.frontends.gui.ui.encounter.action_menus import action_bucket
+from srd_arena.frontends.gui.ui.encounter.config import (
     ActionMenuScope,
     TargetSelectionMode,
 )
-from srd_arena.frontends.qt.ui.encounter.panel_renderer import (
+from srd_arena.frontends.gui.ui.encounter.panel_renderer import (
     configure_action_button,
 )
-from srd_arena.frontends.qt.ui.encounter.targeting import (
+from srd_arena.frontends.gui.ui.encounter.targeting import (
     allocation_counts,
     allocation_status,
     mode_label,
@@ -2074,7 +2074,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
         "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
     )
     monkeypatch.setattr(
-        "srd_arena.frontends.qt.app.QTimer",
+        "srd_arena.frontends.gui.app.QTimer",
         SimpleNamespace(singleShot=lambda _delay, callback: callback()),
     )
 
@@ -5141,7 +5141,7 @@ def test_follow_up_attack_is_queued_only_with_attacks_and_targets(
         )
     )
     monkeypatch.setattr(
-        "srd_arena.frontends.qt.app.build_session_presentation",
+        "srd_arena.frontends.gui.app.build_session_presentation",
         lambda _session: presentation,
     )
 

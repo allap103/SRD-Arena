@@ -71,7 +71,7 @@ RULES = (
         ),
     ),
     DependencyRule(
-        package="srd_arena.frontends.qt",
+        package="srd_arena.frontends.gui",
         forbidden=(
             "srd_arena.content",
             "srd_arena.domain.encounters",
@@ -84,7 +84,7 @@ RULES = (
         forbidden=(
             "srd_arena.content",
             "srd_arena.domain",
-            "srd_arena.frontends.qt",
+            "srd_arena.frontends.gui",
             "srd_arena.infrastructure",
             "srd_arena.engine",
         ),
@@ -139,9 +139,9 @@ def test_package_dependencies_follow_architecture() -> None:
     )
 
 
-def test_qt_domain_imports_are_limited_to_pure_geometry() -> None:
+def test_gui_domain_imports_are_limited_to_pure_geometry() -> None:
     violations: list[str] = []
-    package_dir = PACKAGE_ROOT / "frontends" / "qt"
+    package_dir = PACKAGE_ROOT / "frontends" / "gui"
     for path in sorted(package_dir.rglob("*.py")):
         module = _module_name(path)
         for line, imported_module in _imports(path, module):
@@ -151,7 +151,7 @@ def test_qt_domain_imports_are_limited_to_pure_geometry() -> None:
             ):
                 violations.append(
                     f"{path.relative_to(PACKAGE_ROOT.parent)}:{line} imports "
-                    f"{imported_module}; Qt may import only pure domain geometry."
+                    f"{imported_module}; GUI may import only pure domain geometry."
                 )
     assert not violations, "\n".join(violations)
 
@@ -236,8 +236,8 @@ def test_encounter_actions_have_no_legacy_peer_package() -> None:
     )
 
 
-def test_qt_interaction_planning_stays_independent_of_qt() -> None:
-    encounter_ui = PACKAGE_ROOT / "frontends" / "qt" / "ui" / "encounter"
+def test_gui_interaction_planning_stays_independent_of_pyside6() -> None:
+    encounter_ui = PACKAGE_ROOT / "frontends" / "gui" / "ui" / "encounter"
     violations: list[str] = []
 
     for name in ("action_menus.py", "movement.py", "targeting.py"):
@@ -252,8 +252,8 @@ def test_qt_interaction_planning_stays_independent_of_qt() -> None:
     )
 
 
-def test_qt_window_imports_only_composition_widgets() -> None:
-    path = PACKAGE_ROOT / "frontends" / "qt" / "app.py"
+def test_gui_window_imports_only_composition_widgets() -> None:
+    path = PACKAGE_ROOT / "frontends" / "gui" / "app.py"
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     qt_widget_imports = {
         alias.name
@@ -270,11 +270,11 @@ def test_qt_window_imports_only_composition_widgets() -> None:
 
 
 def test_initiative_rendering_has_one_view_owner() -> None:
-    qt_root = PACKAGE_ROOT / "frontends" / "qt"
+    gui_root = PACKAGE_ROOT / "frontends" / "gui"
     non_owners = (
-        qt_root / "app.py",
-        qt_root / "ui" / "sidebar.py",
-        qt_root / "ui" / "encounter" / "panel_renderer.py",
+        gui_root / "app.py",
+        gui_root / "ui" / "sidebar.py",
+        gui_root / "ui" / "encounter" / "panel_renderer.py",
     )
 
     assert all(

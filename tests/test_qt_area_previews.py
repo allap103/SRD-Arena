@@ -2,13 +2,13 @@ from pathlib import Path
 
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.application.observations import observe_session
-from srd_arena.frontends.qt.ui.encounter.area_previews import (
+from srd_arena.frontends.gui.ui.encounter.area_previews import (
     area_overlay_label,
     overlay_cells,
     overlay_origin,
     preview_area_overlay,
 )
-from srd_arena.frontends.qt.ui.encounter.targeting import (
+from srd_arena.frontends.gui.ui.encounter.targeting import (
     mode_for_action,
     pending_area_overlay,
 )

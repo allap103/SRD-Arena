@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 )
 
 from srd_arena.application.observations import ActionObservation
-from srd_arena.frontends.qt.ui.game_surface import (
+from srd_arena.frontends.gui.ui.game_surface import (
     GameSurface,
     GameSurfaceCallbacks,
 )

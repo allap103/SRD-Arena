@@ -2,7 +2,7 @@
 
 SRD Arena separates game rules, mutable execution, use cases, content loading,
 and client interfaces. The application layer is the stable entry point for both
-the Qt client and model-training code; neither client receives the engine
+the GUI client and model-training code; neither client receives the engine
 session or mutable encounter state.
 
 ## Package roles
@@ -12,10 +12,10 @@ main
 ├── application
 ├── infrastructure
 └── selected frontend
-    ├── Qt
+    ├── GUI
     └── headless
 
-Qt/headless ───────> application
+GUI/headless ──────> application
 infrastructure ────> application
 infrastructure ────> content
 infrastructure ────> domain
@@ -23,7 +23,7 @@ content ───────────> domain
 application ───────> engine
 application ───────> domain
 engine ────────────> domain
-Qt ────────────────> domain.geometry
+GUI ───────────────> domain.geometry
 ```
 
 The arrows show dependencies. `main` is the composition root and chooses the
@@ -38,7 +38,7 @@ definitions from authored content.
 | `application` | Scenario source port, startup use cases, the running-game facade, observations, commands, and result translation. |
 | `content` | Parse authored system and scenario data into domain definitions. |
 | `infrastructure` | Implement the application scenario-source port using filesystem content. |
-| `frontends.qt` | Render observations and translate pointer/widget input into application commands. |
+| `frontends.gui` | Implement the graphical client with PySide6, render observations, and translate pointer/widget input into application commands. |
 | `frontends.headless` | Expose the same use cases to in-process Python and ML clients without choosing actions for them. |
 | `main` | Wire `FilesystemScenarioRepository`, `GameStartup`, and the selected driving adapter. |
 
@@ -48,13 +48,13 @@ contracts owned by the application/domain core.
 
 ## Shared spatial kernel
 
-Qt has one deliberate, narrow dependency on `domain.geometry`. Area previews
-must use the same cone, line, cube, radius, rasterization, and outline
+The GUI adapter has one deliberate, narrow dependency on `domain.geometry`.
+Area previews must use the same cone, line, cube, radius, rasterization, and outline
 calculations as combat resolution; duplicating those rules in the frontend
 could make the displayed template disagree with the affected cells.
 
-This exception does not grant Qt access to mutable encounter state or combat
-orchestration. The geometry package is a stateless calculation kernel made of
+This exception does not grant the GUI access to mutable encounter state or
+combat orchestration. The geometry package is a stateless calculation kernel made of
 value objects and pure operations. Pointer movement remains local presentation
 behavior, so routing every transient hover position through an application
 command would add ceremony without changing game state.
@@ -80,11 +80,11 @@ main
   -> adapter interacts only through RunningGame
 ```
 
-Scenario filesystem paths are infrastructure details. Both Qt and headless
+Scenario filesystem paths are infrastructure details. Both GUI and headless
 clients select the stable IDs advertised by `GameStartup`; the filesystem
 repository resolves those IDs internally. Optional board presentation metadata
-is attached to the scenario summary and injected into Qt. It never enters the
-running game or engine session.
+is attached to the scenario summary and injected into the GUI. It never enters
+the running game or engine session.
 
 ## Public game interaction
 
@@ -107,8 +107,8 @@ private to the application translator.
 
 The command set currently covers direct selection, area aiming, staged target
 changes, numeric allocations, and confirmation/cancellation. Policy remains
-outside the application: Qt waits for a user, while an ML policy chooses among
-the same advertised actions.
+outside the application: the GUI waits for a user, while an ML policy chooses
+among the same advertised actions.
 
 ## Read and write boundaries
 
@@ -116,9 +116,9 @@ the same advertised actions.
 engine Session
     -> observation projection
     -> GameObservation / GameEvent
-    -> Qt or headless client
+    -> GUI or headless client
 
-Qt or headless client
+GUI or headless client
     -> typed GameCommand + expected decision ID
     -> command validation / translation
     -> engine Session
@@ -144,8 +144,8 @@ prevent engine access from returning.
   domain definitions.
 - Shared presentation imports application contracts, not engine or encounter
   implementation packages.
-- Qt imports application contracts and may reuse pure domain geometry for
-  pointer-driven area rendering. It imports neither engine nor mutable
+- The GUI adapter imports application contracts and may reuse pure domain
+  geometry for pointer-driven area rendering. It imports neither engine nor mutable
   encounter implementation packages; no other domain dependency is intended.
 - The headless adapter imports application contracts only.
 - Package roots do not re-export engine types and thereby hide ownership.
@@ -160,5 +160,5 @@ These rules are executable in `tests/test_architecture.py`.
   reward shaping, batching, or a training framework.
 - Observation versioning and wire-format compatibility become relevant only if
   the application boundary is exposed over a process or network boundary.
-- Pure Qt module-size cleanup can continue independently without changing the
+- Pure GUI module-size cleanup can continue independently without changing the
   application contracts.

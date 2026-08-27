@@ -78,7 +78,7 @@ class ScenarioPickerWindow(QMainWindow):
         self.close()
 
 
-def run_pyside6_app(
+def run_gui(
     startup: GameStartup,
     *,
     image_root: Path | None = None,

@@ -13,8 +13,8 @@ pytest.importorskip("PySide6")
 from PySide6.QtWidgets import QApplication, QFrame
 
 from srd_arena.application.game import RunningGame
-from srd_arena.frontends.qt.app import GameWindow
-from srd_arena.frontends.qt.ui.encounter.panel_renderer import (
+from srd_arena.frontends.gui.app import GameWindow
+from srd_arena.frontends.gui.ui.encounter.panel_renderer import (
     EncounterPanelRenderer,
 )
 from srd_arena.infrastructure.scenarios import load_scenario
