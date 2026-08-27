@@ -16,7 +16,25 @@ def available_feature_actions(
     self: EncounterState,
     creature: Creature,
 ) -> list[EncounterAction]:
-    """Advertise supported feature actions whose use and economy permit activation."""
+    """Advertise supported non-reaction feature actions for the current actor.
+
+    >>> from types import SimpleNamespace
+    >>> from ....creatures.feature_actions import FeatureActionDefinition
+    >>> feature = FeatureActionDefinition(
+    ...     "second_wind", "Second Wind", "bonus_action", "self", "fighter"
+    ... )
+    >>> creature = SimpleNamespace(
+    ...     combat_profile=SimpleNamespace(
+    ...         feature_actions={"second_wind": feature}
+    ...     )
+    ... )
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="fighter")
+    ... )
+    >>> action = available_feature_actions(state, creature)[0]
+    >>> (action.label, action.kind, action.cost.bonus_action)
+    ('Second Wind', 'feature', 1)
+    """
 
     creature_ref = self.current_decision().creature_ref
     actions: list[EncounterAction] = []
@@ -46,7 +64,20 @@ def feature_action_available(
     actor: Creature,
     definition: FeatureActionDefinition,
 ) -> bool:
-    """Return whether a creature feature may currently supply its action."""
+    """Return whether a creature feature may currently supply its action.
+
+    >>> from types import SimpleNamespace
+    >>> from ....creatures.feature_actions import FeatureActionDefinition
+    >>> feature = FeatureActionDefinition(
+    ...     "second_wind", "Second Wind", "bonus_action", "self", "fighter"
+    ... )
+    >>> actor = SimpleNamespace(feature_uses_remaining={"second_wind": 1})
+    >>> state = SimpleNamespace(
+    ...     active_bonus_action_available=True, active_actions_remaining=1
+    ... )
+    >>> feature_action_available(state, actor, feature)
+    True
+    """
 
     if definition.economy == "bonus_action" and not self.active_bonus_action_available:
         return False

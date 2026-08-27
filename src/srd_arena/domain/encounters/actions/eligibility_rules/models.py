@@ -46,4 +46,7 @@ class EligibilityRule(Protocol):
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
-    ) -> EligibilityFailure | None: ...
+    ) -> EligibilityFailure | None:
+        """Return one rejection, or no failure when this rule accepts the action."""
+
+        ...

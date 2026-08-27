@@ -160,7 +160,19 @@ def opposing_target_failure(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> EligibilityFailure | None:
-    """Return a failure when a rule requires the target to be an opponent."""
+    """Return a failure when a rule requires the target to be an opponent.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(
+    ...     creatures={"ally": SimpleNamespace(is_alive=True)},
+    ...     _creatures_are_opponents=lambda actor, target: False,
+    ... )
+    >>> failure = opposing_target_failure(
+    ...     state, "hero", EncounterAction("Target Ally", "attack", "ally")
+    ... )
+    >>> failure.code if failure else None
+    'target_not_opponent'
+    """
 
     if not isinstance(action.value, str):
         return EligibilityFailure("target_required", "A creature target is required.")
@@ -181,7 +193,22 @@ def target_requirement_failure(
     target_ref: CreatureRef,
     requirements: tuple[object, ...],
 ) -> EligibilityFailure | None:
-    """Return the first authored target requirement the candidate violates."""
+    """Return the first authored target requirement the candidate violates.
+
+    >>> from types import SimpleNamespace
+    >>> requirement = CreatureTypeRequirement(("humanoid",))
+    >>> target = SimpleNamespace(
+    ...     creature=SimpleNamespace(
+    ...         statistics=SimpleNamespace(creature_type="undead")
+    ...     )
+    ... )
+    >>> state = SimpleNamespace(creatures={"target": target})
+    >>> failure = target_requirement_failure(
+    ...     state, "cleric", "target", (requirement,)
+    ... )
+    >>> failure.code if failure else None
+    'target_creature_type_required'
+    """
 
     for requirement in requirements:
         if isinstance(requirement, CreatureTypeRequirement):
