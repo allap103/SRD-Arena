@@ -45,6 +45,13 @@ class ResourceSummaryView:
     initiative: tuple[InitiativeTrackEntryView, ...] = ()
 
     def as_text(self) -> str:
+        """Render the compact textual resource summary used by simple clients.
+
+        >>> summary = ResourceSummaryView(8, 10, "Available", "Spent", "Available",
+        ...     1, ("prone",), (), 4, 6, 20, 30)
+        >>> summary.as_text().splitlines()[:5]
+        ['Health: 8/10', 'Action: Available', 'Bonus Action: Spent', 'Reaction: Available', 'Conditions: Prone']
+        """
         condition_text = (
             ", ".join(condition.capitalize() for condition in self.conditions)
             if self.conditions
