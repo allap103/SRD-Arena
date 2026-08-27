@@ -40,6 +40,11 @@ class ItemSchema(SourceModel):
 
     @property
     def public_name(self) -> str:
+        """Return the SRD-facing name when the source provides one.
+
+        >>> ItemSchema(name="Longsword Legacy", source="X", srd52="Longsword").public_name
+        'Longsword'
+        """
         for marker in (self.srd52, self.srd):
             if isinstance(marker, str):
                 return marker
@@ -47,10 +52,20 @@ class ItemSchema(SourceModel):
 
     @property
     def is_weapon(self) -> bool:
+        """Return whether authored fields identify this item as a weapon.
+
+        >>> ItemSchema(name="Longsword", source="X", dmg1="1d8").is_weapon
+        True
+        """
         return self.weapon or self.damage is not None
 
     @property
     def is_armor(self) -> bool:
+        """Return whether authored fields identify this item as armor.
+
+        >>> ItemSchema(name="Shield", source="X", ac=2).is_armor
+        True
+        """
         return self.armor or isinstance(self.ac, int)
 
 

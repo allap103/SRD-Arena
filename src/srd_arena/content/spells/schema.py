@@ -46,6 +46,11 @@ class SpellSchema(SourceModel):
 
     @property
     def executable(self) -> bool:
+        """Return whether the spell has runnable complete or partial mechanics.
+
+        >>> SpellSchema(name="Unknown", source="X", level=1, school="A").executable
+        False
+        """
         return self.capability is not None and self.implementation.status in {
             "complete",
             "partial",
@@ -53,6 +58,11 @@ class SpellSchema(SourceModel):
 
     @property
     def public_name(self) -> str:
+        """Return the SRD-facing spell name.
+
+        >>> SpellSchema(name="Legacy Name", source="X", level=1, school="A", srd52="New Name").public_name
+        'New Name'
+        """
         for marker in (self.srd52, self.srd):
             if isinstance(marker, str):
                 return marker

@@ -42,6 +42,12 @@ class ClassFeatureSchema(SourceModel):
 
     @property
     def public_name(self) -> str:
+        """Return the SRD-facing class-feature name.
+
+        >>> feature = ClassFeatureSchema(name="Legacy", source="X", className="Fighter", classSource="X", level=1, srd52="Second Wind")
+        >>> feature.public_name
+        'Second Wind'
+        """
         for marker in (self.srd52, self.srd):
             if isinstance(marker, str):
                 return marker
@@ -94,6 +100,11 @@ class ClassSchema(SourceModel):
 
     @property
     def public_name(self) -> str:
+        """Return the SRD-facing class name.
+
+        >>> ClassSchema(name="Fighter Legacy", source="X", srd52="Fighter").public_name
+        'Fighter'
+        """
         for marker in (self.srd52, self.srd):
             if isinstance(marker, str):
                 return marker
@@ -137,6 +148,12 @@ class SubclassSchema(SourceModel):
 
     @property
     def public_name(self) -> str:
+        """Return the SRD-facing subclass name.
+
+        >>> subclass = SubclassSchema(name="Champion Legacy", source="X", className="Fighter", classSource="X", srd52="Champion")
+        >>> subclass.public_name
+        'Champion'
+        """
         for marker in (self.srd52, self.srd):
             if isinstance(marker, str):
                 return marker

@@ -80,6 +80,13 @@ class BestiarySpeedSchema(SourceModel):
     choose: dict[str, object] | None = None
 
     def feet_for(self, mode: str) -> int | None:
+        """Return an unconditional or conditional speed as feet.
+
+        >>> BestiarySpeedSchema(walk=30).feet_for("walk")
+        30
+        >>> BestiarySpeedSchema(fly={"number": 60, "condition": "while airborne"}).feet_for("fly")
+        60
+        """
         value = getattr(self, mode, None)
         if isinstance(value, int) and not isinstance(value, bool):
             return value
@@ -101,6 +108,15 @@ class BestiaryActionSchema(SourceModel):
     @model_validator(mode="before")
     @classmethod
     def reject_legacy_multiattack_key(cls, value: object) -> object:
+        """Reject the obsolete pre-capability multiattack extension.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     BestiaryActionSchema.model_validate({"name": "Multiattack", "srdArenaMultiattack": {}})
+        ... except ValidationError as error:
+        ...     "obsolete" in str(error)
+        True
+        """
         if isinstance(value, dict) and "srdArenaMultiattack" in value:
             raise ValueError(
                 "Use 'capability' instead of the obsolete 'srdArenaMultiattack' key."
@@ -173,6 +189,11 @@ class BestiaryMonsterSchema(SourceModel):
 
     @property
     def public_name(self) -> str:
+        """Return the SRD-facing monster name.
+
+        >>> BestiaryMonsterSchema(name="Legacy Goblin", source="X", srd52="Goblin").public_name
+        'Goblin'
+        """
         for marker in (self.srd52, self.srd):
             if isinstance(marker, str):
                 return marker
@@ -180,10 +201,20 @@ class BestiaryMonsterSchema(SourceModel):
 
     @property
     def average_hit_points(self) -> int | None:
+        """Return authored average hit points when available.
+
+        >>> BestiaryMonsterSchema(name="Goblin", source="X", hp={"average": 7}).average_hit_points
+        7
+        """
         return self.hp.average
 
     @property
     def armor_class(self) -> int | None:
+        """Return the first authored armor-class value.
+
+        >>> BestiaryMonsterSchema(name="Goblin", source="X", ac=[15]).armor_class
+        15
+        """
         if not self.ac:
             return None
         first = self.ac[0]
@@ -191,16 +222,31 @@ class BestiaryMonsterSchema(SourceModel):
 
     @property
     def walk_speed(self) -> int | None:
+        """Return the monster's walking speed in feet.
+
+        >>> BestiaryMonsterSchema(name="Goblin", source="X", speed={"walk": 30}).walk_speed
+        30
+        """
         return self.speed.feet_for("walk")
 
     @property
     def primary_size(self) -> str:
+        """Return the first authored size code.
+
+        >>> BestiaryMonsterSchema(name="Shapechanger", source="X", size=["M", "L"]).primary_size
+        'M'
+        """
         if isinstance(self.size, str):
             return self.size
         return self.size[0] if self.size else "M"
 
     @property
     def creature_type(self) -> str | None:
+        """Return the base creature type from either authored representation.
+
+        >>> BestiaryMonsterSchema(name="Goblin", source="X", type="humanoid").creature_type
+        'humanoid'
+        """
         if isinstance(self.type, str):
             return self.type
         if self.type is None or not isinstance(self.type.type, str):
@@ -209,12 +255,23 @@ class BestiaryMonsterSchema(SourceModel):
 
     @property
     def type_tags(self) -> tuple[str, ...]:
+        """Return textual subtype tags from a structured creature type.
+
+        >>> monster = BestiaryMonsterSchema(name="Goblin", source="X", type={"type": "humanoid", "tags": ["goblinoid"]})
+        >>> monster.type_tags
+        ('goblinoid',)
+        """
         if not isinstance(self.type, BestiaryTypeSchema):
             return ()
         return tuple(tag for tag in self.type.tags if isinstance(tag, str))
 
     @property
     def challenge_rating(self) -> str | None:
+        """Return challenge rating from either authored representation.
+
+        >>> BestiaryMonsterSchema(name="Goblin", source="X", cr={"cr": "1/4"}).challenge_rating
+        '1/4'
+        """
         if isinstance(self.cr, str):
             return self.cr
         return self.cr.cr if self.cr is not None else None

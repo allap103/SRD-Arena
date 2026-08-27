@@ -17,6 +17,11 @@ class OptionalFeatureSchema(SourceModel):
 
     @property
     def public_name(self) -> str:
+        """Return the SRD-facing optional-feature name.
+
+        >>> OptionalFeatureSchema(name="Legacy Invocation", source="X", srd52="Invocation").public_name
+        'Invocation'
+        """
         for marker in (self.srd52, self.srd):
             if isinstance(marker, str):
                 return marker
