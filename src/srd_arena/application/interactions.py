@@ -90,7 +90,7 @@ def _observe_event(event: CombatEvent) -> GameEvent:
 
 
 def decision_id(observation: GameObservation) -> str | None:
-    """Handle decision id."""
+    """Return the decision token clients must echo with their next command."""
 
     return (
         observation.encounter.decision.id if observation.encounter is not None else None

@@ -56,7 +56,7 @@ class _ActionSemantics:
 
 
 def observe_scene(read: SessionRead) -> SceneObservation:
-    """Observe scene."""
+    """Project the engine's advertised choices into immutable client action data."""
 
     return SceneObservation(
         scene_id=read.scene_id,

@@ -1,4 +1,4 @@
-"""Provide models support for the engine package."""
+"""Define operation results returned by the mutable game engine."""
 
 from dataclasses import dataclass
 

@@ -18,7 +18,12 @@ CONTINUE_CHOICE_TEXT = "Continue"
 
 @dataclass(frozen=True)
 class SpellOptionDetails:
-    """Represent a spell option details."""
+    """Expose spell-specific selections needed to configure one action option.
+
+    These values describe the engine's current executable choice. They do not
+    duplicate the authored spell definition or ask a client to interpret spell
+    rules.
+    """
 
     source_id: str | None
     target_ref: str | None
@@ -33,7 +38,7 @@ class SpellOptionDetails:
 
 @dataclass(frozen=True)
 class StatBlockOptionDetails:
-    """Represent a stat block option details."""
+    """Identify the stat-block entry and target behind an executable option."""
 
     source_id: str | None
     target_ref: str | None
@@ -41,28 +46,28 @@ class StatBlockOptionDetails:
 
 @dataclass(frozen=True)
 class DirectTargetOptionDetails:
-    """Represent a direct target option details."""
+    """Identify the creature affected by a direct-target engine option."""
 
     target_ref: str | None
 
 
 @dataclass(frozen=True)
 class FeatureOptionDetails:
-    """Represent a feature option details."""
+    """Identify the creature feature selected by an executable option."""
 
     feature_id: str
 
 
 @dataclass(frozen=True)
 class MovementOptionDetails:
-    """Represent a movement option details."""
+    """Expose the grid direction encoded by a discrete movement option."""
 
     direction: str
 
 
 @dataclass(frozen=True)
 class ResourceAllocationOptionDetails:
-    """Represent a resource allocation option details."""
+    """Identify a target whose share of a staged resource can be changed."""
 
     target_ref: str
 
@@ -79,7 +84,7 @@ ActionOptionDetails = (
 
 @dataclass(frozen=True)
 class ActionAim:
-    """Represent an action aim."""
+    """Request that an advertised area action be aimed at a battlefield point."""
 
     x: float
     y: float
@@ -87,7 +92,7 @@ class ActionAim:
 
 @dataclass(frozen=True)
 class ActionResourceAllocation:
-    """Represent an action resource allocation."""
+    """Request an exact resource amount for one target in a staged action."""
 
     target_ref: str
     amount: int
@@ -98,7 +103,7 @@ ActionConfiguration = ActionAim | ActionResourceAllocation
 
 @dataclass(frozen=True)
 class ActionOptionCost:
-    """Represent an action option cost."""
+    """Report the turn resources an advertised action would consume."""
 
     movement: int = 0
     action: int = 0

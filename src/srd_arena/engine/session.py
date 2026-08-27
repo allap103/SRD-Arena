@@ -1,4 +1,4 @@
-"""Provide session support for the engine package."""
+"""Own a running game's mutable state and execute application requests."""
 
 from copy import deepcopy
 from dataclasses import dataclass
@@ -24,14 +24,20 @@ from srd_arena.engine.session_queries import read_session
 
 @dataclass
 class PendingSceneTransition:
-    """Represent a pending scene transition."""
+    """Hold a completed scene's destination until the client acknowledges it."""
 
     next_scene_id: str
     message: str
 
 
 class Session:
-    """Represent a session."""
+    """Coordinate content definitions and mutable state for one running game.
+
+    The session is the engine façade used by the application layer. It creates
+    encounter state lazily, advertises currently executable choices, and sends
+    accepted actions through the domain orchestrator. Presentation state and
+    user-interface concerns remain outside it.
+    """
 
     def __init__(
         self,
