@@ -55,7 +55,36 @@ def resolve_stat_block_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Dispatch a supported authored action to its focused resolver."""
+    """Dispatch a supported authored action to its focused resolver.
+
+    The facade selects the resolver from the definition stored on the creature,
+    leaving each resolver responsible for its own rule details.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> from srd_arena.domain.capabilities import CapabilityTarget
+    >>> definition = AutomaticActionDefinition(
+    ...     name="Roar",
+    ...     target=CapabilityTarget("creature"),
+    ...     effects=(),
+    ... )
+    >>> creature = SimpleNamespace(stat_block_actions={"Roar": definition})
+    >>> action = EncounterAction(
+    ...     "Roar",
+    ...     "stat_block_action",
+    ...     preferred_attack_name="Roar",
+    ... )
+    >>> progress = EncounterProgress()
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.stat_block."
+    ...     "resolve_automatic_stat_block_action"
+    ... ) as resolver:
+    ...     resolve_stat_block_action(
+    ...         SimpleNamespace(), creature, action, progress, "roar"
+    ...     )
+    >>> resolver.call_args.args[2] is definition
+    True
+    """
     definition = creature.stat_block_actions.get(action.preferred_attack_name or "")
     if isinstance(definition, AutomaticActionDefinition):
         resolve_automatic_stat_block_action(

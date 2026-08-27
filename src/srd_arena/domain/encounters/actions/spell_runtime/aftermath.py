@@ -32,7 +32,37 @@ def apply_spell_result(
     target_ref: str | None,
     target: SpellTargetContext,
 ) -> None:
-    """Publish resolved effects and record the completed cast."""
+    """Publish resolved effects and record the completed cast.
+
+    The encounter-facing event preserves spell metadata alongside the generic
+    capability result so frontends do not need to inspect domain objects.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import Mock
+    >>> from srd_arena.domain.creatures.feature_rules.types import CapabilityActionResult
+    >>> from srd_arena.domain.encounters.models import EncounterProgress
+    >>> from srd_arena.domain.spells import Spell
+    >>> state = SimpleNamespace(
+    ...     _apply_effects=Mock(return_value=[]),
+    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ... )
+    >>> result = CapabilityActionResult("fire-bolt", "Fire Bolt", [], [])
+    >>> progress = EncounterProgress()
+    >>> apply_spell_result(
+    ...     state,
+    ...     spellcasting=SimpleNamespace(spell_slots_remaining={}),
+    ...     spell=Spell("fire-bolt", "Fire Bolt", None, 0),
+    ...     cast_level=None,
+    ...     creature_ref="mage",
+    ...     action_id="cast",
+    ...     result=result,
+    ...     progress=progress,
+    ...     target_ref="dummy",
+    ...     target=SimpleNamespace(target_label="Dummy"),
+    ... )
+    >>> (progress.events[0][0], progress.events[0][1]["spell_id"])
+    ('spell_cast', 'fire-bolt')
+    """
 
     progress.messages.extend(result.messages)
     _apply_damage_lifecycle(

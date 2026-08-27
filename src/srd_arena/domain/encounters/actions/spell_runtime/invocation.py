@@ -35,7 +35,46 @@ def begin_spell_invocation(
     action_id: str,
     progress: EncounterProgress,
 ) -> bool:
-    """Commit spell resources, publish start effects, and run start checks."""
+    """Commit spell resources, publish start effects, and run start checks.
+
+    Resource spending happens before sourced checks such as Slow decide whether
+    the invocation itself succeeds.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import Mock, patch
+    >>> from srd_arena.domain.encounters.models import ActionCost, EncounterProgress
+    >>> from srd_arena.domain.spells import Spell
+    >>> spell = Spell(
+    ...     "misty-step", "Misty Step", None, 2,
+    ...     components={"v": True},
+    ... )
+    >>> checks = SimpleNamespace(
+    ...     invocation_start_checks=lambda state, context: context,
+    ...     resolve_invocation_start=lambda context, roller:
+    ...         InvocationStartResult(context),
+    ... )
+    >>> state = SimpleNamespace(
+    ...     _spend_spell_resources=Mock(),
+    ...     combat_rules=checks,
+    ... )
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.spell_runtime.invocation."
+    ...     "resolve_spell_lifecycle_event"
+    ... ):
+    ...     allowed = begin_spell_invocation(
+    ...         state,
+    ...         actor=SimpleNamespace(name="Mage"),
+    ...         spellcasting=SimpleNamespace(),
+    ...         spell=spell,
+    ...         cost=ActionCost(action=1),
+    ...         cast_level=2,
+    ...         creature_ref="mage",
+    ...         action_id="cast",
+    ...         progress=EncounterProgress(),
+    ...     )
+    >>> (allowed, state._spend_spell_resources.call_count)
+    (True, 1)
+    """
 
     state._spend_spell_resources(spellcasting, spell, cost, cast_level)
     if spell.concentration:
