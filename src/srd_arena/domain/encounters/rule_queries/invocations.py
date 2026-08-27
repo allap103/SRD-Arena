@@ -23,7 +23,28 @@ def invocation_start_checks(
     state: EncounterState,
     context: InvocationStartContext,
 ) -> InvocationStartQueryResult:
-    """Collect sourced failure chances matching invocation kind and components."""
+    """Collect sourced failure chances matching invocation kind and components.
+
+    >>> from types import SimpleNamespace
+    >>> from ...effects.runtime import EffectSource, EffectSourceKind
+    >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
+    >>> chance = InvocationFailureChance(
+    ...     frozenset({"cast_spell"}), frozenset({"somatic"}),
+    ...     1, 4, "slow.failure", "The gestures are too slow.",
+    ... )
+    >>> ongoing = SimpleNamespace(
+    ...     identity=SimpleNamespace(id="slow-1", source=source),
+    ...     target_refs=("mage",), rule_effects=(chance,),
+    ... )
+    >>> context = InvocationStartContext(
+    ...     "mage", "cast_spell", frozenset({"somatic", "verbal"})
+    ... )
+    >>> query = invocation_start_checks(
+    ...     SimpleNamespace(ongoing_effects=[ongoing]), context
+    ... )
+    >>> query.failure_chances[0].provider_state_id
+    'slow-1'
+    """
 
     invocation_kind = context.kind.casefold()
     components = frozenset(component.casefold() for component in context.components)
@@ -56,7 +77,20 @@ def resolve_invocation_start(
     query: InvocationStartQueryResult,
     roller: DieRoller,
 ) -> InvocationStartResult:
-    """Roll every applicable failure chance and retain complete roll details."""
+    """Roll every applicable failure chance and retain complete roll details.
+
+    >>> from ...effects.runtime import EffectSource, EffectSourceKind
+    >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
+    >>> chance = InvocationFailureChanceContribution(
+    ...     "slow-1", source, 1, 4, "slow.failure", "Too slow."
+    ... )
+    >>> query = InvocationStartQueryResult(
+    ...     InvocationStartContext("mage", "cast_spell"), (chance,)
+    ... )
+    >>> result = resolve_invocation_start(query, lambda sides: 1)
+    >>> (result.allowed, result.failures[0].code)
+    (False, 'slow.failure')
+    """
 
     rolls = tuple(
         _resolve_failure_chance(contribution, roller)

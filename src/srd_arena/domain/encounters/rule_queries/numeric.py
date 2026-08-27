@@ -29,7 +29,21 @@ def effective_armor_class(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> NumericRuleResult:
-    """Return effective AC with every modifier's runtime provenance."""
+    """Return effective AC with every modifier's runtime provenance.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     attributes=SimpleNamespace(base_armor_class=10, dexterity=14),
+    ...     get_modifier=lambda score: (score - 10) // 2,
+    ...     armor_class_modifier_sources={},
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(creature=creature)},
+    ...     ongoing_effects=[],
+    ... )
+    >>> effective_armor_class(state, "hero").value
+    12
+    """
 
     creature = state.creatures[creature_ref].creature
     base = creature.attributes.base_armor_class + creature.get_modifier(
@@ -76,7 +90,23 @@ def effective_speed(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> NumericRuleResult:
-    """Return effective Speed after additions, multipliers, and caps."""
+    """Return effective Speed after additions, multipliers, and caps.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     speed_modifier_sources={},
+    ...     attributes=SimpleNamespace(
+    ...         movement=SimpleNamespace(effective_speed_feet=30)
+    ...     ),
+    ...     condition_immunities=lambda: frozenset(),
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(creature=creature)},
+    ...     ongoing_effects=[], conditions=[],
+    ... )
+    >>> effective_speed(state, "hero").value
+    30
+    """
 
     creature = state.creatures[creature_ref].creature
     contributions: list[NumericRuleContribution] = []
@@ -157,7 +187,25 @@ def movement_budget(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> MovementQueryResult:
-    """Translate effective Speed into the encounter grid's movement budget."""
+    """Translate effective Speed into the encounter grid's movement budget.
+
+    >>> from types import SimpleNamespace
+    >>> from ...geometry import Grid
+    >>> creature = SimpleNamespace(
+    ...     speed_modifier_sources={},
+    ...     attributes=SimpleNamespace(
+    ...         movement=SimpleNamespace(effective_speed_feet=30)
+    ...     ),
+    ...     condition_immunities=lambda: frozenset(),
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(creature=creature)},
+    ...     ongoing_effects=[], conditions=[],
+    ...     definition=SimpleNamespace(grid=Grid(10, 10)),
+    ... )
+    >>> movement_budget(state, "hero").budget
+    6
+    """
 
     speed = effective_speed(state, creature_ref)
     return MovementQueryResult(
@@ -171,7 +219,12 @@ def attack_limit(
     creature_ref: CreatureRef,
     base: int,
 ) -> NumericRuleResult:
-    """Return the maximum attacks allowed by one Attack action."""
+    """Return the maximum attacks allowed by one Attack action.
+
+    >>> from types import SimpleNamespace
+    >>> attack_limit(SimpleNamespace(ongoing_effects=[]), "hero", 3).value
+    3
+    """
 
     contributions = tuple(
         NumericRuleContribution(

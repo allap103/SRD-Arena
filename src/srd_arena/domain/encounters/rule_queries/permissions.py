@@ -25,7 +25,19 @@ def reaction_eligibility(
     creature_ref: CreatureRef,
     reaction_kind: str | None = None,
 ) -> ActionEligibility:
-    """Return every reason a creature cannot take the requested reaction."""
+    """Return every reason a creature cannot take the requested reaction.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(condition_immunities=lambda: frozenset())
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(
+    ...         is_alive=True, reaction_available=False, creature=creature
+    ...     )},
+    ...     conditions=[], ongoing_effects=[],
+    ... )
+    >>> [failure.code for failure in reaction_eligibility(state, "hero").failures]
+    ['reaction_spent']
+    """
 
     creature_state = state.creatures[creature_ref]
     failures: list[EligibilityFailure] = []
@@ -81,7 +93,27 @@ def action_compatibility(
     creature_ref: CreatureRef,
     action: EncounterAction,
 ) -> ActionEligibility:
-    """Ask whether current permissions and turn economy permit an action."""
+    """Ask whether current permissions and turn economy permit an action.
+
+    >>> from types import SimpleNamespace
+    >>> from ..models import ActionCost
+    >>> creature = SimpleNamespace(condition_immunities=lambda: frozenset())
+    >>> creature_state = SimpleNamespace(
+    ...     is_alive=True, creature=creature, actions_remaining=0,
+    ...     bonus_action_available=True, reaction_available=True,
+    ...     action_used_this_turn=False, bonus_action_used_this_turn=False,
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": creature_state}, conditions=[], ongoing_effects=[]
+    ... )
+    >>> action = EncounterAction(
+    ...     "Attack", "attack", creature_ref="hero", cost=ActionCost(action=1)
+    ... )
+    >>> [failure.code for failure in action_compatibility(
+    ...     state, "hero", action
+    ... ).failures]
+    ['action_spent']
+    """
 
     creature_state = state.creatures[creature_ref]
     failures: list[EligibilityFailure] = []
