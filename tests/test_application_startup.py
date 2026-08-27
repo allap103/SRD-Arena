@@ -55,7 +55,7 @@ def test_game_startup_creates_session_from_repository_result(
         def create_session(
             *,
             automatic_action_limit: int | None = None,
-        ):
+        ) -> object:
             received_limits.append(automatic_action_limit)
             return session
 

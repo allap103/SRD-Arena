@@ -23,7 +23,7 @@ from srd_arena.domain.encounters import (
     EncounterTransition,
 )
 from srd_arena.domain.geometry import Grid, Position
-from .schema import EncounterDefinitionSchema
+from .schema import EncounterDefinitionSchema, PositionSchema
 
 
 @dataclass(frozen=True)
@@ -32,7 +32,7 @@ class LoadedEncounter:
     creatures: tuple[Creature, ...]
 
 
-def _build_position(position) -> Position:
+def _build_position(position: PositionSchema) -> Position:
     return Position(x=position.x, y=position.y)
 
 

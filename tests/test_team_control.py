@@ -10,6 +10,7 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterCreatureState
 from srd_arena.frontends.shared.session import build_session_presentation
 from srd_arena.infrastructure.scenarios import load_scenario_directory
+from srd_arena.engine.session import Session
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
@@ -18,8 +19,10 @@ GOBLIN_SKIRMISH_DIR = (
 
 
 @pytest.fixture(autouse=True)
-def _player_first_initiative(monkeypatch):
-    def _fixed_initiative(self):
+def _player_first_initiative(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _fixed_initiative(self: EncounterState) -> None:
         self.initiative_entries = []
         first_external_ref = next(
             creature_ref
@@ -38,7 +41,7 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
-def _all_external_session():
+def _all_external_session() -> Session:
     scenario = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
@@ -49,7 +52,7 @@ def _all_external_session():
     return scenario.create_session()
 
 
-def _action_id_by_label(session, label: str) -> str:
+def _action_id_by_label(session: Session, label: str) -> str:
     return next(
         action.id
         for action in session.read().action_options
@@ -57,7 +60,7 @@ def _action_id_by_label(session, label: str) -> str:
     )
 
 
-def test_tactical_fixture_loads_explicit_teams():
+def test_tactical_fixture_loads_explicit_teams() -> None:
     game = load_scenario_directory(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter")
     encounter = game.encounters["goblin_encounter"]
 
@@ -69,7 +72,7 @@ def test_tactical_fixture_loads_explicit_teams():
     assert encounter.teams[1].members == ["goblin_1", "goblin_2", "goblin_3"]
 
 
-def test_resource_summary_uses_active_creature_movement():
+def test_resource_summary_uses_active_creature_movement() -> None:
     session = _all_external_session()
     session.read()
     assert session.encounter_state is not None
@@ -83,7 +86,7 @@ def test_resource_summary_uses_active_creature_movement():
     assert presentation.encounter.resources.movement_remaining_feet == 30
 
 
-def test_external_control_pauses_for_each_goblin_turn():
+def test_external_control_pauses_for_each_goblin_turn() -> None:
     session = _all_external_session()
     session.read()
     state = session.encounter_state
@@ -107,7 +110,7 @@ def test_external_control_pauses_for_each_goblin_turn():
     assert any(action.kind == "move" for action in actions)
 
 
-def test_externally_controlled_goblin_can_move_then_end_turn():
+def test_externally_controlled_goblin_can_move_then_end_turn() -> None:
     session = _all_external_session()
     session.read()
     assert session.encounter_state is not None
@@ -139,7 +142,9 @@ def test_externally_controlled_goblin_can_move_then_end_turn():
     assert state.current_decision().creature_ref == "goblin_2"
 
 
-def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
+def test_externally_controlled_goblin_can_attack_opposing_player(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     session = _all_external_session()
     session.read()
     assert session.encounter_state is not None
@@ -185,7 +190,9 @@ def test_externally_controlled_goblin_can_attack_opposing_player(monkeypatch):
     assert state.current_decision().creature_ref == "goblin_2"
 
 
-def test_secondary_champion_gets_extra_attack_before_turn_ends(monkeypatch):
+def test_secondary_champion_gets_extra_attack_before_turn_ends(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     session = load_scenario_directory(GOBLIN_SKIRMISH_DIR).create_session()
     session.read()
     assert session.encounter_state is not None
@@ -389,7 +396,7 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
 
 
 def test_ai_controlled_creature_resolves_opportunity_attack_automatically(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
@@ -424,7 +431,9 @@ def test_ai_controlled_creature_resolves_opportunity_attack_automatically(
     )
 
 
-def test_brynn_can_take_an_opportunity_attack(monkeypatch) -> None:
+def test_brynn_can_take_an_opportunity_attack(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     session = load_scenario_directory(GOBLIN_SKIRMISH_DIR).create_session()
     session.read()
     assert session.encounter_state is not None
@@ -459,7 +468,7 @@ def test_brynn_can_take_an_opportunity_attack(monkeypatch) -> None:
     assert (goblin.position.x, goblin.position.y) == (3, 2)
 
 
-def test_team_members_are_not_valid_attack_targets():
+def test_team_members_are_not_valid_attack_targets() -> None:
     session = _all_external_session()
     session.read()
     assert session.encounter_state is not None
@@ -480,7 +489,7 @@ def test_team_members_are_not_valid_attack_targets():
     )
 
 
-def test_externally_controlled_teammate_can_target_opposing_team():
+def test_externally_controlled_teammate_can_target_opposing_team() -> None:
     session = _all_external_session()
     session.read()
     assert session.encounter_state is not None
@@ -505,7 +514,7 @@ def test_externally_controlled_teammate_can_target_opposing_team():
     )
 
 
-def test_paced_ai_resolves_one_visible_action_per_step():
+def test_paced_ai_resolves_one_visible_action_per_step() -> None:
     session = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
@@ -532,7 +541,7 @@ def test_paced_ai_resolves_one_visible_action_per_step():
     assert state.current_decision().creature_ref == "goblin_1"
 
 
-def test_default_ai_still_resolves_until_the_next_user_decision():
+def test_default_ai_still_resolves_until_the_next_user_decision() -> None:
     session = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",

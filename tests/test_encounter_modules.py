@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from typing import cast
 
 from srd_arena.domain.encounters.conditions import (
     apply_condition,
@@ -15,10 +16,20 @@ from srd_arena.domain.encounters.participants import (
 )
 from srd_arena.domain.encounters import EncounterTeam
 from srd_arena.domain.creatures import CreatureStatistics
-from srd_arena.domain.effects.conditions import Condition, build_applied_condition
+from srd_arena.domain.effects.conditions import (
+    AppliedCondition,
+    Condition,
+    build_applied_condition,
+)
+from srd_arena.domain.effects.runtime import CreatureRelationship
+from srd_arena.domain.encounters.encounter import EncounterState
 
 
-def _condition(condition: Condition, source: str, target: str):
+def _condition(
+    condition: Condition,
+    source: str,
+    target: str,
+) -> AppliedCondition:
     return build_applied_condition(
         condition=condition,
         source_ref=source,
@@ -28,9 +39,12 @@ def _condition(condition: Condition, source: str, target: str):
 
 
 def _condition_state(
-    *, conditions=None, relationships=None, immunities=frozenset()
-):
-    return SimpleNamespace(
+    *,
+    conditions: list[AppliedCondition] | None = None,
+    relationships: list[CreatureRelationship] | None = None,
+    immunities: frozenset[Condition] = frozenset(),
+) -> EncounterState:
+    return cast(EncounterState, SimpleNamespace(
         conditions=list(conditions or ()),
         relationships=list(relationships or ()),
         creatures={
@@ -43,7 +57,7 @@ def _condition_state(
                 )
             )
         },
-    )
+    ))
 
 
 def test_apply_condition_refreshes_matching_condition_without_duplication() -> None:
@@ -176,7 +190,7 @@ def test_defeated_creature_releases_all_grapple_relationships() -> None:
 
 
 def test_participant_queries_use_authored_teams_and_controllers() -> None:
-    state = SimpleNamespace(
+    state = cast(EncounterState, SimpleNamespace(
         creatures={
             "player": SimpleNamespace(creature_id="player"),
             "goblin_1": SimpleNamespace(creature_id="goblin"),
@@ -188,14 +202,14 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
                 EncounterTeam("monsters", "Monsters", ["goblin"], "scripted"),
             ]
         ),
-    )
+    ))
 
     assert creature_team_id(state, "player") == "heroes"
     assert creature_team_id(state, "goblin_1") == "monsters"
     assert creature_controller(state, "goblin_1") == "scripted"
     assert creatures_are_opponents(state, "player", "goblin_1") is True
 def test_authored_creature_controller_overrides_team_default() -> None:
-    state = SimpleNamespace(
+    state = cast(EncounterState, SimpleNamespace(
         creatures={"goblin_1": SimpleNamespace(creature_id="goblin")},
         definition=SimpleNamespace(
             participants=[
@@ -205,6 +219,6 @@ def test_authored_creature_controller_overrides_team_default() -> None:
                 EncounterTeam("monsters", "Monsters", ["goblin"], "scripted")
             ],
         ),
-    )
+    ))
 
     assert creature_controller(state, "goblin_1") == "external"

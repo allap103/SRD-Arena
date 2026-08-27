@@ -1,6 +1,7 @@
 from srd_arena.domain.geometry import (
     TOUCHED_CELL_POLICY,
     RASTERIZATION_POLICY,
+    AreaOfEffect,
     Grid,
     Position,
     Vector2D,
@@ -15,7 +16,7 @@ from srd_arena.domain.geometry import (
 )
 
 
-def _coords(area) -> set[tuple[int, int]]:
+def _coords(area: AreaOfEffect) -> set[tuple[int, int]]:
     return {(cell.x, cell.y) for cell in area.cells}
 
 

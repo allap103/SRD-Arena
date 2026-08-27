@@ -3,6 +3,14 @@ from pathlib import Path
 
 import pytest
 
+from srd_arena.content.capabilities import (
+    ConditionEffectSchema,
+    DamageEffectSchema,
+    RollModifierEffectSchema,
+)
+from srd_arena.content.capabilities.requirements import (
+    AttackRollModeRequirementSchema,
+)
 from srd_arena.content.common import SourceCatalog
 from srd_arena.content.creatures import (
     BestiaryFileSchema,
@@ -14,13 +22,17 @@ from srd_arena.content.creatures import (
 from srd_arena.content.creatures.actions.schema import (
     AttackCapabilitySchema,
     CapabilitySchema,
+    SavingThrowActionResolutionSchema,
+    UsesResourceSchema,
 )
 from srd_arena.content.creatures.actions.builder import (
     build_stat_block_actions,
 )
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.creatures.actions.multiattack import (
+    CastSpellInvocationSchema,
     ChoiceStepSchema,
+    MultiattackCapabilitySchema,
     StatBlockActionInvocationSchema,
 )
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
@@ -62,26 +74,46 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     assert scimitar.attack_bonus == 4
     assert scimitar.target.range_feet == 5
     assert scimitar.reach_feet == 5
-    assert scimitar.hit[0].dice == "1d6"
-    assert scimitar.hit[0].bonus == 2
-    assert scimitar.hit[0].damage_type == "slashing"
-    assert scimitar.hit[1].dice == "1d4"
-    assert scimitar.hit[1].requirements[0].mode == "advantage"
+    scimitar_damage, scimitar_conditional_damage = scimitar.hit
+    assert isinstance(scimitar_damage, DamageEffectSchema)
+    assert scimitar_damage.dice == "1d6"
+    assert scimitar_damage.bonus == 2
+    assert scimitar_damage.damage_type == "slashing"
+    assert isinstance(scimitar_conditional_damage, DamageEffectSchema)
+    assert scimitar_conditional_damage.dice == "1d4"
+    [scimitar_requirement] = scimitar_conditional_damage.requirements
+    assert isinstance(scimitar_requirement, AttackRollModeRequirementSchema)
+    assert scimitar_requirement.mode == "advantage"
     assert isinstance(shortbow, AttackCapabilitySchema)
     assert shortbow.attack_modes == ["ranged"]
     assert shortbow.attack_bonus == 4
     assert shortbow.target.range_feet == 80
     assert shortbow.range_normal_feet == 80
     assert shortbow.range_long_feet == 320
-    assert shortbow.hit[0].dice == "1d6"
-    assert shortbow.hit[0].bonus == 2
-    assert shortbow.hit[0].damage_type == "piercing"
-    assert shortbow.hit[1].dice == "1d4"
-    assert shortbow.hit[1].requirements[0].mode == "advantage"
+    shortbow_damage, shortbow_conditional_damage = shortbow.hit
+    assert isinstance(shortbow_damage, DamageEffectSchema)
+    assert shortbow_damage.dice == "1d6"
+    assert shortbow_damage.bonus == 2
+    assert shortbow_damage.damage_type == "piercing"
+    assert isinstance(shortbow_conditional_damage, DamageEffectSchema)
+    assert shortbow_conditional_damage.dice == "1d4"
+    [shortbow_requirement] = shortbow_conditional_damage.requirements
+    assert isinstance(shortbow_requirement, AttackRollModeRequirementSchema)
+    assert shortbow_requirement.mode == "advantage"
     multiattack = aboleth.action[0].capability
-    assert multiattack is not None
+    assert isinstance(multiattack, MultiattackCapabilitySchema)
     assert multiattack.plans[0].steps[0].times == 2
-    assert [option.name for option in multiattack.plans[0].steps[1].options] == [
+    second_step = multiattack.plans[0].steps[1]
+    assert isinstance(second_step, ChoiceStepSchema)
+    assert all(
+        isinstance(option, StatBlockActionInvocationSchema)
+        for option in second_step.options
+    )
+    assert [
+        option.name
+        for option in second_step.options
+        if isinstance(option, StatBlockActionInvocationSchema)
+    ] == [
         "Consume Memories",
         "Dominate Mind (2/Day)",
     ]
@@ -254,6 +286,7 @@ def test_bestiary_core_statistics_build_a_domain_creature() -> None:
             if isinstance(action, AttackActionDefinition)
         }
     )
+    assert sequence is not None
     assert [invocation.name for invocation in sequence] == [
         "Tentacle",
         "Tentacle",
@@ -339,7 +372,10 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
         multiattack = next(
             action for action in monster.action if action.name == "Multiattack"
         )
-        assert multiattack.capability is not None
+        assert isinstance(
+            multiattack.capability,
+            MultiattackCapabilitySchema,
+        )
         creature = build_creature(
             CreatureSchema.model_validate(
                 {
@@ -360,9 +396,19 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
             )
 
     assassin = catalog.find("Assassin", "XMM")
-    assassin_step = assassin.action[0].capability.plans[0].steps[0]
+    assassin_multiattack = assassin.action[0].capability
+    assert isinstance(assassin_multiattack, MultiattackCapabilitySchema)
+    assassin_step = assassin_multiattack.plans[0].steps[0]
     assert isinstance(assassin_step, ChoiceStepSchema)
-    assert [option.name for option in assassin_step.options] == [
+    assert all(
+        isinstance(option, StatBlockActionInvocationSchema)
+        for option in assassin_step.options
+    )
+    assert [
+        option.name
+        for option in assassin_step.options
+        if isinstance(option, StatBlockActionInvocationSchema)
+    ] == [
         "Shortsword",
         "Light Crossbow",
     ]
@@ -387,11 +433,17 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
     )
 
     black_dragon = catalog.find("Adult Black Dragon", "XMM")
-    black_replacement = black_dragon.action[0].capability.plans[0].replacements[0]
-    assert black_replacement.options[0].cast_level == 3
+    black_multiattack = black_dragon.action[0].capability
+    assert isinstance(black_multiattack, MultiattackCapabilitySchema)
+    black_replacement = black_multiattack.plans[0].replacements[0]
+    black_replacement_option = black_replacement.options[0]
+    assert isinstance(black_replacement_option, CastSpellInvocationSchema)
+    assert black_replacement_option.cast_level == 3
 
     white_dragon = catalog.find("Adult White Dragon", "XMM")
-    assert white_dragon.action[0].capability.plans[0].replacements == []
+    white_multiattack = white_dragon.action[0].capability
+    assert isinstance(white_multiattack, MultiattackCapabilitySchema)
+    assert white_multiattack.plans[0].replacements == []
     white_creature = build_creature(
         CreatureSchema.model_validate(
             {
@@ -444,7 +496,7 @@ def test_enriched_multiattack_action_references_have_typed_capability() -> None:
         multiattacks = [
             action.capability
             for action in monster.action
-            if action.capability is not None and action.capability.type == "multiattack"
+            if isinstance(action.capability, MultiattackCapabilitySchema)
         ]
         for multiattack in multiattacks:
             for plan in multiattack.plans:
@@ -488,7 +540,9 @@ def test_enriched_multiattack_action_references_have_typed_capability() -> None:
 
     aboleth = catalog.find("Aboleth", "XMM")
     tentacle = next(action for action in aboleth.action if action.name == "Tentacle")
+    assert isinstance(tentacle.capability, AttackCapabilitySchema)
     grapple = tentacle.capability.hit[1]
+    assert isinstance(grapple, ConditionEffectSchema)
     assert grapple.condition == "grappled"
     assert grapple.escape_dc == 14
     assert grapple.source_capacity == 4
@@ -496,7 +550,13 @@ def test_enriched_multiattack_action_references_have_typed_capability() -> None:
     dominate = next(
         action for action in aboleth.action if action.name == "Dominate Mind (2/Day)"
     )
+    assert isinstance(dominate.capability, CapabilitySchema)
+    assert isinstance(dominate.capability.resource, UsesResourceSchema)
     assert dominate.capability.resource.maximum == 2
+    assert isinstance(
+        dominate.capability.resolution,
+        SavingThrowActionResolutionSchema,
+    )
     assert [
         repeat.trigger
         for repeat in dominate.capability.resolution.failure[0].repeat_saves
@@ -506,8 +566,15 @@ def test_enriched_multiattack_action_references_have_typed_capability() -> None:
     weakening = next(
         action for action in ancient_gold.action if action.name == "Weakening Breath"
     )
+    assert isinstance(weakening.capability, CapabilitySchema)
+    assert isinstance(
+        weakening.capability.resolution,
+        SavingThrowActionResolutionSchema,
+    )
     assert weakening.capability.resolution.difficulty.value == 24
-    assert weakening.capability.resolution.failure[0].effects[1].dice == "1d10"
+    weakening_damage = weakening.capability.resolution.failure[0].effects[1]
+    assert isinstance(weakening_damage, RollModifierEffectSchema)
+    assert weakening_damage.dice == "1d10"
 
 
 def test_b_and_c_monster_actions_have_typed_capability() -> None:

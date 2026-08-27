@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 class Inventory:
     items: list[str] = field(default_factory=list)
 
-    def add_item(self, item: str):
+    def add_item(self, item: str) -> None:
         self.items.append(item)
 
     def remove_item(self, item: str) -> bool:

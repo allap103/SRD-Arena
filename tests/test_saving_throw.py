@@ -1,7 +1,12 @@
 from dataclasses import dataclass
 
 from srd_arena.domain.creatures import Attributes
-from srd_arena.domain.rolls.dice import resolve_roll_attempts
+from srd_arena.domain.effects.modifiers import RollKind
+from srd_arena.domain.rolls.dice import (
+    D20RollMode,
+    DieRoller,
+    resolve_roll_attempts,
+)
 from srd_arena.domain.rolls.saving_throws import reroll_saving_throw, resolve_saving_throw
 
 
@@ -11,6 +16,21 @@ class StubCreature:
 
     def get_modifier(self, attribute_value: int) -> int:
         return (attribute_value - 10) // 2
+
+    def resolve_roll_modifiers(
+        self,
+        roll: RollKind,
+        roller: DieRoller,
+        ability: str | None = None,
+    ) -> int:
+        return 0
+
+    def roll_mode(
+        self,
+        roll: RollKind,
+        ability: str | None = None,
+    ) -> D20RollMode:
+        return "normal"
 
 
 def _actor() -> StubCreature:
@@ -30,7 +50,7 @@ def _actor() -> StubCreature:
     )
 
 
-def test_resolve_saving_throw_applies_ability_proficiency_and_other_modifiers():
+def test_resolve_saving_throw_applies_ability_proficiency_and_other_modifiers() -> None:
     result = resolve_saving_throw(
         _actor(),
         "strength",
@@ -48,7 +68,7 @@ def test_resolve_saving_throw_applies_ability_proficiency_and_other_modifiers():
     assert result.check.success is True
 
 
-def test_resolve_saving_throw_supports_advantage_without_proficiency():
+def test_resolve_saving_throw_supports_advantage_without_proficiency() -> None:
     rolls = iter([4, 17])
 
     result = resolve_saving_throw(
@@ -66,7 +86,7 @@ def test_resolve_saving_throw_supports_advantage_without_proficiency():
     assert result.check.success is True
 
 
-def test_failed_saving_throw_can_be_rerolled_with_bonus_and_must_use_new_result():
+def test_failed_saving_throw_can_be_rerolled_with_bonus_and_must_use_new_result() -> None:
     creature = _actor()
     original = resolve_saving_throw(
         creature,

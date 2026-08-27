@@ -7,7 +7,7 @@ from ....shared.dice import RollView
 from .layout import clear_layout
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QMouseEvent, QPaintEvent, QPainter, QPen
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
     QFrame,
@@ -40,7 +40,7 @@ class DieSvgWidget(QWidget):
         if action_id is not None:
             self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-    def paintEvent(self, event) -> None:
+    def paintEvent(self, event: QPaintEvent) -> None:
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -60,7 +60,7 @@ class DieSvgWidget(QWidget):
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, str(self._value))
         painter.end()
 
-    def mousePressEvent(self, event) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if self.isEnabled() and self._action_id is not None:
             self.clicked.emit(self._action_id)
         super().mousePressEvent(event)

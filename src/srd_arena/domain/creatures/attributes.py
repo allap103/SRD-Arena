@@ -26,11 +26,11 @@ class Attributes:
     base_armor_class: int
     movement: Movement = field(default_factory=Movement)
     proficiency_bonus: int = 0
-    proficiencies: dict = field(default_factory=dict)
+    proficiencies: dict[str, object] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.proficiency_bonus <= 0:
             self.proficiency_bonus = 2 + max(0, self.level - 1) // 4
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Base Health: {self.base_health}, Level: {self.level}, Strength: {self.strength}, Dexterity: {self.dexterity}, Constitution: {self.constitution}, Wisdom: {self.wisdom}, Intelligence: {self.intelligence}, Charisma: {self.charisma}, Base Armor Class: {self.base_armor_class}"

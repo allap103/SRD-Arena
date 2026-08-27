@@ -2,7 +2,15 @@ import pytest
 from pydantic import ValidationError
 
 from srd_arena.content.creatures.actions.multiattack import (
+    ActionReplacementTargetSchema,
+    ActionUsedThisTurnRequirementSchema,
+    CastSpellInvocationSchema,
+    ChoiceStepSchema,
+    CreatureStatCountSchema,
+    HalfSpellLevelCountSchema,
+    InvokeStepSchema,
     MultiattackCapabilitySchema,
+    StatBlockActionInvocationSchema,
 )
 from srd_arena.content.creatures import BestiaryActionSchema, BestiaryMonsterSchema
 
@@ -29,6 +37,8 @@ def test_repeated_action_multiattack_is_compact() -> None:
     )
 
     step = effect.plans[0].steps[0]
+    assert isinstance(step, InvokeStepSchema)
+    assert isinstance(step.invocation, StatBlockActionInvocationSchema)
     assert step.times == 2
     assert step.invocation.name == "Slam"
 
@@ -54,7 +64,11 @@ def test_repeated_choice_supports_any_combination() -> None:
     )
 
     step = effect.plans[0].steps[0]
-    assert [option.name for option in step.options] == [
+    assert isinstance(step, ChoiceStepSchema)
+    first_option, second_option = step.options
+    assert isinstance(first_option, StatBlockActionInvocationSchema)
+    assert isinstance(second_option, StatBlockActionInvocationSchema)
+    assert [first_option.name, second_option.name] == [
         "Scimitar",
         "Shortbow",
     ]
@@ -135,8 +149,10 @@ def test_replacement_can_invoke_action_or_specific_spell() -> None:
         }
     )
 
-    assert action.capability is not None
+    assert isinstance(action.capability, MultiattackCapabilitySchema)
     replacement = action.capability.plans[0].replacements[0]
+    assert isinstance(replacement.target, ActionReplacementTargetSchema)
+    assert isinstance(replacement.options[1], CastSpellInvocationSchema)
     assert replacement.target.name == "Rend"
     assert replacement.options[1].spell.name == "Scorching Ray"
 
@@ -177,9 +193,17 @@ def test_required_and_dynamic_multiattacks_are_supported() -> None:
         }
     )
 
-    assert effect.plans[0].requirement.action == "Hasten"
-    assert effect.plans[0].steps[0].times.stat == "heads"
-    assert effect.plans[1].steps[0].times.type == "half_spell_level"
+    requirement = effect.plans[0].requirement
+    assert isinstance(requirement, ActionUsedThisTurnRequirementSchema)
+    assert requirement.action == "Hasten"
+    first_step = effect.plans[0].steps[0]
+    second_step = effect.plans[1].steps[0]
+    assert isinstance(first_step, InvokeStepSchema)
+    assert isinstance(first_step.times, CreatureStatCountSchema)
+    assert first_step.times.stat == "heads"
+    assert isinstance(second_step, InvokeStepSchema)
+    assert isinstance(second_step.times, HalfSpellLevelCountSchema)
+    assert second_step.times.type == "half_spell_level"
 
 
 def test_multiattack_schema_rejects_unknown_invocation_types() -> None:

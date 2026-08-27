@@ -242,7 +242,9 @@ def _build_count(
     return MultiattackCount(kind="half_spell_level", rounding=count.round)
 
 
-def _build_requirement(requirement) -> "MultiattackRequirement | None":
+def _build_requirement(
+    requirement: ActionUsedThisTurnRequirementSchema | None,
+) -> "MultiattackRequirement | None":
     if requirement is None:
         return None
     return MultiattackRequirement(

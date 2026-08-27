@@ -1,9 +1,12 @@
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from copy import deepcopy
 from dataclasses import replace
 from types import SimpleNamespace
+from typing import cast as type_cast
 
 import pytest
+from PySide6.QtWidgets import QPushButton
 
 from srd_arena.application.game import RunningGame
 from srd_arena.application.interactions import game_update
@@ -54,18 +57,21 @@ from srd_arena.domain.effects.runtime import (
     RuntimeStateIdentity,
     UntilTurnStart,
 )
-from srd_arena.domain.geometry import Position
+from srd_arena.domain.geometry import MovementCost, Position
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.domain.spells.rules import (
     parse_spell_action_ability,
     parse_spell_action_damage_type,
     parse_spell_action_slot,
 )
+from srd_arena.domain.spells import Spell
+from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import (
     ActionAim,
     DirectTargetOptionDetails,
     SpellOptionDetails,
 )
+from srd_arena.engine.session import Session
 from srd_arena.domain.capabilities import (
     CapabilityTarget,
     OutcomeStage,
@@ -81,7 +87,7 @@ from srd_arena.domain.creatures import (
     AttackActionDefinition,
     SavingThrowActionDefinition,
 )
-from srd_arena.frontends.shared.models import SpellSlotTrackView
+from srd_arena.frontends.shared.models import SessionPresentation, SpellSlotTrackView
 from srd_arena.frontends.shared.session import build_session_presentation
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.creatures import (
@@ -95,6 +101,7 @@ from srd_arena.content.spells import (
     load_spell_catalog,
 )
 from srd_arena.frontends.gui.ui.encounter import BattlefieldWidget
+from srd_arena.frontends.gui.ui.sidebar import GameSidebar
 from srd_arena.frontends.gui.ui.encounter.area_previews import preview_area_overlay
 from srd_arena.frontends.gui.ui.encounter.action_menus import action_bucket
 from srd_arena.frontends.gui.ui.encounter.config import (
@@ -128,17 +135,27 @@ CONDITIONS_SHOWCASE_SCENARIO_DIR = (
 _ROLL_INITIATIVE = EncounterState._roll_initiative
 
 
+def _mapping(value: object) -> Mapping[str, object]:
+    assert isinstance(value, Mapping)
+    return type_cast(Mapping[str, object], value)
+
+
+def _sequence(value: object) -> Sequence[object]:
+    assert isinstance(value, Sequence)
+    return type_cast(Sequence[object], value)
+
+
 def _build_referenced_spell(
     name: str,
     source: str | None,
     catalog: SpellCatalog,
-):
+) -> Spell:
     return build_spell_schema(catalog.find(name, source))
 
 
 @pytest.fixture(autouse=True)
-def _player_first_initiative(monkeypatch):
-    def _fixed_initiative(self):
+def _player_first_initiative(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _fixed_initiative(self: EncounterState) -> None:
         self.initiative_entries = []
         first_external_ref = next(
             creature_ref
@@ -157,7 +174,7 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
-def _action_id_by_label(session, label: str) -> str:
+def _action_id_by_label(session: Session, label: str) -> str:
     return next(
         action.id
         for action in session.read().action_options
@@ -165,11 +182,11 @@ def _action_id_by_label(session, label: str) -> str:
     )
 
 
-def _action_labels(session) -> list[str]:
+def _action_labels(session: Session) -> list[str]:
     return [action.label for action in session.read().action_options]
 
 
-def _action_id_by_prefix(session, prefix: str) -> str:
+def _action_id_by_prefix(session: Session, prefix: str) -> str:
     return next(
         action.id
         for action in session.read().action_options
@@ -177,7 +194,7 @@ def _action_id_by_prefix(session, prefix: str) -> str:
     )
 
 
-def _action_id(session, kind: str, value: object) -> str:
+def _action_id(session: Session, kind: str, value: object) -> str:
     return next(
         action.id
         for action in session.read().action_options
@@ -187,7 +204,11 @@ def _action_id(session, kind: str, value: object) -> str:
     )
 
 
-def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
+def _choose_directional_spell(
+    session: Session,
+    label: str,
+    aim_cell: tuple[int, int],
+) -> EngineOutcome:
     scene_view = session.read()
     action = next(
         detail for detail in scene_view.action_options if detail.label == label
@@ -257,7 +278,7 @@ def test_unenriched_frostwing_breath_is_present_as_unimplemented() -> None:
     assert session.encounter_state is not None
     state = session.encounter_state
     state.initiative_order = ["player", "air_elemental", "aboleth"]
-    state.current_turn_index = 0
+    state.turn_index = 0
 
     cold_breath = next(
         action
@@ -293,7 +314,7 @@ def test_targeted_action_labels_only_name_the_action() -> None:
 
 
 def test_line_stat_block_action_can_be_aimed_at_a_map_point(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
@@ -364,7 +385,7 @@ def test_line_stat_block_action_can_be_aimed_at_a_map_point(
 
 
 def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -422,7 +443,7 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
 
 
 def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -479,7 +500,8 @@ def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save(
         for event in result.progress.events
         if event.type == "stat_block_action_resolved"
     )
-    [outcome] = event.data["outcomes"]
+    [outcome_value] = _sequence(event.data["outcomes"])
+    outcome = _mapping(outcome_value)
     assert outcome["success"] is False
     assert outcome["damage"] == min(12, health_before)
 
@@ -520,7 +542,7 @@ def test_unsupported_stat_block_effect_is_rejected_before_execution() -> None:
 
 
 def test_recharge_stat_block_resource_becomes_available_on_required_roll(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -569,7 +591,7 @@ def test_action_eligibility_exposes_structured_failures() -> None:
         "right",
         id=f"{actor_ref}-move-right",
         creature_ref=actor_ref,
-        cost=ActionCost(movement=1),
+        cost=ActionCost(movement=MovementCost(1)),
     )
 
     eligibility = state.action_eligibility(move)
@@ -612,7 +634,7 @@ def test_paralyzed_blocks_actions_through_effective_incapacitation() -> None:
 
 
 def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -647,14 +669,15 @@ def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical(
     result = _ORCHESTRATOR.submit(state, attack)
     event = next(event for event in result.events if event.type == "attack_resolved")
 
-    assert event.data["attack_roll_detail"]["mode"] == "advantage"
+    attack_roll_detail = _mapping(event.data["attack_roll_detail"])
+    assert attack_roll_detail["mode"] == "advantage"
     assert event.data["critical_hit"] is True
-    assert event.data["attack_roll_detail"]["automatic_critical_provider_ids"] == [
+    assert attack_roll_detail["automatic_critical_provider_ids"] == [
         paralyzed.id
     ]
 
 
-def test_attack_damage_uses_sourced_damage_roll_modifier(monkeypatch) -> None:
+def test_attack_damage_uses_sourced_damage_roll_modifier(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -709,7 +732,8 @@ def test_attack_damage_uses_sourced_damage_roll_modifier(monkeypatch) -> None:
 
     event = next(event for event in result.events if event.type == "attack_resolved")
     assert event.data["hit"] is True
-    assert event.data["damage_roll_detail"]["sourced_modifier"] == -2
+    damage_roll_detail = _mapping(event.data["damage_roll_detail"])
+    assert damage_roll_detail["sourced_modifier"] == -2
 
 
 def test_paralyzed_target_automatically_fails_strength_and_dexterity_saves() -> None:
@@ -977,7 +1001,7 @@ def test_cli_encounter_renderer_generates_grid_text() -> None:
 
 
 def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(EncounterState, "_roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
@@ -1007,7 +1031,7 @@ def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
     assert session.encounter_state.current_decision().creature_ref == "goblin_1"
 
 
-def test_presentation_exposes_initiative_tracker(monkeypatch) -> None:
+def test_presentation_exposes_initiative_tracker(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(EncounterState, "_roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
     monkeypatch.setattr(
@@ -1100,7 +1124,7 @@ def test_action_must_belong_to_current_decision_actor() -> None:
         session.choose_encounter_action(action)
 
 
-def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
+def test_enriched_multiattack_queues_named_attacks(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -1181,7 +1205,7 @@ def test_enriched_multiattack_queues_named_attacks(monkeypatch) -> None:
 
 
 def test_assassin_multiattack_applies_independent_poisoned_conditions(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
@@ -1270,6 +1294,7 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
             if isinstance(action, AttackActionDefinition)
         }
     )
+    assert player_sequence is not None
     assert [invocation.name for invocation in player_sequence] == [
         "Rend",
         "Rend",
@@ -1283,6 +1308,7 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
             if isinstance(action, AttackActionDefinition)
         }
     )
+    assert elemental_sequence is not None
     assert [invocation.name for invocation in elemental_sequence] == [
         "Thunderous Slam",
         "Thunderous Slam",
@@ -1295,6 +1321,7 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
             if isinstance(action, AttackActionDefinition)
         }
     )
+    assert aboleth_sequence is not None
     assert [invocation.name for invocation in aboleth_sequence] == [
         "Tentacle",
         "Tentacle",
@@ -1302,17 +1329,23 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
     assert creatures["player"].attributes.movement.speed_feet == 40
     assert creatures["air_elemental"].attributes.movement.speed_feet == 10
     assert creatures["aboleth"].attributes.movement.speed_feet == 10
-    runtime_creatures = session.encounter_state.export_state()["creatures"]
-    assert runtime_creatures["player"]["movement_total_feet"] == 80
-    assert runtime_creatures["air_elemental"]["movement_total_feet"] == 90
-    assert runtime_creatures["aboleth"]["movement_total_feet"] == 10
-    assert {creature["controller"] for creature in runtime_creatures.values()} == {
+    exported_state = session.encounter_state.export_state()
+    runtime_creatures = _mapping(exported_state["creatures"])
+    assert _mapping(runtime_creatures["player"])["movement_total_feet"] == 80
+    assert (
+        _mapping(runtime_creatures["air_elemental"])["movement_total_feet"]
+        == 90
+    )
+    assert _mapping(runtime_creatures["aboleth"])["movement_total_feet"] == 10
+    assert {
+        _mapping(creature)["controller"] for creature in runtime_creatures.values()
+    } == {
         "external"
     }
 
 
 def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(MULTIATTACK_SCENARIO_DIR).create_session()
     session.read()
@@ -1358,7 +1391,8 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
     assert grapple.source_ref == "aboleth"
     assert grapple.metadata["escape_dc"] == 14
     assert state._grappling_targets_for("aboleth") == ("air_elemental",)
-    assert state.export_state()["relationships"][0]["kind"] == "grappling"
+    relationships = _sequence(state.export_state()["relationships"])
+    assert _mapping(relationships[0])["kind"] == "grappling"
 
     huge_target_tentacle = next(
         action
@@ -1518,7 +1552,7 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
     )
 
 
-def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
+def test_grapple_action_is_available_in_the_combat_menu(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1554,7 +1588,7 @@ def test_grapple_action_is_available_in_the_combat_menu(monkeypatch) -> None:
     )
 
 
-def test_grapple_replaces_only_one_attack_in_multiattack(monkeypatch) -> None:
+def test_grapple_replaces_only_one_attack_in_multiattack(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -1581,7 +1615,7 @@ def test_grapple_replaces_only_one_attack_in_multiattack(monkeypatch) -> None:
 
 
 def test_grapple_can_replace_remaining_attack_after_weapon_attack(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
@@ -1729,7 +1763,7 @@ def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
 
 
 def test_presentation_derives_spell_slot_rows_from_player_spellcasting(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -1786,7 +1820,7 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
 
 
 def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -1816,12 +1850,15 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
     assert session.encounter_state.has_condition("goblin_1", Condition.BLINDED) is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Color Spray"
-    assert spell_event.data["save_detail"]["ability"] == "constitution"
-    assert spell_event.data["save_detail"]["success"] is False
-    assert spell_event.data["effects"][0]["data"]["condition"] == "blinded"
+    save_detail = _mapping(spell_event.data["save_detail"])
+    assert save_detail["ability"] == "constitution"
+    assert save_detail["success"] is False
+    effects = _sequence(spell_event.data["effects"])
+    effect_data = _mapping(_mapping(effects[0])["data"])
+    assert effect_data["condition"] == "blinded"
 
 
-def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
+def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1848,18 +1885,20 @@ def test_color_spray_cone_can_affect_multiple_enemies(monkeypatch) -> None:
     assert state.has_condition("goblin_2", Condition.BLINDED) is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["target_refs"] == ["goblin_1", "goblin_2"]
-    assert spell_event.data["area"]["shape"] == "cone"
-    assert spell_event.data["area"]["origin"] == {"x": 4, "y": 4}
-    assert spell_event.data["area"]["rasterization_policy"] == "coverage_threshold"
-    assert spell_event.data["area"]["coverage_threshold"] == 0.1
-    assert len(spell_event.data["save_details"]) == 2
-    assert [effect["target_ref"] for effect in spell_event.data["effects"]] == [
+    area = _mapping(spell_event.data["area"])
+    assert area["shape"] == "cone"
+    assert area["origin"] == {"x": 4, "y": 4}
+    assert area["rasterization_policy"] == "coverage_threshold"
+    assert area["coverage_threshold"] == 0.1
+    assert len(_sequence(spell_event.data["save_details"])) == 2
+    effects = _sequence(spell_event.data["effects"])
+    assert [_mapping(effect)["target_ref"] for effect in effects] == [
         "goblin_1",
         "goblin_2",
     ]
 
 
-def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
+def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1885,13 +1924,15 @@ def test_color_spray_cone_uses_continuous_aim_vector(monkeypatch) -> None:
     assert state.has_condition("goblin_2", Condition.BLINDED) is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["target_refs"] == ["goblin_1", "goblin_2"]
-    assert spell_event.data["area"]["continuous_area"]["direction"] == {
+    area = _mapping(spell_event.data["area"])
+    continuous_area = _mapping(area["continuous_area"])
+    assert continuous_area["direction"] == {
         "x": 0.9486832980505138,
         "y": -0.31622776601683794,
     }
 
 
-def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
+def test_burning_hands_cone_damages_multiple_enemies(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1916,12 +1957,16 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
 
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Burning Hands"
-    assert spell_event.data["save_details"][0]["ability"] == "dexterity"
-    assert spell_event.data["damage_roll_details"][0]["dice"] == "3d6"
-    assert spell_event.data["damage_roll_details"][0]["applied_damage"] == 8
-    assert spell_event.data["damage_roll_details"][1]["applied_damage"] == 4
-    assert spell_event.data["damage_roll_details"][0]["dice_values"] == [5, 1, 2]
-    assert spell_event.data["damage_roll_details"][1]["dice_values"] == [5, 1, 2]
+    save_details = _sequence(spell_event.data["save_details"])
+    assert _mapping(save_details[0])["ability"] == "dexterity"
+    damage_roll_details = _sequence(spell_event.data["damage_roll_details"])
+    first_damage = _mapping(damage_roll_details[0])
+    second_damage = _mapping(damage_roll_details[1])
+    assert first_damage["dice"] == "3d6"
+    assert first_damage["applied_damage"] == 8
+    assert second_damage["applied_damage"] == 4
+    assert first_damage["dice_values"] == [5, 1, 2]
+    assert second_damage["dice_values"] == [5, 1, 2]
     assert state.creatures["goblin_1"].creature.get_health() == 2
     assert state.creatures["goblin_2"].creature.get_health() == 6
     assert (
@@ -1933,7 +1978,7 @@ def test_burning_hands_cone_damages_multiple_enemies(monkeypatch) -> None:
     )
 
 
-def test_burning_hands_can_use_and_scale_a_higher_level_slot(monkeypatch) -> None:
+def test_burning_hands_can_use_and_scale_a_higher_level_slot(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1955,11 +2000,12 @@ def test_burning_hands_can_use_and_scale_a_higher_level_slot(monkeypatch) -> Non
 
     event = next(event for event in result.events if event.type == "spell_cast")
     assert event.data["slot_level"] == 3
-    assert event.data["damage_roll_detail"]["dice"] == "5d6"
+    damage_roll_detail = _mapping(event.data["damage_roll_detail"])
+    assert damage_roll_detail["dice"] == "5d6"
     assert event.data["spell_slots_remaining"] == 1
 
 
-def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
+def test_fireball_point_area_damages_multiple_enemies(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1992,21 +2038,27 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Fireball"
     assert spell_event.data["target_refs"] == ["goblin_1", "goblin_2", "goblin_3"]
-    assert spell_event.data["area"]["shape"] == "radius"
-    assert spell_event.data["area"]["origin"] == {"x": 5, "y": 2}
-    assert spell_event.data["save_details"][0]["ability"] == "dexterity"
-    assert spell_event.data["damage_roll_details"][0]["dice"] == "8d6"
-    assert spell_event.data["damage_roll_details"][0]["dice_total"] == 24
-    assert spell_event.data["damage_roll_details"][0]["final_damage"] == 24
-    assert spell_event.data["damage_roll_details"][0]["applied_damage"] == min(
+    area = _mapping(spell_event.data["area"])
+    assert area["shape"] == "radius"
+    assert area["origin"] == {"x": 5, "y": 2}
+    save_details = _sequence(spell_event.data["save_details"])
+    assert _mapping(save_details[0])["ability"] == "dexterity"
+    damage_roll_details = _sequence(spell_event.data["damage_roll_details"])
+    first_damage = _mapping(damage_roll_details[0])
+    second_damage = _mapping(damage_roll_details[1])
+    third_damage = _mapping(damage_roll_details[2])
+    assert first_damage["dice"] == "8d6"
+    assert first_damage["dice_total"] == 24
+    assert first_damage["final_damage"] == 24
+    assert first_damage["applied_damage"] == min(
         24, starting_healths[0]
     )
-    assert spell_event.data["damage_roll_details"][1]["final_damage"] == 12
-    assert spell_event.data["damage_roll_details"][1]["applied_damage"] == min(
+    assert second_damage["final_damage"] == 12
+    assert second_damage["applied_damage"] == min(
         12, starting_healths[1]
     )
-    assert spell_event.data["damage_roll_details"][2]["final_damage"] == 24
-    assert spell_event.data["damage_roll_details"][2]["applied_damage"] == min(
+    assert third_damage["final_damage"] == 24
+    assert third_damage["applied_damage"] == min(
         24, starting_healths[2]
     )
     assert session.decision_creature.spellcasting.spell_slots_remaining[3] == 1
@@ -2015,7 +2067,7 @@ def test_fireball_point_area_damages_multiple_enemies(monkeypatch) -> None:
     assert state.creatures["goblin_3"].creature.get_health() == 0
 
 
-def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
+def test_pyside6_window_extracts_spell_area_overlay(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -2036,19 +2088,19 @@ def test_pyside6_window_extracts_spell_area_overlay(monkeypatch) -> None:
     )
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
-    area = next(
+    area = _mapping(next(
         event.data["area"] for event in result.events if event.type == "spell_cast"
-    )
+    ))
 
     assert area is not None
     assert area["shape"] == "cone"
     assert area["origin"] == {"x": 4, "y": 4}
     assert area["rasterization_policy"] == "coverage_threshold"
     assert area["coverage_threshold"] == 0.1
-    assert len(area["cells"]) >= 2
+    assert len(_sequence(area["cells"])) >= 2
 
 
-def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> None:
+def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -2077,15 +2129,19 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
     )
 
     window = GameWindow.__new__(GameWindow)
-    window._presentation = SimpleNamespace(encounter=object())
+    window._presentation = type_cast(
+        SessionPresentation,
+        SimpleNamespace(encounter=object()),
+    )
     window._combat_log_scene_id = state.encounter_id
     window._logged_round_number = state.round_number
-    window.sidebar = SimpleNamespace(
-        append_combat_log=lambda _messages, _rolls: None,
+    window.sidebar = type_cast(
+        GameSidebar,
+        SimpleNamespace(append_combat_log=lambda _messages, _rolls: None),
     )
-    window._scroll_roll_log_to_bottom = lambda: None
-    window.refresh_view = lambda: None
-    window.close = lambda: None
+    monkeypatch.setattr(window, "_scroll_roll_log_to_bottom", lambda: None)
+    monkeypatch.setattr(window, "refresh_view", lambda: None)
+    monkeypatch.setattr(window, "close", lambda: True)
 
     GameWindow._apply_turn_result(window, result)
 
@@ -2093,7 +2149,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(monkeypatch) -> N
 
 
 def test_battlefield_widget_preview_overlay_reaims_directional_area(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -2118,9 +2174,9 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(
     presentation = build_session_presentation(observe_session(session))
 
     assert presentation.encounter is not None
-    original_area = next(
+    original_area = _mapping(next(
         event.data["area"] for event in result.events if event.type == "spell_cast"
-    )
+    ))
     preview = preview_area_overlay(
         original_area,
         (6, 4),
@@ -2131,13 +2187,13 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(
     assert preview["shape"] == "cone"
     assert preview["origin"] == {"x": 4, "y": 4}
     assert (
-        preview["continuous_area"]["direction"]
-        != original_area["continuous_area"]["direction"]
+        _mapping(preview["continuous_area"])["direction"]
+        != _mapping(original_area["continuous_area"])["direction"]
     )
     assert preview["cells"] != original_area["cells"]
 
 
-def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
+def test_blinded_enemy_attacks_with_disadvantage(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -2168,11 +2224,12 @@ def test_blinded_enemy_attacks_with_disadvantage(monkeypatch) -> None:
         for event in result.events
         if event.type == "attack_resolved" and event.creature_ref == "goblin_1"
     )
-    assert attack_event.data["attack_roll_detail"]["mode"] == "disadvantage"
-    assert attack_event.data["attack_roll_detail"]["dice"] == [17, 4]
+    attack_roll_detail = _mapping(attack_event.data["attack_roll_detail"])
+    assert attack_roll_detail["mode"] == "disadvantage"
+    assert attack_roll_detail["dice"] == [17, 4]
 
 
-def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
+def test_attacks_against_blinded_target_gain_advantage(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -2202,7 +2259,7 @@ def test_attacks_against_blinded_target_gain_advantage(monkeypatch) -> None:
 
 
 def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -2235,7 +2292,7 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(
     assert state.has_condition("goblin_1", Condition.BLINDED) is False
 
 
-def test_reapplying_blinded_preserves_independent_durations(monkeypatch) -> None:
+def test_reapplying_blinded_preserves_independent_durations(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -2377,10 +2434,11 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     assert spell_event.data["spell_name"] == "Lesser Restoration"
     assert spell_event.data["target_ref"] == "player"
     assert spell_event.data["success"] is True
-    assert spell_event.data["effects"][0]["kind"] == "remove_condition"
+    effects = _sequence(spell_event.data["effects"])
+    assert _mapping(effects[0])["kind"] == "remove_condition"
 
 
-def test_cure_wounds_heals_through_generic_spell_resolution(monkeypatch) -> None:
+def test_cure_wounds_heals_through_generic_spell_resolution(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -2403,11 +2461,12 @@ def test_cure_wounds_heals_through_generic_spell_resolution(monkeypatch) -> None
     assert caster.get_health() == caster.get_max_health() - 3
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["success"] is True
-    assert spell_event.data["healing_roll_detail"]["total"] == 9
-    assert spell_event.data["healing_roll_detail"]["applied"] == 9
+    healing_roll_detail = _mapping(spell_event.data["healing_roll_detail"])
+    assert healing_roll_detail["total"] == 9
+    assert healing_roll_detail["applied"] == 9
 
 
-def test_false_life_grants_scaled_temporary_hit_points(monkeypatch) -> None:
+def test_false_life_grants_scaled_temporary_hit_points(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -2428,11 +2487,14 @@ def test_false_life_grants_scaled_temporary_hit_points(monkeypatch) -> None:
 
     assert caster.temporary_hit_points == 15
     spell_event = next(event for event in result.events if event.type == "spell_cast")
-    assert spell_event.data["temporary_hit_point_detail"]["total"] == 15
-    assert spell_event.data["temporary_hit_point_detail"]["applied"] == 15
+    temporary_hit_point_detail = _mapping(
+        spell_event.data["temporary_hit_point_detail"]
+    )
+    assert temporary_hit_point_detail["total"] == 15
+    assert temporary_hit_point_detail["applied"] == 15
 
 
-def test_mass_healing_word_uses_one_roll_for_selected_targets(monkeypatch) -> None:
+def test_mass_healing_word_uses_one_roll_for_selected_targets(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -2479,7 +2541,10 @@ def test_mass_healing_word_uses_one_roll_for_selected_targets(monkeypatch) -> No
     result = _ORCHESTRATOR.submit(state, confirm)
 
     event = next(event for event in result.events if event.type == "spell_cast")
-    details = event.data["healing_roll_details"]
+    details = [
+        _mapping(detail)
+        for detail in _sequence(event.data["healing_roll_details"])
+    ]
     assert [detail["target_ref"] for detail in details] == ["goblin_1", "goblin_2"]
     assert details[0]["dice_values"] == details[1]["dice_values"] == [3, 3]
     assert all(detail["applied"] == 7 for detail in details)
@@ -2528,8 +2593,10 @@ def test_heal_upcasts_and_removes_every_listed_condition() -> None:
     assert state.has_condition("player", Condition.BLINDED) is False
     assert state.has_condition("player", Condition.POISONED) is False
     event = next(event for event in result.events if event.type == "spell_cast")
-    assert event.data["healing_roll_detail"]["total"] == 80
-    assert [effect["data"]["condition"] for effect in event.data["effects"]] == [
+    healing_roll_detail = _mapping(event.data["healing_roll_detail"])
+    assert healing_roll_detail["total"] == 80
+    effects = [_mapping(effect) for effect in _sequence(event.data["effects"])]
+    assert [_mapping(effect["data"])["condition"] for effect in effects] == [
         "blinded",
         "poisoned",
     ]
@@ -2603,8 +2670,8 @@ def test_invisibility_is_classified_and_exported_as_beneficial() -> None:
     assert effect.polarity is EffectPolarity.BENEFICIAL
     exported = next(
         item
-        for item in state.export_state()["ongoing_effects"]
-        if item["id"] == effect.identity.id
+        for value in _sequence(state.export_state()["ongoing_effects"])
+        if (item := _mapping(value))["id"] == effect.identity.id
     )
     assert exported["polarity"] == "beneficial"
 
@@ -2678,7 +2745,7 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
 
 
 def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -2728,7 +2795,7 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
     )
 
 
-def test_phantasmal_killer_scales_and_repeats_typed_damage(monkeypatch) -> None:
+def test_phantasmal_killer_scales_and_repeats_typed_damage(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -2790,9 +2857,11 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage(monkeypatch) -> None:
         event for event in progress.events if event.type == "ongoing_effect_resolved"
     )
     assert event.data["spell_name"] == "Phantasmal Killer"
-    assert event.data["save_detail"]["success"] is False
-    assert event.data["damage_roll_details"][0]["dice"] == "5d10"
-    assert event.data["damage_roll_details"][0]["damage_type"] == "psychic"
+    assert _mapping(event.data["save_detail"])["success"] is False
+    damage_roll_details = _sequence(event.data["damage_roll_details"])
+    damage_roll_detail = _mapping(damage_roll_details[0])
+    assert damage_roll_detail["dice"] == "5d10"
+    assert damage_roll_detail["damage_type"] == "psychic"
 
 
 def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
@@ -2965,9 +3034,13 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
     assert target.creature.get_health() == 500
     assert state.has_condition("goblin_1", Condition.BLINDED) is False
     event = next(event for event in result.events if event.type == "spell_cast")
+    healing_roll_details = [
+        _mapping(detail)
+        for detail in _sequence(event.data["healing_roll_details"])
+    ]
     assert {
         detail["target_ref"]: detail["allocated"]
-        for detail in event.data["healing_roll_details"]
+        for detail in healing_roll_details
     } == {"player": 300, "goblin_1": 400}
 
 
@@ -3191,7 +3264,7 @@ def test_lesser_restoration_explicitly_selects_the_condition_to_remove() -> None
 
 
 def test_hold_person_applies_concentration_and_ends_after_repeated_save(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
@@ -3256,7 +3329,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save(
 
 
 def test_one_target_repeat_save_does_not_end_multi_target_spell(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -3354,7 +3427,7 @@ def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
     assert not has_condition_save_advantage(state, "goblin_1", ("poisoned",))
 
 
-def test_condition_modifier_applies_to_repeated_saves(monkeypatch) -> None:
+def test_condition_modifier_applies_to_repeated_saves(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -3525,7 +3598,7 @@ def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
 
 
 def test_upcast_hold_person_stages_and_resolves_multiple_targets(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -3613,7 +3686,7 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
 
 
 def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinations(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -3678,11 +3751,12 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
         "goblin_1",
         "goblin_2",
     ]
-    assert len(spell_event.data["attack_roll_details"]) == 3
+    attack_roll_details = _sequence(spell_event.data["attack_roll_details"])
+    assert len(attack_roll_details) == 3
     assert [
-        detail["projectile_index"] for detail in spell_event.data["attack_roll_details"]
+        _mapping(detail)["projectile_index"] for detail in attack_roll_details
     ] == [1, 2, 3]
-    assert len(spell_event.data["damage_roll_details"]) == 3
+    assert len(_sequence(spell_event.data["damage_roll_details"])) == 3
     assert caster.spellcasting.spell_slots_remaining[2] == 0
 
 
@@ -3722,7 +3796,7 @@ def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() ->
 
 
 def test_ray_of_sickness_combines_scaled_damage_and_timed_condition(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -3753,11 +3827,12 @@ def test_ray_of_sickness_combines_scaled_damage_and_timed_condition(
     resolved = _ORCHESTRATOR.submit(state, action)
 
     spell_event = next(event for event in resolved.events if event.type == "spell_cast")
-    assert spell_event.data["damage_roll_detail"]["dice"] == "3d8"
+    damage_roll_detail = _mapping(spell_event.data["damage_roll_detail"])
+    assert damage_roll_detail["dice"] == "3d8"
     assert state.has_condition("goblin_1", Condition.POISONED)
 
 
-def test_eldritch_blast_uses_caster_level_for_beam_allocation(monkeypatch) -> None:
+def test_eldritch_blast_uses_caster_level_for_beam_allocation(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -3808,12 +3883,12 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation(monkeypatch) -> No
         "goblin_1",
         "goblin_2",
     ]
-    assert len(spell_event.data["attack_roll_details"]) == 3
-    assert len(spell_event.data["damage_roll_details"]) == 3
+    assert len(_sequence(spell_event.data["attack_roll_details"])) == 3
+    assert len(_sequence(spell_event.data["damage_roll_details"])) == 3
 
 
 def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -3854,14 +3929,18 @@ def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage(
     resolved = _ORCHESTRATOR.submit(state, action)
 
     spell_event = next(event for event in resolved.events if event.type == "spell_cast")
+    damage_roll_details = [
+        _mapping(detail)
+        for detail in _sequence(spell_event.data["damage_roll_details"])
+    ]
     primary = next(
         detail
-        for detail in spell_event.data["damage_roll_details"]
+        for detail in damage_roll_details
         if detail["damage_type"] == "piercing"
     )
     cold = [
         detail
-        for detail in spell_event.data["damage_roll_details"]
+        for detail in damage_roll_details
         if detail["damage_type"] == "cold"
     ]
     assert primary["dice"] == "1d10"
@@ -3870,7 +3949,7 @@ def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage(
     assert all(detail["dice"] == "3d6" for detail in cold)
 
 
-def test_weird_deals_damage_on_a_failed_repeat_save(monkeypatch) -> None:
+def test_weird_deals_damage_on_a_failed_repeat_save(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -3906,7 +3985,7 @@ def test_weird_deals_damage_on_a_failed_repeat_save(monkeypatch) -> None:
 
 
 def test_sleep_progresses_from_incapacitated_to_unconscious(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -3947,7 +4026,7 @@ def test_sleep_progresses_from_incapacitated_to_unconscious(
 
 
 def test_sleep_stages_choice_when_area_contains_multiple_creatures(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -4007,7 +4086,7 @@ def test_sleep_stages_choice_when_area_contains_multiple_creatures(
     ],
 )
 def test_sleep_automatically_spares_ineligible_creature(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
     statistics_change: dict[str, object],
     reason: str,
 ) -> None:
@@ -4027,10 +4106,22 @@ def test_sleep_automatically_spares_ineligible_creature(
     target = state.creatures["goblin_1"]
     target.position.x = state.active_position.x + 2
     target.position.y = state.active_position.y
-    target.creature.statistics = replace(
-        target.creature.statistics,
-        **statistics_change,
-    )
+    if "condition_immunities" in statistics_change:
+        target.creature.statistics = replace(
+            target.creature.statistics,
+            condition_immunities=type_cast(
+                frozenset[Condition],
+                statistics_change["condition_immunities"],
+            ),
+        )
+    else:
+        target.creature.statistics = replace(
+            target.creature.statistics,
+            mechanical_traits=type_cast(
+                frozenset[str],
+                statistics_change["mechanical_traits"],
+            ),
+        )
     state.creatures["goblin_2"].creature.current_health = 0
     state.creatures["goblin_3"].creature.current_health = 0
     monkeypatch.setattr(
@@ -4044,11 +4135,11 @@ def test_sleep_automatically_spares_ineligible_creature(
     )
 
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
-    save = next(
-        event.data["save_details"][0]
+    save = _mapping(next(
+        _sequence(event.data["save_details"])[0]
         for event in cast.events
         if event.type == "spell_cast"
-    )
+    ))
     assert save["automatic_success_reasons"] == [reason]
     assert "die" not in save
     assert any(
@@ -4057,7 +4148,7 @@ def test_sleep_automatically_spares_ineligible_creature(
 
 
 def test_charm_person_save_has_advantage_against_opponent(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -4095,11 +4186,11 @@ def test_charm_person_save_has_advantage_against_opponent(
     cast = _ORCHESTRATOR.submit(state, action)
 
     assert state.has_condition("goblin_1", Condition.CHARMED) is False
-    save = next(
-        event.data["save_details"][0]
+    save = _mapping(next(
+        _sequence(event.data["save_details"])[0]
         for event in cast.events
         if event.type == "spell_cast"
-    )
+    ))
     assert save["die"] == 20
 
 
@@ -4268,7 +4359,7 @@ def test_charm_ends_only_when_source_side_damages_target() -> None:
     assert state.has_condition("goblin_1", Condition.CHARMED) is False
 
 
-def test_hideous_laughter_damage_save_has_advantage(monkeypatch) -> None:
+def test_hideous_laughter_damage_save_has_advantage(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -4324,7 +4415,7 @@ def test_hideous_laughter_damage_save_has_advantage(monkeypatch) -> None:
 
 
 def test_hideous_laughter_prevents_target_from_removing_its_own_prone(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -4368,7 +4459,7 @@ def test_hideous_laughter_prevents_target_from_removing_its_own_prone(
     assert state.has_condition("goblin_1", Condition.PRONE) is False
 
 
-def test_hideous_laughter_success_is_reported_as_a_save(monkeypatch) -> None:
+def test_hideous_laughter_success_is_reported_as_a_save(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -4457,7 +4548,7 @@ def test_new_concentration_replaces_the_previous_effect_tree() -> None:
 
 
 def test_casting_a_new_concentration_spell_logs_the_dropped_spell(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
@@ -4523,7 +4614,7 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell(
 
 
 def test_somatic_invocation_failure_spends_resources_before_resolution(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
@@ -4616,7 +4707,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution(
 
 
 def test_failed_damage_save_ends_concentration_and_its_conditions(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
@@ -4685,7 +4776,7 @@ def test_orchestrator_runs_enemy_turns_until_player_turn() -> None:
 
 
 def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -4719,11 +4810,12 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
     )
     assert enemy.position.x == 5
     assert enemy.position.y == 2
-    assert attack_event.data["attack_roll_detail"]["attack_type"] == "ranged"
-    assert attack_event.data["attack_roll_detail"]["weapon_name"] == "Shortbow"
+    attack_roll_detail = _mapping(attack_event.data["attack_roll_detail"])
+    assert attack_roll_detail["attack_type"] == "ranged"
+    assert attack_roll_detail["weapon_name"] == "Shortbow"
 
 
-def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
+def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -4758,14 +4850,15 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(monkeypatch) -> None:
     assert attack_event.data["critical_hit"] is False
     assert attack_event.data["damage"] == 0
     assert attack_event.data["damage_roll_detail"] is None
-    assert attack_event.data["attack_roll_detail"]["critical_miss"] is True
+    attack_roll_detail = _mapping(attack_event.data["attack_roll_detail"])
+    assert attack_roll_detail["critical_miss"] is True
     assert (
         session.encounter_state.creatures["goblin_1"].creature.get_health()
         == starting_health
     )
 
 
-def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
+def test_extra_attack_allows_second_attack_after_movement(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -4820,7 +4913,7 @@ def test_extra_attack_allows_second_attack_after_movement(monkeypatch) -> None:
     )
 
 
-def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
+def test_second_wind_appears_and_consumes_bonus_action(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.decision_creature.current_health = 10
@@ -4849,12 +4942,13 @@ def test_second_wind_appears_and_consumes_bonus_action(monkeypatch) -> None:
     assert event.data["feature_id"] == "second_wind"
     assert event.data["feature_name"] == "Second Wind"
     assert event.data["uses_remaining"] == 1
-    assert event.data["healing_roll_detail"]["dice"] == "1d10"
-    assert event.data["healing_roll_detail"]["applied_healing"] == 7
+    healing_roll_detail = _mapping(event.data["healing_roll_detail"])
+    assert healing_roll_detail["dice"] == "1d10"
+    assert healing_roll_detail["applied_healing"] == 7
 
 
 def test_second_wind_stays_visible_in_feature_column_when_unavailable(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
@@ -4880,7 +4974,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable(
     assert feature_actions["Second Wind"].cost["bonus_action"] == 1
 
 
-def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> None:
+def test_action_surge_grants_additional_action_for_same_turn(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -4927,7 +5021,7 @@ def test_action_surge_grants_additional_action_for_same_turn(monkeypatch) -> Non
     assert session.encounter_state.active_actions_remaining == 0
 
 
-def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch) -> None:
+def test_presentation_surfaces_conditions_in_encounter_views(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -5042,16 +5136,16 @@ def test_unavailable_button_tooltip_lists_all_reasons() -> None:
     class Button:
         def __init__(self) -> None:
             self.enabled = True
-            self.properties = {}
+            self.properties: dict[str, object] = {}
             self.tooltip = ""
 
-        def setProperty(self, name, value) -> None:
+        def setProperty(self, name: str, value: object) -> None:
             self.properties[name] = value
 
-        def setEnabled(self, enabled) -> None:
+        def setEnabled(self, enabled: bool) -> None:
             self.enabled = enabled
 
-        def setToolTip(self, tooltip) -> None:
+        def setToolTip(self, tooltip: str) -> None:
             self.tooltip = tooltip
 
     button = Button()
@@ -5086,7 +5180,7 @@ def test_unavailable_button_tooltip_lists_all_reasons() -> None:
         ),
     ]
 
-    configure_action_button(button, actions)
+    configure_action_button(type_cast(QPushButton, button), actions)
 
     assert button.enabled is False
     assert button.properties["availability"] == "unavailable"
@@ -5120,13 +5214,16 @@ def test_unavailable_button_tooltip_lists_all_reasons() -> None:
     ],
 )
 def test_follow_up_attack_is_queued_only_with_attacks_and_targets(
-    monkeypatch,
-    attacks_available,
-    actions,
-    expected,
+    monkeypatch: pytest.MonkeyPatch,
+    attacks_available: int,
+    actions: list[ActionObservation],
+    expected: TargetSelectionMode | None,
 ) -> None:
     window = GameWindow.__new__(GameWindow)
-    window.presenter = SimpleNamespace(observation=object())
+    window.presenter = type_cast(
+        GamePresenter,
+        SimpleNamespace(observation=object()),
+    )
     presentation = SimpleNamespace(
         encounter=SimpleNamespace(
             resources=SimpleNamespace(attacks_available=attacks_available),
@@ -5143,17 +5240,21 @@ def test_follow_up_attack_is_queued_only_with_attacks_and_targets(
 
 
 def test_clicking_actor_during_follow_up_attack_reopens_movement() -> None:
-    window = GameWindow.__new__(GameWindow)
     attack_mode = TargetSelectionMode(
         kind="attack",
         source_trigger_id="Shortsword",
     )
-    window.presenter = SimpleNamespace(pending_target_mode=attack_mode)
-    window._presentation = SimpleNamespace(
-        encounter=SimpleNamespace(non_movement_actions=[])
-    )
     planned_for: list[str] = []
-    window._begin_movement_plan = planned_for.append
+    window = type_cast(
+        GameWindow,
+        SimpleNamespace(
+            presenter=SimpleNamespace(pending_target_mode=attack_mode),
+            _presentation=SimpleNamespace(
+                encounter=SimpleNamespace(non_movement_actions=[])
+            ),
+            _begin_movement_plan=planned_for.append,
+        ),
+    )
 
     GameWindow._handle_battlefield_creature_clicked(window, "assassin")
 
@@ -5161,12 +5262,11 @@ def test_clicking_actor_during_follow_up_attack_reopens_movement() -> None:
 
 
 def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
-    window = GameWindow.__new__(GameWindow)
     mode = TargetSelectionMode(
         kind="toggle_spell_target",
         source_trigger_id="eldritch_blast",
     )
-    window._presentation = SimpleNamespace(
+    presentation = SimpleNamespace(
         encounter=SimpleNamespace(
             non_movement_actions=[
                 ActionObservation(
@@ -5191,14 +5291,20 @@ def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
         )
     )
     target_changes: list[tuple[str, bool, str | None]] = []
-    window.presenter = SimpleNamespace(
-        pending_target_mode=mode,
-        change_target=lambda target_ref, *, remove, source_trigger_id: (
-            target_changes.append((target_ref, remove, source_trigger_id))
-        )
+    window = type_cast(
+        GameWindow,
+        SimpleNamespace(
+            _presentation=presentation,
+            presenter=SimpleNamespace(
+                pending_target_mode=mode,
+                change_target=lambda target_ref, *, remove, source_trigger_id: (
+                    target_changes.append((target_ref, remove, source_trigger_id))
+                ),
+            ),
+            _handle_command_update=lambda update: update,
+            _begin_movement_plan=lambda _creature_ref: None,
+        ),
     )
-    window._handle_command_update = lambda update: update
-    window._begin_movement_plan = lambda _creature_ref: None
 
     GameWindow._handle_battlefield_creature_clicked(
         window,
@@ -5217,7 +5323,7 @@ def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
 
 
 def test_exact_spell_allocation_auto_confirms_after_final_click(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
@@ -5266,7 +5372,7 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
         )
     )
     window._action_menu_scope = ActionMenuScope("action", "magic")
-    window._apply_turn_result = lambda _result, **_kwargs: None
+    monkeypatch.setattr(window, "_apply_turn_result", lambda _result, **_kwargs: None)
 
     assert allocation_counts(window.presenter.observation) == {"goblin_1": 1}
     assert allocation_status(window.presenter.observation) == (
@@ -5384,7 +5490,7 @@ def test_spell_target_modes_preserve_selected_cast_level() -> None:
     )
 
 
-def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None:
+def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -5421,7 +5527,7 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(monkeypatch) -> None
     )
 
 
-def test_attack_consumes_action_until_next_turn(monkeypatch) -> None:
+def test_attack_consumes_action_until_next_turn(monkeypatch: pytest.MonkeyPatch) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()

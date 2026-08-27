@@ -10,7 +10,12 @@ MANIFEST_PATH = PROJECT_ROOT / "docs" / "spell_implementation_manifest.json"
 
 
 def _manifest() -> dict[str, object]:
-    return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    payload: object = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or not all(
+        isinstance(key, str) for key in payload
+    ):
+        raise TypeError("Spell implementation manifest must be an object.")
+    return {key: value for key, value in payload.items() if isinstance(key, str)}
 
 
 def _assignments(manifest: dict[str, object]) -> list[str]:

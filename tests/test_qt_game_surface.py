@@ -48,6 +48,8 @@ def test_game_surface_switches_between_story_and_encounter() -> None:
         if button.text() == "Enter encounter"
     )
     encounter_panel = surface.findChild(QWidget, "encounterPanel")
+    assert scene_text is not None
+    assert encounter_panel is not None
     assert scene_text.toPlainText() == "An encounter awaits."
     assert encounter_panel.isHidden()
 
@@ -57,8 +59,12 @@ def test_game_surface_switches_between_story_and_encounter() -> None:
     surface.show_encounter()
     app.processEvents()
     assert not encounter_panel.isHidden()
-    assert surface.findChild(QFrame, "scenePanel").isHidden()
-    assert surface.findChild(QFrame, "choicesPanel").isHidden()
+    scene_panel = surface.findChild(QFrame, "scenePanel")
+    choices_panel = surface.findChild(QFrame, "choicesPanel")
+    assert scene_panel is not None
+    assert choices_panel is not None
+    assert scene_panel.isHidden()
+    assert choices_panel.isHidden()
 
     _dispose(surface, app)
 
@@ -80,6 +86,10 @@ def test_game_surface_owns_transition_overlay_behavior() -> None:
     message = surface.findChild(QLabel, "transitionMessage")
     button = surface.findChild(QPushButton, "transitionButton")
     encounter_panel = surface.findChild(QWidget, "encounterPanel")
+    assert overlay is not None
+    assert message is not None
+    assert button is not None
+    assert encounter_panel is not None
     assert not overlay.isHidden()
     assert message.text() == "The encounter is over."
     assert button.isEnabled()

@@ -9,7 +9,7 @@ from srd_arena.application.commands import (
     SetResourceAllocation,
 )
 from srd_arena.application.game import RunningGame
-from srd_arena.application.observations import ActionObservation
+from srd_arena.application.observations import ActionObservation, GameObservation
 from srd_arena.application.startup import GameStartup
 from srd_arena.domain.encounters.actions.eligibility_rules.models import (
     ActionEligibility,
@@ -104,7 +104,10 @@ def _running_game(session: SessionStub) -> RunningGame:
     return RunningGame(session)
 
 
-def _advance_to_actor(game: RunningGame, creature_ref: str):
+def _advance_to_actor(
+    game: RunningGame,
+    creature_ref: str,
+) -> GameObservation:
     for _ in range(20):
         observation = game.observe()
         assert observation.encounter is not None

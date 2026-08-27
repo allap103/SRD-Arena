@@ -12,6 +12,7 @@ from .special import special_action_candidates
 from .stat_blocks import stat_block_action_candidates
 
 if TYPE_CHECKING:
+    from ....creatures import Creature
     from ...encounter import EncounterState
 
 
@@ -55,7 +56,7 @@ def creature_action_candidates(
     return actions
 
 
-def _stat_block_display_name(creature, name: str) -> str:
+def _stat_block_display_name(creature: Creature, name: str) -> str:
     return next(
         (
             declaration.display_name

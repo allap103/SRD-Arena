@@ -147,7 +147,7 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
             value.control_range_feet,
             _required_duration(value.duration),
         )
-    memories = cast(effects.GainMemoriesEffectSchema, value)
+    memories = value
     return domain.GainMemoriesEffect(
         domain.CreatureTypeRequirement(tuple(memories.requirement.creature_types)),
         memories.trigger,

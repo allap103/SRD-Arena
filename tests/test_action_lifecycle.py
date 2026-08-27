@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from srd_arena.domain.encounters import EncounterOrchestrator
+from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import ActionExecutionOutcome
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
@@ -9,7 +10,7 @@ FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 _ORCHESTRATOR = EncounterOrchestrator()
 
 
-def _encounter_state():
+def _encounter_state() -> EncounterState:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()

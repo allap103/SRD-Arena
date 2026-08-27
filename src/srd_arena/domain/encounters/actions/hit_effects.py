@@ -7,7 +7,13 @@ from ...capabilities import CapabilityEffect, ConditionEffect, SizeRequirement
 from ...effects.results import EffectResult
 from ...effects.application import condition_from_effect_with_origin
 from ...effects.conditions import Condition, build_applied_condition
-from ...effects.runtime import EffectSourceKind, Indefinite, UntilTurnEnd, UntilTurnStart
+from ...effects.runtime import (
+    EffectDuration,
+    EffectSourceKind,
+    Indefinite,
+    UntilTurnEnd,
+    UntilTurnStart,
+)
 from ..models import EncounterProgress
 
 if TYPE_CHECKING:
@@ -127,7 +133,7 @@ def _condition_duration(
     attacker_ref: str,
     target_ref: str,
     effect: ConditionEffect,
-):
+) -> EffectDuration:
     duration = effect.duration
     if duration is None:
         return Indefinite()

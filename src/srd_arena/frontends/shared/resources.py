@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from srd_arena.application.api import EncounterObservation
+from srd_arena.application.api import CreatureObservation, EncounterObservation
 from .conditions import effective_condition_names
 from .models import (
     InitiativeTrackEntryView,
@@ -69,7 +69,7 @@ def _build_initiative_track(
 
 
 def _build_spell_slot_tracks(
-    creature_state,
+    creature_state: CreatureObservation,
 ) -> tuple[SpellSlotTrackView, ...]:
     return tuple(
         SpellSlotTrackView(

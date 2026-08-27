@@ -11,13 +11,16 @@ from srd_arena.domain.effects import (
 )
 from srd_arena.domain.rolls.dice import reroll_dice, resolve_dice
 from srd_arena.engine.queries import DirectTargetOptionDetails
+from srd_arena.engine.session import Session
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
 
 @pytest.fixture(autouse=True)
-def _player_first_initiative(monkeypatch):
-    def _fixed_initiative(self):
+def _player_first_initiative(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _fixed_initiative(self: EncounterState) -> None:
         self.initiative_entries = []
         first_external_ref = next(
             creature_ref
@@ -36,7 +39,7 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
-def test_triggered_effect_matching_uses_generic_context_conditions():
+def test_triggered_effect_matching_uses_generic_context_conditions() -> None:
     effect = TriggeredEffect(
         id="test",
         source_type="test",
@@ -67,7 +70,7 @@ def test_triggered_effect_matching_uses_generic_context_conditions():
     ) == []
 
 
-def test_reroll_matching_dice_enforces_maximum_per_die():
+def test_reroll_matching_dice_enforces_maximum_per_die() -> None:
     effect = TriggeredEffect(
         id="test",
         source_type="test",
@@ -87,7 +90,7 @@ def test_reroll_matching_dice_enforces_maximum_per_die():
     assert reroll_eligible_indices(effect, rerolled) == (1,)
 
 
-def test_tactical_fighter_loads_great_weapon_fighting_effect():
+def test_tactical_fighter_loads_great_weapon_fighting_effect() -> None:
     player = load_scenario_directory(
         TACTICAL_SCENARIO_DIR
     ).create_session().decision_creature
@@ -103,7 +106,9 @@ def test_tactical_fighter_loads_great_weapon_fighting_effect():
     assert player.equipment.equipped_items["right_hand"] == "greatsword"
 
 
-def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatch):
+def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     session = _adjacent_tactical_encounter()
     session.decision_creature.equipment.equipped_items["right_hand"] = "longsword"
     monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 15)
@@ -123,7 +128,7 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(monkeypatc
     assert not any(event.type == "attack_pending" for event in result.events)
 
 
-def _adjacent_tactical_encounter():
+def _adjacent_tactical_encounter() -> Session:
     session = load_scenario_directory(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter").create_session()
     session.read()
     assert session.encounter_state is not None

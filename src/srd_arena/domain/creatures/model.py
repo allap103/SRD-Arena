@@ -64,7 +64,7 @@ class Creature:
         default_factory=dict
     )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.current_health is None:
             self.current_health = self.get_max_health()
         for name, definition in self.stat_block_actions.items():
@@ -76,16 +76,16 @@ class Creature:
             else:
                 self.stat_block_action_resources[name] = 1
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Creature with attributes: {self.attributes} and inventory: {self.inventory.items}"
 
     def has_item(self, item: str) -> bool:
         return self.inventory.has_item(item)
 
-    def add_item(self, item: str):
+    def add_item(self, item: str) -> None:
         self.inventory.add_item(item)
 
-    def remove_item(self, item: str):
+    def remove_item(self, item: str) -> None:
         self.inventory.remove_item(item)
 
     def show_equipment(self) -> dict[str, str | None]:

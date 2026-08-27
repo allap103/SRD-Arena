@@ -12,7 +12,7 @@ from .encounter import BattlefieldWidget, clear_layout
 from .encounter.initiative import InitiativeRail
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QResizeEvent
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -213,7 +213,7 @@ class GameSurface(QWidget):
     def _update_victory_overlay_geometry(self) -> None:
         self._victory_overlay.setGeometry(self._encounter_panel.rect())
 
-    def resizeEvent(self, event) -> None:  # pragma: no cover - Qt geometry event
+    def resizeEvent(self, event: QResizeEvent) -> None:  # pragma: no cover
         super().resizeEvent(event)
         self._update_victory_overlay_geometry()
 

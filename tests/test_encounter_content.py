@@ -60,10 +60,18 @@ def test_load_encounter_parses_definition() -> None:
         "goblin_2",
         "goblin_3",
     ]
-    assert encounter.participants[1].behavior.type == "chase"
-    assert encounter.participants[2].behavior.anchor is not None
-    assert encounter.participants[2].behavior.radius == 2
-    assert len(encounter.participants[3].behavior.path) == 3
+    chase = encounter.participants[1].behavior
+    guard = encounter.participants[2].behavior
+    patrol = encounter.participants[3].behavior
+    assert chase is not None
+    assert guard is not None
+    assert patrol is not None
+    assert encounter.victory is not None
+    assert encounter.defeat is not None
+    assert chase.type == "chase"
+    assert guard.anchor is not None
+    assert guard.radius == 2
+    assert len(patrol.path) == 3
     assert encounter.victory.next_encounter_id == "goblin_encounter"
     assert encounter.defeat.next_encounter_id == "goblin_encounter"
 
@@ -114,9 +122,11 @@ def test_full_control_showcase_gives_external_control_to_every_creature() -> Non
         "Blueblade",
         "Blueeye",
     }
-    assert scenario.get_creature("player").subclass_ref is not None
-    assert scenario.get_creature("champion_2").subclass_ref is not None
-    assert scenario.get_creature("champion_2").subclass_ref.name == "Champion"
+    player_subclass = scenario.get_creature("player").subclass_ref
+    champion_subclass = scenario.get_creature("champion_2").subclass_ref
+    assert player_subclass is not None
+    assert champion_subclass is not None
+    assert champion_subclass.name == "Champion"
     assert all(
         participant.controller == "external" for participant in encounter.participants
     )
@@ -204,8 +214,12 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(
 
     assert scenario.start_scene == "arena"
     assert scenario.encounter_order == ("arena", "arena_two")
-    assert scenario.encounters["arena"].victory.next_encounter_id == "arena_two"
-    assert scenario.encounters["arena_two"].victory.next_encounter_id == "arena_two"
+    first_victory = scenario.encounters["arena"].victory
+    second_victory = scenario.encounters["arena_two"].victory
+    assert first_victory is not None
+    assert second_victory is not None
+    assert first_victory.next_encounter_id == "arena_two"
+    assert second_victory.next_encounter_id == "arena_two"
 
 
 def test_game_loads_geometry_settings_from_config_json() -> None:

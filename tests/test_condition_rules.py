@@ -1,12 +1,13 @@
 from srd_arena.domain.effects.condition_rules import effective_conditions
 from srd_arena.domain.effects.conditions import (
+    AppliedCondition,
     CombatTrait,
     Condition,
     build_applied_condition,
 )
 
 
-def _applied(condition: Condition, source_ref: str):
+def _applied(condition: Condition, source_ref: str) -> AppliedCondition:
     return build_applied_condition(
         condition=condition,
         source_ref=source_ref,

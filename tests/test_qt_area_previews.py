@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.application.observations import observe_session
 from srd_arena.frontends.gui.ui.encounter.area_previews import (
@@ -37,7 +39,9 @@ def test_area_overlay_readers_ignore_malformed_geometry() -> None:
     assert overlay_origin({"origin": {"x": 2}}) is None
 
 
-def test_slow_pending_area_preview_is_an_eight_square_cube(monkeypatch) -> None:
+def test_slow_pending_area_preview_is_an_eight_square_cube(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def _tempo_archmage_first(self: EncounterState) -> None:
         self.initiative_entries = []
         self.initiative_order = [

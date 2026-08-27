@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
 
@@ -17,7 +18,10 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import resolve_end_turn_effects
 from srd_arena.domain.geometry import Position
+from srd_arena.domain.spells import Spell
+from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import ActionAim
+from srd_arena.engine.session import Session
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 _ORCHESTRATOR = EncounterOrchestrator()
@@ -32,13 +36,15 @@ def _build_referenced_spell(
     name: str,
     source: str | None,
     catalog: SpellCatalog,
-):
+) -> Spell:
     return build_spell_schema(catalog.find(name, source))
 
 
 @pytest.fixture(autouse=True)
-def _player_first_initiative(monkeypatch):
-    def _fixed_initiative(self):
+def _player_first_initiative(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _fixed_initiative(self: EncounterState) -> None:
         self.initiative_entries = []
         first_external_ref = next(
             creature_ref
@@ -57,7 +63,11 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
-def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
+def _choose_directional_spell(
+    session: Session,
+    label: str,
+    aim_cell: tuple[int, int],
+) -> EngineOutcome:
     scene_view = session.read()
     action = next(
         detail for detail in scene_view.action_options if detail.label == label
@@ -69,7 +79,7 @@ def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
 
 
 def test_slow_cast_groups_failed_targets_under_one_typed_effect(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
@@ -172,24 +182,39 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     spell_event = next(
         event for event in resolved.events if event.type == "spell_cast"
     )
-    assert spell_event.data["area"]["shape"] == "cube"
-    assert len(spell_event.data["area"]["cells"]) == 64
+    area = spell_event.data["area"]
+    assert isinstance(area, Mapping)
+    cells = area["cells"]
+    assert isinstance(cells, (list, tuple))
+    assert area["shape"] == "cube"
+    assert len(cells) == 64
     assert spell_event.data["target_refs"] == [
         "goblin_1",
         "goblin_2",
         "goblin_3",
     ]
-    assert [
-        detail["success"] for detail in spell_event.data["save_details"]
-    ] == [False, True, False]
-    exported = next(
-        effect
-        for effect in state.export_state()["ongoing_effects"]
-        if effect["id"] == slow.identity.id
-    )
-    assert [
-        effect["type"] for effect in exported["rule_effects"]
-    ] == [
+    save_details = spell_event.data["save_details"]
+    assert isinstance(save_details, (list, tuple))
+    successes: list[object] = []
+    for detail in save_details:
+        assert isinstance(detail, Mapping)
+        successes.append(detail["success"])
+    assert successes == [False, True, False]
+    exported_effects = state.export_state()["ongoing_effects"]
+    assert isinstance(exported_effects, list)
+    exported: Mapping[str, object] | None = None
+    for effect in exported_effects:
+        if isinstance(effect, Mapping) and effect.get("id") == slow.identity.id:
+            exported = effect
+            break
+    assert exported is not None
+    rule_effects = exported["rule_effects"]
+    assert isinstance(rule_effects, list)
+    rule_effect_types: list[object] = []
+    for effect in rule_effects:
+        assert isinstance(effect, Mapping)
+        rule_effect_types.append(effect["type"])
+    assert rule_effect_types == [
         "speed_multiplier",
         "armor_class_adjustment",
         "roll_adjustment",
@@ -235,7 +260,9 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     ) == 2
 
 
-def test_slow_chosen_area_never_exceeds_six_targets(monkeypatch) -> None:
+def test_slow_chosen_area_never_exceeds_six_targets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -311,7 +338,9 @@ def _assassin_showcase_state() -> EncounterState:
     return state
 
 
-def test_slow_limits_attacks_made_through_multiattack(monkeypatch) -> None:
+def test_slow_limits_attacks_made_through_multiattack(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     state = _assassin_showcase_state()
     assassin = state.active_creature_state
     state._apply_effects(
@@ -370,7 +399,7 @@ def test_slow_limits_attacks_made_through_multiattack(monkeypatch) -> None:
 
 
 def test_ending_slow_mid_multiattack_restores_pending_attacks(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     state = _assassin_showcase_state()
     assassin = state.active_creature_state
@@ -428,7 +457,7 @@ def test_ending_slow_mid_multiattack_restores_pending_attacks(
 
 
 def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
@@ -485,7 +514,11 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
         if event.type == "invocation_start_checked"
     )
     assert invocation_check.data["allowed"] is False
-    assert invocation_check.data["checks"][0]["code"] == (
+    invocation_checks = invocation_check.data["checks"]
+    assert isinstance(invocation_checks, (list, tuple))
+    first_check = invocation_checks[0]
+    assert isinstance(first_check, Mapping)
+    assert first_check["code"] == (
         "slow.somatic_spell_failure"
     )
     second_wind = next(
@@ -503,7 +536,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
 
 
 def test_ending_slow_mid_attack_restores_unused_extra_attack(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),

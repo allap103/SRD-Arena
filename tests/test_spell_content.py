@@ -1,6 +1,12 @@
 from srd_arena.content.common import SourceCatalog
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.spells import SpellSchema, build_spell, load_spell_catalog
+from srd_arena.content.spells import (
+    SpellCatalog,
+    SpellSchema,
+    build_spell,
+    load_spell_catalog,
+)
+from srd_arena.domain.spells import Spell
 from srd_arena.domain.spells.rules import spell_duration_rounds, spell_max_targets
 from srd_arena.domain.capabilities import (
     AttackResolution,
@@ -24,7 +30,11 @@ from srd_arena.domain.capabilities import (
 )
 
 
-def _build_catalog_spell(catalog, name: str, source: str = "XPHB"):
+def _build_catalog_spell(
+    catalog: SpellCatalog,
+    name: str,
+    source: str = "XPHB",
+) -> Spell:
     return build_spell(catalog.find(name, source))
 
 

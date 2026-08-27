@@ -19,7 +19,7 @@ import srd_arena.frontends.gui.launcher as launcher
 
 
 def test_scenario_picker_delegates_game_creation_to_application_startup(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     app = QApplication.instance() or QApplication([])

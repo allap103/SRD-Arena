@@ -25,8 +25,18 @@ from .status_markers import (
     target_allocation_badge_position,
 )
 
-from PySide6.QtCore import QPointF, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap, QPolygonF
+from PySide6.QtCore import QEvent, QPointF, QRect, QSize, Qt, Signal
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QMouseEvent,
+    QPaintEvent,
+    QPainter,
+    QPen,
+    QPixmap,
+    QPolygonF,
+    QWheelEvent,
+)
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
 
@@ -126,7 +136,7 @@ class BattlefieldWidget(QWidget):
         self._movement_plan = plan
         self.update()
 
-    def paintEvent(self, event) -> None:  # pragma: no cover - GUI painting
+    def paintEvent(self, event: QPaintEvent) -> None:  # pragma: no cover
         if self._battlefield is None:
             return
 
@@ -578,7 +588,7 @@ class BattlefieldWidget(QWidget):
         painter.end()
 
     @staticmethod
-    def _floating_label_font():
+    def _floating_label_font() -> QFont:
         style = BATTLEFIELD_FLOATING_LABEL_STYLE
         font = QFont()
         font.setWeight(QFont.Weight(style.font_weight))
@@ -587,11 +597,11 @@ class BattlefieldWidget(QWidget):
 
     def _paint_floating_label(
         self,
-        painter,
+        painter: QPainter,
         text: str,
         *,
         rect: tuple[float, float, float, float],
-        alignment,
+        alignment: Qt.AlignmentFlag,
     ) -> None:
         style = BATTLEFIELD_FLOATING_LABEL_STYLE
         label_x, label_y, label_width, label_height = rect
@@ -618,7 +628,7 @@ class BattlefieldWidget(QWidget):
         )
         painter.restore()
 
-    def _paint_status_tooltip(self, painter) -> None:
+    def _paint_status_tooltip(self, painter: QPainter) -> None:
         text = self._visible_status_tooltip
         anchor = self._status_tooltip_anchor
         if text is None or anchor is None:
@@ -646,7 +656,7 @@ class BattlefieldWidget(QWidget):
 
     def _paint_status_markers(
         self,
-        painter,
+        painter: QPainter,
         creature: BattlefieldCreatureView,
         *,
         cell_x: float,
@@ -721,7 +731,7 @@ class BattlefieldWidget(QWidget):
             )
         return self._image_cache[image_reference]
 
-    def mousePressEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+    def mousePressEvent(self, event: QMouseEvent) -> None:  # pragma: no cover
         if (
             event.button() == Qt.MouseButton.RightButton
             and self._interaction_is_pending()
@@ -770,7 +780,7 @@ class BattlefieldWidget(QWidget):
             or self._cell_targeting_enabled
         )
 
-    def mouseMoveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:  # pragma: no cover
         if self._pan_anchor is not None:
             self._invalidate_status_marker_hits()
             current = (event.position().x(), event.position().y())
@@ -809,7 +819,7 @@ class BattlefieldWidget(QWidget):
             self.update()
         super().mouseMoveEvent(event)
 
-    def mouseReleaseEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:  # pragma: no cover
         if self._pan_anchor is not None and event.button() in {
             Qt.MouseButton.MiddleButton,
             Qt.MouseButton.RightButton,
@@ -820,7 +830,7 @@ class BattlefieldWidget(QWidget):
             return
         super().mouseReleaseEvent(event)
 
-    def wheelEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+    def wheelEvent(self, event: QWheelEvent) -> None:  # pragma: no cover
         if self._battlefield is None or event.angleDelta().y() == 0:
             super().wheelEvent(event)
             return
@@ -876,7 +886,7 @@ class BattlefieldWidget(QWidget):
 
     def _clamped_pan_offset(
         self,
-        rect,
+        rect: QRect,
         board_width: float,
         board_height: float,
     ) -> tuple[float, float]:
@@ -913,7 +923,7 @@ class BattlefieldWidget(QWidget):
             ),
         )
 
-    def leaveEvent(self, event) -> None:  # pragma: no cover - GUI interaction
+    def leaveEvent(self, event: QEvent) -> None:  # pragma: no cover
         self._hide_status_tooltip()
         if self._hover_cell is not None or self._hover_point is not None:
             self._hover_cell = None

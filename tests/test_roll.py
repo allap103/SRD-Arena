@@ -1,8 +1,11 @@
 from collections.abc import Iterator
+from typing import TypedDict
 
 import pytest
 
 from srd_arena.domain.rolls.dice import (
+    D20RollMode,
+    DieRoller,
     extend_d20_pool,
     reroll_dice,
     reroll_dice_pool,
@@ -15,7 +18,14 @@ from srd_arena.domain.rolls.dice import (
 )
 
 
-def _roller(results: list[int]) -> tuple[Iterator[int], object]:
+class ResolveDiceKwargs(TypedDict, total=False):
+    num_dice: int
+    sides: int
+    reroll_values: set[int]
+    max_rerolls_per_die: int
+
+
+def _roller(results: list[int]) -> tuple[Iterator[int], DieRoller]:
     values = iter(results)
     return values, lambda _sides: next(values)
 
@@ -28,7 +38,11 @@ def _roller(results: list[int]) -> tuple[Iterator[int], object]:
         ("disadvantage", 7, 10),
     ],
 )
-def test_resolve_d20_selects_die_for_mode(mode, expected_selected, expected_total):
+def test_resolve_d20_selects_die_for_mode(
+    mode: D20RollMode,
+    expected_selected: int,
+    expected_total: int,
+) -> None:
     results = [7] if mode == "normal" else [7, 16]
     _, roller = _roller(results)
 
@@ -38,7 +52,7 @@ def test_resolve_d20_selects_die_for_mode(mode, expected_selected, expected_tota
     assert result.total == expected_total
 
 
-def test_extended_d20_pool_can_select_highest_of_three():
+def test_extended_d20_pool_can_select_highest_of_three() -> None:
     _, roller = _roller([7, 16, 19])
     pool = roll_d20_pool(2, roller=roller)
     extended_pool = extend_d20_pool(pool, roller=roller)
@@ -56,7 +70,7 @@ def test_extended_d20_pool_can_select_highest_of_three():
     assert result.total == 22
 
 
-def test_extended_d20_pool_leaves_selection_to_caller():
+def test_extended_d20_pool_leaves_selection_to_caller() -> None:
     _, roller = _roller([18, 4])
     pool = roll_d20_pool(roller=roller)
     extended_pool = extend_d20_pool(pool, roller=roller)
@@ -72,7 +86,11 @@ def test_extended_d20_pool_leaves_selection_to_caller():
     ("roll_value", "target", "expected_success"),
     [(12, 15, False), (13, 15, True)],
 )
-def test_resolve_check_compares_roll_total(roll_value, target, expected_success):
+def test_resolve_check_compares_roll_total(
+    roll_value: int,
+    target: int,
+    expected_success: bool,
+) -> None:
     roll = resolve_d20(modifier=2, roller=lambda _sides: roll_value)
 
     result = resolve_check(roll, target)
@@ -82,7 +100,7 @@ def test_resolve_check_compares_roll_total(roll_value, target, expected_success)
     assert result.success is expected_success
 
 
-def test_resolve_dice_records_replaced_roll_and_uses_new_result():
+def test_resolve_dice_records_replaced_roll_and_uses_new_result() -> None:
     _, roller = _roller([1, 4, 2, 1, 1, 6])
 
     result = resolve_dice(
@@ -103,7 +121,7 @@ def test_resolve_dice_records_replaced_roll_and_uses_new_result():
     assert result.total == 15
 
 
-def test_reroll_dice_replaces_only_selected_dice():
+def test_reroll_dice_replaces_only_selected_dice() -> None:
     _, initial_roller = _roller([2, 5, 1, 6])
     pool = resolve_dice(4, 6, roller=initial_roller)
     _, replacement_roller = _roller([4, 3])
@@ -115,7 +133,7 @@ def test_reroll_dice_replaces_only_selected_dice():
     assert result.subtotal == 18
 
 
-def test_reroll_dice_pool_creates_independent_attempt():
+def test_reroll_dice_pool_creates_independent_attempt() -> None:
     _, initial_roller = _roller([2, 5])
     original = resolve_dice(2, 6, modifier=1, roller=initial_roller)
     _, replacement_roller = _roller([6, 4])
@@ -129,7 +147,7 @@ def test_reroll_dice_pool_creates_independent_attempt():
     assert replacement.replacements == ()
 
 
-def test_resolve_roll_attempts_records_selected_complete_roll():
+def test_resolve_roll_attempts_records_selected_complete_roll() -> None:
     _, roller = _roller([2, 5, 6, 4])
     original = resolve_dice(2, 6, roller=roller)
     replacement = reroll_dice_pool(original, roller=roller)
@@ -161,6 +179,9 @@ def test_resolve_roll_attempts_records_selected_complete_roll():
         ),
     ],
 )
-def test_resolve_dice_rejects_invalid_configuration(kwargs, message):
+def test_resolve_dice_rejects_invalid_configuration(
+    kwargs: ResolveDiceKwargs,
+    message: str,
+) -> None:
     with pytest.raises(ValueError, match=message):
         resolve_dice(**kwargs)

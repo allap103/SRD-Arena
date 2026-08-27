@@ -1,12 +1,11 @@
 from collections.abc import Iterable
 from dataclasses import replace
-from typing import Literal, cast
+from typing import Literal
 
 from srd_arena.content.capabilities import (
     CapabilityBuildError,
     ConditionRequirementSchema,
     CreatureTypeRequirementSchema,
-    DerivedDifficultyClassSchema,
     FixedDifficultyClassSchema,
     NotAffectedRequirementSchema,
     SizeRequirementSchema,
@@ -229,8 +228,7 @@ def _build_resolution(
             difficulty.value
         )
     else:
-        derived = cast(DerivedDifficultyClassSchema, difficulty)
-        built_difficulty = domain.DerivedDifficultyClass(derived.type)
+        built_difficulty = domain.DerivedDifficultyClass(difficulty.type)
     return domain.SavingThrowResolution(
         ability=normalize_save_ability(resolution.ability),
         difficulty=built_difficulty,

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ....creatures import Creature
+from ....creatures.feature_actions import FeatureActionDefinition
 from ...models import ActionCost, EncounterAction
 
 if TYPE_CHECKING:
@@ -36,7 +37,11 @@ def available_feature_actions(
     return actions
 
 
-def feature_action_available(self: EncounterState, actor: Creature, definition) -> bool:
+def feature_action_available(
+    self: EncounterState,
+    actor: Creature,
+    definition: FeatureActionDefinition,
+) -> bool:
     if definition.economy == "bonus_action" and not self.active_bonus_action_available:
         return False
     if definition.economy == "action" and self.active_actions_remaining <= 0:

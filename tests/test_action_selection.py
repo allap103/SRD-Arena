@@ -1,6 +1,8 @@
 from pathlib import Path
+from collections.abc import Sequence
 
 from srd_arena.domain.encounters import EncounterOrchestrator
+from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterAction
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
@@ -20,7 +22,12 @@ def test_orchestrator_delegates_scripted_choice_to_actor_selector() -> None:
     selections: list[tuple[str, tuple[EncounterAction, ...], bool]] = []
 
     class RecordingSelector:
-        def select_action(self, encounter, actor_ref, actions):
+        def select_action(
+            self,
+            encounter: EncounterState,
+            actor_ref: str,
+            actions: Sequence[EncounterAction],
+        ) -> EncounterAction:
             selections.append(
                 (
                     actor_ref,
