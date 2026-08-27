@@ -67,7 +67,28 @@ class PreparedSpellResolution:
 
 
 def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolution:
-    """Normalize capability mechanics and perform rolls shared by all targets."""
+    """Normalize capability mechanics and perform rolls shared by all targets.
+
+    >>> from types import SimpleNamespace
+    >>> from ...capabilities import (
+    ...     AutomaticResolution, CapabilityTarget, DamageEffect, Outcome,
+    ... )
+    >>> from ..definitions import Spell
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget("creature"),
+    ...     AutomaticResolution(Outcome((DamageEffect("1d6", 0, "fire"),))),
+    ... )
+    >>> spell = Spell("spark", "Spark", "TEST", 1, definition=definition)
+    >>> context = SimpleNamespace(
+    ...     spell=spell, roller=lambda sides: 4, cast_level=None,
+    ...     creature=SimpleNamespace(attributes=SimpleNamespace(level=1)),
+    ...     target="target", targets=(), damage_roll_modifier_for=None,
+    ...     damage_roll_modifier=0,
+    ... )
+    >>> prepared = prepare_spell_resolution(context)
+    >>> prepared.damage_definitions
+    (SpellDamage(dice='1d6', damage_type='fire'),)
+    """
 
     spell = context.spell
     definition = spell.definition

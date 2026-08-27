@@ -21,7 +21,27 @@ def apply_target_damage(
     prepared: PreparedSpellResolution,
     roll_outcome: TargetRollOutcome,
 ) -> TargetDamageResult:
-    """Apply resolved spell damage after immunity, resistance, and save scaling."""
+    """Apply resolved spell damage after immunity, resistance, and save scaling.
+
+    >>> from types import SimpleNamespace
+    >>> from ...capabilities import AutomaticResolution, Outcome
+    >>> from ...rolls.dice import DicePoolResult, DieRollResult
+    >>> from ..definitions import SpellDamage
+    >>> roll = DicePoolResult((DieRollResult(6, (4,)),), 0, 4, 4)
+    >>> outcome = TargetRollOutcome(
+    ...     False, (), True, [(SpellDamage("1d6", "fire"), roll)]
+    ... )
+    >>> target = SimpleNamespace(
+    ...     target_ref="goblin", target_label="Goblin",
+    ...     creature=SimpleNamespace(take_damage=lambda amount, kind: amount),
+    ... )
+    >>> prepared = SimpleNamespace(
+    ...     half_damage_on_save=False, resolution=AutomaticResolution(Outcome())
+    ... )
+    >>> result = apply_target_damage(target, prepared, outcome)
+    >>> (result.total_applied, result.details[0]["damage_type"])
+    (4, 'fire')
+    """
 
     total_applied = 0
     details: list[dict[str, object]] = []

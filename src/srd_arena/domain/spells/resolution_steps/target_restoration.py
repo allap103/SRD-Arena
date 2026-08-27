@@ -21,7 +21,34 @@ def restore_target(
     prepared: PreparedSpellResolution,
     target: SpellTargetContext,
 ) -> TargetRestorationResult:
-    """Apply prepared healing and temporary Hit Points to an affected target."""
+    """Apply prepared healing and temporary Hit Points to an affected target.
+
+    >>> from types import SimpleNamespace
+    >>> from ...capabilities import (
+    ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget,
+    ...     HealingEffect, Outcome,
+    ... )
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget("creature"), AutomaticResolution(Outcome())
+    ... )
+    >>> context = SimpleNamespace(
+    ...     creature=SimpleNamespace(
+    ...         spellcasting=SimpleNamespace(ability_modifier=3)
+    ...     ),
+    ...     roller=lambda sides: 4, healing_allocations={"hero": 6},
+    ... )
+    >>> prepared = SimpleNamespace(
+    ...     shared_healing_rolls=(), healing_effects=(HealingEffect(pool=10),),
+    ...     temporary_hit_point_effects=(), definition=definition, levels_above=0,
+    ... )
+    >>> target = SimpleNamespace(
+    ...     target_ref="hero", target_label="Hero",
+    ...     creature=SimpleNamespace(heal=lambda amount: amount),
+    ... )
+    >>> result = restore_target(context, prepared, target)
+    >>> result.healing_details[0]["allocated"]
+    6
+    """
 
     assert context.creature.spellcasting is not None
     assert context.roller is not None

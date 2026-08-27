@@ -35,7 +35,25 @@ def resolve_target_roll(
     *,
     projectile_index: int,
 ) -> TargetRollOutcome:
-    """Resolve the attack roll or saving throw required for one spell target."""
+    """Resolve the attack roll or saving throw required for one spell target.
+
+    Automatic resolutions affect their target without making a d20 roll.
+
+    >>> from types import SimpleNamespace
+    >>> from ...capabilities import AutomaticResolution, Outcome
+    >>> context = SimpleNamespace(
+    ...     creature=SimpleNamespace(spellcasting=object()),
+    ...     roller=lambda sides: 10,
+    ... )
+    >>> prepared = SimpleNamespace(
+    ...     resolution=AutomaticResolution(Outcome()), shared_damage_rolls=()
+    ... )
+    >>> outcome = resolve_target_roll(
+    ...     context, prepared, SimpleNamespace(), projectile_index=1
+    ... )
+    >>> (outcome.hit, outcome.save_detail, outcome.attack_detail)
+    (True, None, None)
+    """
 
     assert context.creature.spellcasting is not None
     assert context.roller is not None

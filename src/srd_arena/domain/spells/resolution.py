@@ -29,7 +29,18 @@ __all__ = [
 def resolve_spell_action(
     context: SpellActionContext,
 ) -> CapabilityActionResult | None:
-    """Execute a configured spell invocation through its declarative or custom resolver."""
+    """Execute a configured spell invocation through its declarative or custom resolver.
+
+    Metadata-only spells have no executable action result.
+
+    >>> from types import SimpleNamespace
+    >>> from .definitions import Spell
+    >>> context = SimpleNamespace(
+    ...     spell=Spell("legend_lore", "Legend Lore", "XPHB", 5)
+    ... )
+    >>> resolve_spell_action(context) is None
+    True
+    """
 
     spell = context.spell
     if spell.definition is not None:
