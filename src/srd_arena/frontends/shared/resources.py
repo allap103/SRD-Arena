@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from srd_arena.application.api import CreatureObservation, EncounterObservation
+
 from .conditions import effective_condition_names
 from .models import (
     InitiativeTrackEntryView,

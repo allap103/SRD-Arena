@@ -1,13 +1,6 @@
 import pytest
 from pydantic import ValidationError
 
-from srd_arena.content.creatures.actions.schema import (
-    AttackCapabilitySchema,
-    CapabilitySchema,
-    SavingThrowActionResolutionSchema,
-    SpellcastingCapabilitySchema,
-)
-from srd_arena.content.creatures import BestiaryActionSchema
 from srd_arena.content.capabilities import (
     ConditionEffectSchema,
     ConditionRequirementSchema,
@@ -17,6 +10,13 @@ from srd_arena.content.capabilities import (
 )
 from srd_arena.content.capabilities.requirements import (
     AttackRollModeRequirementSchema,
+)
+from srd_arena.content.creatures import BestiaryActionSchema
+from srd_arena.content.creatures.actions.schema import (
+    AttackCapabilitySchema,
+    CapabilitySchema,
+    SavingThrowActionResolutionSchema,
+    SpellcastingCapabilitySchema,
 )
 
 
@@ -175,38 +175,38 @@ def test_save_action_supports_staged_failures_and_repeat_saves() -> None:
                 "ability": "con",
                 "difficulty": {"type": "fixed", "value": 20},
                 "failure": [
-                {
-                    "effects": [
-                        {
-                            "type": "condition",
-                            "condition": "incapacitated",
-                            "duration": {
-                                "type": "end_of_turn",
-                                "creature": "target",
-                                "turn_offset": 1,
-                            },
-                        }
-                    ],
-                    "repeat_saves": [{"trigger": "end_of_turn"}],
-                },
-                {
-                    "effects": [
-                        {
-                            "type": "condition",
-                            "condition": "paralyzed",
-                        }
-                    ],
-                    "repeat_saves": [
-                        {
-                            "trigger": "end_of_turn",
-                            "automatic_success_after": {
-                                "type": "timed",
-                                "amount": 1,
-                                "unit": "minute",
-                            },
-                        }
-                    ],
-                },
+                    {
+                        "effects": [
+                            {
+                                "type": "condition",
+                                "condition": "incapacitated",
+                                "duration": {
+                                    "type": "end_of_turn",
+                                    "creature": "target",
+                                    "turn_offset": 1,
+                                },
+                            }
+                        ],
+                        "repeat_saves": [{"trigger": "end_of_turn"}],
+                    },
+                    {
+                        "effects": [
+                            {
+                                "type": "condition",
+                                "condition": "paralyzed",
+                            }
+                        ],
+                        "repeat_saves": [
+                            {
+                                "trigger": "end_of_turn",
+                                "automatic_success_after": {
+                                    "type": "timed",
+                                    "amount": 1,
+                                    "unit": "minute",
+                                },
+                            }
+                        ],
+                    },
                 ],
                 "success": {"effects": []},
             },
@@ -280,14 +280,14 @@ def test_action_capability_reject_unknown_effects() -> None:
                     "ability": "wis",
                     "difficulty": {"type": "fixed", "value": 16},
                     "failure": [
-                    {
-                        "effects": [
-                            {
-                                "type": "unstructured_prose",
-                                "text": "Do something complicated.",
-                            }
-                        ]
-                    }
+                        {
+                            "effects": [
+                                {
+                                    "type": "unstructured_prose",
+                                    "text": "Do something complicated.",
+                                }
+                            ]
+                        }
                     ],
                     "success": {"effects": []},
                 },

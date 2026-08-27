@@ -1,6 +1,5 @@
-from typing import Annotated, Literal
-
 from collections.abc import Iterator
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -79,18 +78,14 @@ class InvokeStepSchema(MultiattackSchemaModel):
     type: Literal["invoke"]
     invocation: MultiattackInvocationSchema
     times: RepeatCountSchema = 1
-    availability: Literal["required", "optional", "use_if_available"] = (
-        "required"
-    )
+    availability: Literal["required", "optional", "use_if_available"] = "required"
 
 
 class ChoiceStepSchema(MultiattackSchemaModel):
     type: Literal["choose"]
     options: list[MultiattackInvocationSchema] = Field(min_length=2)
     times: RepeatCountSchema = 1
-    availability: Literal["required", "optional", "use_if_available"] = (
-        "required"
-    )
+    availability: Literal["required", "optional", "use_if_available"] = "required"
 
 
 MultiattackStepSchema = Annotated[
@@ -134,17 +129,14 @@ class MultiattackPlanSchema(MultiattackSchemaModel):
     steps: list[MultiattackStepSchema] = Field(min_length=1)
     ordering: Literal["any", "strict"] = "any"
     requirement: ActionUsedThisTurnRequirementSchema | None = None
-    replacements: list[MultiattackReplacementSchema] = Field(
-        default_factory=list
-    )
+    replacements: list[MultiattackReplacementSchema] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def validate_replacement_step_indexes(self) -> "MultiattackPlanSchema":
+    def validate_replacement_step_indexes(self) -> MultiattackPlanSchema:
         for replacement in self.replacements:
             target = replacement.target
-            if (
-                isinstance(target, StepReplacementTargetSchema)
-                and target.index >= len(self.steps)
+            if isinstance(target, StepReplacementTargetSchema) and target.index >= len(
+                self.steps
             ):
                 raise ValueError(
                     f"Replacement references step {target.index}, but this "
@@ -188,7 +180,7 @@ def _invocation_references(
 
 def build_multiattack(
     capability: MultiattackCapabilitySchema | None,
-) -> "Multiattack | None":
+) -> Multiattack | None:
     if capability is None:
         return None
     return Multiattack(
@@ -216,8 +208,7 @@ def build_multiattack(
                         target_name=getattr(replacement.target, "name", None),
                         target_step=getattr(replacement.target, "index", None),
                         options=tuple(
-                            _build_invocation(option)
-                            for option in replacement.options
+                            _build_invocation(option) for option in replacement.options
                         ),
                         replace_count=replacement.replace_count,
                         maximum_uses=replacement.maximum_uses,
@@ -234,7 +225,7 @@ def build_multiattack(
 
 def _build_count(
     count: int | CreatureStatCountSchema | HalfSpellLevelCountSchema,
-) -> "int | MultiattackCount":
+) -> int | MultiattackCount:
     if isinstance(count, int):
         return count
     if isinstance(count, CreatureStatCountSchema):
@@ -244,7 +235,7 @@ def _build_count(
 
 def _build_requirement(
     requirement: ActionUsedThisTurnRequirementSchema | None,
-) -> "MultiattackRequirement | None":
+) -> MultiattackRequirement | None:
     if requirement is None:
         return None
     return MultiattackRequirement(
@@ -255,7 +246,7 @@ def _build_requirement(
 
 def _build_invocation(
     invocation: MultiattackInvocationSchema,
-) -> "MultiattackInvocation":
+) -> MultiattackInvocation:
     if isinstance(invocation, StatBlockActionInvocationSchema):
         return MultiattackInvocation(
             kind="stat_block_action",

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from ...creatures import size_rank
 from ...capabilities import CapabilityEffect, ConditionEffect, SizeRequirement
-from ...effects.results import EffectResult
+from ...creatures import size_rank
 from ...effects.application import condition_from_effect_with_origin
 from ...effects.conditions import Condition, build_applied_condition
+from ...effects.results import EffectResult
 from ...effects.runtime import (
     EffectDuration,
     EffectSourceKind,
@@ -137,9 +138,7 @@ def _condition_duration(
     duration = effect.duration
     if duration is None:
         return Indefinite()
-    creature_ref = (
-        attacker_ref if duration.creature == "source" else target_ref
-    )
+    creature_ref = attacker_ref if duration.creature == "source" else target_ref
     round_number = state.round.number + duration.turn_offset
     if duration.kind == "start_of_turn":
         return UntilTurnStart(creature_ref, round_number)

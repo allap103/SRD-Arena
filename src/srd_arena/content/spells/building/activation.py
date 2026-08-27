@@ -1,6 +1,5 @@
-from srd_arena.domain.capabilities import CapabilityActivation
-
 from srd_arena.content.spells.schema import SpellSchema
+from srd_arena.domain.capabilities import CapabilityActivation
 
 
 def build_activation(raw: SpellSchema) -> CapabilityActivation | None:

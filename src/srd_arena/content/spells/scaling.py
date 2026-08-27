@@ -39,7 +39,7 @@ class CasterLevelScalingSchema(SpellCapabilitySchemaModel):
     thresholds: list[CasterLevelScalingThresholdSchema] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def validate_thresholds(self) -> "CasterLevelScalingSchema":
+    def validate_thresholds(self) -> CasterLevelScalingSchema:
         levels = [threshold.minimum_level for threshold in self.thresholds]
         if levels != sorted(set(levels)):
             raise ValueError("Caster-level thresholds must be unique and sorted.")

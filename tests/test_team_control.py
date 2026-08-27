@@ -8,9 +8,9 @@ from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterCreatureState
+from srd_arena.engine.session import Session
 from srd_arena.frontends.shared.session import build_session_presentation
 from srd_arena.infrastructure.scenarios import load_scenario_directory
-from srd_arena.engine.session import Session
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
@@ -54,14 +54,14 @@ def _all_external_session() -> Session:
 
 def _action_id_by_label(session: Session, label: str) -> str:
     return next(
-        action.id
-        for action in session.read().action_options
-        if action.label == label
+        action.id for action in session.read().action_options if action.label == label
     )
 
 
 def test_tactical_fixture_loads_explicit_teams() -> None:
-    game = load_scenario_directory(TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter")
+    game = load_scenario_directory(
+        TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter"
+    )
     encounter = game.encounters["goblin_encounter"]
 
     assert encounter is not None

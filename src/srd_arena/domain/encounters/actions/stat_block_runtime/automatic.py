@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 from ....capabilities import DamageEffect
 from ....creatures import Creature
 from ....creatures.stat_block_actions import AutomaticActionDefinition
+from ...models import EncounterAction, EncounterProgress
 from .resources import consume_stat_block_action_resource
 from .rolls import roll_dice
-from ...models import EncounterAction, EncounterProgress
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState

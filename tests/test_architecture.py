@@ -247,8 +247,8 @@ def test_gui_interaction_planning_stays_independent_of_pyside6() -> None:
             if imported_module == "PySide6" or imported_module.startswith("PySide6."):
                 violations.append(f"{path.name}:{line} imports {imported_module}")
 
-    assert not violations, "Interaction planning must stay Qt-independent:\n" + "\n".join(
-        violations
+    assert not violations, (
+        "Interaction planning must stay Qt-independent:\n" + "\n".join(violations)
     )
 
 
@@ -259,8 +259,7 @@ def test_gui_presenter_stays_independent_of_pyside6() -> None:
     assert not [
         imported_module
         for _line, imported_module in _imports(path, module)
-        if imported_module == "PySide6"
-        or imported_module.startswith("PySide6.")
+        if imported_module == "PySide6" or imported_module.startswith("PySide6.")
     ]
 
 
@@ -275,8 +274,7 @@ def test_gui_window_delegates_application_commands_to_presenter() -> None:
         for alias in node.names
     }
     imported_modules = {
-        imported_module
-        for _line, imported_module in _imports(path, _module_name(path))
+        imported_module for _line, imported_module in _imports(path, _module_name(path))
     }
 
     assert application_imports == {

@@ -60,4 +60,3 @@ def execute_standard_action(
     else:
         return False
     return True
-

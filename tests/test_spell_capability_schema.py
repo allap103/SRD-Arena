@@ -95,9 +95,7 @@ def test_condition_spell_supports_type_requirement_and_repeat_save() -> None:
                 "type": "saving_throw",
                 "ability": "wis",
                 "failure": {
-                    "effects": [
-                        {"type": "condition", "condition": "paralyzed"}
-                    ]
+                    "effects": [{"type": "condition", "condition": "paralyzed"}]
                 },
                 "repeat_save": {"trigger": "turn_end", "ability": "wis"},
             },
@@ -223,9 +221,7 @@ def test_hp_pool_and_random_table_are_first_class_resolutions() -> None:
                 "type": "hit_point_pool",
                 "dice": "5d8",
                 "on_covered": {
-                    "effects": [
-                        {"type": "condition", "condition": "unconscious"}
-                    ]
+                    "effects": [{"type": "condition", "condition": "unconscious"}]
                 },
             },
         },
@@ -374,9 +370,7 @@ def test_triggered_casts_links_interception_and_defeat_prevention_are_typed() ->
             "casting_trigger": {
                 "event": "attack_hit",
                 "timing": "immediately_after",
-                "requirements": [
-                    {"type": "attack_source", "source": "weapon"}
-                ],
+                "requirements": [{"type": "attack_source", "source": "weapon"}],
                 "target": {
                     "type": "event_target",
                     "binding": "triggering_target",
@@ -413,7 +407,9 @@ def test_triggered_casts_links_interception_and_defeat_prevention_are_typed() ->
 
 
 def test_implementation_status_cannot_hide_missing_or_extra_capability() -> None:
-    with pytest.raises(ValidationError, match="Complete spells must define a capability"):
+    with pytest.raises(
+        ValidationError, match="Complete spells must define a capability"
+    ):
         _spell(None, implementation={"status": "complete"})
 
     with pytest.raises(ValidationError, match="Unimplemented spells cannot define"):

@@ -12,9 +12,9 @@ from srd_arena.engine.action_configuration import (
 )
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import (
-    ActionConfiguration,
     CONTINUE_CHOICE_TEXT,
     EXIT_CHOICE_TEXT,
+    ActionConfiguration,
     SessionRead,
 )
 from srd_arena.engine.session_queries import read_session
@@ -97,6 +97,7 @@ class Session:
             scene_changed=False,
             should_exit=True,
         )
+
     def _choose_encounter(self, action_id: str) -> EngineOutcome:
         if self.encounter_state is None:
             raise RuntimeError(

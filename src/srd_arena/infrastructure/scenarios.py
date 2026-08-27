@@ -106,9 +106,7 @@ def load_scenario_directory(
     subclasses = load_subclass_catalog(system_path)
     spells = load_spell_catalog(system_path)
     optional_features = load_optional_feature_catalog(system_path)
-    player_characters = load_player_character_templates(
-        directory / "player_characters"
-    )
+    player_characters = load_player_character_templates(directory / "player_characters")
     loaded_encounters = [
         load_encounter(
             path,
@@ -122,8 +120,7 @@ def load_scenario_directory(
         for path in (directory / "encounters").glob("*")
     ]
     encounters = {
-        encounter.definition.id: encounter.definition
-        for encounter in loaded_encounters
+        encounter.definition.id: encounter.definition for encounter in loaded_encounters
     }
     creatures_by_id = {
         creature.id: creature

@@ -11,7 +11,7 @@ CreatureRef = str
 
 @dataclass
 class ActionCost:
-    movement: MovementCost = MovementCost(0)
+    movement: MovementCost = field(default_factory=lambda: MovementCost(0))
     action: int = 0
     bonus_action: int = 0
     reaction: int = 0

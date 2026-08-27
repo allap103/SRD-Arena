@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
-import re
 
 from srd_arena.application.api import GameEvent
 
@@ -33,7 +33,8 @@ def build_roll_views(events: list[GameEvent]) -> list[RollView]:
     resolved_roll_ids = {
         event.data.get("roll_id")
         for event in events
-        if event.type == "attack_resolved" and isinstance(event.data.get("roll_id"), str)
+        if event.type == "attack_resolved"
+        and isinstance(event.data.get("roll_id"), str)
     }
     for event in events:
         if event.type in {"attack_resolved", "attack_pending"}:
@@ -119,9 +120,7 @@ def _attack_roll_view(event: GameEvent) -> RollView | None:
     total = detail.get("total")
     target = detail.get("target_ac")
     if not (
-        isinstance(die, int)
-        and isinstance(modifier, int)
-        and isinstance(total, int)
+        isinstance(die, int) and isinstance(modifier, int) and isinstance(total, int)
     ):
         return None
     attacker = event.data.get("attacker_label")
@@ -233,9 +232,7 @@ def _invocation_start_roll_views(event: GameEvent) -> list[RollView]:
             else "invocation check"
         )
         label = (
-            f"{source_label} {check_kind}"
-            if source_label
-            else check_kind.capitalize()
+            f"{source_label} {check_kind}" if source_label else check_kind.capitalize()
         )
         views.append(
             RollView(
@@ -264,9 +261,7 @@ def _saving_throw_roll_view(
     target_label = detail.get("target_label")
     ability = detail.get("ability")
     if not (
-        isinstance(die, int)
-        and isinstance(modifier, int)
-        and isinstance(total, int)
+        isinstance(die, int) and isinstance(modifier, int) and isinstance(total, int)
     ):
         return None
     label = "Saving Throw"
@@ -410,9 +405,7 @@ def _individual_dice_views(
     if len(values) != count or len(integer_values) != len(values):
         return ()
     history_values = histories if isinstance(histories, (list, tuple)) else []
-    action_ids = (
-        reroll_action_ids if isinstance(reroll_action_ids, Mapping) else {}
-    )
+    action_ids = reroll_action_ids if isinstance(reroll_action_ids, Mapping) else {}
     return tuple(
         DieView(
             expression=f"d{sides}",

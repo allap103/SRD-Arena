@@ -13,9 +13,9 @@ from PySide6.QtWidgets import QApplication
 from srd_arena.frontends.gui.floating_labels import (
     BATTLEFIELD_FLOATING_LABEL_STYLE,
 )
+from srd_arena.frontends.gui.theme import FANTASY_STYLESHEET
 from srd_arena.frontends.gui.ui.encounter import BattlefieldWidget
 from srd_arena.frontends.gui.ui.encounter.status_markers import StatusMarkerHit
-from srd_arena.frontends.gui.theme import FANTASY_STYLESHEET
 
 
 def test_qt_tooltips_match_floating_name_style() -> None:

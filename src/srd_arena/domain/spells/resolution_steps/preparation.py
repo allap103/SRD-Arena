@@ -13,8 +13,8 @@ from ...capabilities import (
     CreatureTypeRequirement,
     DamageEffect,
     HealingEffect,
-    RepeatSave,
     RelationshipRequirement,
+    RepeatSave,
     RollModifierEffect,
     SavingThrowResolution,
     TemporaryHitPointsEffect,
@@ -271,9 +271,7 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
         half_damage_on_save=half_damage_on_save,
         conditions=conditions,
         automatic_failure_creature_types=automatic_failure_creature_types,
-        automatic_success_condition_immunities=(
-            automatic_success_condition_immunities
-        ),
+        automatic_success_condition_immunities=(automatic_success_condition_immunities),
         automatic_success_traits=automatic_success_traits,
         disadvantage_creature_types=disadvantage_creature_types,
         expires_on_source_turn_end=expires_on_source_turn_end,

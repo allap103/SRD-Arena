@@ -5,7 +5,6 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import ActionExecutionOutcome
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
-
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 _ORCHESTRATOR = EncounterOrchestrator()
 

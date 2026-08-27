@@ -9,6 +9,7 @@ from srd_arena.application.api import (
     ActionObservation,
     GameObservation,
 )
+
 from .config import TargetSelectionMode
 
 
@@ -245,11 +246,7 @@ def allocation_counts(observation: GameObservation) -> dict[str, int]:
 
     encounter = observation.encounter
     pending = encounter.targeting if encounter is not None else None
-    return (
-        dict(Counter(pending.selected_target_refs))
-        if pending is not None
-        else {}
-    )
+    return dict(Counter(pending.selected_target_refs)) if pending is not None else {}
 
 
 def allocation_status(observation: GameObservation) -> str | None:
@@ -284,11 +281,7 @@ def is_area_stat_block_action(action: ActionObservation) -> bool:
 
 def _target_mode_source(action: ActionObservation) -> str | None:
     if action.kind == "attack":
-        return (
-            action.source_trigger_id
-            or action.preferred_attack_name
-            or action.kind
-        )
+        return action.source_trigger_id or action.preferred_attack_name or action.kind
     if action.kind == "grapple":
         return action.source_trigger_id or action.kind
     if action.kind == "stat_block":

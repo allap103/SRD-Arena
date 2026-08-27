@@ -117,9 +117,7 @@ def condition_from_effect_with_origin(
         ),
         metadata=metadata if isinstance(metadata, dict) else None,
         source_kind=EffectSourceKind(str(source_kind)),
-        definition_id=(
-            definition_id if isinstance(definition_id, str) else source_ref
-        ),
+        definition_id=(definition_id if isinstance(definition_id, str) else source_ref),
         origin_id=origin_id,
         parent_id=parent_id,
         root_id=parent_id,

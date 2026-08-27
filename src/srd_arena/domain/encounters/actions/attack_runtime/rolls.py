@@ -75,9 +75,7 @@ def resolve_attack_roll(
         roller=roller,
     )
     target_ac = (
-        defender.get_armor_class()
-        if target_armor_class is None
-        else target_armor_class
+        defender.get_armor_class() if target_armor_class is None else target_armor_class
     )
     attack_check = resolve_check(attack_result, target_ac)
     critical_miss = attack_result.selected == 1

@@ -41,10 +41,7 @@ def configure_action(
     if isinstance(configuration, ActionAim):
         if action.kind == "spell":
             details = option_details(action)
-            if (
-                not isinstance(details, SpellOptionDetails)
-                or details.source_id is None
-            ):
+            if not isinstance(details, SpellOptionDetails) or details.source_id is None:
                 raise ValueError(
                     f"Spell action '{action_id}' has no source identifier."
                 )

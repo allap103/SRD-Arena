@@ -18,11 +18,11 @@ from srd_arena.content.creatures import (
 )
 from srd_arena.content.encounters import EncounterDefinitionSchema
 from srd_arena.content.spells import load_spell_catalog
+from srd_arena.domain.creatures import AttackActionDefinition
 from srd_arena.infrastructure.scenarios import (
     FilesystemScenarioRepository,
     load_scenario_directory,
 )
-from srd_arena.domain.creatures import AttackActionDefinition
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"

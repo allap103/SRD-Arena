@@ -118,9 +118,7 @@ def _advance_to_actor(
             for action in observation.scene.action_details
             if action.kind == "wait" and action.enabled
         )
-        result = game.execute(
-            SelectAction(wait.id, observation.encounter.decision.id)
-        )
+        result = game.execute(SelectAction(wait.id, observation.encounter.decision.id))
         assert result.update is not None
     raise AssertionError(f"Creature '{creature_ref}' did not receive a turn.")
 
@@ -172,9 +170,7 @@ def test_running_game_can_start_observe_and_select_by_stable_id() -> None:
         if action.kind == "wait" and action.enabled
     )
 
-    result = game.execute(
-        SelectAction(wait.id, observation.encounter.decision.id)
-    )
+    result = game.execute(SelectAction(wait.id, observation.encounter.decision.id))
     next_observation = game.observe()
 
     assert observation.requires_automatic_advance is False
@@ -215,9 +211,7 @@ def test_application_aims_an_advertised_area_action() -> None:
     fireball = next(
         action
         for action in observation.scene.action_details
-        if action.kind == "spell"
-        and action.source_id == "fireball"
-        and action.enabled
+        if action.kind == "spell" and action.source_id == "fireball" and action.enabled
     )
     assert fireball.source_label == "Fireball"
     assert fireball.source_level == 3

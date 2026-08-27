@@ -97,10 +97,8 @@ def available_spell_actions(
                     if reduction is not None and reduction.selection == "choose_one"
                     else ()
                 )
-                if resistance is not None
-                and resistance.selection == "choose_one"
-                or reduction is not None
-                and reduction.selection == "choose_one"
+                if (resistance is not None and resistance.selection == "choose_one")
+                or (reduction is not None and reduction.selection == "choose_one")
                 else (None,)
             )
             ability_choices = tuple(

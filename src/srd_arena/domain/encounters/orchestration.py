@@ -14,8 +14,8 @@ from .continuations import ContinuationRunner
 from .models import (
     ActionExecutionOutcome,
     CreatureRef,
-    DecisionFrame,
     DecisionExecutionResult,
+    DecisionFrame,
     EncounterAction,
     EncounterProgress,
 )
@@ -244,8 +244,7 @@ class EncounterOrchestrator:
             if result.outcome is ActionExecutionOutcome.PAUSE_FOR_DECISION:
                 return False, progress, actions_resolved
             if result.outcome is ActionExecutionOutcome.END_TURN or (
-                action.kind == "attack"
-                and actor.attacks_remaining == 0
+                action.kind == "attack" and actor.attacks_remaining == 0
             ):
                 return True, progress, actions_resolved
             if action_limit is not None and actions_resolved >= action_limit:

@@ -23,6 +23,7 @@ from srd_arena.domain.encounters import (
     EncounterTransition,
 )
 from srd_arena.domain.geometry import Grid, Position
+
 from .schema import EncounterDefinitionSchema, PositionSchema
 
 

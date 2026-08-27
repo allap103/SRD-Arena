@@ -104,9 +104,7 @@ class TurnLifecycle:
         creature_state.bonus_action_available = True
         creature_state.bonus_action_used_this_turn = False
         if progress is not None:
-            progress.messages.append(
-                ("turn", f"{creature_state.creature.name}'s turn")
-            )
+            progress.messages.append(("turn", f"{creature_state.creature.name}'s turn"))
 
     def expire_conditions_for_turn_end(
         self,
@@ -181,5 +179,6 @@ class TurnLifecycle:
 
     def turn_count(self, state: EncounterState) -> int:
         return len(state.initiative_order)
+
 
 TURN_LIFECYCLE = TurnLifecycle()

@@ -25,11 +25,14 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --dev
 
-      - name: Run Ruff
+      - name: Run Ruff lint
         run: uv run ruff check .
 
+      - name: Check Ruff formatting
+        run: uv run ruff format --check .
+
       - name: Run mypy
-        run: uv run mypy .
+        run: uv run mypy --strict .
 
       - name: Run pytest
         run: uv run pytest

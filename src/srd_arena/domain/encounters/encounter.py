@@ -9,27 +9,100 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+from ..creatures import Creature
+from ..equipment import Item
+from ..geometry import GeometryConfig, MovementBudget, Position
+from ..rolls.dice import roll_dice as _roll_dice
+from ..rolls.dice import roll_die as _roll_die
+from .actions.execution import resolve_grapple_action as _resolve_grapple_action_impl
+from .actions.features import resolve_feature_action as _resolve_feature_action_impl
+from .actions.items import resolve_utilize_action as _resolve_utilize_action_impl
 from .actions.options import (
     available_actions as _available_actions_impl,
+)
+from .actions.options import (
     available_feature_actions as _available_feature_actions_impl,
+)
+from .actions.options import (
     available_spell_actions as _available_spell_actions_impl,
+)
+from .actions.options import (
     feature_action_available as _feature_action_available_impl,
+)
+from .actions.options import (
     spell_action_cost as _spell_action_cost_impl,
+)
+from .actions.options import (
     spell_action_targets as _spell_action_targets_impl,
+)
+from .actions.options import (
     spell_area as _spell_area_impl,
+)
+from .actions.options import (
     spell_area_targets as _spell_area_targets_impl,
+)
+from .actions.options import (
     spell_cast_block_reason_for as _spell_cast_block_reason_impl,
+)
+from .actions.options import (
     spell_range_squares_for as _spell_range_squares_impl,
+)
+from .actions.options import (
     spell_target_context as _spell_target_context_impl,
+)
+from .actions.options import (
     spell_targets_self_only_for as _spell_targets_self_only_impl,
+)
+from .actions.options import (
     spend_spell_resources as _spend_spell_resources_impl,
+)
+from .actions.options import (
     targets_in_area as _targets_in_area_impl,
 )
-from .serialization import (
-    export_decision as _export_decision_impl,
-    export_pending_movement as _export_pending_movement_impl,
-    export_state as _export_state_impl,
+from .actions.spellcasting import resolve_spell_action as _resolve_spell_action_impl
+from .conditions import (
+    apply_condition as _apply_condition_impl,
 )
+from .conditions import (
+    apply_grapple as _apply_grapple_impl,
+)
+from .conditions import (
+    condition_replaces as _condition_replaces_impl,
+)
+from .conditions import (
+    condition_sources_for as _condition_sources_for_impl,
+)
+from .conditions import (
+    grappled_sources_for as _grappled_sources_for_impl,
+)
+from .conditions import (
+    grappling_targets_for as _grappling_targets_for_impl,
+)
+from .conditions import (
+    is_grappled as _is_grappled_impl,
+)
+from .conditions import (
+    movement_cost_for as _movement_cost_for_impl,
+)
+from .conditions import (
+    remove_condition as _remove_condition_impl,
+)
+from .conditions import (
+    remove_condition_from_source as _remove_condition_from_source_impl,
+)
+from .conditions import (
+    remove_relationships_for_creature as _remove_relationships_for_creature_impl,
+)
+from .creature_control import (
+    available_creature_actions as _available_creature_actions_impl,
+)
+from .creature_control import (
+    creature_action_candidates as _creature_action_candidates_impl,
+)
+from .creature_control import (
+    execute_creature_action as _execute_creature_action_impl,
+)
+from .definitions import EncounterBehavior, EncounterDefinition
 from .models import (
     ActionCost,
     CombatEvent,
@@ -45,80 +118,113 @@ from .models import (
     RoundState,
     TurnState,
 )
-from .actions.execution import resolve_grapple_action as _resolve_grapple_action_impl
-from .actions.features import resolve_feature_action as _resolve_feature_action_impl
-from .actions.items import resolve_utilize_action as _resolve_utilize_action_impl
-from .actions.spellcasting import resolve_spell_action as _resolve_spell_action_impl
-from .creature_control import (
-    execute_creature_action as _execute_creature_action_impl,
-    available_creature_actions as _available_creature_actions_impl,
-    creature_action_candidates as _creature_action_candidates_impl,
-)
-from .reactions import REACTION_ENGINE, ReactionEngine
-from .rules import COMBAT_RULES, CombatRules
-from ..creatures import Creature
-from ..equipment import Item
-from ..geometry import Position
-from .definitions import EncounterBehavior, EncounterDefinition
-from ..geometry import GeometryConfig, MovementBudget
-from ..rolls.dice import roll_dice as _roll_dice, roll_die as _roll_die
-from .turn_lifecycle import TURN_LIFECYCLE, TurnLifecycle
-from .conditions import (
-    apply_condition as _apply_condition_impl,
-    apply_grapple as _apply_grapple_impl,
-    condition_replaces as _condition_replaces_impl,
-    condition_sources_for as _condition_sources_for_impl,
-    grappled_sources_for as _grappled_sources_for_impl,
-    grappling_targets_for as _grappling_targets_for_impl,
-    is_grappled as _is_grappled_impl,
-    movement_cost_for as _movement_cost_for_impl,
-    remove_condition as _remove_condition_impl,
-    remove_condition_from_source as _remove_condition_from_source_impl,
-    remove_relationships_for_creature as _remove_relationships_for_creature_impl,
-)
 from .ongoing_effects import start_ongoing_effect as _start_ongoing_effect_impl
 from .participants import (
-    creatures_are_opponents as _creatures_are_opponents_impl,
     creature_controller as _creature_controller_impl,
+)
+from .participants import (
     creature_for_ref as _creature_for_ref_impl,
+)
+from .participants import (
     creature_team_id as _creature_team_id_impl,
 )
+from .participants import (
+    creatures_are_opponents as _creatures_are_opponents_impl,
+)
 from .queries import active_movement_remaining as _active_movement_remaining_query
+from .reactions import REACTION_ENGINE, ReactionEngine
+from .rules import COMBAT_RULES, CombatRules
+from .serialization import (
+    export_decision as _export_decision_impl,
+)
+from .serialization import (
+    export_pending_movement as _export_pending_movement_impl,
+)
+from .serialization import (
+    export_state as _export_state_impl,
+)
 from .state_combat import (
     active_status_effects as _active_status_effects_impl,
+)
+from .state_combat import (
     attack_roll_mode_for as _attack_roll_mode_for_impl,
+)
+from .state_combat import (
     automatic_critical_provider_ids_for as _automatic_critical_provider_ids_for_impl,
+)
+from .state_combat import (
     automatic_save_failure_provider_ids_for,
 )
 from .state_initialization import (
     initialize_action_selectors as _initialize_action_selectors_impl,
+)
+from .state_initialization import (
     roll_initiative as _roll_initiative_impl,
 )
 from .state_queries import (
     action_eligibility as _action_eligibility_impl,
+)
+from .state_queries import (
     active_creature as _active_creature_impl,
+)
+from .state_queries import (
     conditions_for as _conditions_for_impl,
+)
+from .state_queries import (
     current_decision as _current_decision_impl,
+)
+from .state_queries import (
     current_turn_label as _current_turn_label_impl,
+)
+from .state_queries import (
     effective_conditions_for as _effective_conditions_for_impl,
+)
+from .state_queries import (
     has_condition as _has_condition_impl,
+)
+from .state_queries import (
     requires_automatic_advance as _requires_automatic_advance_impl,
 )
 from .state_runtime import (
     active_movement_remaining as _active_movement_remaining_impl,
+)
+from .state_runtime import (
     apply_encounter_effects as _apply_effects_impl,
+)
+from .state_runtime import (
     consume_action as _consume_action_impl,
+)
+from .state_runtime import (
     create_event as _event_impl,
+)
+from .state_runtime import (
     creature_label as _creature_label_impl,
+)
+from .state_runtime import (
     creature_position as _creature_position_impl,
+)
+from .state_runtime import (
     creature_size as _creature_size_impl,
+)
+from .state_runtime import (
     living_creature_refs as _living_creature_refs_impl,
+)
+from .state_runtime import (
     merge_progress as _merge_progress_impl,
+)
+from .state_runtime import (
     next_action_id as _next_action_id_impl,
+)
+from .state_runtime import (
     next_frame_id as _next_frame_id_impl,
+)
+from .state_runtime import (
     next_runtime_origin_id as _next_runtime_origin_id_impl,
+)
+from .state_runtime import (
     position_is_free as _position_is_free_impl,
 )
+from .turn_lifecycle import TURN_LIFECYCLE, TurnLifecycle
 
 # Keep these module-level names for tests and helpers that monkeypatch
 # `srd_arena.domain.encounters.encounter.roll_die` / `roll_dice`.
@@ -129,8 +235,8 @@ __all__ = [
     "CombatEvent",
     "EncounterAction",
     "EncounterState",
-    "roll_die",
     "roll_dice",
+    "roll_die",
 ]
 
 
@@ -315,12 +421,8 @@ class EncounterState(EncounterStateData):
     has_condition = _has_condition_impl
     effective_conditions_for = _effective_conditions_for_impl
     _attack_roll_mode_for = _attack_roll_mode_for_impl
-    _automatic_critical_provider_ids_for = (
-        _automatic_critical_provider_ids_for_impl
-    )
-    _automatic_save_failure_provider_ids_for = (
-        automatic_save_failure_provider_ids_for
-    )
+    _automatic_critical_provider_ids_for = _automatic_critical_provider_ids_for_impl
+    _automatic_save_failure_provider_ids_for = automatic_save_failure_provider_ids_for
     _active_status_effects = _active_status_effects_impl
     active_creature = _active_creature_impl
     requires_automatic_advance = _requires_automatic_advance_impl

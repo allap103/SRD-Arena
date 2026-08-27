@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...creatures import Creature
-from .consumables import healing_potion_dice
 from ..models import EncounterProgress
+from .consumables import healing_potion_dice
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -54,7 +54,9 @@ def resolve_utilize_action(
         return
     healing_dice = healing_potion_dice(item)
     if healing_dice is None:
-        progress.messages.append(("system", f"{item.name} cannot be used that way yet."))
+        progress.messages.append(
+            ("system", f"{item.name} cannot be used that way yet.")
+        )
         progress.events.append(
             self._event(
                 "action_resolved",

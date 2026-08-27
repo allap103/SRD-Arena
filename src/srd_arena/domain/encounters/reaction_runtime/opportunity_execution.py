@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Collection
+from functools import partial
 from typing import TYPE_CHECKING
 
 from ...geometry import Position
@@ -33,8 +34,7 @@ def opportunity_attack_request(decision: DecisionFrame) -> OpportunityAttackRequ
 
     if not isinstance(decision.request, OpportunityAttackRequest):
         raise RuntimeError(
-            f"Decision '{decision.id}' does not contain an opportunity "
-            "attack request."
+            f"Decision '{decision.id}' does not contain an opportunity attack request."
         )
     return decision.request
 
@@ -108,8 +108,9 @@ def resolve_automatic_opportunity_attacks(
                 state,
                 mover_ref,
             ).value,
-            sourced_damage_modifier_for=lambda: damage_roll_rules.resolve_modifier(
-                roll_die
+            sourced_damage_modifier_for=partial(
+                damage_roll_rules.resolve_modifier,
+                roll_die,
             ),
             d20_roller=roll_die,
             dice_roller=roll_dice,

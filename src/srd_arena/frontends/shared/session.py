@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from srd_arena.application.api import GameObservation, ScenarioPresentation
+
 from .actions import build_feature_actions
 from .battlefield import build_battlefield_view
 from .models import EncounterView, SessionPresentation

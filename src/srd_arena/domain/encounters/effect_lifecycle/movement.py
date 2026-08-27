@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from ...geometry import MovementBudget
 
@@ -27,7 +28,6 @@ def reconcile_remaining_movement(
         creature_state.movement_remaining = MovementBudget(
             max(
                 0,
-                int(current_budget)
-                - int(creature_state.movement_spent_this_turn),
+                int(current_budget) - int(creature_state.movement_spent_this_turn),
             )
         )

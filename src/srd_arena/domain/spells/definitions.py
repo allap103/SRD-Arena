@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
-from ..capabilities import CapabilityRequirement
-from ..capabilities import CapabilityActivation, CapabilityDefinition
+from ..capabilities import (
+    CapabilityActivation,
+    CapabilityDefinition,
+    CapabilityRequirement,
+)
 
 
 @dataclass(frozen=True)

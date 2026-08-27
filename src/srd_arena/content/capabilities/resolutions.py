@@ -1,12 +1,8 @@
-from typing import Annotated, Generic, Literal, TypeVar
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from .base import Ability
-
-EffectSchemaT = TypeVar("EffectSchemaT")
-FailureOutcomeT = TypeVar("FailureOutcomeT")
-SuccessOutcomeT = TypeVar("SuccessOutcomeT")
 
 
 class ResolutionSchemaModel(BaseModel):
@@ -15,7 +11,7 @@ class ResolutionSchemaModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-class OutcomeSchema(ResolutionSchemaModel, Generic[EffectSchemaT]):
+class OutcomeSchema[EffectSchemaT](ResolutionSchemaModel):
     """Effects produced by one branch of an executable resolution."""
 
     effects: list[EffectSchemaT] = Field(default_factory=list)
@@ -36,17 +32,13 @@ DifficultyClassSchema = Annotated[
 ]
 
 
-class AutomaticResolutionSchema(
-    ResolutionSchemaModel,
-    Generic[SuccessOutcomeT],
-):
+class AutomaticResolutionSchema[SuccessOutcomeT](ResolutionSchemaModel):
     type: Literal["automatic"]
     outcome: SuccessOutcomeT
 
 
-class SavingThrowResolutionSchema(
-    ResolutionSchemaModel,
-    Generic[FailureOutcomeT, SuccessOutcomeT],
+class SavingThrowResolutionSchema[FailureOutcomeT, SuccessOutcomeT](
+    ResolutionSchemaModel
 ):
     type: Literal["saving_throw"]
     ability: Ability | None = None

@@ -26,6 +26,46 @@ from .models import (
 if TYPE_CHECKING:
     from .encounter import EncounterState
 
+from .reaction_runtime.attack_lifecycle import (
+    resolve_attack_lifecycle as _resolve_attack_lifecycle,
+)
+from .reaction_runtime.damage_rerolls import (
+    apply_damage_reroll_action as _apply_damage_reroll_action,
+)
+from .reaction_runtime.damage_rerolls import (
+    damage_reroll_event_data as _damage_reroll_event_data,
+)
+from .reaction_runtime.damage_rerolls import (
+    damage_reroll_request as _damage_reroll_request,
+)
+from .reaction_runtime.damage_rerolls import (
+    finalize_damage_reroll as _finalize_damage_reroll,
+)
+from .reaction_runtime.damage_rerolls import (
+    open_damage_reroll_decision as _open_damage_reroll_decision,
+)
+from .reaction_runtime.damage_rerolls import (
+    reroll_damage_actions as _reroll_damage_actions,
+)
+from .reaction_runtime.opportunity_attacks import (
+    apply_reaction_action as _apply_reaction_action,
+)
+from .reaction_runtime.opportunity_attacks import (
+    opportunity_attack_request as _opportunity_attack_request,
+)
+from .reaction_runtime.opportunity_attacks import (
+    queue_opportunity_attack as _queue_opportunity_attack,
+)
+from .reaction_runtime.opportunity_attacks import (
+    reaction_actions as _reaction_actions,
+)
+from .reaction_runtime.opportunity_attacks import (
+    resolve_automatic_opportunity_attacks as _resolve_automatic_opportunity_attacks,
+)
+from .reaction_runtime.opportunity_attacks import (
+    resume_movement as _resume_movement,
+)
+
 
 def _roll_die(sides: int) -> int:
     """Roll through the encounter module's runtime-patchable dice seam."""
@@ -41,27 +81,6 @@ def _roll_dice(count: int, sides: int) -> int:
     from . import encounter as encounter_module
 
     return encounter_module.roll_dice(count, sides)
-
-
-from .reaction_runtime.attack_lifecycle import (  # noqa: E402
-    resolve_attack_lifecycle as _resolve_attack_lifecycle,
-)
-from .reaction_runtime.damage_rerolls import (  # noqa: E402
-    apply_damage_reroll_action as _apply_damage_reroll_action,
-    damage_reroll_event_data as _damage_reroll_event_data,
-    damage_reroll_request as _damage_reroll_request,
-    finalize_damage_reroll as _finalize_damage_reroll,
-    open_damage_reroll_decision as _open_damage_reroll_decision,
-    reroll_damage_actions as _reroll_damage_actions,
-)
-from .reaction_runtime.opportunity_attacks import (  # noqa: E402
-    apply_reaction_action as _apply_reaction_action,
-    opportunity_attack_request as _opportunity_attack_request,
-    queue_opportunity_attack as _queue_opportunity_attack,
-    reaction_actions as _reaction_actions,
-    resolve_automatic_opportunity_attacks as _resolve_automatic_opportunity_attacks,
-    resume_movement as _resume_movement,
-)
 
 
 class ReactionEngine:

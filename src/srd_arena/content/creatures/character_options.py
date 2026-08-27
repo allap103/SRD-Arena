@@ -77,15 +77,13 @@ def find_subclass_record(
             f"Creature references subclass '{reference.name}', "
             "but no subclass catalog was loaded."
         )
-    class_name = (
-        reference.class_name
-        or (class_record.definition.public_name if class_record else None)
+    class_name = reference.class_name or (
+        class_record.definition.public_name if class_record else None
     )
     if class_name is None:
         raise ValueError(f"Subclass '{reference.name}' requires a class name.")
-    class_source = (
-        reference.class_source
-        or (class_record.definition.source if class_record else None)
+    class_source = reference.class_source or (
+        class_record.definition.source if class_record else None
     )
     return subclasses.find(
         reference.name,
@@ -146,11 +144,7 @@ def resolve_subclass_features(
 def _parse_class_feature_reference(
     feature_ref: str | ClassFeatureReferenceSchema,
 ) -> tuple[str, int] | None:
-    raw_ref = (
-        feature_ref
-        if isinstance(feature_ref, str)
-        else feature_ref.class_feature
-    )
+    raw_ref = feature_ref if isinstance(feature_ref, str) else feature_ref.class_feature
     parts = raw_ref.split("|")
     for part in reversed(parts):
         if part.isdigit():
@@ -291,11 +285,7 @@ def _class_feature_entry(
 def _first_dice_expression(value: object) -> tuple[int, int] | None:
     if isinstance(value, str):
         match = re.search(r"\{@dice\s+(\d+)d(\d+)", value)
-        return (
-            (int(match.group(1)), int(match.group(2)))
-            if match is not None
-            else None
-        )
+        return (int(match.group(1)), int(match.group(2))) if match is not None else None
     if isinstance(value, dict):
         values = tuple(value.values())
     elif isinstance(value, list):

@@ -43,14 +43,10 @@ def invocation_start_checks(
         and (
             not rule_effect.invocation_kinds
             or invocation_kind
-            in {
-                candidate.casefold()
-                for candidate in rule_effect.invocation_kinds
-            }
+            in {candidate.casefold() for candidate in rule_effect.invocation_kinds}
         )
         and {
-            required.casefold()
-            for required in rule_effect.required_components
+            required.casefold() for required in rule_effect.required_components
         }.issubset(components)
     )
     return InvocationStartQueryResult(context, failure_chances)

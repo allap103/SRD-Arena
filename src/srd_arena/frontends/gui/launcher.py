@@ -3,11 +3,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from srd_arena.application.api import GameStartup, ScenarioSummary
-from .app import GameWindow
-from .presenter import GamePresenter
-from .theme import apply_fantasy_theme
-
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QApplication,
@@ -17,6 +12,12 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from srd_arena.application.api import GameStartup, ScenarioSummary
+
+from .app import GameWindow
+from .presenter import GamePresenter
+from .theme import apply_fantasy_theme
 
 
 class ScenarioPickerWindow(QMainWindow):

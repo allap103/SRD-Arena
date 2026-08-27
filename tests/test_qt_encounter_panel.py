@@ -20,7 +20,6 @@ from srd_arena.frontends.gui.ui.encounter.panel_renderer import (
 )
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
-
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
 
 

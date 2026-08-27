@@ -1,8 +1,7 @@
+import random
 from collections.abc import Callable, Collection
 from dataclasses import dataclass
-import random
-from typing import Generic, Literal, TypeVar
-
+from typing import Literal
 
 DieRoller = Callable[[int], int]
 D20RollMode = Literal["normal", "advantage", "disadvantage"]
@@ -14,7 +13,6 @@ def combine_roll_modes(*modes: D20RollMode) -> D20RollMode:
     if has_advantage == has_disadvantage:
         return "normal"
     return "advantage" if has_advantage else "disadvantage"
-RollResultT = TypeVar("RollResultT")
 
 
 @dataclass(frozen=True)
@@ -69,7 +67,7 @@ class CheckResult:
 
 
 @dataclass(frozen=True)
-class RollResolution(Generic[RollResultT]):
+class RollResolution[RollResultT]:
     attempts: tuple[RollResultT, ...]
     selected_attempt: int
     reason: str
@@ -180,13 +178,12 @@ def reroll_dice_pool(
 ) -> DicePoolResult:
     """Create a fresh attempt with the same dice and modifier as a pool."""
     dice = tuple(
-        DieRollResult(sides=die.sides, rolls=(roller(die.sides),))
-        for die in pool.dice
+        DieRollResult(sides=die.sides, rolls=(roller(die.sides),)) for die in pool.dice
     )
     return _dice_pool_result(dice, modifier=pool.modifier)
 
 
-def resolve_roll_attempts(
+def resolve_roll_attempts[RollResultT](
     attempts: Collection[RollResultT],
     selected_attempt: int,
     *,

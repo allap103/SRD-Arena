@@ -1,13 +1,12 @@
 """Build provider-neutral domain effects from spell-authored effects."""
 
+import srd_arena.domain.capabilities as domain
 from srd_arena.content.capabilities.builder import (
     build_duration,
     build_effect,
     is_shared_effect,
 )
 from srd_arena.content.spells import resolution as spell_effects
-import srd_arena.domain.capabilities as domain
-
 
 _SPELL_EFFECT_TYPES = (
     spell_effects.HealingEffectSchema,

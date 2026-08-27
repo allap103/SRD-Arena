@@ -24,7 +24,5 @@ def resolve_custom_spell(
     try:
         resolver = CUSTOM_SPELL_RESOLVERS[resolver_id]
     except KeyError as error:
-        raise ValueError(
-            f"Unknown custom spell resolver: {resolver_id!r}."
-        ) from error
+        raise ValueError(f"Unknown custom spell resolver: {resolver_id!r}.") from error
     return resolver(context, resolve_declarative)

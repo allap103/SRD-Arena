@@ -41,9 +41,7 @@ def apply_spell_result(
         creature_ref=creature_ref,
         progress=progress,
     )
-    progress.messages.extend(
-        state._apply_effects(result.effects, origin_id=action_id)
-    )
+    progress.messages.extend(state._apply_effects(result.effects, origin_id=action_id))
     progress.events.append(
         state._event(
             "spell_cast",
@@ -55,9 +53,7 @@ def apply_spell_result(
                 "spell_name": result.capability_name,
                 "spell_level": result.details.get("spell_level", spell.level),
                 "target_ref": result.details.get("target_ref", target_ref),
-                "target_label": result.details.get(
-                    "target_label", target.target_label
-                ),
+                "target_label": result.details.get("target_label", target.target_label),
                 "target_refs": result.details.get("target_refs"),
                 "target_labels": result.details.get("target_labels"),
                 "area": result.details.get("area"),

@@ -35,9 +35,7 @@ def execute_movement(
     movement_cost = state._movement_cost_for(decision.creature_ref)
     if movement_cost is None:
         raise RuntimeError("Movement is unavailable for this creature.")
-    remaining = MovementBudget(
-        max(0, (mover.movement_remaining or 0) - movement_cost)
-    )
+    remaining = MovementBudget(max(0, (mover.movement_remaining or 0) - movement_cost))
     grappled_refs = state._grappling_targets_for(decision.creature_ref)
     grappled_positions = {
         target_ref: Position(

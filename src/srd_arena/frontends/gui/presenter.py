@@ -9,10 +9,10 @@ from srd_arena.application.api import (
     AimAction,
     CancelTargeting,
     ChangeTarget,
+    ConfirmTargeting,
     GameCommand,
     GameObservation,
     GameUpdate,
-    ConfirmTargeting,
     RunningGame,
     SelectAction,
     SetResourceAllocation,
@@ -79,7 +79,10 @@ class GamePresenter:
             confirmed = self.confirm_targeting()
             if confirmed is not None:
                 update = confirmed
-        elif selected_action is not None and selected_action.kind == "toggle_spell_target":
+        elif (
+            selected_action is not None
+            and selected_action.kind == "toggle_spell_target"
+        ):
             self._pending_target_mode = mode_for_action(selected_action)
         elif (
             selected_action is not None
@@ -203,9 +206,7 @@ class GamePresenter:
     def toggle_target_mode(self, mode: TargetSelectionMode) -> None:
         """Toggle one battlefield targeting mode."""
 
-        self._pending_target_mode = (
-            None if self._pending_target_mode == mode else mode
-        )
+        self._pending_target_mode = None if self._pending_target_mode == mode else mode
 
     def clear_target_mode(self) -> None:
         """Clear transient battlefield targeting."""

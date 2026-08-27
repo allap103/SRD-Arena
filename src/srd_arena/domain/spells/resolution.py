@@ -89,8 +89,7 @@ def _resolve_declarative_spell(
             "target_refs": [target.target_ref for target in targets],
             "target_labels": [target.target_label for target in targets],
             "affected_target_refs": [
-                target.target_ref
-                for target in resolved_targets.affected_targets
+                target.target_ref for target in resolved_targets.affected_targets
             ],
             "area": serialize_area(context.area),
             "spell_level": spell.level,

@@ -1,7 +1,7 @@
 """Build domain capability primitives from authored schemas."""
 
-from typing import Literal, TypeGuard, cast
 from collections.abc import Iterable
+from typing import Literal, TypeGuard, cast
 
 import srd_arena.domain.capabilities as domain
 

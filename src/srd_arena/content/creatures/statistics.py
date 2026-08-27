@@ -1,8 +1,9 @@
 from fractions import Fraction
 
-from .stat_block_schema import BestiaryMonsterSchema
 from srd_arena.domain.creatures import CreatureStatistics
 from srd_arena.domain.effects.conditions import Condition
+
+from .stat_block_schema import BestiaryMonsterSchema
 
 ABILITY_NAMES = {
     "str": "strength",

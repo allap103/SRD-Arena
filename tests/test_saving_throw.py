@@ -7,7 +7,10 @@ from srd_arena.domain.rolls.dice import (
     DieRoller,
     resolve_roll_attempts,
 )
-from srd_arena.domain.rolls.saving_throws import reroll_saving_throw, resolve_saving_throw
+from srd_arena.domain.rolls.saving_throws import (
+    reroll_saving_throw,
+    resolve_saving_throw,
+)
 
 
 @dataclass
@@ -86,7 +89,9 @@ def test_resolve_saving_throw_supports_advantage_without_proficiency() -> None:
     assert result.check.success is True
 
 
-def test_failed_saving_throw_can_be_rerolled_with_bonus_and_must_use_new_result() -> None:
+def test_failed_saving_throw_can_be_rerolled_with_bonus_and_must_use_new_result() -> (
+    None
+):
     creature = _actor()
     original = resolve_saving_throw(
         creature,

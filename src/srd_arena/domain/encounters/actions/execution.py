@@ -2,15 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from ...creatures import can_grapple
-from ...rolls.dice import resolve_d20
-from ...effects.results import EffectResult
+from ...creatures import Creature, can_grapple
 from ...effects.application import condition_from_effect_with_origin
-from .attack_resolution import has_free_hand
-from ..behaviors import is_adjacent as _is_adjacent
+from ...effects.results import EffectResult
+from ...rolls.dice import resolve_d20
 from ..attack_economy import spend_attack
+from ..behaviors import is_adjacent as _is_adjacent
 from ..models import EncounterAction, EncounterProgress
+from .attack_resolution import has_free_hand
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState

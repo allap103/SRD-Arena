@@ -3,14 +3,15 @@ from typing import TYPE_CHECKING, Literal
 
 from ..capabilities import (
     CapabilityEffect,
-    OutcomeStage,
-    CapabilityTarget,
     CapabilityGrant,
+    CapabilityTarget,
+    OutcomeStage,
     ResourcePoolDefinition,
 )
 
 if TYPE_CHECKING:
     from ..spells import Spell
+
 
 @dataclass(frozen=True)
 class DeclaredStatBlockAction:
@@ -19,6 +20,7 @@ class DeclaredStatBlockAction:
     description: str
     capability_type: str | None = None
     section: Literal["action", "bonus_action"] = "action"
+
 
 @dataclass(frozen=True)
 class AttackActionDefinition:
@@ -64,7 +66,7 @@ class SpellOption:
     cast_level: int | None = None
     uses: int | Literal["at_will"] | None = None
     resource_pool: ResourcePoolDefinition | None = None
-    spell: "Spell | None" = None
+    spell: Spell | None = None
     grant: CapabilityGrant | None = None
 
 

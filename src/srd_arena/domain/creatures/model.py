@@ -1,21 +1,21 @@
-from dataclasses import dataclass, field
 import re
+from dataclasses import dataclass, field
 
+from ..capabilities import LimitedUsePool
+from ..effects.conditions import Condition
+from ..effects.modifiers import DamageReduction, RollKind, RollModifier
+from ..effects.triggered import TriggeredEffect
+from ..rolls.dice import D20RollMode, DieRoller, combine_roll_modes, roll_die
+from .attributes import Attributes
+from .class_features import ClassFeature
+from .classes import ClassRef, SubclassRef
+from .combat_profile import CombatProfile
 from .equipment import Equipment
 from .inventory import Inventory
-from .attributes import Attributes
-from .classes import ClassRef, SubclassRef
-from .class_features import ClassFeature
-from .combat_profile import CombatProfile
-from ..effects.triggered import TriggeredEffect
-from ..effects.modifiers import DamageReduction, RollKind, RollModifier
-from ..effects.conditions import Condition
-from ..rolls.dice import D20RollMode, DieRoller, combine_roll_modes, roll_die
 from .multiattack import Multiattack
 from .spellcasting import Spellcasting
-from .statistics import CreatureStatistics
 from .stat_block_actions import DeclaredStatBlockAction, StatBlockActionDefinition
-from ..capabilities import LimitedUsePool
+from .statistics import CreatureStatistics
 
 
 @dataclass
@@ -335,7 +335,7 @@ class Creature:
         )
 
     def incoming_attack_roll_mode(
-        self, attacker: "Creature | None" = None
+        self, attacker: Creature | None = None
     ) -> D20RollMode:
         return combine_roll_modes(
             *(

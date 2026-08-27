@@ -264,11 +264,7 @@ def _observe_creature(
         inventory=tuple(
             InventoryItemObservation(
                 item_id=item_id,
-                name=(
-                    read.item_names[item_id]
-                    if item_id in read.item_names
-                    else item_id
-                ),
+                name=read.item_names.get(item_id, item_id),
             )
             for item_id in creature.inventory.items
         ),

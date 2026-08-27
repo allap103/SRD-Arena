@@ -3,7 +3,6 @@ from pathlib import Path
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
-
 SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "spell_condition_showcase"
 )

@@ -9,11 +9,11 @@ from srd_arena.domain.rolls.dice import (
     extend_d20_pool,
     reroll_dice,
     reroll_dice_pool,
-    roll_d20_pool,
     resolve_check,
     resolve_d20,
     resolve_dice,
     resolve_roll_attempts,
+    roll_d20_pool,
     select_d20,
 )
 

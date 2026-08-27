@@ -1,8 +1,8 @@
+import srd_arena.domain.capabilities as domain
 from srd_arena.content.spells.scaling import (
     SlotScalingSchema,
 )
 from srd_arena.content.spells.schema import SpellSchema
-import srd_arena.domain.capabilities as domain
 
 
 def build_scaling(raw: SpellSchema) -> tuple[domain.CapabilityScaling, ...]:

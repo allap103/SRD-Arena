@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from .stat_block_schema import BestiaryMonsterSchema
-from srd_arena.content.common.sources import SOURCE_PRIORITY, load_json
 from srd_arena.content.common.catalog import SourceCatalog
+from srd_arena.content.common.sources import SOURCE_PRIORITY, load_json
+
+from .stat_block_schema import BestiaryMonsterSchema
 
 BestiaryCatalog = SourceCatalog[BestiaryMonsterSchema]
 

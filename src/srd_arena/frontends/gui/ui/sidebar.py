@@ -5,13 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
-
-from srd_arena.application.api import CreatureObservation, GameObservation
-from ...shared.dice import RollView
-from .encounter import DiceRollPanel
-from .encounter.config import ENCOUNTER_BUTTON_HEIGHT
-from .encounter.panel_renderer import EncounterPanelBindings
+from datetime import UTC, datetime
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -31,6 +25,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from srd_arena.application.api import CreatureObservation, GameObservation
+
+from ...shared.dice import RollView
+from .encounter import DiceRollPanel
+from .encounter.config import ENCOUNTER_BUTTON_HEIGHT
+from .encounter.panel_renderer import EncounterPanelBindings
 
 SIDEBAR_WIDTH = 320
 EXIT_CHOICE_TEXT = "Exit game"
@@ -215,7 +215,9 @@ class GameSidebar(QFrame):
             layout.addWidget(_sidebar_button("Encounter JSON", self.show_json))
         layout.addWidget(self._build_team_outline_toggle())
         layout.addWidget(self._build_creature_name_toggle())
-        layout.addWidget(_sidebar_button(EXIT_CHOICE_TEXT, self._callbacks.close_window))
+        layout.addWidget(
+            _sidebar_button(EXIT_CHOICE_TEXT, self._callbacks.close_window)
+        )
         layout.addStretch(1)
         return page
 
@@ -472,7 +474,7 @@ def default_encounter_json_export_name(payload: dict[str, object]) -> str:
     encounter = payload.get("encounter")
     scene_id = encounter.get("encounter_id") if isinstance(encounter, dict) else None
     suffix = scene_id if isinstance(scene_id, str) and scene_id else "no-encounter"
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     return f"encounter-{suffix}-{timestamp}.json"
 
 

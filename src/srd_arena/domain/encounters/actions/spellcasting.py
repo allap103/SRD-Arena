@@ -110,8 +110,7 @@ def resolve_spell_action(
         tuple(
             target
             for selected_ref in selected_target_refs
-            if (target := state._spell_target_context(actor, selected_ref))
-            is not None
+            if (target := state._spell_target_context(actor, selected_ref)) is not None
         )
         if selected_target_refs
         else state._spell_area_targets(

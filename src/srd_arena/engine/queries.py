@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Literal
 
@@ -100,7 +100,7 @@ class ActionOption:
     source_trigger_id: str | None = None
     preferred_attack_type: str | None = None
     preferred_attack_name: str | None = None
-    eligibility: ActionEligibility = ActionEligibility()
+    eligibility: ActionEligibility = field(default_factory=ActionEligibility)
     implemented: bool = True
     details: ActionOptionDetails | None = None
 
@@ -115,6 +115,7 @@ class ActionOption:
         if not self.implemented:
             return "unimplemented"
         return "available" if self.eligibility.allowed else "unavailable"
+
 
 @dataclass(frozen=True)
 class SessionRead:

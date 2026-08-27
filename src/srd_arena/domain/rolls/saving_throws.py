@@ -4,13 +4,12 @@ from dataclasses import dataclass
 from typing import Any, Literal, Protocol
 
 from ..effects.modifiers import RollKind
-
 from .dice import (
     CheckResult,
     D20RollMode,
     DieRoller,
-    resolve_check,
     combine_roll_modes,
+    resolve_check,
     resolve_d20,
     roll_die,
 )
@@ -34,9 +33,7 @@ class SavingThrowCreature(Protocol):
         self, roll: RollKind, roller: DieRoller, ability: str | None = None
     ) -> int: ...
 
-    def roll_mode(
-        self, roll: RollKind, ability: str | None = None
-    ) -> D20RollMode: ...
+    def roll_mode(self, roll: RollKind, ability: str | None = None) -> D20RollMode: ...
 
 
 @dataclass(frozen=True)
@@ -79,7 +76,7 @@ def resolve_saving_throw(
     proficiency_modifier = (
         explicit_bonus - ability_modifier
         if explicit_bonus is not None
-        else int(getattr(creature.attributes, "proficiency_bonus"))
+        else int(creature.attributes.proficiency_bonus)
         if proficient
         else 0
     )

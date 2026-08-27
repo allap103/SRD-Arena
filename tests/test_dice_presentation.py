@@ -1,5 +1,5 @@
-from srd_arena.frontends.shared.dice import build_roll_views, without_roll_details
 from srd_arena.application.commands import GameEvent
+from srd_arena.frontends.shared.dice import build_roll_views, without_roll_details
 
 
 def test_build_roll_views_extracts_attack_and_damage() -> None:

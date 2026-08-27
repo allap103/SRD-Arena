@@ -14,6 +14,7 @@ from ...creatures.stat_block_actions import (
     AutomaticActionDefinition,
     SavingThrowActionDefinition,
 )
+from ..models import EncounterAction, EncounterProgress
 from .stat_block_runtime.attacks import resolve_attack_action
 from .stat_block_runtime.automatic import resolve_automatic_stat_block_action
 from .stat_block_runtime.multiattack import (
@@ -30,7 +31,6 @@ from .stat_block_runtime.saving_throws import (
     resolve_saving_throw_stat_block_action,
 )
 from .stat_block_runtime.validation import stat_block_action_runtime_issue
-from ..models import EncounterAction, EncounterProgress
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState

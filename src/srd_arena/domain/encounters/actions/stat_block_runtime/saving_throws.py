@@ -14,10 +14,10 @@ from ....rolls.saving_throws import (
     SavingThrowCreature,
     resolve_saving_throw,
 )
-from .resources import consume_stat_block_action_resource
-from .rolls import roll_dice, roll_die
 from ...models import EncounterAction, EncounterProgress
 from ...ongoing_effects import has_condition_save_advantage
+from .resources import consume_stat_block_action_resource
+from .rolls import roll_dice, roll_die
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState

@@ -6,6 +6,11 @@ from typing import TYPE_CHECKING
 
 from ....creatures import Creature
 from ...attack_economy import spend_attack, spend_current_attack
+from ...models import EncounterAction, EncounterProgress
+from ...ongoing_effects import (
+    resolve_concentration_damage,
+    resolve_spell_lifecycle_event,
+)
 from ..attack_resolution import (
     apply_attack_damage,
     resolve_attack,
@@ -14,11 +19,6 @@ from ..attack_resolution import (
 from ..hit_effects import apply_attack_hit_effects
 from .resources import consume_stat_block_action_resource
 from .rolls import roll_dice, roll_die
-from ...models import EncounterAction, EncounterProgress
-from ...ongoing_effects import (
-    resolve_concentration_damage,
-    resolve_spell_lifecycle_event,
-)
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState

@@ -49,8 +49,7 @@ def has_condition(
     condition: Condition,
 ) -> bool:
     return any(
-        applied.condition is condition
-        for applied in state.conditions_for(creature_ref)
+        applied.condition is condition for applied in state.conditions_for(creature_ref)
     )
 
 
@@ -66,7 +65,9 @@ def active_creature(state: EncounterState) -> CreatureRef:
 
 
 def requires_automatic_advance(state: EncounterState) -> bool:
-    return state._creature_controller(state.current_decision().creature_ref) == "scripted"
+    return (
+        state._creature_controller(state.current_decision().creature_ref) == "scripted"
+    )
 
 
 def action_eligibility(

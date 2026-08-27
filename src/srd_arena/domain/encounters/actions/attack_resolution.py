@@ -13,6 +13,7 @@ from ...creatures import Creature
 from ...equipment import Item
 from ...geometry import Position
 from ...rolls.dice import D20RollMode, roll_dice, roll_die
+from ..models import AttackOutcome
 from .attack_runtime.damage import (
     apply_attack_damage,
     damage_roll_detail,
@@ -35,7 +36,6 @@ from .attack_runtime.sources import (
     weapon_proficiency_bonus,
 )
 from .attack_runtime.triggers import matching_damage_reroll_rule
-from ..models import AttackOutcome
 
 __all__ = [
     "apply_attack_damage",

@@ -10,7 +10,9 @@ from pathlib import Path
 from typing import Any
 
 import erdantic
-from json_schema_for_humans.generate import generate_from_filename  # type: ignore[import-untyped]
+from json_schema_for_humans.generate import (  # type: ignore[import-untyped]
+    generate_from_filename,
+)
 from json_schema_for_humans.generation_configuration import (  # type: ignore[import-untyped]
     GenerationConfiguration,
 )
@@ -170,22 +172,17 @@ def _write_index(
             else ""
         )
         cards.append(
-            """
+            f"""
             <article>
-              <h2>{title}</h2>
-              <p>{description}</p>
+              <h2>{html.escape(document.title)}</h2>
+              <p>{html.escape(document.description)}</p>
               <nav>
-                <a href="{slug}.html">Field reference</a>
-                <a href="{slug}.json">Raw JSON Schema</a>
+                <a href="{document.slug}.html">Field reference</a>
+                <a href="{document.slug}.json">Raw JSON Schema</a>
                 {diagram_link}
               </nav>
             </article>
-            """.format(
-                title=html.escape(document.title),
-                description=html.escape(document.description),
-                slug=document.slug,
-                diagram_link=diagram_link,
-            )
+            """
         )
     output.joinpath("index.html").write_text(
         """<!doctype html>

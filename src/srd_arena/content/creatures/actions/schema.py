@@ -5,9 +5,9 @@ from pydantic import Field, model_validator
 from srd_arena.content.capabilities import (
     Ability,
     ActionEffectSchema,
-    CapabilitySchemaModel,
     ActionTargetSchema,
     AutomaticResolutionSchema,
+    CapabilitySchemaModel,
     CreatureTargetSchema,
     FixedDifficultyClassSchema,
     NonNegativeInt,
@@ -27,7 +27,7 @@ class RepeatSaveSchema(CapabilitySchemaModel):
     automatic_success_after: TimedDurationSchema | None = None
 
     @model_validator(mode="after")
-    def validate_elapsed_interval(self) -> "RepeatSaveSchema":
+    def validate_elapsed_interval(self) -> RepeatSaveSchema:
         if self.trigger == "elapsed" and (
             self.interval_amount is None or self.interval_unit is None
         ):
@@ -49,9 +49,7 @@ StagedFailureSchema = Annotated[
     list[SaveOutcomeStageSchema],
     Field(min_length=1),
 ]
-AutomaticActionResolutionSchema = AutomaticResolutionSchema[
-    RequiredActionOutcomeSchema
-]
+AutomaticActionResolutionSchema = AutomaticResolutionSchema[RequiredActionOutcomeSchema]
 
 
 class SavingThrowActionResolutionSchema(
@@ -93,7 +91,7 @@ class AttackCapabilitySchema(CapabilitySchemaModel):
     resource: ActionResourceSchema | None = None
 
     @model_validator(mode="after")
-    def validate_attack_distances(self) -> "AttackCapabilitySchema":
+    def validate_attack_distances(self) -> AttackCapabilitySchema:
         if "melee" in self.attack_modes and self.reach_feet is None:
             raise ValueError("Melee attacks require reach_feet.")
         if "ranged" in self.attack_modes and self.range_normal_feet is None:
@@ -129,8 +127,6 @@ class SpellcastingCapabilitySchema(CapabilitySchemaModel):
 
 
 NonMultiattackCapabilitySchema = Annotated[
-    AttackCapabilitySchema
-    | CapabilitySchema
-    | SpellcastingCapabilitySchema,
+    AttackCapabilitySchema | CapabilitySchema | SpellcastingCapabilitySchema,
     Field(discriminator="type"),
 ]

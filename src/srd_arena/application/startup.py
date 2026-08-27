@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 from srd_arena.application.game import RunningGame
 from srd_arena.application.scenarios import ScenarioRepository, ScenarioSummary
 

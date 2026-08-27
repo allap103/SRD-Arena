@@ -152,4 +152,3 @@ def _cancel_spell_targets(state: EncounterState) -> None:
         raise RuntimeError("No staged spell targets can be cancelled.")
     state.decision_stack.pop()
     state.pending_spell_cast = None
-

@@ -12,10 +12,10 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QApplication, QPushButton
 
-from srd_arena.application.scenarios import ScenarioPresentation, ScenarioSummary
-from srd_arena.application.game import RunningGame
-from srd_arena.application.startup import GameStartup
 import srd_arena.frontends.gui.launcher as launcher
+from srd_arena.application.game import RunningGame
+from srd_arena.application.scenarios import ScenarioPresentation, ScenarioSummary
+from srd_arena.application.startup import GameStartup
 
 
 def test_scenario_picker_delegates_game_creation_to_application_startup(

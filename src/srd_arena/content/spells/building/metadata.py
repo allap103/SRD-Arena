@@ -1,14 +1,14 @@
 import re
 
-from srd_arena.content.spells.schema import SpellSchema
 from srd_arena.content.capabilities import DamageEffectSchema
 from srd_arena.content.spells.resolution import (
     AutomaticResolutionSchema,
-    RepeatResolutionSchema,
     RemoveEffectSchema,
+    RepeatResolutionSchema,
     SavingThrowResolutionSchema,
     SpellAttackResolutionSchema,
 )
+from srd_arena.content.spells.schema import SpellSchema
 
 
 def spell_damage_dice(raw: SpellSchema) -> str | None:

@@ -45,9 +45,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         return SpellOptionDetails(
             source_id=action.source_trigger_id,
             target_ref=action.value if isinstance(action.value, str) else None,
-            target_refs=(
-                (action.value,) if isinstance(action.value, str) else ()
-            ),
+            target_refs=((action.value,) if isinstance(action.value, str) else ()),
             aim_point=None,
             resource_level=None,
             selected_condition=None,
@@ -78,9 +76,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         "opportunity_attack",
         "wake_spell_target",
     }:
-        return DirectTargetOptionDetails(
-            target_ref=_direct_target_ref(action.value)
-        )
+        return DirectTargetOptionDetails(target_ref=_direct_target_ref(action.value))
     return None
 
 

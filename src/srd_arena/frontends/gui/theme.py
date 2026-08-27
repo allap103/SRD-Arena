@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from .floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
-
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 
+from .floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
 
 FANTASY_STYLESHEET = (
     """

@@ -64,4 +64,3 @@ def finish_action_execution(
     else:
         outcome = ActionExecutionOutcome.CONTINUE_TURN
     return ActionExecutionResult(context, outcome)
-

@@ -11,4 +11,3 @@ def roll_die(sides: int) -> int:
     from .. import ongoing_effects as lifecycle_facade
 
     return lifecycle_facade._roll_die(sides)
-

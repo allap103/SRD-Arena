@@ -30,9 +30,7 @@ def freeze_value(value: object) -> ApplicationValue:
         return MappingProxyType(frozen)
     if isinstance(value, (list, tuple)):
         return tuple(freeze_value(item) for item in value)
-    raise TypeError(
-        f"Unsupported application value type: {type(value).__name__}."
-    )
+    raise TypeError(f"Unsupported application value type: {type(value).__name__}.")
 
 
 def freeze_mapping(

@@ -6,28 +6,28 @@ from srd_arena.content.spells import (
     build_spell,
     load_spell_catalog,
 )
-from srd_arena.domain.spells import Spell
-from srd_arena.domain.spells.rules import spell_duration_rounds, spell_max_targets
 from srd_arena.domain.capabilities import (
-    AttackResolution,
     ArmorClassModifierEffect,
+    AttackResolution,
     AutomaticResolution,
     ConditionEffect,
     ConditionImmunityEffect,
     ConditionSaveAdvantageEffect,
+    DamageEffect,
     DamageReductionEffect,
     DamageResistanceEffect,
-    DamageEffect,
     HealingEffect,
     HitPointMaximumModifierEffect,
     RollModifierEffect,
-    SenseEffect,
     SavingThrowResolution,
+    SenseEffect,
     SpeedModifierEffect,
     TemporaryHitPointsEffect,
     capability_effects,
     primary_effects,
 )
+from srd_arena.domain.spells import Spell
+from srd_arena.domain.spells.rules import spell_duration_rounds, spell_max_targets
 
 
 def _build_catalog_spell(

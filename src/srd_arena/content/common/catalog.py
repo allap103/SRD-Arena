@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Iterator
-from typing import Generic, TypeVar
-
-T = TypeVar("T")
 
 
-class SourceCatalog(Generic[T]):
+class SourceCatalog[T]:
     """Source-aware index for named content records."""
 
     def __init__(

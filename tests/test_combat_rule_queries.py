@@ -50,7 +50,6 @@ from srd_arena.domain.geometry import (
     Position,
 )
 
-
 ACTOR_REF = "participant:target"
 
 
@@ -263,7 +262,9 @@ def test_reaction_prohibition_reports_the_effect_state_id() -> None:
     )
 
     assert eligibility.allowed is False
-    assert any(slow.identity.id in failure.state_ids for failure in eligibility.failures)
+    assert any(
+        slow.identity.id in failure.state_ids for failure in eligibility.failures
+    )
 
 
 def test_action_and_bonus_action_become_incompatible_after_one_is_spent() -> None:
@@ -294,7 +295,9 @@ def test_action_and_bonus_action_become_incompatible_after_one_is_spent() -> Non
     action_result = action_compatibility(state, ACTOR_REF, action)
 
     assert action_result.allowed is False
-    assert any(slow.identity.id in failure.state_ids for failure in action_result.failures)
+    assert any(
+        slow.identity.id in failure.state_ids for failure in action_result.failures
+    )
 
     actor.bonus_action_available = True
     actor.bonus_action_used_this_turn = False
@@ -309,7 +312,9 @@ def test_action_and_bonus_action_become_incompatible_after_one_is_spent() -> Non
     bonus_result = action_compatibility(state, ACTOR_REF, bonus_action)
 
     assert bonus_result.allowed is False
-    assert any(slow.identity.id in failure.state_ids for failure in bonus_result.failures)
+    assert any(
+        slow.identity.id in failure.state_ids for failure in bonus_result.failures
+    )
 
     actor.actions_remaining = 1
     regained_action_result = action_compatibility(
@@ -374,9 +379,9 @@ def test_roll_query_composes_numeric_and_mode_adjustments() -> None:
 
     assert result.resolve_modifier(lambda _sides: 1) == -2
     assert result.mode == "disadvantage"
-    assert {contribution.provider_state_id for contribution in result.contributions} == {
-        slow.identity.id
-    }
+    assert {
+        contribution.provider_state_id for contribution in result.contributions
+    } == {slow.identity.id}
 
 
 def test_invocation_failure_is_component_gated_and_uses_injected_randomness() -> None:

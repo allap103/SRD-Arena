@@ -97,9 +97,7 @@ def build_applied_condition(
     root_id: str | None = None,
 ) -> AppliedCondition:
     resolved_origin_id = origin_id or f"source:{source_ref}"
-    condition_id = (
-        f"condition:{condition.value}:{resolved_origin_id}:{target_ref}"
-    )
+    condition_id = f"condition:{condition.value}:{resolved_origin_id}:{target_ref}"
     if duration is None:
         duration = (
             UntilTurnEnd(expires_on_creature_ref, expires_on_round)

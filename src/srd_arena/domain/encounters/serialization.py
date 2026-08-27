@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..effects.conditions import AppliedCondition
+from ..effects.rule_effects import serialize_runtime_rule_effect
 from ..effects.runtime import (
     EffectDuration,
     EffectSource,
@@ -12,7 +13,6 @@ from ..effects.runtime import (
     UntilTurnStart,
     WhileParentExists,
 )
-from ..effects.rule_effects import serialize_runtime_rule_effect
 from .models import ActionCost, EncounterAction
 
 if TYPE_CHECKING:
@@ -231,8 +231,7 @@ def _export_creature(
             for condition in effective.suppressed_conditions
         ],
         "condition_immunities": sorted(
-            condition.value
-            for condition in creature.condition_immunities()
+            condition.value for condition in creature.condition_immunities()
         ),
         "spell_slots_max": (
             {str(level): slots for level, slots in spellcasting.spell_slots_max.items()}

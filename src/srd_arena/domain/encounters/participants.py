@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .models import CreatureRef
 from ..creatures import Creature
+from .models import CreatureRef
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

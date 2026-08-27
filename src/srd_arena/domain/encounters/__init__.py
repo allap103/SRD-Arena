@@ -13,9 +13,9 @@ __all__ = [
     "EncounterAction",
     "EncounterBehavior",
     "EncounterDefinition",
+    "EncounterOrchestrator",
     "EncounterParticipant",
     "EncounterState",
     "EncounterTeam",
     "EncounterTransition",
-    "EncounterOrchestrator",
 ]

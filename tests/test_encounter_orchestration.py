@@ -2,13 +2,12 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.domain.encounters import EncounterOrchestrator
-from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.effects import EffectResult, TriggeredEffect
 from srd_arena.domain.effects.application import condition_from_effect
-from srd_arena.infrastructure.scenarios import load_scenario_directory
+from srd_arena.domain.encounters import EncounterOrchestrator
+from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.engine.session import Session
-
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 FULL_CONTROL_SCENARIO_DIR = (
@@ -176,10 +175,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
     exported_movement = exported["pending_movement"]
     assert isinstance(exported_decision, dict)
     assert isinstance(exported_movement, dict)
-    assert (
-        exported_decision["pending_movement_id"]
-        == state.pending_movement.action_id
-    )
+    assert exported_decision["pending_movement_id"] == state.pending_movement.action_id
     assert exported_movement["action_id"] == state.pending_movement.action_id
     assert "pending_action" not in exported
     assert (mover.position.x, mover.position.y) == (3, 3)

@@ -33,8 +33,7 @@ def resolve_spell_targets(
 
     target_suffix = (
         f" on {prepared.targets[0].target_label}"
-        if prepared.definition.target.kind == "creature"
-        and len(prepared.targets) == 1
+        if prepared.definition.target.kind == "creature" and len(prepared.targets) == 1
         else ""
     )
     messages = [
@@ -78,9 +77,7 @@ def resolve_spell_targets(
             affected_targets.append(target)
             restoration = restore_target(context, prepared, target)
             healing_details.extend(restoration.healing_details)
-            temporary_hit_point_details.extend(
-                restoration.temporary_hit_point_details
-            )
+            temporary_hit_point_details.extend(restoration.temporary_hit_point_details)
 
         outcome_label = (
             "damages"

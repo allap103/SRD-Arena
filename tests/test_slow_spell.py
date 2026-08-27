@@ -7,8 +7,10 @@ import pytest
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.spells import (
     SpellCatalog,
-    build_spell as build_spell_schema,
     load_spell_catalog,
+)
+from srd_arena.content.spells import (
+    build_spell as build_spell_schema,
 )
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.rule_effects import AttackLimit
@@ -147,14 +149,20 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
         "AttackLimit",
         "InvocationFailureChance",
     ]
-    assert state.combat_rules.effective_armor_class(
-        state,
-        "goblin_1",
-    ).value == base_armor_class - 2
-    assert state.combat_rules.movement_budget(
-        state,
-        "goblin_1",
-    ).speed.value == base_speed // 2
+    assert (
+        state.combat_rules.effective_armor_class(
+            state,
+            "goblin_1",
+        ).value
+        == base_armor_class - 2
+    )
+    assert (
+        state.combat_rules.movement_budget(
+            state,
+            "goblin_1",
+        ).speed.value
+        == base_speed // 2
+    )
     assert (
         state.combat_rules.roll_modifiers(
             state,
@@ -179,9 +187,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     )
     assert reaction.allowed is False
     assert reaction.failures[-1].state_ids == (slow.identity.id,)
-    spell_event = next(
-        event for event in resolved.events if event.type == "spell_cast"
-    )
+    spell_event = next(event for event in resolved.events if event.type == "spell_cast")
     area = spell_event.data["area"]
     assert isinstance(area, Mapping)
     cells = area["cells"]
@@ -236,10 +242,13 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     )
 
     assert state.ongoing_effects[0].target_refs == ("goblin_3",)
-    assert state.combat_rules.effective_armor_class(
-        state,
-        "goblin_1",
-    ).value == base_armor_class
+    assert (
+        state.combat_rules.effective_armor_class(
+            state,
+            "goblin_1",
+        ).value
+        == base_armor_class
+    )
     assert state.combat_rules.reaction_eligibility(
         state,
         "goblin_1",
@@ -254,10 +263,13 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
         repeat_progress,
     )
     assert state.ongoing_effects == []
-    assert sum(
-        "succeeds on the repeated Wisdom save against Slow" in text
-        for _, text in repeat_progress.messages
-    ) == 2
+    assert (
+        sum(
+            "succeeds on the repeated Wisdom save against Slow" in text
+            for _, text in repeat_progress.messages
+        )
+        == 2
+    )
 
 
 def test_slow_chosen_area_never_exceeds_six_targets(
@@ -298,19 +310,19 @@ def test_slow_chosen_area_never_exceeds_six_targets(
     assert state.pending_spell_cast.maximum_targets == 6
     assert len(state.pending_spell_cast.selected_target_refs) == 6
     selected = set(state.pending_spell_cast.selected_target_refs)
-    unselected = next(target_ref for target_ref in target_refs if target_ref not in selected)
+    unselected = next(
+        target_ref for target_ref in target_refs if target_ref not in selected
+    )
     remove = next(
         action
         for action in state.available_actions()
-        if action.kind == "toggle_spell_target"
-        and action.value in selected
+        if action.kind == "toggle_spell_target" and action.value in selected
     )
     _ORCHESTRATOR.submit(state, remove)
     add = next(
         action
         for action in state.available_actions()
-        if action.kind == "toggle_spell_target"
-        and action.value == unselected
+        if action.kind == "toggle_spell_target" and action.value == unselected
     )
     _ORCHESTRATOR.submit(state, add)
 
@@ -451,8 +463,7 @@ def test_ending_slow_mid_multiattack_restores_pending_attacks(
     assert assassin.attacks_remaining == 2
     assert (
         "system",
-        "Assassin Target loses concentration on Slow "
-        "(Constitution 1 vs DC 10).",
+        "Assassin Target loses concentration on Slow (Constitution 1 vs DC 10).",
     ) in resolved.messages
 
 
@@ -499,8 +510,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
     cure = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("cure_wounds:player")
+        if action.kind == "spell" and str(action.value).startswith("cure_wounds:player")
     )
     failed = _ORCHESTRATOR.submit(state, cure)
 
@@ -509,18 +519,14 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
     assert state.active_actions_remaining == 0
     assert not any(event.type == "spell_cast" for event in failed.events)
     invocation_check = next(
-        event
-        for event in failed.events
-        if event.type == "invocation_start_checked"
+        event for event in failed.events if event.type == "invocation_start_checked"
     )
     assert invocation_check.data["allowed"] is False
     invocation_checks = invocation_check.data["checks"]
     assert isinstance(invocation_checks, (list, tuple))
     first_check = invocation_checks[0]
     assert isinstance(first_check, Mapping)
-    assert first_check["code"] == (
-        "slow.somatic_spell_failure"
-    )
+    assert first_check["code"] == ("slow.somatic_spell_failure")
     second_wind = next(
         action
         for action in state._creature_action_candidates("player")
@@ -595,6 +601,5 @@ def test_ending_slow_mid_attack_restores_unused_extra_attack(
     )
     assert (
         "system",
-        "Goblin Warrior loses concentration on Slow "
-        "(Constitution 1 vs DC 10).",
+        "Goblin Warrior loses concentration on Slow (Constitution 1 vs DC 10).",
     ) in resolved.messages

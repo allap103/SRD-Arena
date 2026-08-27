@@ -13,6 +13,7 @@ from srd_arena.domain.geometry import (
     deserialize_continuous_area,
     serialize_area,
 )
+
 from ....shared.models import BattlefieldView
 
 AreaPayload = Mapping[str, object]
@@ -115,7 +116,7 @@ def preview_area_overlay(
         return serialize_area(
             build_point_cube_area(
                 preview_origin,
-                max(1, int(round(continuous.length))),
+                max(1, round(continuous.length)),
                 grid,
             )
         )
@@ -123,7 +124,7 @@ def preview_area_overlay(
         return serialize_area(
             build_radius_area(
                 preview_origin,
-                max(1, int(round(continuous.radius))),
+                max(1, round(continuous.radius)),
                 grid,
             )
         )
@@ -140,7 +141,7 @@ def preview_area_overlay(
         hover_point[1] - continuous.origin.y,
     )
     origin_position = Position(origin_x, origin_y)
-    size = max(1, int(round(continuous.length)))
+    size = max(1, round(continuous.length))
     coverage_threshold = (
         continuous.coverage_threshold
         if continuous.coverage_threshold is not None

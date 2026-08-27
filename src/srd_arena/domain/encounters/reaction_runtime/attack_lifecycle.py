@@ -47,4 +47,3 @@ def resolve_attack_lifecycle(
             progress=progress,
         )
     resolve_concentration_damage(state, target_ref, damage, progress)
-

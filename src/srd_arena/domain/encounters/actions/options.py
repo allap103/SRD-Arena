@@ -12,7 +12,6 @@ from .option_discovery.spell_areas import (
 )
 from .option_discovery.spell_selection import spell_target_selection_actions
 from .option_discovery.spell_targets import (
-    _spell_removal_choices,  # noqa: F401 - compatibility export
     spell_action_targets,
     spell_target_context,
 )
@@ -24,8 +23,6 @@ from .option_discovery.spellcasting import (
     spend_spell_resources,
 )
 from .option_discovery.spells import (
-    _append_spell_action_variants,  # noqa: F401 - compatibility export
-    _append_spell_option,  # noqa: F401 - compatibility export
     available_spell_actions,
 )
 from .option_discovery.standard import (

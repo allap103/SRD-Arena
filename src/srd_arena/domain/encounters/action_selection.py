@@ -1,10 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Sequence
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Protocol
 
 from ..geometry import Position
 from .behaviors import build_behavior
-from .models import BehaviorContext, CreatureRef, EncounterAction, EncounterCreatureState
+from .models import (
+    BehaviorContext,
+    CreatureRef,
+    EncounterAction,
+    EncounterCreatureState,
+)
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -46,9 +52,7 @@ class ScriptedActionSelector:
             return wait
         actor = state.creatures[creature_ref]
         target = state.creatures[target_ref]
-        preferred_attack_type = (
-            "ranged" if actor.behavior.type == "archer" else "melee"
-        )
+        preferred_attack_type = "ranged" if actor.behavior.type == "archer" else "melee"
         matching_attacks = [
             action
             for action in actions

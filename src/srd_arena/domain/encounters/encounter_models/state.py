@@ -51,7 +51,9 @@ class EncounterCreatureState:
     patrol_index: int = 0
     reaction_available: bool = True
     movement_remaining: MovementBudget | None = None
-    movement_spent_this_turn: MovementCost = MovementCost(0)
+    movement_spent_this_turn: MovementCost = field(
+        default_factory=lambda: MovementCost(0)
+    )
     actions_remaining: int = 1
     action_used_this_turn: bool = False
     magic_actions_remaining: int = 1

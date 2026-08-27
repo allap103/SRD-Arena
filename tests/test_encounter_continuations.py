@@ -11,7 +11,6 @@ from srd_arena.domain.encounters.models import (
 )
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
-
 FULL_CONTROL_SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
 )

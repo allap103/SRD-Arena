@@ -6,7 +6,9 @@ from ...creatures import Creature
 from ...equipment import Item
 
 
-def healing_potions_in_inventory(creature: Creature, items_by_id: dict[str, Item]) -> list[Item]:
+def healing_potions_in_inventory(
+    creature: Creature, items_by_id: dict[str, Item]
+) -> list[Item]:
     seen: set[str] = set()
     potions: list[Item] = []
     for item_id in creature.inventory.items:

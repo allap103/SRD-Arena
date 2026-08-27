@@ -8,16 +8,15 @@ from srd_arena.content.capabilities import (
     NonNegativeInt,
     PositiveInt,
 )
+
 from .base import SpellCapabilitySchemaModel
+from .resolution import SpellResolutionSchema
 from .scaling import CasterLevelScalingSchema, SlotScalingSchema
 from .targeting import (
     EventSpellTargetSchema,
     SpellRequirementSchema,
     SpellTargetSchema,
 )
-
-
-from .resolution import SpellResolutionSchema
 
 
 class CastingTriggerSchema(SpellCapabilitySchemaModel):

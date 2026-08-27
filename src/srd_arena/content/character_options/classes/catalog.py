@@ -1,6 +1,10 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, TypeVar
+
+from srd_arena.content.common.catalog import SourceCatalog
+from srd_arena.content.common.schema import SourceModel
+from srd_arena.content.common.sources import SOURCE_PRIORITY, load_json
 
 from .schema import (
     ClassFeatureSchema,
@@ -8,11 +12,6 @@ from .schema import (
     SubclassFeatureSchema,
     SubclassSchema,
 )
-from srd_arena.content.common.sources import SOURCE_PRIORITY, load_json
-from srd_arena.content.common.schema import SourceModel
-from srd_arena.content.common.catalog import SourceCatalog
-
-T = TypeVar("T", bound=SourceModel)
 
 
 @dataclass(frozen=True)
@@ -65,8 +64,7 @@ class SubclassCatalog:
             )
             and (
                 class_source is None
-                or record.definition.class_source.casefold()
-                == class_source.casefold()
+                or record.definition.class_source.casefold() == class_source.casefold()
             )
         ]
         if not candidates:
@@ -130,8 +128,7 @@ def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
                 == definition.class_source.casefold()
                 and feature.subclass_short_name.casefold()
                 == (definition.short_name or definition.name).casefold()
-                and feature.subclass_source.casefold()
-                == definition.source.casefold()
+                and feature.subclass_source.casefold() == definition.source.casefold()
             ),
         )
         for definition in definitions
@@ -139,12 +136,9 @@ def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
     return SubclassCatalog(records)
 
 
-def _load_records(directory: Path, schema: type[T]) -> list[T]:
+def _load_records[T: SourceModel](directory: Path, schema: type[T]) -> list[T]:
     return _load_paths(directory.glob("*.json"), schema)
 
 
-def _load_paths(paths: Iterable[Path], schema: type[T]) -> list[T]:
-    return [
-        schema.model_validate(load_json(path))
-        for path in sorted(paths)
-    ]
+def _load_paths[T: SourceModel](paths: Iterable[Path], schema: type[T]) -> list[T]:
+    return [schema.model_validate(load_json(path)) for path in sorted(paths)]

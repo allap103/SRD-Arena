@@ -112,8 +112,7 @@ class RollRuleResult:
 
     def resolve_modifier(self, roller: DieRoller) -> int:
         return sum(
-            contribution.modifier.resolve(roller)
-            for contribution in self.contributions
+            contribution.modifier.resolve(roller) for contribution in self.contributions
         )
 
 

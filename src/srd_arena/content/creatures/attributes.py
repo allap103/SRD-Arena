@@ -1,7 +1,8 @@
 from srd_arena.content.character_options.classes import ClassRecord
+from srd_arena.domain.creatures import Attributes, Movement, normalize_size
+
 from .schema import CreatureSchema
 from .stat_block_schema import BestiaryMonsterSchema
-from srd_arena.domain.creatures import Attributes, Movement, normalize_size
 from .statistics import challenge_rating_proficiency_bonus
 
 
@@ -44,19 +45,16 @@ def build_creature_attributes(
         wisdom=stat_block.wisdom,
         intelligence=stat_block.intelligence,
         charisma=stat_block.charisma,
-        base_armor_class=_stat_block_base_ac(stat_block, schema.attributes.base_armor_class),
+        base_armor_class=_stat_block_base_ac(
+            stat_block, schema.attributes.base_armor_class
+        ),
         proficiency_bonus=challenge_rating_proficiency_bonus(
             stat_block.challenge_rating
         ),
         proficiencies=_merge_proficiencies(
             schema.attributes.proficiencies,
             _class_proficiencies(class_record),
-            {
-                "saving_throws": [
-                    ability.casefold()
-                    for ability in stat_block.save
-                ]
-            },
+            {"saving_throws": [ability.casefold() for ability in stat_block.save]},
         ),
     )
 
@@ -96,8 +94,12 @@ def _class_proficiencies(class_record: ClassRecord | None) -> dict[str, object]:
     proficiencies: dict[str, object] = {}
     proficiencies["weapons"] = list(definition.starting_proficiencies.weapons)
     ability_names = {
-        "str": "strength", "dex": "dexterity", "con": "constitution",
-        "int": "intelligence", "wis": "wisdom", "cha": "charisma",
+        "str": "strength",
+        "dex": "dexterity",
+        "con": "constitution",
+        "int": "intelligence",
+        "wis": "wisdom",
+        "cha": "charisma",
     }
     proficiencies["saving_throws"] = [
         ability_names.get(value.casefold(), value.casefold())
@@ -113,11 +115,7 @@ def _stat_block_base_ac(stat_block: BestiaryMonsterSchema, default: int) -> int:
 
 
 def _stat_block_ac(stat_block: BestiaryMonsterSchema, default: int) -> int:
-    return (
-        stat_block.armor_class
-        if stat_block.armor_class is not None
-        else default
-    )
+    return stat_block.armor_class if stat_block.armor_class is not None else default
 
 
 def _movement_speed(

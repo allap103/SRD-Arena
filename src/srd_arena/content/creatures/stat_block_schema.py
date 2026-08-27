@@ -3,15 +3,14 @@ import re
 from pydantic import Field, model_validator
 
 from srd_arena.content.common.schema import SourceModel
+
 from .actions.multiattack import (
     MultiattackCapabilitySchema,
     iter_stat_block_references,
 )
 from .actions.schema import NonMultiattackCapabilitySchema
 
-BestiaryCapabilitySchema = (
-    MultiattackCapabilitySchema | NonMultiattackCapabilitySchema
-)
+BestiaryCapabilitySchema = MultiattackCapabilitySchema | NonMultiattackCapabilitySchema
 
 
 class BestiaryHitPointsSchema(SourceModel):
@@ -84,8 +83,7 @@ class BestiaryActionSchema(SourceModel):
     def reject_legacy_multiattack_key(cls, value: object) -> object:
         if isinstance(value, dict) and "srdArenaMultiattack" in value:
             raise ValueError(
-                "Use 'capability' instead of the obsolete "
-                "'srdArenaMultiattack' key."
+                "Use 'capability' instead of the obsolete 'srdArenaMultiattack' key."
             )
         return value
 
@@ -128,12 +126,9 @@ class BestiaryMonsterSchema(SourceModel):
     srd52: bool | str | None = None
 
     @model_validator(mode="after")
-    def validate_multiattack_references(self) -> "BestiaryMonsterSchema":
+    def validate_multiattack_references(self) -> BestiaryMonsterSchema:
         sections = {
-            section: {
-                _reference_name(entry.name)
-                for entry in getattr(self, section)
-            }
+            section: {_reference_name(entry.name) for entry in getattr(self, section)}
             for section in (
                 "action",
                 "bonus",

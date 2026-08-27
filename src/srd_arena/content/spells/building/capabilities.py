@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from dataclasses import replace
 from typing import Literal
 
+import srd_arena.domain.capabilities as domain
 from srd_arena.content.capabilities import (
     CapabilityBuildError,
     ConditionRequirementSchema,
@@ -14,30 +15,28 @@ from srd_arena.content.capabilities.builder import (
     build_duration,
     build_requirement,
 )
-import srd_arena.domain.capabilities as domain
-
 from srd_arena.content.spells.resolution import (
     AutomaticResolutionSchema,
     OutcomeSchema,
-    RepeatSaveProgressionSchema,
     RepeatResolutionSchema,
+    RepeatSaveProgressionSchema,
     SavingThrowResolutionSchema,
     SequenceResolutionSchema,
     SpellAttackResolutionSchema,
 )
 from srd_arena.content.spells.schema import SpellSchema
-from srd_arena.content.spells.targeting import SpellTargetSchema
 from srd_arena.content.spells.targeting import (
     AreaSpellTargetSchema,
     ConditionImmunityRequirementSchema,
-    CreatureTraitRequirementSchema,
     CreatureSpellTargetSchema,
+    CreatureTraitRequirementSchema,
     RelationshipRequirementSchema,
     SpellSaveModifierSchema,
+    SpellTargetSchema,
 )
 
-from .scaling import build_scaling
 from .effects import build_capability_effect, is_buildable_effect
+from .scaling import build_scaling
 from .targeting import normalize_save_ability
 
 SpellResolutionSchema = (

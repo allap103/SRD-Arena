@@ -13,6 +13,7 @@ class Movement:
     def effective_speed_feet(self) -> int:
         return max(self.speed_feet, self.fly_feet or 0)
 
+
 @dataclass
 class Attributes:
     base_health: int

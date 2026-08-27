@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 from ...capabilities import CapabilityEffect, DamageEffect
 from ...effects.triggered import TriggeredEffect
@@ -32,7 +32,7 @@ class EncounterProgress:
     paused_for_pacing: bool = False
 
 
-class ActionExecutionOutcome(str, Enum):
+class ActionExecutionOutcome(StrEnum):
     CONTINUE_TURN = "continue_turn"
     END_TURN = "end_turn"
     PAUSE_FOR_DECISION = "pause_for_decision"

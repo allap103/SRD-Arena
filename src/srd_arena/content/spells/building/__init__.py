@@ -11,8 +11,8 @@ from .targeting import (
 
 __all__ = [
     "build_activation",
-    "build_scaling",
     "build_definition",
+    "build_scaling",
     "build_spell_definition",
     "creature_types_from_requirements",
     "normalize_save_ability",

@@ -58,9 +58,7 @@ def legacy_modifier_provider(
     )
     if matching is not None:
         return matching.identity.id, matching.identity.source
-    provider_state_id = (
-        f"creature-modifier:{definition_id}:{origin_id}:{creature_ref}"
-    )
+    provider_state_id = f"creature-modifier:{definition_id}:{origin_id}:{creature_ref}"
     return provider_state_id, EffectSource(
         kind=EffectSourceKind.SYSTEM,
         definition_id=definition_id,

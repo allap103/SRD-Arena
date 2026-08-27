@@ -104,9 +104,7 @@ def action_compatibility(
         ),
         creature_state.creature.condition_immunities(),
     )
-    if action.kind != "wait" and conditions.has_trait(
-        CombatTrait.CANNOT_TAKE_ACTIONS
-    ):
+    if action.kind != "wait" and conditions.has_trait(CombatTrait.CANNOT_TAKE_ACTIONS):
         failures.append(
             EligibilityFailure(
                 "condition.cannot_take_actions",
@@ -137,16 +135,20 @@ def action_compatibility(
         uses_action = bool(action.cost.action)
         uses_bonus_action = bool(action.cost.bonus_action)
         conflicts = (
-            uses_action
-            and ActionEconomyKind.ACTION in restricted
-            and ActionEconomyKind.BONUS_ACTION in restricted
-            and creature_state.bonus_action_used_this_turn
-        ) or (
-            uses_bonus_action
-            and ActionEconomyKind.BONUS_ACTION in restricted
-            and ActionEconomyKind.ACTION in restricted
-            and creature_state.action_used_this_turn
-        ) or (uses_action and uses_bonus_action)
+            (
+                uses_action
+                and ActionEconomyKind.ACTION in restricted
+                and ActionEconomyKind.BONUS_ACTION in restricted
+                and creature_state.bonus_action_used_this_turn
+            )
+            or (
+                uses_bonus_action
+                and ActionEconomyKind.BONUS_ACTION in restricted
+                and ActionEconomyKind.ACTION in restricted
+                and creature_state.action_used_this_turn
+            )
+            or (uses_action and uses_bonus_action)
+        )
         if conflicts:
             failures.append(
                 SourcedEligibilityFailure(

@@ -3,14 +3,33 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
+from PySide6.QtCore import QEvent, QPointF, QRect, QSize, Qt, Signal
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QMouseEvent,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QPixmap,
+    QPolygonF,
+    QWheelEvent,
+)
+from PySide6.QtWidgets import QSizePolicy, QWidget
+
 from srd_arena.domain.geometry import continuous_area_outline
+
 from ....shared.models import BattlefieldCreatureView, BattlefieldView
 from ...floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
 from .area_previews import (
     area_overlay_label,
     continuous_area,
     display_area_overlay,
+)
+from .area_previews import (
     overlay_cells as area_overlay_cells,
+)
+from .area_previews import (
     overlay_origin as area_overlay_origin,
 )
 from .movement import MOVE_DELTAS, MovementPlan
@@ -24,20 +43,6 @@ from .status_markers import (
     status_tooltip_label_rect,
     target_allocation_badge_position,
 )
-
-from PySide6.QtCore import QEvent, QPointF, QRect, QSize, Qt, Signal
-from PySide6.QtGui import (
-    QColor,
-    QFont,
-    QMouseEvent,
-    QPaintEvent,
-    QPainter,
-    QPen,
-    QPixmap,
-    QPolygonF,
-    QWheelEvent,
-)
-from PySide6.QtWidgets import QSizePolicy, QWidget
 
 
 class BattlefieldWidget(QWidget):
@@ -774,8 +779,7 @@ class BattlefieldWidget(QWidget):
 
     def _interaction_is_pending(self) -> bool:
         return bool(
-            self._movement_plan is not None
-            and self._movement_plan.paths
+            (self._movement_plan is not None and self._movement_plan.paths)
             or self._targetable_creature_refs
             or self._cell_targeting_enabled
         )

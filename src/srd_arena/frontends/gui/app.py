@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QWidget
+
 from srd_arena.application.api import (
     EncounterObservation,
     GameUpdate,
     ScenarioPresentation,
 )
+
 from ..shared.dice import build_roll_views, without_roll_details
 from ..shared.models import SessionPresentation
 from ..shared.session import build_session_presentation
@@ -37,9 +42,6 @@ from .ui.encounter.targeting import (
 )
 from .ui.game_surface import GameSurface, GameSurfaceCallbacks
 from .ui.sidebar import GameSidebar, SidebarCallbacks
-
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 
 
 class GameWindow(QMainWindow):
@@ -387,9 +389,7 @@ class GameWindow(QMainWindow):
                 self._presentation.encounter.non_movement_actions
             )
             if cancel is not None:
-                update = self._handle_command_update(
-                    self.presenter.cancel_targeting()
-                )
+                update = self._handle_command_update(self.presenter.cancel_targeting())
                 if update is not None:
                     self._apply_turn_result(update)
                 return
@@ -413,9 +413,7 @@ class GameWindow(QMainWindow):
         if action is None:
             return
         self._action_menu_scope = None
-        update = self._handle_command_update(
-            self.presenter.aim_action(action.id, x, y)
-        )
+        update = self._handle_command_update(self.presenter.aim_action(action.id, x, y))
         if update is not None:
             self._apply_turn_result(update)
 
@@ -486,9 +484,7 @@ class GameWindow(QMainWindow):
         self._logged_round_number = encounter.round_number
         if entering_encounter:
             creature_ref = encounter.decision.creature_ref
-            self.sidebar.start_turn(
-                f"{encounter.creature(creature_ref).name}'s turn"
-            )
+            self.sidebar.start_turn(f"{encounter.creature(creature_ref).name}'s turn")
         QTimer.singleShot(20, self._scroll_roll_log_to_bottom)
 
     def _scroll_roll_log_to_bottom(self) -> None:
@@ -509,9 +505,6 @@ class GameWindow(QMainWindow):
     def _advance_automatic_step(self) -> None:
         self._automatic_step_scheduled = False
         observation = self.presenter.refresh()
-        if (
-            observation.encounter is None
-            or not observation.requires_automatic_advance
-        ):
+        if observation.encounter is None or not observation.requires_automatic_advance:
             return
         self._apply_turn_result(self.presenter.advance_automatic())

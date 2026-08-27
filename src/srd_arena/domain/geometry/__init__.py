@@ -1,6 +1,6 @@
 from .areas import (
-    TOUCHED_CELL_POLICY,
     RASTERIZATION_POLICY,
+    TOUCHED_CELL_POLICY,
     AreaOfEffect,
     ContinuousArea,
     Point2D,
@@ -24,6 +24,7 @@ from .areas import (
     vector_between_positions,
     vector_from_direction,
 )
+from .config import GeometryConfig
 from .primitives import (
     Grid,
     GridDistance,
@@ -33,16 +34,15 @@ from .primitives import (
     grid_distance_between,
     manhattan_distance,
 )
-from .config import GeometryConfig
 
 __all__ = [
-    "TOUCHED_CELL_POLICY",
     "RASTERIZATION_POLICY",
+    "TOUCHED_CELL_POLICY",
     "AreaOfEffect",
     "ContinuousArea",
+    "GeometryConfig",
     "Grid",
     "GridDistance",
-    "GeometryConfig",
     "MovementBudget",
     "MovementCost",
     "Point2D",
@@ -61,8 +61,8 @@ __all__ = [
     "deserialize_continuous_area",
     "directional_origin_point",
     "grid_distance_between",
-    "normalize_vector",
     "manhattan_distance",
+    "normalize_vector",
     "point_from_position",
     "serialize_area",
     "serialize_continuous_area",

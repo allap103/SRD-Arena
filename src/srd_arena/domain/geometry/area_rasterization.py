@@ -55,9 +55,7 @@ def filter_origin_cell(
     origin: Position,
     cells: tuple[Position, ...],
 ) -> tuple[Position, ...]:
-    return tuple(
-        cell for cell in cells if cell.x != origin.x or cell.y != origin.y
-    )
+    return tuple(cell for cell in cells if cell.x != origin.x or cell.y != origin.y)
 
 
 def cone_polygon(
@@ -115,9 +113,10 @@ def cell_intersects_circle(
     min_x, max_x, min_y, max_y = cell_bounds(cell)
     closest_x = min(max(center.x, min_x), max_x)
     closest_y = min(max(center.y, min_y), max_y)
-    return distance_squared(center, Point2D(closest_x, closest_y)) <= (
-        radius * radius
-    ) + EPSILON
+    return (
+        distance_squared(center, Point2D(closest_x, closest_y))
+        <= (radius * radius) + EPSILON
+    )
 
 
 def cell_meets_polygon_coverage_threshold(
@@ -126,9 +125,7 @@ def cell_meets_polygon_coverage_threshold(
     *,
     coverage_threshold: float,
 ) -> bool:
-    return cell_polygon_overlap_area(cell, polygon) >= (
-        coverage_threshold - EPSILON
-    )
+    return cell_polygon_overlap_area(cell, polygon) >= (coverage_threshold - EPSILON)
 
 
 def cell_polygon_overlap_area(
@@ -220,8 +217,7 @@ def _intersect_horizontal(
 
 def polygon_area(points: tuple[Point2D, ...]) -> float:
     signed_area = sum(
-        (start.x * end.y) - (end.x * start.y)
-        for start, end in polygon_edges(points)
+        (start.x * end.y) - (end.x * start.y) for start, end in polygon_edges(points)
     )
     return abs(signed_area) / 2.0
 

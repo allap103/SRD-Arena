@@ -111,7 +111,7 @@ class TargetCountSchema(SpellCapabilitySchemaModel):
     maximum: PositiveInt | Literal["spellcasting_modifier", "all"] = 1
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> "TargetCountSchema":
+    def validate_bounds(self) -> TargetCountSchema:
         if isinstance(self.maximum, int) and self.minimum > self.maximum:
             raise ValueError("Target count minimum cannot exceed maximum.")
         return self
@@ -169,7 +169,7 @@ class AreaGeometrySchema(SpellCapabilitySchemaModel):
     diameter_feet: PositiveInt | None = None
 
     @model_validator(mode="after")
-    def validate_dimensions(self) -> "AreaGeometrySchema":
+    def validate_dimensions(self) -> AreaGeometrySchema:
         if self.shape in {"sphere", "emanation"} and self.radius_feet is None:
             raise ValueError(f"{self.shape.title()} geometry requires radius_feet.")
         if self.shape == "cone" and self.length_feet is None:
@@ -214,7 +214,7 @@ class AreaSpellTargetSchema(SpellCapabilitySchemaModel):
     requirements: list[SpellRequirementSchema] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def validate_chosen_count(self) -> "AreaSpellTargetSchema":
+    def validate_chosen_count(self) -> AreaSpellTargetSchema:
         if self.occupants == "chosen" and self.chosen_count is None:
             raise ValueError("Chosen area occupants require chosen_count.")
         return self
@@ -226,7 +226,7 @@ class CompositeAreaComponentSchema(SpellCapabilitySchemaModel):
     maximum: PositiveInt
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> "CompositeAreaComponentSchema":
+    def validate_bounds(self) -> CompositeAreaComponentSchema:
         if self.minimum > self.maximum:
             raise ValueError("Composite area minimum cannot exceed maximum.")
         return self

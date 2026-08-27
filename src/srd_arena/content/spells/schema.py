@@ -1,6 +1,7 @@
 from pydantic import Field, model_validator
 
 from srd_arena.content.common.schema import SourceModel
+
 from .capability import SpellCapabilitySchema
 from .implementation import SpellImplementationSchema
 
@@ -31,7 +32,7 @@ class SpellSchema(SourceModel):
     srd52: bool | str | None = None
 
     @model_validator(mode="after")
-    def validate_implementation_state(self) -> "SpellSchema":
+    def validate_implementation_state(self) -> SpellSchema:
         status = self.implementation.status
         if status in {"complete", "partial", "blocked"} and self.capability is None:
             raise ValueError(f"{status.title()} spells must define a capability.")

@@ -189,9 +189,7 @@ def resolve_end_turn_effects(
                         applied,
                         progress,
                     )
-            failure_conditions = effect.parameters.get(
-                "repeat_failure_conditions", []
-            )
+            failure_conditions = effect.parameters.get("repeat_failure_conditions", [])
             if isinstance(failure_conditions, list) and failure_conditions:
                 state.conditions = [
                     condition
@@ -214,9 +212,7 @@ def resolve_end_turn_effects(
                                 ),
                                 "source_label": effect.identity.source.label or "Spell",
                                 "source_kind": "spell",
-                                "definition_id": (
-                                    effect.identity.source.definition_id
-                                ),
+                                "definition_id": (effect.identity.source.definition_id),
                                 "parent_effect_kind": effect.kind.value,
                             },
                         )
@@ -285,9 +281,7 @@ def expire_ongoing_effects_for_turn_start(
     for effect in tuple(state.ongoing_effects):
         if creature_ref not in effect.target_refs:
             continue
-        temporary_hit_points = effect.parameters.get(
-            "turn_start_temporary_hit_points"
-        )
+        temporary_hit_points = effect.parameters.get("turn_start_temporary_hit_points")
         if isinstance(temporary_hit_points, int) and temporary_hit_points > 0:
             state.creatures[creature_ref].creature.grant_temporary_hit_points(
                 temporary_hit_points

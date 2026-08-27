@@ -7,10 +7,10 @@ from .player_characters import (
     load_player_character_templates,
 )
 from .schema import (
+    EQUIPMENT_SLOTS,
     AttributesSchema,
     CreatureItemReferenceSchema,
     CreatureSchema,
-    EQUIPMENT_SLOTS,
     SpellcastingSchema,
     StatBlockReferenceSchema,
 )
@@ -21,6 +21,7 @@ from .stat_block_schema import (
 )
 
 __all__ = [
+    "EQUIPMENT_SLOTS",
     "AttributesSchema",
     "BestiaryActionSchema",
     "BestiaryCatalog",
@@ -28,7 +29,6 @@ __all__ = [
     "BestiaryMonsterSchema",
     "CreatureItemReferenceSchema",
     "CreatureSchema",
-    "EQUIPMENT_SLOTS",
     "PlayerCharacterTemplates",
     "SpellcastingSchema",
     "StatBlockReferenceSchema",

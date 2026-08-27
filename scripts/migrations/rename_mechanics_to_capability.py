@@ -65,7 +65,10 @@ def main() -> None:
         print(f"{path.relative_to(args.content_dir)}: {changes}")
         if args.write:
             migrated = source.replace('"mechanics":', '"capability":')
-            if migrated.count('"capability":') - source.count('"capability":') != changes:
+            if (
+                migrated.count('"capability":') - source.count('"capability":')
+                != changes
+            ):
                 raise ValueError(f"Could not safely rewrite all fields in {path}.")
             path.write_text(migrated, encoding="utf-8")
 

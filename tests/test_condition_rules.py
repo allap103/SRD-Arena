@@ -25,9 +25,7 @@ def test_paralyzed_exposes_incapacitated_without_an_applied_child() -> None:
     assert effective.has(Condition.INCAPACITATED)
     assert effective.has_trait(CombatTrait.CANNOT_TAKE_ACTIONS)
     assert effective.has_trait(CombatTrait.INITIATIVE_DISADVANTAGE)
-    assert effective.providers_for(Condition.INCAPACITATED) == (
-        paralyzed.id,
-    )
+    assert effective.providers_for(Condition.INCAPACITATED) == (paralyzed.id,)
 
 
 def test_paralyzed_and_unconscious_share_close_combat_traits() -> None:
@@ -55,9 +53,7 @@ def test_stunned_reuses_attack_and_save_traits_without_automatic_criticals() -> 
         CombatTrait.AUTO_FAIL_DEXTERITY_SAVES,
     ):
         assert effective.providers_for_trait(trait) == (stunned.id,)
-    assert effective.has_trait(
-        CombatTrait.HITS_WITHIN_5_FEET_ARE_CRITICAL
-    ) is False
+    assert effective.has_trait(CombatTrait.HITS_WITHIN_5_FEET_ARE_CRITICAL) is False
 
 
 def test_effective_condition_preserves_all_independent_providers() -> None:
@@ -69,9 +65,9 @@ def test_effective_condition_preserves_all_independent_providers() -> None:
     assert effective.providers_for(Condition.INCAPACITATED) == tuple(
         sorted((paralyzed.id, stunned.id))
     )
-    assert effective.providers_for_trait(
-        CombatTrait.CANNOT_TAKE_REACTIONS
-    ) == tuple(sorted((paralyzed.id, stunned.id)))
+    assert effective.providers_for_trait(CombatTrait.CANNOT_TAKE_REACTIONS) == tuple(
+        sorted((paralyzed.id, stunned.id))
+    )
 
 
 def test_immunity_suppresses_only_the_implied_condition() -> None:

@@ -39,7 +39,7 @@ class AttributesSchema(BaseModel):
 
     base_health: int = 10
     level: int = 1
-    movement: "MovementSchema" = Field(default_factory=lambda: MovementSchema())
+    movement: MovementSchema = Field(default_factory=lambda: MovementSchema())
     strength: int = 10
     dexterity: int = 10
     constitution: int = 10
@@ -79,13 +79,13 @@ class CreatureSchema(BaseModel):
     inventory: list[ItemIdOrReference] = Field(default_factory=list)
     equipment: dict[EquipmentSlot, ItemIdOrReference] = Field(default_factory=dict)
     metadata: dict[str, object] = Field(default_factory=dict)
-    class_ref: "StatBlockReferenceSchema | None" = None
-    subclass_ref: "SubclassReferenceSchema | None" = None
+    class_ref: StatBlockReferenceSchema | None = None
+    subclass_ref: SubclassReferenceSchema | None = None
     spellcasting: SpellcastingSchema | None = None
-    spells_known: list["StatBlockReferenceSchema"] = Field(default_factory=list)
-    optional_features: list["StatBlockReferenceSchema"] = Field(default_factory=list)
+    spells_known: list[StatBlockReferenceSchema] = Field(default_factory=list)
+    optional_features: list[StatBlockReferenceSchema] = Field(default_factory=list)
     player_character: str | None = None
-    stat_block: "StatBlockReferenceSchema | None" = None
+    stat_block: StatBlockReferenceSchema | None = None
 
 
 class StatBlockReferenceSchema(BaseModel):

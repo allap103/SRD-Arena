@@ -138,9 +138,7 @@ def _install_creature_modifiers(
     condition_immunities = effect.parameters.get("condition_immunities", [])
     if isinstance(condition_immunities, list):
         parsed_immunities = frozenset(
-            Condition(value)
-            for value in condition_immunities
-            if isinstance(value, str)
+            Condition(value) for value in condition_immunities if isinstance(value, str)
         )
         for target_ref in effect.target_refs:
             state.creatures[target_ref].creature.set_condition_immunities(

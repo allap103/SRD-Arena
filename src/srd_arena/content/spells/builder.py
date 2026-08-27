@@ -2,15 +2,13 @@
 
 from srd_arena.content.common.sources import slug
 from srd_arena.domain.spells import Spell
-from .schema import SpellSchema
+
 from .building import (
     build_activation,
     build_spell_definition,
     normalize_save_ability,
     target_requirements,
 )
-
-
 from .building.metadata import (
     remove_effect_selection,
     spell_area_size_feet,
@@ -19,6 +17,7 @@ from .building.metadata import (
     spell_removable_conditions,
     spell_removable_effect_kinds,
 )
+from .schema import SpellSchema
 
 
 def build_spell(spell_schema: SpellSchema) -> Spell:

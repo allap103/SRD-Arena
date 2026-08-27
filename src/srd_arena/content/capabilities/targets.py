@@ -25,14 +25,12 @@ class AreaTargetSchema(CapabilitySchemaModel):
     width_feet: PositiveInt | None = None
     origin: Literal["self", "point_in_range"] = "self"
     range_feet: NonNegativeInt | None = None
-    affects: Literal["creatures", "enemies", "allies", "objects", "all"] = (
-        "creatures"
-    )
+    affects: Literal["creatures", "enemies", "allies", "objects", "all"] = "creatures"
     excludes_self: bool = True
     requirements: list[ActionRequirementSchema] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def validate_area_dimensions(self) -> "AreaTargetSchema":
+    def validate_area_dimensions(self) -> AreaTargetSchema:
         if self.shape == "line" and self.width_feet is None:
             raise ValueError("Line areas require width_feet.")
         if self.origin == "point_in_range" and self.range_feet is None:

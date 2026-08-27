@@ -15,15 +15,14 @@ from srd_arena.domain.creatures import (
     Inventory,
     SubclassRef,
 )
-from .catalog import BestiaryCatalog
-from .schema import CreatureItemReferenceSchema, CreatureSchema
-from .stat_block_schema import BestiaryMonsterSchema
-from .actions.multiattack import MultiattackCapabilitySchema, build_multiattack
+
 from .actions.builder import (
     build_declared_stat_block_actions,
     build_stat_block_actions,
 )
+from .actions.multiattack import MultiattackCapabilitySchema, build_multiattack
 from .attributes import build_creature_attributes, build_creature_size
+from .catalog import BestiaryCatalog
 from .character_options import (
     find_class_record,
     find_subclass_record,
@@ -32,9 +31,11 @@ from .character_options import (
     resolve_subclass_features,
 )
 from .features import build_combat_profile, build_feature_uses_remaining
-from .spellcasting import build_spellcasting
-from .statistics import build_creature_statistics
 from .player_characters import PlayerCharacterTemplates
+from .schema import CreatureItemReferenceSchema, CreatureSchema
+from .spellcasting import build_spellcasting
+from .stat_block_schema import BestiaryMonsterSchema
+from .statistics import build_creature_statistics
 
 
 def load_creature(

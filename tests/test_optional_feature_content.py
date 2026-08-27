@@ -1,9 +1,9 @@
-from srd_arena.content.character_options.classes import load_optional_feature_catalog
-from srd_arena.content.common import SourceCatalog
 from srd_arena.content.character_options.classes import (
     OptionalFeatureSchema,
+    load_optional_feature_catalog,
     normalize_optional_feature_effects,
 )
+from srd_arena.content.common import SourceCatalog
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 
 

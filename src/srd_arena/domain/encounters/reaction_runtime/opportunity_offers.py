@@ -47,8 +47,7 @@ def queue_opportunity_attack(
         and creature_state.is_alive
         and state._creatures_are_opponents(creature_ref, mover_ref)
         and (
-            not external_only
-            or state._creature_controller(creature_ref) == "external"
+            not external_only or state._creature_controller(creature_ref) == "external"
         )
         and state.combat_rules.reaction_eligibility(
             state,
@@ -146,10 +145,7 @@ def reaction_actions(state: EncounterState) -> list[EncounterAction]:
                 f"Opportunity attack {target.creature.name}",
                 "opportunity_attack",
                 target_ref,
-                id=(
-                    f"{reactor_ref}-opportunity-attack-"
-                    f"{target_ref.replace(':', '-')}"
-                ),
+                id=(f"{reactor_ref}-opportunity-attack-{target_ref.replace(':', '-')}"),
                 creature_ref=reactor_ref,
                 source_trigger_id=movement.trigger_id,
                 cost=ActionCost(reaction=1),

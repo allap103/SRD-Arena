@@ -4,7 +4,7 @@ from dataclasses import dataclass
 class GridDistance(int):
     """A non-negative distance measured in grid cells."""
 
-    def __new__(cls, squares: int) -> "GridDistance":
+    def __new__(cls, squares: int) -> GridDistance:
         if squares < 0:
             raise ValueError("Grid distance cannot be negative.")
         return super().__new__(cls, squares)
@@ -13,7 +13,7 @@ class GridDistance(int):
 class MovementBudget(int):
     """Movement available to spend, measured in grid cells."""
 
-    def __new__(cls, squares: int) -> "MovementBudget":
+    def __new__(cls, squares: int) -> MovementBudget:
         if squares < 0:
             raise ValueError("Movement budget cannot be negative.")
         return super().__new__(cls, squares)
@@ -22,7 +22,7 @@ class MovementBudget(int):
 class MovementCost(int):
     """Movement required to enter one or more grid cells."""
 
-    def __new__(cls, squares: int) -> "MovementCost":
+    def __new__(cls, squares: int) -> MovementCost:
         if squares < 0:
             raise ValueError("Movement cost cannot be negative.")
         return super().__new__(cls, squares)

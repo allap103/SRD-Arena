@@ -2,7 +2,6 @@ from pathlib import Path
 
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
-
 SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "spell_damage_showcase"
 )

@@ -7,20 +7,26 @@ from pydantic import Field, RootModel, model_validator
 
 from srd_arena.content.capabilities import (
     Ability,
-    AutomaticResolutionSchema as SharedAutomaticResolutionSchema,
     ConditionEffectSchema,
     DamageEffectSchema,
     DerivedDifficultyClassSchema,
     EffectDurationSchema,
     ForcedMovementEffectSchema,
     NonNegativeInt,
-    OutcomeSchema as SharedOutcomeSchema,
     PositiveInt,
     ProhibitReactionEffectSchema,
     RollModifierEffectSchema,
-    SavingThrowResolutionSchema as SharedSavingThrowResolutionSchema,
     SpeedMultiplierEffectSchema,
     TurnEconomyRestrictionEffectSchema,
+)
+from srd_arena.content.capabilities import (
+    AutomaticResolutionSchema as SharedAutomaticResolutionSchema,
+)
+from srd_arena.content.capabilities import (
+    OutcomeSchema as SharedOutcomeSchema,
+)
+from srd_arena.content.capabilities import (
+    SavingThrowResolutionSchema as SharedSavingThrowResolutionSchema,
 )
 
 from .base import SpellCapabilitySchemaModel
@@ -61,7 +67,7 @@ class HealingEffectSchema(SpellCapabilitySchemaModel):
     pool: PositiveInt | None = None
 
     @model_validator(mode="after")
-    def validate_healing_source(self) -> "HealingEffectSchema":
+    def validate_healing_source(self) -> HealingEffectSchema:
         if (
             self.dice is None
             and self.bonus == 0
@@ -84,7 +90,7 @@ class TemporaryHitPointsEffectSchema(SpellCapabilitySchemaModel):
     trigger: Literal["application", "target_turn_start"] = "application"
 
     @model_validator(mode="after")
-    def validate_temporary_hit_points(self) -> "TemporaryHitPointsEffectSchema":
+    def validate_temporary_hit_points(self) -> TemporaryHitPointsEffectSchema:
         if self.dice is None and self.value == 0 and self.modifier == "none":
             raise ValueError("Temporary hit points require a roll, value, or modifier.")
         return self
@@ -322,7 +328,7 @@ class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
     stored_resolution: SpellResolutionSchema | None = None
 
     @model_validator(mode="after")
-    def validate_stored_payload(self) -> "StoreSpellEffectSchema":
+    def validate_stored_payload(self) -> StoreSpellEffectSchema:
         if (self.spell_name is None) == (self.stored_resolution is None):
             raise ValueError(
                 "Stored spell effects require exactly one spell or authored resolution."
@@ -393,7 +399,7 @@ class ExtraTurnsEffectSchema(SpellCapabilitySchemaModel):
     consecutive: bool = True
 
     @model_validator(mode="after")
-    def validate_count(self) -> "ExtraTurnsEffectSchema":
+    def validate_count(self) -> ExtraTurnsEffectSchema:
         if (self.count_dice is None) == (self.count is None):
             raise ValueError("Extra turns require exactly one count source.")
         return self
@@ -596,7 +602,7 @@ class RepeatResolutionSchema(SpellCapabilitySchemaModel):
     resolution: SpellResolutionSchema
 
     @model_validator(mode="after")
-    def validate_propagation(self) -> "RepeatResolutionSchema":
+    def validate_propagation(self) -> RepeatResolutionSchema:
         if self.allocation == "propagating" and self.propagation_range_feet is None:
             raise ValueError("Propagating resolution requires a propagation range.")
         return self
@@ -631,7 +637,7 @@ class RandomResolutionEntrySchema(SpellCapabilitySchemaModel):
     resolution: SpellResolutionSchema
 
     @model_validator(mode="after")
-    def validate_range(self) -> "RandomResolutionEntrySchema":
+    def validate_range(self) -> RandomResolutionEntrySchema:
         if self.minimum > self.maximum:
             raise ValueError("Random result minimum cannot exceed maximum.")
         return self
@@ -644,7 +650,7 @@ class RandomTableResolutionSchema(SpellCapabilitySchemaModel):
     entries: list[RandomResolutionEntrySchema] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def validate_entries(self) -> "RandomTableResolutionSchema":
+    def validate_entries(self) -> RandomTableResolutionSchema:
         _validate_complete_roll_table(self.die, self.entries)
         return self
 
@@ -721,7 +727,7 @@ class RandomTableEntrySchema(SpellCapabilitySchemaModel):
     resolution: SpellResolutionSchema
 
     @model_validator(mode="after")
-    def validate_range(self) -> "RandomTableEntrySchema":
+    def validate_range(self) -> RandomTableEntrySchema:
         if self.minimum > self.maximum:
             raise ValueError("Random result minimum cannot exceed maximum.")
         return self
@@ -732,7 +738,7 @@ class RandomTableSchema(SpellCapabilitySchemaModel):
     entries: list[RandomTableEntrySchema] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def validate_entries(self) -> "RandomTableSchema":
+    def validate_entries(self) -> RandomTableSchema:
         _validate_complete_roll_table(self.die, self.entries)
         return self
 

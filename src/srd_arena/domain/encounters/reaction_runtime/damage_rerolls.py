@@ -169,8 +169,7 @@ def apply_damage_reroll_action(
         progress.messages.append(
             (
                 "system",
-                f"Damage die {action.value + 1} rerolled: "
-                f"{previous} -> {replacement}.",
+                f"Damage die {action.value + 1} rerolled: {previous} -> {replacement}.",
             )
         )
         progress.events.append(
@@ -287,4 +286,3 @@ def damage_reroll_event_data(
         "accept_action_id": f"{request.action_id}-accept-damage",
         "reaction": request.reaction,
     }
-

@@ -33,7 +33,7 @@ class SpellImplementationSchema(SpellCapabilitySchemaModel):
     resolver: Literal["slow"] | None = None
 
     @model_validator(mode="after")
-    def validate_status_details(self) -> "SpellImplementationSchema":
+    def validate_status_details(self) -> SpellImplementationSchema:
         if self.status == "partial" and not self.omissions:
             raise ValueError("Partial spell implementations must list omissions.")
         if self.status == "blocked" and not self.blocked_by:

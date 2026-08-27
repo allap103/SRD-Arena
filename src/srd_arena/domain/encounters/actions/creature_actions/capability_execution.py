@@ -84,4 +84,3 @@ def execute_capability_action(
     else:
         return False
     return True
-

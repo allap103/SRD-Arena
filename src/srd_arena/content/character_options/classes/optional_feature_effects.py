@@ -1,5 +1,6 @@
-from .optional_feature_schema import OptionalFeatureSchema
 from srd_arena.domain.effects.triggered import TriggeredEffect
+
+from .optional_feature_schema import OptionalFeatureSchema
 
 
 def normalize_optional_feature_effects(

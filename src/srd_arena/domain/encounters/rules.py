@@ -7,6 +7,7 @@ from ..effects.condition_rules import (
     effective_conditions,
 )
 from ..effects.modifiers import ModifierSubject, RollKind
+from ..rolls.dice import DieRoller
 from .actions.eligibility import (
     ActionEligibility,
     action_eligibility,
@@ -28,7 +29,6 @@ from .rule_queries import (
     resolve_invocation_start,
     roll_modifiers,
 )
-from ..rolls.dice import DieRoller
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -43,9 +43,7 @@ class CombatRules:
     ) -> EffectiveConditionSet:
         return effective_conditions(
             state.conditions_for(creature_ref),
-            state.creatures[
-                creature_ref
-            ].creature.statistics.condition_immunities,
+            state.creatures[creature_ref].creature.statistics.condition_immunities,
         )
 
     def action_eligibility(

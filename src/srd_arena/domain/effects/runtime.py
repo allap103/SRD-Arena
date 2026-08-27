@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TypeAlias
 
 from .rule_effects import RuntimeRuleEffect
 
@@ -69,7 +68,7 @@ class WhileParentExists:
     pass
 
 
-EffectDuration: TypeAlias = (
+type EffectDuration = (
     Indefinite | UntilTurnStart | UntilTurnEnd | Rounds | WhileParentExists
 )
 

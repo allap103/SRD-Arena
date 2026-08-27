@@ -6,11 +6,6 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from srd_arena.application.api import ActionObservation
-from ...shared.models import InitiativeTrackEntryView
-from .encounter import BattlefieldWidget, clear_layout
-from .encounter.initiative import InitiativeRail
-
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QResizeEvent
 from PySide6.QtWidgets import (
@@ -23,6 +18,12 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from srd_arena.application.api import ActionObservation
+
+from ...shared.models import InitiativeTrackEntryView
+from .encounter import BattlefieldWidget, clear_layout
+from .encounter.initiative import InitiativeRail
 
 
 @dataclass(frozen=True)
@@ -62,9 +63,7 @@ class GameSurface(QWidget):
         self._story_choices_group.setObjectName("choicesPanel")
         self._story_choices_layout = QVBoxLayout()
         self._story_choices_layout.setSpacing(8)
-        story_group_layout.addWidget(
-            _wrap_in_scroll(self._story_choices_layout)
-        )
+        story_group_layout.addWidget(_wrap_in_scroll(self._story_choices_layout))
 
         self._encounter_panel = QWidget()
         self._encounter_panel.setObjectName("encounterPanel")

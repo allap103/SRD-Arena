@@ -46,10 +46,13 @@ def feature_action_available(
         return False
     if definition.economy == "action" and self.active_actions_remaining <= 0:
         return False
-    if definition.economy == "reaction" and not self.combat_rules.reaction_eligibility(
-        self,
-        self.current_decision().creature_ref,
-        "feature",
-    ).allowed:
+    if (
+        definition.economy == "reaction"
+        and not self.combat_rules.reaction_eligibility(
+            self,
+            self.current_decision().creature_ref,
+            "feature",
+        ).allowed
+    ):
         return False
     return actor.feature_uses_remaining.get(definition.feature_id, 0) > 0

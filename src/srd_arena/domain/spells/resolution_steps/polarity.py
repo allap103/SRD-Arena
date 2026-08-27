@@ -96,4 +96,3 @@ def _roll_modifier_polarity(effect: RollModifierEffect) -> EffectPolarity:
     if beneficial == harmful:
         return EffectPolarity.NEUTRAL
     return EffectPolarity.BENEFICIAL if beneficial else EffectPolarity.HARMFUL
-

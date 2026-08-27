@@ -31,10 +31,7 @@ class Spellcasting:
         )
 
     def grant_for(self, spell: Spell) -> CapabilityGrant | None:
-        if (
-            spell.definition is None
-            or spell.activation is None
-        ):
+        if spell.definition is None or spell.activation is None:
             return None
         cost = (
             SpellSlotCost(self.spell_slot_pool.id, spell.level)

@@ -19,12 +19,8 @@ def spend_attack(
     """Spend one attack and keep the remaining count query-driven."""
 
     creature_state = state.creatures[creature_ref]
-    starts_new_attack_action = (
-        creature_state.attack_action_base_attacks <= 0
-        or (
-            creature_state.attacks_remaining <= 0
-            and creature_state.actions_remaining > 0
-        )
+    starts_new_attack_action = creature_state.attack_action_base_attacks <= 0 or (
+        creature_state.attacks_remaining <= 0 and creature_state.actions_remaining > 0
     )
     if starts_new_attack_action:
         state._consume_action(allow_magic=False)

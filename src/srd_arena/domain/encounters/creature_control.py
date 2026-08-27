@@ -72,9 +72,7 @@ def execute_creature_action(
         action,
         progress,
         action_id,
-    ):
-        pass
-    elif execute_standard_action(
+    ) or execute_standard_action(
         state,
         action,
         decision,

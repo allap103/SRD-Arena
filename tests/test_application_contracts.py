@@ -1,6 +1,6 @@
+import json
 from collections.abc import Mapping
 from dataclasses import fields, is_dataclass
-import json
 
 import pytest
 

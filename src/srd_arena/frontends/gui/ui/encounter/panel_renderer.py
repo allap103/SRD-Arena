@@ -6,7 +6,24 @@ import textwrap
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QComboBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QSpinBox,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
+
 from srd_arena.application.api import ActionObservation, GameObservation
+
 from ....shared.models import EncounterView, ResourceSummaryView
 from .action_menus import group_actions
 from .config import (
@@ -22,22 +39,6 @@ from .targeting import (
     allocation_status,
     mode_for_action,
     mode_label,
-)
-
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
-from PySide6.QtWidgets import (
-    QComboBox,
-    QFrame,
-    QGridLayout,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QSpinBox,
-    QToolButton,
-    QVBoxLayout,
-    QWidget,
 )
 
 
@@ -521,9 +522,7 @@ class EncounterPanelRenderer:
             spin.setRange(0, maximum)
             spin.setValue(current)
             spin.setSuffix(" HP")
-            spin.setToolTip(
-                f"Allocate 0\u2013{maximum} Hit Points to this creature."
-            )
+            spin.setToolTip(f"Allocate 0\u2013{maximum} Hit Points to this creature.")
             spin.editingFinished.connect(
                 lambda ref=target_ref, control=spin: (
                     self._callbacks.set_resource_allocation(ref, control.value())
@@ -537,7 +536,9 @@ class EncounterPanelRenderer:
         action = encounter.end_turn_action
         self._bindings.end_turn_button.setEnabled(action is not None)
         self._bindings.end_turn_button.setText(
-            "Pass Reaction" if action is not None and action.kind == "pass" else "End Turn"
+            "Pass Reaction"
+            if action is not None and action.kind == "pass"
+            else "End Turn"
         )
 
 
@@ -562,8 +563,12 @@ def configure_action_button(
     button.setProperty("availability", availability)
     button.setEnabled(availability == "available")
     if reasons and availability != "available":
-        heading = "Not implemented:" if availability == "unimplemented" else "Unavailable:"
-        button.setToolTip("\n".join((heading, *(f"\u2022 {reason}" for reason in reasons))))
+        heading = (
+            "Not implemented:" if availability == "unimplemented" else "Unavailable:"
+        )
+        button.setToolTip(
+            "\n".join((heading, *(f"\u2022 {reason}" for reason in reasons)))
+        )
 
 
 def set_compact_button_text(button: QPushButton, label: str) -> None:
@@ -577,9 +582,7 @@ def set_compact_button_text(button: QPushButton, label: str) -> None:
     ) or [label]
     button.setText("\n".join(lines))
     button.setFixedHeight(
-        ENCOUNTER_BUTTON_HEIGHT
-        if len(lines) == 1
-        else ENCOUNTER_BUTTON_HEIGHT * 2 - 6
+        ENCOUNTER_BUTTON_HEIGHT if len(lines) == 1 else ENCOUNTER_BUTTON_HEIGHT * 2 - 6
     )
 
 

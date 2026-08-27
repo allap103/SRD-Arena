@@ -1,9 +1,10 @@
 from pathlib import Path
 
-from .catalog import load_item_catalog
 from srd_arena.content.common.sources import SOURCE_PRIORITY
-from .builder import build_item
 from srd_arena.domain.equipment import Item
+
+from .builder import build_item
+from .catalog import load_item_catalog
 
 
 def load_system_items(directory: str | Path) -> list[Item]:

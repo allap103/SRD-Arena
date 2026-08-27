@@ -108,11 +108,7 @@ class EffectiveConditionSet:
 
     def providers_for_trait(self, trait: CombatTrait) -> tuple[str, ...]:
         return next(
-            (
-                entry.provider_ids
-                for entry in self.traits
-                if entry.trait is trait
-            ),
+            (entry.provider_ids for entry in self.traits if entry.trait is trait),
             (),
         )
 
@@ -133,9 +129,7 @@ def effective_conditions(
                 continue
             expanded.add(condition)
             if condition in condition_immunities:
-                suppressed_providers.setdefault(condition, set()).add(
-                    applied.id
-                )
+                suppressed_providers.setdefault(condition, set()).add(applied.id)
                 continue
             condition_providers.setdefault(condition, set()).add(applied.id)
             definition = CONDITION_DEFINITIONS.get(

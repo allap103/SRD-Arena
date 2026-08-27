@@ -18,11 +18,11 @@ from srd_arena.domain.geometry import (
     build_radius_area,
     serialize_area,
 )
+from srd_arena.domain.spells import Spell
 from srd_arena.domain.spells.rules import (
     spell_area_shape,
     spell_range_squares,
 )
-from srd_arena.domain.spells import Spell
 from srd_arena.engine.queries import (
     ActionOption,
     DirectTargetOptionDetails,
@@ -72,8 +72,7 @@ def _observe_action(
 ) -> ActionObservation:
     reason_entries = tuple(
         dict.fromkeys(
-            (failure.code, failure.message)
-            for failure in option.eligibility.failures
+            (failure.code, failure.message) for failure in option.eligibility.failures
         )
     )
     semantics = _action_semantics(option, state)
@@ -126,9 +125,7 @@ def _action_semantics(
         spell = _find_spell(creature, details.source_id)
         return _ActionSemantics(
             source_id=details.source_id,
-            source_label=(
-                spell.name if spell is not None else details.source_id
-            ),
+            source_label=(spell.name if spell is not None else details.source_id),
             source_level=spell.level if spell is not None else None,
             resource_level=details.resource_level,
             target_ref=details.target_ref,
@@ -188,9 +185,7 @@ def _spell_area_preview(
     if spell.geometry_mode == "point_area":
         if spell.area_size_feet is None:
             return None
-        size_squares = int(
-            grid.distance_from_feet(spell.area_size_feet, minimum=1)
-        )
+        size_squares = int(grid.distance_from_feet(spell.area_size_feet, minimum=1))
         area = (
             build_point_cube_area(Position(0, 0), size_squares, grid)
             if spell_area_shape(spell) == "cube"
@@ -218,7 +213,7 @@ def _spell_area_preview(
                     state.geometry_config.directional_area_cell_coverage_threshold
                 ),
             )
-        )
+        ),
     )
 
 
@@ -257,5 +252,5 @@ def _stat_block_area_preview(
                     state.geometry_config.directional_area_cell_coverage_threshold
                 ),
             )
-        )
+        ),
     )

@@ -3,7 +3,6 @@ from pathlib import Path
 from srd_arena.domain.spells.rules import spell_max_targets
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
-
 SCENARIO_DIR = (
     Path(__file__).parents[1]
     / "content"
@@ -37,11 +36,14 @@ def test_eldritch_blast_scaling_showcase_loads_all_caster_thresholds() -> None:
             "Eldritch Blast"
         ]
         spell = caster.spellcasting.learned_spells[0]
-        assert spell_max_targets(
-            spell,
-            None,
-            caster_level=caster.attributes.level,
-        ) == beam_count
+        assert (
+            spell_max_targets(
+                spell,
+                None,
+                caster_level=caster.attributes.level,
+            )
+            == beam_count
+        )
         assert creature_ref in state.initiative_order
 
     target_refs = {f"target_dummy_{index}" for index in range(1, 4)}

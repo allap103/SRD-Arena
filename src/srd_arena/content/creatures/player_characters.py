@@ -1,7 +1,8 @@
 from pathlib import Path
 
-from .schema import CreatureSchema
 from srd_arena.content.common.sources import load_json
+
+from .schema import CreatureSchema
 
 type PlayerCharacterTemplates = dict[str, CreatureSchema]
 

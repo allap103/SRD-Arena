@@ -62,6 +62,5 @@ def parse_roll_modifiers(value: object) -> tuple[RollModifier, ...]:
         if isinstance(item, dict)
         and item.get("roll")
         in {"ability_check", "attack_roll", "damage_roll", "saving_throw"}
-        and item.get("mode")
-        in {"advantage", "disadvantage", "add", "subtract"}
+        and item.get("mode") in {"advantage", "disadvantage", "add", "subtract"}
     )

@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from .optional_feature_schema import OptionalFeatureSchema
-from srd_arena.content.common.sources import SOURCE_PRIORITY, load_json
 from srd_arena.content.common.catalog import SourceCatalog
+from srd_arena.content.common.sources import SOURCE_PRIORITY, load_json
+
+from .optional_feature_schema import OptionalFeatureSchema
 
 OptionalFeatureCatalog = SourceCatalog[OptionalFeatureSchema]
 

@@ -72,9 +72,7 @@ def begin_spell_invocation(
         )
     if result.allowed:
         return True
-    progress.messages.extend(
-        ("system", failure.message) for failure in result.failures
-    )
+    progress.messages.extend(("system", failure.message) for failure in result.failures)
     progress.events.append(
         state._event(
             "action_resolved",
@@ -153,9 +151,7 @@ def _end_replaced_concentration(
         return
     effect_label = existing.parameters.get("effect_label")
     if not isinstance(effect_label, str):
-        effect_label = existing.identity.source.definition_id.replace(
-            "_", " "
-        ).title()
+        effect_label = existing.identity.source.definition_id.replace("_", " ").title()
     progress.messages.append(
         (
             "system",

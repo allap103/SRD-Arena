@@ -11,4 +11,3 @@ def roll_dice(count: int, sides: int) -> int:
     from .. import reactions as reaction_facade
 
     return reaction_facade._roll_dice(count, sides)
-
