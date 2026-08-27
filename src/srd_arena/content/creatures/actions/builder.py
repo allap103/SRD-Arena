@@ -30,7 +30,29 @@ def build_stat_block_actions(
     stat_block: BestiaryMonsterSchema | None,
     spells: SpellCatalog | None = None,
 ) -> dict[str, domain.StatBlockActionDefinition]:
-    """Translate all authored stat-block sections and validate cross-references."""
+    """Translate all authored stat-block sections and validate cross-references.
+
+    >>> monster = BestiaryMonsterSchema(
+    ...     name="Sprite", source="TEST",
+    ...     action=[{
+    ...         "name": "Vanish",
+    ...         "capability": {
+    ...             "type": "capability",
+    ...             "target": {"type": "self"},
+    ...             "resolution": {
+    ...                 "type": "automatic",
+    ...                 "outcome": {"effects": [{
+    ...                     "type": "damage", "dice": "1d4",
+    ...                     "damage_type": "force"
+    ...                 }]}
+    ...             },
+    ...         },
+    ...     }],
+    ... )
+    >>> actions = build_stat_block_actions(monster)
+    >>> (list(actions), type(actions["Vanish"]).__name__)
+    (['Vanish'], 'AutomaticActionDefinition')
+    """
 
     if stat_block is None:
         return {}

@@ -10,7 +10,20 @@ from .schema import SpellSchema
 
 
 def load_spell_catalog(directory: str | Path) -> SpellCatalog:
-    """Load and index validated spell schemas from a system content directory."""
+    """Load and index validated spell schemas from a system content directory.
+
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     root = Path(directory)
+    ...     spells = root / "spells"
+    ...     spells.mkdir()
+    ...     _ = (spells / "light.json").write_text(
+    ...         '{"name":"Light","source":"XPHB","level":0,"school":"E"}'
+    ...     )
+    ...     catalog = load_spell_catalog(root)
+    >>> catalog.find("light", "xphb").level
+    0
+    """
     spells_dir = Path(directory) / "spells"
     records = [
         SpellSchema.model_validate(load_json(path))

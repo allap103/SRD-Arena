@@ -21,7 +21,17 @@ from .schema import SpellSchema
 
 
 def build_spell(spell_schema: SpellSchema) -> Spell:
-    """Build a domain spell from validated authored content."""
+    """Build a domain spell from validated authored content.
+
+    Metadata remains available even when a spell has no executable capability.
+
+    >>> schema = SpellSchema(
+    ...     name="Light", source="XPHB", level=0, school="E"
+    ... )
+    >>> spell = build_spell(schema)
+    >>> (spell.id, spell.name, spell.definition)
+    ('light', 'Light', None)
+    """
     return Spell(
         id=slug(spell_schema.public_name),
         name=spell_schema.public_name,

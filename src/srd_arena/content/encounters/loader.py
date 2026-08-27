@@ -109,7 +109,28 @@ def load_encounter(
     subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> LoadedEncounter:
-    """Validate one encounter file and build all referenced domain objects."""
+    """Validate one encounter file and build all referenced domain objects.
+
+    >>> import json
+    >>> from tempfile import TemporaryDirectory
+    >>> data = {
+    ...     "id": "duel",
+    ...     "grid": {"width": 5, "height": 5},
+    ...     "teams": [
+    ...         {"id": "heroes", "name": "Heroes", "controller": "external"}
+    ...     ],
+    ...     "creatures": [{
+    ...         "id": "hero", "name": "Hero", "team_id": "heroes",
+    ...         "start": {"x": 1, "y": 2},
+    ...     }],
+    ... }
+    >>> with TemporaryDirectory() as directory:
+    ...     path = Path(directory) / "duel.json"
+    ...     _ = path.write_text(json.dumps(data))
+    ...     loaded = load_encounter(path)
+    >>> (loaded.definition.id, loaded.creatures[0].name)
+    ('duel', 'Hero')
+    """
 
     schema = EncounterDefinitionSchema.model_validate(load_json(path))
     return LoadedEncounter(

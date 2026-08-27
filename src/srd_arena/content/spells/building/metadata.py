@@ -92,7 +92,22 @@ def spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
 
 
 def remove_effect_selection(raw: SpellSchema) -> str | None:
-    """Return the spell's authored choice among removable effect categories."""
+    """Return the spell's authored choice among removable effect categories.
+
+    >>> spell = SpellSchema.model_validate({
+    ...     "name": "Restore", "source": "TEST", "level": 2, "school": "A",
+    ...     "implementation": {"status": "complete"},
+    ...     "capability": {
+    ...         "target": {"type": "creature"},
+    ...         "resolution": {"type": "automatic", "outcome": {"effects": [{
+    ...             "type": "remove_effect", "selection": "one",
+    ...             "removable": ["condition", "curse"]
+    ...         }]}},
+    ...     },
+    ... })
+    >>> remove_effect_selection(spell)
+    'one'
+    """
 
     if raw.capability is None:
         return None
@@ -113,7 +128,22 @@ def remove_effect_selection(raw: SpellSchema) -> str | None:
 
 
 def spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
-    """Collect non-condition effect kinds that the spell can remove."""
+    """Collect the authored effect categories that a spell can remove.
+
+    >>> spell = SpellSchema.model_validate({
+    ...     "name": "Restore", "source": "TEST", "level": 2, "school": "A",
+    ...     "implementation": {"status": "complete"},
+    ...     "capability": {
+    ...         "target": {"type": "creature"},
+    ...         "resolution": {"type": "automatic", "outcome": {"effects": [{
+    ...             "type": "remove_effect", "selection": "one",
+    ...             "removable": ["condition", "curse"]
+    ...         }]}},
+    ...     },
+    ... })
+    >>> spell_removable_effect_kinds(spell)
+    ('condition', 'curse')
+    """
 
     if raw.capability is None:
         return ()

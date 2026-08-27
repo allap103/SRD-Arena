@@ -51,7 +51,22 @@ SpellResolutionSchema = (
 def build_spell_definition(
     raw: SpellSchema,
 ) -> domain.CapabilityDefinition | None:
-    """Build an executable spell, rejecting unsupported structured mechanics."""
+    """Build an executable spell, rejecting unsupported structured mechanics.
+
+    >>> spell = SpellSchema.model_validate({
+    ...     "name": "Ward", "source": "TEST", "level": 1, "school": "A",
+    ...     "implementation": {"status": "complete"},
+    ...     "capability": {
+    ...         "target": {"type": "self"},
+    ...         "resolution": {
+    ...             "type": "automatic", "outcome": {"effects": []}
+    ...         },
+    ...     },
+    ... })
+    >>> definition = build_spell_definition(spell)
+    >>> definition.target.kind if definition else None
+    'self'
+    """
     if not raw.executable:
         return None
     assert raw.capability is not None
@@ -128,7 +143,28 @@ def build_definition(
     content: str = "Spell capability",
     location: str = "capability.resolution",
 ) -> domain.CapabilityDefinition:
-    """Translate a spell's capability fields into its reusable domain definition."""
+    """Translate a spell's capability fields into its reusable domain definition.
+
+    >>> spell = SpellSchema.model_validate({
+    ...     "name": "Ward", "source": "TEST", "level": 1, "school": "A",
+    ...     "implementation": {"status": "complete"},
+    ...     "capability": {
+    ...         "target": {"type": "self"},
+    ...         "resolution": {
+    ...             "type": "automatic", "outcome": {"effects": []}
+    ...         },
+    ...     },
+    ... })
+    >>> capability = spell.capability
+    >>> assert capability is not None
+    >>> resolution = capability.resolution.root
+    >>> assert isinstance(resolution, AutomaticResolutionSchema)
+    >>> definition = build_definition(
+    ...     capability.target, resolution, resolution.outcome
+    ... )
+    >>> (definition.target.kind, type(definition.resolution).__name__)
+    ('self', 'AutomaticResolution')
+    """
 
     effect_values = tuple(effect.root for effect in outcome.effects)
     success_values = (
