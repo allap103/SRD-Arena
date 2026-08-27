@@ -29,7 +29,17 @@ DIRECTION_DELTAS = {
 def build_behavior(
     participant: EncounterCreatureState,
 ) -> Generator[EncounterAction | None, BehaviorContext]:
-    """Construct an automatic decision policy from an encounter behavior definition."""
+    """Construct an automatic decision policy from an encounter behavior definition.
+
+    >>> from types import SimpleNamespace
+    >>> behavior = build_behavior(
+    ...     SimpleNamespace(behavior=SimpleNamespace(type="wait"))
+    ... )
+    >>> next(behavior) is None
+    True
+    >>> next(behavior).kind
+    'wait'
+    """
 
     if participant.behavior.type == "wait":
         return _wait_behavior()
@@ -142,7 +152,13 @@ def _patrol_behavior(
 
 
 def step_toward(start: Position, target: Position) -> str | None:
-    """Return the adjacent grid step that approaches a destination."""
+    """Return the adjacent grid step that approaches a destination.
+
+    >>> step_toward(Position(1, 1), Position(4, 0))
+    'up-right'
+    >>> step_toward(Position(1, 1), Position(1, 1)) is None
+    True
+    """
 
     dx = sign(target.x - start.x)
     dy = sign(target.y - start.y)
@@ -153,7 +169,11 @@ def step_toward(start: Position, target: Position) -> str | None:
 
 
 def sign(value: int) -> int:
-    """Reduce an integer displacement to its direction component."""
+    """Reduce an integer displacement to its direction component.
+
+    >>> (sign(-7), sign(0), sign(12))
+    (-1, 0, 1)
+    """
 
     if value < 0:
         return -1
@@ -163,12 +183,25 @@ def sign(value: int) -> int:
 
 
 def is_adjacent(a: Position, b: Position) -> bool:
-    """Return whether two cells share an edge or corner."""
+    """Return whether two cells share an edge or corner.
+
+    >>> is_adjacent(Position(1, 1), Position(2, 2))
+    True
+    >>> is_adjacent(Position(1, 1), Position(3, 1))
+    False
+    """
 
     return grid_distance_between(a, b) == 1
 
 
 def movement_budget_for(creature: Creature, grid: Grid) -> MovementBudget:
-    """Return the movement budget available to the behavior's creature."""
+    """Return the movement budget available to the behavior's creature.
+
+    >>> from types import SimpleNamespace
+    >>> movement_budget_for(
+    ...     SimpleNamespace(effective_speed_feet=lambda: 30), Grid(10, 10)
+    ... )
+    6
+    """
 
     return grid.movement_budget(creature.effective_speed_feet())

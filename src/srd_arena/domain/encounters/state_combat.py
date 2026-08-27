@@ -23,7 +23,25 @@ def attack_roll_mode_for(
     attacker_position: Position | None,
     nearby_opponent_positions: tuple[Position, ...],
 ) -> D20RollMode:
-    """Resolve advantage or disadvantage for an attacker-target pair."""
+    """Resolve advantage or disadvantage for an attacker-target pair.
+
+    >>> from types import SimpleNamespace
+    >>> effective = SimpleNamespace(
+    ...     has_trait=lambda trait: False
+    ... )
+    >>> state = SimpleNamespace(
+    ...     effective_conditions_for=lambda ref: effective, conditions=[],
+    ...     ongoing_effects=[],
+    ...     combat_rules=SimpleNamespace(
+    ...         roll_modifiers=lambda *args, **kwargs: SimpleNamespace(mode="normal")
+    ...     ),
+    ... )
+    >>> attack_roll_mode_for(
+    ...     state, "archer", "goblin", "ranged", Position(0, 0),
+    ...     (Position(1, 0),),
+    ... )
+    'disadvantage'
+    """
 
     modes: list[D20RollMode] = []
     base_mode = attack_roll_mode(
@@ -74,7 +92,20 @@ def automatic_critical_provider_ids_for(
     attacker_ref: CreatureRef,
     target_ref: CreatureRef,
 ) -> tuple[str, ...]:
-    """Return active rules that make a qualifying hit automatically critical."""
+    """Return active rules that make a qualifying hit automatically critical.
+
+    >>> from types import SimpleNamespace
+    >>> effective = SimpleNamespace(
+    ...     providers_for_trait=lambda trait: ("paralyzed:spell",)
+    ... )
+    >>> positions = {"hero": Position(0, 0), "target": Position(1, 0)}
+    >>> state = SimpleNamespace(
+    ...     _creature_position=lambda ref: positions[ref],
+    ...     effective_conditions_for=lambda ref: effective,
+    ... )
+    >>> automatic_critical_provider_ids_for(state, "hero", "target")
+    ('paralyzed:spell',)
+    """
 
     if not is_adjacent(
         state._creature_position(attacker_ref),
@@ -91,7 +122,18 @@ def automatic_save_failure_provider_ids_for(
     target_ref: CreatureRef,
     ability: str,
 ) -> tuple[str, ...]:
-    """Return active rules that force a creature to fail the specified save."""
+    """Return active rules that force a creature to fail the specified save.
+
+    >>> from types import SimpleNamespace
+    >>> effective = SimpleNamespace(
+    ...     providers_for_trait=lambda trait: ("stunned:monk",)
+    ... )
+    >>> state = SimpleNamespace(effective_conditions_for=lambda ref: effective)
+    >>> automatic_save_failure_provider_ids_for(state, "target", "dexterity")
+    ('stunned:monk',)
+    >>> automatic_save_failure_provider_ids_for(state, "target", "wisdom")
+    ()
+    """
 
     trait = {
         "strength": CombatTrait.AUTO_FAIL_STRENGTH_SAVES,
@@ -103,7 +145,16 @@ def automatic_save_failure_provider_ids_for(
 
 
 def active_status_effects(state: EncounterState) -> list[TriggeredEffect]:
-    """Return triggered rules exposed by all active conditions and ongoing effects."""
+    """Return triggered rules exposed by all active conditions.
+
+    >>> from types import SimpleNamespace
+    >>> effect = TriggeredEffect("e", "condition", "prone", "hit", "notify")
+    >>> state = SimpleNamespace(
+    ...     conditions=[SimpleNamespace(triggered_effects=(effect,))]
+    ... )
+    >>> active_status_effects(state)
+    [TriggeredEffect(id='e', source_type='condition', source_id='prone', trigger='hit', operation='notify', conditions={}, parameters={})]
+    """
 
     return [
         effect for status in state.conditions for effect in status.triggered_effects
@@ -115,7 +166,13 @@ def attack_roll_mode(
     attacker_position: Position | None,
     nearby_opponent_positions: tuple[Position, ...],
 ) -> D20RollMode:
-    """Combine all active modifiers that affect an attack roll's mode."""
+    """Apply the adjacent-opponent penalty to ranged attacks.
+
+    >>> attack_roll_mode("ranged", Position(0, 0), (Position(1, 1),))
+    'disadvantage'
+    >>> attack_roll_mode("melee", Position(0, 0), (Position(1, 1),))
+    'normal'
+    """
 
     if attack_type != "ranged" or attacker_position is None:
         return "normal"
@@ -128,7 +185,13 @@ def attack_roll_mode(
 
 
 def combine_roll_modes(modes: list[D20RollMode]) -> D20RollMode:
-    """Collapse multiple advantage and disadvantage sources by cancellation."""
+    """Collapse multiple advantage and disadvantage sources by cancellation.
+
+    >>> combine_roll_modes(["advantage", "advantage"])
+    'advantage'
+    >>> combine_roll_modes(["advantage", "disadvantage"])
+    'normal'
+    """
 
     advantages = sum(1 for mode in modes if mode == "advantage")
     disadvantages = sum(1 for mode in modes if mode == "disadvantage")

@@ -12,7 +12,24 @@ if TYPE_CHECKING:
 
 
 def creature_controller(state: EncounterState, creature_ref: CreatureRef) -> str:
-    """Return the controller assigned to a creature in this encounter."""
+    """Return the controller assigned to a creature in this encounter.
+
+    >>> from types import SimpleNamespace
+    >>> from .definitions import EncounterDefinition, EncounterParticipant
+    >>> from .definitions import EncounterTeam
+    >>> from ..geometry import Grid, Position
+    >>> definition = EncounterDefinition(
+    ...     "duel", Grid(5, 5),
+    ...     [EncounterParticipant("hero", Position(0, 0))],
+    ...     [EncounterTeam("heroes", "Heroes", ["hero"], "external")],
+    ... )
+    >>> state = SimpleNamespace(
+    ...     definition=definition,
+    ...     creatures={"participant:hero": SimpleNamespace(creature_id="hero")},
+    ... )
+    >>> creature_controller(state, "participant:hero")
+    'external'
+    """
 
     creature_id = creature_id_for_ref(state, creature_ref)
     participant = next(
@@ -33,13 +50,36 @@ def creature_controller(state: EncounterState, creature_ref: CreatureRef) -> str
 
 
 def creature_id_for_ref(state: EncounterState, creature_ref: CreatureRef) -> str:
-    """Resolve a runtime creature reference to its content template identifier."""
+    """Resolve a runtime creature reference to its content template identifier.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(
+    ...     creatures={"participant:hero": SimpleNamespace(creature_id="hero")}
+    ... )
+    >>> creature_id_for_ref(state, "participant:hero")
+    'hero'
+    """
 
     return state.creatures[creature_ref].creature_id
 
 
 def creature_team_id(state: EncounterState, creature_ref: CreatureRef) -> str:
-    """Return the team containing a runtime creature reference."""
+    """Return the team containing a runtime creature reference.
+
+    >>> from types import SimpleNamespace
+    >>> from .definitions import EncounterDefinition, EncounterTeam
+    >>> from ..geometry import Grid
+    >>> state = SimpleNamespace(
+    ...     definition=EncounterDefinition(
+    ...         "duel", Grid(5, 5), teams=[
+    ...             EncounterTeam("heroes", "Heroes", ["hero"], "external")
+    ...         ]
+    ...     ),
+    ...     creatures={"participant:hero": SimpleNamespace(creature_id="hero")},
+    ... )
+    >>> creature_team_id(state, "participant:hero")
+    'heroes'
+    """
 
     creature_id = creature_id_for_ref(state, creature_ref)
     team = next(
@@ -54,7 +94,29 @@ def creatures_are_opponents(
     first_creature_ref: CreatureRef,
     second_creature_ref: CreatureRef,
 ) -> bool:
-    """Return whether two creatures belong to different encounter teams."""
+    """Return whether two creatures belong to different encounter teams.
+
+    >>> from types import SimpleNamespace
+    >>> from .definitions import EncounterDefinition, EncounterTeam
+    >>> from ..geometry import Grid
+    >>> definition = EncounterDefinition(
+    ...     "duel", Grid(5, 5), teams=[
+    ...         EncounterTeam("heroes", "Heroes", ["hero"], "external"),
+    ...         EncounterTeam("foes", "Foes", ["goblin"], "scripted"),
+    ...     ]
+    ... )
+    >>> state = SimpleNamespace(
+    ...     definition=definition,
+    ...     creatures={
+    ...         "participant:hero": SimpleNamespace(creature_id="hero"),
+    ...         "participant:goblin": SimpleNamespace(creature_id="goblin"),
+    ...     },
+    ... )
+    >>> creatures_are_opponents(
+    ...     state, "participant:hero", "participant:goblin"
+    ... )
+    True
+    """
 
     return creature_team_id(state, first_creature_ref) != creature_team_id(
         state, second_creature_ref
@@ -62,6 +124,15 @@ def creatures_are_opponents(
 
 
 def creature_for_ref(state: EncounterState, creature_ref: CreatureRef) -> Creature:
-    """Return the mutable creature owned by a runtime encounter participant."""
+    """Return the mutable creature owned by a runtime encounter participant.
+
+    >>> from types import SimpleNamespace
+    >>> creature = object()
+    >>> state = SimpleNamespace(
+    ...     creatures={"participant:hero": SimpleNamespace(creature=creature)}
+    ... )
+    >>> creature_for_ref(state, "participant:hero") is creature
+    True
+    """
 
     return state.creatures[creature_ref].creature

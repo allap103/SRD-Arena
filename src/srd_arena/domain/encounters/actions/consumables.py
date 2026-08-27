@@ -11,7 +11,21 @@ from ...equipment import Item
 def healing_potions_in_inventory(
     creature: Creature, items_by_id: dict[str, Item]
 ) -> list[Item]:
-    """Return inventory items whose tags identify them as healing potions."""
+    """Return unique inventory items identified as healing potions.
+
+    >>> from types import SimpleNamespace
+    >>> potion = Item(
+    ...     "healing_potion", "Potion of Healing", "{@dice 2d4 + 2}", "potion",
+    ...     item_type="P", misc_tags=["CNS"],
+    ... )
+    >>> creature = SimpleNamespace(
+    ...     inventory=SimpleNamespace(items=["healing_potion", "healing_potion"])
+    ... )
+    >>> [item.id for item in healing_potions_in_inventory(
+    ...     creature, {"healing_potion": potion}
+    ... )]
+    ['healing_potion']
+    """
 
     seen: set[str] = set()
     potions: list[Item] = []
@@ -26,7 +40,15 @@ def healing_potions_in_inventory(
 
 
 def healing_potion_dice(item: Item) -> tuple[int, int, int] | None:
-    """Return the healing dice encoded by a supported potion's rules tags."""
+    """Return the healing dice encoded by a supported potion's rules tags.
+
+    >>> potion = Item(
+    ...     "healing_potion", "Potion of Healing", "{@dice 2d4 + 2}", "potion",
+    ...     item_type="P", misc_tags=["CNS"],
+    ... )
+    >>> healing_potion_dice(potion)
+    (2, 4, 2)
+    """
 
     if not item.item_type.startswith("P"):
         return None

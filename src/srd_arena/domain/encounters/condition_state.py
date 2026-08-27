@@ -53,7 +53,25 @@ def apply_condition(
     state: EncounterState,
     applied: AppliedCondition,
 ) -> ConditionApplicationResult:
-    """Store one sourced condition application unless immunity prevents it."""
+    """Store one sourced condition application unless immunity prevents it.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     condition_immunities=lambda: frozenset(),
+    ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(creature=creature)},
+    ...     conditions=[], relationships=[],
+    ... )
+    >>> applied = build_applied_condition(
+    ...     condition=Condition.PRONE, source_ref="fall",
+    ...     source_label="Fall", target_ref="hero",
+    ... )
+    >>> result = apply_condition(state, applied)
+    >>> (result.accepted, state.conditions == [applied])
+    (True, True)
+    """
 
     target = state.creatures[applied.target_ref].creature
     if applied.condition in target.condition_immunities():
@@ -112,7 +130,18 @@ def remove_condition(
     *,
     removed_by_ref: CreatureRef | None = None,
 ) -> None:
-    """Remove all applications of a condition kind from a creature."""
+    """Remove all applications of a condition kind from a creature.
+
+    >>> from types import SimpleNamespace
+    >>> applied = build_applied_condition(
+    ...     condition=Condition.PRONE, source_ref="fall",
+    ...     source_label="Fall", target_ref="hero",
+    ... )
+    >>> state = SimpleNamespace(conditions=[applied], relationships=[])
+    >>> remove_condition(state, "hero", Condition.PRONE)
+    >>> state.conditions
+    []
+    """
 
     remove_condition_from_source(
         state,
@@ -130,7 +159,24 @@ def remove_condition_from_source(
     *,
     removed_by_ref: CreatureRef | None = None,
 ) -> None:
-    """Remove only applications matching both condition kind and source identity."""
+    """Remove only applications matching both condition kind and source identity.
+
+    >>> from types import SimpleNamespace
+    >>> first = build_applied_condition(
+    ...     condition=Condition.GRAPPLED, source_ref="ogre",
+    ...     source_label="Ogre", target_ref="hero",
+    ... )
+    >>> second = build_applied_condition(
+    ...     condition=Condition.GRAPPLED, source_ref="snake",
+    ...     source_label="Snake", target_ref="hero",
+    ... )
+    >>> state = SimpleNamespace(conditions=[first, second], relationships=[])
+    >>> remove_condition_from_source(
+    ...     state, "hero", Condition.GRAPPLED, source_ref="ogre"
+    ... )
+    >>> [condition.source_ref for condition in state.conditions]
+    ['snake']
+    """
 
     removed_ids = {
         applied.id
@@ -159,7 +205,18 @@ def condition_sources_for(
     creature_ref: CreatureRef,
     condition: Condition,
 ) -> tuple[CreatureRef, ...]:
-    """Return creatures responsible for matching condition applications."""
+    """Return creatures responsible for matching condition applications.
+
+    >>> from types import SimpleNamespace
+    >>> applied = build_applied_condition(
+    ...     condition=Condition.GRAPPLED, source_ref="ogre",
+    ...     source_label="Ogre", target_ref="hero",
+    ... )
+    >>> condition_sources_for(
+    ...     SimpleNamespace(conditions=[applied]), "hero", Condition.GRAPPLED
+    ... )
+    ('ogre',)
+    """
 
     return tuple(
         applied.source_ref
@@ -174,6 +231,18 @@ def condition_replaces(
     existing: AppliedCondition,
     applied: AppliedCondition,
 ) -> bool:
-    """Return whether a new application replaces the same runtime occurrence."""
+    """Return whether a new application replaces the same runtime occurrence.
+
+    >>> first = build_applied_condition(
+    ...     condition=Condition.PRONE, source_ref="fall",
+    ...     source_label="Fall", target_ref="hero",
+    ... )
+    >>> replacement = build_applied_condition(
+    ...     condition=Condition.PRONE, source_ref="fall",
+    ...     source_label="Fall", target_ref="hero",
+    ... )
+    >>> condition_replaces(first, replacement)
+    True
+    """
 
     return existing.id == applied.id

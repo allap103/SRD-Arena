@@ -27,7 +27,26 @@ def apply_grapple(
     state: EncounterState,
     applied: AppliedCondition,
 ) -> ConditionApplicationResult:
-    """Apply Grappled to a target and record the grappler-target relationship."""
+    """Apply Grappled to a target and record the grappler-target relationship.
+
+    >>> from types import SimpleNamespace
+    >>> from ..effects.conditions import build_applied_condition
+    >>> creature = SimpleNamespace(
+    ...     condition_immunities=lambda: frozenset(),
+    ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(creature=creature)},
+    ...     conditions=[], relationships=[],
+    ... )
+    >>> applied = build_applied_condition(
+    ...     condition=Condition.GRAPPLED, source_ref="ogre",
+    ...     source_label="Ogre", target_ref="hero",
+    ... )
+    >>> result = apply_grapple(state, applied)
+    >>> (result.accepted, state.relationships[0].source_ref)
+    (True, 'ogre')
+    """
 
     if applied.condition is not Condition.GRAPPLED:
         raise ValueError("A grapple relationship requires Grappled.")
@@ -71,7 +90,21 @@ def remove_relationships_for_creature(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> None:
-    """End grapple relationships in which a removed creature appears on either side."""
+    """End grapple relationships in which a removed creature appears on either side.
+
+    >>> from types import SimpleNamespace
+    >>> relationship = SimpleNamespace(
+    ...     kind=RelationshipKind.GRAPPLING, source_ref="ogre",
+    ...     target_ref="hero", identity=SimpleNamespace(parent_id="condition-1"),
+    ... )
+    >>> condition = SimpleNamespace(id="condition-1")
+    >>> state = SimpleNamespace(
+    ...     relationships=[relationship], conditions=[condition]
+    ... )
+    >>> remove_relationships_for_creature(state, "ogre")
+    >>> (state.relationships, state.conditions)
+    ([], [])
+    """
 
     from .ongoing_effects import end_concentration
 
@@ -109,7 +142,17 @@ def grappled_sources_for(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> tuple[CreatureRef, ...]:
-    """Return creatures currently imposing Grappled on the target."""
+    """Return creatures currently imposing Grappled on the target.
+
+    >>> from types import SimpleNamespace
+    >>> from ..effects.conditions import build_applied_condition
+    >>> condition = build_applied_condition(
+    ...     condition=Condition.GRAPPLED, source_ref="ogre",
+    ...     source_label="Ogre", target_ref="hero",
+    ... )
+    >>> grappled_sources_for(SimpleNamespace(conditions=[condition]), "hero")
+    ('ogre',)
+    """
 
     return condition_sources_for(state, creature_ref, Condition.GRAPPLED)
 
@@ -118,7 +161,18 @@ def grappling_targets_for(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> tuple[CreatureRef, ...]:
-    """Return living creatures currently grappled by the source."""
+    """Return creatures currently grappled by the source.
+
+    >>> from types import SimpleNamespace
+    >>> relationship = SimpleNamespace(
+    ...     kind=RelationshipKind.GRAPPLING,
+    ...     source_ref="ogre", target_ref="hero",
+    ... )
+    >>> grappling_targets_for(
+    ...     SimpleNamespace(relationships=[relationship]), "ogre"
+    ... )
+    ('hero',)
+    """
 
     return tuple(
         relationship.target_ref
@@ -129,7 +183,17 @@ def grappling_targets_for(
 
 
 def is_grappled(state: EncounterState, creature_ref: CreatureRef) -> bool:
-    """Return whether any active source currently grapples the creature."""
+    """Return whether any active source currently grapples the creature.
+
+    >>> from types import SimpleNamespace
+    >>> from ..effects.conditions import build_applied_condition
+    >>> condition = build_applied_condition(
+    ...     condition=Condition.GRAPPLED, source_ref="ogre",
+    ...     source_label="Ogre", target_ref="hero",
+    ... )
+    >>> is_grappled(SimpleNamespace(conditions=[condition]), "hero")
+    True
+    """
 
     return bool(grappled_sources_for(state, creature_ref))
 
@@ -138,7 +202,20 @@ def movement_cost_for(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> MovementCost | None:
-    """Include the cost of dragging grappled creatures in a movement step."""
+    """Include the cost of dragging grappled creatures in a movement step.
+
+    >>> from types import SimpleNamespace
+    >>> relationship = SimpleNamespace(
+    ...     kind=RelationshipKind.GRAPPLING,
+    ...     source_ref="ogre", target_ref="hero",
+    ... )
+    >>> state = SimpleNamespace(
+    ...     conditions=[], relationships=[relationship],
+    ...     _creature_size=lambda ref: {"ogre": "L", "hero": "M"}[ref],
+    ... )
+    >>> movement_cost_for(state, "ogre")
+    2
+    """
 
     if is_grappled(state, creature_ref):
         return None
