@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from srd_arena.infrastructure.scenarios import load_scenario
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 from srd_arena.domain.creatures.feature_rules import (
     CapabilityActionResult,
     resolve_feature_action,
@@ -10,7 +10,7 @@ FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 
 
 def test_second_wind_returns_healing_effect_result() -> None:
-    session = load_scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     creature = session.encounter_state.creatures["player"].creature
@@ -38,7 +38,7 @@ def test_second_wind_returns_healing_effect_result() -> None:
 
 
 def test_action_surge_returns_extra_action_result() -> None:
-    session = load_scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.get_scene_view()
     assert session.encounter_state is not None
     creature = session.encounter_state.creatures["player"].creature

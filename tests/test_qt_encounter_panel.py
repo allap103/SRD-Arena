@@ -17,7 +17,7 @@ from srd_arena.frontends.gui.app import GameWindow
 from srd_arena.frontends.gui.ui.encounter.panel_renderer import (
     EncounterPanelRenderer,
 )
-from srd_arena.infrastructure.scenarios import load_scenario
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
@@ -25,7 +25,7 @@ SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
 
 def test_game_window_delegates_encounter_controls_to_panel_renderer() -> None:
     app = QApplication.instance() or QApplication([])
-    session = load_scenario(SCENARIOS_ROOT / "slow_showcase").create_session()
+    session = load_scenario_directory(SCENARIOS_ROOT / "slow_showcase").create_session()
 
     window = GameWindow(RunningGame(session), show_encounter_json=True)
 

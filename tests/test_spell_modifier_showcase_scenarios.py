@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from srd_arena.infrastructure.scenarios import load_scenario
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
 
 
 def test_spell_modifier_showcase_loads_new_modifier_spells() -> None:
-    scenario = load_scenario(SCENARIOS_ROOT / "spell_modifier_showcase")
+    scenario = load_scenario_directory(SCENARIOS_ROOT / "spell_modifier_showcase")
     session = scenario.create_session()
     session.get_scene_view()
 
@@ -35,7 +35,7 @@ def test_spell_modifier_showcase_loads_new_modifier_spells() -> None:
 
 
 def test_spell_effect_lifecycle_showcase_loads_recent_spell_lifecycles() -> None:
-    scenario = load_scenario(SCENARIOS_ROOT / "spell_effect_lifecycle_showcase")
+    scenario = load_scenario_directory(SCENARIOS_ROOT / "spell_effect_lifecycle_showcase")
     session = scenario.create_session()
     session.get_scene_view()
 
@@ -55,7 +55,7 @@ def test_spell_effect_lifecycle_showcase_loads_recent_spell_lifecycles() -> None
 
 
 def test_slow_showcase_exposes_six_of_seven_rules_subjects() -> None:
-    scenario = load_scenario(SCENARIOS_ROOT / "slow_showcase")
+    scenario = load_scenario_directory(SCENARIOS_ROOT / "slow_showcase")
     session = scenario.create_session()
     session.get_scene_view()
 

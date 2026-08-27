@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from srd_arena.infrastructure.scenarios import load_scenario
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 
 SCENARIO_DIR = (
@@ -9,7 +9,7 @@ SCENARIO_DIR = (
 
 
 def test_spell_damage_showcase_loads_wave_1a_demo_spellcaster() -> None:
-    session = load_scenario(str(SCENARIO_DIR)).create_session()
+    session = load_scenario_directory(str(SCENARIO_DIR)).create_session()
     session.get_scene_view()
 
     assert session.encounter_state is not None

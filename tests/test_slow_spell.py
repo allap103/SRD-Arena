@@ -26,7 +26,7 @@ from srd_arena.domain.spells.rules import (
     parse_spell_action_value,
     spell_action_value,
 )
-from srd_arena.infrastructure.scenarios import load_scenario
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 _ORCHESTRATOR = EncounterOrchestrator()
 
@@ -95,7 +95,7 @@ def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
 def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     monkeypatch,
 ) -> None:
-    session = load_scenario(
+    session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
@@ -260,7 +260,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
 
 
 def test_slow_chosen_area_never_exceeds_six_targets(monkeypatch) -> None:
-    session = load_scenario(
+    session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
@@ -316,7 +316,7 @@ def test_slow_chosen_area_never_exceeds_six_targets(monkeypatch) -> None:
 
 
 def _assassin_showcase_state() -> EncounterState:
-    session = load_scenario(
+    session = load_scenario_directory(
         str(STAT_BLOCK_ACTION_SCENARIO_DIR),
         start_scene="stat_block_action_showcase",
     ).create_session()
@@ -454,7 +454,7 @@ def test_ending_slow_mid_multiattack_restores_pending_attacks(
 def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
     monkeypatch,
 ) -> None:
-    session = load_scenario(
+    session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
@@ -529,7 +529,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
 def test_ending_slow_mid_attack_restores_unused_extra_attack(
     monkeypatch,
 ) -> None:
-    session = load_scenario(
+    session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()

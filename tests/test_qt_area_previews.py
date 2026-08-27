@@ -13,7 +13,7 @@ from srd_arena.frontends.gui.ui.encounter.targeting import (
     pending_area_overlay,
 )
 from srd_arena.frontends.shared.models import BattlefieldView
-from srd_arena.infrastructure.scenarios import load_scenario
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
@@ -46,7 +46,7 @@ def test_slow_pending_area_preview_is_an_eight_square_cube(monkeypatch) -> None:
         ]
 
     monkeypatch.setattr(EncounterState, "_roll_initiative", _tempo_archmage_first)
-    session = load_scenario(SCENARIOS_ROOT / "slow_showcase").create_session()
+    session = load_scenario_directory(SCENARIOS_ROOT / "slow_showcase").create_session()
     session.get_scene_view()
     observation = observe_session(session)
     slow_action = next(

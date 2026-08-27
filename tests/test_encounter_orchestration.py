@@ -6,7 +6,7 @@ from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.effects import EffectResult, TriggeredEffect
 from srd_arena.domain.effects.application import condition_from_effect
-from srd_arena.infrastructure.scenarios import load_scenario
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 from srd_arena.engine.session import Session
 
 
@@ -27,7 +27,7 @@ def _stable_initiative(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _all_external_session() -> Session:
-    scenario = load_scenario(
+    scenario = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     )
@@ -71,7 +71,7 @@ def test_scripted_turns_advance_until_the_next_external_decision(
         "srd_arena.domain.encounters.encounter.roll_die",
         lambda _sides: 1,
     )
-    session = load_scenario(
+    session = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     ).create_session()
@@ -96,7 +96,7 @@ def test_scripted_turns_advance_until_the_next_external_decision(
 
 
 def test_pacing_pause_skips_defeated_initiative_slots_first() -> None:
-    scenario = load_scenario(
+    scenario = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     )
@@ -151,7 +151,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
         "srd_arena.domain.encounters.encounter.roll_die",
         lambda _sides: 1,
     )
-    session = load_scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
     session.get_scene_view()
     state = session.encounter_state
     assert state is not None
@@ -222,7 +222,7 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement(
         "srd_arena.domain.encounters.encounter.roll_dice",
         lambda _count, sides: sides,
     )
-    session = load_scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
     session.get_scene_view()
     state = session.encounter_state
     assert state is not None
@@ -264,7 +264,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
         "srd_arena.domain.encounters.encounter.roll_dice",
         lambda _count, _sides: 1,
     )
-    session = load_scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
     session.get_scene_view()
     state = session.encounter_state
     assert state is not None
@@ -356,7 +356,7 @@ def test_passing_reaction_closes_it_before_parent_movement_resumes(
         "srd_arena.domain.encounters.encounter.roll_die",
         lambda _sides: 1,
     )
-    session = load_scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
     session.get_scene_view()
     state = session.encounter_state
     assert state is not None
@@ -399,7 +399,7 @@ def test_passing_reaction_closes_it_before_parent_movement_resumes(
 
 
 def test_resumed_movement_carries_a_grappled_creature() -> None:
-    session = load_scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
     session.get_scene_view()
     state = session.encounter_state
     assert state is not None
@@ -449,7 +449,7 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
         "srd_arena.domain.encounters.encounter.roll_die",
         lambda _sides: 1,
     )
-    scenario = load_scenario(
+    scenario = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     )
