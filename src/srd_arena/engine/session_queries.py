@@ -40,7 +40,7 @@ def read_session(session: Session) -> SessionRead:
     >>> session = SimpleNamespace(
     ...     pending_scene_transition=SimpleNamespace(message="Victory!"),
     ...     encounter_state=None,
-    ...     current_encounter=SimpleNamespace(id="demo", teams=[]),
+    ...     _current_encounter=SimpleNamespace(id="demo", teams=[]),
     ...     item_templates={})
     >>> [option.label for option in read_session(session).action_options]
     ['Continue', 'Exit game']
@@ -111,12 +111,12 @@ def _session_read(
         else None
     )
     return SessionRead(
-        scene_id=session.current_encounter.id,
+        scene_id=session._current_encounter.id,
         scene_text=scene_text,
         action_options=tuple(action_options),
         encounter_state=state,
         transition_message=transition_message,
-        team_ids=tuple(team.id for team in session.current_encounter.teams),
+        team_ids=tuple(team.id for team in session._current_encounter.teams),
         creature_labels=(
             {
                 creature_ref: creature_label(state, creature_ref)

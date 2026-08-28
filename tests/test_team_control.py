@@ -13,6 +13,9 @@ from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.engine.session import Session
 from srd_arena.frontends.gui.presentation.session import build_session_presentation
 from srd_arena.infrastructure.scenarios import load_scenario_directory
+from tests.encounter_runtime_support import (
+    choose_advertised_action as _choose_advertised_action,
+)
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
@@ -216,7 +219,7 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends(
         for action in state.available_actions()
         if action.kind == "attack" and action.value == "red_blade"
     )
-    session.choose_encounter_action(first_attack)
+    _choose_advertised_action(session, first_attack)
 
     assert state.current_decision().creature_ref == "champion_2"
     assert brynn.attacks_remaining == 1
@@ -226,7 +229,7 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends(
         for action in state.available_actions()
         if action.kind == "attack" and action.value == "red_blade"
     )
-    session.choose_encounter_action(second_attack)
+    _choose_advertised_action(session, second_attack)
 
     assert state.current_decision().creature_ref == "champion_2"
     assert brynn.attacks_remaining == 0
@@ -262,7 +265,7 @@ def test_secondary_champion_can_use_class_feature() -> None:
         for action in session.encounter_state.available_actions()
         if action.kind == "feature" and action.value == "second_wind"
     )
-    session.choose_encounter_action(second_wind)
+    _choose_advertised_action(session, second_wind)
 
     assert brynn.get_health() > 10
     assert session.encounter_state.current_decision().creature_ref == "champion_2"
@@ -284,7 +287,7 @@ def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
 
     assert state.current_decision().creature_ref == "red_blade"
     assert state.current_decision().kind == "reaction"
@@ -293,7 +296,7 @@ def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    session.choose_encounter_action(opportunity_attack)
+    _choose_advertised_action(session, opportunity_attack)
 
     assert goblin.reaction_available is False
     assert state.current_decision().creature_ref == "champion_2"
@@ -315,7 +318,7 @@ def test_user_controlled_goblin_chooses_reaction_to_primary_movement() -> None:
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
 
     assert state.current_decision().creature_ref == "red_blade"
     opportunity_attack = next(
@@ -323,7 +326,7 @@ def test_user_controlled_goblin_chooses_reaction_to_primary_movement() -> None:
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    session.choose_encounter_action(opportunity_attack)
+    _choose_advertised_action(session, opportunity_attack)
 
     assert goblin.reaction_available is False
     assert state.current_decision().creature_ref == "player"
@@ -353,7 +356,7 @@ def test_effectively_incapacitated_creature_gets_no_reaction_prompt() -> None:
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
 
     assert state.current_decision().creature_ref == "player"
     assert state.current_decision().kind == "turn"
@@ -390,7 +393,7 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
 
     assert state.current_decision().creature_ref == "player"
     assert goblin.reaction_available is True
@@ -422,7 +425,7 @@ def test_ai_controlled_creature_resolves_opportunity_attack_automatically(
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    result = session.choose_encounter_action(move)
+    result = _choose_advertised_action(session, move)
 
     assert reactor.reaction_available is False
     assert state.current_decision().creature_ref == "player"
@@ -456,7 +459,7 @@ def test_brynn_can_take_an_opportunity_attack(
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
 
     assert state.current_decision().creature_ref == "champion_2"
     opportunity_attack = next(
@@ -464,7 +467,7 @@ def test_brynn_can_take_an_opportunity_attack(
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    session.choose_encounter_action(opportunity_attack)
+    _choose_advertised_action(session, opportunity_attack)
 
     assert brynn.reaction_available is False
     assert state.current_decision().creature_ref == "red_blade"

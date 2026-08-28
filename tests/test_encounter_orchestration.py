@@ -9,6 +9,9 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.grappling_state import apply_grapple
 from srd_arena.engine.session import Session
 from srd_arena.infrastructure.scenarios import load_scenario_directory
+from tests.encounter_runtime_support import (
+    choose_advertised_action as _choose_advertised_action,
+)
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 FULL_CONTROL_SCENARIO_DIR = (
@@ -46,7 +49,7 @@ def test_manual_action_submission_returns_to_the_same_turn_until_wait() -> None:
     start = (state.active_position.x, state.active_position.y)
     move = next(action for action in state.available_actions() if action.kind == "move")
 
-    moved = session.choose_encounter_action(move)
+    moved = _choose_advertised_action(session, move)
 
     assert moved.selected_action_id == move.id
     assert state.current_decision().kind == "turn"
@@ -55,7 +58,7 @@ def test_manual_action_submission_returns_to_the_same_turn_until_wait() -> None:
     assert state.active_movement_remaining == 5
 
     wait = next(action for action in state.available_actions() if action.kind == "wait")
-    session.choose_encounter_action(wait)
+    _choose_advertised_action(session, wait)
 
     assert state.current_decision().creature_ref == "goblin_1"
 
@@ -76,7 +79,7 @@ def test_scripted_turns_advance_until_the_next_external_decision(
     assert state is not None
     wait = next(action for action in state.available_actions() if action.kind == "wait")
 
-    result = session.choose_encounter_action(wait)
+    result = _choose_advertised_action(session, wait)
 
     assert state.current_decision().kind == "turn"
     assert state.current_decision().creature_ref == "player"
@@ -160,7 +163,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
         if action.kind == "move" and action.value == "up"
     )
 
-    interrupted = session.choose_encounter_action(move)
+    interrupted = _choose_advertised_action(session, move)
 
     assert state.current_decision().kind == "reaction"
     assert state.current_decision().creature_ref == "red_blade"
@@ -179,7 +182,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    resumed = session.choose_encounter_action(opportunity_attack)
+    resumed = _choose_advertised_action(session, opportunity_attack)
 
     assert state.pending_movement is None
     assert state.current_decision().kind == "turn"
@@ -220,13 +223,13 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement(
         if action.kind == "move" and action.value == "up"
     )
 
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
     opportunity_attack = next(
         action
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    resolved = session.choose_encounter_action(opportunity_attack)
+    resolved = _choose_advertised_action(session, opportunity_attack)
 
     assert mover.is_alive is False
     assert (mover.position.x, mover.position.y) == (3, 3)
@@ -271,14 +274,14 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
         if action.kind == "move" and action.value == "up"
     )
 
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
     reaction_frame = state.current_decision()
     opportunity_attack = next(
         action
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    session.choose_encounter_action(opportunity_attack)
+    _choose_advertised_action(session, opportunity_attack)
 
     assert state.current_decision().kind == "reroll_dice"
     assert [frame.kind for frame in state.interrupts.decision_stack] == [
@@ -290,7 +293,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
         action for action in state.available_actions() if action.kind == "reroll_die"
     )
 
-    still_interrupted = session.choose_encounter_action(reroll)
+    still_interrupted = _choose_advertised_action(session, reroll)
 
     assert state.current_decision().id == reroll_frame.id
     assert [frame.id for frame in state.interrupts.decision_stack] == [
@@ -307,7 +310,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
         action for action in state.available_actions() if action.kind == "accept_roll"
     )
 
-    resumed = session.choose_encounter_action(accept_damage)
+    resumed = _choose_advertised_action(session, accept_damage)
 
     assert state.interrupts.decision_stack == []
     assert state.pending_movement is None
@@ -351,14 +354,14 @@ def test_passing_reaction_closes_it_before_parent_movement_resumes(
         if action.kind == "move" and action.value == "up"
     )
 
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
     reaction_frame = state.current_decision()
     assert state.pending_movement is not None
     movement_action_id = state.pending_movement.action_id
     pass_reaction = next(
         action for action in state.available_actions() if action.kind == "pass"
     )
-    resumed = session.choose_encounter_action(pass_reaction)
+    resumed = _choose_advertised_action(session, pass_reaction)
 
     assert state.interrupts.decision_stack == []
     assert state.pending_movement is None
@@ -410,14 +413,14 @@ def test_resumed_movement_carries_a_grappled_creature() -> None:
         if action.kind == "move" and action.value == "up"
     )
 
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
     assert state.pending_movement is not None
     assert state.pending_movement.companion_destinations["red_archer"].x == 4
     assert state.pending_movement.companion_destinations["red_archer"].y == 2
     pass_reaction = next(
         action for action in state.available_actions() if action.kind == "pass"
     )
-    session.choose_encounter_action(pass_reaction)
+    _choose_advertised_action(session, pass_reaction)
 
     assert (mover.position.x, mover.position.y) == (3, 2)
     assert (grappled.position.x, grappled.position.y) == (4, 2)
@@ -470,7 +473,7 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    resumed = session.choose_encounter_action(opportunity_attack)
+    resumed = _choose_advertised_action(session, opportunity_attack)
 
     assert state.pending_movement is None
     assert state.current_decision().kind == "turn"

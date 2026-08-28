@@ -110,6 +110,9 @@ from tests.encounter_runtime_support import (
     action_labels as _action_labels,
 )
 from tests.encounter_runtime_support import (
+    active_creature as _active_creature,
+)
+from tests.encounter_runtime_support import (
     as_mapping as _mapping,
 )
 from tests.encounter_runtime_support import (
@@ -1020,7 +1023,7 @@ def test_action_must_belong_to_current_decision_actor() -> None:
         ValueError,
         match="not current decision actor 'player'",
     ):
-        session.choose_encounter_action(action)
+        _ORCHESTRATOR.submit(session.encounter_state, action)
 
 
 def test_enriched_multiattack_queues_named_attacks(
@@ -1498,7 +1501,7 @@ def test_grapple_replaces_only_one_attack_in_multiattack(
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    session.decision_creature.combat_profile.attacks_per_attack_action = 2
+    _active_creature(session).combat_profile.attacks_per_attack_action = 2
     state.active_position.x = 4
     state.active_position.y = 4
     state.creatures["goblin_1"].position.x = 4
@@ -1526,7 +1529,7 @@ def test_grapple_can_replace_remaining_attack_after_weapon_attack(
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    session.decision_creature.combat_profile.attacks_per_attack_action = 2
+    _active_creature(session).combat_profile.attacks_per_attack_action = 2
     state.active_position.x = 4
     state.active_position.y = 4
     state.creatures["goblin_1"].position.x = 4

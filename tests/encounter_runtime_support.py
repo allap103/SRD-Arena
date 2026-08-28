@@ -9,8 +9,10 @@ from typing import cast
 import pytest
 
 from srd_arena.content.spells import SpellCatalog, build_spell
+from srd_arena.domain.creatures import Creature
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
 from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.domain.spells import Spell
 from srd_arena.engine.models import EngineOutcome
@@ -114,6 +116,27 @@ def action_id(session: Session, kind: str, value: object) -> str:
         and isinstance(action.details, DirectTargetOptionDetails)
         and action.details.target_ref == value
     )
+
+
+def active_creature(session: Session) -> Creature:
+    """Return the active creature from a concrete integration-test session."""
+
+    if session.encounter_state is None:
+        session.read()
+    state = session.encounter_state
+    assert state is not None
+    return state.active_creature_state.creature
+
+
+def choose_advertised_action(
+    session: Session,
+    action: EncounterAction,
+) -> EngineOutcome:
+    """Submit a domain action through the engine's advertised-ID boundary."""
+
+    advertised_ids = {option.id for option in session.read().action_options}
+    assert action.id in advertised_ids
+    return session.choose(action.id)
 
 
 def choose_directional_spell(

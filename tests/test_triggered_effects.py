@@ -13,6 +13,7 @@ from srd_arena.domain.rolls.dice import reroll_dice, resolve_dice
 from srd_arena.engine.queries import DirectTargetOptionDetails
 from srd_arena.engine.session import Session
 from srd_arena.infrastructure.scenarios import load_scenario_directory
+from tests.encounter_runtime_support import active_creature as _active_creature
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
@@ -95,11 +96,8 @@ def test_reroll_matching_dice_enforces_maximum_per_die() -> None:
 
 
 def test_tactical_fighter_loads_great_weapon_fighting_effect() -> None:
-    player = (
-        load_scenario_directory(TACTICAL_SCENARIO_DIR)
-        .create_session()
-        .decision_creature
-    )
+    session = load_scenario_directory(TACTICAL_SCENARIO_DIR).create_session()
+    player = _active_creature(session)
 
     [effect] = [
         effect
@@ -116,7 +114,7 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = _adjacent_tactical_encounter()
-    session.decision_creature.equipment.equipped_items["right_hand"] = "longsword"
+    _active_creature(session).equipment.equipped_items["right_hand"] = "longsword"
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 15
     )

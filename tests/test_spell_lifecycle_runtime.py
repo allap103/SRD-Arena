@@ -54,6 +54,9 @@ from tests.encounter_runtime_support import (
     player_first_initiative,
 )
 from tests.encounter_runtime_support import (
+    active_creature as _active_creature,
+)
+from tests.encounter_runtime_support import (
     as_mapping as _mapping,
 )
 from tests.encounter_runtime_support import (
@@ -80,7 +83,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save(
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -421,7 +424,7 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -509,7 +512,7 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -584,7 +587,7 @@ def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() ->
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -621,7 +624,7 @@ def test_ray_of_sickness_combines_scaled_damage_and_timed_condition(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -658,7 +661,7 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.attributes = replace(caster.attributes, level=11)
     caster.spellcasting.learned_spells.append(
@@ -715,7 +718,7 @@ def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -771,7 +774,7 @@ def test_weird_deals_damage_on_a_failed_repeat_save(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -808,7 +811,7 @@ def test_sleep_progresses_from_incapacitated_to_unconscious(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -849,7 +852,7 @@ def test_sleep_stages_choice_when_area_contains_multiple_creatures(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -911,7 +914,7 @@ def test_sleep_automatically_spares_ineligible_creature(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -973,7 +976,7 @@ def test_charm_person_save_has_advantage_against_opponent(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1248,7 +1251,7 @@ def test_hideous_laughter_prevents_target_from_removing_its_own_prone(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1294,7 +1297,7 @@ def test_hideous_laughter_success_is_reported_as_a_save(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1386,7 +1389,7 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.extend(
         (
@@ -1453,7 +1456,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution(
     assert session.encounter_state is not None
     state = session.encounter_state
     caster_ref = state.current_decision().creature_ref
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(

@@ -66,6 +66,9 @@ from tests.encounter_runtime_support import (
     action_labels as _action_labels,
 )
 from tests.encounter_runtime_support import (
+    active_creature as _active_creature,
+)
+from tests.encounter_runtime_support import (
     as_mapping as _mapping,
 )
 from tests.encounter_runtime_support import (
@@ -150,9 +153,10 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
     session.read()
 
     assert session.encounter_state is not None
-    assert session.decision_creature.spellcasting is not None
-    session.decision_creature.spellcasting.spell_slots_max[2] = 1
-    session.decision_creature.spellcasting.spell_slots_remaining[2] = 1
+    caster = _active_creature(session)
+    assert caster.spellcasting is not None
+    caster.spellcasting.spell_slots_max[2] = 1
+    caster.spellcasting.spell_slots_remaining[2] = 1
     apply_encounter_effects(
         session.encounter_state,
         [
@@ -182,7 +186,8 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
     session.read()
 
     assert session.encounter_state is not None
-    assert session.decision_creature.spellcasting is not None
+    caster = _active_creature(session)
+    assert caster.spellcasting is not None
     session.encounter_state.active_position.x = 4
     session.encounter_state.active_position.y = 3
     session.encounter_state.creatures["goblin_1"].position.x = 4
@@ -200,7 +205,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
         for _, message in result.messages
     )
     assert session.encounter_state.active_action_available is False
-    assert session.decision_creature.spellcasting.spell_slots_remaining[1] == 3
+    assert caster.spellcasting.spell_slots_remaining[1] == 3
     assert session.encounter_state.has_condition("goblin_1", Condition.BLINDED) is True
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Color Spray"
@@ -221,7 +226,7 @@ def test_color_spray_cone_can_affect_multiple_enemies(
     session.read()
 
     assert session.encounter_state is not None
-    assert session.decision_creature.spellcasting is not None
+    assert _active_creature(session).spellcasting is not None
     state = session.encounter_state
     state.active_position.x = 4
     state.active_position.y = 4
@@ -376,7 +381,8 @@ def test_fireball_point_area_damages_multiple_enemies(
     session.read()
 
     assert session.encounter_state is not None
-    assert session.decision_creature.spellcasting is not None
+    caster = _active_creature(session)
+    assert caster.spellcasting is not None
     state = session.encounter_state
     state.active_position.x = 1
     state.active_position.y = 6
@@ -419,7 +425,7 @@ def test_fireball_point_area_damages_multiple_enemies(
     assert second_damage["applied_damage"] == min(12, starting_healths[1])
     assert third_damage["final_damage"] == 24
     assert third_damage["applied_damage"] == min(24, starting_healths[2])
-    assert session.decision_creature.spellcasting.spell_slots_remaining[3] == 1
+    assert caster.spellcasting.spell_slots_remaining[3] == 1
     assert state.creatures["goblin_1"].creature.get_health() == 0
     assert state.creatures["goblin_2"].creature.get_health() == 0
     assert state.creatures["goblin_3"].creature.get_health() == 0
@@ -568,7 +574,7 @@ def test_blinded_enemy_attacks_with_disadvantage(
     session.read()
 
     assert session.encounter_state is not None
-    assert session.decision_creature.spellcasting is not None
+    assert _active_creature(session).spellcasting is not None
     state = session.encounter_state
     state.active_position.x = 2
     state.active_position.y = 2
@@ -778,9 +784,10 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     session.read()
 
     assert session.encounter_state is not None
-    assert session.decision_creature.spellcasting is not None
-    session.decision_creature.spellcasting.spell_slots_max[2] = 1
-    session.decision_creature.spellcasting.spell_slots_remaining[2] = 1
+    caster = _active_creature(session)
+    assert caster.spellcasting is not None
+    caster.spellcasting.spell_slots_max[2] = 1
+    caster.spellcasting.spell_slots_remaining[2] = 1
     state = session.encounter_state
     apply_encounter_effects(
         state,
@@ -807,7 +814,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     assert state.has_condition("player", Condition.BLINDED) is False
     assert state.active_bonus_action_available is False
     assert state.active_action_available is True
-    assert session.decision_creature.spellcasting.spell_slots_remaining[2] == 0
+    assert caster.spellcasting.spell_slots_remaining[2] == 0
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     assert spell_event.data["spell_name"] == "Lesser Restoration"
     assert spell_event.data["target_ref"] == "player"
@@ -823,7 +830,7 @@ def test_cure_wounds_heals_through_generic_spell_resolution(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
     session.read()
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -853,7 +860,7 @@ def test_false_life_grants_scaled_temporary_hit_points(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
     session.read()
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -885,7 +892,7 @@ def test_mass_healing_word_uses_one_roll_for_selected_targets(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -940,7 +947,7 @@ def test_heal_upcasts_and_removes_every_listed_condition() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell("Heal", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
@@ -993,7 +1000,7 @@ def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1032,7 +1039,7 @@ def test_invisibility_is_classified_and_exported_as_beneficial() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1061,7 +1068,7 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1129,7 +1136,7 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1180,7 +1187,7 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     target = state.creatures["goblin_1"].creature
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
@@ -1249,7 +1256,7 @@ def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1282,7 +1289,7 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell("Aid", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT))
@@ -1341,7 +1348,7 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1428,7 +1435,7 @@ def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1502,7 +1509,7 @@ def test_remove_curse_ends_every_curse_on_one_creature() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1546,7 +1553,7 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -1616,8 +1623,9 @@ def test_lesser_restoration_explicitly_selects_the_condition_to_remove() -> None
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    assert session.decision_creature.spellcasting is not None
-    session.decision_creature.spellcasting.spell_slots_remaining[2] = 1
+    caster = _active_creature(session)
+    assert caster.spellcasting is not None
+    caster.spellcasting.spell_slots_remaining[2] = 1
     for condition in ("blinded", "poisoned"):
         apply_encounter_effects(
             state,

@@ -63,29 +63,12 @@ class Session:
         self.pending_scene_transition: PendingSceneTransition | None = None
 
     @property
-    def decision_creature(self) -> Creature:
-        """Return the creature that owns the engine's current decision.
-
-        >>> from unittest.mock import Mock
-        >>> from srd_arena.domain.geometry import Grid
-        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {}, start_scene_id="demo")
-        >>> hero = Mock()
-        >>> session.encounter_state = Mock(
-        ...     encounter_id="demo", active_creature_state=Mock(creature=hero))
-        >>> session.decision_creature is hero
-        True
-        """
-        self._ensure_encounter_state()
-        assert self.encounter_state is not None
-        return self.encounter_state.active_creature_state.creature
-
-    @property
-    def current_encounter(self) -> EncounterDefinition:
+    def _current_encounter(self) -> EncounterDefinition:
         """Return the authored definition for the active scene.
 
         >>> from srd_arena.domain.geometry import Grid
         >>> encounter = EncounterDefinition("demo", Grid(1, 1))
-        >>> Session({"demo": encounter}, {}, start_scene_id="demo").current_encounter is encounter
+        >>> Session({"demo": encounter}, {}, start_scene_id="demo")._current_encounter is encounter
         True
         """
         return self.encounters[self.current_scene_id]
@@ -168,44 +151,11 @@ class Session:
         if action is None:
             raise KeyError(
                 f"Action '{action_id}' is unavailable for encounter "
-                f"'{self.current_encounter.id}'."
+                f"'{self._current_encounter.id}'."
             )
         return self._apply_encounter_action(
             action,
             selected_choice_text=action.label,
-        )
-
-    def choose_encounter_action(
-        self,
-        action: EncounterAction,
-        *,
-        selected_choice_text: str | None = None,
-    ) -> EngineOutcome:
-        """Execute a fully constructed encounter action.
-
-        This entry point supports trusted controllers that already hold the
-        structured action rather than selecting it by advertised ID.
-
-        >>> from unittest.mock import Mock
-        >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
-        >>> from srd_arena.domain.geometry import Grid
-        >>> orchestrator = Mock()
-        >>> orchestrator.submit.return_value = EncounterProgress()
-        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {},
-        ...     start_scene_id="demo", encounter_orchestrator=orchestrator)
-        >>> session.encounter_state = Mock(encounter_id="demo")
-        >>> action = EncounterAction("Wait", "wait", id="wait")
-        >>> session.choose_encounter_action(action).selected_action_id
-        'wait'
-        """
-        self._ensure_encounter_state()
-        if self.encounter_state is None:
-            raise RuntimeError(
-                "Encounter action requested without an active encounter."
-            )
-        return self._apply_encounter_action(
-            action,
-            selected_choice_text=selected_choice_text or action.label,
         )
 
     def configure_action(
@@ -303,7 +253,7 @@ class Session:
         )
 
     def _ensure_encounter_state(self) -> None:
-        encounter = self.current_encounter
+        encounter = self._current_encounter
         if (
             self.encounter_state is not None
             and self.encounter_state.encounter_id == encounter.id
@@ -318,13 +268,6 @@ class Session:
         )
         self.encounter_state.automatic_action_limit = self.automatic_action_limit
         self._encounter_actions = []
-
-    def _clear_encounter_if_scene_changed(
-        self, previous_scene_id: str, next_scene_id: str
-    ) -> None:
-        if previous_scene_id != next_scene_id:
-            self.encounter_state = None
-            self._encounter_actions = []
 
     def _continue_scene_transition(self) -> EngineOutcome:
         pending = self.pending_scene_transition
@@ -343,7 +286,7 @@ class Session:
         )
 
     def _apply_encounter_transition(self, transition: str) -> bool:
-        encounter = self.current_encounter
+        encounter = self._current_encounter
         if (
             encounter is not None
             and encounter.victory is not None

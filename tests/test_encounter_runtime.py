@@ -61,6 +61,9 @@ from tests.encounter_runtime_support import (
     action_labels as _action_labels,
 )
 from tests.encounter_runtime_support import (
+    active_creature as _active_creature,
+)
+from tests.encounter_runtime_support import (
     as_mapping as _mapping,
 )
 from tests.encounter_runtime_support import (
@@ -188,7 +191,7 @@ def test_extra_attack_allows_second_attack_after_movement(
     session.read()
 
     assert session.encounter_state is not None
-    session.decision_creature.combat_profile.attacks_per_attack_action = 2
+    _active_creature(session).combat_profile.attacks_per_attack_action = 2
     session.encounter_state.active_position.x = 4
     session.encounter_state.active_position.y = 3
     session.encounter_state.creatures["goblin_1"].position.x = 4
@@ -242,7 +245,7 @@ def test_second_wind_appears_and_consumes_bonus_action(
 ) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
-    session.decision_creature.current_health = 10
+    _active_creature(session).current_health = 10
 
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5
@@ -253,10 +256,10 @@ def test_second_wind_appears_and_consumes_bonus_action(
 
     assert ("system", "Traveler uses Second Wind.") in result.messages
     assert ("system", "Healing: 1d10=5 + level 2 = 7; applied 7.") in result.messages
-    assert session.decision_creature.get_health() == 17
+    assert _active_creature(session).get_health() == 17
     assert session.encounter_state is not None
     assert session.encounter_state.active_bonus_action_available is False
-    assert session.decision_creature.feature_uses_remaining["second_wind"] == 1
+    assert _active_creature(session).feature_uses_remaining["second_wind"] == 1
     second_wind = next(
         action
         for action in session.read().action_options
@@ -278,7 +281,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable(
 ) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
-    session.decision_creature.current_health = 10
+    _active_creature(session).current_health = 10
 
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5
@@ -332,7 +335,7 @@ def test_action_surge_grants_additional_action_for_same_turn(
     assert ("system", "Traveler uses Action Surge.") in result.messages
     assert session.encounter_state.active_actions_remaining == 1
     assert session.encounter_state.active_magic_actions_remaining == 0
-    assert session.decision_creature.feature_uses_remaining["action_surge"] == 0
+    assert _active_creature(session).feature_uses_remaining["action_surge"] == 0
     assert any(action.kind == "attack" for action in session.read().action_options)
     assert not any(action.kind == "spell" for action in session.read().action_options)
     event = next(event for event in result.events if event.type == "feature_used")
@@ -653,7 +656,7 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.attributes = replace(caster.attributes, level=5)
     caster.spellcasting.learned_spells.append(
@@ -820,7 +823,7 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(
     session.read()
 
     assert session.encounter_state is not None
-    session.decision_creature.combat_profile.attacks_per_attack_action = 1
+    _active_creature(session).combat_profile.attacks_per_attack_action = 1
     session.encounter_state.active_position.x = 4
     session.encounter_state.active_position.y = 3
     session.encounter_state.creatures["goblin_1"].position.x = 4
@@ -856,7 +859,7 @@ def test_attack_consumes_action_until_next_turn(
     session.read()
 
     assert session.encounter_state is not None
-    session.decision_creature.combat_profile.attacks_per_attack_action = 1
+    _active_creature(session).combat_profile.attacks_per_attack_action = 1
     session.encounter_state.active_position.x = 4
     session.encounter_state.active_position.y = 3
     session.encounter_state.creatures["goblin_1"].position.x = 4

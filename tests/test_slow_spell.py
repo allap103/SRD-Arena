@@ -36,6 +36,7 @@ from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import ActionAim
 from srd_arena.engine.session import Session
 from srd_arena.infrastructure.scenarios import load_scenario_directory
+from tests.encounter_runtime_support import active_creature as _active_creature
 
 _ORCHESTRATOR = EncounterOrchestrator()
 
@@ -102,7 +103,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -280,7 +281,7 @@ def test_slow_chosen_area_never_exceeds_six_targets(
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -477,7 +478,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     caster.spellcasting.learned_spells.extend(

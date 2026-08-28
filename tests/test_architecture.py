@@ -474,6 +474,23 @@ def test_application_boundary_does_not_import_concrete_session() -> None:
     )
 
 
+def test_concrete_session_exposes_only_engine_operations() -> None:
+    """Keep test conveniences and mutable-domain bypasses off Session."""
+
+    from srd_arena.engine.api import GameEngine
+    from srd_arena.engine.session import Session
+
+    def public_operations(type_: type[object]) -> set[str]:
+        return {
+            name
+            for name, member in vars(type_).items()
+            if not name.startswith("_")
+            and (callable(member) or isinstance(member, property))
+        }
+
+    assert public_operations(Session) == public_operations(GameEngine)
+
+
 def test_engine_does_not_define_presentation_views() -> None:
     violations: list[str] = []
 
