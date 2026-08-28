@@ -10,7 +10,7 @@ support is still partial, blocked, or intentionally out of scope.
 The resulting concrete contract and JSON examples are documented in
 [`spell_capability_schema.md`](spell_capability_schema.md).
 The implementation order is documented in
-[`spell_implementation_waves.md`](spell_implementation_waves.md).
+[`spell_implementation_batches.md`](spell_implementation_batches.md).
 
 SRD Arena's spell JSON files are the canonical source of truth. Prose remains
 human-readable rules text and must not be parsed at runtime. Explicit mechanics

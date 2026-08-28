@@ -1,0 +1,11 @@
+.hero-title,
+h1,
+h2,
+h3 {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.admonition,
+div[class*="highlight-"] {
+  border-radius: 0.35rem;
+}
