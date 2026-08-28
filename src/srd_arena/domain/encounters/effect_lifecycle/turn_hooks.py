@@ -63,7 +63,20 @@ def resolve_end_turn_effects(
     creature_ref: str,
     progress: EncounterProgress | None = None,
 ) -> None:
-    """Resolve repeat saves and repeat damage due at a creature's turn end."""
+    """Resolve repeat saves and repeat damage due at a creature's turn end.
+
+    Effects belonging to other creatures or other triggers remain unchanged.
+
+    >>> from types import SimpleNamespace
+    >>> effect = SimpleNamespace(
+    ...     target_refs=("other",),
+    ...     parameters={"repeat_save_trigger": "end_of_turn"},
+    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[effect])
+    >>> resolve_end_turn_effects(state, "hero")
+    >>> state.ongoing_effects == [effect]
+    True
+    """
 
     matching = tuple(
         effect
@@ -280,7 +293,26 @@ def expire_ongoing_effects_for_turn_start(
     state: EncounterState,
     creature_ref: str,
 ) -> None:
-    """Expire source-owned durations and grant turn-start temporary HP."""
+    """Expire source-owned durations and grant turn-start temporary HP.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import Mock
+    >>> source = SimpleNamespace(applied_by_ref="cleric")
+    >>> effect = SimpleNamespace(
+    ...     identity=SimpleNamespace(source=source),
+    ...     target_refs=("hero",),
+    ...     parameters={"turn_start_temporary_hit_points": 5},
+    ...     duration=SimpleNamespace(),
+    ... )
+    >>> creature = Mock()
+    >>> state = SimpleNamespace(
+    ...     ongoing_effects=[effect], round=SimpleNamespace(number=1),
+    ...     creatures={"hero": SimpleNamespace(creature=creature)},
+    ... )
+    >>> expire_ongoing_effects_for_turn_start(state, "hero")
+    >>> creature.grant_temporary_hit_points.call_args.args
+    (5,)
+    """
 
     expired = tuple(
         effect

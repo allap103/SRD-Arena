@@ -56,7 +56,32 @@ def open_damage_reroll_decision(
     continuation: DecisionContinuation | None = None,
     reaction: bool = False,
 ) -> None:
-    """Push one damage-reroll frame above its exact parent invocation."""
+    """Push one damage-reroll frame above its exact parent invocation.
+
+    >>> from types import SimpleNamespace
+    >>> attack = AttackOutcome([("system", "Hit")], True, 18, 4, False, {})
+    >>> effect = TriggeredEffect(
+    ...     "great_weapon_fighting", "feature", "gwm", "damage_roll",
+    ...     "reroll_matching_dice", parameters={"values": [1, 2]},
+    ... )
+    >>> parent = DecisionFrame("turn-1", "hero", "turn", "active")
+    >>> state = SimpleNamespace(
+    ...     _next_frame_id=lambda: "reroll-1",
+    ...     current_decision=lambda: parent,
+    ...     active_attacks_remaining=0,
+    ...     decision_stack=[],
+    ...     _event=lambda event_type, **values: event_type,
+    ... )
+    >>> progress = EncounterProgress()
+    >>> open_damage_reroll_decision(
+    ...     state, attack=attack, triggered_effect=effect,
+    ...     attacker_ref="hero", target_ref="goblin",
+    ...     attacker_label="Hero", target_label="Goblin",
+    ...     action_id="attack-1", progress=progress,
+    ... )
+    >>> (state.decision_stack[-1].kind, progress.paused_for_decision, attack.messages)
+    ('reroll_dice', True, [])
+    """
 
     frame_id = state._next_frame_id()
     current_frame = state.current_decision()
@@ -106,7 +131,32 @@ def open_damage_reroll_decision(
 
 
 def reroll_damage_actions(state: EncounterState) -> list[EncounterAction]:
-    """Build the choices for the active damage-reroll frame."""
+    """Build the choices for the active damage-reroll frame.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.rolls.dice import DicePoolResult, DieRollResult
+    >>> attack = AttackOutcome(
+    ...     [], True, 18, 6, False, {},
+    ...     damage_roll=DicePoolResult((DieRollResult(6, (1,)),), 0, 1, 1),
+    ...     damage_dice="1d6",
+    ... )
+    >>> effect = TriggeredEffect(
+    ...     "gwm", "feature", "gwm", "damage_roll", "reroll_matching_dice",
+    ...     parameters={"values": [1, 2]},
+    ... )
+    >>> request = DamageRerollRequest(
+    ...     "attack-1", "hero", "goblin", "Hero", "Goblin", 0,
+    ...     attack, effect,
+    ... )
+    >>> frame = DecisionFrame(
+    ...     "reroll", "hero", "reroll_dice", "gwm", request=request
+    ... )
+    >>> actions = reroll_damage_actions(
+    ...     SimpleNamespace(current_decision=lambda: frame)
+    ... )
+    >>> [(action.kind, action.value) for action in actions]
+    [('reroll_die', 0), ('accept_roll', None)]
+    """
 
     request = damage_reroll_request(state.current_decision())
     if request.attack.damage_roll is None:
@@ -141,7 +191,36 @@ def apply_damage_reroll_action(
     action: EncounterAction,
     decision: DecisionFrame,
 ) -> DecisionExecutionResult:
-    """Apply one reroll/accept choice without closing its decision frame."""
+    """Apply one reroll/accept choice without closing its decision frame.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> from srd_arena.domain.effects.triggered import TriggeredEffect
+    >>> from srd_arena.domain.rolls.dice import DicePoolResult, DieRollResult
+    >>> attack = AttackOutcome(
+    ...     [], True, 18, 5, False, {},
+    ...     damage_roll=DicePoolResult((DieRollResult(6, (5,)),), 0, 5, 5),
+    ... )
+    >>> request = DamageRerollRequest(
+    ...     "attack-1", "hero", "goblin", "Hero", "Goblin", 0, attack,
+    ...     TriggeredEffect("gwm", "feature", "gwm", "damage_roll", "reroll_matching_dice"),
+    ... )
+    >>> frame = DecisionFrame(
+    ...     "reroll", "hero", "reroll_dice", "gwm", request=request
+    ... )
+    >>> state = SimpleNamespace(
+    ...     _event=lambda event_type, **values: event_type
+    ... )
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.reaction_runtime.damage_rerolls."
+    ...     "finalize_damage_reroll"
+    ... ) as finalize:
+    ...     result = apply_damage_reroll_action(
+    ...         state, EncounterAction("Accept", "accept_roll"), frame
+    ...     )
+    >>> (result.completed, finalize.call_count)
+    (True, 1)
+    """
 
     request = damage_reroll_request(decision)
     if request.attack.damage_roll is None:
@@ -216,7 +295,38 @@ def finalize_damage_reroll(
     progress: EncounterProgress,
     decision: DecisionFrame,
 ) -> None:
-    """Apply accepted damage and record the completed attack."""
+    """Apply accepted damage and record the completed attack.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> attack = AttackOutcome([], True, 18, 5, False, {})
+    >>> effect = TriggeredEffect(
+    ...     "gwm", "feature", "gwm", "damage_roll", "reroll_matching_dice"
+    ... )
+    >>> request = DamageRerollRequest(
+    ...     "attack-1", "hero", "goblin", "Hero", "Goblin", 0,
+    ...     attack, effect,
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={
+    ...         "hero": SimpleNamespace(creature=SimpleNamespace(name="Hero")),
+    ...         "goblin": SimpleNamespace(creature=object(), is_alive=True),
+    ...     },
+    ...     _event=lambda event_type, **values: event_type,
+    ... )
+    >>> progress = EncounterProgress()
+    >>> frame = DecisionFrame("reroll", "hero", "reroll_dice", "gwm")
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.reaction_runtime.damage_rerolls."
+    ...     "apply_attack_damage"
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.reaction_runtime.damage_rerolls."
+    ...     "resolve_attack_lifecycle"
+    ... ):
+    ...     finalize_damage_reroll(state, request, progress, frame)
+    >>> progress.events
+    ['attack_resolved']
+    """
 
     attacker = state.creatures[request.attacker_ref].creature
     target = state.creatures[request.target_ref]
