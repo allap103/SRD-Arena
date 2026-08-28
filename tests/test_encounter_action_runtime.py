@@ -84,7 +84,9 @@ from srd_arena.engine.queries import (
     DirectTargetOptionDetails,
 )
 from srd_arena.frontends.gui.presentation.session import build_session_presentation
-from srd_arena.frontends.gui.ui.encounter import BattlefieldWidget
+from srd_arena.frontends.gui.ui.encounter.battlefield_renderer import (
+    fallback_token_colors,
+)
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import (
     CONDITIONS_SHOWCASE_SCENARIO_DIR,
@@ -1310,8 +1312,8 @@ def test_tentacle_grapple_enforces_capacity_without_counting_duplicates() -> Non
 
 
 def test_fallback_tokens_use_team_colors() -> None:
-    blue_fill, blue_border = BattlefieldWidget._fallback_token_colors("#3f7fd5")
-    red_fill, red_border = BattlefieldWidget._fallback_token_colors("#d64545")
+    blue_fill, blue_border = fallback_token_colors("#3f7fd5")
+    red_fill, red_border = fallback_token_colors("#d64545")
 
     assert blue_fill.name() == "#3f7fd5"
     assert red_fill.name() == "#d64545"

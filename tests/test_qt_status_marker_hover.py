@@ -15,6 +15,9 @@ from srd_arena.frontends.gui.floating_labels import (
 )
 from srd_arena.frontends.gui.theme import FANTASY_STYLESHEET
 from srd_arena.frontends.gui.ui.encounter import BattlefieldWidget
+from srd_arena.frontends.gui.ui.encounter.battlefield_renderer import (
+    floating_label_font,
+)
 from srd_arena.frontends.gui.ui.encounter.status_markers import StatusMarkerHit
 
 
@@ -46,7 +49,7 @@ def test_real_mouse_move_shows_painted_status_marker_tooltip() -> None:
 
     assert widget._visible_status_tooltip == "Conditions:\n- Prone"
     assert widget._status_tooltip_anchor == (10.0, 10.0)
-    font = widget._floating_label_font()
+    font = floating_label_font()
     assert font.pointSize() == BATTLEFIELD_FLOATING_LABEL_STYLE.font_point_size
     assert int(font.weight()) == BATTLEFIELD_FLOATING_LABEL_STYLE.font_weight
     widget.deleteLater()

@@ -380,6 +380,28 @@ def test_initiative_rendering_has_one_view_owner() -> None:
     )
 
 
+def test_battlefield_widget_delegates_painting_and_image_caching() -> None:
+    gui_root = PACKAGE_ROOT / "frontends" / "gui" / "ui" / "encounter"
+    widget_path = gui_root / "battlefield.py"
+    renderer_path = gui_root / "battlefield_renderer.py"
+    widget_source = widget_path.read_text(encoding="utf-8")
+    renderer_source = renderer_path.read_text(encoding="utf-8")
+    widget_tree = ast.parse(widget_source, filename=str(widget_path))
+    widget_class = next(
+        node
+        for node in widget_tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "BattlefieldWidget"
+    )
+
+    assert not any(
+        isinstance(node, ast.FunctionDef) and node.name.startswith("_paint_")
+        for node in widget_class.body
+    )
+    assert "_image_cache" not in widget_source
+    assert "class BattlefieldRenderer" in renderer_source
+    assert "_image_cache" in renderer_source
+
+
 def test_domain_root_is_namespace_only() -> None:
     violations: list[str] = []
     search_roots = (PACKAGE_ROOT, Path(__file__).parent)
