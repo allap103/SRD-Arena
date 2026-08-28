@@ -28,7 +28,24 @@ def resolve_feature_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Dispatch a supported creature feature to its registered Python rule."""
+    """Dispatch a supported creature feature to its registered Python rule.
+
+    Unknown feature IDs resolve as explicit failures instead of disappearing
+    from the encounter log.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     combat_profile=SimpleNamespace(feature_actions={})
+    ... )
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
+    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ... )
+    >>> progress = EncounterProgress()
+    >>> resolve_feature_action(state, creature, "unknown", progress, "feature-1")
+    >>> (progress.messages[-1], progress.events[-1][1]["success"])
+    (('system', 'unknown is not implemented yet.'), False)
+    """
 
     creature_ref = self.current_decision().creature_ref
     feature_action = creature.combat_profile.feature_actions.get(feature_id)

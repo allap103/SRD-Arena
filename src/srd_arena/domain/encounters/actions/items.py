@@ -25,7 +25,22 @@ def resolve_utilize_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Consume a supported inventory item and apply its action outcome."""
+    """Consume a supported inventory item and apply its action outcome.
+
+    >>> from types import SimpleNamespace
+    >>> actor = SimpleNamespace(
+    ...     inventory=SimpleNamespace(has_item=lambda item_id: False)
+    ... )
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
+    ...     item_templates={},
+    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ... )
+    >>> progress = EncounterProgress()
+    >>> resolve_utilize_action(state, actor, "potion", progress, "use-1")
+    >>> (progress.messages[-1], progress.events[-1][1]["success"])
+    (('system', 'You do not have that item.'), False)
+    """
 
     creature_ref = self.current_decision().creature_ref
     item = self.item_templates.get(item_id)

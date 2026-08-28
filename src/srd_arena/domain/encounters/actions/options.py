@@ -35,7 +35,30 @@ if TYPE_CHECKING:
 
 
 def available_actions(self: EncounterState) -> list[EncounterAction]:
-    """Discover and normalize every action candidate for the current decision actor."""
+    """Discover and normalize every action candidate for the current decision actor.
+
+    Scripted controllers do not advertise choices to clients, while specialized
+    decision frames delegate to their matching reaction service.
+
+    >>> from types import SimpleNamespace
+    >>> decision = SimpleNamespace(creature_ref="hero", kind="turn")
+    >>> scripted = SimpleNamespace(
+    ...     current_decision=lambda: decision,
+    ...     _creature_controller=lambda ref: "scripted",
+    ... )
+    >>> available_actions(scripted)
+    []
+    >>> decision.kind = "reroll_dice"
+    >>> external = SimpleNamespace(
+    ...     current_decision=lambda: decision,
+    ...     _creature_controller=lambda ref: "external",
+    ...     reaction_engine=SimpleNamespace(
+    ...         reroll_damage_actions=lambda state: [EncounterAction("Accept", "accept_roll")]
+    ...     ),
+    ... )
+    >>> available_actions(external)[0].kind
+    'accept_roll'
+    """
 
     decision = self.current_decision()
     if self._creature_controller(decision.creature_ref) != "external":

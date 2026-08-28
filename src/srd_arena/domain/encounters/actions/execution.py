@@ -30,7 +30,23 @@ def resolve_grapple_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Route a grapple or escape action through its contested-check resolver."""
+    """Route a grapple or escape action through its contested-check resolver.
+
+    >>> from types import SimpleNamespace
+    >>> creature_state = SimpleNamespace(actions_remaining=0, attacks_remaining=0)
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
+    ...     creatures={"hero": creature_state},
+    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ... )
+    >>> progress = EncounterProgress()
+    >>> resolve_grapple_action(
+    ...     state, SimpleNamespace(), EncounterAction("Grapple", "grapple"),
+    ...     progress, "grapple-1"
+    ... )
+    >>> (progress.messages[-1], progress.events[-1][1]["success"])
+    (('system', 'You have already used your Action.'), False)
+    """
 
     creature_ref = self.current_decision().creature_ref
     creature_state = self.creatures[creature_ref]
