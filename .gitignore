@@ -8,5 +8,6 @@ ___
 saves/
 dist
 build
+docs/_build/
 *.egg-info
 .DS_Store
