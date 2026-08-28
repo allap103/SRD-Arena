@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPointF, QRect, QSize, Qt, Signal
@@ -71,6 +72,38 @@ def clamp_axis(
     minimum = viewport_start + viewport_size - board_size - board_start
     maximum = viewport_start - board_start
     return min(max(offset, minimum), maximum)
+
+
+@dataclass(frozen=True)
+class _BattlefieldRenderGeometry:
+    """Describe the visible board rectangle in widget pixel coordinates."""
+
+    viewport: QRect
+    origin_x: float
+    origin_y: float
+    cell_size: float
+    columns: int
+    rows: int
+
+    @property
+    def board_width(self) -> float:
+        """Return the rendered board width in pixels."""
+
+        return self.cell_size * self.columns
+
+    @property
+    def board_height(self) -> float:
+        """Return the rendered board height in pixels."""
+
+        return self.cell_size * self.rows
+
+
+@dataclass(frozen=True)
+class _MovementPreview:
+    """Hold the moving creature and cells in its currently previewed path."""
+
+    creature: BattlefieldCreatureView | None
+    cells: tuple[tuple[int, int], ...]
 
 
 class BattlefieldWidget(QWidget):
@@ -178,46 +211,91 @@ class BattlefieldWidget(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        rect = self.rect().adjusted(12, 12, -12, -12)
-        cols = max(1, self._battlefield.width)
-        rows = max(1, self._battlefield.height)
-        fitted_cell_size = min(rect.width() / cols, rect.height() / rows)
-        cell_size = fitted_cell_size * self._zoom
-        board_width = cell_size * cols
-        board_height = cell_size * rows
-        self._pan_offset = self._clamped_pan_offset(
-            rect,
-            board_width,
-            board_height,
-        )
-        origin_x = rect.x() + (rect.width() - board_width) / 2 + self._pan_offset[0]
-        origin_y = rect.y() + (rect.height() - board_height) / 2 + self._pan_offset[1]
-        self._board_metrics = (origin_x, origin_y, cell_size, cols, rows)
+        geometry = self._render_geometry()
         display_overlay = display_area_overlay(
             self._area_overlay,
             self._hover_point,
             self._battlefield,
         )
+        self._paint_board(painter, geometry)
 
-        board_x = int(origin_x)
-        board_y = int(origin_y)
-        board_width_px = int(board_width)
-        board_height_px = int(board_height)
+        self._paint_team_outlines(painter, geometry)
+
+        movement_preview = self._paint_movement_plan(painter, geometry)
+
+        self._paint_area_overlay(painter, geometry, display_overlay)
+
+        self._paint_creatures(painter, geometry)
+        self._paint_movement_destination(painter, geometry, movement_preview)
+
+        self._paint_area_badge(painter, geometry, display_overlay)
+        self._paint_targeting_badge(painter, geometry)
+
+        self._paint_status_tooltip(painter)
+
+        painter.end()
+
+    def _render_geometry(self) -> _BattlefieldRenderGeometry:
+        """Calculate and retain the pixel geometry used by this paint pass."""
+
+        assert self._battlefield is not None
+        viewport = self.rect().adjusted(12, 12, -12, -12)
+        columns = max(1, self._battlefield.width)
+        rows = max(1, self._battlefield.height)
+        fitted_cell_size = min(viewport.width() / columns, viewport.height() / rows)
+        cell_size = fitted_cell_size * self._zoom
+        board_width = cell_size * columns
+        board_height = cell_size * rows
+        self._pan_offset = self._clamped_pan_offset(
+            viewport,
+            board_width,
+            board_height,
+        )
+        origin_x = (
+            viewport.x() + (viewport.width() - board_width) / 2 + self._pan_offset[0]
+        )
+        origin_y = (
+            viewport.y() + (viewport.height() - board_height) / 2 + self._pan_offset[1]
+        )
+        self._board_metrics = (
+            origin_x,
+            origin_y,
+            cell_size,
+            columns,
+            rows,
+        )
+        return _BattlefieldRenderGeometry(
+            viewport=viewport,
+            origin_x=origin_x,
+            origin_y=origin_y,
+            cell_size=cell_size,
+            columns=columns,
+            rows=rows,
+        )
+
+    def _paint_board(
+        self,
+        painter: QPainter,
+        geometry: _BattlefieldRenderGeometry,
+    ) -> None:
+        """Paint the board background and square grid."""
+
+        assert self._battlefield is not None
         background = self._content_image(self._battlefield.background_image)
         if background is None:
             painter.fillRect(
-                board_x,
-                board_y,
-                board_width_px,
-                board_height_px,
+                int(geometry.origin_x),
+                int(geometry.origin_y),
+                int(geometry.board_width),
+                int(geometry.board_height),
                 QColor("#303030"),
             )
         else:
             painter.drawPixmap(
-                board_x,
-                board_y,
-                board_width_px,
-                board_height_px,
+                int(geometry.origin_x),
+                int(geometry.origin_y),
+                int(geometry.board_width),
+                int(geometry.board_height),
                 background,
             )
 
@@ -228,46 +306,65 @@ class BattlefieldWidget(QWidget):
         grid_pen = QPen(grid_color)
         grid_pen.setWidth(1)
         painter.setPen(grid_pen)
-
-        for y in range(rows):
-            for x in range(cols):
-                cell_x = origin_x + x * cell_size
-                cell_y = origin_y + y * cell_size
+        for y in range(geometry.rows):
+            for x in range(geometry.columns):
+                cell_x = geometry.origin_x + x * geometry.cell_size
+                cell_y = geometry.origin_y + y * geometry.cell_size
                 painter.drawRect(
-                    int(cell_x), int(cell_y), int(cell_size), int(cell_size)
+                    int(cell_x),
+                    int(cell_y),
+                    int(geometry.cell_size),
+                    int(geometry.cell_size),
                 )
 
-        if self._show_team_outlines:
-            for creature in self._battlefield.creatures:
-                cell_x = origin_x + creature.position.x * cell_size
-                cell_y = origin_y + creature.position.y * cell_size
-                team_color = QColor(creature.team_color)
-                team_color.setAlphaF(0.7)
-                team_pen = QPen(team_color)
-                team_pen.setWidth(max(2, int(cell_size * 0.05)))
-                painter.setPen(team_pen)
-                painter.setBrush(Qt.BrushStyle.NoBrush)
-                inset = max(1, team_pen.width() // 2)
-                painter.drawRect(
-                    int(cell_x + inset),
-                    int(cell_y + inset),
-                    max(1, int(cell_size - inset * 2)),
-                    max(1, int(cell_size - inset * 2)),
-                )
+    def _paint_team_outlines(
+        self,
+        painter: QPainter,
+        geometry: _BattlefieldRenderGeometry,
+    ) -> None:
+        """Paint team-colored outlines around occupied cells when enabled."""
 
+        if not self._show_team_outlines:
+            return
+        assert self._battlefield is not None
+        for creature in self._battlefield.creatures:
+            cell_x = geometry.origin_x + creature.position.x * geometry.cell_size
+            cell_y = geometry.origin_y + creature.position.y * geometry.cell_size
+            team_color = QColor(creature.team_color)
+            team_color.setAlphaF(0.7)
+            team_pen = QPen(team_color)
+            team_pen.setWidth(max(2, int(geometry.cell_size * 0.05)))
+            painter.setPen(team_pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            inset = max(1, team_pen.width() // 2)
+            painter.drawRect(
+                int(cell_x + inset),
+                int(cell_y + inset),
+                max(1, int(geometry.cell_size - inset * 2)),
+                max(1, int(geometry.cell_size - inset * 2)),
+            )
+
+    def _paint_movement_plan(
+        self,
+        painter: QPainter,
+        geometry: _BattlefieldRenderGeometry,
+    ) -> _MovementPreview:
+        """Paint reachable cells and the currently hovered movement path."""
+
+        assert self._battlefield is not None
         movement_paths = self._movement_plan.paths if self._movement_plan else {}
         if movement_paths:
             painter.setPen(Qt.PenStyle.NoPen)
             for cell_x, cell_y in movement_paths:
                 if not movement_paths[(cell_x, cell_y)]:
                     continue
-                draw_x = origin_x + cell_x * cell_size
-                draw_y = origin_y + cell_y * cell_size
+                draw_x = geometry.origin_x + cell_x * geometry.cell_size
+                draw_y = geometry.origin_y + cell_y * geometry.cell_size
                 painter.fillRect(
                     int(draw_x + 2),
                     int(draw_y + 2),
-                    max(1, int(cell_size - 4)),
-                    max(1, int(cell_size - 4)),
+                    max(1, int(geometry.cell_size - 4)),
+                    max(1, int(geometry.cell_size - 4)),
                     QColor(63, 127, 213, 70),
                 )
 
@@ -296,36 +393,45 @@ class BattlefieldWidget(QWidget):
                 preview_y += delta_y
                 preview_cells.append((preview_x, preview_y))
             path_pen = QPen(QColor(218, 235, 255, 210))
-            path_pen.setWidth(max(2, int(cell_size * 0.06)))
+            path_pen.setWidth(max(2, int(geometry.cell_size * 0.06)))
             painter.setPen(path_pen)
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawPolyline(
                 QPolygonF(
                     [
                         QPointF(
-                            origin_x + (path_x + 0.5) * cell_size,
-                            origin_y + (path_y + 0.5) * cell_size,
+                            geometry.origin_x + (path_x + 0.5) * geometry.cell_size,
+                            geometry.origin_y + (path_y + 0.5) * geometry.cell_size,
                         )
                         for path_x, path_y in preview_cells
                     ]
                 )
             )
+        return _MovementPreview(planner, tuple(preview_cells))
 
-        overlay_cells = area_overlay_cells(display_overlay)
-        overlay_origin = area_overlay_origin(display_overlay)
+    @staticmethod
+    def _paint_area_overlay(
+        painter: QPainter,
+        geometry: _BattlefieldRenderGeometry,
+        overlay: Mapping[str, object] | None,
+    ) -> None:
+        """Paint an area template and its selected origin cell."""
+
+        overlay_cells = area_overlay_cells(overlay)
+        overlay_origin = area_overlay_origin(overlay)
         if overlay_cells:
             painter.setPen(Qt.PenStyle.NoPen)
             for cell_x, cell_y in overlay_cells:
-                draw_x = origin_x + cell_x * cell_size
-                draw_y = origin_y + cell_y * cell_size
+                draw_x = geometry.origin_x + cell_x * geometry.cell_size
+                draw_y = geometry.origin_y + cell_y * geometry.cell_size
                 painter.fillRect(
                     int(draw_x + 1),
                     int(draw_y + 1),
-                    max(1, int(cell_size - 2)),
-                    max(1, int(cell_size - 2)),
+                    max(1, int(geometry.cell_size - 2)),
+                    max(1, int(geometry.cell_size - 2)),
                     QColor(72, 142, 212, 95),
                 )
-            continuous = continuous_area(display_overlay)
+            continuous = continuous_area(overlay)
             if continuous is not None:
                 outline = continuous_area_outline(continuous)
                 if outline is not None:
@@ -337,8 +443,8 @@ class BattlefieldWidget(QWidget):
                         QPolygonF(
                             [
                                 QPointF(
-                                    origin_x + (point.x * cell_size),
-                                    origin_y + (point.y * cell_size),
+                                    geometry.origin_x + point.x * geometry.cell_size,
+                                    geometry.origin_y + point.y * geometry.cell_size,
                                 )
                                 for point in outline
                             ]
@@ -346,281 +452,404 @@ class BattlefieldWidget(QWidget):
                     )
             painter.setPen(QPen(QColor("#2a5f92"), 2))
             for cell_x, cell_y in overlay_cells:
-                draw_x = origin_x + cell_x * cell_size
-                draw_y = origin_y + cell_y * cell_size
+                draw_x = geometry.origin_x + cell_x * geometry.cell_size
+                draw_y = geometry.origin_y + cell_y * geometry.cell_size
                 painter.drawRect(
                     int(draw_x + 1),
                     int(draw_y + 1),
-                    max(1, int(cell_size - 2)),
-                    max(1, int(cell_size - 2)),
+                    max(1, int(geometry.cell_size - 2)),
+                    max(1, int(geometry.cell_size - 2)),
                 )
 
-        if overlay_origin is not None:
-            origin_cell_x, origin_cell_y = overlay_origin
-            draw_x = origin_x + origin_cell_x * cell_size
-            draw_y = origin_y + origin_cell_y * cell_size
-            painter.setBrush(QColor(255, 247, 186, 110))
-            painter.setPen(QPen(QColor("#9a7a17"), 3))
-            painter.drawRect(
-                int(draw_x + 2),
-                int(draw_y + 2),
-                max(1, int(cell_size - 4)),
-                max(1, int(cell_size - 4)),
-            )
+        if overlay_origin is None:
+            return
+        origin_cell_x, origin_cell_y = overlay_origin
+        draw_x = geometry.origin_x + origin_cell_x * geometry.cell_size
+        draw_y = geometry.origin_y + origin_cell_y * geometry.cell_size
+        painter.setBrush(QColor(255, 247, 186, 110))
+        painter.setPen(QPen(QColor("#9a7a17"), 3))
+        painter.drawRect(
+            int(draw_x + 2),
+            int(draw_y + 2),
+            max(1, int(geometry.cell_size - 4)),
+            max(1, int(geometry.cell_size - 4)),
+        )
 
+    def _paint_creatures(
+        self,
+        painter: QPainter,
+        geometry: _BattlefieldRenderGeometry,
+    ) -> None:
+        """Paint every creature and rebuild its pointer-interaction geometry."""
+
+        assert self._battlefield is not None
         self._creature_positions = {}
         self._status_marker_hits = []
         for creature in self._battlefield.creatures:
-            center_x = origin_x + (creature.position.x + 0.5) * cell_size
-            center_y = origin_y + (creature.position.y + 0.5) * cell_size
-            radius = max(14, int(cell_size * 0.38))
-            fill, border = self._fallback_token_colors(creature.team_color)
-            self._creature_positions[creature.creature_ref] = (
-                center_x,
-                center_y,
-                radius,
-            )
+            self._paint_creature(painter, geometry, creature)
 
-            if creature.is_active:
-                painter.setBrush(QColor(255, 215, 0, 70))
-                painter.setPen(Qt.PenStyle.NoPen)
-                highlight_radius = int(radius * 1.6)
-                painter.drawEllipse(
-                    int(center_x - highlight_radius),
-                    int(center_y - highlight_radius),
-                    highlight_radius * 2,
-                    highlight_radius * 2,
-                )
+    def _paint_creature(
+        self,
+        painter: QPainter,
+        geometry: _BattlefieldRenderGeometry,
+        creature: BattlefieldCreatureView,
+    ) -> None:
+        """Paint one creature's emphasis, token, labels, and status markers."""
 
-            if creature.creature_ref in self._targetable_creature_refs:
-                painter.setBrush(QColor(84, 196, 110, 70))
-                painter.setPen(QPen(QColor("#2d7a3d"), 2))
-                target_radius = int(radius * 1.3)
-                painter.drawEllipse(
-                    int(center_x - target_radius),
-                    int(center_y - target_radius),
-                    target_radius * 2,
-                    target_radius * 2,
-                )
+        center_x = geometry.origin_x + (creature.position.x + 0.5) * geometry.cell_size
+        center_y = geometry.origin_y + (creature.position.y + 0.5) * geometry.cell_size
+        radius = max(14, int(geometry.cell_size * 0.38))
+        self._creature_positions[creature.creature_ref] = (
+            center_x,
+            center_y,
+            radius,
+        )
+        self._paint_creature_emphasis(
+            painter,
+            creature,
+            center_x=center_x,
+            center_y=center_y,
+            radius=radius,
+        )
+        self._paint_creature_token(
+            painter,
+            creature,
+            center_x=center_x,
+            center_y=center_y,
+            radius=radius,
+            cell_size=geometry.cell_size,
+        )
+        self._paint_target_allocation_badge(
+            painter,
+            creature,
+            center_x=center_x,
+            center_y=center_y,
+            radius=radius,
+            cell_size=geometry.cell_size,
+        )
+        self._paint_creature_name(
+            painter,
+            creature,
+            center_x=center_x,
+            center_y=center_y,
+            radius=radius,
+            cell_size=geometry.cell_size,
+        )
+        self._paint_status_markers(
+            painter,
+            creature,
+            cell_x=geometry.origin_x + creature.position.x * geometry.cell_size,
+            cell_y=geometry.origin_y + creature.position.y * geometry.cell_size,
+            center_x=center_x,
+            center_y=center_y,
+            token_radius=radius,
+            cell_size=geometry.cell_size,
+        )
 
-            if creature.creature_ref == self._selected_creature_ref:
-                painter.setBrush(QColor(255, 255, 255, 0))
-                painter.setPen(QPen(QColor("#1b1b1b"), 3))
-                selected_radius = int(radius * 1.45)
-                painter.drawEllipse(
-                    int(center_x - selected_radius),
-                    int(center_y - selected_radius),
-                    selected_radius * 2,
-                    selected_radius * 2,
-                )
+    def _paint_creature_emphasis(
+        self,
+        painter: QPainter,
+        creature: BattlefieldCreatureView,
+        *,
+        center_x: float,
+        center_y: float,
+        radius: int,
+    ) -> None:
+        """Paint active, targetable, and selected emphasis behind a token."""
 
-            token = self._token_image(creature.token_image)
-            if token is not None:
-                maximum_size = cell_size * 0.98
-                scale = min(
-                    maximum_size / token.width(),
-                    maximum_size / token.height(),
-                )
-                sprite_width = max(1, int(token.width() * scale))
-                sprite_height = max(1, int(token.height() * scale))
-                painter.drawPixmap(
-                    int(center_x - sprite_width / 2),
-                    int(center_y + cell_size / 2 - sprite_height),
-                    sprite_width,
-                    sprite_height,
-                    token,
-                )
-            else:
-                painter.setBrush(fill)
-                painter.setPen(QPen(border, 2))
-                painter.drawEllipse(
-                    int(center_x - radius),
-                    int(center_y - radius),
-                    radius * 2,
-                    radius * 2,
-                )
-
-                painter.setPen(QColor("white"))
-                font = QFont()
-                font.setBold(True)
-                font.setPointSize(max(8, int(cell_size * 0.18)))
-                painter.setFont(font)
-                painter.drawText(
-                    int(center_x - radius),
-                    int(center_y - radius),
-                    radius * 2,
-                    radius * 2,
-                    Qt.AlignmentFlag.AlignCenter,
-                    creature.label[:1].upper(),
-                )
-
-            allocation_count = self._target_allocation_counts.get(
-                creature.creature_ref,
-                0,
-            )
-            if allocation_count:
-                badge_radius = max(9, int(cell_size * 0.16))
-                badge_x, badge_y = target_allocation_badge_position(
-                    center_x=center_x,
-                    center_y=center_y,
-                    token_radius=radius,
-                    top_right_reserved=bool(creature.debuffs),
-                )
-                painter.setBrush(QColor("#f4d35e"))
-                painter.setPen(QPen(QColor("#4b3900"), 2))
-                painter.drawEllipse(
-                    int(badge_x - badge_radius),
-                    int(badge_y - badge_radius),
-                    badge_radius * 2,
-                    badge_radius * 2,
-                )
-                painter.setPen(QColor("#211900"))
-                font = QFont()
-                font.setBold(True)
-                font.setPointSize(max(8, int(cell_size * 0.13)))
-                painter.setFont(font)
-                painter.drawText(
-                    int(badge_x - badge_radius),
-                    int(badge_y - badge_radius),
-                    badge_radius * 2,
-                    badge_radius * 2,
-                    Qt.AlignmentFlag.AlignCenter,
-                    f"x{allocation_count}",
-                )
-
-            if self._always_show_creature_names or self._hover_cell == (
-                creature.position.x,
-                creature.position.y,
-            ):
-                label_style = BATTLEFIELD_FLOATING_LABEL_STYLE
-                painter.setFont(self._floating_label_font())
-                label_x, label_y, label_width, label_height = creature_name_label_rect(
-                    center_x=center_x,
-                    center_y=center_y,
-                    token_radius=radius,
-                    cell_size=cell_size,
-                    text_width=painter.fontMetrics().horizontalAdvance(
-                        creature.name,
-                    ),
-                    text_height=painter.fontMetrics().height(),
-                    horizontal_padding=label_style.horizontal_padding,
-                    vertical_padding=label_style.vertical_padding,
-                    viewport_width=self.width(),
-                    viewport_height=self.height(),
-                )
-                self._paint_floating_label(
-                    painter,
-                    creature.name,
-                    rect=(label_x, label_y, label_width, label_height),
-                    alignment=Qt.AlignmentFlag.AlignCenter,
-                )
-
-            self._paint_status_markers(
-                painter,
-                creature,
-                cell_x=origin_x + creature.position.x * cell_size,
-                cell_y=origin_y + creature.position.y * cell_size,
-                center_x=center_x,
-                center_y=center_y,
-                token_radius=radius,
-                cell_size=cell_size,
-            )
-        if planner is not None and len(preview_cells) > 1:
-            destination_x, destination_y = preview_cells[-1]
-            center_x = origin_x + (destination_x + 0.5) * cell_size
-            center_y = origin_y + (destination_y + 0.5) * cell_size
-            token = self._token_image(planner.token_image)
-            painter.setOpacity(0.45)
-            if token is not None:
-                maximum_size = cell_size * 0.98
-                scale = min(
-                    maximum_size / token.width(),
-                    maximum_size / token.height(),
-                )
-                sprite_width = max(1, int(token.width() * scale))
-                sprite_height = max(1, int(token.height() * scale))
-                painter.drawPixmap(
-                    int(center_x - sprite_width / 2),
-                    int(center_y + cell_size / 2 - sprite_height),
-                    sprite_width,
-                    sprite_height,
-                    token,
-                )
-            else:
-                radius = max(14, int(cell_size * 0.38))
-                fill, border = self._fallback_token_colors(planner.team_color)
-                painter.setBrush(fill)
-                painter.setPen(QPen(border, 2))
-                painter.drawEllipse(
-                    int(center_x - radius),
-                    int(center_y - radius),
-                    radius * 2,
-                    radius * 2,
-                )
-            painter.setOpacity(1.0)
-
-        if display_overlay is not None:
-            badge_rect = rect.adjusted(12, 12, -12, -12)
-            badge_height = 32
-            badge_width = min(int(cell_size * 3.8), max(160, badge_rect.width() // 3))
-            painter.setBrush(QColor(23, 54, 74, 220))
+        if creature.is_active:
+            painter.setBrush(QColor(255, 215, 0, 70))
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawRoundedRect(
-                badge_rect.x(),
-                badge_rect.y(),
-                badge_width,
-                badge_height,
-                10,
-                10,
-            )
-            painter.setPen(QColor("white"))
-            font = QFont()
-            font.setBold(True)
-            font.setPointSize(10)
-            painter.setFont(font)
-            painter.drawText(
-                badge_rect.x() + 12,
-                badge_rect.y(),
-                badge_width - 24,
-                badge_height,
-                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
-                area_overlay_label(display_overlay),
+            highlight_radius = int(radius * 1.6)
+            painter.drawEllipse(
+                int(center_x - highlight_radius),
+                int(center_y - highlight_radius),
+                highlight_radius * 2,
+                highlight_radius * 2,
             )
 
-        if self._targeting_label is not None:
-            badge_rect = rect.adjusted(12, 12, -12, -12)
-            badge_height = 34
-            badge_width = min(
-                max(260, int(cell_size * 6.5)),
-                badge_rect.width(),
-            )
-            painter.setBrush(QColor(37, 30, 14, 225))
-            painter.setPen(QPen(QColor("#d4ad45"), 2))
-            painter.drawRoundedRect(
-                badge_rect.x(),
-                badge_rect.y(),
-                badge_width,
-                badge_height,
-                10,
-                10,
-            )
-            painter.setPen(QColor("#fff4cf"))
-            font = QFont()
-            font.setBold(True)
-            font.setPointSize(10)
-            painter.setFont(font)
-            painter.drawText(
-                badge_rect.x() + 12,
-                badge_rect.y(),
-                badge_width - 24,
-                badge_height,
-                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
-                self._targeting_label,
+        if creature.creature_ref in self._targetable_creature_refs:
+            painter.setBrush(QColor(84, 196, 110, 70))
+            painter.setPen(QPen(QColor("#2d7a3d"), 2))
+            target_radius = int(radius * 1.3)
+            painter.drawEllipse(
+                int(center_x - target_radius),
+                int(center_y - target_radius),
+                target_radius * 2,
+                target_radius * 2,
             )
 
-        self._paint_status_tooltip(painter)
+        if creature.creature_ref == self._selected_creature_ref:
+            painter.setBrush(QColor(255, 255, 255, 0))
+            painter.setPen(QPen(QColor("#1b1b1b"), 3))
+            selected_radius = int(radius * 1.45)
+            painter.drawEllipse(
+                int(center_x - selected_radius),
+                int(center_y - selected_radius),
+                selected_radius * 2,
+                selected_radius * 2,
+            )
 
-        painter.end()
+    def _paint_creature_token(
+        self,
+        painter: QPainter,
+        creature: BattlefieldCreatureView,
+        *,
+        center_x: float,
+        center_y: float,
+        radius: int,
+        cell_size: float,
+    ) -> None:
+        """Paint a creature image or its colored initial fallback token."""
+
+        token = self._token_image(creature.token_image)
+        if token is not None:
+            maximum_size = cell_size * 0.98
+            scale = min(
+                maximum_size / token.width(),
+                maximum_size / token.height(),
+            )
+            sprite_width = max(1, int(token.width() * scale))
+            sprite_height = max(1, int(token.height() * scale))
+            painter.drawPixmap(
+                int(center_x - sprite_width / 2),
+                int(center_y + cell_size / 2 - sprite_height),
+                sprite_width,
+                sprite_height,
+                token,
+            )
+            return
+
+        fill, border = self._fallback_token_colors(creature.team_color)
+        painter.setBrush(fill)
+        painter.setPen(QPen(border, 2))
+        painter.drawEllipse(
+            int(center_x - radius),
+            int(center_y - radius),
+            radius * 2,
+            radius * 2,
+        )
+        painter.setPen(QColor("white"))
+        font = QFont()
+        font.setBold(True)
+        font.setPointSize(max(8, int(cell_size * 0.18)))
+        painter.setFont(font)
+        painter.drawText(
+            int(center_x - radius),
+            int(center_y - radius),
+            radius * 2,
+            radius * 2,
+            Qt.AlignmentFlag.AlignCenter,
+            creature.label[:1].upper(),
+        )
+
+    def _paint_target_allocation_badge(
+        self,
+        painter: QPainter,
+        creature: BattlefieldCreatureView,
+        *,
+        center_x: float,
+        center_y: float,
+        radius: int,
+        cell_size: float,
+    ) -> None:
+        """Paint how many repeated targets are allocated to a creature."""
+
+        allocation_count = self._target_allocation_counts.get(
+            creature.creature_ref,
+            0,
+        )
+        if not allocation_count:
+            return
+        badge_radius = max(9, int(cell_size * 0.16))
+        badge_x, badge_y = target_allocation_badge_position(
+            center_x=center_x,
+            center_y=center_y,
+            token_radius=radius,
+            top_right_reserved=bool(creature.debuffs),
+        )
+        painter.setBrush(QColor("#f4d35e"))
+        painter.setPen(QPen(QColor("#4b3900"), 2))
+        painter.drawEllipse(
+            int(badge_x - badge_radius),
+            int(badge_y - badge_radius),
+            badge_radius * 2,
+            badge_radius * 2,
+        )
+        painter.setPen(QColor("#211900"))
+        font = QFont()
+        font.setBold(True)
+        font.setPointSize(max(8, int(cell_size * 0.13)))
+        painter.setFont(font)
+        painter.drawText(
+            int(badge_x - badge_radius),
+            int(badge_y - badge_radius),
+            badge_radius * 2,
+            badge_radius * 2,
+            Qt.AlignmentFlag.AlignCenter,
+            f"x{allocation_count}",
+        )
+
+    def _paint_creature_name(
+        self,
+        painter: QPainter,
+        creature: BattlefieldCreatureView,
+        *,
+        center_x: float,
+        center_y: float,
+        radius: int,
+        cell_size: float,
+    ) -> None:
+        """Paint a creature's floating name when configured or hovered."""
+
+        if not (
+            self._always_show_creature_names
+            or self._hover_cell == (creature.position.x, creature.position.y)
+        ):
+            return
+        label_style = BATTLEFIELD_FLOATING_LABEL_STYLE
+        painter.setFont(self._floating_label_font())
+        label_rect = creature_name_label_rect(
+            center_x=center_x,
+            center_y=center_y,
+            token_radius=radius,
+            cell_size=cell_size,
+            text_width=painter.fontMetrics().horizontalAdvance(creature.name),
+            text_height=painter.fontMetrics().height(),
+            horizontal_padding=label_style.horizontal_padding,
+            vertical_padding=label_style.vertical_padding,
+            viewport_width=self.width(),
+            viewport_height=self.height(),
+        )
+        self._paint_floating_label(
+            painter,
+            creature.name,
+            rect=label_rect,
+            alignment=Qt.AlignmentFlag.AlignCenter,
+        )
+
+    def _paint_movement_destination(
+        self,
+        painter: QPainter,
+        geometry: _BattlefieldRenderGeometry,
+        preview: _MovementPreview,
+    ) -> None:
+        """Paint a translucent creature token at the path destination."""
+
+        planner = preview.creature
+        if planner is None or len(preview.cells) <= 1:
+            return
+        destination_x, destination_y = preview.cells[-1]
+        center_x = geometry.origin_x + (destination_x + 0.5) * geometry.cell_size
+        center_y = geometry.origin_y + (destination_y + 0.5) * geometry.cell_size
+        token = self._token_image(planner.token_image)
+        painter.setOpacity(0.45)
+        if token is not None:
+            maximum_size = geometry.cell_size * 0.98
+            scale = min(
+                maximum_size / token.width(),
+                maximum_size / token.height(),
+            )
+            sprite_width = max(1, int(token.width() * scale))
+            sprite_height = max(1, int(token.height() * scale))
+            painter.drawPixmap(
+                int(center_x - sprite_width / 2),
+                int(center_y + geometry.cell_size / 2 - sprite_height),
+                sprite_width,
+                sprite_height,
+                token,
+            )
+        else:
+            radius = max(14, int(geometry.cell_size * 0.38))
+            fill, border = self._fallback_token_colors(planner.team_color)
+            painter.setBrush(fill)
+            painter.setPen(QPen(border, 2))
+            painter.drawEllipse(
+                int(center_x - radius),
+                int(center_y - radius),
+                radius * 2,
+                radius * 2,
+            )
+        painter.setOpacity(1.0)
+
+    @staticmethod
+    def _paint_area_badge(
+        painter: QPainter,
+        geometry: _BattlefieldRenderGeometry,
+        overlay: Mapping[str, object] | None,
+    ) -> None:
+        """Paint the label describing an active area template."""
+
+        if overlay is None:
+            return
+        badge_rect = geometry.viewport.adjusted(12, 12, -12, -12)
+        badge_height = 32
+        badge_width = min(
+            int(geometry.cell_size * 3.8),
+            max(160, badge_rect.width() // 3),
+        )
+        painter.setBrush(QColor(23, 54, 74, 220))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawRoundedRect(
+            badge_rect.x(),
+            badge_rect.y(),
+            badge_width,
+            badge_height,
+            10,
+            10,
+        )
+        painter.setPen(QColor("white"))
+        font = QFont()
+        font.setBold(True)
+        font.setPointSize(10)
+        painter.setFont(font)
+        painter.drawText(
+            badge_rect.x() + 12,
+            badge_rect.y(),
+            badge_width - 24,
+            badge_height,
+            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
+            area_overlay_label(overlay),
+        )
+
+    def _paint_targeting_badge(
+        self,
+        painter: QPainter,
+        geometry: _BattlefieldRenderGeometry,
+    ) -> None:
+        """Paint the instructions for the active target-selection interaction."""
+
+        if self._targeting_label is None:
+            return
+        badge_rect = geometry.viewport.adjusted(12, 12, -12, -12)
+        badge_height = 34
+        badge_width = min(
+            max(260, int(geometry.cell_size * 6.5)),
+            badge_rect.width(),
+        )
+        painter.setBrush(QColor(37, 30, 14, 225))
+        painter.setPen(QPen(QColor("#d4ad45"), 2))
+        painter.drawRoundedRect(
+            badge_rect.x(),
+            badge_rect.y(),
+            badge_width,
+            badge_height,
+            10,
+            10,
+        )
+        painter.setPen(QColor("#fff4cf"))
+        font = QFont()
+        font.setBold(True)
+        font.setPointSize(10)
+        painter.setFont(font)
+        painter.drawText(
+            badge_rect.x() + 12,
+            badge_rect.y(),
+            badge_width - 24,
+            badge_height,
+            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
+            self._targeting_label,
+        )
 
     @staticmethod
     def _floating_label_font() -> QFont:
