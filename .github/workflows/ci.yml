@@ -37,5 +37,8 @@ jobs:
       - name: Check documentation coverage
         run: uv run interrogate src/srd_arena
 
+      - name: Check doctest coverage
+        run: uv run doctest-audit --fail-under 90
+
       - name: Run pytest
         run: uv run pytest
