@@ -38,7 +38,42 @@ def execute_creature_action(
     action: EncounterAction,
     decision: DecisionFrame,
 ) -> ActionExecutionResult:
-    """Execute one selected action through its focused domain handler."""
+    """Execute one selected action through its focused domain handler.
+
+    Standard actions pass through the shared begin/finish lifecycle even when
+    their focused handler performs all rule-specific work.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> action = EncounterAction("Wait", "wait")
+    >>> decision = DecisionFrame("turn", "hero", "turn", "active")
+    >>> context = SimpleNamespace(
+    ...     actor=SimpleNamespace(creature=object()),
+    ...     progress=SimpleNamespace(),
+    ...     action_id="action-1",
+    ... )
+    >>> marker = object()
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.creature_control.begin_action_execution",
+    ...     return_value=context,
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.creature_control.execute_capability_action",
+    ...     return_value=False,
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.creature_control."
+    ...     "execute_spell_selection_action",
+    ...     return_value=False,
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.creature_control.execute_standard_action",
+    ...     return_value=True,
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.creature_control.finish_action_execution",
+    ...     return_value=marker,
+    ... ) as finish:
+    ...     result = execute_creature_action(SimpleNamespace(), action, decision)
+    >>> (result is marker, finish.call_args.kwargs["action_ends_turn"])
+    (True, True)
+    """
 
     context = begin_action_execution(state, action, decision)
     actor = context.actor.creature

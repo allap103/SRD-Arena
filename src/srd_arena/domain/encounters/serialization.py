@@ -22,7 +22,21 @@ if TYPE_CHECKING:
 
 
 def export_decision(self: EncounterState) -> dict[str, object]:
-    """Convert a pending decision and its invocation stack into immutable data."""
+    """Convert a pending decision and its invocation stack into immutable data.
+
+    >>> from types import SimpleNamespace
+    >>> frame = SimpleNamespace(
+    ...     id="turn-1", creature_ref="hero", kind="turn", reason="active",
+    ...     can_pass=False, parent_frame_id=None, parent_action_id=None,
+    ... )
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: frame,
+    ...     pending_movement=None,
+    ... )
+    >>> payload = export_decision(state)
+    >>> (payload["frame_id"], payload["creature_ref"], payload["kind"])
+    ('turn-1', 'hero', 'turn')
+    """
 
     decision = self.current_decision()
     payload: dict[str, object] = {
@@ -259,7 +273,19 @@ def _export_creature(
 
 
 def export_pending_movement(self: EncounterState) -> dict[str, object] | None:
-    """Serialize an in-progress movement path and its remaining budget."""
+    """Serialize an in-progress movement path and its remaining budget.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.encounters.models import PendingMovement
+    >>> from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
+    >>> movement = PendingMovement(
+    ...     "move-1", "hero", "right", Position(0, 0), Position(1, 0),
+    ...     MovementBudget(5), MovementCost(1), "trigger-1",
+    ... )
+    >>> payload = export_pending_movement(SimpleNamespace(pending_movement=movement))
+    >>> (payload["to"], int(payload["remaining_movement_after"]))
+    ({'x': 1, 'y': 0}, 5)
+    """
 
     movement = self.pending_movement
     if movement is None:

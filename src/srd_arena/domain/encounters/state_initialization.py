@@ -14,7 +14,22 @@ if TYPE_CHECKING:
 
 
 def initialize_action_selectors(state: EncounterState) -> None:
-    """Install the selectors used for external and automatic creature decisions."""
+    """Install the selectors used for external and automatic creature decisions.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": object(), "goblin": object()},
+    ...     _creature_controller=lambda ref: "external" if ref == "hero" else "scripted",
+    ... )
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.state_initialization.build_action_selector",
+    ...     side_effect=lambda controller, participant: controller,
+    ... ):
+    ...     initialize_action_selectors(state)
+    >>> state._action_selectors
+    {'hero': 'external', 'goblin': 'scripted'}
+    """
 
     state._action_selectors = {}
     for creature_ref, creature_state in state.creatures.items():
@@ -28,7 +43,31 @@ def roll_initiative(
     state: EncounterState,
     roll: Callable[[int], int],
 ) -> None:
-    """Roll participants, order ties deterministically, and select the first turn."""
+    """Roll participants, order ties deterministically, and select the first turn.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import Mock
+    >>> hero = SimpleNamespace(creature=Mock())
+    >>> goblin = SimpleNamespace(creature=Mock())
+    >>> hero.creature.attributes.dexterity = 14
+    >>> goblin.creature.attributes.dexterity = 12
+    >>> hero.creature.get_modifier.return_value = 2
+    >>> goblin.creature.get_modifier.return_value = 1
+    >>> participants = [
+    ...     SimpleNamespace(creature_id="hero", takes_turns=True),
+    ...     SimpleNamespace(creature_id="goblin", takes_turns=True),
+    ... ]
+    >>> no_traits = SimpleNamespace(has_trait=lambda trait: False)
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": hero, "goblin": goblin},
+    ...     definition=SimpleNamespace(participants=participants),
+    ...     effective_conditions_for=lambda ref: no_traits,
+    ... )
+    >>> rolls = iter((12, 15))
+    >>> roll_initiative(state, lambda sides: next(rolls))
+    >>> state.initiative_order
+    ['goblin', 'hero']
+    """
 
     entries: list[InitiativeEntry] = []
     for creature_ref, creature_state in state.creatures.items():

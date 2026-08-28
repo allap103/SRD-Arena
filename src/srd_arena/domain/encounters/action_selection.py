@@ -140,7 +140,16 @@ def build_action_selector(
     controller: str,
     participant: EncounterCreatureState,
 ) -> ActionSelector:
-    """Construct the controller-specific selector used for a creature's decisions."""
+    """Construct the controller-specific selector used for a creature's decisions.
+
+    >>> from unittest.mock import Mock
+    >>> isinstance(build_action_selector("external", Mock()), ExternalActionSelector)
+    True
+    >>> participant = Mock()
+    >>> participant.behavior.type = "wait"
+    >>> isinstance(build_action_selector("scripted", participant), ScriptedActionSelector)
+    True
+    """
 
     if controller == "external":
         return ExternalActionSelector()
