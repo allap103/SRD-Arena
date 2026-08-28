@@ -1,5 +1,7 @@
 """Build ongoing-effect and condition results from resolved spell targets."""
 
+from typing import cast
+
 from ...capabilities import (
     ArmorClassModifierEffect,
     ConditionImmunityEffect,
@@ -11,10 +13,17 @@ from ...capabilities import (
     SenseEffect,
     SpeedModifierEffect,
 )
+from ...effects.modifiers import ModifierMode, RollKind, RollModifier
 from ...effects.results import EffectResult
+from ...effects.rule_effects import (
+    ArmorClassAdjustment,
+    RollAdjustment,
+    RuntimeRuleEffect,
+    SpeedAdjustment,
+)
 from ..rules import spell_duration_rounds
 from .context import SpellActionContext
-from .details import effect_duration_rounds, serialize_roll_modifiers
+from .details import effect_duration_rounds
 from .polarity import persistent_spell_effect_polarity
 from .preparation import PreparedSpellResolution
 from .scaling import resource_dice_increment, resource_int_increment, scale_dice
@@ -124,16 +133,7 @@ def build_persistent_spell_effects(
         if isinstance(effect, ConditionSaveAdvantageEffect)
         for condition in effect.conditions
     )
-    armor_class_modifier = sum(
-        effect.value
-        for effect in prepared.definition_effects
-        if isinstance(effect, ArmorClassModifierEffect)
-    )
-    speed_modifier_feet = sum(
-        effect.feet
-        for effect in prepared.definition_effects
-        if isinstance(effect, SpeedModifierEffect)
-    )
+    rule_effects = _build_rule_effects(prepared, context.selected_ability)
     condition_immunities = tuple(
         condition
         for effect in prepared.definition_effects
@@ -163,9 +163,7 @@ def build_persistent_spell_effects(
             or maximum_hit_point_modifier != 0
             or selected_damage_resistances
             or condition_save_advantages
-            or prepared.roll_modifier_effects
-            or armor_class_modifier
-            or speed_modifier_feet
+            or rule_effects
             or selected_damage_reduction_type is not None
             or any(
                 temporary.trigger == "target_turn_start"
@@ -245,12 +243,6 @@ def build_persistent_spell_effects(
                         ),
                         "damage_resistances": list(selected_damage_resistances),
                         "condition_save_advantages": list(condition_save_advantages),
-                        "roll_modifiers": serialize_roll_modifiers(
-                            prepared.roll_modifier_effects,
-                            context.selected_ability,
-                        ),
-                        "armor_class_modifier": armor_class_modifier,
-                        "speed_modifier_feet": speed_modifier_feet,
                         "damage_reduction_type": selected_damage_reduction_type,
                         "damage_reduction_dice": (
                             reduction_effect.dice
@@ -274,6 +266,7 @@ def build_persistent_spell_effects(
                         "senses": [list(sense) for sense in senses],
                     },
                 },
+                rule_effects=rule_effects,
             )
         )
 
@@ -301,3 +294,58 @@ def build_persistent_spell_effects(
                 )
             )
     return effects
+
+
+def _build_rule_effects(
+    prepared: PreparedSpellResolution,
+    selected_ability: str | None,
+) -> tuple[RuntimeRuleEffect, ...]:
+    """Translate persistent capability effects into typed runtime rules.
+
+    >>> from types import SimpleNamespace
+    >>> prepared = SimpleNamespace(
+    ...     definition_effects=(
+    ...         ArmorClassModifierEffect(2),
+    ...         SpeedModifierEffect(10),
+    ...     ),
+    ...     roll_modifier_effects=(),
+    ... )
+    >>> _build_rule_effects(prepared, None)
+    (ArmorClassAdjustment(value=2), SpeedAdjustment(feet=10))
+    """
+
+    effects: list[RuntimeRuleEffect] = [
+        ArmorClassAdjustment(effect.value)
+        for effect in prepared.definition_effects
+        if isinstance(effect, ArmorClassModifierEffect)
+    ]
+    effects.extend(
+        SpeedAdjustment(effect.feet)
+        for effect in prepared.definition_effects
+        if isinstance(effect, SpeedModifierEffect)
+    )
+    for effect in prepared.roll_modifier_effects:
+        abilities = effect.ability_options or (effect.ability,)
+        for ability in abilities:
+            if ability is not None and ability != selected_ability:
+                continue
+            rolls = (
+                ("ability_check", "attack_roll", "saving_throw")
+                if effect.roll == "d20_test"
+                else (effect.roll,)
+            )
+            effects.extend(
+                RollAdjustment(
+                    RollModifier(
+                        roll=cast(RollKind, roll),
+                        mode=cast(ModifierMode, effect.mode),
+                        dice=effect.dice,
+                        value=effect.value,
+                        subject=effect.subject,
+                        ignored_by_senses=effect.ignored_by_senses,
+                        ability=ability,
+                    )
+                )
+                for roll in rolls
+            )
+    return tuple(effects)

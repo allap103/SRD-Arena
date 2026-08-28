@@ -21,7 +21,6 @@ from ..attack_economy import reconcile_remaining_attacks
 from .concentration import end_concentration
 from .movement import reconcile_remaining_movement
 from .removal import _remove_effect_tree
-from .rule_effects import parse_runtime_rule_effects
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -112,10 +111,7 @@ def start_ongoing_effect(
         parameters=effect_parameters,
         polarity=polarity,
         dispellable=True,
-        rule_effects=(
-            *parse_runtime_rule_effects(effect_parameters),
-            *result.rule_effects,
-        ),
+        rule_effects=result.rule_effects,
     )
     state.ongoing_effects.append(effect)
     reconcile_remaining_attacks(state, target_refs)

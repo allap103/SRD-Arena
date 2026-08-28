@@ -196,8 +196,8 @@ def test_effect_lifecycle_queries_speed_without_losing_movement_debt() -> None:
                 "source_label": "Slowing effect",
                 "definition_id": "slowing_effect",
                 "effect_kind": "spell",
-                "parameters": {"speed_modifier_feet": -20},
             },
+            rule_effects=(SpeedAdjustment(-20),),
         ),
         "origin:slowing-effect",
     )

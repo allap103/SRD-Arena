@@ -50,6 +50,7 @@ from srd_arena.domain.effects.modifiers import RollModifier
 from srd_arena.domain.effects.rule_effects import (
     InvocationFailureChance,
     RollAdjustment,
+    SpeedAdjustment,
 )
 from srd_arena.domain.effects.runtime import (
     EffectPolarity,
@@ -2735,17 +2736,15 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
         ).mode
         == "normal"
     )
-    assert state.ongoing_effects[0].parameters["roll_modifiers"] == [
-        {
-            "roll": "ability_check",
-            "mode": "advantage",
-            "dice": None,
-            "value": None,
-            "subject": "target",
-            "ignored_by_senses": [],
-            "ability": "strength",
-        }
-    ]
+    assert state.ongoing_effects[0].rule_effects == (
+        RollAdjustment(
+            RollModifier(
+                "ability_check",
+                "advantage",
+                ability="strength",
+            )
+        ),
+    )
 
 
 def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
@@ -3509,8 +3508,8 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
                     "source_label": "Caster",
                     "definition_id": "longstrider",
                     "duration_rounds": 600,
-                    "parameters": {"speed_modifier_feet": 10},
                 },
+                rule_effects=(SpeedAdjustment(10),),
             )
         ],
         origin_id="longstrider-cast",

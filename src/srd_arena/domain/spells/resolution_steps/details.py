@@ -1,6 +1,6 @@
 """Formatting helpers for structured spell-resolution details."""
 
-from ...capabilities import EffectDuration, RollModifierEffect
+from ...capabilities import EffectDuration
 from ...rolls.dice import DicePoolResult, resolve_dice
 from .context import DieRoller, SpellTargetContext
 from .scaling import parse_damage_dice
@@ -55,47 +55,6 @@ def restoration_detail(
         "total": total,
         "applied": applied,
     }
-
-
-def serialize_roll_modifiers(
-    modifiers: tuple[RollModifierEffect, ...],
-    selected_ability: str | None,
-) -> list[dict[str, object]]:
-    """Expose the sources and totals of roll modifiers in event-safe form.
-
-    >>> modifier = RollModifierEffect(
-    ...     roll="saving_throw", mode="advantage", ability="wisdom"
-    ... )
-    >>> serialize_roll_modifiers((modifier,), "wisdom")[0]["mode"]
-    'advantage'
-    >>> serialize_roll_modifiers((modifier,), "strength")
-    []
-    """
-
-    serialized: list[dict[str, object]] = []
-    for modifier in modifiers:
-        abilities = modifier.ability_options or (modifier.ability,)
-        for ability in abilities:
-            if ability is not None and ability != selected_ability:
-                continue
-            rolls = (
-                ("ability_check", "attack_roll", "saving_throw")
-                if modifier.roll == "d20_test"
-                else (modifier.roll,)
-            )
-            serialized.extend(
-                {
-                    "roll": roll,
-                    "mode": modifier.mode,
-                    "dice": modifier.dice,
-                    "value": modifier.value,
-                    "subject": modifier.subject,
-                    "ignored_by_senses": list(modifier.ignored_by_senses),
-                    "ability": ability,
-                }
-                for roll in rolls
-            )
-    return serialized
 
 
 def effect_duration_rounds(duration: EffectDuration | None) -> int | None:
