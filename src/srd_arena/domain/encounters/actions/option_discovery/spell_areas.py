@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 def spell_area_targets(
-    self: EncounterState,
+    state: EncounterState,
     actor: Creature,
     spell: Spell,
     target_ref: str | None = None,
@@ -55,17 +55,17 @@ def spell_area_targets(
     (namespace(target_ref='goblin'),)
     """
 
-    area = spell_area(self, actor, spell, target_ref=target_ref, aim_point=aim_point)
+    area = spell_area(state, actor, spell, target_ref=target_ref, aim_point=aim_point)
     if area is None:
         if target_ref is None:
             return ()
-        target = spell_target_context(self, actor, target_ref)
+        target = spell_target_context(state, actor, target_ref)
         return (target,) if target is not None else ()
-    return tuple(targets_in_area(self, actor, area))
+    return tuple(targets_in_area(state, actor, area))
 
 
 def spell_area(
-    self: EncounterState,
+    state: EncounterState,
     actor: Creature,
     spell: Spell,
     target_ref: str | None = None,
@@ -89,8 +89,8 @@ def spell_area(
     (Position(x=5, y=5), True)
     """
 
-    creature_ref = self.current_decision().creature_ref
-    actor_position = creature_position(self, creature_ref)
+    creature_ref = state.current_decision().creature_ref
+    actor_position = creature_position(state, creature_ref)
     if spell.geometry_mode == "point_area":
         if aim_point is None:
             return None
@@ -98,12 +98,12 @@ def spell_area(
         if radius_feet is None:
             return None
         radius_squares = int(
-            self.definition.grid.distance_from_feet(radius_feet, minimum=1)
+            state.definition.grid.distance_from_feet(radius_feet, minimum=1)
         )
         origin = Position(int(aim_point[0]), int(aim_point[1]))
         if spell_area_shape(spell) == "cube":
-            return build_point_cube_area(origin, radius_squares, self.definition.grid)
-        return build_radius_area(origin, radius_squares, self.definition.grid)
+            return build_point_cube_area(origin, radius_squares, state.definition.grid)
+        return build_radius_area(origin, radius_squares, state.definition.grid)
     if spell.geometry_mode != "directional_area":
         return None
     if aim_point is not None:
@@ -119,29 +119,29 @@ def spell_area(
     else:
         if target_ref is None:
             return None
-        target = spell_target_context(self, actor, target_ref)
+        target = spell_target_context(state, actor, target_ref)
         if target is None or target_ref == creature_ref:
             return None
         direction = vector_between_positions(
             actor_position,
-            creature_position(self, target_ref),
+            creature_position(state, target_ref),
         )
-    length = spell_range_squares_for(self, spell, actor)
+    length = spell_range_squares_for(state, spell, actor)
     if length is None:
         return None
-    coverage_threshold = self.geometry_config.directional_area_cell_coverage_threshold
+    coverage_threshold = state.geometry_config.directional_area_cell_coverage_threshold
     return build_directional_area(
         spell.range_data.get("type"),
         actor_position,
         direction,
         length,
-        self.definition.grid,
+        state.definition.grid,
         coverage_threshold=coverage_threshold,
     )
 
 
 def targets_in_area(
-    self: EncounterState,
+    state: EncounterState,
     actor: Creature,
     area: AreaOfEffect,
 ) -> list[SpellTargetContext]:
@@ -168,12 +168,12 @@ def targets_in_area(
 
     occupied_cells = {(cell.x, cell.y) for cell in area.cells}
     targets: list[SpellTargetContext] = []
-    for target_ref, target_state in self.creatures.items():
+    for target_ref, target_state in state.creatures.items():
         if not target_state.is_alive:
             continue
         if (target_state.position.x, target_state.position.y) not in occupied_cells:
             continue
-        target = spell_target_context(self, actor, target_ref)
+        target = spell_target_context(state, actor, target_ref)
         if target is not None:
             targets.append(target)
     return targets

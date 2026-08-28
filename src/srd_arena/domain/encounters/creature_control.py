@@ -1,8 +1,8 @@
 """Coordinate discovery and execution of creature-selected encounter actions.
 
 Detailed movement, spell-selection, and capability behavior lives in the
-focused :mod:`actions.creature_actions` package.  This module remains the
-stable surface bound onto :class:`EncounterState`.
+focused :mod:`actions.creature_actions` package. This module owns their
+high-level discovery and execution entry points.
 """
 
 from __future__ import annotations

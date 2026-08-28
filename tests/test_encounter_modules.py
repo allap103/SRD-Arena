@@ -9,15 +9,17 @@ from srd_arena.domain.effects.conditions import (
 )
 from srd_arena.domain.effects.runtime import CreatureRelationship
 from srd_arena.domain.encounters import EncounterTeam
-from srd_arena.domain.encounters.conditions import (
+from srd_arena.domain.encounters.condition_state import (
     apply_condition,
-    apply_grapple,
     condition_replaces,
     remove_condition,
     remove_condition_from_source,
-    remove_relationships_for_creature,
 )
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.encounters.grappling_state import (
+    apply_grapple,
+    remove_relationships_for_creature,
+)
 from srd_arena.domain.encounters.participants import (
     creature_controller,
     creature_team_id,

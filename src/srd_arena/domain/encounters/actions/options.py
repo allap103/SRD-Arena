@@ -36,7 +36,7 @@ if TYPE_CHECKING:
     from ..encounter import EncounterState
 
 
-def available_actions(self: EncounterState) -> list[EncounterAction]:
+def available_actions(state: EncounterState) -> list[EncounterAction]:
     """Discover and normalize every action candidate for the current decision actor.
 
     Scripted controllers do not advertise choices to clients, while specialized
@@ -69,16 +69,16 @@ def available_actions(self: EncounterState) -> list[EncounterAction]:
     'accept_roll'
     """
 
-    decision = self.current_decision()
-    if creature_controller(self, decision.creature_ref) != "external":
+    decision = state.current_decision()
+    if creature_controller(state, decision.creature_ref) != "external":
         return []
     if decision.kind == "reroll_dice":
-        return self.reaction_engine.reroll_damage_actions(self)
+        return state.reaction_engine.reroll_damage_actions(state)
     if decision.kind == "reaction":
-        return self.reaction_engine.reaction_actions(self)
+        return state.reaction_engine.reaction_actions(state)
     if decision.kind == "spell_targets":
-        return spell_target_selection_actions(self, decision.creature_ref)
-    return available_creature_actions(self, decision.creature_ref)
+        return spell_target_selection_actions(state, decision.creature_ref)
+    return available_creature_actions(state, decision.creature_ref)
 
 
 __all__ = [

@@ -228,6 +228,24 @@ def test_content_is_grouped_by_game_concept() -> None:
     )
 
 
+def test_spell_building_does_not_import_its_package_facade() -> None:
+    """Keep spell construction below the public package entry point."""
+
+    violations: list[str] = []
+    building_dir = PACKAGE_ROOT / "content" / "spells" / "building"
+    for path in sorted(building_dir.rglob("*.py")):
+        module = _module_name(path)
+        for line, imported_module in _imports(path, module):
+            if imported_module == "srd_arena.content.spells":
+                violations.append(f"{path.name}:{line} imports the spell facade")
+
+    assert not violations, (
+        "Spell-building modules must import concrete sibling modules directly; "
+        "the package facade imports the builder and would create a cycle:\n"
+        + "\n".join(violations)
+    )
+
+
 def test_encounter_actions_have_no_legacy_peer_package() -> None:
     legacy_actions = PACKAGE_ROOT / "domain" / "actions"
 

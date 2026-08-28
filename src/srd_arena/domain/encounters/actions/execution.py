@@ -27,7 +27,7 @@ def _roll_die(sides: int) -> int:
 
 
 def resolve_grapple_action(
-    self: EncounterState,
+    state: EncounterState,
     actor: Creature,
     action: EncounterAction,
     progress: EncounterProgress,
@@ -50,13 +50,13 @@ def resolve_grapple_action(
     (('system', 'You have already used your Action.'), False)
     """
 
-    creature_ref = self.current_decision().creature_ref
-    creature_state = self.creatures[creature_ref]
+    creature_ref = state.current_decision().creature_ref
+    creature_state = state.creatures[creature_ref]
     if creature_state.actions_remaining <= 0 and creature_state.attacks_remaining <= 0:
         progress.messages.append(("system", "You have already used your Action."))
         progress.events.append(
             create_event(
-                self,
+                state,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -70,7 +70,7 @@ def resolve_grapple_action(
         )
 
     target_ref = action.value
-    target = self.creatures[target_ref]
+    target = state.creatures[target_ref]
     if not target.is_alive:
         progress.messages.append(("system", "The target is no longer available."))
         return
@@ -81,7 +81,7 @@ def resolve_grapple_action(
         progress.messages.append(("system", "You need a free hand to grapple."))
         progress.events.append(
             create_event(
-                self,
+                state,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -94,19 +94,19 @@ def resolve_grapple_action(
         return
 
     spend_attack(
-        self,
+        state,
         creature_ref,
         base_attacks=actor.combat_profile.attacks_per_attack_action,
     )
 
-    actor_roll_rules = self.combat_rules.roll_modifiers(
-        self,
+    actor_roll_rules = state.combat_rules.roll_modifiers(
+        state,
         creature_ref,
         "ability_check",
         ability="strength",
     )
-    target_roll_rules = self.combat_rules.roll_modifiers(
-        self,
+    target_roll_rules = state.combat_rules.roll_modifiers(
+        state,
         target_ref,
         "ability_check",
         ability="strength",
@@ -128,11 +128,11 @@ def resolve_grapple_action(
         roller=_roll_die,
     )
     success = player_roll.total >= target_roll.total
-    target_label = creature_label(self, target_ref)
+    target_label = creature_label(state, target_ref)
 
     progress.events.append(
         create_event(
-            self,
+            state,
             "grapple_resolved",
             creature_ref=creature_ref,
             action_id=action_id,
@@ -154,7 +154,7 @@ def resolve_grapple_action(
         )
         progress.events.append(
             create_event(
-                self,
+                state,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -166,7 +166,7 @@ def resolve_grapple_action(
     progress.messages.append(("system", f"{actor.name} grapples {target_label}."))
     progress.messages.append(("system", f"{target_label} is grappled."))
     apply_grapple(
-        self,
+        state,
         condition_from_effect_with_origin(
             EffectResult(
                 kind="apply_condition",
@@ -184,7 +184,7 @@ def resolve_grapple_action(
     )
     progress.events.append(
         create_event(
-            self,
+            state,
             "action_resolved",
             creature_ref=creature_ref,
             action_id=action_id,

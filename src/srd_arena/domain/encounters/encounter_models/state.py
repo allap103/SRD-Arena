@@ -124,7 +124,7 @@ class EncounterStateData:
 
     The data includes combatants, clocks, nested decisions, sourced effects,
     relationships, runtime sequences, and action selectors. ``EncounterState``
-    adds the service facade used to operate on this aggregate.
+    constructs this aggregate and exposes its small engine-facing API.
     """
 
     encounter_id: str

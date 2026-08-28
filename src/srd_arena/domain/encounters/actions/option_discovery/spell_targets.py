@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 def spell_action_targets(
-    self: EncounterState,
+    state: EncounterState,
     actor: Creature,
     spell: Spell,
 ) -> list[SpellTargetContext]:
@@ -54,8 +54,8 @@ def spell_action_targets(
     []
     """
 
-    creature_ref = self.current_decision().creature_ref
-    actor_position = creature_position(self, creature_ref)
+    creature_ref = state.current_decision().creature_ref
+    actor_position = creature_position(state, creature_ref)
     if spell.removable_effect_kinds and not (
         any(
             isinstance(effect, (HealingEffect, TemporaryHitPointsEffect))
@@ -63,8 +63,8 @@ def spell_action_targets(
         )
     ):
         restoration_targets: list[SpellTargetContext] = []
-        max_range = spell_range_squares_for(self, spell, actor)
-        for target_ref, target_state in self.creatures.items():
+        max_range = spell_range_squares_for(state, spell, actor)
+        for target_ref, target_state in state.creatures.items():
             if not target_state.is_alive:
                 continue
             if (
@@ -73,38 +73,38 @@ def spell_action_targets(
                 > max_range
             ):
                 continue
-            target = spell_target_context(self, actor, target_ref)
-            if target is not None and _spell_removal_choices(self, target_ref, spell):
+            target = spell_target_context(state, actor, target_ref)
+            if target is not None and _spell_removal_choices(state, target_ref, spell):
                 restoration_targets.append(target)
         return restoration_targets
     if spell.geometry_mode == "point_area":
-        max_range = spell_range_squares_for(self, spell, actor)
+        max_range = spell_range_squares_for(state, spell, actor)
         if max_range is None:
             return []
         return [
             target
-            for target_ref, target_state in self.creatures.items()
+            for target_ref, target_state in state.creatures.items()
             if target_state.is_alive
-            and creatures_are_opponents(self, creature_ref, target_ref)
+            and creatures_are_opponents(state, creature_ref, target_ref)
             and grid_distance_between(actor_position, target_state.position)
             <= max_range
-            and (target := spell_target_context(self, actor, target_ref)) is not None
+            and (target := spell_target_context(state, actor, target_ref)) is not None
         ]
-    if spell_targets_self_only_for(self, spell):
-        target = spell_target_context(self, actor, creature_ref)
+    if spell_targets_self_only_for(state, spell):
+        target = spell_target_context(state, actor, creature_ref)
         if target is None:
             return []
-        if _spell_removal_choices(self, creature_ref, spell):
+        if _spell_removal_choices(state, creature_ref, spell):
             return [target]
         return []
 
-    max_range = spell_range_squares_for(self, spell, actor)
+    max_range = spell_range_squares_for(state, spell, actor)
     targets: list[SpellTargetContext] = []
-    for target_ref, target_state in self.creatures.items():
+    for target_ref, target_state in state.creatures.items():
         if not target_state.is_alive:
             continue
         disposition = spell_target_disposition(spell)
-        is_opponent = creatures_are_opponents(self, creature_ref, target_ref)
+        is_opponent = creatures_are_opponents(state, creature_ref, target_ref)
         if disposition == "enemy" and not is_opponent:
             continue
         if disposition == "ally" and is_opponent:
@@ -120,7 +120,7 @@ def spell_action_targets(
             > max_range
         ):
             continue
-        target = spell_target_context(self, actor, target_ref)
+        target = spell_target_context(state, actor, target_ref)
         if target is not None:
             targets.append(target)
     return targets
@@ -166,7 +166,7 @@ def _spell_removal_choices(
 
 
 def spell_target_context(
-    self: EncounterState,
+    state: EncounterState,
     actor: Creature,
     target_ref: str,
 ) -> SpellTargetContext | None:
@@ -193,16 +193,16 @@ def spell_target_context(
     True
     """
 
-    target_state = self.creatures.get(target_ref)
+    target_state = state.creatures.get(target_ref)
     if target_state is None or not target_state.is_alive:
         return None
-    effective = self.effective_conditions_for(target_ref)
+    effective = state.effective_conditions_for(target_ref)
     return SpellTargetContext(
         creature=target_state.creature,
         target_ref=target_ref,
         target_label=target_state.creature.name,
         target_conditions=tuple(
-            condition.condition.value for condition in self.conditions_for(target_ref)
+            condition.condition.value for condition in state.conditions_for(target_ref)
         ),
         automatic_save_failures={
             "strength": effective.providers_for_trait(

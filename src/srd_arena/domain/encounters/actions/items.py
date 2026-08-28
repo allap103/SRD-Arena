@@ -20,7 +20,7 @@ def _roll_dice(count: int, sides: int) -> int:
 
 
 def resolve_utilize_action(
-    self: EncounterState,
+    state: EncounterState,
     actor: Creature,
     item_id: str,
     progress: EncounterProgress,
@@ -42,13 +42,13 @@ def resolve_utilize_action(
     (('system', 'You do not have that item.'), False)
     """
 
-    creature_ref = self.current_decision().creature_ref
-    item = self.item_templates.get(item_id)
+    creature_ref = state.current_decision().creature_ref
+    item = state.item_templates.get(item_id)
     if item is None or not actor.inventory.has_item(item_id):
         progress.messages.append(("system", "You do not have that item."))
         progress.events.append(
             create_event(
-                self,
+                state,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -56,11 +56,11 @@ def resolve_utilize_action(
             )
         )
         return
-    if not self.active_bonus_action_available:
+    if not state.active_bonus_action_available:
         progress.messages.append(("system", "You have already used your Bonus Action."))
         progress.events.append(
             create_event(
-                self,
+                state,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -80,7 +80,7 @@ def resolve_utilize_action(
         )
         progress.events.append(
             create_event(
-                self,
+                state,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -101,7 +101,7 @@ def resolve_utilize_action(
     consumed = item.has_misc_tag("CNS")
     if consumed:
         actor.inventory.remove_item(item.id)
-    self.active_bonus_action_available = False
+    state.active_bonus_action_available = False
 
     modifier_text = f" + {modifier}" if modifier else ""
     progress.messages.extend(
@@ -118,7 +118,7 @@ def resolve_utilize_action(
         progress.messages.append(("system", f"{item.name} is consumed."))
     progress.events.append(
         create_event(
-            self,
+            state,
             "item_used",
             creature_ref=creature_ref,
             action_id=action_id,

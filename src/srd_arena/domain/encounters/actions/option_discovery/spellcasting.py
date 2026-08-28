@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from ...encounter import EncounterState
 
 
-def spell_action_cost(self: EncounterState, spell: Spell) -> ActionCost:
+def spell_action_cost(state: EncounterState, spell: Spell) -> ActionCost:
     """Map a spell's activation time to the turn resource it consumes.
 
     >>> spell = Spell(
@@ -42,7 +42,7 @@ def spell_action_cost(self: EncounterState, spell: Spell) -> ActionCost:
 
 
 def spell_cast_block_reason_for(
-    self: EncounterState,
+    state: EncounterState,
     spellcasting: Spellcasting,
     spell: Spell,
     cost: ActionCost,
@@ -72,9 +72,9 @@ def spell_cast_block_reason_for(
     'You have no level 1 spell slots remaining.'
     """
 
-    creature_ref = self.current_decision().creature_ref
-    compatibility = self.combat_rules.action_compatibility(
-        self,
+    creature_ref = state.current_decision().creature_ref
+    compatibility = state.combat_rules.action_compatibility(
+        state,
         creature_ref,
         EncounterAction(
             spell.name,
@@ -89,10 +89,10 @@ def spell_cast_block_reason_for(
         spellcasting,
         spell,
         spell_action_economy(spell),
-        action_available=self.active_magic_actions_remaining > 0,
-        bonus_action_available=self.active_bonus_action_available,
-        reaction_available=self.combat_rules.reaction_eligibility(
-            self,
+        action_available=state.active_magic_actions_remaining > 0,
+        bonus_action_available=state.active_bonus_action_available,
+        reaction_available=state.combat_rules.reaction_eligibility(
+            state,
             creature_ref,
             "spell",
         ).allowed,
@@ -100,7 +100,7 @@ def spell_cast_block_reason_for(
     )
 
 
-def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
+def spell_targets_self_only_for(state: EncounterState, spell: Spell) -> bool:
     """Return whether the spell's target contract permits only its caster.
 
     >>> spell = Spell("shield", "Shield", "XPHB", 1, geometry_mode="self_only")
@@ -112,7 +112,7 @@ def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
 
 
 def spell_range_squares_for(
-    self: EncounterState, spell: Spell, creature: Creature
+    state: EncounterState, spell: Spell, creature: Creature
 ) -> int | None:
     """Convert the spell's authored range into grid cells for this caster.
 
@@ -127,11 +127,11 @@ def spell_range_squares_for(
     12
     """
 
-    return spell_range_squares(spell, self.definition.grid)
+    return spell_range_squares(spell, state.definition.grid)
 
 
 def spend_spell_resources(
-    self: EncounterState,
+    state: EncounterState,
     spellcasting: Spellcasting,
     spell: Spell,
     cost: ActionCost,
@@ -160,12 +160,12 @@ def spend_spell_resources(
     """
 
     if cost.action > 0:
-        consume_action(self, allow_magic=True)
-        clear_attack_action(self.active_creature_state)
+        consume_action(state, allow_magic=True)
+        clear_attack_action(state.active_creature_state)
     if cost.bonus_action > 0:
-        self.active_bonus_action_available = False
+        state.active_bonus_action_available = False
     if cost.reaction > 0:
-        self.active_reaction_available = False
+        state.active_reaction_available = False
     if spell.level > 0:
         slot_level = cast_level if cast_level is not None else spell.level
         spellcasting.spell_slots_remaining[slot_level] -= 1
