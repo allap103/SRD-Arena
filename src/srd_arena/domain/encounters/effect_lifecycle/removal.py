@@ -15,7 +15,35 @@ if TYPE_CHECKING:
 
 
 def remove_ongoing_effects(state: EncounterState, result: EffectResult) -> None:
-    """Remove matching effects from one target according to an effect result."""
+    """Remove matching effects from one target according to an effect result.
+
+    By default only the first matching occurrence is removed; authored effects
+    can explicitly request all matches.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> first = SimpleNamespace(
+    ...     target_refs=("hero",),
+    ...     identity=SimpleNamespace(id="bless-1"),
+    ...     kind=SimpleNamespace(value="spell"),
+    ...     parameters={},
+    ... )
+    >>> second = SimpleNamespace(
+    ...     target_refs=("hero",),
+    ...     identity=SimpleNamespace(id="bless-2"),
+    ...     kind=SimpleNamespace(value="spell"),
+    ...     parameters={},
+    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[first, second])
+    >>> result = EffectResult("remove_effect", "hero", data={"effect_kind": "spell"})
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.effect_lifecycle.removal."
+    ...     "_remove_effect_target"
+    ... ) as remove:
+    ...     remove_ongoing_effects(state, result)
+    >>> remove.call_args.args[1] is first
+    True
+    """
 
     effect_id = result.data.get("effect_id")
     effect_kind = result.data.get("effect_kind")

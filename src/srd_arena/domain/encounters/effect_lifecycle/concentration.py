@@ -15,7 +15,24 @@ if TYPE_CHECKING:
 
 
 def end_concentration(state: EncounterState, source_ref: str) -> None:
-    """End every concentration effect maintained by one creature."""
+    """End every concentration effect maintained by one creature.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> source = SimpleNamespace(applied_by_ref="mage")
+    >>> effect = SimpleNamespace(
+    ...     kind=OngoingEffectKind.CONCENTRATION,
+    ...     identity=SimpleNamespace(source=source),
+    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[effect])
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.effect_lifecycle.concentration."
+    ...     "_remove_effect_tree"
+    ... ) as remove:
+    ...     end_concentration(state, "mage")
+    >>> remove.call_args.args[1] is effect
+    True
+    """
 
     matching = tuple(
         effect

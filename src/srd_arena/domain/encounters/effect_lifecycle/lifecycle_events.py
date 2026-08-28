@@ -25,7 +25,27 @@ def resolve_spell_lifecycle_event(
     target_ref: str | None = None,
     progress: EncounterProgress | None = None,
 ) -> None:
-    """Apply event-triggered repeat saves and configured termination rules."""
+    """Apply event-triggered repeat saves and configured termination rules.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> source = SimpleNamespace(applied_by_ref="mage", label="Hideous Laughter")
+    >>> effect = SimpleNamespace(
+    ...     target_refs=("target",),
+    ...     parameters={"end_events": [["target_makes_attack", "target"]]},
+    ...     identity=SimpleNamespace(source=source),
+    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[effect])
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.effect_lifecycle.lifecycle_events."
+    ...     "_remove_effect_target"
+    ... ) as remove:
+    ...     resolve_spell_lifecycle_event(
+    ...         state, "target_makes_attack", actor_ref="target"
+    ...     )
+    >>> remove.call_args.args[2]
+    'target'
+    """
 
     for effect in tuple(state.ongoing_effects):
         affected_ref = (
