@@ -13,7 +13,25 @@ from .models import (
 
 
 def build_resource_summary(encounter: EncounterObservation) -> ResourceSummaryView:
-    """Project the active combatant's health, economy, movement, and slots."""
+    """Project the active combatant's health, economy, movement, and slots.
+
+    >>> from types import SimpleNamespace
+    >>> hero = SimpleNamespace(
+    ...     health=9, max_health=12, action_available=True,
+    ...     bonus_action_available=False, reaction_available=True,
+    ...     attacks_remaining=0, attacks_per_attack_action=1,
+    ...     effective_conditions=("prone",), spell_slots=(),
+    ...     movement_remaining=4, movement_total=6,
+    ...     movement_remaining_feet=20, movement_total_feet=30,
+    ... )
+    >>> encounter = SimpleNamespace(
+    ...     decision=SimpleNamespace(creature_ref="hero", kind="turn"),
+    ...     creature=lambda ref: hero, initiative=(),
+    ... )
+    >>> summary = build_resource_summary(encounter)
+    >>> (summary.action_status, summary.bonus_action_status, summary.conditions)
+    ('Ready', 'Spent', ('prone',))
+    """
 
     decision = encounter.decision
     creature_state = encounter.creature(decision.creature_ref)

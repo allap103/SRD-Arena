@@ -35,7 +35,19 @@ class RollView:
 
 
 def build_roll_views(events: list[GameEvent]) -> list[RollView]:
-    """Convert roll-bearing combat events into display-ready roll groups."""
+    """Convert roll-bearing combat events into display-ready roll groups.
+
+    >>> event = GameEvent(1, "attack_resolved", data={
+    ...     "attacker_label": "Hero", "target_label": "Goblin", "hit": True,
+    ...     "attack_roll_detail": {
+    ...         "die": 14, "dice": [14], "selected_index": 0,
+    ...         "modifier": 5, "total": 19, "target_ac": 15,
+    ...     },
+    ... })
+    >>> view = build_roll_views([event])[0]
+    >>> (view.label, view.total, view.success)
+    ('Hero attacks Goblin', 19, True)
+    """
 
     views: list[RollView] = []
     resolved_roll_ids = {
@@ -104,7 +116,14 @@ def build_roll_views(events: list[GameEvent]) -> list[RollView]:
 def without_roll_details(
     messages: list[tuple[str, str]],
 ) -> list[tuple[str, str]]:
-    """Remove prose formulas represented by the structured roll log."""
+    """Remove prose formulas represented by the structured roll log.
+
+    >>> without_roll_details([
+    ...     ("system", "Roll d20=14 + 5 = 19"),
+    ...     ("system", "Hero hits Goblin."),
+    ... ])
+    [('system', 'Hero hits Goblin.')]
+    """
     return [
         (channel, message)
         for channel, message in messages

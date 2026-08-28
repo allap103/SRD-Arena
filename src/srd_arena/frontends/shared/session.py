@@ -16,7 +16,22 @@ def build_session_presentation(
     observation: GameObservation,
     config: ScenarioPresentation | None = None,
 ) -> SessionPresentation:
-    """Convert one application observation into a complete frontend snapshot."""
+    """Convert one application observation into a complete frontend snapshot.
+
+    Story scenes remain frontend-neutral when no encounter is active.
+
+    >>> from types import SimpleNamespace
+    >>> system = SimpleNamespace(kind="system_exit")
+    >>> observation = SimpleNamespace(
+    ...     scene=SimpleNamespace(
+    ...         scene_id="intro", scene_text="Welcome", action_details=(system,)
+    ...     ),
+    ...     encounter=None,
+    ... )
+    >>> presentation = build_session_presentation(observation)
+    >>> (presentation.scene_id, presentation.story_text, presentation.system_actions)
+    ('intro', 'Welcome', [namespace(kind='system_exit')])
+    """
 
     presentation_config = config or ScenarioPresentation()
     view = observation.scene

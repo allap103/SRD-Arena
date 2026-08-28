@@ -4,7 +4,23 @@ from srd_arena.application.api import EncounterObservation
 
 
 def render_encounter_text(encounter: EncounterObservation) -> str:
-    """Render a compact text alternative from the public encounter snapshot."""
+    """Render a compact text alternative from the public encounter snapshot.
+
+    >>> from types import SimpleNamespace
+    >>> hero = SimpleNamespace(
+    ...     creature_ref="hero", label="Hero", position=SimpleNamespace(x=0, y=0),
+    ...     health=10, max_health=12, is_alive=True, movement_remaining=5,
+    ...     movement_total=6, action_available=True, attacks_remaining=0,
+    ...     reaction_available=True,
+    ... )
+    >>> encounter = SimpleNamespace(
+    ...     decision=SimpleNamespace(creature_ref="hero", kind="turn"),
+    ...     creature=lambda ref: hero, creatures=(hero,), round_number=1,
+    ...     grid=SimpleNamespace(width=2, height=1),
+    ... )
+    >>> print(render_encounter_text(encounter).splitlines()[0])
+    A .
+    """
 
     actor_ref = encounter.decision.creature_ref
     actor = encounter.creature(actor_ref)

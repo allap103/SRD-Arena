@@ -18,7 +18,23 @@ def build_battlefield_view(
     grid_opacity: float = 1.0,
     team_ids: tuple[str, ...] = (),
 ) -> BattlefieldView:
-    """Project an encounter observation into drawable grid and token data."""
+    """Project an encounter observation into drawable grid and token data.
+
+    >>> from types import SimpleNamespace
+    >>> hero = SimpleNamespace(
+    ...     creature_ref="hero", creature_id="hero", name="Hero", label="Hero",
+    ...     token_image=None, team_id="heroes", position=SimpleNamespace(x=1, y=1),
+    ...     health=10, max_health=10, is_alive=True, effective_conditions=(),
+    ... )
+    >>> encounter = SimpleNamespace(
+    ...     grid=SimpleNamespace(width=3, height=3), round_number=1,
+    ...     decision=SimpleNamespace(creature_ref="hero", kind="turn"),
+    ...     creatures=(hero,), ongoing_effects=(), creature=lambda ref: hero,
+    ... )
+    >>> view = build_battlefield_view(encounter, team_ids=("heroes",))
+    >>> (view.width, view.height, view.creatures[0].is_active)
+    (3, 3, True)
+    """
 
     if len(team_ids) > len(TEAM_COLORS):
         raise ValueError("Battlefield presentation supports at most five teams.")
