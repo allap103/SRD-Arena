@@ -20,6 +20,3 @@ class CapabilityActionResult:
     effects: list[EffectResult]
     resource_updates: dict[str, int] = field(default_factory=dict)
     details: dict[str, object] = field(default_factory=dict)
-
-
-FeatureActionResult = CapabilityActionResult

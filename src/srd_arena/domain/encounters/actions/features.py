@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...creatures import Creature
-from ...creatures.feature_rules.actions import (
+from ...creatures.feature_rules import (
     resolve_feature_action as _resolve_feature_action_impl,
 )
 from ..attack_economy import clear_attack_action
