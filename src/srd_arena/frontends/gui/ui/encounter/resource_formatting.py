@@ -4,7 +4,12 @@ from __future__ import annotations
 
 
 def spell_slot_rich_text(level: int, remaining: int, maximum: int) -> str:
-    """Render available and spent spell slots as colored square markers."""
+    """Render available and spent spell slots as colored square markers.
+
+    >>> text = spell_slot_rich_text(2, 1, 3)
+    >>> (text.startswith("2: "), text.count("#2f6f9d"), text.count("#9d2f2f"))
+    (True, 1, 2)
+    """
 
     gap = "&nbsp;"
     available = gap.join(

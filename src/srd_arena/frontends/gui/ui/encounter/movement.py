@@ -56,7 +56,23 @@ def build_movement_plan(
     encounter: EncounterView,
     creature_ref: str,
 ) -> MovementPlan | None:
-    """Build a movement preview for an active creature that can still move."""
+    """Build a movement preview for an active creature that can still move.
+
+    >>> from types import SimpleNamespace
+    >>> hero = SimpleNamespace(
+    ...     creature_ref="hero", is_active=True,
+    ...     position=SimpleNamespace(x=0, y=0),
+    ... )
+    >>> action = SimpleNamespace(cost={"movement": 1})
+    >>> encounter = SimpleNamespace(
+    ...     battlefield=SimpleNamespace(width=3, height=3, creatures=[hero]),
+    ...     movement_actions={"right": action},
+    ...     resources=SimpleNamespace(movement_remaining=2),
+    ... )
+    >>> plan = build_movement_plan(encounter, "hero")
+    >>> plan.path_to((2, 0)) if plan else None
+    ('right', 'right')
+    """
 
     planner = next(
         (
@@ -98,7 +114,17 @@ def movement_plan_is_current(
     plan: MovementPlan | None,
     battlefield: BattlefieldView,
 ) -> bool:
-    """Return whether a plan still belongs to the active battlefield creature."""
+    """Return whether a plan still belongs to the active battlefield creature.
+
+    >>> from types import SimpleNamespace
+    >>> battlefield = SimpleNamespace(creatures=[
+    ...     SimpleNamespace(creature_ref="hero", is_active=True)
+    ... ])
+    >>> movement_plan_is_current(MovementPlan("hero", {}), battlefield)
+    True
+    >>> movement_plan_is_current(MovementPlan("goblin", {}), battlefield)
+    False
+    """
 
     if plan is None:
         return True
@@ -115,7 +141,14 @@ def shortest_movement_paths(
     blocked: set[GridCell],
     max_steps: int,
 ) -> dict[GridCell, MovementPath]:
-    """Find one shortest path to every reachable grid cell."""
+    """Find one shortest path to every reachable grid cell.
+
+    >>> paths = shortest_movement_paths(3, 1, (0, 0), {(1, 0)}, 3)
+    >>> paths
+    {(0, 0): ()}
+    >>> shortest_movement_paths(3, 1, (0, 0), set(), 2)[(2, 0)]
+    ('right', 'right')
+    """
 
     paths: dict[GridCell, MovementPath] = {origin: ()}
     frontier = deque([origin])
