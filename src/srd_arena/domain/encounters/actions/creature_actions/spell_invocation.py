@@ -38,7 +38,18 @@ def execute_spell_invocation(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Resolve a complete cast or suspend it before casting for target choices."""
+    """Resolve a complete cast or suspend it before casting for target choices.
+
+    >>> from types import SimpleNamespace
+    >>> execute_spell_invocation(
+    ...     SimpleNamespace(), SimpleNamespace(), EncounterAction("Cast", "spell"),
+    ...     DecisionFrame("turn", "mage", "turn", "active"),
+    ...     EncounterProgress(), "cast-1"
+    ... )
+    Traceback (most recent call last):
+    ...
+    ValueError: Spell action requires a spell payload.
+    """
 
     if not isinstance(action.value, str):
         raise ValueError("Spell action requires a spell payload.")

@@ -26,7 +26,26 @@ def execute_spell_selection_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> bool:
-    """Apply one command to the active staged spell selection."""
+    """Apply one command to the active staged spell selection.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(
+    ...     pending_spell_cast=object(), decision_stack=[object()]
+    ... )
+    >>> execute_spell_selection_action(
+    ...     state, SimpleNamespace(),
+    ...     EncounterAction("Cancel", "cancel_spell_targets"),
+    ...     EncounterProgress(), "cancel-1"
+    ... )
+    True
+    >>> (state.pending_spell_cast, state.decision_stack)
+    (None, [])
+    >>> execute_spell_selection_action(
+    ...     state, SimpleNamespace(), EncounterAction("Wait", "wait"),
+    ...     EncounterProgress(), "wait-1"
+    ... )
+    False
+    """
 
     if action.kind == "toggle_spell_target":
         _toggle_spell_target(state, action, progress)

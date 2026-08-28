@@ -20,7 +20,25 @@ def execute_capability_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> bool:
-    """Execute a recognized non-spell capability and report whether it matched."""
+    """Execute a recognized non-spell capability and report whether it matched.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import Mock
+    >>> state = SimpleNamespace(_resolve_feature_action=Mock())
+    >>> progress = EncounterProgress()
+    >>> execute_capability_action(
+    ...     state, SimpleNamespace(), EncounterAction("Surge", "feature", "surge"),
+    ...     progress, "feature-1"
+    ... )
+    True
+    >>> state._resolve_feature_action.call_args.args[1]
+    'surge'
+    >>> execute_capability_action(
+    ...     state, SimpleNamespace(), EncounterAction("Wait", "wait"),
+    ...     progress, "wait-1"
+    ... )
+    False
+    """
 
     if action.kind == "multiattack":
         resolve_multiattack_action(
