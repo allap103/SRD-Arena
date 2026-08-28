@@ -5,12 +5,11 @@ from .capability import SpellCapabilitySchema
 from .catalog import SpellCatalog
 from .implementation import SpellImplementationSchema
 from .loader import load_spell_catalog
-from .schema import SpellFileSchema, SpellSchema
+from .schema import SpellSchema
 
 __all__ = [
     "SpellCapabilitySchema",
     "SpellCatalog",
-    "SpellFileSchema",
     "SpellImplementationSchema",
     "SpellSchema",
     "build_spell",

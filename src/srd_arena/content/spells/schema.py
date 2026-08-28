@@ -77,9 +77,3 @@ class SpellSchema(SourceModel):
             if isinstance(marker, str):
                 return marker
         return self.name
-
-
-class SpellFileSchema(SourceModel):
-    """Define the authored spell-file fields with spell."""
-
-    spell: list[SpellSchema] = Field(default_factory=list)

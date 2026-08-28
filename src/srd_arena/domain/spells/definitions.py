@@ -11,14 +11,6 @@ from ..capabilities import (
 
 
 @dataclass(frozen=True)
-class SpellRef:
-    """Reference an authored spell by name and optional rules source."""
-
-    name: str
-    source: str | None = None
-
-
-@dataclass(frozen=True)
 class SpellDamage:
     """Pair normalized damage dice with the damage type they inflict."""
 

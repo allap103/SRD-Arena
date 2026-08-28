@@ -67,15 +67,3 @@ class ItemSchema(SourceModel):
         True
         """
         return self.armor or isinstance(self.ac, int)
-
-
-class BaseItemFileSchema(SourceModel):
-    """Define the authored equipment fields with base items."""
-
-    base_items: list[ItemSchema] = Field(default_factory=list, alias="baseitem")
-
-
-class ItemFileSchema(SourceModel):
-    """Define the authored equipment fields with items."""
-
-    items: list[ItemSchema] = Field(default_factory=list, alias="item")

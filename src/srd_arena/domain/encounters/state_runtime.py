@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..effects.application import apply_effects
 from ..effects.results import EffectResult
-from ..geometry import MovementBudget, Position
+from ..geometry import Position
 from .models import CombatEvent, CreatureRef, EncounterProgress
 from .ongoing_effects import remove_ongoing_effects
 
@@ -72,19 +72,6 @@ def consume_action(state: EncounterState, *, allow_magic: bool) -> None:
     elif non_magic_only_actions <= 0 and state.active_magic_actions_remaining > 0:
         state.active_magic_actions_remaining -= 1
     state.active_actions_remaining -= 1
-
-
-def active_movement_remaining(state: EncounterState) -> MovementBudget:
-    """Return the active creature's remaining movement in grid cells.
-
-    >>> from types import SimpleNamespace
-    >>> active_movement_remaining(
-    ...     SimpleNamespace(active_movement_remaining_for=lambda: MovementBudget(4))
-    ... )
-    4
-    """
-
-    return state.active_movement_remaining_for()
 
 
 def next_action_id(state: EncounterState) -> str:

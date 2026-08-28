@@ -170,14 +170,6 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
         state.pending_movement.to_position.x,
         state.pending_movement.to_position.y,
     ) == (3, 2)
-    exported = state.export_state()
-    exported_decision = exported["decision"]
-    exported_movement = exported["pending_movement"]
-    assert isinstance(exported_decision, dict)
-    assert isinstance(exported_movement, dict)
-    assert exported_decision["pending_movement_id"] == state.pending_movement.action_id
-    assert exported_movement["action_id"] == state.pending_movement.action_id
-    assert "pending_action" not in exported
     assert (mover.position.x, mover.position.y) == (3, 3)
     assert not any(event.type == "movement_resolved" for event in interrupted.events)
 

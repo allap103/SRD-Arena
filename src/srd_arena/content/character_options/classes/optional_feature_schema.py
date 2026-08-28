@@ -26,12 +26,3 @@ class OptionalFeatureSchema(SourceModel):
             if isinstance(marker, str):
                 return marker
         return self.name
-
-
-class OptionalFeatureFileSchema(SourceModel):
-    """Define the authored optional-feature fields with optional features."""
-
-    optional_features: list[OptionalFeatureSchema] = Field(
-        default_factory=list,
-        alias="optionalfeature",
-    )

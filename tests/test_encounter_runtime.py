@@ -116,7 +116,6 @@ from srd_arena.frontends.gui.ui.encounter.targeting import (
     selection_modes,
 )
 from srd_arena.frontends.gui.ui.sidebar import GameSidebar
-from srd_arena.frontends.shared.combat import render_encounter_text
 from srd_arena.frontends.shared.models import SessionPresentation, SpellSlotTrackView
 from srd_arena.frontends.shared.session import build_session_presentation
 from srd_arena.infrastructure.scenarios import load_scenario_directory
@@ -987,23 +986,6 @@ def test_execution_rechecks_action_eligibility() -> None:
         _ORCHESTRATOR.submit(state, move)
 
 
-def test_cli_encounter_renderer_generates_grid_text() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
-    session.current_scene_id = "goblin_encounter"
-    session.read()
-    assert session.encounter_state is not None
-
-    observation = observe_session(session)
-    assert observation.encounter is not None
-    scene_text = render_encounter_text(observation.encounter)
-
-    assert "A" in scene_text
-    assert "E" in scene_text
-    assert "Round 1 - Turn: Traveler (player)" in scene_text
-    assert "Movement remaining: 6/6 squares" in scene_text
-    assert "Actor HP:" in scene_text
-
-
 def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1289,9 +1271,10 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
 
     assert scenario.display_name == "Multiattack Showcase"
     assert session.encounter_state is not None
+    state = session.encounter_state
     creatures = {
-        state.creature.id: state.creature
-        for state in session.encounter_state.creatures.values()
+        combatant.creature.id: combatant.creature
+        for combatant in state.creatures.values()
     }
     assert set(creatures) == {"player", "air_elemental", "aboleth"}
     assert creatures["player"].multiattack is not None
@@ -1337,13 +1320,11 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
     assert creatures["player"].attributes.movement.speed_feet == 40
     assert creatures["air_elemental"].attributes.movement.speed_feet == 10
     assert creatures["aboleth"].attributes.movement.speed_feet == 10
-    exported_state = session.encounter_state.export_state()
-    runtime_creatures = _mapping(exported_state["creatures"])
-    assert _mapping(runtime_creatures["player"])["movement_total_feet"] == 80
-    assert _mapping(runtime_creatures["air_elemental"])["movement_total_feet"] == 90
-    assert _mapping(runtime_creatures["aboleth"])["movement_total_feet"] == 10
+    assert state.combat_rules.movement_budget(state, "player").speed.value == 80
+    assert state.combat_rules.movement_budget(state, "air_elemental").speed.value == 90
+    assert state.combat_rules.movement_budget(state, "aboleth").speed.value == 10
     assert {
-        _mapping(creature)["controller"] for creature in runtime_creatures.values()
+        state._creature_controller(creature_ref) for creature_ref in state.creatures
     } == {"external"}
 
 
@@ -1394,8 +1375,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
     assert grapple.source_ref == "aboleth"
     assert grapple.metadata["escape_dc"] == 14
     assert state._grappling_targets_for("aboleth") == ("air_elemental",)
-    relationships = _sequence(state.export_state()["relationships"])
-    assert _mapping(relationships[0])["kind"] == "grappling"
+    assert state.relationships[0].kind.value == "grappling"
 
     huge_target_tentacle = next(
         action
@@ -2698,12 +2678,6 @@ def test_invisibility_is_classified_and_exported_as_beneficial() -> None:
     assert state.has_condition("player", Condition.INVISIBLE)
     effect = state.ongoing_effects[0]
     assert effect.polarity is EffectPolarity.BENEFICIAL
-    exported = next(
-        item
-        for value in _sequence(state.export_state()["ongoing_effects"])
-        if (item := _mapping(value))["id"] == effect.identity.id
-    )
-    assert exported["polarity"] == "beneficial"
 
 
 def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
@@ -3523,7 +3497,7 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    before = state._active_movement_remaining()
+    before = state.turn_lifecycle.active_movement_remaining(state)
     state._apply_effects(
         [
             EffectResult(

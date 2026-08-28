@@ -13,7 +13,15 @@ from srd_arena.content.spells import (
     build_spell as build_spell_schema,
 )
 from srd_arena.domain.effects import EffectResult
-from srd_arena.domain.effects.rule_effects import AttackLimit
+from srd_arena.domain.effects.rule_effects import (
+    ActionEconomyRestriction,
+    ArmorClassAdjustment,
+    AttackLimit,
+    InvocationFailureChance,
+    ReactionProhibition,
+    RollAdjustment,
+    SpeedMultiplier,
+)
 from srd_arena.domain.effects.runtime import EffectPolarity, OngoingEffectKind
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
@@ -206,29 +214,15 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
         assert isinstance(detail, Mapping)
         successes.append(detail["success"])
     assert successes == [False, True, False]
-    exported_effects = state.export_state()["ongoing_effects"]
-    assert isinstance(exported_effects, list)
-    exported: Mapping[str, object] | None = None
-    for effect in exported_effects:
-        if isinstance(effect, Mapping) and effect.get("id") == slow.identity.id:
-            exported = effect
-            break
-    assert exported is not None
-    rule_effects = exported["rule_effects"]
-    assert isinstance(rule_effects, list)
-    rule_effect_types: list[object] = []
-    for effect in rule_effects:
-        assert isinstance(effect, Mapping)
-        rule_effect_types.append(effect["type"])
-    assert rule_effect_types == [
-        "speed_multiplier",
-        "armor_class_adjustment",
-        "roll_adjustment",
-        "reaction_prohibition",
-        "action_economy_restriction",
-        "attack_limit",
-        "invocation_failure_chance",
-    ]
+    assert tuple(type(effect) for effect in slow.rule_effects) == (
+        SpeedMultiplier,
+        ArmorClassAdjustment,
+        RollAdjustment,
+        ReactionProhibition,
+        ActionEconomyRestriction,
+        AttackLimit,
+        InvocationFailureChance,
+    )
     repeat_progress = EncounterProgress()
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_die",

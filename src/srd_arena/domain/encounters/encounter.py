@@ -131,18 +131,8 @@ from .participants import (
 from .participants import (
     creatures_are_opponents as _creatures_are_opponents_impl,
 )
-from .queries import active_movement_remaining as _active_movement_remaining_query
 from .reactions import REACTION_ENGINE, ReactionEngine
 from .rules import COMBAT_RULES, CombatRules
-from .serialization import (
-    export_decision as _export_decision_impl,
-)
-from .serialization import (
-    export_pending_movement as _export_pending_movement_impl,
-)
-from .serialization import (
-    export_state as _export_state_impl,
-)
 from .state_combat import (
     active_status_effects as _active_status_effects_impl,
 )
@@ -184,9 +174,6 @@ from .state_queries import (
 )
 from .state_queries import (
     requires_automatic_advance as _requires_automatic_advance_impl,
-)
-from .state_runtime import (
-    active_movement_remaining as _active_movement_remaining_impl,
 )
 from .state_runtime import (
     apply_encounter_effects as _apply_effects_impl,
@@ -615,9 +602,7 @@ class EncounterState(EncounterStateData):
     requires_automatic_advance = _requires_automatic_advance_impl
     action_eligibility = _action_eligibility_impl
 
-    # Serialization, action discovery, and action execution entry points.
-    export_decision = _export_decision_impl
-    export_state = _export_state_impl
+    # Action discovery and action execution entry points.
     available_actions = _available_actions_impl
     _available_feature_actions = _available_feature_actions_impl
     _available_spell_actions = _available_spell_actions_impl
@@ -655,14 +640,11 @@ class EncounterState(EncounterStateData):
     _creatures_are_opponents = _creatures_are_opponents_impl
 
     _consume_action = _consume_action_impl
-    _active_movement_remaining = _active_movement_remaining_impl
-    active_movement_remaining_for = _active_movement_remaining_query
     _next_action_id = _next_action_id_impl
     _next_runtime_origin_id = _next_runtime_origin_id_impl
     _next_frame_id = _next_frame_id_impl
     _event = _event_impl
     _merge_progress = _merge_progress_impl
-    _export_pending_movement = _export_pending_movement_impl
     _creature_label = _creature_label_impl
     _living_creature_refs = _living_creature_refs_impl
     _creature_position = _creature_position_impl
