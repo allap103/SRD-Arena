@@ -14,8 +14,7 @@ from ..effects.condition_rules import EffectiveConditionSet
 from ..effects.conditions import AppliedCondition, Condition
 from ..equipment import Item
 from ..geometry import GeometryConfig, MovementBudget, Position
-from ..rolls.dice import roll_dice as _roll_dice
-from ..rolls.dice import roll_die as _roll_die
+from ..rolls.randomness import DiceRoller
 from .actions.eligibility import ActionEligibility
 from .actions.options import (
     available_actions as _available_actions_impl,
@@ -73,17 +72,11 @@ from .state_queries import (
 )
 from .turn_lifecycle import TURN_LIFECYCLE, TurnLifecycle
 
-# Keep these module-level names for tests and helpers that monkeypatch
-# `srd_arena.domain.encounters.encounter.roll_die` / `roll_dice`.
-roll_die = _roll_die
-roll_dice = _roll_dice
 __all__ = [
     "ActionCost",
     "CombatEvent",
     "EncounterAction",
     "EncounterState",
-    "roll_dice",
-    "roll_die",
 ]
 
 
@@ -333,6 +326,7 @@ class EncounterState(EncounterStateData):
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
         geometry_config: GeometryConfig | None = None,
+        dice: DiceRoller | None = None,
     ) -> EncounterState:
         """Create isolated runtime state from an authored encounter definition.
 
@@ -369,6 +363,7 @@ class EncounterState(EncounterStateData):
             interrupts=InterruptState(),
             item_templates=item_templates or {},
             geometry_config=geometry_config or GeometryConfig(),
+            dice=dice or DiceRoller(),
         )
         state.roll_initiative()
         _initialize_action_selectors_impl(state)
@@ -377,9 +372,7 @@ class EncounterState(EncounterStateData):
     def roll_initiative(self) -> None:
         """Roll and order the encounter participants before the first turn."""
 
-        # Resolve the module-level name at call time so tests and simulations can
-        # replace encounter.roll_die deterministically.
-        _roll_initiative_impl(self, roll_die)
+        _roll_initiative_impl(self, self.dice.roll_die)
 
     def current_turn_label(self) -> str:
         """Return the label of the creature whose turn or reaction is active."""

@@ -14,6 +14,9 @@ from srd_arena.engine.queries import DirectTargetOptionDetails
 from srd_arena.engine.session import Session
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import active_creature as _active_creature
+from tests.encounter_runtime_support import (
+    use_deterministic_dice as _use_deterministic_dice,
+)
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
@@ -110,17 +113,11 @@ def test_tactical_fighter_loads_great_weapon_fighting_effect() -> None:
     assert player.equipment.equipped_items["right_hand"] == "greatsword"
 
 
-def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon() -> None:
     session = _adjacent_tactical_encounter()
     _active_creature(session).equipment.equipped_items["right_hand"] = "longsword"
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 15
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 15)
+    _use_deterministic_dice(session, pool_roller=lambda _count, _sides: 1)
     attack_id = next(
         action.id
         for action in session.read().action_options

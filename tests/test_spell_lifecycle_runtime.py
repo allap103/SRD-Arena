@@ -68,13 +68,14 @@ from tests.encounter_runtime_support import (
 from tests.encounter_runtime_support import (
     choose_directional_spell as _choose_directional_spell,
 )
+from tests.encounter_runtime_support import (
+    use_deterministic_dice as _use_deterministic_dice,
+)
 
 pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
 
-def test_hold_person_applies_concentration_and_ends_after_repeated_save(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_hold_person_applies_concentration_and_ends_after_repeated_save() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -100,10 +101,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save(
     state.creatures["goblin_1"].position.x = state.active_position.x + 1
     state.creatures["goblin_1"].position.y = state.active_position.y
     rolls = iter((1, 20))
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: next(rolls),
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
     action = next(
         action
@@ -137,9 +135,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save(
     )
 
 
-def test_one_target_repeat_save_does_not_end_multi_target_spell(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_one_target_repeat_save_does_not_end_multi_target_spell() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -180,9 +176,7 @@ def test_one_target_repeat_save_does_not_end_multi_target_spell(
         ),
     ]
     apply_encounter_effects(state, effects, origin_id="multi-target-cast")
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
 
     resolve_end_turn_effects(state, "goblin_1")
 
@@ -237,9 +231,7 @@ def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
     assert not has_condition_save_advantage(state, "goblin_1", ("poisoned",))
 
 
-def test_condition_modifier_applies_to_repeated_saves(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_condition_modifier_applies_to_repeated_saves() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -286,10 +278,7 @@ def test_condition_modifier_applies_to_repeated_saves(
         origin_id="poison-origin",
     )
     rolls = iter([1, 20])
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: next(rolls),
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
     resolve_end_turn_effects(state, "goblin_1")
 
@@ -415,9 +404,7 @@ def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
     assert state.creatures["player"].creature.temporary_hit_points == 4
 
 
-def test_upcast_hold_person_stages_and_resolves_multiple_targets(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_upcast_hold_person_stages_and_resolves_multiple_targets() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -451,9 +438,7 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
         state.active_position.x + 3,
         state.active_position.y,
     )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     initial = next(
         action
@@ -503,9 +488,9 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets(
     assert state.ongoing_effects[0].target_refs == ("goblin_1", "goblin_2")
 
 
-def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinations(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinations() -> (
+    None
+):
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -520,10 +505,7 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
         )
     )
     caster.spellcasting.spell_slots_remaining[2] = 1
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda sides: 10 if sides == 20 else 3,
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 10 if sides == 20 else 3)
 
     initial = next(
         action
@@ -615,9 +597,7 @@ def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() ->
     assert state.active_actions_remaining == 1
 
 
-def test_ray_of_sickness_combines_scaled_damage_and_timed_condition(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_ray_of_sickness_combines_scaled_damage_and_timed_condition() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -632,10 +612,7 @@ def test_ray_of_sickness_combines_scaled_damage_and_timed_condition(
         )
     )
     caster.spellcasting.spell_slots_remaining[2] = 1
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda sides: 15 if sides == 20 else 2,
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 15 if sides == 20 else 2)
 
     action = next(
         action
@@ -652,9 +629,7 @@ def test_ray_of_sickness_combines_scaled_damage_and_timed_condition(
     assert state.has_condition("goblin_1", Condition.POISONED)
 
 
-def test_eldritch_blast_uses_caster_level_for_beam_allocation(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_eldritch_blast_uses_caster_level_for_beam_allocation() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -669,10 +644,7 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation(
             "Eldritch Blast", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
         )
     )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda sides: 20 if sides == 20 else 4,
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 20 if sides == 20 else 4)
 
     initial = next(
         action
@@ -709,9 +681,7 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation(
     assert len(_sequence(spell_event.data["damage_roll_details"])) == 3
 
 
-def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -731,10 +701,7 @@ def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage(
     state.creatures["goblin_1"].position = Position(5, 5)
     state.creatures["goblin_2"].position = Position(6, 5)
     state.creatures["goblin_3"].position = Position(10, 10)
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda sides: 1 if sides == 20 else 2,
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 1 if sides == 20 else 2)
 
     ice_knife_actions = [
         action
@@ -765,9 +732,7 @@ def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage(
     assert all(detail["dice"] == "3d6" for detail in cold)
 
 
-def test_weird_deals_damage_on_a_failed_repeat_save(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_weird_deals_damage_on_a_failed_repeat_save() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -789,10 +754,7 @@ def test_weird_deals_damage_on_a_failed_repeat_save(
     target.creature.current_health = 200
     state.creatures["goblin_2"].position = Position(15, 1)
     state.creatures["goblin_3"].position = Position(15, 10)
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     _choose_directional_spell(session, "Cast Weird", (8, 8))
 
@@ -802,9 +764,7 @@ def test_weird_deals_damage_on_a_failed_repeat_save(
     assert target.creature.get_health() == health_after_cast - 5
 
 
-def test_sleep_progresses_from_incapacitated_to_unconscious(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_sleep_progresses_from_incapacitated_to_unconscious() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -822,9 +782,7 @@ def test_sleep_progresses_from_incapacitated_to_unconscious(
     state.creatures["goblin_1"].position.y = state.active_position.y
     state.creatures["goblin_2"].creature.current_health = 0
     state.creatures["goblin_3"].creature.current_health = 0
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     _choose_directional_spell(
         session,
@@ -843,9 +801,7 @@ def test_sleep_progresses_from_incapacitated_to_unconscious(
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
 
 
-def test_sleep_stages_choice_when_area_contains_multiple_creatures(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_sleep_stages_choice_when_area_contains_multiple_creatures() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -863,9 +819,7 @@ def test_sleep_stages_choice_when_area_contains_multiple_creatures(
     state.creatures["goblin_1"].position = origin
     state.creatures["goblin_2"].position = Position(origin.x, origin.y + 1)
     state.creatures["goblin_3"].creature.current_health = 0
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     _choose_directional_spell(
         session,
@@ -904,7 +858,6 @@ def test_sleep_stages_choice_when_area_contains_multiple_creatures(
     ],
 )
 def test_sleep_automatically_spares_ineligible_creature(
-    monkeypatch: pytest.MonkeyPatch,
     statistics_change: dict[str, object],
     reason: str,
 ) -> None:
@@ -942,9 +895,7 @@ def test_sleep_automatically_spares_ineligible_creature(
         )
     state.creatures["goblin_2"].creature.current_health = 0
     state.creatures["goblin_3"].creature.current_health = 0
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     cast = _choose_directional_spell(
         session,
@@ -967,9 +918,7 @@ def test_sleep_automatically_spares_ineligible_creature(
     )
 
 
-def test_charm_person_save_has_advantage_against_opponent(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_charm_person_save_has_advantage_against_opponent() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -992,10 +941,7 @@ def test_charm_person_save_has_advantage_against_opponent(
     target.position.x = state.active_position.x + 1
     target.position.y = state.active_position.y
     rolls = iter((1, 20))
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: next(rolls),
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
     action = next(
         action
@@ -1184,9 +1130,7 @@ def test_charm_ends_only_when_source_side_damages_target() -> None:
     assert state.has_condition("goblin_1", Condition.CHARMED) is False
 
 
-def test_hideous_laughter_damage_save_has_advantage(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_hideous_laughter_damage_save_has_advantage() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1226,10 +1170,7 @@ def test_hideous_laughter_damage_save_has_advantage(
         origin_id="laughter-cast",
     )
     rolls = iter((1, 20))
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.ongoing_effects._roll_die",
-        lambda _sides: next(rolls),
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
     resolve_spell_lifecycle_event(
         state,
@@ -1242,9 +1183,7 @@ def test_hideous_laughter_damage_save_has_advantage(
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
 
 
-def test_hideous_laughter_prevents_target_from_removing_its_own_prone(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_hideous_laughter_prevents_target_from_removing_its_own_prone() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1265,9 +1204,7 @@ def test_hideous_laughter_prevents_target_from_removing_its_own_prone(
         state.active_position.x + 1,
         state.active_position.y,
     )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     action = next(
         action
         for action in state.available_actions()
@@ -1288,9 +1225,7 @@ def test_hideous_laughter_prevents_target_from_removing_its_own_prone(
     assert state.has_condition("goblin_1", Condition.PRONE) is False
 
 
-def test_hideous_laughter_success_is_reported_as_a_save(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_hideous_laughter_success_is_reported_as_a_save() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1311,9 +1246,7 @@ def test_hideous_laughter_success_is_reported_as_a_save(
         state.active_position.x + 1,
         state.active_position.y,
     )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
     action = next(
         action
         for action in state.available_actions()
@@ -1379,9 +1312,7 @@ def test_new_concentration_replaces_the_previous_effect_tree() -> None:
     assert state.ongoing_effects[0].identity.source.origin_id == "second-cast"
 
 
-def test_casting_a_new_concentration_spell_logs_the_dropped_spell(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_casting_a_new_concentration_spell_logs_the_dropped_spell() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -1413,9 +1344,7 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell(
         state.active_position.x + 1,
         state.active_position.y,
     )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     hold = next(
         action
         for action in state.available_actions()
@@ -1445,9 +1374,7 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell(
     )
 
 
-def test_somatic_invocation_failure_spends_resources_before_resolution(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_somatic_invocation_failure_spends_resources_before_resolution() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -1492,10 +1419,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution(
         ),
     )
     state.ongoing_effects.append(slow)
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     initial_health = caster.get_health()
     action = next(
         candidate
@@ -1538,9 +1462,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution(
     ) in result.messages
 
 
-def test_failed_damage_save_ends_concentration_and_its_conditions(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_failed_damage_save_ends_concentration_and_its_conditions() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -1576,10 +1498,7 @@ def test_failed_damage_save_ends_concentration_and_its_conditions(
         ],
         origin_id="hold-cast",
     )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     progress = EncounterProgress()
     resolve_concentration_damage(state, "player", 20, progress)

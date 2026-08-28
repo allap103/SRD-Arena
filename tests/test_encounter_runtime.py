@@ -72,23 +72,21 @@ from tests.encounter_runtime_support import (
 from tests.encounter_runtime_support import (
     choose_directional_spell as _choose_directional_spell,
 )
+from tests.encounter_runtime_support import (
+    use_deterministic_dice as _use_deterministic_dice,
+)
 
 pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
 
-def test_orchestrator_runs_enemy_turns_until_player_turn(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_orchestrator_runs_enemy_turns_until_player_turn() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
 
     assert session.encounter_state is not None
     session.encounter_state.turn.index = 1
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     progress = _ORCHESTRATOR.advance(session.encounter_state)
 
@@ -98,9 +96,7 @@ def test_orchestrator_runs_enemy_turns_until_player_turn(
     assert session.encounter_state.round.number == 2
 
 
-def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_archer_behavior_uses_ranged_weapon_without_closing_distance() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -117,12 +113,8 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
     session.encounter_state.active_position.y = 6
     session.encounter_state.turn.index = 1
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 4
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 20)
+    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 4)
 
     progress = _ORCHESTRATOR.advance(session.encounter_state)
 
@@ -138,9 +130,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
     assert attack_roll_detail["weapon_name"] == "Shortbow"
 
 
-def test_natural_one_is_an_automatic_miss_for_attack_rolls(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_natural_one_is_an_automatic_miss_for_attack_rolls() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -157,9 +147,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(
         "goblin_1"
     ].creature.get_health()
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 1)
 
     attack_index = _action_id(session, "attack", "goblin_1")
     result = session.choose(attack_index)
@@ -183,9 +171,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls(
     )
 
 
-def test_extra_attack_allows_second_attack_after_movement(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_extra_attack_allows_second_attack_after_movement() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -198,12 +184,8 @@ def test_extra_attack_allows_second_attack_after_movement(
     session.encounter_state.creatures["goblin_1"].position.y = 2
     session.encounter_state.creatures["goblin_1"].creature.current_health = 20
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 20)
+    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 1)
 
     attack_index = _action_id(session, "attack", "goblin_1")
     first_result = session.choose(attack_index)
@@ -240,16 +222,12 @@ def test_extra_attack_allows_second_attack_after_movement(
     )
 
 
-def test_second_wind_appears_and_consumes_bonus_action(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_second_wind_appears_and_consumes_bonus_action() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     _active_creature(session).current_health = 10
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5
-    )
+    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 5)
 
     second_wind_index = _action_id_by_label(session, "Second Wind")
     result = session.choose(second_wind_index)
@@ -276,16 +254,12 @@ def test_second_wind_appears_and_consumes_bonus_action(
     assert healing_roll_detail["applied_healing"] == 7
 
 
-def test_second_wind_stays_visible_in_feature_column_when_unavailable(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_second_wind_stays_visible_in_feature_column_when_unavailable() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     _active_creature(session).current_health = 10
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 5
-    )
+    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 5)
 
     second_wind_index = _action_id_by_label(session, "Second Wind")
     session.choose(second_wind_index)
@@ -303,9 +277,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable(
     assert feature_actions["Second Wind"].cost["bonus_action"] == 1
 
 
-def test_action_surge_grants_additional_action_for_same_turn(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_action_surge_grants_additional_action_for_same_turn() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -319,10 +291,8 @@ def test_action_surge_grants_additional_action_for_same_turn(
     def fixed_roll(sides: int) -> int:
         return 18 if sides == 20 else 6
 
-    monkeypatch.setattr("srd_arena.domain.encounters.encounter.roll_die", fixed_roll)
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 6
-    )
+    _use_deterministic_dice(session, die_roller=fixed_roll)
+    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 6)
 
     first_attack_index = _action_id(session, "attack", "goblin_1")
     session.choose(first_attack_index)
@@ -348,9 +318,7 @@ def test_action_surge_grants_additional_action_for_same_turn(
     assert session.encounter_state.active_actions_remaining == 0
 
 
-def test_presentation_surfaces_conditions_in_encounter_views(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_presentation_surfaces_conditions_in_encounter_views() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -362,9 +330,7 @@ def test_presentation_surfaces_conditions_in_encounter_views(
     state.active_position.y = 3
     state.creatures["goblin_1"].position.x = 4
     state.creatures["goblin_1"].position.y = 2
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 5)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     presentation = build_session_presentation(observe_session(session))
@@ -664,10 +630,7 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
             "Eldritch Blast", "XPHB", load_spell_catalog(SYSTEM_CONTENT_ROOT)
         )
     )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda sides: 15 if sides == 20 else 3,
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 15 if sides == 20 else 3)
     initial = next(
         action
         for action in session.read().action_options
@@ -815,9 +778,7 @@ def test_spell_target_modes_preserve_selected_cast_level() -> None:
     )
 
 
-def test_goblin_encounter_attack_can_end_scene_with_victory(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_goblin_encounter_attack_can_end_scene_with_victory() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -832,12 +793,8 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(
     session.encounter_state.creatures["goblin_2"].creature.current_health = 0
     session.encounter_state.creatures["goblin_3"].creature.current_health = 0
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 4
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 20)
+    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 4)
 
     attack_index = _action_id(session, "attack", "goblin_1")
     result = session.choose(attack_index)
@@ -851,9 +808,7 @@ def test_goblin_encounter_attack_can_end_scene_with_victory(
     assert session.read().action_options[0].id == "system-continue-scene-transition"
 
 
-def test_attack_consumes_action_until_next_turn(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_attack_consumes_action_until_next_turn() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -865,9 +820,7 @@ def test_attack_consumes_action_until_next_turn(
     session.encounter_state.creatures["goblin_1"].position.x = 4
     session.encounter_state.creatures["goblin_1"].position.y = 2
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 1)
 
     attack_index = _action_id(session, "attack", "goblin_1")
     session.choose(attack_index)

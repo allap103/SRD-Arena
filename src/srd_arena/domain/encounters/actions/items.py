@@ -13,12 +13,6 @@ if TYPE_CHECKING:
     from ..encounter import EncounterState
 
 
-def _roll_dice(count: int, sides: int) -> int:
-    from .. import encounter as encounter_module
-
-    return encounter_module.roll_dice(count, sides)
-
-
 def resolve_utilize_action(
     state: EncounterState,
     actor: Creature,
@@ -95,7 +89,7 @@ def resolve_utilize_action(
         return
 
     dice_count, dice_sides, modifier = healing_dice
-    dice_total = _roll_dice(dice_count, dice_sides)
+    dice_total = state.dice.roll_dice(dice_count, dice_sides)
     healing_total = dice_total + modifier
     applied_healing = actor.heal(healing_total)
     consumed = item.has_misc_tag("CNS")

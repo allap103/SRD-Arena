@@ -9,7 +9,6 @@ from ...ongoing_effects import end_concentration, resolve_spell_lifecycle_event
 from ...rule_queries import InvocationStartContext, InvocationStartResult
 from ...state_runtime import create_event
 from ..option_discovery.spellcasting import spend_spell_resources
-from .rolls import roll_die
 
 if TYPE_CHECKING:
     from ....creatures import Creature, Spellcasting
@@ -57,7 +56,10 @@ def begin_spell_invocation(
     ...     resolve_invocation_start=lambda context, roller:
     ...         InvocationStartResult(context),
     ... )
-    >>> state = SimpleNamespace(combat_rules=checks)
+    >>> state = SimpleNamespace(
+    ...     combat_rules=checks,
+    ...     dice=SimpleNamespace(roll_die=lambda _sides: 1),
+    ... )
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.spell_runtime.invocation."
     ...     "spend_spell_resources"
@@ -103,7 +105,10 @@ def begin_spell_invocation(
             components=components,
         ),
     )
-    result = state.combat_rules.resolve_invocation_start(query, roll_die)
+    result = state.combat_rules.resolve_invocation_start(
+        query,
+        state.dice.roll_die,
+    )
     if result.rolls:
         progress.events.append(
             create_event(

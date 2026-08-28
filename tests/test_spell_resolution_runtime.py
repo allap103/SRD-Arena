@@ -80,6 +80,9 @@ from tests.encounter_runtime_support import (
 from tests.encounter_runtime_support import (
     choose_directional_spell as _choose_directional_spell,
 )
+from tests.encounter_runtime_support import (
+    use_deterministic_dice as _use_deterministic_dice,
+)
 
 pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
@@ -118,9 +121,7 @@ def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
     assert "Cast Burning Hands (Level 3)" in _action_labels(session)
 
 
-def test_presentation_derives_spell_slot_rows_from_player_spellcasting(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_presentation_derives_spell_slot_rows_from_player_spellcasting() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -131,9 +132,7 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting(
     session.encounter_state.active_position.y = 3
     session.encounter_state.creatures["goblin_1"].position.x = 4
     session.encounter_state.creatures["goblin_1"].position.y = 2
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 5)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 2))
     presentation = build_session_presentation(observe_session(session))
@@ -177,9 +176,7 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
     )
 
 
-def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -193,9 +190,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
     session.encounter_state.creatures["goblin_1"].position.x = 4
     session.encounter_state.creatures["goblin_1"].position.y = 2
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 2))
 
@@ -217,9 +212,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save(
     assert effect_data["condition"] == "blinded"
 
 
-def test_color_spray_cone_can_affect_multiple_enemies(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_color_spray_cone_can_affect_multiple_enemies() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -236,9 +229,7 @@ def test_color_spray_cone_can_affect_multiple_enemies(
     state.creatures["goblin_2"].position.y = 2
     state.creatures["goblin_3"].creature.current_health = 0
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
 
@@ -259,9 +250,7 @@ def test_color_spray_cone_can_affect_multiple_enemies(
     ]
 
 
-def test_color_spray_cone_uses_continuous_aim_vector(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_color_spray_cone_uses_continuous_aim_vector() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -277,9 +266,7 @@ def test_color_spray_cone_uses_continuous_aim_vector(
     state.creatures["goblin_2"].position.y = 4
     state.creatures["goblin_3"].creature.current_health = 0
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (5, 3))
 
@@ -295,9 +282,7 @@ def test_color_spray_cone_uses_continuous_aim_vector(
     }
 
 
-def test_burning_hands_cone_damages_multiple_enemies(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_burning_hands_cone_damages_multiple_enemies() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -314,9 +299,7 @@ def test_burning_hands_cone_damages_multiple_enemies(
     state.creatures["goblin_3"].creature.current_health = 0
 
     rolls = iter([5, 1, 2, 3, 16, 4, 5, 6])
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls)
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: next(rolls))
 
     result = _choose_directional_spell(session, "Cast Burning Hands", (4, 3))
 
@@ -343,9 +326,7 @@ def test_burning_hands_cone_damages_multiple_enemies(
     )
 
 
-def test_burning_hands_can_use_and_scale_a_higher_level_slot(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_burning_hands_can_use_and_scale_a_higher_level_slot() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -358,10 +339,7 @@ def test_burning_hands_can_use_and_scale_a_higher_level_slot(
     state.creatures["goblin_1"].position.y = 3
     state.creatures["goblin_2"].creature.current_health = 0
     state.creatures["goblin_3"].creature.current_health = 0
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     result = _choose_directional_spell(session, "Cast Burning Hands (Level 3)", (4, 3))
 
@@ -372,9 +350,7 @@ def test_burning_hands_can_use_and_scale_a_higher_level_slot(
     assert event.data["spell_slots_remaining"] == 1
 
 
-def test_fireball_point_area_damages_multiple_enemies(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_fireball_point_area_damages_multiple_enemies() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -399,9 +375,7 @@ def test_fireball_point_area_damages_multiple_enemies(
     ]
 
     rolls = iter([1, 2, 3, 4, 5, 6, 1, 2, 5, 16, 3])
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls)
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
     result = _choose_directional_spell(session, "Cast Fireball", (5, 2))
 
@@ -431,9 +405,7 @@ def test_fireball_point_area_damages_multiple_enemies(
     assert state.creatures["goblin_3"].creature.get_health() == 0
 
 
-def test_pyside6_window_extracts_spell_area_overlay(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_pyside6_window_extracts_spell_area_overlay() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -449,9 +421,7 @@ def test_pyside6_window_extracts_spell_area_overlay(
     state.creatures["goblin_2"].position.y = 2
     state.creatures["goblin_3"].creature.current_health = 0
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
     area = _mapping(
@@ -485,9 +455,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(
     state.creatures["goblin_2"].creature.current_health = 0
     state.creatures["goblin_3"].creature.current_health = 0
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 5)
     monkeypatch.setattr(
         "srd_arena.frontends.gui.app.QTimer",
         SimpleNamespace(singleShot=lambda _delay, callback: callback()),
@@ -518,9 +486,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(
     assert not hasattr(window, "_resolved_area_overlay")
 
 
-def test_battlefield_widget_preview_overlay_reaims_directional_area(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_battlefield_widget_preview_overlay_reaims_directional_area() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -536,9 +502,7 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(
     state.creatures["goblin_2"].position.y = 2
     state.creatures["goblin_3"].creature.current_health = 0
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 5)
 
     result = _choose_directional_spell(session, "Cast Color Spray", (4, 3))
     presentation = build_session_presentation(observe_session(session))
@@ -565,9 +529,7 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area(
     assert preview["cells"] != original_area["cells"]
 
 
-def test_blinded_enemy_attacks_with_disadvantage(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_blinded_enemy_attacks_with_disadvantage() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -583,12 +545,8 @@ def test_blinded_enemy_attacks_with_disadvantage(
     state.creatures["goblin_2"].creature.current_health = 0
     state.creatures["goblin_3"].creature.current_health = 0
     rolls = iter([5, 17, 4, 1])
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls, 3)
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: next(rolls, 3))
+    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     result = session.choose(_action_id_by_label(session, "Wait"))
@@ -603,9 +561,7 @@ def test_blinded_enemy_attacks_with_disadvantage(
     assert attack_roll_detail["dice"] == [17, 4]
 
 
-def test_attacks_against_blinded_target_gain_advantage(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_attacks_against_blinded_target_gain_advantage() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -617,9 +573,7 @@ def test_attacks_against_blinded_target_gain_advantage(
     state.active_position.y = 2
     state.creatures["goblin_1"].position.x = 3
     state.creatures["goblin_1"].position.y = 2
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 5)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
 
@@ -635,9 +589,7 @@ def test_attacks_against_blinded_target_gain_advantage(
     assert attack_mode == "advantage"
 
 
-def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_blinded_from_color_spray_expires_at_end_of_players_next_turn() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -652,12 +604,8 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(
     state.creatures["goblin_2"].creature.current_health = 0
     state.creatures["goblin_3"].creature.current_health = 0
     rolls = iter([5, 3, 3])
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: next(rolls, 3)
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: next(rolls, 3))
+    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     session.choose(_action_id_by_label(session, "Wait"))
@@ -669,9 +617,7 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn(
     assert state.has_condition("goblin_1", Condition.BLINDED) is False
 
 
-def test_reapplying_blinded_preserves_independent_durations(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_reapplying_blinded_preserves_independent_durations() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -685,12 +631,8 @@ def test_reapplying_blinded_preserves_independent_durations(
     state.creatures["goblin_1"].position.y = 1
     state.creatures["goblin_2"].creature.current_health = 0
     state.creatures["goblin_3"].creature.current_health = 0
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 5
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda num_dice, sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda sides: 5)
+    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
     session.choose(_action_id_by_label(session, "Wait"))
@@ -823,9 +765,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     assert _mapping(effects[0])["kind"] == "remove_condition"
 
 
-def test_cure_wounds_heals_through_generic_spell_resolution(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_cure_wounds_heals_through_generic_spell_resolution() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -839,9 +779,7 @@ def test_cure_wounds_heals_through_generic_spell_resolution(
     )
     caster.spellcasting.spell_slots_remaining[1] = 1
     caster.current_health = caster.get_max_health() - 12
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 4
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 4)
 
     result = session.choose(_action_id_by_prefix(session, "Cast Cure Wounds"))
 
@@ -853,9 +791,7 @@ def test_cure_wounds_heals_through_generic_spell_resolution(
     assert healing_roll_detail["applied"] == 9
 
 
-def test_false_life_grants_scaled_temporary_hit_points(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_false_life_grants_scaled_temporary_hit_points() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -868,9 +804,7 @@ def test_false_life_grants_scaled_temporary_hit_points(
         )
     )
     caster.spellcasting.spell_slots_remaining[2] = 1
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 3
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 3)
 
     result = session.choose(_action_id_by_prefix(session, "Cast False Life (Level 2)"))
 
@@ -883,9 +817,7 @@ def test_false_life_grants_scaled_temporary_hit_points(
     assert temporary_hit_point_detail["applied"] == 15
 
 
-def test_mass_healing_word_uses_one_roll_for_selected_targets(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_mass_healing_word_uses_one_roll_for_selected_targets() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -907,9 +839,7 @@ def test_mass_healing_word_uses_one_roll_for_selected_targets(
             state.active_position.y,
         )
         target.creature.current_health = target.creature.get_max_health() - 8
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 3
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 3)
 
     initial = next(
         action
@@ -1127,9 +1057,7 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
     )
 
 
-def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_faerie_fire_applies_attack_advantage_only_after_failed_save() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1147,10 +1075,7 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
     state.creatures["goblin_1"].position = Position(3, 3)
     state.creatures["goblin_2"].position = Position(4, 3)
     rolls = iter((1, 20))
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: next(rolls),
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
     result = _choose_directional_spell(session, "Cast Faerie Fire", (3, 3))
 
@@ -1178,9 +1103,7 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save(
     )
 
 
-def test_phantasmal_killer_scales_and_repeats_typed_damage(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_phantasmal_killer_scales_and_repeats_typed_damage() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1199,9 +1122,7 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage(
     caster.spellcasting.spell_slots_remaining[5] = 1
     target.current_health = 20
     target.add_damage_resistance("psychic", "test-resistance")
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     action = next(
         action
         for action in state.available_actions()

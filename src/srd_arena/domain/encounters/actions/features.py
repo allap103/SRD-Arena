@@ -16,12 +16,6 @@ if TYPE_CHECKING:
     from ..encounter import EncounterState
 
 
-def _roll_dice(count: int, sides: int) -> int:
-    from .. import encounter as encounter_module
-
-    return encounter_module.roll_dice(count, sides)
-
-
 def resolve_feature_action(
     state: EncounterState,
     creature: Creature,
@@ -125,7 +119,11 @@ def resolve_feature_action(
         )
         return
 
-    result = _resolve_feature_action_impl(creature, feature_id, _roll_dice)
+    result = _resolve_feature_action_impl(
+        creature,
+        feature_id,
+        state.dice.roll_dice,
+    )
     if result is None:
         progress.messages.append(
             ("system", f"{feature_action.label} is not implemented yet.")

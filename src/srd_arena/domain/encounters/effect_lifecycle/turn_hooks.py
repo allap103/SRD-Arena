@@ -18,7 +18,6 @@ from ..state_runtime import apply_encounter_effects, create_event
 from .concentration import resolve_concentration_damage
 from .lifecycle_events import resolve_spell_lifecycle_event
 from .removal import _remove_effect_target, _remove_effect_tree
-from .rolls import roll_die
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -119,9 +118,9 @@ def resolve_end_turn_effects(
             cast(Ability, ability),
             dc,
             mode=save_mode,
-            sourced_modifier_override=roll_rules.resolve_modifier(roll_die),
+            sourced_modifier_override=roll_rules.resolve_modifier(state.dice.roll_die),
             sourced_mode_override=roll_rules.mode,
-            roller=roll_die,
+            roller=state.dice.roll_die,
             automatic_failure_reasons=(
                 automatic_save_failure_provider_ids_for(
                     state,
@@ -170,7 +169,7 @@ def resolve_end_turn_effects(
                             state,
                             source_ref,
                             "damage_roll",
-                        ).resolve_modifier(roll_die)
+                        ).resolve_modifier(state.dice.roll_die)
                         if source_ref in state.creatures
                         else 0
                     )
@@ -178,7 +177,7 @@ def resolve_end_turn_effects(
                         int(count_text),
                         int(sides_text),
                         modifier=damage_modifier,
-                        roller=roll_die,
+                        roller=state.dice.roll_die,
                     )
                     applied = target.take_damage(roll.total, damage_type)
                     damage_details.append(

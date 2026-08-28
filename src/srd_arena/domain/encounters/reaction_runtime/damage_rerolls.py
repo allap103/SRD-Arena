@@ -21,7 +21,6 @@ from ..encounter_models.resolution import (
 from ..refs import reroll_die_action_id as _reroll_die_action_id
 from ..state_runtime import create_event, next_frame_id
 from .attack_lifecycle import resolve_attack_lifecycle
-from .rolls import roll_dice
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -251,7 +250,7 @@ def apply_damage_reroll_action(
         request.attack.damage_roll = reroll_dice(
             request.attack.damage_roll,
             [action.value],
-            roller=lambda sides: roll_dice(1, sides),
+            roller=lambda sides: state.dice.roll_dice(1, sides),
         )
         replacement = request.attack.damage_roll.dice[action.value].result
         request.attack.damage_roll_detail = damage_roll_detail(request.attack)

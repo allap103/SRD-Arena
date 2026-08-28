@@ -12,7 +12,7 @@ from collections.abc import Callable
 from ...creatures import Creature
 from ...equipment import Item
 from ...geometry import Position
-from ...rolls.dice import D20RollMode, roll_dice, roll_die
+from ...rolls.dice import D20RollMode
 from ..encounter_models.resolution import AttackOutcome
 from .attack_runtime.damage import (
     apply_attack_damage,
@@ -64,6 +64,8 @@ def resolve_attack(
     defender: Creature,
     attacker_label: str,
     target_label: str,
+    d20_roller: Callable[[int], int],
+    dice_roller: Callable[[int, int], int],
     action_label: str = "Attack",
     items_by_id: dict[str, Item] | None = None,
     attacker_position: Position | None = None,
@@ -75,8 +77,6 @@ def resolve_attack(
     sourced_attack_roll_mode: D20RollMode | None = None,
     target_armor_class: int | None = None,
     sourced_damage_modifier_for: Callable[[], int] | None = None,
-    d20_roller: Callable[[int], int] = roll_die,
-    dice_roller: Callable[[int, int], int] = roll_dice,
     automatic_critical_provider_ids: tuple[str, ...] = (),
 ) -> AttackOutcome:
     """Resolve attack selection, hit determination, and rolled damage.

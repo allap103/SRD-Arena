@@ -14,6 +14,8 @@ from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
 from srd_arena.domain.encounters.participants import creature_controller
+from srd_arena.domain.rolls.dice import DieRoller
+from srd_arena.domain.rolls.randomness import DicePoolRoller, DiceRoller
 from srd_arena.domain.spells import Spell
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import ActionAim, DirectTargetOptionDetails
@@ -137,6 +139,29 @@ def choose_advertised_action(
     advertised_ids = {option.id for option in session.read().action_options}
     assert action.id in advertised_ids
     return session.choose(action.id)
+
+
+def use_deterministic_dice(
+    session: Session,
+    *,
+    die_roller: DieRoller | None = None,
+    pool_roller: DicePoolRoller | None = None,
+) -> DiceRoller:
+    """Inject deterministic dice through the concrete engine composition seam."""
+
+    current = session._dice
+    configured = DiceRoller(
+        die_roller=die_roller or current.die_roller,
+        pool_roller=(
+            pool_roller
+            if pool_roller is not None
+            else (None if die_roller is not None else current.pool_roller)
+        ),
+    )
+    session._dice = configured
+    if session.encounter_state is not None:
+        session.encounter_state.dice = configured
+    return configured
 
 
 def choose_directional_spell(

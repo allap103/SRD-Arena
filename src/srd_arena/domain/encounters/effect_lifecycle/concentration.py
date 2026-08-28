@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, cast
 from ...effects.runtime import OngoingEffectKind
 from ...rolls.saving_throws import SavingThrowCreature, resolve_saving_throw
 from .removal import _remove_effect_tree
-from .rolls import roll_die
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -103,9 +102,9 @@ def resolve_concentration_damage(
         cast(SavingThrowCreature, creature),
         "constitution",
         dc,
-        sourced_modifier_override=roll_rules.resolve_modifier(roll_die),
+        sourced_modifier_override=roll_rules.resolve_modifier(state.dice.roll_die),
         sourced_mode_override=roll_rules.mode,
-        roller=roll_die,
+        roller=state.dice.roll_die,
     )
     if progress is not None:
         outcome = "maintains" if save.check.success else "loses"

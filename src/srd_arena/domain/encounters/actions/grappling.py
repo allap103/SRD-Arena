@@ -20,12 +20,6 @@ if TYPE_CHECKING:
     from ..encounter import EncounterState
 
 
-def _roll_die(sides: int) -> int:
-    from .. import encounter as encounter_module
-
-    return encounter_module.roll_die(sides)
-
-
 def available_escape_actions(
     state: EncounterState,
     creature_ref: str,
@@ -129,10 +123,11 @@ def resolve_escape_action(
         "ability_check",
         ability=ability,
     )
+    roll_die = state.dice.roll_die
     check = resolve_d20(
-        modifier=modifier + roll_rules.resolve_modifier(_roll_die),
+        modifier=modifier + roll_rules.resolve_modifier(roll_die),
         mode=roll_rules.mode,
-        roller=_roll_die,
+        roller=roll_die,
     )
     success = check.total >= escape_dc
     if success:

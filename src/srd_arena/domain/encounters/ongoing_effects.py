@@ -1,8 +1,6 @@
 """Stable facade for encounter-scoped ongoing-effect lifecycle services.
 
 The implementation is organized by concern under :mod:`effect_lifecycle`.
-This module intentionally retains the established import and dice-patching
-surface used by the encounter runtime and its tests.
 """
 
 from __future__ import annotations
@@ -28,15 +26,6 @@ from .effect_lifecycle.turn_hooks import (
     resolve_end_turn_effects,
 )
 
-
-def _roll_die(sides: int) -> int:
-    """Roll through the encounter module's runtime-patchable dice seam."""
-
-    from . import encounter as encounter_module
-
-    return encounter_module.roll_die(sides)
-
-
 __all__ = [
     "_progressed_target_refs",
     "_remove_damage_resistances",
@@ -44,7 +33,6 @@ __all__ = [
     "_remove_effect_tree",
     "_remove_maximum_hit_point_modifier",
     "_required_string",
-    "_roll_die",
     "_round_duration_expired",
     "end_concentration",
     "expire_ongoing_effects_for_turn_start",

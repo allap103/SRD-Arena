@@ -69,22 +69,6 @@ from .reaction_runtime.opportunity_attacks import (
 )
 
 
-def _roll_die(sides: int) -> int:
-    """Roll through the encounter module's runtime-patchable dice seam."""
-
-    from . import encounter as encounter_module
-
-    return encounter_module.roll_die(sides)
-
-
-def _roll_dice(count: int, sides: int) -> int:
-    """Roll damage through the encounter module's patchable dice seam."""
-
-    from . import encounter as encounter_module
-
-    return encounter_module.roll_dice(count, sides)
-
-
 class ReactionEngine:
     """Coordinate reaction offers while the orchestrator owns continuation."""
 
@@ -366,6 +350,4 @@ __all__ = [
     "_damage_reroll_request",
     "_opportunity_attack_request",
     "_resolve_attack_lifecycle",
-    "_roll_dice",
-    "_roll_die",
 ]

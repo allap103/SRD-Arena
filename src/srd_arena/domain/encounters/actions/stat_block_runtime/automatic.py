@@ -13,7 +13,6 @@ from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
 from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
-from .rolls import roll_dice
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -59,6 +58,7 @@ def resolve_automatic_stat_block_action(
         creature_ref,
         "damage_roll",
     )
+    roll_dice = state.dice.roll_dice
     for effect in definition.effects:
         if not isinstance(effect, DamageEffect):
             raise NotImplementedError(

@@ -16,6 +16,9 @@ from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import (
     choose_advertised_action as _choose_advertised_action,
 )
+from tests.encounter_runtime_support import (
+    use_deterministic_dice as _use_deterministic_dice,
+)
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
@@ -147,9 +150,7 @@ def test_externally_controlled_goblin_can_move_then_end_turn() -> None:
     assert state.current_decision().creature_ref == "goblin_2"
 
 
-def test_externally_controlled_goblin_can_attack_opposing_player(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_externally_controlled_goblin_can_attack_opposing_player() -> None:
     session = _all_external_session()
     session.read()
     assert session.encounter_state is not None
@@ -158,12 +159,8 @@ def test_externally_controlled_goblin_can_attack_opposing_player(
     state.active_position.y = 2
     state.creatures["goblin_1"].position.x = 3
     state.creatures["goblin_1"].position.y = 2
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
+    _use_deterministic_dice(session, pool_roller=lambda _count, _sides: 1)
     session.choose(_action_id_by_label(session, "Wait"))
 
     attack = next(
@@ -195,9 +192,7 @@ def test_externally_controlled_goblin_can_attack_opposing_player(
     assert state.current_decision().creature_ref == "goblin_2"
 
 
-def test_secondary_champion_gets_extra_attack_before_turn_ends(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_secondary_champion_gets_extra_attack_before_turn_ends() -> None:
     session = load_scenario_directory(GOBLIN_SKIRMISH_DIR).create_session()
     session.read()
     assert session.encounter_state is not None
@@ -208,10 +203,7 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends(
     brynn.position.y = 2
     goblin.position.x = 3
     goblin.position.y = 2
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.choose(_action_id_by_label(session, "Wait"))
 
     first_attack = next(
@@ -401,9 +393,7 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
     assert (goblin.position.x, goblin.position.y) == (3, 3)
 
 
-def test_ai_controlled_creature_resolves_opportunity_attack_automatically(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_ai_controlled_creature_resolves_opportunity_attack_automatically() -> None:
     session = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
@@ -415,10 +405,7 @@ def test_ai_controlled_creature_resolves_opportunity_attack_automatically(
     reactor = state.creatures["goblin_1"]
     actor.position.x, actor.position.y = 3, 3
     reactor.position.x, reactor.position.y = 3, 4
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     move = next(
         action
@@ -437,9 +424,7 @@ def test_ai_controlled_creature_resolves_opportunity_attack_automatically(
     )
 
 
-def test_brynn_can_take_an_opportunity_attack(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_brynn_can_take_an_opportunity_attack() -> None:
     session = load_scenario_directory(GOBLIN_SKIRMISH_DIR).create_session()
     session.read()
     assert session.encounter_state is not None
@@ -449,10 +434,7 @@ def test_brynn_can_take_an_opportunity_attack(
     state.turn.index = 2
     goblin.position.x, goblin.position.y = 3, 3
     brynn.position.x, brynn.position.y = 3, 4
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     move = next(
         action

@@ -23,7 +23,6 @@ from ..attack_resolution import (
 )
 from ..hit_effects import apply_attack_hit_effects
 from .resources import consume_stat_block_action_resource
-from .rolls import roll_dice, roll_die
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -98,6 +97,8 @@ def resolve_attack_action(
         creature_ref,
         "damage_roll",
     )
+    roll_die = state.dice.roll_die
+    roll_dice = state.dice.roll_dice
     outcome = resolve_attack(
         creature,
         defender,

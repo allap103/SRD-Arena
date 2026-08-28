@@ -148,7 +148,10 @@ class TurnLifecycle:
         )
         from .actions.stat_block import recharge_stat_block_actions
 
-        recharge_stat_block_actions(creature_state.creature)
+        recharge_stat_block_actions(
+            creature_state.creature,
+            state.dice.roll_die,
+        )
         creature_state.movement_remaining = None
         creature_state.movement_spent_this_turn = MovementCost(0)
         creature_state.actions_remaining = 1

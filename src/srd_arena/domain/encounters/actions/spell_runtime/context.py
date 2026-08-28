@@ -28,7 +28,6 @@ from ...state_combat import (
 )
 from ...state_runtime import creature_position
 from ..option_discovery.spell_areas import targets_in_area
-from .rolls import roll_die
 
 if TYPE_CHECKING:
     from ....creatures import Creature
@@ -119,6 +118,7 @@ def build_spell_action_context(
         if save_ability is not None
         else {}
     )
+    roll_die = state.dice.roll_die
     return SpellActionContext(
         creature=actor,
         spell=spell,

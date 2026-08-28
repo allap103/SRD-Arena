@@ -20,12 +20,6 @@ if TYPE_CHECKING:
     from ..encounter import EncounterState
 
 
-def _roll_die(sides: int) -> int:
-    from .. import encounter as encounter_module
-
-    return encounter_module.roll_die(sides)
-
-
 def resolve_grapple_action(
     state: EncounterState,
     actor: Creature,
@@ -111,21 +105,22 @@ def resolve_grapple_action(
         "ability_check",
         ability="strength",
     )
+    roll_die = state.dice.roll_die
     player_roll = resolve_d20(
         modifier=(
             actor.get_modifier(actor.attributes.strength)
-            + actor_roll_rules.resolve_modifier(_roll_die)
+            + actor_roll_rules.resolve_modifier(roll_die)
         ),
         mode=actor_roll_rules.mode,
-        roller=_roll_die,
+        roller=roll_die,
     )
     target_roll = resolve_d20(
         modifier=(
             target.creature.get_modifier(target.creature.attributes.strength)
-            + target_roll_rules.resolve_modifier(_roll_die)
+            + target_roll_rules.resolve_modifier(roll_die)
         ),
         mode=target_roll_rules.mode,
-        roller=_roll_die,
+        roller=roll_die,
     )
     success = player_roll.total >= target_roll.total
     target_label = creature_label(state, target_ref)

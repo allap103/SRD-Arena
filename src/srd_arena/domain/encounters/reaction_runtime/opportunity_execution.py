@@ -28,7 +28,6 @@ from ..participants import creature_controller, creatures_are_opponents
 from ..state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
 from ..state_runtime import create_event, creature_label, next_action_id
 from .attack_lifecycle import resolve_attack_lifecycle
-from .rolls import roll_dice, roll_die
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -71,7 +70,11 @@ def resolve_automatic_opportunity_attacks(
 
     >>> from types import SimpleNamespace
     >>> mover = SimpleNamespace()
-    >>> state = SimpleNamespace(creatures={"hero": mover})
+    >>> dice = SimpleNamespace(
+    ...     roll_die=lambda _sides: 1,
+    ...     roll_dice=lambda count, _sides: count,
+    ... )
+    >>> state = SimpleNamespace(creatures={"hero": mover}, dice=dice)
     >>> resolve_automatic_opportunity_attacks(
     ...     state, mover_ref="hero", from_position=Position(0, 0),
     ...     to_position=Position(1, 0), action_id="move-1",
@@ -81,6 +84,8 @@ def resolve_automatic_opportunity_attacks(
     """
 
     mover = state.creatures[mover_ref]
+    roll_die = state.dice.roll_die
+    roll_dice = state.dice.roll_dice
     messages: list[tuple[str, str]] = []
     reactors = [
         (reactor_ref, reactor)
@@ -235,6 +240,8 @@ def apply_reaction_action(
     )
 
     if action.kind == "opportunity_attack":
+        roll_die = state.dice.roll_die
+        roll_dice = state.dice.roll_dice
         request = opportunity_attack_request(decision)
         movement = request.movement
         eligibility = state.combat_rules.reaction_eligibility(

@@ -12,6 +12,9 @@ from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import (
     choose_advertised_action as _choose_advertised_action,
 )
+from tests.encounter_runtime_support import (
+    use_deterministic_dice as _use_deterministic_dice,
+)
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 FULL_CONTROL_SCENARIO_DIR = (
@@ -63,17 +66,12 @@ def test_manual_action_submission_returns_to_the_same_turn_until_wait() -> None:
     assert state.current_decision().creature_ref == "goblin_1"
 
 
-def test_scripted_turns_advance_until_the_next_external_decision(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+def test_scripted_turns_advance_until_the_next_external_decision() -> None:
     session = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     ).create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state
     assert state is not None
@@ -141,14 +139,9 @@ def test_querying_a_defeated_actors_decision_does_not_advance_the_turn() -> None
     assert state.current_decision().creature_ref == "goblin_2"
 
 
-def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+def test_reaction_interrupts_movement_then_resumes_the_parent_turn() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state
     assert state is not None
@@ -196,18 +189,10 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
     assert movement.data["resumed"] is True
 
 
-def test_lethal_reaction_closes_the_frame_without_resuming_movement(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 20,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda _count, sides: sides,
-    )
+def test_lethal_reaction_closes_the_frame_without_resuming_movement() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
+    _use_deterministic_dice(session, pool_roller=lambda _count, sides: sides)
     session.read()
     state = session.encounter_state
     assert state is not None
@@ -238,18 +223,10 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement(
     assert not any(event.type == "movement_resolved" for event in resolved.events)
 
 
-def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 15,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda _count, _sides: 1,
-    )
+def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 15)
+    _use_deterministic_dice(session, pool_roller=lambda _count, _sides: 1)
     session.read()
     state = session.encounter_state
     assert state is not None
@@ -332,14 +309,9 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
     assert parent_close_index < movement_event_index
 
 
-def test_passing_reaction_closes_it_before_parent_movement_resumes(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+def test_passing_reaction_closes_it_before_parent_movement_resumes() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state
     assert state is not None
@@ -426,13 +398,7 @@ def test_resumed_movement_carries_a_grappled_creature() -> None:
     assert (grappled.position.x, grappled.position.y) == (4, 2)
 
 
-def test_reaction_to_scripted_movement_resumes_automatic_advancement(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+def test_reaction_to_scripted_movement_resumes_automatic_advancement() -> None:
     scenario = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
@@ -445,6 +411,7 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
     assert goblin.behavior is not None
     goblin.behavior.type = "guard"
     session = scenario.create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state
     assert state is not None

@@ -32,14 +32,6 @@ if TYPE_CHECKING:
     from ..encounter import EncounterState
 
 
-def _roll_die(sides: int) -> int:
-    """Roll through the encounter module's runtime-patchable dice seam."""
-
-    from .. import encounter as encounter_module
-
-    return encounter_module.roll_die(sides)
-
-
 def resolve_spell_action(
     state: EncounterState,
     actor: Creature,
@@ -243,4 +235,4 @@ def _record_failed_spell_action(
     )
 
 
-__all__ = ["_roll_die", "resolve_spell_action"]
+__all__ = ["resolve_spell_action"]

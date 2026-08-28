@@ -22,7 +22,6 @@ from ...ongoing_effects import has_condition_save_advantage
 from ...state_combat import automatic_save_failure_provider_ids_for
 from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
-from .rolls import roll_dice, roll_die
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -74,6 +73,7 @@ def resolve_saving_throw_stat_block_action(
         creature_ref,
         "damage_roll",
     )
+    roll_die = state.dice.roll_die
     for target_ref in target_refs:
         target = state.creatures[target_ref].creature
         ability = cast(Ability, ability_names[definition.ability])
@@ -127,6 +127,7 @@ def resolve_saving_throw_stat_block_action(
             target,
             damage_effects,
             half=(saving_throw.check.success and definition.success_damage == "half"),
+            dice_roller=state.dice.roll_dice,
             modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
         )
         non_damage_effects = (*effects, *definition.always)
@@ -143,6 +144,7 @@ def resolve_saving_throw_stat_block_action(
             target,
             definition.always,
             half=False,
+            dice_roller=state.dice.roll_dice,
             modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
         )
         outcomes.append(
@@ -261,6 +263,7 @@ def apply_damage_effects(
     effects: tuple[CapabilityEffect, ...],
     *,
     half: bool,
+    dice_roller: Callable[[int, int], int],
     modifier_for_roll: Callable[[], int] | None = None,
 ) -> int:
     """Apply supported damage effects and return damage actually received.
@@ -269,15 +272,12 @@ def apply_damage_effects(
     combined. The returned value reflects the target's own mitigation.
 
     >>> from types import SimpleNamespace
-    >>> from unittest.mock import patch
     >>> effect = DamageEffect("2d6", 2, "fire")
     >>> target = SimpleNamespace(take_damage=lambda amount, damage_type: amount - 1)
-    >>> with patch(
-    ...     "srd_arena.domain.encounters.actions.stat_block_runtime."
-    ...     "saving_throws.roll_dice",
-    ...     return_value=8,
-    ... ):
-    ...     apply_damage_effects(target, (effect,), half=True)
+    >>> apply_damage_effects(
+    ...     target, (effect,), half=True,
+    ...     dice_roller=lambda count, sides: 8,
+    ... )
     4
     """
     total = 0
@@ -287,7 +287,7 @@ def apply_damage_effects(
         count_text, sides_text = effect.dice.lower().split("d", 1)
         amount = max(
             effect.minimum or 0,
-            roll_dice(int(count_text), int(sides_text))
+            dice_roller(int(count_text), int(sides_text))
             + effect.bonus
             + (modifier_for_roll() if modifier_for_roll is not None else 0),
         )

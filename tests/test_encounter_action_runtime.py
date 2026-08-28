@@ -118,6 +118,9 @@ from tests.encounter_runtime_support import (
 from tests.encounter_runtime_support import (
     as_sequence as _sequence,
 )
+from tests.encounter_runtime_support import (
+    use_deterministic_dice as _use_deterministic_dice,
+)
 
 pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
@@ -216,9 +219,7 @@ def test_targeted_action_labels_only_name_the_action() -> None:
     )
 
 
-def test_line_stat_block_action_can_be_aimed_at_a_map_point(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_line_stat_block_action_can_be_aimed_at_a_map_point() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -256,14 +257,8 @@ def test_line_stat_block_action_can_be_aimed_at_a_map_point(
         success_damage="half",
         always=(),
     )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda count, sides: count * sides,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
+    _use_deterministic_dice(session, pool_roller=lambda count, sides: count * sides)
     health_before = {
         target_ref: state.creatures[target_ref].creature.get_health()
         for target_ref in target_refs
@@ -287,9 +282,7 @@ def test_line_stat_block_action_can_be_aimed_at_a_map_point(
     )
 
 
-def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_automatic_stat_block_damage_action_is_discovered_and_resolved() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -316,10 +309,7 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
         ),
     )
     actor.creature.stat_block_action_resources["Reaping Scythe"] = 1
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda count, sides: count * sides,
-    )
+    _use_deterministic_dice(session, pool_roller=lambda count, sides: count * sides)
     action = next(
         action
         for action in available_creature_actions(state, actor_ref)
@@ -346,9 +336,7 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
     )
 
 
-def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -378,14 +366,8 @@ def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save(
         success_damage="half",
         always=(),
     )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda count, sides: count * sides,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
+    _use_deterministic_dice(session, pool_roller=lambda count, sides: count * sides)
     action = next(
         action
         for action in available_creature_actions(state, actor_ref)
@@ -446,9 +428,7 @@ def test_unsupported_stat_block_effect_is_rejected_before_execution() -> None:
     assert actor.actions_remaining == 1
 
 
-def test_recharge_stat_block_resource_becomes_available_on_required_roll(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_recharge_stat_block_resource_becomes_available_on_required_roll() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -465,12 +445,12 @@ def test_recharge_stat_block_resource_becomes_available_on_required_roll(
         ),
     )
     creature.stat_block_action_resources["Breath"] = 0
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 5,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 5)
 
-    recharge_stat_block_actions(creature)
+    recharge_stat_block_actions(
+        creature,
+        session.encounter_state.dice.roll_die,
+    )
 
     assert creature.stat_block_action_resources["Breath"] == 1
 
@@ -538,9 +518,7 @@ def test_paralyzed_blocks_actions_through_effective_incapacitation() -> None:
     assert state.has_condition(actor_ref, Condition.INCAPACITATED) is False
 
 
-def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -557,14 +535,8 @@ def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical(
         target_ref=target_ref,
     )
     state.conditions.append(paralyzed)
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 10,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda count, _sides: count,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 10)
+    _use_deterministic_dice(session, pool_roller=lambda count, _sides: count)
 
     attack = next(
         action
@@ -580,9 +552,7 @@ def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical(
     assert attack_roll_detail["automatic_critical_provider_ids"] == [paralyzed.id]
 
 
-def test_attack_damage_uses_sourced_damage_roll_modifier(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_attack_damage_uses_sourced_damage_roll_modifier() -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
@@ -619,14 +589,8 @@ def test_attack_damage_uses_sourced_damage_roll_modifier(
         ),
     )
     state.ongoing_effects.append(weakening)
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 10,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda count, _sides: 5 * count,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 10)
+    _use_deterministic_dice(session, pool_roller=lambda count, _sides: 5 * count)
     attack = next(
         action
         for action in state.available_actions()
@@ -905,10 +869,8 @@ def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
 ) -> None:
     monkeypatch.setattr(EncounterState, "roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls)
-    )
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
     session.current_scene_id = "goblin_encounter"
 
     session.read()
@@ -936,10 +898,8 @@ def test_presentation_exposes_initiative_tracker(
 ) -> None:
     monkeypatch.setattr(EncounterState, "roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls)
-    )
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
     session.current_scene_id = "goblin_encounter"
 
     presentation = build_session_presentation(observe_session(session))
@@ -1026,9 +986,7 @@ def test_action_must_belong_to_current_decision_actor() -> None:
         _ORCHESTRATOR.submit(session.encounter_state, action)
 
 
-def test_enriched_multiattack_queues_named_attacks(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_enriched_multiattack_queues_named_attacks() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -1050,10 +1008,7 @@ def test_enriched_multiattack_queues_named_attacks(
     state.active_position.y = 4
     state.creatures["goblin_1"].position.x = 4
     state.creatures["goblin_1"].position.y = 3
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     multiattack = next(
         action for action in state.available_actions() if action.kind == "multiattack"
@@ -1108,9 +1063,7 @@ def test_enriched_multiattack_queues_named_attacks(
     ] == ["Thunderous Slam"]
 
 
-def test_assassin_multiattack_applies_independent_poisoned_conditions(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_assassin_multiattack_applies_independent_poisoned_conditions() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -1133,14 +1086,8 @@ def test_assassin_multiattack_applies_independent_poisoned_conditions(
     state.creatures["goblin_1"].position.x = 4
     state.creatures["goblin_1"].position.y = 3
     state.creatures["goblin_1"].creature.current_health = 100
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 20,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda count, _sides: count,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
+    _use_deterministic_dice(session, pool_roller=lambda count, _sides: count)
 
     multiattack = next(
         action for action in state.available_actions() if action.kind == "multiattack"
@@ -1242,9 +1189,7 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
     } == {"external"}
 
 
-def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape() -> None:
     session = load_scenario_directory(MULTIATTACK_SCENARIO_DIR).create_session()
     session.read()
     assert session.encounter_state is not None
@@ -1261,14 +1206,8 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
     state.creatures["air_elemental"].position.y = 4
     state.creatures["player"].position.x = 4
     state.creatures["player"].position.y = 4
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 20,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda count, _sides: count,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
+    _use_deterministic_dice(session, pool_roller=lambda count, _sides: count)
 
     multiattack = next(
         action for action in state.available_actions() if action.kind == "multiattack"
@@ -1307,20 +1246,14 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
         for action in state.available_actions()
         if action.kind == "escape_grapple"
     )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     failed = _ORCHESTRATOR.submit(state, failed_escape)
     assert state.has_condition("air_elemental", Condition.GRAPPLED) is True
     assert state.creatures["air_elemental"].actions_remaining == 0
     assert any("fails to escape" in text for _, text in failed.messages)
 
     state.creatures["air_elemental"].actions_remaining = 1
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 20,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
     escape = next(
         action
         for action in state.available_actions()
@@ -1452,9 +1385,7 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
     )
 
 
-def test_grapple_action_is_available_in_the_combat_menu(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_grapple_action_is_available_in_the_combat_menu() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
     ).create_session()
@@ -1468,9 +1399,7 @@ def test_grapple_action_is_available_in_the_combat_menu(
     state.creatures["goblin_1"].position.y = 3
 
     rolls = iter([20, 1])
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls)
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
     scene_view = session.read()
     grapple_index = _action_id(session, "grapple", "goblin_1")
@@ -1490,9 +1419,7 @@ def test_grapple_action_is_available_in_the_combat_menu(
     )
 
 
-def test_grapple_replaces_only_one_attack_in_multiattack(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_grapple_replaces_only_one_attack_in_multiattack() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -1506,10 +1433,7 @@ def test_grapple_replaces_only_one_attack_in_multiattack(
     state.active_position.y = 4
     state.creatures["goblin_1"].position.x = 4
     state.creatures["goblin_1"].position.y = 3
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 10,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 10)
 
     session.choose(_action_id(session, "grapple", "goblin_1"))
 
@@ -1518,9 +1442,7 @@ def test_grapple_replaces_only_one_attack_in_multiattack(
     assert any(action.kind == "attack" for action in state.available_actions())
 
 
-def test_grapple_can_replace_remaining_attack_after_weapon_attack(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_grapple_can_replace_remaining_attack_after_weapon_attack() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -1535,10 +1457,7 @@ def test_grapple_can_replace_remaining_attack_after_weapon_attack(
     state.creatures["goblin_1"].position.x = 4
     state.creatures["goblin_1"].position.y = 3
     state.creatures["goblin_1"].creature.current_health = 20
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     session.choose(_action_id(session, "attack", "goblin_1"))
     assert state.active_attacks_remaining == 1

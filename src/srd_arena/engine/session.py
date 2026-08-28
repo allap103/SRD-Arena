@@ -9,6 +9,7 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
 from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import GeometryConfig
+from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.engine.action_configuration import (
     configure_action as configure_engine_action,
 )
@@ -48,6 +49,7 @@ class Session:
         automatic_action_limit: int | None = None,
         geometry_config: GeometryConfig | None = None,
         encounter_orchestrator: EncounterOrchestrator | None = None,
+        dice: DiceRoller | None = None,
     ):
         self.encounters = encounters
         self.creature_templates = creature_templates
@@ -58,6 +60,7 @@ class Session:
         self.automatic_action_limit = automatic_action_limit
         self.geometry_config = geometry_config or GeometryConfig()
         self.encounter_orchestrator = encounter_orchestrator or EncounterOrchestrator()
+        self._dice = dice or DiceRoller()
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
         self.pending_scene_transition: PendingSceneTransition | None = None
@@ -265,6 +268,7 @@ class Session:
             self.creature_templates,
             self.item_templates,
             self.geometry_config,
+            self._dice,
         )
         self.encounter_state.automatic_action_limit = self.automatic_action_limit
         self._encounter_actions = []
