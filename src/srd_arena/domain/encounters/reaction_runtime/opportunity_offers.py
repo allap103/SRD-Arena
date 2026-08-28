@@ -96,7 +96,7 @@ def queue_opportunity_attack(
             for target_ref, position in companion_destinations.items()
         },
     )
-    state.decision_stack.append(
+    state.interrupts.decision_stack.append(
         DecisionFrame(
             id=frame_id,
             creature_ref=reactor_ref,

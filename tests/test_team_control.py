@@ -273,7 +273,7 @@ def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
     state = session.encounter_state
     brynn = state.creatures["champion_2"]
     goblin = state.creatures["red_blade"]
-    state.turn_index = 1
+    state.turn.index = 1
     brynn.position.x, brynn.position.y = 3, 3
     goblin.position.x, goblin.position.y = 3, 4
 
@@ -440,7 +440,7 @@ def test_brynn_can_take_an_opportunity_attack(
     state = session.encounter_state
     brynn = state.creatures["champion_2"]
     goblin = state.creatures["red_blade"]
-    state.turn_index = 2
+    state.turn.index = 2
     goblin.position.x, goblin.position.y = 3, 3
     brynn.position.x, brynn.position.y = 3, 4
     monkeypatch.setattr(
@@ -498,7 +498,7 @@ def test_externally_controlled_teammate_can_target_opposing_team() -> None:
     goblins = next(team for team in state.definition.teams if team.id == "goblins")
     heroes.members.append("goblin_1")
     goblins.members.remove("goblin_1")
-    state.turn_index = 1
+    state.turn.index = 1
     state.creatures["goblin_1"].position.x = 3
     state.creatures["goblin_1"].position.y = 2
     state.creatures["goblin_2"].position.x = 4

@@ -88,7 +88,7 @@ class EncounterOrchestrator:
         another action.
 
         >>> from unittest.mock import Mock
-        >>> state = Mock(decision_stack=[])
+        >>> state = Mock(interrupts=Mock(decision_stack=[]))
         >>> state.turn_lifecycle.check_transition.return_value = "victory-scene"
         >>> EncounterOrchestrator().advance(state).transition
         'victory-scene'
@@ -99,7 +99,7 @@ class EncounterOrchestrator:
             self._record_transition(state, progress)
             if progress.transition is not None:
                 break
-            if state.decision_stack:
+            if state.interrupts.decision_stack:
                 progress.paused_for_decision = True
                 break
 
@@ -158,7 +158,7 @@ class EncounterOrchestrator:
         if (
             progress.transition is not None
             or progress.paused_for_decision
-            or state.decision_stack
+            or state.interrupts.decision_stack
         ):
             return progress
         state._merge_progress(progress, self.advance(state))

@@ -156,7 +156,7 @@ def test_unenriched_frostwing_breath_is_present_as_unimplemented() -> None:
     assert session.encounter_state is not None
     state = session.encounter_state
     state.initiative_order = ["player", "air_elemental", "aboleth"]
-    state.turn_index = 0
+    state.turn.index = 0
 
     cold_breath = next(
         action
@@ -956,8 +956,8 @@ def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> N
     assert session.encounter_state.creatures["goblin_2"].position.y == 2
     assert session.encounter_state.creatures["goblin_3"].position.x == 4
     assert session.encounter_state.creatures["goblin_3"].position.y == 1
-    assert session.encounter_state.turn_index == 0
-    assert session.encounter_state.round_number == 1
+    assert session.encounter_state.turn.index == 0
+    assert session.encounter_state.round.number == 1
 
 
 def test_goblin_encounter_allows_diagonal_movement() -> None:
@@ -1219,7 +1219,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
         condition_immunities=frozenset(),
     )
     state.initiative_order = ["aboleth", "air_elemental", "player"]
-    state.turn_index = 0
+    state.turn.index = 0
     state.creatures["aboleth"].position.x = 7
     state.creatures["aboleth"].position.y = 4
     state.creatures["air_elemental"].position.x = 5
@@ -1265,7 +1265,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
     assert state.has_condition("player", Condition.GRAPPLED) is False
 
     state.initiative_order = ["air_elemental", "aboleth", "player"]
-    state.turn_index = 0
+    state.turn.index = 0
     state.creatures["air_elemental"].actions_remaining = 1
     failed_escape = next(
         action
@@ -1568,8 +1568,8 @@ def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
 
     assert ("system", "Traveler moves right to (7, 6).") in result.messages
     assert session.encounter_state is not None
-    assert session.encounter_state.turn_index == 0
-    assert session.encounter_state.round_number == 1
+    assert session.encounter_state.turn.index == 0
+    assert session.encounter_state.round.number == 1
     assert _action_labels(session).count("Wait") == 1
 
 
@@ -1590,5 +1590,5 @@ def test_goblin_encounter_wait_advances_enemy_turns() -> None:
     assert session.encounter_state.creatures["goblin_2"].position.y == 5
     assert session.encounter_state.creatures["goblin_3"].position.x == 4
     assert session.encounter_state.creatures["goblin_3"].position.y == 1
-    assert session.encounter_state.turn_index == 0
-    assert session.encounter_state.round_number == 2
+    assert session.encounter_state.turn.index == 0
+    assert session.encounter_state.round.number == 2

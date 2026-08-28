@@ -71,7 +71,7 @@ def open_damage_reroll_decision(
     ...     _next_frame_id=lambda: "reroll-1",
     ...     current_decision=lambda: parent,
     ...     active_attacks_remaining=0,
-    ...     decision_stack=[],
+    ...     interrupts=SimpleNamespace(decision_stack=[]),
     ...     _event=lambda event_type, **values: event_type,
     ... )
     >>> progress = EncounterProgress()
@@ -81,7 +81,7 @@ def open_damage_reroll_decision(
     ...     attacker_label="Hero", target_label="Goblin",
     ...     action_id="attack-1", progress=progress,
     ... )
-    >>> (state.decision_stack[-1].kind, progress.paused_for_decision, attack.messages)
+    >>> (state.interrupts.decision_stack[-1].kind, progress.paused_for_decision, attack.messages)
     ('reroll_dice', True, [])
     """
 
@@ -98,7 +98,7 @@ def open_damage_reroll_decision(
         triggered_effect=triggered_effect,
         reaction=reaction,
     )
-    state.decision_stack.append(
+    state.interrupts.decision_stack.append(
         DecisionFrame(
             id=frame_id,
             creature_ref=attacker_ref,

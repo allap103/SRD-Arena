@@ -193,7 +193,7 @@ def execute_spell_invocation(
             staged_selection_needed = False
             automated_resolved = True
     if staged_selection_needed:
-        state.pending_spell_cast = PendingSpellCast(
+        state.interrupts.pending_spell_cast = PendingSpellCast(
             action=action,
             spell_id=spell_id,
             selected_target_refs=selected_targets,
@@ -203,7 +203,7 @@ def execute_spell_invocation(
             resource_pool_total=resource_pool_total,
             resource_allocation_limits=resource_allocation_limits,
         )
-        state.decision_stack.append(
+        state.interrupts.decision_stack.append(
             DecisionFrame(
                 id=f"spell-targets-{action_id}",
                 creature_ref=decision.creature_ref,

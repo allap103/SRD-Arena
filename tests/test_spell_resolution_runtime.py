@@ -492,7 +492,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(
         SimpleNamespace(encounter=object()),
     )
     window._combat_log_scene_id = state.encounter_id
-    window._logged_round_number = state.round_number
+    window._logged_round_number = state.round.number
     window.sidebar = type_cast(
         GameSidebar,
         SimpleNamespace(append_combat_log=lambda _messages, _rolls: None),
@@ -1364,8 +1364,8 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
     opened = _ORCHESTRATOR.submit(state, initial)
 
     assert opened.paused_for_decision
-    assert state.pending_spell_cast is not None
-    assert state.pending_spell_cast.resource_pool_total == 700
+    assert state.interrupts.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast.resource_pool_total == 700
     for target_ref, amount in (("player", 300), ("goblin_1", 400)):
         _ORCHESTRATOR.submit(
             state,

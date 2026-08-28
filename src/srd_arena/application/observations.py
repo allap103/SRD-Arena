@@ -99,7 +99,7 @@ def _observe_encounter(read: SessionRead) -> EncounterObservation:
     return EncounterObservation(
         encounter_id=state.encounter_id,
         grid=GridObservation(width=grid.width, height=grid.height),
-        round_number=state.round_number,
+        round_number=state.round.number,
         decision=DecisionObservation(
             id=decision.id,
             kind=decision.kind,
@@ -125,7 +125,7 @@ def _observe_encounter(read: SessionRead) -> EncounterObservation:
 
 
 def _observe_targeting(state: EncounterState) -> TargetingObservation | None:
-    pending = state.pending_spell_cast
+    pending = state.interrupts.pending_spell_cast
     if pending is None:
         return None
     actor = state.creatures[state.current_decision().creature_ref].creature

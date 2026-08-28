@@ -17,7 +17,7 @@ def test_orchestrator_delegates_scripted_choice_to_actor_selector() -> None:
     assert session.encounter_state is not None
     state = session.encounter_state
     creature_ref = "goblin_1"
-    state.turn_index = state.initiative_order.index(creature_ref)
+    state.turn.index = state.initiative_order.index(creature_ref)
     selections: list[tuple[str, tuple[EncounterAction, ...], bool]] = []
 
     class RecordingSelector:

@@ -1,8 +1,8 @@
 """Encounter state facade and its stable service bindings.
 
 Turn flow lives in orchestration and turn_lifecycle. This class owns state
-construction, compatibility views over structured state containers, and the
-explicit bindings to focused encounter services.
+construction, derived convenience queries, and the explicit bindings to
+focused encounter services.
 """
 
 from __future__ import annotations
@@ -109,11 +109,9 @@ from .encounter_models.actions import (
     EncounterAction,
 )
 from .encounter_models.decisions import (
-    DecisionFrame,
     InterruptState,
     OpportunityAttackRequest,
     PendingMovement,
-    PendingSpellCast,
 )
 from .encounter_models.resolution import CombatEvent
 from .encounter_models.state import (
@@ -273,91 +271,24 @@ class EncounterState(EncounterStateData):
         """
         return COMBAT_RULES
 
-    # Compatibility views expose structured interrupt, round, turn, and
-    # active-creature state through the established EncounterState API.
-    @property
-    def decision_stack(self) -> list[DecisionFrame]:
-        """Expose the interrupt state's nested decision frames.
-
-        >>> from srd_arena.domain.geometry import Grid
-        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
-        >>> frame = DecisionFrame("reaction-1", "hero", "reaction", "counterspell")
-        >>> state.decision_stack = [frame]
-        >>> state.decision_stack[-1].reason
-        'counterspell'
-        """
-        return self.interrupts.decision_stack
-
-    @decision_stack.setter
-    def decision_stack(self, value: list[DecisionFrame]) -> None:
-        self.interrupts.decision_stack = value
-
     @property
     def pending_movement(self) -> PendingMovement | None:
         """Return movement suspended by the newest opportunity-attack decision.
 
         >>> from srd_arena.domain.geometry import Grid, MovementCost
+        >>> from srd_arena.domain.encounters.encounter_models.decisions import DecisionFrame
         >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
         >>> movement = PendingMovement("move", "hero", "right", Position(0, 0),
         ...     Position(1, 0), MovementBudget(5), MovementCost(1), "trigger")
-        >>> state.decision_stack = [DecisionFrame("reaction", "enemy", "reaction", "opportunity",
+        >>> state.interrupts.decision_stack = [DecisionFrame("reaction", "enemy", "reaction", "opportunity",
         ...     request=OpportunityAttackRequest(movement))]
         >>> state.pending_movement is movement
         True
         """
-        for decision in reversed(self.decision_stack):
+        for decision in reversed(self.interrupts.decision_stack):
             if isinstance(decision.request, OpportunityAttackRequest):
                 return decision.request.movement
         return None
-
-    @property
-    def pending_spell_cast(self) -> PendingSpellCast | None:
-        """Expose spell targeting staged before invocation begins.
-
-        >>> from srd_arena.domain.geometry import Grid
-        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
-        >>> pending = PendingSpellCast(EncounterAction("Cast", "spell"), "fireball", [], 1)
-        >>> state.pending_spell_cast = pending
-        >>> state.pending_spell_cast.spell_id if state.pending_spell_cast else None
-        'fireball'
-        """
-        return self.interrupts.pending_spell_cast
-
-    @pending_spell_cast.setter
-    def pending_spell_cast(self, value: PendingSpellCast | None) -> None:
-        self.interrupts.pending_spell_cast = value
-
-    @property
-    def turn_index(self) -> int:
-        """Expose the current index within initiative order.
-
-        >>> from srd_arena.domain.geometry import Grid
-        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
-        >>> state.turn_index = 2
-        >>> state.turn_index
-        2
-        """
-        return self.turn.index
-
-    @turn_index.setter
-    def turn_index(self, value: int) -> None:
-        self.turn.index = value
-
-    @property
-    def round_number(self) -> int:
-        """Expose the current one-based encounter round.
-
-        >>> from srd_arena.domain.geometry import Grid
-        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
-        >>> state.round_number = 3
-        >>> state.round_number
-        3
-        """
-        return self.round.number
-
-    @round_number.setter
-    def round_number(self, value: int) -> None:
-        self.round.number = value
 
     @property
     def active_creature_state(self) -> EncounterCreatureState:

@@ -117,7 +117,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save(
     assert paralyzed.identity.root_id == state.ongoing_effects[0].identity.id
 
     state.initiative_order = ["player", "goblin_1"]
-    state.turn_index = 1
+    state.turn.index = 1
     state.turn_lifecycle.advance_turn(state, cast)
 
     assert state.has_condition("goblin_1", Condition.PARALYZED) is False
@@ -517,8 +517,8 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
     opened = _ORCHESTRATOR.submit(state, initial)
 
     assert opened.paused_for_decision
-    assert state.pending_spell_cast is not None
-    assert state.pending_spell_cast.selected_target_refs == ["goblin_1"]
+    assert state.interrupts.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast.selected_target_refs == ["goblin_1"]
     assert not any(
         action.kind == "confirm_spell_targets" for action in state.available_actions()
     )
@@ -533,8 +533,8 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
         )
         _ORCHESTRATOR.submit(state, add_ray)
 
-    assert state.pending_spell_cast is not None
-    assert state.pending_spell_cast.selected_target_refs == [
+    assert state.interrupts.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast.selected_target_refs == [
         "goblin_1",
         "goblin_1",
         "goblin_2",
@@ -593,7 +593,7 @@ def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() ->
     )
     _ORCHESTRATOR.submit(state, cancel)
 
-    assert state.pending_spell_cast is None
+    assert state.interrupts.pending_spell_cast is None
     assert state.current_decision().kind == "turn"
     assert caster.spellcasting.spell_slots_remaining[2] == 1
     assert state.active_actions_remaining == 1
@@ -665,8 +665,8 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation(
     )
     _ORCHESTRATOR.submit(state, initial)
 
-    assert state.pending_spell_cast is not None
-    assert state.pending_spell_cast.maximum_targets == 3
+    assert state.interrupts.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast.maximum_targets == 3
     for target_ref in ("goblin_1", "goblin_2"):
         add_beam = next(
             action
@@ -821,7 +821,7 @@ def test_sleep_progresses_from_incapacitated_to_unconscious(
 
     assert state.has_condition("goblin_1", Condition.INCAPACITATED)
     state.initiative_order = ["player", "goblin_1"]
-    state.turn_index = 1
+    state.turn.index = 1
     state.turn_lifecycle.advance_turn(state, EncounterProgress())
     assert state.has_condition("goblin_1", Condition.UNCONSCIOUS)
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
@@ -1041,7 +1041,7 @@ def test_adjacent_creature_can_spend_action_to_wake_sleep_target() -> None:
         state.creatures["goblin_1"].position.y,
     )
     state.initiative_order = ["goblin_2", "player", "goblin_1"]
-    state.turn_index = 0
+    state.turn.index = 0
 
     action = next(
         action

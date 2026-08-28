@@ -19,12 +19,14 @@ def spell_target_selection_actions(
 
     >>> from types import SimpleNamespace
     >>> spell_target_selection_actions(
-    ...     SimpleNamespace(pending_spell_cast=None), "mage"
+    ...     SimpleNamespace(
+    ...         interrupts=SimpleNamespace(pending_spell_cast=None)
+    ...     ), "mage"
     ... )
     []
     """
 
-    pending = state.pending_spell_cast
+    pending = state.interrupts.pending_spell_cast
     if pending is None:
         return []
     actor = state.creatures[creature_ref].creature

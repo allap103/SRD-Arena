@@ -39,9 +39,9 @@ def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> No
     result = _ORCHESTRATOR.submit(state, cast)
 
     assert result.paused_for_decision
-    assert state.pending_spell_cast is not None
-    assert state.pending_spell_cast.resource_pool_total == 700
-    assert state.pending_spell_cast.resource_allocation_limits == {
+    assert state.interrupts.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast.resource_pool_total == 700
+    assert state.interrupts.pending_spell_cast.resource_allocation_limits == {
         "healer": 200,
         "guardian": 450,
         "champion": 200,

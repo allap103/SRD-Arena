@@ -41,12 +41,13 @@ def current_decision(state: EncounterState) -> DecisionFrame:
 
     >>> from types import SimpleNamespace
     >>> reaction = DecisionFrame("reaction-1", "goblin", "reaction", "opportunity")
-    >>> current_decision(SimpleNamespace(decision_stack=[reaction])) is reaction
+    >>> interrupts = SimpleNamespace(decision_stack=[reaction])
+    >>> current_decision(SimpleNamespace(interrupts=interrupts)) is reaction
     True
     """
 
-    if state.decision_stack:
-        return state.decision_stack[-1]
+    if state.interrupts.decision_stack:
+        return state.interrupts.decision_stack[-1]
     creature_ref = state.turn_lifecycle.active_turn_creature(state)
     return DecisionFrame(
         id=f"turn-{creature_ref.replace(':', '-')}",

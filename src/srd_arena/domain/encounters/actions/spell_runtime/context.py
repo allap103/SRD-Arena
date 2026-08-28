@@ -116,7 +116,7 @@ def build_spell_action_context(
         creature=actor,
         spell=spell,
         target=target,
-        current_round=state.round_number,
+        current_round=state.round.number,
         targets=targets,
         area=area,
         source_ref=creature_ref,

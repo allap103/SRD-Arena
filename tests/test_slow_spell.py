@@ -132,8 +132,8 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     _choose_directional_spell(session, "Cast Slow", (7, 5))
 
     assert state.current_decision().kind == "spell_targets"
-    assert state.pending_spell_cast is not None
-    assert state.pending_spell_cast.maximum_targets == 3
+    assert state.interrupts.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast.maximum_targets == 3
     confirm = next(
         action
         for action in state.available_actions()
@@ -300,10 +300,10 @@ def test_slow_chosen_area_never_exceeds_six_targets(
     _choose_directional_spell(session, "Cast Slow", (8, 6))
 
     assert state.current_decision().kind == "spell_targets"
-    assert state.pending_spell_cast is not None
-    assert state.pending_spell_cast.maximum_targets == 6
-    assert len(state.pending_spell_cast.selected_target_refs) == 6
-    selected = set(state.pending_spell_cast.selected_target_refs)
+    assert state.interrupts.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast.maximum_targets == 6
+    assert len(state.interrupts.pending_spell_cast.selected_target_refs) == 6
+    selected = set(state.interrupts.pending_spell_cast.selected_target_refs)
     unselected = next(
         target_ref for target_ref in target_refs if target_ref not in selected
     )
@@ -320,8 +320,8 @@ def test_slow_chosen_area_never_exceeds_six_targets(
     )
     _ORCHESTRATOR.submit(state, add)
 
-    assert state.pending_spell_cast is not None
-    assert len(state.pending_spell_cast.selected_target_refs) == 6
+    assert state.interrupts.pending_spell_cast is not None
+    assert len(state.interrupts.pending_spell_cast.selected_target_refs) == 6
 
 
 def _assassin_showcase_state() -> EncounterState:
@@ -333,7 +333,7 @@ def _assassin_showcase_state() -> EncounterState:
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.turn_index = state.initiative_order.index("assassin")
+    state.turn.index = state.initiative_order.index("assassin")
     assassin = state.active_creature_state
     assassin.actions_remaining = 1
     assassin.attacks_remaining = 0

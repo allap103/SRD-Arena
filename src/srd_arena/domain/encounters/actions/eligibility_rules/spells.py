@@ -111,7 +111,7 @@ class SpellTargetSelectionRule:
         >>> from unittest.mock import Mock
         >>> action = EncounterAction("Confirm", "confirm_spell_targets")
         >>> SpellTargetSelectionRule().check(
-        ...     Mock(pending_spell_cast=None), "hero", action).code
+        ...     Mock(interrupts=Mock(pending_spell_cast=None)), "hero", action).code
         'spell_selection_unavailable'
         """
         if action.kind not in {
@@ -120,7 +120,7 @@ class SpellTargetSelectionRule:
             "confirm_spell_targets",
         }:
             return None
-        pending = state.pending_spell_cast
+        pending = state.interrupts.pending_spell_cast
         if pending is None:
             return EligibilityFailure(
                 "spell_selection_unavailable",

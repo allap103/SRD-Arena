@@ -140,7 +140,10 @@ class ReactionEngine:
         >>> attack = AttackOutcome([], True, 18, 0, False, {})
         >>> trigger = TriggeredEffect("great_weapon", "feature", "great_weapon",
         ...     "damage_rolled", "reroll_matching_dice")
-        >>> state = Mock(active_attacks_remaining=1, decision_stack=[])
+        >>> state = Mock(
+        ...     active_attacks_remaining=1,
+        ...     interrupts=Mock(decision_stack=[]),
+        ... )
         >>> state._next_frame_id.return_value = "reroll:1"
         >>> state.current_decision.return_value = DecisionFrame("turn", "hero", "turn", "active")
         >>> progress = EncounterProgress()
@@ -148,7 +151,7 @@ class ReactionEngine:
         ...     triggered_effect=trigger, attacker_ref="hero", target_ref="ogre",
         ...     attacker_label="Hero", target_label="Ogre", action_id="attack:1",
         ...     progress=progress)
-        >>> (state.decision_stack[-1].kind, progress.paused_for_decision)
+        >>> (state.interrupts.decision_stack[-1].kind, progress.paused_for_decision)
         ('reroll_dice', True)
         """
         _open_damage_reroll_decision(

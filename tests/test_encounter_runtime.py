@@ -78,7 +78,7 @@ def test_orchestrator_runs_enemy_turns_until_player_turn(
     session.read()
 
     assert session.encounter_state is not None
-    session.encounter_state.turn_index = 1
+    session.encounter_state.turn.index = 1
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_die",
         lambda _sides: 1,
@@ -89,7 +89,7 @@ def test_orchestrator_runs_enemy_turns_until_player_turn(
     assert progress.transition is None
     assert ("system", "Goblin Warrior moves down-left to (4, 3).") in progress.messages
     assert session.encounter_state.active_creature() == "player"
-    assert session.encounter_state.round_number == 2
+    assert session.encounter_state.round.number == 2
 
 
 def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
@@ -109,7 +109,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
     enemy.position.y = 2
     session.encounter_state.active_position.x = 1
     session.encounter_state.active_position.y = 6
-    session.encounter_state.turn_index = 1
+    session.encounter_state.turn.index = 1
 
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_die", lambda sides: 20
@@ -671,7 +671,7 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
         and action.details.target_ref == "goblin_1"
     )
     session.choose(initial.id)
-    assert state.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast is not None
     add = next(
         action
         for action in session.read().action_options
@@ -700,7 +700,7 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
 
     GameWindow._select_action(window, add.id)
 
-    assert state.pending_spell_cast is None
+    assert state.interrupts.pending_spell_cast is None
     assert state.current_decision().kind == "turn"
     assert state.active_actions_remaining == 0
 
@@ -713,7 +713,7 @@ def test_movement_does_not_consume_pending_multiattack_slots() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.turn_index = state.initiative_order.index("assassin")
+    state.turn.index = state.initiative_order.index("assassin")
     actor = state.active_creature_state
     actor.movement_remaining = None
     actor.actions_remaining = 1

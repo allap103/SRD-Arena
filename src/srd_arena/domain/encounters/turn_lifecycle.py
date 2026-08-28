@@ -41,10 +41,10 @@ class TurnLifecycle:
 
         >>> from unittest.mock import Mock
         >>> TurnLifecycle().active_turn_creature(
-        ...     Mock(initiative_order=["goblin", "hero"], turn_index=1))
+        ...     Mock(initiative_order=["goblin", "hero"], turn=Mock(index=1)))
         'hero'
         """
-        return state.initiative_order[state.turn_index]
+        return state.initiative_order[state.turn.index]
 
     def check_transition(self, state: EncounterState) -> str | None:
         """Return the victory transition once only one configured team lives.
@@ -81,13 +81,14 @@ class TurnLifecycle:
 
         >>> from unittest.mock import Mock
         >>> from srd_arena.domain.encounters.encounter_models.decisions import DecisionFrame
-        >>> state = Mock(ongoing_effects=[], conditions=[], relationships=[], turn_index=0,
+        >>> state = Mock(ongoing_effects=[], conditions=[], relationships=[],
+        ...     turn=Mock(index=0),
         ...     initiative_order=["hero", "fallen"],
         ...     creatures={"hero": Mock(is_alive=True), "fallen": Mock(is_alive=False)},
         ...     round=Mock(number=1))
         >>> state.current_decision.return_value = DecisionFrame("turn", "hero", "turn", "active")
         >>> TurnLifecycle().advance_turn(state)
-        >>> state.turn_index
+        >>> state.turn.index
         1
         """
         ending_creature_ref = state.current_decision().creature_ref
@@ -105,19 +106,19 @@ class TurnLifecycle:
         """Advance one defeated initiative slot without running its turn hooks.
 
         >>> from unittest.mock import Mock
-        >>> state = Mock(turn_index=0, initiative_order=["fallen", "next"],
+        >>> state = Mock(turn=Mock(index=0), initiative_order=["fallen", "next"],
         ...     creatures={"next": Mock(is_alive=False)}, round=Mock())
         >>> TurnLifecycle().skip_defeated_turn(state)
-        >>> state.turn_index
+        >>> state.turn.index
         1
         """
         self._advance_initiative(state)
         self._begin_turn_if_alive(state, progress)
 
     def _advance_initiative(self, state: EncounterState) -> None:
-        state.turn_index += 1
-        if state.turn_index >= self.turn_count(state):
-            state.turn_index = 0
+        state.turn.index += 1
+        if state.turn.index >= self.turn_count(state):
+            state.turn.index = 0
             state.round.advance()
 
     def _begin_turn_if_alive(
@@ -125,7 +126,7 @@ class TurnLifecycle:
         state: EncounterState,
         progress: EncounterProgress | None,
     ) -> None:
-        creature_ref = state.initiative_order[state.turn_index]
+        creature_ref = state.initiative_order[state.turn.index]
         creature_state = state.creatures[creature_ref]
         if not creature_state.is_alive:
             return
@@ -234,12 +235,12 @@ class TurnLifecycle:
 
         >>> from unittest.mock import Mock
         >>> hero = Mock(reaction_available=False)
-        >>> state = Mock(turn_index=0, creatures={"hero": hero})
+        >>> state = Mock(turn=Mock(index=0), creatures={"hero": hero})
         >>> TurnLifecycle().maybe_reset_reactions(state)
         >>> hero.reaction_available
         True
         """
-        if state.turn_index != 0:
+        if state.turn.index != 0:
             return
         for creature_state in state.creatures.values():
             creature_state.reaction_available = True

@@ -105,7 +105,7 @@ def test_pacing_pause_skips_defeated_initiative_slots_first() -> None:
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("goblin_1")
+    state.turn.index = state.initiative_order.index("goblin_1")
     state.creatures["goblin_2"].creature.current_health = 0
 
     progress = _ORCHESTRATOR.advance(state)
@@ -118,21 +118,21 @@ def test_querying_a_defeated_actors_decision_does_not_advance_the_turn() -> None
     session = _all_external_session()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("goblin_1")
+    state.turn.index = state.initiative_order.index("goblin_1")
     state.creatures["goblin_1"].creature.current_health = 0
-    turn_index = state.turn_index
+    turn_index = state.turn.index
     round_number = state.round.number
 
     decision = state.current_decision()
 
     assert decision.creature_ref == "goblin_1"
-    assert state.turn_index == turn_index
+    assert state.turn.index == turn_index
     assert state.round.number == round_number
 
     progress = _ORCHESTRATOR.advance(state)
 
     assert progress.paused_for_decision is True
-    assert state.turn_index == turn_index + 1
+    assert state.turn.index == turn_index + 1
     assert state.round.number == round_number
     assert state.current_decision().creature_ref == "goblin_2"
 
@@ -148,7 +148,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("champion_2")
+    state.turn.index = state.initiative_order.index("champion_2")
     mover = state.creatures["champion_2"]
     reactor = state.creatures["red_blade"]
     mover.position.x, mover.position.y = 3, 3
@@ -207,7 +207,7 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement(
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("champion_2")
+    state.turn.index = state.initiative_order.index("champion_2")
     mover = state.creatures["champion_2"]
     reactor = state.creatures["red_blade"]
     mover.creature.current_health = 1
@@ -229,7 +229,7 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement(
 
     assert mover.is_alive is False
     assert (mover.position.x, mover.position.y) == (3, 3)
-    assert state.decision_stack == []
+    assert state.interrupts.decision_stack == []
     assert state.pending_movement is None
     assert not any(event.type == "movement_resolved" for event in resolved.events)
 
@@ -249,7 +249,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("champion_2")
+    state.turn.index = state.initiative_order.index("champion_2")
     mover = state.creatures["champion_2"]
     reactor = state.creatures["red_blade"]
     mover.position.x, mover.position.y = 3, 3
@@ -280,7 +280,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
     session.choose_encounter_action(opportunity_attack)
 
     assert state.current_decision().kind == "reroll_dice"
-    assert [frame.kind for frame in state.decision_stack] == [
+    assert [frame.kind for frame in state.interrupts.decision_stack] == [
         "reaction",
         "reroll_dice",
     ]
@@ -292,7 +292,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
     still_interrupted = session.choose_encounter_action(reroll)
 
     assert state.current_decision().id == reroll_frame.id
-    assert [frame.id for frame in state.decision_stack] == [
+    assert [frame.id for frame in state.interrupts.decision_stack] == [
         reaction_frame.id,
         reroll_frame.id,
     ]
@@ -308,7 +308,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
 
     resumed = session.choose_encounter_action(accept_damage)
 
-    assert state.decision_stack == []
+    assert state.interrupts.decision_stack == []
     assert state.pending_movement is None
     assert (mover.position.x, mover.position.y) == (3, 2)
     closed_frame_ids = [
@@ -339,7 +339,7 @@ def test_passing_reaction_closes_it_before_parent_movement_resumes(
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("champion_2")
+    state.turn.index = state.initiative_order.index("champion_2")
     mover = state.creatures["champion_2"]
     reactor = state.creatures["red_blade"]
     mover.position.x, mover.position.y = 3, 3
@@ -359,7 +359,7 @@ def test_passing_reaction_closes_it_before_parent_movement_resumes(
     )
     resumed = session.choose_encounter_action(pass_reaction)
 
-    assert state.decision_stack == []
+    assert state.interrupts.decision_stack == []
     assert state.pending_movement is None
     assert state.current_decision().creature_ref == "champion_2"
     assert (mover.position.x, mover.position.y) == (3, 2)
@@ -382,7 +382,7 @@ def test_resumed_movement_carries_a_grappled_creature() -> None:
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("champion_2")
+    state.turn.index = state.initiative_order.index("champion_2")
     mover = state.creatures["champion_2"]
     grappled = state.creatures["red_archer"]
     reactor = state.creatures["red_blade"]
@@ -443,7 +443,7 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("goblin_2")
+    state.turn.index = state.initiative_order.index("goblin_2")
     mover = state.creatures["goblin_2"]
     reactor = state.creatures["player"]
     mover.position.x, mover.position.y = 3, 3

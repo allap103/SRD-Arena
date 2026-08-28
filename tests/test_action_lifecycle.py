@@ -22,7 +22,7 @@ def _encounter_state() -> EncounterState:
         for creature_ref in state.initiative_order
         if state._creature_controller(creature_ref) == "external"
     )
-    state.turn_index = state.initiative_order.index(external_ref)
+    state.turn.index = state.initiative_order.index(external_ref)
     return state
 
 
@@ -30,12 +30,12 @@ def test_action_execution_reports_lifecycle_without_advancing_turn() -> None:
     state = _encounter_state()
     decision = state.current_decision()
     wait = next(action for action in state.available_actions() if action.kind == "wait")
-    starting_turn = state.turn_index
+    starting_turn = state.turn.index
 
     result = state._execute_creature_action(wait, decision)
 
     assert result.outcome is ActionExecutionOutcome.END_TURN
-    assert state.turn_index == starting_turn
+    assert state.turn.index == starting_turn
     assert [event.type for event in result.progress.events] == [
         "action_declared",
         "action_resolved",
@@ -57,11 +57,11 @@ def test_non_terminal_action_reports_continue_turn() -> None:
     state = _encounter_state()
     decision = state.current_decision()
     move = next(action for action in state.available_actions() if action.kind == "move")
-    starting_turn = state.turn_index
+    starting_turn = state.turn.index
 
     result = state._execute_creature_action(move, decision)
 
     assert result.outcome is ActionExecutionOutcome.CONTINUE_TURN
-    assert state.turn_index == starting_turn
+    assert state.turn.index == starting_turn
     assert result.progress.events[0].type == "action_declared"
     assert result.progress.events[-1].type == "movement_resolved"

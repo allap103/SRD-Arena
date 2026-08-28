@@ -31,7 +31,9 @@ def execute_spell_selection_action(
 
     >>> from types import SimpleNamespace
     >>> state = SimpleNamespace(
-    ...     pending_spell_cast=object(), decision_stack=[object()]
+    ...     interrupts=SimpleNamespace(
+    ...         pending_spell_cast=object(), decision_stack=[object()]
+    ...     )
     ... )
     >>> execute_spell_selection_action(
     ...     state, SimpleNamespace(),
@@ -39,7 +41,7 @@ def execute_spell_selection_action(
     ...     EncounterProgress(), "cancel-1"
     ... )
     True
-    >>> (state.pending_spell_cast, state.decision_stack)
+    >>> (state.interrupts.pending_spell_cast, state.interrupts.decision_stack)
     (None, [])
     >>> execute_spell_selection_action(
     ...     state, SimpleNamespace(), EncounterAction("Wait", "wait"),
@@ -66,7 +68,7 @@ def _toggle_spell_target(
     action: EncounterAction,
     progress: EncounterProgress,
 ) -> None:
-    pending = state.pending_spell_cast
+    pending = state.interrupts.pending_spell_cast
     if pending is None or not isinstance(action.value, str):
         raise RuntimeError("No staged spell target selection is active.")
     remove_target = action.id.endswith("-remove")
@@ -90,7 +92,7 @@ def _set_spell_resource_allocation(
     action: EncounterAction,
     progress: EncounterProgress,
 ) -> None:
-    pending = state.pending_spell_cast
+    pending = state.interrupts.pending_spell_cast
     if pending is None or pending.resource_pool_total is None:
         raise RuntimeError("No staged spell resource allocation is active.")
     if not isinstance(action.value, str):
@@ -126,7 +128,7 @@ def _confirm_spell_targets(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    pending = state.pending_spell_cast
+    pending = state.interrupts.pending_spell_cast
     if pending is None or (
         not pending.selected_target_refs and not pending.resource_allocations
     ):
@@ -157,8 +159,8 @@ def _confirm_spell_targets(
         slot_level=slot_level,
         healing_allocations=pending.resource_allocations,
     )
-    state.decision_stack.pop()
-    state.pending_spell_cast = None
+    state.interrupts.decision_stack.pop()
+    state.interrupts.pending_spell_cast = None
     state._resolve_spell_action(
         actor,
         payload,
@@ -168,7 +170,7 @@ def _confirm_spell_targets(
 
 
 def _cancel_spell_targets(state: EncounterState) -> None:
-    if state.pending_spell_cast is None:
+    if state.interrupts.pending_spell_cast is None:
         raise RuntimeError("No staged spell targets can be cancelled.")
-    state.decision_stack.pop()
-    state.pending_spell_cast = None
+    state.interrupts.decision_stack.pop()
+    state.interrupts.pending_spell_cast = None
