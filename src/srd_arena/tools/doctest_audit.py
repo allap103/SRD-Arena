@@ -8,7 +8,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-ExclusionReason = Literal["protocol", "abstract", "property_setter", "qt_override"]
+ExclusionReason = Literal[
+    "protocol",
+    "abstract",
+    "property_setter",
+    "private_owner",
+    "qt_widget_method",
+    "qt_override",
+]
 
 QT_EVENT_OVERRIDES = frozenset(
     {
@@ -100,11 +107,20 @@ class _CallableCollector(ast.NodeVisitor):
     def __init__(self, path: Path) -> None:
         self.path = path
         self.entries: list[DoctestAuditEntry] = []
-        self._classes: list[tuple[str, bool]] = []
+        self._classes: list[tuple[str, bool, bool, bool]] = []
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        is_protocol = any(_decorator_name(base) == "Protocol" for base in node.bases)
-        self._classes.append((node.name, is_protocol))
+        base_names = {_decorator_name(base) for base in node.bases}
+        inherited_private = any(item[2] for item in self._classes)
+        inherited_qt = any(item[3] for item in self._classes)
+        self._classes.append(
+            (
+                node.name,
+                "Protocol" in base_names,
+                inherited_private or node.name.startswith("_"),
+                inherited_qt or any(name.startswith("Q") for name in base_names),
+            )
+        )
         for child in node.body:
             self.visit(child)
         self._classes.pop()
@@ -118,7 +134,7 @@ class _CallableCollector(ast.NodeVisitor):
     def _record_callable(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         if node.name.startswith("_"):
             return
-        owners = tuple(name for name, _is_protocol in self._classes)
+        owners = tuple(name for name, *_flags in self._classes)
         exclusion = self._exclusion(node)
         self.entries.append(
             DoctestAuditEntry(
@@ -134,13 +150,17 @@ class _CallableCollector(ast.NodeVisitor):
         self,
         node: ast.FunctionDef | ast.AsyncFunctionDef,
     ) -> ExclusionReason | None:
-        if any(is_protocol for _name, is_protocol in self._classes):
+        if any(is_protocol for _name, is_protocol, _private, _qt in self._classes):
             return "protocol"
+        if any(is_private for _name, _protocol, is_private, _qt in self._classes):
+            return "private_owner"
         decorator_names = {_decorator_name(item) for item in node.decorator_list}
         if "abstractmethod" in decorator_names:
             return "abstract"
         if "setter" in decorator_names:
             return "property_setter"
+        if any(is_qt for _name, _protocol, _private, is_qt in self._classes):
+            return "qt_widget_method"
         if (
             "frontends" in self.path.parts
             and "gui" in self.path.parts
@@ -181,8 +201,7 @@ def render_audit(audit: DoctestAudit) -> str:
     covered = len(eligible) - len(audit.missing)
     excluded = len(audit.entries) - len(eligible)
     lines = [
-        f"Doctest coverage: {covered}/{len(eligible)} "
-        f"({audit.coverage_percent:.1f}%)",
+        f"Doctest coverage: {covered}/{len(eligible)} ({audit.coverage_percent:.1f}%)",
         f"Policy exclusions: {excluded}",
     ]
     if audit.missing:

@@ -43,9 +43,7 @@ class SavingThrowCreature(Protocol):
 
         ...
 
-    def roll_mode(
-        self, roll: RollKind, ability: str | None = None
-    ) -> D20RollMode:
+    def roll_mode(self, roll: RollKind, ability: str | None = None) -> D20RollMode:
         """Return the combined advantage state supplied by active rules."""
 
         ...

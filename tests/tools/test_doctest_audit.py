@@ -27,6 +27,10 @@ class Port(Protocol):
 class Widget:
     def paintEvent(self, event):
         pass
+
+class Panel(QWidget):
+    def refresh(self):
+        pass
 ''',
         encoding="utf-8",
     )
@@ -38,6 +42,7 @@ class Widget:
     assert {entry.exclusion for entry in audit.entries} == {
         None,
         "protocol",
+        "qt_widget_method",
         "qt_override",
     }
 

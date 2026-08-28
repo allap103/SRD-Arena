@@ -17,9 +17,9 @@ The following declarations are documented exceptions:
 
 - Protocol and abstract method declarations, because their concrete
   implementations own the behavior being demonstrated.
-- GUI framework event overrides such as `paintEvent`, `resizeEvent`, and mouse
-  events, because Qt creates and invokes their event objects. Their behavior is
-  covered by GUI tests rather than examples requiring a live event loop.
+- Methods on Qt-bound widget classes and framework event overrides such as
+  `paintEvent`, `resizeEvent`, and mouse events. Their behavior is covered by
+  GUI tests rather than examples requiring a live event loop.
 - Property setters when the corresponding property example already exercises
   both reading and writing the value.
 
@@ -31,7 +31,8 @@ and avoid examples that only mock away the method being documented.
 Run `uv run doctest-audit` to report executable-example coverage independently
 from ordinary docstring coverage. The report counts concrete public functions,
 methods, and properties, while listing protocol declarations, abstract methods,
-property setters, and Qt event overrides as policy exclusions.
+property setters, private implementation classes, and Qt-bound methods as policy
+exclusions.
 
 An optional threshold makes the command suitable for a formal check without
 hard-coding that policy into the tool, for example:
