@@ -29,7 +29,20 @@ def spell_area_targets(
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
 ) -> tuple[SpellTargetContext, ...]:
-    """Return legal creature targets intersected by an aimed spell area."""
+    """Return legal creature targets intersected by an aimed spell area.
+
+    A direct spell with no constructed area falls back to its selected target.
+
+    >>> from types import SimpleNamespace
+    >>> target = SimpleNamespace(target_ref="goblin")
+    >>> state = SimpleNamespace(
+    ...     _spell_area=lambda *args, **kwargs: None,
+    ...     _spell_target_context=lambda actor, ref: target,
+    ... )
+    >>> spell = Spell("bolt", "Bolt", None, 0)
+    >>> spell_area_targets(state, SimpleNamespace(), spell, target_ref="goblin")
+    (namespace(target_ref='goblin'),)
+    """
 
     area = self._spell_area(actor, spell, target_ref=target_ref, aim_point=aim_point)
     if area is None:
@@ -47,7 +60,23 @@ def spell_area(
     target_ref: str | None = None,
     aim_point: tuple[float, float] | None = None,
 ) -> AreaOfEffect | None:
-    """Construct the continuous and rasterized area for an aimed spell."""
+    """Construct the continuous and rasterized area for an aimed spell.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.geometry import Grid
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="mage"),
+    ...     _creature_position=lambda ref: Position(0, 0),
+    ...     definition=SimpleNamespace(grid=Grid(10, 10)),
+    ... )
+    >>> spell = Spell(
+    ...     "fireball", "Fireball", None, 3,
+    ...     geometry_mode="point_area", area_size_feet=20,
+    ... )
+    >>> area = spell_area(state, SimpleNamespace(), spell, aim_point=(5, 5))
+    >>> (area.origin, bool(area.cells)) if area else None
+    (Position(x=5, y=5), True)
+    """
 
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
@@ -105,7 +134,21 @@ def targets_in_area(
     actor: Creature,
     area: AreaOfEffect,
 ) -> list[SpellTargetContext]:
-    """Return living creature references whose footprints intersect affected cells."""
+    """Return living creature references whose footprints intersect affected cells.
+
+    >>> from types import SimpleNamespace
+    >>> area = AreaOfEffect("sphere", Position(0, 0), (Position(1, 1),))
+    >>> target = SimpleNamespace(target_ref="goblin")
+    >>> state = SimpleNamespace(
+    ...     creatures={
+    ...         "goblin": SimpleNamespace(is_alive=True, position=Position(1, 1)),
+    ...         "fallen": SimpleNamespace(is_alive=False, position=Position(1, 1)),
+    ...     },
+    ...     _spell_target_context=lambda actor, ref: target,
+    ... )
+    >>> targets_in_area(state, SimpleNamespace(), area)
+    [namespace(target_ref='goblin')]
+    """
 
     occupied_cells = {(cell.x, cell.y) for cell in area.cells}
     targets: list[SpellTargetContext] = []

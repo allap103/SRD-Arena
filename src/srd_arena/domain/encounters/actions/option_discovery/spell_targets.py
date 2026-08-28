@@ -142,7 +142,28 @@ def spell_target_context(
     actor: Creature,
     target_ref: str,
 ) -> SpellTargetContext | None:
-    """Build target facts needed to evaluate authored spell requirements."""
+    """Build target facts needed to evaluate authored spell requirements.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(name="Goblin")
+    >>> effective = SimpleNamespace(
+    ...     providers_for_trait=lambda trait: ("stunned",)
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={
+    ...         "goblin": SimpleNamespace(is_alive=True, creature=creature)
+    ...     },
+    ...     effective_conditions_for=lambda ref: effective,
+    ...     conditions_for=lambda ref: (),
+    ... )
+    >>> context = spell_target_context(
+    ...     state, SimpleNamespace(), "goblin"
+    ... )
+    >>> (context.target_label, context.automatic_save_failures["strength"])
+    ('Goblin', ('stunned',))
+    >>> spell_target_context(state, SimpleNamespace(), "missing") is None
+    True
+    """
 
     target_state = self.creatures.get(target_ref)
     if target_state is None or not target_state.is_alive:
