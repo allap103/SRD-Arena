@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..models import CreatureRef, EncounterAction
+from ..encounter_models.actions import (
+    CreatureRef,
+    EncounterAction,
+)
 from .eligibility_rules.attacks import AttackRule, GrappleRule
 from .eligibility_rules.capabilities import FeatureActionRule, StatBlockActionRule
 from .eligibility_rules.common import (

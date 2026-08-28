@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from ...effects.modifiers import ModifierSubject, RollKind, RollModifier
 from ...effects.rule_effects import RollAdjustment
-from ..models import CreatureRef
+from ..encounter_models.actions import CreatureRef
 from .models import RollRuleContribution, RollRuleResult
 from .providers import legacy_modifier_provider, ongoing_rule_effects
 

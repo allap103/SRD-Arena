@@ -9,7 +9,7 @@ from typing import cast
 
 from srd_arena.domain.creatures import Creature, StatBlockActionDefinition
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import EncounterCreatureState
+from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
 from srd_arena.domain.geometry import (
     Position,
     Vector2D,

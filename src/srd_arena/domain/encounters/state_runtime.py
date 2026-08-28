@@ -7,7 +7,11 @@ from typing import TYPE_CHECKING
 from ..effects.application import apply_effects
 from ..effects.results import EffectResult
 from ..geometry import Position
-from .models import CombatEvent, CreatureRef, EncounterProgress
+from .encounter_models.actions import CreatureRef
+from .encounter_models.resolution import (
+    CombatEvent,
+    EncounterProgress,
+)
 from .ongoing_effects import remove_ongoing_effects
 
 if TYPE_CHECKING:

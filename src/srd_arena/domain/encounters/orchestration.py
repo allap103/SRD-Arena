@@ -11,12 +11,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .continuations import ContinuationRunner
-from .models import (
-    ActionExecutionOutcome,
+from .encounter_models.actions import (
     CreatureRef,
-    DecisionExecutionResult,
-    DecisionFrame,
     EncounterAction,
+)
+from .encounter_models.decisions import DecisionFrame
+from .encounter_models.resolution import (
+    ActionExecutionOutcome,
+    DecisionExecutionResult,
     EncounterProgress,
 )
 

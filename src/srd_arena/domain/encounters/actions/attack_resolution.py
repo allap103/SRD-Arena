@@ -13,7 +13,7 @@ from ...creatures import Creature
 from ...equipment import Item
 from ...geometry import Position
 from ...rolls.dice import D20RollMode, roll_dice, roll_die
-from ..models import AttackOutcome
+from ..encounter_models.resolution import AttackOutcome
 from .attack_runtime.damage import (
     apply_attack_damage,
     damage_roll_detail,
@@ -83,7 +83,7 @@ def resolve_attack(
 
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
-    >>> from srd_arena.domain.encounters.models import AttackSource
+    >>> from srd_arena.domain.encounters.encounter_models.resolution import AttackSource
     >>> source = AttackSource(
     ...     "Claw", "1d6", 2, "STR mod", "slashing", 5,
     ...     "attack bonus", ("melee",),

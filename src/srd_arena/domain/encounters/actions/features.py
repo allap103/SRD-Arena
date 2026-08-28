@@ -9,7 +9,7 @@ from ...creatures.feature_rules.actions import (
     resolve_feature_action as _resolve_feature_action_impl,
 )
 from ..attack_economy import clear_attack_action
-from ..models import EncounterProgress
+from ..encounter_models.resolution import EncounterProgress
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState

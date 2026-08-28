@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
-    from .models import CreatureRef, EncounterCreatureState
+    from .encounter_models.actions import CreatureRef
+    from .encounter_models.state import EncounterCreatureState
 
 
 def spend_attack(

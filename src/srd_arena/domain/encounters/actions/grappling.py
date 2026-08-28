@@ -7,7 +7,11 @@ from typing import TYPE_CHECKING
 from ...creatures import Creature
 from ...effects.conditions import Condition
 from ...rolls.dice import resolve_d20
-from ..models import ActionCost, EncounterAction, EncounterProgress
+from ..encounter_models.actions import (
+    ActionCost,
+    EncounterAction,
+)
+from ..encounter_models.resolution import EncounterProgress
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState

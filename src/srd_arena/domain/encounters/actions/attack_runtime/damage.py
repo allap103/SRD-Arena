@@ -8,7 +8,10 @@ from dataclasses import dataclass
 from ....capabilities import DamageEffect
 from ....creatures import Creature
 from ....rolls.dice import D20RollMode, DicePoolResult, resolve_dice
-from ...models import AttackOutcome, AttackSource
+from ...encounter_models.resolution import (
+    AttackOutcome,
+    AttackSource,
+)
 
 
 @dataclass(frozen=True)

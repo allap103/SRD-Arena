@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING
 
 from ....creatures import Creature
 from ...attack_economy import spend_attack, spend_current_attack
-from ...models import EncounterAction, EncounterProgress
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.resolution import EncounterProgress
 from ...ongoing_effects import (
     resolve_concentration_damage,
     resolve_spell_lifecycle_event,

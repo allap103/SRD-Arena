@@ -12,7 +12,7 @@ from ...effects.rule_effects import (
     SpeedAdjustment,
     SpeedMultiplier,
 )
-from ..models import CreatureRef
+from ..encounter_models.actions import CreatureRef
 from .models import (
     MovementQueryResult,
     NumericOperation,

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from srd_arena.domain.effects.runtime import OngoingEffect
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import (
+from srd_arena.domain.encounters.encounter_models.actions import (
     ActionCost,
     EncounterAction,
-    EncounterCreatureState,
 )
+from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
 from srd_arena.engine.api import GameEngine
 from srd_arena.engine.queries import SessionRead
 

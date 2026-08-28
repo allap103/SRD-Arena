@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...behaviors import DIRECTION_DELTAS
-from ...models import ActionCost, CreatureRef, EncounterAction
+from ...encounter_models.actions import (
+    ActionCost,
+    CreatureRef,
+    EncounterAction,
+)
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState

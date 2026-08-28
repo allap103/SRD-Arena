@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from srd_arena.domain.encounters.models import CombatEvent
+from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
 
 
 @dataclass(frozen=True)

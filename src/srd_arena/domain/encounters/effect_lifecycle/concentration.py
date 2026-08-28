@@ -11,7 +11,7 @@ from .rolls import roll_die
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
-    from ..models import EncounterProgress
+    from ..encounter_models.resolution import EncounterProgress
 
 
 def end_concentration(state: EncounterState, source_ref: str) -> None:

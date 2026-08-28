@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...geometry import MovementCost, Position
-from ..models import EncounterProgress, PendingMovement
+from ..encounter_models.decisions import PendingMovement
+from ..encounter_models.resolution import EncounterProgress
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState

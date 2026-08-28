@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from ..effects.conditions import CombatTrait
 from .action_selection import build_action_selector
-from .models import InitiativeEntry
+from .encounter_models.state import InitiativeEntry
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

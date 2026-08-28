@@ -9,7 +9,7 @@ from ..effects.triggered import TriggeredEffect, matching_effects
 from ..geometry import Position
 from ..rolls.dice import D20RollMode
 from .behaviors import is_adjacent
-from .models import CreatureRef
+from .encounter_models.actions import CreatureRef
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

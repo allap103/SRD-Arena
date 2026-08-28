@@ -17,7 +17,7 @@ from ...effects.runtime import (
     UntilTurnEnd,
     UntilTurnStart,
 )
-from ..models import EncounterProgress
+from ..encounter_models.resolution import EncounterProgress
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState

@@ -12,7 +12,10 @@ from ...effects.rule_effects import (
     ReactionProhibition,
 )
 from ..actions.eligibility_rules.models import ActionEligibility, EligibilityFailure
-from ..models import CreatureRef, EncounterAction
+from ..encounter_models.actions import (
+    CreatureRef,
+    EncounterAction,
+)
 from .models import SourcedEligibilityFailure
 from .providers import ongoing_rule_effects
 
@@ -96,7 +99,7 @@ def action_compatibility(
     """Ask whether current permissions and turn economy permit an action.
 
     >>> from types import SimpleNamespace
-    >>> from ..models import ActionCost
+    >>> from ..encounter_models.actions import ActionCost
     >>> creature = SimpleNamespace(condition_immunities=lambda: frozenset())
     >>> creature_state = SimpleNamespace(
     ...     is_alive=True, creature=creature, actions_remaining=0,

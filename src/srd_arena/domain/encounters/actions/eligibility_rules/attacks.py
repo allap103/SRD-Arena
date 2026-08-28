@@ -6,7 +6,10 @@ from typing import TYPE_CHECKING
 
 from ....creatures import AttackActionDefinition, can_grapple
 from ....geometry import grid_distance_between
-from ...models import CreatureRef, EncounterAction
+from ...encounter_models.actions import (
+    CreatureRef,
+    EncounterAction,
+)
 from ..attack_resolution import attack_range_squares, has_free_hand
 from ..stat_block import (
     executable_multiattack_slot_plans,

@@ -10,7 +10,8 @@ from ...effects.results import EffectResult
 from ...rolls.dice import resolve_d20
 from ..attack_economy import spend_attack
 from ..behaviors import is_adjacent as _is_adjacent
-from ..models import EncounterAction, EncounterProgress
+from ..encounter_models.actions import EncounterAction
+from ..encounter_models.resolution import EncounterProgress
 from .attack_resolution import has_free_hand
 
 if TYPE_CHECKING:

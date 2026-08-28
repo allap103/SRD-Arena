@@ -14,13 +14,15 @@ from ..actions.attack_resolution import (
     resolve_attack,
 )
 from ..behaviors import is_adjacent as _is_adjacent
-from ..models import (
+from ..encounter_models.actions import EncounterAction
+from ..encounter_models.decisions import (
     CloseParentDecision,
-    DecisionExecutionResult,
     DecisionFrame,
-    EncounterAction,
-    EncounterProgress,
     OpportunityAttackRequest,
+)
+from ..encounter_models.resolution import (
+    DecisionExecutionResult,
+    EncounterProgress,
 )
 from .attack_lifecycle import resolve_attack_lifecycle
 from .rolls import roll_dice, roll_die

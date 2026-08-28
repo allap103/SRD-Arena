@@ -6,7 +6,10 @@ from typing import TYPE_CHECKING
 
 from ....creatures import Creature
 from ....creatures.feature_actions import FeatureActionDefinition
-from ...models import ActionCost, EncounterAction
+from ...encounter_models.actions import (
+    ActionCost,
+    EncounterAction,
+)
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState

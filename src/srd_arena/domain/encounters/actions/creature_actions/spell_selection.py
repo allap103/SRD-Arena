@@ -12,7 +12,8 @@ from ....spells.rules import (
     parse_spell_action_value,
     spell_action_value,
 )
-from ...models import EncounterAction, EncounterProgress
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.resolution import EncounterProgress
 
 if TYPE_CHECKING:
     from ....creatures import Creature

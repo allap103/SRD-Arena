@@ -16,7 +16,7 @@ from ...spells.rules import (
     parse_spell_action_targets,
     parse_spell_action_value,
 )
-from ..models import EncounterProgress
+from ..encounter_models.resolution import EncounterProgress
 from .spell_runtime.aftermath import apply_spell_result
 from .spell_runtime.context import build_spell_action_context
 from .spell_runtime.invocation import begin_spell_invocation

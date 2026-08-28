@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 
 from ....geometry import MovementBudget, MovementCost, Position
 from ...behaviors import DIRECTION_DELTAS
-from ...models import (
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.decisions import DecisionFrame
+from ...encounter_models.resolution import (
     ActionExecutionContext,
     ActionExecutionOutcome,
     ActionExecutionResult,
-    DecisionFrame,
-    EncounterAction,
 )
 
 if TYPE_CHECKING:

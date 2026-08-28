@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...models import EncounterAction, EncounterProgress
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.resolution import EncounterProgress
 from ..grappling import resolve_escape_action
 from ..stat_block import resolve_attack_action, resolve_multiattack_action
 

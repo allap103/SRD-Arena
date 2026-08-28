@@ -7,7 +7,7 @@ from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import EncounterCreatureState
+from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
 from srd_arena.engine.session import Session
 from srd_arena.frontends.shared.session import build_session_presentation
 from srd_arena.infrastructure.scenarios import load_scenario_directory

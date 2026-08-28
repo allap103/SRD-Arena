@@ -12,15 +12,17 @@ from typing import TYPE_CHECKING
 
 from ..effects.triggered import TriggeredEffect
 from ..geometry import MovementBudget, MovementCost, Position
-from .models import (
+from .encounter_models.actions import EncounterAction
+from .encounter_models.decisions import (
+    DecisionContinuation,
+    DecisionFrame,
+    PendingMovement,
+)
+from .encounter_models.resolution import (
     AttackOutcome,
     DamageRerollRequest,
-    DecisionContinuation,
     DecisionExecutionResult,
-    DecisionFrame,
-    EncounterAction,
     EncounterProgress,
-    PendingMovement,
 )
 
 if TYPE_CHECKING:

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.encounters import EncounterDefinition, EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import EncounterAction
+from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
 from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import GeometryConfig
 from srd_arena.engine.action_configuration import (
@@ -187,7 +187,7 @@ class Session:
         structured action rather than selecting it by advertised ID.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.domain.encounters.models import EncounterProgress
+        >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
         >>> from srd_arena.domain.geometry import Grid
         >>> orchestrator = Mock()
         >>> orchestrator.submit.return_value = EncounterProgress()
@@ -265,7 +265,7 @@ class Session:
         """Advance automatic controllers until an external decision is needed.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.domain.encounters.models import EncounterProgress
+        >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
         >>> from srd_arena.domain.geometry import Grid
         >>> orchestrator = Mock()
         >>> orchestrator.advance.return_value = EncounterProgress(messages=[("Goblin", "Waits")])

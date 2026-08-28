@@ -17,7 +17,7 @@ from .condition_state import (
     apply_condition,
     condition_sources_for,
 )
-from .models import CreatureRef
+from .encounter_models.actions import CreatureRef
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

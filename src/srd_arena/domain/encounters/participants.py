@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..creatures import Creature
-from .models import CreatureRef
+from .encounter_models.actions import CreatureRef
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

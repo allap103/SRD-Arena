@@ -8,7 +8,7 @@ from .definitions import (
     EncounterTransition,
 )
 from .encounter import EncounterState
-from .models import EncounterAction
+from .encounter_models.actions import EncounterAction
 from .orchestration import EncounterOrchestrator
 
 __all__ = [

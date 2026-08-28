@@ -25,7 +25,7 @@ from srd_arena.domain.effects.rule_effects import (
 from srd_arena.domain.effects.runtime import EffectPolarity, OngoingEffectKind
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import EncounterProgress
+from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import resolve_end_turn_effects
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.spells import Spell

@@ -73,7 +73,7 @@ from srd_arena.domain.encounters.encounter import (
     EncounterAction,
     EncounterState,
 )
-from srd_arena.domain.encounters.models import EncounterProgress
+from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import (
     expire_ongoing_effects_for_turn_start,
     has_condition_save_advantage,

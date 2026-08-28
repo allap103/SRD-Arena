@@ -7,13 +7,15 @@ from typing import TYPE_CHECKING
 from ...effects.triggered import TriggeredEffect, reroll_eligible_indices
 from ...rolls.dice import reroll_dice
 from ..actions.attack_resolution import apply_attack_damage, damage_roll_detail
-from ..models import (
+from ..encounter_models.actions import EncounterAction
+from ..encounter_models.decisions import (
+    DecisionContinuation,
+    DecisionFrame,
+)
+from ..encounter_models.resolution import (
     AttackOutcome,
     DamageRerollRequest,
-    DecisionContinuation,
     DecisionExecutionResult,
-    DecisionFrame,
-    EncounterAction,
     EncounterProgress,
 )
 from ..refs import reroll_die_action_id as _reroll_die_action_id

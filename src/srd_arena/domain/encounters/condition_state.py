@@ -11,7 +11,7 @@ from ..effects.conditions import (
     Condition,
     build_applied_condition,
 )
-from .models import CreatureRef
+from .encounter_models.actions import CreatureRef
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

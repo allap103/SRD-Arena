@@ -7,10 +7,12 @@ from typing import TYPE_CHECKING, Protocol
 
 from ..geometry import Position
 from .behaviors import build_behavior
-from .models import (
-    BehaviorContext,
+from .encounter_models.actions import (
     CreatureRef,
     EncounterAction,
+)
+from .encounter_models.state import (
+    BehaviorContext,
     EncounterCreatureState,
 )
 

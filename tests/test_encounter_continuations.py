@@ -4,11 +4,11 @@ import pytest
 
 from srd_arena.domain.encounters.continuations import ContinuationRunner
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import (
+from srd_arena.domain.encounters.encounter_models.decisions import (
     CloseParentDecision,
     DecisionFrame,
-    EncounterProgress,
 )
+from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 FULL_CONTROL_SCENARIO_DIR = (

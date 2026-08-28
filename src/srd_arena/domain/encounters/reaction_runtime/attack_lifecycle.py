@@ -11,7 +11,7 @@ from ..ongoing_effects import (
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
-    from ..models import EncounterProgress
+    from ..encounter_models.resolution import EncounterProgress
 
 
 def resolve_attack_lifecycle(
@@ -29,7 +29,7 @@ def resolve_attack_lifecycle(
 
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
-    >>> from srd_arena.domain.encounters.models import EncounterProgress
+    >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
     >>> with patch(
     ...     "srd_arena.domain.encounters.reaction_runtime.attack_lifecycle."
     ...     "resolve_spell_lifecycle_event"

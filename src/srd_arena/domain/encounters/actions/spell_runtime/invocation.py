@@ -13,7 +13,8 @@ if TYPE_CHECKING:
     from ....creatures import Creature, Spellcasting
     from ....spells.definitions import Spell
     from ...encounter import EncounterState
-    from ...models import ActionCost, EncounterProgress
+    from ...encounter_models.actions import ActionCost
+    from ...encounter_models.resolution import EncounterProgress
 
 
 _COMPONENT_NAMES = {
@@ -42,7 +43,8 @@ def begin_spell_invocation(
 
     >>> from types import SimpleNamespace
     >>> from unittest.mock import Mock, patch
-    >>> from srd_arena.domain.encounters.models import ActionCost, EncounterProgress
+    >>> from srd_arena.domain.encounters.encounter_models.actions import ActionCost
+    >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
     >>> from srd_arena.domain.spells import Spell
     >>> spell = Spell(
     ...     "misty-step", "Misty Step", None, 2,

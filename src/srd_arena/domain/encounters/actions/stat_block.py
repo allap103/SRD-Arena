@@ -14,7 +14,8 @@ from ...creatures.stat_block_actions import (
     AutomaticActionDefinition,
     SavingThrowActionDefinition,
 )
-from ..models import EncounterAction, EncounterProgress
+from ..encounter_models.actions import EncounterAction
+from ..encounter_models.resolution import EncounterProgress
 from .stat_block_runtime.attacks import resolve_attack_action
 from .stat_block_runtime.automatic import resolve_automatic_stat_block_action
 from .stat_block_runtime.multiattack import (

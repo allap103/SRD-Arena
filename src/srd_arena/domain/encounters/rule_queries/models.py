@@ -12,7 +12,7 @@ from ...effects.runtime import EffectSource
 from ...geometry import MovementBudget
 from ...rolls.dice import D20RollMode, DieRoller, combine_roll_modes
 from ..actions.eligibility_rules.models import EligibilityFailure
-from ..models import CreatureRef
+from ..encounter_models.actions import CreatureRef
 
 
 class NumericOperation(StrEnum):

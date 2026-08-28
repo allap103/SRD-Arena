@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...models import DecisionFrame, EncounterAction, EncounterProgress
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.decisions import DecisionFrame
+from ...encounter_models.resolution import EncounterProgress
 from ...ongoing_effects import resolve_spell_lifecycle_event
 
 if TYPE_CHECKING:

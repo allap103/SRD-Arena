@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..models import EncounterAction
+from ..encounter_models.actions import EncounterAction
 from .option_discovery.spell_areas import (
     spell_area,
     spell_area_targets,

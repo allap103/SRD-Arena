@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...models import (
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.decisions import DecisionFrame
+from ...encounter_models.resolution import (
     ActionExecutionContext,
     ActionExecutionOutcome,
     ActionExecutionResult,
-    DecisionFrame,
-    EncounterAction,
 )
 from ..eligibility import require_action_eligible
 
@@ -74,7 +74,7 @@ def finish_action_execution(
     """Translate accumulated progress into the orchestrator's action outcome.
 
     >>> from types import SimpleNamespace
-    >>> from ...models import EncounterProgress
+    >>> from ...encounter_models.resolution import EncounterProgress
     >>> context = SimpleNamespace(progress=EncounterProgress())
     >>> finish_action_execution(context, action_ends_turn=True).outcome.value
     'end_turn'

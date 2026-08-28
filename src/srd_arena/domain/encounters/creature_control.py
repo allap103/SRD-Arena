@@ -27,7 +27,9 @@ from .actions.creature_actions.spell_selection import (
     execute_spell_selection_action,
 )
 from .actions.creature_actions.standard import execute_standard_action
-from .models import ActionExecutionResult, DecisionFrame, EncounterAction
+from .encounter_models.actions import EncounterAction
+from .encounter_models.decisions import DecisionFrame
+from .encounter_models.resolution import ActionExecutionResult
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

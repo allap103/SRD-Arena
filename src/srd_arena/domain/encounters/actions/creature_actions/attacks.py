@@ -6,7 +6,11 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from ....creatures import Creature
-from ...models import ActionCost, CreatureRef, EncounterAction
+from ...encounter_models.actions import (
+    ActionCost,
+    CreatureRef,
+    EncounterAction,
+)
 from ..attack_resolution import attack_sources
 from ..stat_block import executable_multiattack_slot_plans
 

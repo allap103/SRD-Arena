@@ -10,7 +10,11 @@ from ....creatures import (
     Creature,
     SavingThrowActionDefinition,
 )
-from ...models import ActionCost, CreatureRef, EncounterAction
+from ...encounter_models.actions import (
+    ActionCost,
+    CreatureRef,
+    EncounterAction,
+)
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState

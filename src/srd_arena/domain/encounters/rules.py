@@ -34,7 +34,10 @@ from .rule_queries import (
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
-    from .models import CreatureRef, EncounterAction
+    from .encounter_models.actions import (
+        CreatureRef,
+        EncounterAction,
+    )
 
 
 class CombatRules:
@@ -73,7 +76,7 @@ class CombatRules:
         """Return every rule failure that prevents selecting an action.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.domain.encounters.models import EncounterAction
+        >>> from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
         >>> actor = Mock(is_alive=True, movement_remaining=0, actions_remaining=1,
         ...     bonus_action_available=True, bonus_action_used_this_turn=False,
         ...     action_used_this_turn=False)
@@ -95,7 +98,7 @@ class CombatRules:
         """Check actor identity, survival, permissions, and action economy.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.domain.encounters.models import EncounterAction
+        >>> from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
         >>> actor = Mock(is_alive=True, actions_remaining=1,
         ...     bonus_action_available=True, bonus_action_used_this_turn=False,
         ...     action_used_this_turn=False)

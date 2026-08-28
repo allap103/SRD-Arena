@@ -8,15 +8,17 @@ from typing import TYPE_CHECKING
 from ...geometry import MovementBudget, MovementCost, Position
 from ..actions.attack_resolution import can_make_opportunity_attack
 from ..behaviors import is_adjacent as _is_adjacent
-from ..models import (
+from ..encounter_models.actions import (
     ActionCost,
-    DecisionFrame,
     EncounterAction,
-    EncounterProgress,
+)
+from ..encounter_models.decisions import (
+    DecisionFrame,
     OpportunityAttackRequest,
     PendingMovement,
     ResumeMovement,
 )
+from ..encounter_models.resolution import EncounterProgress
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState

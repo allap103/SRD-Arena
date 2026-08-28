@@ -103,18 +103,22 @@ from .creature_control import (
     execute_creature_action as _execute_creature_action_impl,
 )
 from .definitions import EncounterBehavior, EncounterDefinition
-from .models import (
+from .encounter_models.actions import (
     ActionCost,
-    CombatEvent,
     CreatureRef,
-    DecisionFrame,
     EncounterAction,
-    EncounterCreatureState,
-    EncounterStateData,
+)
+from .encounter_models.decisions import (
+    DecisionFrame,
     InterruptState,
     OpportunityAttackRequest,
     PendingMovement,
     PendingSpellCast,
+)
+from .encounter_models.resolution import CombatEvent
+from .encounter_models.state import (
+    EncounterCreatureState,
+    EncounterStateData,
     RoundState,
     TurnState,
 )

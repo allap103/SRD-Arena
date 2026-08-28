@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from ....creatures.feature_rules.types import CapabilityActionResult
 from ....effects import serialize_effects
 from ....spells.resolution import SpellTargetContext
-from ...models import EncounterProgress
+from ...encounter_models.resolution import EncounterProgress
 from ...ongoing_effects import (
     resolve_concentration_damage,
     resolve_spell_lifecycle_event,
@@ -40,7 +40,7 @@ def apply_spell_result(
     >>> from types import SimpleNamespace
     >>> from unittest.mock import Mock
     >>> from srd_arena.domain.creatures.feature_rules.types import CapabilityActionResult
-    >>> from srd_arena.domain.encounters.models import EncounterProgress
+    >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
     >>> from srd_arena.domain.spells import Spell
     >>> state = SimpleNamespace(
     ...     _apply_effects=Mock(return_value=[]),

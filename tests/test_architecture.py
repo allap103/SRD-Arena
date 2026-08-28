@@ -414,6 +414,19 @@ def test_package_and_engine_roots_do_not_reexport_engine_types() -> None:
         ), f"{path.relative_to(PACKAGE_ROOT.parent)} must remain namespace-only."
 
 
+def test_domain_models_are_imported_from_their_owning_modules() -> None:
+    """Keep removed compatibility facades from obscuring model ownership."""
+
+    for path in (
+        PACKAGE_ROOT / "domain" / "capabilities" / "models.py",
+        PACKAGE_ROOT / "domain" / "encounters" / "models.py",
+    ):
+        assert not path.exists(), (
+            f"{path.relative_to(PACKAGE_ROOT.parent)} must not be restored; "
+            "import models from their focused owner modules."
+        )
+
+
 def test_application_boundary_does_not_import_concrete_session() -> None:
     boundary_modules = (
         "action_observations.py",

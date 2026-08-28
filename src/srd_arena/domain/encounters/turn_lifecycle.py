@@ -7,10 +7,8 @@ from typing import TYPE_CHECKING
 from ..effects.runtime import UntilTurnEnd, UntilTurnStart
 from ..geometry import MovementBudget, MovementCost
 from .attack_economy import clear_attack_action
-from .models import (
-    CreatureRef,
-    EncounterProgress,
-)
+from .encounter_models.actions import CreatureRef
+from .encounter_models.resolution import EncounterProgress
 from .ongoing_effects import (
     expire_ongoing_effects_for_turn_start,
     resolve_end_turn_effects,
@@ -82,7 +80,7 @@ class TurnLifecycle:
         """Run end hooks, advance initiative, and begin the next living turn.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.domain.encounters.models import DecisionFrame
+        >>> from srd_arena.domain.encounters.encounter_models.decisions import DecisionFrame
         >>> state = Mock(ongoing_effects=[], conditions=[], relationships=[], turn_index=0,
         ...     initiative_order=["hero", "fallen"],
         ...     creatures={"hero": Mock(is_alive=True), "fallen": Mock(is_alive=False)},
@@ -250,7 +248,7 @@ class TurnLifecycle:
         """Lazily initialize and return the active creature's movement budget.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.domain.encounters.models import DecisionFrame
+        >>> from srd_arena.domain.encounters.encounter_models.decisions import DecisionFrame
         >>> state = Mock(active_movement_remaining=None)
         >>> state.current_decision.return_value = DecisionFrame("turn", "hero", "turn", "active")
         >>> state._is_grappled.return_value = False

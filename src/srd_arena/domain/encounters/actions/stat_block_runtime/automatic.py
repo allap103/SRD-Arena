@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 from ....capabilities import DamageEffect
 from ....creatures import Creature
 from ....creatures.stat_block_actions import AutomaticActionDefinition
-from ...models import EncounterAction, EncounterProgress
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.resolution import EncounterProgress
 from .resources import consume_stat_block_action_resource
 from .rolls import roll_dice
 

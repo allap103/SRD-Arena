@@ -16,7 +16,7 @@ from ....rolls.dice import (
     resolve_d20,
 )
 from ...behaviors import is_adjacent
-from ...models import AttackSource
+from ...encounter_models.resolution import AttackSource
 
 
 @dataclass(frozen=True)

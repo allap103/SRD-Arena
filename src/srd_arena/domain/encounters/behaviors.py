@@ -12,7 +12,11 @@ from ..geometry import (
     grid_distance_between,
     manhattan_distance,
 )
-from .models import BehaviorContext, EncounterAction, EncounterCreatureState
+from .encounter_models.actions import EncounterAction
+from .encounter_models.state import (
+    BehaviorContext,
+    EncounterCreatureState,
+)
 
 DIRECTION_DELTAS = {
     "up": (0, -1),

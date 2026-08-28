@@ -8,7 +8,10 @@ from srd_arena.domain.encounters.actions.eligibility_rules.models import (
     ActionEligibility,
     EligibilityFailure,
 )
-from srd_arena.domain.encounters.models import ActionCost, EncounterAction
+from srd_arena.domain.encounters.encounter_models.actions import (
+    ActionCost,
+    EncounterAction,
+)
 from srd_arena.engine.action_queries import option_details
 from srd_arena.engine.queries import (
     CONTINUE_CHOICE_TEXT,

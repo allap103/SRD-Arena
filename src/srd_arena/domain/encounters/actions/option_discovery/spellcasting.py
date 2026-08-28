@@ -13,7 +13,10 @@ from ....spells.rules import (
     spell_targets_self_only,
 )
 from ...attack_economy import clear_attack_action
-from ...models import ActionCost, EncounterAction
+from ...encounter_models.actions import (
+    ActionCost,
+    EncounterAction,
+)
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState

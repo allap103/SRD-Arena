@@ -18,12 +18,12 @@ from ....spells.rules import (
     spell_repeats_target_allocations,
     spell_requires_full_target_count,
 )
-from ...models import (
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.decisions import (
     DecisionFrame,
-    EncounterAction,
-    EncounterProgress,
     PendingSpellCast,
 )
+from ...encounter_models.resolution import EncounterProgress
 
 if TYPE_CHECKING:
     from ....creatures import Creature

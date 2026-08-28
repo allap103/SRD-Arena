@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .models import (
+from .encounter_models.decisions import (
     CloseParentDecision,
     DecisionFrame,
-    EncounterProgress,
     ResumeMovement,
 )
+from .encounter_models.resolution import EncounterProgress
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

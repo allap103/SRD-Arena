@@ -2,7 +2,9 @@ from pathlib import Path
 
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import ActionExecutionOutcome
+from srd_arena.domain.encounters.encounter_models.resolution import (
+    ActionExecutionOutcome,
+)
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"

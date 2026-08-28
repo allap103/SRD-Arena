@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 from ....creatures import Creature, MultiattackInvocation, MultiattackStep
 from ....creatures.stat_block_actions import AttackActionDefinition
 from ...attack_economy import begin_attack_action, clear_attack_action
-from ...models import EncounterAction, EncounterProgress
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.resolution import EncounterProgress
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState

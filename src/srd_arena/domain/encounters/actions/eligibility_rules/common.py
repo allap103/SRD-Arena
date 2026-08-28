@@ -8,7 +8,10 @@ from ....capabilities import ConditionRequirement, CreatureTypeRequirement
 from ....effects.conditions import CombatTrait, Condition
 from ....geometry import Position
 from ...behaviors import DIRECTION_DELTAS
-from ...models import CreatureRef, EncounterAction
+from ...encounter_models.actions import (
+    CreatureRef,
+    EncounterAction,
+)
 from .models import EligibilityFailure
 
 if TYPE_CHECKING:
@@ -85,7 +88,7 @@ class ResourceRule:
         """Reject an action whose movement cost exceeds the remaining budget.
 
         >>> from unittest.mock import Mock
-        >>> from ...models import ActionCost
+        >>> from ...encounter_models.actions import ActionCost
         >>> from ....geometry import MovementCost
         >>> action = EncounterAction("Move", "move", cost=ActionCost(movement=MovementCost(2)))
         >>> ResourceRule().check(Mock(creatures={"hero": Mock(movement_remaining=1)}),

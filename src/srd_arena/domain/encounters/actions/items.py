@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...creatures import Creature
-from ..models import EncounterProgress
+from ..encounter_models.resolution import EncounterProgress
 from .consumables import healing_potion_dice
 
 if TYPE_CHECKING:

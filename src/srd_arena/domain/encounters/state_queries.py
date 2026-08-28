@@ -7,7 +7,11 @@ from typing import TYPE_CHECKING
 from ..effects.condition_rules import EffectiveConditionSet
 from ..effects.conditions import AppliedCondition, Condition
 from .actions.eligibility import ActionEligibility
-from .models import CreatureRef, DecisionFrame, EncounterAction
+from .encounter_models.actions import (
+    CreatureRef,
+    EncounterAction,
+)
+from .encounter_models.decisions import DecisionFrame
 
 if TYPE_CHECKING:
     from .encounter import EncounterState

@@ -24,7 +24,10 @@ from ....spells.rules import (
     spell_action_value,
     spell_supports_higher_level,
 )
-from ...models import ActionCost, EncounterAction
+from ...encounter_models.actions import (
+    ActionCost,
+    EncounterAction,
+)
 from .spell_targets import _spell_removal_choices
 
 if TYPE_CHECKING:

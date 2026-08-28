@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from ...effects.rule_effects import RuntimeRuleEffect
 from ...effects.runtime import EffectSource, EffectSourceKind
-from ..models import CreatureRef
+from ..encounter_models.actions import CreatureRef
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
