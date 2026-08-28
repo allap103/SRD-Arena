@@ -25,3 +25,17 @@ The following declarations are documented exceptions:
 
 These exceptions keep the requirement focused on executable project behavior
 and avoid examples that only mock away the method being documented.
+
+## Auditing coverage
+
+Run `uv run doctest-audit` to report executable-example coverage independently
+from ordinary docstring coverage. The report counts concrete public functions,
+methods, and properties, while listing protocol declarations, abstract methods,
+property setters, and Qt event overrides as policy exclusions.
+
+An optional threshold makes the command suitable for a formal check without
+hard-coding that policy into the tool, for example:
+
+```text
+uv run doctest-audit --fail-under 90
+```

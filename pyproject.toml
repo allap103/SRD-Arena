@@ -10,6 +10,7 @@ dependencies = [
 [project.scripts]
 srd-arena = "srd_arena.main:main"
 content-schema-docs = "srd_arena.tools.content_schema_docs:main"
+doctest-audit = "srd_arena.tools.doctest_audit:main"
 
 [build-system]
 requires = ["setuptools>=61"]
