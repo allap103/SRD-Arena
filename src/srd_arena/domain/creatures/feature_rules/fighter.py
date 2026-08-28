@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from ...effects.results import EffectResult
 from ..model import Creature
-from .types import CapabilityActionResult, DiceRoller
+from .types import CapabilityActionResult, DiceRoller, HealingReceiver
 
 
 def resolve_fighter_feature(
     creature: Creature,
     feature_id: str,
     roll_dice: DiceRoller,
+    heal: HealingReceiver,
 ) -> CapabilityActionResult | None:
     """Execute the supported fighter feature identified by an action grant.
 
@@ -23,26 +24,28 @@ def resolve_fighter_feature(
     ...     feature_uses_remaining={"action_surge": 1},
     ... )
     >>> result = resolve_fighter_feature(
-    ...     fighter, "action_surge", lambda count, sides: count
+    ...     fighter, "action_surge", lambda count, sides: count, fighter.heal
     ... )
     >>> (result.details["grant_actions"], fighter.feature_uses_remaining)
     (1, {'action_surge': 0})
     """
 
     if feature_id == "second_wind":
-        return _resolve_second_wind(creature, roll_dice)
+        return _resolve_second_wind(creature, roll_dice, heal)
     if feature_id == "action_surge":
         return _resolve_action_surge(creature)
     return None
 
 
 def _resolve_second_wind(
-    creature: Creature, roll_dice: DiceRoller
+    creature: Creature,
+    roll_dice: DiceRoller,
+    heal: HealingReceiver,
 ) -> CapabilityActionResult:
     dice_count, dice_sides = _feature_healing_dice(creature, "second_wind")
     dice_total = roll_dice(dice_count, dice_sides)
     healing_total = dice_total + creature.attributes.level
-    applied_healing = creature.heal(healing_total)
+    applied_healing = heal(healing_total)
     creature.feature_uses_remaining["second_wind"] = (
         creature.feature_uses_remaining.get("second_wind", 0) - 1
     )

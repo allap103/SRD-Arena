@@ -13,13 +13,26 @@ from ...capabilities import (
     SenseEffect,
     SpeedModifierEffect,
 )
+from ...effects.conditions import Condition
 from ...effects.modifiers import ModifierMode, RollKind, RollModifier
 from ...effects.results import EffectResult
 from ...effects.rule_effects import (
     ArmorClassAdjustment,
+    ConditionImmunity,
+    ConditionSaveAdvantage,
+    DamageReduction,
+    DamageResistance,
+    GrantedSense,
+    MaximumHitPointAdjustment,
     RollAdjustment,
     RuntimeRuleEffect,
     SpeedAdjustment,
+)
+from ...effects.runtime import (
+    EndEventRule,
+    OngoingEffectLifecycle,
+    RepeatedDamage,
+    RepeatSaveLifecycle,
 )
 from ..rules import spell_duration_rounds
 from .context import SpellActionContext
@@ -133,7 +146,6 @@ def build_persistent_spell_effects(
         if isinstance(effect, ConditionSaveAdvantageEffect)
         for condition in effect.conditions
     )
-    rule_effects = _build_rule_effects(prepared, context.selected_ability)
     condition_immunities = tuple(
         condition
         for effect in prepared.definition_effects
@@ -144,6 +156,24 @@ def build_persistent_spell_effects(
         (effect.sense, effect.range_feet)
         for effect in prepared.definition_effects
         if isinstance(effect, SenseEffect)
+    )
+    rule_effects = _build_rule_effects(
+        prepared,
+        context.selected_ability,
+        maximum_hit_point_modifier=maximum_hit_point_modifier,
+        also_modify_current=(
+            maximum_hit_point_effect.also_modify_current
+            if maximum_hit_point_effect is not None
+            else False
+        ),
+        damage_resistances=selected_damage_resistances,
+        damage_reduction_type=selected_damage_reduction_type,
+        damage_reduction_dice=(
+            reduction_effect.dice if reduction_effect is not None else None
+        ),
+        condition_immunities=condition_immunities,
+        condition_save_advantages=condition_save_advantages,
+        senses=senses,
     )
     effect_duration = next(
         (
@@ -199,73 +229,62 @@ def build_persistent_spell_effects(
                         if duration_rounds is not None
                         else effect_duration_rounds(effect_duration)
                     ),
-                    "parameters": {
-                        "effect_label": spell.name,
-                        "started_round": context.current_round,
-                        "repeat_save_trigger": (
-                            prepared.repeat_save.trigger
-                            if prepared.repeat_save is not None
-                            else None
-                        ),
-                        "save_ability": (
-                            prepared.repeat_save.ability
-                            if prepared.repeat_save is not None
-                            else prepared.save_ability
-                        ),
-                        "save_dc": context.creature.spellcasting.save_dc,
-                        "repeat_failure_conditions": list(
-                            prepared.repeat_failure_conditions
-                        ),
-                        "repeat_failure_damage": [
-                            {
-                                "dice": scale_dice(
-                                    damage.dice,
-                                    resource_dice_increment(
-                                        prepared.definition,
-                                        "damage_dice",
-                                        damage.damage_type,
-                                    ),
-                                    prepared.levels_above,
-                                ),
-                                "damage_type": damage.damage_type,
-                            }
-                            for damage in prepared.repeat_failure_damage
-                        ],
-                        "end_events": [list(event) for event in prepared.end_events],
-                        "damage_repeat_save_advantage": (
-                            prepared.damage_repeat_save_advantage
-                        ),
-                        "maximum_hit_point_modifier": maximum_hit_point_modifier,
-                        "also_modify_current_hit_points": (
-                            maximum_hit_point_effect.also_modify_current
-                            if maximum_hit_point_effect is not None
-                            else False
-                        ),
-                        "damage_resistances": list(selected_damage_resistances),
-                        "condition_save_advantages": list(condition_save_advantages),
-                        "damage_reduction_type": selected_damage_reduction_type,
-                        "damage_reduction_dice": (
-                            reduction_effect.dice
-                            if reduction_effect is not None
-                            else None
-                        ),
-                        "turn_start_temporary_hit_points": next(
-                            (
-                                temporary.value
-                                + (
-                                    context.creature.spellcasting.ability_modifier
-                                    if temporary.modifier == "ability_modifier"
-                                    else 0
-                                )
-                                for temporary in prepared.temporary_hit_point_effects
-                                if temporary.trigger == "target_turn_start"
-                            ),
-                            0,
-                        ),
-                        "condition_immunities": list(condition_immunities),
-                        "senses": [list(sense) for sense in senses],
-                    },
                 },
+                effect_label=spell.name,
+                lifecycle=OngoingEffectLifecycle(
+                    started_round=context.current_round,
+                    repeat_save=(
+                        RepeatSaveLifecycle(
+                            trigger=prepared.repeat_save.trigger,
+                            ability=cast(str, prepared.repeat_save.ability),
+                            dc=context.creature.spellcasting.save_dc,
+                            failure_conditions=tuple(
+                                Condition(value)
+                                for value in prepared.repeat_failure_conditions
+                            ),
+                            failure_damage=tuple(
+                                RepeatedDamage(
+                                    cast(
+                                        str,
+                                        scale_dice(
+                                            damage.dice,
+                                            resource_dice_increment(
+                                                prepared.definition,
+                                                "damage_dice",
+                                                damage.damage_type,
+                                            ),
+                                            prepared.levels_above,
+                                        ),
+                                    ),
+                                    damage.damage_type,
+                                )
+                                for damage in prepared.repeat_failure_damage
+                            ),
+                            damage_grants_advantage=(
+                                prepared.damage_repeat_save_advantage
+                            ),
+                        )
+                        if prepared.repeat_save is not None
+                        else None
+                    ),
+                    end_events=tuple(
+                        EndEventRule(event, scope)
+                        for event, scope in prepared.end_events
+                    ),
+                    turn_start_temporary_hit_points=next(
+                        (
+                            temporary.value
+                            + (
+                                context.creature.spellcasting.ability_modifier
+                                if temporary.modifier == "ability_modifier"
+                                else 0
+                            )
+                            for temporary in prepared.temporary_hit_point_effects
+                            if temporary.trigger == "target_turn_start"
+                        ),
+                        0,
+                    ),
+                ),
                 rule_effects=rule_effects,
             )
         )
@@ -299,6 +318,15 @@ def build_persistent_spell_effects(
 def _build_rule_effects(
     prepared: PreparedSpellResolution,
     selected_ability: str | None,
+    *,
+    maximum_hit_point_modifier: int = 0,
+    also_modify_current: bool = False,
+    damage_resistances: tuple[str, ...] = (),
+    damage_reduction_type: str | None = None,
+    damage_reduction_dice: str | None = None,
+    condition_immunities: tuple[str, ...] = (),
+    condition_save_advantages: tuple[str, ...] = (),
+    senses: tuple[tuple[str, int], ...] = (),
 ) -> tuple[RuntimeRuleEffect, ...]:
     """Translate persistent capability effects into typed runtime rules.
 
@@ -319,6 +347,30 @@ def _build_rule_effects(
         for effect in prepared.definition_effects
         if isinstance(effect, ArmorClassModifierEffect)
     ]
+    if maximum_hit_point_modifier:
+        effects.append(
+            MaximumHitPointAdjustment(
+                maximum_hit_point_modifier,
+                also_modify_current,
+            )
+        )
+    if damage_resistances:
+        effects.append(DamageResistance(frozenset(damage_resistances)))
+    if damage_reduction_type is not None and damage_reduction_dice is not None:
+        effects.append(DamageReduction(damage_reduction_type, damage_reduction_dice))
+    if condition_immunities:
+        effects.append(
+            ConditionImmunity(
+                frozenset(Condition(value) for value in condition_immunities)
+            )
+        )
+    if condition_save_advantages:
+        effects.append(
+            ConditionSaveAdvantage(
+                frozenset(Condition(value) for value in condition_save_advantages)
+            )
+        )
+    effects.extend(GrantedSense(sense, feet) for sense, feet in senses)
     effects.extend(
         SpeedAdjustment(effect.feet)
         for effect in prepared.definition_effects

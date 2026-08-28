@@ -73,7 +73,12 @@ def resolve_automatic_stat_block_action(
             effect.minimum or 0,
             rolled + effect.bonus + sourced_modifier,
         )
-        applied = target.take_damage(amount, effect.damage_type)
+        applied = state.combat_rules.apply_damage(
+            state,
+            target_ref,
+            amount,
+            effect.damage_type,
+        )
         damage += applied
         damage_details.append(
             {

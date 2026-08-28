@@ -162,6 +162,11 @@ def resolve_automatic_opportunity_attacks(
             mover.creature,
             attacker_label=reactor.creature.name,
             target_label=mover.creature.name,
+            damage_receiver=partial(
+                state.combat_rules.apply_damage,
+                state,
+                mover_ref,
+            ),
         )
         resolve_attack_lifecycle(
             state,
@@ -331,6 +336,11 @@ def apply_reaction_action(
             target.creature,
             attacker_label=reactor_label,
             target_label=target_label,
+            damage_receiver=partial(
+                state.combat_rules.apply_damage,
+                state,
+                target_ref,
+            ),
         )
         resolve_attack_lifecycle(
             state,

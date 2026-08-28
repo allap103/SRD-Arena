@@ -55,14 +55,9 @@ def special_action_candidates(
     actions.extend(available_spell_actions(state, actor.creature))
 
     for effect in state.ongoing_effects:
-        end_events = effect.parameters.get("end_events", [])
-        if (
-            not isinstance(end_events, list)
-            or [
-                "adjacent_creature_wakes_target",
-                "any",
-            ]
-            not in end_events
+        if not any(
+            configured.event == "adjacent_creature_wakes_target"
+            for configured in effect.lifecycle.end_events
         ):
             continue
         for target_ref in effect.target_refs:

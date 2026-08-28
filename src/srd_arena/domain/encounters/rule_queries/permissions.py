@@ -16,6 +16,7 @@ from ..encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from .defenses import condition_suppressions
 from .models import SourcedEligibilityFailure
 from .providers import ongoing_rule_effects
 
@@ -31,7 +32,9 @@ def reaction_eligibility(
     """Return every reason a creature cannot take the requested reaction.
 
     >>> from types import SimpleNamespace
-    >>> creature = SimpleNamespace(condition_immunities=lambda: frozenset())
+    >>> creature = SimpleNamespace(
+    ...     statistics=SimpleNamespace(condition_immunities=frozenset())
+    ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(
     ...         is_alive=True, reaction_available=False, creature=creature
@@ -59,7 +62,7 @@ def reaction_eligibility(
             for condition in state.conditions
             if condition.target_ref == creature_ref
         ),
-        creature_state.creature.condition_immunities(),
+        condition_suppressions(state, creature_ref).values,
     )
     if conditions.has_trait(CombatTrait.CANNOT_TAKE_REACTIONS):
         failures.append(
@@ -100,7 +103,9 @@ def action_compatibility(
 
     >>> from types import SimpleNamespace
     >>> from ..encounter_models.actions import ActionCost
-    >>> creature = SimpleNamespace(condition_immunities=lambda: frozenset())
+    >>> creature = SimpleNamespace(
+    ...     statistics=SimpleNamespace(condition_immunities=frozenset())
+    ... )
     >>> creature_state = SimpleNamespace(
     ...     is_alive=True, creature=creature, actions_remaining=0,
     ...     bonus_action_available=True, reaction_available=True,
@@ -137,7 +142,7 @@ def action_compatibility(
             for condition in state.conditions
             if condition.target_ref == creature_ref
         ),
-        creature_state.creature.condition_immunities(),
+        condition_suppressions(state, creature_ref).values,
     )
     if action.kind != "wait" and conditions.has_trait(CombatTrait.CANNOT_TAKE_ACTIONS):
         failures.append(

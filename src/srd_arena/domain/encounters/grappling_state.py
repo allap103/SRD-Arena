@@ -33,12 +33,11 @@ def apply_grapple(
     >>> from types import SimpleNamespace
     >>> from ..effects.conditions import build_applied_condition
     >>> creature = SimpleNamespace(
-    ...     condition_immunities=lambda: frozenset(),
     ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
-    ...     conditions=[], relationships=[],
+    ...     conditions=[], relationships=[], ongoing_effects=[],
     ... )
     >>> applied = build_applied_condition(
     ...     condition=Condition.GRAPPLED, source_ref="ogre",

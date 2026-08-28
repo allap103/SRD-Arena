@@ -128,6 +128,7 @@ def apply_attack_damage(
     *,
     attacker_label: str,
     target_label: str,
+    damage_receiver: Callable[[int, str | None], int] | None = None,
 ) -> None:
     """Apply a rolled attack to defenses and append its combat messages.
 
@@ -150,12 +151,15 @@ def apply_attack_damage(
         return
     damage_total = attack.damage_roll.total
     damage = max(1, damage_total) + attack.additional_damage
-    applied_damage = defender.take_damage(max(1, damage_total), attack.damage_type)
+    receive_damage = damage_receiver or (
+        lambda amount, _damage_type: defender.take_damage(amount)
+    )
+    applied_damage = receive_damage(max(1, damage_total), attack.damage_type)
     for detail in attack.additional_damage_details:
         extra_damage = detail.get("total", 0)
         extra_type = detail.get("damage_type")
         if isinstance(extra_damage, int):
-            applied_damage += defender.take_damage(
+            applied_damage += receive_damage(
                 extra_damage,
                 extra_type if isinstance(extra_type, str) else None,
             )

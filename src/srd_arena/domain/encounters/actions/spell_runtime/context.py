@@ -20,7 +20,6 @@ from ....spells.rules import (
     parse_spell_action_damage_type,
     parse_spell_healing_allocations,
 )
-from ...ongoing_effects import has_condition_save_advantage
 from ...participants import creatures_are_opponents
 from ...state_combat import (
     attack_roll_mode_for,
@@ -185,7 +184,7 @@ def build_spell_action_context(
                 candidate.target_ref: "advantage"
                 for candidate in targets
                 if (
-                    has_condition_save_advantage(
+                    state.combat_rules.has_condition_save_advantage(
                         state,
                         candidate.target_ref,
                         conditions,

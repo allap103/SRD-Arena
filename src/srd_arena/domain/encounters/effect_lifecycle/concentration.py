@@ -108,11 +108,10 @@ def resolve_concentration_damage(
     )
     if progress is not None:
         outcome = "maintains" if save.check.success else "loses"
-        effect_label = concentrating.parameters.get("effect_label")
-        if not isinstance(effect_label, str):
-            effect_label = concentrating.identity.source.definition_id.replace(
-                "_", " "
-            ).title()
+        effect_label = (
+            concentrating.label
+            or concentrating.identity.source.definition_id.replace("_", " ").title()
+        )
         progress.messages.append(
             (
                 "system",

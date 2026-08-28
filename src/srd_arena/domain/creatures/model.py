@@ -4,10 +4,7 @@ import re
 from dataclasses import dataclass, field
 
 from ..capabilities import LimitedUsePool
-from ..effects.conditions import Condition
-from ..effects.modifiers import DamageReduction
 from ..effects.triggered import TriggeredEffect
-from ..rolls.dice import DieRoller, roll_die
 from .attributes import Attributes
 from .class_features import ClassFeature
 from .classes import ClassRef, SubclassRef
@@ -54,17 +51,6 @@ class Creature:
     statistics: CreatureStatistics = field(default_factory=CreatureStatistics)
     max_health_override: int | None = None
     temporary_hit_points: int = 0
-    maximum_health_modifiers: dict[str, dict[str, int]] = field(default_factory=dict)
-    damage_resistance_sources: dict[str, set[str]] = field(default_factory=dict)
-    damage_reduction_sources: dict[str, dict[str, DamageReduction]] = field(
-        default_factory=dict
-    )
-    condition_immunity_sources: dict[str, dict[str, frozenset[Condition]]] = field(
-        default_factory=dict
-    )
-    sense_sources: dict[str, dict[str, tuple[tuple[str, int], ...]]] = field(
-        default_factory=dict
-    )
 
     def __post_init__(self) -> None:
         if self.current_health is None:
@@ -160,7 +146,7 @@ class Creature:
         return (attribute_value - 10) // 2
 
     def get_max_health(self) -> int:
-        """Return maximum health including sourced modifiers.
+        """Return the creature's intrinsic maximum health.
 
         >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 2, 14, 12, 14, 10, 10, 10, 10), Equipment())
         >>> creature.get_max_health()
@@ -172,63 +158,7 @@ class Creature:
             else self.attributes.base_health
             + self.get_modifier(self.attributes.constitution) * self.attributes.level
         )
-        return base + sum(
-            max(instances.values(), default=0)
-            for instances in self.maximum_health_modifiers.values()
-        )
-
-    def set_maximum_health_modifier(
-        self,
-        definition_id: str,
-        origin_id: str,
-        value: int,
-        *,
-        also_modify_current: bool,
-    ) -> None:
-        """Set one sourced maximum-health modifier.
-
-        Multiple instances of the same definition do not stack; only the
-        strongest instance contributes.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_maximum_health_modifier("aid", "cast-1", 5, also_modify_current=True)
-        >>> (creature.get_health(), creature.get_max_health())
-        (25, 25)
-        """
-        previous_maximum = self.get_max_health()
-        self.maximum_health_modifiers.setdefault(definition_id, {})[origin_id] = value
-        if also_modify_current:
-            self.current_health = self.get_health() + (
-                self.get_max_health() - previous_maximum
-            )
-
-    def remove_maximum_health_modifier(
-        self,
-        definition_id: str,
-        origin_id: str,
-        *,
-        also_modify_current: bool,
-    ) -> None:
-        """Remove one sourced maximum-health modifier.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_maximum_health_modifier("aid", "cast-1", 5, also_modify_current=True)
-        >>> creature.remove_maximum_health_modifier("aid", "cast-1", also_modify_current=True)
-        >>> (creature.get_health(), creature.get_max_health())
-        (20, 20)
-        """
-        previous_maximum = self.get_max_health()
-        instances = self.maximum_health_modifiers.get(definition_id)
-        if instances is None:
-            return
-        instances.pop(origin_id, None)
-        if not instances:
-            self.maximum_health_modifiers.pop(definition_id, None)
-        if also_modify_current:
-            self.current_health = max(
-                0,
-                self.get_health() + self.get_max_health() - previous_maximum,
-            )
+        return base
 
     def get_health(self) -> int:
         """Return current health as a concrete integer.
@@ -242,11 +172,8 @@ class Creature:
     def take_damage(
         self,
         amount: int,
-        damage_type: str | None = None,
-        *,
-        roller: DieRoller = roll_die,
     ) -> int:
-        """Apply damage after reductions, resistance, and temporary HP.
+        """Apply already-resolved damage to temporary and current hit points.
 
         >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
         >>> creature.grant_temporary_hit_points(3)
@@ -256,13 +183,6 @@ class Creature:
         >>> (creature.temporary_hit_points, creature.get_health())
         (0, 18)
         """
-        if damage_type is not None:
-            amount = max(
-                0,
-                amount - self.resolve_damage_reduction(damage_type, roller),
-            )
-        if damage_type is not None and self.has_damage_resistance(damage_type):
-            amount //= 2
         applied_damage = min(
             max(amount, 0),
             self.get_health() + self.temporary_hit_points,
@@ -273,204 +193,16 @@ class Creature:
         self.current_health = self.get_health() - health_damage
         return applied_damage
 
-    def has_damage_resistance(self, damage_type: str) -> bool:
-        """Return whether any active source grants damage resistance.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.add_damage_resistance("Fire", "spell:protection")
-        >>> creature.has_damage_resistance("fire")
-        True
-        """
-        return bool(self.damage_resistance_sources.get(damage_type.casefold()))
-
-    def add_damage_resistance(self, damage_type: str, origin_id: str) -> None:
-        """Add a sourced resistance without replacing other sources.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.add_damage_resistance("fire", "spell:protection")
-        >>> creature.take_damage(5, "fire")
-        2
-        """
-        self.damage_resistance_sources.setdefault(damage_type.casefold(), set()).add(
-            origin_id
-        )
-
-    def remove_damage_resistance(self, damage_type: str, origin_id: str) -> None:
-        """Remove one source while retaining any other resistance sources.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.add_damage_resistance("fire", "spell:protection")
-        >>> creature.remove_damage_resistance("fire", "spell:protection")
-        >>> creature.has_damage_resistance("fire")
-        False
-        """
-        sources = self.damage_resistance_sources.get(damage_type.casefold())
-        if sources is None:
-            return
-        sources.discard(origin_id)
-        if not sources:
-            self.damage_resistance_sources.pop(damage_type.casefold(), None)
-
-    def set_damage_reduction(
-        self,
-        definition_id: str,
-        origin_id: str,
-        reduction: DamageReduction,
-    ) -> None:
-        """Register a sourced, once-per-turn damage reduction.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_damage_reduction("heavy_armor_master", "feature", DamageReduction("slashing", "1d3"))
-        >>> creature.resolve_damage_reduction("slashing", lambda _: 2)
-        2
-        """
-        self.damage_reduction_sources.setdefault(definition_id, {})[origin_id] = (
-            reduction
-        )
-
-    def remove_damage_reduction(self, definition_id: str, origin_id: str) -> None:
-        """Remove a sourced damage reduction.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_damage_reduction("feature", "origin", DamageReduction("fire", "1d4"))
-        >>> creature.remove_damage_reduction("feature", "origin")
-        >>> creature.resolve_damage_reduction("fire", lambda _: 4)
-        0
-        """
-        sources = self.damage_reduction_sources.get(definition_id)
-        if sources is None:
-            return
-        sources.pop(origin_id, None)
-        if not sources:
-            self.damage_reduction_sources.pop(definition_id, None)
-
-    def resolve_damage_reduction(self, damage_type: str, roller: DieRoller) -> int:
-        """Resolve the active reduction matching a damage type.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_damage_reduction("feature", "origin", DamageReduction("fire", "1d4"))
-        >>> (creature.resolve_damage_reduction("fire", lambda _: 3), creature.resolve_damage_reduction("fire", lambda _: 3))
-        (3, 0)
-        """
-        return sum(
-            reduction.resolve(roller)
-            for sources in self.damage_reduction_sources.values()
-            for reduction in tuple(sources.values())[:1]
-            if reduction.damage_type == damage_type.casefold()
-        )
-
-    def reset_per_turn_modifiers(self) -> None:
-        """Restore per-turn sourced defenses for a new turn.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_damage_reduction("feature", "origin", DamageReduction("fire", "1d4"))
-        >>> creature.resolve_damage_reduction("fire", lambda _: 3)
-        3
-        >>> creature.reset_per_turn_modifiers()
-        >>> creature.resolve_damage_reduction("fire", lambda _: 2)
-        2
-        """
-        for sources in self.damage_reduction_sources.values():
-            for reduction in sources.values():
-                reduction.available = True
-
-    def condition_immunities(self) -> frozenset[Condition]:
-        """Return intrinsic and temporary condition immunities together.
-
-        >>> stats = CreatureStatistics(condition_immunities=frozenset({Condition.POISONED}))
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment(), statistics=stats)
-        >>> creature.set_condition_immunities("spell", "origin", frozenset({Condition.CHARMED}))
-        >>> creature.condition_immunities() == frozenset({Condition.POISONED, Condition.CHARMED})
-        True
-        """
-        return self.statistics.condition_immunities.union(
-            condition
-            for sources in self.condition_immunity_sources.values()
-            for immunities in sources.values()
-            for condition in immunities
-        )
-
-    def set_condition_immunities(
-        self,
-        definition_id: str,
-        origin_id: str,
-        conditions: frozenset[Condition],
-    ) -> None:
-        """Set temporary condition immunities supplied by one source.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_condition_immunities("mind_blank", "cast", frozenset({Condition.CHARMED}))
-        >>> Condition.CHARMED in creature.condition_immunities()
-        True
-        """
-        self.condition_immunity_sources.setdefault(definition_id, {})[origin_id] = (
-            conditions
-        )
-
-    def remove_condition_immunities(self, definition_id: str, origin_id: str) -> None:
-        """Remove temporary condition immunities from one source.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_condition_immunities("mind_blank", "cast", frozenset({Condition.CHARMED}))
-        >>> creature.remove_condition_immunities("mind_blank", "cast")
-        >>> Condition.CHARMED in creature.condition_immunities()
-        False
-        """
-        sources = self.condition_immunity_sources.get(definition_id)
-        if sources is None:
-            return
-        sources.pop(origin_id, None)
-        if not sources:
-            self.condition_immunity_sources.pop(definition_id, None)
-
-    def set_senses(
-        self,
-        definition_id: str,
-        origin_id: str,
-        senses: tuple[tuple[str, int], ...],
-    ) -> None:
-        """Set senses supplied by one runtime source.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_senses("truesight", "spell", (("truesight", 120),))
-        >>> creature.sense_range("truesight")
-        120
-        """
-        self.sense_sources.setdefault(definition_id, {})[origin_id] = senses
-
-    def remove_senses(self, definition_id: str, origin_id: str) -> None:
-        """Remove senses supplied by one runtime source.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_senses("truesight", "spell", (("truesight", 120),))
-        >>> creature.remove_senses("truesight", "spell")
-        >>> creature.has_sense("truesight")
-        False
-        """
-        sources = self.sense_sources.get(definition_id)
-        if sources is None:
-            return
-        sources.pop(origin_id, None)
-        if not sources:
-            self.sense_sources.pop(definition_id, None)
-
     def sense_range(self, sense: str) -> int | None:
-        """Return the longest intrinsic or granted range for a sense.
+        """Return the creature's intrinsic range for a sense.
 
         >>> stats = CreatureStatistics(senses=("Darkvision 60 ft.",))
         >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment(), statistics=stats)
-        >>> creature.set_senses("spell", "origin", (("darkvision", 120),))
         >>> creature.sense_range("darkvision")
-        120
+        60
         """
         normalized = sense.casefold()
-        ranges = [
-            feet
-            for sources in self.sense_sources.values()
-            for granted in sources.values()
-            for kind, feet in granted
-            if kind == normalized
-        ]
+        ranges: list[int] = []
         for entry in self.statistics.senses:
             match = re.match(
                 rf"^{re.escape(normalized)}\s+(\d+)\s*ft\.?$",
@@ -490,8 +222,8 @@ class Creature:
         """
         return self.sense_range(sense) is not None
 
-    def heal(self, amount: int) -> int:
-        """Restore health up to the creature's maximum and return the amount.
+    def heal(self, amount: int, *, maximum_health: int | None = None) -> int:
+        """Restore health up to the supplied or intrinsic maximum.
 
         >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
         >>> creature.take_damage(8)
@@ -501,7 +233,8 @@ class Creature:
         >>> creature.get_health()
         17
         """
-        missing_health = self.get_max_health() - self.get_health()
+        maximum = self.get_max_health() if maximum_health is None else maximum_health
+        missing_health = maximum - self.get_health()
         applied_healing = min(max(amount, 0), missing_health)
         self.current_health = self.get_health() + applied_healing
         return applied_healing

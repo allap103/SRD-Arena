@@ -143,7 +143,7 @@ def resolve_follow_up(
                 if save.check.success
                 else roll.total
             )
-            applied = target.creature.take_damage(final_damage, damage.damage_type)
+            applied = target.take_damage(final_damage, damage.damage_type)
             damage_details.append(
                 {
                     "sequence_step": sequence_step,

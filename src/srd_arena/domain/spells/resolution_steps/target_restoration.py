@@ -43,7 +43,7 @@ def restore_target(
     ... )
     >>> target = SimpleNamespace(
     ...     target_ref="hero", target_label="Hero",
-    ...     creature=SimpleNamespace(heal=lambda amount: amount),
+    ...     heal=lambda amount: amount,
     ... )
     >>> result = restore_target(context, prepared, target)
     >>> result.healing_details[0]["allocated"]
@@ -73,7 +73,7 @@ def restore_target(
                 (healing_roll.subtotal if healing_roll is not None else 0) + modifier,
             )
         )
-        applied = target.creature.heal(total)
+        applied = target.heal(total)
         healing_details.append(
             restoration_detail(
                 target,
@@ -88,7 +88,7 @@ def restore_target(
         if healing.pool is None:
             continue
         allocated = context.healing_allocations.get(target.target_ref, 0)
-        applied = target.creature.heal(allocated)
+        applied = target.heal(allocated)
         detail = restoration_detail(
             target,
             dice=None,

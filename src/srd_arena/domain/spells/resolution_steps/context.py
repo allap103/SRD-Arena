@@ -19,7 +19,24 @@ class SpellTargetContext:
     target_ref: str
     target_label: str
     target_conditions: tuple[str, ...] = ()
+    condition_immunities: frozenset[str] = frozenset()
     automatic_save_failures: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    damage_receiver: Callable[[int, str | None], int] | None = None
+    healing_receiver: Callable[[int], int] | None = None
+
+    def take_damage(self, amount: int, damage_type: str | None = None) -> int:
+        """Apply damage through the encounter boundary when one is supplied."""
+
+        if self.damage_receiver is not None:
+            return self.damage_receiver(amount, damage_type)
+        return self.creature.take_damage(amount)
+
+    def heal(self, amount: int) -> int:
+        """Apply healing through the encounter boundary when one is supplied."""
+
+        if self.healing_receiver is not None:
+            return self.healing_receiver(amount)
+        return self.creature.heal(amount)
 
     def automatic_failure_reasons(self, ability: str) -> tuple[str, ...]:
         """Return condition-derived automatic save failures for an ability.

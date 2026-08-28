@@ -16,7 +16,12 @@ def test_second_wind_returns_healing_effect_result() -> None:
     creature = session.encounter_state.creatures["player"].creature
     creature.current_health = 10
 
-    result = resolve_feature_action(creature, "second_wind", lambda num_dice, sides: 5)
+    result = resolve_feature_action(
+        creature,
+        "second_wind",
+        lambda num_dice, sides: 5,
+        creature.heal,
+    )
 
     assert isinstance(result, CapabilityActionResult)
     assert result.capability_id == "second_wind"
@@ -43,7 +48,12 @@ def test_action_surge_returns_extra_action_result() -> None:
     assert session.encounter_state is not None
     creature = session.encounter_state.creatures["player"].creature
 
-    result = resolve_feature_action(creature, "action_surge", lambda num_dice, sides: 0)
+    result = resolve_feature_action(
+        creature,
+        "action_surge",
+        lambda num_dice, sides: 0,
+        creature.heal,
+    )
 
     assert isinstance(result, CapabilityActionResult)
     assert result.capability_id == "action_surge"

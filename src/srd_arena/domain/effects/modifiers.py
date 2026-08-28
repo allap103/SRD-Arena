@@ -54,31 +54,3 @@ class RollModifier:
         if self.mode in {"advantage", "disadvantage"}:
             return cast(D20RollMode, self.mode)
         return None
-
-
-@dataclass
-class DamageReduction:
-    """Track a dice-based damage reduction that can be consumed once.
-
-    The owning creature or effect lifecycle is responsible for restoring its
-    availability at the appropriate rules boundary.
-    """
-
-    damage_type: str
-    dice: str
-    available: bool = True
-
-    def resolve(self, roller: DieRoller) -> int:
-        """Resolve this reduction once, consuming its availability.
-
-        >>> reduction = DamageReduction("bludgeoning", "1d10")
-        >>> reduction.resolve(lambda _: 4)
-        4
-        >>> reduction.resolve(lambda _: 9)
-        0
-        """
-        if not self.available:
-            return 0
-        count_text, sides_text = self.dice.casefold().split("d", 1)
-        self.available = False
-        return sum(roller(int(sides_text)) for _ in range(int(count_text)))

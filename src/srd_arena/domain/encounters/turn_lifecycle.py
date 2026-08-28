@@ -138,8 +138,7 @@ class TurnLifecycle:
         creature_state = state.creatures[creature_ref]
         if not creature_state.is_alive:
             return
-        for candidate in state.creatures.values():
-            candidate.creature.reset_per_turn_modifiers()
+        state.combat_rules.reset_damage_reductions(state, creature_ref)
         expire_ongoing_effects_for_turn_start(state, creature_ref)
         self.expire_conditions_for_turn_start(
             state,

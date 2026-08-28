@@ -9,6 +9,7 @@ from ...effects.rule_effects import RollAdjustment
 from ..encounter_models.actions import CreatureRef
 from .models import RollRuleContribution, RollRuleResult
 from .providers import ongoing_rule_effects
+from .senses import sense_range
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -68,5 +69,7 @@ def _modifier_applies(
         return False
     if opposing_ref is None or not modifier.ignored_by_senses:
         return True
-    opposing = state.creatures[opposing_ref].creature
-    return not any(opposing.has_sense(sense) for sense in modifier.ignored_by_senses)
+    return not any(
+        sense_range(state, opposing_ref, sense).range_feet is not None
+        for sense in modifier.ignored_by_senses
+    )

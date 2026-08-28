@@ -51,11 +51,11 @@ def _condition_state(
         SimpleNamespace(
             conditions=list(conditions or ()),
             relationships=list(relationships or ()),
+            ongoing_effects=[],
             creatures={
                 "player": SimpleNamespace(
                     creature=SimpleNamespace(
                         statistics=CreatureStatistics(condition_immunities=immunities),
-                        condition_immunities=lambda: immunities,
                     )
                 )
             },

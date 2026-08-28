@@ -123,6 +123,11 @@ def resolve_feature_action(
         creature,
         feature_id,
         state.dice.roll_dice,
+        lambda amount: state.combat_rules.apply_healing(
+            state,
+            creature_ref,
+            amount,
+        ),
     )
     if result is None:
         progress.messages.append(

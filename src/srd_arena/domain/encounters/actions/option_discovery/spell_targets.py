@@ -11,6 +11,7 @@ from ....capabilities import (
 )
 from ....creatures import Creature
 from ....effects.conditions import CombatTrait
+from ....effects.rule_effects import MaximumHitPointAdjustment
 from ....geometry import grid_distance_between
 from ....spells.definitions import Spell
 from ....spells.resolution import SpellTargetContext
@@ -154,11 +155,10 @@ def _spell_removal_choices(
         )
     if "hit_point_maximum_reduction" in spell.removable_effect_kinds and any(
         target_ref in effect.target_refs
-        and isinstance(
-            maximum_modifier := effect.parameters.get("maximum_hit_point_modifier"),
-            int,
+        and any(
+            isinstance(rule_effect, MaximumHitPointAdjustment) and rule_effect.value < 0
+            for rule_effect in effect.rule_effects
         )
-        and maximum_modifier < 0
         for effect in state.ongoing_effects
     ):
         choices.append(("hit_point_maximum_reduction", "Hit Point Maximum Reduction"))
@@ -183,6 +183,13 @@ def spell_target_context(
     ...     },
     ...     effective_conditions_for=lambda ref: effective,
     ...     conditions_for=lambda ref: (),
+    ...     combat_rules=SimpleNamespace(
+    ...         condition_immunities=lambda state, ref: SimpleNamespace(
+    ...             values=frozenset()
+    ...         ),
+    ...         apply_damage=lambda state, ref, amount, kind: amount,
+    ...         apply_healing=lambda state, ref, amount: amount,
+    ...     ),
     ... )
     >>> context = spell_target_context(
     ...     state, SimpleNamespace(), "goblin"
@@ -203,6 +210,23 @@ def spell_target_context(
         target_label=target_state.creature.name,
         target_conditions=tuple(
             condition.condition.value for condition in state.conditions_for(target_ref)
+        ),
+        condition_immunities=frozenset(
+            condition.value
+            for condition in state.combat_rules.condition_immunities(
+                state, target_ref
+            ).values
+        ),
+        damage_receiver=lambda amount, damage_type: state.combat_rules.apply_damage(
+            state,
+            target_ref,
+            amount,
+            damage_type,
+        ),
+        healing_receiver=lambda amount: state.combat_rules.apply_healing(
+            state,
+            target_ref,
+            amount,
         ),
         automatic_save_failures={
             "strength": effective.providers_for_trait(

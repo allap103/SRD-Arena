@@ -336,6 +336,12 @@ def finalize_damage_reroll(
         target.creature,
         attacker_label=attacker.name,
         target_label=request.target_label,
+        damage_receiver=lambda amount, damage_type: state.combat_rules.apply_damage(
+            state,
+            request.target_ref,
+            amount,
+            damage_type,
+        ),
     )
     resolve_attack_lifecycle(
         state,

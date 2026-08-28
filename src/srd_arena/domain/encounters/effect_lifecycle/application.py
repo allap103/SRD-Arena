@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...effects.conditions import Condition
-from ...effects.modifiers import DamageReduction
 from ...effects.results import EffectResult
+from ...effects.rule_effects import MaximumHitPointAdjustment
 from ...effects.runtime import (
     EffectPolarity,
     EffectSource,
@@ -14,10 +13,12 @@ from ...effects.runtime import (
     Indefinite,
     OngoingEffect,
     OngoingEffectKind,
+    OngoingEffectLifecycle,
     Rounds,
     RuntimeStateIdentity,
 )
 from ..attack_economy import reconcile_remaining_attacks
+from ..rule_queries.health import effective_maximum_health
 from .concentration import end_concentration
 from .movement import reconcile_remaining_movement
 from .removal import _remove_effect_tree
@@ -31,7 +32,7 @@ def start_ongoing_effect(
     result: EffectResult,
     origin_id: str,
 ) -> OngoingEffect:
-    """Create an ongoing effect and install its creature modifiers.
+    """Create encounter-owned ongoing state from one resolved effect.
 
     The runtime identity combines the effect kind with the exact action origin,
     allowing later removal to distinguish repeated uses of the same spell.
@@ -48,16 +49,20 @@ def start_ongoing_effect(
     ...         "effect_kind": "spell",
     ...     },
     ... )
-    >>> state = SimpleNamespace(ongoing_effects=[])
+    >>> creature = SimpleNamespace(
+    ...     get_max_health=lambda: 10, get_health=lambda: 10,
+    ...     current_health=10,
+    ... )
+    >>> state = SimpleNamespace(
+    ...     ongoing_effects=[],
+    ...     creatures={"target": SimpleNamespace(creature=creature)},
+    ... )
     >>> with patch(
     ...     "srd_arena.domain.encounters.effect_lifecycle.application."
     ...     "reconcile_remaining_attacks"
     ... ), patch(
     ...     "srd_arena.domain.encounters.effect_lifecycle.application."
     ...     "reconcile_remaining_movement"
-    ... ), patch(
-    ...     "srd_arena.domain.encounters.effect_lifecycle.application."
-    ...     "_install_creature_modifiers"
     ... ):
     ...     effect = start_ongoing_effect(state, result, "cast-7")
     >>> (effect.identity.id, effect.target_refs, state.ongoing_effects == [effect])
@@ -87,7 +92,6 @@ def start_ongoing_effect(
         )
         for effect in previous:
             _remove_effect_tree(state, effect)
-    parameters = result.data.get("parameters")
     duration_rounds = result.data.get("duration_rounds")
     target_refs_data = result.data.get("target_refs")
     target_refs = (
@@ -95,7 +99,10 @@ def start_ongoing_effect(
         if isinstance(target_refs_data, list)
         else (result.target_ref,)
     )
-    effect_parameters = dict(parameters) if isinstance(parameters, dict) else {}
+    previous_maximums = {
+        target_ref: effective_maximum_health(state, target_ref).value
+        for target_ref in target_refs
+    }
     effect = OngoingEffect(
         identity=RuntimeStateIdentity(
             id=f"ongoing:{kind.value}:{origin_id}",
@@ -108,83 +115,28 @@ def start_ongoing_effect(
             else Indefinite()
         ),
         kind=kind,
-        parameters=effect_parameters,
         polarity=polarity,
+        label=result.effect_label,
+        lifecycle=result.lifecycle or OngoingEffectLifecycle(),
         dispellable=True,
         rule_effects=result.rule_effects,
     )
     state.ongoing_effects.append(effect)
     reconcile_remaining_attacks(state, target_refs)
     reconcile_remaining_movement(state, target_refs)
-    _install_creature_modifiers(state, effect)
-    return effect
-
-
-def _install_creature_modifiers(
-    state: EncounterState,
-    effect: OngoingEffect,
-) -> None:
-    """Install each modifier encoded by an ongoing effect's parameters."""
-
-    definition_id = effect.identity.source.definition_id
-    origin_id = effect.identity.source.origin_id
-    maximum_hit_point_modifier = effect.parameters.get("maximum_hit_point_modifier")
-    also_modify_current = bool(
-        effect.parameters.get("also_modify_current_hit_points", False)
-    )
-    if isinstance(maximum_hit_point_modifier, int) and maximum_hit_point_modifier:
-        for target_ref in effect.target_refs:
-            state.creatures[target_ref].creature.set_maximum_health_modifier(
-                definition_id,
-                origin_id,
-                maximum_hit_point_modifier,
-                also_modify_current=also_modify_current,
-            )
-    damage_resistances = effect.parameters.get("damage_resistances", [])
-    if isinstance(damage_resistances, list):
-        for target_ref in effect.target_refs:
-            for damage_type in damage_resistances:
-                if isinstance(damage_type, str):
-                    state.creatures[target_ref].creature.add_damage_resistance(
-                        damage_type, origin_id
-                    )
-    damage_reduction_type = effect.parameters.get("damage_reduction_type")
-    damage_reduction_dice = effect.parameters.get("damage_reduction_dice")
-    if isinstance(damage_reduction_type, str) and isinstance(
-        damage_reduction_dice, str
+    if any(
+        isinstance(rule_effect, MaximumHitPointAdjustment)
+        and rule_effect.also_modify_current
+        for rule_effect in effect.rule_effects
     ):
-        for target_ref in effect.target_refs:
-            state.creatures[target_ref].creature.set_damage_reduction(
-                definition_id,
-                origin_id,
-                DamageReduction(
-                    damage_type=damage_reduction_type.casefold(),
-                    dice=damage_reduction_dice,
-                ),
+        for target_ref in target_refs:
+            creature = state.creatures[target_ref].creature
+            maximum_delta = (
+                effective_maximum_health(state, target_ref).value
+                - previous_maximums[target_ref]
             )
-    condition_immunities = effect.parameters.get("condition_immunities", [])
-    if isinstance(condition_immunities, list):
-        parsed_immunities = frozenset(
-            Condition(value) for value in condition_immunities if isinstance(value, str)
-        )
-        for target_ref in effect.target_refs:
-            state.creatures[target_ref].creature.set_condition_immunities(
-                definition_id, origin_id, parsed_immunities
-            )
-    senses = effect.parameters.get("senses", [])
-    if isinstance(senses, list):
-        parsed_senses = tuple(
-            (value[0], value[1])
-            for value in senses
-            if isinstance(value, list)
-            and len(value) == 2
-            and isinstance(value[0], str)
-            and isinstance(value[1], int)
-        )
-        for target_ref in effect.target_refs:
-            state.creatures[target_ref].creature.set_senses(
-                definition_id, origin_id, parsed_senses
-            )
+            creature.current_health = max(0, creature.get_health() + maximum_delta)
+    return effect
 
 
 def _required_string(result: EffectResult, key: str) -> str:

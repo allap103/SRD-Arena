@@ -12,6 +12,7 @@ from ..effects.conditions import (
     build_applied_condition,
 )
 from .encounter_models.actions import CreatureRef
+from .rule_queries.defenses import condition_immunities, condition_suppressions
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -57,12 +58,11 @@ def apply_condition(
 
     >>> from types import SimpleNamespace
     >>> creature = SimpleNamespace(
-    ...     condition_immunities=lambda: frozenset(),
     ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
-    ...     conditions=[], relationships=[],
+    ...     conditions=[], relationships=[], ongoing_effects=[],
     ... )
     >>> applied = build_applied_condition(
     ...     condition=Condition.PRONE, source_ref="fall",
@@ -73,8 +73,8 @@ def apply_condition(
     (True, True)
     """
 
-    target = state.creatures[applied.target_ref].creature
-    if applied.condition in target.condition_immunities():
+    immunities = condition_immunities(state, applied.target_ref).values
+    if applied.condition in immunities:
         return ConditionApplicationResult(
             requested_condition=applied.condition,
             rejections=(ConditionRejection(applied.condition, "condition_immunity"),),
@@ -108,10 +108,10 @@ def apply_condition(
         for condition in state.conditions
         if condition.target_ref == applied.target_ref
     )
-    if effective_conditions(
-        target_conditions,
-        target.statistics.condition_immunities,
-    ).has(Condition.INCAPACITATED):
+    suppressions = condition_suppressions(state, applied.target_ref).values
+    if effective_conditions(target_conditions, suppressions).has(
+        Condition.INCAPACITATED
+    ):
         from .ongoing_effects import end_concentration
 
         if hasattr(state, "ongoing_effects"):

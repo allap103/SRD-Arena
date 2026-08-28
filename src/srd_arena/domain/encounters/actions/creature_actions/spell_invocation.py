@@ -97,10 +97,16 @@ def execute_spell_invocation(
     if resource_pool_total is not None and spell is not None:
         resource_allocation_limits = {
             target.target_ref: (
-                target.creature.get_max_health() - target.creature.get_health()
+                state.combat_rules.effective_maximum_health(
+                    state, target.target_ref
+                ).value
+                - target.creature.get_health()
             )
             for target in spell_action_targets(state, actor, spell)
-            if target.creature.get_health() < target.creature.get_max_health()
+            if target.creature.get_health()
+            < state.combat_rules.effective_maximum_health(
+                state, target.target_ref
+            ).value
         }
         selected_targets = []
         maximum_targets = len(resource_allocation_limits)

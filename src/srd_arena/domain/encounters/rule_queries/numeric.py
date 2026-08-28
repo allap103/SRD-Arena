@@ -13,6 +13,7 @@ from ...effects.rule_effects import (
     SpeedMultiplier,
 )
 from ..encounter_models.actions import CreatureRef
+from .defenses import condition_suppressions
 from .models import (
     MovementQueryResult,
     NumericOperation,
@@ -74,7 +75,7 @@ def effective_speed(
     ...     attributes=SimpleNamespace(
     ...         movement=SimpleNamespace(effective_speed_feet=30)
     ...     ),
-    ...     condition_immunities=lambda: frozenset(),
+    ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
@@ -115,7 +116,7 @@ def effective_speed(
     )
     conditions = effective_conditions(
         applied_conditions,
-        creature.condition_immunities(),
+        condition_suppressions(state, creature_ref).values,
     )
     for provider_state_id in conditions.providers_for_trait(CombatTrait.SPEED_ZERO):
         condition = next(
@@ -150,7 +151,7 @@ def movement_budget(
     ...     attributes=SimpleNamespace(
     ...         movement=SimpleNamespace(effective_speed_feet=30)
     ...     ),
-    ...     condition_immunities=lambda: frozenset(),
+    ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},

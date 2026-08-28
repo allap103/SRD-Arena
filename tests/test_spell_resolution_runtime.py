@@ -1,5 +1,6 @@
 """Exercise immediate and persistent authored spell resolution."""
 
+from dataclasses import replace
 from types import SimpleNamespace
 from typing import cast as type_cast
 
@@ -18,6 +19,9 @@ from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.modifiers import RollModifier
 from srd_arena.domain.effects.rule_effects import (
+    DamageReduction,
+    DamageResistance,
+    MaximumHitPointAdjustment,
     RollAdjustment,
 )
 from srd_arena.domain.effects.runtime import (
@@ -956,10 +960,14 @@ def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
     )
     _ORCHESTRATOR.submit(state, fire_action)
 
-    assert caster.has_damage_resistance("fire")
-    assert not caster.has_damage_resistance("cold")
+    resistances = state.combat_rules.damage_resistances(state, "player").values
+    assert "fire" in resistances
+    assert "cold" not in resistances
     assert state.ongoing_effects[0].polarity is EffectPolarity.BENEFICIAL
-    assert state.ongoing_effects[0].parameters["damage_resistances"] == ["fire"]
+    assert any(
+        isinstance(rule, DamageResistance) and rule.damage_types == frozenset({"fire"})
+        for rule in state.ongoing_effects[0].rule_effects
+    )
 
 
 def test_invisibility_is_classified_and_exported_as_beneficial() -> None:
@@ -1121,7 +1129,10 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage() -> None:
     caster.spellcasting.spell_slots_max[5] = 1
     caster.spellcasting.spell_slots_remaining[5] = 1
     target.current_health = 20
-    target.add_damage_resistance("psychic", "test-resistance")
+    target.statistics = replace(
+        target.statistics,
+        damage_resistances=frozenset({"psychic"}),
+    )
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     action = next(
         action
@@ -1150,9 +1161,11 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage() -> None:
         ).mode
         == "disadvantage"
     )
-    assert state.ongoing_effects[0].parameters["repeat_failure_damage"] == [
-        {"dice": "5d10", "damage_type": "psychic"}
-    ]
+    repeat_save = state.ongoing_effects[0].lifecycle.repeat_save
+    assert repeat_save is not None
+    assert [
+        (damage.dice, damage.damage_type) for damage in repeat_save.failure_damage
+    ] == [("5d10", "psychic")]
 
     progress = EncounterProgress()
     resolve_end_turn_effects(state, "goblin_1", progress)
@@ -1199,8 +1212,13 @@ def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
 
     _ORCHESTRATOR.submit(state, fire_action)
 
-    reduction = caster.damage_reduction_sources["resistance"].values()
-    assert [entry.damage_type for entry in reduction] == ["fire"]
+    reductions = [
+        rule
+        for effect in state.ongoing_effects
+        for rule in effect.rule_effects
+        if isinstance(rule, DamageReduction)
+    ]
+    assert [entry.damage_type for entry in reductions] == ["fire"]
 
 
 def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
@@ -1219,9 +1237,12 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
     target = state.creatures["goblin_1"]
     target.position = Position(state.active_position.x + 1, state.active_position.y)
     original = {
-        "player": (caster.get_max_health(), caster.get_health()),
+        "player": (
+            state.combat_rules.effective_maximum_health(state, "player").value,
+            caster.get_health(),
+        ),
         "goblin_1": (
-            target.creature.get_max_health(),
+            state.combat_rules.effective_maximum_health(state, "goblin_1").value,
             target.creature.get_health(),
         ),
     }
@@ -1247,17 +1268,26 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
     )
     _ORCHESTRATOR.submit(state, confirm)
 
-    assert caster.get_max_health() == original["player"][0] + 10
+    assert (
+        state.combat_rules.effective_maximum_health(state, "player").value
+        == original["player"][0] + 10
+    )
     assert caster.get_health() == original["player"][1] + 10
-    assert target.creature.get_max_health() == original["goblin_1"][0] + 10
+    assert (
+        state.combat_rules.effective_maximum_health(state, "goblin_1").value
+        == original["goblin_1"][0] + 10
+    )
     assert target.creature.get_health() == original["goblin_1"][1] + 10
 
     state.round.number = 4801
     expire_ongoing_effects_for_turn_start(state, "player")
 
-    assert (caster.get_max_health(), caster.get_health()) == original["player"]
     assert (
-        target.creature.get_max_health(),
+        state.combat_rules.effective_maximum_health(state, "player").value,
+        caster.get_health(),
+    ) == original["player"]
+    assert (
+        state.combat_rules.effective_maximum_health(state, "goblin_1").value,
         target.creature.get_health(),
     ) == original["goblin_1"]
 
@@ -1482,7 +1512,10 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
         )
     )
     caster.spellcasting.spell_slots_remaining[5] = 1
-    original = (caster.get_max_health(), caster.get_health())
+    original = (
+        state.combat_rules.effective_maximum_health(state, "player").value,
+        caster.get_health(),
+    )
     apply_encounter_effects(
         state,
         [
@@ -1495,16 +1528,16 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
                     "source_label": "Withering Effect",
                     "definition_id": "withering_effect",
                     "target_refs": ["player"],
-                    "parameters": {
-                        "maximum_hit_point_modifier": -10,
-                        "also_modify_current_hit_points": True,
-                    },
                 },
+                rule_effects=(MaximumHitPointAdjustment(-10, True),),
             )
         ],
         origin_id="withering-origin",
     )
-    assert (caster.get_max_health(), caster.get_health()) == (
+    assert (
+        state.combat_rules.effective_maximum_health(state, "player").value,
+        caster.get_health(),
+    ) == (
         original[0] - 10,
         original[1] - 10,
     )
@@ -1516,7 +1549,10 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
     )
     _ORCHESTRATOR.submit(state, action)
 
-    assert (caster.get_max_health(), caster.get_health()) == original
+    assert (
+        state.combat_rules.effective_maximum_health(state, "player").value,
+        caster.get_health(),
+    ) == original
 
 
 def test_lesser_restoration_uses_magic_menu_bucket() -> None:

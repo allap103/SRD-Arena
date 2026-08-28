@@ -226,7 +226,10 @@ def _observe_creature(
             y=creature_state.position.y,
         ),
         health=creature.get_health(),
-        max_health=creature.get_max_health(),
+        max_health=state.combat_rules.effective_maximum_health(
+            state,
+            creature_ref,
+        ).value,
         is_alive=creature_state.is_alive,
         action_available=action_available,
         bonus_action_available=bonus_action_available,
@@ -285,12 +288,7 @@ def _observe_creature(
 def _observe_effect(effect: OngoingEffect) -> OngoingEffectObservation:
     source = effect.identity.source
     definition_id = source.definition_id
-    explicit_label = effect.parameters.get("effect_label")
-    label = (
-        explicit_label
-        if isinstance(explicit_label, str) and explicit_label.strip()
-        else definition_id.replace("_", " ").replace("-", " ").title()
-    )
+    label = effect.label or definition_id.replace("_", " ").replace("-", " ").title()
     return OngoingEffectObservation(
         kind=effect.kind.value,
         polarity=effect.polarity.value,

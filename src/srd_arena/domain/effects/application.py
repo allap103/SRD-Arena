@@ -107,6 +107,8 @@ def _serialize_effect(effect: EffectResult) -> dict[str, object]:
             serialize_runtime_rule_effect(rule_effect)
             for rule_effect in effect.rule_effects
         ]
+    if effect.effect_label is not None:
+        payload["effect_label"] = effect.effect_label
     return payload
 
 

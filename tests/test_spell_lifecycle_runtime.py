@@ -12,14 +12,20 @@ from srd_arena.content.spells import (
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.rule_effects import (
+    ConditionImmunity,
+    ConditionSaveAdvantage,
+    DamageResistance,
     InvocationFailureChance,
     SpeedAdjustment,
 )
 from srd_arena.domain.effects.runtime import (
     EffectSource,
     EffectSourceKind,
+    EndEventRule,
     OngoingEffect,
     OngoingEffectKind,
+    OngoingEffectLifecycle,
+    RepeatSaveLifecycle,
     RuntimeStateIdentity,
 )
 from srd_arena.domain.encounters.condition_state import remove_condition
@@ -33,12 +39,12 @@ from srd_arena.domain.encounters.encounter import (
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import (
     expire_ongoing_effects_for_turn_start,
-    has_condition_save_advantage,
     remove_ongoing_effects,
     resolve_concentration_damage,
     resolve_end_turn_effects,
     resolve_spell_lifecycle_event,
 )
+from srd_arena.domain.encounters.rule_queries import has_condition_save_advantage
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.spells.rules import (
@@ -152,12 +158,14 @@ def test_one_target_repeat_save_does_not_end_multi_target_spell() -> None:
                 "source_label": "Caster",
                 "definition_id": "hold_person",
                 "target_refs": ["goblin_1", "goblin_2"],
-                "parameters": {
-                    "repeat_save_trigger": "end_of_turn",
-                    "save_ability": "wisdom",
-                    "save_dc": 10,
-                },
             },
+            lifecycle=OngoingEffectLifecycle(
+                repeat_save=RepeatSaveLifecycle(
+                    trigger="end_of_turn",
+                    ability="wisdom",
+                    dc=10,
+                )
+            ),
         ),
         *(
             EffectResult(
@@ -204,18 +212,17 @@ def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
                     "source_label": "Caster",
                     "definition_id": "protection_from_poison",
                     "duration_rounds": 600,
-                    "parameters": {
-                        "damage_resistances": ["poison"],
-                        "condition_save_advantages": ["poisoned"],
-                    },
                 },
+                rule_effects=(
+                    DamageResistance(frozenset({"poison"})),
+                    ConditionSaveAdvantage(frozenset({Condition.POISONED})),
+                ),
             )
         ],
         origin_id="protection-cast",
     )
 
-    target = state.creatures["goblin_1"].creature
-    assert target.has_damage_resistance("poison")
+    assert "poison" in state.combat_rules.damage_resistances(state, "goblin_1").values
     assert has_condition_save_advantage(state, "goblin_1", ("poisoned",))
 
     remove_ongoing_effects(
@@ -227,7 +234,9 @@ def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
         ),
     )
 
-    assert not target.has_damage_resistance("poison")
+    assert (
+        "poison" not in state.combat_rules.damage_resistances(state, "goblin_1").values
+    )
     assert not has_condition_save_advantage(state, "goblin_1", ("poisoned",))
 
 
@@ -249,8 +258,8 @@ def test_condition_modifier_applies_to_repeated_saves() -> None:
                     "source_ref": "player",
                     "source_label": "Protector",
                     "definition_id": "protection_from_poison",
-                    "parameters": {"condition_save_advantages": ["poisoned"]},
                 },
+                rule_effects=(ConditionSaveAdvantage(frozenset({Condition.POISONED})),),
             )
         ],
         origin_id="protection-origin",
@@ -266,13 +275,15 @@ def test_condition_modifier_applies_to_repeated_saves() -> None:
                     "source_ref": "goblin_2",
                     "source_label": "Poisoner",
                     "definition_id": "persistent_poison",
-                    "parameters": {
-                        "repeat_save_trigger": "end_of_turn",
-                        "repeat_failure_conditions": ["poisoned"],
-                        "save_ability": "constitution",
-                        "save_dc": 15,
-                    },
                 },
+                lifecycle=OngoingEffectLifecycle(
+                    repeat_save=RepeatSaveLifecycle(
+                        trigger="end_of_turn",
+                        ability="constitution",
+                        dc=15,
+                        failure_conditions=(Condition.POISONED,),
+                    )
+                ),
             ),
         ],
         origin_id="poison-origin",
@@ -364,11 +375,9 @@ def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
                     "source_label": "Caster",
                     "definition_id": "heroism",
                     "duration_rounds": 10,
-                    "parameters": {
-                        "condition_immunities": ["frightened"],
-                        "turn_start_temporary_hit_points": 4,
-                    },
                 },
+                lifecycle=OngoingEffectLifecycle(turn_start_temporary_hit_points=4),
+                rule_effects=(ConditionImmunity(frozenset({Condition.FRIGHTENED})),),
             )
         ],
         origin_id="heroism-cast",
@@ -980,10 +989,10 @@ def test_adjacent_creature_can_spend_action_to_wake_sleep_target() -> None:
                     "source_ref": "player",
                     "source_label": "Traveler",
                     "definition_id": "sleep",
-                    "parameters": {
-                        "end_events": [["adjacent_creature_wakes_target", "any"]]
-                    },
                 },
+                lifecycle=OngoingEffectLifecycle(
+                    end_events=(EndEventRule("adjacent_creature_wakes_target", "any"),)
+                ),
             ),
             EffectResult(
                 kind="apply_condition",
@@ -1048,8 +1057,10 @@ def test_spell_lifecycle_event_ends_effect_for_affected_target(
                     "source_ref": "player",
                     "source_label": "Traveler",
                     "definition_id": definition_id,
-                    "parameters": {"end_events": [[event, "any"]]},
                 },
+                lifecycle=OngoingEffectLifecycle(
+                    end_events=(EndEventRule(event, "any"),)
+                ),
             ),
             EffectResult(
                 kind="apply_condition",
@@ -1095,8 +1106,10 @@ def test_charm_ends_only_when_source_side_damages_target() -> None:
                     "source_ref": "player",
                     "source_label": "Traveler",
                     "definition_id": "charm_person",
-                    "parameters": {"end_events": [["target_damaged", "source_team"]]},
                 },
+                lifecycle=OngoingEffectLifecycle(
+                    end_events=(EndEventRule("target_damaged", "source_team"),)
+                ),
             ),
             EffectResult(
                 kind="apply_condition",
@@ -1148,12 +1161,15 @@ def test_hideous_laughter_damage_save_has_advantage() -> None:
                     "source_ref": "player",
                     "source_label": "Traveler",
                     "definition_id": "hideous_laughter",
-                    "parameters": {
-                        "damage_repeat_save_advantage": True,
-                        "save_ability": "wisdom",
-                        "save_dc": 15,
-                    },
                 },
+                lifecycle=OngoingEffectLifecycle(
+                    repeat_save=RepeatSaveLifecycle(
+                        trigger="end_of_turn",
+                        ability="wisdom",
+                        dc=15,
+                        damage_grants_advantage=True,
+                    )
+                ),
             ),
             EffectResult(
                 kind="apply_condition",
@@ -1288,7 +1304,6 @@ def test_new_concentration_replaces_the_previous_effect_tree() -> None:
                         "source_ref": "player",
                         "source_label": "Traveler",
                         "definition_id": "hold_person",
-                        "parameters": {},
                     },
                 ),
                 EffectResult(
@@ -1369,9 +1384,7 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell() -> None:
         f"{caster.name} drops concentration on Hold Person.",
     ) in result.messages
     assert state.has_condition("goblin_1", Condition.PARALYZED) is False
-    assert state.ongoing_effects[0].parameters["effect_label"] == (
-        "Protection from Energy"
-    )
+    assert state.ongoing_effects[0].label == "Protection from Energy"
 
 
 def test_somatic_invocation_failure_spends_resources_before_resolution() -> None:
@@ -1481,7 +1494,6 @@ def test_failed_damage_save_ends_concentration_and_its_conditions() -> None:
                     "source_ref": "player",
                     "source_label": "Traveler",
                     "definition_id": "hold_person",
-                    "parameters": {},
                 },
             ),
             EffectResult(

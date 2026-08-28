@@ -199,9 +199,10 @@ def _end_replaced_concentration(
     )
     if existing is None:
         return
-    effect_label = existing.parameters.get("effect_label")
-    if not isinstance(effect_label, str):
-        effect_label = existing.identity.source.definition_id.replace("_", " ").title()
+    effect_label = (
+        existing.label
+        or existing.identity.source.definition_id.replace("_", " ").title()
+    )
     progress.messages.append(
         (
             "system",

@@ -15,6 +15,61 @@ from ..actions.eligibility_rules.models import EligibilityFailure
 from ..encounter_models.actions import CreatureRef
 
 
+@dataclass(frozen=True)
+class SourcedRuleContribution[T]:
+    """Associate one typed rule value with its runtime state and source."""
+
+    provider_state_id: str
+    source: EffectSource
+    value: T
+
+
+@dataclass(frozen=True)
+class SetRuleResult[T]:
+    """Compose intrinsic values with sourced set-valued contributions."""
+
+    intrinsic: frozenset[T] = frozenset()
+    contributions: tuple[SourcedRuleContribution[frozenset[T]], ...] = ()
+
+    @property
+    def values(self) -> frozenset[T]:
+        """Return the union of intrinsic and sourced values.
+
+        >>> SetRuleResult(frozenset({"fire"})).values
+        frozenset({'fire'})
+        """
+
+        return self.intrinsic.union(
+            value for contribution in self.contributions for value in contribution.value
+        )
+
+
+@dataclass(frozen=True)
+class SenseRuleResult:
+    """Report an intrinsic sense range and every sourced granted range."""
+
+    intrinsic_range: int | None = None
+    contributions: tuple[SourcedRuleContribution[int], ...] = ()
+
+    @property
+    def range_feet(self) -> int | None:
+        """Return the longest available range for the requested sense.
+
+        >>> SenseRuleResult(60).range_feet
+        60
+        """
+
+        ranges = [
+            value
+            for value in (
+                self.intrinsic_range,
+                *(contribution.value for contribution in self.contributions),
+            )
+            if value is not None
+        ]
+        return max(ranges) if ranges else None
+
+
 class NumericOperation(StrEnum):
     """A supported contribution to an integer-valued combat rule."""
 

@@ -72,10 +72,7 @@ def resolve_target_roll(
         automatic_success_reasons = tuple(
             f"{context.spell.name}: immune to {condition}"
             for condition in prepared.automatic_success_condition_immunities
-            if any(
-                immunity.value == condition
-                for immunity in target.creature.statistics.condition_immunities
-            )
+            if any(immunity == condition for immunity in target.condition_immunities)
         )
         automatic_success_reasons += tuple(
             f"{context.spell.name}: {trait}"

@@ -91,7 +91,11 @@ def resolve_utilize_action(
     dice_count, dice_sides, modifier = healing_dice
     dice_total = state.dice.roll_dice(dice_count, dice_sides)
     healing_total = dice_total + modifier
-    applied_healing = actor.heal(healing_total)
+    applied_healing = state.combat_rules.apply_healing(
+        state,
+        creature_ref,
+        healing_total,
+    )
     consumed = item.has_misc_tag("CNS")
     if consumed:
         actor.inventory.remove_item(item.id)

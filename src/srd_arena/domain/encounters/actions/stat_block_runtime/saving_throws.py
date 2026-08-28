@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from functools import partial
 from typing import TYPE_CHECKING, cast
 
 from ....capabilities import CapabilityEffect, ConditionEffect, DamageEffect
@@ -18,7 +19,6 @@ from ...attack_economy import consume_action
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
-from ...ongoing_effects import has_condition_save_advantage
 from ...state_combat import automatic_save_failure_provider_ids_for
 from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
@@ -95,7 +95,7 @@ def resolve_saving_throw_stat_block_action(
             definition.dc,
             mode=(
                 "advantage"
-                if has_condition_save_advantage(
+                if state.combat_rules.has_condition_save_advantage(
                     state,
                     target_ref,
                     inflicted_conditions,
@@ -129,6 +129,11 @@ def resolve_saving_throw_stat_block_action(
             half=(saving_throw.check.success and definition.success_damage == "half"),
             dice_roller=state.dice.roll_dice,
             modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
+            damage_receiver=partial(
+                state.combat_rules.apply_damage,
+                state,
+                target_ref,
+            ),
         )
         non_damage_effects = (*effects, *definition.always)
         if any(not isinstance(effect, DamageEffect) for effect in non_damage_effects):
@@ -146,6 +151,11 @@ def resolve_saving_throw_stat_block_action(
             half=False,
             dice_roller=state.dice.roll_dice,
             modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
+            damage_receiver=partial(
+                state.combat_rules.apply_damage,
+                state,
+                target_ref,
+            ),
         )
         outcomes.append(
             {
@@ -265,6 +275,7 @@ def apply_damage_effects(
     half: bool,
     dice_roller: Callable[[int, int], int],
     modifier_for_roll: Callable[[], int] | None = None,
+    damage_receiver: Callable[[int, str | None], int] | None = None,
 ) -> int:
     """Apply supported damage effects and return damage actually received.
 
@@ -273,7 +284,7 @@ def apply_damage_effects(
 
     >>> from types import SimpleNamespace
     >>> effect = DamageEffect("2d6", 2, "fire")
-    >>> target = SimpleNamespace(take_damage=lambda amount, damage_type: amount - 1)
+    >>> target = SimpleNamespace(take_damage=lambda amount: amount - 1)
     >>> apply_damage_effects(
     ...     target, (effect,), half=True,
     ...     dice_roller=lambda count, sides: 8,
@@ -293,5 +304,8 @@ def apply_damage_effects(
         )
         if half:
             amount //= 2
-        total += target.take_damage(amount, effect.damage_type)
+        receiver = damage_receiver or (
+            lambda value, _damage_type: target.take_damage(value)
+        )
+        total += receiver(amount, effect.damage_type)
     return total

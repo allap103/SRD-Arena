@@ -353,7 +353,6 @@ def test_slow_limits_attacks_made_through_multiattack() -> None:
                     "source_ref": "avatar",
                     "source_label": "Slow",
                     "definition_id": "slow",
-                    "parameters": {},
                 },
                 rule_effects=(AttackLimit(1),),
             )
@@ -408,8 +407,8 @@ def test_ending_slow_mid_multiattack_restores_pending_attacks() -> None:
                     "source_ref": "assassin_target",
                     "source_label": "Slow",
                     "definition_id": "slow",
-                    "parameters": {"effect_label": "Slow"},
                 },
+                effect_label="Slow",
                 rule_effects=(AttackLimit(1),),
             )
         ],
@@ -540,8 +539,8 @@ def test_ending_slow_mid_attack_restores_unused_extra_attack() -> None:
                     "source_ref": "goblin_1",
                     "source_label": "Goblin Warrior",
                     "definition_id": "slow",
-                    "parameters": {"effect_label": "Slow"},
                 },
+                effect_label="Slow",
                 rule_effects=(AttackLimit(1),),
             )
         ],

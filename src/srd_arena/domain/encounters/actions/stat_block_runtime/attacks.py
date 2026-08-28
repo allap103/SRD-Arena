@@ -147,6 +147,12 @@ def resolve_attack_action(
         defender,
         attacker_label=creature.name,
         target_label=target_label,
+        damage_receiver=lambda amount, damage_type: state.combat_rules.apply_damage(
+            state,
+            target_ref,
+            amount,
+            damage_type,
+        ),
     )
     resolve_spell_lifecycle_event(
         state,

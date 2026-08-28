@@ -33,7 +33,7 @@ def apply_target_damage(
     ... )
     >>> target = SimpleNamespace(
     ...     target_ref="goblin", target_label="Goblin",
-    ...     creature=SimpleNamespace(take_damage=lambda amount, kind: amount),
+    ...     take_damage=lambda amount, kind: amount,
     ... )
     >>> prepared = SimpleNamespace(
     ...     half_damage_on_save=False, resolution=AutomaticResolution(Outcome())
@@ -51,7 +51,7 @@ def apply_target_damage(
             final_damage = final_damage // 2 if prepared.half_damage_on_save else 0
         if isinstance(prepared.resolution, AttackResolution) and not roll_outcome.hit:
             final_damage = 0
-        applied = target.creature.take_damage(final_damage, damage.damage_type)
+        applied = target.take_damage(final_damage, damage.damage_type)
         total_applied += applied
         details.append(
             {
