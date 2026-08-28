@@ -1,8 +1,7 @@
 from pathlib import Path
 
 from srd_arena.domain.effects.conditions import Condition
-from srd_arena.infrastructure.scenarios import load_scenario
-
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "spell_condition_showcase"
@@ -10,8 +9,8 @@ SCENARIO_DIR = (
 
 
 def test_spell_condition_showcase_loads_wave_1b_capability() -> None:
-    session = load_scenario(str(SCENARIO_DIR)).create_session()
-    session.get_scene_view()
+    session = load_scenario_directory(str(SCENARIO_DIR)).create_session()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

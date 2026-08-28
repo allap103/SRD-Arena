@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 from ....capabilities import DamageEffect
 from ....creatures import Creature
 from ....creatures.stat_block_actions import AutomaticActionDefinition
+from ...models import EncounterAction, EncounterProgress
 from .resources import consume_stat_block_action_resource
 from .rolls import roll_dice
-from ...models import EncounterAction, EncounterProgress
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -23,7 +23,24 @@ def resolve_automatic_stat_block_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Apply a supported automatic stat-block action to one target."""
+    """Apply a supported automatic stat-block action to one target.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.capabilities import CapabilityTarget
+    >>> definition = AutomaticActionDefinition(
+    ...     "Aura", CapabilityTarget("creature"), ()
+    ... )
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="monster")
+    ... )
+    >>> resolve_automatic_stat_block_action(
+    ...     state, SimpleNamespace(), definition,
+    ...     EncounterAction("Aura", "stat_block"), EncounterProgress(), "aura-1"
+    ... )
+    Traceback (most recent call last):
+    ...
+    ValueError: Automatic stat-block action requires a target.
+    """
     creature_ref = state.current_decision().creature_ref
     if not isinstance(action.value, str):
         raise ValueError("Automatic stat-block action requires a target.")

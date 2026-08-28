@@ -1,3 +1,5 @@
+"""Define condition vocabulary and sourced condition applications."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -15,6 +17,8 @@ from .triggered import TriggeredEffect
 
 
 class Condition(StrEnum):
+    """Name the rules conditions that can affect a creature."""
+
     BLINDED = "blinded"
     CHARMED = "charmed"
     DEAFENED = "deafened"
@@ -33,6 +37,8 @@ class Condition(StrEnum):
 
 
 class CombatTrait(StrEnum):
+    """Name reusable rule consequences supplied by one or more conditions."""
+
     CANNOT_TAKE_ACTIONS = "cannot_take_actions"
     CANNOT_TAKE_REACTIONS = "cannot_take_reactions"
     SPEED_ZERO = "speed_zero"
@@ -45,6 +51,13 @@ class CombatTrait(StrEnum):
 
 @dataclass(frozen=True)
 class AppliedCondition:
+    """Track one sourced application of a condition to a creature.
+
+    Applications remain separate so their sources and durations can be
+    resolved independently, even though a condition's mechanical effects
+    apply only once.
+    """
+
     identity: RuntimeStateIdentity
     condition: Condition
     target_ref: str
@@ -64,14 +77,35 @@ class AppliedCondition:
 
     @property
     def id(self) -> str:
+        """Return the stable runtime identity of this condition instance.
+
+        >>> condition = build_applied_condition(condition=Condition.PRONE,
+        ...     source_ref="ogre", source_label="Ogre", target_ref="hero")
+        >>> condition.id
+        'condition:prone:source:ogre:hero'
+        """
         return self.identity.id
 
     @property
     def source_ref(self) -> str | None:
+        """Return the creature or object that applied the condition.
+
+        >>> condition = build_applied_condition(condition=Condition.GRAPPLED,
+        ...     source_ref="ogre", source_label="Ogre", target_ref="hero")
+        >>> condition.source_ref
+        'ogre'
+        """
         return self.identity.source.applied_by_ref
 
     @property
     def source_label(self) -> str:
+        """Return the most readable available name for the condition source.
+
+        >>> condition = build_applied_condition(condition=Condition.STUNNED,
+        ...     source_ref="monk", source_label="Monk", target_ref="ogre")
+        >>> condition.source_label
+        'Monk'
+        """
         return (
             self.identity.source.label
             or self.identity.source.applied_by_ref
@@ -96,10 +130,16 @@ def build_applied_condition(
     parent_id: str | None = None,
     root_id: str | None = None,
 ) -> AppliedCondition:
+    """Build one sourced condition instance for a target.
+
+    >>> condition = build_applied_condition(condition=Condition.POISONED,
+    ...     source_ref="spider", source_label="Spider", target_ref="hero")
+    >>> (condition.condition, condition.target_ref)
+    (<Condition.POISONED: 'poisoned'>, 'hero')
+    """
+
     resolved_origin_id = origin_id or f"source:{source_ref}"
-    condition_id = (
-        f"condition:{condition.value}:{resolved_origin_id}:{target_ref}"
-    )
+    condition_id = f"condition:{condition.value}:{resolved_origin_id}:{target_ref}"
     if duration is None:
         duration = (
             UntilTurnEnd(expires_on_creature_ref, expires_on_round)

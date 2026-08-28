@@ -1,7 +1,9 @@
+"""Implement fighter-specific feature mechanics that remain clearer in Python."""
+
 from __future__ import annotations
 
-from ..model import Creature
 from ...effects.results import EffectResult
+from ..model import Creature
 from .types import CapabilityActionResult, DiceRoller
 
 
@@ -10,6 +12,23 @@ def resolve_fighter_feature(
     feature_id: str,
     roll_dice: DiceRoller,
 ) -> CapabilityActionResult | None:
+    """Execute the supported fighter feature identified by an action grant.
+
+    >>> from ..attributes import Attributes
+    >>> from ..equipment import Equipment
+    >>> from ..inventory import Inventory
+    >>> fighter = Creature(
+    ...     "fighter", "Fighter", "", Inventory(),
+    ...     Attributes(20, 1, 10, 10, 10, 10, 10, 10, 10), Equipment(),
+    ...     feature_uses_remaining={"action_surge": 1},
+    ... )
+    >>> result = resolve_fighter_feature(
+    ...     fighter, "action_surge", lambda count, sides: count
+    ... )
+    >>> (result.details["grant_actions"], fighter.feature_uses_remaining)
+    (1, {'action_surge': 0})
+    """
+
     if feature_id == "second_wind":
         return _resolve_second_wind(creature, roll_dice)
     if feature_id == "action_surge":
@@ -17,7 +36,9 @@ def resolve_fighter_feature(
     return None
 
 
-def _resolve_second_wind(creature: Creature, roll_dice: DiceRoller) -> CapabilityActionResult:
+def _resolve_second_wind(
+    creature: Creature, roll_dice: DiceRoller
+) -> CapabilityActionResult:
     dice_count, dice_sides = _feature_healing_dice(creature, "second_wind")
     dice_total = roll_dice(dice_count, dice_sides)
     healing_total = dice_total + creature.attributes.level
@@ -55,7 +76,9 @@ def _resolve_second_wind(creature: Creature, roll_dice: DiceRoller) -> Capabilit
                 },
             )
         ],
-        resource_updates={"second_wind": creature.feature_uses_remaining["second_wind"]},
+        resource_updates={
+            "second_wind": creature.feature_uses_remaining["second_wind"]
+        },
     )
 
 
@@ -71,7 +94,9 @@ def _resolve_action_surge(creature: Creature) -> CapabilityActionResult:
             ("system", "You steel yourself and gain an additional Action this turn."),
         ],
         effects=[],
-        resource_updates={"action_surge": creature.feature_uses_remaining["action_surge"]},
+        resource_updates={
+            "action_surge": creature.feature_uses_remaining["action_surge"]
+        },
         details={"grant_actions": 1},
     )
 

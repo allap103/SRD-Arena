@@ -8,12 +8,20 @@ from .requirements import CapabilityRequirement
 
 @dataclass(frozen=True)
 class TargetCount:
+    """Constrain how many targets one capability invocation may select."""
+
     minimum: int = 1
     maximum: int | Literal["all", "ability_modifier"] = 1
 
 
 @dataclass(frozen=True)
 class CapabilityTarget:
+    """Declare which entities or area occupants a capability may affect.
+
+    Target declarations combine geometry, range, disposition, selection mode,
+    and rule requirements without storing the targets chosen at runtime.
+    """
+
     kind: Literal["self", "creature", "area"]
     count: TargetCount = TargetCount()
     range_feet: int | None = None

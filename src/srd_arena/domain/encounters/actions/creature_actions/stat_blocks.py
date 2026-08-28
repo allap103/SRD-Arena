@@ -1,3 +1,5 @@
+"""Discover executable actions authored in a creature's stat block."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -19,6 +21,20 @@ def stat_block_action_candidates(
     creature_ref: CreatureRef,
     display_name: Callable[[Creature, str], str],
 ) -> list[EncounterAction]:
+    """Build actor-relative candidates from all supported stat-block sections.
+
+    >>> from types import SimpleNamespace
+    >>> actor = SimpleNamespace(
+    ...     creature=SimpleNamespace(stat_block_actions={}),
+    ...     position=SimpleNamespace(x=0, y=0),
+    ... )
+    >>> state = SimpleNamespace(creatures={"hero": actor})
+    >>> stat_block_action_candidates(
+    ...     state, "hero", lambda creature, name: name
+    ... )
+    []
+    """
+
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
     for definition in actor.creature.stat_block_actions.values():

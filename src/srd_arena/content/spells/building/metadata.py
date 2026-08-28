@@ -1,17 +1,27 @@
+"""Extract normalized rule metadata from validated spell content."""
+
 import re
 
-from srd_arena.content.spells.schema import SpellSchema
 from srd_arena.content.capabilities import DamageEffectSchema
 from srd_arena.content.spells.resolution import (
     AutomaticResolutionSchema,
-    RepeatResolutionSchema,
     RemoveEffectSchema,
+    RepeatResolutionSchema,
     SavingThrowResolutionSchema,
     SpellAttackResolutionSchema,
 )
+from srd_arena.content.spells.schema import SpellSchema
 
 
 def spell_damage_dice(raw: SpellSchema) -> str | None:
+    """Return the base damage expression authored for a spell outcome.
+
+    >>> spell = SpellSchema.model_construct(
+    ...     capability=None, entries=["Damage: {@damage 8d6}."], range={})
+    >>> spell_damage_dice(spell)
+    '8d6'
+    """
+
     if raw.capability is not None:
         resolution = raw.capability.resolution.root
         if isinstance(resolution, RepeatResolutionSchema):
@@ -46,6 +56,16 @@ def spell_damage_dice(raw: SpellSchema) -> str | None:
 
 
 def spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
+    """Collect condition kinds that the spell can explicitly remove.
+
+    >>> spell = SpellSchema.model_construct(
+    ...     capability=None,
+    ...     entries=["End one condition on it: {@condition Blinded}."],
+    ...     range={})
+    >>> spell_removable_conditions(spell)
+    ('blinded',)
+    """
+
     if raw.capability is not None:
         resolution = raw.capability.resolution.root
         if isinstance(resolution, RepeatResolutionSchema):
@@ -72,6 +92,23 @@ def spell_removable_conditions(raw: SpellSchema) -> tuple[str, ...]:
 
 
 def remove_effect_selection(raw: SpellSchema) -> str | None:
+    """Return the spell's authored choice among removable effect categories.
+
+    >>> spell = SpellSchema.model_validate({
+    ...     "name": "Restore", "source": "TEST", "level": 2, "school": "A",
+    ...     "implementation": {"status": "complete"},
+    ...     "capability": {
+    ...         "target": {"type": "creature"},
+    ...         "resolution": {"type": "automatic", "outcome": {"effects": [{
+    ...             "type": "remove_effect", "selection": "one",
+    ...             "removable": ["condition", "curse"]
+    ...         }]}},
+    ...     },
+    ... })
+    >>> remove_effect_selection(spell)
+    'one'
+    """
+
     if raw.capability is None:
         return None
     resolution = raw.capability.resolution.root
@@ -91,6 +128,23 @@ def remove_effect_selection(raw: SpellSchema) -> str | None:
 
 
 def spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
+    """Collect the authored effect categories that a spell can remove.
+
+    >>> spell = SpellSchema.model_validate({
+    ...     "name": "Restore", "source": "TEST", "level": 2, "school": "A",
+    ...     "implementation": {"status": "complete"},
+    ...     "capability": {
+    ...         "target": {"type": "creature"},
+    ...         "resolution": {"type": "automatic", "outcome": {"effects": [{
+    ...             "type": "remove_effect", "selection": "one",
+    ...             "removable": ["condition", "curse"]
+    ...         }]}},
+    ...     },
+    ... })
+    >>> spell_removable_effect_kinds(spell)
+    ('condition', 'curse')
+    """
+
     if raw.capability is None:
         return ()
     resolution = raw.capability.resolution.root
@@ -110,6 +164,14 @@ def spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
 
 
 def spell_geometry_mode(raw: SpellSchema) -> str:
+    """Map authored area metadata to the domain's grid geometry mode.
+
+    >>> cone = SpellSchema.model_construct(
+    ...     capability=None, entries=[], range={"type": "cone"})
+    >>> spell_geometry_mode(cone)
+    'directional_area'
+    """
+
     if raw.capability is not None and raw.capability.target.type == "area":
         return (
             "directional_area"
@@ -131,6 +193,15 @@ def spell_geometry_mode(raw: SpellSchema) -> str:
 
 
 def spell_area_size_feet(raw: SpellSchema) -> int | None:
+    """Return the authored linear size used to construct the spell's area.
+
+    >>> spell = SpellSchema.model_construct(
+    ...     capability=None, entries=["A 20-foot-radius sphere."],
+    ...     range={"type": "point"})
+    >>> spell_area_size_feet(spell)
+    20
+    """
+
     if raw.capability is not None and raw.capability.target.type == "area":
         geometry = raw.capability.target.geometry
         return geometry.radius_feet or geometry.length_feet

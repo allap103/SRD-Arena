@@ -2,15 +2,10 @@
 
 from __future__ import annotations
 
-from srd_arena.domain.encounters.models import (
-    ActionCost,
-    CombatEvent,
-    EncounterAction,
-)
-from srd_arena.domain.geometry import MovementCost
-from srd_arena.domain.spells.rules import spell_action_value
-from srd_arena.runtime.models import TurnResult
-from srd_arena.runtime.session import Session
+from srd_arena.domain.encounters.models import CombatEvent
+from srd_arena.engine.api import GameEngine
+from srd_arena.engine.models import EngineOutcome
+from srd_arena.engine.queries import ActionAim, ActionResourceAllocation
 
 from .commands import (
     AimAction,
@@ -25,7 +20,7 @@ from .commands import (
     SelectAction,
     SetResourceAllocation,
 )
-from .observations import ActionObservation, GameObservation, observe_session
+from .observations import GameObservation, observe_session
 from .values import freeze_mapping
 
 
@@ -35,8 +30,26 @@ class _CommandRejected(Exception):
         self.code = code
 
 
-def execute_game_command(session: Session, command: GameCommand) -> CommandResult:
-    """Execute a command if it still matches the advertised decision."""
+def execute_game_command(
+    session: GameEngine,
+    command: GameCommand,
+) -> CommandResult:
+    """Execute a command if it still matches the advertised decision.
+
+    A stale command is rejected before it can reach the engine.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.engine.queries import SessionRead
+    >>> read = SessionRead(
+    ...     scene_id="intro", scene_text=None, action_options=(),
+    ...     encounter_state=None, transition_message=None, team_ids=(),
+    ...     creature_labels={}, creature_team_ids={}, item_names={},
+    ...     requires_automatic_advance=False)
+    >>> session = SimpleNamespace(read=lambda: read)
+    >>> result = execute_game_command(session, SelectAction("wait", "old"))
+    >>> (result.accepted, result.failure.code)
+    (False, 'stale_decision')
+    """
 
     observation = observe_session(session)
     if command.expected_decision_id != decision_id(observation):
@@ -66,8 +79,22 @@ def execute_game_command(session: Session, command: GameCommand) -> CommandResul
     return CommandResult(update=game_update(session, engine_result))
 
 
-def game_update(session: Session, result: TurnResult) -> GameUpdate:
-    """Translate an accepted engine result into an application update."""
+def game_update(session: GameEngine, result: EngineOutcome) -> GameUpdate:
+    """Translate an accepted engine result into an application update.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.engine.queries import SessionRead
+    >>> read = SessionRead(
+    ...     scene_id="intro", scene_text=None, action_options=(),
+    ...     encounter_state=None, transition_message=None, team_ids=(),
+    ...     creature_labels={}, creature_team_ids={}, item_names={},
+    ...     requires_automatic_advance=False)
+    >>> update = game_update(
+    ...     SimpleNamespace(read=lambda: read),
+    ...     EngineOutcome(selected_action_id="wait", messages=(("Hero", "Waits"),)))
+    >>> (update.selected_action_id, update.messages)
+    ('wait', (('Hero', 'Waits'),))
+    """
 
     return GameUpdate(
         observation=observe_session(session),
@@ -92,16 +119,24 @@ def _observe_event(event: CombatEvent) -> GameEvent:
 
 
 def decision_id(observation: GameObservation) -> str | None:
+    """Return the decision token clients must echo with their next command.
+
+    >>> from srd_arena.application.observation_models import GameObservation, SceneObservation
+    >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
+    >>> decision_id(observation) is None
+    True
+    """
+
     return (
         observation.encounter.decision.id if observation.encounter is not None else None
     )
 
 
 def _select_advertised(
-    session: Session,
+    session: GameEngine,
     observation: GameObservation,
     action_id: str,
-) -> TurnResult:
+) -> EngineOutcome:
     option = next(
         (
             option
@@ -119,10 +154,10 @@ def _select_advertised(
 
 
 def _aim_action(
-    session: Session,
+    session: GameEngine,
     observation: GameObservation,
     command: AimAction,
-) -> TurnResult:
+) -> EngineOutcome:
     option = next(
         (
             option
@@ -136,29 +171,17 @@ def _aim_action(
             "action_unavailable",
             f"Aimable action '{command.action_id}' is not available.",
         )
-    value: str | tuple[float, float]
-    if option.kind == "spell":
-        spell_id = option.source_id
-        if spell_id is None:
-            raise _CommandRejected(
-                "action_unavailable",
-                f"Spell action '{command.action_id}' has no source identifier.",
-            )
-        value = spell_action_value(
-            spell_id,
-            aim_point=(command.x, command.y),
-            slot_level=option.resource_level,
-        )
-    else:
-        value = (command.x, command.y)
-    return session.choose_encounter_action(_encounter_action(option, value=value))
+    return session.configure_action(
+        option.id,
+        ActionAim(x=command.x, y=command.y),
+    )
 
 
 def _change_target(
-    session: Session,
+    session: GameEngine,
     observation: GameObservation,
     command: ChangeTarget,
-) -> TurnResult:
+) -> EngineOutcome:
     encounter = observation.encounter
     if encounter is None or encounter.targeting is None:
         raise _CommandRejected(
@@ -205,10 +228,10 @@ def _change_target(
 
 
 def _set_resource_allocation(
-    session: Session,
+    session: GameEngine,
     observation: GameObservation,
     command: SetResourceAllocation,
-) -> TurnResult:
+) -> EngineOutcome:
     encounter = observation.encounter
     targeting = encounter.targeting if encounter is not None else None
     if targeting is None or targeting.resource_pool_total is None:
@@ -254,19 +277,20 @@ def _set_resource_allocation(
             "allocation_target_unavailable",
             "The requested allocation target is not available.",
         )
-    return session.choose_encounter_action(
-        _encounter_action(
-            option,
-            value=f"{command.target_ref}~{command.amount}",
-        )
+    return session.configure_action(
+        option.id,
+        ActionResourceAllocation(
+            target_ref=command.target_ref,
+            amount=command.amount,
+        ),
     )
 
 
 def _select_kind(
-    session: Session,
+    session: GameEngine,
     observation: GameObservation,
     kind: str,
-) -> TurnResult:
+) -> EngineOutcome:
     option = next(
         (
             option
@@ -281,29 +305,6 @@ def _select_kind(
             f"No '{kind}' action is available.",
         )
     return session.choose(option.id)
-
-
-def _encounter_action(
-    option: ActionObservation,
-    *,
-    value: str | tuple[float, float],
-) -> EncounterAction:
-    return EncounterAction(
-        label=option.label,
-        kind=option.kind,
-        value=value,
-        id=option.id,
-        creature_ref=option.creature_ref,
-        cost=ActionCost(
-            movement=MovementCost(option.cost.get("movement", 0)),
-            action=option.cost.get("action", 0),
-            bonus_action=option.cost.get("bonus_action", 0),
-            reaction=option.cost.get("reaction", 0),
-        ),
-        source_trigger_id=option.source_trigger_id,
-        preferred_attack_type=option.preferred_attack_type,
-        preferred_attack_name=option.preferred_attack_name,
-    )
 
 
 def _reject(code: str, message: str) -> CommandResult:

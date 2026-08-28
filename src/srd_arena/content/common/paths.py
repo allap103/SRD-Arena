@@ -1,3 +1,5 @@
+"""Locate bundled SRD content independently of the process working directory."""
+
 from pathlib import Path
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[2]

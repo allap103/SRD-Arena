@@ -1,8 +1,7 @@
 from pathlib import Path
 
 from srd_arena.domain.encounters import EncounterOrchestrator
-from srd_arena.infrastructure.scenarios import load_scenario
-
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 SCENARIO_DIR = (
     Path(__file__).parents[1]
@@ -14,10 +13,10 @@ _ORCHESTRATOR = EncounterOrchestrator()
 
 
 def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> None:
-    session = load_scenario(
+    session = load_scenario_directory(
         str(SCENARIO_DIR), start_scene="mass_heal_allocation_showcase"
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

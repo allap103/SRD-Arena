@@ -1,5 +1,14 @@
 from types import SimpleNamespace
+from typing import cast
 
+from srd_arena.domain.creatures import CreatureStatistics
+from srd_arena.domain.effects.conditions import (
+    AppliedCondition,
+    Condition,
+    build_applied_condition,
+)
+from srd_arena.domain.effects.runtime import CreatureRelationship
+from srd_arena.domain.encounters import EncounterTeam
 from srd_arena.domain.encounters.conditions import (
     apply_condition,
     apply_grapple,
@@ -8,17 +17,19 @@ from srd_arena.domain.encounters.conditions import (
     remove_condition_from_source,
     remove_relationships_for_creature,
 )
+from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.participants import (
-    creatures_are_opponents,
     creature_controller,
     creature_team_id,
+    creatures_are_opponents,
 )
-from srd_arena.domain.encounters import EncounterTeam
-from srd_arena.domain.creatures import CreatureStatistics
-from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 
 
-def _condition(condition: Condition, source: str, target: str):
+def _condition(
+    condition: Condition,
+    source: str,
+    target: str,
+) -> AppliedCondition:
     return build_applied_condition(
         condition=condition,
         source_ref=source,
@@ -28,21 +39,25 @@ def _condition(condition: Condition, source: str, target: str):
 
 
 def _condition_state(
-    *, conditions=None, relationships=None, immunities=frozenset()
-):
-    return SimpleNamespace(
-        conditions=list(conditions or ()),
-        relationships=list(relationships or ()),
-        creatures={
-            "player": SimpleNamespace(
-                creature=SimpleNamespace(
-                    statistics=CreatureStatistics(
-                        condition_immunities=immunities
-                    ),
-                    condition_immunities=lambda: immunities,
+    *,
+    conditions: list[AppliedCondition] | None = None,
+    relationships: list[CreatureRelationship] | None = None,
+    immunities: frozenset[Condition] = frozenset(),
+) -> EncounterState:
+    return cast(
+        EncounterState,
+        SimpleNamespace(
+            conditions=list(conditions or ()),
+            relationships=list(relationships or ()),
+            creatures={
+                "player": SimpleNamespace(
+                    creature=SimpleNamespace(
+                        statistics=CreatureStatistics(condition_immunities=immunities),
+                        condition_immunities=lambda: immunities,
+                    )
                 )
-            )
-        },
+            },
+        ),
     )
 
 
@@ -89,9 +104,7 @@ def test_apply_condition_preserves_instances_from_distinct_origins() -> None:
 def test_condition_immunity_rejects_new_application() -> None:
     state = _condition_state(immunities=frozenset({Condition.PRONE}))
 
-    result = apply_condition(
-        state, _condition(Condition.PRONE, "wizard", "player")
-    )
+    result = apply_condition(state, _condition(Condition.PRONE, "wizard", "player"))
 
     assert result.accepted is False
     assert result.rejections[0].reason == "condition_immunity"
@@ -107,9 +120,7 @@ def test_unconscious_applies_persistent_prone_consequence() -> None:
     remove_condition(state, "player", Condition.UNCONSCIOUS)
 
     assert result.accepted is True
-    assert [condition.condition for condition in state.conditions] == [
-        Condition.PRONE
-    ]
+    assert [condition.condition for condition in state.conditions] == [Condition.PRONE]
 
 
 def test_prone_immunity_does_not_reject_unconscious() -> None:
@@ -160,7 +171,9 @@ def test_removing_one_grapple_source_preserves_other_grapples() -> None:
     )
 
     assert state.conditions == [second]
-    assert [relationship.source_ref for relationship in state.relationships] == ["goblin_2"]
+    assert [relationship.source_ref for relationship in state.relationships] == [
+        "goblin_2"
+    ]
 
 
 def test_defeated_creature_releases_all_grapple_relationships() -> None:
@@ -176,17 +189,20 @@ def test_defeated_creature_releases_all_grapple_relationships() -> None:
 
 
 def test_participant_queries_use_authored_teams_and_controllers() -> None:
-    state = SimpleNamespace(
-        creatures={
-            "player": SimpleNamespace(creature_id="player"),
-            "goblin_1": SimpleNamespace(creature_id="goblin"),
-        },
-        definition=SimpleNamespace(
-            participants=[],
-            teams=[
-                EncounterTeam("heroes", "Heroes", ["player"], "external"),
-                EncounterTeam("monsters", "Monsters", ["goblin"], "scripted"),
-            ]
+    state = cast(
+        EncounterState,
+        SimpleNamespace(
+            creatures={
+                "player": SimpleNamespace(creature_id="player"),
+                "goblin_1": SimpleNamespace(creature_id="goblin"),
+            },
+            definition=SimpleNamespace(
+                participants=[],
+                teams=[
+                    EncounterTeam("heroes", "Heroes", ["player"], "external"),
+                    EncounterTeam("monsters", "Monsters", ["goblin"], "scripted"),
+                ],
+            ),
         ),
     )
 
@@ -194,16 +210,19 @@ def test_participant_queries_use_authored_teams_and_controllers() -> None:
     assert creature_team_id(state, "goblin_1") == "monsters"
     assert creature_controller(state, "goblin_1") == "scripted"
     assert creatures_are_opponents(state, "player", "goblin_1") is True
+
+
 def test_authored_creature_controller_overrides_team_default() -> None:
-    state = SimpleNamespace(
-        creatures={"goblin_1": SimpleNamespace(creature_id="goblin")},
-        definition=SimpleNamespace(
-            participants=[
-                SimpleNamespace(creature_id="goblin", controller="external"),
-            ],
-            teams=[
-                EncounterTeam("monsters", "Monsters", ["goblin"], "scripted")
-            ],
+    state = cast(
+        EncounterState,
+        SimpleNamespace(
+            creatures={"goblin_1": SimpleNamespace(creature_id="goblin")},
+            definition=SimpleNamespace(
+                participants=[
+                    SimpleNamespace(creature_id="goblin", controller="external"),
+                ],
+                teams=[EncounterTeam("monsters", "Monsters", ["goblin"], "scripted")],
+            ),
         ),
     )
 

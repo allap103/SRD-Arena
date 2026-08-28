@@ -1,3 +1,5 @@
+"""Resolve Grapple and escape actions together with their source relationships."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -21,6 +23,24 @@ def available_escape_actions(
     state: EncounterState,
     creature_ref: str,
 ) -> list[EncounterAction]:
+    """Advertise one escape choice for each creature currently grappling the actor.
+
+    >>> from types import SimpleNamespace
+    >>> applied = SimpleNamespace(
+    ...     condition=Condition.GRAPPLED,
+    ...     metadata={"escape_dc": 13},
+    ...     source_ref="ogre",
+    ...     source_label="Ogre",
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(actions_remaining=1)},
+    ...     conditions_for=lambda ref: (applied,),
+    ... )
+    >>> action = available_escape_actions(state, "hero")[0]
+    >>> (action.kind, action.value, action.cost.action)
+    ('escape_grapple', 'ogre', 1)
+    """
+
     creature_state = state.creatures[creature_ref]
     if creature_state.actions_remaining <= 0:
         return []
@@ -54,6 +74,22 @@ def resolve_escape_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
+    """Resolve an escape contest and remove only the selected grapple source on success.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
+    ...     creatures={"hero": SimpleNamespace(actions_remaining=0)},
+    ... )
+    >>> resolve_escape_action(
+    ...     state, SimpleNamespace(), EncounterAction("Escape", "escape_grapple"),
+    ...     EncounterProgress(), "escape-1"
+    ... )
+    Traceback (most recent call last):
+    ...
+    RuntimeError: No Action remains to escape a grapple.
+    """
+
     creature_ref = state.current_decision().creature_ref
     creature_state = state.creatures[creature_ref]
     if creature_state.actions_remaining <= 0:

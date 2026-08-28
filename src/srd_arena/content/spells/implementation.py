@@ -1,3 +1,5 @@
+"""Validate whether a spell uses declarative rules or a Python resolver."""
+
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -12,11 +14,15 @@ def _default_implementation_scope() -> list[ImplementationScope]:
 
 
 class ImplementationOmissionSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-implementation fields with mechanic and reason."""
+
     mechanic: str = Field(min_length=1)
     reason: str = Field(min_length=1)
 
 
 class SpellImplementationSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-implementation fields with status and scope."""
+
     status: Literal[
         "complete",
         "partial",
@@ -33,7 +39,20 @@ class SpellImplementationSchema(SpellCapabilitySchemaModel):
     resolver: Literal["slow"] | None = None
 
     @model_validator(mode="after")
-    def validate_status_details(self) -> "SpellImplementationSchema":
+    def validate_status_details(self) -> SpellImplementationSchema:
+        """Require the explanatory details implied by implementation status.
+
+        >>> SpellImplementationSchema(status="partial", omissions=[
+        ...     {"mechanic": "mounted travel", "reason": "Mounted combat is out of scope"}
+        ... ]).status
+        'partial'
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     SpellImplementationSchema(status="partial")
+        ... except ValidationError as error:
+        ...     "must list omissions" in str(error)
+        True
+        """
         if self.status == "partial" and not self.omissions:
             raise ValueError("Partial spell implementations must list omissions.")
         if self.status == "blocked" and not self.blocked_by:

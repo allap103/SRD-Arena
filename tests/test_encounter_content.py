@@ -18,11 +18,11 @@ from srd_arena.content.creatures import (
 )
 from srd_arena.content.encounters import EncounterDefinitionSchema
 from srd_arena.content.spells import load_spell_catalog
+from srd_arena.domain.creatures import AttackActionDefinition
 from srd_arena.infrastructure.scenarios import (
     FilesystemScenarioRepository,
-    load_scenario,
+    load_scenario_directory,
 )
-from srd_arena.domain.creatures import AttackActionDefinition
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
@@ -46,7 +46,7 @@ def creature_content() -> SimpleNamespace:
 
 
 def test_load_encounter_parses_definition() -> None:
-    scenario = load_scenario(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR))
     encounter = scenario.encounters["goblin_encounter"]
 
     assert encounter.id == "goblin_encounter"
@@ -60,10 +60,18 @@ def test_load_encounter_parses_definition() -> None:
         "goblin_2",
         "goblin_3",
     ]
-    assert encounter.participants[1].behavior.type == "chase"
-    assert encounter.participants[2].behavior.anchor is not None
-    assert encounter.participants[2].behavior.radius == 2
-    assert len(encounter.participants[3].behavior.path) == 3
+    chase = encounter.participants[1].behavior
+    guard = encounter.participants[2].behavior
+    patrol = encounter.participants[3].behavior
+    assert chase is not None
+    assert guard is not None
+    assert patrol is not None
+    assert encounter.victory is not None
+    assert encounter.defeat is not None
+    assert chase.type == "chase"
+    assert guard.anchor is not None
+    assert guard.radius == 2
+    assert len(patrol.path) == 3
     assert encounter.victory.next_encounter_id == "goblin_encounter"
     assert encounter.defeat.next_encounter_id == "goblin_encounter"
 
@@ -90,10 +98,10 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
         encoding="utf-8",
     )
 
-    scenario = load_scenario(scenario_dir)
+    scenario = load_scenario_directory(scenario_dir)
     participant = scenario.encounters["goblin_encounter"].participants[1]
     session = scenario.create_session()
-    session.get_scene_view()
+    session.read()
 
     assert participant.creature_id == "goblin_1"
     assert participant.controller == "external"
@@ -101,10 +109,10 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
 
 
 def test_full_control_showcase_gives_external_control_to_every_creature() -> None:
-    scenario = load_scenario(GOBLIN_SKIRMISH_DIR)
+    scenario = load_scenario_directory(GOBLIN_SKIRMISH_DIR)
     encounter = scenario.encounters["full_control_showcase"]
     session = scenario.create_session()
-    session.get_scene_view()
+    session.read()
 
     assert {creature.name for creature in scenario.creatures} == {
         "Aldren",
@@ -114,9 +122,11 @@ def test_full_control_showcase_gives_external_control_to_every_creature() -> Non
         "Blueblade",
         "Blueeye",
     }
-    assert scenario.get_creature("player").subclass_ref is not None
-    assert scenario.get_creature("champion_2").subclass_ref is not None
-    assert scenario.get_creature("champion_2").subclass_ref.name == "Champion"
+    player_subclass = scenario.get_creature("player").subclass_ref
+    champion_subclass = scenario.get_creature("champion_2").subclass_ref
+    assert player_subclass is not None
+    assert champion_subclass is not None
+    assert champion_subclass.name == "Champion"
     assert all(
         participant.controller == "external" for participant in encounter.participants
     )
@@ -129,13 +139,13 @@ def test_full_control_showcase_gives_external_control_to_every_creature() -> Non
 
 
 def test_encounter_can_be_fully_scripted() -> None:
-    scenario = load_scenario(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR))
     encounter = scenario.encounters["goblin_encounter"]
     for team in encounter.teams:
         team.controller = "scripted"
 
     session = scenario.create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     assert session.encounter_state.requires_automatic_advance() is True
@@ -146,7 +156,7 @@ def test_encounter_can_be_fully_scripted() -> None:
 
 
 def test_nested_creature_can_reference_system_stat_block() -> None:
-    scenario = load_scenario(str(FIXTURE_ENCOUNTER_DIR))
+    scenario = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR))
     creature = scenario.get_creature("goblin_1")
 
     assert creature.id == "goblin_1"
@@ -200,16 +210,20 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(
         encoding="utf-8",
     )
 
-    scenario = load_scenario(str(scenario_dir))
+    scenario = load_scenario_directory(str(scenario_dir))
 
     assert scenario.start_scene == "arena"
     assert scenario.encounter_order == ("arena", "arena_two")
-    assert scenario.encounters["arena"].victory.next_encounter_id == "arena_two"
-    assert scenario.encounters["arena_two"].victory.next_encounter_id == "arena_two"
+    first_victory = scenario.encounters["arena"].victory
+    second_victory = scenario.encounters["arena_two"].victory
+    assert first_victory is not None
+    assert second_victory is not None
+    assert first_victory.next_encounter_id == "arena_two"
+    assert second_victory.next_encounter_id == "arena_two"
 
 
 def test_game_loads_geometry_settings_from_config_json() -> None:
-    scenario = load_scenario(str(TACTICAL_SCENARIO_DIR))
+    scenario = load_scenario_directory(str(TACTICAL_SCENARIO_DIR))
     presentation = next(
         summary.presentation
         for summary in FilesystemScenarioRepository(
@@ -225,7 +239,7 @@ def test_game_loads_geometry_settings_from_config_json() -> None:
     assert presentation.grid_opacity == 0.65
 
     session = scenario.create_session()
-    session.get_scene_view()
+    session.read()
 
     assert not hasattr(session, "background_image")
     assert not hasattr(session, "grid_color")

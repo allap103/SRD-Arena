@@ -1,6 +1,8 @@
+"""Choose deterministic actions for encounter-controlled creature behaviors."""
+
 from __future__ import annotations
 
-from typing import Generator
+from collections.abc import Generator
 
 from ..creatures import Creature
 from ..geometry import (
@@ -26,7 +28,19 @@ DIRECTION_DELTAS = {
 
 def build_behavior(
     participant: EncounterCreatureState,
-) -> Generator[EncounterAction | None, BehaviorContext, None]:
+) -> Generator[EncounterAction | None, BehaviorContext]:
+    """Construct an automatic decision policy from an encounter behavior definition.
+
+    >>> from types import SimpleNamespace
+    >>> behavior = build_behavior(
+    ...     SimpleNamespace(behavior=SimpleNamespace(type="wait"))
+    ... )
+    >>> next(behavior) is None
+    True
+    >>> next(behavior).kind
+    'wait'
+    """
+
     if participant.behavior.type == "wait":
         return _wait_behavior()
     if participant.behavior.type == "archer":
@@ -38,7 +52,7 @@ def build_behavior(
     return _chase_behavior(participant)
 
 
-def _wait_behavior() -> Generator[EncounterAction | None, BehaviorContext, None]:
+def _wait_behavior() -> Generator[EncounterAction | None, BehaviorContext]:
     yield None
     while True:
         yield EncounterAction("Wait", "wait")
@@ -46,51 +60,68 @@ def _wait_behavior() -> Generator[EncounterAction | None, BehaviorContext, None]
 
 def _chase_behavior(
     participant: EncounterCreatureState,
-) -> Generator[EncounterAction | None, BehaviorContext, None]:
+) -> Generator[EncounterAction | None, BehaviorContext]:
     context = yield None
     while True:
         if context.can_attack:
             context = yield EncounterAction("Attack", "attack", "melee")
             continue
         direction = step_toward(context.actor_position, context.target_position)
-        command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+        command = (
+            EncounterAction("Move", "move", direction)
+            if direction
+            else EncounterAction("Wait", "wait")
+        )
         context = yield command
 
 
 def _archer_behavior(
     participant: EncounterCreatureState,
-) -> Generator[EncounterAction | None, BehaviorContext, None]:
+) -> Generator[EncounterAction | None, BehaviorContext]:
     context = yield None
     while True:
         if context.can_attack:
             context = yield EncounterAction("Attack", "attack", "ranged")
             continue
         direction = step_toward(context.actor_position, context.target_position)
-        command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+        command = (
+            EncounterAction("Move", "move", direction)
+            if direction
+            else EncounterAction("Wait", "wait")
+        )
         context = yield command
 
 
 def _guard_behavior(
     participant: EncounterCreatureState,
-) -> Generator[EncounterAction | None, BehaviorContext, None]:
+) -> Generator[EncounterAction | None, BehaviorContext]:
     context = yield None
     while True:
         anchor = participant.behavior.anchor or participant.position
         within_radius = (
             participant.behavior.radius is not None
-            and manhattan_distance(context.target_position, anchor) <= participant.behavior.radius
+            and manhattan_distance(context.target_position, anchor)
+            <= participant.behavior.radius
         )
         if context.can_attack:
             context = yield EncounterAction("Attack", "attack", "melee")
             continue
         if within_radius:
             direction = step_toward(context.actor_position, context.target_position)
-            command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+            command = (
+                EncounterAction("Move", "move", direction)
+                if direction
+                else EncounterAction("Wait", "wait")
+            )
             context = yield command
             continue
         if context.actor_position.x != anchor.x or context.actor_position.y != anchor.y:
             direction = step_toward(context.actor_position, anchor)
-            command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+            command = (
+                EncounterAction("Move", "move", direction)
+                if direction
+                else EncounterAction("Wait", "wait")
+            )
             context = yield command
             continue
         context = yield EncounterAction("Wait", "wait")
@@ -98,7 +129,7 @@ def _guard_behavior(
 
 def _patrol_behavior(
     participant: EncounterCreatureState,
-) -> Generator[EncounterAction | None, BehaviorContext, None]:
+) -> Generator[EncounterAction | None, BehaviorContext]:
     context = yield None
     while True:
         if context.can_attack:
@@ -107,14 +138,28 @@ def _patrol_behavior(
         if not participant.behavior.path:
             context = yield EncounterAction("Wait", "wait")
             continue
-        participant.patrol_index = (participant.patrol_index + 1) % len(participant.behavior.path)
+        participant.patrol_index = (participant.patrol_index + 1) % len(
+            participant.behavior.path
+        )
         target = participant.behavior.path[participant.patrol_index]
         direction = step_toward(context.actor_position, target)
-        command = EncounterAction("Move", "move", direction) if direction else EncounterAction("Wait", "wait")
+        command = (
+            EncounterAction("Move", "move", direction)
+            if direction
+            else EncounterAction("Wait", "wait")
+        )
         context = yield command
 
 
 def step_toward(start: Position, target: Position) -> str | None:
+    """Return the adjacent grid step that approaches a destination.
+
+    >>> step_toward(Position(1, 1), Position(4, 0))
+    'up-right'
+    >>> step_toward(Position(1, 1), Position(1, 1)) is None
+    True
+    """
+
     dx = sign(target.x - start.x)
     dy = sign(target.y - start.y)
     for direction, (delta_x, delta_y) in DIRECTION_DELTAS.items():
@@ -124,6 +169,12 @@ def step_toward(start: Position, target: Position) -> str | None:
 
 
 def sign(value: int) -> int:
+    """Reduce an integer displacement to its direction component.
+
+    >>> (sign(-7), sign(0), sign(12))
+    (-1, 0, 1)
+    """
+
     if value < 0:
         return -1
     if value > 0:
@@ -132,8 +183,25 @@ def sign(value: int) -> int:
 
 
 def is_adjacent(a: Position, b: Position) -> bool:
+    """Return whether two cells share an edge or corner.
+
+    >>> is_adjacent(Position(1, 1), Position(2, 2))
+    True
+    >>> is_adjacent(Position(1, 1), Position(3, 1))
+    False
+    """
+
     return grid_distance_between(a, b) == 1
 
 
 def movement_budget_for(creature: Creature, grid: Grid) -> MovementBudget:
+    """Return the movement budget available to the behavior's creature.
+
+    >>> from types import SimpleNamespace
+    >>> movement_budget_for(
+    ...     SimpleNamespace(effective_speed_feet=lambda: 30), Grid(10, 10)
+    ... )
+    6
+    """
+
     return grid.movement_budget(creature.effective_speed_feet())

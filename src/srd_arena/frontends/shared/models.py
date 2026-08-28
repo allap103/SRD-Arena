@@ -1,14 +1,16 @@
-"""Frontend-neutral presentation models."""
+"""Define read-only presentation projections shared by every frontend adapter."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ...application.observations import ActionObservation
+from srd_arena.application.api import ActionObservation
 
 
 @dataclass(frozen=True)
 class SpellSlotTrackView:
+    """Report remaining and maximum uses for one spell-slot level."""
+
     level: int
     remaining: int
     maximum: int
@@ -16,6 +18,8 @@ class SpellSlotTrackView:
 
 @dataclass(frozen=True)
 class InitiativeTrackEntryView:
+    """Describe one combatant's position in the displayed initiative order."""
+
     creature_ref: str
     name: str
     total: int
@@ -24,6 +28,8 @@ class InitiativeTrackEntryView:
 
 @dataclass
 class ResourceSummaryView:
+    """Collect the active creature resources a frontend should summarize."""
+
     current_health: int
     max_health: int
     action_status: str
@@ -39,6 +45,13 @@ class ResourceSummaryView:
     initiative: tuple[InitiativeTrackEntryView, ...] = ()
 
     def as_text(self) -> str:
+        """Render the compact textual resource summary used by simple clients.
+
+        >>> summary = ResourceSummaryView(8, 10, "Available", "Spent", "Available",
+        ...     1, ("prone",), (), 4, 6, 20, 30)
+        >>> summary.as_text().splitlines()[:5]
+        ['Health: 8/10', 'Action: Available', 'Bonus Action: Spent', 'Reaction: Available', 'Conditions: Prone']
+        """
         condition_text = (
             ", ".join(condition.capitalize() for condition in self.conditions)
             if self.conditions
@@ -62,12 +75,16 @@ class ResourceSummaryView:
 
 @dataclass
 class GridPositionView:
+    """Expose a creature's grid coordinates without leaking domain geometry."""
+
     x: int
     y: int
 
 
 @dataclass
 class BattlefieldCreatureView:
+    """Contain the read-only creature data needed to draw one battlefield token."""
+
     creature_ref: str
     creature_id: str
     name: str
@@ -85,6 +102,8 @@ class BattlefieldCreatureView:
 
 @dataclass
 class BattlefieldView:
+    """Contain the complete frontend-neutral snapshot of the combat grid."""
+
     width: int
     height: int
     creatures: list[BattlefieldCreatureView]
@@ -96,6 +115,8 @@ class BattlefieldView:
 
 @dataclass
 class EncounterView:
+    """Group battlefield state and advertised actions for an encounter screen."""
+
     narrative_text: str | None
     battlefield: BattlefieldView
     resources: ResourceSummaryView
@@ -110,6 +131,8 @@ class EncounterView:
 
 @dataclass
 class SessionPresentation:
+    """Describe the current scene in the form consumed by any frontend."""
+
     scene_id: str
     story_text: str | None
     story_actions: list[ActionObservation]

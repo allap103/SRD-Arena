@@ -1,18 +1,19 @@
+from collections.abc import Sequence
 from pathlib import Path
 
 from srd_arena.domain.encounters import EncounterOrchestrator
+from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterAction
-from srd_arena.infrastructure.scenarios import load_scenario
-
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 _ORCHESTRATOR = EncounterOrchestrator()
 
 
 def test_orchestrator_delegates_scripted_choice_to_actor_selector() -> None:
-    session = load_scenario(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
-    session.get_scene_view()
+    session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
     creature_ref = "goblin_1"
@@ -20,7 +21,12 @@ def test_orchestrator_delegates_scripted_choice_to_actor_selector() -> None:
     selections: list[tuple[str, tuple[EncounterAction, ...], bool]] = []
 
     class RecordingSelector:
-        def select_action(self, encounter, actor_ref, actions):
+        def select_action(
+            self,
+            encounter: EncounterState,
+            actor_ref: str,
+            actions: Sequence[EncounterAction],
+        ) -> EncounterAction:
             selections.append(
                 (
                     actor_ref,

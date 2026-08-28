@@ -6,7 +6,6 @@ from srd_arena.application.startup import GameStartup
 from srd_arena.frontends.headless import HeadlessGameAdapter
 from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
 
-
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
 
 

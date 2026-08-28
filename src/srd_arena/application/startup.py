@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 from srd_arena.application.game import RunningGame
 from srd_arena.application.scenarios import ScenarioRepository, ScenarioSummary
 
@@ -14,6 +15,14 @@ class GameStartup:
     scenarios: ScenarioRepository
 
     def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
+        """Return scenario summaries supplied by the configured repository.
+
+        >>> from unittest.mock import Mock
+        >>> repository = Mock()
+        >>> repository.available_scenarios.return_value = (ScenarioSummary("demo", "Demo"),)
+        >>> GameStartup(repository).available_scenarios()[0].id
+        'demo'
+        """
         return self.scenarios.available_scenarios()
 
     def start_scenario(
@@ -22,6 +31,17 @@ class GameStartup:
         *,
         automatic_action_limit: int | None = None,
     ) -> RunningGame:
+        """Load a scenario and wrap its new engine session as a running game.
+
+        >>> from unittest.mock import Mock
+        >>> repository, scenario, engine = Mock(), Mock(), Mock()
+        >>> repository.load_scenario.return_value = scenario
+        >>> scenario.create_session.return_value = engine
+        >>> game = GameStartup(repository).start_scenario("demo")
+        >>> isinstance(game, RunningGame)
+        True
+        >>> repository.load_scenario.assert_called_once_with("demo")
+        """
         scenario = self.scenarios.load_scenario(scenario_id)
         return RunningGame(
             scenario.create_session(

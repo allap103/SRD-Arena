@@ -1,3 +1,6 @@
+"""Report content errors that require an authored capability to be corrected."""
+
+
 class CapabilityBuildError(ValueError):
     """Report structured capability content that cannot be built."""
 

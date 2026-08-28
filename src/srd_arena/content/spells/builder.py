@@ -2,15 +2,13 @@
 
 from srd_arena.content.common.sources import slug
 from srd_arena.domain.spells import Spell
-from .schema import SpellSchema
+
 from .building import (
     build_activation,
     build_spell_definition,
     normalize_save_ability,
     target_requirements,
 )
-
-
 from .building.metadata import (
     remove_effect_selection,
     spell_area_size_feet,
@@ -19,10 +17,21 @@ from .building.metadata import (
     spell_removable_conditions,
     spell_removable_effect_kinds,
 )
+from .schema import SpellSchema
 
 
 def build_spell(spell_schema: SpellSchema) -> Spell:
-    """Build a domain spell from validated authored content."""
+    """Build a domain spell from validated authored content.
+
+    Metadata remains available even when a spell has no executable capability.
+
+    >>> schema = SpellSchema(
+    ...     name="Light", source="XPHB", level=0, school="E"
+    ... )
+    >>> spell = build_spell(schema)
+    >>> (spell.id, spell.name, spell.definition)
+    ('light', 'Light', None)
+    """
     return Spell(
         id=slug(spell_schema.public_name),
         name=spell_schema.public_name,

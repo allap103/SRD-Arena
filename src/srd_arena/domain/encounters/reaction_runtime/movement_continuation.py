@@ -16,7 +16,30 @@ def resume_movement(
     movement: PendingMovement,
     progress: EncounterProgress,
 ) -> None:
-    """Resume the exact movement occurrence suspended by a reaction frame."""
+    """Resume the exact movement occurrence suspended by a reaction frame.
+
+    >>> from types import SimpleNamespace
+    >>> mover = SimpleNamespace(
+    ...     is_alive=True,
+    ...     position=Position(0, 0),
+    ...     movement_spent_this_turn=MovementCost(5),
+    ...     movement_remaining=None,
+    ...     creature=SimpleNamespace(name="Hero"),
+    ... )
+    >>> movement = PendingMovement(
+    ...     "move-1", "hero", "right", Position(0, 0), Position(1, 0),
+    ...     20, MovementCost(5), "trigger-1",
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": mover},
+    ...     _position_is_free=lambda *args, **kwargs: True,
+    ...     _event=lambda event_type, **values: event_type,
+    ... )
+    >>> progress = EncounterProgress()
+    >>> resume_movement(state, movement, progress)
+    >>> (mover.position, int(mover.movement_remaining))
+    (Position(x=1, y=0), 20)
+    """
 
     mover = state.creatures[movement.creature_ref]
     if mover.is_alive and state._position_is_free(

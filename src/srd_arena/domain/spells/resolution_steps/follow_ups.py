@@ -24,6 +24,20 @@ def resolve_follow_up(
     cast_level: int,
     sequence_step: int,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    """Resolve a persistent spell's scheduled damage or saving-throw step.
+
+    A follow-up without target-origin area geometry is intentionally skipped.
+
+    >>> from types import SimpleNamespace
+    >>> from ...capabilities import AutomaticResolution, CapabilityStep
+    >>> from ...capabilities import CapabilityTarget, Outcome
+    >>> follow_up = CapabilityStep(
+    ...     CapabilityTarget("self"), AutomaticResolution(Outcome())
+    ... )
+    >>> resolve_follow_up(SimpleNamespace(), follow_up, 1, 2)
+    ([], [])
+    """
+
     if (
         follow_up.target.kind != "area"
         or follow_up.target.origin != "target"

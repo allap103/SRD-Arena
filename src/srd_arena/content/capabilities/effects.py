@@ -1,3 +1,5 @@
+"""Validate declarative effects produced by authored capabilities."""
+
 from typing import Annotated, Literal
 
 from pydantic import Field
@@ -12,6 +14,8 @@ from .requirements import (
 
 
 class DamageEffectSchema(CapabilitySchemaModel):
+    """Encode the ``damage`` capability-effect variant with dice and bonus."""
+
     type: Literal["damage"]
     dice: str = Field(pattern=r"^\d+d\d+$")
     bonus: int = 0
@@ -22,6 +26,8 @@ class DamageEffectSchema(CapabilitySchemaModel):
 
 
 class ConditionEffectSchema(CapabilitySchemaModel):
+    """Encode the ``condition`` capability-effect variant with condition and duration."""
+
     type: Literal["condition"]
     condition: str = Field(min_length=1)
     duration: EffectDurationSchema | None = None
@@ -39,6 +45,8 @@ class ConditionEffectSchema(CapabilitySchemaModel):
 
 
 class ForcedMovementEffectSchema(CapabilitySchemaModel):
+    """Encode the ``forced_movement`` capability-effect variant with direction."""
+
     type: Literal["forced_movement"]
     direction: Literal["away", "toward", "chosen"]
     distance_feet: PositiveInt
@@ -46,6 +54,8 @@ class ForcedMovementEffectSchema(CapabilitySchemaModel):
 
 
 class SpeedMultiplierEffectSchema(CapabilitySchemaModel):
+    """Encode the ``speed_multiplier`` capability-effect variant with numerator."""
+
     type: Literal["speed_multiplier"]
     numerator: NonNegativeInt
     denominator: PositiveInt
@@ -53,11 +63,15 @@ class SpeedMultiplierEffectSchema(CapabilitySchemaModel):
 
 
 class ProhibitReactionEffectSchema(CapabilitySchemaModel):
+    """Encode the ``prohibit_reactions`` capability-effect variant with duration."""
+
     type: Literal["prohibit_reactions"]
     duration: EffectDurationSchema
 
 
 class TurnEconomyRestrictionEffectSchema(CapabilitySchemaModel):
+    """Encode the ``turn_economy_restriction`` capability-effect variant."""
+
     type: Literal["turn_economy_restriction"]
     choose_between: list[Literal["action", "bonus_action"]] = Field(
         min_length=2,
@@ -67,6 +81,8 @@ class TurnEconomyRestrictionEffectSchema(CapabilitySchemaModel):
 
 
 class RollModifierEffectSchema(CapabilitySchemaModel):
+    """Encode the ``roll_modifier`` capability-effect variant with roll and mode."""
+
     type: Literal["roll_modifier"]
     roll: Literal[
         "ability_check",
@@ -77,9 +93,9 @@ class RollModifierEffectSchema(CapabilitySchemaModel):
     ]
     mode: Literal["advantage", "disadvantage", "add", "subtract"]
     subject: Literal["target", "attacks_against_target"] = "target"
-    ignored_by_senses: list[
-        Literal["blindsight", "darkvision", "truesight"]
-    ] = Field(default_factory=list)
+    ignored_by_senses: list[Literal["blindsight", "darkvision", "truesight"]] = Field(
+        default_factory=list
+    )
     ability: Ability | None = None
     ability_options: list[Ability] = Field(default_factory=list)
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
@@ -89,6 +105,8 @@ class RollModifierEffectSchema(CapabilitySchemaModel):
 
 
 class ControlEffectSchema(CapabilitySchemaModel):
+    """Encode the ``control`` capability-effect variant with controller."""
+
     type: Literal["control"]
     controller: Literal["source"]
     communication: Literal["telepathy"] | None = None
@@ -98,6 +116,8 @@ class ControlEffectSchema(CapabilitySchemaModel):
 
 
 class GainMemoriesEffectSchema(CapabilitySchemaModel):
+    """Encode the ``gain_memories`` capability-effect variant with requirement."""
+
     type: Literal["gain_memories"]
     requirement: CreatureTypeRequirementSchema
     trigger: Literal["reduced_to_zero_by_action"]

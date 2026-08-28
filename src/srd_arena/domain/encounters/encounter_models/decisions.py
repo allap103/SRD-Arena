@@ -33,22 +33,34 @@ class PendingMovement:
 
 @dataclass(frozen=True)
 class OpportunityAttackRequest(DecisionRequest):
+    """Offer reactions against one exact suspended movement occurrence."""
+
     movement: PendingMovement
 
 
 @dataclass(frozen=True)
 class ResumeMovement(DecisionContinuation):
+    """Resume a suspended movement after its reaction decision closes."""
+
     movement: PendingMovement
 
 
 @dataclass(frozen=True)
 class CloseParentDecision(DecisionContinuation):
+    """Close a specific parent frame after a nested decision resolves.
+
+    Referencing the exact frame and action occurrence allows reactions such as
+    nested Counterspells to unwind safely in last-in, first-out order.
+    """
+
     frame_id: str
     action_id: str
 
 
 @dataclass
 class DecisionFrame:
+    """Track one unresolved controller choice on the encounter decision stack."""
+
     id: str
     creature_ref: CreatureRef
     kind: str
@@ -77,5 +89,7 @@ class PendingSpellCast:
 
 @dataclass
 class InterruptState:
+    """Own nested decision frames and spell targeting staged before invocation."""
+
     decision_stack: list[DecisionFrame] = field(default_factory=list)
     pending_spell_cast: PendingSpellCast | None = None

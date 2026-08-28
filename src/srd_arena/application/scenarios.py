@@ -9,7 +9,7 @@ from srd_arena.domain.creatures import Creature
 from srd_arena.domain.encounters import EncounterDefinition
 from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import GeometryConfig
-from srd_arena.runtime.session import Session
+from srd_arena.engine.session import Session
 
 DEFAULT_GRID_COLOR = "#d3d3d3"
 
@@ -45,7 +45,15 @@ class LoadedScenario:
     geometry_config: GeometryConfig
 
     def get_creature(self, creature_id: str) -> Creature:
-        """Return a loaded creature template by its authored identifier."""
+        """Return a loaded creature template by its authored identifier.
+
+        >>> from srd_arena.domain.creatures import Attributes, Equipment, Inventory
+        >>> hero = Creature("hero", "Hero", "", Inventory(),
+        ...     Attributes(10, 1, 10, 10, 10, 10, 10, 10, 10), Equipment())
+        >>> scenario = LoadedScenario("Demo", {}, (hero,), (), (), "intro", GeometryConfig())
+        >>> scenario.get_creature("hero").name
+        'Hero'
+        """
 
         for creature in self.creatures:
             if creature.id == creature_id:
@@ -57,7 +65,14 @@ class LoadedScenario:
         *,
         automatic_action_limit: int | None = None,
     ) -> Session:
-        """Create an isolated runtime session from the loaded definitions."""
+        """Create an isolated engine session from the loaded definitions.
+
+        >>> scenario = LoadedScenario("Demo", {}, (), (), (), "intro", GeometryConfig())
+        >>> first = scenario.create_session()
+        >>> second = scenario.create_session()
+        >>> isinstance(first, Session) and first is not second
+        True
+        """
 
         return Session(
             encounters=self.encounters,

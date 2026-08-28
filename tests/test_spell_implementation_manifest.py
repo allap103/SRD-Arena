@@ -10,7 +10,12 @@ MANIFEST_PATH = PROJECT_ROOT / "docs" / "spell_implementation_manifest.json"
 
 
 def _manifest() -> dict[str, object]:
-    return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    payload: object = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or not all(
+        isinstance(key, str) for key in payload
+    ):
+        raise TypeError("Spell implementation manifest must be an object.")
+    return {key: value for key, value in payload.items() if isinstance(key, str)}
 
 
 def _assignments(manifest: dict[str, object]) -> list[str]:
@@ -54,20 +59,33 @@ def test_manifest_batches_are_stable_and_internally_sorted() -> None:
     batch_ids = [batch["id"] for batch in batches]
     assert len(batch_ids) == len(set(batch_ids))
     assert batch_ids == [
-        "1A", "1B", "1C",
-        "2A", "2B", "2C",
-        "3A", "3B", "3C",
-        "4A", "4B", "4C",
-        "5A", "5B",
-        "6A", "6B",
-        "7A", "7B", "7C",
-        "8A", "8B", "8C", "8D",
+        "1A",
+        "1B",
+        "1C",
+        "2A",
+        "2B",
+        "2C",
+        "3A",
+        "3B",
+        "3C",
+        "4A",
+        "4B",
+        "4C",
+        "5A",
+        "5B",
+        "6A",
+        "6B",
+        "7A",
+        "7B",
+        "7C",
+        "8A",
+        "8B",
+        "8C",
+        "8D",
     ]
     for batch in batches:
         assert batch["spells"] == sorted(batch["spells"])
         expected_status = (
-            "committed"
-            if batch["wave"] == 1 or batch["id"] == "2A"
-            else "provisional"
+            "committed" if batch["wave"] == 1 or batch["id"] == "2A" else "provisional"
         )
         assert batch["status"] == expected_status

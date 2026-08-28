@@ -1,3 +1,5 @@
+"""Translate an authored encounter and its participants into domain templates."""
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -23,16 +25,19 @@ from srd_arena.domain.encounters import (
     EncounterTransition,
 )
 from srd_arena.domain.geometry import Grid, Position
-from .schema import EncounterDefinitionSchema
+
+from .schema import EncounterDefinitionSchema, PositionSchema
 
 
 @dataclass(frozen=True)
 class LoadedEncounter:
+    """Bundle an encounter definition with the creature templates it references."""
+
     definition: EncounterDefinition
     creatures: tuple[Creature, ...]
 
 
-def _build_position(position) -> Position:
+def _build_position(position: PositionSchema) -> Position:
     return Position(x=position.x, y=position.y)
 
 
@@ -104,6 +109,29 @@ def load_encounter(
     subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> LoadedEncounter:
+    """Validate one encounter file and build all referenced domain objects.
+
+    >>> import json
+    >>> from tempfile import TemporaryDirectory
+    >>> data = {
+    ...     "id": "duel",
+    ...     "grid": {"width": 5, "height": 5},
+    ...     "teams": [
+    ...         {"id": "heroes", "name": "Heroes", "controller": "external"}
+    ...     ],
+    ...     "creatures": [{
+    ...         "id": "hero", "name": "Hero", "team_id": "heroes",
+    ...         "start": {"x": 1, "y": 2},
+    ...     }],
+    ... }
+    >>> with TemporaryDirectory() as directory:
+    ...     path = Path(directory) / "duel.json"
+    ...     _ = path.write_text(json.dumps(data))
+    ...     loaded = load_encounter(path)
+    >>> (loaded.definition.id, loaded.creatures[0].name)
+    ('duel', 'Hero')
+    """
+
     schema = EncounterDefinitionSchema.model_validate(load_json(path))
     return LoadedEncounter(
         definition=_build_encounter(schema),

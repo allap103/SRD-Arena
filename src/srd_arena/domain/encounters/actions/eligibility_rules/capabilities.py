@@ -1,3 +1,5 @@
+"""Validate stat-block and feature capability candidates before execution."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -17,12 +19,24 @@ if TYPE_CHECKING:
 
 
 class StatBlockActionRule:
+    """Check stat-block implementation support, resources, targeting, and range."""
+
     def check(
         self,
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate executable stat-block capability and its resources.
+
+        >>> from unittest.mock import Mock
+        >>> actor = Mock()
+        >>> actor.creature.stat_block_actions = {}
+        >>> action = EncounterAction("Roar", "stat_block", preferred_attack_name="roar")
+        >>> StatBlockActionRule().check(
+        ...     Mock(creatures={"dragon": actor}), "dragon", action).code
+        'stat_block_action_unavailable'
+        """
         if action.kind != "stat_block":
             return None
         actor = state.creatures[actor_ref]
@@ -104,12 +118,24 @@ class StatBlockActionRule:
 
 
 class FeatureActionRule:
+    """Check that a feature action exists and retains a consumable use."""
+
     def check(
         self,
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate that a feature action exists and retains uses.
+
+        >>> from unittest.mock import Mock
+        >>> creature = Mock()
+        >>> creature.combat_profile.feature_actions = {}
+        >>> action = EncounterAction("Feature", "feature", value="missing")
+        >>> FeatureActionRule().check(
+        ...     Mock(creatures={"hero": Mock(creature=creature)}), "hero", action).code
+        'feature_unavailable'
+        """
         if action.kind != "feature" or not isinstance(action.value, str):
             return None
         actor = state.creatures[actor_ref].creature

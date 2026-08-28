@@ -1,3 +1,5 @@
+"""Resolve legal spell targets and the context passed to target requirements."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -23,6 +25,23 @@ def spell_action_targets(
     actor: Creature,
     spell: Spell,
 ) -> list[SpellTargetContext]:
+    """Return target sets for direct, self, area, and staged spell selection.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.geometry import Position
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="mage"),
+    ...     _creature_position=lambda ref: Position(0, 0),
+    ...     _spell_targets_self_only=lambda spell: False,
+    ...     _spell_range_squares=lambda spell, actor: None,
+    ...     creatures={},
+    ... )
+    >>> spell_action_targets(
+    ...     state, SimpleNamespace(), Spell("bolt", "Bolt", None, 0)
+    ... )
+    []
+    """
+
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)
     if spell.removable_effect_kinds and not (
@@ -138,6 +157,29 @@ def spell_target_context(
     actor: Creature,
     target_ref: str,
 ) -> SpellTargetContext | None:
+    """Build target facts needed to evaluate authored spell requirements.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(name="Goblin")
+    >>> effective = SimpleNamespace(
+    ...     providers_for_trait=lambda trait: ("stunned",)
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={
+    ...         "goblin": SimpleNamespace(is_alive=True, creature=creature)
+    ...     },
+    ...     effective_conditions_for=lambda ref: effective,
+    ...     conditions_for=lambda ref: (),
+    ... )
+    >>> context = spell_target_context(
+    ...     state, SimpleNamespace(), "goblin"
+    ... )
+    >>> (context.target_label, context.automatic_save_failures["strength"])
+    ('Goblin', ('stunned',))
+    >>> spell_target_context(state, SimpleNamespace(), "missing") is None
+    True
+    """
+
     target_state = self.creatures.get(target_ref)
     if target_state is None or not target_state.is_alive:
         return None

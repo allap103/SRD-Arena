@@ -1,8 +1,8 @@
-from srd_arena.frontends.shared.dice import build_roll_views, without_roll_details
 from srd_arena.application.commands import GameEvent
+from srd_arena.frontends.shared.dice import build_roll_views, without_roll_details
 
 
-def test_build_roll_views_extracts_attack_and_damage():
+def test_build_roll_views_extracts_attack_and_damage() -> None:
     event = GameEvent(
         seq=1,
         type="attack_resolved",
@@ -39,7 +39,7 @@ def test_build_roll_views_extracts_attack_and_damage():
     assert damage.total == 12
 
 
-def test_build_roll_views_displays_additional_typed_attack_damage():
+def test_build_roll_views_displays_additional_typed_attack_damage() -> None:
     event = GameEvent(
         seq=1,
         type="attack_resolved",
@@ -59,17 +59,17 @@ def test_build_roll_views_displays_additional_typed_attack_damage():
                 "modifier": 6,
                 "total": 13,
                 "damage_type": "slashing",
-                "additional_damage": [
+                "additional_damage": (
                     {
                         "dice": "1d8",
-                        "dice_values": [5],
-                        "die_rolls": [[5]],
+                        "dice_values": (5,),
+                        "die_rolls": ((5,),),
                         "dice_total": 5,
                         "modifier": 0,
                         "total": 5,
                         "damage_type": "cold",
-                    }
-                ],
+                    },
+                ),
             },
         },
     )
@@ -84,7 +84,7 @@ def test_build_roll_views_displays_additional_typed_attack_damage():
     assert cold.total == 5
 
 
-def test_build_roll_views_shows_both_d20s_for_advantage_or_disadvantage():
+def test_build_roll_views_shows_both_d20s_for_advantage_or_disadvantage() -> None:
     event = GameEvent(
         seq=1,
         type="attack_resolved",
@@ -94,7 +94,7 @@ def test_build_roll_views_shows_both_d20s_for_advantage_or_disadvantage():
             "hit": False,
             "attack_roll_detail": {
                 "die": 5,
-                "dice": [17, 5],
+                "dice": (17, 5),
                 "selected_index": 1,
                 "mode": "disadvantage",
                 "modifier": 4,
@@ -110,7 +110,7 @@ def test_build_roll_views_shows_both_d20s_for_advantage_or_disadvantage():
     assert [die.selected for die in attack.dice] == [False, True]
 
 
-def test_build_roll_views_shows_full_attack_pool_for_three_d20s():
+def test_build_roll_views_shows_full_attack_pool_for_three_d20s() -> None:
     event = GameEvent(
         seq=1,
         type="attack_resolved",
@@ -120,7 +120,7 @@ def test_build_roll_views_shows_full_attack_pool_for_three_d20s():
             "hit": True,
             "attack_roll_detail": {
                 "die": 19,
-                "dice": [12, 19, 7],
+                "dice": (12, 19, 7),
                 "selected_index": 1,
                 "mode": "advantage",
                 "modifier": 7,
@@ -136,7 +136,7 @@ def test_build_roll_views_shows_full_attack_pool_for_three_d20s():
     assert [die.selected for die in attack.dice] == [False, True, False]
 
 
-def test_build_roll_views_extracts_feature_healing():
+def test_build_roll_views_extracts_feature_healing() -> None:
     event = GameEvent(
         seq=1,
         type="feature_used",
@@ -157,25 +157,25 @@ def test_build_roll_views_extracts_feature_healing():
     assert healing.total == 9
 
 
-def test_build_roll_views_extracts_spell_save_dice():
+def test_build_roll_views_extracts_spell_save_dice() -> None:
     event = GameEvent(
         seq=1,
         type="spell_cast",
         data={
             "spell_name": "Color Spray",
-            "save_details": [
+            "save_details": (
                 {
                     "target_label": "Goblin",
                     "ability": "constitution",
                     "die": 4,
-                    "dice": [15, 4],
+                    "dice": (15, 4),
                     "selected_index": 1,
                     "modifier": 2,
                     "total": 6,
                     "target_dc": 12,
                     "success": False,
-                }
-            ],
+                },
+            ),
         },
     )
 
@@ -190,23 +190,23 @@ def test_build_roll_views_extracts_spell_save_dice():
     assert save.success is False
 
 
-def test_build_roll_views_extracts_spell_damage_dice():
+def test_build_roll_views_extracts_spell_damage_dice() -> None:
     event = GameEvent(
         seq=1,
         type="spell_cast",
         data={
             "spell_name": "Burning Hands",
-            "damage_roll_details": [
+            "damage_roll_details": (
                 {
                     "target_label": "Goblin",
                     "dice": "3d6",
-                    "dice_values": [2, 5, 6],
-                    "die_rolls": [[2], [5], [6]],
+                    "dice_values": (2, 5, 6),
+                    "die_rolls": ((2,), (5,), (6,)),
                     "dice_total": 13,
                     "modifier": 0,
                     "total": 13,
-                }
-            ],
+                },
+            ),
         },
     )
 
@@ -219,26 +219,26 @@ def test_build_roll_views_extracts_spell_damage_dice():
     assert damage.total == 13
 
 
-def test_spell_damage_view_explains_save_and_defense_reductions():
+def test_spell_damage_view_explains_save_and_defense_reductions() -> None:
     event = GameEvent(
         seq=1,
         type="spell_cast",
         data={
             "spell_name": "Phantasmal Killer",
-            "damage_roll_details": [
+            "damage_roll_details": (
                 {
                     "target_label": "Veteran",
                     "dice": "4d10",
-                    "dice_values": [5, 5, 5, 5],
-                    "die_rolls": [[5], [5], [5], [5]],
+                    "dice_values": (5, 5, 5, 5),
+                    "die_rolls": ((5,), (5,), (5,), (5,)),
                     "dice_total": 20,
                     "modifier": 0,
                     "total": 20,
                     "saved": True,
                     "final_damage": 10,
                     "applied_damage": 5,
-                }
-            ],
+                },
+            ),
         },
     )
 
@@ -251,7 +251,7 @@ def test_spell_damage_view_explains_save_and_defense_reductions():
     )
 
 
-def test_build_roll_views_extracts_ongoing_spell_save_and_damage():
+def test_build_roll_views_extracts_ongoing_spell_save_and_damage() -> None:
     event = GameEvent(
         seq=1,
         type="ongoing_effect_resolved",
@@ -261,24 +261,24 @@ def test_build_roll_views_extracts_ongoing_spell_save_and_damage():
                 "target_label": "Veteran",
                 "ability": "wisdom",
                 "die": 7,
-                "dice": [7],
+                "dice": (7,),
                 "selected_index": 0,
                 "modifier": 1,
                 "total": 8,
                 "target_dc": 16,
                 "success": False,
             },
-            "damage_roll_details": [
+            "damage_roll_details": (
                 {
                     "target_label": "Veteran",
                     "dice": "4d10",
-                    "dice_values": [2, 4, 6, 8],
-                    "die_rolls": [[2], [4], [6], [8]],
+                    "dice_values": (2, 4, 6, 8),
+                    "die_rolls": ((2,), (4,), (6,), (8,)),
                     "dice_total": 20,
                     "modifier": 0,
                     "total": 20,
-                }
-            ],
+                },
+            ),
         },
     )
 
@@ -292,13 +292,13 @@ def test_build_roll_views_extracts_ongoing_spell_save_and_damage():
     assert damage.total == 20
 
 
-def test_build_roll_views_extracts_each_invocation_start_check():
+def test_build_roll_views_extracts_each_invocation_start_check() -> None:
     event = GameEvent(
         seq=1,
         type="invocation_start_checked",
         data={
             "kind": "cast_spell",
-            "checks": [
+            "checks": (
                 {
                     "source": {
                         "definition_id": "slow",
@@ -319,7 +319,7 @@ def test_build_roll_views_extracts_each_invocation_start_check():
                     "roll": 5,
                     "failed": False,
                 },
-            ],
+            ),
         },
     )
 
@@ -339,7 +339,7 @@ def test_build_roll_views_extracts_each_invocation_start_check():
     assert interference.success is True
 
 
-def test_build_roll_views_exposes_individual_rerollable_damage_dice():
+def test_build_roll_views_exposes_individual_rerollable_damage_dice() -> None:
     event = GameEvent(
         seq=1,
         type="attack_pending",
@@ -358,8 +358,8 @@ def test_build_roll_views_exposes_individual_rerollable_damage_dice():
             },
             "damage_roll_detail": {
                 "dice": "2d6",
-                "dice_values": [1, 2],
-                "die_rolls": [[1], [2]],
+                "dice_values": (1, 2),
+                "die_rolls": ((1,), (2,)),
                 "dice_total": 3,
                 "modifier": 4,
                 "total": 7,
@@ -378,7 +378,7 @@ def test_build_roll_views_exposes_individual_rerollable_damage_dice():
     ]
 
 
-def test_without_roll_details_keeps_outcomes_and_removes_formula_messages():
+def test_without_roll_details_keeps_outcomes_and_removes_formula_messages() -> None:
     messages = [
         ("system", "Traveler attacks Goblin. Roll d20=17 + STR mod 3 = 20."),
         ("system", "Damage to Goblin: 1d8=6 + STR mod 3 = 9."),

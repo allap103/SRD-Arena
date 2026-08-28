@@ -15,7 +15,24 @@ if TYPE_CHECKING:
 
 
 def end_concentration(state: EncounterState, source_ref: str) -> None:
-    """End every concentration effect maintained by one creature."""
+    """End every concentration effect maintained by one creature.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> source = SimpleNamespace(applied_by_ref="mage")
+    >>> effect = SimpleNamespace(
+    ...     kind=OngoingEffectKind.CONCENTRATION,
+    ...     identity=SimpleNamespace(source=source),
+    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[effect])
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.effect_lifecycle.concentration."
+    ...     "_remove_effect_tree"
+    ... ) as remove:
+    ...     end_concentration(state, "mage")
+    >>> remove.call_args.args[1] is effect
+    True
+    """
 
     matching = tuple(
         effect
@@ -33,7 +50,30 @@ def resolve_concentration_damage(
     damage: int,
     progress: EncounterProgress | None = None,
 ) -> None:
-    """Resolve the concentration save caused by one damage application."""
+    """Resolve the concentration save caused by one damage application.
+
+    A defeated creature loses concentration immediately without rolling.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import Mock, patch
+    >>> source = SimpleNamespace(applied_by_ref="mage")
+    >>> effect = SimpleNamespace(
+    ...     kind=OngoingEffectKind.CONCENTRATION,
+    ...     identity=SimpleNamespace(source=source),
+    ... )
+    >>> creature = SimpleNamespace(get_health=lambda: 0)
+    >>> state = SimpleNamespace(
+    ...     ongoing_effects=[effect],
+    ...     creatures={"mage": SimpleNamespace(creature=creature)},
+    ... )
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.effect_lifecycle.concentration."
+    ...     "end_concentration"
+    ... ) as end:
+    ...     resolve_concentration_damage(state, "mage", 8)
+    >>> end.call_args.args[1]
+    'mage'
+    """
 
     if damage <= 0:
         return

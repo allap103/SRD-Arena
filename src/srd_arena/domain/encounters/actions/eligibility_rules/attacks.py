@@ -1,3 +1,5 @@
+"""Validate attack and grapple candidates against economy, targets, and reach."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -19,12 +21,22 @@ if TYPE_CHECKING:
 
 
 class AttackRule:
+    """Reject attacks lacking economy, a legal target, supported mechanics, or range."""
+
     def check(
         self,
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate attack economy, target, capability, and range.
+
+        >>> from unittest.mock import Mock
+        >>> actor = Mock(actions_remaining=0, attacks_remaining=0)
+        >>> action = EncounterAction("Strike", "attack", value="goblin")
+        >>> AttackRule().check(Mock(creatures={"hero": actor}), "hero", action).code
+        'action_spent'
+        """
         if action.kind not in {"attack", "multiattack"}:
             return None
         actor = state.creatures[actor_ref]
@@ -130,12 +142,22 @@ class AttackRule:
 
 
 class GrappleRule:
+    """Reject grapples lacking economy, reach, a free hand, or a valid-sized target."""
+
     def check(
         self,
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate grapple economy, target, reach, hand, and relative size.
+
+        >>> from unittest.mock import Mock
+        >>> actor = Mock(actions_remaining=0, attacks_remaining=0)
+        >>> action = EncounterAction("Grapple", "grapple", value="goblin")
+        >>> GrappleRule().check(Mock(creatures={"hero": actor}), "hero", action).code
+        'action_spent'
+        """
         if action.kind != "grapple":
             return None
         actor = state.creatures[actor_ref]

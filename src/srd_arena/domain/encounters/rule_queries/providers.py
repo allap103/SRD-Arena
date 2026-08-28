@@ -22,6 +22,18 @@ def ongoing_rule_effects(
     Multiple instances retain independent duration and provenance, but effects
     from the same named rule do not stack.  When the active instance ends, the
     next instance becomes the provider automatically.
+
+    >>> from types import SimpleNamespace
+    >>> from ...effects.rule_effects import ArmorClassAdjustment
+    >>> from ...effects.runtime import EffectSource, EffectSourceKind
+    >>> source = EffectSource(EffectSourceKind.SPELL, "shield")
+    >>> ongoing = SimpleNamespace(
+    ...     identity=SimpleNamespace(id="effect-1", source=source),
+    ...     target_refs=("hero",), rule_effects=(ArmorClassAdjustment(5),),
+    ... )
+    >>> [(state_id, effect.value) for state_id, _source, effect in
+    ...  ongoing_rule_effects(SimpleNamespace(ongoing_effects=[ongoing]), "hero")]
+    [('effect-1', 5)]
     """
 
     active_definitions: set[str] = set()
@@ -44,7 +56,15 @@ def legacy_modifier_provider(
     definition_id: str,
     origin_id: str,
 ) -> tuple[str, EffectSource]:
-    """Recover provenance for a modifier stored on the legacy Creature model."""
+    """Recover provenance for a modifier stored on the legacy Creature model.
+
+    >>> from types import SimpleNamespace
+    >>> state_id, source = legacy_modifier_provider(
+    ...     SimpleNamespace(ongoing_effects=[]), "hero", "shield", "cast-1"
+    ... )
+    >>> (state_id, source.kind.value, source.definition_id)
+    ('creature-modifier:shield:cast-1:hero', 'system', 'shield')
+    """
 
     matching = next(
         (
@@ -58,9 +78,7 @@ def legacy_modifier_provider(
     )
     if matching is not None:
         return matching.identity.id, matching.identity.source
-    provider_state_id = (
-        f"creature-modifier:{definition_id}:{origin_id}:{creature_ref}"
-    )
+    provider_state_id = f"creature-modifier:{definition_id}:{origin_id}:{creature_ref}"
     return provider_state_id, EffectSource(
         kind=EffectSourceKind.SYSTEM,
         definition_id=definition_id,

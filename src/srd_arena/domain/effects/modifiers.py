@@ -1,3 +1,5 @@
+"""Define reusable adjustments to dice rolls and incoming damage."""
+
 from dataclasses import dataclass
 from typing import Literal, cast
 
@@ -10,6 +12,12 @@ ModifierSubject = Literal["target", "attacks_against_target"]
 
 @dataclass(frozen=True)
 class RollModifier:
+    """Describe an adjustment matched to a particular roll context.
+
+    A modifier either changes advantage state or contributes a fixed/dice-based
+    numeric amount. Runtime effect state supplies its provenance separately.
+    """
+
     roll: RollKind
     mode: ModifierMode
     dice: str | None = None
@@ -19,6 +27,13 @@ class RollModifier:
     ability: str | None = None
 
     def resolve(self, roller: DieRoller) -> int:
+        """Resolve an additive or subtractive modifier.
+
+        >>> RollModifier("saving_throw", "add", dice="1d4").resolve(lambda _: 3)
+        3
+        >>> RollModifier("attack_roll", "subtract", value=2).resolve(lambda _: 1)
+        -2
+        """
         if self.mode not in {"add", "subtract"}:
             return 0
         total = self.value or 0
@@ -29,6 +44,13 @@ class RollModifier:
 
     @property
     def roll_mode(self) -> D20RollMode | None:
+        """Return the advantage mode contributed by this modifier, if any.
+
+        >>> RollModifier("attack_roll", "advantage").roll_mode
+        'advantage'
+        >>> RollModifier("attack_roll", "add", value=1).roll_mode is None
+        True
+        """
         if self.mode in {"advantage", "disadvantage"}:
             return cast(D20RollMode, self.mode)
         return None
@@ -36,11 +58,25 @@ class RollModifier:
 
 @dataclass
 class DamageReduction:
+    """Track a dice-based damage reduction that can be consumed once.
+
+    The owning creature or effect lifecycle is responsible for restoring its
+    availability at the appropriate rules boundary.
+    """
+
     damage_type: str
     dice: str
     available: bool = True
 
     def resolve(self, roller: DieRoller) -> int:
+        """Resolve this reduction once, consuming its availability.
+
+        >>> reduction = DamageReduction("bludgeoning", "1d10")
+        >>> reduction.resolve(lambda _: 4)
+        4
+        >>> reduction.resolve(lambda _: 9)
+        0
+        """
         if not self.available:
             return 0
         count_text, sides_text = self.dice.casefold().split("d", 1)

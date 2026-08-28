@@ -1,16 +1,17 @@
+"""Resolve saving throws from creature statistics and active rule modifiers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol
 
 from ..effects.modifiers import RollKind
-
 from .dice import (
     CheckResult,
     D20RollMode,
     DieRoller,
-    resolve_check,
     combine_roll_modes,
+    resolve_check,
     resolve_d20,
     roll_die,
 )
@@ -26,32 +27,52 @@ Ability = Literal[
 
 
 class SavingThrowCreature(Protocol):
+    """Define the saving throw creature contract."""
+
     attributes: Any
 
-    def get_modifier(self, attribute_value: int) -> int: ...
+    def get_modifier(self, attribute_value: int) -> int:
+        """Return the rules modifier associated with an ability score."""
+
+        ...
 
     def resolve_roll_modifiers(
         self, roll: RollKind, roller: DieRoller, ability: str | None = None
-    ) -> int: ...
+    ) -> int:
+        """Resolve sourced numeric modifiers for the requested roll."""
+
+        ...
 
     def roll_mode(
         self, roll: RollKind, ability: str | None = None
-    ) -> D20RollMode: ...
+    ) -> D20RollMode:
+        """Return the combined advantage state supplied by active rules."""
+
+        ...
 
 
 @dataclass(frozen=True)
 class SavingThrowModifiers:
+    """Separate ability, proficiency, and situational contributions to a save."""
+
     ability: int
     proficiency: int
     other: int = 0
 
     @property
     def total(self) -> int:
+        """Return the combined saving-throw modifier.
+
+        >>> SavingThrowModifiers(ability=3, proficiency=2, other=1).total
+        6
+        """
         return self.ability + self.proficiency + self.other
 
 
 @dataclass(frozen=True)
 class SavingThrowResult:
+    """Record a saving throw's inputs, roll, outcome, and forced-failure reasons."""
+
     ability: Ability
     proficient: bool
     modifiers: SavingThrowModifiers
@@ -71,7 +92,21 @@ def resolve_saving_throw(
     roller: DieRoller = roll_die,
     automatic_failure_reasons: tuple[str, ...] = (),
 ) -> SavingThrowResult:
-    """Resolve an creature's saving throw against a target."""
+    """Resolve a creature's saving throw against a difficulty class.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     attributes=SimpleNamespace(
+    ...         dexterity=14, proficiency_bonus=2, proficiencies={}
+    ...     ),
+    ...     get_modifier=lambda score: (score - 10) // 2,
+    ... )
+    >>> result = resolve_saving_throw(
+    ...     creature, "dexterity", 13, roller=lambda sides: 12
+    ... )
+    >>> (result.modifiers.total, result.check.total if hasattr(result.check, "total") else result.check.roll.total, result.check.success)
+    (2, 14, True)
+    """
     ability_score = getattr(creature.attributes, ability)
     ability_modifier = creature.get_modifier(ability_score)
     explicit_bonus = _explicit_saving_throw_bonus(creature, ability)
@@ -79,7 +114,7 @@ def resolve_saving_throw(
     proficiency_modifier = (
         explicit_bonus - ability_modifier
         if explicit_bonus is not None
-        else int(getattr(creature.attributes, "proficiency_bonus"))
+        else int(creature.attributes.proficiency_bonus)
         if proficient
         else 0
     )
@@ -138,7 +173,24 @@ def reroll_saving_throw(
     mode: D20RollMode = "normal",
     roller: DieRoller = roll_die,
 ) -> SavingThrowResult:
-    """Repeat a save against the same target, retaining its existing modifiers."""
+    """Repeat a save against the same target, retaining its existing modifiers.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     attributes=SimpleNamespace(
+    ...         wisdom=10, proficiency_bonus=2, proficiencies={}
+    ...     ),
+    ...     get_modifier=lambda score: (score - 10) // 2,
+    ... )
+    >>> original = resolve_saving_throw(
+    ...     creature, "wisdom", 15, roller=lambda sides: 5
+    ... )
+    >>> rerolled = reroll_saving_throw(
+    ...     creature, original, bonus_modifier=1, roller=lambda sides: 20
+    ... )
+    >>> (original.check.success, rerolled.modifiers.total, rerolled.check.success)
+    (False, 1, True)
+    """
     return resolve_saving_throw(
         creature,
         original.ability,

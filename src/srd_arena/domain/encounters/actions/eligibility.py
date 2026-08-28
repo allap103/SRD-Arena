@@ -43,6 +43,27 @@ def action_eligibility(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> ActionEligibility:
+    """Collect every reason a candidate action is currently unavailable.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> compatibility = ActionEligibility()
+    >>> state = SimpleNamespace(
+    ...     combat_rules=SimpleNamespace(
+    ...         action_compatibility=lambda state, actor, action: compatibility
+    ...     )
+    ... )
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.eligibility.ACTION_ELIGIBILITY_RULES",
+    ...     (),
+    ... ):
+    ...     result = action_eligibility(
+    ...         state, "hero", EncounterAction("Wait", "wait")
+    ...     )
+    >>> result.allowed
+    True
+    """
+
     compatibility = state.combat_rules.action_compatibility(
         state,
         actor_ref,
@@ -61,6 +82,24 @@ def require_action_eligible(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> None:
+    """Raise when an action fails eligibility, preserving its first explanation.
+
+    >>> from types import SimpleNamespace
+    >>> blocked = ActionEligibility(
+    ...     (EligibilityFailure("stunned", "The actor is stunned."),)
+    ... )
+    >>> state = SimpleNamespace(
+    ...     combat_rules=SimpleNamespace(
+    ...         action_eligibility=lambda state, actor, action: blocked
+    ...     )
+    ... )
+    >>> try:
+    ...     require_action_eligible(state, "hero", EncounterAction("Attack", "attack"))
+    ... except ValueError as error:
+    ...     str(error)
+    'The actor is stunned.'
+    """
+
     eligibility = state.combat_rules.action_eligibility(
         state,
         actor_ref,

@@ -1,16 +1,26 @@
+"""Choose advertised actions for external and simple scripted controllers."""
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Sequence
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Protocol
 
 from ..geometry import Position
 from .behaviors import build_behavior
-from .models import BehaviorContext, CreatureRef, EncounterAction, EncounterCreatureState
+from .models import (
+    BehaviorContext,
+    CreatureRef,
+    EncounterAction,
+    EncounterCreatureState,
+)
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
 
 
 class ActionSelector(Protocol):
+    """Define the action selector contract."""
+
     def select_action(
         self,
         state: EncounterState,
@@ -20,16 +30,26 @@ class ActionSelector(Protocol):
 
 
 class ExternalActionSelector:
+    """Yield control instead of selecting on behalf of a user or external agent."""
+
     def select_action(
         self,
         state: EncounterState,
         creature_ref: CreatureRef,
         actions: Sequence[EncounterAction],
     ) -> None:
+        """Decline automatic selection so an external controller can choose.
+
+        >>> from unittest.mock import Mock
+        >>> ExternalActionSelector().select_action(Mock(), "hero", ()) is None
+        True
+        """
         return None
 
 
 class ScriptedActionSelector:
+    """Select legal actions using a participant's configured deterministic behavior."""
+
     def __init__(self, participant: EncounterCreatureState) -> None:
         self._behavior = build_behavior(participant)
         next(self._behavior)
@@ -40,15 +60,27 @@ class ScriptedActionSelector:
         creature_ref: CreatureRef,
         actions: Sequence[EncounterAction],
     ) -> EncounterAction:
+        """Select an action from the participant's authored behavior.
+
+        A scripted creature with no living opponent safely waits.
+
+        >>> from unittest.mock import Mock
+        >>> participant = Mock()
+        >>> participant.behavior.type = "wait"
+        >>> selector = ScriptedActionSelector(participant)
+        >>> state = Mock()
+        >>> state._creature_position.return_value = Position(0, 0)
+        >>> state._living_creature_refs.return_value = []
+        >>> selector.select_action(state, "guard", (EncounterAction("Wait", "wait"),)).kind
+        'wait'
+        """
         wait = next(action for action in actions if action.kind == "wait")
         target_ref = self._nearest_opponent(state, creature_ref)
         if target_ref is None:
             return wait
         actor = state.creatures[creature_ref]
         target = state.creatures[target_ref]
-        preferred_attack_type = (
-            "ranged" if actor.behavior.type == "archer" else "melee"
-        )
+        preferred_attack_type = "ranged" if actor.behavior.type == "archer" else "melee"
         matching_attacks = [
             action
             for action in actions
@@ -108,6 +140,17 @@ def build_action_selector(
     controller: str,
     participant: EncounterCreatureState,
 ) -> ActionSelector:
+    """Construct the controller-specific selector used for a creature's decisions.
+
+    >>> from unittest.mock import Mock
+    >>> isinstance(build_action_selector("external", Mock()), ExternalActionSelector)
+    True
+    >>> participant = Mock()
+    >>> participant.behavior.type = "wait"
+    >>> isinstance(build_action_selector("scripted", participant), ScriptedActionSelector)
+    True
+    """
+
     if controller == "external":
         return ExternalActionSelector()
     return ScriptedActionSelector(participant)

@@ -1,12 +1,23 @@
 import pytest
 from pydantic import ValidationError
 
+from srd_arena.content.capabilities import (
+    ConditionEffectSchema,
+    ConditionRequirementSchema,
+    CreatureTargetSchema,
+    DamageEffectSchema,
+    TimedDurationSchema,
+)
+from srd_arena.content.capabilities.requirements import (
+    AttackRollModeRequirementSchema,
+)
+from srd_arena.content.creatures import BestiaryActionSchema
 from srd_arena.content.creatures.actions.schema import (
     AttackCapabilitySchema,
     CapabilitySchema,
+    SavingThrowActionResolutionSchema,
     SpellcastingCapabilitySchema,
 )
-from srd_arena.content.creatures import BestiaryActionSchema
 
 
 def test_attack_action_supports_multiple_hit_effects() -> None:
@@ -41,7 +52,10 @@ def test_attack_action_supports_multiple_hit_effects() -> None:
     )
 
     assert isinstance(action.capability, AttackCapabilitySchema)
-    assert [effect.damage_type for effect in action.capability.hit] == [
+    first_effect, second_effect = action.capability.hit
+    assert isinstance(first_effect, DamageEffectSchema)
+    assert isinstance(second_effect, DamageEffectSchema)
+    assert [first_effect.damage_type, second_effect.damage_type] == [
         "slashing",
         "cold",
     ]
@@ -82,6 +96,11 @@ def test_damage_effect_supports_attack_roll_mode_requirement() -> None:
 
     assert isinstance(action.capability, AttackCapabilitySchema)
     conditional_damage = action.capability.hit[1]
+    assert isinstance(conditional_damage, DamageEffectSchema)
+    assert isinstance(
+        conditional_damage.requirements[0],
+        AttackRollModeRequirementSchema,
+    )
     assert conditional_damage.requirements[0].type == "attack_roll_mode"
     assert conditional_damage.requirements[0].mode == "advantage"
 
@@ -134,7 +153,11 @@ def test_save_action_supports_target_requirements_and_half_damage() -> None:
         }
     )
 
-    assert action.target.requirements[0].applied_by == "source"
+    assert isinstance(action.target, CreatureTargetSchema)
+    requirement = action.target.requirements[0]
+    assert isinstance(requirement, ConditionRequirementSchema)
+    assert requirement.applied_by == "source"
+    assert isinstance(action.resolution, SavingThrowActionResolutionSchema)
     assert action.resolution.success_damage == "half"
     assert action.resolution.always.effects[0].type == "gain_memories"
 
@@ -152,47 +175,50 @@ def test_save_action_supports_staged_failures_and_repeat_saves() -> None:
                 "ability": "con",
                 "difficulty": {"type": "fixed", "value": 20},
                 "failure": [
-                {
-                    "effects": [
-                        {
-                            "type": "condition",
-                            "condition": "incapacitated",
-                            "duration": {
-                                "type": "end_of_turn",
-                                "creature": "target",
-                                "turn_offset": 1,
-                            },
-                        }
-                    ],
-                    "repeat_saves": [{"trigger": "end_of_turn"}],
-                },
-                {
-                    "effects": [
-                        {
-                            "type": "condition",
-                            "condition": "paralyzed",
-                        }
-                    ],
-                    "repeat_saves": [
-                        {
-                            "trigger": "end_of_turn",
-                            "automatic_success_after": {
-                                "type": "timed",
-                                "amount": 1,
-                                "unit": "minute",
-                            },
-                        }
-                    ],
-                },
+                    {
+                        "effects": [
+                            {
+                                "type": "condition",
+                                "condition": "incapacitated",
+                                "duration": {
+                                    "type": "end_of_turn",
+                                    "creature": "target",
+                                    "turn_offset": 1,
+                                },
+                            }
+                        ],
+                        "repeat_saves": [{"trigger": "end_of_turn"}],
+                    },
+                    {
+                        "effects": [
+                            {
+                                "type": "condition",
+                                "condition": "paralyzed",
+                            }
+                        ],
+                        "repeat_saves": [
+                            {
+                                "trigger": "end_of_turn",
+                                "automatic_success_after": {
+                                    "type": "timed",
+                                    "amount": 1,
+                                    "unit": "minute",
+                                },
+                            }
+                        ],
+                    },
                 ],
                 "success": {"effects": []},
             },
         }
     )
 
+    assert isinstance(action.resolution, SavingThrowActionResolutionSchema)
     assert len(action.resolution.failure) == 2
     repeat = action.resolution.failure[1].repeat_saves[0]
-    assert repeat.automatic_success_after.amount == 1
+    duration = repeat.automatic_success_after
+    assert isinstance(duration, TimedDurationSchema)
+    assert duration.amount == 1
 
 
 def test_condition_duration_can_end_at_start_of_source_turn() -> None:
@@ -216,7 +242,10 @@ def test_condition_duration_can_end_at_start_of_source_turn() -> None:
         }
     )
 
-    assert action.hit[0].duration.type == "start_of_turn"
+    effect = action.hit[0]
+    assert isinstance(effect, ConditionEffectSchema)
+    assert effect.duration is not None
+    assert effect.duration.type == "start_of_turn"
 
 
 def test_spellcasting_action_is_distinct_from_save_and_attack_actions() -> None:
@@ -251,14 +280,14 @@ def test_action_capability_reject_unknown_effects() -> None:
                     "ability": "wis",
                     "difficulty": {"type": "fixed", "value": 16},
                     "failure": [
-                    {
-                        "effects": [
-                            {
-                                "type": "unstructured_prose",
-                                "text": "Do something complicated.",
-                            }
-                        ]
-                    }
+                        {
+                            "effects": [
+                                {
+                                    "type": "unstructured_prose",
+                                    "text": "Do something complicated.",
+                                }
+                            ]
+                        }
                     ],
                     "success": {"effects": []},
                 },

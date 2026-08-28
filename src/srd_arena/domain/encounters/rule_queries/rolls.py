@@ -22,7 +22,18 @@ def roll_modifiers(
     subject: ModifierSubject = "target",
     opposing_ref: CreatureRef | None = None,
 ) -> RollRuleResult:
-    """Return modifiers matching one roll, subject, ability, and opponent."""
+    """Return modifiers matching one roll, subject, ability, and opponent.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(roll_modifier_sources={})
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(creature=creature)},
+    ...     ongoing_effects=[],
+    ... )
+    >>> result = roll_modifiers(state, "hero", "saving_throw", "wisdom")
+    >>> (result.contributions, result.mode)
+    ((), 'normal')
+    """
 
     creature = state.creatures[creature_ref].creature
     contributions: list[RollRuleContribution] = []

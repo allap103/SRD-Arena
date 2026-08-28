@@ -14,10 +14,10 @@ from ....rolls.saving_throws import (
     SavingThrowCreature,
     resolve_saving_throw,
 )
-from .resources import consume_stat_block_action_resource
-from .rolls import roll_dice, roll_die
 from ...models import EncounterAction, EncounterProgress
 from ...ongoing_effects import has_condition_save_advantage
+from .resources import consume_stat_block_action_resource
+from .rolls import roll_dice, roll_die
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -31,7 +31,17 @@ def resolve_saving_throw_stat_block_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Resolve a supported saving-throw action against all selected targets."""
+    """Resolve a supported saving-throw action against all selected targets.
+
+    >>> from types import SimpleNamespace
+    >>> resolve_saving_throw_stat_block_action(
+    ...     SimpleNamespace(), SimpleNamespace(), SimpleNamespace(),
+    ...     EncounterAction("Breath", "stat_block"), EncounterProgress(), "breath-1"
+    ... )
+    Traceback (most recent call last):
+    ...
+    ValueError: Saving-throw stat-block action requires an aim target.
+    """
     if not isinstance(action.value, (str, tuple)):
         raise ValueError("Saving-throw stat-block action requires an aim target.")
     creature_ref = state.current_decision().creature_ref
@@ -167,7 +177,30 @@ def stat_block_target_refs(
     aim: str | tuple[float, float],
     definition: SavingThrowActionDefinition,
 ) -> tuple[str, ...]:
-    """Resolve creature references covered by a stat-block action target."""
+    """Resolve creature references covered by a stat-block action target.
+
+    Direct targets require no geometry; area definitions continue through the
+    same function and return every living creature whose cell is covered.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.capabilities import CapabilityTarget, OutcomeStage
+    >>> self_definition = SavingThrowActionDefinition(
+    ...     "Pulse", CapabilityTarget("self"), "con", 12,
+    ...     (OutcomeStage(()),), (), "none", (),
+    ... )
+    >>> stat_block_target_refs(
+    ...     SimpleNamespace(), "caster", "ignored", self_definition
+    ... )
+    ('caster',)
+    >>> target_definition = SavingThrowActionDefinition(
+    ...     "Glare", CapabilityTarget("creature"), "wis", 12,
+    ...     (OutcomeStage(()),), (), "none", (),
+    ... )
+    >>> stat_block_target_refs(
+    ...     SimpleNamespace(), "caster", "target", target_definition
+    ... )
+    ('target',)
+    """
     target = definition.target
     if target.kind == "self":
         return (creature_ref,)
@@ -223,7 +256,23 @@ def apply_damage_effects(
     half: bool,
     modifier_for_roll: Callable[[], int] | None = None,
 ) -> int:
-    """Apply supported damage effects and return damage actually received."""
+    """Apply supported damage effects and return damage actually received.
+
+    Successful saves can request half damage after dice and modifiers have been
+    combined. The returned value reflects the target's own mitigation.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> effect = DamageEffect("2d6", 2, "fire")
+    >>> target = SimpleNamespace(take_damage=lambda amount, damage_type: amount - 1)
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.stat_block_runtime."
+    ...     "saving_throws.roll_dice",
+    ...     return_value=8,
+    ... ):
+    ...     apply_damage_effects(target, (effect,), half=True)
+    4
+    """
     total = 0
     for effect in effects:
         if not isinstance(effect, DamageEffect):

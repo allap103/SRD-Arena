@@ -1,11 +1,11 @@
 from srd_arena.application.observations import ActionObservation
-from srd_arena.frontends.qt.ui.encounter.config import TargetSelectionMode
-from srd_arena.frontends.qt.ui.encounter.movement import (
+from srd_arena.frontends.gui.ui.encounter.config import TargetSelectionMode
+from srd_arena.frontends.gui.ui.encounter.movement import (
     build_movement_plan,
     movement_plan_is_current,
     shortest_movement_paths,
 )
-from srd_arena.frontends.qt.ui.encounter.targeting import (
+from srd_arena.frontends.gui.ui.encounter.targeting import (
     action_for_target_click,
     cancel_targeting_action,
 )

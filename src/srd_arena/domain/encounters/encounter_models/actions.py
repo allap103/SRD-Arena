@@ -11,7 +11,9 @@ CreatureRef = str
 
 @dataclass
 class ActionCost:
-    movement: MovementCost = MovementCost(0)
+    """Count movement and turn resources consumed by an encounter action."""
+
+    movement: MovementCost = field(default_factory=lambda: MovementCost(0))
     action: int = 0
     bonus_action: int = 0
     reaction: int = 0
@@ -22,6 +24,12 @@ class ActionCost:
 
 @dataclass
 class EncounterAction:
+    """Describe one stable, selectable choice at an encounter decision point.
+
+    Actions carry runtime identity, actor, cost, and compact selection data;
+    reusable rules mechanics remain on the referenced capability or source.
+    """
+
     label: str
     kind: str
     value: str | int | tuple[float, float] | None = None

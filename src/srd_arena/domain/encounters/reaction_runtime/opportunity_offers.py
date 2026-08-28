@@ -37,7 +37,19 @@ def queue_opportunity_attack(
     external_only: bool,
     excluded_reactor_refs: Collection[str] = (),
 ) -> bool:
-    """Push the first eligible external Opportunity Attack decision."""
+    """Push the first eligible external Opportunity Attack decision.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(creatures={"hero": SimpleNamespace()})
+    >>> queue_opportunity_attack(
+    ...     state, mover_ref="hero", action_id="move-1", direction="right",
+    ...     from_position=Position(0, 0), to_position=Position(1, 0),
+    ...     remaining_movement_after=MovementBudget(5),
+    ...     movement_cost=MovementCost(1), companion_destinations={},
+    ...     progress=EncounterProgress(), external_only=True,
+    ... )
+    False
+    """
 
     reactors = [
         (creature_ref, creature_state)
@@ -47,8 +59,7 @@ def queue_opportunity_attack(
         and creature_state.is_alive
         and state._creatures_are_opponents(creature_ref, mover_ref)
         and (
-            not external_only
-            or state._creature_controller(creature_ref) == "external"
+            not external_only or state._creature_controller(creature_ref) == "external"
         )
         and state.combat_rules.reaction_eligibility(
             state,
@@ -113,7 +124,19 @@ def queue_opportunity_attack(
 
 
 def reaction_actions(state: EncounterState) -> list[EncounterAction]:
-    """Build the choices for the active reaction frame."""
+    """Build the choices for the active reaction frame.
+
+    Frames without a recognized Opportunity Attack request still expose a
+    stable pass choice, allowing future reaction kinds to fail closed.
+
+    >>> from types import SimpleNamespace
+    >>> frame = DecisionFrame("reaction", "guard", "reaction", "other")
+    >>> actions = reaction_actions(
+    ...     SimpleNamespace(current_decision=lambda: frame)
+    ... )
+    >>> [(action.kind, action.creature_ref) for action in actions]
+    [('pass', 'guard')]
+    """
 
     decision = state.current_decision()
     if not isinstance(decision.request, OpportunityAttackRequest):
@@ -146,10 +169,7 @@ def reaction_actions(state: EncounterState) -> list[EncounterAction]:
                 f"Opportunity attack {target.creature.name}",
                 "opportunity_attack",
                 target_ref,
-                id=(
-                    f"{reactor_ref}-opportunity-attack-"
-                    f"{target_ref.replace(':', '-')}"
-                ),
+                id=(f"{reactor_ref}-opportunity-attack-{target_ref.replace(':', '-')}"),
                 creature_ref=reactor_ref,
                 source_trigger_id=movement.trigger_id,
                 cost=ActionCost(reaction=1),

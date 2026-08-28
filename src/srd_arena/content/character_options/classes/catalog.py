@@ -1,6 +1,12 @@
+"""Group class and subclass definitions with their separately authored features."""
+
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, TypeVar
+
+from srd_arena.content.common.catalog import SourceCatalog
+from srd_arena.content.common.schema import SourceModel
+from srd_arena.content.common.sources import SOURCE_PRIORITY, load_json
 
 from .schema import (
     ClassFeatureSchema,
@@ -8,21 +14,20 @@ from .schema import (
     SubclassFeatureSchema,
     SubclassSchema,
 )
-from srd_arena.content.common.sources import SOURCE_PRIORITY, load_json
-from srd_arena.content.common.schema import SourceModel
-from srd_arena.content.common.catalog import SourceCatalog
-
-T = TypeVar("T", bound=SourceModel)
 
 
 @dataclass(frozen=True)
 class ClassRecord:
+    """Bundle one class definition with the features that belong to it."""
+
     definition: ClassSchema
     features: tuple[ClassFeatureSchema, ...]
 
 
 @dataclass(frozen=True)
 class SubclassRecord:
+    """Bundle one subclass definition with the features that belong to it."""
+
     definition: SubclassSchema
     features: tuple[SubclassFeatureSchema, ...]
 
@@ -31,6 +36,8 @@ ClassCatalog = SourceCatalog[ClassRecord]
 
 
 class SubclassCatalog:
+    """Resolve subclasses using both their own and their parent class identities."""
+
     def __init__(self, records: list[SubclassRecord]) -> None:
         self._records = records
         self._by_identity = {
@@ -52,6 +59,14 @@ class SubclassCatalog:
         class_name: str,
         class_source: str | None,
     ) -> SubclassRecord:
+        """Find a subclass by its own and its parent class identities.
+
+        >>> champion = SubclassSchema(name="Champion", source="X",
+        ...     className="Fighter", classSource="X")
+        >>> catalog = SubclassCatalog([SubclassRecord(champion, ())])
+        >>> catalog.find("champion", None, "fighter", None).definition.name
+        'Champion'
+        """
         name_key = name.casefold()
         class_name_key = class_name.casefold()
         candidates = [
@@ -65,8 +80,7 @@ class SubclassCatalog:
             )
             and (
                 class_source is None
-                or record.definition.class_source.casefold()
-                == class_source.casefold()
+                or record.definition.class_source.casefold() == class_source.casefold()
             )
         ]
         if not candidates:
@@ -82,6 +96,19 @@ class SubclassCatalog:
 
 
 def load_class_catalog(directory: str | Path) -> ClassCatalog:
+    """Group each authored class with features matching its name and source.
+
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     root = Path(directory)
+    ...     fighter = root / "classes" / "fighter"
+    ...     fighter.mkdir(parents=True)
+    ...     _ = (fighter / "class.json").write_text(
+    ...         '{"name": "Fighter", "source": "X"}', encoding="utf-8")
+    ...     load_class_catalog(root).find("fighter", None).definition.name
+    'Fighter'
+    """
+
     system_dir = Path(directory)
     class_dir = system_dir / "classes"
     definitions = _load_paths(
@@ -113,6 +140,20 @@ def load_class_catalog(directory: str | Path) -> ClassCatalog:
 
 
 def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
+    """Group each subclass with features matching it and its parent class.
+
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     root = Path(directory)
+    ...     (root / "subclasses").mkdir()
+    ...     _ = (root / "subclasses" / "champion.json").write_text(
+    ...         '{"name": "Champion", "source": "X", '
+    ...         '"className": "Fighter", "classSource": "X"}', encoding="utf-8")
+    ...     catalog = load_subclass_catalog(root)
+    ...     catalog.find("champion", None, "fighter", None).definition.name
+    'Champion'
+    """
+
     system_dir = Path(directory)
     definitions = _load_records(system_dir / "subclasses", SubclassSchema)
     features = _load_records(
@@ -130,8 +171,7 @@ def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
                 == definition.class_source.casefold()
                 and feature.subclass_short_name.casefold()
                 == (definition.short_name or definition.name).casefold()
-                and feature.subclass_source.casefold()
-                == definition.source.casefold()
+                and feature.subclass_source.casefold() == definition.source.casefold()
             ),
         )
         for definition in definitions
@@ -139,12 +179,9 @@ def load_subclass_catalog(directory: str | Path) -> SubclassCatalog:
     return SubclassCatalog(records)
 
 
-def _load_records(directory: Path, schema: type[T]) -> list[T]:
+def _load_records[T: SourceModel](directory: Path, schema: type[T]) -> list[T]:
     return _load_paths(directory.glob("*.json"), schema)
 
 
-def _load_paths(paths: Iterable[Path], schema: type[T]) -> list[T]:
-    return [
-        schema.model_validate(load_json(path))
-        for path in sorted(paths)
-    ]
+def _load_paths[T: SourceModel](paths: Iterable[Path], schema: type[T]) -> list[T]:
+    return [schema.model_validate(load_json(path)) for path in sorted(paths)]

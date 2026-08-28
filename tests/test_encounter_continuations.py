@@ -9,8 +9,7 @@ from srd_arena.domain.encounters.models import (
     DecisionFrame,
     EncounterProgress,
 )
-from srd_arena.infrastructure.scenarios import load_scenario
-
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 FULL_CONTROL_SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
@@ -18,8 +17,8 @@ FULL_CONTROL_SCENARIO_DIR = (
 
 
 def _encounter_state() -> EncounterState:
-    session = load_scenario(FULL_CONTROL_SCENARIO_DIR).create_session()
-    session.get_scene_view()
+    session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
+    session.read()
     assert session.encounter_state is not None
     return session.encounter_state
 

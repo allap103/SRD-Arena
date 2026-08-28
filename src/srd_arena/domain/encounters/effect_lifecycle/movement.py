@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from ...geometry import MovementBudget
 
@@ -14,7 +15,24 @@ def reconcile_remaining_movement(
     state: EncounterState,
     creature_refs: Iterable[str],
 ) -> None:
-    """Recompute remaining movement without forgiving distance already spent."""
+    """Recompute remaining movement without forgiving distance already spent.
+
+    This is used when an effect changes Speed during a turn. Movement already
+    spent remains spent, and a reduced budget cannot produce a negative value.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     movement_remaining=30,
+    ...     movement_spent_this_turn=20,
+    ... )
+    >>> rules = SimpleNamespace(
+    ...     movement_budget=lambda state, ref: SimpleNamespace(budget=15)
+    ... )
+    >>> state = SimpleNamespace(creatures={"hero": creature}, combat_rules=rules)
+    >>> reconcile_remaining_movement(state, ("hero",))
+    >>> int(creature.movement_remaining)
+    0
+    """
 
     for creature_ref in creature_refs:
         creature_state = state.creatures[creature_ref]
@@ -27,7 +45,6 @@ def reconcile_remaining_movement(
         creature_state.movement_remaining = MovementBudget(
             max(
                 0,
-                int(current_budget)
-                - int(creature_state.movement_spent_this_turn),
+                int(current_budget) - int(creature_state.movement_spent_this_turn),
             )
         )

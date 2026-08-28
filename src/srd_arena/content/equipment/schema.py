@@ -1,14 +1,20 @@
+"""Validate authored equipment statistics and granted capabilities."""
+
 from pydantic import Field
 
 from srd_arena.content.common.schema import SourceModel
 
 
 class ItemPropertySchema(SourceModel):
+    """Define the authored equipment fields with uid and note."""
+
     uid: str
     note: str | None = None
 
 
 class ItemSchema(SourceModel):
+    """Validate an item's identity and optional weapon or armor statistics."""
+
     name: str
     source: str
     type: str = ""
@@ -34,6 +40,11 @@ class ItemSchema(SourceModel):
 
     @property
     def public_name(self) -> str:
+        """Return the SRD-facing name when the source provides one.
+
+        >>> ItemSchema(name="Longsword Legacy", source="X", srd52="Longsword").public_name
+        'Longsword'
+        """
         for marker in (self.srd52, self.srd):
             if isinstance(marker, str):
                 return marker
@@ -41,16 +52,30 @@ class ItemSchema(SourceModel):
 
     @property
     def is_weapon(self) -> bool:
+        """Return whether authored fields identify this item as a weapon.
+
+        >>> ItemSchema(name="Longsword", source="X", dmg1="1d8").is_weapon
+        True
+        """
         return self.weapon or self.damage is not None
 
     @property
     def is_armor(self) -> bool:
+        """Return whether authored fields identify this item as armor.
+
+        >>> ItemSchema(name="Shield", source="X", ac=2).is_armor
+        True
+        """
         return self.armor or isinstance(self.ac, int)
 
 
 class BaseItemFileSchema(SourceModel):
+    """Define the authored equipment fields with base items."""
+
     base_items: list[ItemSchema] = Field(default_factory=list, alias="baseitem")
 
 
 class ItemFileSchema(SourceModel):
+    """Define the authored equipment fields with items."""
+
     items: list[ItemSchema] = Field(default_factory=list, alias="item")

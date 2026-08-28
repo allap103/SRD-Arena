@@ -1,12 +1,11 @@
+"""Index authored records by stable name and source identity."""
+
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Iterator
-from typing import Generic, TypeVar
-
-T = TypeVar("T")
 
 
-class SourceCatalog(Generic[T]):
+class SourceCatalog[T]:
     """Source-aware index for named content records."""
 
     def __init__(
@@ -29,6 +28,17 @@ class SourceCatalog(Generic[T]):
             self._add(record, name_of(record), source_of(record))
 
     def find(self, name: str, source: str | None = None) -> T:
+        """Find a record case-insensitively, optionally selecting its source.
+
+        >>> records = (("Fireball", "2014"), ("Fireball", "2024"))
+        >>> catalog = SourceCatalog(records, name_of=lambda item: item[0],
+        ...                         source_of=lambda item: item[1],
+        ...                         source_priority={"2024": 1})
+        >>> catalog.find("fireball")
+        ('Fireball', '2024')
+        >>> catalog.find("Fireball", "2014")
+        ('Fireball', '2014')
+        """
         name_key = name.casefold()
         if source is not None:
             exact = self._records.get((name_key, source.casefold()))

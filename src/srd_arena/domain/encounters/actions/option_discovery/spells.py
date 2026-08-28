@@ -1,3 +1,5 @@
+"""Discover executable spell actions from the acting creature's casting grants."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -33,6 +35,17 @@ def available_spell_actions(
     self: EncounterState,
     actor: Creature,
 ) -> list[EncounterAction]:
+    """Advertise castable spell grants with target-relative configurations.
+
+    >>> from types import SimpleNamespace
+    >>> actor = SimpleNamespace(spellcasting=None)
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="fighter")
+    ... )
+    >>> available_spell_actions(state, actor)
+    []
+    """
+
     spellcasting = actor.spellcasting
     creature_ref = self.current_decision().creature_ref
     if spellcasting is None:
@@ -97,10 +110,8 @@ def available_spell_actions(
                     if reduction is not None and reduction.selection == "choose_one"
                     else ()
                 )
-                if resistance is not None
-                and resistance.selection == "choose_one"
-                or reduction is not None
-                and reduction.selection == "choose_one"
+                if (resistance is not None and resistance.selection == "choose_one")
+                or (reduction is not None and reduction.selection == "choose_one")
                 else (None,)
             )
             ability_choices = tuple(

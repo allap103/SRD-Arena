@@ -1,16 +1,17 @@
+"""Route accepted encounter actions into the matching execution pipeline."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from ...creatures import can_grapple
-from ...rolls.dice import resolve_d20
-from ...effects.results import EffectResult
+from ...creatures import Creature, can_grapple
 from ...effects.application import condition_from_effect_with_origin
-from .attack_resolution import has_free_hand
-from ..behaviors import is_adjacent as _is_adjacent
+from ...effects.results import EffectResult
+from ...rolls.dice import resolve_d20
 from ..attack_economy import spend_attack
+from ..behaviors import is_adjacent as _is_adjacent
 from ..models import EncounterAction, EncounterProgress
+from .attack_resolution import has_free_hand
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -29,6 +30,24 @@ def resolve_grapple_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
+    """Route a grapple or escape action through its contested-check resolver.
+
+    >>> from types import SimpleNamespace
+    >>> creature_state = SimpleNamespace(actions_remaining=0, attacks_remaining=0)
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
+    ...     creatures={"hero": creature_state},
+    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ... )
+    >>> progress = EncounterProgress()
+    >>> resolve_grapple_action(
+    ...     state, SimpleNamespace(), EncounterAction("Grapple", "grapple"),
+    ...     progress, "grapple-1"
+    ... )
+    >>> (progress.messages[-1], progress.events[-1][1]["success"])
+    (('system', 'You have already used your Action.'), False)
+    """
+
     creature_ref = self.current_decision().creature_ref
     creature_state = self.creatures[creature_ref]
     if creature_state.actions_remaining <= 0 and creature_state.attacks_remaining <= 0:

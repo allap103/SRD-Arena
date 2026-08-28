@@ -1,6 +1,6 @@
 """Project observed encounter actions into display-ready action views."""
 
-from ...application.observations import (
+from srd_arena.application.api import (
     ActionObservation,
     ActionReasonObservation,
     EncounterObservation,
@@ -12,6 +12,24 @@ def build_feature_actions(
     encounter: EncounterObservation,
     story_actions: list[ActionObservation],
 ) -> list[ActionObservation]:
+    """Select and order feature actions for the frontend action pane.
+
+    Authored features remain visible even when no currently selectable action
+    corresponds to them.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     feature_actions=(FeatureActionObservation("surge", "Second Wind", "bonus_action"),)
+    ... )
+    >>> encounter = SimpleNamespace(
+    ...     decision=SimpleNamespace(creature_ref="hero"),
+    ...     creature=lambda ref: creature,
+    ... )
+    >>> action = build_feature_actions(encounter, [])[0]
+    >>> (action.label, action.enabled, action.cost)
+    ('Second Wind', False, mappingproxy({'bonus_action': 1}))
+    """
+
     creature_ref = encounter.decision.creature_ref
     creature = encounter.creature(creature_ref)
     available_feature_actions = {

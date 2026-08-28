@@ -1,8 +1,9 @@
+"""Translate authored stat-block actions into executable creature capabilities."""
+
 import re
 from typing import TYPE_CHECKING, Literal, cast
 
-from . import schema
-from .multiattack import MultiattackCapabilitySchema
+import srd_arena.domain.capabilities as shared_domain
 from srd_arena.content.capabilities import (
     AutomaticResolutionSchema,
     CapabilityBuildError,
@@ -17,7 +18,9 @@ from srd_arena.content.creatures.stat_block_schema import (
     BestiaryMonsterSchema,
 )
 from srd_arena.domain.creatures import stat_block_actions as domain
-import srd_arena.domain.capabilities as shared_domain
+
+from . import schema
+from .multiattack import MultiattackCapabilitySchema
 
 if TYPE_CHECKING:
     from srd_arena.content.spells import SpellCatalog
@@ -25,8 +28,32 @@ if TYPE_CHECKING:
 
 def build_stat_block_actions(
     stat_block: BestiaryMonsterSchema | None,
-    spells: "SpellCatalog | None" = None,
+    spells: SpellCatalog | None = None,
 ) -> dict[str, domain.StatBlockActionDefinition]:
+    """Translate all authored stat-block sections and validate cross-references.
+
+    >>> monster = BestiaryMonsterSchema(
+    ...     name="Sprite", source="TEST",
+    ...     action=[{
+    ...         "name": "Vanish",
+    ...         "capability": {
+    ...             "type": "capability",
+    ...             "target": {"type": "self"},
+    ...             "resolution": {
+    ...                 "type": "automatic",
+    ...                 "outcome": {"effects": [{
+    ...                     "type": "damage", "dice": "1d4",
+    ...                     "damage_type": "force"
+    ...                 }]}
+    ...             },
+    ...         },
+    ...     }],
+    ... )
+    >>> actions = build_stat_block_actions(monster)
+    >>> (list(actions), type(actions["Vanish"]).__name__)
+    (['Vanish'], 'AutomaticActionDefinition')
+    """
+
     if stat_block is None:
         return {}
     definitions: dict[str, domain.StatBlockActionDefinition] = {}
@@ -136,6 +163,17 @@ def build_stat_block_actions(
 def build_declared_stat_block_actions(
     stat_block: BestiaryMonsterSchema | None,
 ) -> tuple[domain.DeclaredStatBlockAction, ...]:
+    """Preserve authored entries for availability and UI reporting.
+
+    >>> from ..stat_block_schema import BestiaryMonsterSchema
+    >>> monster = BestiaryMonsterSchema(
+    ...     name="Goblin", source="X",
+    ...     bonus=[{"name": "Nimble Escape", "entries": ["The goblin hides."]}])
+    >>> declaration = build_declared_stat_block_actions(monster)[0]
+    >>> (declaration.display_name, declaration.section, declaration.description)
+    ('Nimble Escape', 'bonus_action', 'The goblin hides.')
+    """
+
     if stat_block is None:
         return ()
     declarations: list[domain.DeclaredStatBlockAction] = []
@@ -284,7 +322,7 @@ def _resource_pool(
 
 def _spell_option(
     spell: schema.SpellOptionSchema,
-    catalog: "SpellCatalog | None",
+    catalog: SpellCatalog | None,
 ) -> domain.SpellOption:
     resolved = None
     if catalog is not None:

@@ -1,3 +1,5 @@
+"""Validate actor ownership, readiness, resources, movement, and target predicates."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -14,12 +16,22 @@ if TYPE_CHECKING:
 
 
 class ActorReadyRule:
+    """Reject actions by defeated creatures or creatures unable to act."""
+
     def check(
         self,
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Reject actions by defeated or incapacitated actors.
+
+        >>> from unittest.mock import Mock
+        >>> actor = Mock(is_alive=False)
+        >>> ActorReadyRule().check(Mock(creatures={"hero": actor}), "hero",
+        ...     EncounterAction("Wait", "wait", creature_ref="hero")).code
+        'actor_defeated'
+        """
         actor = state.creatures[actor_ref]
         if not actor.is_alive:
             return EligibilityFailure(
@@ -38,12 +50,21 @@ class ActorReadyRule:
 
 
 class ActorOwnershipRule:
+    """Reject actions whose recorded owner is not the current actor."""
+
     def check(
         self,
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Reject actions owned by a different encounter creature.
+
+        >>> from unittest.mock import Mock
+        >>> action = EncounterAction("Wait", "wait", creature_ref="goblin")
+        >>> ActorOwnershipRule().check(Mock(), "hero", action).code
+        'wrong_actor'
+        """
         if action.creature_ref != actor_ref:
             return EligibilityFailure(
                 "wrong_actor",
@@ -53,12 +74,24 @@ class ActorOwnershipRule:
 
 
 class ResourceRule:
+    """Reject actions that exceed the actor's remaining movement budget."""
+
     def check(
         self,
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Reject an action whose movement cost exceeds the remaining budget.
+
+        >>> from unittest.mock import Mock
+        >>> from ...models import ActionCost
+        >>> from ....geometry import MovementCost
+        >>> action = EncounterAction("Move", "move", cost=ActionCost(movement=MovementCost(2)))
+        >>> ResourceRule().check(Mock(creatures={"hero": Mock(movement_remaining=1)}),
+        ...     "hero", action).code
+        'insufficient_movement'
+        """
         actor = state.creatures[actor_ref]
         if action.cost.movement > (actor.movement_remaining or 0):
             return EligibilityFailure(
@@ -69,12 +102,21 @@ class ResourceRule:
 
 
 class MovementRule:
+    """Validate movement direction, cost, carried creatures, and occupancy."""
+
     def check(
         self,
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
     ) -> EligibilityFailure | None:
+        """Validate movement direction, budget, and destination occupancy.
+
+        >>> from unittest.mock import Mock
+        >>> action = EncounterAction("Move", "move", value="sideways")
+        >>> MovementRule().check(Mock(), "hero", action).code
+        'invalid_direction'
+        """
         if action.kind != "move":
             return None
         if not isinstance(action.value, str) or action.value not in DIRECTION_DELTAS:
@@ -118,6 +160,20 @@ def opposing_target_failure(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> EligibilityFailure | None:
+    """Return a failure when a rule requires the target to be an opponent.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(
+    ...     creatures={"ally": SimpleNamespace(is_alive=True)},
+    ...     _creatures_are_opponents=lambda actor, target: False,
+    ... )
+    >>> failure = opposing_target_failure(
+    ...     state, "hero", EncounterAction("Target Ally", "attack", "ally")
+    ... )
+    >>> failure.code if failure else None
+    'target_not_opponent'
+    """
+
     if not isinstance(action.value, str):
         return EligibilityFailure("target_required", "A creature target is required.")
     target = state.creatures.get(action.value)
@@ -137,6 +193,23 @@ def target_requirement_failure(
     target_ref: CreatureRef,
     requirements: tuple[object, ...],
 ) -> EligibilityFailure | None:
+    """Return the first authored target requirement the candidate violates.
+
+    >>> from types import SimpleNamespace
+    >>> requirement = CreatureTypeRequirement(("humanoid",))
+    >>> target = SimpleNamespace(
+    ...     creature=SimpleNamespace(
+    ...         statistics=SimpleNamespace(creature_type="undead")
+    ...     )
+    ... )
+    >>> state = SimpleNamespace(creatures={"target": target})
+    >>> failure = target_requirement_failure(
+    ...     state, "cleric", "target", (requirement,)
+    ... )
+    >>> failure.code if failure else None
+    'target_creature_type_required'
+    """
+
     for requirement in requirements:
         if isinstance(requirement, CreatureTypeRequirement):
             creature_type = state.creatures[

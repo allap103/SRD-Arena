@@ -21,22 +21,42 @@ if TYPE_CHECKING:
 
 @dataclass
 class RoundState:
+    """Track the encounter's mutable one-based round number."""
+
     number: int = 1
 
     def advance(self) -> None:
+        """Advance the mutable round counter by one.
+
+        >>> round_state = RoundState()
+        >>> round_state.advance()
+        >>> round_state.number
+        2
+        """
         self.number += 1
 
     def matches(self, round_number: int | None) -> bool:
+        """Return whether a possibly absent round number is current.
+
+        >>> RoundState(number=3).matches(3)
+        True
+        >>> RoundState(number=3).matches(None)
+        False
+        """
         return round_number == self.number
 
 
 @dataclass
 class TurnState:
+    """Track the current position within initiative order."""
+
     index: int = 0
 
 
 @dataclass
 class BehaviorContext:
+    """Supply a scripted controller with positions and immediate attack access."""
+
     target_position: Position
     actor_position: Position
     can_attack: bool
@@ -44,6 +64,12 @@ class BehaviorContext:
 
 @dataclass
 class EncounterCreatureState:
+    """Wrap a creature with encounter-specific position and turn resources.
+
+    Controller and team ownership are derived from the encounter definition.
+    Intrinsic statistics, health, equipment, and features stay on ``creature``.
+    """
+
     creature_id: str
     creature: Creature
     position: Position
@@ -51,7 +77,9 @@ class EncounterCreatureState:
     patrol_index: int = 0
     reaction_available: bool = True
     movement_remaining: MovementBudget | None = None
-    movement_spent_this_turn: MovementCost = MovementCost(0)
+    movement_spent_this_turn: MovementCost = field(
+        default_factory=lambda: MovementCost(0)
+    )
     actions_remaining: int = 1
     action_used_this_turn: bool = False
     magic_actions_remaining: int = 1
@@ -64,11 +92,26 @@ class EncounterCreatureState:
 
     @property
     def is_alive(self) -> bool:
+        """Return whether the encounter creature still has hit points.
+
+        >>> from srd_arena.domain.creatures import Attributes, Equipment, Inventory
+        >>> creature = Creature("hero", "Hero", "", Inventory(),
+        ...     Attributes(10, 1, 10, 10, 10, 10, 10, 10, 10), Equipment())
+        >>> state = EncounterCreatureState("hero", creature, Position(0, 0), EncounterBehavior("hold"))
+        >>> state.is_alive
+        True
+        >>> creature.take_damage(10)
+        10
+        >>> state.is_alive
+        False
+        """
         return self.creature.get_health() > 0
 
 
 @dataclass
 class InitiativeEntry:
+    """Retain one creature's initiative roll, modifier, and resolved total."""
+
     creature_ref: CreatureRef
     roll: int
     modifier: int
@@ -77,6 +120,13 @@ class InitiativeEntry:
 
 @dataclass
 class EncounterStateData:
+    """Store all mutable aggregate state for one encounter instance.
+
+    The data includes combatants, clocks, nested decisions, sourced effects,
+    relationships, runtime sequences, and action selectors. ``EncounterState``
+    adds the service facade used to operate on this aggregate.
+    """
+
     encounter_id: str
     definition: EncounterDefinition
     creatures: dict[CreatureRef, EncounterCreatureState]

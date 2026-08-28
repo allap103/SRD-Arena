@@ -1,3 +1,5 @@
+"""Apply authored class and subclass choices while building a creature."""
+
 import re
 
 from srd_arena.content.character_options.classes import (
@@ -26,6 +28,17 @@ def resolve_optional_feature_effects(
     schema: CreatureSchema,
     catalog: OptionalFeatureCatalog | None,
 ) -> list[TriggeredEffect]:
+    """Collect the optional-feature changes selected by a creature build.
+
+    >>> schema = CreatureSchema(
+    ...     id="fighter", optional_features=[{
+    ...         "name": "Great Weapon Fighting", "source": "PHB"}])
+    >>> resolve_optional_feature_effects(schema, None)[0].id
+    Traceback (most recent call last):
+    ...
+    ValueError: Creature references optional feature 'Great Weapon Fighting', but no optional feature catalog was loaded.
+    """
+
     effects: list[TriggeredEffect] = []
     for reference in schema.optional_features:
         if catalog is None:
@@ -54,6 +67,19 @@ def find_class_record(
     schema: CreatureSchema,
     classes: ClassCatalog | None,
 ) -> ClassRecord | None:
+    """Resolve the class record referenced by a creature's character levels.
+
+    >>> from srd_arena.content.common.catalog import SourceCatalog
+    >>> definition = ClassSchema(name="Fighter", source="X")
+    >>> record = ClassRecord(definition, ())
+    >>> catalog = SourceCatalog(
+    ...     [record], name_of=lambda item: item.definition.public_name,
+    ...     source_of=lambda item: item.definition.source)
+    >>> schema = CreatureSchema(id="hero", class_ref={"name": "Fighter"})
+    >>> find_class_record(schema, catalog) is record
+    True
+    """
+
     if schema.class_ref is None:
         return None
     if classes is None:
@@ -69,6 +95,18 @@ def find_subclass_record(
     subclasses: SubclassCatalog | None,
     class_record: ClassRecord | None,
 ) -> SubclassRecord | None:
+    """Resolve a subclass within its referenced parent class identity.
+
+    >>> from srd_arena.content.character_options.classes.schema import SubclassSchema
+    >>> champion = SubclassRecord(SubclassSchema(
+    ...     name="Champion", source="X", className="Fighter", classSource="X"), ())
+    >>> catalog = SubclassCatalog([champion])
+    >>> schema = CreatureSchema(id="hero", subclass_ref={
+    ...     "name": "Champion", "class_name": "Fighter"})
+    >>> find_subclass_record(schema, catalog, None) is champion
+    True
+    """
+
     reference = schema.subclass_ref
     if reference is None:
         return None
@@ -77,15 +115,13 @@ def find_subclass_record(
             f"Creature references subclass '{reference.name}', "
             "but no subclass catalog was loaded."
         )
-    class_name = (
-        reference.class_name
-        or (class_record.definition.public_name if class_record else None)
+    class_name = reference.class_name or (
+        class_record.definition.public_name if class_record else None
     )
     if class_name is None:
         raise ValueError(f"Subclass '{reference.name}' requires a class name.")
-    class_source = (
-        reference.class_source
-        or (class_record.definition.source if class_record else None)
+    class_source = reference.class_source or (
+        class_record.definition.source if class_record else None
     )
     return subclasses.find(
         reference.name,
@@ -99,6 +135,16 @@ def resolve_class_features(
     class_record: ClassRecord | None,
     level: int,
 ) -> list[ClassFeature]:
+    """Collect supported class features earned at or below a level.
+
+    >>> definition = ClassSchema(
+    ...     name="Fighter", source="X",
+    ...     classFeatures=["Extra Attack|Fighter|X|5"])
+    >>> features = resolve_class_features(ClassRecord(definition, ()), 5)
+    >>> (features[0].id, features[0].data["attacks"])
+    ('extra_attack', 2)
+    """
+
     if class_record is None:
         return []
     resolved: list[ClassFeature] = []
@@ -124,6 +170,18 @@ def resolve_subclass_features(
     *,
     class_name: str | None,
 ) -> list[ClassFeature]:
+    """Collect supported subclass features earned at or below a level.
+
+    >>> from srd_arena.content.character_options.classes.schema import SubclassSchema
+    >>> definition = SubclassSchema(
+    ...     name="Champion", source="X", className="Fighter", classSource="X",
+    ...     subclassFeatures=["Extra Attack Improvement|Fighter|X|10"])
+    >>> features = resolve_subclass_features(
+    ...     SubclassRecord(definition, ()), 10, class_name="Fighter")
+    >>> (features[0].source_subclass, features[0].data["attacks"])
+    ('Champion', 2)
+    """
+
     if subclass_record is None:
         return []
     definition = subclass_record.definition
@@ -146,11 +204,7 @@ def resolve_subclass_features(
 def _parse_class_feature_reference(
     feature_ref: str | ClassFeatureReferenceSchema,
 ) -> tuple[str, int] | None:
-    raw_ref = (
-        feature_ref
-        if isinstance(feature_ref, str)
-        else feature_ref.class_feature
-    )
+    raw_ref = feature_ref if isinstance(feature_ref, str) else feature_ref.class_feature
     parts = raw_ref.split("|")
     for part in reversed(parts):
         if part.isdigit():
@@ -291,11 +345,7 @@ def _class_feature_entry(
 def _first_dice_expression(value: object) -> tuple[int, int] | None:
     if isinstance(value, str):
         match = re.search(r"\{@dice\s+(\d+)d(\d+)", value)
-        return (
-            (int(match.group(1)), int(match.group(2)))
-            if match is not None
-            else None
-        )
+        return (int(match.group(1)), int(match.group(2))) if match is not None else None
     if isinstance(value, dict):
         values = tuple(value.values())
     elif isinstance(value, list):

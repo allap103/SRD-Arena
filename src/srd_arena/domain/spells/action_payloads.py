@@ -1,3 +1,5 @@
+"""Encode spell choices into stable action IDs, labels, and command payloads."""
+
 from __future__ import annotations
 
 from .definitions import Spell
@@ -10,12 +12,28 @@ def spell_action_label(
     target_ref: str | None = None,
     target_label: str | None = None,
 ) -> str:
+    """Build a readable cast label, including a direct target when useful.
+
+    >>> spell = Spell("magic_missile", "Magic Missile", "XPHB", 1)
+    >>> spell_action_label(
+    ...     spell, actor_ref="wizard", target_ref="goblin", target_label="Goblin"
+    ... )
+    'Cast Magic Missile on goblin'
+    """
+
     if target_ref is None or target_ref == actor_ref or target_label is None:
         return f"Cast {spell.name}"
     return f"Cast {spell.name} on {target_label[:1].lower()}{target_label[1:]}"
 
 
 def spell_action_id(spell: Spell, *, target_ref: str | None = None) -> str:
+    """Build a stable selectable-action ID for a spell and optional target.
+
+    >>> spell = Spell("fire_bolt", "Fire Bolt", "XPHB", 0)
+    >>> spell_action_id(spell, target_ref="participant:goblin")
+    'spell-fire_bolt-goblin'
+    """
+
     if target_ref is None:
         return f"spell-{spell.id}"
     if target_ref.startswith("participant:"):
@@ -33,6 +51,15 @@ def spell_action_value(
     slot_level: int | None = None,
     healing_allocations: dict[str, int] | None = None,
 ) -> str:
+    """Encode runtime targeting, upcasting, and allocation choices for execution.
+
+    >>> spell_action_value(
+    ...     "mass_heal", ("cleric", "fighter"), slot_level=9,
+    ...     healing_allocations={"cleric": 200, "fighter": 500},
+    ... )
+    'mass_heal:cleric,fighter#slot=9&healing=cleric~200,fighter~500'
+    """
+
     if aim_point is not None:
         value = f"{spell_id}@{aim_point[0]:.4f},{aim_point[1]:.4f}"
         if isinstance(target_ref, tuple) and target_ref:
@@ -106,6 +133,14 @@ def _with_spell_selections(
 def parse_spell_action_value(
     value: str,
 ) -> tuple[str, str | None, tuple[float, float] | None]:
+    """Extract the spell, direct target, or aim point from an action payload.
+
+    >>> parse_spell_action_value("fireball@3.5000,4.0000|goblin#slot=4")
+    ('fireball', None, (3.5, 4.0))
+    >>> parse_spell_action_value("hold_person:goblin")
+    ('hold_person', 'goblin', None)
+    """
+
     value, _, _selection = value.partition("#")
     if "@" in value:
         spell_id, _, aim = value.partition("@")
@@ -123,6 +158,14 @@ def parse_spell_action_value(
 
 
 def parse_spell_action_targets(value: str) -> tuple[str, ...]:
+    """Extract the ordered creature references selected for a spell action.
+
+    >>> parse_spell_action_targets("scorching_ray:goblin,ogre")
+    ('goblin', 'ogre')
+    >>> parse_spell_action_targets("fireball@2.0000,3.0000|goblin,ogre")
+    ('goblin', 'ogre')
+    """
+
     base, _, _selection = value.partition("#")
     if "|" in base:
         _aim_payload, _, targets = base.partition("|")
@@ -134,6 +177,14 @@ def parse_spell_action_targets(value: str) -> tuple[str, ...]:
 
 
 def parse_spell_action_condition(value: str) -> str | None:
+    """Extract the condition chosen for a flexible spell.
+
+    >>> parse_spell_action_condition("lesser_restoration:hero#condition=blinded")
+    'blinded'
+    >>> parse_spell_action_condition("lesser_restoration:hero#poisoned")
+    'poisoned'
+    """
+
     _base, separator, selections = value.partition("#")
     if not separator:
         return None
@@ -145,6 +196,12 @@ def parse_spell_action_condition(value: str) -> str | None:
 
 
 def parse_spell_action_damage_type(value: str) -> str | None:
+    """Extract the damage-type selection encoded in a spell action payload.
+
+    >>> parse_spell_action_damage_type("resist_energy:hero#damage_type=fire")
+    'fire'
+    """
+
     _base, separator, selections = value.partition("#")
     if not separator:
         return None
@@ -156,6 +213,12 @@ def parse_spell_action_damage_type(value: str) -> str | None:
 
 
 def parse_spell_action_ability(value: str) -> str | None:
+    """Extract the ability chosen for a flexible spell.
+
+    >>> parse_spell_action_ability("enhance_ability:hero#ability=strength")
+    'strength'
+    """
+
     _base, separator, selections = value.partition("#")
     if not separator:
         return None
@@ -167,6 +230,12 @@ def parse_spell_action_ability(value: str) -> str | None:
 
 
 def parse_spell_action_slot(value: str) -> int | None:
+    """Extract the spell-slot level selected for this casting invocation.
+
+    >>> parse_spell_action_slot("fireball@2.0000,3.0000#slot=5")
+    5
+    """
+
     _base, separator, selections = value.partition("#")
     if not separator:
         return None
@@ -178,6 +247,14 @@ def parse_spell_action_slot(value: str) -> int | None:
 
 
 def parse_spell_healing_allocations(value: str) -> dict[str, int]:
+    """Extract per-target healing amounts from a resource-allocation payload.
+
+    >>> parse_spell_healing_allocations(
+    ...     "mass_heal:cleric,fighter#healing=cleric~200,fighter~500"
+    ... )
+    {'cleric': 200, 'fighter': 500}
+    """
+
     _base, separator, selections = value.partition("#")
     if not separator:
         return {}

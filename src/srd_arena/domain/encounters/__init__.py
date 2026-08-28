@@ -1,3 +1,5 @@
+"""Expose the public encounters package API."""
+
 from .definitions import (
     EncounterBehavior,
     EncounterDefinition,
@@ -13,9 +15,9 @@ __all__ = [
     "EncounterAction",
     "EncounterBehavior",
     "EncounterDefinition",
+    "EncounterOrchestrator",
     "EncounterParticipant",
     "EncounterState",
     "EncounterTeam",
     "EncounterTransition",
-    "EncounterOrchestrator",
 ]

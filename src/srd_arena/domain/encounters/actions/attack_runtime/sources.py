@@ -11,7 +11,22 @@ from ...models import AttackSource
 
 
 def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | None:
-    """Return the first equipped item that defines a weapon attack."""
+    """Return the first equipped item that defines a weapon attack.
+
+    >>> from types import SimpleNamespace
+    >>> from ....equipment import WeaponStat
+    >>> sword = Item(
+    ...     "sword", "Sword", "", "weapon",
+    ...     weapon_stat=WeaponStat([], "1d8", "slashing", []),
+    ... )
+    >>> attacker = SimpleNamespace(
+    ...     equipment=SimpleNamespace(
+    ...         equipped_items={"right_hand": "sword", "left_hand": None}
+    ...     )
+    ... )
+    >>> equipped_weapon(attacker, {"sword": sword}) is sword
+    True
+    """
     for slot in ("right_hand", "left_hand"):
         item_id = attacker.equipment.equipped_items.get(slot)
         if item_id is None:
@@ -23,7 +38,17 @@ def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | 
 
 
 def has_free_hand(creature: Creature) -> bool:
-    """Return whether either hand equipment slot is empty."""
+    """Return whether either hand equipment slot is empty.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     equipment=SimpleNamespace(
+    ...         equipped_items={"right_hand": "sword", "left_hand": None}
+    ...     )
+    ... )
+    >>> has_free_hand(creature)
+    True
+    """
     return any(
         creature.equipment.equipped_items.get(slot) is None
         for slot in ("right_hand", "left_hand")
@@ -31,7 +56,17 @@ def has_free_hand(creature: Creature) -> bool:
 
 
 def unarmed_attack_source(attacker: Creature) -> AttackSource:
-    """Build the fallback unarmed attack source for a creature."""
+    """Build the fallback unarmed attack source for a creature.
+
+    >>> from types import SimpleNamespace
+    >>> attacker = SimpleNamespace(
+    ...     attributes=SimpleNamespace(strength=14),
+    ...     get_modifier=lambda score: (score - 10) // 2,
+    ... )
+    >>> source = unarmed_attack_source(attacker)
+    >>> (source.name, source.attack_bonus, source.damage_bonus)
+    ('Unarmed Strike', 2, 2)
+    """
     strength_modifier = attacker.get_modifier(attacker.attributes.strength)
     return AttackSource(
         name="Unarmed Strike",
@@ -47,7 +82,27 @@ def unarmed_attack_source(attacker: Creature) -> AttackSource:
 
 
 def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
-    """Build an attack source from an equipped weapon and creature stats."""
+    """Build an attack source from an equipped weapon and creature stats.
+
+    >>> from types import SimpleNamespace
+    >>> from ....equipment import WeaponStat
+    >>> bow = Item(
+    ...     "shortbow", "Shortbow", "", "weapon",
+    ...     weapon_stat=WeaponStat(
+    ...         [], "1d6", "piercing", [], "ranged", 80, 320, "martial"
+    ...     ),
+    ... )
+    >>> attacker = SimpleNamespace(
+    ...     attributes=SimpleNamespace(
+    ...         strength=10, dexterity=16, proficiency_bonus=2,
+    ...         proficiencies={"weapons": ["martial"]},
+    ...     ),
+    ...     get_modifier=lambda score: (score - 10) // 2,
+    ... )
+    >>> source = weapon_attack_source(attacker, bow)
+    >>> (source.attack_bonus, source.damage_bonus, source.attack_modes)
+    (5, 3, ('ranged',))
+    """
     assert weapon.weapon_stat is not None
     attack_type = weapon.weapon_stat.attack_type or "melee"
     ability_modifier = (
@@ -81,7 +136,17 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
 
 
 def stat_block_attack_source(attack: AttackActionDefinition) -> AttackSource:
-    """Build an attack source from an authored monster attack."""
+    """Build an attack source from an authored monster attack.
+
+    >>> from ....capabilities import CapabilityTarget
+    >>> attack = AttackActionDefinition(
+    ...     "Bite", ("melee",), 5, CapabilityTarget("creature"),
+    ...     5, None, None, (DamageEffect("1d8", 3, "piercing"),),
+    ... )
+    >>> source = stat_block_attack_source(attack)
+    >>> (source.name, source.damage_dice, source.reach_feet)
+    ('Bite', '1d8', 5)
+    """
     damage = [effect for effect in attack.hit if isinstance(effect, DamageEffect)]
     if not damage:
         raise ValueError(f"Attack '{attack.name}' has no damage effect.")
@@ -113,7 +178,18 @@ def select_attack_source(
     preferred_attack_type: str | None = None,
     preferred_attack_name: str | None = None,
 ) -> AttackSource | None:
-    """Select the requested attack source and lock it to one attack mode."""
+    """Select the requested attack source and lock it to one attack mode.
+
+    >>> from types import SimpleNamespace
+    >>> attacker = SimpleNamespace(
+    ...     equipment=SimpleNamespace(
+    ...         equipped_items={"right_hand": None, "left_hand": None}
+    ...     ),
+    ...     stat_block_actions={},
+    ... )
+    >>> select_attack_source(attacker, {}) is None
+    True
+    """
     sources = attack_sources(attacker, items_by_id)
     if not sources:
         return None
@@ -150,7 +226,18 @@ def attack_sources(
     attacker: Creature,
     items_by_id: dict[str, Item],
 ) -> list[AttackSource]:
-    """Return the weapon or authored attacks available to a creature."""
+    """Return the weapon or authored attacks available to a creature.
+
+    >>> from types import SimpleNamespace
+    >>> attacker = SimpleNamespace(
+    ...     equipment=SimpleNamespace(
+    ...         equipped_items={"right_hand": None, "left_hand": None}
+    ...     ),
+    ...     stat_block_actions={},
+    ... )
+    >>> attack_sources(attacker, {})
+    []
+    """
     weapon = equipped_weapon(attacker, items_by_id)
     if weapon is not None:
         return [weapon_attack_source(attacker, weapon)]
@@ -169,7 +256,18 @@ def attack_range_squares(
     preferred_attack_type: str | None = None,
     preferred_attack_name: str | None = None,
 ) -> int:
-    """Return the selected attack's normal reach or range in grid squares."""
+    """Return the selected attack's normal reach or range in grid squares.
+
+    >>> from types import SimpleNamespace
+    >>> attacker = SimpleNamespace(
+    ...     equipment=SimpleNamespace(
+    ...         equipped_items={"right_hand": None, "left_hand": None}
+    ...     ),
+    ...     stat_block_actions={},
+    ... )
+    >>> attack_range_squares(attacker, {}, Grid(10, 10))
+    1
+    """
     source = select_attack_source(
         attacker,
         items_by_id,
@@ -186,7 +284,15 @@ def attack_range_squares(
 
 
 def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
-    """Copy an attack source with one selected attack mode."""
+    """Copy an attack source with one selected attack mode.
+
+    >>> source = AttackSource(
+    ...     "Spear", "1d6", 2, "STR mod", "piercing", 4,
+    ...     "STR mod + proficiency", ("melee", "ranged"),
+    ... )
+    >>> source_for_mode(source, "ranged").attack_modes
+    ('ranged',)
+    """
     return AttackSource(
         name=source.name,
         damage_dice=source.damage_dice,
@@ -215,7 +321,18 @@ def selected_attack_type(
     *,
     preferred_attack_type: str | None = None,
 ) -> str:
-    """Return the selected source's attack mode, with a melee fallback."""
+    """Return the selected source's attack mode, with a melee fallback.
+
+    >>> from types import SimpleNamespace
+    >>> attacker = SimpleNamespace(
+    ...     equipment=SimpleNamespace(
+    ...         equipped_items={"right_hand": None, "left_hand": None}
+    ...     ),
+    ...     stat_block_actions={},
+    ... )
+    >>> selected_attack_type(attacker, {}, preferred_attack_type="ranged")
+    'ranged'
+    """
     attack_source = select_attack_source(
         attacker,
         items_by_id,
@@ -230,7 +347,18 @@ def can_make_opportunity_attack(
     attacker: Creature,
     items_by_id: dict[str, Item],
 ) -> bool:
-    """Return whether the creature has a selectable melee attack."""
+    """Return whether the creature has a selectable melee attack.
+
+    >>> from types import SimpleNamespace
+    >>> attacker = SimpleNamespace(
+    ...     equipment=SimpleNamespace(
+    ...         equipped_items={"right_hand": None, "left_hand": None}
+    ...     ),
+    ...     stat_block_actions={},
+    ... )
+    >>> can_make_opportunity_attack(attacker, {})
+    False
+    """
     attack_source = select_attack_source(
         attacker,
         items_by_id,
@@ -240,7 +368,24 @@ def can_make_opportunity_attack(
 
 
 def weapon_proficiency_bonus(attacker: Creature, weapon: Item | None) -> int:
-    """Return the proficiency bonus contributed by an equipped weapon."""
+    """Return the proficiency bonus contributed by an equipped weapon.
+
+    >>> from types import SimpleNamespace
+    >>> from ....equipment import WeaponStat
+    >>> sword = Item(
+    ...     "longsword", "Longsword", "", "weapon",
+    ...     weapon_stat=WeaponStat(
+    ...         [], "1d8", "slashing", [], weapon_category="martial"
+    ...     ),
+    ... )
+    >>> attacker = SimpleNamespace(
+    ...     attributes=SimpleNamespace(
+    ...         proficiency_bonus=3, proficiencies={"weapons": ["martial"]}
+    ...     )
+    ... )
+    >>> weapon_proficiency_bonus(attacker, sword)
+    3
+    """
     if weapon is None or weapon.weapon_stat is None:
         return 0
     weapon_proficiencies = attacker.attributes.proficiencies.get("weapons", [])

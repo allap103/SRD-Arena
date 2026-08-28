@@ -12,7 +12,6 @@ from .option_discovery.spell_areas import (
 )
 from .option_discovery.spell_selection import spell_target_selection_actions
 from .option_discovery.spell_targets import (
-    _spell_removal_choices,  # noqa: F401 - compatibility export
     spell_action_targets,
     spell_target_context,
 )
@@ -24,8 +23,6 @@ from .option_discovery.spellcasting import (
     spend_spell_resources,
 )
 from .option_discovery.spells import (
-    _append_spell_action_variants,  # noqa: F401 - compatibility export
-    _append_spell_option,  # noqa: F401 - compatibility export
     available_spell_actions,
 )
 from .option_discovery.standard import (
@@ -38,6 +35,31 @@ if TYPE_CHECKING:
 
 
 def available_actions(self: EncounterState) -> list[EncounterAction]:
+    """Discover and normalize every action candidate for the current decision actor.
+
+    Scripted controllers do not advertise choices to clients, while specialized
+    decision frames delegate to their matching reaction service.
+
+    >>> from types import SimpleNamespace
+    >>> decision = SimpleNamespace(creature_ref="hero", kind="turn")
+    >>> scripted = SimpleNamespace(
+    ...     current_decision=lambda: decision,
+    ...     _creature_controller=lambda ref: "scripted",
+    ... )
+    >>> available_actions(scripted)
+    []
+    >>> decision.kind = "reroll_dice"
+    >>> external = SimpleNamespace(
+    ...     current_decision=lambda: decision,
+    ...     _creature_controller=lambda ref: "external",
+    ...     reaction_engine=SimpleNamespace(
+    ...         reroll_damage_actions=lambda state: [EncounterAction("Accept", "accept_roll")]
+    ...     ),
+    ... )
+    >>> available_actions(external)[0].kind
+    'accept_roll'
+    """
+
     decision = self.current_decision()
     if self._creature_controller(decision.creature_ref) != "external":
         return []

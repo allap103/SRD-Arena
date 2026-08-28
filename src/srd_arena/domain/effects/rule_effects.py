@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .modifiers import RollModifier
@@ -114,7 +114,7 @@ class InvocationFailureChance:
             raise ValueError("Invocation failure chance requires a message.")
 
 
-RuntimeRuleEffect: TypeAlias = (
+type RuntimeRuleEffect = (
     ArmorClassAdjustment
     | SpeedAdjustment
     | SpeedMultiplier
@@ -129,7 +129,11 @@ RuntimeRuleEffect: TypeAlias = (
 def serialize_runtime_rule_effect(
     effect: RuntimeRuleEffect,
 ) -> dict[str, object]:
-    """Serialize one typed contribution for events and state inspection."""
+    """Serialize one typed contribution for events and state inspection.
+
+    >>> serialize_runtime_rule_effect(ArmorClassAdjustment(2))
+    {'type': 'armor_class_adjustment', 'value': 2}
+    """
 
     if isinstance(effect, ArmorClassAdjustment):
         return {"type": "armor_class_adjustment", "value": effect.value}
@@ -161,9 +165,7 @@ def serialize_runtime_rule_effect(
     if isinstance(effect, ActionEconomyRestriction):
         return {
             "type": "action_economy_restriction",
-            "choose_between": sorted(
-                kind.value for kind in effect.choose_between
-            ),
+            "choose_between": sorted(kind.value for kind in effect.choose_between),
         }
     if isinstance(effect, AttackLimit):
         return {"type": "attack_limit", "maximum": effect.maximum}

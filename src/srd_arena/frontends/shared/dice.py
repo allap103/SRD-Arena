@@ -1,14 +1,18 @@
+"""Convert combat roll events into frontend-neutral die presentations."""
+
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
-import re
 
-from ...application.commands import GameEvent
+from srd_arena.application.api import GameEvent
 
 
 @dataclass(frozen=True)
 class DieView:
+    """Describe one displayed die, including its result and visual state."""
+
     expression: str
     value: int
     selected: bool = True
@@ -18,6 +22,8 @@ class DieView:
 
 @dataclass(frozen=True)
 class RollView:
+    """Group the dice and modifier shown for one resolved rules roll."""
+
     label: str
     dice: tuple[DieView, ...]
     modifier: int
@@ -29,11 +35,26 @@ class RollView:
 
 
 def build_roll_views(events: list[GameEvent]) -> list[RollView]:
+    """Convert roll-bearing combat events into display-ready roll groups.
+
+    >>> event = GameEvent(1, "attack_resolved", data={
+    ...     "attacker_label": "Hero", "target_label": "Goblin", "hit": True,
+    ...     "attack_roll_detail": {
+    ...         "die": 14, "dice": [14], "selected_index": 0,
+    ...         "modifier": 5, "total": 19, "target_ac": 15,
+    ...     },
+    ... })
+    >>> view = build_roll_views([event])[0]
+    >>> (view.label, view.total, view.success)
+    ('Hero attacks Goblin', 19, True)
+    """
+
     views: list[RollView] = []
     resolved_roll_ids = {
         event.data.get("roll_id")
         for event in events
-        if event.type == "attack_resolved" and isinstance(event.data.get("roll_id"), str)
+        if event.type == "attack_resolved"
+        and isinstance(event.data.get("roll_id"), str)
     }
     for event in events:
         if event.type in {"attack_resolved", "attack_pending"}:
@@ -95,7 +116,14 @@ def build_roll_views(events: list[GameEvent]) -> list[RollView]:
 def without_roll_details(
     messages: list[tuple[str, str]],
 ) -> list[tuple[str, str]]:
-    """Remove prose formulas represented by the structured roll log."""
+    """Remove prose formulas represented by the structured roll log.
+
+    >>> without_roll_details([
+    ...     ("system", "Roll d20=14 + 5 = 19"),
+    ...     ("system", "Hero hits Goblin."),
+    ... ])
+    [('system', 'Hero hits Goblin.')]
+    """
     return [
         (channel, message)
         for channel, message in messages
@@ -119,9 +147,7 @@ def _attack_roll_view(event: GameEvent) -> RollView | None:
     total = detail.get("total")
     target = detail.get("target_ac")
     if not (
-        isinstance(die, int)
-        and isinstance(modifier, int)
-        and isinstance(total, int)
+        isinstance(die, int) and isinstance(modifier, int) and isinstance(total, int)
     ):
         return None
     attacker = event.data.get("attacker_label")
@@ -233,9 +259,7 @@ def _invocation_start_roll_views(event: GameEvent) -> list[RollView]:
             else "invocation check"
         )
         label = (
-            f"{source_label} {check_kind}"
-            if source_label
-            else check_kind.capitalize()
+            f"{source_label} {check_kind}" if source_label else check_kind.capitalize()
         )
         views.append(
             RollView(
@@ -264,9 +288,7 @@ def _saving_throw_roll_view(
     target_label = detail.get("target_label")
     ability = detail.get("ability")
     if not (
-        isinstance(die, int)
-        and isinstance(modifier, int)
-        and isinstance(total, int)
+        isinstance(die, int) and isinstance(modifier, int) and isinstance(total, int)
     ):
         return None
     label = "Saving Throw"
@@ -410,9 +432,7 @@ def _individual_dice_views(
     if len(values) != count or len(integer_values) != len(values):
         return ()
     history_values = histories if isinstance(histories, (list, tuple)) else []
-    action_ids = (
-        reroll_action_ids if isinstance(reroll_action_ids, Mapping) else {}
-    )
+    action_ids = reroll_action_ids if isinstance(reroll_action_ids, Mapping) else {}
     return tuple(
         DieView(
             expression=f"d{sides}",

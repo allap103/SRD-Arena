@@ -28,7 +28,19 @@ def has_condition_save_advantage(
     target_ref: str,
     conditions: tuple[str, ...],
 ) -> bool:
-    """Return whether ongoing state grants advantage against the conditions."""
+    """Return whether ongoing state grants advantage against the conditions.
+
+    >>> from types import SimpleNamespace
+    >>> effect = SimpleNamespace(
+    ...     target_refs=("hero",),
+    ...     parameters={"condition_save_advantages": ["Poisoned"]},
+    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[effect])
+    >>> has_condition_save_advantage(state, "hero", ("poisoned",))
+    True
+    >>> has_condition_save_advantage(state, "other", ("poisoned",))
+    False
+    """
 
     requested = {condition.casefold() for condition in conditions}
     if not requested:
@@ -51,7 +63,20 @@ def resolve_end_turn_effects(
     creature_ref: str,
     progress: EncounterProgress | None = None,
 ) -> None:
-    """Resolve repeat saves and repeat damage due at a creature's turn end."""
+    """Resolve repeat saves and repeat damage due at a creature's turn end.
+
+    Effects belonging to other creatures or other triggers remain unchanged.
+
+    >>> from types import SimpleNamespace
+    >>> effect = SimpleNamespace(
+    ...     target_refs=("other",),
+    ...     parameters={"repeat_save_trigger": "end_of_turn"},
+    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[effect])
+    >>> resolve_end_turn_effects(state, "hero")
+    >>> state.ongoing_effects == [effect]
+    True
+    """
 
     matching = tuple(
         effect
@@ -189,9 +214,7 @@ def resolve_end_turn_effects(
                         applied,
                         progress,
                     )
-            failure_conditions = effect.parameters.get(
-                "repeat_failure_conditions", []
-            )
+            failure_conditions = effect.parameters.get("repeat_failure_conditions", [])
             if isinstance(failure_conditions, list) and failure_conditions:
                 state.conditions = [
                     condition
@@ -214,9 +237,7 @@ def resolve_end_turn_effects(
                                 ),
                                 "source_label": effect.identity.source.label or "Spell",
                                 "source_kind": "spell",
-                                "definition_id": (
-                                    effect.identity.source.definition_id
-                                ),
+                                "definition_id": (effect.identity.source.definition_id),
                                 "parent_effect_kind": effect.kind.value,
                             },
                         )
@@ -272,7 +293,26 @@ def expire_ongoing_effects_for_turn_start(
     state: EncounterState,
     creature_ref: str,
 ) -> None:
-    """Expire source-owned durations and grant turn-start temporary HP."""
+    """Expire source-owned durations and grant turn-start temporary HP.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import Mock
+    >>> source = SimpleNamespace(applied_by_ref="cleric")
+    >>> effect = SimpleNamespace(
+    ...     identity=SimpleNamespace(source=source),
+    ...     target_refs=("hero",),
+    ...     parameters={"turn_start_temporary_hit_points": 5},
+    ...     duration=SimpleNamespace(),
+    ... )
+    >>> creature = Mock()
+    >>> state = SimpleNamespace(
+    ...     ongoing_effects=[effect], round=SimpleNamespace(number=1),
+    ...     creatures={"hero": SimpleNamespace(creature=creature)},
+    ... )
+    >>> expire_ongoing_effects_for_turn_start(state, "hero")
+    >>> creature.grant_temporary_hit_points.call_args.args
+    (5,)
+    """
 
     expired = tuple(
         effect
@@ -285,9 +325,7 @@ def expire_ongoing_effects_for_turn_start(
     for effect in tuple(state.ongoing_effects):
         if creature_ref not in effect.target_refs:
             continue
-        temporary_hit_points = effect.parameters.get(
-            "turn_start_temporary_hit_points"
-        )
+        temporary_hit_points = effect.parameters.get("turn_start_temporary_hit_points")
         if isinstance(temporary_hit_points, int) and temporary_hit_points > 0:
             state.creatures[creature_ref].creature.grant_temporary_hit_points(
                 temporary_hit_points

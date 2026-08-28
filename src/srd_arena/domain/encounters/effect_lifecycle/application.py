@@ -32,7 +32,38 @@ def start_ongoing_effect(
     result: EffectResult,
     origin_id: str,
 ) -> OngoingEffect:
-    """Create an ongoing effect and install its creature modifiers."""
+    """Create an ongoing effect and install its creature modifiers.
+
+    The runtime identity combines the effect kind with the exact action origin,
+    allowing later removal to distinguish repeated uses of the same spell.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> result = EffectResult(
+    ...     "ongoing_effect",
+    ...     "target",
+    ...     data={
+    ...         "source_ref": "mage",
+    ...         "source_label": "Mage",
+    ...         "definition_id": "slow",
+    ...         "effect_kind": "spell",
+    ...     },
+    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[])
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.effect_lifecycle.application."
+    ...     "reconcile_remaining_attacks"
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.effect_lifecycle.application."
+    ...     "reconcile_remaining_movement"
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.effect_lifecycle.application."
+    ...     "_install_creature_modifiers"
+    ... ):
+    ...     effect = start_ongoing_effect(state, result, "cast-7")
+    >>> (effect.identity.id, effect.target_refs, state.ongoing_effects == [effect])
+    ('ongoing:spell:cast-7', ('target',), True)
+    """
 
     source_ref = _required_string(result, "source_ref")
     source_label = _required_string(result, "source_label")
@@ -138,9 +169,7 @@ def _install_creature_modifiers(
     condition_immunities = effect.parameters.get("condition_immunities", [])
     if isinstance(condition_immunities, list):
         parsed_immunities = frozenset(
-            Condition(value)
-            for value in condition_immunities
-            if isinstance(value, str)
+            Condition(value) for value in condition_immunities if isinstance(value, str)
         )
         for target_ref in effect.target_refs:
             state.creatures[target_ref].creature.set_condition_immunities(

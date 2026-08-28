@@ -1,11 +1,16 @@
+"""Validate spell metadata together with its embedded capability definition."""
+
 from pydantic import Field, model_validator
 
 from srd_arena.content.common.schema import SourceModel
+
 from .capability import SpellCapabilitySchema
 from .implementation import SpellImplementationSchema
 
 
 class SpellSchema(SourceModel):
+    """Validate spell metadata and the capability invoked when it is cast."""
+
     name: str
     source: str
     level: int
@@ -31,7 +36,17 @@ class SpellSchema(SourceModel):
     srd52: bool | str | None = None
 
     @model_validator(mode="after")
-    def validate_implementation_state(self) -> "SpellSchema":
+    def validate_implementation_state(self) -> SpellSchema:
+        """Keep implementation status consistent with capability presence.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     SpellSchema(name="Fireball", source="X", level=3, school="V",
+        ...         implementation={"status": "complete"})
+        ... except ValidationError as error:
+        ...     "must define a capability" in str(error)
+        True
+        """
         status = self.implementation.status
         if status in {"complete", "partial", "blocked"} and self.capability is None:
             raise ValueError(f"{status.title()} spells must define a capability.")
@@ -41,6 +56,11 @@ class SpellSchema(SourceModel):
 
     @property
     def executable(self) -> bool:
+        """Return whether the spell has runnable complete or partial mechanics.
+
+        >>> SpellSchema(name="Unknown", source="X", level=1, school="A").executable
+        False
+        """
         return self.capability is not None and self.implementation.status in {
             "complete",
             "partial",
@@ -48,6 +68,11 @@ class SpellSchema(SourceModel):
 
     @property
     def public_name(self) -> str:
+        """Return the SRD-facing spell name.
+
+        >>> SpellSchema(name="Legacy Name", source="X", level=1, school="A", srd52="New Name").public_name
+        'New Name'
+        """
         for marker in (self.srd52, self.srd):
             if isinstance(marker, str):
                 return marker
@@ -55,4 +80,6 @@ class SpellSchema(SourceModel):
 
 
 class SpellFileSchema(SourceModel):
+    """Define the authored spell-file fields with spell."""
+
     spell: list[SpellSchema] = Field(default_factory=list)

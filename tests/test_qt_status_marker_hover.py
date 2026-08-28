@@ -10,12 +10,12 @@ from PySide6.QtCore import QEvent, QPointF, Qt
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QApplication
 
-from srd_arena.frontends.qt.floating_labels import (
+from srd_arena.frontends.gui.floating_labels import (
     BATTLEFIELD_FLOATING_LABEL_STYLE,
 )
-from srd_arena.frontends.qt.ui.encounter import BattlefieldWidget
-from srd_arena.frontends.qt.ui.encounter.status_markers import StatusMarkerHit
-from srd_arena.frontends.qt.theme import FANTASY_STYLESHEET
+from srd_arena.frontends.gui.theme import FANTASY_STYLESHEET
+from srd_arena.frontends.gui.ui.encounter import BattlefieldWidget
+from srd_arena.frontends.gui.ui.encounter.status_markers import StatusMarkerHit
 
 
 def test_qt_tooltips_match_floating_name_style() -> None:

@@ -21,7 +21,7 @@ RULES = (
             "srd_arena.content",
             "srd_arena.frontends",
             "srd_arena.infrastructure",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -30,7 +30,7 @@ RULES = (
             "srd_arena.application",
             "srd_arena.frontends",
             "srd_arena.infrastructure",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -38,7 +38,7 @@ RULES = (
         forbidden=("srd_arena.content.creatures",),
     ),
     DependencyRule(
-        package="srd_arena.runtime",
+        package="srd_arena.engine",
         forbidden=(
             "srd_arena.application",
             "srd_arena.content",
@@ -60,23 +60,23 @@ RULES = (
             "srd_arena.content",
             "srd_arena.domain",
             "srd_arena.infrastructure",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
         package="srd_arena.infrastructure",
         forbidden=(
             "srd_arena.frontends",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
-        package="srd_arena.frontends.qt",
+        package="srd_arena.frontends.gui",
         forbidden=(
             "srd_arena.content",
             "srd_arena.domain.encounters",
             "srd_arena.infrastructure",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -84,9 +84,9 @@ RULES = (
         forbidden=(
             "srd_arena.content",
             "srd_arena.domain",
-            "srd_arena.frontends.qt",
+            "srd_arena.frontends.gui",
             "srd_arena.infrastructure",
-            "srd_arena.runtime",
+            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -139,9 +139,9 @@ def test_package_dependencies_follow_architecture() -> None:
     )
 
 
-def test_qt_domain_imports_are_limited_to_pure_geometry() -> None:
+def test_gui_domain_imports_are_limited_to_pure_geometry() -> None:
     violations: list[str] = []
-    package_dir = PACKAGE_ROOT / "frontends" / "qt"
+    package_dir = PACKAGE_ROOT / "frontends" / "gui"
     for path in sorted(package_dir.rglob("*.py")):
         module = _module_name(path)
         for line, imported_module in _imports(path, module):
@@ -151,7 +151,7 @@ def test_qt_domain_imports_are_limited_to_pure_geometry() -> None:
             ):
                 violations.append(
                     f"{path.relative_to(PACKAGE_ROOT.parent)}:{line} imports "
-                    f"{imported_module}; Qt may import only pure domain geometry."
+                    f"{imported_module}; GUI may import only pure domain geometry."
                 )
     assert not violations, "\n".join(violations)
 
@@ -169,21 +169,29 @@ def test_relative_import_resolution() -> None:
     )
 
 
-def test_content_and_runtime_use_absolute_cross_package_imports() -> None:
+def test_cross_package_imports_are_absolute() -> None:
     violations: list[str] = []
 
-    for package_name in ("content", "runtime"):
-        package_dir = PACKAGE_ROOT / package_name
-        for path in sorted(package_dir.rglob("*.py")):
-            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-            for node in ast.walk(tree):
-                if isinstance(node, ast.ImportFrom) and node.level > 1:
-                    violations.append(
-                        f"{path.relative_to(PACKAGE_ROOT.parent)}:{node.lineno}"
-                    )
+    for path in sorted(PACKAGE_ROOT.rglob("*.py")):
+        module = _module_name(path)
+        source_package = _top_level_package(module)
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom) or node.level == 0:
+                continue
+            imported_module = _resolve_from_import(
+                module,
+                path.name == "__init__.py",
+                node,
+            )
+            if _top_level_package(imported_module) != source_package:
+                violations.append(
+                    f"{path.relative_to(PACKAGE_ROOT.parent)}:{node.lineno}: "
+                    f"{module} imports {imported_module} relatively"
+                )
 
     assert not violations, (
-        "Use absolute imports across content/runtime package boundaries:\n"
+        "Use absolute imports across top-level srd_arena package boundaries:\n"
         + "\n".join(violations)
     )
 
@@ -228,8 +236,8 @@ def test_encounter_actions_have_no_legacy_peer_package() -> None:
     )
 
 
-def test_qt_interaction_planning_stays_independent_of_qt() -> None:
-    encounter_ui = PACKAGE_ROOT / "frontends" / "qt" / "ui" / "encounter"
+def test_gui_interaction_planning_stays_independent_of_pyside6() -> None:
+    encounter_ui = PACKAGE_ROOT / "frontends" / "gui" / "ui" / "encounter"
     violations: list[str] = []
 
     for name in ("action_menus.py", "movement.py", "targeting.py"):
@@ -239,13 +247,85 @@ def test_qt_interaction_planning_stays_independent_of_qt() -> None:
             if imported_module == "PySide6" or imported_module.startswith("PySide6."):
                 violations.append(f"{path.name}:{line} imports {imported_module}")
 
-    assert not violations, "Interaction planning must stay Qt-independent:\n" + "\n".join(
-        violations
+    assert not violations, (
+        "Interaction planning must stay Qt-independent:\n" + "\n".join(violations)
     )
 
 
-def test_qt_window_imports_only_composition_widgets() -> None:
-    path = PACKAGE_ROOT / "frontends" / "qt" / "app.py"
+def test_gui_presenter_stays_independent_of_pyside6() -> None:
+    path = PACKAGE_ROOT / "frontends" / "gui" / "presenter.py"
+    module = _module_name(path)
+
+    assert not [
+        imported_module
+        for _line, imported_module in _imports(path, module)
+        if imported_module == "PySide6" or imported_module.startswith("PySide6.")
+    ]
+
+
+def test_gui_window_delegates_application_commands_to_presenter() -> None:
+    path = PACKAGE_ROOT / "frontends" / "gui" / "app.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    application_imports = {
+        alias.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom)
+        and node.module == "srd_arena.application.api"
+        for alias in node.names
+    }
+    imported_modules = {
+        imported_module for _line, imported_module in _imports(path, _module_name(path))
+    }
+
+    assert application_imports == {
+        "EncounterObservation",
+        "GameUpdate",
+        "ScenarioPresentation",
+    }
+    assert "srd_arena.application.game" not in imported_modules
+
+
+def test_driving_adapters_use_only_the_public_application_api() -> None:
+    violations: list[str] = []
+
+    paths = [
+        *sorted((PACKAGE_ROOT / "frontends").rglob("*.py")),
+        PACKAGE_ROOT / "main.py",
+    ]
+    for path in paths:
+        module = _module_name(path)
+        for line, imported_module in _imports(path, module):
+            if (
+                imported_module.startswith("srd_arena.application.")
+                and imported_module != "srd_arena.application.api"
+            ):
+                violations.append(
+                    f"{path.relative_to(PACKAGE_ROOT.parent)}:{line} imports "
+                    f"{imported_module}"
+                )
+
+    assert not violations, (
+        "Driving adapters must use srd_arena.application.api exclusively:\n"
+        + "\n".join(violations)
+    )
+
+
+def test_application_api_exports_only_application_owned_contracts() -> None:
+    from srd_arena.application import api
+
+    assert api.__all__
+    assert len(api.__all__) == len(set(api.__all__))
+    assert all(hasattr(api, name) for name in api.__all__)
+    assert not {"Session", "SessionRead", "EncounterState"} & set(api.__all__)
+    assert all(
+        exported.__doc__
+        for name in api.__all__
+        if isinstance(exported := getattr(api, name), type)
+    )
+
+
+def test_gui_window_imports_only_composition_widgets() -> None:
+    path = PACKAGE_ROOT / "frontends" / "gui" / "app.py"
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     qt_widget_imports = {
         alias.name
@@ -262,11 +342,11 @@ def test_qt_window_imports_only_composition_widgets() -> None:
 
 
 def test_initiative_rendering_has_one_view_owner() -> None:
-    qt_root = PACKAGE_ROOT / "frontends" / "qt"
+    gui_root = PACKAGE_ROOT / "frontends" / "gui"
     non_owners = (
-        qt_root / "app.py",
-        qt_root / "ui" / "sidebar.py",
-        qt_root / "ui" / "encounter" / "panel_renderer.py",
+        gui_root / "app.py",
+        gui_root / "ui" / "sidebar.py",
+        gui_root / "ui" / "encounter" / "panel_renderer.py",
     )
 
     assert all(
@@ -319,10 +399,11 @@ def test_domain_root_is_namespace_only() -> None:
     )
 
 
-def test_package_and_runtime_roots_do_not_reexport_engine_types() -> None:
+def test_package_and_engine_roots_do_not_reexport_engine_types() -> None:
+    assert not (PACKAGE_ROOT / "runtime").exists()
     for path in (
         PACKAGE_ROOT / "__init__.py",
-        PACKAGE_ROOT / "runtime" / "__init__.py",
+        PACKAGE_ROOT / "engine" / "__init__.py",
     ):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         assert (
@@ -331,6 +412,62 @@ def test_package_and_runtime_roots_do_not_reexport_engine_types() -> None:
             and isinstance(tree.body[0].value, ast.Constant)
             and isinstance(tree.body[0].value.value, str)
         ), f"{path.relative_to(PACKAGE_ROOT.parent)} must remain namespace-only."
+
+
+def test_application_boundary_does_not_import_concrete_session() -> None:
+    boundary_modules = (
+        "action_observations.py",
+        "game.py",
+        "interactions.py",
+        "observations.py",
+    )
+    violations: list[str] = []
+
+    for name in boundary_modules:
+        path = PACKAGE_ROOT / "application" / name
+        module = _module_name(path)
+        for line, imported_module in _imports(path, module):
+            if imported_module == "srd_arena.engine.session":
+                violations.append(f"{name}:{line} imports concrete Session")
+
+    assert not violations, (
+        "Application boundary modules must use the GameEngine protocol:\n"
+        + "\n".join(violations)
+    )
+
+
+def test_engine_does_not_define_presentation_views() -> None:
+    violations: list[str] = []
+
+    for path in sorted((PACKAGE_ROOT / "engine").rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name.endswith("View"):
+                violations.append(f"{path.name}:{node.lineno}: {node.name}")
+
+    assert not violations, (
+        "Application observations are the sole client read model; engine "
+        "must expose typed queries instead of presentation views:\n"
+        + "\n".join(violations)
+    )
+
+
+def test_engine_action_options_do_not_expose_domain_action_payloads() -> None:
+    path = PACKAGE_ROOT / "engine" / "queries.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    action_option = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "ActionOption"
+    )
+    fields = {
+        node.target.id
+        for node in action_option.body
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+    }
+
+    assert "action" not in fields
+    assert "value" not in fields
 
 
 def _imports(path: Path, module: str) -> list[tuple[int, str]]:
@@ -371,6 +508,11 @@ def _module_name(path: Path) -> str:
     if parts[-1] == "__init__":
         parts.pop()
     return ".".join(parts)
+
+
+def _top_level_package(module: str) -> str:
+    parts = module.split(".")
+    return parts[1] if len(parts) > 1 else ""
 
 
 def _is_package_or_child(module: str, package: str) -> bool:

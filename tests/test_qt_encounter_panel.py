@@ -13,21 +13,24 @@ pytest.importorskip("PySide6")
 from PySide6.QtWidgets import QApplication, QFrame
 
 from srd_arena.application.game import RunningGame
-from srd_arena.frontends.qt.app import GameWindow
-from srd_arena.frontends.qt.ui.encounter.panel_renderer import (
+from srd_arena.frontends.gui.app import GameWindow
+from srd_arena.frontends.gui.presenter import GamePresenter
+from srd_arena.frontends.gui.ui.encounter.panel_renderer import (
     EncounterPanelRenderer,
 )
-from srd_arena.infrastructure.scenarios import load_scenario
-
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
 
 
 def test_game_window_delegates_encounter_controls_to_panel_renderer() -> None:
     app = QApplication.instance() or QApplication([])
-    session = load_scenario(SCENARIOS_ROOT / "slow_showcase").create_session()
+    session = load_scenario_directory(SCENARIOS_ROOT / "slow_showcase").create_session()
 
-    window = GameWindow(RunningGame(session), show_encounter_json=True)
+    window = GameWindow(
+        GamePresenter(RunningGame(session)),
+        show_encounter_json=True,
+    )
 
     assert isinstance(window._encounter_panel_renderer, EncounterPanelRenderer)
     bindings = window.sidebar.encounter_bindings

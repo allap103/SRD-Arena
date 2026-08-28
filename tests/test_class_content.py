@@ -1,9 +1,10 @@
 from srd_arena.content.character_options.classes import (
+    ClassRecord,
+    ClassSchema,
     load_class_catalog,
     load_subclass_catalog,
 )
 from srd_arena.content.common import SourceCatalog
-from srd_arena.content.character_options.classes import ClassRecord, ClassSchema
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 
 
@@ -25,7 +26,9 @@ def test_bundled_subclasses_use_class_aware_identity() -> None:
 
     assert len(catalog) == 24
     assert champion.definition.class_name == "Fighter"
-    assert any(feature.public_name == "Improved Critical" for feature in champion.features)
+    assert any(
+        feature.public_name == "Improved Critical" for feature in champion.features
+    )
 
 
 def test_class_schema_preserves_unknown_source_fields() -> None:
@@ -37,9 +40,7 @@ def test_class_schema_preserves_unknown_source_fields() -> None:
         }
     )
 
-    assert class_definition.model_extra == {
-        "customFutureField": {"enabled": True}
-    }
+    assert class_definition.model_extra == {"customFutureField": {"enabled": True}}
 
 
 def test_class_catalog_uses_srd_public_name() -> None:

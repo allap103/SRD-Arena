@@ -12,8 +12,8 @@ from ....capabilities import (
     primary_effects,
 )
 from ....geometry import AreaOfEffect, build_radius_area
-from ....spells.resolution import SpellActionContext, SpellTargetContext
 from ....rolls.dice import combine_roll_modes
+from ....spells.resolution import SpellActionContext, SpellTargetContext
 from ....spells.rules import (
     parse_spell_action_ability,
     parse_spell_action_condition,
@@ -41,7 +41,23 @@ def build_spell_action_context(
     area: AreaOfEffect | None,
     cast_level: int | None,
 ) -> SpellActionContext:
-    """Supply encounter state needed by otherwise source-neutral resolution."""
+    """Supply encounter state needed by otherwise source-neutral resolution.
+
+    Only spells with executable capability definitions may cross this boundary.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.spells import Spell
+    >>> try:
+    ...     build_spell_action_context(
+    ...         SimpleNamespace(), actor=SimpleNamespace(),
+    ...         spell=Spell("unknown", "Unknown", None, 1), spell_value="unknown",
+    ...         creature_ref="mage", target=SimpleNamespace(), targets=(),
+    ...         area=None, cast_level=1,
+    ...     )
+    ... except AssertionError:
+    ...     print("Executable definition required.")
+    Executable definition required.
+    """
 
     definition = spell.definition
     assert definition is not None
@@ -177,22 +193,25 @@ def build_spell_action_context(
             if conditions or save_advantage_against_opponents
             else {}
         ),
-        save_roll_modifier_for=lambda target_ref, ability: state.combat_rules.roll_modifiers(
-            state,
-            target_ref,
-            "saving_throw",
-            ability=ability,
-        ).resolve_modifier(roll_die),
+        save_roll_modifier_for=lambda target_ref, ability: (
+            state.combat_rules.roll_modifiers(
+                state,
+                target_ref,
+                "saving_throw",
+                ability=ability,
+            ).resolve_modifier(roll_die)
+        ),
         save_sourced_roll_modes={
-            target_ref: rules.mode
-            for target_ref, rules in save_roll_rules.items()
+            target_ref: rules.mode for target_ref, rules in save_roll_rules.items()
         },
-        save_sourced_roll_mode_for=lambda target_ref, ability: state.combat_rules.roll_modifiers(
-            state,
-            target_ref,
-            "saving_throw",
-            ability=ability,
-        ).mode,
+        save_sourced_roll_mode_for=lambda target_ref, ability: (
+            state.combat_rules.roll_modifiers(
+                state,
+                target_ref,
+                "saving_throw",
+                ability=ability,
+            ).mode
+        ),
         area_targets_around=lambda center_ref, radius_feet: tuple(
             state._targets_in_area(
                 actor,

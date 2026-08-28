@@ -17,7 +17,14 @@ type ApplicationValue = (
 
 
 def freeze_value(value: object) -> ApplicationValue:
-    """Return a recursively immutable application value."""
+    """Return a recursively immutable application value.
+
+    >>> frozen = freeze_value({"targets": ["goblin", "ogre"]})
+    >>> tuple(frozen["targets"])
+    ('goblin', 'ogre')
+    >>> type(frozen).__name__
+    'mappingproxy'
+    """
 
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
@@ -30,15 +37,18 @@ def freeze_value(value: object) -> ApplicationValue:
         return MappingProxyType(frozen)
     if isinstance(value, (list, tuple)):
         return tuple(freeze_value(item) for item in value)
-    raise TypeError(
-        f"Unsupported application value type: {type(value).__name__}."
-    )
+    raise TypeError(f"Unsupported application value type: {type(value).__name__}.")
 
 
 def freeze_mapping(
     value: Mapping[str, object],
 ) -> Mapping[str, ApplicationValue]:
-    """Return a recursively immutable string-keyed mapping."""
+    """Return a recursively immutable string-keyed mapping.
+
+    >>> frozen = freeze_mapping({"roll": {"dice": [4, 6]}})
+    >>> frozen["roll"]["dice"]
+    (4, 6)
+    """
 
     frozen = freeze_value(value)
     assert isinstance(frozen, Mapping)

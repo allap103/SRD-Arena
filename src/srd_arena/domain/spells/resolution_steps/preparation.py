@@ -13,8 +13,8 @@ from ...capabilities import (
     CreatureTypeRequirement,
     DamageEffect,
     HealingEffect,
-    RepeatSave,
     RelationshipRequirement,
+    RepeatSave,
     RollModifierEffect,
     SavingThrowResolution,
     TemporaryHitPointsEffect,
@@ -35,6 +35,8 @@ from .scaling import (
 
 @dataclass(frozen=True)
 class PreparedSpellResolution:
+    """Cache the normalized mechanics and shared rolls for one spell invocation."""
+
     definition: CapabilityDefinition
     resolution: CapabilityResolution
     definition_effects: tuple[CapabilityEffect, ...]
@@ -65,6 +67,29 @@ class PreparedSpellResolution:
 
 
 def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolution:
+    """Normalize capability mechanics and perform rolls shared by all targets.
+
+    >>> from types import SimpleNamespace
+    >>> from ...capabilities import (
+    ...     AutomaticResolution, CapabilityTarget, DamageEffect, Outcome,
+    ... )
+    >>> from ..definitions import Spell
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget("creature"),
+    ...     AutomaticResolution(Outcome((DamageEffect("1d6", 0, "fire"),))),
+    ... )
+    >>> spell = Spell("spark", "Spark", "TEST", 1, definition=definition)
+    >>> context = SimpleNamespace(
+    ...     spell=spell, roller=lambda sides: 4, cast_level=None,
+    ...     creature=SimpleNamespace(attributes=SimpleNamespace(level=1)),
+    ...     target="target", targets=(), damage_roll_modifier_for=None,
+    ...     damage_roll_modifier=0,
+    ... )
+    >>> prepared = prepare_spell_resolution(context)
+    >>> prepared.damage_definitions
+    (SpellDamage(dice='1d6', damage_type='fire'),)
+    """
+
     spell = context.spell
     definition = spell.definition
     assert definition is not None
@@ -271,9 +296,7 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
         half_damage_on_save=half_damage_on_save,
         conditions=conditions,
         automatic_failure_creature_types=automatic_failure_creature_types,
-        automatic_success_condition_immunities=(
-            automatic_success_condition_immunities
-        ),
+        automatic_success_condition_immunities=(automatic_success_condition_immunities),
         automatic_success_traits=automatic_success_traits,
         disadvantage_creature_types=disadvantage_creature_types,
         expires_on_source_turn_end=expires_on_source_turn_end,

@@ -24,7 +24,36 @@ def execute_movement(
     decision: DecisionFrame,
     context: ActionExecutionContext,
 ) -> ActionExecutionResult | None:
-    """Resolve one grid step or return while an interrupt owns the decision."""
+    """Resolve one grid step or return while an interrupt owns the decision.
+
+    When an external Opportunity Attack is offered, movement remains suspended
+    and its context is returned to the orchestration layer.
+
+    >>> from types import SimpleNamespace
+    >>> mover = SimpleNamespace(
+    ...     position=Position(0, 0), movement_remaining=6,
+    ...     movement_spent_this_turn=MovementCost(0), is_alive=True,
+    ... )
+    >>> reactions = SimpleNamespace(
+    ...     queue_opportunity_attack=lambda *args, **kwargs: True
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": mover},
+    ...     _movement_cost_for=lambda ref: MovementCost(1),
+    ...     _grappling_targets_for=lambda ref: (),
+    ...     reaction_engine=reactions,
+    ... )
+    >>> decision = DecisionFrame("turn", "hero", "turn", "active")
+    >>> context = SimpleNamespace(
+    ...     actor_ref="hero", progress=SimpleNamespace(paused_for_decision=False),
+    ...     action_id="move-1",
+    ... )
+    >>> result = execute_movement(
+    ...     state, EncounterAction("Right", "move", "right"), decision, context
+    ... )
+    >>> (result.outcome, context.progress.paused_for_decision)
+    (<ActionExecutionOutcome.PAUSE_FOR_DECISION: 'pause_for_decision'>, True)
+    """
 
     mover = state.creatures[context.actor_ref]
     progress = context.progress
@@ -35,9 +64,7 @@ def execute_movement(
     movement_cost = state._movement_cost_for(decision.creature_ref)
     if movement_cost is None:
         raise RuntimeError("Movement is unavailable for this creature.")
-    remaining = MovementBudget(
-        max(0, (mover.movement_remaining or 0) - movement_cost)
-    )
+    remaining = MovementBudget(max(0, (mover.movement_remaining or 0) - movement_cost))
     grappled_refs = state._grappling_targets_for(decision.creature_ref)
     grappled_positions = {
         target_ref: Position(

@@ -1,3 +1,5 @@
+"""Start, end, and advance creature turns in initiative order."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -26,12 +28,36 @@ class TurnLifecycle:
         state: EncounterState,
         creature_ref: CreatureRef,
     ) -> MovementBudget:
+        """Return the grid movement budget available at turn start.
+
+        >>> from unittest.mock import Mock
+        >>> state = Mock()
+        >>> state.combat_rules.movement_budget.return_value.budget = MovementBudget(6)
+        >>> TurnLifecycle().movement_budget_for_turn(state, "hero")
+        6
+        """
         return state.combat_rules.movement_budget(state, creature_ref).budget
 
     def active_turn_creature(self, state: EncounterState) -> CreatureRef:
+        """Return the creature occupying the current initiative slot.
+
+        >>> from unittest.mock import Mock
+        >>> TurnLifecycle().active_turn_creature(
+        ...     Mock(initiative_order=["goblin", "hero"], turn_index=1))
+        'hero'
+        """
         return state.initiative_order[state.turn_index]
 
     def check_transition(self, state: EncounterState) -> str | None:
+        """Return the victory transition once only one configured team lives.
+
+        >>> from unittest.mock import Mock
+        >>> state = Mock(creatures={"hero": Mock(is_alive=True), "goblin": Mock(is_alive=False)})
+        >>> state._creature_team_id.side_effect = {"hero": "heroes", "goblin": "foes"}.__getitem__
+        >>> state.definition.victory.next_encounter_id = "victory"
+        >>> TurnLifecycle().check_transition(state)
+        'victory'
+        """
         configured_teams = {
             state._creature_team_id(creature_ref) for creature_ref in state.creatures
         }
@@ -53,6 +79,19 @@ class TurnLifecycle:
         state: EncounterState,
         progress: EncounterProgress | None = None,
     ) -> None:
+        """Run end hooks, advance initiative, and begin the next living turn.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.encounters.models import DecisionFrame
+        >>> state = Mock(ongoing_effects=[], conditions=[], relationships=[], turn_index=0,
+        ...     initiative_order=["hero", "fallen"],
+        ...     creatures={"hero": Mock(is_alive=True), "fallen": Mock(is_alive=False)},
+        ...     round=Mock(number=1))
+        >>> state.current_decision.return_value = DecisionFrame("turn", "hero", "turn", "active")
+        >>> TurnLifecycle().advance_turn(state)
+        >>> state.turn_index
+        1
+        """
         ending_creature_ref = state.current_decision().creature_ref
         ending_round = state.round.number
         resolve_end_turn_effects(state, ending_creature_ref, progress)
@@ -65,7 +104,15 @@ class TurnLifecycle:
         state: EncounterState,
         progress: EncounterProgress | None = None,
     ) -> None:
-        """Advance one defeated initiative slot without running its turn hooks."""
+        """Advance one defeated initiative slot without running its turn hooks.
+
+        >>> from unittest.mock import Mock
+        >>> state = Mock(turn_index=0, initiative_order=["fallen", "next"],
+        ...     creatures={"next": Mock(is_alive=False)}, round=Mock())
+        >>> TurnLifecycle().skip_defeated_turn(state)
+        >>> state.turn_index
+        1
+        """
         self._advance_initiative(state)
         self._begin_turn_if_alive(state, progress)
 
@@ -104,9 +151,7 @@ class TurnLifecycle:
         creature_state.bonus_action_available = True
         creature_state.bonus_action_used_this_turn = False
         if progress is not None:
-            progress.messages.append(
-                ("turn", f"{creature_state.creature.name}'s turn")
-            )
+            progress.messages.append(("turn", f"{creature_state.creature.name}'s turn"))
 
     def expire_conditions_for_turn_end(
         self,
@@ -114,6 +159,18 @@ class TurnLifecycle:
         creature_ref: CreatureRef,
         round_number: int,
     ) -> None:
+        """Remove conditions whose duration ends with this creature's turn.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.effects.conditions import Condition, build_applied_condition
+        >>> condition = build_applied_condition(condition=Condition.STUNNED,
+        ...     source_ref="mage", source_label="Mage", target_ref="hero",
+        ...     duration=UntilTurnEnd("hero"))
+        >>> state = Mock(conditions=[condition], relationships=[], round=Mock())
+        >>> TurnLifecycle().expire_conditions_for_turn_end(state, "hero", 1)
+        >>> state.conditions
+        []
+        """
         expired_ids = {
             condition.id
             for condition in state.conditions
@@ -141,6 +198,18 @@ class TurnLifecycle:
         creature_ref: CreatureRef,
         round_number: int,
     ) -> None:
+        """Remove conditions whose duration ends when this creature's turn starts.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.effects.conditions import Condition, build_applied_condition
+        >>> condition = build_applied_condition(condition=Condition.FRIGHTENED,
+        ...     source_ref="dragon", source_label="Dragon", target_ref="hero",
+        ...     duration=UntilTurnStart("hero"))
+        >>> state = Mock(conditions=[condition], relationships=[], round=Mock())
+        >>> TurnLifecycle().expire_conditions_for_turn_start(state, "hero", 1)
+        >>> state.conditions
+        []
+        """
         expired_ids = {
             condition.id
             for condition in state.conditions
@@ -163,12 +232,34 @@ class TurnLifecycle:
         ]
 
     def maybe_reset_reactions(self, state: EncounterState) -> None:
+        """Restore reactions when initiative wraps to the first slot.
+
+        >>> from unittest.mock import Mock
+        >>> hero = Mock(reaction_available=False)
+        >>> state = Mock(turn_index=0, creatures={"hero": hero})
+        >>> TurnLifecycle().maybe_reset_reactions(state)
+        >>> hero.reaction_available
+        True
+        """
         if state.turn_index != 0:
             return
         for creature_state in state.creatures.values():
             creature_state.reaction_available = True
 
     def active_movement_remaining(self, state: EncounterState) -> MovementBudget:
+        """Lazily initialize and return the active creature's movement budget.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.encounters.models import DecisionFrame
+        >>> state = Mock(active_movement_remaining=None)
+        >>> state.current_decision.return_value = DecisionFrame("turn", "hero", "turn", "active")
+        >>> state._is_grappled.return_value = False
+        >>> state.combat_rules.movement_budget.return_value.budget = MovementBudget(6)
+        >>> TurnLifecycle().active_movement_remaining(state)
+        6
+        >>> state.active_movement_remaining
+        6
+        """
         creature_ref = state.current_decision().creature_ref
         if state._is_grappled(creature_ref):
             return MovementBudget(0)
@@ -180,6 +271,13 @@ class TurnLifecycle:
         return state.active_movement_remaining
 
     def turn_count(self, state: EncounterState) -> int:
+        """Return the number of initiative slots in the encounter.
+
+        >>> from unittest.mock import Mock
+        >>> TurnLifecycle().turn_count(Mock(initiative_order=["hero", "goblin"]))
+        2
+        """
         return len(state.initiative_order)
+
 
 TURN_LIFECYCLE = TurnLifecycle()

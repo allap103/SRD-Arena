@@ -1,10 +1,12 @@
+"""Execute encounter actions granted by inventory items."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ...creatures import Creature
-from .consumables import healing_potion_dice
 from ..models import EncounterProgress
+from .consumables import healing_potion_dice
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -23,6 +25,23 @@ def resolve_utilize_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
+    """Consume a supported inventory item and apply its action outcome.
+
+    >>> from types import SimpleNamespace
+    >>> actor = SimpleNamespace(
+    ...     inventory=SimpleNamespace(has_item=lambda item_id: False)
+    ... )
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
+    ...     item_templates={},
+    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ... )
+    >>> progress = EncounterProgress()
+    >>> resolve_utilize_action(state, actor, "potion", progress, "use-1")
+    >>> (progress.messages[-1], progress.events[-1][1]["success"])
+    (('system', 'You do not have that item.'), False)
+    """
+
     creature_ref = self.current_decision().creature_ref
     item = self.item_templates.get(item_id)
     if item is None or not actor.inventory.has_item(item_id):
@@ -54,7 +73,9 @@ def resolve_utilize_action(
         return
     healing_dice = healing_potion_dice(item)
     if healing_dice is None:
-        progress.messages.append(("system", f"{item.name} cannot be used that way yet."))
+        progress.messages.append(
+            ("system", f"{item.name} cannot be used that way yet.")
+        )
         progress.events.append(
             self._event(
                 "action_resolved",

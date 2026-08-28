@@ -12,7 +12,11 @@ from ....effects.conditions import Condition
 
 
 def stat_block_action_runtime_issue(definition: object) -> str | None:
-    """Describe why a stat-block action cannot run in the current engine."""
+    """Describe why a stat-block action cannot run in the current engine.
+
+    >>> stat_block_action_runtime_issue(object())
+    'This stat-block action type is not executable yet.'
+    """
     if isinstance(definition, AttackActionDefinition):
         for effect in definition.hit:
             if isinstance(effect, DamageEffect):

@@ -16,6 +16,8 @@ from .target_rolls import resolve_target_roll
 
 @dataclass
 class ResolvedSpellTargets:
+    """Collect messages, roll details, damage, restoration, and affected targets."""
+
     messages: list[tuple[str, str]]
     save_details: list[dict[str, object]]
     attack_details: list[dict[str, object]]
@@ -29,12 +31,27 @@ def resolve_spell_targets(
     context: SpellActionContext,
     prepared: PreparedSpellResolution,
 ) -> ResolvedSpellTargets:
-    """Resolve rolls, damage, restoration, and messages in target order."""
+    """Resolve rolls, damage, restoration, and messages in target order.
+
+    >>> from types import SimpleNamespace
+    >>> from ...capabilities import AutomaticResolution, CapabilityDefinition
+    >>> from ...capabilities import CapabilityTarget, Outcome
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget("creature"), AutomaticResolution(Outcome())
+    ... )
+    >>> context = SimpleNamespace(
+    ...     creature=SimpleNamespace(name="Mage"),
+    ...     spell=SimpleNamespace(name="Ward", removable_conditions=()),
+    ... )
+    >>> prepared = SimpleNamespace(definition=definition, targets=())
+    >>> resolved = resolve_spell_targets(context, prepared)
+    >>> (resolved.messages, resolved.affected_targets)
+    ([('system', 'Mage casts Ward.')], [])
+    """
 
     target_suffix = (
         f" on {prepared.targets[0].target_label}"
-        if prepared.definition.target.kind == "creature"
-        and len(prepared.targets) == 1
+        if prepared.definition.target.kind == "creature" and len(prepared.targets) == 1
         else ""
     )
     messages = [
@@ -78,9 +95,7 @@ def resolve_spell_targets(
             affected_targets.append(target)
             restoration = restore_target(context, prepared, target)
             healing_details.extend(restoration.healing_details)
-            temporary_hit_point_details.extend(
-                restoration.temporary_hit_point_details
-            )
+            temporary_hit_point_details.extend(restoration.temporary_hit_point_details)
 
         outcome_label = (
             "damages"

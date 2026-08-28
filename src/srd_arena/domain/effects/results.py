@@ -1,3 +1,5 @@
+"""Carry resolved capability output from rule evaluation to state application."""
+
 from dataclasses import dataclass, field
 
 from .rule_effects import RuntimeRuleEffect

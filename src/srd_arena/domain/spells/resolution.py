@@ -1,3 +1,5 @@
+"""Coordinate capability-driven and custom spell resolution into effect output."""
+
 from __future__ import annotations
 
 from typing import cast
@@ -27,6 +29,19 @@ __all__ = [
 def resolve_spell_action(
     context: SpellActionContext,
 ) -> CapabilityActionResult | None:
+    """Execute a configured spell invocation through its declarative or custom resolver.
+
+    Metadata-only spells have no executable action result.
+
+    >>> from types import SimpleNamespace
+    >>> from .definitions import Spell
+    >>> context = SimpleNamespace(
+    ...     spell=Spell("legend_lore", "Legend Lore", "XPHB", 5)
+    ... )
+    >>> resolve_spell_action(context) is None
+    True
+    """
+
     spell = context.spell
     if spell.definition is not None:
         return resolve_custom_spell(context, _resolve_declarative_spell)
@@ -89,8 +104,7 @@ def _resolve_declarative_spell(
             "target_refs": [target.target_ref for target in targets],
             "target_labels": [target.target_label for target in targets],
             "affected_target_refs": [
-                target.target_ref
-                for target in resolved_targets.affected_targets
+                target.target_ref for target in resolved_targets.affected_targets
             ],
             "area": serialize_area(context.area),
             "spell_level": spell.level,

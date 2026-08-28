@@ -1,3 +1,5 @@
+"""Validate spell outcomes that require spell-specific authoring fields."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -7,20 +9,26 @@ from pydantic import Field, RootModel, model_validator
 
 from srd_arena.content.capabilities import (
     Ability,
-    AutomaticResolutionSchema as SharedAutomaticResolutionSchema,
     ConditionEffectSchema,
     DamageEffectSchema,
     DerivedDifficultyClassSchema,
     EffectDurationSchema,
     ForcedMovementEffectSchema,
     NonNegativeInt,
-    OutcomeSchema as SharedOutcomeSchema,
     PositiveInt,
     ProhibitReactionEffectSchema,
     RollModifierEffectSchema,
-    SavingThrowResolutionSchema as SharedSavingThrowResolutionSchema,
     SpeedMultiplierEffectSchema,
     TurnEconomyRestrictionEffectSchema,
+)
+from srd_arena.content.capabilities import (
+    AutomaticResolutionSchema as SharedAutomaticResolutionSchema,
+)
+from srd_arena.content.capabilities import (
+    OutcomeSchema as SharedOutcomeSchema,
+)
+from srd_arena.content.capabilities import (
+    SavingThrowResolutionSchema as SharedSavingThrowResolutionSchema,
 )
 
 from .base import SpellCapabilitySchemaModel
@@ -52,6 +60,8 @@ def _validate_complete_roll_table(
 
 
 class HealingEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``healing`` spell-resolution variant with dice and bonus."""
+
     type: Literal["healing"]
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     bonus: int = 0
@@ -61,7 +71,18 @@ class HealingEffectSchema(SpellCapabilitySchemaModel):
     pool: PositiveInt | None = None
 
     @model_validator(mode="after")
-    def validate_healing_source(self) -> "HealingEffectSchema":
+    def validate_healing_source(self) -> HealingEffectSchema:
+        """Require at least one source for the healing amount.
+
+        >>> HealingEffectSchema(type="healing", dice="2d8").dice
+        '2d8'
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     HealingEffectSchema(type="healing")
+        ... except ValidationError as error:
+        ...     "requires a roll" in str(error)
+        True
+        """
         if (
             self.dice is None
             and self.bonus == 0
@@ -77,6 +98,8 @@ class HealingEffectSchema(SpellCapabilitySchemaModel):
 
 
 class TemporaryHitPointsEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``temporary_hit_points`` spell-resolution variant with dice."""
+
     type: Literal["temporary_hit_points"]
     dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     value: NonNegativeInt = 0
@@ -84,25 +107,42 @@ class TemporaryHitPointsEffectSchema(SpellCapabilitySchemaModel):
     trigger: Literal["application", "target_turn_start"] = "application"
 
     @model_validator(mode="after")
-    def validate_temporary_hit_points(self) -> "TemporaryHitPointsEffectSchema":
+    def validate_temporary_hit_points(self) -> TemporaryHitPointsEffectSchema:
+        """Require a roll, value, or modifier for temporary hit points.
+
+        >>> TemporaryHitPointsEffectSchema(type="temporary_hit_points", value=5).value
+        5
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     TemporaryHitPointsEffectSchema(type="temporary_hit_points")
+        ... except ValidationError as error:
+        ...     "require a roll" in str(error)
+        True
+        """
         if self.dice is None and self.value == 0 and self.modifier == "none":
             raise ValueError("Temporary hit points require a roll, value, or modifier.")
         return self
 
 
 class ArmorClassModifierEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``armor_class_modifier`` spell-resolution variant with value."""
+
     type: Literal["armor_class_modifier"]
     value: int
     duration: EffectDurationSchema | None = None
 
 
 class AttackLimitEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``attack_action_limit`` spell-resolution variant with maximum."""
+
     type: Literal["attack_action_limit"]
     maximum: PositiveInt
     duration: EffectDurationSchema | None = None
 
 
 class ActionFailureChanceEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``action_failure_chance`` spell-resolution variant with action."""
+
     type: Literal["action_failure_chance"]
     action: Literal["cast_spell", "attack", "magic_action", "any"]
     percent: Annotated[int, Field(ge=1, le=100)]
@@ -111,6 +151,8 @@ class ActionFailureChanceEffectSchema(SpellCapabilitySchemaModel):
 
 
 class RemoveEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``remove_effect`` spell-resolution variant with selection."""
+
     type: Literal["remove_effect"]
     selection: Literal["one", "all"] = "one"
     removable: list[
@@ -127,6 +169,8 @@ class RemoveEffectSchema(SpellCapabilitySchemaModel):
 
 
 class DamageResistanceEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``damage_resistance`` spell-resolution variant with damage types."""
+
     type: Literal["damage_resistance"]
     damage_types: list[str] = Field(min_length=1)
     selection: Literal["all", "choose_one"] = "all"
@@ -134,6 +178,8 @@ class DamageResistanceEffectSchema(SpellCapabilitySchemaModel):
 
 
 class DamageReductionEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``damage_reduction`` spell-resolution variant with damage types."""
+
     type: Literal["damage_reduction"]
     damage_types: list[str] = Field(min_length=1)
     selection: Literal["all", "choose_one"] = "all"
@@ -144,24 +190,32 @@ class DamageReductionEffectSchema(SpellCapabilitySchemaModel):
 
 
 class SpeedModifierEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``speed_modifier`` spell-resolution variant with feet and duration."""
+
     type: Literal["speed_modifier"]
     feet: int
     duration: EffectDurationSchema | None = None
 
 
 class ConditionSaveAdvantageEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``condition_save_advantage`` spell-resolution variant."""
+
     type: Literal["condition_save_advantage"]
     conditions: list[str] = Field(min_length=1)
     duration: EffectDurationSchema | None = None
 
 
 class DamageImmunityEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``damage_immunity`` spell-resolution variant with damage types."""
+
     type: Literal["damage_immunity"]
     damage_types: list[str] = Field(min_length=1)
     duration: EffectDurationSchema | None = None
 
 
 class ConditionImmunityEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``condition_immunity`` spell-resolution variant with conditions."""
+
     type: Literal["condition_immunity"]
     conditions: list[str] = Field(min_length=1)
     suppress_existing: bool = False
@@ -169,6 +223,8 @@ class ConditionImmunityEffectSchema(SpellCapabilitySchemaModel):
 
 
 class SenseEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``sense`` spell-resolution variant with sense and range feet."""
+
     type: Literal["sense"]
     sense: Literal["blindsight", "darkvision", "truesight"]
     range_feet: PositiveInt
@@ -176,6 +232,8 @@ class SenseEffectSchema(SpellCapabilitySchemaModel):
 
 
 class HitPointMaximumModifierEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``hit_point_maximum_modifier`` spell-resolution variant with value."""
+
     type: Literal["hit_point_maximum_modifier"]
     value: int
     also_modify_current: bool = False
@@ -183,6 +241,8 @@ class HitPointMaximumModifierEffectSchema(SpellCapabilitySchemaModel):
 
 
 class TeleportEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``teleport`` spell-resolution variant with distance feet."""
+
     type: Literal["teleport"]
     distance_feet: NonNegativeInt | Literal["spell_range", "unlimited"]
     destination: Literal[
@@ -191,11 +251,15 @@ class TeleportEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ObscurementEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``obscurement`` spell-resolution variant with degree."""
+
     type: Literal["obscurement"]
     degree: Literal["light", "heavy"]
 
 
 class MovementModeEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``movement_mode`` spell-resolution variant with mode and speed feet."""
+
     type: Literal["movement_mode"]
     mode: Literal["walk", "fly", "swim", "climb", "burrow", "hover"]
     speed_feet: PositiveInt | Literal["walking_speed"]
@@ -203,11 +267,15 @@ class MovementModeEffectSchema(SpellCapabilitySchemaModel):
 
 
 class DifficultTerrainEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``difficult_terrain`` spell-resolution variant with applies to."""
+
     type: Literal["difficult_terrain"]
     applies_to: Literal["all", "enemies", "creatures_on_ground"] = "all"
 
 
 class BattlefieldRemovalEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``battlefield_removal`` spell-resolution variant with destination."""
+
     type: Literal["battlefield_removal"]
     destination: Literal["demiplane", "another_plane", "extradimensional", "off_board"]
     return_trigger: Literal["spell_ends", "turn_start", "turn_end", "random_turn_start"]
@@ -215,6 +283,8 @@ class BattlefieldRemovalEffectSchema(SpellCapabilitySchemaModel):
 
 
 class RelationshipEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``relationship`` spell-resolution variant with relationship."""
+
     type: Literal["relationship"]
     relationship: str = Field(min_length=1)
     source_role: str = Field(default="source", min_length=1)
@@ -223,6 +293,8 @@ class RelationshipEffectSchema(SpellCapabilitySchemaModel):
 
 
 class MirroredDamageEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``mirrored_damage`` spell-resolution variant with from event."""
+
     type: Literal["mirrored_damage"]
     from_event: Literal["triggering_damage"] = "triggering_damage"
     numerator: PositiveInt = 1
@@ -232,6 +304,8 @@ class MirroredDamageEffectSchema(SpellCapabilitySchemaModel):
 
 
 class CompelledBehaviorEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``compelled_behavior`` spell-resolution variant with behavior."""
+
     type: Literal["compelled_behavior"]
     behavior: Literal[
         "authored_command",
@@ -246,28 +320,38 @@ class CompelledBehaviorEffectSchema(SpellCapabilitySchemaModel):
 
 
 class CancelPendingEventEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``cancel_pending_event`` spell-resolution variant with event."""
+
     type: Literal["cancel_pending_event"]
     event: Literal["attack", "damage", "spell", "defeat", "instant_death"]
     consume_triggering_resources: bool = True
 
 
 class RedirectPendingTargetEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``redirect_pending_target`` spell-resolution variant."""
+
     type: Literal["redirect_pending_target"]
     destination: Literal["random_spell_entity", "chosen_legal_target"]
 
 
 class RequireTargetReselectionEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``require_target_reselection`` spell-resolution variant."""
+
     type: Literal["require_target_reselection"]
     on_no_legal_target: Literal["cancel_action", "retain_target"] = "cancel_action"
 
 
 class LightEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``light`` spell-resolution variant with bright radius feet."""
+
     type: Literal["light"]
     bright_radius_feet: NonNegativeInt = 0
     dim_additional_feet: NonNegativeInt = 0
 
 
 class SpellEntityStatisticsSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-resolution fields with armor class and hit points."""
+
     armor_class: PositiveInt | Literal["caster"] | None = None
     hit_points: PositiveInt | Literal["caster_maximum"] | None = None
     size: str | None = None
@@ -279,6 +363,8 @@ class SpellEntityStatisticsSchema(SpellCapabilitySchemaModel):
 
 
 class CreateSpellEntityEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``create_spell_entity`` spell-resolution variant with entity id."""
+
     type: Literal["create_spell_entity"]
     entity_id: str = Field(min_length=1)
     entity_kind: Literal["manifestation", "weapon", "hand", "hazard", "image"]
@@ -291,6 +377,8 @@ class CreateSpellEntityEffectSchema(SpellCapabilitySchemaModel):
 
 
 class TransformObjectEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``transform_object`` spell-resolution variant with creature by size."""
+
     type: Literal["transform_object"]
     creature_by_size: dict[str, str] = Field(min_length=1)
     restore_object_on_end: bool = True
@@ -298,6 +386,8 @@ class TransformObjectEffectSchema(SpellCapabilitySchemaModel):
 
 
 class AccumulateDiceEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``accumulate_dice`` spell-resolution variant with counter and dice."""
+
     type: Literal["accumulate_dice"]
     counter: str = Field(min_length=1)
     dice: str = Field(pattern=r"^\d+d\d+$")
@@ -305,6 +395,8 @@ class AccumulateDiceEffectSchema(SpellCapabilitySchemaModel):
 
 
 class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``store_spell`` spell-resolution variant with maximum level."""
+
     type: Literal["store_spell"]
     maximum_level: NonNegativeInt | Literal["cast_level"]
     activation_trigger: Literal[
@@ -322,7 +414,21 @@ class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
     stored_resolution: SpellResolutionSchema | None = None
 
     @model_validator(mode="after")
-    def validate_stored_payload(self) -> "StoreSpellEffectSchema":
+    def validate_stored_payload(self) -> StoreSpellEffectSchema:
+        """Require exactly one referenced spell or authored resolution.
+
+        >>> stored = StoreSpellEffectSchema(type="store_spell", maximum_level=3,
+        ...     activation_trigger="object_touched", spell_name="Fireball")
+        >>> stored.spell_name
+        'Fireball'
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     StoreSpellEffectSchema(type="store_spell", maximum_level=3,
+        ...         activation_trigger="object_touched")
+        ... except ValidationError as error:
+        ...     "exactly one" in str(error)
+        True
+        """
         if (self.spell_name is None) == (self.stored_resolution is None):
             raise ValueError(
                 "Stored spell effects require exactly one spell or authored resolution."
@@ -331,6 +437,8 @@ class StoreSpellEffectSchema(SpellCapabilitySchemaModel):
 
 
 class AccumulatedDamageEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``accumulated_damage`` spell-resolution variant with base dice."""
+
     type: Literal["accumulated_damage"]
     base_dice: str = Field(pattern=r"^\d+d\d+$")
     counter: str = Field(min_length=1)
@@ -339,11 +447,15 @@ class AccumulatedDamageEffectSchema(SpellCapabilitySchemaModel):
 
 
 class GrantActionEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``grant_action`` spell-resolution variant with action."""
+
     type: Literal["grant_action"]
     action: GrantedActionSchema
 
 
 class CreatePersistentAreaEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``create_persistent_area`` spell-resolution variant."""
+
     type: Literal["create_persistent_area"]
     geometry_from_target: bool = True
     properties: list[PersistentAreaPropertySchema] = Field(default_factory=list)
@@ -362,6 +474,8 @@ class CreatePersistentAreaEffectSchema(SpellCapabilitySchemaModel):
 
 
 class SummonEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``summon`` spell-resolution variant with creature and source."""
+
     type: Literal["summon"]
     creature: str
     source: str | None = None
@@ -372,6 +486,8 @@ class SummonEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ReplaceWithCreatureEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``replace_with_creature`` spell-resolution variant with creature."""
+
     type: Literal["replace_with_creature"]
     creature: str
     source: str | None = None
@@ -380,6 +496,8 @@ class ReplaceWithCreatureEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ExtraActionEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``extra_action`` spell-resolution variant with allowed actions."""
+
     type: Literal["extra_action"]
     allowed_actions: list[str] = Field(min_length=1)
     attack_limit: PositiveInt | None = None
@@ -387,19 +505,34 @@ class ExtraActionEffectSchema(SpellCapabilitySchemaModel):
 
 
 class ExtraTurnsEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``extra_turns`` spell-resolution variant with count dice and count."""
+
     type: Literal["extra_turns"]
     count_dice: str | None = Field(default=None, pattern=r"^\d+d\d+$")
     count: PositiveInt | None = None
     consecutive: bool = True
 
     @model_validator(mode="after")
-    def validate_count(self) -> "ExtraTurnsEffectSchema":
+    def validate_count(self) -> ExtraTurnsEffectSchema:
+        """Require exactly one fixed or rolled extra-turn count.
+
+        >>> ExtraTurnsEffectSchema(type="extra_turns", count=2).count
+        2
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     ExtraTurnsEffectSchema(type="extra_turns", count=2, count_dice="1d4")
+        ... except ValidationError as error:
+        ...     "exactly one count source" in str(error)
+        True
+        """
         if (self.count_dice is None) == (self.count is None):
             raise ValueError("Extra turns require exactly one count source.")
         return self
 
 
 class PreventDefeatEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``prevent_defeat`` spell-resolution variant."""
+
     type: Literal["prevent_defeat"]
     prevent_drop_to_zero: bool = True
     prevent_instant_death: bool = True
@@ -409,12 +542,16 @@ class PreventDefeatEffectSchema(SpellCapabilitySchemaModel):
 
 
 class SuppressMagicEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``suppress_magic`` spell-resolution variant with minimum spell level."""
+
     type: Literal["suppress_magic"]
     minimum_spell_level: NonNegativeInt = 0
     exceptions: list[str] = Field(default_factory=list)
 
 
 class TransformEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``transform`` spell-resolution variant with forms and maximum rating."""
+
     type: Literal["transform"]
     forms: Literal["beast", "creature_catalog", "authored"]
     maximum_rating: Literal["target_level_or_cr", "cast_level"]
@@ -423,11 +560,15 @@ class TransformEffectSchema(SpellCapabilitySchemaModel):
 
 
 class RandomOutcomeEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``random_outcome`` spell-resolution variant with table."""
+
     type: Literal["random_outcome"]
     table: RandomTableSchema
 
 
 class OngoingModifierGroupEffectSchema(SpellCapabilitySchemaModel):
+    """Encode the ``ongoing_modifier_group`` spell-resolution variant with duration."""
+
     type: Literal["ongoing_modifier_group"]
     duration: EffectDurationSchema | None = None
     modifiers: list[OngoingModifierSchema] = Field(min_length=1)
@@ -519,20 +660,28 @@ class SpellEffectSchema(
         ]
     ]
 ):
+    """Define the authored spell-resolution fields."""
+
     pass
 
 
 class OutcomeSchema(SharedOutcomeSchema[SpellEffectSchema]):
+    """Validate the ordered effects produced by one spell-resolution branch."""
+
     end_spell: bool = False
 
 
 class AutomaticResolutionSchema(SharedAutomaticResolutionSchema[OutcomeSchema]):
+    """Define the authored spell-resolution fields."""
+
     pass
 
 
 class SavingThrowResolutionSchema(
     SharedSavingThrowResolutionSchema[OutcomeSchema, OutcomeSchema]
 ):
+    """Define the authored spell-resolution fields with ability and difficulty."""
+
     ability: Ability | None = None
     difficulty: DerivedDifficultyClassSchema = Field(
         default_factory=lambda: DerivedDifficultyClassSchema(type="spell_save_dc")
@@ -546,6 +695,8 @@ class SavingThrowResolutionSchema(
 
 
 class SpellAttackResolutionSchema(SpellCapabilitySchemaModel):
+    """Encode the ``spell_attack`` spell-resolution variant with mode and attacks."""
+
     type: Literal["spell_attack"]
     mode: Literal["melee", "ranged"]
     attacks: PositiveInt = 1
@@ -555,6 +706,8 @@ class SpellAttackResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class AbilityCheckResolutionSchema(SpellCapabilitySchemaModel):
+    """Encode the ``ability_check`` spell-resolution variant with ability and dc."""
+
     type: Literal["ability_check"]
     ability: Ability | Literal["spellcasting"]
     dc: PositiveInt | Literal["spell_save_dc", "ten_plus_spell_level"]
@@ -563,6 +716,8 @@ class AbilityCheckResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class ContestedCheckResolutionSchema(SpellCapabilitySchemaModel):
+    """Encode the ``contested_check`` spell-resolution variant with source ability."""
+
     type: Literal["contested_check"]
     source_ability: Ability | Literal["spellcasting"]
     target_abilities: list[Ability] = Field(min_length=1)
@@ -573,6 +728,8 @@ class ContestedCheckResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class HitPointPoolResolutionSchema(SpellCapabilitySchemaModel):
+    """Encode the ``hit_point_pool`` spell-resolution variant with dice and bonus."""
+
     type: Literal["hit_point_pool"]
     dice: str = Field(pattern=r"^\d+d\d+$")
     bonus: int = 0
@@ -585,6 +742,8 @@ class HitPointPoolResolutionSchema(SpellCapabilitySchemaModel):
 
 
 class RepeatResolutionSchema(SpellCapabilitySchemaModel):
+    """Encode the ``repeat`` spell-resolution variant with count and allocation."""
+
     type: Literal["repeat"]
     count: PositiveInt | Literal["spellcasting_modifier", "slot_scaled"]
     allocation: Literal[
@@ -596,23 +755,43 @@ class RepeatResolutionSchema(SpellCapabilitySchemaModel):
     resolution: SpellResolutionSchema
 
     @model_validator(mode="after")
-    def validate_propagation(self) -> "RepeatResolutionSchema":
+    def validate_propagation(self) -> RepeatResolutionSchema:
+        """Require a range when repeated resolution propagates between targets.
+
+        >>> nested = {"type": "automatic", "outcome": {}}
+        >>> RepeatResolutionSchema(type="repeat", count=2, allocation="propagating",
+        ...     propagation_range_feet=30, resolution=nested).propagation_range_feet
+        30
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     RepeatResolutionSchema(type="repeat", count=2,
+        ...         allocation="propagating", resolution=nested)
+        ... except ValidationError as error:
+        ...     "requires a propagation range" in str(error)
+        True
+        """
         if self.allocation == "propagating" and self.propagation_range_feet is None:
             raise ValueError("Propagating resolution requires a propagation range.")
         return self
 
 
 class SequenceStepSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-resolution fields with resolution and target."""
+
     resolution: SpellResolutionSchema
     target: SpellTargetSchema | None = None
 
 
 class SequenceResolutionSchema(SpellCapabilitySchemaModel):
+    """Encode the ``sequence`` spell-resolution variant with steps."""
+
     type: Literal["sequence"]
     steps: list[SequenceStepSchema] = Field(min_length=1)
 
 
 class ResolutionChoiceOptionSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-resolution fields with id and label."""
+
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
     resolution: SpellResolutionSchema
@@ -620,31 +799,57 @@ class ResolutionChoiceOptionSchema(SpellCapabilitySchemaModel):
 
 
 class ChoiceResolutionSchema(SpellCapabilitySchemaModel):
+    """Encode the ``choice`` spell-resolution variant with count and options."""
+
     type: Literal["choice"]
     count: PositiveInt = 1
     options: list[ResolutionChoiceOptionSchema] = Field(min_length=1)
 
 
 class RandomResolutionEntrySchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-resolution fields with minimum and maximum."""
+
     minimum: PositiveInt
     maximum: PositiveInt
     resolution: SpellResolutionSchema
 
     @model_validator(mode="after")
-    def validate_range(self) -> "RandomResolutionEntrySchema":
+    def validate_range(self) -> RandomResolutionEntrySchema:
+        """Reject a random-resolution range whose minimum exceeds its maximum.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     RandomResolutionEntrySchema(minimum=2, maximum=1,
+        ...         resolution={"type": "automatic", "outcome": {}})
+        ... except ValidationError as error:
+        ...     "minimum cannot exceed maximum" in str(error)
+        True
+        """
         if self.minimum > self.maximum:
             raise ValueError("Random result minimum cannot exceed maximum.")
         return self
 
 
 class RandomTableResolutionSchema(SpellCapabilitySchemaModel):
+    """Encode the ``random_table`` spell-resolution variant with die and per target."""
+
     type: Literal["random_table"]
     die: str = Field(pattern=r"^\d+d\d+$")
     per_target: bool = False
     entries: list[RandomResolutionEntrySchema] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def validate_entries(self) -> "RandomTableResolutionSchema":
+    def validate_entries(self) -> RandomTableResolutionSchema:
+        """Require contiguous entries covering every result on the table die.
+
+        >>> automatic = {"type": "automatic", "outcome": {}}
+        >>> table = RandomTableResolutionSchema(type="random_table", die="1d2", entries=[
+        ...     {"minimum": 1, "maximum": 1, "resolution": automatic},
+        ...     {"minimum": 2, "maximum": 2, "resolution": automatic},
+        ... ])
+        >>> len(table.entries)
+        2
+        """
         _validate_complete_roll_table(self.die, self.entries)
         return self
 
@@ -666,10 +871,14 @@ class SpellResolutionSchema(
         ]
     ]
 ):
+    """Define the authored spell-resolution fields."""
+
     pass
 
 
 class RepeatSaveProgressionSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-resolution fields with trigger and ability."""
+
     trigger: Literal["turn_start", "turn_end", "source_turn_start", "source_turn_end"]
     ability: Ability | None = None
     on_success: SpellResolutionSchema = Field(
@@ -684,6 +893,8 @@ class RepeatSaveProgressionSchema(SpellCapabilitySchemaModel):
 
 
 class GrantedActionSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-resolution fields with id and label."""
+
     id: str = Field(min_length=1)
     label: str = Field(min_length=1)
     economy: Literal["action", "bonus_action", "reaction", "magic_action"]
@@ -696,6 +907,8 @@ class GrantedActionSchema(SpellCapabilitySchemaModel):
 
 
 class AreaTriggerSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-resolution fields with event and resolution."""
+
     event: Literal[
         "created",
         "creature_enters",
@@ -709,6 +922,8 @@ class AreaTriggerSchema(SpellCapabilitySchemaModel):
 
 
 class AreaMovementSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-resolution fields with trigger and distance feet."""
+
     trigger: Literal["source_turn_start", "source_turn_end", "granted_action"]
     distance_feet: PositiveInt
     direction: Literal["away_from_source", "chosen", "fixed"]
@@ -716,23 +931,47 @@ class AreaMovementSchema(SpellCapabilitySchemaModel):
 
 
 class RandomTableEntrySchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-resolution fields with minimum and maximum."""
+
     minimum: PositiveInt
     maximum: PositiveInt
     resolution: SpellResolutionSchema
 
     @model_validator(mode="after")
-    def validate_range(self) -> "RandomTableEntrySchema":
+    def validate_range(self) -> RandomTableEntrySchema:
+        """Reject a random-effect range whose minimum exceeds its maximum.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     RandomTableEntrySchema(minimum=2, maximum=1,
+        ...         resolution={"type": "automatic", "outcome": {}})
+        ... except ValidationError as error:
+        ...     "minimum cannot exceed maximum" in str(error)
+        True
+        """
         if self.minimum > self.maximum:
             raise ValueError("Random result minimum cannot exceed maximum.")
         return self
 
 
 class RandomTableSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-resolution fields with die and entries."""
+
     die: str = Field(pattern=r"^\d+d\d+$")
     entries: list[RandomTableEntrySchema] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def validate_entries(self) -> "RandomTableSchema":
+    def validate_entries(self) -> RandomTableSchema:
+        """Require contiguous effect entries covering every die result.
+
+        >>> automatic = {"type": "automatic", "outcome": {}}
+        >>> table = RandomTableSchema(die="1d2", entries=[
+        ...     {"minimum": 1, "maximum": 1, "resolution": automatic},
+        ...     {"minimum": 2, "maximum": 2, "resolution": automatic},
+        ... ])
+        >>> len(table.entries)
+        2
+        """
         _validate_complete_roll_table(self.die, self.entries)
         return self
 

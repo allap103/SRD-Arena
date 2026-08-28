@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
 
@@ -6,27 +7,24 @@ import pytest
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.spells import (
     SpellCatalog,
-    build_spell as build_spell_schema,
     load_spell_catalog,
+)
+from srd_arena.content.spells import (
+    build_spell as build_spell_schema,
 )
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.rule_effects import AttackLimit
 from srd_arena.domain.effects.runtime import EffectPolarity, OngoingEffectKind
 from srd_arena.domain.encounters import EncounterOrchestrator
-from srd_arena.domain.encounters.encounter import (
-    ActionCost,
-    EncounterAction,
-    EncounterState,
-)
+from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.models import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import resolve_end_turn_effects
 from srd_arena.domain.geometry import Position
-from srd_arena.domain.spells.rules import (
-    parse_spell_action_slot,
-    parse_spell_action_value,
-    spell_action_value,
-)
-from srd_arena.infrastructure.scenarios import load_scenario
+from srd_arena.domain.spells import Spell
+from srd_arena.engine.models import EngineOutcome
+from srd_arena.engine.queries import ActionAim
+from srd_arena.engine.session import Session
+from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 _ORCHESTRATOR = EncounterOrchestrator()
 
@@ -40,13 +38,15 @@ def _build_referenced_spell(
     name: str,
     source: str | None,
     catalog: SpellCatalog,
-):
+) -> Spell:
     return build_spell_schema(catalog.find(name, source))
 
 
 @pytest.fixture(autouse=True)
-def _player_first_initiative(monkeypatch):
-    def _fixed_initiative(self):
+def _player_first_initiative(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _fixed_initiative(self: EncounterState) -> None:
         self.initiative_entries = []
         first_external_ref = next(
             creature_ref
@@ -65,41 +65,29 @@ def _player_first_initiative(monkeypatch):
     monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
 
 
-def _choose_directional_spell(session, label: str, aim_cell: tuple[int, int]):
-    scene_view = session.get_scene_view()
+def _choose_directional_spell(
+    session: Session,
+    label: str,
+    aim_cell: tuple[int, int],
+) -> EngineOutcome:
+    scene_view = session.read()
     action = next(
-        detail for detail in scene_view.action_details if detail.label == label
+        detail for detail in scene_view.action_options if detail.label == label
     )
-    return session.choose_encounter_action(
-        EncounterAction(
-            label=action.label,
-            kind=action.kind,
-            value=spell_action_value(
-                parse_spell_action_value(str(action.value))[0],
-                aim_point=(aim_cell[0] + 0.5, aim_cell[1] + 0.5),
-                slot_level=parse_spell_action_slot(str(action.value)),
-            ),
-            id=action.id,
-            creature_ref=action.creature_ref,
-            cost=ActionCost(
-                movement=action.cost.get("movement", 0),
-                action=action.cost.get("action", 0),
-                bonus_action=action.cost.get("bonus_action", 0),
-                reaction=action.cost.get("reaction", 0),
-            ),
-            source_trigger_id=action.source_trigger_id,
-        )
+    return session.configure_action(
+        action.id,
+        ActionAim(x=aim_cell[0] + 0.5, y=aim_cell[1] + 0.5),
     )
 
 
 def test_slow_cast_groups_failed_targets_under_one_typed_effect(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    session = load_scenario(
+    session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -161,14 +149,20 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
         "AttackLimit",
         "InvocationFailureChance",
     ]
-    assert state.combat_rules.effective_armor_class(
-        state,
-        "goblin_1",
-    ).value == base_armor_class - 2
-    assert state.combat_rules.movement_budget(
-        state,
-        "goblin_1",
-    ).speed.value == base_speed // 2
+    assert (
+        state.combat_rules.effective_armor_class(
+            state,
+            "goblin_1",
+        ).value
+        == base_armor_class - 2
+    )
+    assert (
+        state.combat_rules.movement_budget(
+            state,
+            "goblin_1",
+        ).speed.value
+        == base_speed // 2
+    )
     assert (
         state.combat_rules.roll_modifiers(
             state,
@@ -193,27 +187,40 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     )
     assert reaction.allowed is False
     assert reaction.failures[-1].state_ids == (slow.identity.id,)
-    spell_event = next(
-        event for event in resolved.events if event.type == "spell_cast"
-    )
-    assert spell_event.data["area"]["shape"] == "cube"
-    assert len(spell_event.data["area"]["cells"]) == 64
+    spell_event = next(event for event in resolved.events if event.type == "spell_cast")
+    area = spell_event.data["area"]
+    assert isinstance(area, Mapping)
+    cells = area["cells"]
+    assert isinstance(cells, (list, tuple))
+    assert area["shape"] == "cube"
+    assert len(cells) == 64
     assert spell_event.data["target_refs"] == [
         "goblin_1",
         "goblin_2",
         "goblin_3",
     ]
-    assert [
-        detail["success"] for detail in spell_event.data["save_details"]
-    ] == [False, True, False]
-    exported = next(
-        effect
-        for effect in state.export_state()["ongoing_effects"]
-        if effect["id"] == slow.identity.id
-    )
-    assert [
-        effect["type"] for effect in exported["rule_effects"]
-    ] == [
+    save_details = spell_event.data["save_details"]
+    assert isinstance(save_details, (list, tuple))
+    successes: list[object] = []
+    for detail in save_details:
+        assert isinstance(detail, Mapping)
+        successes.append(detail["success"])
+    assert successes == [False, True, False]
+    exported_effects = state.export_state()["ongoing_effects"]
+    assert isinstance(exported_effects, list)
+    exported: Mapping[str, object] | None = None
+    for effect in exported_effects:
+        if isinstance(effect, Mapping) and effect.get("id") == slow.identity.id:
+            exported = effect
+            break
+    assert exported is not None
+    rule_effects = exported["rule_effects"]
+    assert isinstance(rule_effects, list)
+    rule_effect_types: list[object] = []
+    for effect in rule_effects:
+        assert isinstance(effect, Mapping)
+        rule_effect_types.append(effect["type"])
+    assert rule_effect_types == [
         "speed_multiplier",
         "armor_class_adjustment",
         "roll_adjustment",
@@ -235,10 +242,13 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     )
 
     assert state.ongoing_effects[0].target_refs == ("goblin_3",)
-    assert state.combat_rules.effective_armor_class(
-        state,
-        "goblin_1",
-    ).value == base_armor_class
+    assert (
+        state.combat_rules.effective_armor_class(
+            state,
+            "goblin_1",
+        ).value
+        == base_armor_class
+    )
     assert state.combat_rules.reaction_eligibility(
         state,
         "goblin_1",
@@ -253,18 +263,23 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
         repeat_progress,
     )
     assert state.ongoing_effects == []
-    assert sum(
-        "succeeds on the repeated Wisdom save against Slow" in text
-        for _, text in repeat_progress.messages
-    ) == 2
+    assert (
+        sum(
+            "succeeds on the repeated Wisdom save against Slow" in text
+            for _, text in repeat_progress.messages
+        )
+        == 2
+    )
 
 
-def test_slow_chosen_area_never_exceeds_six_targets(monkeypatch) -> None:
-    session = load_scenario(
+def test_slow_chosen_area_never_exceeds_six_targets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -295,19 +310,19 @@ def test_slow_chosen_area_never_exceeds_six_targets(monkeypatch) -> None:
     assert state.pending_spell_cast.maximum_targets == 6
     assert len(state.pending_spell_cast.selected_target_refs) == 6
     selected = set(state.pending_spell_cast.selected_target_refs)
-    unselected = next(target_ref for target_ref in target_refs if target_ref not in selected)
+    unselected = next(
+        target_ref for target_ref in target_refs if target_ref not in selected
+    )
     remove = next(
         action
         for action in state.available_actions()
-        if action.kind == "toggle_spell_target"
-        and action.value in selected
+        if action.kind == "toggle_spell_target" and action.value in selected
     )
     _ORCHESTRATOR.submit(state, remove)
     add = next(
         action
         for action in state.available_actions()
-        if action.kind == "toggle_spell_target"
-        and action.value == unselected
+        if action.kind == "toggle_spell_target" and action.value == unselected
     )
     _ORCHESTRATOR.submit(state, add)
 
@@ -316,11 +331,11 @@ def test_slow_chosen_area_never_exceeds_six_targets(monkeypatch) -> None:
 
 
 def _assassin_showcase_state() -> EncounterState:
-    session = load_scenario(
+    session = load_scenario_directory(
         str(STAT_BLOCK_ACTION_SCENARIO_DIR),
         start_scene="stat_block_action_showcase",
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -335,7 +350,9 @@ def _assassin_showcase_state() -> EncounterState:
     return state
 
 
-def test_slow_limits_attacks_made_through_multiattack(monkeypatch) -> None:
+def test_slow_limits_attacks_made_through_multiattack(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     state = _assassin_showcase_state()
     assassin = state.active_creature_state
     state._apply_effects(
@@ -394,7 +411,7 @@ def test_slow_limits_attacks_made_through_multiattack(monkeypatch) -> None:
 
 
 def test_ending_slow_mid_multiattack_restores_pending_attacks(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     state = _assassin_showcase_state()
     assassin = state.active_creature_state
@@ -446,19 +463,18 @@ def test_ending_slow_mid_multiattack_restores_pending_attacks(
     assert assassin.attacks_remaining == 2
     assert (
         "system",
-        "Assassin Target loses concentration on Slow "
-        "(Constitution 1 vs DC 10).",
+        "Assassin Target loses concentration on Slow (Constitution 1 vs DC 10).",
     ) in resolved.messages
 
 
 def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    session = load_scenario(
+    session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -494,8 +510,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
     cure = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("cure_wounds:player")
+        if action.kind == "spell" and str(action.value).startswith("cure_wounds:player")
     )
     failed = _ORCHESTRATOR.submit(state, cure)
 
@@ -504,14 +519,14 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
     assert state.active_actions_remaining == 0
     assert not any(event.type == "spell_cast" for event in failed.events)
     invocation_check = next(
-        event
-        for event in failed.events
-        if event.type == "invocation_start_checked"
+        event for event in failed.events if event.type == "invocation_start_checked"
     )
     assert invocation_check.data["allowed"] is False
-    assert invocation_check.data["checks"][0]["code"] == (
-        "slow.somatic_spell_failure"
-    )
+    invocation_checks = invocation_check.data["checks"]
+    assert isinstance(invocation_checks, (list, tuple))
+    first_check = invocation_checks[0]
+    assert isinstance(first_check, Mapping)
+    assert first_check["code"] == ("slow.somatic_spell_failure")
     second_wind = next(
         action
         for action in state._creature_action_candidates("player")
@@ -527,13 +542,13 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
 
 
 def test_ending_slow_mid_attack_restores_unused_extra_attack(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    session = load_scenario(
+    session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
     ).create_session()
-    session.get_scene_view()
+    session.read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -586,6 +601,5 @@ def test_ending_slow_mid_attack_restores_unused_extra_attack(
     )
     assert (
         "system",
-        "Goblin Warrior loses concentration on Slow "
-        "(Constitution 1 vs DC 10).",
+        "Goblin Warrior loses concentration on Slow (Constitution 1 vs DC 10).",
     ) in resolved.messages

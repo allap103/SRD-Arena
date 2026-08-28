@@ -1,3 +1,5 @@
+"""Validate the reusable capability definition embedded in an authored spell."""
+
 from __future__ import annotations
 
 from typing import Annotated, Literal
@@ -8,7 +10,9 @@ from srd_arena.content.capabilities import (
     NonNegativeInt,
     PositiveInt,
 )
+
 from .base import SpellCapabilitySchemaModel
+from .resolution import SpellResolutionSchema
 from .scaling import CasterLevelScalingSchema, SlotScalingSchema
 from .targeting import (
     EventSpellTargetSchema,
@@ -17,10 +21,9 @@ from .targeting import (
 )
 
 
-from .resolution import SpellResolutionSchema
-
-
 class CastingTriggerSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-capability fields with event and timing."""
+
     event: Literal[
         "attack_hit",
         "creature_damaged",
@@ -34,6 +37,8 @@ class CastingTriggerSchema(SpellCapabilitySchemaModel):
 
 
 class OutcomeTriggerSchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-capability fields with event and attribution."""
+
     event: Literal[
         "targeted_by_attack",
         "attack_would_hit",
@@ -71,6 +76,8 @@ class OutcomeTriggerSchema(SpellCapabilitySchemaModel):
 
 
 class SpellCapabilitySchema(SpellCapabilitySchemaModel):
+    """Define the authored spell-capability fields with target and resolution."""
+
     target: SpellTargetSchema
     resolution: SpellResolutionSchema
     casting_requirements: list[SpellRequirementSchema] = Field(default_factory=list)

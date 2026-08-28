@@ -40,7 +40,19 @@ def resolve_spell_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Prepare, resolve, and apply one selected spell action."""
+    """Prepare, resolve, and apply one selected spell action.
+
+    >>> from types import SimpleNamespace
+    >>> actor = SimpleNamespace(spellcasting=None)
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="fighter"),
+    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ... )
+    >>> progress = EncounterProgress()
+    >>> resolve_spell_action(state, actor, "fireball", progress, "cast-1")
+    >>> (progress.messages[-1], progress.events[-1][1]["success"])
+    (('system', 'You cannot cast spells.'), False)
+    """
 
     creature_ref = state.current_decision().creature_ref
     spellcasting = actor.spellcasting
@@ -110,8 +122,7 @@ def resolve_spell_action(
         tuple(
             target
             for selected_ref in selected_target_refs
-            if (target := state._spell_target_context(actor, selected_ref))
-            is not None
+            if (target := state._spell_target_context(actor, selected_ref)) is not None
         )
         if selected_target_refs
         else state._spell_area_targets(

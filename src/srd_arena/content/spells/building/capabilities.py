@@ -1,12 +1,14 @@
+"""Assemble executable domain capabilities from validated spell records."""
+
 from collections.abc import Iterable
 from dataclasses import replace
-from typing import Literal, cast
+from typing import Literal
 
+import srd_arena.domain.capabilities as domain
 from srd_arena.content.capabilities import (
     CapabilityBuildError,
     ConditionRequirementSchema,
     CreatureTypeRequirementSchema,
-    DerivedDifficultyClassSchema,
     FixedDifficultyClassSchema,
     NotAffectedRequirementSchema,
     SizeRequirementSchema,
@@ -15,30 +17,28 @@ from srd_arena.content.capabilities.builder import (
     build_duration,
     build_requirement,
 )
-import srd_arena.domain.capabilities as domain
-
 from srd_arena.content.spells.resolution import (
     AutomaticResolutionSchema,
     OutcomeSchema,
-    RepeatSaveProgressionSchema,
     RepeatResolutionSchema,
+    RepeatSaveProgressionSchema,
     SavingThrowResolutionSchema,
     SequenceResolutionSchema,
     SpellAttackResolutionSchema,
 )
 from srd_arena.content.spells.schema import SpellSchema
-from srd_arena.content.spells.targeting import SpellTargetSchema
 from srd_arena.content.spells.targeting import (
     AreaSpellTargetSchema,
     ConditionImmunityRequirementSchema,
-    CreatureTraitRequirementSchema,
     CreatureSpellTargetSchema,
+    CreatureTraitRequirementSchema,
     RelationshipRequirementSchema,
     SpellSaveModifierSchema,
+    SpellTargetSchema,
 )
 
-from .scaling import build_scaling
 from .effects import build_capability_effect, is_buildable_effect
+from .scaling import build_scaling
 from .targeting import normalize_save_ability
 
 SpellResolutionSchema = (
@@ -51,7 +51,22 @@ SpellResolutionSchema = (
 def build_spell_definition(
     raw: SpellSchema,
 ) -> domain.CapabilityDefinition | None:
-    """Build an executable spell, rejecting unsupported structured mechanics."""
+    """Build an executable spell, rejecting unsupported structured mechanics.
+
+    >>> spell = SpellSchema.model_validate({
+    ...     "name": "Ward", "source": "TEST", "level": 1, "school": "A",
+    ...     "implementation": {"status": "complete"},
+    ...     "capability": {
+    ...         "target": {"type": "self"},
+    ...         "resolution": {
+    ...             "type": "automatic", "outcome": {"effects": []}
+    ...         },
+    ...     },
+    ... })
+    >>> definition = build_spell_definition(spell)
+    >>> definition.target.kind if definition else None
+    'self'
+    """
     if not raw.executable:
         return None
     assert raw.capability is not None
@@ -128,6 +143,29 @@ def build_definition(
     content: str = "Spell capability",
     location: str = "capability.resolution",
 ) -> domain.CapabilityDefinition:
+    """Translate a spell's capability fields into its reusable domain definition.
+
+    >>> spell = SpellSchema.model_validate({
+    ...     "name": "Ward", "source": "TEST", "level": 1, "school": "A",
+    ...     "implementation": {"status": "complete"},
+    ...     "capability": {
+    ...         "target": {"type": "self"},
+    ...         "resolution": {
+    ...             "type": "automatic", "outcome": {"effects": []}
+    ...         },
+    ...     },
+    ... })
+    >>> capability = spell.capability
+    >>> assert capability is not None
+    >>> resolution = capability.resolution.root
+    >>> assert isinstance(resolution, AutomaticResolutionSchema)
+    >>> definition = build_definition(
+    ...     capability.target, resolution, resolution.outcome
+    ... )
+    >>> (definition.target.kind, type(definition.resolution).__name__)
+    ('self', 'AutomaticResolution')
+    """
+
     effect_values = tuple(effect.root for effect in outcome.effects)
     success_values = (
         tuple(effect.root for effect in resolution.success.effects)
@@ -229,8 +267,7 @@ def _build_resolution(
             difficulty.value
         )
     else:
-        derived = cast(DerivedDifficultyClassSchema, difficulty)
-        built_difficulty = domain.DerivedDifficultyClass(derived.type)
+        built_difficulty = domain.DerivedDifficultyClass(difficulty.type)
     return domain.SavingThrowResolution(
         ability=normalize_save_ability(resolution.ability),
         difficulty=built_difficulty,

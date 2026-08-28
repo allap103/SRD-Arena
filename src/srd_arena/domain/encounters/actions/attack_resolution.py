@@ -13,6 +13,7 @@ from ...creatures import Creature
 from ...equipment import Item
 from ...geometry import Position
 from ...rolls.dice import D20RollMode, roll_dice, roll_die
+from ..models import AttackOutcome
 from .attack_runtime.damage import (
     apply_attack_damage,
     damage_roll_detail,
@@ -35,7 +36,6 @@ from .attack_runtime.sources import (
     weapon_proficiency_bonus,
 )
 from .attack_runtime.triggers import matching_damage_reroll_rule
-from ..models import AttackOutcome
 
 __all__ = [
     "apply_attack_damage",
@@ -79,7 +79,33 @@ def resolve_attack(
     dice_roller: Callable[[int, int], int] = roll_dice,
     automatic_critical_provider_ids: tuple[str, ...] = (),
 ) -> AttackOutcome:
-    """Resolve attack selection, hit determination, and rolled damage."""
+    """Resolve attack selection, hit determination, and rolled damage.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> from srd_arena.domain.encounters.models import AttackSource
+    >>> source = AttackSource(
+    ...     "Claw", "1d6", 2, "STR mod", "slashing", 5,
+    ...     "attack bonus", ("melee",),
+    ... )
+    >>> attacker = SimpleNamespace(
+    ...     resolve_roll_modifiers=lambda *args: 0,
+    ...     roll_mode=lambda *args: "normal",
+    ... )
+    >>> defender = SimpleNamespace(get_armor_class=lambda: 15)
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.attack_resolution."
+    ...     "select_attack_source",
+    ...     return_value=source,
+    ... ):
+    ...     outcome = resolve_attack(
+    ...         attacker, defender, "Wolf", "Hero",
+    ...         d20_roller=lambda sides: 12,
+    ...         dice_roller=lambda count, sides: 4,
+    ...     )
+    >>> (outcome.hit, outcome.attack_roll, outcome.damage)
+    (True, 17, 6)
+    """
     attack_source = select_attack_source(
         attacker,
         items_by_id or {},

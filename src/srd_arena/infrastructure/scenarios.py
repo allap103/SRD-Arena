@@ -50,6 +50,20 @@ class FilesystemScenarioRepository:
     image_root: Path = IMAGES_ROOT
 
     def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
+        """Describe scenarios selectable through this repository by stable ID.
+
+        >>> from tempfile import TemporaryDirectory
+        >>> with TemporaryDirectory() as temporary_directory:
+        ...     root = Path(temporary_directory)
+        ...     scenario = root / "demo"
+        ...     (scenario / "encounters").mkdir(parents=True)
+        ...     _ = (scenario / "config.json").write_text(
+        ...         '{"display_name": "Demo"}', encoding="utf-8")
+        ...     summaries = FilesystemScenarioRepository(scenario_root=root).available_scenarios()
+        >>> [(summary.id, summary.label) for summary in summaries]
+        [('demo', 'Demo')]
+        """
+
         return tuple(
             ScenarioSummary(
                 id=scenario.id,
@@ -65,6 +79,21 @@ class FilesystemScenarioRepository:
         self,
         scenario_id: str,
     ) -> LoadedScenario:
+        """Load one repository scenario selected by its advertised stable ID.
+
+        Unknown IDs fail before any system content is loaded.
+
+        >>> from tempfile import TemporaryDirectory
+        >>> with TemporaryDirectory() as temporary_directory:
+        ...     repository = FilesystemScenarioRepository(
+        ...         scenario_root=Path(temporary_directory))
+        ...     try:
+        ...         repository.load_scenario("missing")
+        ...     except KeyError as error:
+        ...         "Unknown scenario 'missing'." in str(error)
+        True
+        """
+
         scenario = next(
             (
                 candidate
@@ -75,69 +104,63 @@ class FilesystemScenarioRepository:
         )
         if scenario is None:
             raise KeyError(f"Unknown scenario '{scenario_id}'.")
-        return self._load_directory(scenario.directory)
-
-    def _load_directory(
-        self,
-        directory: Path,
-        *,
-        start_scene: str | None = None,
-    ) -> LoadedScenario:
-        config = _load_config(directory / "config.json")
-        bestiary = load_bestiary_catalog(self.system_directory)
-        classes = load_class_catalog(self.system_directory)
-        subclasses = load_subclass_catalog(self.system_directory)
-        spells = load_spell_catalog(self.system_directory)
-        optional_features = load_optional_feature_catalog(self.system_directory)
-        player_characters = load_player_character_templates(
-            directory / "player_characters"
-        )
-        loaded_encounters = [
-            load_encounter(
-                path,
-                bestiary,
-                classes,
-                player_characters,
-                optional_features,
-                subclasses,
-                spells,
-            )
-            for path in (directory / "encounters").glob("*")
-        ]
-        encounters = {
-            encounter.definition.id: encounter.definition
-            for encounter in loaded_encounters
-        }
-        creatures_by_id = {
-            creature.id: creature
-            for encounter in loaded_encounters
-            for creature in encounter.creatures
-        }
-        _link_encounters(encounters, config.encounters)
-        return LoadedScenario(
-            display_name=config.display_name,
-            encounters=encounters,
-            creatures=tuple(creatures_by_id.values()),
-            items=tuple(load_system_items(self.system_directory)),
-            encounter_order=config.encounters,
-            start_scene=start_scene or config.encounters[0],
-            geometry_config=config.geometry_config,
+        return load_scenario_directory(
+            scenario.directory,
+            system_directory=self.system_directory,
         )
 
 
-def load_scenario(
+def load_scenario_directory(
     scenario_directory: str | Path,
     *,
     start_scene: str | None = None,
     system_directory: str | Path = SYSTEM_CONTENT_ROOT,
 ) -> LoadedScenario:
-    """Load one filesystem scenario without constructing a frontend."""
+    """Assemble a scenario directly from an explicit directory.
 
-    return FilesystemScenarioRepository(
-        system_directory=Path(system_directory)
-    )._load_directory(
-        Path(scenario_directory),
-        start_scene=start_scene,
+    This lower-level filesystem entry point supports fixtures and other callers
+    that already own a scenario path. Application clients should instead use a
+    :class:`FilesystemScenarioRepository` and select scenarios by stable ID.
+    """
+
+    directory = Path(scenario_directory)
+    system_path = Path(system_directory)
+    config = _load_config(directory / "config.json")
+    bestiary = load_bestiary_catalog(system_path)
+    classes = load_class_catalog(system_path)
+    subclasses = load_subclass_catalog(system_path)
+    spells = load_spell_catalog(system_path)
+    optional_features = load_optional_feature_catalog(system_path)
+    player_characters = load_player_character_templates(directory / "player_characters")
+    loaded_encounters = [
+        load_encounter(
+            path,
+            bestiary,
+            classes,
+            player_characters,
+            optional_features,
+            subclasses,
+            spells,
+        )
+        for path in (directory / "encounters").glob("*")
+    ]
+    encounters = {
+        encounter.definition.id: encounter.definition for encounter in loaded_encounters
+    }
+    creatures_by_id = {
+        creature.id: creature
+        for encounter in loaded_encounters
+        for creature in encounter.creatures
+    }
+    _link_encounters(encounters, config.encounters)
+    return LoadedScenario(
+        display_name=config.display_name,
+        encounters=encounters,
+        creatures=tuple(creatures_by_id.values()),
+        items=tuple(load_system_items(system_path)),
+        encounter_order=config.encounters,
+        start_scene=start_scene or config.encounters[0],
+        geometry_config=config.geometry_config,
     )
 
 
@@ -145,6 +168,8 @@ def _link_encounters(
     encounters: dict[str, EncounterDefinition],
     encounter_order: tuple[str, ...],
 ) -> None:
+    """Validate encounter order and install its victory/defeat transitions."""
+
     if not encounter_order:
         raise ValueError("A scenario must contain at least one encounter.")
     missing = [
@@ -170,6 +195,8 @@ def _link_encounters(
 
 
 def _load_config(path: Path) -> _ScenarioConfig:
+    """Read optional scenario and GUI metadata using documented defaults."""
+
     if not path.exists():
         return _ScenarioConfig()
     with path.open("r", encoding="utf-8") as config_file:

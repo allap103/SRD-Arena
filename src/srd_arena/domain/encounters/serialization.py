@@ -1,8 +1,11 @@
+"""Convert encounter values into immutable event payloads."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from ..effects.conditions import AppliedCondition
+from ..effects.rule_effects import serialize_runtime_rule_effect
 from ..effects.runtime import (
     EffectDuration,
     EffectSource,
@@ -12,7 +15,6 @@ from ..effects.runtime import (
     UntilTurnStart,
     WhileParentExists,
 )
-from ..effects.rule_effects import serialize_runtime_rule_effect
 from .models import ActionCost, EncounterAction
 
 if TYPE_CHECKING:
@@ -20,6 +22,22 @@ if TYPE_CHECKING:
 
 
 def export_decision(self: EncounterState) -> dict[str, object]:
+    """Convert a pending decision and its invocation stack into immutable data.
+
+    >>> from types import SimpleNamespace
+    >>> frame = SimpleNamespace(
+    ...     id="turn-1", creature_ref="hero", kind="turn", reason="active",
+    ...     can_pass=False, parent_frame_id=None, parent_action_id=None,
+    ... )
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: frame,
+    ...     pending_movement=None,
+    ... )
+    >>> payload = export_decision(state)
+    >>> (payload["frame_id"], payload["creature_ref"], payload["kind"])
+    ('turn-1', 'hero', 'turn')
+    """
+
     decision = self.current_decision()
     payload: dict[str, object] = {
         "frame_id": decision.id,
@@ -36,6 +54,31 @@ def export_decision(self: EncounterState) -> dict[str, object]:
 
 
 def export_state(self: EncounterState) -> dict[str, object]:
+    """Snapshot mutable encounter state into client-safe primitive values.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> frame = SimpleNamespace(creature_ref="hero")
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: frame,
+    ...     encounter_id="demo",
+    ...     definition=SimpleNamespace(grid=SimpleNamespace(width=8, height=6)),
+    ...     round_number=2, turn_index=0, initiative_order=["hero"],
+    ...     initiative_entries=[], creatures={"hero": object()},
+    ...     conditions=[], ongoing_effects=[], relationships=[],
+    ...     _creature_controller=lambda ref: "external",
+    ...     export_decision=lambda: {"frame_id": "turn-1"},
+    ...     _export_pending_movement=lambda: None,
+    ... )
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.serialization._export_creature",
+    ...     return_value={"name": "Hero"},
+    ... ):
+    ...     payload = export_state(state)
+    >>> (payload["encounter_id"], payload["grid"], payload["creatures"])
+    ('demo', {'width': 8, 'height': 6}, {'hero': {'name': 'Hero'}})
+    """
+
     active_creature_ref = self.current_decision().creature_ref
     return {
         "encounter_id": self.encounter_id,
@@ -231,8 +274,7 @@ def _export_creature(
             for condition in effective.suppressed_conditions
         ],
         "condition_immunities": sorted(
-            condition.value
-            for condition in creature.condition_immunities()
+            condition.value for condition in creature.condition_immunities()
         ),
         "spell_slots_max": (
             {str(level): slots for level, slots in spellcasting.spell_slots_max.items()}
@@ -254,6 +296,20 @@ def _export_creature(
 
 
 def export_pending_movement(self: EncounterState) -> dict[str, object] | None:
+    """Serialize an in-progress movement path and its remaining budget.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.encounters.models import PendingMovement
+    >>> from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
+    >>> movement = PendingMovement(
+    ...     "move-1", "hero", "right", Position(0, 0), Position(1, 0),
+    ...     MovementBudget(5), MovementCost(1), "trigger-1",
+    ... )
+    >>> payload = export_pending_movement(SimpleNamespace(pending_movement=movement))
+    >>> (payload["to"], int(payload["remaining_movement_after"]))
+    ({'x': 1, 'y': 0}, 5)
+    """
+
     movement = self.pending_movement
     if movement is None:
         return None

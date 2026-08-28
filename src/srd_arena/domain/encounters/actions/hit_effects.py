@@ -1,13 +1,22 @@
+"""Apply damage and secondary effects after an attack has hit."""
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from ...creatures import size_rank
 from ...capabilities import CapabilityEffect, ConditionEffect, SizeRequirement
-from ...effects.results import EffectResult
+from ...creatures import size_rank
 from ...effects.application import condition_from_effect_with_origin
 from ...effects.conditions import Condition, build_applied_condition
-from ...effects.runtime import EffectSourceKind, Indefinite, UntilTurnEnd, UntilTurnStart
+from ...effects.results import EffectResult
+from ...effects.runtime import (
+    EffectDuration,
+    EffectSourceKind,
+    Indefinite,
+    UntilTurnEnd,
+    UntilTurnStart,
+)
 from ..models import EncounterProgress
 
 if TYPE_CHECKING:
@@ -28,6 +37,28 @@ def apply_attack_hit_effects(
     progress: EncounterProgress,
     origin_id: str | None = None,
 ) -> None:
+    """Apply an attack's damage and sourced conditions to its confirmed target.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import Mock
+    >>> state = SimpleNamespace(
+    ...     creatures={
+    ...         "wolf": SimpleNamespace(creature=SimpleNamespace(name="Wolf")),
+    ...         "hero": SimpleNamespace(creature=SimpleNamespace(name="Hero")),
+    ...     },
+    ...     round=SimpleNamespace(number=1),
+    ...     _apply_condition=Mock(return_value=SimpleNamespace(accepted=True)),
+    ... )
+    >>> progress = EncounterProgress()
+    >>> apply_attack_hit_effects(
+    ...     state, attacker_ref="wolf", target_ref="hero",
+    ...     effects=(ConditionEffect("prone"),), progress=progress,
+    ...     origin_id="bite-1",
+    ... )
+    >>> progress.messages
+    [('system', 'Hero is prone.')]
+    """
+
     resolved_origin_id = origin_id or f"attack:{attacker_ref}:{target_ref}"
     for effect in effects:
         handler = _HIT_EFFECT_HANDLERS.get(type(effect))
@@ -127,13 +158,11 @@ def _condition_duration(
     attacker_ref: str,
     target_ref: str,
     effect: ConditionEffect,
-):
+) -> EffectDuration:
     duration = effect.duration
     if duration is None:
         return Indefinite()
-    creature_ref = (
-        attacker_ref if duration.creature == "source" else target_ref
-    )
+    creature_ref = attacker_ref if duration.creature == "source" else target_ref
     round_number = state.round.number + duration.turn_offset
     if duration.kind == "start_of_turn":
         return UntilTurnStart(creature_ref, round_number)

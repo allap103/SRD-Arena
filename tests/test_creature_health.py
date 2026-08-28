@@ -1,11 +1,11 @@
 from hypothesis import given
 from hypothesis import strategies as st
 
-from tests.helpers import make_creature
-from srd_arena.domain.effects.modifiers import DamageReduction, RollModifier
 from srd_arena.domain.effects.conditions import Condition
+from srd_arena.domain.effects.modifiers import DamageReduction, RollModifier
 from srd_arena.domain.encounters.actions.attack_resolution import resolve_attack
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
+from tests.helpers import make_creature
 
 
 def test_take_damage_reduces_current_health() -> None:

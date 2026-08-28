@@ -1,3 +1,5 @@
+"""Advertise the staged add, remove, confirm, and cancel actions for spell targets."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -13,6 +15,15 @@ def spell_target_selection_actions(
     state: EncounterState,
     creature_ref: str,
 ) -> list[EncounterAction]:
+    """Build actions that mutate or confirm the current staged target selection.
+
+    >>> from types import SimpleNamespace
+    >>> spell_target_selection_actions(
+    ...     SimpleNamespace(pending_spell_cast=None), "mage"
+    ... )
+    []
+    """
+
     pending = state.pending_spell_cast
     if pending is None:
         return []

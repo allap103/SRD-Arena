@@ -1,19 +1,35 @@
+"""Translate authored creature features into executable domain rules."""
+
 from srd_arena.domain.creatures import ClassFeature, CombatProfile
 from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
 
 
 def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
+    """Translate supported class features into a creature combat profile.
+
+    >>> feature = ClassFeature(
+    ...     "extra_attack", "Extra Attack", "Fighter", 5,
+    ...     data={"attacks": 2})
+    >>> build_combat_profile([feature]).attacks_per_attack_action
+    2
+    """
+
     profile = CombatProfile()
     for class_feature in class_features:
         if class_feature.id == "extra_attack":
             attacks = class_feature.data.get("attacks")
             if isinstance(attacks, int):
-                profile.attacks_per_attack_action = max(profile.attacks_per_attack_action, attacks)
+                profile.attacks_per_attack_action = max(
+                    profile.attacks_per_attack_action, attacks
+                )
         elif class_feature.id == "second_wind":
             profile.bonus_action_options.add("second_wind")
             profile.feature_actions["second_wind"] = FeatureActionDefinition(
-                feature_id="second_wind", label="Second Wind", economy="bonus_action",
-                target="self", resolver="second_wind",
+                feature_id="second_wind",
+                label="Second Wind",
+                economy="bonus_action",
+                target="self",
+                resolver="second_wind",
             )
             uses = class_feature.data.get("uses")
             if isinstance(uses, int):
@@ -30,8 +46,11 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                 }
         elif class_feature.id == "action_surge":
             profile.feature_actions["action_surge"] = FeatureActionDefinition(
-                feature_id="action_surge", label="Action Surge", economy="none",
-                target="self", resolver="action_surge",
+                feature_id="action_surge",
+                label="Action Surge",
+                economy="none",
+                target="self",
+                resolver="action_surge",
             )
             uses = class_feature.data.get("uses")
             if isinstance(uses, int):
@@ -39,10 +58,18 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                     profile.feature_uses_max.get("action_surge", 0), uses
                 )
             profile.feature_recharge["action_surge"] = {
-                "short_rest": "all", "long_rest": "all"
+                "short_rest": "all",
+                "long_rest": "all",
             }
     return profile
 
 
 def build_feature_uses_remaining(combat_profile: CombatProfile) -> dict[str, int]:
+    """Initialize tracked uses from a combat profile's finite maxima.
+
+    >>> profile = CombatProfile(feature_uses_max={"second_wind": 2})
+    >>> build_feature_uses_remaining(profile)
+    {'second_wind': 2}
+    """
+
     return dict(combat_profile.feature_uses_max)

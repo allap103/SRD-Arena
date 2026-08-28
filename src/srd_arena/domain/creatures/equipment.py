@@ -1,8 +1,12 @@
+"""Track which item identifiers occupy a creature's equipment slots."""
+
 from dataclasses import dataclass, field
 
 
 @dataclass
 class Equipment:
+    """Map body and hand slots to the item identifiers currently equipped."""
+
     equipped_items: dict[str, str | None] = field(
         default_factory=lambda: {
             "head": None,
@@ -17,10 +21,15 @@ class Equipment:
     )
 
     def equip(self, item: str, slot: str) -> bool:
-        """
-        Equips an item. If the slot is not empty, unequip the currently equipped item first.
-         - item: The name of the item to equip.
-         - slot: The equipment slot to equip the item in (e.g., 'head', 'body', 'right_hand').
+        """Equip an item, replacing anything currently occupying the slot.
+
+        >>> equipment = Equipment()
+        >>> equipment.equip("longsword", "right_hand")
+        True
+        >>> equipment.show()["right_hand"]
+        'longsword'
+        >>> equipment.equip("helmet", "unknown")
+        False
         """
         if slot not in self.equipped_items:
             return False
@@ -30,6 +39,16 @@ class Equipment:
         return True
 
     def unequip(self, slot: str) -> str | None:
+        """Clear a slot and return the removed item, if any.
+
+        >>> equipment = Equipment()
+        >>> equipment.equip("shield", "left_hand")
+        True
+        >>> equipment.unequip("left_hand")
+        'shield'
+        >>> equipment.unequip("left_hand") is None
+        True
+        """
         if slot not in self.equipped_items:
             return None
         if self.equipped_items[slot] is not None:
@@ -39,7 +58,23 @@ class Equipment:
         return None
 
     def show(self) -> dict[str, str | None]:
+        """Return a copy of the equipment-slot mapping.
+
+        >>> equipment = Equipment()
+        >>> snapshot = equipment.show()
+        >>> snapshot["head"] = "helmet"
+        >>> equipment.show()["head"] is None
+        True
+        """
         return dict(self.equipped_items)
 
     def is_equipped(self, item: str) -> bool:
+        """Return whether an item occupies any equipment slot.
+
+        >>> equipment = Equipment()
+        >>> equipment.equip("shield", "left_hand")
+        True
+        >>> equipment.is_equipped("shield")
+        True
+        """
         return item in self.equipped_items.values()

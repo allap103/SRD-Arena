@@ -1,13 +1,12 @@
 """Build provider-neutral domain effects from spell-authored effects."""
 
+import srd_arena.domain.capabilities as domain
 from srd_arena.content.capabilities.builder import (
     build_duration,
     build_effect,
     is_shared_effect,
 )
 from srd_arena.content.spells import resolution as spell_effects
-import srd_arena.domain.capabilities as domain
-
 
 _SPELL_EFFECT_TYPES = (
     spell_effects.HealingEffectSchema,
@@ -26,12 +25,26 @@ _SPELL_EFFECT_TYPES = (
 
 
 def is_buildable_effect(value: object) -> bool:
-    """Return whether an authored effect has a shared domain representation."""
+    """Return whether an authored effect has a shared domain representation.
+
+    >>> healing = spell_effects.HealingEffectSchema(type="healing", dice="1d8")
+    >>> is_buildable_effect(healing)
+    True
+    >>> is_buildable_effect(object())
+    False
+    """
     return is_shared_effect(value) or isinstance(value, _SPELL_EFFECT_TYPES)
 
 
 def build_capability_effect(value: object) -> domain.CapabilityEffect:
-    """Build a shared domain effect from an authored action or spell effect."""
+    """Build a shared domain effect from an authored action or spell effect.
+
+    >>> schema = spell_effects.HealingEffectSchema(
+    ...     type="healing", dice="1d8", modifier="spellcasting_ability")
+    >>> effect = build_capability_effect(schema)
+    >>> (effect.dice, effect.modifier)
+    ('1d8', 'ability_modifier')
+    """
     if is_shared_effect(value):
         return build_effect(value)
     if isinstance(value, spell_effects.HealingEffectSchema):

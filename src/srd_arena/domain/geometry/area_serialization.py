@@ -14,6 +14,17 @@ from .area_models import (
 
 
 def serialize_area(area: AreaOfEffect | None) -> dict[str, object] | None:
+    """Convert a rasterized area and optional exact geometry into event data.
+
+    >>> from .primitives import Position
+    >>> area = AreaOfEffect("line", Position(0, 0), (Position(1, 0),))
+    >>> payload = serialize_area(area)
+    >>> (payload["shape"], payload["cells"])
+    ('line', [{'x': 1, 'y': 0}])
+    >>> serialize_area(None) is None
+    True
+    """
+
     if area is None:
         return None
     payload: dict[str, object] = {
@@ -30,6 +41,13 @@ def serialize_area(area: AreaOfEffect | None) -> dict[str, object] | None:
 
 
 def serialize_continuous_area(area: ContinuousArea) -> dict[str, object]:
+    """Convert an exact geometric template into primitive event-safe fields.
+
+    >>> area = ContinuousArea("radius", Point2D(1.5, 2.5), radius=3.0)
+    >>> serialize_continuous_area(area)["radius"]
+    3.0
+    """
+
     payload: dict[str, object] = {
         "shape": area.shape,
         "origin": {"x": area.origin.x, "y": area.origin.y},
@@ -49,6 +67,16 @@ def serialize_continuous_area(area: ContinuousArea) -> dict[str, object]:
 
 
 def deserialize_continuous_area(payload: object) -> ContinuousArea | None:
+    """Reconstruct a continuous area from its event-safe serialized fields.
+
+    >>> original = ContinuousArea(
+    ...     "line", Point2D(1.0, 2.0), Vector2D(1.0, 0.0), length=4.0)
+    >>> deserialize_continuous_area(serialize_continuous_area(original)) == original
+    True
+    >>> deserialize_continuous_area("not a mapping") is None
+    True
+    """
+
     if not isinstance(payload, Mapping):
         return None
     shape = payload.get("shape")

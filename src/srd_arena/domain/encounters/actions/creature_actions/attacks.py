@@ -1,3 +1,5 @@
+"""Discover ordinary weapon attacks available to the acting creature."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -17,6 +19,30 @@ def attack_action_candidates(
     creature_ref: CreatureRef,
     display_name: Callable[[Creature, str], str],
 ) -> list[EncounterAction]:
+    """Build target-relative action candidates for the creature's equipped attacks.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     multiattack=None, stat_block_actions={},
+    ...     equipment=SimpleNamespace(
+    ...         equipped_items={"right_hand": None, "left_hand": None}
+    ...     ),
+    ... )
+    >>> actor = SimpleNamespace(
+    ...     creature=creature, pending_multiattack=[], attacks_remaining=0
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": actor}, item_templates={},
+    ...     _living_creature_refs=lambda: [],
+    ...     _creatures_are_opponents=lambda first, second: False,
+    ... )
+    >>> actions = attack_action_candidates(
+    ...     state, "hero", lambda creature, name: name
+    ... )
+    >>> [(action.label, action.kind, action.value) for action in actions]
+    [('Grapple', 'grapple', None)]
+    """
+
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
 

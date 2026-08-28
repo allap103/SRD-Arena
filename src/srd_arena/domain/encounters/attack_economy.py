@@ -16,15 +16,28 @@ def spend_attack(
     *,
     base_attacks: int,
 ) -> None:
-    """Spend one attack and keep the remaining count query-driven."""
+    """Spend one attack and keep the remaining count query-driven.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     attack_action_base_attacks=0, attacks_remaining=0,
+    ...     actions_remaining=1, attack_action_attacks_used=0,
+    ...     pending_multiattack=[],
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": creature}, _consume_action=lambda **kwargs: None,
+    ...     combat_rules=SimpleNamespace(
+    ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=base)
+    ...     ),
+    ... )
+    >>> spend_attack(state, "hero", base_attacks=2)
+    >>> (creature.attack_action_attacks_used, creature.attacks_remaining)
+    (1, 1)
+    """
 
     creature_state = state.creatures[creature_ref]
-    starts_new_attack_action = (
-        creature_state.attack_action_base_attacks <= 0
-        or (
-            creature_state.attacks_remaining <= 0
-            and creature_state.actions_remaining > 0
-        )
+    starts_new_attack_action = creature_state.attack_action_base_attacks <= 0 or (
+        creature_state.attacks_remaining <= 0 and creature_state.actions_remaining > 0
     )
     if starts_new_attack_action:
         state._consume_action(allow_magic=False)
@@ -44,7 +57,23 @@ def begin_attack_action(
     *,
     base_attacks: int,
 ) -> None:
-    """Initialize the attack budget for one Attack action."""
+    """Initialize the attack budget for one Attack action.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     attack_action_base_attacks=0, attack_action_attacks_used=3,
+    ...     attacks_remaining=0, pending_multiattack=[],
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": creature},
+    ...     combat_rules=SimpleNamespace(
+    ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=base)
+    ...     ),
+    ... )
+    >>> begin_attack_action(state, "hero", base_attacks=2)
+    >>> (creature.attack_action_attacks_used, creature.attacks_remaining)
+    (0, 2)
+    """
 
     creature_state = state.creatures[creature_ref]
     creature_state.attack_action_base_attacks = base_attacks
@@ -56,7 +85,23 @@ def spend_current_attack(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> None:
-    """Record one attack within the Attack action already in progress."""
+    """Record one attack within the Attack action already in progress.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     attack_action_base_attacks=2, attack_action_attacks_used=0,
+    ...     attacks_remaining=2, pending_multiattack=[],
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": creature},
+    ...     combat_rules=SimpleNamespace(
+    ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=base)
+    ...     ),
+    ... )
+    >>> spend_current_attack(state, "hero")
+    >>> (creature.attack_action_attacks_used, creature.attacks_remaining)
+    (1, 1)
+    """
 
     creature_state = state.creatures[creature_ref]
     if (
@@ -69,7 +114,17 @@ def spend_current_attack(
 
 
 def clear_attack_action(creature_state: EncounterCreatureState) -> None:
-    """Clear both the visible attack count and its progress metadata."""
+    """Clear both the visible attack count and its progress metadata.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     attacks_remaining=1, attack_action_base_attacks=2,
+    ...     attack_action_attacks_used=1, pending_multiattack=["bite"],
+    ... )
+    >>> clear_attack_action(creature)
+    >>> (creature.attacks_remaining, creature.pending_multiattack)
+    (0, [])
+    """
 
     creature_state.attacks_remaining = 0
     creature_state.attack_action_base_attacks = 0
@@ -81,7 +136,23 @@ def reconcile_remaining_attacks(
     state: EncounterState,
     creature_refs: Iterable[CreatureRef],
 ) -> None:
-    """Recompute unused attacks when an Attack-action limit changes."""
+    """Recompute unused attacks when an Attack-action limit changes.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     attack_action_base_attacks=3, attack_action_attacks_used=1,
+    ...     attacks_remaining=0, pending_multiattack=[],
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": creature},
+    ...     combat_rules=SimpleNamespace(
+    ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=2)
+    ...     ),
+    ... )
+    >>> reconcile_remaining_attacks(state, ("hero",))
+    >>> creature.attacks_remaining
+    1
+    """
 
     for creature_ref in creature_refs:
         creature_state = state.creatures[creature_ref]

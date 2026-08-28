@@ -18,7 +18,24 @@ def execute_standard_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> bool:
-    """Execute wake/wait actions and report whether this handler recognized one."""
+    """Execute wake/wait actions and report whether this handler recognized one.
+
+    >>> from types import SimpleNamespace
+    >>> actor = SimpleNamespace(creature=SimpleNamespace(name="Hero"))
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": actor},
+    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ... )
+    >>> progress = EncounterProgress()
+    >>> execute_standard_action(
+    ...     state, EncounterAction("Wait", "wait"),
+    ...     DecisionFrame("turn", "hero", "turn", "active"),
+    ...     progress, "wait-1"
+    ... )
+    True
+    >>> (progress.messages[-1], progress.events[-1][1]["kind"])
+    (('system', 'Hero waits.'), 'wait')
+    """
 
     actor = state.creatures[decision.creature_ref]
     if action.kind == "wake_spell_target":
@@ -60,4 +77,3 @@ def execute_standard_action(
     else:
         return False
     return True
-

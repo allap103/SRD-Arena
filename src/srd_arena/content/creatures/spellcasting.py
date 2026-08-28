@@ -1,3 +1,5 @@
+"""Build creature-specific spellcasting grants from authored progressions."""
+
 from srd_arena.content.character_options.classes import ClassRecord, SubclassRecord
 from srd_arena.content.character_options.classes.schema import (
     ClassSchema,
@@ -19,6 +21,32 @@ def build_spellcasting(
     subclass_record: SubclassRecord | None,
     spells: SpellCatalog | None,
 ) -> Spellcasting | None:
+    """Bind spell definitions to a creature's casting statistics and resource pools.
+
+    >>> schema = CreatureSchema(
+    ...     id="mage",
+    ...     spellcasting={
+    ...         "ability": "int",
+    ...         "caster_progression": "full",
+    ...         "spell_slots": {1: 2},
+    ...     },
+    ... )
+    >>> attributes = Attributes(
+    ...     base_health=10,
+    ...     level=1,
+    ...     strength=10,
+    ...     dexterity=10,
+    ...     constitution=10,
+    ...     wisdom=10,
+    ...     intelligence=16,
+    ...     charisma=10,
+    ...     base_armor_class=10,
+    ... )
+    >>> casting = build_spellcasting(schema, attributes, None, None, None)
+    >>> (casting.save_dc, casting.spell_slots_remaining) if casting else None
+    (13, {1: 2})
+    """
+
     if schema.spellcasting is not None:
         config = schema.spellcasting
         ability_modifier = (
@@ -110,6 +138,15 @@ def _spellcasting_source_definition(
 
 
 def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
+    """Return the creature ability score used by an authored spellcasting entry.
+
+    >>> attributes = Attributes(10, 5, 8, 12, 10, 14, 16, 10, 10)
+    >>> spellcasting_ability_score(attributes, "int")
+    16
+    >>> spellcasting_ability_score(attributes, "unknown")
+    10
+    """
+
     ability_map = {
         "str": attributes.strength,
         "dex": attributes.dexterity,
@@ -123,10 +160,25 @@ def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:
 
 def spell_preparation_mode(block: SpellcastingSource) -> str:
     # The supported source formats currently describe fixed known/prepared lists.
+    """Return the fixed-list preparation mode supported by current source formats.
+
+    >>> from types import SimpleNamespace
+    >>> spell_preparation_mode(SimpleNamespace())
+    'fixed'
+    """
+
     return "fixed"
 
 
 def progression_value(progression: object, level: int) -> int | None:
+    """Read the value in effect at a level from a sparse authored progression.
+
+    >>> progression_value([2, 3, None], 2)
+    3
+    >>> progression_value([2, 3, None], 3) is None
+    True
+    """
+
     if not isinstance(progression, list):
         return None
     row_index = level - 1
@@ -140,6 +192,14 @@ def spell_slots_progression(
     block: SpellcastingSource,
     level: int,
 ) -> dict[int, int]:
+    """Derive per-level spell-slot maxima from a class progression table.
+
+    >>> from types import SimpleNamespace
+    >>> group = SimpleNamespace(spell_progression_rows=[[2, 1, 0]])
+    >>> spell_slots_progression(SimpleNamespace(table_groups=[group]), 1)
+    {1: 2, 2: 1}
+    """
+
     row_index = level - 1
     for group in block.table_groups:
         rows = group.spell_progression_rows
@@ -158,6 +218,14 @@ def spell_count_progression(
     block: SpellcastingSource,
     level: int,
 ) -> int | None:
+    """Derive the known or prepared spell count across class levels.
+
+    >>> from types import SimpleNamespace
+    >>> block = SimpleNamespace(spells_known_progression=[2, 3], table_groups=[])
+    >>> spell_count_progression(block, 2)
+    3
+    """
+
     direct = progression_value(block.spells_known_progression, level)
     if direct is not None:
         return direct

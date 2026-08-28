@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import cast
+
 from srd_arena.application.scenarios import (
     LoadedScenario,
     ScenarioRepository,
@@ -45,8 +46,7 @@ def test_game_startup_lists_frontend_neutral_scenario_summaries() -> None:
     assert scenarios == (summary,)
 
 
-def test_game_startup_creates_session_from_repository_result(
-) -> None:
+def test_game_startup_creates_session_from_repository_result() -> None:
     session = object()
     received_limits: list[int | None] = []
 
@@ -55,7 +55,7 @@ def test_game_startup_creates_session_from_repository_result(
         def create_session(
             *,
             automatic_action_limit: int | None = None,
-        ):
+        ) -> object:
             received_limits.append(automatic_action_limit)
             return session
 

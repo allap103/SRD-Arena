@@ -1,3 +1,5 @@
+"""Discover legal one-cell movement choices for the acting creature."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -13,6 +15,20 @@ def movement_action_candidates(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> list[EncounterAction]:
+    """Build movement candidates that fit the grid and remaining movement budget.
+
+    >>> from types import SimpleNamespace
+    >>> from ....geometry import MovementBudget, MovementCost
+    >>> actor = SimpleNamespace(movement_remaining=MovementBudget(6))
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": actor},
+    ...     _movement_cost_for=lambda ref: MovementCost(1),
+    ... )
+    >>> actions = movement_action_candidates(state, "hero")
+    >>> (len(actions), actions[0].kind, actions[0].cost.movement)
+    (8, 'move', 1)
+    """
+
     actor = state.creatures[creature_ref]
     movement_cost = state._movement_cost_for(creature_ref)
     if actor.movement_remaining is None:

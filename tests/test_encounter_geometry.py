@@ -1,6 +1,7 @@
 from srd_arena.domain.geometry import (
-    TOUCHED_CELL_POLICY,
     RASTERIZATION_POLICY,
+    TOUCHED_CELL_POLICY,
+    AreaOfEffect,
     Grid,
     Position,
     Vector2D,
@@ -15,7 +16,7 @@ from srd_arena.domain.geometry import (
 )
 
 
-def _coords(area) -> set[tuple[int, int]]:
+def _coords(area: AreaOfEffect) -> set[tuple[int, int]]:
     return {(cell.x, cell.y) for cell in area.cells}
 
 
@@ -49,9 +50,7 @@ def test_point_cube_area_uses_exact_grid_aligned_dimensions() -> None:
     assert area.continuous_area.direction is None
     assert area.continuous_area.length == 4.0
     assert len(area.cells) == 16
-    assert _coords(area) == {
-        (x, y) for y in range(2, 6) for x in range(2, 6)
-    }
+    assert _coords(area) == {(x, y) for y in range(2, 6) for x in range(2, 6)}
 
 
 def test_radius_area_clips_at_grid_edges() -> None:

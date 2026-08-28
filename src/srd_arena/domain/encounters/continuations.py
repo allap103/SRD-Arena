@@ -31,6 +31,19 @@ class ContinuationRunner:
         action_id: str,
         progress: EncounterProgress,
     ) -> None:
+        """Close a decision and run its typed continuation in LIFO order.
+
+        A decision cannot be completed after its frame has left the stack.
+
+        >>> from unittest.mock import Mock
+        >>> decision = DecisionFrame("reaction-1", "hero", "reaction", "shield")
+        >>> state = Mock(decision_stack=[])
+        >>> ContinuationRunner().complete_decision(
+        ...     state, decision, action_id="decline", progress=EncounterProgress())
+        Traceback (most recent call last):
+        ...
+        RuntimeError: Cannot close decision 'reaction-1': the stack is empty.
+        """
         current = decision
         current_action_id = action_id
         while True:

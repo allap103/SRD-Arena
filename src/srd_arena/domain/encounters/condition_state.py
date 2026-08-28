@@ -1,3 +1,5 @@
+"""Apply and remove sourced conditions from mutable encounter state."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -17,18 +19,31 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class ConditionRejection:
+    """Explain why one requested condition application did not take hold."""
+
     condition: Condition
     reason: str
 
 
 @dataclass(frozen=True)
 class ConditionApplicationResult:
+    """Report applied condition instances and rejected derived consequences."""
+
     requested_condition: Condition
     applied: tuple[AppliedCondition, ...] = ()
     rejections: tuple[ConditionRejection, ...] = ()
 
     @property
     def accepted(self) -> bool:
+        """Return whether the requested condition was actually applied.
+
+        >>> applied = build_applied_condition(condition=Condition.PRONE,
+        ...     source_ref="fall", source_label="Fall", target_ref="hero")
+        >>> ConditionApplicationResult(Condition.PRONE, (applied,)).accepted
+        True
+        >>> ConditionApplicationResult(Condition.PRONE).accepted
+        False
+        """
         return any(
             applied.condition is self.requested_condition for applied in self.applied
         )
@@ -38,6 +53,26 @@ def apply_condition(
     state: EncounterState,
     applied: AppliedCondition,
 ) -> ConditionApplicationResult:
+    """Store one sourced condition application unless immunity prevents it.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     condition_immunities=lambda: frozenset(),
+    ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(creature=creature)},
+    ...     conditions=[], relationships=[],
+    ... )
+    >>> applied = build_applied_condition(
+    ...     condition=Condition.PRONE, source_ref="fall",
+    ...     source_label="Fall", target_ref="hero",
+    ... )
+    >>> result = apply_condition(state, applied)
+    >>> (result.accepted, state.conditions == [applied])
+    (True, True)
+    """
+
     target = state.creatures[applied.target_ref].creature
     if applied.condition in target.condition_immunities():
         return ConditionApplicationResult(
@@ -95,6 +130,19 @@ def remove_condition(
     *,
     removed_by_ref: CreatureRef | None = None,
 ) -> None:
+    """Remove all applications of a condition kind from a creature.
+
+    >>> from types import SimpleNamespace
+    >>> applied = build_applied_condition(
+    ...     condition=Condition.PRONE, source_ref="fall",
+    ...     source_label="Fall", target_ref="hero",
+    ... )
+    >>> state = SimpleNamespace(conditions=[applied], relationships=[])
+    >>> remove_condition(state, "hero", Condition.PRONE)
+    >>> state.conditions
+    []
+    """
+
     remove_condition_from_source(
         state,
         target_ref,
@@ -111,6 +159,25 @@ def remove_condition_from_source(
     *,
     removed_by_ref: CreatureRef | None = None,
 ) -> None:
+    """Remove only applications matching both condition kind and source identity.
+
+    >>> from types import SimpleNamespace
+    >>> first = build_applied_condition(
+    ...     condition=Condition.GRAPPLED, source_ref="ogre",
+    ...     source_label="Ogre", target_ref="hero",
+    ... )
+    >>> second = build_applied_condition(
+    ...     condition=Condition.GRAPPLED, source_ref="snake",
+    ...     source_label="Snake", target_ref="hero",
+    ... )
+    >>> state = SimpleNamespace(conditions=[first, second], relationships=[])
+    >>> remove_condition_from_source(
+    ...     state, "hero", Condition.GRAPPLED, source_ref="ogre"
+    ... )
+    >>> [condition.source_ref for condition in state.conditions]
+    ['snake']
+    """
+
     removed_ids = {
         applied.id
         for applied in state.conditions
@@ -138,6 +205,19 @@ def condition_sources_for(
     creature_ref: CreatureRef,
     condition: Condition,
 ) -> tuple[CreatureRef, ...]:
+    """Return creatures responsible for matching condition applications.
+
+    >>> from types import SimpleNamespace
+    >>> applied = build_applied_condition(
+    ...     condition=Condition.GRAPPLED, source_ref="ogre",
+    ...     source_label="Ogre", target_ref="hero",
+    ... )
+    >>> condition_sources_for(
+    ...     SimpleNamespace(conditions=[applied]), "hero", Condition.GRAPPLED
+    ... )
+    ('ogre',)
+    """
+
     return tuple(
         applied.source_ref
         for applied in state.conditions
@@ -151,4 +231,18 @@ def condition_replaces(
     existing: AppliedCondition,
     applied: AppliedCondition,
 ) -> bool:
+    """Return whether a new application replaces the same runtime occurrence.
+
+    >>> first = build_applied_condition(
+    ...     condition=Condition.PRONE, source_ref="fall",
+    ...     source_label="Fall", target_ref="hero",
+    ... )
+    >>> replacement = build_applied_condition(
+    ...     condition=Condition.PRONE, source_ref="fall",
+    ...     source_label="Fall", target_ref="hero",
+    ... )
+    >>> condition_replaces(first, replacement)
+    True
+    """
+
     return existing.id == applied.id

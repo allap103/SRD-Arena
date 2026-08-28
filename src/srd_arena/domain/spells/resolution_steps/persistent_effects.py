@@ -15,9 +15,9 @@ from ...effects.results import EffectResult
 from ..rules import spell_duration_rounds
 from .context import SpellActionContext
 from .details import effect_duration_rounds, serialize_roll_modifiers
+from .polarity import persistent_spell_effect_polarity
 from .preparation import PreparedSpellResolution
 from .scaling import resource_dice_increment, resource_int_increment, scale_dice
-from .polarity import persistent_spell_effect_polarity
 from .targets import ResolvedSpellTargets
 
 
@@ -26,6 +26,39 @@ def build_persistent_spell_effects(
     prepared: PreparedSpellResolution,
     resolved: ResolvedSpellTargets,
 ) -> list[EffectResult]:
+    """Create ongoing effects that retain the casting source and future rules hooks.
+
+    No runtime state is created when the spell affected no targets.
+
+    >>> from types import SimpleNamespace
+    >>> from ...capabilities import AutomaticResolution, CapabilityDefinition
+    >>> from ...capabilities import CapabilityTarget, Outcome
+    >>> from ..definitions import Spell
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget("creature"), AutomaticResolution(Outcome())
+    ... )
+    >>> spell = Spell("ward", "Ward", "TEST", 1, definition=definition)
+    >>> context = SimpleNamespace(
+    ...     spell=spell, selected_condition=None, selected_damage_type=None,
+    ...     selected_ability=None, source_ref="mage", current_round=1,
+    ...     creature=SimpleNamespace(
+    ...         name="Mage", spellcasting=SimpleNamespace(
+    ...             save_dc=13, ability_modifier=3
+    ...         )
+    ...     ),
+    ... )
+    >>> prepared = SimpleNamespace(
+    ...     definition=definition, definition_effects=(), conditions=(),
+    ...     repeat_failure_damage=(), repeat_failure_conditions=(),
+    ...     temporary_hit_point_effects=(), roll_modifier_effects=(),
+    ...     repeat_save=None, save_ability=None, levels_above=0,
+    ...     expires_on_source_turn_end=False,
+    ... )
+    >>> resolved = SimpleNamespace(affected_targets=())
+    >>> build_persistent_spell_effects(context, prepared, resolved)
+    []
+    """
+
     spell = context.spell
     assert context.creature.spellcasting is not None
 

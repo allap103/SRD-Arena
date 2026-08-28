@@ -50,7 +50,15 @@ class NumericRuleResult:
 
     @property
     def value(self) -> int:
-        """Apply additions, then multipliers, then upper caps."""
+        """Apply additions, then multipliers, then upper caps.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(kind=EffectSourceKind.SPELL, definition_id="slow")
+        >>> additions = NumericRuleContribution("bless", source, NumericOperation.ADD, 10)
+        >>> halving = NumericRuleContribution("slow", source, NumericOperation.MULTIPLY, 1, 2)
+        >>> NumericRuleResult(30, (additions, halving)).value
+        20
+        """
 
         value = Fraction(
             self.base
@@ -102,6 +110,15 @@ class RollRuleResult:
 
     @property
     def mode(self) -> D20RollMode:
+        """Combine all sourced advantage and disadvantage contributions.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(kind=EffectSourceKind.SPELL, definition_id="faerie_fire")
+        >>> modifier = RollModifier("attack_roll", "advantage")
+        >>> result = RollRuleResult((RollRuleContribution("effect", source, modifier),))
+        >>> result.mode
+        'advantage'
+        """
         return combine_roll_modes(
             *(
                 mode
@@ -111,9 +128,17 @@ class RollRuleResult:
         )
 
     def resolve_modifier(self, roller: DieRoller) -> int:
+        """Roll and sum all numeric contributions.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(kind=EffectSourceKind.SPELL, definition_id="bless")
+        >>> modifier = RollModifier("saving_throw", "add", dice="1d4")
+        >>> result = RollRuleResult((RollRuleContribution("bless", source, modifier),))
+        >>> result.resolve_modifier(lambda _: 3)
+        3
+        """
         return sum(
-            contribution.modifier.resolve(roller)
-            for contribution in self.contributions
+            contribution.modifier.resolve(roller) for contribution in self.contributions
         )
 
 
@@ -169,18 +194,50 @@ class InvocationStartRoll:
 
     @property
     def provider_state_id(self) -> str:
+        """Return the runtime state responsible for this roll.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
+        >>> chance = InvocationFailureChanceContribution("slow:cast", source, 1, 4, "slow", "Too slow")
+        >>> InvocationStartRoll(chance, 1, True).provider_state_id
+        'slow:cast'
+        """
         return self.contribution.provider_state_id
 
     @property
     def source(self) -> EffectSource:
+        """Return the rules source responsible for this roll.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
+        >>> chance = InvocationFailureChanceContribution("slow:cast", source, 1, 4, "slow", "Too slow")
+        >>> InvocationStartRoll(chance, 1, True).source.definition_id
+        'slow'
+        """
         return self.contribution.source
 
     @property
     def code(self) -> str:
+        """Return the machine-readable failure code.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
+        >>> chance = InvocationFailureChanceContribution("slow:cast", source, 1, 4, "slow", "Too slow")
+        >>> InvocationStartRoll(chance, 1, True).code
+        'slow'
+        """
         return self.contribution.code
 
     @property
     def message(self) -> str:
+        """Return the human-readable failure explanation.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
+        >>> chance = InvocationFailureChanceContribution("slow:cast", source, 1, 4, "slow", "Too slow")
+        >>> InvocationStartRoll(chance, 1, True).message
+        'Too slow'
+        """
         return self.contribution.message
 
 
@@ -193,8 +250,23 @@ class InvocationStartResult:
 
     @property
     def allowed(self) -> bool:
+        """Return whether every invocation-start check passed.
+
+        >>> InvocationStartResult(InvocationStartContext("mage", "spell")).allowed
+        True
+        """
         return not any(roll.failed for roll in self.rolls)
 
     @property
     def failures(self) -> tuple[InvocationStartRoll, ...]:
+        """Return only failed invocation-start rolls.
+
+        >>> from srd_arena.domain.effects.runtime import EffectSourceKind
+        >>> source = EffectSource(kind=EffectSourceKind.SPELL, definition_id="slow")
+        >>> chance = InvocationFailureChanceContribution("slow", source, 1, 4, "slow", "Too slow")
+        >>> failed = InvocationStartRoll(chance, roll=1, failed=True)
+        >>> result = InvocationStartResult(InvocationStartContext("mage", "spell"), (failed,))
+        >>> (len(result.failures), result.failures[0].code)
+        (1, 'slow')
+        """
         return tuple(roll for roll in self.rolls if roll.failed)

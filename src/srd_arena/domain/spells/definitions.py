@@ -1,24 +1,41 @@
+"""Combine spell metadata with reusable capability mechanics."""
+
 from dataclasses import dataclass, field
 from typing import Literal
 
-from ..capabilities import CapabilityRequirement
-from ..capabilities import CapabilityActivation, CapabilityDefinition
+from ..capabilities import (
+    CapabilityActivation,
+    CapabilityDefinition,
+    CapabilityRequirement,
+)
 
 
 @dataclass(frozen=True)
 class SpellRef:
+    """Reference an authored spell by name and optional rules source."""
+
     name: str
     source: str | None = None
 
 
 @dataclass(frozen=True)
 class SpellDamage:
+    """Pair normalized damage dice with the damage type they inflict."""
+
     dice: str
     damage_type: str
 
 
 @dataclass(frozen=True)
 class Spell:
+    """Describe one loaded spell and the mechanics available to invoke it.
+
+    Spell-specific metadata such as level, components, and concentration stays
+    on this model. Reusable executable behavior lives in ``definition``;
+    ``resolver_id`` is the deliberate Python escape hatch for exceptional
+    mechanics that are clearer outside the declarative capability model.
+    """
+
     id: str
     name: str
     source: str | None

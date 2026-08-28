@@ -1,0 +1,35 @@
+"""Define GUI-only layout constants and transient interaction state."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+ENCOUNTER_BUTTON_HEIGHT = 32
+RESOURCE_BAR_HEIGHT = 28
+ARROW_LABELS = {
+    "up-left": "↖",
+    "up": "↑",
+    "up-right": "↗",
+    "left": "←",
+    "right": "→",
+    "down-left": "↙",
+    "down": "↓",
+    "down-right": "↘",
+}
+
+
+@dataclass(frozen=True)
+class TargetSelectionMode:
+    """Track which staged targeting interaction battlefield clicks configure."""
+
+    kind: str
+    source_trigger_id: str | None = None
+    variant_id: str | None = None
+
+
+@dataclass(frozen=True)
+class ActionMenuScope:
+    """Identify an action-economy section and its expandable menu bucket."""
+
+    economy: str
+    bucket: str

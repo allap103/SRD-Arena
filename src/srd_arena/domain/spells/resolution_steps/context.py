@@ -13,6 +13,8 @@ DieRoller = Callable[[int], int]
 
 @dataclass(frozen=True)
 class SpellTargetContext:
+    """Supply one target and its encounter-derived facts to spell resolution."""
+
     creature: Creature
     target_ref: str
     target_label: str
@@ -20,11 +22,29 @@ class SpellTargetContext:
     automatic_save_failures: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
     def automatic_failure_reasons(self, ability: str) -> tuple[str, ...]:
+        """Return condition-derived automatic save failures for an ability.
+
+        >>> from srd_arena.domain.creatures import Attributes, Equipment, Inventory
+        >>> creature = Creature("hero", "Hero", "", Inventory(),
+        ...     Attributes(10, 1, 10, 10, 10, 10, 10, 10, 10), Equipment())
+        >>> target = SpellTargetContext(creature, "hero", "Hero",
+        ...     automatic_save_failures={"dexterity": ("stunned",)})
+        >>> target.automatic_failure_reasons("dexterity")
+        ('stunned',)
+        >>> target.automatic_failure_reasons("wisdom")
+        ()
+        """
         return self.automatic_save_failures.get(ability, ())
 
 
 @dataclass(frozen=True)
 class SpellActionContext:
+    """Supply one spell invocation with caster, targets, choices, and rule queries.
+
+    The encounter assembles this immutable boundary object before resolution so
+    spell code does not reach back into mutable encounter state.
+    """
+
     creature: Creature
     spell: Spell
     target: SpellTargetContext
