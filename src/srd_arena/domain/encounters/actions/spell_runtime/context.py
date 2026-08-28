@@ -41,7 +41,23 @@ def build_spell_action_context(
     area: AreaOfEffect | None,
     cast_level: int | None,
 ) -> SpellActionContext:
-    """Supply encounter state needed by otherwise source-neutral resolution."""
+    """Supply encounter state needed by otherwise source-neutral resolution.
+
+    Only spells with executable capability definitions may cross this boundary.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.spells import Spell
+    >>> try:
+    ...     build_spell_action_context(
+    ...         SimpleNamespace(), actor=SimpleNamespace(),
+    ...         spell=Spell("unknown", "Unknown", None, 1), spell_value="unknown",
+    ...         creature_ref="mage", target=SimpleNamespace(), targets=(),
+    ...         area=None, cast_level=1,
+    ...     )
+    ... except AssertionError:
+    ...     print("Executable definition required.")
+    Executable definition required.
+    """
 
     definition = spell.definition
     assert definition is not None

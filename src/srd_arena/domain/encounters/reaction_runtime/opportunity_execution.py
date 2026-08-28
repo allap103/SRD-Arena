@@ -62,7 +62,18 @@ def resolve_automatic_opportunity_attacks(
     progress: EncounterProgress,
     excluded_reactor_refs: Collection[str] = (),
 ) -> list[tuple[str, str]]:
-    """Resolve eligible scripted reactions without opening decision frames."""
+    """Resolve eligible scripted reactions without opening decision frames.
+
+    >>> from types import SimpleNamespace
+    >>> mover = SimpleNamespace()
+    >>> state = SimpleNamespace(creatures={"hero": mover})
+    >>> resolve_automatic_opportunity_attacks(
+    ...     state, mover_ref="hero", from_position=Position(0, 0),
+    ...     to_position=Position(1, 0), action_id="move-1",
+    ...     progress=EncounterProgress(),
+    ... )
+    []
+    """
 
     mover = state.creatures[mover_ref]
     messages: list[tuple[str, str]] = []

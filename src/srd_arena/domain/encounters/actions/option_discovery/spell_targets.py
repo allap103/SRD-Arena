@@ -25,7 +25,22 @@ def spell_action_targets(
     actor: Creature,
     spell: Spell,
 ) -> list[SpellTargetContext]:
-    """Return target sets for direct, self, area, and staged spell selection."""
+    """Return target sets for direct, self, area, and staged spell selection.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.geometry import Position
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="mage"),
+    ...     _creature_position=lambda ref: Position(0, 0),
+    ...     _spell_targets_self_only=lambda spell: False,
+    ...     _spell_range_squares=lambda spell, actor: None,
+    ...     creatures={},
+    ... )
+    >>> spell_action_targets(
+    ...     state, SimpleNamespace(), Spell("bolt", "Bolt", None, 0)
+    ... )
+    []
+    """
 
     creature_ref = self.current_decision().creature_ref
     creature_position = self._creature_position(creature_ref)

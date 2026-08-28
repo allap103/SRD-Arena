@@ -37,7 +37,19 @@ def queue_opportunity_attack(
     external_only: bool,
     excluded_reactor_refs: Collection[str] = (),
 ) -> bool:
-    """Push the first eligible external Opportunity Attack decision."""
+    """Push the first eligible external Opportunity Attack decision.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(creatures={"hero": SimpleNamespace()})
+    >>> queue_opportunity_attack(
+    ...     state, mover_ref="hero", action_id="move-1", direction="right",
+    ...     from_position=Position(0, 0), to_position=Position(1, 0),
+    ...     remaining_movement_after=MovementBudget(5),
+    ...     movement_cost=MovementCost(1), companion_destinations={},
+    ...     progress=EncounterProgress(), external_only=True,
+    ... )
+    False
+    """
 
     reactors = [
         (creature_ref, creature_state)

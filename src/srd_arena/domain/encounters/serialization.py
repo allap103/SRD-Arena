@@ -54,7 +54,30 @@ def export_decision(self: EncounterState) -> dict[str, object]:
 
 
 def export_state(self: EncounterState) -> dict[str, object]:
-    """Snapshot mutable encounter state into client-safe primitive values."""
+    """Snapshot mutable encounter state into client-safe primitive values.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> frame = SimpleNamespace(creature_ref="hero")
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: frame,
+    ...     encounter_id="demo",
+    ...     definition=SimpleNamespace(grid=SimpleNamespace(width=8, height=6)),
+    ...     round_number=2, turn_index=0, initiative_order=["hero"],
+    ...     initiative_entries=[], creatures={"hero": object()},
+    ...     conditions=[], ongoing_effects=[], relationships=[],
+    ...     _creature_controller=lambda ref: "external",
+    ...     export_decision=lambda: {"frame_id": "turn-1"},
+    ...     _export_pending_movement=lambda: None,
+    ... )
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.serialization._export_creature",
+    ...     return_value={"name": "Hero"},
+    ... ):
+    ...     payload = export_state(state)
+    >>> (payload["encounter_id"], payload["grid"], payload["creatures"])
+    ('demo', {'width': 8, 'height': 6}, {'hero': {'name': 'Hero'}})
+    """
 
     active_creature_ref = self.current_decision().creature_ref
     return {
