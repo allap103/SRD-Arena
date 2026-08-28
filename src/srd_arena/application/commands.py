@@ -120,6 +120,9 @@ class CommandResult:
     def accepted(self) -> bool:
         """Return whether the command produced an application update.
 
+        >>> from unittest.mock import Mock
+        >>> CommandResult(update=Mock()).accepted
+        True
         >>> CommandResult(failure=CommandFailure("stale", "Decision changed")).accepted
         False
         """

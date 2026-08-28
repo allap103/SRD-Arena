@@ -72,14 +72,25 @@ class GamePresenter:
         """Select an action and establish any resulting targeting mode.
 
         >>> from unittest.mock import Mock
-        >>> observation = Mock(scene=Mock(action_details=()),
+        >>> spell = ActionObservation(
+        ...     "fireball", "Fireball", "spell", "mage", source_id="fireball"
+        ... )
+        >>> observation = Mock(scene=Mock(action_details=(spell,)),
         ...     encounter=Mock(decision=Mock(id="turn:1"), targeting=None))
-        >>> update, game = Mock(observation=observation), Mock()
+        >>> targeting_observation = Mock(
+        ...     encounter=Mock(
+        ...         decision=Mock(id="targets:1", kind="spell_targets"), targeting=None
+        ...     )
+        ... )
+        >>> update, game = Mock(observation=targeting_observation), Mock()
         >>> game.observe.return_value = observation
         >>> game.execute.return_value = Mock(update=update)
-        >>> selection = GamePresenter(game).select_action("dodge")
+        >>> presenter = GamePresenter(game)
+        >>> selection = presenter.select_action("fireball")
         >>> selection.update is update if selection else False
         True
+        >>> presenter.pending_target_mode
+        TargetSelectionMode(kind='toggle_spell_target', source_trigger_id='fireball', variant_id=None)
         """
 
         selected_action = next(
@@ -126,13 +137,19 @@ class GamePresenter:
         """Aim one currently advertised area action.
 
         >>> from unittest.mock import Mock
-        >>> observation = Mock(encounter=None)
-        >>> game = Mock()
+        >>> observation = Mock(encounter=Mock(decision=Mock(id="turn:1")))
+        >>> update, game = Mock(observation=observation), Mock()
         >>> game.observe.return_value = observation
-        >>> GamePresenter(game).aim_action("fireball", 2.5, 3.5) is None
+        >>> game.execute.return_value = Mock(update=update)
+        >>> presenter = GamePresenter(game)
+        >>> presenter.set_target_mode(TargetSelectionMode("spell", "fireball"))
+        >>> presenter.aim_action("fireball", 2.5, 3.5) is update
         True
-        >>> game.execute.called
-        False
+        >>> command = game.execute.call_args.args[0]
+        >>> (command.action_id, command.x, command.y, command.expected_decision_id)
+        ('fireball', 2.5, 3.5, 'turn:1')
+        >>> presenter.pending_target_mode is None
+        True
         """
 
         decision_id = self.current_decision_id

@@ -110,16 +110,26 @@ class HeadlessGameAdapter:
 
         >>> from unittest.mock import Mock
         >>> from srd_arena.application.api import SceneObservation
-        >>> action = ActionObservation("dodge", "Dodge", "action", "hero")
-        >>> observation = GameObservation(SceneObservation("fight", None, (action,)), None, None, False)
+        >>> actions = (
+        ...     ActionObservation("dodge", "Dodge", "action", "hero"),
+        ...     ActionObservation(
+        ...         "dash", "Dash", "action", "hero", availability="unavailable"
+        ...     ),
+        ...     ActionObservation(
+        ...         "help", "Help", "action", "hero", enabled=False
+        ...     ),
+        ... )
+        >>> observation = GameObservation(
+        ...     SceneObservation("fight", None, actions), None, None, False
+        ... )
         >>> startup, game = Mock(), Mock()
         >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
         >>> startup.start_scenario.return_value = game
         >>> game.observe.return_value = observation
         >>> adapter = HeadlessGameAdapter(startup)
         >>> _ = adapter.start_scenario("demo")
-        >>> adapter.available_actions()[0].id
-        'dodge'
+        >>> tuple(action.id for action in adapter.available_actions())
+        ('dodge',)
         """
 
         return tuple(
@@ -160,13 +170,14 @@ class HeadlessGameAdapter:
         >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
         >>> startup.start_scenario.return_value = game
         >>> game.observe.return_value = Mock()
-        >>> game.execute.return_value = CommandResult()
+        >>> game.execute.return_value = CommandResult(update=Mock())
         >>> adapter = HeadlessGameAdapter(startup)
         >>> _ = adapter.start_scenario("demo")
         >>> adapter.select_action("dodge", expected_decision_id="turn:1").accepted
-        False
-        >>> game.execute.call_args.args[0].action_id
-        'dodge'
+        True
+        >>> command = game.execute.call_args.args[0]
+        >>> (command.action_id, command.expected_decision_id)
+        ('dodge', 'turn:1')
         """
 
         return self.submit(
@@ -216,15 +227,19 @@ class HeadlessGameAdapter:
         """Reset the active game to its initial observation.
 
         >>> from unittest.mock import Mock
+        >>> from srd_arena.application.api import SceneObservation
+        >>> initial = GameObservation(
+        ...     SceneObservation("intro", "Ready?", ()), None, None, False
+        ... )
         >>> startup, game = Mock(), Mock()
         >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
         >>> startup.start_scenario.return_value = game
         >>> game.observe.return_value = Mock()
-        >>> game.reset.return_value = "initial snapshot"
+        >>> game.reset.return_value = initial
         >>> adapter = HeadlessGameAdapter(startup)
         >>> _ = adapter.start_scenario("demo")
-        >>> adapter.reset()
-        'initial snapshot'
+        >>> adapter.reset().scene.scene_text
+        'Ready?'
         """
 
         return self._require_game().reset()
