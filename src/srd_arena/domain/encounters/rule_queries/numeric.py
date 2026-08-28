@@ -19,7 +19,7 @@ from .models import (
     NumericRuleContribution,
     NumericRuleResult,
 )
-from .providers import legacy_modifier_provider, ongoing_rule_effects
+from .providers import ongoing_rule_effects
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -35,7 +35,6 @@ def effective_armor_class(
     >>> creature = SimpleNamespace(
     ...     attributes=SimpleNamespace(base_armor_class=10, dexterity=14),
     ...     get_modifier=lambda score: (score - 10) // 2,
-    ...     armor_class_modifier_sources={},
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
@@ -49,29 +48,7 @@ def effective_armor_class(
     base = creature.attributes.base_armor_class + creature.get_modifier(
         creature.attributes.dexterity
     )
-    contributions: list[NumericRuleContribution] = []
-    for definition_id, sources in creature.armor_class_modifier_sources.items():
-        if not sources:
-            continue
-        origin_id, value = max(
-            sources.items(),
-            key=lambda item: (item[1], item[0]),
-        )
-        provider_state_id, source = legacy_modifier_provider(
-            state,
-            creature_ref,
-            definition_id,
-            origin_id,
-        )
-        contributions.append(
-            NumericRuleContribution(
-                provider_state_id,
-                source,
-                NumericOperation.ADD,
-                value,
-            )
-        )
-    contributions.extend(
+    contributions = tuple(
         NumericRuleContribution(
             provider_state_id,
             source,
@@ -83,7 +60,7 @@ def effective_armor_class(
         )
         if isinstance(rule_effect, ArmorClassAdjustment)
     )
-    return NumericRuleResult(base, tuple(contributions))
+    return NumericRuleResult(base, contributions)
 
 
 def effective_speed(
@@ -94,7 +71,6 @@ def effective_speed(
 
     >>> from types import SimpleNamespace
     >>> creature = SimpleNamespace(
-    ...     speed_modifier_sources={},
     ...     attributes=SimpleNamespace(
     ...         movement=SimpleNamespace(effective_speed_feet=30)
     ...     ),
@@ -110,27 +86,6 @@ def effective_speed(
 
     creature = state.creatures[creature_ref].creature
     contributions: list[NumericRuleContribution] = []
-    for definition_id, sources in creature.speed_modifier_sources.items():
-        if not sources:
-            continue
-        origin_id, feet = max(
-            sources.items(),
-            key=lambda item: (item[1], item[0]),
-        )
-        provider_state_id, source = legacy_modifier_provider(
-            state,
-            creature_ref,
-            definition_id,
-            origin_id,
-        )
-        contributions.append(
-            NumericRuleContribution(
-                provider_state_id,
-                source,
-                NumericOperation.ADD,
-                feet,
-            )
-        )
     for provider_state_id, source, rule_effect in ongoing_rule_effects(
         state, creature_ref
     ):
@@ -192,7 +147,6 @@ def movement_budget(
     >>> from types import SimpleNamespace
     >>> from ...geometry import Grid
     >>> creature = SimpleNamespace(
-    ...     speed_modifier_sources={},
     ...     attributes=SimpleNamespace(
     ...         movement=SimpleNamespace(effective_speed_feet=30)
     ...     ),

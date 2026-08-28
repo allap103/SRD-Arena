@@ -88,10 +88,7 @@ def resolve_attack(
     ...     "Claw", "1d6", 2, "STR mod", "slashing", 5,
     ...     "attack bonus", ("melee",),
     ... )
-    >>> attacker = SimpleNamespace(
-    ...     resolve_roll_modifiers=lambda *args: 0,
-    ...     roll_mode=lambda *args: "normal",
-    ... )
+    >>> attacker = SimpleNamespace()
     >>> defender = SimpleNamespace(get_armor_class=lambda: 15)
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.attack_resolution."
@@ -151,12 +148,7 @@ def resolve_attack(
             critical_hit=attack_roll.critical_hit,
         )
 
-    damage_modifier_for = sourced_damage_modifier_for or (
-        lambda: attacker.resolve_roll_modifiers(
-            "damage_roll",
-            lambda sides: dice_roller(1, sides),
-        )
-    )
+    damage_modifier_for = sourced_damage_modifier_for or (lambda: 0)
     damage = roll_attack_damage(
         attack_source,
         critical_hit=attack_roll.critical_hit,

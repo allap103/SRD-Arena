@@ -79,16 +79,6 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
     for target_ref in effect.target_refs:
         _remove_maximum_hit_point_modifier(state, effect, target_ref)
         _remove_damage_resistances(state, effect, target_ref)
-        state.creatures[target_ref].creature.remove_roll_modifiers(
-            effect.identity.source.definition_id, origin_id
-        )
-        state.creatures[target_ref].creature.remove_armor_class_modifier(
-            effect.identity.source.definition_id, origin_id
-        )
-        state.creatures[target_ref].creature.remove_speed_modifier(
-            effect.identity.source.definition_id,
-            origin_id,
-        )
         state.creatures[target_ref].creature.remove_damage_reduction(
             effect.identity.source.definition_id, origin_id
         )
@@ -121,18 +111,6 @@ def _remove_effect_target(
 
     _remove_maximum_hit_point_modifier(state, effect, target_ref)
     _remove_damage_resistances(state, effect, target_ref)
-    state.creatures[target_ref].creature.remove_roll_modifiers(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-    )
-    state.creatures[target_ref].creature.remove_armor_class_modifier(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-    )
-    state.creatures[target_ref].creature.remove_speed_modifier(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-    )
     state.creatures[target_ref].creature.remove_damage_reduction(
         effect.identity.source.definition_id,
         effect.identity.source.origin_id,

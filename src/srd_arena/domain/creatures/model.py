@@ -5,9 +5,9 @@ from dataclasses import dataclass, field
 
 from ..capabilities import LimitedUsePool
 from ..effects.conditions import Condition
-from ..effects.modifiers import DamageReduction, RollKind, RollModifier
+from ..effects.modifiers import DamageReduction
 from ..effects.triggered import TriggeredEffect
-from ..rolls.dice import D20RollMode, DieRoller, combine_roll_modes, roll_die
+from ..rolls.dice import DieRoller, roll_die
 from .attributes import Attributes
 from .class_features import ClassFeature
 from .classes import ClassRef, SubclassRef
@@ -56,13 +56,6 @@ class Creature:
     temporary_hit_points: int = 0
     maximum_health_modifiers: dict[str, dict[str, int]] = field(default_factory=dict)
     damage_resistance_sources: dict[str, set[str]] = field(default_factory=dict)
-    roll_modifier_sources: dict[str, dict[str, tuple[RollModifier, ...]]] = field(
-        default_factory=dict
-    )
-    armor_class_modifier_sources: dict[str, dict[str, int]] = field(
-        default_factory=dict
-    )
-    speed_modifier_sources: dict[str, dict[str, int]] = field(default_factory=dict)
     damage_reduction_sources: dict[str, dict[str, DamageReduction]] = field(
         default_factory=dict
     )
@@ -497,109 +490,6 @@ class Creature:
         """
         return self.sense_range(sense) is not None
 
-    def set_roll_modifiers(
-        self,
-        definition_id: str,
-        origin_id: str,
-        modifiers: tuple[RollModifier, ...],
-    ) -> None:
-        """Set roll modifiers supplied by one runtime source.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_roll_modifiers("bless", "cast", (RollModifier("saving_throw", "add", value=1),))
-        >>> creature.resolve_roll_modifiers("saving_throw", lambda _: 1)
-        1
-        """
-        self.roll_modifier_sources.setdefault(definition_id, {})[origin_id] = modifiers
-
-    def remove_roll_modifiers(self, definition_id: str, origin_id: str) -> None:
-        """Remove roll modifiers supplied by one runtime source.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_roll_modifiers("bless", "cast", (RollModifier("saving_throw", "add", value=1),))
-        >>> creature.remove_roll_modifiers("bless", "cast")
-        >>> creature.resolve_roll_modifiers("saving_throw", lambda _: 1)
-        0
-        """
-        sources = self.roll_modifier_sources.get(definition_id)
-        if sources is None:
-            return
-        sources.pop(origin_id, None)
-        if not sources:
-            self.roll_modifier_sources.pop(definition_id, None)
-
-    def resolve_roll_modifiers(
-        self, roll: RollKind, roller: DieRoller, ability: str | None = None
-    ) -> int:
-        """Resolve numeric modifiers matching a roll and optional ability.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> modifier = RollModifier("saving_throw", "add", dice="1d4", ability="wisdom")
-        >>> creature.set_roll_modifiers("bless", "cast", (modifier,))
-        >>> creature.resolve_roll_modifiers("saving_throw", lambda _: 3, "wisdom")
-        3
-        """
-        return sum(
-            modifier.resolve(roller)
-            for sources in self.roll_modifier_sources.values()
-            for modifiers in tuple(sources.values())[:1]
-            for modifier in modifiers
-            if modifier.roll == roll
-            and modifier.subject == "target"
-            and (modifier.ability is None or modifier.ability == ability)
-        )
-
-    def roll_mode(self, roll: RollKind, ability: str | None = None) -> D20RollMode:
-        """Combine advantage modes matching a roll and optional ability.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_roll_modifiers("dodge", "turn", (RollModifier("saving_throw", "advantage"),))
-        >>> creature.roll_mode("saving_throw")
-        'advantage'
-        """
-        return combine_roll_modes(
-            *(
-                modifier.roll_mode
-                for sources in self.roll_modifier_sources.values()
-                for modifiers in tuple(sources.values())[:1]
-                for modifier in modifiers
-                if modifier.roll == roll
-                and modifier.subject == "target"
-                and (modifier.ability is None or modifier.ability == ability)
-                and modifier.roll_mode is not None
-            )
-        )
-
-    def incoming_attack_roll_mode(
-        self, attacker: Creature | None = None
-    ) -> D20RollMode:
-        """Combine modifiers that apply to attacks against this creature.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> modifier = RollModifier("attack_roll", "advantage", subject="attacks_against_target")
-        >>> creature.set_roll_modifiers("faerie_fire", "cast", (modifier,))
-        >>> creature.incoming_attack_roll_mode()
-        'advantage'
-        """
-        return combine_roll_modes(
-            *(
-                modifier.roll_mode
-                for sources in self.roll_modifier_sources.values()
-                for modifiers in tuple(sources.values())[:1]
-                for modifier in modifiers
-                if modifier.roll == "attack_roll"
-                and modifier.subject == "attacks_against_target"
-                and modifier.roll_mode is not None
-                and not (
-                    attacker is not None
-                    and any(
-                        attacker.has_sense(sense)
-                        for sense in modifier.ignored_by_senses
-                    )
-                )
-            )
-        )
-
     def heal(self, amount: int) -> int:
         """Restore health up to the creature's maximum and return the amount.
 
@@ -632,91 +522,12 @@ class Creature:
         return self.temporary_hit_points - previous
 
     def get_armor_class(self) -> int:
-        """Return base AC plus Dexterity and sourced modifiers.
+        """Return the creature's intrinsic AC including Dexterity.
 
         >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 14, 10, 10, 10, 10, 10), Equipment())
         >>> creature.get_armor_class()
         12
         """
-        return (
-            self.attributes.base_armor_class
-            + self.get_modifier(self.attributes.dexterity)
-            + sum(
-                max(sources.values(), default=0)
-                for sources in self.armor_class_modifier_sources.values()
-            )
+        return self.attributes.base_armor_class + self.get_modifier(
+            self.attributes.dexterity
         )
-
-    def set_armor_class_modifier(
-        self, definition_id: str, origin_id: str, value: int
-    ) -> None:
-        """Set an armor-class modifier supplied by one source.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_armor_class_modifier("shield_of_faith", "cast", 2)
-        >>> creature.get_armor_class()
-        13
-        """
-        self.armor_class_modifier_sources.setdefault(definition_id, {})[origin_id] = (
-            value
-        )
-
-    def remove_armor_class_modifier(self, definition_id: str, origin_id: str) -> None:
-        """Remove an armor-class modifier supplied by one source.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_armor_class_modifier("shield_of_faith", "cast", 2)
-        >>> creature.remove_armor_class_modifier("shield_of_faith", "cast")
-        >>> creature.get_armor_class()
-        11
-        """
-        sources = self.armor_class_modifier_sources.get(definition_id)
-        if sources is None:
-            return
-        sources.pop(origin_id, None)
-        if not sources:
-            self.armor_class_modifier_sources.pop(definition_id, None)
-
-    def effective_speed_feet(self) -> int:
-        """Return movement speed after combining sourced adjustments.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_speed_modifier("slow", "cast", -20)
-        >>> creature.effective_speed_feet()
-        10
-        """
-        return max(
-            0,
-            self.attributes.movement.effective_speed_feet
-            + sum(
-                max(sources.values())
-                for sources in self.speed_modifier_sources.values()
-                if sources
-            ),
-        )
-
-    def set_speed_modifier(self, definition_id: str, origin_id: str, feet: int) -> None:
-        """Set a speed adjustment supplied by one source.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_speed_modifier("longstrider", "cast", 10)
-        >>> creature.effective_speed_feet()
-        40
-        """
-        self.speed_modifier_sources.setdefault(definition_id, {})[origin_id] = feet
-
-    def remove_speed_modifier(self, definition_id: str, origin_id: str) -> None:
-        """Remove a speed adjustment supplied by one source.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.set_speed_modifier("longstrider", "cast", 10)
-        >>> creature.remove_speed_modifier("longstrider", "cast")
-        >>> creature.effective_speed_feet()
-        30
-        """
-        sources = self.speed_modifier_sources.get(definition_id)
-        if sources is None:
-            return
-        sources.pop(origin_id, None)
-        if not sources:
-            self.speed_modifier_sources.pop(definition_id, None)

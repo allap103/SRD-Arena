@@ -137,7 +137,7 @@ class CombatRules:
 
         >>> from unittest.mock import Mock
         >>> attributes = Mock(base_armor_class=15, dexterity=14)
-        >>> creature = Mock(attributes=attributes, armor_class_modifier_sources={})
+        >>> creature = Mock(attributes=attributes)
         >>> creature.get_modifier.return_value = 2
         >>> state = Mock(creatures={"hero": Mock(creature=creature)}, ongoing_effects=[])
         >>> CombatRules().effective_armor_class(state, "hero").value
@@ -154,7 +154,7 @@ class CombatRules:
 
         >>> from unittest.mock import Mock
         >>> movement = Mock(effective_speed_feet=30)
-        >>> creature = Mock(speed_modifier_sources={}, attributes=Mock(movement=movement))
+        >>> creature = Mock(attributes=Mock(movement=movement))
         >>> creature.condition_immunities.return_value = frozenset()
         >>> state = Mock(creatures={"hero": Mock(creature=creature)},
         ...     ongoing_effects=[], conditions=[])
@@ -173,7 +173,7 @@ class CombatRules:
         >>> from unittest.mock import Mock
         >>> from srd_arena.domain.geometry import Grid
         >>> movement = Mock(effective_speed_feet=30)
-        >>> creature = Mock(speed_modifier_sources={}, attributes=Mock(movement=movement))
+        >>> creature = Mock(attributes=Mock(movement=movement))
         >>> creature.condition_immunities.return_value = frozenset()
         >>> state = Mock(creatures={"hero": Mock(creature=creature)},
         ...     ongoing_effects=[], conditions=[], definition=Mock(grid=Grid(5, 5)))
@@ -209,8 +209,7 @@ class CombatRules:
         """Collect modifiers matching a particular roll context.
 
         >>> from unittest.mock import Mock
-        >>> creature = Mock(roll_modifier_sources={})
-        >>> state = Mock(creatures={"hero": Mock(creature=creature)}, ongoing_effects=[])
+        >>> state = Mock(ongoing_effects=[])
         >>> CombatRules().roll_modifiers(state, "hero", "saving_throw").mode
         'normal'
         """

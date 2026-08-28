@@ -1,12 +1,7 @@
 from dataclasses import dataclass
 
 from srd_arena.domain.creatures import Attributes
-from srd_arena.domain.effects.modifiers import RollKind
-from srd_arena.domain.rolls.dice import (
-    D20RollMode,
-    DieRoller,
-    resolve_roll_attempts,
-)
+from srd_arena.domain.rolls.dice import resolve_roll_attempts
 from srd_arena.domain.rolls.saving_throws import (
     reroll_saving_throw,
     resolve_saving_throw,
@@ -19,21 +14,6 @@ class StubCreature:
 
     def get_modifier(self, attribute_value: int) -> int:
         return (attribute_value - 10) // 2
-
-    def resolve_roll_modifiers(
-        self,
-        roll: RollKind,
-        roller: DieRoller,
-        ability: str | None = None,
-    ) -> int:
-        return 0
-
-    def roll_mode(
-        self,
-        roll: RollKind,
-        ability: str | None = None,
-    ) -> D20RollMode:
-        return "normal"
 
 
 def _actor() -> StubCreature:

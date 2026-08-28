@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from srd_arena.domain.creatures import Attributes, Creature, Equipment, Inventory
 from srd_arena.domain.effects.modifiers import RollModifier
 from srd_arena.domain.effects.results import EffectResult
@@ -51,6 +53,7 @@ from srd_arena.domain.geometry import (
 )
 
 ACTOR_REF = "participant:target"
+OPPONENT_REF = "participant:opponent"
 
 
 def _encounter() -> EncounterState:
@@ -203,7 +206,6 @@ def test_effect_lifecycle_queries_speed_without_losing_movement_debt() -> None:
     )
 
     assert isinstance(applied.rule_effects[0], SpeedAdjustment)
-    assert creature_state.creature.speed_modifier_sources == {}
     assert effective_speed(state, ACTOR_REF).value == 10
     assert creature_state.movement_remaining == 0
 
@@ -382,6 +384,48 @@ def test_roll_query_composes_numeric_and_mode_adjustments() -> None:
     assert {
         contribution.provider_state_id for contribution in result.contributions
     } == {slow.identity.id}
+
+
+def test_roll_query_honors_an_opponent_sense_exception() -> None:
+    state = _encounter()
+    state.creatures[OPPONENT_REF] = deepcopy(state.creatures[ACTOR_REF])
+    blur = _ongoing_effect(
+        "effect:blur",
+        RollAdjustment(
+            RollModifier(
+                roll="attack_roll",
+                mode="disadvantage",
+                subject="attacks_against_target",
+                ignored_by_senses=("blindsight", "truesight"),
+            )
+        ),
+        definition_id="blur",
+    )
+    state.ongoing_effects.append(blur)
+
+    without_truesight = roll_modifiers(
+        state,
+        ACTOR_REF,
+        "attack_roll",
+        subject="attacks_against_target",
+        opposing_ref=OPPONENT_REF,
+    )
+    state.creatures[OPPONENT_REF].creature.set_senses(
+        "true_seeing",
+        "cast",
+        (("truesight", 120),),
+    )
+    with_truesight = roll_modifiers(
+        state,
+        ACTOR_REF,
+        "attack_roll",
+        subject="attacks_against_target",
+        opposing_ref=OPPONENT_REF,
+    )
+
+    assert without_truesight.mode == "disadvantage"
+    assert with_truesight.mode == "normal"
+    assert with_truesight.contributions == ()
 
 
 def test_invocation_failure_is_component_gated_and_uses_injected_randomness() -> None:

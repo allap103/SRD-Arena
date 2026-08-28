@@ -6,7 +6,7 @@ from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from ...effects.rule_effects import RuntimeRuleEffect
-from ...effects.runtime import EffectSource, EffectSourceKind
+from ...effects.runtime import EffectSource
 from ..encounter_models.actions import CreatureRef
 
 if TYPE_CHECKING:
@@ -48,41 +48,3 @@ def ongoing_rule_effects(
         active_definitions.add(definition_id)
         for rule_effect in ongoing.rule_effects:
             yield ongoing.identity.id, ongoing.identity.source, rule_effect
-
-
-def legacy_modifier_provider(
-    state: EncounterState,
-    creature_ref: CreatureRef,
-    definition_id: str,
-    origin_id: str,
-) -> tuple[str, EffectSource]:
-    """Recover provenance for a modifier stored on the legacy Creature model.
-
-    >>> from types import SimpleNamespace
-    >>> state_id, source = legacy_modifier_provider(
-    ...     SimpleNamespace(ongoing_effects=[]), "hero", "shield", "cast-1"
-    ... )
-    >>> (state_id, source.kind.value, source.definition_id)
-    ('creature-modifier:shield:cast-1:hero', 'system', 'shield')
-    """
-
-    matching = next(
-        (
-            ongoing
-            for ongoing in state.ongoing_effects
-            if creature_ref in ongoing.target_refs
-            and ongoing.identity.source.definition_id == definition_id
-            and ongoing.identity.source.origin_id == origin_id
-        ),
-        None,
-    )
-    if matching is not None:
-        return matching.identity.id, matching.identity.source
-    provider_state_id = f"creature-modifier:{definition_id}:{origin_id}:{creature_ref}"
-    return provider_state_id, EffectSource(
-        kind=EffectSourceKind.SYSTEM,
-        definition_id=definition_id,
-        applied_by_ref=None,
-        label=definition_id,
-        origin_id=origin_id,
-    )

@@ -55,10 +55,7 @@ def resolve_attack_roll(
     ...     "Sword", "1d8", 3, "STR mod", "slashing", 5,
     ...     "STR mod + proficiency", ("melee",),
     ... )
-    >>> attacker = SimpleNamespace(
-    ...     resolve_roll_modifiers=lambda *args: 0,
-    ...     roll_mode=lambda *args: "normal",
-    ... )
+    >>> attacker = SimpleNamespace()
     >>> defender = SimpleNamespace(get_armor_class=lambda: 15)
     >>> resolved = resolve_attack_roll(
     ...     attacker, defender, source, attacker_position=Position(0, 0),
@@ -71,11 +68,7 @@ def resolve_attack_roll(
     (17, True, False)
     """
     attack_type = attack_source.attack_modes[0]
-    sourced_modifier = (
-        attacker.resolve_roll_modifiers("attack_roll", roller)
-        if sourced_modifier_override is None
-        else sourced_modifier_override
-    )
+    sourced_modifier = sourced_modifier_override or 0
     attack_modifier = attack_source.attack_bonus + sourced_modifier
     roll_mode = combine_roll_modes(
         attack_roll_mode_override
@@ -84,11 +77,7 @@ def resolve_attack_roll(
             attacker_position,
             nearby_opponent_positions,
         ),
-        (
-            attacker.roll_mode("attack_roll")
-            if sourced_roll_mode_override is None
-            else sourced_roll_mode_override
-        ),
+        sourced_roll_mode_override or "normal",
     )
     attack_result = resolve_d20(
         modifier=attack_modifier,
