@@ -112,7 +112,19 @@ def queue_opportunity_attack(
 
 
 def reaction_actions(state: EncounterState) -> list[EncounterAction]:
-    """Build the choices for the active reaction frame."""
+    """Build the choices for the active reaction frame.
+
+    Frames without a recognized Opportunity Attack request still expose a
+    stable pass choice, allowing future reaction kinds to fail closed.
+
+    >>> from types import SimpleNamespace
+    >>> frame = DecisionFrame("reaction", "guard", "reaction", "other")
+    >>> actions = reaction_actions(
+    ...     SimpleNamespace(current_decision=lambda: frame)
+    ... )
+    >>> [(action.kind, action.creature_ref) for action in actions]
+    [('pass', 'guard')]
+    """
 
     decision = state.current_decision()
     if not isinstance(decision.request, OpportunityAttackRequest):

@@ -30,7 +30,20 @@ if TYPE_CHECKING:
 
 
 def opportunity_attack_request(decision: DecisionFrame) -> OpportunityAttackRequest:
-    """Read and type-check the request owned by a reaction frame."""
+    """Read and type-check the request owned by a reaction frame.
+
+    >>> from unittest.mock import Mock
+    >>> request = Mock(spec=OpportunityAttackRequest)
+    >>> frame = DecisionFrame("reaction", "guard", "reaction", "opportunity")
+    >>> frame.request = request
+    >>> opportunity_attack_request(frame) is request
+    True
+    >>> frame.request = None
+    >>> opportunity_attack_request(frame)
+    Traceback (most recent call last):
+    ...
+    RuntimeError: Decision 'reaction' does not contain an opportunity attack request.
+    """
 
     if not isinstance(decision.request, OpportunityAttackRequest):
         raise RuntimeError(
@@ -166,7 +179,26 @@ def apply_reaction_action(
     *,
     open_damage_reroll: Callable[..., None],
 ) -> DecisionExecutionResult:
-    """Resolve an Opportunity Attack or pass without closing its frame."""
+    """Resolve an Opportunity Attack or pass without closing its frame.
+
+    Passing completes the decision without consuming the reactor's reaction.
+
+    >>> from types import SimpleNamespace
+    >>> frame = DecisionFrame("reaction", "guard", "reaction", "opportunity")
+    >>> state = SimpleNamespace(
+    ...     creatures={"guard": SimpleNamespace(reaction_available=True)},
+    ...     _next_action_id=lambda: "action-1",
+    ...     _event=lambda event_type, **values: event_type,
+    ... )
+    >>> result = apply_reaction_action(
+    ...     state,
+    ...     EncounterAction("Pass reaction", "pass", id="pass"),
+    ...     frame,
+    ...     open_damage_reroll=lambda *args, **kwargs: None,
+    ... )
+    >>> (result.completed, result.action_id, state.creatures["guard"].reaction_available)
+    (True, 'action-1', True)
+    """
 
     progress = EncounterProgress()
     resolved_action_id = state._next_action_id()

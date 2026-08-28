@@ -25,7 +25,15 @@ if TYPE_CHECKING:
 
 
 def damage_reroll_request(decision: DecisionFrame) -> DamageRerollRequest:
-    """Read and type-check the request owned by a reroll decision frame."""
+    """Read and type-check the request owned by a reroll decision frame.
+
+    >>> from unittest.mock import Mock
+    >>> request = Mock(spec=DamageRerollRequest)
+    >>> frame = DecisionFrame("reroll", "hero", "reroll_dice", "feature")
+    >>> frame.request = request
+    >>> damage_reroll_request(frame) is request
+    True
+    """
 
     if not isinstance(decision.request, DamageRerollRequest):
         raise RuntimeError(
@@ -257,7 +265,29 @@ def finalize_damage_reroll(
 def damage_reroll_event_data(
     request: DamageRerollRequest,
 ) -> dict[str, object]:
-    """Serialize the pending reroll choices into combat-event data."""
+    """Serialize the pending reroll choices into combat-event data.
+
+    >>> from srd_arena.domain.effects.triggered import TriggeredEffect
+    >>> from srd_arena.domain.rolls.dice import DicePoolResult, DieRollResult
+    >>> attack = AttackOutcome(
+    ...     [], True, 18, 6, False, {"total": 18},
+    ...     damage_roll=DicePoolResult(
+    ...         (DieRollResult(6, (1,)), DieRollResult(6, (5,))), 0, 6, 6
+    ...     ),
+    ...     damage_dice="2d6",
+    ... )
+    >>> effect = TriggeredEffect(
+    ...     "great_weapon_fighting", "feature", "gwm", "damage_roll",
+    ...     "reroll_matching_dice", parameters={"values": [1, 2]},
+    ... )
+    >>> request = DamageRerollRequest(
+    ...     "attack-1", "hero", "target", "Hero", "Target", 0,
+    ...     attack, effect,
+    ... )
+    >>> data = damage_reroll_event_data(request)
+    >>> (data["eligible_die_indices"], data["accept_action_id"])
+    ([0], 'attack-1-accept-damage')
+    """
 
     if request.attack.damage_roll is None:
         return {}
