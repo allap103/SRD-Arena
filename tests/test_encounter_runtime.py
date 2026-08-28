@@ -4799,13 +4799,19 @@ def test_failed_damage_save_ends_concentration_and_its_conditions(
     ) in progress.messages
 
 
-def test_orchestrator_runs_enemy_turns_until_player_turn() -> None:
+def test_orchestrator_runs_enemy_turns_until_player_turn(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
     session.current_scene_id = "goblin_encounter"
     session.read()
 
     assert session.encounter_state is not None
     session.encounter_state.turn_index = 1
+    monkeypatch.setattr(
+        "srd_arena.domain.encounters.encounter.roll_die",
+        lambda _sides: 1,
+    )
 
     progress = _ORCHESTRATOR.advance(session.encounter_state)
 
