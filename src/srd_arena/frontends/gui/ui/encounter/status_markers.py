@@ -43,7 +43,25 @@ class StatusMarkerHit:
 def build_status_marker_specs(
     creature: BattlefieldCreatureView,
 ) -> tuple[StatusMarkerSpec, ...]:
-    """Create only the concentration and status markers applicable to a token."""
+    """Create only the concentration and status markers applicable to a token.
+
+    >>> from ....shared.models import GridPositionView
+    >>> creature = BattlefieldCreatureView(
+    ...     "hero", "hero", "Hero", "H", None, "blue",
+    ...     GridPositionView(1, 1), 10,
+    ...     conditions=("prone",), is_concentrating=True,
+    ...     buffs=("Bless",), debuffs=("slow",),
+    ... )
+    >>> tuple(spec.corner for spec in build_status_marker_specs(creature))
+    ('top_left', 'top_right', 'bottom_left', 'bottom_right')
+    >>> build_status_marker_specs(
+    ...     BattlefieldCreatureView(
+    ...         "hero", "hero", "Hero", "H", None, "blue",
+    ...         GridPositionView(1, 1), 10,
+    ...     )
+    ... )
+    ()
+    """
 
     specs: list[StatusMarkerSpec] = []
     if creature.buffs:
@@ -90,7 +108,15 @@ def status_marker_positions(
     token_radius: float,
     cell_size: float,
 ) -> tuple[dict[MarkerCorner, tuple[float, float]], float]:
-    """Place the four marker anchors around a token and return their radius."""
+    """Place the four marker anchors around a token and return their radius.
+
+    >>> positions, radius = status_marker_positions(
+    ...     cell_x=0, cell_y=0, center_x=50, center_y=50,
+    ...     token_radius=20, cell_size=100,
+    ... )
+    >>> (positions["top_left"], positions["bottom_left"], radius)
+    ((33.6, 33.6), (10.0, 90.0), 6.5)
+    """
 
     marker_radius = max(4.0, cell_size * 0.065)
     token_offset = token_radius * 0.82
@@ -119,7 +145,13 @@ def status_marker_positions(
 
 
 def status_marker_hit_radius(marker_radius: float) -> float:
-    """Return a comfortably hoverable radius without enlarging the marker."""
+    """Return a comfortably hoverable radius without enlarging the marker.
+
+    >>> status_marker_hit_radius(4.0)
+    7.0
+    >>> status_marker_hit_radius(6.0)
+    9.0
+    """
 
     return max(7.0, marker_radius * 1.5)
 
@@ -131,7 +163,17 @@ def target_allocation_badge_position(
     token_radius: float,
     top_right_reserved: bool,
 ) -> tuple[float, float]:
-    """Keep the transient target-count badge clear of status markers."""
+    """Keep the transient target-count badge clear of status markers.
+
+    >>> target_allocation_badge_position(
+    ...     center_x=50, center_y=50, token_radius=20, top_right_reserved=False
+    ... )
+    (64.4, 35.6)
+    >>> target_allocation_badge_position(
+    ...     center_x=50, center_y=50, token_radius=20, top_right_reserved=True
+    ... )
+    (50, 50)
+    """
 
     if top_right_reserved:
         return center_x, center_y
@@ -151,7 +193,15 @@ def creature_name_label_rect(
     horizontal_padding: float = 6.0,
     vertical_padding: float = 0.0,
 ) -> tuple[float, float, float, float]:
-    """Size a floating name badge to its text and keep it in the viewport."""
+    """Size a floating name badge to its text and keep it in the viewport.
+
+    >>> creature_name_label_rect(
+    ...     center_x=10, center_y=10, token_radius=8, cell_size=40,
+    ...     text_width=80, viewport_width=100, viewport_height=80,
+    ...     text_height=12,
+    ... )
+    (3.0, 3.0, 92.0, 16.0)
+    """
 
     margin = 3.0
     available_width = max(1.0, viewport_width - margin * 2)
@@ -187,7 +237,15 @@ def status_tooltip_label_rect(
     viewport_width: float,
     viewport_height: float,
 ) -> tuple[float, float, float, float]:
-    """Place a painted status tooltip beside its marker and inside the viewport."""
+    """Place a painted status tooltip beside its marker and inside the viewport.
+
+    >>> status_tooltip_label_rect(
+    ...     anchor_x=90, anchor_y=70, text_width=40, text_height=20,
+    ...     horizontal_padding=4, vertical_padding=2,
+    ...     viewport_width=100, viewport_height=80,
+    ... )
+    (30.0, 34.0, 48, 24)
+    """
 
     margin = 3.0
     offset = 12.0
@@ -217,7 +275,19 @@ def status_marker_tooltip(
     x: float,
     y: float,
 ) -> str | None:
-    """Return the topmost marker tooltip under a battlefield pointer position."""
+    """Return the topmost marker tooltip under a battlefield pointer position.
+
+    Later entries represent markers painted on top of earlier ones.
+
+    >>> hits = [
+    ...     StatusMarkerHit(10, 10, 5, "Conditions: Prone"),
+    ...     StatusMarkerHit(10, 10, 3, "Concentrating on a spell"),
+    ... ]
+    >>> status_marker_tooltip(hits, 10, 10)
+    'Concentrating on a spell'
+    >>> status_marker_tooltip(hits, 30, 30) is None
+    True
+    """
 
     hit = next(
         (candidate for candidate in reversed(marker_hits) if candidate.contains(x, y)),

@@ -47,6 +47,32 @@ from .status_markers import (
 )
 
 
+def clamp_axis(
+    offset: float,
+    viewport_start: float,
+    viewport_size: float,
+    board_start: float,
+    board_size: float,
+) -> float:
+    """Clamp one pan offset so a large board continues to cover the viewport.
+
+    A board smaller than its viewport remains centered rather than pannable.
+
+    >>> clamp_axis(20, 0, 100, 25, 50)
+    0.0
+    >>> clamp_axis(80, 0, 100, -50, 200)
+    50
+    >>> clamp_axis(-80, 0, 100, -50, 200)
+    -50
+    """
+
+    if board_size <= viewport_size:
+        return 0.0
+    minimum = viewport_start + viewport_size - board_size - board_start
+    maximum = viewport_start - board_start
+    return min(max(offset, minimum), maximum)
+
+
 class BattlefieldWidget(QWidget):
     """Draw a battlefield snapshot and expose map interactions to its presenter."""
 
@@ -900,19 +926,6 @@ class BattlefieldWidget(QWidget):
     ) -> tuple[float, float]:
         centered_x = rect.x() + (rect.width() - board_width) / 2
         centered_y = rect.y() + (rect.height() - board_height) / 2
-
-        def clamp_axis(
-            offset: float,
-            viewport_start: float,
-            viewport_size: float,
-            board_start: float,
-            board_size: float,
-        ) -> float:
-            if board_size <= viewport_size:
-                return 0.0
-            minimum = viewport_start + viewport_size - board_size - board_start
-            maximum = viewport_start - board_start
-            return min(max(offset, minimum), maximum)
 
         return (
             clamp_axis(

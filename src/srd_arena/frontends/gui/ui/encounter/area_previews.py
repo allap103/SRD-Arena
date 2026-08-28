@@ -26,7 +26,22 @@ def display_area_overlay(
     hover_point: tuple[float, float] | None,
     battlefield: BattlefieldView | None,
 ) -> AreaPayload | None:
-    """Return the hover preview or the authored overlay ready for display."""
+    """Return the hover preview or the authored overlay ready for display.
+
+    A point-centered area is hidden until the pointer supplies its origin.
+
+    >>> area = {
+    ...     "shape": "radius", "origin": {"x": 1, "y": 1},
+    ...     "continuous_area": {
+    ...         "shape": "radius", "origin": {"x": 1, "y": 1}, "radius": 1,
+    ...     },
+    ... }
+    >>> display_area_overlay(area, None, None) is None
+    True
+    >>> view = BattlefieldView(5, 5, [], "")
+    >>> overlay_origin(display_area_overlay(area, (3.0, 2.0), view))
+    (3, 2)
+    """
 
     preview = preview_area_overlay(area, hover_point, battlefield)
     if preview is not None:
@@ -42,7 +57,15 @@ def display_area_overlay(
 
 
 def overlay_cells(area: AreaPayload | None) -> set[tuple[int, int]]:
-    """Read valid grid cells from a serialized area payload."""
+    """Read valid grid cells from a serialized area payload.
+
+    >>> overlay_cells({
+    ...     "cells": ({"x": 1, "y": 2}, {"x": "invalid", "y": 3})
+    ... })
+    {(1, 2)}
+    >>> overlay_cells(None)
+    set()
+    """
 
     if not isinstance(area, Mapping):
         return set()
@@ -59,7 +82,13 @@ def overlay_cells(area: AreaPayload | None) -> set[tuple[int, int]]:
 
 
 def overlay_origin(area: AreaPayload | None) -> tuple[int, int] | None:
-    """Read a valid grid origin from a serialized area payload."""
+    """Read a valid grid origin from a serialized area payload.
+
+    >>> overlay_origin({"origin": {"x": 2, "y": 3}})
+    (2, 3)
+    >>> overlay_origin({"origin": {"x": 2.5, "y": 3}}) is None
+    True
+    """
 
     if not isinstance(area, Mapping):
         return None
@@ -74,7 +103,17 @@ def overlay_origin(area: AreaPayload | None) -> tuple[int, int] | None:
 
 
 def continuous_area(area: AreaPayload | None) -> ContinuousArea | None:
-    """Deserialize the continuous geometry carried by an overlay payload."""
+    """Deserialize the continuous geometry carried by an overlay payload.
+
+    >>> payload = {
+    ...     "continuous_area": {
+    ...         "shape": "radius", "origin": {"x": 1, "y": 2}, "radius": 3,
+    ...     }
+    ... }
+    >>> geometry = continuous_area(payload)
+    >>> (geometry.shape, geometry.radius)
+    ('radius', 3.0)
+    """
 
     if not isinstance(area, Mapping):
         return None
@@ -82,7 +121,13 @@ def continuous_area(area: AreaPayload | None) -> ContinuousArea | None:
 
 
 def area_overlay_label(area: AreaPayload) -> str:
-    """Build the compact label displayed for an area template."""
+    """Build the compact label displayed for an area template.
+
+    >>> area_overlay_label({"shape": "cone"})
+    'Cone AoE'
+    >>> area_overlay_label({})
+    'Area AoE'
+    """
 
     shape = area.get("shape")
     label = str(shape).capitalize() if isinstance(shape, str) else "Area"
@@ -94,7 +139,18 @@ def preview_area_overlay(
     hover_point: tuple[float, float] | None,
     battlefield: BattlefieldView | None,
 ) -> AreaPayload | None:
-    """Place a serialized point or directional area at the hover position."""
+    """Place a serialized point or directional area at the hover position.
+
+    >>> authored = serialize_area(
+    ...     build_radius_area(Position(1, 1), 1, Grid(5, 5))
+    ... )
+    >>> view = BattlefieldView(5, 5, [], "")
+    >>> preview = preview_area_overlay(authored, (3.0, 2.0), view)
+    >>> overlay_origin(preview)
+    (3, 2)
+    >>> preview_area_overlay(authored, None, view) is None
+    True
+    """
 
     if area is None or hover_point is None or battlefield is None:
         return None

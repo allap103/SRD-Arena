@@ -424,7 +424,17 @@ class GameSidebar(QFrame):
 
 
 def inventory_text(actor: CreatureObservation | None) -> str:
-    """Format the inventory page for the current decision creature."""
+    """Format the inventory page for the current decision creature.
+
+    >>> from types import SimpleNamespace
+    >>> actor = SimpleNamespace(
+    ...     inventory=(SimpleNamespace(name="Longsword"), SimpleNamespace(name="Torch"))
+    ... )
+    >>> inventory_text(actor)
+    'Longsword\\nTorch'
+    >>> inventory_text(None)
+    'Inventory is empty.'
+    """
 
     if actor is None or not actor.inventory:
         return "Inventory is empty."
@@ -432,7 +442,32 @@ def inventory_text(actor: CreatureObservation | None) -> str:
 
 
 def attributes_text(actor: CreatureObservation | None) -> str:
-    """Format the attributes page for the current decision creature."""
+    """Format the attributes page for the current decision creature.
+
+    >>> from types import SimpleNamespace
+    >>> scores = SimpleNamespace(
+    ...     level=3, strength=16, dexterity=12, constitution=14,
+    ...     wisdom=10, intelligence=8, charisma=13, proficiency_bonus=2,
+    ... )
+    >>> actor = SimpleNamespace(
+    ...     name="Aric", health=17, max_health=24, armor_class=16,
+    ...     attributes=scores,
+    ... )
+    >>> print(attributes_text(actor))
+    Name: Aric
+    HP: 17/24
+    AC: 16
+    Level: 3
+    STR: 16
+    DEX: 12
+    CON: 14
+    WIS: 10
+    INT: 8
+    CHA: 13
+    PB: +2
+    >>> attributes_text(None)
+    'No active creature.'
+    """
 
     if actor is None:
         return "No active creature."
@@ -455,7 +490,15 @@ def attributes_text(actor: CreatureObservation | None) -> str:
 
 
 def encounter_json_payload(observation: GameObservation) -> dict[str, object]:
-    """Build the optional debug representation for one game observation."""
+    """Build the optional debug representation for one game observation.
+
+    >>> from types import SimpleNamespace
+    >>> observation = SimpleNamespace(
+    ...     encounter=None, scene=SimpleNamespace(scene_id="scenario-selection")
+    ... )
+    >>> encounter_json_payload(observation)
+    {'encounter_active': False, 'scene_id': 'scenario-selection'}
+    """
 
     if observation.encounter is None:
         return {
@@ -469,7 +512,15 @@ def encounter_json_payload(observation: GameObservation) -> dict[str, object]:
 
 
 def default_encounter_json_export_name(payload: dict[str, object]) -> str:
-    """Return a timestamped export filename for an encounter payload."""
+    """Return a timestamped export filename for an encounter payload.
+
+    >>> from unittest.mock import patch
+    >>> payload = {"encounter": {"encounter_id": "conditions-showcase"}}
+    >>> with patch("srd_arena.frontends.gui.ui.sidebar.datetime") as clock:
+    ...     clock.now.return_value.strftime.return_value = "20260828T120000Z"
+    ...     default_encounter_json_export_name(payload)
+    'encounter-conditions-showcase-20260828T120000Z.json'
+    """
 
     encounter = payload.get("encounter")
     scene_id = encounter.get("encounter_id") if isinstance(encounter, dict) else None
