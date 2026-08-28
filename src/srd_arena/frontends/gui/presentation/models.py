@@ -1,4 +1,4 @@
-"""Define read-only presentation projections shared by every frontend adapter."""
+"""Define read-only presentation projections consumed by the GUI adapter."""
 
 from __future__ import annotations
 
@@ -102,7 +102,7 @@ class BattlefieldCreatureView:
 
 @dataclass
 class BattlefieldView:
-    """Contain the complete frontend-neutral snapshot of the combat grid."""
+    """Contain the complete GUI snapshot of the combat grid."""
 
     width: int
     height: int

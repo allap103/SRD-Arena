@@ -4,6 +4,7 @@ import pytest
 
 from srd_arena.application.observations import observe_session
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.frontends.gui.presentation.models import BattlefieldView
 from srd_arena.frontends.gui.ui.encounter.area_previews import (
     area_overlay_label,
     overlay_cells,
@@ -14,7 +15,6 @@ from srd_arena.frontends.gui.ui.encounter.targeting import (
     mode_for_action,
     pending_area_overlay,
 )
-from srd_arena.frontends.shared.models import BattlefieldView
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"

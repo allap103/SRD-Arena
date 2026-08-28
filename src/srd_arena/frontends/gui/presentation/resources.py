@@ -1,4 +1,4 @@
-"""Build display-ready turn resources and initiative information."""
+"""Build GUI-ready turn resources and initiative information."""
 
 from __future__ import annotations
 

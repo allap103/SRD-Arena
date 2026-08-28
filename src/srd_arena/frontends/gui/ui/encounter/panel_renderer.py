@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 
 from srd_arena.application.api import ActionObservation, GameObservation
 
-from ....shared.models import EncounterView, ResourceSummaryView
+from ...presentation.models import EncounterView, ResourceSummaryView
 from .action_menus import group_actions
 from .config import (
     ENCOUNTER_BUTTON_HEIGHT,
@@ -68,7 +68,7 @@ class EncounterPanelCallbacks:
 
 
 class EncounterPanelRenderer:
-    """Populate encounter controls from frontend-neutral read models."""
+    """Populate encounter controls from GUI presentation models."""
 
     def __init__(
         self,

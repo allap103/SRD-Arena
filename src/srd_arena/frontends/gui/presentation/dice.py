@@ -1,4 +1,4 @@
-"""Convert combat roll events into frontend-neutral die presentations."""
+"""Convert combat roll events into GUI die presentations."""
 
 from __future__ import annotations
 

@@ -210,7 +210,7 @@ prevent engine access from returning.
   domain definitions.
 - Driving adapters import application contracts exclusively through
   `srd_arena.application.api`, not its implementation modules.
-- Shared presentation imports application contracts, not engine or encounter
+- GUI presentation imports application contracts, not engine or encounter
   implementation packages.
 - The GUI adapter imports application contracts and may reuse pure domain
   geometry for pointer-driven area rendering. It imports neither engine nor mutable

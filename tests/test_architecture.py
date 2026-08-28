@@ -55,7 +55,7 @@ RULES = (
         ),
     ),
     DependencyRule(
-        package="srd_arena.frontends.shared",
+        package="srd_arena.frontends.gui.presentation",
         forbidden=(
             "srd_arena.content",
             "srd_arena.domain",
@@ -261,6 +261,13 @@ def test_gui_presenter_stays_independent_of_pyside6() -> None:
         for _line, imported_module in _imports(path, module)
         if imported_module == "PySide6" or imported_module.startswith("PySide6.")
     ]
+
+
+def test_gui_presentation_has_one_owner() -> None:
+    """Keep GUI projections with the adapter that consumes them."""
+
+    assert not list((PACKAGE_ROOT / "frontends" / "shared").glob("*.py"))
+    assert (PACKAGE_ROOT / "frontends" / "gui" / "presentation").is_dir()
 
 
 def test_gui_window_delegates_application_commands_to_presenter() -> None:

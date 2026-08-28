@@ -21,6 +21,7 @@ from srd_arena.engine.queries import (
     SpellOptionDetails,
 )
 from srd_arena.frontends.gui.app import GameWindow
+from srd_arena.frontends.gui.presentation.session import build_session_presentation
 from srd_arena.frontends.gui.presenter import GamePresenter
 from srd_arena.frontends.gui.ui.encounter.action_menus import action_bucket
 from srd_arena.frontends.gui.ui.encounter.config import (
@@ -37,7 +38,6 @@ from srd_arena.frontends.gui.ui.encounter.targeting import (
     mode_label,
     selection_modes,
 )
-from srd_arena.frontends.shared.session import build_session_presentation
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import (
     FIXTURE_ENCOUNTER_DIR,

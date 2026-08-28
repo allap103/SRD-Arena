@@ -1,4 +1,4 @@
-"""Project an observed encounter into a battlefield presentation."""
+"""Project an observed encounter into the GUI battlefield presentation."""
 
 from __future__ import annotations
 

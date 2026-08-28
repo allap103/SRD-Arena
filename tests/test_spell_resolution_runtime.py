@@ -38,11 +38,14 @@ from srd_arena.domain.spells.rules import (
     parse_spell_action_slot,
 )
 from srd_arena.frontends.gui.app import GameWindow
+from srd_arena.frontends.gui.presentation.models import (
+    SessionPresentation,
+    SpellSlotTrackView,
+)
+from srd_arena.frontends.gui.presentation.session import build_session_presentation
 from srd_arena.frontends.gui.ui.encounter.action_menus import action_bucket
 from srd_arena.frontends.gui.ui.encounter.area_previews import preview_area_overlay
 from srd_arena.frontends.gui.ui.sidebar import GameSidebar
-from srd_arena.frontends.shared.models import SessionPresentation, SpellSlotTrackView
-from srd_arena.frontends.shared.session import build_session_presentation
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import (
     ORCHESTRATOR as _ORCHESTRATOR,

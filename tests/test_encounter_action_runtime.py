@@ -61,8 +61,8 @@ from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.engine.queries import (
     DirectTargetOptionDetails,
 )
+from srd_arena.frontends.gui.presentation.session import build_session_presentation
 from srd_arena.frontends.gui.ui.encounter import BattlefieldWidget
-from srd_arena.frontends.shared.session import build_session_presentation
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import (
     CONDITIONS_SHOWCASE_SCENARIO_DIR,

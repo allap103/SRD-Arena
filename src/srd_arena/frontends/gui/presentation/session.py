@@ -1,4 +1,4 @@
-"""Compose frontend-neutral presentation state from an application observation."""
+"""Compose GUI presentation state from an application observation."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def build_session_presentation(
 ) -> SessionPresentation:
     """Convert one application observation into a complete frontend snapshot.
 
-    Story scenes remain frontend-neutral when no encounter is active.
+    Story scenes remain simple GUI projections when no encounter is active.
 
     >>> from types import SimpleNamespace
     >>> system = SimpleNamespace(kind="system_exit")

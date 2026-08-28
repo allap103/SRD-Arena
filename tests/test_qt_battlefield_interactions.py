@@ -1,4 +1,11 @@
 from srd_arena.application.observations import ActionObservation
+from srd_arena.frontends.gui.presentation.models import (
+    BattlefieldCreatureView,
+    BattlefieldView,
+    EncounterView,
+    GridPositionView,
+    ResourceSummaryView,
+)
 from srd_arena.frontends.gui.ui.encounter.config import TargetSelectionMode
 from srd_arena.frontends.gui.ui.encounter.movement import (
     build_movement_plan,
@@ -8,13 +15,6 @@ from srd_arena.frontends.gui.ui.encounter.movement import (
 from srd_arena.frontends.gui.ui.encounter.targeting import (
     action_for_target_click,
     cancel_targeting_action,
-)
-from srd_arena.frontends.shared.models import (
-    BattlefieldCreatureView,
-    BattlefieldView,
-    EncounterView,
-    GridPositionView,
-    ResourceSummaryView,
 )
 
 

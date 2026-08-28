@@ -1,4 +1,4 @@
-"""Extract display-ready condition names from observed creature state."""
+"""Extract GUI-ready condition names from observed creature state."""
 
 from srd_arena.application.api import CreatureObservation
 

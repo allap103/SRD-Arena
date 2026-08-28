@@ -29,11 +29,13 @@ area-preview rasterization. It must not import the engine or mutable encounter
 implementation packages. This exception keeps one definition of grid geometry
 without moving widget behavior into the application layer.
 
-## Shared presentation
+## GUI presentation
 
-`frontends.shared` turns application observations and events into display-ready
-models used by the GUI. It contains no PySide6 widgets and imports neither engine
-nor domain encounter implementation.
+`frontends.gui.presentation` turns application observations and events into
+display-ready models owned by the GUI adapter. It contains no PySide6 widgets
+and imports neither engine nor domain encounter implementation. Keeping these
+projections beside their sole consumer avoids suggesting that the headless
+adapter shares a GUI-shaped read model.
 
 | Module | Responsibility |
 | --- | --- |

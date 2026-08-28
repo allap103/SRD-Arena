@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 
 from srd_arena.application.api import ActionObservation
 
-from ...shared.models import InitiativeTrackEntryView
+from ..presentation.models import InitiativeTrackEntryView
 from .encounter import BattlefieldWidget, clear_layout
 from .encounter.initiative import InitiativeRail
 

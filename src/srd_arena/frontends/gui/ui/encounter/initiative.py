@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ....shared.models import InitiativeTrackEntryView
+from ...presentation.models import InitiativeTrackEntryView
 from .layout import clear_layout
 
 

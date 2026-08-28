@@ -7,6 +7,14 @@ from srd_arena.application.observations import (
     OngoingEffectObservation,
     PositionObservation,
 )
+from srd_arena.frontends.gui.presentation.battlefield import (
+    build_battlefield_view,
+)
+from srd_arena.frontends.gui.presentation.conditions import effective_condition_names
+from srd_arena.frontends.gui.presentation.models import (
+    BattlefieldCreatureView,
+    GridPositionView,
+)
 from srd_arena.frontends.gui.ui.encounter.status_markers import (
     StatusMarkerHit,
     build_status_marker_specs,
@@ -16,14 +24,6 @@ from srd_arena.frontends.gui.ui.encounter.status_markers import (
     status_marker_tooltip,
     status_tooltip_label_rect,
     target_allocation_badge_position,
-)
-from srd_arena.frontends.shared.battlefield import (
-    build_battlefield_view,
-)
-from srd_arena.frontends.shared.conditions import effective_condition_names
-from srd_arena.frontends.shared.models import (
-    BattlefieldCreatureView,
-    GridPositionView,
 )
 
 

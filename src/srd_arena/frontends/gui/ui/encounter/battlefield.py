@@ -22,8 +22,8 @@ from PySide6.QtWidgets import QSizePolicy, QWidget
 
 from srd_arena.domain.geometry import continuous_area_outline
 
-from ....shared.models import BattlefieldCreatureView, BattlefieldView
 from ...floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
+from ...presentation.models import BattlefieldCreatureView, BattlefieldView
 from .area_previews import (
     area_overlay_label,
     continuous_area,

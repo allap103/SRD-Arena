@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ....shared.dice import RollView
+from ...presentation.dice import RollView
 from .layout import clear_layout
 
 

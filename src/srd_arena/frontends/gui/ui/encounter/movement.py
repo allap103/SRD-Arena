@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 
-from ....shared.models import BattlefieldView, EncounterView
+from ...presentation.models import BattlefieldView, EncounterView
 
 GridCell = tuple[int, int]
 MovementPath = tuple[str, ...]

@@ -16,7 +16,7 @@ from srd_arena.domain.geometry import (
     serialize_area,
 )
 
-from ....shared.models import BattlefieldView
+from ...presentation.models import BattlefieldView
 
 AreaPayload = Mapping[str, object]
 
