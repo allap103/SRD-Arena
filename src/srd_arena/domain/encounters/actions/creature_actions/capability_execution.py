@@ -6,7 +6,10 @@ from typing import TYPE_CHECKING
 
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
+from ..execution import resolve_grapple_action
+from ..features import resolve_feature_action
 from ..grappling import resolve_escape_action
+from ..items import resolve_utilize_action
 from ..stat_block import resolve_attack_action, resolve_multiattack_action
 
 if TYPE_CHECKING:
@@ -24,15 +27,21 @@ def execute_capability_action(
     """Execute a recognized non-spell capability and report whether it matched.
 
     >>> from types import SimpleNamespace
-    >>> from unittest.mock import Mock
-    >>> state = SimpleNamespace(_resolve_feature_action=Mock())
+    >>> from unittest.mock import Mock, patch
+    >>> state = SimpleNamespace()
     >>> progress = EncounterProgress()
-    >>> execute_capability_action(
-    ...     state, SimpleNamespace(), EncounterAction("Surge", "feature", "surge"),
-    ...     progress, "feature-1"
-    ... )
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions."
+    ...     "capability_execution.resolve_feature_action"
+    ... ) as resolve:
+    ...     matched = execute_capability_action(
+    ...         state, SimpleNamespace(),
+    ...         EncounterAction("Surge", "feature", "surge"),
+    ...         progress, "feature-1"
+    ...     )
+    >>> matched
     True
-    >>> state._resolve_feature_action.call_args.args[1]
+    >>> resolve.call_args.args[2]
     'surge'
     >>> execute_capability_action(
     ...     state, SimpleNamespace(), EncounterAction("Wait", "wait"),
@@ -70,14 +79,16 @@ def execute_capability_action(
     elif action.kind == "feature":
         if not isinstance(action.value, str):
             raise ValueError("Feature action requires a feature id.")
-        state._resolve_feature_action(
+        resolve_feature_action(
+            state,
             actor,
             action.value,
             progress,
             action_id,
         )
     elif action.kind == "grapple":
-        state._resolve_grapple_action(
+        resolve_grapple_action(
+            state,
             actor,
             action,
             progress,
@@ -94,7 +105,8 @@ def execute_capability_action(
     elif action.kind == "utilize":
         if not isinstance(action.value, str):
             raise ValueError("Utilize action requires an item id.")
-        state._resolve_utilize_action(
+        resolve_utilize_action(
+            state,
             actor,
             action.value,
             progress,

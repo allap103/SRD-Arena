@@ -9,6 +9,8 @@ from ...rolls.saving_throws import (
     SavingThrowCreature,
     resolve_saving_throw,
 )
+from ..participants import creatures_are_opponents
+from ..state_combat import automatic_save_failure_provider_ids_for
 from .removal import _remove_effect_target
 from .rolls import roll_die
 
@@ -78,8 +80,8 @@ def resolve_spell_lifecycle_event(
                     sourced_mode_override=roll_rules.mode,
                     roller=roll_die,
                     automatic_failure_reasons=(
-                        state._automatic_save_failure_provider_ids_for(
-                            affected_ref, ability
+                        automatic_save_failure_provider_ids_for(
+                            state, affected_ref, ability
                         )
                     ),
                 )
@@ -107,7 +109,7 @@ def resolve_spell_lifecycle_event(
             if (
                 scope == "source_team"
                 and source_ref is not None
-                and state._creatures_are_opponents(source_ref, actor_ref)
+                and creatures_are_opponents(state, source_ref, actor_ref)
             ):
                 continue
             _remove_effect_target(state, effect, affected_ref)

@@ -8,10 +8,16 @@ from srd_arena.domain.encounters.actions.eligibility_rules.models import (
     ActionEligibility,
     EligibilityFailure,
 )
+from srd_arena.domain.encounters.creature_control import creature_action_candidates
 from srd_arena.domain.encounters.encounter_models.actions import (
     ActionCost,
     EncounterAction,
 )
+from srd_arena.domain.encounters.participants import (
+    creature_controller,
+    creature_team_id,
+)
+from srd_arena.domain.encounters.state_runtime import creature_label
 from srd_arena.engine.action_queries import option_details
 from srd_arena.engine.queries import (
     CONTINUE_CHOICE_TEXT,
@@ -69,9 +75,9 @@ def read_session(session: Session) -> SessionRead:
     decision = state.current_decision()
     if (
         decision.kind == "turn"
-        and state._creature_controller(decision.creature_ref) == "external"
+        and creature_controller(state, decision.creature_ref) == "external"
     ):
-        candidates = state._creature_action_candidates(decision.creature_ref)
+        candidates = creature_action_candidates(state, decision.creature_ref)
         action_options = [
             _action_option(action, state.action_eligibility(action))
             for action in candidates
@@ -113,7 +119,7 @@ def _session_read(
         team_ids=tuple(team.id for team in session.current_encounter.teams),
         creature_labels=(
             {
-                creature_ref: state._creature_label(creature_ref)
+                creature_ref: creature_label(state, creature_ref)
                 for creature_ref in state.creatures
             }
             if state is not None
@@ -121,7 +127,7 @@ def _session_read(
         ),
         creature_team_ids=(
             {
-                creature_ref: state._creature_team_id(creature_ref)
+                creature_ref: creature_team_id(state, creature_ref)
                 for creature_ref in state.creatures
             }
             if state is not None

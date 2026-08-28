@@ -12,6 +12,8 @@ from .encounter_models.actions import (
     EncounterAction,
 )
 from .encounter_models.decisions import DecisionFrame
+from .participants import creature_controller
+from .state_runtime import creature_label
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -22,18 +24,21 @@ def current_turn_label(state: EncounterState) -> str:
 
     >>> from types import SimpleNamespace
     >>> decision = DecisionFrame("reaction-1", "goblin", "reaction", "opportunity")
-    >>> state = SimpleNamespace(
-    ...     current_decision=lambda: decision,
-    ...     _creature_label=lambda ref: "Goblin",
-    ... )
-    >>> current_turn_label(state)
+    >>> state = SimpleNamespace(current_decision=lambda: decision)
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.state_queries.creature_label",
+    ...     return_value="Goblin",
+    ... ):
+    ...     label = current_turn_label(state)
+    >>> label
     'Goblin (Reaction)'
     """
 
     decision = state.current_decision()
     if decision.kind == "reaction":
-        return f"{state._creature_label(decision.creature_ref)} (Reaction)"
-    return state._creature_label(decision.creature_ref)
+        return f"{creature_label(state, decision.creature_ref)} (Reaction)"
+    return creature_label(state, decision.creature_ref)
 
 
 def current_decision(state: EncounterState) -> DecisionFrame:
@@ -139,16 +144,19 @@ def requires_automatic_advance(state: EncounterState) -> bool:
 
     >>> from types import SimpleNamespace
     >>> decision = DecisionFrame("turn-goblin", "goblin", "turn", "normal_turn")
-    >>> state = SimpleNamespace(
-    ...     current_decision=lambda: decision,
-    ...     _creature_controller=lambda ref: "scripted",
-    ... )
-    >>> requires_automatic_advance(state)
+    >>> state = SimpleNamespace(current_decision=lambda: decision)
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.state_queries.creature_controller",
+    ...     return_value="scripted",
+    ... ):
+    ...     automatic = requires_automatic_advance(state)
+    >>> automatic
     True
     """
 
     return (
-        state._creature_controller(state.current_decision().creature_ref) == "scripted"
+        creature_controller(state, state.current_decision().creature_ref) == "scripted"
     )
 
 

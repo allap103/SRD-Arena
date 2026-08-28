@@ -9,10 +9,12 @@ from ..geometry import MovementBudget, MovementCost
 from .attack_economy import clear_attack_action
 from .encounter_models.actions import CreatureRef
 from .encounter_models.resolution import EncounterProgress
+from .grappling_state import is_grappled
 from .ongoing_effects import (
     expire_ongoing_effects_for_turn_start,
     resolve_end_turn_effects,
 )
+from .participants import creature_team_id
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -51,16 +53,22 @@ class TurnLifecycle:
 
         >>> from unittest.mock import Mock
         >>> state = Mock(creatures={"hero": Mock(is_alive=True), "goblin": Mock(is_alive=False)})
-        >>> state._creature_team_id.side_effect = {"hero": "heroes", "goblin": "foes"}.__getitem__
         >>> state.definition.victory.next_encounter_id = "victory"
-        >>> TurnLifecycle().check_transition(state)
+        >>> from unittest.mock import patch
+        >>> teams = {"hero": "heroes", "goblin": "foes"}
+        >>> with patch(
+        ...     "srd_arena.domain.encounters.turn_lifecycle.creature_team_id",
+        ...     side_effect=lambda state, ref: teams[ref],
+        ... ):
+        ...     transition = TurnLifecycle().check_transition(state)
+        >>> transition
         'victory'
         """
         configured_teams = {
-            state._creature_team_id(creature_ref) for creature_ref in state.creatures
+            creature_team_id(state, creature_ref) for creature_ref in state.creatures
         }
         living_teams = {
-            state._creature_team_id(creature_ref)
+            creature_team_id(state, creature_ref)
             for creature_ref, creature_state in state.creatures.items()
             if creature_state.is_alive
         }
@@ -252,15 +260,20 @@ class TurnLifecycle:
         >>> from srd_arena.domain.encounters.encounter_models.decisions import DecisionFrame
         >>> state = Mock(active_movement_remaining=None)
         >>> state.current_decision.return_value = DecisionFrame("turn", "hero", "turn", "active")
-        >>> state._is_grappled.return_value = False
         >>> state.combat_rules.movement_budget.return_value.budget = MovementBudget(6)
-        >>> TurnLifecycle().active_movement_remaining(state)
+        >>> from unittest.mock import patch
+        >>> with patch(
+        ...     "srd_arena.domain.encounters.turn_lifecycle.is_grappled",
+        ...     return_value=False,
+        ... ):
+        ...     movement = TurnLifecycle().active_movement_remaining(state)
+        >>> movement
         6
         >>> state.active_movement_remaining
         6
         """
         creature_ref = state.current_decision().creature_ref
-        if state._is_grappled(creature_ref):
+        if is_grappled(state, creature_ref):
             return MovementBudget(0)
         if state.active_movement_remaining is None:
             state.active_movement_remaining = state.combat_rules.movement_budget(

@@ -8,10 +8,14 @@ from ....creatures import Creature
 from ...attack_economy import spend_attack, spend_current_attack
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
+from ...grappling_state import remove_relationships_for_creature
 from ...ongoing_effects import (
     resolve_concentration_damage,
     resolve_spell_lifecycle_event,
 )
+from ...participants import creatures_are_opponents
+from ...state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
+from ...state_runtime import create_event, creature_label
 from ..attack_resolution import (
     apply_attack_damage,
     resolve_attack,
@@ -74,15 +78,15 @@ def resolve_attack_action(
     if not isinstance(action.value, str):
         raise ValueError("Attack action requires a creature reference.")
     target_ref = action.value
-    if not state._creatures_are_opponents(creature_ref, target_ref):
+    if not creatures_are_opponents(state, creature_ref, target_ref):
         raise ValueError("Attack target must belong to an opposing team.")
     defender = state.creatures[target_ref].creature
-    target_label = state._creature_label(target_ref)
+    target_label = creature_label(state, target_ref)
     nearby_opponent_positions = tuple(
         candidate.position
         for opponent_ref, candidate in state.creatures.items()
         if candidate.is_alive
-        and state._creatures_are_opponents(creature_ref, opponent_ref)
+        and creatures_are_opponents(state, creature_ref, opponent_ref)
     )
     attack_roll_rules = state.combat_rules.roll_modifiers(
         state,
@@ -104,7 +108,8 @@ def resolve_attack_action(
         nearby_opponent_positions=nearby_opponent_positions,
         preferred_attack_name=preferred_attack_name,
         preferred_attack_type=action.preferred_attack_type,
-        attack_roll_mode_override=state._attack_roll_mode_for(
+        attack_roll_mode_override=attack_roll_mode_for(
+            state,
             creature_ref,
             target_ref,
             selected_attack_type(
@@ -127,7 +132,8 @@ def resolve_attack_action(
         d20_roller=roll_die,
         dice_roller=roll_dice,
         automatic_critical_provider_ids=(
-            state._automatic_critical_provider_ids_for(
+            automatic_critical_provider_ids_for(
+                state,
                 creature_ref,
                 target_ref,
             )
@@ -175,7 +181,8 @@ def resolve_attack_action(
         )
     progress.messages.extend(outcome.messages)
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "attack_resolved",
             creature_ref=creature_ref,
             action_id=action_id,
@@ -195,9 +202,10 @@ def resolve_attack_action(
         )
     )
     if defender.get_health() <= 0:
-        state._remove_relationships_for_creature(target_ref)
+        remove_relationships_for_creature(state, target_ref)
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "creature_defeated",
                 creature_ref=target_ref,
                 action_id=action_id,

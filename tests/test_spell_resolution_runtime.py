@@ -31,6 +31,8 @@ from srd_arena.domain.encounters.ongoing_effects import (
     expire_ongoing_effects_for_turn_start,
     resolve_end_turn_effects,
 )
+from srd_arena.domain.encounters.state_combat import attack_roll_mode_for
+from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.spells.rules import (
     parse_spell_action_ability,
@@ -151,7 +153,8 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
     assert session.decision_creature.spellcasting is not None
     session.decision_creature.spellcasting.spell_slots_max[2] = 1
     session.decision_creature.spellcasting.spell_slots_remaining[2] = 1
-    session.encounter_state._apply_effects(
+    apply_encounter_effects(
+        session.encounter_state,
         [
             EffectResult(
                 kind="apply_condition",
@@ -162,7 +165,7 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
                     "source_label": "Goblin",
                 },
             )
-        ]
+        ],
     )
 
     assert any(
@@ -614,7 +617,8 @@ def test_attacks_against_blinded_target_gain_advantage(
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
 
-    attack_mode = state._attack_roll_mode_for(
+    attack_mode = attack_roll_mode_for(
+        state,
         "player",
         "goblin_1",
         "melee",
@@ -709,7 +713,8 @@ def test_remove_condition_effect_clears_blinded_rules_immediately() -> None:
     state.creatures["goblin_1"].position.x = 3
     state.creatures["goblin_1"].position.y = 2
 
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="apply_condition",
@@ -720,11 +725,12 @@ def test_remove_condition_effect_clears_blinded_rules_immediately() -> None:
                     "source_label": "Traveler",
                 },
             )
-        ]
+        ],
     )
     assert state.has_condition("goblin_1", Condition.BLINDED) is True
     assert (
-        state._attack_roll_mode_for(
+        attack_roll_mode_for(
+            state,
             "player",
             "goblin_1",
             "melee",
@@ -734,7 +740,8 @@ def test_remove_condition_effect_clears_blinded_rules_immediately() -> None:
         == "advantage"
     )
 
-    messages = state._apply_effects(
+    messages = apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="message",
@@ -746,13 +753,14 @@ def test_remove_condition_effect_clears_blinded_rules_immediately() -> None:
                 target_ref="goblin_1",
                 data={"condition": "blinded"},
             ),
-        ]
+        ],
     )
 
     assert messages == [("system", "Status removed.")]
     assert state.has_condition("goblin_1", Condition.BLINDED) is False
     assert (
-        state._attack_roll_mode_for(
+        attack_roll_mode_for(
+            state,
             "player",
             "goblin_1",
             "melee",
@@ -774,7 +782,8 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
     session.decision_creature.spellcasting.spell_slots_max[2] = 1
     session.decision_creature.spellcasting.spell_slots_remaining[2] = 1
     state = session.encounter_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="apply_condition",
@@ -785,7 +794,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
                     "source_label": "Goblin",
                 },
             )
-        ]
+        ],
     )
 
     result = session.choose(_action_id_by_prefix(session, "Cast Lesser Restoration"))
@@ -940,7 +949,8 @@ def test_heal_upcasts_and_removes_every_listed_condition() -> None:
     caster.max_health_override = 200
     caster.current_health = 50
     for condition in ("blinded", "poisoned"):
-        state._apply_effects(
+        apply_encounter_effects(
+            state,
             [
                 EffectResult(
                     kind="apply_condition",
@@ -951,7 +961,7 @@ def test_heal_upcasts_and_removes_every_listed_condition() -> None:
                         "source_label": "Goblin",
                     },
                 )
-            ]
+            ],
         )
 
     action = next(
@@ -1345,7 +1355,8 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
     caster.current_health = 100
     target.creature.max_health_override = 500
     target.creature.current_health = 100
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="apply_condition",
@@ -1356,7 +1367,7 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
                     "source_label": "Traveler",
                 },
             )
-        ]
+        ],
     )
 
     initial = next(
@@ -1425,7 +1436,8 @@ def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
         )
     )
     caster.spellcasting.spell_slots_remaining[5] = 1
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="apply_condition",
@@ -1439,7 +1451,8 @@ def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
         ],
         origin_id="charm-origin",
     )
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -1498,7 +1511,8 @@ def test_remove_curse_ends_every_curse_on_one_creature() -> None:
     )
     caster.spellcasting.spell_slots_remaining[3] = 1
     for index in (1, 2):
-        state._apply_effects(
+        apply_encounter_effects(
+            state,
             [
                 EffectResult(
                     kind="start_ongoing_effect",
@@ -1541,7 +1555,8 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
     )
     caster.spellcasting.spell_slots_remaining[5] = 1
     original = (caster.get_max_health(), caster.get_health())
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -1604,7 +1619,8 @@ def test_lesser_restoration_explicitly_selects_the_condition_to_remove() -> None
     assert session.decision_creature.spellcasting is not None
     session.decision_creature.spellcasting.spell_slots_remaining[2] = 1
     for condition in ("blinded", "poisoned"):
-        state._apply_effects(
+        apply_encounter_effects(
+            state,
             [
                 EffectResult(
                     kind="apply_condition",
@@ -1615,7 +1631,7 @@ def test_lesser_restoration_explicitly_selects_the_condition_to_remove() -> None
                         "source_label": "Goblin",
                     },
                 )
-            ]
+            ],
         )
 
     action = next(

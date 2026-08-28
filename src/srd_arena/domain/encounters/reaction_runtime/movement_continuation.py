@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from ...geometry import MovementCost, Position
 from ..encounter_models.decisions import PendingMovement
 from ..encounter_models.resolution import EncounterProgress
+from ..state_runtime import create_event, position_is_free
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -31,19 +32,21 @@ def resume_movement(
     ...     "move-1", "hero", "right", Position(0, 0), Position(1, 0),
     ...     20, MovementCost(5), "trigger-1",
     ... )
-    >>> state = SimpleNamespace(
-    ...     creatures={"hero": mover},
-    ...     _position_is_free=lambda *args, **kwargs: True,
-    ...     _event=lambda event_type, **values: event_type,
-    ... )
+    >>> state = SimpleNamespace(creatures={"hero": mover}, event_sequence=1)
     >>> progress = EncounterProgress()
-    >>> resume_movement(state, movement, progress)
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.reaction_runtime."
+    ...     "movement_continuation.position_is_free", return_value=True
+    ... ):
+    ...     resume_movement(state, movement, progress)
     >>> (mover.position, int(mover.movement_remaining))
     (Position(x=1, y=0), 20)
     """
 
     mover = state.creatures[movement.creature_ref]
-    if mover.is_alive and state._position_is_free(
+    if mover.is_alive and position_is_free(
+        state,
         movement.to_position.x,
         movement.to_position.y,
         ignored_refs={movement.creature_ref},
@@ -68,7 +71,8 @@ def resume_movement(
             )
         )
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "movement_resolved",
                 creature_ref=movement.creature_ref,
                 action_id=movement.action_id,

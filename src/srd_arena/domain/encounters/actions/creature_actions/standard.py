@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ...attack_economy import consume_action
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import EncounterProgress
 from ...ongoing_effects import resolve_spell_lifecycle_event
+from ...state_runtime import create_event
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -25,8 +27,7 @@ def execute_standard_action(
     >>> from types import SimpleNamespace
     >>> actor = SimpleNamespace(creature=SimpleNamespace(name="Hero"))
     >>> state = SimpleNamespace(
-    ...     creatures={"hero": actor},
-    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ...     creatures={"hero": actor}, event_sequence=1,
     ... )
     >>> progress = EncounterProgress()
     >>> execute_standard_action(
@@ -35,7 +36,7 @@ def execute_standard_action(
     ...     progress, "wait-1"
     ... )
     True
-    >>> (progress.messages[-1], progress.events[-1][1]["kind"])
+    >>> (progress.messages[-1], progress.events[-1].data["kind"])
     (('system', 'Hero waits.'), 'wait')
     """
 
@@ -43,7 +44,7 @@ def execute_standard_action(
     if action.kind == "wake_spell_target":
         if not isinstance(action.value, str):
             raise ValueError("Wake action requires a creature reference.")
-        state._consume_action(allow_magic=False)
+        consume_action(state, allow_magic=False)
         resolve_spell_lifecycle_event(
             state,
             "adjacent_creature_wakes_target",
@@ -59,7 +60,8 @@ def execute_standard_action(
             )
         )
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "action_resolved",
                 creature_ref=decision.creature_ref,
                 action_id=action_id,
@@ -69,7 +71,8 @@ def execute_standard_action(
     elif action.kind == "wait":
         progress.messages.append(("system", f"{actor.creature.name} waits."))
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "action_resolved",
                 creature_ref=decision.creature_ref,
                 action_id=action_id,

@@ -12,7 +12,7 @@ from ....spells.rules import (
     spell_range_squares,
     spell_targets_self_only,
 )
-from ...attack_economy import clear_attack_action
+from ...attack_economy import clear_attack_action, consume_action
 from ...encounter_models.actions import (
     ActionCost,
     EncounterAction,
@@ -150,7 +150,8 @@ def spend_spell_resources(
     ...     attack_action_attacks_used=0, pending_multiattack=[],
     ... )
     >>> state = SimpleNamespace(
-    ...     _consume_action=lambda **kwargs: None, active_creature_state=actor,
+    ...     active_actions_remaining=1, active_magic_actions_remaining=1,
+    ...     active_creature_state=actor,
     ...     active_bonus_action_available=True, active_reaction_available=True,
     ... )
     >>> spend_spell_resources(state, casting, spell, ActionCost(action=1))
@@ -159,7 +160,7 @@ def spend_spell_resources(
     """
 
     if cost.action > 0:
-        self._consume_action(allow_magic=True)
+        consume_action(self, allow_magic=True)
         clear_attack_action(self.active_creature_state)
     if cost.bonus_action > 0:
         self.active_bonus_action_available = False

@@ -17,6 +17,9 @@ from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.spells import (
     load_spell_catalog,
 )
+from srd_arena.domain.encounters.state_initialization import (
+    initialize_action_selectors,
+)
 from srd_arena.engine.queries import (
     SpellOptionDetails,
 )
@@ -102,7 +105,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance(
     assert session.encounter_state is not None
     enemy = session.encounter_state.creatures["goblin_1"]
     enemy.behavior.type = "archer"
-    session.encounter_state._initialize_action_selectors()
+    initialize_action_selectors(session.encounter_state)
     session.encounter_state.creatures["goblin_2"].creature.current_health = 0
     session.encounter_state.creatures["goblin_3"].creature.current_health = 0
     enemy.position.x = 5

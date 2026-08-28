@@ -12,6 +12,9 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ...grappling_state import grappling_targets_for, movement_cost_for
+from ...participants import creatures_are_opponents
+from ...state_runtime import creature_position, position_is_free
 from .models import EligibilityFailure
 
 if TYPE_CHECKING:
@@ -127,7 +130,7 @@ class MovementRule:
                 "invalid_direction",
                 "Movement requires a valid direction.",
             )
-        movement_cost = state._movement_cost_for(actor_ref)
+        movement_cost = movement_cost_for(state, actor_ref)
         actor = state.creatures[actor_ref]
         if movement_cost is None or (actor.movement_remaining or 0) < movement_cost:
             return EligibilityFailure(
@@ -135,16 +138,17 @@ class MovementRule:
                 "Not enough movement remains.",
             )
         dx, dy = DIRECTION_DELTAS[action.value]
-        moving_refs = {actor_ref, *state._grappling_targets_for(actor_ref)}
+        moving_refs = {actor_ref, *grappling_targets_for(state, actor_ref)}
         destinations = [
             Position(
-                state._creature_position(moving_ref).x + dx,
-                state._creature_position(moving_ref).y + dy,
+                creature_position(state, moving_ref).x + dx,
+                creature_position(state, moving_ref).y + dy,
             )
             for moving_ref in moving_refs
         ]
         if any(
-            not state._position_is_free(
+            not position_is_free(
+                state,
                 destination.x,
                 destination.y,
                 ignored_refs=moving_refs,
@@ -166,13 +170,15 @@ def opposing_target_failure(
     """Return a failure when a rule requires the target to be an opponent.
 
     >>> from types import SimpleNamespace
-    >>> state = SimpleNamespace(
-    ...     creatures={"ally": SimpleNamespace(is_alive=True)},
-    ...     _creatures_are_opponents=lambda actor, target: False,
-    ... )
-    >>> failure = opposing_target_failure(
-    ...     state, "hero", EncounterAction("Target Ally", "attack", "ally")
-    ... )
+    >>> state = SimpleNamespace(creatures={"ally": SimpleNamespace(is_alive=True)})
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.eligibility_rules.common."
+    ...     "creatures_are_opponents", return_value=False
+    ... ):
+    ...     failure = opposing_target_failure(
+    ...         state, "hero", EncounterAction("Target Ally", "attack", "ally")
+    ...     )
     >>> failure.code if failure else None
     'target_not_opponent'
     """
@@ -182,7 +188,7 @@ def opposing_target_failure(
     target = state.creatures.get(action.value)
     if target is None or not target.is_alive:
         return EligibilityFailure("target_unavailable", "The target is not available.")
-    if not state._creatures_are_opponents(actor_ref, action.value):
+    if not creatures_are_opponents(state, actor_ref, action.value):
         return EligibilityFailure(
             "target_not_opponent",
             "The target must belong to an opposing team.",

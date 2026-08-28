@@ -8,6 +8,8 @@ from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
+from srd_arena.domain.encounters.grappling_state import apply_grapple
+from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.engine.session import Session
 from srd_arena.frontends.gui.presentation.session import build_session_presentation
 from srd_arena.infrastructure.scenarios import load_scenario_directory
@@ -27,7 +29,7 @@ def _player_first_initiative(
         first_external_ref = next(
             creature_ref
             for creature_ref in self.creatures
-            if self._creature_controller(creature_ref) == "external"
+            if creature_controller(self, creature_ref) == "external"
         )
         self.initiative_order = [
             first_external_ref,
@@ -38,7 +40,7 @@ def _player_first_initiative(
             ),
         ]
 
-    monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
+    monkeypatch.setattr(EncounterState, "roll_initiative", _fixed_initiative)
 
 
 def _all_external_session() -> Session:
@@ -368,7 +370,8 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
     goblin = state.creatures["red_blade"]
     aldren.position.x, aldren.position.y = 3, 3
     goblin.position.x, goblin.position.y = 3, 4
-    state._apply_grapple(
+    apply_grapple(
+        state,
         condition_from_effect(
             EffectResult(
                 kind="apply_condition",
@@ -379,7 +382,7 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
                     "source_label": aldren.creature.name,
                 },
             )
-        )
+        ),
     )
 
     move = next(

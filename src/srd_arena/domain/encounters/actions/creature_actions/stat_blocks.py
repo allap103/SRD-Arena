@@ -15,6 +15,8 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ...participants import creatures_are_opponents
+from ...state_runtime import living_creature_refs
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -59,8 +61,8 @@ def stat_block_action_candidates(
             if definition.target.kind == "area"
             else [
                 target_ref
-                for target_ref in state._living_creature_refs()
-                if state._creatures_are_opponents(creature_ref, target_ref)
+                for target_ref in living_creature_refs(state)
+                if creatures_are_opponents(state, creature_ref, target_ref)
             ]
             if definition.target.kind == "creature"
             else []

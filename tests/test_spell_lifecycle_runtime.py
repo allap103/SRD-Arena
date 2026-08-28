@@ -22,6 +22,11 @@ from srd_arena.domain.effects.runtime import (
     OngoingEffectKind,
     RuntimeStateIdentity,
 )
+from srd_arena.domain.encounters.condition_state import remove_condition
+from srd_arena.domain.encounters.creature_control import (
+    creature_action_candidates,
+    execute_creature_action,
+)
 from srd_arena.domain.encounters.encounter import (
     EncounterAction,
 )
@@ -34,6 +39,7 @@ from srd_arena.domain.encounters.ongoing_effects import (
     resolve_end_turn_effects,
     resolve_spell_lifecycle_event,
 )
+from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.spells.rules import (
     parse_spell_action_damage_type,
@@ -170,7 +176,7 @@ def test_one_target_repeat_save_does_not_end_multi_target_spell(
             for target_ref in ("goblin_1", "goblin_2")
         ),
     ]
-    state._apply_effects(effects, origin_id="multi-target-cast")
+    apply_encounter_effects(state, effects, origin_id="multi-target-cast")
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20
     )
@@ -189,7 +195,8 @@ def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -236,7 +243,8 @@ def test_condition_modifier_applies_to_repeated_saves(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -252,7 +260,8 @@ def test_condition_modifier_applies_to_repeated_saves(
         ],
         origin_id="protection-origin",
     )
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -294,7 +303,8 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
     assert session.encounter_state is not None
     state = session.encounter_state
     before = state.turn_lifecycle.active_movement_remaining(state)
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -335,7 +345,8 @@ def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="apply_condition",
@@ -349,7 +360,8 @@ def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
         ],
         origin_id="original-fear",
     )
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -376,7 +388,8 @@ def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
         for condition in state.conditions
         if condition.condition is not Condition.FRIGHTENED
     ]
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="apply_condition",
@@ -1007,7 +1020,8 @@ def test_adjacent_creature_can_spend_action_to_wake_sleep_target() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -1045,10 +1059,10 @@ def test_adjacent_creature_can_spend_action_to_wake_sleep_target() -> None:
 
     action = next(
         action
-        for action in state._creature_action_candidates("goblin_2")
+        for action in creature_action_candidates(state, "goblin_2")
         if action.kind == "wake_spell_target" and action.value == "goblin_1"
     )
-    result = state._execute_creature_action(action, state.current_decision())
+    result = execute_creature_action(state, action, state.current_decision())
 
     assert state.has_condition("goblin_1", Condition.UNCONSCIOUS) is False
     assert state.creatures["goblin_2"].actions_remaining == 0
@@ -1074,7 +1088,8 @@ def test_spell_lifecycle_event_ends_effect_for_affected_target(
     assert session.encounter_state is not None
     state = session.encounter_state
     target_ref = "goblin_1"
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -1120,7 +1135,8 @@ def test_charm_ends_only_when_source_side_damages_target() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -1174,7 +1190,8 @@ def test_hideous_laughter_damage_save_has_advantage(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -1256,14 +1273,15 @@ def test_hideous_laughter_prevents_target_from_removing_its_own_prone(
     )
     _ORCHESTRATOR.submit(state, action)
 
-    state._remove_condition(
+    remove_condition(
+        state,
         "goblin_1",
         Condition.PRONE,
         removed_by_ref="goblin_1",
     )
     assert state.has_condition("goblin_1", Condition.PRONE)
 
-    state._remove_condition("goblin_1", Condition.PRONE)
+    remove_condition(state, "goblin_1", Condition.PRONE)
     assert state.has_condition("goblin_1", Condition.PRONE) is False
 
 
@@ -1323,7 +1341,8 @@ def test_new_concentration_replaces_the_previous_effect_tree() -> None:
         ("first-cast", "goblin_1"),
         ("second-cast", "goblin_2"),
     ):
-        state._apply_effects(
+        apply_encounter_effects(
+            state,
             [
                 EffectResult(
                     kind="start_ongoing_effect",
@@ -1526,7 +1545,8 @@ def test_failed_damage_save_ends_concentration_and_its_conditions(
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",

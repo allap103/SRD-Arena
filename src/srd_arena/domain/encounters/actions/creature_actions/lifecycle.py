@@ -11,6 +11,7 @@ from ...encounter_models.resolution import (
     ActionExecutionOutcome,
     ActionExecutionResult,
 )
+from ...state_runtime import create_event, next_action_id
 from ..eligibility import require_action_eligible
 
 if TYPE_CHECKING:
@@ -32,14 +33,13 @@ def begin_action_execution(
     ...     combat_rules=SimpleNamespace(
     ...         action_eligibility=lambda *args: ActionEligibility()
     ...     ),
-    ...     _next_action_id=lambda: "action-1",
-    ...     _event=lambda event_type, **kwargs: (event_type, kwargs),
+    ...     action_sequence=1, event_sequence=1,
     ... )
     >>> context = begin_action_execution(
     ...     state, EncounterAction("Wait", "wait"), decision
     ... )
-    >>> (context.action_id, context.progress.events[0][0])
-    ('action-1', 'action_declared')
+    >>> (context.action_id, context.progress.events[0].type)
+    ('action_1', 'action_declared')
     """
 
     require_action_eligible(state, decision.creature_ref, action)
@@ -49,10 +49,11 @@ def begin_action_execution(
         actor=actor,
         decision=decision,
         action=action,
-        action_id=state._next_action_id(),
+        action_id=next_action_id(state),
     )
     context.progress.events.append(
-        state._event(
+        create_event(
+            state,
             "action_declared",
             creature_ref=context.actor_ref,
             action_id=context.action_id,

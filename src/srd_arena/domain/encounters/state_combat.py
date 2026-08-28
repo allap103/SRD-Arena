@@ -10,6 +10,7 @@ from ..geometry import Position
 from ..rolls.dice import D20RollMode
 from .behaviors import is_adjacent
 from .encounter_models.actions import CreatureRef
+from .state_runtime import creature_position
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -99,17 +100,20 @@ def automatic_critical_provider_ids_for(
     ...     providers_for_trait=lambda trait: ("paralyzed:spell",)
     ... )
     >>> positions = {"hero": Position(0, 0), "target": Position(1, 0)}
-    >>> state = SimpleNamespace(
-    ...     _creature_position=lambda ref: positions[ref],
-    ...     effective_conditions_for=lambda ref: effective,
-    ... )
-    >>> automatic_critical_provider_ids_for(state, "hero", "target")
+    >>> state = SimpleNamespace(effective_conditions_for=lambda ref: effective)
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.state_combat.creature_position",
+    ...     side_effect=lambda state, ref: positions[ref],
+    ... ):
+    ...     providers = automatic_critical_provider_ids_for(state, "hero", "target")
+    >>> providers
     ('paralyzed:spell',)
     """
 
     if not is_adjacent(
-        state._creature_position(attacker_ref),
-        state._creature_position(target_ref),
+        creature_position(state, attacker_ref),
+        creature_position(state, target_ref),
     ):
         return ()
     return state.effective_conditions_for(target_ref).providers_for_trait(

@@ -26,6 +26,9 @@ from srd_arena.domain.encounters.definitions import (
     EncounterBehavior,
     EncounterDefinition,
 )
+from srd_arena.domain.encounters.effect_lifecycle.application import (
+    start_ongoing_effect,
+)
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import (
     ActionCost,
@@ -190,7 +193,8 @@ def test_effect_lifecycle_queries_speed_without_losing_movement_debt() -> None:
     creature_state = state.creatures[ACTOR_REF]
     creature_state.movement_spent_this_turn = MovementCost(4)
     creature_state.movement_remaining = MovementBudget(2)
-    applied = state._start_ongoing_effect(
+    applied = start_ongoing_effect(
+        state,
         EffectResult(
             kind="start_ongoing_effect",
             target_ref=ACTOR_REF,

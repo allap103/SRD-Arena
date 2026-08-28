@@ -47,8 +47,16 @@ from srd_arena.domain.effects.runtime import (
 from srd_arena.domain.encounters.actions.hit_effects import (
     apply_attack_hit_effects,
 )
+from srd_arena.domain.encounters.actions.option_discovery.spell_targets import (
+    spell_target_context,
+)
 from srd_arena.domain.encounters.actions.stat_block import (
     recharge_stat_block_actions,
+)
+from srd_arena.domain.encounters.creature_control import (
+    available_creature_actions,
+    creature_action_candidates,
+    execute_creature_action,
 )
 from srd_arena.domain.encounters.encounter import (
     ActionCost,
@@ -56,6 +64,20 @@ from srd_arena.domain.encounters.encounter import (
     EncounterState,
 )
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
+from srd_arena.domain.encounters.grappling_state import (
+    apply_grapple,
+    grappling_targets_for,
+)
+from srd_arena.domain.encounters.participants import (
+    creature_controller,
+    creatures_are_opponents,
+)
+from srd_arena.domain.encounters.state_combat import (
+    attack_roll_mode_for,
+    automatic_critical_provider_ids_for,
+    automatic_save_failure_provider_ids_for,
+)
+from srd_arena.domain.encounters.state_runtime import creature_label
 from srd_arena.domain.geometry import MovementCost, Position
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.engine.queries import (
@@ -122,9 +144,9 @@ def test_stat_block_action_showcase_exposes_new_runtime_capabilities() -> None:
     assert session.encounter_state is not None
     state = session.encounter_state
 
-    avatar_actions = state._available_creature_actions("avatar")
-    wyrmling_actions = state._available_creature_actions("blue_wyrmling")
-    assassin_actions = state._creature_action_candidates("assassin")
+    avatar_actions = available_creature_actions(state, "avatar")
+    wyrmling_actions = available_creature_actions(state, "blue_wyrmling")
+    assassin_actions = creature_action_candidates(state, "assassin")
 
     assert scenario.display_name == "Executable Stat-Block Actions"
     assert any(
@@ -179,7 +201,7 @@ def test_targeted_action_labels_only_name_the_action() -> None:
     session.read()
     assert session.encounter_state is not None
 
-    actions = session.encounter_state._available_creature_actions("avatar")
+    actions = available_creature_actions(session.encounter_state, "avatar")
 
     assert all(
         action.label == action.preferred_attack_name
@@ -206,7 +228,7 @@ def test_line_stat_block_action_can_be_aimed_at_a_map_point(
     target_refs = [
         creature_ref
         for creature_ref in state.creatures
-        if state._creatures_are_opponents(actor_ref, creature_ref)
+        if creatures_are_opponents(state, actor_ref, creature_ref)
     ][:2]
     assert len(target_refs) == 2
     actor.position = Position(0, 1)
@@ -253,7 +275,7 @@ def test_line_stat_block_action_can_be_aimed_at_a_map_point(
         cost=ActionCost(action=1),
     )
 
-    state._execute_creature_action(action, state.current_decision())
+    execute_creature_action(state, action, state.current_decision())
 
     assert all(
         state.creatures[target_ref].creature.get_health()
@@ -274,7 +296,7 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
     target_ref = next(
         creature_ref
         for creature_ref in state.creatures
-        if state._creatures_are_opponents(actor_ref, creature_ref)
+        if creatures_are_opponents(state, actor_ref, creature_ref)
     )
     actor = state.creatures[actor_ref]
     target = state.creatures[target_ref]
@@ -297,12 +319,13 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
     )
     action = next(
         action
-        for action in state._available_creature_actions(actor_ref)
+        for action in available_creature_actions(state, actor_ref)
         if action.preferred_attack_name == "Reaping Scythe"
     )
     health_before = target.creature.get_health()
 
-    result = state._execute_creature_action(
+    result = execute_creature_action(
+        state,
         action,
         state.current_decision(),
     )
@@ -316,7 +339,7 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved(
     actor.actions_remaining = 1
     assert not any(
         action.preferred_attack_name == "Reaping Scythe"
-        for action in state._available_creature_actions(actor_ref)
+        for action in available_creature_actions(state, actor_ref)
     )
 
 
@@ -332,7 +355,7 @@ def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save(
     target_ref = next(
         creature_ref
         for creature_ref in state.creatures
-        if state._creatures_are_opponents(actor_ref, creature_ref)
+        if creatures_are_opponents(state, actor_ref, creature_ref)
     )
     actor = state.creatures[actor_ref]
     target = state.creatures[target_ref]
@@ -362,12 +385,13 @@ def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save(
     )
     action = next(
         action
-        for action in state._available_creature_actions(actor_ref)
+        for action in available_creature_actions(state, actor_ref)
         if action.preferred_attack_name == "Acid Spray"
     )
     health_before = target.creature.get_health()
 
-    result = state._execute_creature_action(
+    result = execute_creature_action(
+        state,
         action,
         state.current_decision(),
     )
@@ -394,7 +418,7 @@ def test_unsupported_stat_block_effect_is_rejected_before_execution() -> None:
     target_ref = next(
         creature_ref
         for creature_ref in state.creatures
-        if state._creatures_are_opponents(actor_ref, creature_ref)
+        if creatures_are_opponents(state, actor_ref, creature_ref)
     )
     actor = state.creatures[actor_ref]
     actor.creature.stat_block_actions["Paralyze"] = AutomaticActionDefinition(
@@ -497,7 +521,7 @@ def test_paralyzed_blocks_actions_through_effective_incapacitation() -> None:
     state.conditions.append(paralyzed)
     move = next(
         action
-        for action in state._creature_action_candidates(actor_ref)
+        for action in creature_action_candidates(state, actor_ref)
         if action.kind == "move"
     )
 
@@ -526,7 +550,7 @@ def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical(
     paralyzed = build_applied_condition(
         condition=Condition.PARALYZED,
         source_ref=attacker_ref,
-        source_label=state._creature_label(attacker_ref),
+        source_label=creature_label(state, attacker_ref),
         target_ref=target_ref,
     )
     state.conditions.append(paralyzed)
@@ -629,16 +653,19 @@ def test_paralyzed_target_automatically_fails_strength_and_dexterity_saves() -> 
     )
     state.conditions.append(paralyzed)
 
-    assert state._automatic_save_failure_provider_ids_for(
+    assert automatic_save_failure_provider_ids_for(
+        state,
         target_ref,
         "strength",
     ) == (paralyzed.id,)
-    assert state._automatic_save_failure_provider_ids_for(
+    assert automatic_save_failure_provider_ids_for(
+        state,
         target_ref,
         "dexterity",
     ) == (paralyzed.id,)
     assert (
-        state._automatic_save_failure_provider_ids_for(
+        automatic_save_failure_provider_ids_for(
+            state,
             target_ref,
             "wisdom",
         )
@@ -668,12 +695,13 @@ def test_stunned_target_grants_advantage_without_automatic_critical_hits() -> No
     stunned = build_applied_condition(
         condition=Condition.STUNNED,
         source_ref=attacker_ref,
-        source_label=state._creature_label(attacker_ref),
+        source_label=creature_label(state, attacker_ref),
         target_ref=target_ref,
     )
     state.conditions.append(stunned)
 
-    mode = state._attack_roll_mode_for(
+    mode = attack_roll_mode_for(
+        state,
         attacker_ref,
         target_ref,
         "melee",
@@ -683,17 +711,20 @@ def test_stunned_target_grants_advantage_without_automatic_critical_hits() -> No
 
     assert mode == "advantage"
     assert (
-        state._automatic_critical_provider_ids_for(
+        automatic_critical_provider_ids_for(
+            state,
             attacker_ref,
             target_ref,
         )
         == ()
     )
-    assert state._automatic_save_failure_provider_ids_for(
+    assert automatic_save_failure_provider_ids_for(
+        state,
         target_ref,
         "strength",
     ) == (stunned.id,)
-    assert state._automatic_save_failure_provider_ids_for(
+    assert automatic_save_failure_provider_ids_for(
+        state,
         target_ref,
         "dexterity",
     ) == (stunned.id,)
@@ -713,7 +744,8 @@ def test_stunned_creature_automatically_fails_dexterity_save() -> None:
         target_ref=target_ref,
     )
     state.conditions.append(stunned)
-    target = state._spell_target_context(
+    target = spell_target_context(
+        state,
         state.creatures["player"].creature,
         target_ref,
     )
@@ -798,7 +830,7 @@ def test_conditions_showcase_is_externally_controlled_and_uses_immunities() -> N
     assert session.encounter_state is not None
     state = session.encounter_state
     assert all(
-        state._creature_controller(creature_ref) == "external"
+        creature_controller(state, creature_ref) == "external"
         for creature_ref in state.creatures
     )
     assert Condition.POISONED in (
@@ -827,7 +859,7 @@ def test_creature_type_restricted_spell_targets_are_visible_but_unavailable() ->
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    candidates = state._creature_action_candidates("condition_mage")
+    candidates = creature_action_candidates(state, "condition_mage")
     hold_person_actions = [
         action
         for action in candidates
@@ -868,7 +900,7 @@ def test_execution_rechecks_action_eligibility() -> None:
 def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(EncounterState, "_roll_initiative", _ROLL_INITIATIVE)
+    monkeypatch.setattr(EncounterState, "roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls)
@@ -899,7 +931,7 @@ def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
 def test_presentation_exposes_initiative_tracker(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(EncounterState, "_roll_initiative", _ROLL_INITIATIVE)
+    monkeypatch.setattr(EncounterState, "roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
     monkeypatch.setattr(
         "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: next(rolls)
@@ -1203,7 +1235,7 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
     assert state.combat_rules.movement_budget(state, "air_elemental").speed.value == 90
     assert state.combat_rules.movement_budget(state, "aboleth").speed.value == 10
     assert {
-        state._creature_controller(creature_ref) for creature_ref in state.creatures
+        creature_controller(state, creature_ref) for creature_ref in state.creatures
     } == {"external"}
 
 
@@ -1253,7 +1285,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
     )
     assert grapple.source_ref == "aboleth"
     assert grapple.metadata["escape_dc"] == 14
-    assert state._grappling_targets_for("aboleth") == ("air_elemental",)
+    assert grappling_targets_for(state, "aboleth") == ("air_elemental",)
     assert state.relationships[0].kind.value == "grappling"
 
     huge_target_tentacle = next(
@@ -1295,7 +1327,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape(
 
     assert escape.label == "Escape The Deep One (DC 14)"
     assert state.has_condition("air_elemental", Condition.GRAPPLED) is False
-    assert state._grappling_targets_for("aboleth") == ()
+    assert grappling_targets_for(state, "aboleth") == ()
     assert any("escapes The Deep One's grapple" in text for _, text in result.messages)
 
 
@@ -1332,7 +1364,7 @@ def test_tentacle_grapple_enforces_capacity_without_counting_duplicates() -> Non
             progress=EncounterProgress(),
         )
 
-    assert set(state._grappling_targets_for(aboleth_ref)) == {
+    assert set(grappling_targets_for(state, aboleth_ref)) == {
         "air_elemental",
         "tentacle-target:0",
         "tentacle-target:1",
@@ -1366,7 +1398,8 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
     state.creatures["goblin_2"].position.y = 2
     state.creatures["goblin_3"].position.x = 1
     state.creatures["goblin_3"].position.y = 1
-    state._apply_grapple(
+    apply_grapple(
+        state,
         condition_from_effect(
             EffectResult(
                 kind="apply_condition",
@@ -1377,13 +1410,14 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
                     "source_label": "Goblin",
                 },
             )
-        )
+        ),
     )
 
     labels = _action_labels(session)
     assert not any(label.startswith("Move ") for label in labels)
     assert (
-        state._attack_roll_mode_for(
+        attack_roll_mode_for(
+            state,
             "player",
             "goblin_2",
             "melee",
@@ -1398,7 +1432,8 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
         == "disadvantage"
     )
     assert (
-        state._attack_roll_mode_for(
+        attack_roll_mode_for(
+            state,
             "player",
             "goblin_1",
             "melee",
@@ -1443,7 +1478,7 @@ def test_grapple_action_is_available_in_the_combat_menu(
         "Traveler grapples Goblin Warrior (goblin_1).",
     ) in result.messages
     assert session.encounter_state.has_condition("goblin_1", Condition.GRAPPLED) is True
-    assert session.encounter_state._grappling_targets_for("player") == ("goblin_1",)
+    assert grappling_targets_for(session.encounter_state, "player") == ("goblin_1",)
     assert any(
         action.kind == "grapple"
         and isinstance(action.details, DirectTargetOptionDetails)
@@ -1529,7 +1564,8 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
     state.creatures["goblin_2"].position.y = 2
     state.creatures["goblin_3"].position.x = 1
     state.creatures["goblin_3"].position.y = 1
-    state._apply_grapple(
+    apply_grapple(
+        state,
         condition_from_effect(
             EffectResult(
                 kind="apply_condition",
@@ -1540,7 +1576,7 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
                     "source_label": "Traveler",
                 },
             )
-        )
+        ),
     )
 
     move_up_index = _action_id_by_label(session, "Move up")

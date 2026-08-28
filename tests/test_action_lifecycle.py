@@ -1,10 +1,12 @@
 from pathlib import Path
 
 from srd_arena.domain.encounters import EncounterOrchestrator
+from srd_arena.domain.encounters.creature_control import execute_creature_action
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.resolution import (
     ActionExecutionOutcome,
 )
+from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
@@ -20,7 +22,7 @@ def _encounter_state() -> EncounterState:
     external_ref = next(
         creature_ref
         for creature_ref in state.initiative_order
-        if state._creature_controller(creature_ref) == "external"
+        if creature_controller(state, creature_ref) == "external"
     )
     state.turn.index = state.initiative_order.index(external_ref)
     return state
@@ -32,7 +34,7 @@ def test_action_execution_reports_lifecycle_without_advancing_turn() -> None:
     wait = next(action for action in state.available_actions() if action.kind == "wait")
     starting_turn = state.turn.index
 
-    result = state._execute_creature_action(wait, decision)
+    result = execute_creature_action(state, wait, decision)
 
     assert result.outcome is ActionExecutionOutcome.END_TURN
     assert state.turn.index == starting_turn
@@ -59,7 +61,7 @@ def test_non_terminal_action_reports_continue_turn() -> None:
     move = next(action for action in state.available_actions() if action.kind == "move")
     starting_turn = state.turn.index
 
-    result = state._execute_creature_action(move, decision)
+    result = execute_creature_action(state, move, decision)
 
     assert result.outcome is ActionExecutionOutcome.CONTINUE_TURN
     assert state.turn.index == starting_turn

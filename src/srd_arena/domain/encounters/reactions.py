@@ -141,10 +141,9 @@ class ReactionEngine:
         >>> trigger = TriggeredEffect("great_weapon", "feature", "great_weapon",
         ...     "damage_rolled", "reroll_matching_dice")
         >>> state = Mock(
-        ...     active_attacks_remaining=1,
+        ...     active_attacks_remaining=1, frame_sequence=1, event_sequence=1,
         ...     interrupts=Mock(decision_stack=[]),
         ... )
-        >>> state._next_frame_id.return_value = "reroll:1"
         >>> state.current_decision.return_value = DecisionFrame("turn", "hero", "turn", "active")
         >>> progress = EncounterProgress()
         >>> ReactionEngine().open_damage_reroll_decision(state, attack=attack,
@@ -223,14 +222,13 @@ class ReactionEngine:
         ...     "damage_rolled", "reroll_matching_dice")
         >>> request = DamageRerollRequest("attack", "hero", "ogre", "Hero", "Ogre", 1,
         ...     AttackOutcome([], False, 8, 0, False, {}), trigger)
-        >>> state = Mock(ongoing_effects=[], creatures={
+        >>> state = Mock(ongoing_effects=[], event_sequence=1, creatures={
         ...     "hero": Mock(creature=Mock(name="Hero")),
         ...     "ogre": Mock(creature=Mock(), is_alive=True)})
-        >>> state._event.side_effect = lambda kind, **_details: kind
         >>> progress = EncounterProgress()
         >>> decision = DecisionFrame("reroll:1", "hero", "reroll_dice", "reroll")
         >>> ReactionEngine().finalize_damage_reroll(state, request, progress, decision)
-        >>> progress.events
+        >>> [event.type for event in progress.events]
         ['attack_resolved']
         """
         _finalize_damage_reroll(state, request, progress, decision)
@@ -259,13 +257,14 @@ class ReactionEngine:
         """Resolve an offered reaction choice without closing its frame.
 
         >>> from unittest.mock import Mock
-        >>> state = Mock(creatures={"hero": Mock()})
-        >>> state._next_action_id.return_value = "reaction:1"
+        >>> state = Mock(
+        ...     creatures={"hero": Mock()}, action_sequence=1, event_sequence=1
+        ... )
         >>> decision = DecisionFrame("frame:1", "hero", "reaction", "opportunity")
         >>> result = ReactionEngine().apply_reaction_action(
         ...     state, EncounterAction("Pass", "pass"), decision)
         >>> (result.completed, result.action_id)
-        (True, 'reaction:1')
+        (True, 'action_1')
         """
         return _apply_reaction_action(
             state,
@@ -285,11 +284,17 @@ class ReactionEngine:
         >>> from unittest.mock import Mock
         >>> mover = Mock(is_alive=True, position=Position(0, 0),
         ...     movement_spent_this_turn=MovementCost(0), creature=Mock(name="Hero"))
-        >>> state = Mock(creatures={"hero": mover})
-        >>> state._position_is_free.return_value = True
+        >>> state = Mock(creatures={"hero": mover}, event_sequence=1)
         >>> movement = PendingMovement("move", "hero", "right", Position(0, 0),
         ...     Position(1, 0), MovementBudget(5), MovementCost(1), "trigger")
-        >>> ReactionEngine().resume_movement(state, movement, EncounterProgress())
+        >>> from unittest.mock import patch
+        >>> with patch(
+        ...     "srd_arena.domain.encounters.reaction_runtime."
+        ...     "movement_continuation.position_is_free", return_value=True
+        ... ):
+        ...     ReactionEngine().resume_movement(
+        ...         state, movement, EncounterProgress()
+        ...     )
         >>> (mover.position, mover.movement_remaining)
         (Position(x=1, y=0), 5)
         """

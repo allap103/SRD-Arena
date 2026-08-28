@@ -19,6 +19,7 @@ from ..encounter_models.resolution import (
     EncounterProgress,
 )
 from ..refs import reroll_die_action_id as _reroll_die_action_id
+from ..state_runtime import create_event, next_frame_id
 from .attack_lifecycle import resolve_attack_lifecycle
 from .rolls import roll_dice
 
@@ -68,11 +69,10 @@ def open_damage_reroll_decision(
     ... )
     >>> parent = DecisionFrame("turn-1", "hero", "turn", "active")
     >>> state = SimpleNamespace(
-    ...     _next_frame_id=lambda: "reroll-1",
+    ...     frame_sequence=1, event_sequence=1,
     ...     current_decision=lambda: parent,
     ...     active_attacks_remaining=0,
     ...     interrupts=SimpleNamespace(decision_stack=[]),
-    ...     _event=lambda event_type, **values: event_type,
     ... )
     >>> progress = EncounterProgress()
     >>> open_damage_reroll_decision(
@@ -85,7 +85,7 @@ def open_damage_reroll_decision(
     ('reroll_dice', True, [])
     """
 
-    frame_id = state._next_frame_id()
+    frame_id = next_frame_id(state)
     current_frame = state.current_decision()
     request = DamageRerollRequest(
         action_id=action_id,
@@ -121,7 +121,8 @@ def open_damage_reroll_decision(
         )
     )
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "attack_pending",
             creature_ref=attacker_ref,
             frame_id=frame_id,
@@ -210,9 +211,7 @@ def apply_damage_reroll_action(
     >>> frame = DecisionFrame(
     ...     "reroll", "hero", "reroll_dice", "gwm", request=request
     ... )
-    >>> state = SimpleNamespace(
-    ...     _event=lambda event_type, **values: event_type
-    ... )
+    >>> state = SimpleNamespace(event_sequence=1)
     >>> with patch(
     ...     "srd_arena.domain.encounters.reaction_runtime.damage_rerolls."
     ...     "finalize_damage_reroll"
@@ -229,7 +228,8 @@ def apply_damage_reroll_action(
         raise RuntimeError("Damage reroll requested without a pending attack.")
     progress = EncounterProgress()
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "action_declared",
             creature_ref=request.attacker_ref,
             frame_id=decision.id,
@@ -262,7 +262,8 @@ def apply_damage_reroll_action(
             )
         )
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "damage_rerolled",
                 creature_ref=request.attacker_ref,
                 frame_id=decision.id,
@@ -313,8 +314,7 @@ def finalize_damage_reroll(
     ...     creatures={
     ...         "hero": SimpleNamespace(creature=SimpleNamespace(name="Hero")),
     ...         "goblin": SimpleNamespace(creature=object(), is_alive=True),
-    ...     },
-    ...     _event=lambda event_type, **values: event_type,
+    ...     }, event_sequence=1,
     ... )
     >>> progress = EncounterProgress()
     >>> frame = DecisionFrame("reroll", "hero", "reroll_dice", "gwm")
@@ -326,7 +326,7 @@ def finalize_damage_reroll(
     ...     "resolve_attack_lifecycle"
     ... ):
     ...     finalize_damage_reroll(state, request, progress, frame)
-    >>> progress.events
+    >>> [event.type for event in progress.events]
     ['attack_resolved']
     """
 
@@ -347,7 +347,8 @@ def finalize_damage_reroll(
     )
     progress.messages.extend(request.attack.messages)
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "attack_resolved",
             creature_ref=request.attacker_ref,
             frame_id=decision.id,
@@ -365,7 +366,8 @@ def finalize_damage_reroll(
     )
     if not target.is_alive:
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "creature_defeated",
                 creature_ref=request.target_ref,
                 frame_id=decision.id,

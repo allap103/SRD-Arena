@@ -17,6 +17,9 @@ from ....geometry import (
 from ....spells.definitions import Spell
 from ....spells.resolution import SpellTargetContext
 from ....spells.rules import spell_area_shape
+from ...state_runtime import creature_position
+from .spell_targets import spell_target_context
+from .spellcasting import spell_range_squares_for
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -35,22 +38,30 @@ def spell_area_targets(
 
     >>> from types import SimpleNamespace
     >>> target = SimpleNamespace(target_ref="goblin")
-    >>> state = SimpleNamespace(
-    ...     _spell_area=lambda *args, **kwargs: None,
-    ...     _spell_target_context=lambda actor, ref: target,
-    ... )
+    >>> state = SimpleNamespace()
     >>> spell = Spell("bolt", "Bolt", None, 0)
-    >>> spell_area_targets(state, SimpleNamespace(), spell, target_ref="goblin")
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.option_discovery.spell_areas."
+    ...     "spell_area", return_value=None
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.option_discovery.spell_areas."
+    ...     "spell_target_context", return_value=target
+    ... ):
+    ...     targets = spell_area_targets(
+    ...         state, SimpleNamespace(), spell, target_ref="goblin"
+    ...     )
+    >>> targets
     (namespace(target_ref='goblin'),)
     """
 
-    area = self._spell_area(actor, spell, target_ref=target_ref, aim_point=aim_point)
+    area = spell_area(self, actor, spell, target_ref=target_ref, aim_point=aim_point)
     if area is None:
         if target_ref is None:
             return ()
-        target = self._spell_target_context(actor, target_ref)
+        target = spell_target_context(self, actor, target_ref)
         return (target,) if target is not None else ()
-    return tuple(self._targets_in_area(actor, area))
+    return tuple(targets_in_area(self, actor, area))
 
 
 def spell_area(
@@ -66,7 +77,7 @@ def spell_area(
     >>> from srd_arena.domain.geometry import Grid
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="mage"),
-    ...     _creature_position=lambda ref: Position(0, 0),
+    ...     creatures={"mage": SimpleNamespace(position=Position(0, 0))},
     ...     definition=SimpleNamespace(grid=Grid(10, 10)),
     ... )
     >>> spell = Spell(
@@ -79,7 +90,7 @@ def spell_area(
     """
 
     creature_ref = self.current_decision().creature_ref
-    creature_position = self._creature_position(creature_ref)
+    actor_position = creature_position(self, creature_ref)
     if spell.geometry_mode == "point_area":
         if aim_point is None:
             return None
@@ -97,31 +108,31 @@ def spell_area(
         return None
     if aim_point is not None:
         if (
-            abs(aim_point[0] - (creature_position.x + 0.5)) < 1e-9
-            and abs(aim_point[1] - (creature_position.y + 0.5)) < 1e-9
+            abs(aim_point[0] - (actor_position.x + 0.5)) < 1e-9
+            and abs(aim_point[1] - (actor_position.y + 0.5)) < 1e-9
         ):
             return None
         direction = Vector2D(
-            aim_point[0] - (creature_position.x + 0.5),
-            aim_point[1] - (creature_position.y + 0.5),
+            aim_point[0] - (actor_position.x + 0.5),
+            aim_point[1] - (actor_position.y + 0.5),
         )
     else:
         if target_ref is None:
             return None
-        target = self._spell_target_context(actor, target_ref)
+        target = spell_target_context(self, actor, target_ref)
         if target is None or target_ref == creature_ref:
             return None
         direction = vector_between_positions(
-            creature_position,
-            self._creature_position(target_ref),
+            actor_position,
+            creature_position(self, target_ref),
         )
-    length = self._spell_range_squares(spell, actor)
+    length = spell_range_squares_for(self, spell, actor)
     if length is None:
         return None
     coverage_threshold = self.geometry_config.directional_area_cell_coverage_threshold
     return build_directional_area(
         spell.range_data.get("type"),
-        creature_position,
+        actor_position,
         direction,
         length,
         self.definition.grid,
@@ -144,9 +155,14 @@ def targets_in_area(
     ...         "goblin": SimpleNamespace(is_alive=True, position=Position(1, 1)),
     ...         "fallen": SimpleNamespace(is_alive=False, position=Position(1, 1)),
     ...     },
-    ...     _spell_target_context=lambda actor, ref: target,
     ... )
-    >>> targets_in_area(state, SimpleNamespace(), area)
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.option_discovery.spell_areas."
+    ...     "spell_target_context", return_value=target
+    ... ):
+    ...     targets = targets_in_area(state, SimpleNamespace(), area)
+    >>> targets
     [namespace(target_ref='goblin')]
     """
 
@@ -157,7 +173,7 @@ def targets_in_area(
             continue
         if (target_state.position.x, target_state.position.y) not in occupied_cells:
             continue
-        target = self._spell_target_context(actor, target_ref)
+        target = spell_target_context(self, actor, target_ref)
         if target is not None:
             targets.append(target)
     return targets

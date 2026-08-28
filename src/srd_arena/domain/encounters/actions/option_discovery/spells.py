@@ -28,7 +28,8 @@ from ...encounter_models.actions import (
     ActionCost,
     EncounterAction,
 )
-from .spell_targets import _spell_removal_choices
+from .spell_targets import _spell_removal_choices, spell_action_targets
+from .spellcasting import spell_action_cost
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -55,7 +56,7 @@ def available_spell_actions(
         return []
     actions: list[EncounterAction] = []
     for spell in spellcasting.learned_spells:
-        cost = self._spell_action_cost(spell)
+        cost = spell_action_cost(self, spell)
         if spell.geometry_mode in {"directional_area", "point_area"}:
             _append_spell_action_variants(
                 actions,
@@ -71,7 +72,7 @@ def available_spell_actions(
                 ),
             )
             continue
-        targets = self._spell_action_targets(actor, spell)
+        targets = spell_action_targets(self, actor, spell)
         shared_effects = capability_effects(spell.definition)
         conditions = tuple(
             effect.condition

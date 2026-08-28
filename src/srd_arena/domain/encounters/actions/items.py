@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from ...creatures import Creature
 from ..encounter_models.resolution import EncounterProgress
+from ..state_runtime import create_event
 from .consumables import healing_potion_dice
 
 if TYPE_CHECKING:
@@ -33,12 +34,11 @@ def resolve_utilize_action(
     ... )
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
-    ...     item_templates={},
-    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ...     item_templates={}, event_sequence=1,
     ... )
     >>> progress = EncounterProgress()
     >>> resolve_utilize_action(state, actor, "potion", progress, "use-1")
-    >>> (progress.messages[-1], progress.events[-1][1]["success"])
+    >>> (progress.messages[-1], progress.events[-1].data["success"])
     (('system', 'You do not have that item.'), False)
     """
 
@@ -47,7 +47,8 @@ def resolve_utilize_action(
     if item is None or not actor.inventory.has_item(item_id):
         progress.messages.append(("system", "You do not have that item."))
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -58,7 +59,8 @@ def resolve_utilize_action(
     if not self.active_bonus_action_available:
         progress.messages.append(("system", "You have already used your Bonus Action."))
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -77,7 +79,8 @@ def resolve_utilize_action(
             ("system", f"{item.name} cannot be used that way yet.")
         )
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -114,7 +117,8 @@ def resolve_utilize_action(
     if consumed:
         progress.messages.append(("system", f"{item.name} is consumed."))
     progress.events.append(
-        self._event(
+        create_event(
+            self,
             "item_used",
             creature_ref=creature_ref,
             action_id=action_id,

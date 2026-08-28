@@ -13,6 +13,8 @@ from ...rolls.saving_throws import (
     SavingThrowCreature,
     resolve_saving_throw,
 )
+from ..state_combat import automatic_save_failure_provider_ids_for
+from ..state_runtime import apply_encounter_effects, create_event
 from .concentration import resolve_concentration_damage
 from .lifecycle_events import resolve_spell_lifecycle_event
 from .removal import _remove_effect_target, _remove_effect_tree
@@ -121,7 +123,8 @@ def resolve_end_turn_effects(
             sourced_mode_override=roll_rules.mode,
             roller=roll_die,
             automatic_failure_reasons=(
-                state._automatic_save_failure_provider_ids_for(
+                automatic_save_failure_provider_ids_for(
+                    state,
                     creature_ref,
                     ability,
                 )
@@ -225,7 +228,8 @@ def resolve_end_turn_effects(
                         and condition.target_ref == creature_ref
                     )
                 ]
-                state._apply_effects(
+                apply_encounter_effects(
+                    state,
                     [
                         EffectResult(
                             kind="apply_condition",
@@ -261,7 +265,8 @@ def resolve_end_turn_effects(
                 ]
         if progress is not None:
             progress.events.append(
-                state._event(
+                create_event(
+                    state,
                     "ongoing_effect_resolved",
                     creature_ref=creature_ref,
                     data={

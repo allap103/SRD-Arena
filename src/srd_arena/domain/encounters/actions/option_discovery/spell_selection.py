@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 from ....spells.rules import parse_spell_action_value, spell_chooses_area_targets
 from ...encounter_models.actions import EncounterAction
+from .spell_areas import spell_area_targets
+from .spell_targets import spell_action_targets
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -46,9 +48,9 @@ def spell_target_selection_actions(
         str(pending.action.value)
     )
     candidates = (
-        state._spell_area_targets(actor, spell, aim_point=aim_point)
+        spell_area_targets(state, actor, spell, aim_point=aim_point)
         if spell_chooses_area_targets(spell)
-        else tuple(state._spell_action_targets(actor, spell))
+        else tuple(spell_action_targets(state, actor, spell))
     )
     if pending.resource_pool_total is not None:
         for target in candidates:

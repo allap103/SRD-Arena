@@ -14,6 +14,7 @@ from ....spells.rules import (
 )
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
+from ..spellcasting import resolve_spell_action
 
 if TYPE_CHECKING:
     from ....creatures import Creature
@@ -161,7 +162,8 @@ def _confirm_spell_targets(
     )
     state.interrupts.decision_stack.pop()
     state.interrupts.pending_spell_cast = None
-    state._resolve_spell_action(
+    resolve_spell_action(
+        state,
         actor,
         payload,
         progress,

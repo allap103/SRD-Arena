@@ -10,6 +10,7 @@ from .encounter_models.decisions import (
     ResumeMovement,
 )
 from .encounter_models.resolution import EncounterProgress
+from .state_runtime import create_event
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -118,7 +119,8 @@ class ContinuationRunner:
         decision = state.interrupts.decision_stack[-1]
         state.interrupts.decision_stack.pop()
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "decision_closed",
                 creature_ref=decision.creature_ref,
                 frame_id=decision.id,

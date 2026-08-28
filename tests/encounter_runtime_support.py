@@ -11,6 +11,7 @@ import pytest
 from srd_arena.content.spells import SpellCatalog, build_spell
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.domain.spells import Spell
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import ActionAim, DirectTargetOptionDetails
@@ -29,7 +30,7 @@ STAT_BLOCK_ACTION_SCENARIO_DIR = (
 CONDITIONS_SHOWCASE_SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "conditions_showcase"
 )
-ROLL_INITIATIVE = EncounterState._roll_initiative
+ROLL_INITIATIVE = EncounterState.roll_initiative
 
 
 def as_mapping(value: object) -> Mapping[str, object]:
@@ -65,7 +66,7 @@ def player_first_initiative(monkeypatch: pytest.MonkeyPatch) -> None:
         first_external_ref = next(
             creature_ref
             for creature_ref in self.creatures
-            if self._creature_controller(creature_ref) == "external"
+            if creature_controller(self, creature_ref) == "external"
         )
         self.initiative_order = [
             first_external_ref,
@@ -76,7 +77,7 @@ def player_first_initiative(monkeypatch: pytest.MonkeyPatch) -> None:
             ),
         ]
 
-    monkeypatch.setattr(EncounterState, "_roll_initiative", fixed_initiative)
+    monkeypatch.setattr(EncounterState, "roll_initiative", fixed_initiative)
 
 
 def action_id_by_label(session: Session, label: str) -> str:

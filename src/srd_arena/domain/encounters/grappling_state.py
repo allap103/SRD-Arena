@@ -18,6 +18,7 @@ from .condition_state import (
     condition_sources_for,
 )
 from .encounter_models.actions import CreatureRef
+from .state_runtime import creature_size
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -211,7 +212,10 @@ def movement_cost_for(
     ... )
     >>> state = SimpleNamespace(
     ...     conditions=[], relationships=[relationship],
-    ...     _creature_size=lambda ref: {"ogre": "L", "hero": "M"}[ref],
+    ...     creatures={
+    ...         "ogre": SimpleNamespace(creature=SimpleNamespace(size="L")),
+    ...         "hero": SimpleNamespace(creature=SimpleNamespace(size="M")),
+    ...     },
     ... )
     >>> movement_cost_for(state, "ogre")
     2
@@ -220,10 +224,10 @@ def movement_cost_for(
     if is_grappled(state, creature_ref):
         return None
     cost = 1
-    grappler_size = state._creature_size(creature_ref)
+    grappler_size = creature_size(state, creature_ref)
     for target_ref in grappling_targets_for(state, creature_ref):
         if not is_two_sizes_smaller(
-            state._creature_size(target_ref),
+            creature_size(state, target_ref),
             grappler_size,
         ):
             cost += 1

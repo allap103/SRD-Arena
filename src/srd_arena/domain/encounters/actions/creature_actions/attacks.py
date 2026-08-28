@@ -11,6 +11,8 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ...participants import creatures_are_opponents
+from ...state_runtime import living_creature_refs
 from ..attack_resolution import attack_sources
 from ..stat_block import executable_multiattack_slot_plans
 
@@ -35,14 +37,15 @@ def attack_action_candidates(
     >>> actor = SimpleNamespace(
     ...     creature=creature, pending_multiattack=[], attacks_remaining=0
     ... )
-    >>> state = SimpleNamespace(
-    ...     creatures={"hero": actor}, item_templates={},
-    ...     _living_creature_refs=lambda: [],
-    ...     _creatures_are_opponents=lambda first, second: False,
-    ... )
-    >>> actions = attack_action_candidates(
-    ...     state, "hero", lambda creature, name: name
-    ... )
+    >>> state = SimpleNamespace(creatures={"hero": actor}, item_templates={})
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.attacks."
+    ...     "living_creature_refs", return_value=[]
+    ... ):
+    ...     actions = attack_action_candidates(
+    ...         state, "hero", lambda creature, name: name
+    ...     )
     >>> [(action.label, action.kind, action.value) for action in actions]
     [('Grapple', 'grapple', None)]
     """
@@ -77,8 +80,8 @@ def attack_action_candidates(
 
     opponent_refs = [
         target_ref
-        for target_ref in state._living_creature_refs()
-        if state._creatures_are_opponents(creature_ref, target_ref)
+        for target_ref in living_creature_refs(state)
+        if creatures_are_opponents(state, creature_ref, target_ref)
     ]
     attack_target_refs: list[str | None] = (
         list(opponent_refs) if opponent_refs else [None]

@@ -8,8 +8,9 @@ from ...creatures import Creature
 from ...creatures.feature_rules import (
     resolve_feature_action as _resolve_feature_action_impl,
 )
-from ..attack_economy import clear_attack_action
+from ..attack_economy import clear_attack_action, consume_action
 from ..encounter_models.resolution import EncounterProgress
+from ..state_runtime import create_event
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -39,11 +40,11 @@ def resolve_feature_action(
     ... )
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
-    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ...     event_sequence=1,
     ... )
     >>> progress = EncounterProgress()
     >>> resolve_feature_action(state, creature, "unknown", progress, "feature-1")
-    >>> (progress.messages[-1], progress.events[-1][1]["success"])
+    >>> (progress.messages[-1], progress.events[-1].data["success"])
     (('system', 'unknown is not implemented yet.'), False)
     """
 
@@ -52,7 +53,8 @@ def resolve_feature_action(
     if feature_action is None:
         progress.messages.append(("system", f"{feature_id} is not implemented yet."))
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -66,7 +68,8 @@ def resolve_feature_action(
     ):
         progress.messages.append(("system", "You have already used your Bonus Action."))
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -77,7 +80,8 @@ def resolve_feature_action(
     if feature_action.economy == "action" and self.active_actions_remaining <= 0:
         progress.messages.append(("system", "You have already used your Action."))
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -95,7 +99,8 @@ def resolve_feature_action(
     ):
         progress.messages.append(("system", "You have already used your Reaction."))
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -110,7 +115,8 @@ def resolve_feature_action(
             ("system", f"You have no uses of {feature_action.label} remaining.")
         )
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -125,7 +131,8 @@ def resolve_feature_action(
             ("system", f"{feature_action.label} is not implemented yet.")
         )
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -137,7 +144,7 @@ def resolve_feature_action(
     if feature_action.economy == "bonus_action":
         self.active_bonus_action_available = False
     elif feature_action.economy == "action":
-        self._consume_action(allow_magic=False)
+        consume_action(self, allow_magic=False)
         clear_attack_action(self.active_creature_state)
     elif feature_action.economy == "reaction":
         self.active_reaction_available = False
@@ -157,7 +164,8 @@ def resolve_feature_action(
     target_label = healing_data.get("target_label", creature.name)
     healing = healing_data.get("amount", 0)
     progress.events.append(
-        self._event(
+        create_event(
+            self,
             "feature_used",
             creature_ref=creature_ref,
             action_id=action_id,

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from srd_arena.domain.effects.conditions import Condition
+from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 SCENARIO_DIR = (
@@ -32,8 +33,8 @@ def test_spell_condition_showcase_loads_wave_1b_capability() -> None:
     assert all(
         spell.definition is not None for spell in savant.spellcasting.learned_spells
     )
-    assert state._creature_controller("lifecycle_savant") == "external"
-    assert state._creature_controller("sleep_target") == "external"
+    assert creature_controller(state, "lifecycle_savant") == "external"
+    assert creature_controller(state, "sleep_target") == "external"
     assert state.creatures["beast_target"].creature.statistics.creature_type == "beast"
     assert Condition.EXHAUSTION in (
         state.creatures["sleep_immune_target"].creature.statistics.condition_immunities

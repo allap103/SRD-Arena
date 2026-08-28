@@ -19,6 +19,8 @@ from ..encounter_models.decisions import (
     ResumeMovement,
 )
 from ..encounter_models.resolution import EncounterProgress
+from ..participants import creature_controller, creatures_are_opponents
+from ..state_runtime import create_event, next_frame_id
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -59,9 +61,9 @@ def queue_opportunity_attack(
         if creature_ref != mover_ref
         and creature_ref not in excluded_reactor_refs
         and creature_state.is_alive
-        and state._creatures_are_opponents(creature_ref, mover_ref)
+        and creatures_are_opponents(state, creature_ref, mover_ref)
         and (
-            not external_only or state._creature_controller(creature_ref) == "external"
+            not external_only or creature_controller(state, creature_ref) == "external"
         )
         and state.combat_rules.reaction_eligibility(
             state,
@@ -79,8 +81,8 @@ def queue_opportunity_attack(
         return False
     reactor_ref, _reactor = reactors[0]
 
-    frame_id = state._next_frame_id()
-    trigger_id = state._next_frame_id(prefix="trigger")
+    frame_id = next_frame_id(state)
+    trigger_id = next_frame_id(state, prefix="trigger")
     current_frame = state.current_decision()
     movement = PendingMovement(
         action_id=action_id,
@@ -110,7 +112,8 @@ def queue_opportunity_attack(
         )
     )
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "trigger_opened",
             creature_ref=reactor_ref,
             frame_id=frame_id,

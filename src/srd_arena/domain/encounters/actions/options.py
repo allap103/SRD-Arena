@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ..creature_control import available_creature_actions
 from ..encounter_models.actions import EncounterAction
+from ..participants import creature_controller
 from .option_discovery.spell_areas import (
     spell_area,
     spell_area_targets,
@@ -42,26 +44,33 @@ def available_actions(self: EncounterState) -> list[EncounterAction]:
 
     >>> from types import SimpleNamespace
     >>> decision = SimpleNamespace(creature_ref="hero", kind="turn")
-    >>> scripted = SimpleNamespace(
-    ...     current_decision=lambda: decision,
-    ...     _creature_controller=lambda ref: "scripted",
-    ... )
-    >>> available_actions(scripted)
+    >>> scripted = SimpleNamespace(current_decision=lambda: decision)
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.options.creature_controller",
+    ...     return_value="scripted",
+    ... ):
+    ...     scripted_actions = available_actions(scripted)
+    >>> scripted_actions
     []
     >>> decision.kind = "reroll_dice"
     >>> external = SimpleNamespace(
     ...     current_decision=lambda: decision,
-    ...     _creature_controller=lambda ref: "external",
     ...     reaction_engine=SimpleNamespace(
     ...         reroll_damage_actions=lambda state: [EncounterAction("Accept", "accept_roll")]
     ...     ),
     ... )
-    >>> available_actions(external)[0].kind
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.options.creature_controller",
+    ...     return_value="external",
+    ... ):
+    ...     external_actions = available_actions(external)
+    >>> external_actions[0].kind
     'accept_roll'
     """
 
     decision = self.current_decision()
-    if self._creature_controller(decision.creature_ref) != "external":
+    if creature_controller(self, decision.creature_ref) != "external":
         return []
     if decision.kind == "reroll_dice":
         return self.reaction_engine.reroll_damage_actions(self)
@@ -69,7 +78,7 @@ def available_actions(self: EncounterState) -> list[EncounterAction]:
         return self.reaction_engine.reaction_actions(self)
     if decision.kind == "spell_targets":
         return spell_target_selection_actions(self, decision.creature_ref)
-    return self._available_creature_actions(decision.creature_ref)
+    return available_creature_actions(self, decision.creature_ref)
 
 
 __all__ = [

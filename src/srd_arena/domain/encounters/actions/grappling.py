@@ -7,11 +7,14 @@ from typing import TYPE_CHECKING
 from ...creatures import Creature
 from ...effects.conditions import Condition
 from ...rolls.dice import resolve_d20
+from ..attack_economy import consume_action
+from ..condition_state import remove_condition_from_source
 from ..encounter_models.actions import (
     ActionCost,
     EncounterAction,
 )
 from ..encounter_models.resolution import EncounterProgress
+from ..state_runtime import create_event
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -112,7 +115,7 @@ def resolve_escape_action(
     )
     if grapple is None:
         raise RuntimeError("That grapple is no longer active.")
-    state._consume_action(allow_magic=False)
+    consume_action(state, allow_magic=False)
     escape_dc = grapple.metadata["escape_dc"]
     if not isinstance(escape_dc, int):
         raise RuntimeError("Grapple escape DC must be an integer.")
@@ -133,7 +136,8 @@ def resolve_escape_action(
     )
     success = check.total >= escape_dc
     if success:
-        state._remove_condition_from_source(
+        remove_condition_from_source(
+            state,
             creature_ref,
             Condition.GRAPPLED,
             action.value,
@@ -147,7 +151,8 @@ def resolve_escape_action(
         )
     )
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "action_resolved",
             creature_ref=creature_ref,
             action_id=action_id,

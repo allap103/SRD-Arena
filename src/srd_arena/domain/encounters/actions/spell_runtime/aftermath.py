@@ -12,6 +12,7 @@ from ...ongoing_effects import (
     resolve_concentration_damage,
     resolve_spell_lifecycle_event,
 )
+from ...state_runtime import apply_encounter_effects, create_event
 
 if TYPE_CHECKING:
     from ....creatures import Spellcasting
@@ -38,29 +39,30 @@ def apply_spell_result(
     capability result so frontends do not need to inspect domain objects.
 
     >>> from types import SimpleNamespace
-    >>> from unittest.mock import Mock
+    >>> from unittest.mock import patch
     >>> from srd_arena.domain.creatures.feature_rules.types import CapabilityActionResult
     >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
     >>> from srd_arena.domain.spells import Spell
-    >>> state = SimpleNamespace(
-    ...     _apply_effects=Mock(return_value=[]),
-    ...     _event=lambda event_type, **values: (event_type, values["data"]),
-    ... )
+    >>> state = SimpleNamespace(event_sequence=1)
     >>> result = CapabilityActionResult("fire-bolt", "Fire Bolt", [], [])
     >>> progress = EncounterProgress()
-    >>> apply_spell_result(
-    ...     state,
-    ...     spellcasting=SimpleNamespace(spell_slots_remaining={}),
-    ...     spell=Spell("fire-bolt", "Fire Bolt", None, 0),
-    ...     cast_level=None,
-    ...     creature_ref="mage",
-    ...     action_id="cast",
-    ...     result=result,
-    ...     progress=progress,
-    ...     target_ref="dummy",
-    ...     target=SimpleNamespace(target_label="Dummy"),
-    ... )
-    >>> (progress.events[0][0], progress.events[0][1]["spell_id"])
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.spell_runtime.aftermath."
+    ...     "apply_encounter_effects", return_value=[]
+    ... ):
+    ...     apply_spell_result(
+    ...         state,
+    ...         spellcasting=SimpleNamespace(spell_slots_remaining={}),
+    ...         spell=Spell("fire-bolt", "Fire Bolt", None, 0),
+    ...         cast_level=None,
+    ...         creature_ref="mage",
+    ...         action_id="cast",
+    ...         result=result,
+    ...         progress=progress,
+    ...         target_ref="dummy",
+    ...         target=SimpleNamespace(target_label="Dummy"),
+    ...     )
+    >>> (progress.events[0].type, progress.events[0].data["spell_id"])
     ('spell_cast', 'fire-bolt')
     """
 
@@ -71,9 +73,12 @@ def apply_spell_result(
         creature_ref=creature_ref,
         progress=progress,
     )
-    progress.messages.extend(state._apply_effects(result.effects, origin_id=action_id))
+    progress.messages.extend(
+        apply_encounter_effects(state, result.effects, origin_id=action_id)
+    )
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "spell_cast",
             creature_ref=creature_ref,
             action_id=action_id,

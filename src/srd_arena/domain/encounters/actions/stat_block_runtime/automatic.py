@@ -7,8 +7,11 @@ from typing import TYPE_CHECKING
 from ....capabilities import DamageEffect
 from ....creatures import Creature
 from ....creatures.stat_block_actions import AutomaticActionDefinition
+from ...attack_economy import consume_action
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
+from ...grappling_state import remove_relationships_for_creature
+from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
 from .rolls import roll_dice
 
@@ -47,7 +50,7 @@ def resolve_automatic_stat_block_action(
         raise ValueError("Automatic stat-block action requires a target.")
     target_ref = action.value
     target = state.creatures[target_ref].creature
-    state._consume_action(allow_magic=False)
+    consume_action(state, allow_magic=False)
     consume_stat_block_action_resource(creature, definition.name)
     damage = 0
     damage_details: list[dict[str, object]] = []
@@ -89,7 +92,8 @@ def resolve_automatic_stat_block_action(
         )
     )
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "stat_block_action_resolved",
             creature_ref=creature_ref,
             action_id=action_id,
@@ -102,9 +106,10 @@ def resolve_automatic_stat_block_action(
         )
     )
     if target.get_health() <= 0:
-        state._remove_relationships_for_creature(target_ref)
+        remove_relationships_for_creature(state, target_ref)
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "creature_defeated",
                 creature_ref=target_ref,
                 action_id=action_id,

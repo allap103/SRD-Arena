@@ -6,6 +6,7 @@ from srd_arena.domain.effects import EffectResult, TriggeredEffect
 from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.encounters.grappling_state import apply_grapple
 from srd_arena.engine.session import Session
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
@@ -22,7 +23,7 @@ def _stable_initiative(monkeypatch: pytest.MonkeyPatch) -> None:
         state.initiative_entries = []
         state.initiative_order = list(state.creatures)
 
-    monkeypatch.setattr(EncounterState, "_roll_initiative", _use_definition_order)
+    monkeypatch.setattr(EncounterState, "roll_initiative", _use_definition_order)
 
 
 def _all_external_session() -> Session:
@@ -389,7 +390,8 @@ def test_resumed_movement_carries_a_grappled_creature() -> None:
     mover.position.x, mover.position.y = 3, 3
     grappled.position.x, grappled.position.y = 4, 3
     reactor.position.x, reactor.position.y = 3, 4
-    state._apply_grapple(
+    apply_grapple(
+        state,
         condition_from_effect(
             EffectResult(
                 kind="apply_condition",
@@ -400,7 +402,7 @@ def test_resumed_movement_carries_a_grappled_creature() -> None:
                     "source_label": mover.creature.name,
                 },
             )
-        )
+        ),
     )
     move = next(
         action

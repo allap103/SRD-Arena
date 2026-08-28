@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 from ....effects.runtime import OngoingEffectKind
 from ...ongoing_effects import end_concentration, resolve_spell_lifecycle_event
 from ...rule_queries import InvocationStartContext, InvocationStartResult
+from ...state_runtime import create_event
+from ..option_discovery.spellcasting import spend_spell_resources
 from .rolls import roll_die
 
 if TYPE_CHECKING:
@@ -55,11 +57,11 @@ def begin_spell_invocation(
     ...     resolve_invocation_start=lambda context, roller:
     ...         InvocationStartResult(context),
     ... )
-    >>> state = SimpleNamespace(
-    ...     _spend_spell_resources=Mock(),
-    ...     combat_rules=checks,
-    ... )
+    >>> state = SimpleNamespace(combat_rules=checks)
     >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.spell_runtime.invocation."
+    ...     "spend_spell_resources"
+    ... ) as spend, patch(
     ...     "srd_arena.domain.encounters.actions.spell_runtime.invocation."
     ...     "resolve_spell_lifecycle_event"
     ... ):
@@ -74,11 +76,11 @@ def begin_spell_invocation(
     ...         action_id="cast",
     ...         progress=EncounterProgress(),
     ...     )
-    >>> (allowed, state._spend_spell_resources.call_count)
+    >>> (allowed, spend.call_count)
     (True, 1)
     """
 
-    state._spend_spell_resources(spellcasting, spell, cost, cast_level)
+    spend_spell_resources(state, spellcasting, spell, cost, cast_level)
     if spell.concentration:
         _end_replaced_concentration(
             state,
@@ -104,7 +106,8 @@ def begin_spell_invocation(
     result = state.combat_rules.resolve_invocation_start(query, roll_die)
     if result.rolls:
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "invocation_start_checked",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -115,7 +118,8 @@ def begin_spell_invocation(
         return True
     progress.messages.extend(("system", failure.message) for failure in result.failures)
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "action_resolved",
             creature_ref=creature_ref,
             action_id=action_id,

@@ -24,9 +24,12 @@ from srd_arena.domain.effects.rule_effects import (
 )
 from srd_arena.domain.effects.runtime import EffectPolarity, OngoingEffectKind
 from srd_arena.domain.encounters import EncounterOrchestrator
+from srd_arena.domain.encounters.creature_control import creature_action_candidates
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.ongoing_effects import resolve_end_turn_effects
+from srd_arena.domain.encounters.participants import creature_controller
+from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.spells import Spell
 from srd_arena.engine.models import EngineOutcome
@@ -59,7 +62,7 @@ def _player_first_initiative(
         first_external_ref = next(
             creature_ref
             for creature_ref in self.creatures
-            if self._creature_controller(creature_ref) == "external"
+            if creature_controller(self, creature_ref) == "external"
         )
         self.initiative_order = [
             first_external_ref,
@@ -70,7 +73,7 @@ def _player_first_initiative(
             ),
         ]
 
-    monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
+    monkeypatch.setattr(EncounterState, "roll_initiative", _fixed_initiative)
 
 
 def _choose_directional_spell(
@@ -349,7 +352,8 @@ def test_slow_limits_attacks_made_through_multiattack(
 ) -> None:
     state = _assassin_showcase_state()
     assassin = state.active_creature_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -409,7 +413,8 @@ def test_ending_slow_mid_multiattack_restores_pending_attacks(
 ) -> None:
     state = _assassin_showcase_state()
     assassin = state.active_creature_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -523,7 +528,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
     assert first_check["code"] == ("slow.somatic_spell_failure")
     second_wind = next(
         action
-        for action in state._creature_action_candidates("player")
+        for action in creature_action_candidates(state, "player")
         if action.label == "Second Wind"
     )
     compatibility = state.combat_rules.action_compatibility(
@@ -551,7 +556,8 @@ def test_ending_slow_mid_attack_restores_unused_extra_attack(
     actor.position = Position(4, 3)
     state.creatures["goblin_1"].position = Position(4, 2)
     state.creatures["goblin_1"].creature.current_health = 20
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",

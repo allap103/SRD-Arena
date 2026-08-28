@@ -12,6 +12,8 @@ from ...encounter_models.actions import (
 )
 from ..consumables import healing_potions_in_inventory
 from ..grappling import available_escape_actions
+from ..option_discovery.spells import available_spell_actions
+from ..option_discovery.standard import available_feature_actions
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -31,10 +33,14 @@ def special_action_candidates(
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": actor}, ongoing_effects=[], item_templates={},
-    ...     _available_feature_actions=lambda creature: [],
-    ...     _available_spell_actions=lambda creature: [],
     ... )
     >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.special."
+    ...     "available_feature_actions", return_value=[]
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.special."
+    ...     "available_spell_actions", return_value=[]
+    ... ), patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions.special.available_escape_actions",
     ...     return_value=[],
     ... ):
@@ -45,8 +51,8 @@ def special_action_candidates(
 
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
-    actions.extend(state._available_feature_actions(actor.creature))
-    actions.extend(state._available_spell_actions(actor.creature))
+    actions.extend(available_feature_actions(state, actor.creature))
+    actions.extend(available_spell_actions(state, actor.creature))
 
     for effect in state.ongoing_effects:
         end_events = effect.parameters.get("end_events", [])

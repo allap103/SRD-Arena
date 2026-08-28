@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .continuations import ContinuationRunner
+from .creature_control import available_creature_actions, execute_creature_action
 from .encounter_models.actions import (
     CreatureRef,
     EncounterAction,
@@ -21,6 +22,8 @@ from .encounter_models.resolution import (
     DecisionExecutionResult,
     EncounterProgress,
 )
+from .participants import creature_controller
+from .state_runtime import merge_progress
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -60,7 +63,7 @@ class EncounterOrchestrator:
                 f"Action '{action.id}' belongs to '{action.creature_ref}', "
                 f"not current decision actor '{decision.creature_ref}'."
             )
-        if state._creature_controller(decision.creature_ref) != "external":
+        if creature_controller(state, decision.creature_ref) != "external":
             raise RuntimeError(
                 "External action requested for a scripted-controlled creature."
             )
@@ -118,7 +121,8 @@ class EncounterOrchestrator:
                 state,
                 creature_ref,
                 tuple(
-                    state._available_creature_actions(
+                    available_creature_actions(
+                        state,
                         creature_ref,
                         include_attack_alternatives=True,
                     )
@@ -140,7 +144,7 @@ class EncounterOrchestrator:
                 action_limit=remaining_limit,
             )
             automatic_actions_resolved += actions_resolved
-            state._merge_progress(progress, actor_progress)
+            merge_progress(state, progress, actor_progress)
             if progress.transition is not None or progress.paused_for_decision:
                 break
             if completed_turn:
@@ -161,7 +165,7 @@ class EncounterOrchestrator:
             or state.interrupts.decision_stack
         ):
             return progress
-        state._merge_progress(progress, self.advance(state))
+        merge_progress(state, progress, self.advance(state))
         return progress
 
     def _finish_decision_execution(
@@ -207,7 +211,7 @@ class EncounterOrchestrator:
         action: EncounterAction,
         decision: DecisionFrame,
     ) -> EncounterProgress:
-        result = state._execute_creature_action(action, decision)
+        result = execute_creature_action(state, action, decision)
         progress = result.progress
         self._record_transition(state, progress)
         if progress.transition is not None:
@@ -215,7 +219,7 @@ class EncounterOrchestrator:
         if result.outcome is not ActionExecutionOutcome.END_TURN:
             return progress
         self._finish_turn(state, decision.creature_ref, progress)
-        state._merge_progress(progress, self.advance(state))
+        merge_progress(state, progress, self.advance(state))
         return progress
 
     def _run_creature_turn(
@@ -241,7 +245,8 @@ class EncounterOrchestrator:
             state,
             creature_ref,
             tuple(
-                state._available_creature_actions(
+                available_creature_actions(
+                    state,
                     creature_ref,
                     include_attack_alternatives=True,
                 )
@@ -252,7 +257,8 @@ class EncounterOrchestrator:
 
         actions_resolved = 0
         while actor.is_alive:
-            result = state._execute_creature_action(
+            result = execute_creature_action(
+                state,
                 action,
                 DecisionFrame(
                     id=f"turn-{creature_ref.replace(':', '-')}",
@@ -262,7 +268,7 @@ class EncounterOrchestrator:
                 ),
             )
             self._record_transition(state, result.progress)
-            state._merge_progress(progress, result.progress)
+            merge_progress(state, progress, result.progress)
             actions_resolved += 1
             if progress.transition is not None:
                 return True, progress, actions_resolved
@@ -279,7 +285,8 @@ class EncounterOrchestrator:
                 state,
                 creature_ref,
                 tuple(
-                    state._available_creature_actions(
+                    available_creature_actions(
+                        state,
                         creature_ref,
                         include_attack_alternatives=True,
                     )

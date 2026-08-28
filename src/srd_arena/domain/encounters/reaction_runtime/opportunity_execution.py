@@ -24,6 +24,9 @@ from ..encounter_models.resolution import (
     DecisionExecutionResult,
     EncounterProgress,
 )
+from ..participants import creature_controller, creatures_are_opponents
+from ..state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
+from ..state_runtime import create_event, creature_label, next_action_id
 from .attack_lifecycle import resolve_attack_lifecycle
 from .rolls import roll_dice, roll_die
 
@@ -85,8 +88,8 @@ def resolve_automatic_opportunity_attacks(
         if reactor_ref != mover_ref
         and reactor_ref not in excluded_reactor_refs
         and reactor.is_alive
-        and state._creatures_are_opponents(reactor_ref, mover_ref)
-        and state._creature_controller(reactor_ref) == "scripted"
+        and creatures_are_opponents(state, reactor_ref, mover_ref)
+        and creature_controller(state, reactor_ref) == "scripted"
         and state.combat_rules.reaction_eligibility(
             state,
             reactor_ref,
@@ -121,7 +124,8 @@ def resolve_automatic_opportunity_attacks(
             attacker_position=reactor.position,
             nearby_opponent_positions=(mover.position,),
             preferred_attack_type="melee",
-            attack_roll_mode_override=state._attack_roll_mode_for(
+            attack_roll_mode_override=attack_roll_mode_for(
+                state,
                 reactor_ref,
                 mover_ref,
                 "melee",
@@ -141,7 +145,8 @@ def resolve_automatic_opportunity_attacks(
             d20_roller=roll_die,
             dice_roller=roll_dice,
             automatic_critical_provider_ids=(
-                state._automatic_critical_provider_ids_for(
+                automatic_critical_provider_ids_for(
+                    state,
                     reactor_ref,
                     mover_ref,
                 )
@@ -162,7 +167,8 @@ def resolve_automatic_opportunity_attacks(
         )
         messages.extend(attack.messages)
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "attack_resolved",
                 creature_ref=reactor_ref,
                 action_id=action_id,
@@ -200,8 +206,7 @@ def apply_reaction_action(
     >>> frame = DecisionFrame("reaction", "guard", "reaction", "opportunity")
     >>> state = SimpleNamespace(
     ...     creatures={"guard": SimpleNamespace(reaction_available=True)},
-    ...     _next_action_id=lambda: "action-1",
-    ...     _event=lambda event_type, **values: event_type,
+    ...     action_sequence=1, event_sequence=1,
     ... )
     >>> result = apply_reaction_action(
     ...     state,
@@ -210,16 +215,17 @@ def apply_reaction_action(
     ...     open_damage_reroll=lambda *args, **kwargs: None,
     ... )
     >>> (result.completed, result.action_id, state.creatures["guard"].reaction_available)
-    (True, 'action-1', True)
+    (True, 'action_1', True)
     """
 
     progress = EncounterProgress()
-    resolved_action_id = state._next_action_id()
+    resolved_action_id = next_action_id(state)
 
     reactor_ref = decision.creature_ref
     reactor = state.creatures[reactor_ref]
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "action_declared",
             creature_ref=reactor_ref,
             frame_id=decision.id,
@@ -241,8 +247,8 @@ def apply_reaction_action(
         reactor.reaction_available = False
         target_ref = movement.creature_ref
         target = state.creatures[target_ref]
-        target_label = state._creature_label(target_ref)
-        reactor_label = state._creature_label(reactor_ref)
+        target_label = creature_label(state, target_ref)
+        reactor_label = creature_label(state, reactor_ref)
         attack_roll_rules = state.combat_rules.roll_modifiers(
             state,
             reactor_ref,
@@ -263,7 +269,8 @@ def apply_reaction_action(
             attacker_position=reactor.position,
             nearby_opponent_positions=(target.position,),
             preferred_attack_type="melee",
-            attack_roll_mode_override=state._attack_roll_mode_for(
+            attack_roll_mode_override=attack_roll_mode_for(
+                state,
                 reactor_ref,
                 target_ref,
                 "melee",
@@ -282,7 +289,8 @@ def apply_reaction_action(
             d20_roller=roll_die,
             dice_roller=roll_dice,
             automatic_critical_provider_ids=(
-                state._automatic_critical_provider_ids_for(
+                automatic_critical_provider_ids_for(
+                    state,
                     reactor_ref,
                     target_ref,
                 )
@@ -326,7 +334,8 @@ def apply_reaction_action(
         )
         progress.messages.extend(attack.messages)
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "attack_resolved",
                 creature_ref=reactor_ref,
                 frame_id=decision.id,
@@ -347,7 +356,8 @@ def apply_reaction_action(
         )
         if not target.is_alive:
             progress.events.append(
-                state._event(
+                create_event(
+                    state,
                     "creature_defeated",
                     creature_ref=movement.creature_ref,
                     frame_id=decision.id,

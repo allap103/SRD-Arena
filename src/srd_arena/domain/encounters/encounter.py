@@ -1,8 +1,8 @@
-"""Encounter state facade and its stable service bindings.
+"""Encounter state aggregate and its small public facade.
 
 Turn flow lives in orchestration and turn_lifecycle. This class owns state
-construction, derived convenience queries, and the explicit bindings to
-focused encounter services.
+construction and derived convenience properties. Focused encounter modules
+are called directly instead of being dynamically rebound onto the aggregate.
 """
 
 from __future__ import annotations
@@ -10,97 +10,15 @@ from __future__ import annotations
 from copy import deepcopy
 
 from ..creatures import Creature
+from ..effects.condition_rules import EffectiveConditionSet
+from ..effects.conditions import AppliedCondition, Condition
 from ..equipment import Item
 from ..geometry import GeometryConfig, MovementBudget, Position
 from ..rolls.dice import roll_dice as _roll_dice
 from ..rolls.dice import roll_die as _roll_die
-from .actions.execution import resolve_grapple_action as _resolve_grapple_action_impl
-from .actions.features import resolve_feature_action as _resolve_feature_action_impl
-from .actions.items import resolve_utilize_action as _resolve_utilize_action_impl
+from .actions.eligibility import ActionEligibility
 from .actions.options import (
     available_actions as _available_actions_impl,
-)
-from .actions.options import (
-    available_feature_actions as _available_feature_actions_impl,
-)
-from .actions.options import (
-    available_spell_actions as _available_spell_actions_impl,
-)
-from .actions.options import (
-    feature_action_available as _feature_action_available_impl,
-)
-from .actions.options import (
-    spell_action_cost as _spell_action_cost_impl,
-)
-from .actions.options import (
-    spell_action_targets as _spell_action_targets_impl,
-)
-from .actions.options import (
-    spell_area as _spell_area_impl,
-)
-from .actions.options import (
-    spell_area_targets as _spell_area_targets_impl,
-)
-from .actions.options import (
-    spell_cast_block_reason_for as _spell_cast_block_reason_impl,
-)
-from .actions.options import (
-    spell_range_squares_for as _spell_range_squares_impl,
-)
-from .actions.options import (
-    spell_target_context as _spell_target_context_impl,
-)
-from .actions.options import (
-    spell_targets_self_only_for as _spell_targets_self_only_impl,
-)
-from .actions.options import (
-    spend_spell_resources as _spend_spell_resources_impl,
-)
-from .actions.options import (
-    targets_in_area as _targets_in_area_impl,
-)
-from .actions.spellcasting import resolve_spell_action as _resolve_spell_action_impl
-from .conditions import (
-    apply_condition as _apply_condition_impl,
-)
-from .conditions import (
-    apply_grapple as _apply_grapple_impl,
-)
-from .conditions import (
-    condition_replaces as _condition_replaces_impl,
-)
-from .conditions import (
-    condition_sources_for as _condition_sources_for_impl,
-)
-from .conditions import (
-    grappled_sources_for as _grappled_sources_for_impl,
-)
-from .conditions import (
-    grappling_targets_for as _grappling_targets_for_impl,
-)
-from .conditions import (
-    is_grappled as _is_grappled_impl,
-)
-from .conditions import (
-    movement_cost_for as _movement_cost_for_impl,
-)
-from .conditions import (
-    remove_condition as _remove_condition_impl,
-)
-from .conditions import (
-    remove_condition_from_source as _remove_condition_from_source_impl,
-)
-from .conditions import (
-    remove_relationships_for_creature as _remove_relationships_for_creature_impl,
-)
-from .creature_control import (
-    available_creature_actions as _available_creature_actions_impl,
-)
-from .creature_control import (
-    creature_action_candidates as _creature_action_candidates_impl,
-)
-from .creature_control import (
-    execute_creature_action as _execute_creature_action_impl,
 )
 from .definitions import EncounterBehavior, EncounterDefinition
 from .encounter_models.actions import (
@@ -109,6 +27,7 @@ from .encounter_models.actions import (
     EncounterAction,
 )
 from .encounter_models.decisions import (
+    DecisionFrame,
     InterruptState,
     OpportunityAttackRequest,
     PendingMovement,
@@ -120,33 +39,8 @@ from .encounter_models.state import (
     RoundState,
     TurnState,
 )
-from .ongoing_effects import start_ongoing_effect as _start_ongoing_effect_impl
-from .participants import (
-    creature_controller as _creature_controller_impl,
-)
-from .participants import (
-    creature_for_ref as _creature_for_ref_impl,
-)
-from .participants import (
-    creature_team_id as _creature_team_id_impl,
-)
-from .participants import (
-    creatures_are_opponents as _creatures_are_opponents_impl,
-)
 from .reactions import REACTION_ENGINE, ReactionEngine
 from .rules import COMBAT_RULES, CombatRules
-from .state_combat import (
-    active_status_effects as _active_status_effects_impl,
-)
-from .state_combat import (
-    attack_roll_mode_for as _attack_roll_mode_for_impl,
-)
-from .state_combat import (
-    automatic_critical_provider_ids_for as _automatic_critical_provider_ids_for_impl,
-)
-from .state_combat import (
-    automatic_save_failure_provider_ids_for,
-)
 from .state_initialization import (
     initialize_action_selectors as _initialize_action_selectors_impl,
 )
@@ -177,42 +71,6 @@ from .state_queries import (
 from .state_queries import (
     requires_automatic_advance as _requires_automatic_advance_impl,
 )
-from .state_runtime import (
-    apply_encounter_effects as _apply_effects_impl,
-)
-from .state_runtime import (
-    consume_action as _consume_action_impl,
-)
-from .state_runtime import (
-    create_event as _event_impl,
-)
-from .state_runtime import (
-    creature_label as _creature_label_impl,
-)
-from .state_runtime import (
-    creature_position as _creature_position_impl,
-)
-from .state_runtime import (
-    creature_size as _creature_size_impl,
-)
-from .state_runtime import (
-    living_creature_refs as _living_creature_refs_impl,
-)
-from .state_runtime import (
-    merge_progress as _merge_progress_impl,
-)
-from .state_runtime import (
-    next_action_id as _next_action_id_impl,
-)
-from .state_runtime import (
-    next_frame_id as _next_frame_id_impl,
-)
-from .state_runtime import (
-    next_runtime_origin_id as _next_runtime_origin_id_impl,
-)
-from .state_runtime import (
-    position_is_free as _position_is_free_impl,
-)
 from .turn_lifecycle import TURN_LIFECYCLE, TurnLifecycle
 
 # Keep these module-level names for tests and helpers that monkeypatch
@@ -232,9 +90,9 @@ __all__ = [
 class EncounterState(EncounterStateData):
     """Own one running encounter and expose its stable orchestration facade.
 
-    Aggregate data lives in ``EncounterStateData`` while focused services own
-    turn flow, reactions, and rule queries. This facade binds those services to
-    the state instance and retains the public API consumed by the engine.
+    Aggregate data lives in ``EncounterStateData`` while focused modules own
+    turn flow, reactions, and rule queries. This facade retains only the small
+    public API consumed by the engine.
     """
 
     # Engines are stateless rule/orchestration collaborators.
@@ -512,84 +370,68 @@ class EncounterState(EncounterStateData):
             item_templates=item_templates or {},
             geometry_config=geometry_config or GeometryConfig(),
         )
-        state._roll_initiative()
-        state._initialize_action_selectors()
+        state.roll_initiative()
+        _initialize_action_selectors_impl(state)
         return state
 
-    _initialize_action_selectors = _initialize_action_selectors_impl
+    def roll_initiative(self) -> None:
+        """Roll and order the encounter participants before the first turn."""
 
-    def _roll_initiative(self) -> None:
         # Resolve the module-level name at call time so tests and simulations can
-        # still replace encounter.roll_die deterministically.
+        # replace encounter.roll_die deterministically.
         _roll_initiative_impl(self, roll_die)
 
-    # Read-only state and combat queries.
-    current_turn_label = _current_turn_label_impl
-    current_decision = _current_decision_impl
-    conditions_for = _conditions_for_impl
-    has_condition = _has_condition_impl
-    effective_conditions_for = _effective_conditions_for_impl
-    _attack_roll_mode_for = _attack_roll_mode_for_impl
-    _automatic_critical_provider_ids_for = _automatic_critical_provider_ids_for_impl
-    _automatic_save_failure_provider_ids_for = automatic_save_failure_provider_ids_for
-    _active_status_effects = _active_status_effects_impl
-    active_creature = _active_creature_impl
-    requires_automatic_advance = _requires_automatic_advance_impl
-    action_eligibility = _action_eligibility_impl
+    def current_turn_label(self) -> str:
+        """Return the label of the creature whose turn or reaction is active."""
 
-    # Action discovery and action execution entry points.
-    available_actions = _available_actions_impl
-    _available_feature_actions = _available_feature_actions_impl
-    _available_spell_actions = _available_spell_actions_impl
-    _feature_action_available = _feature_action_available_impl
-    _spell_action_cost = _spell_action_cost_impl
-    _spell_cast_block_reason = _spell_cast_block_reason_impl
-    _spell_targets_self_only = _spell_targets_self_only_impl
-    _spell_range_squares = _spell_range_squares_impl
-    _spell_action_targets = _spell_action_targets_impl
-    _spell_area_targets = _spell_area_targets_impl
-    _spend_spell_resources = _spend_spell_resources_impl
-    _spell_area = _spell_area_impl
-    _targets_in_area = _targets_in_area_impl
-    _available_creature_actions = _available_creature_actions_impl
-    _creature_action_candidates = _creature_action_candidates_impl
-    _execute_creature_action = _execute_creature_action_impl
-    _resolve_utilize_action = _resolve_utilize_action_impl
-    _resolve_feature_action = _resolve_feature_action_impl
-    _resolve_spell_action = _resolve_spell_action_impl
-    _resolve_grapple_action = _resolve_grapple_action_impl
+        return _current_turn_label_impl(self)
 
-    _spell_target_context = _spell_target_context_impl
+    def current_decision(self) -> DecisionFrame:
+        """Return the unresolved decision at the top of the encounter stack."""
 
-    # Effect, condition, participant, and runtime-state services.
-    _apply_effects = _apply_effects_impl
+        return _current_decision_impl(self)
 
-    _apply_condition = _apply_condition_impl
-    _start_ongoing_effect = _start_ongoing_effect_impl
-    _apply_grapple = _apply_grapple_impl
-    _remove_condition = _remove_condition_impl
-    _remove_condition_from_source = _remove_condition_from_source_impl
-    _remove_relationships_for_creature = _remove_relationships_for_creature_impl
-    _creature_controller = _creature_controller_impl
-    _creature_team_id = _creature_team_id_impl
-    _creatures_are_opponents = _creatures_are_opponents_impl
+    def conditions_for(
+        self,
+        creature_ref: CreatureRef,
+    ) -> tuple[AppliedCondition, ...]:
+        """Return stored condition applications for one creature."""
 
-    _consume_action = _consume_action_impl
-    _next_action_id = _next_action_id_impl
-    _next_runtime_origin_id = _next_runtime_origin_id_impl
-    _next_frame_id = _next_frame_id_impl
-    _event = _event_impl
-    _merge_progress = _merge_progress_impl
-    _creature_label = _creature_label_impl
-    _living_creature_refs = _living_creature_refs_impl
-    _creature_position = _creature_position_impl
-    _position_is_free = _position_is_free_impl
-    _creature_size = _creature_size_impl
+        return _conditions_for_impl(self, creature_ref)
 
-    _condition_sources_for = _condition_sources_for_impl
-    _grappled_sources_for = _grappled_sources_for_impl
-    _grappling_targets_for = _grappling_targets_for_impl
-    _is_grappled = _is_grappled_impl
-    _movement_cost_for = _movement_cost_for_impl
-    _creature_for_ref = _creature_for_ref_impl
-    _condition_replaces = staticmethod(_condition_replaces_impl)
+    def has_condition(
+        self,
+        creature_ref: CreatureRef,
+        condition: Condition,
+    ) -> bool:
+        """Return whether a condition currently affects one creature."""
+
+        return _has_condition_impl(self, creature_ref, condition)
+
+    def effective_conditions_for(
+        self,
+        creature_ref: CreatureRef,
+    ) -> EffectiveConditionSet:
+        """Return the effective condition set for one creature."""
+
+        return _effective_conditions_for_impl(self, creature_ref)
+
+    def active_creature(self) -> CreatureRef:
+        """Return the creature that owns the current decision."""
+
+        return _active_creature_impl(self)
+
+    def requires_automatic_advance(self) -> bool:
+        """Return whether the current controller should act automatically."""
+
+        return _requires_automatic_advance_impl(self)
+
+    def action_eligibility(self, action: EncounterAction) -> ActionEligibility:
+        """Evaluate an action against the current encounter decision."""
+
+        return _action_eligibility_impl(self, action)
+
+    def available_actions(self) -> list[EncounterAction]:
+        """Return actions advertised for the current external decision."""
+
+        return _available_actions_impl(self)

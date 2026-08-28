@@ -10,6 +10,7 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ...state_runtime import creature_position
 from ..attack_resolution import attack_range_squares, has_free_hand
 from ..stat_block import (
     executable_multiattack_slot_plans,
@@ -134,7 +135,7 @@ class AttackRule:
         if (
             grid_distance_between(
                 actor.position,
-                state._creature_position(action.value),
+                creature_position(state, action.value),
             )
             > reach
         ):

@@ -17,6 +17,13 @@ from ...spells.rules import (
     parse_spell_action_value,
 )
 from ..encounter_models.resolution import EncounterProgress
+from ..state_runtime import create_event
+from .option_discovery.spell_areas import spell_area, spell_area_targets
+from .option_discovery.spell_targets import spell_target_context
+from .option_discovery.spellcasting import (
+    spell_action_cost,
+    spell_cast_block_reason_for,
+)
 from .spell_runtime.aftermath import apply_spell_result
 from .spell_runtime.context import build_spell_action_context
 from .spell_runtime.invocation import begin_spell_invocation
@@ -46,11 +53,11 @@ def resolve_spell_action(
     >>> actor = SimpleNamespace(spellcasting=None)
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="fighter"),
-    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ...     event_sequence=1,
     ... )
     >>> progress = EncounterProgress()
     >>> resolve_spell_action(state, actor, "fireball", progress, "cast-1")
-    >>> (progress.messages[-1], progress.events[-1][1]["success"])
+    >>> (progress.messages[-1], progress.events[-1].data["success"])
     (('system', 'You cannot cast spells.'), False)
     """
 
@@ -88,14 +95,15 @@ def resolve_spell_action(
         )
         return
 
-    cost = state._spell_action_cost(spell)
+    cost = spell_action_cost(state, spell)
     block_reason: str | None
     if cast_level is not None and (
         spell.level == 0 or cast_level <= spell.level or cast_level > 9
     ):
         block_reason = "That spell slot level is not available for this spell."
     else:
-        block_reason = state._spell_cast_block_reason(
+        block_reason = spell_cast_block_reason_for(
+            state,
             spellcasting,
             spell,
             cost,
@@ -112,7 +120,8 @@ def resolve_spell_action(
         )
         return
 
-    area = state._spell_area(
+    area = spell_area(
+        state,
         actor,
         spell,
         target_ref=target_ref,
@@ -122,10 +131,11 @@ def resolve_spell_action(
         tuple(
             target
             for selected_ref in selected_target_refs
-            if (target := state._spell_target_context(actor, selected_ref)) is not None
+            if (target := spell_target_context(state, actor, selected_ref)) is not None
         )
         if selected_target_refs
-        else state._spell_area_targets(
+        else spell_area_targets(
+            state,
             actor,
             spell,
             target_ref=target_ref,
@@ -223,7 +233,8 @@ def _record_failed_spell_action(
         data["spell_id"] = spell_id
     data["success"] = False
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "action_resolved",
             creature_ref=creature_ref,
             action_id=action_id,

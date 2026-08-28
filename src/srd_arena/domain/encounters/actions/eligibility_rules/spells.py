@@ -14,6 +14,9 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ..option_discovery.spell_areas import spell_area_targets
+from ..option_discovery.spell_targets import spell_action_targets
+from ..option_discovery.spellcasting import spell_cast_block_reason_for
 from .common import target_requirement_failure
 from .models import EligibilityFailure
 
@@ -62,7 +65,8 @@ class SpellActionRule:
                 "spell_unavailable",
                 "This spell is not known.",
             )
-        reason = state._spell_cast_block_reason(
+        reason = spell_cast_block_reason_for(
+            state,
             actor.spellcasting,
             spell,
             action.cost,
@@ -150,9 +154,9 @@ class SpellTargetSelectionRule:
         candidate_refs = {
             target.target_ref
             for target in (
-                state._spell_area_targets(actor, spell, aim_point=aim_point)
+                spell_area_targets(state, actor, spell, aim_point=aim_point)
                 if spell_chooses_area_targets(spell)
-                else tuple(state._spell_action_targets(actor, spell))
+                else tuple(spell_action_targets(state, actor, spell))
             )
         }
         if action.kind == "toggle_spell_target":

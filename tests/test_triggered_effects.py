@@ -8,6 +8,7 @@ from srd_arena.domain.effects import (
     reroll_eligible_indices,
 )
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.domain.rolls.dice import reroll_dice, resolve_dice
 from srd_arena.engine.queries import DirectTargetOptionDetails
 from srd_arena.engine.session import Session
@@ -25,7 +26,7 @@ def _player_first_initiative(
         first_external_ref = next(
             creature_ref
             for creature_ref in self.creatures
-            if self._creature_controller(creature_ref) == "external"
+            if creature_controller(self, creature_ref) == "external"
         )
         self.initiative_order = [
             first_external_ref,
@@ -36,7 +37,7 @@ def _player_first_initiative(
             ),
         ]
 
-    monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
+    monkeypatch.setattr(EncounterState, "roll_initiative", _fixed_initiative)
 
 
 def test_triggered_effect_matching_uses_generic_context_conditions() -> None:

@@ -6,9 +6,10 @@ from typing import TYPE_CHECKING
 
 from ....creatures import Creature, MultiattackInvocation, MultiattackStep
 from ....creatures.stat_block_actions import AttackActionDefinition
-from ...attack_economy import begin_attack_action, clear_attack_action
+from ...attack_economy import begin_attack_action, clear_attack_action, consume_action
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
+from ...state_runtime import create_event
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -92,11 +93,11 @@ def resolve_multiattack_action(
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="wolf"),
     ...     creatures={"wolf": creature_state},
-    ...     _consume_action=lambda **kwargs: None,
+    ...     active_actions_remaining=1, active_magic_actions_remaining=1,
     ...     combat_rules=SimpleNamespace(
     ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=base)
     ...     ),
-    ...     _event=lambda *args, **kwargs: kwargs,
+    ...     event_sequence=1,
     ... )
     >>> progress = EncounterProgress()
     >>> resolve_multiattack_action(
@@ -119,7 +120,7 @@ def resolve_multiattack_action(
     if selected_plan >= len(plans):
         raise RuntimeError("This creature has no executable Multiattack plan.")
     slots = plans[selected_plan]
-    state._consume_action(allow_magic=False)
+    consume_action(state, allow_magic=False)
     clear_attack_action(creature_state)
     creature_state.pending_multiattack = list(slots)
     begin_attack_action(
@@ -129,7 +130,8 @@ def resolve_multiattack_action(
     )
     progress.messages.append(("system", f"{creature.name} begins Multiattack."))
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "action_resolved",
             creature_ref=creature_ref,
             action_id=action_id,

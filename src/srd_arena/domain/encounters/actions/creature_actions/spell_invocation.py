@@ -24,6 +24,10 @@ from ...encounter_models.decisions import (
     PendingSpellCast,
 )
 from ...encounter_models.resolution import EncounterProgress
+from ...participants import creature_controller
+from ..option_discovery.spell_areas import spell_area_targets
+from ..option_discovery.spell_targets import spell_action_targets
+from ..spellcasting import resolve_spell_action
 
 if TYPE_CHECKING:
     from ....creatures import Creature
@@ -95,7 +99,7 @@ def execute_spell_invocation(
             target.target_ref: (
                 target.creature.get_max_health() - target.creature.get_health()
             )
-            for target in state._spell_action_targets(actor, spell)
+            for target in spell_action_targets(state, actor, spell)
             if target.creature.get_health() < target.creature.get_max_health()
         }
         selected_targets = []
@@ -107,7 +111,8 @@ def execute_spell_invocation(
     ):
         area_target_refs = [
             target.target_ref
-            for target in state._spell_area_targets(
+            for target in spell_area_targets(
+                state,
                 actor,
                 spell,
                 aim_point=aim_point,
@@ -135,7 +140,7 @@ def execute_spell_invocation(
     automated_resolved = False
     if (
         staged_selection_needed
-        and state._creature_controller(decision.creature_ref) != "external"
+        and creature_controller(state, decision.creature_ref) != "external"
         and spell is not None
     ):
         if repeat_target_allocations:
@@ -158,7 +163,8 @@ def execute_spell_invocation(
                 slot_level=parse_spell_action_slot(action.value),
                 healing_allocations=allocations,
             )
-            state._resolve_spell_action(
+            resolve_spell_action(
+                state,
                 actor,
                 automated_payload,
                 progress,
@@ -169,7 +175,8 @@ def execute_spell_invocation(
         elif not spell_chooses_area_targets(spell):
             selected_targets = [
                 target.target_ref
-                for target in state._spell_action_targets(
+                for target in spell_action_targets(
+                    state,
                     actor,
                     spell,
                 )[:maximum_targets]
@@ -184,7 +191,8 @@ def execute_spell_invocation(
                 selected_ability=parse_spell_action_ability(action.value),
                 slot_level=parse_spell_action_slot(action.value),
             )
-            state._resolve_spell_action(
+            resolve_spell_action(
+                state,
                 actor,
                 automated_payload,
                 progress,
@@ -219,7 +227,8 @@ def execute_spell_invocation(
         )
         progress.paused_for_decision = True
     elif not automated_resolved:
-        state._resolve_spell_action(
+        resolve_spell_action(
+            state,
             actor,
             action.value,
             progress,

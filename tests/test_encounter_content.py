@@ -19,6 +19,7 @@ from srd_arena.content.creatures import (
 from srd_arena.content.encounters import EncounterDefinitionSchema
 from srd_arena.content.spells import load_spell_catalog
 from srd_arena.domain.creatures import AttackActionDefinition
+from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.infrastructure.scenarios import (
     FilesystemScenarioRepository,
     load_scenario_directory,
@@ -133,7 +134,7 @@ def test_full_control_showcase_gives_external_control_to_every_creature() -> Non
     assert all(team.controller == "external" for team in encounter.teams)
     assert session.encounter_state is not None
     assert all(
-        session.encounter_state._creature_controller(creature_ref) == "external"
+        creature_controller(session.encounter_state, creature_ref) == "external"
         for creature_ref in session.encounter_state.initiative_order
     )
 
@@ -150,7 +151,7 @@ def test_encounter_can_be_fully_scripted() -> None:
     assert session.encounter_state is not None
     assert session.encounter_state.requires_automatic_advance() is True
     assert all(
-        session.encounter_state._creature_controller(creature_ref) == "scripted"
+        creature_controller(session.encounter_state, creature_ref) == "scripted"
         for creature_ref in session.encounter_state.initiative_order
     )
 

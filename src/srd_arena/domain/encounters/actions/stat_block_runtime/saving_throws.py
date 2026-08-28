@@ -14,9 +14,13 @@ from ....rolls.saving_throws import (
     SavingThrowCreature,
     resolve_saving_throw,
 )
+from ...attack_economy import consume_action
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
+from ...grappling_state import remove_relationships_for_creature
 from ...ongoing_effects import has_condition_save_advantage
+from ...state_combat import automatic_save_failure_provider_ids_for
+from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
 from .rolls import roll_dice, roll_die
 
@@ -54,7 +58,7 @@ def resolve_saving_throw_stat_block_action(
     )
     if not target_refs:
         raise ValueError("The stat-block action has no valid targets.")
-    state._consume_action(allow_magic=False)
+    consume_action(state, allow_magic=False)
     consume_stat_block_action_resource(creature, definition.name)
     ability_names = {
         "str": "strength",
@@ -102,7 +106,8 @@ def resolve_saving_throw_stat_block_action(
             sourced_mode_override=roll_rules.mode,
             roller=roll_die,
             automatic_failure_reasons=(
-                state._automatic_save_failure_provider_ids_for(
+                automatic_save_failure_provider_ids_for(
+                    state,
                     target_ref,
                     ability_names[definition.ability],
                 )
@@ -152,7 +157,7 @@ def resolve_saving_throw_stat_block_action(
             }
         )
         if target.get_health() <= 0:
-            state._remove_relationships_for_creature(target_ref)
+            remove_relationships_for_creature(state, target_ref)
     progress.messages.append(
         (
             "system",
@@ -160,7 +165,8 @@ def resolve_saving_throw_stat_block_action(
         )
     )
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "stat_block_action_resolved",
             creature_ref=creature_ref,
             action_id=action_id,

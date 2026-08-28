@@ -12,6 +12,8 @@ from ..attack_economy import spend_attack
 from ..behaviors import is_adjacent as _is_adjacent
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.resolution import EncounterProgress
+from ..grappling_state import apply_grapple
+from ..state_runtime import create_event, creature_label
 from .attack_resolution import has_free_hand
 
 if TYPE_CHECKING:
@@ -37,15 +39,14 @@ def resolve_grapple_action(
     >>> creature_state = SimpleNamespace(actions_remaining=0, attacks_remaining=0)
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
-    ...     creatures={"hero": creature_state},
-    ...     _event=lambda event_type, **values: (event_type, values["data"]),
+    ...     creatures={"hero": creature_state}, event_sequence=1,
     ... )
     >>> progress = EncounterProgress()
     >>> resolve_grapple_action(
     ...     state, SimpleNamespace(), EncounterAction("Grapple", "grapple"),
     ...     progress, "grapple-1"
     ... )
-    >>> (progress.messages[-1], progress.events[-1][1]["success"])
+    >>> (progress.messages[-1], progress.events[-1].data["success"])
     (('system', 'You have already used your Action.'), False)
     """
 
@@ -54,7 +55,8 @@ def resolve_grapple_action(
     if creature_state.actions_remaining <= 0 and creature_state.attacks_remaining <= 0:
         progress.messages.append(("system", "You have already used your Action."))
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -78,7 +80,8 @@ def resolve_grapple_action(
     if not has_free_hand(actor):
         progress.messages.append(("system", "You need a free hand to grapple."))
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -125,10 +128,11 @@ def resolve_grapple_action(
         roller=_roll_die,
     )
     success = player_roll.total >= target_roll.total
-    target_label = self._creature_label(target_ref)
+    target_label = creature_label(self, target_ref)
 
     progress.events.append(
-        self._event(
+        create_event(
+            self,
             "grapple_resolved",
             creature_ref=creature_ref,
             action_id=action_id,
@@ -149,7 +153,8 @@ def resolve_grapple_action(
             ("system", f"{actor.name} fails to grapple {target_label}.")
         )
         progress.events.append(
-            self._event(
+            create_event(
+                self,
                 "action_resolved",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -160,7 +165,8 @@ def resolve_grapple_action(
 
     progress.messages.append(("system", f"{actor.name} grapples {target_label}."))
     progress.messages.append(("system", f"{target_label} is grappled."))
-    self._apply_grapple(
+    apply_grapple(
+        self,
         condition_from_effect_with_origin(
             EffectResult(
                 kind="apply_condition",
@@ -174,10 +180,11 @@ def resolve_grapple_action(
                 },
             ),
             origin_id=action_id,
-        )
+        ),
     )
     progress.events.append(
-        self._event(
+        create_event(
+            self,
             "action_resolved",
             creature_ref=creature_ref,
             action_id=action_id,
