@@ -31,7 +31,26 @@ def resolve_attack_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Resolve one attack, including multiattack state and hit effects."""
+    """Resolve one attack, including multiattack state and hit effects.
+
+    A pending Multiattack slot rejects attacks outside its authored options.
+
+    >>> from types import SimpleNamespace
+    >>> slot = SimpleNamespace(options=(SimpleNamespace(name="Bite"),))
+    >>> creature_state = SimpleNamespace(pending_multiattack=[slot])
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="dragon"),
+    ...     creatures={"dragon": creature_state},
+    ... )
+    >>> resolve_attack_action(
+    ...     state, SimpleNamespace(),
+    ...     EncounterAction("Claw", "attack", preferred_attack_name="Claw"),
+    ...     EncounterProgress(), "attack-1"
+    ... )
+    Traceback (most recent call last):
+    ...
+    ValueError: The selected attack is not available for this Multiattack slot.
+    """
     creature_ref = state.current_decision().creature_ref
     creature_state = state.creatures[creature_ref]
     preferred_attack_name = action.preferred_attack_name

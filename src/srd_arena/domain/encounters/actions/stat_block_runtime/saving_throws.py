@@ -31,7 +31,17 @@ def resolve_saving_throw_stat_block_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Resolve a supported saving-throw action against all selected targets."""
+    """Resolve a supported saving-throw action against all selected targets.
+
+    >>> from types import SimpleNamespace
+    >>> resolve_saving_throw_stat_block_action(
+    ...     SimpleNamespace(), SimpleNamespace(), SimpleNamespace(),
+    ...     EncounterAction("Breath", "stat_block"), EncounterProgress(), "breath-1"
+    ... )
+    Traceback (most recent call last):
+    ...
+    ValueError: Saving-throw stat-block action requires an aim target.
+    """
     if not isinstance(action.value, (str, tuple)):
         raise ValueError("Saving-throw stat-block action requires an aim target.")
     creature_ref = state.current_decision().creature_ref

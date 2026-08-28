@@ -35,7 +35,16 @@ def available_spell_actions(
     self: EncounterState,
     actor: Creature,
 ) -> list[EncounterAction]:
-    """Advertise castable spell grants with target-relative configurations."""
+    """Advertise castable spell grants with target-relative configurations.
+
+    >>> from types import SimpleNamespace
+    >>> actor = SimpleNamespace(spellcasting=None)
+    >>> state = SimpleNamespace(
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="fighter")
+    ... )
+    >>> available_spell_actions(state, actor)
+    []
+    """
 
     spellcasting = actor.spellcasting
     creature_ref = self.current_decision().creature_ref

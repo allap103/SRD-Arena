@@ -37,7 +37,27 @@ def apply_attack_hit_effects(
     progress: EncounterProgress,
     origin_id: str | None = None,
 ) -> None:
-    """Apply an attack's damage and sourced conditions to its confirmed target."""
+    """Apply an attack's damage and sourced conditions to its confirmed target.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import Mock
+    >>> state = SimpleNamespace(
+    ...     creatures={
+    ...         "wolf": SimpleNamespace(creature=SimpleNamespace(name="Wolf")),
+    ...         "hero": SimpleNamespace(creature=SimpleNamespace(name="Hero")),
+    ...     },
+    ...     round=SimpleNamespace(number=1),
+    ...     _apply_condition=Mock(return_value=SimpleNamespace(accepted=True)),
+    ... )
+    >>> progress = EncounterProgress()
+    >>> apply_attack_hit_effects(
+    ...     state, attacker_ref="wolf", target_ref="hero",
+    ...     effects=(ConditionEffect("prone"),), progress=progress,
+    ...     origin_id="bite-1",
+    ... )
+    >>> progress.messages
+    [('system', 'Hero is prone.')]
+    """
 
     resolved_origin_id = origin_id or f"attack:{attacker_ref}:{target_ref}"
     for effect in effects:
