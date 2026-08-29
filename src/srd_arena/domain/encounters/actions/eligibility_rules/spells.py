@@ -10,6 +10,7 @@ from ....spells.rules import (
     parse_spell_action_value,
 )
 from ...encounter_models.actions import CreatureRef, EncounterAction
+from ..capability_support import capability_runtime_issue
 from ..option_discovery.spellcasting import spell_cast_block_reason_for
 from .common import target_requirement_failure
 from .models import EligibilityFailure
@@ -61,6 +62,13 @@ class SpellActionRule:
                 "spell_unavailable",
                 "This spell is not known.",
             )
+        if spell.definition is not None:
+            runtime_issue = capability_runtime_issue(spell.definition)
+            if runtime_issue is not None:
+                return EligibilityFailure(
+                    runtime_issue.code,
+                    runtime_issue.message,
+                )
         reason = spell_cast_block_reason_for(
             state,
             actor.spellcasting,

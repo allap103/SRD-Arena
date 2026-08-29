@@ -150,7 +150,7 @@ def _action_option(
 ) -> ActionOption:
     checked_eligibility = eligibility or ActionEligibility()
     implemented = not any(
-        failure.code == "unsupported_stat_block_capability"
+        failure.code.startswith("unsupported_")
         for failure in checked_eligibility.failures
     )
     return ActionOption(

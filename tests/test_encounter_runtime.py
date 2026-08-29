@@ -488,6 +488,46 @@ def test_unavailable_button_tooltip_lists_all_reasons() -> None:
     )
 
 
+def test_unimplemented_button_tooltip_explains_unsupported_semantics() -> None:
+    class Button:
+        def __init__(self) -> None:
+            self.enabled = True
+            self.properties: dict[str, object] = {}
+            self.tooltip = ""
+
+        def setProperty(self, name: str, value: object) -> None:
+            self.properties[name] = value
+
+        def setEnabled(self, enabled: bool) -> None:
+            self.enabled = enabled
+
+        def setToolTip(self, tooltip: str) -> None:
+            self.tooltip = tooltip
+
+    button = Button()
+    action = ActionObservation(
+        id="animate-objects",
+        label="Animate Objects",
+        kind="spell",
+        creature_ref="mage",
+        enabled=False,
+        availability="unimplemented",
+        reasons=(
+            ActionReasonObservation(
+                "unsupported_target_entities",
+                "Areas that affect objects are not executable yet.",
+            ),
+        ),
+    )
+
+    configure_action_button(type_cast(QPushButton, button), [action])
+
+    assert button.enabled is False
+    assert button.properties["availability"] == "unimplemented"
+    assert button.tooltip.startswith("Not implemented:")
+    assert "Areas that affect objects are not executable yet." in button.tooltip
+
+
 @pytest.mark.parametrize(
     ("attacks_available", "actions", "expected"),
     [

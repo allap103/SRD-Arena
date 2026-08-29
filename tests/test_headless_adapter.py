@@ -2,6 +2,12 @@ from pathlib import Path
 
 import pytest
 
+from srd_arena.application.api import (
+    ActionObservation,
+    ActionReasonObservation,
+    GameObservation,
+    SceneObservation,
+)
 from srd_arena.application.startup import GameStartup
 from srd_arena.frontends.headless import HeadlessGameAdapter
 from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
@@ -71,3 +77,38 @@ def test_headless_adapter_requires_a_started_game() -> None:
 
     with pytest.raises(KeyError, match="Unknown scenario"):
         adapter.start_scenario("missing")
+
+
+def test_headless_observation_preserves_unimplemented_action_reason() -> None:
+    from unittest.mock import Mock
+
+    unsupported = ActionObservation(
+        "animate-objects",
+        "Animate Objects",
+        "spell",
+        "mage",
+        enabled=False,
+        availability="unimplemented",
+        reasons=(
+            ActionReasonObservation(
+                "unsupported_target_entities",
+                "Areas that affect objects are not executable yet.",
+            ),
+        ),
+    )
+    observation = GameObservation(
+        SceneObservation("fight", None, (unsupported,)),
+        None,
+        None,
+        False,
+    )
+    startup, game = Mock(), Mock()
+    startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+    startup.start_scenario.return_value = game
+    game.observe.return_value = observation
+    adapter = HeadlessGameAdapter(startup)
+
+    observed = adapter.start_scenario("demo")
+
+    assert observed.scene.action_details[0].reasons == unsupported.reasons
+    assert adapter.available_actions() == ()

@@ -9,6 +9,10 @@ from ....creatures.stat_block_actions import (
     SavingThrowActionDefinition,
 )
 from ....effects.conditions import Condition
+from ..capability_support import (
+    capability_runtime_issue,
+    capability_target_runtime_issue,
+)
 
 
 def stat_block_action_runtime_issue(definition: object) -> str | None:
@@ -17,6 +21,11 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
     >>> stat_block_action_runtime_issue(object())
     'This stat-block action type is not executable yet.'
     """
+    target = getattr(definition, "target", None)
+    if target is not None:
+        target_issue = capability_target_runtime_issue(target)
+        if target_issue is not None:
+            return target_issue.message
     if isinstance(definition, AttackActionDefinition):
         for effect in definition.hit:
             if isinstance(effect, DamageEffect):
@@ -28,6 +37,11 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
                     return (
                         f"Condition '{effect.condition}' is not supported by "
                         "the condition runtime yet."
+                    )
+                if effect.condition == "grappled" and effect.duration is not None:
+                    return (
+                        "Authored durations for grappled are not executable yet; "
+                        "the creature relationship owns its ending rules."
                     )
                 if effect.condition != "grappled" and effect.requirements:
                     return (
@@ -47,7 +61,7 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
                     )
                 continue
             return f"{type(effect).__name__} is not executable for attack actions yet."
-        return None
+        return _grant_runtime_issue(definition)
     if isinstance(definition, AutomaticActionDefinition):
         effects = definition.effects
     elif isinstance(definition, SavingThrowActionDefinition):
@@ -73,4 +87,20 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
             f"{type(unsupported).__name__} is not executable for "
             "stat-block actions yet."
         )
-    return None
+    return _grant_runtime_issue(definition)
+
+
+def _grant_runtime_issue(
+    definition: (
+        AttackActionDefinition | AutomaticActionDefinition | SavingThrowActionDefinition
+    ),
+) -> str | None:
+    """Return an issue preserved by the provider-neutral capability grant."""
+
+    if definition.grant is None:
+        return None
+    issue = capability_runtime_issue(
+        definition.grant.definition,
+        supports_turn_relative_durations=True,
+    )
+    return issue.message if issue is not None else None

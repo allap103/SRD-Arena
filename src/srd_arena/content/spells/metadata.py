@@ -28,7 +28,15 @@ class SpellRangeDistanceSchema(SpellMetadataSchemaModel):
 
     @model_validator(mode="after")
     def validate_amount(self) -> SpellRangeDistanceSchema:
-        """Require an amount exactly when the distance kind is numeric."""
+        """Require an amount exactly when the distance kind is numeric.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     SpellRangeDistanceSchema(type="feet")
+        ... except ValidationError as error:
+        ...     "require an amount" in str(error)
+        True
+        """
         numeric = self.type in {"feet", "miles"}
         if numeric and self.amount is None:
             raise ValueError("Numeric spell distances require an amount.")
@@ -77,7 +85,15 @@ class SpellDurationSchema(SpellMetadataSchemaModel):
 
     @model_validator(mode="after")
     def validate_variant_fields(self) -> SpellDurationSchema:
-        """Require timing and ending fields only on their matching variants."""
+        """Require timing and ending fields only on their matching variants.
+
+        >>> from pydantic import ValidationError
+        >>> try:
+        ...     SpellDurationSchema(type="timed")
+        ... except ValidationError as error:
+        ...     "require duration details" in str(error)
+        True
+        """
         if self.type == "timed" and self.duration is None:
             raise ValueError("Timed spell durations require duration details.")
         if self.type != "timed" and self.duration is not None:
