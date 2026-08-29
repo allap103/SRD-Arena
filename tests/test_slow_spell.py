@@ -23,7 +23,7 @@ from srd_arena.domain.effects.rule_effects import (
     SpeedMultiplier,
 )
 from srd_arena.domain.effects.runtime import EffectPolarity, OngoingEffectKind
-from srd_arena.domain.encounters import EncounterOrchestrator
+from srd_arena.domain.encounters import EncounterOrchestrator, rule_queries
 from srd_arena.domain.encounters.creature_control import creature_action_candidates
 from srd_arena.domain.encounters.effect_lifecycle.repeat_saves import (
     resolve_end_turn_effects,
@@ -40,6 +40,7 @@ from srd_arena.engine.queries import ActionAim
 from srd_arena.engine.session import Session
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import active_creature as _active_creature
+from tests.encounter_runtime_support import is_spell_action
 from tests.encounter_runtime_support import (
     use_deterministic_dice as _use_deterministic_dice,
 )
@@ -123,11 +124,11 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
         strict=True,
     ):
         state.creatures[target_ref].position = Position(x, 5)
-    base_armor_class = state.combat_rules.effective_armor_class(
+    base_armor_class = rule_queries.effective_armor_class(
         state,
         "goblin_1",
     ).value
-    base_speed = state.combat_rules.movement_budget(
+    base_speed = rule_queries.movement_budget(
         state,
         "goblin_1",
     ).speed.value
@@ -163,21 +164,21 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
         "InvocationFailureChance",
     ]
     assert (
-        state.combat_rules.effective_armor_class(
+        rule_queries.effective_armor_class(
             state,
             "goblin_1",
         ).value
         == base_armor_class - 2
     )
     assert (
-        state.combat_rules.movement_budget(
+        rule_queries.movement_budget(
             state,
             "goblin_1",
         ).speed.value
         == base_speed // 2
     )
     assert (
-        state.combat_rules.roll_modifiers(
+        rule_queries.roll_modifiers(
             state,
             "goblin_1",
             "saving_throw",
@@ -186,7 +187,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
         == -2
     )
     assert (
-        state.combat_rules.roll_modifiers(
+        rule_queries.roll_modifiers(
             state,
             "goblin_1",
             "saving_throw",
@@ -194,7 +195,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
         ).resolve_modifier(lambda _sides: 1)
         == 0
     )
-    reaction = state.combat_rules.reaction_eligibility(
+    reaction = rule_queries.reaction_eligibility(
         state,
         "goblin_1",
     )
@@ -239,17 +240,17 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
 
     assert state.ongoing_effects[0].target_refs == ("goblin_3",)
     assert (
-        state.combat_rules.effective_armor_class(
+        rule_queries.effective_armor_class(
             state,
             "goblin_1",
         ).value
         == base_armor_class
     )
-    assert state.combat_rules.reaction_eligibility(
+    assert rule_queries.reaction_eligibility(
         state,
         "goblin_1",
     ).allowed
-    assert not state.combat_rules.reaction_eligibility(
+    assert not rule_queries.reaction_eligibility(
         state,
         "goblin_3",
     ).allowed
@@ -483,7 +484,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
     cure = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value).startswith("cure_wounds:player")
+        if is_spell_action(action, "cure_wounds", target_ref="player")
     )
     failed = _ORCHESTRATOR.submit(state, cure)
 
@@ -505,7 +506,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
         for action in creature_action_candidates(state, "player")
         if action.label == "Second Wind"
     )
-    compatibility = state.combat_rules.action_compatibility(
+    compatibility = rule_queries.action_compatibility(
         state,
         "player",
         second_wind,

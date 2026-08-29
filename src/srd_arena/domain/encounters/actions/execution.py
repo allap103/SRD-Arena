@@ -4,15 +4,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature, can_grapple
-from ...effects.application import condition_from_effect_with_origin
-from ...effects.results import EffectResult
-from ...rolls.dice import resolve_d20
+from srd_arena.domain.creatures import Creature, can_grapple
+from srd_arena.domain.effects.application import condition_from_effect_with_origin
+from srd_arena.domain.effects.results import EffectResult
+from srd_arena.domain.rolls.dice import resolve_d20
+
 from ..attack_economy import spend_attack
 from ..behaviors import is_adjacent as _is_adjacent
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.resolution import EncounterProgress
 from ..grappling_state import apply_grapple
+from ..rule_queries.rolls import roll_modifiers
 from ..state_runtime import create_event, creature_label
 from .attack_resolution import has_free_hand
 from .rejections import reject_action
@@ -127,13 +129,13 @@ def resolve_grapple_action(
         base_attacks=actor.combat_profile.attacks_per_attack_action,
     )
 
-    actor_roll_rules = state.combat_rules.roll_modifiers(
+    actor_roll_rules = roll_modifiers(
         state,
         creature_ref,
         "ability_check",
         ability="strength",
     )
-    target_roll_rules = state.combat_rules.roll_modifiers(
+    target_roll_rules = roll_modifiers(
         state,
         target_ref,
         "ability_check",

@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import replace
 
-from ...effects.modifiers import RollModifier
-from ...effects.results import ActionResolutionResult, EffectResult
-from ...effects.rule_effects import (
+from srd_arena.domain.effects.modifiers import RollModifier
+from srd_arena.domain.effects.results import (
+    ActionResolutionResult,
+    EffectResult,
+    SpellResolutionDetails,
+)
+from srd_arena.domain.effects.rule_effects import (
     ActionEconomyKind,
     ActionEconomyRestriction,
     ArmorClassAdjustment,
@@ -16,29 +21,32 @@ from ...effects.rule_effects import (
     RollAdjustment,
     SpeedMultiplier,
 )
-from ...effects.runtime import OngoingEffectLifecycle, RepeatSaveLifecycle
+from srd_arena.domain.effects.runtime import OngoingEffectLifecycle, RepeatSaveLifecycle
+
 from ..properties import spell_duration_rounds
 from ..resolution_steps.context import SpellActionContext
-from .types import DeclarativeSpellResolver
 
 
 def resolve_slow(
     context: SpellActionContext,
-    resolve_declarative: DeclarativeSpellResolver,
+    resolve_declarative: Callable[[SpellActionContext], ActionResolutionResult],
 ) -> ActionResolutionResult:
     """Resolve common targeting/saves, then attach Slow's grouped rule state.
 
     A casting that affects no targets retains only its declarative result.
 
     >>> from types import SimpleNamespace
-    >>> result = ActionResolutionResult("slow", "Slow", [], [], details={})
+    >>> result = ActionResolutionResult("slow", "Slow", [], [])
     >>> context = SimpleNamespace()
     >>> resolve_slow(context, lambda current: result) is result
     True
     """
 
     result = resolve_declarative(context)
-    affected_target_refs = _affected_target_refs(result)
+    details = result.details
+    if not isinstance(details, SpellResolutionDetails):
+        return result
+    affected_target_refs = details.affected_target_refs
     if not affected_target_refs:
         return result
 
@@ -95,19 +103,8 @@ def resolve_slow(
             ),
         ),
     )
-    details = dict(result.details)
-    details["success"] = True
     return replace(
         result,
         effects=[*result.effects, slow_effect],
-        details=details,
+        details=replace(details, success=True),
     )
-
-
-def _affected_target_refs(
-    result: ActionResolutionResult,
-) -> tuple[str, ...]:
-    value = result.details.get("affected_target_refs")
-    if not isinstance(value, list):
-        return ()
-    return tuple(target_ref for target_ref in value if isinstance(target_ref, str))

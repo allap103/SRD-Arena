@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
-from ..capabilities import (
+from srd_arena.domain.capabilities import (
     CapabilityEffect,
     CapabilityGrant,
     CapabilityTarget,
@@ -12,7 +12,7 @@ from ..capabilities import (
 )
 
 if TYPE_CHECKING:
-    from ..spells import Spell
+    from srd_arena.domain.spells import Spell
 
 
 @dataclass(frozen=True)

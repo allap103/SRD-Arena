@@ -5,10 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from ..capabilities import CapabilityGrant, SpellSlotCost, SpellSlotPool
+from srd_arena.domain.capabilities import CapabilityGrant, SpellSlotCost, SpellSlotPool
 
 if TYPE_CHECKING:
-    from ..spells.definitions import Spell
+    from srd_arena.domain.spells.definitions import Spell
 
 
 @dataclass

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 
-from ..effects.conditions import Condition
+from srd_arena.domain.effects.conditions import Condition
 
 
 @dataclass(frozen=True)

@@ -1,8 +1,58 @@
-"""Encode spell choices into stable action IDs, labels, and command payloads."""
+"""Build typed spell choices for encounter actions."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from .definitions import Spell
+
+
+@dataclass(frozen=True)
+class SpellActionPayload:
+    """Selections needed to execute one advertised spell action."""
+
+    spell_id: str
+    target_refs: tuple[str, ...] = ()
+    aim_point: tuple[float, float] | None = None
+    selected_condition: str | None = None
+    selected_damage_type: str | None = None
+    selected_ability: str | None = None
+    slot_level: int | None = None
+    healing_allocations: tuple[tuple[str, int], ...] = ()
+
+    @property
+    def target_ref(self) -> str | None:
+        """Return the target for a single-target invocation.
+
+        >>> SpellActionPayload("fire_bolt", ("goblin",)).target_ref
+        'goblin'
+        >>> SpellActionPayload("scorching_ray", ("goblin", "ogre")).target_ref is None
+        True
+        """
+
+        return self.target_refs[0] if len(self.target_refs) == 1 else None
+
+
+def serialize_spell_action_payload(payload: SpellActionPayload) -> dict[str, object]:
+    """Translate a typed choice at the application event boundary.
+
+    >>> serialized = serialize_spell_action_payload(
+    ...     SpellActionPayload("fireball", aim_point=(3.5, 4.5), slot_level=5)
+    ... )
+    >>> (serialized["spell_id"], serialized["aim_point"], serialized["slot_level"])
+    ('fireball', (3.5, 4.5), 5)
+    """
+
+    return {
+        "spell_id": payload.spell_id,
+        "target_refs": list(payload.target_refs),
+        "aim_point": payload.aim_point,
+        "selected_condition": payload.selected_condition,
+        "selected_damage_type": payload.selected_damage_type,
+        "selected_ability": payload.selected_ability,
+        "slot_level": payload.slot_level,
+        "healing_allocations": dict(payload.healing_allocations),
+    }
 
 
 def spell_action_label(
@@ -41,7 +91,7 @@ def spell_action_id(spell: Spell, *, target_ref: str | None = None) -> str:
     return f"spell-{spell.id}-{target_ref.replace(':', '-')}"
 
 
-def spell_action_value(
+def spell_action_payload(
     spell_id: str,
     target_ref: str | tuple[str, ...] | None = None,
     aim_point: tuple[float, float] | None = None,
@@ -50,222 +100,40 @@ def spell_action_value(
     selected_ability: str | None = None,
     slot_level: int | None = None,
     healing_allocations: dict[str, int] | None = None,
-) -> str:
-    """Encode runtime targeting, upcasting, and allocation choices for execution.
+) -> SpellActionPayload:
+    """Build the complete typed selection for one spell invocation.
 
-    >>> spell_action_value(
+    >>> payload = spell_action_payload(
     ...     "mass_heal", ("cleric", "fighter"), slot_level=9,
     ...     healing_allocations={"cleric": 200, "fighter": 500},
     ... )
-    'mass_heal:cleric,fighter#slot=9&healing=cleric~200,fighter~500'
-    """
-
-    if aim_point is not None:
-        value = f"{spell_id}@{aim_point[0]:.4f},{aim_point[1]:.4f}"
-        if isinstance(target_ref, tuple) and target_ref:
-            value += f"|{','.join(target_ref)}"
-        return _with_spell_selections(
-            value,
-            selected_condition,
-            selected_damage_type,
-            selected_ability,
-            slot_level,
-            healing_allocations,
-        )
-    if target_ref is None:
-        return _with_spell_selections(
-            spell_id,
-            selected_condition,
-            selected_damage_type,
-            selected_ability,
-            slot_level,
-            healing_allocations,
-        )
-    encoded_target = (
-        ",".join(target_ref) if isinstance(target_ref, tuple) else target_ref
-    )
-    value = f"{spell_id}:{encoded_target}"
-    return _with_spell_selections(
-        value,
-        selected_condition,
-        selected_damage_type,
-        selected_ability,
-        slot_level,
-        healing_allocations,
-    )
-
-
-def _with_spell_selections(
-    value: str,
-    selected_condition: str | None,
-    selected_damage_type: str | None,
-    selected_ability: str | None,
-    slot_level: int | None,
-    healing_allocations: dict[str, int] | None = None,
-) -> str:
-    if (
-        selected_condition is not None
-        and selected_damage_type is None
-        and selected_ability is None
-        and slot_level is None
-        and not healing_allocations
-    ):
-        return f"{value}#{selected_condition}"
-    selections = []
-    if selected_condition is not None:
-        selections.append(f"condition={selected_condition}")
-    if selected_damage_type is not None:
-        selections.append(f"damage_type={selected_damage_type}")
-    if selected_ability is not None:
-        selections.append(f"ability={selected_ability}")
-    if slot_level is not None:
-        selections.append(f"slot={slot_level}")
-    if healing_allocations:
-        encoded = ",".join(
-            f"{target_ref}~{amount}"
-            for target_ref, amount in sorted(healing_allocations.items())
-            if amount > 0
-        )
-        selections.append(f"healing={encoded}")
-    return value if not selections else f"{value}#{'&'.join(selections)}"
-
-
-def parse_spell_action_value(
-    value: str,
-) -> tuple[str, str | None, tuple[float, float] | None]:
-    """Extract the spell, direct target, or aim point from an action payload.
-
-    >>> parse_spell_action_value("fireball@3.5000,4.0000|goblin#slot=4")
-    ('fireball', None, (3.5, 4.0))
-    >>> parse_spell_action_value("hold_person:goblin")
-    ('hold_person', 'goblin', None)
-    """
-
-    value, _, _selection = value.partition("#")
-    if "@" in value:
-        spell_id, _, aim = value.partition("@")
-        aim, _, _targets = aim.partition("|")
-        x_text, _, y_text = aim.partition(",")
-        if not spell_id or not x_text or not y_text:
-            raise ValueError(f"Unsupported spell action payload: {value!r}.")
-        return spell_id, None, (float(x_text), float(y_text))
-    spell_id, _, target_ref = value.partition(":")
-    if not spell_id:
-        raise ValueError(f"Unsupported spell action payload: {value!r}.")
-    if not target_ref:
-        return spell_id, None, None
-    return spell_id, target_ref, None
-
-
-def parse_spell_action_targets(value: str) -> tuple[str, ...]:
-    """Extract the ordered creature references selected for a spell action.
-
-    >>> parse_spell_action_targets("scorching_ray:goblin,ogre")
-    ('goblin', 'ogre')
-    >>> parse_spell_action_targets("fireball@2.0000,3.0000|goblin,ogre")
-    ('goblin', 'ogre')
-    """
-
-    base, _, _selection = value.partition("#")
-    if "|" in base:
-        _aim_payload, _, targets = base.partition("|")
-        return tuple(ref for ref in targets.split(",") if ref)
-    _spell_id, target_ref, _aim = parse_spell_action_value(value)
-    if target_ref is None:
-        return ()
-    return tuple(ref for ref in target_ref.split(",") if ref)
-
-
-def parse_spell_action_condition(value: str) -> str | None:
-    """Extract the condition chosen for a flexible spell.
-
-    >>> parse_spell_action_condition("lesser_restoration:hero#condition=blinded")
-    'blinded'
-    >>> parse_spell_action_condition("lesser_restoration:hero#poisoned")
-    'poisoned'
-    """
-
-    _base, separator, selections = value.partition("#")
-    if not separator:
-        return None
-    for selection in selections.split("&"):
-        key, equals, selected = selection.partition("=")
-        if equals and key == "condition" and selected:
-            return selected
-    return selections if "=" not in selections and selections else None
-
-
-def parse_spell_action_damage_type(value: str) -> str | None:
-    """Extract the damage-type selection encoded in a spell action payload.
-
-    >>> parse_spell_action_damage_type("resist_energy:hero#damage_type=fire")
-    'fire'
-    """
-
-    _base, separator, selections = value.partition("#")
-    if not separator:
-        return None
-    for selection in selections.split("&"):
-        key, equals, selected = selection.partition("=")
-        if equals and key == "damage_type" and selected:
-            return selected
-    return None
-
-
-def parse_spell_action_ability(value: str) -> str | None:
-    """Extract the ability chosen for a flexible spell.
-
-    >>> parse_spell_action_ability("enhance_ability:hero#ability=strength")
-    'strength'
-    """
-
-    _base, separator, selections = value.partition("#")
-    if not separator:
-        return None
-    for selection in selections.split("&"):
-        key, equals, selected = selection.partition("=")
-        if equals and key == "ability" and selected:
-            return selected
-    return None
-
-
-def parse_spell_action_slot(value: str) -> int | None:
-    """Extract the spell-slot level selected for this casting invocation.
-
-    >>> parse_spell_action_slot("fireball@2.0000,3.0000#slot=5")
-    5
-    """
-
-    _base, separator, selections = value.partition("#")
-    if not separator:
-        return None
-    for selection in selections.split("&"):
-        key, equals, selected = selection.partition("=")
-        if equals and key == "slot" and selected.isdigit():
-            return int(selected)
-    return None
-
-
-def parse_spell_healing_allocations(value: str) -> dict[str, int]:
-    """Extract per-target healing amounts from a resource-allocation payload.
-
-    >>> parse_spell_healing_allocations(
-    ...     "mass_heal:cleric,fighter#healing=cleric~200,fighter~500"
-    ... )
+    >>> (payload.spell_id, payload.target_refs, payload.slot_level)
+    ('mass_heal', ('cleric', 'fighter'), 9)
+    >>> dict(payload.healing_allocations)
     {'cleric': 200, 'fighter': 500}
     """
 
-    _base, separator, selections = value.partition("#")
-    if not separator:
-        return {}
-    for selection in selections.split("&"):
-        key, equals, encoded = selection.partition("=")
-        if not equals or key != "healing":
-            continue
-        allocations: dict[str, int] = {}
-        for entry in encoded.split(","):
-            target_ref, separator, amount = entry.rpartition("~")
-            if separator and target_ref and amount.isdigit():
-                allocations[target_ref] = int(amount)
-        return allocations
-    return {}
+    target_refs = (
+        ()
+        if target_ref is None
+        else target_ref
+        if isinstance(target_ref, tuple)
+        else (target_ref,)
+    )
+    allocations = tuple(
+        sorted(
+            (target, amount)
+            for target, amount in (healing_allocations or {}).items()
+            if amount > 0
+        )
+    )
+    return SpellActionPayload(
+        spell_id=spell_id,
+        target_refs=target_refs,
+        aim_point=aim_point,
+        selected_condition=selected_condition,
+        selected_damage_type=selected_damage_type,
+        selected_ability=selected_ability,
+        slot_level=slot_level,
+        healing_allocations=allocations,
+    )

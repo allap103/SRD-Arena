@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-from ...geometry import MovementCost
+from srd_arena.domain.geometry import MovementCost
+
+if TYPE_CHECKING:
+    from srd_arena.domain.spells.action_payloads import SpellActionPayload
 
 CreatureRef = str
 
@@ -32,7 +36,7 @@ class EncounterAction:
 
     label: str
     kind: str
-    value: str | int | tuple[float, float] | None = None
+    value: str | int | tuple[float, float] | SpellActionPayload | None = None
     id: str = ""
     creature_ref: CreatureRef | None = None
     source_trigger_id: str | None = None

@@ -4,14 +4,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....capabilities import DamageEffect
-from ....creatures import Creature
-from ....creatures.stat_block_actions import AutomaticActionDefinition
-from ....rolls.dice import resolve_dice
+from srd_arena.domain.capabilities import DamageEffect
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.stat_block_actions import AutomaticActionDefinition
+from srd_arena.domain.rolls.dice import resolve_dice
+
 from ...attack_economy import consume_action
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
+from ...rule_queries.defenses import apply_damage
+from ...rule_queries.rolls import roll_modifiers
 from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
 
@@ -54,7 +57,7 @@ def resolve_automatic_stat_block_action(
     consume_stat_block_action_resource(creature, definition.name)
     damage = 0
     damage_details: list[dict[str, object]] = []
-    damage_roll_rules = state.combat_rules.roll_modifiers(
+    damage_roll_rules = roll_modifiers(
         state,
         creature_ref,
         "damage_roll",
@@ -78,7 +81,7 @@ def resolve_automatic_stat_block_action(
             effect.minimum or 0,
             resolved_total,
         )
-        applied = state.combat_rules.apply_damage(
+        applied = apply_damage(
             state,
             target_ref,
             amount,

@@ -7,9 +7,10 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
 
-from ...capabilities import CapabilityEffect, DamageEffect
-from ...effects.triggered import TriggeredEffect
-from ...rolls.dice import CheckResult, DicePoolResult
+from srd_arena.domain.capabilities import CapabilityEffect, DamageEffect
+from srd_arena.domain.effects.triggered import TriggeredEffect
+from srd_arena.domain.rolls.dice import CheckResult, DicePoolResult
+
 from .actions import CreatureRef, EncounterAction
 from .decisions import DecisionFrame, DecisionRequest
 from .state import EncounterCreatureState

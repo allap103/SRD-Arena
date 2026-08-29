@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 
-from ..creatures import Spellcasting
+from srd_arena.domain.creatures import Spellcasting
+
 from .definitions import Spell
 
 

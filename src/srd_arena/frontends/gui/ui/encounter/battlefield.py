@@ -18,9 +18,9 @@ from ...presentation.models import BattlefieldView
 from .area_previews import display_area_overlay
 from .battlefield_renderer import (
     BattlefieldRenderer,
-    BattlefieldRenderGeometry,
     BattlefieldRenderInput,
 )
+from .config import BattlefieldRenderGeometry
 from .movement import MovementPlan
 from .status_markers import (
     StatusMarkerHit,

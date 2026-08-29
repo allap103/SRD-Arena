@@ -19,6 +19,30 @@ ARROW_LABELS = {
 
 
 @dataclass(frozen=True)
+class BattlefieldRenderGeometry:
+    """Describe the visible board rectangle in widget pixel coordinates."""
+
+    viewport: tuple[int, int, int, int]
+    origin_x: float
+    origin_y: float
+    cell_size: float
+    columns: int
+    rows: int
+
+    @property
+    def board_width(self) -> float:
+        """Return the rendered board width in pixels."""
+
+        return self.cell_size * self.columns
+
+    @property
+    def board_height(self) -> float:
+        """Return the rendered board height in pixels."""
+
+        return self.cell_size * self.rows
+
+
+@dataclass(frozen=True)
 class TargetSelectionMode:
     """Track which staged targeting interaction battlefield clicks configure."""
 

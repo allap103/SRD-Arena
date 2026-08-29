@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from ...effects.rule_effects import MaximumHitPointAdjustment
-from ...effects.runtime import EffectSource
+from srd_arena.domain.effects.rule_effects import MaximumHitPointAdjustment
+from srd_arena.domain.effects.runtime import EffectSource
+
 from .context import CreatureEffectQueryContext
 from .models import NumericOperation, NumericRuleContribution, NumericRuleResult
 

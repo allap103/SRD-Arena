@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from ...rolls.saving_throws import (
+from srd_arena.domain.rolls.saving_throws import (
     Ability,
     resolve_saving_throw,
 )
+
 from ..participants import creatures_are_opponents
+from ..rule_queries.rolls import roll_modifiers
 from ..state_combat import automatic_save_failure_provider_ids_for
 from .removal import _remove_effect_target
 
@@ -30,7 +32,7 @@ def resolve_spell_lifecycle_event(
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
     >>> source = SimpleNamespace(applied_by_ref="mage", label="Hideous Laughter")
-    >>> from ...effects.runtime import EndEventRule
+    >>> from srd_arena.domain.effects.runtime import EndEventRule
     >>> effect = SimpleNamespace(
     ...     target_refs=("target",),
     ...     lifecycle=SimpleNamespace(
@@ -70,7 +72,7 @@ def resolve_spell_lifecycle_event(
             dc = repeat_save.dc
             if ability and dc:
                 creature = state.creatures[affected_ref].creature
-                roll_rules = state.combat_rules.roll_modifiers(
+                roll_rules = roll_modifiers(
                     state,
                     affected_ref,
                     "saving_throw",

@@ -2,8 +2,7 @@
 
 The orchestrator owns decisions, continuations, and the transition between
 actions and turns. It deliberately delegates action mechanics, reaction
-resolution, turn-boundary work, and rules calculations to their focused
-services.
+resolution, and turn-boundary work to their focused functions.
 """
 
 from __future__ import annotations
@@ -23,7 +22,17 @@ from .encounter_models.resolution import (
     EncounterProgress,
 )
 from .participants import creature_controller
+from .reaction_runtime.damage_rerolls import apply_damage_reroll_action
+from .reaction_runtime.opportunity_execution import apply_reaction_action
 from .state_runtime import merge_progress
+from .turn_lifecycle import (
+    active_turn_creature,
+    advance_turn,
+    check_transition,
+    maybe_reset_reactions,
+    movement_budget_for_turn,
+    skip_defeated_turn,
+)
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -69,14 +78,14 @@ class EncounterOrchestrator:
             )
 
         if decision.kind == "reroll_dice":
-            result = state.reaction_engine.apply_damage_reroll_action(
+            result = apply_damage_reroll_action(
                 state,
                 action,
                 decision,
             )
             return self._finish_decision_execution(state, decision, result)
         if decision.kind == "reaction":
-            result = state.reaction_engine.apply_reaction_action(
+            result = apply_reaction_action(
                 state,
                 action,
                 decision,
@@ -92,8 +101,13 @@ class EncounterOrchestrator:
 
         >>> from unittest.mock import Mock
         >>> state = Mock(interrupts=Mock(decision_stack=[]))
-        >>> state.turn_lifecycle.check_transition.return_value = "victory-scene"
-        >>> EncounterOrchestrator().advance(state).transition
+        >>> from unittest.mock import patch
+        >>> with patch(
+        ...     "srd_arena.domain.encounters.orchestration.check_transition",
+        ...     return_value="victory-scene",
+        ... ):
+        ...     transition = EncounterOrchestrator().advance(state).transition
+        >>> transition
         'victory-scene'
         """
         progress = EncounterProgress()
@@ -106,10 +120,10 @@ class EncounterOrchestrator:
                 progress.paused_for_decision = True
                 break
 
-            creature_ref = state.turn_lifecycle.active_turn_creature(state)
+            creature_ref = active_turn_creature(state)
             if not state.creatures[creature_ref].is_alive:
-                state.turn_lifecycle.skip_defeated_turn(state, progress)
-                state.turn_lifecycle.maybe_reset_reactions(state)
+                skip_defeated_turn(state, progress)
+                maybe_reset_reactions(state)
                 continue
             if (
                 state.automatic_action_limit is not None
@@ -191,7 +205,7 @@ class EncounterOrchestrator:
         progress: EncounterProgress,
     ) -> None:
         if progress.transition is None:
-            progress.transition = state.turn_lifecycle.check_transition(state)
+            progress.transition = check_transition(state)
 
     def _finish_turn(
         self,
@@ -200,10 +214,10 @@ class EncounterOrchestrator:
         progress: EncounterProgress,
     ) -> None:
         if state.creatures[creature_ref].is_alive:
-            state.turn_lifecycle.advance_turn(state, progress)
+            advance_turn(state, progress)
         else:
-            state.turn_lifecycle.skip_defeated_turn(state, progress)
-        state.turn_lifecycle.maybe_reset_reactions(state)
+            skip_defeated_turn(state, progress)
+        maybe_reset_reactions(state)
 
     def _apply_selected_action(
         self,
@@ -235,10 +249,7 @@ class EncounterOrchestrator:
         if not actor.is_alive:
             return True, progress, 0
         if actor.movement_remaining is None:
-            actor.movement_remaining = state.turn_lifecycle.movement_budget_for_turn(
-                state,
-                creature_ref,
-            )
+            actor.movement_remaining = movement_budget_for_turn(state, creature_ref)
 
         selector = state._action_selectors[creature_ref]
         action = initial_action or selector.select_action(

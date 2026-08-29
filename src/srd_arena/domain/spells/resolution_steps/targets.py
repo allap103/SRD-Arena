@@ -2,11 +2,12 @@
 
 from dataclasses import dataclass
 
-from ...capabilities import (
+from srd_arena.domain.capabilities import (
     AttackResolution,
     AutomaticResolution,
     SavingThrowResolution,
 )
+
 from .context import SpellActionContext, SpellTargetContext
 from .preparation import PreparedSpellResolution
 from .target_damage import apply_target_damage
@@ -34,8 +35,8 @@ def resolve_spell_targets(
     """Resolve rolls, damage, restoration, and messages in target order.
 
     >>> from types import SimpleNamespace
-    >>> from ...capabilities import AutomaticResolution, CapabilityDefinition
-    >>> from ...capabilities import CapabilityTarget, Outcome
+    >>> from srd_arena.domain.capabilities import AutomaticResolution, CapabilityDefinition
+    >>> from srd_arena.domain.capabilities import CapabilityTarget, Outcome
     >>> definition = CapabilityDefinition(
     ...     CapabilityTarget("creature"), AutomaticResolution(Outcome())
     ... )

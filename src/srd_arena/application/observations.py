@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from srd_arena.domain.effects.runtime import OngoingEffect
+from srd_arena.domain.encounters import rule_queries
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import (
     ActionCost,
@@ -174,13 +175,13 @@ def _observe_creature(
     slots_remaining = (
         spellcasting.spell_slots_remaining if spellcasting is not None else {}
     )
-    movement = state.combat_rules.movement_budget(state, creature_ref)
+    movement = rule_queries.movement_budget(state, creature_ref)
     movement_remaining = (
         creature_state.movement_remaining
         if creature_state.movement_remaining is not None
         else movement.budget
     )
-    action_available = state.combat_rules.action_compatibility(
+    action_available = rule_queries.action_compatibility(
         state,
         creature_ref,
         EncounterAction(
@@ -190,7 +191,7 @@ def _observe_creature(
             cost=ActionCost(action=1),
         ),
     ).allowed
-    bonus_action_available = state.combat_rules.action_compatibility(
+    bonus_action_available = rule_queries.action_compatibility(
         state,
         creature_ref,
         EncounterAction(
@@ -200,17 +201,17 @@ def _observe_creature(
             cost=ActionCost(bonus_action=1),
         ),
     ).allowed
-    reaction_available = state.combat_rules.reaction_eligibility(
+    reaction_available = rule_queries.reaction_eligibility(
         state,
         creature_ref,
     ).allowed
-    attacks_per_attack_action = state.combat_rules.attack_limit(
+    attacks_per_attack_action = rule_queries.attack_limit(
         state,
         creature_ref,
         creature.combat_profile.attacks_per_attack_action,
     ).value
     effective_conditions = state.effective_conditions_for(creature_ref).conditions
-    armor_class = state.combat_rules.effective_armor_class(
+    armor_class = rule_queries.effective_armor_class(
         state,
         creature_ref,
     ).value
@@ -226,7 +227,7 @@ def _observe_creature(
             y=creature_state.position.y,
         ),
         health=creature.get_health(),
-        max_health=state.combat_rules.effective_maximum_health(
+        max_health=rule_queries.effective_maximum_health(
             state,
             creature_ref,
         ).value,

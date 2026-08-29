@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from ...effects.modifiers import ModifierSubject, RollKind, RollModifier
-from ...effects.rule_effects import RollAdjustment
+from srd_arena.domain.effects.modifiers import ModifierSubject, RollKind, RollModifier
+from srd_arena.domain.effects.rule_effects import RollAdjustment
+
 from ..encounter_models.actions import CreatureRef
 from .context import CreatureEffectQueryContext
 from .models import RollRuleContribution, RollRuleResult

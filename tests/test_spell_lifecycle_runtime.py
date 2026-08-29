@@ -28,6 +28,7 @@ from srd_arena.domain.effects.runtime import (
     RepeatSaveLifecycle,
     RuntimeStateIdentity,
 )
+from srd_arena.domain.encounters import rule_queries
 from srd_arena.domain.encounters.condition_state import remove_condition
 from srd_arena.domain.encounters.creature_control import (
     creature_action_candidates,
@@ -54,18 +55,20 @@ from srd_arena.domain.encounters.encounter import (
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.rule_queries import has_condition_save_advantage
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
-from srd_arena.domain.geometry import Position
-from srd_arena.domain.spells.rules import (
-    parse_spell_action_damage_type,
-    parse_spell_action_slot,
+from srd_arena.domain.encounters.turn_lifecycle import (
+    active_movement_remaining,
+    advance_turn,
 )
+from srd_arena.domain.geometry import Position
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import (
     ORCHESTRATOR as _ORCHESTRATOR,
 )
 from tests.encounter_runtime_support import (
     TACTICAL_SCENARIO_DIR,
+    is_spell_action,
     player_first_initiative,
+    spell_payload,
 )
 from tests.encounter_runtime_support import (
     active_creature as _active_creature,
@@ -120,8 +123,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save() -> Non
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("hold_person:goblin_1")
+        if is_spell_action(action, "hold_person", target_ref="goblin_1")
     )
     cast = _ORCHESTRATOR.submit(state, action)
 
@@ -139,7 +141,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save() -> Non
 
     state.initiative_order = ["player", "goblin_1"]
     state.turn.index = 1
-    state.turn_lifecycle.advance_turn(state, cast)
+    advance_turn(state, cast)
 
     assert state.has_condition("goblin_1", Condition.PARALYZED) is False
     assert state.ongoing_effects == []
@@ -230,7 +232,7 @@ def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
         origin_id="protection-cast",
     )
 
-    assert "poison" in state.combat_rules.damage_resistances(state, "goblin_1").values
+    assert "poison" in rule_queries.damage_resistances(state, "goblin_1").values
     assert has_condition_save_advantage(state, "goblin_1", ("poisoned",))
 
     remove_ongoing_effects(
@@ -242,9 +244,7 @@ def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
         ),
     )
 
-    assert (
-        "poison" not in state.combat_rules.damage_resistances(state, "goblin_1").values
-    )
+    assert "poison" not in rule_queries.damage_resistances(state, "goblin_1").values
     assert not has_condition_save_advantage(state, "goblin_1", ("poisoned",))
 
 
@@ -313,7 +313,7 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
-    before = state.turn_lifecycle.active_movement_remaining(state)
+    before = active_movement_remaining(state)
     apply_encounter_effects(
         state,
         [
@@ -334,7 +334,7 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
     )
 
     assert state.active_creature_state.movement_remaining == before + 2
-    assert state.combat_rules.effective_speed(state, "player").value == 40
+    assert rule_queries.effective_speed(state, "player").value == 40
 
     remove_ongoing_effects(
         state,
@@ -346,7 +346,7 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
     )
 
     assert state.active_creature_state.movement_remaining == before
-    assert state.combat_rules.effective_speed(state, "player").value == 30
+    assert rule_queries.effective_speed(state, "player").value == 30
 
 
 def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
@@ -460,9 +460,12 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets() -> None:
     initial = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("hold_person:goblin_1")
-        and parse_spell_action_slot(str(action.value)) == 3
+        if is_spell_action(
+            action,
+            "hold_person",
+            target_ref="goblin_1",
+            slot_level=3,
+        )
     )
     opened = _ORCHESTRATOR.submit(state, initial)
 
@@ -529,7 +532,7 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
     initial = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value) == "scorching_ray:goblin_1"
+        if is_spell_action(action, "scorching_ray", target_ref="goblin_1")
     )
     opened = _ORCHESTRATOR.submit(state, initial)
 
@@ -599,7 +602,7 @@ def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() ->
     initial = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value) == "scorching_ray:goblin_1"
+        if is_spell_action(action, "scorching_ray", target_ref="goblin_1")
     )
     _ORCHESTRATOR.submit(state, initial)
 
@@ -636,9 +639,12 @@ def test_ray_of_sickness_combines_scaled_damage_and_timed_condition() -> None:
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("ray_of_sickness:goblin_1")
-        and parse_spell_action_slot(str(action.value)) == 2
+        if is_spell_action(
+            action,
+            "ray_of_sickness",
+            target_ref="goblin_1",
+            slot_level=2,
+        )
     )
     resolved = _ORCHESTRATOR.submit(state, action)
 
@@ -668,7 +674,7 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation() -> None:
     initial = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value) == "eldritch_blast:goblin_1"
+        if is_spell_action(action, "eldritch_blast", target_ref="goblin_1")
     )
     _ORCHESTRATOR.submit(state, initial)
 
@@ -725,14 +731,18 @@ def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage() -> None:
     ice_knife_actions = [
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value).startswith("ice_knife")
+        if is_spell_action(action, "ice_knife")
     ]
     assert ice_knife_actions
     action = next(
         action
         for action in ice_knife_actions
-        if str(action.value).startswith("ice_knife:goblin_1")
-        and parse_spell_action_slot(str(action.value)) == 2
+        if is_spell_action(
+            action,
+            "ice_knife",
+            target_ref="goblin_1",
+            slot_level=2,
+        )
     )
     resolved = _ORCHESTRATOR.submit(state, action)
 
@@ -815,7 +825,7 @@ def test_sleep_progresses_from_incapacitated_to_unconscious() -> None:
     assert state.has_condition("goblin_1", Condition.INCAPACITATED)
     state.initiative_order = ["player", "goblin_1"]
     state.turn.index = 1
-    state.turn_lifecycle.advance_turn(state, EncounterProgress())
+    advance_turn(state, EncounterProgress())
     assert state.has_condition("goblin_1", Condition.UNCONSCIOUS)
     assert state.has_condition("goblin_1", Condition.INCAPACITATED) is False
 
@@ -965,8 +975,7 @@ def test_charm_person_save_has_advantage_against_opponent() -> None:
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("charm_person:goblin_1")
+        if is_spell_action(action, "charm_person", target_ref="goblin_1")
     )
     cast = _ORCHESTRATOR.submit(state, action)
 
@@ -1234,8 +1243,7 @@ def test_hideous_laughter_prevents_target_from_removing_its_own_prone() -> None:
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("hideous_laughter:goblin_1")
+        if is_spell_action(action, "hideous_laughter", target_ref="goblin_1")
     )
     _ORCHESTRATOR.submit(state, action)
 
@@ -1276,8 +1284,7 @@ def test_hideous_laughter_success_is_reported_as_a_save() -> None:
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("hideous_laughter:goblin_1")
+        if is_spell_action(action, "hideous_laughter", target_ref="goblin_1")
     )
 
     result = _ORCHESTRATOR.submit(state, action)
@@ -1373,8 +1380,7 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell() -> None:
     hold = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("hold_person:goblin_1")
+        if is_spell_action(action, "hold_person", target_ref="goblin_1")
     )
     _ORCHESTRATOR.submit(state, hold)
     state.creatures["player"].actions_remaining = 1
@@ -1382,9 +1388,8 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell() -> None:
     protection = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("protection_from_energy:player")
-        and parse_spell_action_damage_type(str(action.value)) == "fire"
+        if is_spell_action(action, "protection_from_energy", target_ref="player")
+        and spell_payload(action).selected_damage_type == "fire"
     )
 
     result = _ORCHESTRATOR.submit(state, protection)
@@ -1447,7 +1452,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution() -> None
     action = next(
         candidate
         for candidate in state.available_actions()
-        if candidate.kind == "spell" and str(candidate.value).startswith("cure_wounds:")
+        if is_spell_action(candidate, "cure_wounds")
     )
 
     result = _ORCHESTRATOR.submit(state, action)

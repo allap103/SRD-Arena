@@ -15,7 +15,8 @@ from .special import special_action_candidates
 from .stat_blocks import stat_block_action_candidates
 
 if TYPE_CHECKING:
-    from ....creatures import Creature
+    from srd_arena.domain.creatures import Creature
+
     from ...encounter import EncounterState
 
 

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from ...rolls.dice import resolve_dice
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.rolls.dice import resolve_dice
+
 from ..encounter_models.resolution import EncounterProgress
+from ..rule_queries.health import apply_healing
 from ..state_runtime import create_event
 from .consumables import healing_potion_dice
 from .rejections import reject_action
@@ -87,7 +89,7 @@ def resolve_utilize_action(
     )
     dice_total = roll.subtotal
     healing_total = roll.total
-    applied_healing = state.combat_rules.apply_healing(
+    applied_healing = apply_healing(
         state,
         creature_ref,
         healing_total,

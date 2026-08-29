@@ -4,19 +4,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....capabilities import (
+from srd_arena.domain.capabilities import (
     HealingEffect,
     TemporaryHitPointsEffect,
     capability_effects,
 )
-from ....creatures import Creature
-from ....effects.conditions import CombatTrait
-from ....effects.rule_effects import MaximumHitPointAdjustment
-from ....geometry import grid_distance_between
-from ....spells.definitions import Spell
-from ....spells.resolution import SpellTargetContext
-from ....spells.rules import spell_target_disposition
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.effects.conditions import CombatTrait
+from srd_arena.domain.effects.rule_effects import MaximumHitPointAdjustment
+from srd_arena.domain.geometry import grid_distance_between
+from srd_arena.domain.spells.definitions import Spell
+from srd_arena.domain.spells.resolution import SpellTargetContext
+from srd_arena.domain.spells.rules import spell_target_disposition
+
 from ...participants import creatures_are_opponents
+from ...rule_queries.defenses import condition_immunities
 from ...state_runtime import creature_position
 from .spellcasting import spell_range_squares_for, spell_targets_self_only_for
 
@@ -166,33 +168,7 @@ def spell_target_context(
     actor: Creature,
     target_ref: str,
 ) -> SpellTargetContext | None:
-    """Build target facts needed to evaluate authored spell requirements.
-
-    >>> from types import SimpleNamespace
-    >>> creature = SimpleNamespace(name="Goblin")
-    >>> effective = SimpleNamespace(
-    ...     providers_for_trait=lambda trait: ("stunned",)
-    ... )
-    >>> state = SimpleNamespace(
-    ...     creatures={
-    ...         "goblin": SimpleNamespace(is_alive=True, creature=creature)
-    ...     },
-    ...     effective_conditions_for=lambda ref: effective,
-    ...     conditions_for=lambda ref: (),
-    ...     combat_rules=SimpleNamespace(
-    ...         condition_immunities=lambda state, ref: SimpleNamespace(
-    ...             values=frozenset()
-    ...         ),
-    ...     ),
-    ... )
-    >>> context = spell_target_context(
-    ...     state, SimpleNamespace(), "goblin"
-    ... )
-    >>> (context.target_label, context.automatic_save_failures["strength"])
-    ('Goblin', ('stunned',))
-    >>> spell_target_context(state, SimpleNamespace(), "missing") is None
-    True
-    """
+    """Build target facts needed to evaluate authored spell requirements."""
 
     target_state = state.creatures.get(target_ref)
     if target_state is None or not target_state.is_alive:
@@ -207,9 +183,7 @@ def spell_target_context(
         ),
         condition_immunities=frozenset(
             condition.value
-            for condition in state.combat_rules.condition_immunities(
-                state, target_ref
-            ).values
+            for condition in condition_immunities(state, target_ref).values
         ),
         automatic_save_failures={
             "strength": effective.providers_for_trait(

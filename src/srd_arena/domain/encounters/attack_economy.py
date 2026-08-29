@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
+from .rule_queries.numeric import attack_limit
+
 if TYPE_CHECKING:
     from .encounter import EncounterState
     from .encounter_models.actions import CreatureRef
@@ -55,9 +57,7 @@ def spend_attack(
     >>> state = SimpleNamespace(
     ...     creatures={"hero": creature},
     ...     active_actions_remaining=1, active_magic_actions_remaining=1,
-    ...     combat_rules=SimpleNamespace(
-    ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=base)
-    ...     ),
+    ...     ongoing_effects=[],
     ... )
     >>> spend_attack(state, "hero", base_attacks=2)
     >>> (creature.attack_action_attacks_used, creature.attacks_remaining)
@@ -95,9 +95,7 @@ def begin_attack_action(
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": creature},
-    ...     combat_rules=SimpleNamespace(
-    ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=base)
-    ...     ),
+    ...     ongoing_effects=[],
     ... )
     >>> begin_attack_action(state, "hero", base_attacks=2)
     >>> (creature.attack_action_attacks_used, creature.attacks_remaining)
@@ -123,9 +121,7 @@ def spend_current_attack(
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": creature},
-    ...     combat_rules=SimpleNamespace(
-    ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=base)
-    ...     ),
+    ...     ongoing_effects=[],
     ... )
     >>> spend_current_attack(state, "hero")
     >>> (creature.attack_action_attacks_used, creature.attacks_remaining)
@@ -174,13 +170,11 @@ def reconcile_remaining_attacks(
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": creature},
-    ...     combat_rules=SimpleNamespace(
-    ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=2)
-    ...     ),
+    ...     ongoing_effects=[],
     ... )
     >>> reconcile_remaining_attacks(state, ("hero",))
     >>> creature.attacks_remaining
-    1
+    2
     """
 
     for creature_ref in creature_refs:
@@ -188,7 +182,7 @@ def reconcile_remaining_attacks(
         base = creature_state.attack_action_base_attacks
         if base <= 0:
             continue
-        allowed = state.combat_rules.attack_limit(
+        allowed = attack_limit(
             state,
             creature_ref,
             base,

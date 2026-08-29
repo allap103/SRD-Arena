@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Generator
 
-from ..geometry import (
+from srd_arena.domain.geometry import (
     Position,
     grid_distance_between,
     manhattan_distance,
 )
+
 from .encounter_models.actions import EncounterAction
 from .encounter_models.state import (
     BehaviorContext,

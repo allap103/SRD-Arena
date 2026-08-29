@@ -11,6 +11,7 @@ from ...encounter_models.actions import (
     EncounterAction,
 )
 from ...grappling_state import movement_cost_for
+from ...rule_queries.numeric import movement_budget
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -23,7 +24,7 @@ def movement_action_candidates(
     """Build movement candidates that fit the grid and remaining movement budget.
 
     >>> from types import SimpleNamespace
-    >>> from ....geometry import MovementBudget, MovementCost
+    >>> from srd_arena.domain.geometry import MovementBudget, MovementCost
     >>> actor = SimpleNamespace(movement_remaining=MovementBudget(6))
     >>> state = SimpleNamespace(creatures={"hero": actor})
     >>> from unittest.mock import patch
@@ -40,7 +41,7 @@ def movement_action_candidates(
     actor = state.creatures[creature_ref]
     movement_cost = movement_cost_for(state, creature_ref)
     if actor.movement_remaining is None:
-        actor.movement_remaining = state.combat_rules.movement_budget(
+        actor.movement_remaining = movement_budget(
             state,
             creature_ref,
         ).budget

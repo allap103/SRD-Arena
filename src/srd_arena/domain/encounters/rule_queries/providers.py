@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 
-from ...effects.rule_effects import RuntimeRuleEffect
-from ...effects.runtime import EffectSource
+from srd_arena.domain.effects.rule_effects import RuntimeRuleEffect
+from srd_arena.domain.effects.runtime import EffectSource
+
 from ..encounter_models.actions import CreatureRef
 from .context import EffectQueryContext
 
@@ -21,8 +22,8 @@ def ongoing_rule_effects(
     next instance becomes the provider automatically.
 
     >>> from types import SimpleNamespace
-    >>> from ...effects.rule_effects import ArmorClassAdjustment
-    >>> from ...effects.runtime import EffectSource, EffectSourceKind
+    >>> from srd_arena.domain.effects.rule_effects import ArmorClassAdjustment
+    >>> from srd_arena.domain.effects.runtime import EffectSource, EffectSourceKind
     >>> source = EffectSource(EffectSourceKind.SPELL, "shield")
     >>> ongoing = SimpleNamespace(
     ...     identity=SimpleNamespace(id="effect-1", source=source),

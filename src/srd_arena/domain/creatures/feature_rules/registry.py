@@ -2,30 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from collections.abc import Callable
 
-from ...effects.results import ActionResolutionResult
-from ...rolls.dice import DieRoller
+from srd_arena.domain.effects.results import ActionResolutionResult
+from srd_arena.domain.rolls.dice import DieRoller
+
 from ..model import Creature
-from .contracts import HealingReceiver
 from .fighter import resolve_fighter_feature
 
-
-class FeatureResolver(Protocol):
-    """Resolve one class feature for an explicitly identified encounter actor."""
-
-    def __call__(
-        self,
-        creature: Creature,
-        feature_id: str,
-        roll_die: DieRoller,
-        heal: HealingReceiver,
-        *,
-        actor_ref: str,
-    ) -> ActionResolutionResult | None: ...
-
-
-CLASS_FEATURE_RESOLVERS: dict[str, FeatureResolver] = {
+CLASS_FEATURE_RESOLVERS = {
     "fighter": resolve_fighter_feature,
 }
 
@@ -34,7 +19,7 @@ def resolve_feature_action(
     creature: Creature,
     feature_id: str,
     roll_die: DieRoller,
-    heal: HealingReceiver,
+    heal: Callable[[int], int],
     *,
     actor_ref: str,
 ) -> ActionResolutionResult | None:

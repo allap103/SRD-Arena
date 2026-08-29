@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ...geometry import MovementBudget, MovementCost, Position
+from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
+
 from .actions import CreatureRef, EncounterAction
 
 

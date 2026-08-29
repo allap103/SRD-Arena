@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....creatures import Creature
+from srd_arena.domain.creatures import Creature
+
 from ...attack_economy import spend_attack, spend_current_attack
 from ...effect_lifecycle.concentration import resolve_concentration_damage
 from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
@@ -12,6 +13,9 @@ from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
 from ...participants import creatures_are_opponents
+from ...rule_queries.defenses import apply_damage
+from ...rule_queries.numeric import effective_armor_class
+from ...rule_queries.rolls import roll_modifiers
 from ...state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
 from ...state_runtime import create_event, creature_label
 from ..attack_resolution import (
@@ -85,12 +89,12 @@ def resolve_attack_action(
         if candidate.is_alive
         and creatures_are_opponents(state, creature_ref, opponent_ref)
     )
-    attack_roll_rules = state.combat_rules.roll_modifiers(
+    attack_roll_rules = roll_modifiers(
         state,
         creature_ref,
         "attack_roll",
     )
-    damage_roll_rules = state.combat_rules.roll_modifiers(
+    damage_roll_rules = roll_modifiers(
         state,
         creature_ref,
         "damage_roll",
@@ -120,7 +124,7 @@ def resolve_attack_action(
         ),
         sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
         sourced_attack_roll_mode=attack_roll_rules.mode,
-        target_armor_class=state.combat_rules.effective_armor_class(
+        target_armor_class=effective_armor_class(
             state,
             target_ref,
         ).value,
@@ -144,7 +148,7 @@ def resolve_attack_action(
         defender,
         attacker_label=creature.name,
         target_label=target_label,
-        damage_receiver=lambda amount, damage_type: state.combat_rules.apply_damage(
+        damage_receiver=lambda amount, damage_type: apply_damage(
             state,
             target_ref,
             amount,

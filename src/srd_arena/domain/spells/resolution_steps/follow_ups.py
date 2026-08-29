@@ -2,12 +2,17 @@
 
 from typing import cast
 
-from ...capabilities import CapabilityStep, DamageEffect, SavingThrowResolution
-from ...rolls.dice import resolve_dice
-from ...rolls.saving_throws import (
+from srd_arena.domain.capabilities import (
+    CapabilityStep,
+    DamageEffect,
+    SavingThrowResolution,
+)
+from srd_arena.domain.rolls.dice import resolve_dice
+from srd_arena.domain.rolls.saving_throws import (
     Ability,
     resolve_saving_throw,
 )
+
 from ..definitions import SpellDamage
 from .context import SpellActionContext
 from .scaling import (
@@ -28,8 +33,8 @@ def resolve_follow_up(
     A follow-up without target-origin area geometry is intentionally skipped.
 
     >>> from types import SimpleNamespace
-    >>> from ...capabilities import AutomaticResolution, CapabilityStep
-    >>> from ...capabilities import CapabilityTarget, Outcome
+    >>> from srd_arena.domain.capabilities import AutomaticResolution, CapabilityStep
+    >>> from srd_arena.domain.capabilities import CapabilityTarget, Outcome
     >>> follow_up = CapabilityStep(
     ...     CapabilityTarget("self"), AutomaticResolution(Outcome())
     ... )

@@ -2,19 +2,21 @@
 
 from __future__ import annotations
 
-from ...effects.results import ActionResolutionResult
+from collections.abc import Callable
+
+from srd_arena.domain.effects.results import ActionResolutionResult
+
 from ..resolution_steps.context import SpellActionContext
 from .slow import resolve_slow
-from .types import CustomSpellResolver, DeclarativeSpellResolver
 
-CUSTOM_SPELL_RESOLVERS: dict[str, CustomSpellResolver] = {
+CUSTOM_SPELL_RESOLVERS = {
     "slow": resolve_slow,
 }
 
 
 def resolve_custom_spell(
     context: SpellActionContext,
-    resolve_declarative: DeclarativeSpellResolver,
+    resolve_declarative: Callable[[SpellActionContext], ActionResolutionResult],
 ) -> ActionResolutionResult:
     """Resolve one spell through its validated registered Python handler.
 

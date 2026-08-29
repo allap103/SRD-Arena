@@ -1,6 +1,7 @@
 """Create provenance-aware condition results for persistent spells."""
 
-from ...effects.results import EffectResult
+from srd_arena.domain.effects.results import EffectResult
+
 from .context import SpellActionContext
 from .preparation import PreparedSpellResolution
 from .targets import ResolvedSpellTargets
@@ -16,7 +17,7 @@ def build_persistent_spell_conditions(
     """Create every condition child produced by the resolved casting.
 
     >>> from types import SimpleNamespace
-    >>> from ...capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget, Outcome,
     ... )
     >>> from ..definitions import Spell

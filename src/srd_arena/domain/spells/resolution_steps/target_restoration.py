@@ -24,7 +24,7 @@ def restore_target(
     """Apply prepared healing and temporary Hit Points to an affected target.
 
     >>> from types import SimpleNamespace
-    >>> from ...capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget,
     ...     HealingEffect, Outcome,
     ... )

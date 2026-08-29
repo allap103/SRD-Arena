@@ -1,6 +1,7 @@
 """Derive runtime targeting behavior from spell metadata and capabilities."""
 
-from ..geometry import Grid
+from srd_arena.domain.geometry import Grid
+
 from .definitions import Spell
 
 
@@ -25,8 +26,8 @@ def spell_targets_self_only(spell: Spell) -> bool:
 def spell_chooses_area_targets(spell: Spell) -> bool:
     """Return whether an area affects selected rather than all occupants.
 
-    >>> from ..capabilities import AutomaticResolution, CapabilityDefinition
-    >>> from ..capabilities import CapabilityTarget, Outcome
+    >>> from srd_arena.domain.capabilities import AutomaticResolution, CapabilityDefinition
+    >>> from srd_arena.domain.capabilities import CapabilityTarget, Outcome
     >>> definition = CapabilityDefinition(
     ...     CapabilityTarget("area", occupants="chosen"),
     ...     AutomaticResolution(Outcome()),
@@ -46,8 +47,8 @@ def spell_chooses_area_targets(spell: Spell) -> bool:
 def spell_target_disposition(spell: Spell) -> str:
     """Return the ally, enemy, willing, or unrestricted target relationship.
 
-    >>> from ..capabilities import AutomaticResolution, CapabilityDefinition
-    >>> from ..capabilities import CapabilityTarget, Outcome
+    >>> from srd_arena.domain.capabilities import AutomaticResolution, CapabilityDefinition
+    >>> from srd_arena.domain.capabilities import CapabilityTarget, Outcome
     >>> definition = CapabilityDefinition(
     ...     CapabilityTarget("creature", disposition="ally"),
     ...     AutomaticResolution(Outcome()),
@@ -66,8 +67,8 @@ def spell_target_disposition(spell: Spell) -> str:
 def spell_area_shape(spell: Spell) -> str | None:
     """Return the capability's geometric area shape, if it has one.
 
-    >>> from ..capabilities import AutomaticResolution, CapabilityDefinition
-    >>> from ..capabilities import CapabilityTarget, Outcome
+    >>> from srd_arena.domain.capabilities import AutomaticResolution, CapabilityDefinition
+    >>> from srd_arena.domain.capabilities import CapabilityTarget, Outcome
     >>> definition = CapabilityDefinition(
     ...     CapabilityTarget("area", shape="cone"),
     ...     AutomaticResolution(Outcome()),
@@ -86,7 +87,7 @@ def spell_area_shape(spell: Spell) -> str | None:
 def spell_repeats_target_allocations(spell: Spell) -> bool:
     """Return whether repeated effects may be assigned to the same target.
 
-    >>> from ..capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityRepetition,
     ...     CapabilityTarget, Outcome,
     ... )
@@ -111,7 +112,7 @@ def spell_repeats_target_allocations(spell: Spell) -> bool:
 def spell_requires_full_target_count(spell: Spell) -> bool:
     """Return whether every repeated effect must be allocated before casting.
 
-    >>> from ..capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityRepetition,
     ...     CapabilityTarget, Outcome,
     ... )
@@ -163,7 +164,7 @@ def spell_max_targets(
 ) -> int:
     """Resolve target or projectile count after actor-level and slot scaling.
 
-    >>> from ..capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityRepetition,
     ...     CapabilityScaling, CapabilityTarget, Outcome, ScalingIncrement,
     ... )

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Collection
+from collections.abc import Collection
 from functools import partial
 from typing import TYPE_CHECKING
 
-from ...geometry import Position
+from srd_arena.domain.geometry import Position
+
 from ..actions.attack_resolution import (
     apply_attack_damage,
     can_make_opportunity_attack,
@@ -25,9 +26,14 @@ from ..encounter_models.resolution import (
     EncounterProgress,
 )
 from ..participants import creature_controller, creatures_are_opponents
+from ..rule_queries.defenses import apply_damage
+from ..rule_queries.numeric import effective_armor_class
+from ..rule_queries.permissions import reaction_eligibility
+from ..rule_queries.rolls import roll_modifiers
 from ..state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
 from ..state_runtime import create_event, creature_label, next_action_id
 from .attack_lifecycle import resolve_attack_lifecycle
+from .damage_rerolls import open_damage_reroll_decision
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -93,7 +99,7 @@ def resolve_automatic_opportunity_attacks(
         and reactor.is_alive
         and creatures_are_opponents(state, reactor_ref, mover_ref)
         and creature_controller(state, reactor_ref) == "scripted"
-        and state.combat_rules.reaction_eligibility(
+        and reaction_eligibility(
             state,
             reactor_ref,
             "opportunity_attack",
@@ -107,12 +113,12 @@ def resolve_automatic_opportunity_attacks(
     ]
     for reactor_ref, reactor in reactors:
         reactor.reaction_available = False
-        attack_roll_rules = state.combat_rules.roll_modifiers(
+        attack_roll_rules = roll_modifiers(
             state,
             reactor_ref,
             "attack_roll",
         )
-        damage_roll_rules = state.combat_rules.roll_modifiers(
+        damage_roll_rules = roll_modifiers(
             state,
             reactor_ref,
             "damage_roll",
@@ -137,7 +143,7 @@ def resolve_automatic_opportunity_attacks(
             ),
             sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
             sourced_attack_roll_mode=attack_roll_rules.mode,
-            target_armor_class=state.combat_rules.effective_armor_class(
+            target_armor_class=effective_armor_class(
                 state,
                 mover_ref,
             ).value,
@@ -161,7 +167,7 @@ def resolve_automatic_opportunity_attacks(
             attacker_label=reactor.creature.name,
             target_label=mover.creature.name,
             damage_receiver=partial(
-                state.combat_rules.apply_damage,
+                apply_damage,
                 state,
                 mover_ref,
             ),
@@ -203,8 +209,6 @@ def apply_reaction_action(
     state: EncounterState,
     action: EncounterAction,
     decision: DecisionFrame,
-    *,
-    open_damage_reroll: Callable[..., None],
 ) -> DecisionExecutionResult:
     """Resolve an Opportunity Attack or pass without closing its frame.
 
@@ -220,7 +224,6 @@ def apply_reaction_action(
     ...     state,
     ...     EncounterAction("Pass reaction", "pass", id="pass"),
     ...     frame,
-    ...     open_damage_reroll=lambda *args, **kwargs: None,
     ... )
     >>> (result.completed, result.action_id, state.creatures["guard"].reaction_available)
     (True, 'action_1', True)
@@ -246,7 +249,7 @@ def apply_reaction_action(
         roll_die = state.dice.roll_die
         request = opportunity_attack_request(decision)
         movement = request.movement
-        eligibility = state.combat_rules.reaction_eligibility(
+        eligibility = reaction_eligibility(
             state,
             reactor_ref,
             "opportunity_attack",
@@ -258,12 +261,12 @@ def apply_reaction_action(
         target = state.creatures[target_ref]
         target_label = creature_label(state, target_ref)
         reactor_label = creature_label(state, reactor_ref)
-        attack_roll_rules = state.combat_rules.roll_modifiers(
+        attack_roll_rules = roll_modifiers(
             state,
             reactor_ref,
             "attack_roll",
         )
-        damage_roll_rules = state.combat_rules.roll_modifiers(
+        damage_roll_rules = roll_modifiers(
             state,
             reactor_ref,
             "damage_roll",
@@ -288,7 +291,7 @@ def apply_reaction_action(
             ),
             sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
             sourced_attack_roll_mode=attack_roll_rules.mode,
-            target_armor_class=state.combat_rules.effective_armor_class(
+            target_armor_class=effective_armor_class(
                 state,
                 target_ref,
             ).value,
@@ -307,7 +310,7 @@ def apply_reaction_action(
         )
         reroll_rule = matching_damage_reroll_rule(reactor.creature, attack)
         if attack.hit and reroll_rule is not None:
-            open_damage_reroll(
+            open_damage_reroll_decision(
                 state,
                 attack=attack,
                 triggered_effect=reroll_rule,
@@ -334,7 +337,7 @@ def apply_reaction_action(
             attacker_label=reactor_label,
             target_label=target_label,
             damage_receiver=partial(
-                state.combat_rules.apply_damage,
+                apply_damage,
                 state,
                 target_ref,
             ),

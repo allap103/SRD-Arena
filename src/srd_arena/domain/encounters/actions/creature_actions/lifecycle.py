@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.spells.action_payloads import (
+    SpellActionPayload,
+    serialize_spell_action_payload,
+)
+
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import (
@@ -12,6 +17,7 @@ from ...encounter_models.resolution import (
     ActionExecutionResult,
 )
 from ...state_runtime import create_event, next_action_id
+from ..eligibility import action_eligibility
 from ..rejections import reject_action
 
 if TYPE_CHECKING:
@@ -23,26 +29,9 @@ def begin_action_execution(
     action: EncounterAction,
     decision: DecisionFrame,
 ) -> ActionExecutionContext:
-    """Validate and record the declaration of a selected action.
+    """Validate and record the declaration of a selected action."""
 
-    >>> from types import SimpleNamespace
-    >>> from ..eligibility_rules.models import ActionEligibility
-    >>> decision = DecisionFrame("turn-hero", "hero", "turn", "normal_turn")
-    >>> state = SimpleNamespace(
-    ...     creatures={"hero": object()},
-    ...     combat_rules=SimpleNamespace(
-    ...         action_eligibility=lambda *args: ActionEligibility()
-    ...     ),
-    ...     action_sequence=1, event_sequence=1,
-    ... )
-    >>> context = begin_action_execution(
-    ...     state, EncounterAction("Wait", "wait"), decision
-    ... )
-    >>> (context.action_id, context.progress.events[0].type)
-    ('action_1', 'action_declared')
-    """
-
-    eligibility = state.combat_rules.action_eligibility(
+    eligibility = action_eligibility(
         state,
         decision.creature_ref,
         action,
@@ -55,6 +44,11 @@ def begin_action_execution(
         action=action,
         action_id=next_action_id(state),
     )
+    event_value = (
+        serialize_spell_action_payload(action.value)
+        if isinstance(action.value, SpellActionPayload)
+        else action.value
+    )
     context.progress.events.append(
         create_event(
             state,
@@ -63,7 +57,7 @@ def begin_action_execution(
             action_id=context.action_id,
             data={
                 "kind": action.kind,
-                "value": action.value,
+                "value": event_value,
                 "selected_action_id": action.id,
             },
         )
@@ -80,7 +74,7 @@ def begin_action_execution(
             reason_code=failure.code,
             details={
                 "selected_action_id": action.id,
-                "action_value": action.value,
+                "action_value": event_value,
                 "failure_codes": [item.code for item in eligibility.failures],
                 "provider_state_ids": [
                     state_id

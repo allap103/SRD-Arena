@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from ...capabilities import (
+from srd_arena.domain.capabilities import (
     CapabilityDefinition,
     CapabilityEffect,
     CapabilityResolution,
@@ -10,7 +10,8 @@ from ...capabilities import (
     HealingEffect,
     SavingThrowResolution,
 )
-from ...rolls.dice import DicePoolResult, resolve_dice
+from srd_arena.domain.rolls.dice import DicePoolResult, resolve_dice
+
 from ..definitions import SpellDamage
 from .context import SpellActionContext
 from .details import roll_optional_dice
@@ -45,7 +46,7 @@ def prepare_spell_rolls(
     """Scale spell outcomes and perform rolls intentionally shared by targets.
 
     >>> from types import SimpleNamespace
-    >>> from ...capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget,
     ...     DamageEffect, Outcome,
     ... )

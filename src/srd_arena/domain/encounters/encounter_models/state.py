@@ -5,13 +5,19 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from ...creatures.multiattack import MultiattackStep
-from ...effects.conditions import AppliedCondition
-from ...effects.runtime import CreatureRelationship, OngoingEffect
-from ...equipment import Item
-from ...geometry import GeometryConfig, MovementBudget, MovementCost, Position
-from ...rolls.randomness import DiceRoller
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.multiattack import MultiattackStep
+from srd_arena.domain.effects.conditions import AppliedCondition
+from srd_arena.domain.effects.runtime import CreatureRelationship, OngoingEffect
+from srd_arena.domain.equipment import Item
+from srd_arena.domain.geometry import (
+    GeometryConfig,
+    MovementBudget,
+    MovementCost,
+    Position,
+)
+from srd_arena.domain.rolls.randomness import DiceRoller
+
 from ..definitions import EncounterBehavior, EncounterDefinition
 from .actions import CreatureRef
 from .decisions import InterruptState

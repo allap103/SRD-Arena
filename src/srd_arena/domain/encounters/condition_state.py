@@ -5,12 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from ..effects.condition_rules import effective_conditions
-from ..effects.conditions import (
+from srd_arena.domain.effects.condition_rules import effective_conditions
+from srd_arena.domain.effects.conditions import (
     AppliedCondition,
     Condition,
     build_applied_condition,
 )
+
 from .effect_lifecycle.concentration import end_concentration
 from .encounter_models.actions import CreatureRef
 from .rule_queries.defenses import condition_immunities, condition_suppressions

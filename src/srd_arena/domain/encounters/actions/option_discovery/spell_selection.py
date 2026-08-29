@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....spells.rules import parse_spell_action_value, spell_chooses_area_targets
+from srd_arena.domain.spells.rules import SpellActionPayload, spell_chooses_area_targets
+
 from ...encounter_models.actions import EncounterAction
+from ..eligibility import action_eligibility
 from .spell_areas import spell_area_targets
 from .spell_targets import spell_action_targets
 
@@ -44,11 +46,11 @@ def spell_target_selection_actions(
     if spell is None:
         return []
     actions: list[EncounterAction] = []
-    _spell_id, _target_ref, aim_point = parse_spell_action_value(
-        str(pending.action.value)
-    )
+    payload = pending.action.value
+    if not isinstance(payload, SpellActionPayload):
+        return []
     candidates = (
-        spell_area_targets(state, actor, spell, aim_point=aim_point)
+        spell_area_targets(state, actor, spell, aim_point=payload.aim_point)
         if spell_chooses_area_targets(spell)
         else tuple(spell_action_targets(state, actor, spell))
     )
@@ -167,7 +169,7 @@ def spell_target_selection_actions(
     return [
         action
         for action in actions
-        if state.combat_rules.action_eligibility(
+        if action_eligibility(
             state,
             creature_ref,
             action,

@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 from ..creature_control import available_creature_actions
 from ..encounter_models.actions import EncounterAction
 from ..participants import creature_controller
+from ..reaction_runtime.damage_rerolls import reroll_damage_actions
+from ..reaction_runtime.opportunity_offers import reaction_actions
 from .option_discovery.spell_areas import (
     spell_area,
     spell_area_targets,
@@ -54,15 +56,13 @@ def available_actions(state: EncounterState) -> list[EncounterAction]:
     >>> scripted_actions
     []
     >>> decision.kind = "reroll_dice"
-    >>> external = SimpleNamespace(
-    ...     current_decision=lambda: decision,
-    ...     reaction_engine=SimpleNamespace(
-    ...         reroll_damage_actions=lambda state: [EncounterAction("Accept", "accept_roll")]
-    ...     ),
-    ... )
+    >>> external = SimpleNamespace(current_decision=lambda: decision)
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.options.creature_controller",
     ...     return_value="external",
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.options.reroll_damage_actions",
+    ...     return_value=[EncounterAction("Accept", "accept_roll")],
     ... ):
     ...     external_actions = available_actions(external)
     >>> external_actions[0].kind
@@ -73,9 +73,9 @@ def available_actions(state: EncounterState) -> list[EncounterAction]:
     if creature_controller(state, decision.creature_ref) != "external":
         return []
     if decision.kind == "reroll_dice":
-        return state.reaction_engine.reroll_damage_actions(state)
+        return reroll_damage_actions(state)
     if decision.kind == "reaction":
-        return state.reaction_engine.reaction_actions(state)
+        return reaction_actions(state)
     if decision.kind == "spell_targets":
         return spell_target_selection_actions(state, decision.creature_ref)
     return available_creature_actions(state, decision.creature_ref)

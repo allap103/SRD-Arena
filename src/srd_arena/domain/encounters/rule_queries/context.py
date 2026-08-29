@@ -5,9 +5,10 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol
 
-from ...effects.conditions import AppliedCondition
-from ...effects.runtime import OngoingEffect
-from ...rolls.randomness import DiceRoller
+from srd_arena.domain.effects.conditions import AppliedCondition
+from srd_arena.domain.effects.runtime import OngoingEffect
+from srd_arena.domain.rolls.randomness import DiceRoller
+
 from ..definitions import EncounterDefinition
 from ..encounter_models.actions import CreatureRef
 from ..encounter_models.state import EncounterCreatureState

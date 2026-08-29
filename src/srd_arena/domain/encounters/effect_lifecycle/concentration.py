@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...effects.runtime import OngoingEffectKind
-from ...rolls.saving_throws import resolve_saving_throw
+from srd_arena.domain.effects.runtime import OngoingEffectKind
+from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
+
+from ..rule_queries.rolls import roll_modifiers
 from .removal import _remove_effect_tree
 
 if TYPE_CHECKING:
@@ -92,7 +94,7 @@ def resolve_concentration_damage(
         end_concentration(state, creature_ref)
         return
     dc = max(10, damage // 2)
-    roll_rules = state.combat_rules.roll_modifiers(
+    roll_rules = roll_modifiers(
         state,
         creature_ref,
         "saving_throw",

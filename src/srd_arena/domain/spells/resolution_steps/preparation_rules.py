@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from ...capabilities import (
+from srd_arena.domain.capabilities import (
     AutomaticResolution,
     CapabilityDefinition,
     CapabilityEffect,
@@ -16,6 +16,7 @@ from ...capabilities import (
     RepeatSave,
     SavingThrowResolution,
 )
+
 from ..definitions import SpellDamage
 
 
@@ -45,7 +46,7 @@ def prepare_spell_rules(
 ) -> PreparedSpellRules:
     """Normalize saving-throw requirements and ongoing lifecycle metadata.
 
-    >>> from ...capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget, Outcome,
     ... )
     >>> definition = CapabilityDefinition(

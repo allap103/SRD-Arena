@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Literal, cast
 
-from ..rolls.dice import D20RollMode, DieRoller
+from srd_arena.domain.rolls.dice import D20RollMode, DieRoller
 
 RollKind = Literal["ability_check", "attack_roll", "damage_roll", "saving_throw"]
 ModifierMode = Literal["advantage", "disadvantage", "add", "subtract"]

@@ -9,13 +9,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from ...spells.resolution import resolve_spell_action as _resolve_spell_action_impl
-from ...spells.rules import (
-    parse_spell_action_slot,
-    parse_spell_action_targets,
-    parse_spell_action_value,
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.spells.resolution import (
+    resolve_spell_action as _resolve_spell_action_impl,
 )
+from srd_arena.domain.spells.rules import SpellActionPayload
+
 from ..encounter_models.resolution import EncounterProgress
 from .option_discovery.spell_areas import spell_area, spell_area_targets
 from .option_discovery.spell_targets import spell_target_context
@@ -35,20 +34,23 @@ if TYPE_CHECKING:
 def resolve_spell_action(
     state: EncounterState,
     actor: Creature,
-    spell_value: str,
+    payload: SpellActionPayload,
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
     """Prepare, resolve, and apply one selected spell action.
 
     >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.spells.rules import spell_action_payload
     >>> actor = SimpleNamespace(spellcasting=None)
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="fighter"),
     ...     event_sequence=1,
     ... )
     >>> progress = EncounterProgress()
-    >>> resolve_spell_action(state, actor, "fireball", progress, "cast-1")
+    >>> resolve_spell_action(
+    ...     state, actor, spell_action_payload("fireball"), progress, "cast-1"
+    ... )
     >>> (progress.messages[-1], progress.events[-1].data["reason_code"])
     (('system', 'You cannot cast spells.'), 'spellcasting_unavailable')
     """
@@ -66,9 +68,11 @@ def resolve_spell_action(
         )
         return
 
-    spell_id, target_ref, aim_point = parse_spell_action_value(spell_value)
-    selected_target_refs = parse_spell_action_targets(spell_value)
-    cast_level = parse_spell_action_slot(spell_value)
+    spell_id = payload.spell_id
+    target_ref = payload.target_ref
+    aim_point = payload.aim_point
+    selected_target_refs = payload.target_refs
+    cast_level = payload.slot_level
     spell = next(
         (
             candidate
@@ -185,7 +189,7 @@ def resolve_spell_action(
             state,
             actor=actor,
             spell=spell,
-            spell_value=spell_value,
+            payload=payload,
             creature_ref=creature_ref,
             target=target,
             targets=targets,
@@ -214,8 +218,6 @@ def resolve_spell_action(
         action_id=action_id,
         result=result,
         progress=progress,
-        target_ref=target_ref,
-        target=target,
     )
 
 

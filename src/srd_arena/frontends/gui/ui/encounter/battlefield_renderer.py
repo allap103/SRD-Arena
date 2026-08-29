@@ -25,11 +25,11 @@ from .battlefield_overlay_painter import (
     paint_status_tooltip,
     paint_targeting_badge,
 )
+from .config import BattlefieldRenderGeometry
 from .movement import MovementPlan
 from .status_markers import StatusMarkerHit
 
 __all__ = [
-    "BattlefieldRenderGeometry",
     "BattlefieldRenderInput",
     "BattlefieldRenderResult",
     "BattlefieldRenderer",
@@ -37,40 +37,6 @@ __all__ = [
     "fallback_token_colors",
     "floating_label_font",
 ]
-
-
-@dataclass(frozen=True)
-class BattlefieldRenderGeometry:
-    """Describe the visible board rectangle in widget pixel coordinates."""
-
-    viewport: tuple[int, int, int, int]
-    origin_x: float
-    origin_y: float
-    cell_size: float
-    columns: int
-    rows: int
-
-    @property
-    def board_width(self) -> float:
-        """Return the rendered board width in pixels.
-
-        >>> geometry = BattlefieldRenderGeometry((0, 0, 200, 100), 0, 0, 25, 4, 3)
-        >>> geometry.board_width
-        100
-        """
-
-        return self.cell_size * self.columns
-
-    @property
-    def board_height(self) -> float:
-        """Return the rendered board height in pixels.
-
-        >>> geometry = BattlefieldRenderGeometry((0, 0, 200, 100), 0, 0, 25, 4, 3)
-        >>> geometry.board_height
-        75
-        """
-
-        return self.cell_size * self.rows
 
 
 @dataclass(frozen=True)

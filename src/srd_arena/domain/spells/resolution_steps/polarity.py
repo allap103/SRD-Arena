@@ -1,6 +1,6 @@
 """Classify ongoing spell state without leaking rule details into frontends."""
 
-from ...capabilities import (
+from srd_arena.domain.capabilities import (
     ArmorClassModifierEffect,
     ConditionImmunityEffect,
     ConditionSaveAdvantageEffect,
@@ -16,7 +16,8 @@ from ...capabilities import (
     TemporaryHitPointsEffect,
     TurnEconomyRestrictionEffect,
 )
-from ...effects.runtime import EffectPolarity
+from srd_arena.domain.effects.runtime import EffectPolarity
+
 from .preparation import PreparedSpellResolution
 
 _BENEFICIAL_CONDITIONS = frozenset({"invisible"})

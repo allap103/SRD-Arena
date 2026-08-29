@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...geometry import MovementCost, Position
+from srd_arena.domain.geometry import MovementCost, Position
+
 from ..encounter_models.decisions import PendingMovement
 from ..encounter_models.resolution import EncounterProgress
 from ..state_runtime import create_event, position_is_free

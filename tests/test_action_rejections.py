@@ -45,17 +45,19 @@ def test_lifecycle_rejections_publish_messages_and_events(
     failure = EligibilityFailure(reason_code, message, ("effect-1",))
     state = SimpleNamespace(
         creatures={"hero": object()},
-        combat_rules=SimpleNamespace(
-            action_eligibility=lambda *args: ActionEligibility((failure,))
-        ),
         action_sequence=1,
         event_sequence=1,
     )
-    context = begin_action_execution(
-        cast(EncounterState, state),
-        EncounterAction("Act", "attack", creature_ref="hero"),
-        DecisionFrame("turn-hero", "hero", "turn", "normal_turn"),
-    )
+    with patch(
+        "srd_arena.domain.encounters.actions.creature_actions.lifecycle."
+        "action_eligibility",
+        return_value=ActionEligibility((failure,)),
+    ):
+        context = begin_action_execution(
+            cast(EncounterState, state),
+            EncounterAction("Act", "attack", creature_ref="hero"),
+            DecisionFrame("turn-hero", "hero", "turn", "normal_turn"),
+        )
 
     assert context.rejection is not None
     assert context.rejection.reason_code == reason_code
@@ -93,9 +95,6 @@ def test_unimplemented_feature_rejection_retains_feature_identity() -> None:
         active_bonus_action_available=True,
         event_sequence=1,
         dice=SimpleNamespace(roll_die=lambda sides: sides),
-        combat_rules=SimpleNamespace(
-            apply_healing=lambda *args: 0,
-        ),
     )
     progress = EncounterProgress()
 

@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol
 
-from ..geometry import Position
+from srd_arena.domain.geometry import Position
+
 from .behaviors import build_behavior
 from .encounter_models.actions import (
     CreatureRef,

@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
-from ...effects.results import ActionResolutionResult, EffectResult
-from ...rolls.dice import DieRoller, resolve_dice
+from collections.abc import Callable
+
+from srd_arena.domain.effects.results import (
+    ActionResolutionResult,
+    EffectResult,
+    FeatureResolutionDetails,
+)
+from srd_arena.domain.rolls.dice import DieRoller, resolve_dice
+
 from ..model import Creature
-from .contracts import HealingReceiver
 
 
 def resolve_fighter_feature(
     creature: Creature,
     feature_id: str,
     roll_die: DieRoller,
-    heal: HealingReceiver,
+    heal: Callable[[int], int],
     *,
     actor_ref: str,
 ) -> ActionResolutionResult | None:
@@ -30,7 +36,7 @@ def resolve_fighter_feature(
     ...     fighter, "action_surge", lambda sides: sides, fighter.heal,
     ...     actor_ref="participant:fighter",
     ... )
-    >>> (result.details["grant_actions"], fighter.feature_uses_remaining)
+    >>> (result.details.granted_actions, fighter.feature_uses_remaining)
     (1, {'action_surge': 0})
     """
 
@@ -49,7 +55,7 @@ def resolve_fighter_feature(
 def _resolve_second_wind(
     creature: Creature,
     roll_die: DieRoller,
-    heal: HealingReceiver,
+    heal: Callable[[int], int],
     *,
     actor_ref: str,
 ) -> ActionResolutionResult:
@@ -119,7 +125,7 @@ def _resolve_action_surge(creature: Creature) -> ActionResolutionResult:
         resource_updates={
             "action_surge": creature.feature_uses_remaining["action_surge"]
         },
-        details={"grant_actions": 1},
+        details=FeatureResolutionDetails(granted_actions=1),
     )
 
 

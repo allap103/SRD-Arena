@@ -3,11 +3,12 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
-from ..capabilities import (
+from srd_arena.domain.capabilities import (
     CapabilityActivation,
     CapabilityDefinition,
     CapabilityRequirement,
 )
+
 from .metadata import SpellCastingTime, SpellComponents, SpellDuration, SpellRange
 
 

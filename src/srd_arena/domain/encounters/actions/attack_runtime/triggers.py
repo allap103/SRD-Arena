@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from ....creatures import Creature
-from ....effects.triggered import (
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.effects.triggered import (
     TriggeredEffect,
     matching_effects,
     reroll_eligible_indices,
 )
+
 from ...encounter_models.resolution import AttackOutcome
 
 

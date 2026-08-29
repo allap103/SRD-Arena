@@ -8,6 +8,7 @@ from ..encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ..rule_queries.permissions import action_compatibility
 from .eligibility_rules.attacks import AttackRule, GrappleRule
 from .eligibility_rules.capabilities import FeatureActionRule, StatBlockActionRule
 from .eligibility_rules.common import (
@@ -15,8 +16,6 @@ from .eligibility_rules.common import (
     ActorReadyRule,
     MovementRule,
     ResourceRule,
-    opposing_target_failure,
-    target_requirement_failure,
 )
 from .eligibility_rules.models import (
     ActionEligibility,
@@ -46,28 +45,9 @@ def action_eligibility(
     actor_ref: CreatureRef,
     action: EncounterAction,
 ) -> ActionEligibility:
-    """Collect every reason a candidate action is currently unavailable.
+    """Collect every reason a candidate action is currently unavailable."""
 
-    >>> from types import SimpleNamespace
-    >>> from unittest.mock import patch
-    >>> compatibility = ActionEligibility()
-    >>> state = SimpleNamespace(
-    ...     combat_rules=SimpleNamespace(
-    ...         action_compatibility=lambda state, actor, action: compatibility
-    ...     )
-    ... )
-    >>> with patch(
-    ...     "srd_arena.domain.encounters.actions.eligibility.ACTION_ELIGIBILITY_RULES",
-    ...     (),
-    ... ):
-    ...     result = action_eligibility(
-    ...         state, "hero", EncounterAction("Wait", "wait")
-    ...     )
-    >>> result.allowed
-    True
-    """
-
-    compatibility = state.combat_rules.action_compatibility(
+    compatibility = action_compatibility(
         state,
         actor_ref,
         action,
@@ -78,11 +58,6 @@ def action_eligibility(
         if (failure := rule.check(state, actor_ref, action)) is not None
     )
     return ActionEligibility(failures)
-
-
-# Preserve the former module-local names for internal callers and diagnostics.
-_opposing_target_failure = opposing_target_failure
-_target_requirement_failure = target_requirement_failure
 
 
 __all__ = [

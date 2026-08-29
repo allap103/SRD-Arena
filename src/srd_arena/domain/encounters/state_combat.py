@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..effects.conditions import CombatTrait, Condition
-from ..effects.triggered import TriggeredEffect, matching_effects
-from ..geometry import Position
-from ..rolls.dice import D20RollMode, combine_roll_modes
+from srd_arena.domain.effects.conditions import CombatTrait, Condition
+from srd_arena.domain.effects.triggered import TriggeredEffect, matching_effects
+from srd_arena.domain.geometry import Position
+from srd_arena.domain.rolls.dice import D20RollMode, combine_roll_modes
+
 from .attack_rules import proximity_attack_roll_mode
 from .behaviors import is_adjacent
 from .encounter_models.actions import CreatureRef
+from .rule_queries.rolls import roll_modifiers
 from .state_runtime import creature_position
 
 if TYPE_CHECKING:
@@ -34,9 +36,6 @@ def attack_roll_mode_for(
     >>> state = SimpleNamespace(
     ...     effective_conditions_for=lambda ref: effective, conditions=[],
     ...     ongoing_effects=[],
-    ...     combat_rules=SimpleNamespace(
-    ...         roll_modifiers=lambda *args, **kwargs: SimpleNamespace(mode="normal")
-    ...     ),
     ... )
     >>> attack_roll_mode_for(
     ...     state, "archer", "goblin", "ranged", Position(0, 0),
@@ -55,7 +54,7 @@ def attack_roll_mode_for(
         modes.append(base_mode)
     target_effective = state.effective_conditions_for(target_ref)
     modes.append(
-        state.combat_rules.roll_modifiers(
+        roll_modifiers(
             state,
             target_ref,
             "attack_roll",

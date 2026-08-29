@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ...capabilities import (
+from srd_arena.domain.capabilities import (
     AttackResolution,
     AutomaticResolution,
     CapabilityDefinition,

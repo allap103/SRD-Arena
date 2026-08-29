@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...effects.triggered import TriggeredEffect, reroll_eligible_indices
-from ...rolls.dice import reroll_dice
+from srd_arena.domain.effects.triggered import TriggeredEffect, reroll_eligible_indices
+from srd_arena.domain.rolls.dice import reroll_dice
+
 from ..actions.attack_resolution import apply_attack_damage, damage_roll_detail
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import (
@@ -19,6 +20,7 @@ from ..encounter_models.resolution import (
     EncounterProgress,
 )
 from ..refs import reroll_die_action_id as _reroll_die_action_id
+from ..rule_queries.defenses import apply_damage
 from ..state_runtime import create_event, next_frame_id
 from .attack_lifecycle import resolve_attack_lifecycle
 
@@ -336,7 +338,7 @@ def finalize_damage_reroll(
         target.creature,
         attacker_label=attacker.name,
         target_label=request.target_label,
-        damage_receiver=lambda amount, damage_type: state.combat_rules.apply_damage(
+        damage_receiver=lambda amount, damage_type: apply_damage(
             state,
             request.target_ref,
             amount,

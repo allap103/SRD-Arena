@@ -44,6 +44,7 @@ from srd_arena.domain.effects.runtime import (
     RuntimeStateIdentity,
     UntilTurnStart,
 )
+from srd_arena.domain.encounters import rule_queries
 from srd_arena.domain.encounters.actions.hit_effects import (
     apply_attack_hit_effects,
 )
@@ -78,6 +79,9 @@ from srd_arena.domain.encounters.state_combat import (
     automatic_save_failure_provider_ids_for,
 )
 from srd_arena.domain.encounters.state_runtime import creature_label
+from srd_arena.domain.encounters.turn_lifecycle import (
+    expire_conditions_for_turn_start,
+)
 from srd_arena.domain.geometry import MovementCost, Position
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from srd_arena.engine.queries import (
@@ -94,7 +98,9 @@ from tests.encounter_runtime_support import (
     MULTIATTACK_SCENARIO_DIR,
     STAT_BLOCK_ACTION_SCENARIO_DIR,
     TACTICAL_SCENARIO_DIR,
+    is_spell_action,
     player_first_initiative,
+    spell_payload,
 )
 from tests.encounter_runtime_support import (
     ORCHESTRATOR as _ORCHESTRATOR,
@@ -850,13 +856,11 @@ def test_creature_type_restricted_spell_targets_are_visible_but_unavailable() ->
     state = session.encounter_state
     candidates = creature_action_candidates(state, "condition_mage")
     hold_person_actions = [
-        action
-        for action in candidates
-        if action.kind == "spell" and str(action.value).startswith("hold_person:")
+        action for action in candidates if is_spell_action(action, "hold_person")
     ]
 
     by_target = {
-        str(action.value).split(":")[1]: state.action_eligibility(action)
+        spell_payload(action).target_ref: state.action_eligibility(action)
         for action in hold_person_actions
     }
 
@@ -1147,11 +1151,11 @@ def test_assassin_multiattack_applies_independent_poisoned_conditions() -> None:
         condition.duration == UntilTurnStart("player", 2) for condition in poisoned
     )
 
-    state.turn_lifecycle.expire_conditions_for_turn_start(state, "player", 1)
+    expire_conditions_for_turn_start(state, "player")
     assert state.has_condition("goblin_1", Condition.POISONED) is True
 
     state.round.number = 2
-    state.turn_lifecycle.expire_conditions_for_turn_start(state, "player", 2)
+    expire_conditions_for_turn_start(state, "player")
     assert state.has_condition("goblin_1", Condition.POISONED) is False
 
 
@@ -1211,9 +1215,9 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
     assert creatures["player"].attributes.movement.speed_feet == 40
     assert creatures["air_elemental"].attributes.movement.speed_feet == 10
     assert creatures["aboleth"].attributes.movement.speed_feet == 10
-    assert state.combat_rules.movement_budget(state, "player").speed.value == 80
-    assert state.combat_rules.movement_budget(state, "air_elemental").speed.value == 90
-    assert state.combat_rules.movement_budget(state, "aboleth").speed.value == 10
+    assert rule_queries.movement_budget(state, "player").speed.value == 80
+    assert rule_queries.movement_budget(state, "air_elemental").speed.value == 90
+    assert rule_queries.movement_budget(state, "aboleth").speed.value == 10
     assert {
         creature_controller(state, creature_ref) for creature_ref in state.creatures
     } == {"external"}

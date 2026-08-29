@@ -7,9 +7,10 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Protocol
 
-from ...creatures import Creature
-from ...geometry import AreaOfEffect
-from ...rolls.dice import D20RollMode
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.geometry import AreaOfEffect
+from srd_arena.domain.rolls.dice import D20RollMode
+
 from ..definitions import Spell
 
 

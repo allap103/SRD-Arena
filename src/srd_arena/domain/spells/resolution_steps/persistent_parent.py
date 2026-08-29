@@ -2,14 +2,15 @@
 
 from typing import cast
 
-from ...effects.conditions import Condition
-from ...effects.results import EffectResult
-from ...effects.runtime import (
+from srd_arena.domain.effects.conditions import Condition
+from srd_arena.domain.effects.results import EffectResult
+from srd_arena.domain.effects.runtime import (
     EndEventRule,
     OngoingEffectLifecycle,
     RepeatedDamage,
     RepeatSaveLifecycle,
 )
+
 from ..rules import spell_duration_rounds
 from .context import SpellActionContext
 from .details import effect_duration_rounds

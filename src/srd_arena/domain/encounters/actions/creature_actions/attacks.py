@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from ....creatures import Creature
+from srd_arena.domain.creatures import Creature
+
 from ...encounter_models.actions import (
     ActionCost,
     CreatureRef,

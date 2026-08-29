@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from ...capabilities import (
+from srd_arena.domain.capabilities import (
     CapabilityDefinition,
     CapabilityEffect,
     CapabilityResolution,
@@ -13,7 +13,8 @@ from ...capabilities import (
     capability_effects,
     primary_effects,
 )
-from ...rolls.dice import DicePoolResult
+from srd_arena.domain.rolls.dice import DicePoolResult
+
 from ..definitions import SpellDamage
 from .context import SpellActionContext, SpellTargetContext
 from .preparation_rolls import prepare_spell_rolls
@@ -57,7 +58,7 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
     """Normalize spell rules and perform rolls shared by every resolved target.
 
     >>> from types import SimpleNamespace
-    >>> from ...capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget,
     ...     DamageEffect, Outcome,
     ... )

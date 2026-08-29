@@ -30,6 +30,7 @@ from srd_arena.domain.encounters.actions.eligibility_rules.spells import (
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
 from srd_arena.domain.spells import Spell
+from srd_arena.domain.spells.rules import spell_action_payload
 from srd_arena.engine.queries import SessionRead
 from srd_arena.engine.session_queries import _action_option
 
@@ -214,7 +215,7 @@ def test_spell_eligibility_rejects_unsupported_semantics_before_resolution() -> 
     action = EncounterAction(
         "Cast Animate Objects",
         "spell",
-        value="animate_objects",
+        value=spell_action_payload("animate_objects"),
         id="mage-spell-animate_objects",
         creature_ref="mage",
     )

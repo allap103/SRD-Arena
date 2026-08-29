@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....creatures import Creature
-from ....geometry import (
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.geometry import (
     AreaOfEffect,
     Position,
     Vector2D,
@@ -14,9 +14,10 @@ from ....geometry import (
     build_radius_area,
     vector_between_positions,
 )
-from ....spells.definitions import Spell
-from ....spells.resolution import SpellTargetContext
-from ....spells.rules import spell_area_shape
+from srd_arena.domain.spells.definitions import Spell
+from srd_arena.domain.spells.resolution import SpellTargetContext
+from srd_arena.domain.spells.rules import spell_area_shape
+
 from ...state_runtime import creature_position
 from .spell_targets import spell_target_context
 from .spellcasting import spell_range_squares_for

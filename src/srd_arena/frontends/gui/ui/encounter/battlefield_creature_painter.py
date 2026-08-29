@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Protocol
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen, QPixmap
@@ -15,6 +14,7 @@ from .battlefield_overlay_painter import (
     floating_label_font,
     paint_floating_label,
 )
+from .config import BattlefieldRenderGeometry
 from .status_markers import (
     StatusMarkerHit,
     build_status_marker_specs,
@@ -29,28 +29,12 @@ TokenColors = Callable[[str], tuple[QColor, QColor]]
 CreaturePosition = tuple[str, float, float, float]
 
 
-class CreatureGeometry(Protocol):
-    """Provide the pixel geometry needed to position creature visuals."""
-
-    @property
-    def origin_x(self) -> float:
-        """Return the board's horizontal pixel origin."""
-
-    @property
-    def origin_y(self) -> float:
-        """Return the board's vertical pixel origin."""
-
-    @property
-    def cell_size(self) -> float:
-        """Return the rendered size of one grid cell."""
-
-
 @dataclass(frozen=True)
 class CreaturePaintInput:
     """Contain the read-only creature-specific state for one paint."""
 
     battlefield: BattlefieldView
-    geometry: CreatureGeometry
+    geometry: BattlefieldRenderGeometry
     hover_cell: tuple[int, int] | None
     targetable_creature_refs: frozenset[str]
     selected_creature_ref: str | None

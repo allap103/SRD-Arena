@@ -3,26 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Protocol
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 
 from ...floating_labels import BATTLEFIELD_FLOATING_LABEL_STYLE
 from .area_previews import area_overlay_label
+from .config import BattlefieldRenderGeometry
 from .status_markers import status_tooltip_label_rect
-
-
-class OverlayGeometry(Protocol):
-    """Provide the viewport geometry needed to place battlefield badges."""
-
-    @property
-    def viewport(self) -> tuple[int, int, int, int]:
-        """Return the viewport's x, y, width, and height."""
-
-    @property
-    def cell_size(self) -> float:
-        """Return the rendered size of one grid cell."""
 
 
 def floating_label_font() -> QFont:
@@ -72,7 +60,7 @@ def paint_floating_label(
 
 def paint_area_badge(
     painter: QPainter,
-    geometry: OverlayGeometry,
+    geometry: BattlefieldRenderGeometry,
     overlay: Mapping[str, object] | None,
 ) -> None:
     """Paint the label describing an active area template."""
@@ -115,7 +103,7 @@ def paint_area_badge(
 
 def paint_targeting_badge(
     painter: QPainter,
-    geometry: OverlayGeometry,
+    geometry: BattlefieldRenderGeometry,
     targeting_label: str | None,
 ) -> None:
     """Paint instructions for the active target-selection interaction."""

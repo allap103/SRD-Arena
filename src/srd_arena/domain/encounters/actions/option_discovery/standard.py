@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....creatures import Creature
-from ....creatures.feature_actions import FeatureActionDefinition
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
+
 from ...encounter_models.actions import (
     ActionCost,
     EncounterAction,
 )
+from ...rule_queries.permissions import reaction_eligibility
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -22,7 +24,7 @@ def available_feature_actions(
     """Advertise supported non-reaction feature actions for the current actor.
 
     >>> from types import SimpleNamespace
-    >>> from ....creatures.feature_actions import FeatureActionDefinition
+    >>> from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
     >>> feature = FeatureActionDefinition(
     ...     "second_wind", "Second Wind", "bonus_action", "self", "fighter"
     ... )
@@ -70,7 +72,7 @@ def feature_action_available(
     """Return whether a creature feature may currently supply its action.
 
     >>> from types import SimpleNamespace
-    >>> from ....creatures.feature_actions import FeatureActionDefinition
+    >>> from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
     >>> feature = FeatureActionDefinition(
     ...     "second_wind", "Second Wind", "bonus_action", "self", "fighter"
     ... )
@@ -88,7 +90,7 @@ def feature_action_available(
         return False
     if (
         definition.economy == "reaction"
-        and not state.combat_rules.reaction_eligibility(
+        and not reaction_eligibility(
             state,
             state.current_decision().creature_ref,
             "feature",

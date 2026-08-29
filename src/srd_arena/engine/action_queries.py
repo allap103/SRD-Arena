@@ -1,17 +1,9 @@
-"""Normalize encoded domain actions into typed engine query details."""
+"""Project domain action selections into typed engine query details."""
 
 from __future__ import annotations
 
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
-from srd_arena.domain.spells.rules import (
-    parse_spell_action_ability,
-    parse_spell_action_condition,
-    parse_spell_action_damage_type,
-    parse_spell_action_slot,
-    parse_spell_action_targets,
-    parse_spell_action_value,
-    parse_spell_healing_allocations,
-)
+from srd_arena.domain.spells.rules import SpellActionPayload
 from srd_arena.engine.queries import (
     ActionOptionDetails,
     DirectTargetOptionDetails,
@@ -24,7 +16,7 @@ from srd_arena.engine.queries import (
 
 
 def option_details(action: EncounterAction) -> ActionOptionDetails | None:
-    """Describe an action without exposing its overloaded encoded value.
+    """Describe an action without exposing its domain selection payload.
 
     >>> movement = EncounterAction("Move", "move", value="up")
     >>> option_details(movement)
@@ -33,20 +25,18 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
     True
     """
 
-    if action.kind == "spell" and isinstance(action.value, str):
-        source_id, target_ref, aim_point = parse_spell_action_value(action.value)
+    if action.kind == "spell" and isinstance(action.value, SpellActionPayload):
+        payload = action.value
         return SpellOptionDetails(
-            source_id=source_id,
-            target_ref=target_ref,
-            target_refs=parse_spell_action_targets(action.value),
-            aim_point=aim_point,
-            resource_level=parse_spell_action_slot(action.value),
-            selected_condition=parse_spell_action_condition(action.value),
-            selected_damage_type=parse_spell_action_damage_type(action.value),
-            selected_ability=parse_spell_action_ability(action.value),
-            healing_allocations=tuple(
-                sorted(parse_spell_healing_allocations(action.value).items())
-            ),
+            source_id=payload.spell_id,
+            target_ref=payload.target_ref,
+            target_refs=payload.target_refs,
+            aim_point=payload.aim_point,
+            resource_level=payload.slot_level,
+            selected_condition=payload.selected_condition,
+            selected_damage_type=payload.selected_damage_type,
+            selected_ability=payload.selected_ability,
+            healing_allocations=payload.healing_allocations,
         )
     if action.kind == "toggle_spell_target":
         return SpellOptionDetails(
@@ -88,7 +78,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
 
 
 def _direct_target_ref(
-    value: str | int | tuple[float, float] | None,
+    value: str | int | tuple[float, float] | SpellActionPayload | None,
 ) -> str | None:
     if isinstance(value, str):
         return value

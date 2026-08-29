@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....capabilities import ConditionRequirement, CreatureTypeRequirement
-from ....effects.conditions import CombatTrait, Condition
-from ....geometry import Position
+from srd_arena.domain.capabilities import ConditionRequirement, CreatureTypeRequirement
+from srd_arena.domain.effects.conditions import CombatTrait, Condition
+from srd_arena.domain.geometry import Position
+
 from ...behaviors import DIRECTION_DELTAS
 from ...encounter_models.actions import (
     CreatureRef,
@@ -92,7 +93,7 @@ class ResourceRule:
 
         >>> from unittest.mock import Mock
         >>> from ...encounter_models.actions import ActionCost
-        >>> from ....geometry import MovementCost
+        >>> from srd_arena.domain.geometry import MovementCost
         >>> action = EncounterAction("Move", "move", cost=ActionCost(movement=MovementCost(2)))
         >>> ResourceRule().check(Mock(creatures={"hero": Mock(movement_remaining=1)}),
         ...     "hero", action).code

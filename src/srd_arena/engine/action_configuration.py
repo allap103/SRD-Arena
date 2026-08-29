@@ -5,14 +5,12 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from srd_arena.domain.spells.rules import spell_action_value
-from srd_arena.engine.action_queries import option_details
+from srd_arena.domain.spells.rules import SpellActionPayload
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import (
     ActionAim,
     ActionConfiguration,
     ActionResourceAllocation,
-    SpellOptionDetails,
 )
 
 if TYPE_CHECKING:
@@ -51,20 +49,11 @@ def configure_action(
 
     if isinstance(configuration, ActionAim):
         if action.kind == "spell":
-            details = option_details(action)
-            if not isinstance(details, SpellOptionDetails) or details.source_id is None:
-                raise ValueError(
-                    f"Spell action '{action_id}' has no source identifier."
-                )
-            value: str | tuple[float, float] = spell_action_value(
-                details.source_id,
-                target_ref=details.target_refs or None,
+            if not isinstance(action.value, SpellActionPayload):
+                raise ValueError(f"Spell action '{action_id}' has no spell payload.")
+            value: SpellActionPayload | str | tuple[float, float] = replace(
+                action.value,
                 aim_point=(configuration.x, configuration.y),
-                selected_condition=details.selected_condition,
-                selected_damage_type=details.selected_damage_type,
-                selected_ability=details.selected_ability,
-                slot_level=details.resource_level,
-                healing_allocations=dict(details.healing_allocations),
             )
         elif action.kind == "stat_block":
             value = (configuration.x, configuration.y)
