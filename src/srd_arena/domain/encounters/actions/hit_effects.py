@@ -5,18 +5,23 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from ...capabilities import CapabilityEffect, ConditionEffect, SizeRequirement
-from ...creatures import size_rank
-from ...effects.application import condition_from_effect_with_origin
-from ...effects.conditions import Condition, build_applied_condition
-from ...effects.results import EffectResult
-from ...effects.runtime import (
+from srd_arena.domain.capabilities import (
+    CapabilityEffect,
+    ConditionEffect,
+    SizeRequirement,
+)
+from srd_arena.domain.creatures import size_rank
+from srd_arena.domain.effects.application import condition_from_effect_with_origin
+from srd_arena.domain.effects.conditions import Condition, build_applied_condition
+from srd_arena.domain.effects.results import EffectResult
+from srd_arena.domain.effects.runtime import (
     EffectDuration,
     EffectSourceKind,
     Indefinite,
     UntilTurnEnd,
     UntilTurnStart,
 )
+
 from ..condition_state import apply_condition
 from ..encounter_models.resolution import EncounterProgress
 from ..grappling_state import (

@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 
-from ...capabilities import AttackResolution
+from srd_arena.domain.capabilities import AttackResolution
+
 from .context import SpellActionContext, SpellTargetContext
 from .preparation import PreparedSpellResolution
 from .target_rolls import TargetRollOutcome
@@ -25,8 +26,8 @@ def apply_target_damage(
     """Apply resolved spell damage after immunity, resistance, and save scaling.
 
     >>> from types import SimpleNamespace
-    >>> from ...capabilities import AutomaticResolution, Outcome
-    >>> from ...rolls.dice import DicePoolResult, DieRollResult
+    >>> from srd_arena.domain.capabilities import AutomaticResolution, Outcome
+    >>> from srd_arena.domain.rolls.dice import DicePoolResult, DieRollResult
     >>> from ..definitions import SpellDamage
     >>> roll = DicePoolResult((DieRollResult(6, (4,)),), 0, 4, 4)
     >>> outcome = TargetRollOutcome(

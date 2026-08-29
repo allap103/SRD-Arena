@@ -18,9 +18,9 @@ from srd_arena.frontends.gui.presentation.models import (
 from srd_arena.frontends.gui.ui.encounter import BattlefieldWidget
 from srd_arena.frontends.gui.ui.encounter.battlefield_renderer import (
     BattlefieldRenderer,
-    BattlefieldRenderGeometry,
     BattlefieldRenderInput,
 )
+from srd_arena.frontends.gui.ui.encounter.config import BattlefieldRenderGeometry
 
 
 def test_renderer_returns_hit_regions_from_the_same_completed_paint() -> None:

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..effects.application import apply_effects
-from ..effects.results import EffectResult
-from ..geometry import Position
+from srd_arena.domain.effects.application import apply_effects
+from srd_arena.domain.effects.results import EffectResult
+from srd_arena.domain.geometry import Position
+
 from .condition_state import apply_condition, remove_condition
 from .effect_lifecycle.application import start_ongoing_effect
 from .effect_lifecycle.removal import remove_ongoing_effects

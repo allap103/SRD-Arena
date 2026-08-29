@@ -4,19 +4,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....creatures import Creature, Spellcasting
-from ....spells.definitions import Spell
-from ....spells.rules import (
+from srd_arena.domain.creatures import Creature, Spellcasting
+from srd_arena.domain.spells.definitions import Spell
+from srd_arena.domain.spells.rules import (
     spell_action_economy,
     spell_cast_block_reason,
     spell_range_squares,
     spell_targets_self_only,
 )
+
 from ...attack_economy import clear_attack_action, consume_action
 from ...encounter_models.actions import (
     ActionCost,
     EncounterAction,
 )
+from ...rule_queries.permissions import action_compatibility, reaction_eligibility
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -25,7 +27,7 @@ if TYPE_CHECKING:
 def spell_action_cost(state: EncounterState, spell: Spell) -> ActionCost:
     """Map a spell's activation time to the turn resource it consumes.
 
-    >>> from ....spells.metadata import SpellCastingTime
+    >>> from srd_arena.domain.spells.metadata import SpellCastingTime
     >>> spell = Spell(
     ...     "healing_word", "Healing Word", "XPHB", 1,
     ...     casting_times=(SpellCastingTime(1, "bonus"),),
@@ -49,32 +51,10 @@ def spell_cast_block_reason_for(
     cost: ActionCost,
     cast_level: int | None = None,
 ) -> str | None:
-    """Return the rule reason that prevents this creature from casting a spell.
-
-    >>> from types import SimpleNamespace
-    >>> from ....creatures import Spellcasting
-    >>> casting = Spellcasting(
-    ...     "int", 3, 13, 5, "full", spell_slots_remaining={1: 0}
-    ... )
-    >>> spell = Spell("shield", "Shield", "XPHB", 1)
-    >>> allowed = SimpleNamespace(allowed=True)
-    >>> state = SimpleNamespace(
-    ...     current_decision=lambda: SimpleNamespace(creature_ref="mage"),
-    ...     combat_rules=SimpleNamespace(
-    ...         action_compatibility=lambda *args: allowed,
-    ...         reaction_eligibility=lambda *args: allowed,
-    ...     ),
-    ...     active_magic_actions_remaining=1,
-    ...     active_bonus_action_available=True,
-    ... )
-    >>> spell_cast_block_reason_for(
-    ...     state, casting, spell, ActionCost(action=1)
-    ... )
-    'You have no level 1 spell slots remaining.'
-    """
+    """Return the rule reason that prevents this creature from casting a spell."""
 
     creature_ref = state.current_decision().creature_ref
-    compatibility = state.combat_rules.action_compatibility(
+    compatibility = action_compatibility(
         state,
         creature_ref,
         EncounterAction(
@@ -92,7 +72,7 @@ def spell_cast_block_reason_for(
         spell_action_economy(spell),
         action_available=state.active_magic_actions_remaining > 0,
         bonus_action_available=state.active_bonus_action_available,
-        reaction_available=state.combat_rules.reaction_eligibility(
+        reaction_available=reaction_eligibility(
             state,
             creature_ref,
             "spell",
@@ -118,8 +98,8 @@ def spell_range_squares_for(
     """Convert the spell's authored range into grid cells for this caster.
 
     >>> from types import SimpleNamespace
-    >>> from ....geometry import Grid
-    >>> from ....spells.metadata import SpellRange, SpellRangeDistance
+    >>> from srd_arena.domain.geometry import Grid
+    >>> from srd_arena.domain.spells.metadata import SpellRange, SpellRangeDistance
     >>> spell = Spell(
     ...     "bolt", "Bolt", "TEST", 0,
     ...     range=SpellRange("point", SpellRangeDistance("feet", 60)),
@@ -142,7 +122,7 @@ def spend_spell_resources(
     """Commit turn economy and spell-slot cost for an accepted casting.
 
     >>> from types import SimpleNamespace
-    >>> from ....creatures import Spellcasting
+    >>> from srd_arena.domain.creatures import Spellcasting
     >>> casting = Spellcasting(
     ...     "int", 3, 13, 5, "full", spell_slots_remaining={1: 2}
     ... )

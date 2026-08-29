@@ -12,7 +12,8 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..rolls.dice import DieRoller
+    from srd_arena.domain.rolls.dice import DieRoller
+
     from .conditions import Condition
     from .modifiers import RollModifier
 

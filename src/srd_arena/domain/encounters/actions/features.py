@@ -4,14 +4,20 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from ...creatures.feature_actions import FeatureActionDefinition
-from ...creatures.feature_rules import (
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
+from srd_arena.domain.creatures.feature_rules import (
     resolve_feature_action as _resolve_feature_action_impl,
 )
-from ...effects.results import ActionResolutionResult
+from srd_arena.domain.effects.results import (
+    ActionResolutionResult,
+    FeatureResolutionDetails,
+)
+
 from ..attack_economy import clear_attack_action, consume_action
 from ..encounter_models.resolution import EncounterProgress
+from ..rule_queries.health import apply_healing
+from ..rule_queries.permissions import reaction_eligibility
 from ..state_runtime import create_event
 from .eligibility_rules.models import EligibilityFailure
 from .rejections import reject_action
@@ -76,7 +82,7 @@ def resolve_feature_action(
         creature,
         feature_id,
         state.dice.roll_die,
-        lambda amount: state.combat_rules.apply_healing(
+        lambda amount: apply_healing(
             state,
             creature_ref,
             amount,
@@ -108,8 +114,12 @@ def resolve_feature_action(
         state.active_reaction_available = False
 
     progress.messages.extend(result.messages)
-    granted_actions = result.details.get("grant_actions", 0)
-    if isinstance(granted_actions, int) and granted_actions > 0:
+    granted_actions = (
+        result.details.granted_actions
+        if isinstance(result.details, FeatureResolutionDetails)
+        else 0
+    )
+    if granted_actions > 0:
         state.active_actions_remaining += granted_actions
     progress.events.append(
         create_event(
@@ -156,7 +166,7 @@ def _feature_execution_failure(
             "You have already used your Action.",
         )
     if feature_action.economy == "reaction":
-        reaction = state.combat_rules.reaction_eligibility(
+        reaction = reaction_eligibility(
             state,
             creature_ref,
             "feature",
@@ -176,7 +186,7 @@ def _feature_event_data(
     creature_ref: str,
     feature_id: str,
     result: ActionResolutionResult,
-    granted_actions: object,
+    granted_actions: int,
 ) -> dict[str, object]:
     """Build the successful feature event after its rule has resolved."""
 
@@ -197,7 +207,7 @@ def _feature_event_data(
         "healing": healing_data.get("amount", 0),
         "healing_roll_detail": healing_data.get("roll", {}),
         "uses_remaining": result.resource_updates.get(feature_id),
-        "granted_actions": granted_actions if isinstance(granted_actions, int) else 0,
+        "granted_actions": granted_actions,
         "effects": [
             {
                 "kind": effect.kind,

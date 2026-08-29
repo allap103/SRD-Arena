@@ -7,10 +7,11 @@ from enum import StrEnum
 from fractions import Fraction
 from math import floor
 
-from ...effects.modifiers import RollModifier
-from ...effects.runtime import EffectSource
-from ...geometry import MovementBudget
-from ...rolls.dice import D20RollMode, DieRoller, combine_roll_modes
+from srd_arena.domain.effects.modifiers import RollModifier
+from srd_arena.domain.effects.runtime import EffectSource
+from srd_arena.domain.geometry import MovementBudget
+from srd_arena.domain.rolls.dice import D20RollMode, DieRoller, combine_roll_modes
+
 from ..actions.eligibility_rules.models import EligibilityFailure
 from ..encounter_models.actions import CreatureRef
 

@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....creatures import AutomaticActionDefinition, SavingThrowActionDefinition
-from ....geometry import grid_distance_between
+from srd_arena.domain.creatures import (
+    AutomaticActionDefinition,
+    SavingThrowActionDefinition,
+)
+from srd_arena.domain.geometry import grid_distance_between
+
 from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,

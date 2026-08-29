@@ -5,14 +5,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from ....geometry import build_radius_area
-from ....rolls.dice import D20RollMode
-from ....spells.resolution import SpellTargetContext
+from srd_arena.domain.geometry import build_radius_area
+from srd_arena.domain.rolls.dice import D20RollMode
+from srd_arena.domain.spells.resolution import SpellTargetContext
+
+from ...rule_queries.defenses import apply_damage
+from ...rule_queries.health import apply_healing
+from ...rule_queries.rolls import roll_modifiers
 from ...state_runtime import creature_position
 from ..option_discovery.spell_areas import targets_in_area
 
 if TYPE_CHECKING:
-    from ....creatures import Creature
+    from srd_arena.domain.creatures import Creature
+
     from ...encounter import EncounterState
 
 
@@ -32,7 +37,7 @@ class EncounterSpellResolutionEnvironment:
     def attack_roll_modifier(self, _target_ref: str) -> int:
         """Resolve sourced attack modifiers for the spell's caster."""
 
-        return self.state.combat_rules.roll_modifiers(
+        return roll_modifiers(
             self.state,
             self.actor_ref,
             "attack_roll",
@@ -41,7 +46,7 @@ class EncounterSpellResolutionEnvironment:
     def attack_roll_mode(self, _target_ref: str) -> D20RollMode:
         """Resolve sourced attack modes for the spell's caster."""
 
-        return self.state.combat_rules.roll_modifiers(
+        return roll_modifiers(
             self.state,
             self.actor_ref,
             "attack_roll",
@@ -50,7 +55,7 @@ class EncounterSpellResolutionEnvironment:
     def damage_roll_modifier(self) -> int:
         """Resolve sourced damage modifiers for the spell's caster."""
 
-        return self.state.combat_rules.roll_modifiers(
+        return roll_modifiers(
             self.state,
             self.actor_ref,
             "damage_roll",
@@ -59,7 +64,7 @@ class EncounterSpellResolutionEnvironment:
     def saving_throw_modifier(self, target_ref: str, ability: str) -> int:
         """Resolve sourced saving-throw modifiers for one target."""
 
-        return self.state.combat_rules.roll_modifiers(
+        return roll_modifiers(
             self.state,
             target_ref,
             "saving_throw",
@@ -69,7 +74,7 @@ class EncounterSpellResolutionEnvironment:
     def saving_throw_mode(self, target_ref: str, ability: str) -> D20RollMode:
         """Resolve sourced saving-throw modes for one target."""
 
-        return self.state.combat_rules.roll_modifiers(
+        return roll_modifiers(
             self.state,
             target_ref,
             "saving_throw",
@@ -104,7 +109,7 @@ class EncounterSpellResolutionEnvironment:
     ) -> int:
         """Apply encounter-adjusted spell damage to one target."""
 
-        return self.state.combat_rules.apply_damage(
+        return apply_damage(
             self.state,
             target_ref,
             amount,
@@ -114,7 +119,7 @@ class EncounterSpellResolutionEnvironment:
     def apply_healing(self, target_ref: str, amount: int) -> int:
         """Apply encounter-adjusted spell healing to one target."""
 
-        return self.state.combat_rules.apply_healing(
+        return apply_healing(
             self.state,
             target_ref,
             amount,

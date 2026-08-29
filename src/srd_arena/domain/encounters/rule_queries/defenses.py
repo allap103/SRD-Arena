@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from ...effects.conditions import Condition
-from ...effects.rule_effects import (
+from srd_arena.domain.effects.conditions import Condition
+from srd_arena.domain.effects.rule_effects import (
     ConditionImmunity,
     ConditionSaveAdvantage,
     ConditionSuppression,
     DamageReduction,
     DamageResistance,
 )
-from ...rolls.dice import DieRoller
+from srd_arena.domain.rolls.dice import DieRoller
+
 from .context import (
     CreatureEffectQueryContext,
     DamageRuleQueryContext,
@@ -72,7 +73,7 @@ def condition_suppressions(
     each suppression, so callers can explain why a condition is inactive.
 
     >>> from types import SimpleNamespace
-    >>> from ...effects.runtime import EffectSource, EffectSourceKind
+    >>> from srd_arena.domain.effects.runtime import EffectSource, EffectSourceKind
     >>> source = EffectSource(EffectSourceKind.SPELL, "calm_emotions")
     >>> effect = SimpleNamespace(
     ...     identity=SimpleNamespace(id="effect-1", source=source),

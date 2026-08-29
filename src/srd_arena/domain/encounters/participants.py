@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creatures import Creature
+from srd_arena.domain.creatures import Creature
+
 from .encounter_models.actions import CreatureRef
 
 if TYPE_CHECKING:
@@ -17,7 +18,7 @@ def creature_controller(state: EncounterState, creature_ref: CreatureRef) -> str
     >>> from types import SimpleNamespace
     >>> from .definitions import EncounterDefinition, EncounterParticipant
     >>> from .definitions import EncounterTeam
-    >>> from ..geometry import Grid, Position
+    >>> from srd_arena.domain.geometry import Grid, Position
     >>> definition = EncounterDefinition(
     ...     "duel", Grid(5, 5),
     ...     [EncounterParticipant("hero", Position(0, 0))],
@@ -68,7 +69,7 @@ def creature_team_id(state: EncounterState, creature_ref: CreatureRef) -> str:
 
     >>> from types import SimpleNamespace
     >>> from .definitions import EncounterDefinition, EncounterTeam
-    >>> from ..geometry import Grid
+    >>> from srd_arena.domain.geometry import Grid
     >>> state = SimpleNamespace(
     ...     definition=EncounterDefinition(
     ...         "duel", Grid(5, 5), teams=[
@@ -98,7 +99,7 @@ def creatures_are_opponents(
 
     >>> from types import SimpleNamespace
     >>> from .definitions import EncounterDefinition, EncounterTeam
-    >>> from ..geometry import Grid
+    >>> from srd_arena.domain.geometry import Grid
     >>> definition = EncounterDefinition(
     ...     "duel", Grid(5, 5), teams=[
     ...         EncounterTeam("heroes", "Heroes", ["hero"], "external"),

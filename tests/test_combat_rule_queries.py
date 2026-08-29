@@ -29,6 +29,7 @@ from srd_arena.domain.effects.runtime import (
     OngoingEffectKind,
     RuntimeStateIdentity,
 )
+from srd_arena.domain.encounters import rule_queries
 from srd_arena.domain.encounters.definitions import (
     EncounterBehavior,
     EncounterDefinition,
@@ -272,7 +273,7 @@ def test_damage_reduction_is_consumed_before_resistance_and_resets() -> None:
     assert apply_damage(state, ACTOR_REF, 10, "fire") == 3
     assert apply_damage(state, ACTOR_REF, 10, "fire") == 5
 
-    state.combat_rules.reset_damage_reductions(state, ACTOR_REF)
+    rule_queries.reset_damage_reductions(state, ACTOR_REF)
     state.creatures[ACTOR_REF].creature.current_health = 10
     assert apply_damage(state, ACTOR_REF, 10, "fire") == 3
 
@@ -356,12 +357,7 @@ def test_removing_effect_state_removes_every_typed_rule_contribution() -> None:
     assert condition_immunities(state, ACTOR_REF).values == frozenset(
         {Condition.CHARMED}
     )
-    assert (
-        state.combat_rules.effective_conditions(state, ACTOR_REF).has(
-            Condition.FRIGHTENED
-        )
-        is False
-    )
+    assert state.effective_conditions_for(ACTOR_REF).has(Condition.FRIGHTENED) is False
     assert sense_range(state, ACTOR_REF, "truesight").range_feet == 120
 
     remove_ongoing_effects(
@@ -378,9 +374,7 @@ def test_removing_effect_state_removes_every_typed_rule_contribution() -> None:
     assert damage_resistances(state, ACTOR_REF).values == frozenset()
     assert resolve_damage_reduction(state, ACTOR_REF, "slashing", lambda _: 3) == 0
     assert condition_immunities(state, ACTOR_REF).values == frozenset()
-    assert state.combat_rules.effective_conditions(state, ACTOR_REF).has(
-        Condition.FRIGHTENED
-    )
+    assert state.effective_conditions_for(ACTOR_REF).has(Condition.FRIGHTENED)
     assert sense_range(state, ACTOR_REF, "truesight").range_feet is None
 
 

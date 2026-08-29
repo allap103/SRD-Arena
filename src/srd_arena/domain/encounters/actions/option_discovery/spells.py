@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from ....capabilities import (
+from srd_arena.domain.capabilities import (
     ConditionEffect,
     DamageReductionEffect,
     DamageResistanceEffect,
@@ -12,18 +13,16 @@ from ....capabilities import (
     capability_effects,
     primary_effects,
 )
-from ....creatures import Creature, Spellcasting
-from ....spells.definitions import Spell
-from ....spells.rules import (
-    parse_spell_action_ability,
-    parse_spell_action_condition,
-    parse_spell_action_damage_type,
-    parse_spell_action_value,
+from srd_arena.domain.creatures import Creature, Spellcasting
+from srd_arena.domain.spells.definitions import Spell
+from srd_arena.domain.spells.rules import (
+    SpellActionPayload,
     spell_action_id,
     spell_action_label,
-    spell_action_value,
+    spell_action_payload,
     spell_supports_higher_level,
 )
+
 from ...encounter_models.actions import (
     ActionCost,
     EncounterAction,
@@ -65,7 +64,7 @@ def available_spell_actions(
                 EncounterAction(
                     spell_action_label(spell, actor_ref=creature_ref),
                     "spell",
-                    spell_action_value(spell.id),
+                    spell_action_payload(spell.id),
                     id=spell_action_id(spell),
                     creature_ref=creature_ref,
                     cost=cost,
@@ -150,7 +149,7 @@ def available_spell_actions(
                 EncounterAction(
                     spell_action_label(spell, actor_ref=creature_ref),
                     "spell",
-                    spell_action_value(spell.id),
+                    spell_action_payload(spell.id),
                     id=spell_action_id(spell),
                     creature_ref=creature_ref,
                     cost=cost,
@@ -191,7 +190,7 @@ def _append_spell_option(
         EncounterAction(
             spell_action_label(spell, actor_ref=creature_ref) + selection_label,
             "spell",
-            spell_action_value(
+            spell_action_payload(
                 spell.id,
                 target_ref,
                 selected_condition=selection,
@@ -216,10 +215,9 @@ def _append_spell_action_variants(
         return
     if not spell_supports_higher_level(spell):
         return
-    spell_id, target_ref, aim_point = parse_spell_action_value(str(action.value))
-    selected_condition = parse_spell_action_condition(str(action.value))
-    selected_damage_type = parse_spell_action_damage_type(str(action.value))
-    selected_ability = parse_spell_action_ability(str(action.value))
+    payload = action.value
+    if not isinstance(payload, SpellActionPayload):
+        raise TypeError("Spell option has no spell payload.")
     for slot_level in sorted(spellcasting.spell_slots_remaining):
         if slot_level <= spell.level:
             continue
@@ -229,13 +227,8 @@ def _append_spell_action_variants(
             EncounterAction(
                 f"{action.label} (Level {slot_level})",
                 action.kind,
-                spell_action_value(
-                    spell_id,
-                    target_ref=target_ref,
-                    aim_point=aim_point,
-                    selected_condition=selected_condition,
-                    selected_damage_type=selected_damage_type,
-                    selected_ability=selected_ability,
+                replace(
+                    payload,
                     slot_level=slot_level,
                 ),
                 id=f"{action.id}-level-{slot_level}",

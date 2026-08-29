@@ -17,6 +17,7 @@ from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.domain.rolls.dice import DieRoller
 from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.domain.spells import Spell
+from srd_arena.domain.spells.rules import SpellActionPayload
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import ActionAim, DirectTargetOptionDetails
 from srd_arena.engine.session import Session
@@ -35,6 +36,32 @@ CONDITIONS_SHOWCASE_SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "conditions_showcase"
 )
 ROLL_INITIATIVE = EncounterState.roll_initiative
+
+
+def is_spell_action(
+    action: EncounterAction,
+    spell_id: str,
+    *,
+    target_ref: str | None = None,
+    slot_level: int | None = None,
+) -> bool:
+    """Return whether an action carries the requested typed spell selection."""
+
+    payload = action.value
+    return (
+        action.kind == "spell"
+        and isinstance(payload, SpellActionPayload)
+        and payload.spell_id == spell_id
+        and (target_ref is None or payload.target_ref == target_ref)
+        and (slot_level is None or payload.slot_level == slot_level)
+    )
+
+
+def spell_payload(action: EncounterAction) -> SpellActionPayload:
+    """Return a spell action's payload after asserting its concrete type."""
+
+    assert isinstance(action.value, SpellActionPayload)
+    return action.value
 
 
 def as_mapping(value: object) -> Mapping[str, object]:

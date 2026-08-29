@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....geometry import MovementBudget, MovementCost, Position
+from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
+
 from ...behaviors import DIRECTION_DELTAS
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
@@ -14,6 +15,10 @@ from ...encounter_models.resolution import (
     ActionExecutionResult,
 )
 from ...grappling_state import grappling_targets_for, movement_cost_for
+from ...reaction_runtime.opportunity_execution import (
+    resolve_automatic_opportunity_attacks,
+)
+from ...reaction_runtime.opportunity_offers import queue_opportunity_attack
 from ...state_runtime import create_event
 
 if TYPE_CHECKING:
@@ -36,12 +41,7 @@ def execute_movement(
     ...     position=Position(0, 0), movement_remaining=6,
     ...     movement_spent_this_turn=MovementCost(0), is_alive=True,
     ... )
-    >>> reactions = SimpleNamespace(
-    ...     queue_opportunity_attack=lambda *args, **kwargs: True
-    ... )
-    >>> state = SimpleNamespace(
-    ...     creatures={"hero": mover}, reaction_engine=reactions,
-    ... )
+    >>> state = SimpleNamespace(creatures={"hero": mover})
     >>> decision = DecisionFrame("turn", "hero", "turn", "active")
     >>> context = SimpleNamespace(
     ...     actor_ref="hero", progress=SimpleNamespace(paused_for_decision=False),
@@ -54,6 +54,9 @@ def execute_movement(
     ... ), patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
     ...     "grappling_targets_for", return_value=()
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
+    ...     "queue_opportunity_attack", return_value=True
     ... ):
     ...     result = execute_movement(
     ...         state, EncounterAction("Right", "move", "right"), decision, context
@@ -80,7 +83,7 @@ def execute_movement(
         )
         for target_ref in grappled_refs
     }
-    if state.reaction_engine.queue_opportunity_attack(
+    if queue_opportunity_attack(
         state,
         mover_ref=decision.creature_ref,
         action_id=action_id,
@@ -100,7 +103,7 @@ def execute_movement(
             ActionExecutionOutcome.PAUSE_FOR_DECISION,
         )
     progress.messages.extend(
-        state.reaction_engine.resolve_automatic_opportunity_attacks(
+        resolve_automatic_opportunity_attacks(
             state,
             mover_ref=decision.creature_ref,
             from_position=Position(mover.position.x, mover.position.y),

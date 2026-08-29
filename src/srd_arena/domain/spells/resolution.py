@@ -4,8 +4,13 @@ from __future__ import annotations
 
 from typing import cast
 
-from ..effects.results import ActionResolutionResult
-from ..geometry import serialize_area
+from srd_arena.domain.effects.results import (
+    ActionResolutionResult,
+    DamageApplication,
+    SpellResolutionDetails,
+)
+from srd_arena.domain.geometry import serialize_area
+
 from .custom import resolve_custom_spell
 from .resolution_steps.context import (
     SpellActionContext,
@@ -90,40 +95,37 @@ def _resolve_declarative_spell(
     removals = build_spell_removals(context, resolved_targets)
     messages.extend(removals.messages)
     effects.extend(removals.effects)
-    removed_conditions = removals.removed_conditions
 
     return ActionResolutionResult(
         definition_id=spell.id,
         definition_name=spell.name,
         messages=messages,
         effects=effects,
-        details={
-            "target_ref": context.target.target_ref,
-            "target_label": context.target.target_label,
-            "target_refs": [target.target_ref for target in targets],
-            "target_labels": [target.target_label for target in targets],
-            "affected_target_refs": [
+        details=SpellResolutionDetails(
+            target_ref=context.target.target_ref,
+            target_label=context.target.target_label,
+            targets=tuple(
+                (target.target_ref, target.target_label) for target in targets
+            ),
+            affected_target_refs=tuple(
                 target.target_ref for target in resolved_targets.affected_targets
-            ],
-            "area": serialize_area(context.area),
-            "spell_level": spell.level,
-            "slot_level": cast_level,
-            "save_detail": save_details[0] if save_details else None,
-            "save_details": save_details,
-            "attack_roll_detail": attack_details[0] if attack_details else None,
-            "attack_roll_details": attack_details,
-            "damage_roll_detail": damage_details[0] if damage_details else None,
-            "damage_roll_details": damage_details,
-            "healing_roll_detail": healing_details[0] if healing_details else None,
-            "healing_roll_details": healing_details,
-            "temporary_hit_point_detail": (
-                temporary_hit_point_details[0] if temporary_hit_point_details else None
             ),
-            "temporary_hit_point_details": temporary_hit_point_details,
-            "removed_condition": (
-                removed_conditions[0] if removed_conditions else None
+            area=serialize_area(context.area),
+            spell_level=spell.level,
+            slot_level=cast_level,
+            save_details=tuple(save_details),
+            attack_roll_details=tuple(attack_details),
+            damage_roll_details=tuple(damage_details),
+            healing_roll_details=tuple(healing_details),
+            temporary_hit_point_details=tuple(temporary_hit_point_details),
+            damage_applications=tuple(
+                DamageApplication(
+                    target_ref=cast(str, detail["target_ref"]),
+                    amount=cast(int, detail["applied_damage"]),
+                )
+                for detail in damage_details
             ),
-            "success": bool(effects)
+            success=bool(effects)
             or bool(healing_details)
             or bool(temporary_hit_point_details)
             or any(
@@ -131,5 +133,5 @@ def _resolve_declarative_spell(
                 and cast(int, detail["applied_damage"]) > 0
                 for detail in damage_details
             ),
-        },
+        ),
     )

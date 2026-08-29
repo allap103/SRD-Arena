@@ -2,22 +2,20 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from ....spells.rules import (
-    parse_spell_action_ability,
-    parse_spell_action_condition,
-    parse_spell_action_damage_type,
-    parse_spell_action_slot,
-    parse_spell_action_value,
-    spell_action_value,
+from srd_arena.domain.spells.rules import (
+    SpellActionPayload,
 )
+
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ..spellcasting import resolve_spell_action
 
 if TYPE_CHECKING:
-    from ....creatures import Creature
+    from srd_arena.domain.creatures import Creature
+
     from ...encounter import EncounterState
 
 
@@ -139,26 +137,18 @@ def _confirm_spell_targets(
         and len(pending.selected_target_refs) != pending.maximum_targets
     ):
         raise RuntimeError("All spell effects must be allocated before casting.")
-    original_value = str(pending.action.value)
-    _spell_id, _target_ref, aim_point = parse_spell_action_value(original_value)
-    selected_condition = parse_spell_action_condition(original_value)
-    selected_damage_type = parse_spell_action_damage_type(original_value)
-    selected_ability = parse_spell_action_ability(original_value)
-    slot_level = parse_spell_action_slot(original_value)
+    original_payload = pending.action.value
+    if not isinstance(original_payload, SpellActionPayload):
+        raise TypeError("Staged spell action has no spell payload.")
     resolved_target_refs = (
         tuple(pending.resource_allocations)
         if pending.resource_pool_total is not None
         else tuple(pending.selected_target_refs)
     )
-    payload = spell_action_value(
-        pending.spell_id,
-        resolved_target_refs,
-        aim_point=aim_point,
-        selected_condition=selected_condition,
-        selected_damage_type=selected_damage_type,
-        selected_ability=selected_ability,
-        slot_level=slot_level,
-        healing_allocations=pending.resource_allocations,
+    payload = replace(
+        original_payload,
+        target_refs=resolved_target_refs,
+        healing_allocations=tuple(sorted(pending.resource_allocations.items())),
     )
     state.interrupts.decision_stack.pop()
     state.interrupts.pending_spell_cast = None

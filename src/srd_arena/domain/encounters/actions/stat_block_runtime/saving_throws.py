@@ -7,19 +7,30 @@ from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING, cast
 
-from ....capabilities import CapabilityEffect, ConditionEffect, DamageEffect
-from ....creatures import Creature
-from ....creatures.stat_block_actions import SavingThrowActionDefinition
-from ....geometry import Vector2D, build_directional_area, vector_between_positions
-from ....rolls.dice import DieRoller, resolve_dice
-from ....rolls.saving_throws import (
+from srd_arena.domain.capabilities import (
+    CapabilityEffect,
+    ConditionEffect,
+    DamageEffect,
+)
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.stat_block_actions import SavingThrowActionDefinition
+from srd_arena.domain.geometry import (
+    Vector2D,
+    build_directional_area,
+    vector_between_positions,
+)
+from srd_arena.domain.rolls.dice import DieRoller, resolve_dice
+from srd_arena.domain.rolls.saving_throws import (
     Ability,
     resolve_saving_throw,
 )
+
 from ...attack_economy import consume_action
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
+from ...rule_queries.defenses import apply_damage, has_condition_save_advantage
+from ...rule_queries.rolls import roll_modifiers
 from ...state_combat import automatic_save_failure_provider_ids_for
 from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
@@ -69,7 +80,7 @@ def resolve_saving_throw_stat_block_action(
         "cha": "charisma",
     }
     outcomes: list[dict[str, object]] = []
-    damage_roll_rules = state.combat_rules.roll_modifiers(
+    damage_roll_rules = roll_modifiers(
         state,
         creature_ref,
         "damage_roll",
@@ -78,7 +89,7 @@ def resolve_saving_throw_stat_block_action(
     for target_ref in target_refs:
         target = state.creatures[target_ref].creature
         ability = cast(Ability, ability_names[definition.ability])
-        roll_rules = state.combat_rules.roll_modifiers(
+        roll_rules = roll_modifiers(
             state,
             target_ref,
             "saving_throw",
@@ -96,7 +107,7 @@ def resolve_saving_throw_stat_block_action(
             definition.dc,
             mode=(
                 "advantage"
-                if state.combat_rules.has_condition_save_advantage(
+                if has_condition_save_advantage(
                     state,
                     target_ref,
                     inflicted_conditions,
@@ -131,7 +142,7 @@ def resolve_saving_throw_stat_block_action(
             die_roller=roll_die,
             modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
             damage_receiver=partial(
-                state.combat_rules.apply_damage,
+                apply_damage,
                 state,
                 target_ref,
             ),
@@ -153,7 +164,7 @@ def resolve_saving_throw_stat_block_action(
             die_roller=roll_die,
             modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
             damage_receiver=partial(
-                state.combat_rules.apply_damage,
+                apply_damage,
                 state,
                 target_ref,
             ),

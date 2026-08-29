@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from ...effects.rule_effects import InvocationFailureChance
-from ...rolls.dice import DieRoller
+from srd_arena.domain.effects.rule_effects import InvocationFailureChance
+from srd_arena.domain.rolls.dice import DieRoller
+
 from .context import EffectQueryContext
 from .models import (
     InvocationFailureChanceContribution,
@@ -22,7 +23,7 @@ def invocation_start_checks(
     """Collect sourced failure chances matching invocation kind and components.
 
     >>> from types import SimpleNamespace
-    >>> from ...effects.runtime import EffectSource, EffectSourceKind
+    >>> from srd_arena.domain.effects.runtime import EffectSource, EffectSourceKind
     >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
     >>> chance = InvocationFailureChance(
     ...     frozenset({"cast_spell"}), frozenset({"somatic"}),
@@ -75,7 +76,7 @@ def resolve_invocation_start(
 ) -> InvocationStartResult:
     """Roll every applicable failure chance and retain complete roll details.
 
-    >>> from ...effects.runtime import EffectSource, EffectSourceKind
+    >>> from srd_arena.domain.effects.runtime import EffectSource, EffectSourceKind
     >>> source = EffectSource(EffectSourceKind.SPELL, "slow")
     >>> chance = InvocationFailureChanceContribution(
     ...     "slow-1", source, 1, 4, "slow.failure", "Too slow."

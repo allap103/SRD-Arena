@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....capabilities import (
+from srd_arena.domain.capabilities import (
     AttackResolution,
     CapabilityDefinition,
     CapabilityResolution,
@@ -13,16 +13,14 @@ from ....capabilities import (
     SavingThrowResolution,
     primary_effects,
 )
-from ....geometry import AreaOfEffect
-from ....rolls.dice import D20RollMode
-from ....spells.resolution import SpellActionContext, SpellTargetContext
-from ....spells.rules import (
-    parse_spell_action_ability,
-    parse_spell_action_condition,
-    parse_spell_action_damage_type,
-    parse_spell_healing_allocations,
-)
+from srd_arena.domain.geometry import AreaOfEffect
+from srd_arena.domain.rolls.dice import D20RollMode
+from srd_arena.domain.spells.resolution import SpellActionContext, SpellTargetContext
+from srd_arena.domain.spells.rules import SpellActionPayload
+
 from ...participants import creatures_are_opponents
+from ...rule_queries.defenses import has_condition_save_advantage
+from ...rule_queries.numeric import effective_armor_class
 from ...state_combat import (
     attack_roll_mode_for,
     automatic_critical_provider_ids_for,
@@ -31,8 +29,9 @@ from ...state_runtime import creature_position
 from .environment import EncounterSpellResolutionEnvironment
 
 if TYPE_CHECKING:
-    from ....creatures import Creature
-    from ....spells.definitions import Spell
+    from srd_arena.domain.creatures import Creature
+    from srd_arena.domain.spells.definitions import Spell
+
     from ...encounter import EncounterState
 
 
@@ -41,7 +40,7 @@ def build_spell_action_context(
     *,
     actor: Creature,
     spell: Spell,
-    spell_value: str,
+    payload: SpellActionPayload,
     creature_ref: str,
     target: SpellTargetContext,
     targets: tuple[SpellTargetContext, ...],
@@ -54,10 +53,12 @@ def build_spell_action_context(
 
     >>> from types import SimpleNamespace
     >>> from srd_arena.domain.spells import Spell
+    >>> from srd_arena.domain.spells.rules import spell_action_payload
     >>> try:
     ...     build_spell_action_context(
     ...         SimpleNamespace(), actor=SimpleNamespace(),
-    ...         spell=Spell("unknown", "Unknown", None, 1), spell_value="unknown",
+    ...         spell=Spell("unknown", "Unknown", None, 1),
+    ...         payload=spell_action_payload("unknown"),
     ...         creature_ref="mage", target=SimpleNamespace(), targets=(),
     ...         area=None, cast_level=1,
     ...     )
@@ -81,9 +82,9 @@ def build_spell_action_context(
         area=area,
         source_ref=creature_ref,
         environment=environment,
-        selected_condition=parse_spell_action_condition(spell_value),
-        selected_damage_type=parse_spell_action_damage_type(spell_value),
-        selected_ability=parse_spell_action_ability(spell_value),
+        selected_condition=payload.selected_condition,
+        selected_damage_type=payload.selected_damage_type,
+        selected_ability=payload.selected_ability,
         attack_roll_modes=_attack_roll_modes(
             state,
             creature_ref,
@@ -91,7 +92,7 @@ def build_spell_action_context(
             attack_mode,
         ),
         target_armor_classes={
-            candidate.target_ref: state.combat_rules.effective_armor_class(
+            candidate.target_ref: effective_armor_class(
                 state,
                 candidate.target_ref,
             ).value
@@ -111,7 +112,7 @@ def build_spell_action_context(
             conditions,
             save_advantage_against_opponents,
         ),
-        healing_allocations=parse_spell_healing_allocations(spell_value),
+        healing_allocations=dict(payload.healing_allocations),
     )
 
 
@@ -191,7 +192,7 @@ def _save_roll_modes(
     return {
         target.target_ref: "advantage"
         for target in targets
-        if state.combat_rules.has_condition_save_advantage(
+        if has_condition_save_advantage(
             state,
             target.target_ref,
             conditions,

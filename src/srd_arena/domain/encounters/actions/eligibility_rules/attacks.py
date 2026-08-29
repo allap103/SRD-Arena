@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....creatures import AttackActionDefinition, can_grapple
-from ....geometry import grid_distance_between
+from srd_arena.domain.creatures import AttackActionDefinition, can_grapple
+from srd_arena.domain.geometry import grid_distance_between
+
 from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,

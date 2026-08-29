@@ -5,9 +5,10 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from ...effects.results import EffectResult
-from ...effects.rule_effects import MaximumHitPointAdjustment
-from ...effects.runtime import OngoingEffect
+from srd_arena.domain.effects.results import EffectResult
+from srd_arena.domain.effects.rule_effects import MaximumHitPointAdjustment
+from srd_arena.domain.effects.runtime import OngoingEffect
+
 from ..attack_economy import reconcile_remaining_attacks
 from ..rule_queries.health import effective_maximum_health
 from .movement import reconcile_remaining_movement

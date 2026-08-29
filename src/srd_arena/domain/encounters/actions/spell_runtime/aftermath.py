@@ -4,17 +4,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....effects import serialize_effects
-from ....effects.results import ActionResolutionResult
-from ....spells.resolution import SpellTargetContext
+from srd_arena.domain.effects import serialize_effects
+from srd_arena.domain.effects.results import (
+    ActionResolutionResult,
+    SpellResolutionDetails,
+)
+
 from ...effect_lifecycle.concentration import resolve_concentration_damage
 from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...encounter_models.resolution import EncounterProgress
 from ...state_runtime import apply_encounter_effects, create_event
 
 if TYPE_CHECKING:
-    from ....creatures import Spellcasting
-    from ....spells.definitions import Spell
+    from srd_arena.domain.creatures import Spellcasting
+    from srd_arena.domain.spells.definitions import Spell
+
     from ...encounter import EncounterState
 
 
@@ -28,8 +32,6 @@ def apply_spell_result(
     action_id: str,
     result: ActionResolutionResult,
     progress: EncounterProgress,
-    target_ref: str | None,
-    target: SpellTargetContext,
 ) -> None:
     """Publish resolved effects and record the completed cast.
 
@@ -38,11 +40,18 @@ def apply_spell_result(
 
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
-    >>> from srd_arena.domain.effects.results import ActionResolutionResult
+    >>> from srd_arena.domain.effects.results import (
+    ...     ActionResolutionResult, SpellResolutionDetails,
+    ... )
     >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
     >>> from srd_arena.domain.spells import Spell
     >>> state = SimpleNamespace(event_sequence=1)
-    >>> result = ActionResolutionResult("fire-bolt", "Fire Bolt", [], [])
+    >>> details = SpellResolutionDetails(
+    ...     "dummy", "Dummy", (("dummy", "Dummy"),), (), None, 0, 0
+    ... )
+    >>> result = ActionResolutionResult(
+    ...     "fire-bolt", "Fire Bolt", [], [], details=details
+    ... )
     >>> progress = EncounterProgress()
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.spell_runtime.aftermath."
@@ -57,13 +66,14 @@ def apply_spell_result(
     ...         action_id="cast",
     ...         result=result,
     ...         progress=progress,
-    ...         target_ref="dummy",
-    ...         target=SimpleNamespace(target_label="Dummy"),
     ...     )
     >>> (progress.events[0].type, progress.events[0].data["spell_id"])
     ('spell_cast', 'fire-bolt')
     """
 
+    details = result.details
+    if not isinstance(details, SpellResolutionDetails):
+        raise TypeError("Spell resolution returned non-spell details.")
     progress.messages.extend(result.messages)
     _apply_damage_lifecycle(
         state,
@@ -84,13 +94,13 @@ def apply_spell_result(
                 "kind": "spell",
                 "spell_id": result.definition_id,
                 "spell_name": result.definition_name,
-                "spell_level": result.details.get("spell_level", spell.level),
-                "target_ref": result.details.get("target_ref", target_ref),
-                "target_label": result.details.get("target_label", target.target_label),
-                "target_refs": result.details.get("target_refs"),
-                "target_labels": result.details.get("target_labels"),
-                "area": result.details.get("area"),
-                "slot_level": result.details.get("slot_level", spell.level),
+                "spell_level": details.spell_level,
+                "target_ref": details.target_ref,
+                "target_label": details.target_label,
+                "target_refs": [ref for ref, _label in details.targets],
+                "target_labels": [label for _ref, label in details.targets],
+                "area": details.area,
+                "slot_level": details.slot_level,
                 "spell_slots_remaining": (
                     spellcasting.spell_slots_remaining.get(
                         cast_level if cast_level is not None else spell.level,
@@ -99,22 +109,22 @@ def apply_spell_result(
                     if spell.level > 0
                     else None
                 ),
-                "save_detail": result.details.get("save_detail"),
-                "save_details": result.details.get("save_details"),
-                "attack_roll_detail": result.details.get("attack_roll_detail"),
-                "attack_roll_details": result.details.get("attack_roll_details"),
-                "damage_roll_detail": result.details.get("damage_roll_detail"),
-                "damage_roll_details": result.details.get("damage_roll_details"),
-                "healing_roll_detail": result.details.get("healing_roll_detail"),
-                "healing_roll_details": result.details.get("healing_roll_details"),
-                "temporary_hit_point_detail": result.details.get(
-                    "temporary_hit_point_detail"
+                "save_detail": _first(details.save_details),
+                "save_details": list(details.save_details),
+                "attack_roll_detail": _first(details.attack_roll_details),
+                "attack_roll_details": list(details.attack_roll_details),
+                "damage_roll_detail": _first(details.damage_roll_details),
+                "damage_roll_details": list(details.damage_roll_details),
+                "healing_roll_detail": _first(details.healing_roll_details),
+                "healing_roll_details": list(details.healing_roll_details),
+                "temporary_hit_point_detail": _first(
+                    details.temporary_hit_point_details
                 ),
-                "temporary_hit_point_details": result.details.get(
-                    "temporary_hit_point_details"
+                "temporary_hit_point_details": list(
+                    details.temporary_hit_point_details
                 ),
                 "effects": serialize_effects(result.effects),
-                "success": result.details.get("success", False),
+                "success": details.success,
             },
         )
     )
@@ -127,34 +137,34 @@ def _apply_damage_lifecycle(
     creature_ref: str,
     progress: EncounterProgress,
 ) -> None:
-    damage_details = result.details.get("damage_roll_details")
-    if not isinstance(damage_details, list):
+    details = result.details
+    if not isinstance(details, SpellResolutionDetails):
         return
-    for detail in damage_details:
-        if not isinstance(detail, dict):
-            continue
-        damaged_ref = detail.get("target_ref")
-        applied_damage = detail.get("applied_damage")
-        if not isinstance(damaged_ref, str) or not isinstance(applied_damage, int):
-            continue
-        if applied_damage > 0:
+    for damage in details.damage_applications:
+        if damage.amount > 0:
             resolve_spell_lifecycle_event(
                 state,
                 "target_damaged",
                 actor_ref=creature_ref,
-                target_ref=damaged_ref,
+                target_ref=damage.target_ref,
                 progress=progress,
             )
             resolve_spell_lifecycle_event(
                 state,
                 "target_deals_damage",
                 actor_ref=creature_ref,
-                target_ref=damaged_ref,
+                target_ref=damage.target_ref,
                 progress=progress,
             )
         resolve_concentration_damage(
             state,
-            damaged_ref,
-            applied_damage,
+            damage.target_ref,
+            damage.amount,
             progress,
         )
+
+
+def _first(
+    details: tuple[dict[str, object], ...],
+) -> dict[str, object] | None:
+    return details[0] if details else None

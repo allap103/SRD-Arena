@@ -4,14 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..creatures import is_two_sizes_smaller
-from ..effects.conditions import AppliedCondition, Condition
-from ..effects.runtime import (
+from srd_arena.domain.creatures import is_two_sizes_smaller
+from srd_arena.domain.effects.conditions import AppliedCondition, Condition
+from srd_arena.domain.effects.runtime import (
     CreatureRelationship,
     RelationshipKind,
     RuntimeStateIdentity,
 )
-from ..geometry import MovementCost
+from srd_arena.domain.geometry import MovementCost
+
 from .condition_state import (
     ConditionApplicationResult,
     apply_condition,
@@ -32,7 +33,7 @@ def apply_grapple(
     """Apply Grappled to a target and record the grappler-target relationship.
 
     >>> from types import SimpleNamespace
-    >>> from ..effects.conditions import build_applied_condition
+    >>> from srd_arena.domain.effects.conditions import build_applied_condition
     >>> creature = SimpleNamespace(
     ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
     ... )
@@ -144,7 +145,7 @@ def grappled_sources_for(
     """Return creatures currently imposing Grappled on the target.
 
     >>> from types import SimpleNamespace
-    >>> from ..effects.conditions import build_applied_condition
+    >>> from srd_arena.domain.effects.conditions import build_applied_condition
     >>> condition = build_applied_condition(
     ...     condition=Condition.GRAPPLED, source_ref="ogre",
     ...     source_label="Ogre", target_ref="hero",
@@ -185,7 +186,7 @@ def is_grappled(state: EncounterState, creature_ref: CreatureRef) -> bool:
     """Return whether any active source currently grapples the creature.
 
     >>> from types import SimpleNamespace
-    >>> from ..effects.conditions import build_applied_condition
+    >>> from srd_arena.domain.effects.conditions import build_applied_condition
     >>> condition = build_applied_condition(
     ...     condition=Condition.GRAPPLED, source_ref="ogre",
     ...     source_label="Ogre", target_ref="hero",

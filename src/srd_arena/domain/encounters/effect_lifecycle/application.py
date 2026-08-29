@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...effects.results import EffectResult
-from ...effects.rule_effects import MaximumHitPointAdjustment
-from ...effects.runtime import (
+from srd_arena.domain.effects.results import EffectResult
+from srd_arena.domain.effects.rule_effects import MaximumHitPointAdjustment
+from srd_arena.domain.effects.runtime import (
     EffectPolarity,
     EffectSource,
     EffectSourceKind,
@@ -17,6 +17,7 @@ from ...effects.runtime import (
     Rounds,
     RuntimeStateIdentity,
 )
+
 from ..attack_economy import reconcile_remaining_attacks
 from ..rule_queries.health import effective_maximum_health
 from .concentration import end_concentration

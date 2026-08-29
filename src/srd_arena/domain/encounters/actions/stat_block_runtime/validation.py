@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from ....capabilities import ConditionEffect, DamageEffect
-from ....creatures.stat_block_actions import (
+from srd_arena.domain.capabilities import ConditionEffect, DamageEffect
+from srd_arena.domain.creatures.stat_block_actions import (
     AttackActionDefinition,
     AutomaticActionDefinition,
     SavingThrowActionDefinition,
 )
-from ....effects.conditions import Condition
+from srd_arena.domain.effects.conditions import Condition
+
 from ..capability_support import (
     capability_runtime_issue,
     capability_target_runtime_issue,

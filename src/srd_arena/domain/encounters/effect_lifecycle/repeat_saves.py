@@ -5,10 +5,13 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING, cast
 
-from ...effects.results import EffectResult
-from ...effects.runtime import OngoingEffect
-from ...rolls.dice import D20RollMode
-from ...rolls.saving_throws import Ability, resolve_saving_throw
+from srd_arena.domain.effects.results import EffectResult
+from srd_arena.domain.effects.runtime import OngoingEffect
+from srd_arena.domain.rolls.dice import D20RollMode
+from srd_arena.domain.rolls.saving_throws import Ability, resolve_saving_throw
+
+from ..rule_queries.defenses import has_condition_save_advantage
+from ..rule_queries.rolls import roll_modifiers
 from ..state_combat import automatic_save_failure_provider_ids_for
 from ..state_runtime import apply_encounter_effects, create_event
 from .removal import _remove_effect_target
@@ -65,14 +68,14 @@ def _resolve_repeat_save(
     target = state.creatures[creature_ref].creature
     save_mode: D20RollMode = (
         "advantage"
-        if state.combat_rules.has_condition_save_advantage(
+        if has_condition_save_advantage(
             state,
             creature_ref,
             tuple(condition.value for condition in repeat_save.failure_conditions),
         )
         else "normal"
     )
-    roll_rules = state.combat_rules.roll_modifiers(
+    roll_rules = roll_modifiers(
         state,
         creature_ref,
         "saving_throw",

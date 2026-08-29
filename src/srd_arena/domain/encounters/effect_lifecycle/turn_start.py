@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...effects.runtime import OngoingEffect, Rounds
+from srd_arena.domain.effects.runtime import OngoingEffect, Rounds
+
 from .removal import _remove_effect_tree
 
 if TYPE_CHECKING:

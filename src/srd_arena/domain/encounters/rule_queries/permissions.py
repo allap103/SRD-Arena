@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from ...effects.condition_rules import effective_conditions
-from ...effects.conditions import CombatTrait
-from ...effects.rule_effects import (
+from srd_arena.domain.effects.condition_rules import effective_conditions
+from srd_arena.domain.effects.conditions import CombatTrait
+from srd_arena.domain.effects.rule_effects import (
     ActionEconomyKind,
     ActionEconomyRestriction,
     ReactionProhibition,
 )
+
 from ..actions.eligibility_rules.models import ActionEligibility, EligibilityFailure
 from ..encounter_models.actions import (
     CreatureRef,

@@ -9,11 +9,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from ...creatures.stat_block_actions import (
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.stat_block_actions import (
     AutomaticActionDefinition,
     SavingThrowActionDefinition,
 )
+
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.resolution import EncounterProgress
 from .stat_block_runtime.attacks import resolve_attack_action

@@ -4,13 +4,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...rolls.dice import resolve_dice
+from srd_arena.domain.rolls.dice import resolve_dice
+
+from ..rule_queries.defenses import apply_damage
+from ..rule_queries.rolls import roll_modifiers
 from .concentration import resolve_concentration_damage
 from .lifecycle_events import resolve_spell_lifecycle_event
 
 if TYPE_CHECKING:
-    from ...creatures import Creature
-    from ...effects.runtime import OngoingEffect
+    from srd_arena.domain.creatures import Creature
+    from srd_arena.domain.effects.runtime import OngoingEffect
+
     from ..encounter import EncounterState
     from ..encounter_models.resolution import EncounterProgress
 
@@ -37,7 +41,7 @@ def resolve_repeat_failure_damage(
             continue
         source_ref = effect.identity.source.applied_by_ref
         damage_modifier = (
-            state.combat_rules.roll_modifiers(
+            roll_modifiers(
                 state,
                 source_ref,
                 "damage_roll",
@@ -51,7 +55,7 @@ def resolve_repeat_failure_damage(
             modifier=damage_modifier,
             roller=state.dice.roll_die,
         )
-        applied = state.combat_rules.apply_damage(
+        applied = apply_damage(
             state,
             creature_ref,
             roll.total,

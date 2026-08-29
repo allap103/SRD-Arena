@@ -62,16 +62,23 @@ contracts owned by the application/domain core.
 
 ### Domain rule-query boundary
 
-`EncounterState` remains the mutable encounter aggregate, while `CombatRules`
-is its stable source-aware rules facade. The focused functions under
-`domain.encounters.rule_queries` do not depend on the aggregate class. They
-accept small structural contexts exposing only active effects and, where a
-specific query needs them, combatants, conditions, the grid definition, or
-dice. This keeps reusable calculations independent of initiative, decision
-stacks, action selectors, relationships, and encounter orchestration without
-copying state into a second model.
+`EncounterState` remains the mutable encounter aggregate. Stateless rule
+queries live as focused functions under `domain.encounters.rule_queries`;
+callers import the operation they use instead of reaching it through a service
+stored on encounter state. The query functions accept small structural
+contexts exposing only active effects and, where a specific query needs them,
+combatants, conditions, the grid definition, or dice. This keeps reusable
+calculations independent of initiative, decision stacks, action selectors,
+relationships, and encounter orchestration without copying state into a
+second model or adding forwarding facade objects.
 
 ### Spell-resolution boundary
+
+Within the domain and engine, a spell choice is a typed `SpellActionPayload`.
+Target references, aim points, slot level, selectable effects, and resource
+allocations are named fields rather than fragments encoded into a string. The
+payload is serialized only when combat-event data crosses an observation
+boundary.
 
 The source-neutral spell resolver receives a frozen `SpellActionContext` with
 read-only invocation and target facts. Operations that must remain live—dice,

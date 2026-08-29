@@ -6,7 +6,7 @@ from .definitions import Spell
 def spell_supports_higher_level(spell: Spell) -> bool:
     """Return whether resource-level scaling gives the spell an upcast benefit.
 
-    >>> from ..capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityScaling,
     ...     CapabilityTarget, Outcome, ScalingIncrement,
     ... )

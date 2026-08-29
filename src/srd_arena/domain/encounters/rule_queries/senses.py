@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from ...effects.rule_effects import GrantedSense
+from srd_arena.domain.effects.rule_effects import GrantedSense
+
 from .context import CreatureEffectQueryContext
 from .models import SenseRuleResult, SourcedRuleContribution
 from .providers import ongoing_rule_effects
@@ -16,7 +17,7 @@ def sense_range(
     """Return the longest intrinsic or effect-granted range for a sense.
 
     >>> from types import SimpleNamespace
-    >>> from ...effects.runtime import EffectSource, EffectSourceKind
+    >>> from srd_arena.domain.effects.runtime import EffectSource, EffectSourceKind
     >>> creature = SimpleNamespace(sense_range=lambda name: 30)
     >>> source = EffectSource(EffectSourceKind.SPELL, "true_seeing")
     >>> effect = SimpleNamespace(

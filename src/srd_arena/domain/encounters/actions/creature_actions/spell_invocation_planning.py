@@ -2,29 +2,26 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
-from ....capabilities import HealingEffect, capability_effects
-from ....spells.definitions import Spell
-from ....spells.rules import (
-    parse_spell_action_ability,
-    parse_spell_action_condition,
-    parse_spell_action_damage_type,
-    parse_spell_action_slot,
-    parse_spell_action_targets,
-    parse_spell_action_value,
-    spell_action_value,
+from srd_arena.domain.capabilities import HealingEffect, capability_effects
+from srd_arena.domain.spells.definitions import Spell
+from srd_arena.domain.spells.rules import (
+    SpellActionPayload,
     spell_chooses_area_targets,
     spell_max_targets,
     spell_repeats_target_allocations,
     spell_requires_full_target_count,
 )
+
+from ...rule_queries.health import effective_maximum_health
 from ..option_discovery.spell_areas import spell_area_targets
 from ..option_discovery.spell_targets import spell_action_targets
 
 if TYPE_CHECKING:
-    from ....creatures import Creature
+    from srd_arena.domain.creatures import Creature
+
     from ...encounter import EncounterState
 
 
@@ -48,22 +45,25 @@ class SpellInvocationPlan:
 def plan_spell_invocation(
     state: EncounterState,
     actor: Creature,
-    payload: str,
+    payload: SpellActionPayload,
 ) -> SpellInvocationPlan:
     """Derive target counts, candidate allocations, and staging requirements.
 
     >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.spells.rules import spell_action_payload
     >>> actor = SimpleNamespace(
     ...     spellcasting=None, attributes=SimpleNamespace(level=1)
     ... )
     >>> plan = plan_spell_invocation(
-    ...     SimpleNamespace(), actor, "unknown:target"
+    ...     SimpleNamespace(), actor,
+    ...     spell_action_payload("unknown", "target"),
     ... )
     >>> (plan.spell_id, plan.selected_target_refs, plan.staged_selection_needed)
     ('unknown', ('target',), False)
     """
 
-    spell_id, _target_ref, aim_point = parse_spell_action_value(payload)
+    spell_id = payload.spell_id
+    aim_point = payload.aim_point
     spell = (
         next(
             candidate
@@ -73,7 +73,7 @@ def plan_spell_invocation(
         if actor.spellcasting is not None
         else None
     )
-    slot_level = parse_spell_action_slot(payload)
+    slot_level = payload.slot_level
     maximum_targets = (
         spell_max_targets(
             spell,
@@ -90,7 +90,7 @@ def plan_spell_invocation(
         spell is not None and spell_requires_full_target_count(spell)
     )
     resource_pool_total = _resource_pool_total(spell)
-    selected_targets = list(parse_spell_action_targets(payload))
+    selected_targets = list(payload.target_refs)
     resource_allocation_limits: dict[str, int] = {}
     if resource_pool_total is not None and spell is not None:
         resource_allocation_limits = _healing_allocation_limits(state, actor, spell)
@@ -147,12 +147,13 @@ def plan_spell_invocation(
 def automatic_spell_payload(
     state: EncounterState,
     actor: Creature,
-    original_payload: str,
+    original_payload: SpellActionPayload,
     plan: SpellInvocationPlan,
-) -> str:
+) -> SpellActionPayload:
     """Choose a deterministic complete payload for a non-external controller.
 
     >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.spells.rules import spell_action_payload
     >>> plan = SpellInvocationPlan(
     ...     spell_id="ray", spell=Spell("ray", "Ray", "TEST", 0),
     ...     aim_point=None, slot_level=None, selected_target_refs=("goblin",),
@@ -161,9 +162,10 @@ def automatic_spell_payload(
     ...     resource_allocation_limits={}, staged_selection_needed=True,
     ... )
     >>> automatic_spell_payload(
-    ...     SimpleNamespace(), SimpleNamespace(), "ray:goblin", plan
-    ... )
-    'ray:goblin,goblin'
+    ...     SimpleNamespace(), SimpleNamespace(),
+    ...     spell_action_payload("ray", "goblin"), plan,
+    ... ).target_refs
+    ('goblin', 'goblin')
     """
 
     spell = plan.spell
@@ -176,12 +178,12 @@ def automatic_spell_payload(
             plan.resource_pool_total,
             plan.resource_allocation_limits,
         )
-        return spell_action_value(
-            plan.spell_id,
-            tuple(allocations),
+        return replace(
+            original_payload,
+            target_refs=tuple(allocations),
             aim_point=plan.aim_point,
             slot_level=plan.slot_level,
-            healing_allocations=allocations,
+            healing_allocations=tuple(sorted(allocations.items())),
         )
     elif not spell_chooses_area_targets(spell):
         selected_targets = [
@@ -190,13 +192,10 @@ def automatic_spell_payload(
                 : plan.maximum_targets
             ]
         ]
-    return spell_action_value(
-        plan.spell_id,
-        tuple(selected_targets),
+    return replace(
+        original_payload,
+        target_refs=tuple(selected_targets),
         aim_point=plan.aim_point,
-        selected_condition=parse_spell_action_condition(original_payload),
-        selected_damage_type=parse_spell_action_damage_type(original_payload),
-        selected_ability=parse_spell_action_ability(original_payload),
         slot_level=plan.slot_level,
     )
 
@@ -225,7 +224,7 @@ def _healing_allocation_limits(
 
     limits: dict[str, int] = {}
     for target in spell_action_targets(state, actor, spell):
-        maximum = state.combat_rules.effective_maximum_health(
+        maximum = effective_maximum_health(
             state,
             target.target_ref,
         ).value

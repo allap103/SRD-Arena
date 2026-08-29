@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Collection
 from typing import TYPE_CHECKING
 
-from ...geometry import MovementBudget, MovementCost, Position
+from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
+
 from ..actions.attack_resolution import can_make_opportunity_attack
 from ..behaviors import is_adjacent as _is_adjacent
 from ..encounter_models.actions import (
@@ -20,6 +21,7 @@ from ..encounter_models.decisions import (
 )
 from ..encounter_models.resolution import EncounterProgress
 from ..participants import creature_controller, creatures_are_opponents
+from ..rule_queries.permissions import reaction_eligibility
 from ..state_runtime import create_event, next_frame_id
 
 if TYPE_CHECKING:
@@ -65,7 +67,7 @@ def queue_opportunity_attack(
         and (
             not external_only or creature_controller(state, creature_ref) == "external"
         )
-        and state.combat_rules.reaction_eligibility(
+        and reaction_eligibility(
             state,
             creature_ref,
             "opportunity_attack",
@@ -162,7 +164,7 @@ def reaction_actions(state: EncounterState) -> list[EncounterAction]:
     reactor_ref = decision.creature_ref
     actions: list[EncounterAction] = []
     if (
-        state.combat_rules.reaction_eligibility(
+        reaction_eligibility(
             state,
             reactor_ref,
             "opportunity_attack",

@@ -4,11 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....spells.rules import (
-    parse_spell_action_slot,
-    parse_spell_action_targets,
-    parse_spell_action_value,
-)
+from srd_arena.domain.spells.rules import SpellActionPayload
+
 from ...encounter_models.actions import CreatureRef, EncounterAction
 from ..capability_support import capability_runtime_issue
 from ..option_discovery.spellcasting import spell_cast_block_reason_for
@@ -32,23 +29,30 @@ class SpellActionRule:
         """Validate spell access, resources, targeting, and requirements.
 
         >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.spells.rules import spell_action_payload
         >>> actor = Mock()
         >>> actor.creature.spellcasting = None
-        >>> action = EncounterAction('Cast', 'spell', value='fireball')
+        >>> action = EncounterAction(
+        ...     'Cast', 'spell', value=spell_action_payload('fireball')
+        ... )
         >>> SpellActionRule().check(
         ...     Mock(creatures={'hero': actor}), 'hero', action).code
         'spellcasting_unavailable'
         """
 
-        if action.kind != "spell" or not isinstance(action.value, str):
+        if action.kind != "spell" or not isinstance(
+            action.value,
+            SpellActionPayload,
+        ):
             return None
+        payload = action.value
         actor = state.creatures[actor_ref].creature
         if actor.spellcasting is None:
             return EligibilityFailure(
                 "spellcasting_unavailable",
                 "This creature cannot cast spells.",
             )
-        spell_id, target_ref, aim_point = parse_spell_action_value(action.value)
+        spell_id = payload.spell_id
         spell = next(
             (
                 known
@@ -74,11 +78,11 @@ class SpellActionRule:
             actor.spellcasting,
             spell,
             action.cost,
-            parse_spell_action_slot(action.value),
+            payload.slot_level,
         )
         if reason is not None:
             return EligibilityFailure("spell_blocked", reason)
-        for selected_target_ref in parse_spell_action_targets(action.value):
+        for selected_target_ref in payload.target_refs:
             target = state.creatures.get(selected_target_ref)
             if target is None or not target.is_alive:
                 return EligibilityFailure(
@@ -95,8 +99,8 @@ class SpellActionRule:
                 return requirement_failure
         if (
             spell.geometry_mode not in {"directional_area", "point_area"}
-            and target_ref is None
-            and aim_point is None
+            and not payload.target_refs
+            and payload.aim_point is None
         ):
             return EligibilityFailure(
                 "target_unavailable",

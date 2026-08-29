@@ -2,7 +2,7 @@
 
 import re
 
-from ...capabilities import CapabilityDefinition
+from srd_arena.domain.capabilities import CapabilityDefinition
 
 
 def scale_dice(
@@ -51,7 +51,7 @@ def actor_level_damage_dice(
 ) -> str | None:
     """Resolve the highest damage-dice threshold reached by the actor.
 
-    >>> from ...capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityScaling, CapabilityTarget, Outcome,
     ...     ScalingIncrement, ScalingThreshold,
     ... )
@@ -90,7 +90,7 @@ def resource_dice_increment(
 ) -> str | None:
     """Return a matching per-resource-level dice increment.
 
-    >>> from ...capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityScaling, CapabilityTarget, Outcome,
     ...     ScalingIncrement,
     ... )
@@ -128,7 +128,7 @@ def resource_int_increment(
 ) -> int:
     """Sum per-resource-level integer increments of a requested kind.
 
-    >>> from ...capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityScaling, CapabilityTarget, Outcome,
     ...     ScalingIncrement,
     ... )

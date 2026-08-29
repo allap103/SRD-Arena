@@ -27,6 +27,7 @@ from srd_arena.domain.effects.rule_effects import (
 from srd_arena.domain.effects.runtime import (
     EffectPolarity,
 )
+from srd_arena.domain.encounters import rule_queries
 from srd_arena.domain.encounters.effect_lifecycle.repeat_saves import (
     resolve_end_turn_effects,
 )
@@ -40,11 +41,6 @@ from srd_arena.domain.encounters.encounter_models.resolution import EncounterPro
 from srd_arena.domain.encounters.state_combat import attack_roll_mode_for
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
 from srd_arena.domain.geometry import Position
-from srd_arena.domain.spells.rules import (
-    parse_spell_action_ability,
-    parse_spell_action_damage_type,
-    parse_spell_action_slot,
-)
 from srd_arena.frontends.gui.app import GameWindow
 from srd_arena.frontends.gui.presentation.models import (
     SessionPresentation,
@@ -60,7 +56,9 @@ from tests.encounter_runtime_support import (
 )
 from tests.encounter_runtime_support import (
     TACTICAL_SCENARIO_DIR,
+    is_spell_action,
     player_first_initiative,
+    spell_payload,
 )
 from tests.encounter_runtime_support import (
     action_id_by_label as _action_id_by_label,
@@ -847,7 +845,7 @@ def test_mass_healing_word_uses_one_roll_for_selected_targets() -> None:
     initial = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value) == "mass_healing_word:goblin_1"
+        if is_spell_action(action, "mass_healing_word", target_ref="goblin_1")
     )
     _ORCHESTRATOR.submit(state, initial)
     add_second = next(
@@ -907,9 +905,12 @@ def test_heal_upcasts_and_removes_every_listed_condition() -> None:
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("heal:player")
-        and parse_spell_action_slot(str(action.value)) == 7
+        if is_spell_action(
+            action,
+            "heal",
+            target_ref="player",
+            slot_level=7,
+        )
     )
     result = _ORCHESTRATOR.submit(state, action)
 
@@ -945,21 +946,24 @@ def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
     actions = [
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("protection_from_energy:player")
+        if is_spell_action(action, "protection_from_energy", target_ref="player")
     ]
 
-    assert {
-        parse_spell_action_damage_type(str(action.value)) for action in actions
-    } == {"acid", "cold", "fire", "lightning", "thunder"}
+    assert {spell_payload(action).selected_damage_type for action in actions} == {
+        "acid",
+        "cold",
+        "fire",
+        "lightning",
+        "thunder",
+    }
     fire_action = next(
         action
         for action in actions
-        if parse_spell_action_damage_type(str(action.value)) == "fire"
+        if spell_payload(action).selected_damage_type == "fire"
     )
     _ORCHESTRATOR.submit(state, fire_action)
 
-    resistances = state.combat_rules.damage_resistances(state, "player").values
+    resistances = rule_queries.damage_resistances(state, "player").values
     assert "fire" in resistances
     assert "cold" not in resistances
     assert state.ongoing_effects[0].polarity is EffectPolarity.BENEFICIAL
@@ -988,8 +992,7 @@ def test_invisibility_is_classified_and_exported_as_beneficial() -> None:
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("invisibility:player")
+        if is_spell_action(action, "invisibility", target_ref="player")
     )
     _ORCHESTRATOR.submit(state, action)
 
@@ -1017,11 +1020,10 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
     actions = [
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("enhance_ability:player")
+        if is_spell_action(action, "enhance_ability", target_ref="player")
     ]
 
-    assert {parse_spell_action_ability(str(action.value)) for action in actions} == {
+    assert {spell_payload(action).selected_ability for action in actions} == {
         "strength",
         "dexterity",
         "intelligence",
@@ -1031,12 +1033,12 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
     strength_action = next(
         action
         for action in actions
-        if parse_spell_action_ability(str(action.value)) == "strength"
+        if spell_payload(action).selected_ability == "strength"
     )
     _ORCHESTRATOR.submit(state, strength_action)
 
     assert (
-        state.combat_rules.roll_modifiers(
+        rule_queries.roll_modifiers(
             state,
             "player",
             "ability_check",
@@ -1045,7 +1047,7 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
         == "advantage"
     )
     assert (
-        state.combat_rules.roll_modifiers(
+        rule_queries.roll_modifiers(
             state,
             "player",
             "ability_check",
@@ -1089,7 +1091,7 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save() -> None:
     assert result.events
     assert state.ongoing_effects[0].polarity is EffectPolarity.HARMFUL
     assert (
-        state.combat_rules.roll_modifiers(
+        rule_queries.roll_modifiers(
             state,
             "goblin_1",
             "attack_roll",
@@ -1099,7 +1101,7 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save() -> None:
         == "advantage"
     )
     assert (
-        state.combat_rules.roll_modifiers(
+        rule_queries.roll_modifiers(
             state,
             "goblin_2",
             "attack_roll",
@@ -1136,16 +1138,19 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage() -> None:
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("phantasmal_killer:goblin_1")
-        and parse_spell_action_slot(str(action.value)) == 5
+        if is_spell_action(
+            action,
+            "phantasmal_killer",
+            target_ref="goblin_1",
+            slot_level=5,
+        )
     )
 
     _ORCHESTRATOR.submit(state, action)
 
     assert target.get_health() == 18
     assert (
-        state.combat_rules.roll_modifiers(
+        rule_queries.roll_modifiers(
             state,
             "goblin_1",
             "ability_check",
@@ -1153,7 +1158,7 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage() -> None:
         == "disadvantage"
     )
     assert (
-        state.combat_rules.roll_modifiers(
+        rule_queries.roll_modifiers(
             state,
             "goblin_1",
             "attack_roll",
@@ -1200,13 +1205,13 @@ def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
     actions = [
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value).startswith("resistance:player")
+        if is_spell_action(action, "resistance", target_ref="player")
     ]
     assert len(actions) == 11
     fire_action = next(
         action
         for action in actions
-        if parse_spell_action_damage_type(str(action.value)) == "fire"
+        if spell_payload(action).selected_damage_type == "fire"
     )
 
     _ORCHESTRATOR.submit(state, fire_action)
@@ -1237,11 +1242,11 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
     target.position = Position(state.active_position.x + 1, state.active_position.y)
     original = {
         "player": (
-            state.combat_rules.effective_maximum_health(state, "player").value,
+            rule_queries.effective_maximum_health(state, "player").value,
             caster.get_health(),
         ),
         "goblin_1": (
-            state.combat_rules.effective_maximum_health(state, "goblin_1").value,
+            rule_queries.effective_maximum_health(state, "goblin_1").value,
             target.creature.get_health(),
         ),
     }
@@ -1249,9 +1254,12 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
     initial = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("aid:player")
-        and parse_spell_action_slot(str(action.value)) == 3
+        if is_spell_action(
+            action,
+            "aid",
+            target_ref="player",
+            slot_level=3,
+        )
     )
     _ORCHESTRATOR.submit(state, initial)
     add_target = next(
@@ -1268,12 +1276,12 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
     _ORCHESTRATOR.submit(state, confirm)
 
     assert (
-        state.combat_rules.effective_maximum_health(state, "player").value
+        rule_queries.effective_maximum_health(state, "player").value
         == original["player"][0] + 10
     )
     assert caster.get_health() == original["player"][1] + 10
     assert (
-        state.combat_rules.effective_maximum_health(state, "goblin_1").value
+        rule_queries.effective_maximum_health(state, "goblin_1").value
         == original["goblin_1"][0] + 10
     )
     assert target.creature.get_health() == original["goblin_1"][1] + 10
@@ -1282,11 +1290,11 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
     expire_ongoing_effects_for_turn_start(state, "player")
 
     assert (
-        state.combat_rules.effective_maximum_health(state, "player").value,
+        rule_queries.effective_maximum_health(state, "player").value,
         caster.get_health(),
     ) == original["player"]
     assert (
-        state.combat_rules.effective_maximum_health(state, "goblin_1").value,
+        rule_queries.effective_maximum_health(state, "goblin_1").value,
         target.creature.get_health(),
     ) == original["goblin_1"]
 
@@ -1330,7 +1338,7 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
     initial = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value).startswith("mass_heal:")
+        if is_spell_action(action, "mass_heal")
     )
     opened = _ORCHESTRATOR.submit(state, initial)
 
@@ -1431,9 +1439,8 @@ def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
     curse_action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell"
-        and str(action.value).startswith("greater_restoration:player")
-        and "curse@" in str(action.value)
+        if is_spell_action(action, "greater_restoration", target_ref="player")
+        and (spell_payload(action).selected_condition or "").startswith("curse@")
     )
     result = _ORCHESTRATOR.submit(state, curse_action)
 
@@ -1491,7 +1498,7 @@ def test_remove_curse_ends_every_curse_on_one_creature() -> None:
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value) == "remove_curse:player"
+        if is_spell_action(action, "remove_curse", target_ref="player")
     )
     _ORCHESTRATOR.submit(state, action)
 
@@ -1514,7 +1521,7 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
     )
     caster.spellcasting.spell_slots_remaining[5] = 1
     original = (
-        state.combat_rules.effective_maximum_health(state, "player").value,
+        rule_queries.effective_maximum_health(state, "player").value,
         caster.get_health(),
     )
     apply_encounter_effects(
@@ -1536,7 +1543,7 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
         origin_id="withering-origin",
     )
     assert (
-        state.combat_rules.effective_maximum_health(state, "player").value,
+        rule_queries.effective_maximum_health(state, "player").value,
         caster.get_health(),
     ) == (
         original[0] - 10,
@@ -1546,12 +1553,13 @@ def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell" and "hit_point_maximum_reduction" in str(action.value)
+        if is_spell_action(action, "greater_restoration", target_ref="player")
+        and spell_payload(action).selected_condition == "hit_point_maximum_reduction"
     )
     _ORCHESTRATOR.submit(state, action)
 
     assert (
-        state.combat_rules.effective_maximum_health(state, "player").value,
+        rule_queries.effective_maximum_health(state, "player").value,
         caster.get_health(),
     ) == original
 
@@ -1603,7 +1611,8 @@ def test_lesser_restoration_explicitly_selects_the_condition_to_remove() -> None
     action = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value).endswith("#poisoned")
+        if is_spell_action(action, "lesser_restoration", target_ref="player")
+        and spell_payload(action).selected_condition == "poisoned"
     )
     _ORCHESTRATOR.submit(state, action)
 

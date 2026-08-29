@@ -9,12 +9,13 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from ..creatures import Creature
-from ..effects.condition_rules import EffectiveConditionSet
-from ..effects.conditions import AppliedCondition, Condition
-from ..equipment import Item
-from ..geometry import GeometryConfig, MovementBudget, Position
-from ..rolls.randomness import DiceRoller
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.effects.condition_rules import EffectiveConditionSet
+from srd_arena.domain.effects.conditions import AppliedCondition, Condition
+from srd_arena.domain.equipment import Item
+from srd_arena.domain.geometry import GeometryConfig, MovementBudget, Position
+from srd_arena.domain.rolls.randomness import DiceRoller
+
 from .actions.eligibility import ActionEligibility
 from .actions.options import (
     available_actions as _available_actions_impl,
@@ -38,8 +39,6 @@ from .encounter_models.state import (
     RoundState,
     TurnState,
 )
-from .reactions import REACTION_ENGINE, ReactionEngine
-from .rules import COMBAT_RULES, CombatRules
 from .state_initialization import (
     initialize_action_selectors as _initialize_action_selectors_impl,
 )
@@ -70,7 +69,6 @@ from .state_queries import (
 from .state_queries import (
     requires_automatic_advance as _requires_automatic_advance_impl,
 )
-from .turn_lifecycle import TURN_LIFECYCLE, TurnLifecycle
 
 __all__ = [
     "ActionCost",
@@ -87,40 +85,6 @@ class EncounterState(EncounterStateData):
     turn flow, reactions, and rule queries. This facade retains only the small
     public API consumed by the engine.
     """
-
-    # Engines are stateless rule/orchestration collaborators.
-    @property
-    def reaction_engine(self) -> ReactionEngine:
-        """Return the stateless reaction-orchestration service.
-
-        >>> from srd_arena.domain.geometry import Grid
-        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
-        >>> isinstance(state.reaction_engine, ReactionEngine)
-        True
-        """
-        return REACTION_ENGINE
-
-    @property
-    def turn_lifecycle(self) -> TurnLifecycle:
-        """Return the stateless turn-lifecycle service.
-
-        >>> from srd_arena.domain.geometry import Grid
-        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
-        >>> isinstance(state.turn_lifecycle, TurnLifecycle)
-        True
-        """
-        return TURN_LIFECYCLE
-
-    @property
-    def combat_rules(self) -> CombatRules:
-        """Return the stateless combat-rule query service.
-
-        >>> from srd_arena.domain.geometry import Grid
-        >>> state = EncounterState("demo", EncounterDefinition("demo", Grid(5, 5)), {})
-        >>> isinstance(state.combat_rules, CombatRules)
-        True
-        """
-        return COMBAT_RULES
 
     @property
     def pending_movement(self) -> PendingMovement | None:

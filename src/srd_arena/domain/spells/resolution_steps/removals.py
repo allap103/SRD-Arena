@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 
-from ...effects.results import EffectResult
+from srd_arena.domain.effects.results import EffectResult
+
 from .context import SpellActionContext
 from .targets import ResolvedSpellTargets
 

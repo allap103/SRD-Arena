@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from ....capabilities import RechargePool
-from ....creatures import Creature
-from ....rolls.dice import DieRoller
+from srd_arena.domain.capabilities import RechargePool
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.rolls.dice import DieRoller
 
 
 def stat_block_action_resource_available(

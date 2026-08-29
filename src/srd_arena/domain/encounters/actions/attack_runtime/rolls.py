@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from ....creatures import Creature
-from ....geometry import Position
-from ....rolls.dice import (
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.geometry import Position
+from srd_arena.domain.rolls.dice import (
     CheckResult,
     D20RollMode,
     D20RollResult,
@@ -15,6 +15,7 @@ from ....rolls.dice import (
     resolve_check,
     resolve_d20,
 )
+
 from ...attack_rules import proximity_attack_roll_mode
 from ...encounter_models.resolution import AttackSource
 

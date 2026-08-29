@@ -1,7 +1,10 @@
 from pathlib import Path
 
 from srd_arena.domain.creatures.feature_rules import resolve_feature_action
-from srd_arena.domain.effects.results import ActionResolutionResult
+from srd_arena.domain.effects.results import (
+    ActionResolutionResult,
+    FeatureResolutionDetails,
+)
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
@@ -62,4 +65,4 @@ def test_action_surge_returns_extra_action_result() -> None:
     assert result.definition_name == "Action Surge"
     assert result.resource_updates == {"action_surge": 0}
     assert result.effects == []
-    assert result.details["grant_actions"] == 1
+    assert result.details == FeatureResolutionDetails(granted_actions=1)

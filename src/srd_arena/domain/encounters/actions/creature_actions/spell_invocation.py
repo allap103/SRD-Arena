@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.spells.rules import SpellActionPayload
+
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame, PendingSpellCast
 from ...encounter_models.resolution import EncounterProgress
@@ -16,7 +18,8 @@ from .spell_invocation_planning import (
 )
 
 if TYPE_CHECKING:
-    from ....creatures import Creature
+    from srd_arena.domain.creatures import Creature
+
     from ...encounter import EncounterState
 
 
@@ -41,7 +44,7 @@ def execute_spell_invocation(
     ValueError: Spell action requires a spell payload.
     """
 
-    if not isinstance(action.value, str):
+    if not isinstance(action.value, SpellActionPayload):
         raise ValueError("Spell action requires a spell payload.")
     plan = plan_spell_invocation(state, actor, action.value)
     if (

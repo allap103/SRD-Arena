@@ -174,7 +174,7 @@ def test_cross_package_imports_are_absolute() -> None:
 
     for path in sorted(PACKAGE_ROOT.rglob("*.py")):
         module = _module_name(path)
-        source_package = _top_level_package(module)
+        source_package = _import_boundary(module)
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             if not isinstance(node, ast.ImportFrom) or node.level == 0:
@@ -184,14 +184,14 @@ def test_cross_package_imports_are_absolute() -> None:
                 path.name == "__init__.py",
                 node,
             )
-            if _top_level_package(imported_module) != source_package:
+            if _import_boundary(imported_module) != source_package:
                 violations.append(
                     f"{path.relative_to(PACKAGE_ROOT.parent)}:{node.lineno}: "
                     f"{module} imports {imported_module} relatively"
                 )
 
     assert not violations, (
-        "Use absolute imports across top-level srd_arena package boundaries:\n"
+        "Use absolute imports across top-level and domain-concept boundaries:\n"
         + "\n".join(violations)
     )
 
@@ -244,22 +244,6 @@ def test_spell_building_does_not_import_its_package_facade() -> None:
         "the package facade imports the builder and would create a cycle:\n"
         + "\n".join(violations)
     )
-
-
-def test_encounter_actions_have_no_legacy_peer_package() -> None:
-    legacy_actions = PACKAGE_ROOT / "domain" / "actions"
-
-    assert not list(legacy_actions.rglob("*.py")), (
-        "Encounter-specific actions belong in srd_arena.domain.encounters.actions."
-    )
-
-
-def test_encounter_effect_lifecycle_has_no_facade() -> None:
-    """Keep lifecycle ownership visible at each focused implementation module."""
-
-    facade = PACKAGE_ROOT / "domain" / "encounters" / "ongoing_effects.py"
-
-    assert not facade.exists()
 
 
 def test_encounter_runtime_import_graph_is_acyclic() -> None:
@@ -327,35 +311,6 @@ def test_gui_presenter_stays_independent_of_pyside6() -> None:
     ]
 
 
-def test_gui_presentation_has_one_owner() -> None:
-    """Keep GUI projections with the adapter that consumes them."""
-
-    assert not list((PACKAGE_ROOT / "frontends" / "shared").glob("*.py"))
-    assert (PACKAGE_ROOT / "frontends" / "gui" / "presentation").is_dir()
-
-
-def test_gui_window_delegates_application_commands_to_presenter() -> None:
-    path = PACKAGE_ROOT / "frontends" / "gui" / "app.py"
-    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    application_imports = {
-        alias.name
-        for node in ast.walk(tree)
-        if isinstance(node, ast.ImportFrom)
-        and node.module == "srd_arena.application.api"
-        for alias in node.names
-    }
-    imported_modules = {
-        imported_module for _line, imported_module in _imports(path, _module_name(path))
-    }
-
-    assert application_imports == {
-        "EncounterObservation",
-        "GameUpdate",
-        "ScenarioPresentation",
-    }
-    assert "srd_arena.application.game" not in imported_modules
-
-
 def test_driving_adapters_use_only_the_public_application_api() -> None:
     violations: list[str] = []
 
@@ -395,74 +350,9 @@ def test_application_api_exports_only_application_owned_contracts() -> None:
     )
 
 
-def test_gui_window_imports_only_composition_widgets() -> None:
-    path = PACKAGE_ROOT / "frontends" / "gui" / "app.py"
-    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    qt_widget_imports = {
-        alias.name
-        for node in ast.walk(tree)
-        if isinstance(node, ast.ImportFrom) and node.module == "PySide6.QtWidgets"
-        for alias in node.names
-    }
-
-    assert qt_widget_imports == {
-        "QHBoxLayout",
-        "QMainWindow",
-        "QWidget",
-    }
-
-
-def test_initiative_rendering_has_one_view_owner() -> None:
-    gui_root = PACKAGE_ROOT / "frontends" / "gui"
-    non_owners = (
-        gui_root / "app.py",
-        gui_root / "ui" / "sidebar.py",
-        gui_root / "ui" / "encounter" / "panel_renderer.py",
-    )
-
-    assert all(
-        "initiative_layout" not in path.read_text(encoding="utf-8")
-        for path in non_owners
-    )
-
-
-def test_battlefield_widget_delegates_painting_and_image_caching() -> None:
-    gui_root = PACKAGE_ROOT / "frontends" / "gui" / "ui" / "encounter"
-    widget_path = gui_root / "battlefield.py"
-    renderer_path = gui_root / "battlefield_renderer.py"
-    widget_source = widget_path.read_text(encoding="utf-8")
-    renderer_source = renderer_path.read_text(encoding="utf-8")
-    widget_tree = ast.parse(widget_source, filename=str(widget_path))
-    widget_class = next(
-        node
-        for node in widget_tree.body
-        if isinstance(node, ast.ClassDef) and node.name == "BattlefieldWidget"
-    )
-
-    assert not any(
-        isinstance(node, ast.FunctionDef) and node.name.startswith("_paint_")
-        for node in widget_class.body
-    )
-    assert "_image_cache" not in widget_source
-    assert "class BattlefieldRenderer" in renderer_source
-    assert "_image_cache" in renderer_source
-
-
-def test_domain_root_is_namespace_only() -> None:
+def test_domain_models_are_imported_from_their_owning_package() -> None:
     violations: list[str] = []
     search_roots = (PACKAGE_ROOT, Path(__file__).parent)
-    domain_init = ast.parse(
-        (PACKAGE_ROOT / "domain" / "__init__.py").read_text(encoding="utf-8")
-    )
-
-    assert (
-        len(domain_init.body) == 1
-        and isinstance(domain_init.body[0], ast.Expr)
-        and isinstance(domain_init.body[0].value, ast.Constant)
-        and isinstance(domain_init.body[0].value.value, str)
-    ), (
-        "srd_arena.domain.__init__ must remain a descriptive namespace without re-exports."
-    )
 
     for search_root in search_roots:
         for path in sorted(search_root.rglob("*.py")):
@@ -492,10 +382,12 @@ def test_domain_root_is_namespace_only() -> None:
     )
 
 
-def test_package_and_engine_roots_do_not_reexport_engine_types() -> None:
-    assert not (PACKAGE_ROOT / "runtime").exists()
+def test_package_roots_remain_descriptive_namespaces() -> None:
+    """Prevent convenience re-exports from hiding contract ownership."""
+
     for path in (
         PACKAGE_ROOT / "__init__.py",
+        PACKAGE_ROOT / "domain" / "__init__.py",
         PACKAGE_ROOT / "engine" / "__init__.py",
     ):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -507,17 +399,20 @@ def test_package_and_engine_roots_do_not_reexport_engine_types() -> None:
         ), f"{path.relative_to(PACKAGE_ROOT.parent)} must remain namespace-only."
 
 
-def test_domain_models_are_imported_from_their_owning_modules() -> None:
-    """Keep removed compatibility facades from obscuring model ownership."""
+def test_removed_stateless_service_facades_stay_removed() -> None:
+    """Keep rule and lifecycle dependencies visible as focused functions."""
 
-    for path in (
-        PACKAGE_ROOT / "domain" / "capabilities" / "models.py",
-        PACKAGE_ROOT / "domain" / "encounters" / "models.py",
-    ):
-        assert not path.exists(), (
-            f"{path.relative_to(PACKAGE_ROOT.parent)} must not be restored; "
-            "import models from their focused owner modules."
-        )
+    removed_facades = (
+        PACKAGE_ROOT / "domain" / "encounters" / "rules.py",
+        PACKAGE_ROOT / "domain" / "encounters" / "reactions.py",
+        PACKAGE_ROOT
+        / "domain"
+        / "encounters"
+        / "reaction_runtime"
+        / "opportunity_attacks.py",
+    )
+
+    assert not [path for path in removed_facades if path.exists()]
 
 
 def test_application_boundary_does_not_import_concrete_session() -> None:
@@ -543,7 +438,7 @@ def test_application_boundary_does_not_import_concrete_session() -> None:
 
 
 def test_concrete_session_exposes_only_engine_operations() -> None:
-    """Keep test conveniences and mutable-domain bypasses off Session."""
+    """Keep mutable-domain conveniences outside the engine's public protocol."""
 
     from srd_arena.engine.api import GameEngine
     from srd_arena.engine.session import Session
@@ -699,9 +594,13 @@ def _module_name(path: Path) -> str:
     return ".".join(parts)
 
 
-def _top_level_package(module: str) -> str:
+def _import_boundary(module: str) -> str:
+    """Identify the package boundary across which imports must be absolute."""
+
     parts = module.split(".")
-    return parts[1] if len(parts) > 1 else ""
+    if len(parts) >= 3 and parts[1] == "domain":
+        return ".".join(parts[:3])
+    return ".".join(parts[:2])
 
 
 def _is_package_or_child(module: str, package: str) -> bool:

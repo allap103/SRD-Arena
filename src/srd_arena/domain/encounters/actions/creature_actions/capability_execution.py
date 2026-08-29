@@ -13,7 +13,8 @@ from ..items import resolve_utilize_action
 from ..stat_block import resolve_attack_action, resolve_multiattack_action
 
 if TYPE_CHECKING:
-    from ....creatures import Creature
+    from srd_arena.domain.creatures import Creature
+
     from ...encounter import EncounterState
 
 

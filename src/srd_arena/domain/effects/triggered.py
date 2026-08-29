@@ -3,7 +3,7 @@
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 
-from ..rolls.dice import DicePoolResult
+from srd_arena.domain.rolls.dice import DicePoolResult
 
 
 @dataclass(frozen=True)
@@ -53,7 +53,7 @@ def reroll_eligible_indices(
 ) -> tuple[int, ...]:
     """Return dice that still satisfy a triggered reroll rule.
 
-    >>> from ..rolls.dice import DicePoolResult, DieRollResult
+    >>> from srd_arena.domain.rolls.dice import DicePoolResult, DieRollResult
     >>> effect = TriggeredEffect(
     ...     "gwm", "feature", "great_weapon_fighting", "damage_roll",
     ...     "reroll_matching_dice", parameters={"values": [1, 2]}

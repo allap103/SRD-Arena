@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from ....capabilities import DamageEffect
-from ....creatures import Creature
-from ....creatures.stat_block_actions import AttackActionDefinition
-from ....equipment import Item
-from ....geometry import Grid
+from srd_arena.domain.capabilities import DamageEffect
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.stat_block_actions import AttackActionDefinition
+from srd_arena.domain.equipment import Item
+from srd_arena.domain.geometry import Grid
+
 from ...encounter_models.resolution import AttackSource
 
 
@@ -14,7 +15,7 @@ def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | 
     """Return the first equipped item that defines a weapon attack.
 
     >>> from types import SimpleNamespace
-    >>> from ....equipment import WeaponStat
+    >>> from srd_arena.domain.equipment import WeaponStat
     >>> sword = Item(
     ...     "sword", "Sword", "", "weapon",
     ...     weapon_stat=WeaponStat([], "1d8", "slashing", []),
@@ -85,7 +86,7 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
     """Build an attack source from an equipped weapon and creature stats.
 
     >>> from types import SimpleNamespace
-    >>> from ....equipment import WeaponStat
+    >>> from srd_arena.domain.equipment import WeaponStat
     >>> bow = Item(
     ...     "shortbow", "Shortbow", "", "weapon",
     ...     weapon_stat=WeaponStat(
@@ -138,7 +139,7 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
 def stat_block_attack_source(attack: AttackActionDefinition) -> AttackSource:
     """Build an attack source from an authored monster attack.
 
-    >>> from ....capabilities import CapabilityTarget
+    >>> from srd_arena.domain.capabilities import CapabilityTarget
     >>> attack = AttackActionDefinition(
     ...     "Bite", ("melee",), 5, CapabilityTarget("creature"),
     ...     5, None, None, (DamageEffect("1d8", 3, "piercing"),),
@@ -371,7 +372,7 @@ def weapon_proficiency_bonus(attacker: Creature, weapon: Item | None) -> int:
     """Return the proficiency bonus contributed by an equipped weapon.
 
     >>> from types import SimpleNamespace
-    >>> from ....equipment import WeaponStat
+    >>> from srd_arena.domain.equipment import WeaponStat
     >>> sword = Item(
     ...     "longsword", "Longsword", "", "weapon",
     ...     weapon_stat=WeaponStat(

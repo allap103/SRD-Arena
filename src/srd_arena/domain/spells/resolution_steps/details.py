@@ -1,7 +1,8 @@
 """Formatting helpers for structured spell-resolution details."""
 
-from ...capabilities import EffectDuration
-from ...rolls.dice import DicePoolResult, DieRoller, resolve_dice
+from srd_arena.domain.capabilities import EffectDuration
+from srd_arena.domain.rolls.dice import DicePoolResult, DieRoller, resolve_dice
+
 from .context import SpellTargetContext
 from .scaling import parse_damage_dice
 

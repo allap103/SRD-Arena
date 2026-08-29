@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from ...effects.condition_rules import effective_conditions
-from ...effects.conditions import CombatTrait
-from ...effects.rule_effects import (
+from srd_arena.domain.effects.condition_rules import effective_conditions
+from srd_arena.domain.effects.conditions import CombatTrait
+from srd_arena.domain.effects.rule_effects import (
     ArmorClassAdjustment,
     AttackLimit,
     SpeedAdjustment,
     SpeedMultiplier,
 )
+
 from ..encounter_models.actions import CreatureRef
 from .context import (
     ConditionRuleQueryContext,
@@ -147,7 +148,7 @@ def movement_budget(
     """Translate effective Speed into the encounter grid's movement budget.
 
     >>> from types import SimpleNamespace
-    >>> from ...geometry import Grid
+    >>> from srd_arena.domain.geometry import Grid
     >>> creature = SimpleNamespace(
     ...     attributes=SimpleNamespace(
     ...         movement=SimpleNamespace(effective_speed_feet=30)

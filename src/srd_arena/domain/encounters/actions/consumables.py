@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 
-from ...creatures import Creature
-from ...equipment import Item
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.equipment import Item
 
 
 def healing_potions_in_inventory(

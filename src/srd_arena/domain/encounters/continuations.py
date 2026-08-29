@@ -10,6 +10,7 @@ from .encounter_models.decisions import (
     ResumeMovement,
 )
 from .encounter_models.resolution import EncounterProgress
+from .reaction_runtime.movement_continuation import resume_movement
 from .state_runtime import create_event
 
 if TYPE_CHECKING:
@@ -84,7 +85,7 @@ class ContinuationRunner:
                 current_action_id = continuation.action_id
                 continue
             if isinstance(continuation, ResumeMovement):
-                state.reaction_engine.resume_movement(
+                resume_movement(
                     state,
                     continuation.movement,
                     progress,

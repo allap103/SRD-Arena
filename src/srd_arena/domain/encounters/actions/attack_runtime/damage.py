@@ -5,9 +5,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from ....capabilities import DamageEffect
-from ....creatures import Creature
-from ....rolls.dice import D20RollMode, DicePoolResult, DieRoller, resolve_dice
+from srd_arena.domain.capabilities import DamageEffect
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.rolls.dice import (
+    D20RollMode,
+    DicePoolResult,
+    DieRoller,
+    resolve_dice,
+)
+
 from ...encounter_models.resolution import (
     AttackOutcome,
     AttackSource,
@@ -133,7 +139,7 @@ def apply_attack_damage(
     """Apply a rolled attack to defenses and append its combat messages.
 
     >>> from types import SimpleNamespace
-    >>> from ....rolls.dice import DicePoolResult, DieRollResult
+    >>> from srd_arena.domain.rolls.dice import DicePoolResult, DieRollResult
     >>> roll = DicePoolResult((DieRollResult(8, (4,)),), 3, 4, 7)
     >>> attack = AttackOutcome([], True, 15, 0, False, {}, damage_roll=roll,
     ...     damage_dice="1d8", damage_modifier=3, damage_type="slashing")
@@ -192,7 +198,7 @@ def damage_roll_detail(
 ) -> dict[str, object]:
     """Build the stable event payload for an attack's damage roll.
 
-    >>> from ....rolls.dice import DicePoolResult, DieRollResult
+    >>> from srd_arena.domain.rolls.dice import DicePoolResult, DieRollResult
     >>> roll = DicePoolResult((DieRollResult(6, (5,)),), 2, 5, 7)
     >>> attack = AttackOutcome([], True, 15, 7, False, {}, damage_roll=roll,
     ...     damage_dice="1d6", damage_modifier=2, damage_type="piercing")
@@ -229,7 +235,7 @@ def damage_effect_requirements_met(
 ) -> bool:
     """Return whether conditional damage matches the resolved attack mode.
 
-    >>> from ....capabilities import AttackRollModeRequirement
+    >>> from srd_arena.domain.capabilities import AttackRollModeRequirement
     >>> effect = DamageEffect(
     ...     "1d6", 0, "fire",
     ...     requirements=(AttackRollModeRequirement("advantage"),),

@@ -3,18 +3,19 @@
 from dataclasses import dataclass
 from typing import cast
 
-from ...capabilities import AttackResolution, SavingThrowResolution
-from ...rolls.dice import (
+from srd_arena.domain.capabilities import AttackResolution, SavingThrowResolution
+from srd_arena.domain.rolls.dice import (
     DicePoolResult,
     combine_roll_modes,
     resolve_check,
     resolve_d20,
     resolve_dice,
 )
-from ...rolls.saving_throws import (
+from srd_arena.domain.rolls.saving_throws import (
     Ability,
     resolve_saving_throw,
 )
+
 from ..definitions import SpellDamage
 from .context import SpellActionContext, SpellTargetContext
 from .preparation import PreparedSpellResolution
@@ -45,7 +46,7 @@ def resolve_target_roll(
     Automatic resolutions affect their target without making a d20 roll.
 
     >>> from types import SimpleNamespace
-    >>> from ...capabilities import AutomaticResolution, Outcome
+    >>> from srd_arena.domain.capabilities import AutomaticResolution, Outcome
     >>> context = SimpleNamespace(
     ...     creature=SimpleNamespace(spellcasting=object()),
     ...     roller=lambda sides: 10,

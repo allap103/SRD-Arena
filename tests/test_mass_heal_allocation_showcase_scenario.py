@@ -3,6 +3,7 @@ from pathlib import Path
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.participants import creature_team_id
 from srd_arena.infrastructure.scenarios import load_scenario_directory
+from tests.encounter_runtime_support import is_spell_action
 
 SCENARIO_DIR = (
     Path(__file__).parents[1]
@@ -35,7 +36,7 @@ def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> No
     cast = next(
         action
         for action in state.available_actions()
-        if action.kind == "spell" and str(action.value).startswith("mass_heal:")
+        if is_spell_action(action, "mass_heal")
     )
     result = _ORCHESTRATOR.submit(state, cast)
 

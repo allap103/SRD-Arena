@@ -5,7 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from ..effects.conditions import CombatTrait
+from srd_arena.domain.effects.conditions import CombatTrait
+
 from .action_selection import build_action_selector
 from .encounter_models.state import InitiativeEntry
 from .participants import creature_controller

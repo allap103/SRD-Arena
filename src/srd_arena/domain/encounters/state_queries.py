@@ -4,16 +4,27 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..effects.condition_rules import EffectiveConditionSet
-from ..effects.conditions import AppliedCondition, Condition
-from .actions.eligibility import ActionEligibility
+from srd_arena.domain.effects.condition_rules import (
+    EffectiveConditionSet,
+    effective_conditions,
+)
+from srd_arena.domain.effects.conditions import AppliedCondition, Condition
+
+from .actions.eligibility import (
+    ActionEligibility,
+)
+from .actions.eligibility import (
+    action_eligibility as evaluate_action_eligibility,
+)
 from .encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
 from .encounter_models.decisions import DecisionFrame
 from .participants import creature_controller
+from .rule_queries import condition_suppressions
 from .state_runtime import creature_label
+from .turn_lifecycle import active_turn_creature
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -53,7 +64,7 @@ def current_decision(state: EncounterState) -> DecisionFrame:
 
     if state.interrupts.decision_stack:
         return state.interrupts.decision_stack[-1]
-    creature_ref = state.turn_lifecycle.active_turn_creature(state)
+    creature_ref = active_turn_creature(state)
     return DecisionFrame(
         id=f"turn-{creature_ref.replace(':', '-')}",
         creature_ref=creature_ref,
@@ -69,7 +80,7 @@ def conditions_for(
     """Return stored condition applications for a creature, including suppressed ones.
 
     >>> from types import SimpleNamespace
-    >>> from ..effects.conditions import build_applied_condition
+    >>> from srd_arena.domain.effects.conditions import build_applied_condition
     >>> prone = build_applied_condition(
     ...     condition=Condition.PRONE, source_ref="fall",
     ...     source_label="Fall", target_ref="hero",
@@ -93,7 +104,7 @@ def has_condition(
     """Return whether the condition's mechanics currently affect the creature.
 
     >>> from types import SimpleNamespace
-    >>> from ..effects.conditions import build_applied_condition
+    >>> from srd_arena.domain.effects.conditions import build_applied_condition
     >>> prone = build_applied_condition(
     ...     condition=Condition.PRONE, source_ref="fall",
     ...     source_label="Fall", target_ref="hero",
@@ -112,19 +123,12 @@ def effective_conditions_for(
     state: EncounterState,
     creature_ref: CreatureRef,
 ) -> EffectiveConditionSet:
-    """Return condition kinds whose mechanics currently apply to a creature.
+    """Return condition kinds whose mechanics currently apply to a creature."""
 
-    >>> from types import SimpleNamespace
-    >>> effective = object()
-    >>> rules = SimpleNamespace(
-    ...     effective_conditions=lambda state, ref: effective
-    ... )
-    >>> state = SimpleNamespace(combat_rules=rules)
-    >>> effective_conditions_for(state, "hero") is effective
-    True
-    """
-
-    return state.combat_rules.effective_conditions(state, creature_ref)
+    return effective_conditions(
+        state.conditions_for(creature_ref),
+        condition_suppressions(state, creature_ref).values,
+    )
 
 
 def active_creature(state: EncounterState) -> CreatureRef:
@@ -168,18 +172,9 @@ def action_eligibility(
 
     >>> from types import SimpleNamespace
     >>> decision = DecisionFrame("turn-hero", "hero", "turn", "normal_turn")
-    >>> expected = object()
-    >>> rules = SimpleNamespace(
-    ...     action_eligibility=lambda state, ref, action: expected
-    ... )
-    >>> state = SimpleNamespace(
-    ...     current_decision=lambda: decision, combat_rules=rules
-    ... )
-    >>> action_eligibility(state, EncounterAction("Wait", "wait")) is expected
-    True
     """
 
-    return state.combat_rules.action_eligibility(
+    return evaluate_action_eligibility(
         state,
         state.current_decision().creature_ref,
         action,

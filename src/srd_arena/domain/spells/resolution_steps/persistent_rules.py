@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import cast
 
-from ...capabilities import (
+from srd_arena.domain.capabilities import (
     ArmorClassModifierEffect,
     ConditionImmunityEffect,
     ConditionSaveAdvantageEffect,
@@ -14,9 +14,9 @@ from ...capabilities import (
     SenseEffect,
     SpeedModifierEffect,
 )
-from ...effects.conditions import Condition
-from ...effects.modifiers import ModifierMode, RollKind, RollModifier
-from ...effects.rule_effects import (
+from srd_arena.domain.effects.conditions import Condition
+from srd_arena.domain.effects.modifiers import ModifierMode, RollKind, RollModifier
+from srd_arena.domain.effects.rule_effects import (
     ArmorClassAdjustment,
     ConditionImmunity,
     ConditionSaveAdvantage,
@@ -28,6 +28,7 @@ from ...effects.rule_effects import (
     RuntimeRuleEffect,
     SpeedAdjustment,
 )
+
 from .context import SpellActionContext
 from .preparation import PreparedSpellResolution
 from .scaling import resource_int_increment
@@ -48,7 +49,7 @@ def prepare_persistent_rule_plan(
     """Resolve casting choices and translate persistent spell effects.
 
     >>> from types import SimpleNamespace
-    >>> from ...capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget, Outcome,
     ... )
     >>> definition = CapabilityDefinition(

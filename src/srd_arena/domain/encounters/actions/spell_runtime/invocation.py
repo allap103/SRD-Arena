@@ -4,17 +4,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....effects.runtime import OngoingEffectKind
+from srd_arena.domain.effects.runtime import OngoingEffectKind
+
 from ...effect_lifecycle.concentration import end_concentration
 from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...rule_queries import InvocationStartContext, InvocationStartResult
+from ...rule_queries.invocations import (
+    invocation_start_checks,
+    resolve_invocation_start,
+)
 from ...state_runtime import create_event
 from ..option_discovery.spellcasting import spend_spell_resources
 from ..rejections import reject_action
 
 if TYPE_CHECKING:
-    from ....creatures import Creature, Spellcasting
-    from ....spells.definitions import Spell
+    from srd_arena.domain.creatures import Creature, Spellcasting
+    from srd_arena.domain.spells.definitions import Spell
+
     from ...encounter import EncounterState
     from ...encounter_models.actions import ActionCost
     from ...encounter_models.resolution import EncounterProgress
@@ -46,13 +52,8 @@ def begin_spell_invocation(
     ...     "misty-step", "Misty Step", None, 2,
     ...     components=SpellComponents(verbal=True),
     ... )
-    >>> checks = SimpleNamespace(
-    ...     invocation_start_checks=lambda state, context: context,
-    ...     resolve_invocation_start=lambda context, roller:
-    ...         InvocationStartResult(context),
-    ... )
     >>> state = SimpleNamespace(
-    ...     combat_rules=checks,
+    ...     ongoing_effects=[],
     ...     dice=SimpleNamespace(roll_die=lambda _sides: 1),
     ... )
     >>> with patch(
@@ -92,7 +93,7 @@ def begin_spell_invocation(
         progress=progress,
     )
     components = spell.components.required
-    query = state.combat_rules.invocation_start_checks(
+    query = invocation_start_checks(
         state,
         InvocationStartContext(
             actor_ref=creature_ref,
@@ -100,7 +101,7 @@ def begin_spell_invocation(
             components=components,
         ),
     )
-    result = state.combat_rules.resolve_invocation_start(
+    result = resolve_invocation_start(
         query,
         state.dice.roll_die,
     )

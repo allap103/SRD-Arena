@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....creatures import Creature, MultiattackInvocation, MultiattackStep
-from ....creatures.stat_block_actions import AttackActionDefinition
+from srd_arena.domain.creatures import Creature, MultiattackInvocation, MultiattackStep
+from srd_arena.domain.creatures.stat_block_actions import AttackActionDefinition
+
 from ...attack_economy import begin_attack_action, clear_attack_action, consume_action
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
@@ -21,8 +22,8 @@ def executable_multiattack_sequence(
     """Return the sole deterministic sequence, if the first plan has one.
 
     >>> from types import SimpleNamespace
-    >>> from ....capabilities import CapabilityTarget, DamageEffect
-    >>> from ....creatures import Multiattack, MultiattackPlan
+    >>> from srd_arena.domain.capabilities import CapabilityTarget, DamageEffect
+    >>> from srd_arena.domain.creatures import Multiattack, MultiattackPlan
     >>> bite = MultiattackInvocation("stat_block_action", "Bite")
     >>> attack = AttackActionDefinition(
     ...     "Bite", ("melee",), 5, CapabilityTarget("creature"),
@@ -73,8 +74,8 @@ def resolve_multiattack_action(
     """Consume an action and queue the selected multiattack plan's slots.
 
     >>> from types import SimpleNamespace
-    >>> from ....capabilities import CapabilityTarget, DamageEffect
-    >>> from ....creatures import Multiattack, MultiattackPlan
+    >>> from srd_arena.domain.capabilities import CapabilityTarget, DamageEffect
+    >>> from srd_arena.domain.creatures import Multiattack, MultiattackPlan
     >>> bite = MultiattackInvocation("stat_block_action", "Bite")
     >>> attack = AttackActionDefinition(
     ...     "Bite", ("melee",), 5, CapabilityTarget("creature"),
@@ -94,9 +95,7 @@ def resolve_multiattack_action(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="wolf"),
     ...     creatures={"wolf": creature_state},
     ...     active_actions_remaining=1, active_magic_actions_remaining=1,
-    ...     combat_rules=SimpleNamespace(
-    ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=base)
-    ...     ),
+    ...     ongoing_effects=[],
     ...     event_sequence=1,
     ... )
     >>> progress = EncounterProgress()

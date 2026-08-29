@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 
-from ..geometry import Grid, Position
+from srd_arena.domain.geometry import Grid, Position
 
 
 @dataclass

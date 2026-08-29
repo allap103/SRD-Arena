@@ -9,10 +9,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from ...creatures import Creature
-from ...equipment import Item
-from ...geometry import Position
-from ...rolls.dice import D20RollMode, DieRoller
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.equipment import Item
+from srd_arena.domain.geometry import Position
+from srd_arena.domain.rolls.dice import D20RollMode, DieRoller
+
 from ..encounter_models.resolution import AttackOutcome
 from .attack_runtime.damage import (
     apply_attack_damage,

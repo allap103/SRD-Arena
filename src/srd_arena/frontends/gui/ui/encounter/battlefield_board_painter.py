@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Protocol
 
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QColor, QPainter, QPen, QPixmap, QPolygonF
@@ -15,42 +14,11 @@ from ...presentation.models import BattlefieldCreatureView, BattlefieldView
 from .area_previews import continuous_area
 from .area_previews import overlay_cells as area_overlay_cells
 from .area_previews import overlay_origin as area_overlay_origin
+from .config import BattlefieldRenderGeometry
 from .movement import MOVE_DELTAS, MovementPlan
 
 ImageLoader = Callable[[str | None], QPixmap | None]
 TokenColors = Callable[[str], tuple[QColor, QColor]]
-
-
-class BoardGeometry(Protocol):
-    """Provide the pixel geometry needed by board paint phases."""
-
-    @property
-    def origin_x(self) -> float:
-        """Return the board's horizontal pixel origin."""
-
-    @property
-    def origin_y(self) -> float:
-        """Return the board's vertical pixel origin."""
-
-    @property
-    def cell_size(self) -> float:
-        """Return the rendered size of one grid cell."""
-
-    @property
-    def columns(self) -> int:
-        """Return the number of rendered grid columns."""
-
-    @property
-    def rows(self) -> int:
-        """Return the number of rendered grid rows."""
-
-    @property
-    def board_width(self) -> float:
-        """Return the rendered board width in pixels."""
-
-    @property
-    def board_height(self) -> float:
-        """Return the rendered board height in pixels."""
 
 
 @dataclass(frozen=True)
@@ -64,7 +32,7 @@ class MovementPreview:
 def paint_board(
     painter: QPainter,
     battlefield: BattlefieldView,
-    geometry: BoardGeometry,
+    geometry: BattlefieldRenderGeometry,
     load_image: ImageLoader,
 ) -> None:
     """Paint the board background and square grid."""
@@ -109,7 +77,7 @@ def paint_board(
 def paint_team_outlines(
     painter: QPainter,
     battlefield: BattlefieldView,
-    geometry: BoardGeometry,
+    geometry: BattlefieldRenderGeometry,
     *,
     visible: bool,
 ) -> None:
@@ -138,7 +106,7 @@ def paint_team_outlines(
 def paint_movement_plan(
     painter: QPainter,
     battlefield: BattlefieldView,
-    geometry: BoardGeometry,
+    geometry: BattlefieldRenderGeometry,
     movement_plan: MovementPlan | None,
     hover_cell: tuple[int, int] | None,
 ) -> MovementPreview:
@@ -200,7 +168,7 @@ def paint_movement_plan(
 
 def paint_area_overlay(
     painter: QPainter,
-    geometry: BoardGeometry,
+    geometry: BattlefieldRenderGeometry,
     overlay: Mapping[str, object] | None,
 ) -> None:
     """Paint an area template and its selected origin cell."""
@@ -266,7 +234,7 @@ def paint_area_overlay(
 
 def paint_movement_destination(
     painter: QPainter,
-    geometry: BoardGeometry,
+    geometry: BattlefieldRenderGeometry,
     preview: MovementPreview,
     load_image: ImageLoader,
     token_colors: TokenColors,

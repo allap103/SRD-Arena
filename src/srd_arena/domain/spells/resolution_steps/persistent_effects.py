@@ -1,6 +1,7 @@
 """Coordinate persistent rule, lifecycle, and condition spell results."""
 
-from ...effects.results import EffectResult
+from srd_arena.domain.effects.results import EffectResult
+
 from .context import SpellActionContext
 from .persistent_conditions import build_persistent_spell_conditions
 from .persistent_parent import build_ongoing_spell_effect
@@ -19,7 +20,7 @@ def build_persistent_spell_effects(
     No runtime state is created when the spell affected no targets.
 
     >>> from types import SimpleNamespace
-    >>> from ...capabilities import (
+    >>> from srd_arena.domain.capabilities import (
     ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget, Outcome,
     ... )
     >>> from ..definitions import Spell

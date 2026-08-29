@@ -1,7 +1,7 @@
 """Pure combat rules that derive attack behavior from encounter geometry."""
 
-from ..geometry import Position, grid_distance_between
-from ..rolls.dice import D20RollMode
+from srd_arena.domain.geometry import Position, grid_distance_between
+from srd_arena.domain.rolls.dice import D20RollMode
 
 
 def proximity_attack_roll_mode(

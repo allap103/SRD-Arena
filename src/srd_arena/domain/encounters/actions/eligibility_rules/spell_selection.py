@@ -5,8 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from ....spells.definitions import Spell
-from ....spells.rules import parse_spell_action_value, spell_chooses_area_targets
+from srd_arena.domain.spells.definitions import Spell
+from srd_arena.domain.spells.rules import SpellActionPayload, spell_chooses_area_targets
+
 from ...encounter_models.actions import CreatureRef, EncounterAction
 from ...encounter_models.decisions import PendingSpellCast
 from ..option_discovery.spell_areas import spell_area_targets
@@ -15,7 +16,8 @@ from .common import target_requirement_failure
 from .models import EligibilityFailure
 
 if TYPE_CHECKING:
-    from ....creatures import Creature
+    from srd_arena.domain.creatures import Creature
+
     from ...encounter import EncounterState
 
 
@@ -75,9 +77,14 @@ def _resolve_staged_selection(
             "spell_unavailable",
             "The staged spell is no longer available.",
         )
-    _spell_id, _target, aim_point = parse_spell_action_value(str(pending.action.value))
+    payload = pending.action.value
+    if not isinstance(payload, SpellActionPayload):
+        return EligibilityFailure(
+            "spell_selection_unavailable",
+            "The staged action has no spell payload.",
+        )
     candidates = (
-        spell_area_targets(state, actor, spell, aim_point=aim_point)
+        spell_area_targets(state, actor, spell, aim_point=payload.aim_point)
         if spell_chooses_area_targets(spell)
         else tuple(spell_action_targets(state, actor, spell))
     )

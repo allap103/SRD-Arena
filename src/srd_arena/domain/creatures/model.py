@@ -4,9 +4,10 @@ import re
 from dataclasses import dataclass, field
 from typing import assert_never
 
-from ..capabilities import LimitedUsePool
-from ..effects.triggered import TriggeredEffect
-from ..rolls.saving_throws import Ability
+from srd_arena.domain.capabilities import LimitedUsePool
+from srd_arena.domain.effects.triggered import TriggeredEffect
+from srd_arena.domain.rolls.saving_throws import Ability
+
 from .attributes import Attributes
 from .class_features import ClassFeature
 from .classes import ClassRef, SubclassRef

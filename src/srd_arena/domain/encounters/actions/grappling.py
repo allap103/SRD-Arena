@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...creatures import Creature
-from ...effects.conditions import Condition
-from ...rolls.dice import resolve_d20
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.effects.conditions import Condition
+from srd_arena.domain.rolls.dice import resolve_d20
+
 from ..attack_economy import consume_action
 from ..condition_state import remove_condition_from_source
 from ..encounter_models.actions import (
@@ -14,6 +15,7 @@ from ..encounter_models.actions import (
     EncounterAction,
 )
 from ..encounter_models.resolution import EncounterProgress
+from ..rule_queries.rolls import roll_modifiers
 from ..state_runtime import create_event
 from .rejections import reject_action
 
@@ -147,7 +149,7 @@ def resolve_escape_action(
     dexterity_modifier = creature.get_modifier(creature.attributes.dexterity)
     ability = "strength" if strength_modifier >= dexterity_modifier else "dexterity"
     modifier = max(strength_modifier, dexterity_modifier)
-    roll_rules = state.combat_rules.roll_modifiers(
+    roll_rules = roll_modifiers(
         state,
         creature_ref,
         "ability_check",
