@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....creatures.feature_rules.types import CapabilityActionResult
 from ....effects import serialize_effects
+from ....effects.results import ActionResolutionResult
 from ....spells.resolution import SpellTargetContext
 from ...encounter_models.resolution import EncounterProgress
 from ...ongoing_effects import (
@@ -28,7 +28,7 @@ def apply_spell_result(
     cast_level: int | None,
     creature_ref: str,
     action_id: str,
-    result: CapabilityActionResult,
+    result: ActionResolutionResult,
     progress: EncounterProgress,
     target_ref: str | None,
     target: SpellTargetContext,
@@ -40,11 +40,11 @@ def apply_spell_result(
 
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
-    >>> from srd_arena.domain.creatures.feature_rules.types import CapabilityActionResult
+    >>> from srd_arena.domain.effects.results import ActionResolutionResult
     >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
     >>> from srd_arena.domain.spells import Spell
     >>> state = SimpleNamespace(event_sequence=1)
-    >>> result = CapabilityActionResult("fire-bolt", "Fire Bolt", [], [])
+    >>> result = ActionResolutionResult("fire-bolt", "Fire Bolt", [], [])
     >>> progress = EncounterProgress()
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.spell_runtime.aftermath."
@@ -84,8 +84,8 @@ def apply_spell_result(
             action_id=action_id,
             data={
                 "kind": "spell",
-                "spell_id": result.capability_id,
-                "spell_name": result.capability_name,
+                "spell_id": result.definition_id,
+                "spell_name": result.definition_name,
                 "spell_level": result.details.get("spell_level", spell.level),
                 "target_ref": result.details.get("target_ref", target_ref),
                 "target_label": result.details.get("target_label", target.target_label),
@@ -124,7 +124,7 @@ def apply_spell_result(
 
 def _apply_damage_lifecycle(
     state: EncounterState,
-    result: CapabilityActionResult,
+    result: ActionResolutionResult,
     *,
     creature_ref: str,
     progress: EncounterProgress,

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from ...effects.results import EffectResult
+from ...effects.results import ActionResolutionResult, EffectResult
 from ...rolls.dice import DieRoller, resolve_dice
 from ..model import Creature
-from .types import CapabilityActionResult, HealingReceiver
+from .contracts import HealingReceiver
 
 
 def resolve_fighter_feature(
@@ -15,7 +15,7 @@ def resolve_fighter_feature(
     heal: HealingReceiver,
     *,
     actor_ref: str,
-) -> CapabilityActionResult | None:
+) -> ActionResolutionResult | None:
     """Execute the supported fighter feature identified by an action grant.
 
     >>> from ..attributes import Attributes
@@ -52,7 +52,7 @@ def _resolve_second_wind(
     heal: HealingReceiver,
     *,
     actor_ref: str,
-) -> CapabilityActionResult:
+) -> ActionResolutionResult:
     dice_count, dice_sides = _feature_healing_dice(creature, "second_wind")
     roll = resolve_dice(
         dice_count,
@@ -76,9 +76,9 @@ def _resolve_second_wind(
         "total": healing_total,
         "applied_healing": applied_healing,
     }
-    return CapabilityActionResult(
-        capability_id="second_wind",
-        capability_name="Second Wind",
+    return ActionResolutionResult(
+        definition_id="second_wind",
+        definition_name="Second Wind",
         messages=[
             ("system", f"{creature.name} uses Second Wind."),
             (
@@ -104,13 +104,13 @@ def _resolve_second_wind(
     )
 
 
-def _resolve_action_surge(creature: Creature) -> CapabilityActionResult:
+def _resolve_action_surge(creature: Creature) -> ActionResolutionResult:
     creature.feature_uses_remaining["action_surge"] = (
         creature.feature_uses_remaining.get("action_surge", 0) - 1
     )
-    return CapabilityActionResult(
-        capability_id="action_surge",
-        capability_name="Action Surge",
+    return ActionResolutionResult(
+        definition_id="action_surge",
+        definition_name="Action Surge",
         messages=[
             ("system", f"{creature.name} uses Action Surge."),
             ("system", "You steel yourself and gain an additional Action this turn."),

@@ -1,9 +1,7 @@
 from pathlib import Path
 
-from srd_arena.domain.creatures.feature_rules import (
-    CapabilityActionResult,
-    resolve_feature_action,
-)
+from srd_arena.domain.creatures.feature_rules import resolve_feature_action
+from srd_arena.domain.effects.results import ActionResolutionResult
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
@@ -24,9 +22,9 @@ def test_second_wind_returns_healing_effect_result() -> None:
         actor_ref="participant:traveler",
     )
 
-    assert isinstance(result, CapabilityActionResult)
-    assert result.capability_id == "second_wind"
-    assert result.capability_name == "Second Wind"
+    assert isinstance(result, ActionResolutionResult)
+    assert result.definition_id == "second_wind"
+    assert result.definition_name == "Second Wind"
     assert result.resource_updates == {"second_wind": 1}
     assert len(result.effects) == 1
     effect = result.effects[0]
@@ -59,9 +57,9 @@ def test_action_surge_returns_extra_action_result() -> None:
         actor_ref="participant:traveler",
     )
 
-    assert isinstance(result, CapabilityActionResult)
-    assert result.capability_id == "action_surge"
-    assert result.capability_name == "Action Surge"
+    assert isinstance(result, ActionResolutionResult)
+    assert result.definition_id == "action_surge"
+    assert result.definition_name == "Action Surge"
     assert result.resource_updates == {"action_surge": 0}
     assert result.effects == []
     assert result.details["grant_actions"] == 1

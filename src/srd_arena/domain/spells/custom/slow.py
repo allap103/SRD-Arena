@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from ...creatures.feature_rules.types import CapabilityActionResult
 from ...effects.modifiers import RollModifier
-from ...effects.results import EffectResult
+from ...effects.results import ActionResolutionResult, EffectResult
 from ...effects.rule_effects import (
     ActionEconomyKind,
     ActionEconomyRestriction,
@@ -26,13 +25,13 @@ from .types import DeclarativeSpellResolver
 def resolve_slow(
     context: SpellActionContext,
     resolve_declarative: DeclarativeSpellResolver,
-) -> CapabilityActionResult:
+) -> ActionResolutionResult:
     """Resolve common targeting/saves, then attach Slow's grouped rule state.
 
     A casting that affects no targets retains only its declarative result.
 
     >>> from types import SimpleNamespace
-    >>> result = CapabilityActionResult("slow", "Slow", [], [], details={})
+    >>> result = ActionResolutionResult("slow", "Slow", [], [], details={})
     >>> context = SimpleNamespace()
     >>> resolve_slow(context, lambda current: result) is result
     True
@@ -106,7 +105,7 @@ def resolve_slow(
 
 
 def _affected_target_refs(
-    result: CapabilityActionResult,
+    result: ActionResolutionResult,
 ) -> tuple[str, ...]:
     value = result.details.get("affected_target_refs")
     if not isinstance(value, list):

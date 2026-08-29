@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from typing import Protocol
 
+from ...effects.results import ActionResolutionResult
 from ...rolls.dice import DieRoller
 from ..model import Creature
+from .contracts import HealingReceiver
 from .fighter import resolve_fighter_feature
-from .types import CapabilityActionResult, HealingReceiver
 
 
 class FeatureResolver(Protocol):
@@ -21,7 +22,7 @@ class FeatureResolver(Protocol):
         heal: HealingReceiver,
         *,
         actor_ref: str,
-    ) -> CapabilityActionResult | None: ...
+    ) -> ActionResolutionResult | None: ...
 
 
 CLASS_FEATURE_RESOLVERS: dict[str, FeatureResolver] = {
@@ -36,7 +37,7 @@ def resolve_feature_action(
     heal: HealingReceiver,
     *,
     actor_ref: str,
-) -> CapabilityActionResult | None:
+) -> ActionResolutionResult | None:
     """Dispatch a feature with the acting encounter participant's identity.
 
     >>> from ..attributes import Attributes
@@ -53,7 +54,7 @@ def resolve_feature_action(
     ...     fighter, "action_surge", lambda sides: sides, fighter.heal,
     ...     actor_ref="participant:fighter",
     ... )
-    >>> result.capability_name if result else None
+    >>> result.definition_name if result else None
     'Action Surge'
     """
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from ..creatures.feature_rules.types import CapabilityActionResult
+from ..effects.results import ActionResolutionResult
 from ..geometry import serialize_area
 from .custom import resolve_custom_spell
 from .resolution_steps.context import (
@@ -28,7 +28,7 @@ __all__ = [
 
 def resolve_spell_action(
     context: SpellActionContext,
-) -> CapabilityActionResult | None:
+) -> ActionResolutionResult | None:
     """Execute a configured spell invocation through its declarative or custom resolver.
 
     Metadata-only spells have no executable action result.
@@ -50,7 +50,7 @@ def resolve_spell_action(
 
 def _resolve_declarative_spell(
     context: SpellActionContext,
-) -> CapabilityActionResult:
+) -> ActionResolutionResult:
     spell = context.spell
     assert context.creature.spellcasting is not None
 
@@ -92,9 +92,9 @@ def _resolve_declarative_spell(
     effects.extend(removals.effects)
     removed_conditions = removals.removed_conditions
 
-    return CapabilityActionResult(
-        capability_id=spell.id,
-        capability_name=spell.name,
+    return ActionResolutionResult(
+        definition_id=spell.id,
+        definition_name=spell.name,
         messages=messages,
         effects=effects,
         details={

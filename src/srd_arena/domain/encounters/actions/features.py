@@ -9,7 +9,7 @@ from ...creatures.feature_actions import FeatureActionDefinition
 from ...creatures.feature_rules import (
     resolve_feature_action as _resolve_feature_action_impl,
 )
-from ...creatures.feature_rules.types import CapabilityActionResult
+from ...effects.results import ActionResolutionResult
 from ..attack_economy import clear_attack_action, consume_action
 from ..encounter_models.resolution import EncounterProgress
 from ..state_runtime import create_event
@@ -175,7 +175,7 @@ def _feature_event_data(
     creature: Creature,
     creature_ref: str,
     feature_id: str,
-    result: CapabilityActionResult,
+    result: ActionResolutionResult,
     granted_actions: object,
 ) -> dict[str, object]:
     """Build the successful feature event after its rule has resolved."""
@@ -187,8 +187,8 @@ def _feature_event_data(
     healing_data = healing_effect.data if healing_effect is not None else {}
     return {
         "kind": "feature",
-        "feature_id": result.capability_id,
-        "feature_name": result.capability_name,
+        "feature_id": result.definition_id,
+        "feature_name": result.definition_name,
         "target_ref": (
             healing_effect.target_ref if healing_effect is not None else creature_ref
         ),
