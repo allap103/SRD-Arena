@@ -6,13 +6,15 @@ from typing import TYPE_CHECKING
 
 from ....geometry import MovementBudget, MovementCost, Position
 from ...behaviors import DIRECTION_DELTAS
-from ...models import (
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.decisions import DecisionFrame
+from ...encounter_models.resolution import (
     ActionExecutionContext,
     ActionExecutionOutcome,
     ActionExecutionResult,
-    DecisionFrame,
-    EncounterAction,
 )
+from ...grappling_state import grappling_targets_for, movement_cost_for
+from ...state_runtime import create_event
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -38,19 +40,24 @@ def execute_movement(
     ...     queue_opportunity_attack=lambda *args, **kwargs: True
     ... )
     >>> state = SimpleNamespace(
-    ...     creatures={"hero": mover},
-    ...     _movement_cost_for=lambda ref: MovementCost(1),
-    ...     _grappling_targets_for=lambda ref: (),
-    ...     reaction_engine=reactions,
+    ...     creatures={"hero": mover}, reaction_engine=reactions,
     ... )
     >>> decision = DecisionFrame("turn", "hero", "turn", "active")
     >>> context = SimpleNamespace(
     ...     actor_ref="hero", progress=SimpleNamespace(paused_for_decision=False),
     ...     action_id="move-1",
     ... )
-    >>> result = execute_movement(
-    ...     state, EncounterAction("Right", "move", "right"), decision, context
-    ... )
+    >>> from unittest.mock import patch
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
+    ...     "movement_cost_for", return_value=MovementCost(1)
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
+    ...     "grappling_targets_for", return_value=()
+    ... ):
+    ...     result = execute_movement(
+    ...         state, EncounterAction("Right", "move", "right"), decision, context
+    ...     )
     >>> (result.outcome, context.progress.paused_for_decision)
     (<ActionExecutionOutcome.PAUSE_FOR_DECISION: 'pause_for_decision'>, True)
     """
@@ -61,11 +68,11 @@ def execute_movement(
     direction = str(action.value)
     dx, dy = DIRECTION_DELTAS[direction]
     destination = Position(mover.position.x + dx, mover.position.y + dy)
-    movement_cost = state._movement_cost_for(decision.creature_ref)
+    movement_cost = movement_cost_for(state, decision.creature_ref)
     if movement_cost is None:
         raise RuntimeError("Movement is unavailable for this creature.")
     remaining = MovementBudget(max(0, (mover.movement_remaining or 0) - movement_cost))
-    grappled_refs = state._grappling_targets_for(decision.creature_ref)
+    grappled_refs = grappling_targets_for(state, decision.creature_ref)
     grappled_positions = {
         target_ref: Position(
             state.creatures[target_ref].position.x + dx,
@@ -123,7 +130,8 @@ def execute_movement(
         )
     )
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "movement_resolved",
             creature_ref=decision.creature_ref,
             action_id=action_id,

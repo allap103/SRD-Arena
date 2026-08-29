@@ -7,7 +7,35 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
-    from .models import CreatureRef, EncounterCreatureState
+    from .encounter_models.actions import CreatureRef
+    from .encounter_models.state import EncounterCreatureState
+
+
+def consume_action(state: EncounterState, *, allow_magic: bool) -> None:
+    """Spend the active creature's Action under magic-action restrictions.
+
+    >>> from types import SimpleNamespace
+    >>> state = SimpleNamespace(
+    ...     active_actions_remaining=1, active_magic_actions_remaining=1
+    ... )
+    >>> consume_action(state, allow_magic=True)
+    >>> (state.active_actions_remaining, state.active_magic_actions_remaining)
+    (0, 0)
+    """
+
+    if state.active_actions_remaining <= 0:
+        raise RuntimeError("No Action remains to consume.")
+    non_magic_only_actions = max(
+        0,
+        state.active_actions_remaining - state.active_magic_actions_remaining,
+    )
+    if allow_magic:
+        if state.active_magic_actions_remaining <= 0:
+            raise RuntimeError("No spell-capable Action remains to consume.")
+        state.active_magic_actions_remaining -= 1
+    elif non_magic_only_actions <= 0 and state.active_magic_actions_remaining > 0:
+        state.active_magic_actions_remaining -= 1
+    state.active_actions_remaining -= 1
 
 
 def spend_attack(
@@ -25,7 +53,8 @@ def spend_attack(
     ...     pending_multiattack=[],
     ... )
     >>> state = SimpleNamespace(
-    ...     creatures={"hero": creature}, _consume_action=lambda **kwargs: None,
+    ...     creatures={"hero": creature},
+    ...     active_actions_remaining=1, active_magic_actions_remaining=1,
     ...     combat_rules=SimpleNamespace(
     ...         attack_limit=lambda state, ref, base: SimpleNamespace(value=base)
     ...     ),
@@ -40,7 +69,7 @@ def spend_attack(
         creature_state.attacks_remaining <= 0 and creature_state.actions_remaining > 0
     )
     if starts_new_attack_action:
-        state._consume_action(allow_magic=False)
+        consume_action(state, allow_magic=False)
         begin_attack_action(
             state,
             creature_ref,

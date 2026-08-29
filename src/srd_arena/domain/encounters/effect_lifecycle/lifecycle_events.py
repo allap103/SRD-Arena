@@ -6,15 +6,15 @@ from typing import TYPE_CHECKING, cast
 
 from ...rolls.saving_throws import (
     Ability,
-    SavingThrowCreature,
     resolve_saving_throw,
 )
+from ..participants import creatures_are_opponents
+from ..state_combat import automatic_save_failure_provider_ids_for
 from .removal import _remove_effect_target
-from .rolls import roll_die
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
-    from ..models import EncounterProgress
+    from ..encounter_models.resolution import EncounterProgress
 
 
 def resolve_spell_lifecycle_event(
@@ -30,9 +30,13 @@ def resolve_spell_lifecycle_event(
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
     >>> source = SimpleNamespace(applied_by_ref="mage", label="Hideous Laughter")
+    >>> from ...effects.runtime import EndEventRule
     >>> effect = SimpleNamespace(
     ...     target_refs=("target",),
-    ...     parameters={"end_events": [["target_makes_attack", "target"]]},
+    ...     lifecycle=SimpleNamespace(
+    ...         repeat_save=None,
+    ...         end_events=(EndEventRule("target_makes_attack", "target"),),
+    ...     ),
     ...     identity=SimpleNamespace(source=source),
     ... )
     >>> state = SimpleNamespace(ongoing_effects=[effect])
@@ -56,12 +60,15 @@ def resolve_spell_lifecycle_event(
         )
         if affected_ref not in effect.target_refs:
             continue
-        if event == "target_damaged" and effect.parameters.get(
-            "damage_repeat_save_advantage"
+        repeat_save = effect.lifecycle.repeat_save
+        if (
+            event == "target_damaged"
+            and repeat_save is not None
+            and repeat_save.damage_grants_advantage
         ):
-            ability = effect.parameters.get("save_ability")
-            dc = effect.parameters.get("save_dc")
-            if isinstance(ability, str) and isinstance(dc, int):
+            ability = repeat_save.ability
+            dc = repeat_save.dc
+            if ability and dc:
                 creature = state.creatures[affected_ref].creature
                 roll_rules = state.combat_rules.roll_modifiers(
                     state,
@@ -70,16 +77,18 @@ def resolve_spell_lifecycle_event(
                     ability=ability,
                 )
                 save = resolve_saving_throw(
-                    cast(SavingThrowCreature, creature),
+                    creature,
                     cast(Ability, ability),
                     dc,
                     mode="advantage",
-                    sourced_modifier_override=roll_rules.resolve_modifier(roll_die),
+                    sourced_modifier_override=roll_rules.resolve_modifier(
+                        state.dice.roll_die
+                    ),
                     sourced_mode_override=roll_rules.mode,
-                    roller=roll_die,
+                    roller=state.dice.roll_die,
                     automatic_failure_reasons=(
-                        state._automatic_save_failure_provider_ids_for(
-                            affected_ref, ability
+                        automatic_save_failure_provider_ids_for(
+                            state, affected_ref, ability
                         )
                     ),
                 )
@@ -94,20 +103,14 @@ def resolve_spell_lifecycle_event(
                             )
                         )
                     continue
-        end_events = effect.parameters.get("end_events", [])
-        if not isinstance(end_events, list):
-            continue
-        for configured in end_events:
-            if not isinstance(configured, list) or len(configured) != 2:
-                continue
-            configured_event, scope = configured
-            if configured_event != event:
+        for configured in effect.lifecycle.end_events:
+            if configured.event != event:
                 continue
             source_ref = effect.identity.source.applied_by_ref
             if (
-                scope == "source_team"
+                configured.scope == "source_team"
                 and source_ref is not None
-                and state._creatures_are_opponents(source_ref, actor_ref)
+                and creatures_are_opponents(state, source_ref, actor_ref)
             ):
                 continue
             _remove_effect_target(state, effect, affected_ref)

@@ -17,7 +17,13 @@ from ...effects.runtime import (
     UntilTurnEnd,
     UntilTurnStart,
 )
-from ..models import EncounterProgress
+from ..condition_state import apply_condition
+from ..encounter_models.resolution import EncounterProgress
+from ..grappling_state import (
+    apply_grapple,
+    grappled_sources_for,
+    grappling_targets_for,
+)
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -40,21 +46,24 @@ def apply_attack_hit_effects(
     """Apply an attack's damage and sourced conditions to its confirmed target.
 
     >>> from types import SimpleNamespace
-    >>> from unittest.mock import Mock
+    >>> from unittest.mock import Mock, patch
     >>> state = SimpleNamespace(
     ...     creatures={
     ...         "wolf": SimpleNamespace(creature=SimpleNamespace(name="Wolf")),
     ...         "hero": SimpleNamespace(creature=SimpleNamespace(name="Hero")),
     ...     },
     ...     round=SimpleNamespace(number=1),
-    ...     _apply_condition=Mock(return_value=SimpleNamespace(accepted=True)),
     ... )
     >>> progress = EncounterProgress()
-    >>> apply_attack_hit_effects(
-    ...     state, attacker_ref="wolf", target_ref="hero",
-    ...     effects=(ConditionEffect("prone"),), progress=progress,
-    ...     origin_id="bite-1",
-    ... )
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.hit_effects.apply_condition",
+    ...     return_value=SimpleNamespace(accepted=True),
+    ... ):
+    ...     apply_attack_hit_effects(
+    ...         state, attacker_ref="wolf", target_ref="hero",
+    ...         effects=(ConditionEffect("prone"),), progress=progress,
+    ...         origin_id="bite-1",
+    ...     )
     >>> progress.messages
     [('system', 'Hero is prone.')]
     """
@@ -92,7 +101,8 @@ def _apply_condition(
             target_ref,
             effect,
         )
-        result = state._apply_condition(
+        result = apply_condition(
+            state,
             build_applied_condition(
                 condition=Condition(effect.condition),
                 source_ref=attacker_ref,
@@ -102,7 +112,7 @@ def _apply_condition(
                 definition_id="attack",
                 origin_id=origin_id,
                 duration=duration,
-            )
+            ),
         )
         if result.accepted:
             progress.messages.append(
@@ -121,19 +131,20 @@ def _apply_condition(
         maximum_size
     ):
         return
-    already_grappled = attacker_ref in state._grappled_sources_for(target_ref)
+    already_grappled = attacker_ref in grappled_sources_for(state, target_ref)
     capacity = effect.source_capacity
     if (
         not already_grappled
         and isinstance(capacity, int)
-        and len(state._grappling_targets_for(attacker_ref)) >= capacity
+        and len(grappling_targets_for(state, attacker_ref)) >= capacity
     ):
         return
     metadata = {
         "escape_dc": effect.escape_dc,
         "originating_action": "attack",
     }
-    state._apply_grapple(
+    apply_grapple(
+        state,
         condition_from_effect_with_origin(
             EffectResult(
                 kind="apply_condition",
@@ -148,7 +159,7 @@ def _apply_condition(
                 },
             ),
             origin_id=origin_id,
-        )
+        ),
     )
     progress.messages.append(("system", f"{attacker.name} grapples {target.name}."))
 

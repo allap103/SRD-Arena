@@ -7,15 +7,19 @@ from .definitions import Spell
 def spell_targets_self_only(spell: Spell) -> bool:
     """Return whether the caster is the spell's only legal target.
 
+    >>> from .metadata import SpellRange, SpellRangeDistance
     >>> spell_targets_self_only(
-    ...     Spell("shield", "Shield", "XPHB", 1, range_data={"type": "self"})
+    ...     Spell(
+    ...         "shield", "Shield", "XPHB", 1,
+    ...         range=SpellRange("point", SpellRangeDistance("self")),
+    ...     )
     ... )
     True
     """
 
     return (
         spell.definition is not None and spell.definition.target.kind == "self"
-    ) or spell.range_data.get("type") == "self"
+    ) or bool(spell.range is not None and spell.range.distance.kind == "self")
 
 
 def spell_chooses_area_targets(spell: Spell) -> bool:
@@ -129,23 +133,26 @@ def spell_requires_full_target_count(spell: Spell) -> bool:
 def spell_range_squares(spell: Spell, grid: Grid) -> int | None:
     """Convert authored spell range into the encounter grid's square metric.
 
+    >>> from .metadata import SpellRange, SpellRangeDistance
     >>> spell = Spell(
     ...     "fire_bolt", "Fire Bolt", "XPHB", 0,
-    ...     range_data={"distance": {"type": "feet", "amount": 120}},
+    ...     range=SpellRange("point", SpellRangeDistance("feet", 120)),
     ... )
     >>> spell_range_squares(spell, Grid(20, 20))
     24
     """
 
-    distance = spell.range_data.get("distance", {})
-    if not isinstance(distance, dict):
+    if spell.range is None:
         return None
-    amount = distance.get("amount")
-    if distance.get("type") == "touch":
+    distance = spell.range.distance
+    if distance.kind == "touch":
         return 1
-    if not isinstance(amount, int):
+    if distance.amount is None:
         return None
-    return int(grid.distance_from_feet(amount, minimum=1))
+    amount_feet = (
+        distance.amount * 5_280 if distance.kind == "miles" else distance.amount
+    )
+    return int(grid.distance_from_feet(amount_feet, minimum=1))
 
 
 def spell_max_targets(

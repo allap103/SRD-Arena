@@ -28,14 +28,23 @@ def build_creature_attributes(
 
     if stat_block is None:
         attributes = schema.attributes.model_dump(exclude={"movement"})
-        attributes["proficiencies"] = _merge_proficiencies(
+        proficiencies = _merge_proficiencies(
             schema.attributes.proficiencies, _class_proficiencies(class_record)
+        )
+        attributes["proficiencies"] = proficiencies
+        attributes["saving_throw_proficiencies"] = _saving_throw_proficiencies(
+            proficiencies
         )
         return Attributes(
             **attributes,
             movement=Movement(**schema.attributes.movement.model_dump()),
         )
 
+    proficiencies = _merge_proficiencies(
+        schema.attributes.proficiencies,
+        _class_proficiencies(class_record),
+        {"saving_throws": [ability.casefold() for ability in stat_block.save]},
+    )
     return Attributes(
         base_health=(
             stat_block.average_hit_points
@@ -66,11 +75,8 @@ def build_creature_attributes(
         proficiency_bonus=challenge_rating_proficiency_bonus(
             stat_block.challenge_rating
         ),
-        proficiencies=_merge_proficiencies(
-            schema.attributes.proficiencies,
-            _class_proficiencies(class_record),
-            {"saving_throws": [ability.casefold() for ability in stat_block.save]},
-        ),
+        proficiencies=proficiencies,
+        saving_throw_proficiencies=_saving_throw_proficiencies(proficiencies),
     )
 
 
@@ -128,6 +134,27 @@ def _class_proficiencies(class_record: ClassRecord | None) -> dict[str, object]:
         for value in definition.proficiency
     ]
     return proficiencies
+
+
+def _saving_throw_proficiencies(
+    proficiencies: dict[str, object],
+) -> frozenset[str]:
+    authored = proficiencies.get("saving_throws", ())
+    if not isinstance(authored, list):
+        return frozenset()
+    aliases = {
+        "str": "strength",
+        "dex": "dexterity",
+        "con": "constitution",
+        "int": "intelligence",
+        "wis": "wisdom",
+        "cha": "charisma",
+    }
+    return frozenset(
+        aliases.get(value.casefold(), value.casefold())
+        for value in authored
+        if isinstance(value, str)
+    )
 
 
 def _stat_block_base_ac(stat_block: BestiaryMonsterSchema, default: int) -> int:

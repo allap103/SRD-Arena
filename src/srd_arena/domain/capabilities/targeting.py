@@ -37,3 +37,8 @@ class CapabilityTarget:
     occupants: Literal["all", "allies", "enemies", "chosen"] = "all"
     excludes_source: bool = False
     requirements: tuple[CapabilityRequirement, ...] = ()
+    affected_entities: Literal[
+        "creatures",
+        "objects",
+        "creatures_and_objects",
+    ] = "creatures"

@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 
 from srd_arena.application.api import CreatureObservation, GameObservation
 
-from ...shared.dice import RollView
+from ..presentation.dice import RollView
 from .encounter import DiceRollPanel
 from .encounter.config import ENCOUNTER_BUTTON_HEIGHT
 from .encounter.panel_renderer import EncounterPanelBindings

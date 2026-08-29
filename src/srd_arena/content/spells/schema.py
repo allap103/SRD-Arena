@@ -6,6 +6,12 @@ from srd_arena.content.common.schema import SourceModel
 
 from .capability import SpellCapabilitySchema
 from .implementation import SpellImplementationSchema
+from .metadata import (
+    SpellCastingTimeSchema,
+    SpellComponentsSchema,
+    SpellDurationSchema,
+    SpellRangeSchema,
+)
 
 
 class SpellSchema(SourceModel):
@@ -15,10 +21,10 @@ class SpellSchema(SourceModel):
     source: str
     level: int
     school: str
-    time: list[dict[str, object]] = Field(default_factory=list)
-    range: dict[str, object] = Field(default_factory=dict)
-    components: dict[str, object] = Field(default_factory=dict)
-    duration: list[dict[str, object]] = Field(default_factory=list)
+    time: list[SpellCastingTimeSchema] = Field(default_factory=list)
+    range: SpellRangeSchema | None = None
+    components: SpellComponentsSchema = Field(default_factory=SpellComponentsSchema)
+    duration: list[SpellDurationSchema] = Field(default_factory=list)
     entries: list[object] = Field(default_factory=list)
     saving_throw: list[str] = Field(default_factory=list, alias="savingThrow")
     condition_inflict: list[str] = Field(default_factory=list, alias="conditionInflict")
@@ -77,9 +83,3 @@ class SpellSchema(SourceModel):
             if isinstance(marker, str):
                 return marker
         return self.name
-
-
-class SpellFileSchema(SourceModel):
-    """Define the authored spell-file fields with spell."""
-
-    spell: list[SpellSchema] = Field(default_factory=list)

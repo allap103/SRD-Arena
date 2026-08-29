@@ -70,7 +70,7 @@ def test_effective_condition_preserves_all_independent_providers() -> None:
     )
 
 
-def test_immunity_suppresses_only_the_implied_condition() -> None:
+def test_explicit_suppression_suspends_only_the_implied_condition() -> None:
     paralyzed = _applied(Condition.PARALYZED, "hold_person")
 
     effective = effective_conditions(
@@ -84,4 +84,4 @@ def test_immunity_suppresses_only_the_implied_condition() -> None:
     suppressed = effective.suppressed_conditions[0]
     assert suppressed.condition is Condition.INCAPACITATED
     assert suppressed.provider_ids == (paralyzed.id,)
-    assert suppressed.reason == "immunity"
+    assert suppressed.reason == "suppression"

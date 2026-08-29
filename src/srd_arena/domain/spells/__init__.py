@@ -3,11 +3,23 @@
 from .definitions import (
     Spell,
     SpellDamage,
-    SpellRef,
+)
+from .metadata import (
+    SpellCastingTime,
+    SpellComponents,
+    SpellDuration,
+    SpellMaterialComponent,
+    SpellRange,
+    SpellRangeDistance,
 )
 
 __all__ = [
     "Spell",
+    "SpellCastingTime",
+    "SpellComponents",
     "SpellDamage",
-    "SpellRef",
+    "SpellDuration",
+    "SpellMaterialComponent",
+    "SpellRange",
+    "SpellRangeDistance",
 ]

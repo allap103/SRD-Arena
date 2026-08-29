@@ -12,19 +12,23 @@ from ....spells.rules import (
     spell_range_squares,
     spell_targets_self_only,
 )
-from ...attack_economy import clear_attack_action
-from ...models import ActionCost, EncounterAction
+from ...attack_economy import clear_attack_action, consume_action
+from ...encounter_models.actions import (
+    ActionCost,
+    EncounterAction,
+)
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
 
 
-def spell_action_cost(self: EncounterState, spell: Spell) -> ActionCost:
+def spell_action_cost(state: EncounterState, spell: Spell) -> ActionCost:
     """Map a spell's activation time to the turn resource it consumes.
 
+    >>> from ....spells.metadata import SpellCastingTime
     >>> spell = Spell(
     ...     "healing_word", "Healing Word", "XPHB", 1,
-    ...     casting_time=({"unit": "bonus"},),
+    ...     casting_times=(SpellCastingTime(1, "bonus"),),
     ... )
     >>> spell_action_cost(None, spell).bonus_action
     1
@@ -39,7 +43,7 @@ def spell_action_cost(self: EncounterState, spell: Spell) -> ActionCost:
 
 
 def spell_cast_block_reason_for(
-    self: EncounterState,
+    state: EncounterState,
     spellcasting: Spellcasting,
     spell: Spell,
     cost: ActionCost,
@@ -69,9 +73,9 @@ def spell_cast_block_reason_for(
     'You have no level 1 spell slots remaining.'
     """
 
-    creature_ref = self.current_decision().creature_ref
-    compatibility = self.combat_rules.action_compatibility(
-        self,
+    creature_ref = state.current_decision().creature_ref
+    compatibility = state.combat_rules.action_compatibility(
+        state,
         creature_ref,
         EncounterAction(
             spell.name,
@@ -86,10 +90,10 @@ def spell_cast_block_reason_for(
         spellcasting,
         spell,
         spell_action_economy(spell),
-        action_available=self.active_magic_actions_remaining > 0,
-        bonus_action_available=self.active_bonus_action_available,
-        reaction_available=self.combat_rules.reaction_eligibility(
-            self,
+        action_available=state.active_magic_actions_remaining > 0,
+        bonus_action_available=state.active_bonus_action_available,
+        reaction_available=state.combat_rules.reaction_eligibility(
+            state,
             creature_ref,
             "spell",
         ).allowed,
@@ -97,7 +101,7 @@ def spell_cast_block_reason_for(
     )
 
 
-def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
+def spell_targets_self_only_for(state: EncounterState, spell: Spell) -> bool:
     """Return whether the spell's target contract permits only its caster.
 
     >>> spell = Spell("shield", "Shield", "XPHB", 1, geometry_mode="self_only")
@@ -109,26 +113,27 @@ def spell_targets_self_only_for(self: EncounterState, spell: Spell) -> bool:
 
 
 def spell_range_squares_for(
-    self: EncounterState, spell: Spell, creature: Creature
+    state: EncounterState, spell: Spell, creature: Creature
 ) -> int | None:
     """Convert the spell's authored range into grid cells for this caster.
 
     >>> from types import SimpleNamespace
     >>> from ....geometry import Grid
+    >>> from ....spells.metadata import SpellRange, SpellRangeDistance
     >>> spell = Spell(
     ...     "bolt", "Bolt", "TEST", 0,
-    ...     range_data={"distance": {"type": "feet", "amount": 60}},
+    ...     range=SpellRange("point", SpellRangeDistance("feet", 60)),
     ... )
     >>> state = SimpleNamespace(definition=SimpleNamespace(grid=Grid(10, 10)))
     >>> spell_range_squares_for(state, spell, None)
     12
     """
 
-    return spell_range_squares(spell, self.definition.grid)
+    return spell_range_squares(spell, state.definition.grid)
 
 
 def spend_spell_resources(
-    self: EncounterState,
+    state: EncounterState,
     spellcasting: Spellcasting,
     spell: Spell,
     cost: ActionCost,
@@ -147,7 +152,8 @@ def spend_spell_resources(
     ...     attack_action_attacks_used=0, pending_multiattack=[],
     ... )
     >>> state = SimpleNamespace(
-    ...     _consume_action=lambda **kwargs: None, active_creature_state=actor,
+    ...     active_actions_remaining=1, active_magic_actions_remaining=1,
+    ...     active_creature_state=actor,
     ...     active_bonus_action_available=True, active_reaction_available=True,
     ... )
     >>> spend_spell_resources(state, casting, spell, ActionCost(action=1))
@@ -156,12 +162,12 @@ def spend_spell_resources(
     """
 
     if cost.action > 0:
-        self._consume_action(allow_magic=True)
-        clear_attack_action(self.active_creature_state)
+        consume_action(state, allow_magic=True)
+        clear_attack_action(state.active_creature_state)
     if cost.bonus_action > 0:
-        self.active_bonus_action_available = False
+        state.active_bonus_action_available = False
     if cost.reaction > 0:
-        self.active_reaction_available = False
+        state.active_reaction_available = False
     if spell.level > 0:
         slot_level = cast_level if cast_level is not None else spell.level
         spellcasting.spell_slots_remaining[slot_level] -= 1

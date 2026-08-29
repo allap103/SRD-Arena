@@ -18,17 +18,16 @@ class SpellActionEconomy:
 def spell_action_economy(spell: Spell) -> SpellActionEconomy:
     """Translate authored casting-time units into turn-resource costs.
 
+    >>> from .metadata import SpellCastingTime
     >>> spell = Spell(
     ...     "healing_word", "Healing Word", "XPHB", 1,
-    ...     casting_time=({"number": 1, "unit": "bonus"},),
+    ...     casting_times=(SpellCastingTime(1, "bonus"),),
     ... )
     >>> spell_action_economy(spell)
     SpellActionEconomy(action=0, bonus_action=1, reaction=0)
     """
 
-    units = {
-        entry.get("unit") for entry in spell.casting_time if isinstance(entry, dict)
-    }
+    units = {entry.unit for entry in spell.casting_times}
     return SpellActionEconomy(
         action=1 if "action" in units else 0,
         bonus_action=1 if "bonus" in units else 0,

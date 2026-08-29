@@ -11,6 +11,7 @@ from ...effects.conditions import AppliedCondition
 from ...effects.runtime import CreatureRelationship, OngoingEffect
 from ...equipment import Item
 from ...geometry import GeometryConfig, MovementBudget, MovementCost, Position
+from ...rolls.randomness import DiceRoller
 from ..definitions import EncounterBehavior, EncounterDefinition
 from .actions import CreatureRef
 from .decisions import InterruptState
@@ -124,7 +125,7 @@ class EncounterStateData:
 
     The data includes combatants, clocks, nested decisions, sourced effects,
     relationships, runtime sequences, and action selectors. ``EncounterState``
-    adds the service facade used to operate on this aggregate.
+    constructs this aggregate and exposes its small engine-facing API.
     """
 
     encounter_id: str
@@ -145,6 +146,7 @@ class EncounterStateData:
     relationships: list[CreatureRelationship] = field(default_factory=list)
     item_templates: dict[str, Item] = field(default_factory=dict)
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
+    dice: DiceRoller = field(default_factory=DiceRoller, repr=False)
     _action_selectors: dict[CreatureRef, ActionSelector] = field(
         default_factory=dict,
         repr=False,

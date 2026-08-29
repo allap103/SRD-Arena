@@ -6,8 +6,15 @@ from srd_arena.domain.effects import EffectResult, TriggeredEffect
 from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.encounters.grappling_state import apply_grapple
 from srd_arena.engine.session import Session
 from srd_arena.infrastructure.scenarios import load_scenario_directory
+from tests.encounter_runtime_support import (
+    choose_advertised_action as _choose_advertised_action,
+)
+from tests.encounter_runtime_support import (
+    use_deterministic_dice as _use_deterministic_dice,
+)
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 FULL_CONTROL_SCENARIO_DIR = (
@@ -22,7 +29,7 @@ def _stable_initiative(monkeypatch: pytest.MonkeyPatch) -> None:
         state.initiative_entries = []
         state.initiative_order = list(state.creatures)
 
-    monkeypatch.setattr(EncounterState, "_roll_initiative", _use_definition_order)
+    monkeypatch.setattr(EncounterState, "roll_initiative", _use_definition_order)
 
 
 def _all_external_session() -> Session:
@@ -45,7 +52,7 @@ def test_manual_action_submission_returns_to_the_same_turn_until_wait() -> None:
     start = (state.active_position.x, state.active_position.y)
     move = next(action for action in state.available_actions() if action.kind == "move")
 
-    moved = session.choose_encounter_action(move)
+    moved = _choose_advertised_action(session, move)
 
     assert moved.selected_action_id == move.id
     assert state.current_decision().kind == "turn"
@@ -54,28 +61,23 @@ def test_manual_action_submission_returns_to_the_same_turn_until_wait() -> None:
     assert state.active_movement_remaining == 5
 
     wait = next(action for action in state.available_actions() if action.kind == "wait")
-    session.choose_encounter_action(wait)
+    _choose_advertised_action(session, wait)
 
     assert state.current_decision().creature_ref == "goblin_1"
 
 
-def test_scripted_turns_advance_until_the_next_external_decision(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+def test_scripted_turns_advance_until_the_next_external_decision() -> None:
     session = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     ).create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state
     assert state is not None
     wait = next(action for action in state.available_actions() if action.kind == "wait")
 
-    result = session.choose_encounter_action(wait)
+    result = _choose_advertised_action(session, wait)
 
     assert state.current_decision().kind == "turn"
     assert state.current_decision().creature_ref == "player"
@@ -105,7 +107,7 @@ def test_pacing_pause_skips_defeated_initiative_slots_first() -> None:
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("goblin_1")
+    state.turn.index = state.initiative_order.index("goblin_1")
     state.creatures["goblin_2"].creature.current_health = 0
 
     progress = _ORCHESTRATOR.advance(state)
@@ -118,37 +120,32 @@ def test_querying_a_defeated_actors_decision_does_not_advance_the_turn() -> None
     session = _all_external_session()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("goblin_1")
+    state.turn.index = state.initiative_order.index("goblin_1")
     state.creatures["goblin_1"].creature.current_health = 0
-    turn_index = state.turn_index
+    turn_index = state.turn.index
     round_number = state.round.number
 
     decision = state.current_decision()
 
     assert decision.creature_ref == "goblin_1"
-    assert state.turn_index == turn_index
+    assert state.turn.index == turn_index
     assert state.round.number == round_number
 
     progress = _ORCHESTRATOR.advance(state)
 
     assert progress.paused_for_decision is True
-    assert state.turn_index == turn_index + 1
+    assert state.turn.index == turn_index + 1
     assert state.round.number == round_number
     assert state.current_decision().creature_ref == "goblin_2"
 
 
-def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+def test_reaction_interrupts_movement_then_resumes_the_parent_turn() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("champion_2")
+    state.turn.index = state.initiative_order.index("champion_2")
     mover = state.creatures["champion_2"]
     reactor = state.creatures["red_blade"]
     mover.position.x, mover.position.y = 3, 3
@@ -159,7 +156,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
         if action.kind == "move" and action.value == "up"
     )
 
-    interrupted = session.choose_encounter_action(move)
+    interrupted = _choose_advertised_action(session, move)
 
     assert state.current_decision().kind == "reaction"
     assert state.current_decision().creature_ref == "red_blade"
@@ -170,14 +167,6 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
         state.pending_movement.to_position.x,
         state.pending_movement.to_position.y,
     ) == (3, 2)
-    exported = state.export_state()
-    exported_decision = exported["decision"]
-    exported_movement = exported["pending_movement"]
-    assert isinstance(exported_decision, dict)
-    assert isinstance(exported_movement, dict)
-    assert exported_decision["pending_movement_id"] == state.pending_movement.action_id
-    assert exported_movement["action_id"] == state.pending_movement.action_id
-    assert "pending_action" not in exported
     assert (mover.position.x, mover.position.y) == (3, 3)
     assert not any(event.type == "movement_resolved" for event in interrupted.events)
 
@@ -186,7 +175,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    resumed = session.choose_encounter_action(opportunity_attack)
+    resumed = _choose_advertised_action(session, opportunity_attack)
 
     assert state.pending_movement is None
     assert state.current_decision().kind == "turn"
@@ -200,22 +189,13 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn(
     assert movement.data["resumed"] is True
 
 
-def test_lethal_reaction_closes_the_frame_without_resuming_movement(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 20,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda _count, sides: sides,
-    )
+def test_lethal_reaction_closes_the_frame_without_resuming_movement() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
+    _use_deterministic_dice(session, die_roller=lambda sides: sides)
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("champion_2")
+    state.turn.index = state.initiative_order.index("champion_2")
     mover = state.creatures["champion_2"]
     reactor = state.creatures["red_blade"]
     mover.creature.current_health = 1
@@ -227,37 +207,31 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement(
         if action.kind == "move" and action.value == "up"
     )
 
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
     opportunity_attack = next(
         action
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    resolved = session.choose_encounter_action(opportunity_attack)
+    resolved = _choose_advertised_action(session, opportunity_attack)
 
     assert mover.is_alive is False
     assert (mover.position.x, mover.position.y) == (3, 3)
-    assert state.decision_stack == []
+    assert state.interrupts.decision_stack == []
     assert state.pending_movement is None
     assert not any(event.type == "movement_resolved" for event in resolved.events)
 
 
-def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 15,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda _count, _sides: 1,
-    )
+def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 15 if sides == 20 else 1,
+    )
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("champion_2")
+    state.turn.index = state.initiative_order.index("champion_2")
     mover = state.creatures["champion_2"]
     reactor = state.creatures["red_blade"]
     mover.position.x, mover.position.y = 3, 3
@@ -278,17 +252,17 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
         if action.kind == "move" and action.value == "up"
     )
 
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
     reaction_frame = state.current_decision()
     opportunity_attack = next(
         action
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    session.choose_encounter_action(opportunity_attack)
+    _choose_advertised_action(session, opportunity_attack)
 
     assert state.current_decision().kind == "reroll_dice"
-    assert [frame.kind for frame in state.decision_stack] == [
+    assert [frame.kind for frame in state.interrupts.decision_stack] == [
         "reaction",
         "reroll_dice",
     ]
@@ -297,10 +271,10 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
         action for action in state.available_actions() if action.kind == "reroll_die"
     )
 
-    still_interrupted = session.choose_encounter_action(reroll)
+    still_interrupted = _choose_advertised_action(session, reroll)
 
     assert state.current_decision().id == reroll_frame.id
-    assert [frame.id for frame in state.decision_stack] == [
+    assert [frame.id for frame in state.interrupts.decision_stack] == [
         reaction_frame.id,
         reroll_frame.id,
     ]
@@ -314,9 +288,9 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
         action for action in state.available_actions() if action.kind == "accept_roll"
     )
 
-    resumed = session.choose_encounter_action(accept_damage)
+    resumed = _choose_advertised_action(session, accept_damage)
 
-    assert state.decision_stack == []
+    assert state.interrupts.decision_stack == []
     assert state.pending_movement is None
     assert (mover.position.x, mover.position.y) == (3, 2)
     closed_frame_ids = [
@@ -336,18 +310,13 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes(
     assert parent_close_index < movement_event_index
 
 
-def test_passing_reaction_closes_it_before_parent_movement_resumes(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+def test_passing_reaction_closes_it_before_parent_movement_resumes() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("champion_2")
+    state.turn.index = state.initiative_order.index("champion_2")
     mover = state.creatures["champion_2"]
     reactor = state.creatures["red_blade"]
     mover.position.x, mover.position.y = 3, 3
@@ -358,16 +327,16 @@ def test_passing_reaction_closes_it_before_parent_movement_resumes(
         if action.kind == "move" and action.value == "up"
     )
 
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
     reaction_frame = state.current_decision()
     assert state.pending_movement is not None
     movement_action_id = state.pending_movement.action_id
     pass_reaction = next(
         action for action in state.available_actions() if action.kind == "pass"
     )
-    resumed = session.choose_encounter_action(pass_reaction)
+    resumed = _choose_advertised_action(session, pass_reaction)
 
-    assert state.decision_stack == []
+    assert state.interrupts.decision_stack == []
     assert state.pending_movement is None
     assert state.current_decision().creature_ref == "champion_2"
     assert (mover.position.x, mover.position.y) == (3, 2)
@@ -390,14 +359,15 @@ def test_resumed_movement_carries_a_grappled_creature() -> None:
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("champion_2")
+    state.turn.index = state.initiative_order.index("champion_2")
     mover = state.creatures["champion_2"]
     grappled = state.creatures["red_archer"]
     reactor = state.creatures["red_blade"]
     mover.position.x, mover.position.y = 3, 3
     grappled.position.x, grappled.position.y = 4, 3
     reactor.position.x, reactor.position.y = 3, 4
-    state._apply_grapple(
+    apply_grapple(
+        state,
         condition_from_effect(
             EffectResult(
                 kind="apply_condition",
@@ -408,7 +378,7 @@ def test_resumed_movement_carries_a_grappled_creature() -> None:
                     "source_label": mover.creature.name,
                 },
             )
-        )
+        ),
     )
     move = next(
         action
@@ -416,26 +386,20 @@ def test_resumed_movement_carries_a_grappled_creature() -> None:
         if action.kind == "move" and action.value == "up"
     )
 
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
     assert state.pending_movement is not None
     assert state.pending_movement.companion_destinations["red_archer"].x == 4
     assert state.pending_movement.companion_destinations["red_archer"].y == 2
     pass_reaction = next(
         action for action in state.available_actions() if action.kind == "pass"
     )
-    session.choose_encounter_action(pass_reaction)
+    _choose_advertised_action(session, pass_reaction)
 
     assert (mover.position.x, mover.position.y) == (3, 2)
     assert (grappled.position.x, grappled.position.y) == (4, 2)
 
 
-def test_reaction_to_scripted_movement_resumes_automatic_advancement(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+def test_reaction_to_scripted_movement_resumes_automatic_advancement() -> None:
     scenario = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
@@ -448,10 +412,11 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
     assert goblin.behavior is not None
     goblin.behavior.type = "guard"
     session = scenario.create_session()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state
     assert state is not None
-    state.turn_index = state.initiative_order.index("goblin_2")
+    state.turn.index = state.initiative_order.index("goblin_2")
     mover = state.creatures["goblin_2"]
     reactor = state.creatures["player"]
     mover.position.x, mover.position.y = 3, 3
@@ -476,7 +441,7 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement(
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    resumed = session.choose_encounter_action(opportunity_attack)
+    resumed = _choose_advertised_action(session, opportunity_attack)
 
     assert state.pending_movement is None
     assert state.current_decision().kind == "turn"

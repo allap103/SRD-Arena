@@ -3,7 +3,7 @@ from pathlib import Path
 
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import EncounterAction
+from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
@@ -17,7 +17,7 @@ def test_orchestrator_delegates_scripted_choice_to_actor_selector() -> None:
     assert session.encounter_state is not None
     state = session.encounter_state
     creature_ref = "goblin_1"
-    state.turn_index = state.initiative_order.index(creature_ref)
+    state.turn.index = state.initiative_order.index(creature_ref)
     selections: list[tuple[str, tuple[EncounterAction, ...], bool]] = []
 
     class RecordingSelector:

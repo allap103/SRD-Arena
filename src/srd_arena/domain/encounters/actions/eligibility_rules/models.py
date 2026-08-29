@@ -5,7 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from ...models import CreatureRef, EncounterAction
+from ...encounter_models.actions import (
+    CreatureRef,
+    EncounterAction,
+)
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..models import CreatureRef, EncounterAction
+from ..encounter_models.actions import (
+    CreatureRef,
+    EncounterAction,
+)
 from .eligibility_rules.attacks import AttackRule, GrappleRule
 from .eligibility_rules.capabilities import FeatureActionRule, StatBlockActionRule
 from .eligibility_rules.common import (
@@ -77,39 +80,6 @@ def action_eligibility(
     return ActionEligibility(failures)
 
 
-def require_action_eligible(
-    state: EncounterState,
-    actor_ref: CreatureRef,
-    action: EncounterAction,
-) -> None:
-    """Raise when an action fails eligibility, preserving its first explanation.
-
-    >>> from types import SimpleNamespace
-    >>> blocked = ActionEligibility(
-    ...     (EligibilityFailure("stunned", "The actor is stunned."),)
-    ... )
-    >>> state = SimpleNamespace(
-    ...     combat_rules=SimpleNamespace(
-    ...         action_eligibility=lambda state, actor, action: blocked
-    ...     )
-    ... )
-    >>> try:
-    ...     require_action_eligible(state, "hero", EncounterAction("Attack", "attack"))
-    ... except ValueError as error:
-    ...     str(error)
-    'The actor is stunned.'
-    """
-
-    eligibility = state.combat_rules.action_eligibility(
-        state,
-        actor_ref,
-        action,
-    )
-    if eligibility.allowed:
-        return
-    raise ValueError(eligibility.failures[0].message)
-
-
 # Preserve the former module-local names for internal callers and diagnostics.
 _opposing_target_failure = opposing_target_failure
 _target_requirement_failure = target_requirement_failure
@@ -131,5 +101,4 @@ __all__ = [
     "SpellTargetSelectionRule",
     "StatBlockActionRule",
     "action_eligibility",
-    "require_action_eligible",
 ]

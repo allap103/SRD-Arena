@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
+from types import MappingProxyType
 
 from ...capabilities import CapabilityEffect, DamageEffect
 from ...effects.triggered import TriggeredEffect
@@ -36,6 +38,31 @@ class EncounterProgress:
     paused_for_pacing: bool = False
 
 
+@dataclass(frozen=True)
+class ActionRejection:
+    """Describe one selected action that execution refused to perform.
+
+    >>> rejection = ActionRejection(
+    ...     "hero", "action-1", "attack", "The target moved.",
+    ...     "target_out_of_range", {"target_ref": "goblin"},
+    ... )
+    >>> (rejection.reason_code, rejection.details["target_ref"])
+    ('target_out_of_range', 'goblin')
+    """
+
+    actor_ref: CreatureRef
+    action_id: str
+    action_kind: str
+    message: str
+    reason_code: str
+    details: Mapping[str, object] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Detach source-specific details from the caller's mutable mapping."""
+
+        object.__setattr__(self, "details", MappingProxyType(dict(self.details)))
+
+
 class ActionExecutionOutcome(StrEnum):
     """Enumerate supported action execution outcome values."""
 
@@ -55,6 +82,7 @@ class ActionExecutionContext:
     action: EncounterAction
     action_id: str
     progress: EncounterProgress = field(default_factory=EncounterProgress)
+    rejection: ActionRejection | None = None
 
 
 @dataclass

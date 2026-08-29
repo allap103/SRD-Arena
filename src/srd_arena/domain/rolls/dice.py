@@ -116,20 +116,6 @@ class RollResolution[RollResultT]:
         return self.attempts[self.selected_attempt]
 
 
-def roll_dice(num_dice: int, sides: int) -> int:
-    """Roll and sum a number of identical dice.
-
-    >>> total = roll_dice(2, 6)
-    >>> 2 <= total <= 12
-    True
-    """
-
-    total = 0
-    for _ in range(num_dice):
-        total += roll_die(sides)
-    return total
-
-
 def roll_die(sides: int) -> int:
     """Roll one die with the given number of sides.
 

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from srd_arena.domain.encounters import EncounterOrchestrator
+from srd_arena.domain.encounters.participants import creature_team_id
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 SCENARIO_DIR = (
@@ -26,7 +27,7 @@ def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> No
     missing_hit_points = sum(
         combatant.creature.get_max_health() - combatant.creature.get_health()
         for ref, combatant in state.creatures.items()
-        if state._creature_team_id(ref) == "wounded_party"
+        if creature_team_id(state, ref) == "wounded_party"
     )
     assert missing_hit_points == 900
     assert state.creatures["observer"].is_alive
@@ -39,9 +40,9 @@ def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> No
     result = _ORCHESTRATOR.submit(state, cast)
 
     assert result.paused_for_decision
-    assert state.pending_spell_cast is not None
-    assert state.pending_spell_cast.resource_pool_total == 700
-    assert state.pending_spell_cast.resource_allocation_limits == {
+    assert state.interrupts.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast.resource_pool_total == 700
+    assert state.interrupts.pending_spell_cast.resource_allocation_limits == {
         "healer": 200,
         "guardian": 450,
         "champion": 200,

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .models import (
+from .encounter_models.decisions import (
     CloseParentDecision,
     DecisionFrame,
-    EncounterProgress,
     ResumeMovement,
 )
+from .encounter_models.resolution import EncounterProgress
+from .state_runtime import create_event
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -37,7 +38,7 @@ class ContinuationRunner:
 
         >>> from unittest.mock import Mock
         >>> decision = DecisionFrame("reaction-1", "hero", "reaction", "shield")
-        >>> state = Mock(decision_stack=[])
+        >>> state = Mock(interrupts=Mock(decision_stack=[]))
         >>> ContinuationRunner().complete_decision(
         ...     state, decision, action_id="decline", progress=EncounterProgress())
         Traceback (most recent call last):
@@ -56,8 +57,8 @@ class ContinuationRunner:
                         f"'{continuation.frame_id}'."
                     )
                 if (
-                    len(state.decision_stack) < 2
-                    or state.decision_stack[-2].id != continuation.frame_id
+                    len(state.interrupts.decision_stack) < 2
+                    or state.interrupts.decision_stack[-2].id != continuation.frame_id
                 ):
                     raise RuntimeError(
                         f"Decision '{current.id}' cannot complete frame "
@@ -79,7 +80,7 @@ class ContinuationRunner:
                 progress=progress,
             )
             if isinstance(continuation, CloseParentDecision):
-                current = state.decision_stack[-1]
+                current = state.interrupts.decision_stack[-1]
                 current_action_id = continuation.action_id
                 continue
             if isinstance(continuation, ResumeMovement):
@@ -95,11 +96,11 @@ class ContinuationRunner:
         state: EncounterState,
         expected_frame_id: str,
     ) -> None:
-        if not state.decision_stack:
+        if not state.interrupts.decision_stack:
             raise RuntimeError(
                 f"Cannot close decision '{expected_frame_id}': the stack is empty."
             )
-        current = state.decision_stack[-1]
+        current = state.interrupts.decision_stack[-1]
         if current.id != expected_frame_id:
             raise RuntimeError(
                 f"Cannot close decision '{expected_frame_id}' while "
@@ -115,10 +116,11 @@ class ContinuationRunner:
         progress: EncounterProgress,
     ) -> DecisionFrame:
         self._require_top(state, expected_frame_id)
-        decision = state.decision_stack[-1]
-        state.decision_stack.pop()
+        decision = state.interrupts.decision_stack[-1]
+        state.interrupts.decision_stack.pop()
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "decision_closed",
                 creature_ref=decision.creature_ref,
                 frame_id=decision.id,

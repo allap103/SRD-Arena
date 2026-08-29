@@ -24,15 +24,19 @@ from ....spells.rules import (
     spell_action_value,
     spell_supports_higher_level,
 )
-from ...models import ActionCost, EncounterAction
-from .spell_targets import _spell_removal_choices
+from ...encounter_models.actions import (
+    ActionCost,
+    EncounterAction,
+)
+from .spell_targets import _spell_removal_choices, spell_action_targets
+from .spellcasting import spell_action_cost
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
 
 
 def available_spell_actions(
-    self: EncounterState,
+    state: EncounterState,
     actor: Creature,
 ) -> list[EncounterAction]:
     """Advertise castable spell grants with target-relative configurations.
@@ -47,12 +51,12 @@ def available_spell_actions(
     """
 
     spellcasting = actor.spellcasting
-    creature_ref = self.current_decision().creature_ref
+    creature_ref = state.current_decision().creature_ref
     if spellcasting is None:
         return []
     actions: list[EncounterAction] = []
     for spell in spellcasting.learned_spells:
-        cost = self._spell_action_cost(spell)
+        cost = spell_action_cost(state, spell)
         if spell.geometry_mode in {"directional_area", "point_area"}:
             _append_spell_action_variants(
                 actions,
@@ -68,7 +72,7 @@ def available_spell_actions(
                 ),
             )
             continue
-        targets = self._spell_action_targets(actor, spell)
+        targets = spell_action_targets(state, actor, spell)
         shared_effects = capability_effects(spell.definition)
         conditions = tuple(
             effect.condition
@@ -92,7 +96,7 @@ def available_spell_actions(
             None,
         )
         for target in targets:
-            removal_choices = _spell_removal_choices(self, target.target_ref, spell)
+            removal_choices = _spell_removal_choices(state, target.target_ref, spell)
             selections = (
                 tuple(choice for choice, _label in removal_choices)
                 if spell.removable_effect_kinds

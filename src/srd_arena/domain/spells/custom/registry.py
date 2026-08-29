@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ...creatures.feature_rules.types import CapabilityActionResult
+from ...effects.results import ActionResolutionResult
 from ..resolution_steps.context import SpellActionContext
 from .slow import resolve_slow
 from .types import CustomSpellResolver, DeclarativeSpellResolver
@@ -15,7 +15,7 @@ CUSTOM_SPELL_RESOLVERS: dict[str, CustomSpellResolver] = {
 def resolve_custom_spell(
     context: SpellActionContext,
     resolve_declarative: DeclarativeSpellResolver,
-) -> CapabilityActionResult:
+) -> ActionResolutionResult:
     """Resolve one spell through its validated registered Python handler.
 
     Spells without an escape-hatch resolver remain fully declarative.

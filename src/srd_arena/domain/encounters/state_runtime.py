@@ -6,9 +6,15 @@ from typing import TYPE_CHECKING
 
 from ..effects.application import apply_effects
 from ..effects.results import EffectResult
-from ..geometry import MovementBudget, Position
-from .models import CombatEvent, CreatureRef, EncounterProgress
-from .ongoing_effects import remove_ongoing_effects
+from ..geometry import Position
+from .condition_state import apply_condition, remove_condition
+from .effect_lifecycle.application import start_ongoing_effect
+from .effect_lifecycle.removal import remove_ongoing_effects
+from .encounter_models.actions import CreatureRef
+from .encounter_models.resolution import (
+    CombatEvent,
+    EncounterProgress,
+)
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -26,65 +32,24 @@ def apply_encounter_effects(
     >>> effect = EffectResult(
     ...     "message", "hero", data={"channel": "combat", "text": "Hit!"}
     ... )
-    >>> state = SimpleNamespace(
-    ...     _next_runtime_origin_id=lambda: "effect_1",
-    ...     _apply_condition=lambda condition: None,
-    ...     _remove_condition=lambda target, condition: None,
-    ...     _start_ongoing_effect=lambda effect, origin: None,
-    ... )
+    >>> state = SimpleNamespace(runtime_state_sequence=1)
     >>> apply_encounter_effects(state, [effect])
     [('combat', 'Hit!')]
     """
 
-    resolved_origin_id = origin_id or state._next_runtime_origin_id()
+    resolved_origin_id = origin_id or next_runtime_origin_id(state)
     return apply_effects(
         effects,
-        apply_condition=state._apply_condition,
-        remove_condition=state._remove_condition,
-        apply_ongoing_effect=state._start_ongoing_effect,
+        apply_condition=lambda condition: apply_condition(state, condition),
+        remove_condition=lambda target, condition: remove_condition(
+            state, target, condition
+        ),
+        apply_ongoing_effect=lambda effect, origin: start_ongoing_effect(
+            state, effect, origin
+        ),
         remove_ongoing_effects=lambda effect: remove_ongoing_effects(state, effect),
         origin_id=resolved_origin_id,
     )
-
-
-def consume_action(state: EncounterState, *, allow_magic: bool) -> None:
-    """Spend the active creature's Action while enforcing magic-action restrictions.
-
-    >>> from types import SimpleNamespace
-    >>> state = SimpleNamespace(
-    ...     active_actions_remaining=1, active_magic_actions_remaining=1
-    ... )
-    >>> consume_action(state, allow_magic=True)
-    >>> (state.active_actions_remaining, state.active_magic_actions_remaining)
-    (0, 0)
-    """
-
-    if state.active_actions_remaining <= 0:
-        raise RuntimeError("No Action remains to consume.")
-    non_magic_only_actions = max(
-        0,
-        state.active_actions_remaining - state.active_magic_actions_remaining,
-    )
-    if allow_magic:
-        if state.active_magic_actions_remaining <= 0:
-            raise RuntimeError("No spell-capable Action remains to consume.")
-        state.active_magic_actions_remaining -= 1
-    elif non_magic_only_actions <= 0 and state.active_magic_actions_remaining > 0:
-        state.active_magic_actions_remaining -= 1
-    state.active_actions_remaining -= 1
-
-
-def active_movement_remaining(state: EncounterState) -> MovementBudget:
-    """Return the active creature's remaining movement in grid cells.
-
-    >>> from types import SimpleNamespace
-    >>> active_movement_remaining(
-    ...     SimpleNamespace(active_movement_remaining_for=lambda: MovementBudget(4))
-    ... )
-    4
-    """
-
-    return state.active_movement_remaining_for()
 
 
 def next_action_id(state: EncounterState) -> str:

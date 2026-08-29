@@ -19,11 +19,11 @@ from PySide6.QtWidgets import (
 )
 
 from srd_arena.application.observations import ActionObservation
+from srd_arena.frontends.gui.presentation.models import InitiativeTrackEntryView
 from srd_arena.frontends.gui.ui.game_surface import (
     GameSurface,
     GameSurfaceCallbacks,
 )
-from srd_arena.frontends.shared.models import InitiativeTrackEntryView
 
 
 def test_game_surface_switches_between_story_and_encounter() -> None:

@@ -6,7 +6,7 @@ from .definitions import (
     CapabilityDefinition,
     SavingThrowResolution,
 )
-from .models import CapabilityEffect
+from .effects import CapabilityEffect
 
 
 def capability_effects(
@@ -15,7 +15,8 @@ def capability_effects(
     """Return every effect reachable from a capability's primary resolution.
 
     >>> from .definitions import AutomaticResolution, Outcome
-    >>> from .models import CapabilityTarget, DamageEffect
+    >>> from .effects import DamageEffect
+    >>> from .targeting import CapabilityTarget
     >>> damage = DamageEffect("1d6", 0, "fire")
     >>> definition = CapabilityDefinition(
     ...     CapabilityTarget(kind="self"),
@@ -48,7 +49,8 @@ def primary_effects(
     For attacks, miss-only effects are deliberately excluded.
 
     >>> from .definitions import AttackResolution, FixedAttackBonus, Outcome
-    >>> from .models import CapabilityTarget, DamageEffect
+    >>> from .effects import DamageEffect
+    >>> from .targeting import CapabilityTarget
     >>> hit = DamageEffect("1d8", 2, "slashing")
     >>> miss = DamageEffect("1d4", 0, "force")
     >>> definition = CapabilityDefinition(

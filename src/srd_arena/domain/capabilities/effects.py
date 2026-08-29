@@ -16,6 +16,7 @@ class EffectDuration:
     creature: str | None = None
     turn_offset: int = 0
     events: tuple[str, ...] = ()
+    event_match: Literal["any", "all"] = "any"
 
 
 @dataclass(frozen=True)

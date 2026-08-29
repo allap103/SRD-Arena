@@ -6,8 +6,10 @@ from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from ...effects.results import EffectResult
+from ...effects.rule_effects import MaximumHitPointAdjustment
 from ...effects.runtime import OngoingEffect
 from ..attack_economy import reconcile_remaining_attacks
+from ..rule_queries.health import effective_maximum_health
 from .movement import reconcile_remaining_movement
 
 if TYPE_CHECKING:
@@ -26,13 +28,11 @@ def remove_ongoing_effects(state: EncounterState, result: EffectResult) -> None:
     ...     target_refs=("hero",),
     ...     identity=SimpleNamespace(id="bless-1"),
     ...     kind=SimpleNamespace(value="spell"),
-    ...     parameters={},
     ... )
     >>> second = SimpleNamespace(
     ...     target_refs=("hero",),
     ...     identity=SimpleNamespace(id="bless-2"),
     ...     kind=SimpleNamespace(value="spell"),
-    ...     parameters={},
     ... )
     >>> state = SimpleNamespace(ongoing_effects=[first, second])
     >>> result = EffectResult("remove_effect", "hero", data={"effect_kind": "spell"})
@@ -57,14 +57,10 @@ def remove_ongoing_effects(state: EncounterState, result: EffectResult) -> None:
         and (not isinstance(effect_kind, str) or effect.kind.value == effect_kind)
         and (
             parameter != "negative_maximum_hit_points"
-            or (
-                isinstance(
-                    maximum_modifier := effect.parameters.get(
-                        "maximum_hit_point_modifier"
-                    ),
-                    int,
-                )
-                and maximum_modifier < 0
+            or any(
+                isinstance(rule_effect, MaximumHitPointAdjustment)
+                and rule_effect.value < 0
+                for rule_effect in effect.rule_effects
             )
         )
     )
@@ -76,28 +72,7 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
     """Remove an ongoing effect, every target modifier, and child condition."""
 
     origin_id = effect.identity.source.origin_id
-    for target_ref in effect.target_refs:
-        _remove_maximum_hit_point_modifier(state, effect, target_ref)
-        _remove_damage_resistances(state, effect, target_ref)
-        state.creatures[target_ref].creature.remove_roll_modifiers(
-            effect.identity.source.definition_id, origin_id
-        )
-        state.creatures[target_ref].creature.remove_armor_class_modifier(
-            effect.identity.source.definition_id, origin_id
-        )
-        state.creatures[target_ref].creature.remove_speed_modifier(
-            effect.identity.source.definition_id,
-            origin_id,
-        )
-        state.creatures[target_ref].creature.remove_damage_reduction(
-            effect.identity.source.definition_id, origin_id
-        )
-        state.creatures[target_ref].creature.remove_condition_immunities(
-            effect.identity.source.definition_id, origin_id
-        )
-        state.creatures[target_ref].creature.remove_senses(
-            effect.identity.source.definition_id, origin_id
-        )
+    previous_maximums = _maximums_before_removal(state, effect, effect.target_refs)
     state.ongoing_effects = [
         existing
         for existing in state.ongoing_effects
@@ -108,6 +83,7 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
         for condition in state.conditions
         if condition.identity.source.origin_id != origin_id
     ]
+    _adjust_current_health_after_removal(state, previous_maximums)
     reconcile_remaining_attacks(state, effect.target_refs)
     reconcile_remaining_movement(state, effect.target_refs)
 
@@ -119,32 +95,7 @@ def _remove_effect_target(
 ) -> None:
     """Detach one target while retaining a multi-target effect for the rest."""
 
-    _remove_maximum_hit_point_modifier(state, effect, target_ref)
-    _remove_damage_resistances(state, effect, target_ref)
-    state.creatures[target_ref].creature.remove_roll_modifiers(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-    )
-    state.creatures[target_ref].creature.remove_armor_class_modifier(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-    )
-    state.creatures[target_ref].creature.remove_speed_modifier(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-    )
-    state.creatures[target_ref].creature.remove_damage_reduction(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-    )
-    state.creatures[target_ref].creature.remove_condition_immunities(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-    )
-    state.creatures[target_ref].creature.remove_senses(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-    )
+    previous_maximums = _maximums_before_removal(state, effect, (target_ref,))
     remaining_targets = tuple(
         existing for existing in effect.target_refs if existing != target_ref
     )
@@ -162,6 +113,7 @@ def _remove_effect_target(
             for existing in state.ongoing_effects
             if existing.identity.id != effect.identity.id
         ]
+        _adjust_current_health_after_removal(state, previous_maximums)
         reconcile_remaining_attacks(state, (target_ref,))
         reconcile_remaining_movement(state, (target_ref,))
         return
@@ -171,37 +123,35 @@ def _remove_effect_target(
         else existing
         for existing in state.ongoing_effects
     ]
+    _adjust_current_health_after_removal(state, previous_maximums)
     reconcile_remaining_attacks(state, (target_ref,))
     reconcile_remaining_movement(state, (target_ref,))
 
 
-def _remove_maximum_hit_point_modifier(
+def _maximums_before_removal(
     state: EncounterState,
     effect: OngoingEffect,
-    target_ref: str,
-) -> None:
-    modifier = effect.parameters.get("maximum_hit_point_modifier")
-    if not isinstance(modifier, int) or modifier == 0:
-        return
-    state.creatures[target_ref].creature.remove_maximum_health_modifier(
-        effect.identity.source.definition_id,
-        effect.identity.source.origin_id,
-        also_modify_current=bool(
-            effect.parameters.get("also_modify_current_hit_points", False)
-        ),
-    )
+    target_refs: tuple[str, ...],
+) -> dict[str, int]:
+    if not any(
+        isinstance(rule_effect, MaximumHitPointAdjustment)
+        and rule_effect.also_modify_current
+        for rule_effect in effect.rule_effects
+    ):
+        return {}
+    return {
+        target_ref: effective_maximum_health(state, target_ref).value
+        for target_ref in target_refs
+    }
 
 
-def _remove_damage_resistances(
+def _adjust_current_health_after_removal(
     state: EncounterState,
-    effect: OngoingEffect,
-    target_ref: str,
+    previous_maximums: dict[str, int],
 ) -> None:
-    values = effect.parameters.get("damage_resistances", [])
-    if not isinstance(values, list):
-        return
-    for damage_type in values:
-        if isinstance(damage_type, str):
-            state.creatures[target_ref].creature.remove_damage_resistance(
-                damage_type, effect.identity.source.origin_id
-            )
+    for target_ref, previous_maximum in previous_maximums.items():
+        creature = state.creatures[target_ref].creature
+        maximum_delta = (
+            effective_maximum_health(state, target_ref).value - previous_maximum
+        )
+        creature.current_health = max(0, creature.get_health() + maximum_delta)

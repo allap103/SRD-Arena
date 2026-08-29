@@ -4,15 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Generator
 
-from ..creatures import Creature
 from ..geometry import (
-    Grid,
-    MovementBudget,
     Position,
     grid_distance_between,
     manhattan_distance,
 )
-from .models import BehaviorContext, EncounterAction, EncounterCreatureState
+from .encounter_models.actions import EncounterAction
+from .encounter_models.state import (
+    BehaviorContext,
+    EncounterCreatureState,
+)
 
 DIRECTION_DELTAS = {
     "up": (0, -1),
@@ -192,16 +193,3 @@ def is_adjacent(a: Position, b: Position) -> bool:
     """
 
     return grid_distance_between(a, b) == 1
-
-
-def movement_budget_for(creature: Creature, grid: Grid) -> MovementBudget:
-    """Return the movement budget available to the behavior's creature.
-
-    >>> from types import SimpleNamespace
-    >>> movement_budget_for(
-    ...     SimpleNamespace(effective_speed_feet=lambda: 30), Grid(10, 10)
-    ... )
-    6
-    """
-
-    return grid.movement_budget(creature.effective_speed_feet())

@@ -19,4 +19,5 @@ class CreatureStatistics:
     passive_perception: int | None = None
     languages: tuple[str, ...] = ()
     condition_immunities: frozenset[Condition] = frozenset()
+    damage_resistances: frozenset[str] = frozenset()
     mechanical_traits: frozenset[str] = frozenset()

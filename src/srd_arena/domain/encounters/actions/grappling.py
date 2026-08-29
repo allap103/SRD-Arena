@@ -7,16 +7,18 @@ from typing import TYPE_CHECKING
 from ...creatures import Creature
 from ...effects.conditions import Condition
 from ...rolls.dice import resolve_d20
-from ..models import ActionCost, EncounterAction, EncounterProgress
+from ..attack_economy import consume_action
+from ..condition_state import remove_condition_from_source
+from ..encounter_models.actions import (
+    ActionCost,
+    EncounterAction,
+)
+from ..encounter_models.resolution import EncounterProgress
+from ..state_runtime import create_event
+from .rejections import reject_action
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
-
-
-def _roll_die(sides: int) -> int:
-    from .. import encounter as encounter_module
-
-    return encounter_module.roll_die(sides)
 
 
 def available_escape_actions(
@@ -80,22 +82,41 @@ def resolve_escape_action(
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
     ...     creatures={"hero": SimpleNamespace(actions_remaining=0)},
+    ...     event_sequence=1,
     ... )
+    >>> progress = EncounterProgress()
     >>> resolve_escape_action(
     ...     state, SimpleNamespace(), EncounterAction("Escape", "escape_grapple"),
-    ...     EncounterProgress(), "escape-1"
+    ...     progress, "escape-1"
     ... )
-    Traceback (most recent call last):
-    ...
-    RuntimeError: No Action remains to escape a grapple.
+    >>> (progress.messages[-1], progress.events[-1].data["reason_code"])
+    (('system', 'No Action remains to escape a grapple.'), 'action_spent')
     """
 
     creature_ref = state.current_decision().creature_ref
     creature_state = state.creatures[creature_ref]
     if creature_state.actions_remaining <= 0:
-        raise RuntimeError("No Action remains to escape a grapple.")
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="escape_grapple",
+            message="No Action remains to escape a grapple.",
+            reason_code="action_spent",
+        )
+        return
     if not isinstance(action.value, str):
-        raise ValueError("Escape grapple requires the grappler reference.")
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="escape_grapple",
+            message="Escape grapple requires the grappler reference.",
+            reason_code="source_required",
+        )
+        return
     grapple = next(
         (
             applied
@@ -107,8 +128,18 @@ def resolve_escape_action(
         None,
     )
     if grapple is None:
-        raise RuntimeError("That grapple is no longer active.")
-    state._consume_action(allow_magic=False)
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="escape_grapple",
+            message="That grapple is no longer active.",
+            reason_code="grapple_unavailable",
+            details={"source_ref": action.value},
+        )
+        return
+    consume_action(state, allow_magic=False)
     escape_dc = grapple.metadata["escape_dc"]
     if not isinstance(escape_dc, int):
         raise RuntimeError("Grapple escape DC must be an integer.")
@@ -122,14 +153,16 @@ def resolve_escape_action(
         "ability_check",
         ability=ability,
     )
+    roll_die = state.dice.roll_die
     check = resolve_d20(
-        modifier=modifier + roll_rules.resolve_modifier(_roll_die),
+        modifier=modifier + roll_rules.resolve_modifier(roll_die),
         mode=roll_rules.mode,
-        roller=_roll_die,
+        roller=roll_die,
     )
     success = check.total >= escape_dc
     if success:
-        state._remove_condition_from_source(
+        remove_condition_from_source(
+            state,
             creature_ref,
             Condition.GRAPPLED,
             action.value,
@@ -143,7 +176,8 @@ def resolve_escape_action(
         )
     )
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "action_resolved",
             creature_ref=creature_ref,
             action_id=action_id,

@@ -2,14 +2,14 @@
 
 from collections.abc import Callable
 
-from ...creatures.feature_rules.types import CapabilityActionResult
+from ...effects.results import ActionResolutionResult
 from ..resolution_steps.context import SpellActionContext
 
 DeclarativeSpellResolver = Callable[
     [SpellActionContext],
-    CapabilityActionResult,
+    ActionResolutionResult,
 ]
 CustomSpellResolver = Callable[
     [SpellActionContext, DeclarativeSpellResolver],
-    CapabilityActionResult,
+    ActionResolutionResult,
 ]

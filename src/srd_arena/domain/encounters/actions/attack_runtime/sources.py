@@ -7,7 +7,7 @@ from ....creatures import Creature
 from ....creatures.stat_block_actions import AttackActionDefinition
 from ....equipment import Item
 from ....geometry import Grid
-from ...models import AttackSource
+from ...encounter_models.resolution import AttackSource
 
 
 def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | None:

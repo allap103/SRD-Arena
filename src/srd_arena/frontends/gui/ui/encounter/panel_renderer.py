@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import textwrap
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 
 from PySide6.QtCore import Qt
@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 
 from srd_arena.application.api import ActionObservation, GameObservation
 
-from ....shared.models import EncounterView, ResourceSummaryView
+from ...presentation.models import EncounterView, ResourceSummaryView
 from .action_menus import group_actions
 from .config import (
     ENCOUNTER_BUTTON_HEIGHT,
@@ -68,7 +68,7 @@ class EncounterPanelCallbacks:
 
 
 class EncounterPanelRenderer:
-    """Populate encounter controls from frontend-neutral read models."""
+    """Populate encounter controls from GUI presentation models."""
 
     def __init__(
         self,
@@ -190,7 +190,7 @@ class EncounterPanelRenderer:
 
     def _render_direct_actions(
         self,
-        actions: list[ActionObservation],
+        actions: Sequence[ActionObservation],
         spells: list[ActionObservation],
         economy: str,
         rendered_target_modes: set[TargetSelectionMode],
@@ -305,7 +305,7 @@ class EncounterPanelRenderer:
     def _render_action_detail_column(
         self,
         title: str,
-        actions: list[ActionObservation],
+        actions: Sequence[ActionObservation],
         rendered_target_modes: set[TargetSelectionMode],
         scope: ActionMenuScope | None,
         target_layout: QVBoxLayout,
@@ -342,7 +342,7 @@ class EncounterPanelRenderer:
 
     def _render_feature_column(
         self,
-        feature_actions: list[ActionObservation],
+        feature_actions: Sequence[ActionObservation],
         rendered_target_modes: set[TargetSelectionMode],
         target_layout: QVBoxLayout,
     ) -> None:

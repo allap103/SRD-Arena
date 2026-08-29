@@ -4,11 +4,11 @@ import pytest
 
 from srd_arena.domain.encounters.continuations import ContinuationRunner
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import (
+from srd_arena.domain.encounters.encounter_models.decisions import (
     CloseParentDecision,
     DecisionFrame,
-    EncounterProgress,
 )
+from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 FULL_CONTROL_SCENARIO_DIR = (
@@ -38,7 +38,7 @@ def test_continuation_runner_rejects_out_of_order_completion() -> None:
         reason="test",
         parent_frame_id=parent.id,
     )
-    state.decision_stack = [parent, child]
+    state.interrupts.decision_stack = [parent, child]
     progress = EncounterProgress()
 
     with pytest.raises(
@@ -52,7 +52,7 @@ def test_continuation_runner_rejects_out_of_order_completion() -> None:
             progress=progress,
         )
 
-    assert state.decision_stack == [parent, child]
+    assert state.interrupts.decision_stack == [parent, child]
     assert progress.events == []
 
 
@@ -75,7 +75,7 @@ def test_continuation_runner_rejects_an_unrelated_parent_without_mutation() -> N
             action_id="test-action",
         ),
     )
-    state.decision_stack = [parent, child]
+    state.interrupts.decision_stack = [parent, child]
     progress = EncounterProgress()
 
     with pytest.raises(RuntimeError, match="cannot complete unrelated frame"):
@@ -86,5 +86,5 @@ def test_continuation_runner_rejects_an_unrelated_parent_without_mutation() -> N
             progress=progress,
         )
 
-    assert state.decision_stack == [parent, child]
+    assert state.interrupts.decision_stack == [parent, child]
     assert progress.events == []

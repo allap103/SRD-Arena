@@ -7,8 +7,11 @@ from dataclasses import dataclass
 
 from ....capabilities import DamageEffect
 from ....creatures import Creature
-from ....rolls.dice import D20RollMode, DicePoolResult, resolve_dice
-from ...models import AttackOutcome, AttackSource
+from ....rolls.dice import D20RollMode, DicePoolResult, DieRoller, resolve_dice
+from ...encounter_models.resolution import (
+    AttackOutcome,
+    AttackSource,
+)
 
 
 @dataclass(frozen=True)
@@ -29,7 +32,7 @@ def roll_attack_damage(
     *,
     critical_hit: bool,
     attack_roll_mode: D20RollMode,
-    roller: Callable[[int, int], int],
+    roller: DieRoller,
     sourced_modifier_for: Callable[[], int],
 ) -> AttackDamageResolution:
     """Roll primary and conditional additional damage in authored order.
@@ -40,7 +43,7 @@ def roll_attack_damage(
     ... )
     >>> resolved = roll_attack_damage(
     ...     source, critical_hit=False, attack_roll_mode="normal",
-    ...     roller=lambda count, sides: 4, sourced_modifier_for=lambda: 0,
+    ...     roller=lambda sides: 4, sourced_modifier_for=lambda: 0,
     ... )
     >>> (resolved.dice, resolved.roll.total, resolved.damage)
     ('1d8', 7, 7)
@@ -55,7 +58,7 @@ def roll_attack_damage(
         damage_die_count,
         damage_die_sides,
         modifier=attack_source.damage_bonus + sourced_modifier,
-        roller=lambda sides: roller(1, sides),
+        roller=roller,
     )
     damage_die_total = damage_roll.subtotal
     damage_total = damage_roll.total
@@ -76,7 +79,7 @@ def roll_attack_damage(
             extra_count,
             extra_sides,
             modifier=extra_bonus + extra_sourced_modifier,
-            roller=lambda sides: roller(1, sides),
+            roller=roller,
         )
         additional_damage += max(0, extra_roll.total)
         additional_damage_details.append(
@@ -125,6 +128,7 @@ def apply_attack_damage(
     *,
     attacker_label: str,
     target_label: str,
+    damage_receiver: Callable[[int, str | None], int] | None = None,
 ) -> None:
     """Apply a rolled attack to defenses and append its combat messages.
 
@@ -147,12 +151,15 @@ def apply_attack_damage(
         return
     damage_total = attack.damage_roll.total
     damage = max(1, damage_total) + attack.additional_damage
-    applied_damage = defender.take_damage(max(1, damage_total), attack.damage_type)
+    receive_damage = damage_receiver or (
+        lambda amount, _damage_type: defender.take_damage(amount)
+    )
+    applied_damage = receive_damage(max(1, damage_total), attack.damage_type)
     for detail in attack.additional_damage_details:
         extra_damage = detail.get("total", 0)
         extra_type = detail.get("damage_type")
         if isinstance(extra_damage, int):
-            applied_damage += defender.take_damage(
+            applied_damage += receive_damage(
                 extra_damage,
                 extra_type if isinstance(extra_type, str) else None,
             )

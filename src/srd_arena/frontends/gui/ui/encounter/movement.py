@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 
-from ....shared.models import BattlefieldView, EncounterView
+from ...presentation.models import BattlefieldView, EncounterView
 
 GridCell = tuple[int, int]
 MovementPath = tuple[str, ...]
@@ -37,7 +39,12 @@ class MovementPlan:
     """The currently previewed paths for one active creature."""
 
     creature_ref: str
-    paths: dict[GridCell, MovementPath]
+    paths: Mapping[GridCell, MovementPath]
+
+    def __post_init__(self) -> None:
+        """Detach the path lookup from the planner's mutable work table."""
+
+        object.__setattr__(self, "paths", MappingProxyType(dict(self.paths)))
 
     def path_to(self, destination: GridCell) -> MovementPath | None:
         """Return the previewed path to a destination, if one exists.

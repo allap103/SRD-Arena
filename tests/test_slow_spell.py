@@ -13,18 +13,36 @@ from srd_arena.content.spells import (
     build_spell as build_spell_schema,
 )
 from srd_arena.domain.effects import EffectResult
-from srd_arena.domain.effects.rule_effects import AttackLimit
+from srd_arena.domain.effects.rule_effects import (
+    ActionEconomyRestriction,
+    ArmorClassAdjustment,
+    AttackLimit,
+    InvocationFailureChance,
+    ReactionProhibition,
+    RollAdjustment,
+    SpeedMultiplier,
+)
 from srd_arena.domain.effects.runtime import EffectPolarity, OngoingEffectKind
 from srd_arena.domain.encounters import EncounterOrchestrator
+from srd_arena.domain.encounters.creature_control import creature_action_candidates
+from srd_arena.domain.encounters.effect_lifecycle.repeat_saves import (
+    resolve_end_turn_effects,
+)
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import EncounterProgress
-from srd_arena.domain.encounters.ongoing_effects import resolve_end_turn_effects
+from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
+from srd_arena.domain.encounters.participants import creature_controller
+from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
 from srd_arena.domain.geometry import Position
+from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.domain.spells import Spell
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import ActionAim
 from srd_arena.engine.session import Session
 from srd_arena.infrastructure.scenarios import load_scenario_directory
+from tests.encounter_runtime_support import active_creature as _active_creature
+from tests.encounter_runtime_support import (
+    use_deterministic_dice as _use_deterministic_dice,
+)
 
 _ORCHESTRATOR = EncounterOrchestrator()
 
@@ -51,7 +69,7 @@ def _player_first_initiative(
         first_external_ref = next(
             creature_ref
             for creature_ref in self.creatures
-            if self._creature_controller(creature_ref) == "external"
+            if creature_controller(self, creature_ref) == "external"
         )
         self.initiative_order = [
             first_external_ref,
@@ -62,7 +80,7 @@ def _player_first_initiative(
             ),
         ]
 
-    monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
+    monkeypatch.setattr(EncounterState, "roll_initiative", _fixed_initiative)
 
 
 def _choose_directional_spell(
@@ -80,9 +98,7 @@ def _choose_directional_spell(
     )
 
 
-def test_slow_cast_groups_failed_targets_under_one_typed_effect(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -91,7 +107,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -116,16 +132,13 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
         "goblin_1",
     ).speed.value
     rolls = iter((1, 20, 1))
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: next(rolls),
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
     _choose_directional_spell(session, "Cast Slow", (7, 5))
 
     assert state.current_decision().kind == "spell_targets"
-    assert state.pending_spell_cast is not None
-    assert state.pending_spell_cast.maximum_targets == 3
+    assert state.interrupts.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast.maximum_targets == 3
     confirm = next(
         action
         for action in state.available_actions()
@@ -206,34 +219,17 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
         assert isinstance(detail, Mapping)
         successes.append(detail["success"])
     assert successes == [False, True, False]
-    exported_effects = state.export_state()["ongoing_effects"]
-    assert isinstance(exported_effects, list)
-    exported: Mapping[str, object] | None = None
-    for effect in exported_effects:
-        if isinstance(effect, Mapping) and effect.get("id") == slow.identity.id:
-            exported = effect
-            break
-    assert exported is not None
-    rule_effects = exported["rule_effects"]
-    assert isinstance(rule_effects, list)
-    rule_effect_types: list[object] = []
-    for effect in rule_effects:
-        assert isinstance(effect, Mapping)
-        rule_effect_types.append(effect["type"])
-    assert rule_effect_types == [
-        "speed_multiplier",
-        "armor_class_adjustment",
-        "roll_adjustment",
-        "reaction_prohibition",
-        "action_economy_restriction",
-        "attack_limit",
-        "invocation_failure_chance",
-    ]
-    repeat_progress = EncounterProgress()
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 20,
+    assert tuple(type(effect) for effect in slow.rule_effects) == (
+        SpeedMultiplier,
+        ArmorClassAdjustment,
+        RollAdjustment,
+        ReactionProhibition,
+        ActionEconomyRestriction,
+        AttackLimit,
+        InvocationFailureChance,
     )
+    repeat_progress = EncounterProgress()
+    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
 
     resolve_end_turn_effects(
         state,
@@ -272,9 +268,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect(
     )
 
 
-def test_slow_chosen_area_never_exceeds_six_targets(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_slow_chosen_area_never_exceeds_six_targets() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -283,7 +277,7 @@ def test_slow_chosen_area_never_exceeds_six_targets(
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
         _build_referenced_spell(
@@ -298,18 +292,15 @@ def test_slow_chosen_area_never_exceeds_six_targets(
         if target_ref not in state.creatures:
             state.creatures[target_ref] = deepcopy(state.creatures["goblin_1"])
         state.creatures[target_ref].position = Position(index, 6)
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     _choose_directional_spell(session, "Cast Slow", (8, 6))
 
     assert state.current_decision().kind == "spell_targets"
-    assert state.pending_spell_cast is not None
-    assert state.pending_spell_cast.maximum_targets == 6
-    assert len(state.pending_spell_cast.selected_target_refs) == 6
-    selected = set(state.pending_spell_cast.selected_target_refs)
+    assert state.interrupts.pending_spell_cast is not None
+    assert state.interrupts.pending_spell_cast.maximum_targets == 6
+    assert len(state.interrupts.pending_spell_cast.selected_target_refs) == 6
+    selected = set(state.interrupts.pending_spell_cast.selected_target_refs)
     unselected = next(
         target_ref for target_ref in target_refs if target_ref not in selected
     )
@@ -326,8 +317,8 @@ def test_slow_chosen_area_never_exceeds_six_targets(
     )
     _ORCHESTRATOR.submit(state, add)
 
-    assert state.pending_spell_cast is not None
-    assert len(state.pending_spell_cast.selected_target_refs) == 6
+    assert state.interrupts.pending_spell_cast is not None
+    assert len(state.interrupts.pending_spell_cast.selected_target_refs) == 6
 
 
 def _assassin_showcase_state() -> EncounterState:
@@ -339,7 +330,7 @@ def _assassin_showcase_state() -> EncounterState:
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    state.turn_index = state.initiative_order.index("assassin")
+    state.turn.index = state.initiative_order.index("assassin")
     assassin = state.active_creature_state
     assassin.actions_remaining = 1
     assassin.attacks_remaining = 0
@@ -350,12 +341,11 @@ def _assassin_showcase_state() -> EncounterState:
     return state
 
 
-def test_slow_limits_attacks_made_through_multiattack(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_slow_limits_attacks_made_through_multiattack() -> None:
     state = _assassin_showcase_state()
     assassin = state.active_creature_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -365,7 +355,6 @@ def test_slow_limits_attacks_made_through_multiattack(
                     "source_ref": "avatar",
                     "source_label": "Slow",
                     "definition_id": "slow",
-                    "parameters": {},
                 },
                 rule_effects=(AttackLimit(1),),
             )
@@ -383,13 +372,8 @@ def test_slow_limits_attacks_made_through_multiattack(
     assert assassin.attack_action_attacks_used == 0
     assert assassin.attacks_remaining == 1
 
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 20,
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda count, _sides: count,
+    state.dice = DiceRoller(
+        die_roller=lambda sides: 20 if sides == 20 else 1,
     )
     light_crossbow = next(
         action
@@ -410,12 +394,11 @@ def test_slow_limits_attacks_made_through_multiattack(
     assert attack_event.data["attacks_remaining"] == 0
 
 
-def test_ending_slow_mid_multiattack_restores_pending_attacks(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_ending_slow_mid_multiattack_restores_pending_attacks() -> None:
     state = _assassin_showcase_state()
     assassin = state.active_creature_state
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -425,21 +408,16 @@ def test_ending_slow_mid_multiattack_restores_pending_attacks(
                     "source_ref": "assassin_target",
                     "source_label": "Slow",
                     "definition_id": "slow",
-                    "parameters": {"effect_label": "Slow"},
                 },
+                effect_label="Slow",
                 rule_effects=(AttackLimit(1),),
             )
         ],
         origin_id="slow-breakable-multiattack",
     )
-    rolls = iter((20, 1))
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: next(rolls),
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda count, _sides: count,
+    d20_rolls = iter((20, 1))
+    state.dice = DiceRoller(
+        die_roller=lambda sides: next(d20_rolls) if sides == 20 else 1,
     )
 
     multiattack = next(
@@ -467,9 +445,7 @@ def test_ending_slow_mid_multiattack_restores_pending_attacks(
     ) in resolved.messages
 
 
-def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -478,7 +454,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
 
     assert session.encounter_state is not None
     state = session.encounter_state
-    caster = session.decision_creature
+    caster = _active_creature(session)
     assert caster.spellcasting is not None
     catalog = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     caster.spellcasting.learned_spells.extend(
@@ -491,10 +467,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
     caster.spellcasting.spell_slots_remaining[1] = 1
     caster.current_health = caster.get_max_health() - 5
     rolls = iter((1, 1))
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: next(rolls),
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
     _choose_directional_spell(
         session,
@@ -529,7 +502,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
     assert first_check["code"] == ("slow.somatic_spell_failure")
     second_wind = next(
         action
-        for action in state._creature_action_candidates("player")
+        for action in creature_action_candidates(state, "player")
         if action.label == "Second Wind"
     )
     compatibility = state.combat_rules.action_compatibility(
@@ -541,9 +514,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell(
     assert compatibility.failures[-1].code == "effect.action_economy_conflict"
 
 
-def test_ending_slow_mid_attack_restores_unused_extra_attack(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_ending_slow_mid_attack_restores_unused_extra_attack() -> None:
     session = load_scenario_directory(
         str(TACTICAL_SCENARIO_DIR),
         start_scene="goblin_encounter",
@@ -557,7 +528,8 @@ def test_ending_slow_mid_attack_restores_unused_extra_attack(
     actor.position = Position(4, 3)
     state.creatures["goblin_1"].position = Position(4, 2)
     state.creatures["goblin_1"].creature.current_health = 20
-    state._apply_effects(
+    apply_encounter_effects(
+        state,
         [
             EffectResult(
                 kind="start_ongoing_effect",
@@ -567,21 +539,17 @@ def test_ending_slow_mid_attack_restores_unused_extra_attack(
                     "source_ref": "goblin_1",
                     "source_label": "Goblin Warrior",
                     "definition_id": "slow",
-                    "parameters": {"effect_label": "Slow"},
                 },
+                effect_label="Slow",
                 rule_effects=(AttackLimit(1),),
             )
         ],
         origin_id="slow-breakable-concentration",
     )
-    rolls = iter((20, 1))
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: next(rolls),
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice",
-        lambda _count, _sides: 1,
+    d20_rolls = iter((20, 1))
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: next(d20_rolls) if sides == 20 else 1,
     )
 
     attack = next(

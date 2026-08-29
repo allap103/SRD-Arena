@@ -13,6 +13,7 @@ ExclusionReason = Literal[
     "abstract",
     "property_setter",
     "private_owner",
+    "qt_bound_callable",
     "qt_widget_method",
     "qt_override",
 ]
@@ -39,6 +40,18 @@ def _decorator_name(node: ast.expr) -> str:
     if isinstance(node, ast.Attribute):
         return node.attr
     return ""
+
+
+def _annotation_names(node: ast.expr | None) -> set[str]:
+    """Return simple and qualified names appearing in one annotation."""
+
+    if node is None:
+        return set()
+    return {
+        child.id if isinstance(child, ast.Name) else child.attr
+        for child in ast.walk(node)
+        if isinstance(child, (ast.Name, ast.Attribute))
+    }
 
 
 @dataclass(frozen=True)
@@ -161,6 +174,24 @@ class _CallableCollector(ast.NodeVisitor):
             return "property_setter"
         if any(is_qt for _name, _protocol, _private, is_qt in self._classes):
             return "qt_widget_method"
+        annotations = (
+            *(argument.annotation for argument in node.args.posonlyargs),
+            *(argument.annotation for argument in node.args.args),
+            *(argument.annotation for argument in node.args.kwonlyargs),
+            node.args.vararg.annotation if node.args.vararg is not None else None,
+            node.args.kwarg.annotation if node.args.kwarg is not None else None,
+            node.returns,
+        )
+        if (
+            "frontends" in self.path.parts
+            and "gui" in self.path.parts
+            and any(
+                name.startswith("Q")
+                for annotation in annotations
+                for name in _annotation_names(annotation)
+            )
+        ):
+            return "qt_bound_callable"
         if (
             "frontends" in self.path.parts
             and "gui" in self.path.parts

@@ -8,6 +8,7 @@ from ..effects.condition_rules import (
     EffectiveConditionSet,
     effective_conditions,
 )
+from ..effects.conditions import Condition
 from ..effects.modifiers import ModifierSubject, RollKind
 from ..rolls.dice import DieRoller
 from .actions.eligibility import (
@@ -21,20 +22,34 @@ from .rule_queries import (
     MovementQueryResult,
     NumericRuleResult,
     RollRuleResult,
+    SenseRuleResult,
+    SetRuleResult,
     action_compatibility,
+    apply_damage,
+    apply_healing,
     attack_limit,
+    condition_immunities,
+    condition_suppressions,
+    damage_resistances,
     effective_armor_class,
+    effective_maximum_health,
     effective_speed,
+    has_condition_save_advantage,
     invocation_start_checks,
     movement_budget,
     reaction_eligibility,
+    reset_damage_reductions,
     resolve_invocation_start,
     roll_modifiers,
+    sense_range,
 )
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
-    from .models import CreatureRef, EncounterAction
+    from .encounter_models.actions import (
+        CreatureRef,
+        EncounterAction,
+    )
 
 
 class CombatRules:
@@ -49,20 +64,109 @@ class CombatRules:
         state: EncounterState,
         creature_ref: CreatureRef,
     ) -> EffectiveConditionSet:
-        """Resolve active conditions after immunity and implication rules.
+        """Resolve active conditions after suppression and implication rules.
 
         >>> from unittest.mock import Mock
         >>> creature = Mock()
         >>> creature.statistics.condition_immunities = frozenset()
-        >>> state = Mock(creatures={"hero": Mock(creature=creature)})
+        >>> state = Mock(
+        ...     creatures={"hero": Mock(creature=creature)},
+        ...     ongoing_effects=[],
+        ... )
         >>> state.conditions_for.return_value = ()
         >>> CombatRules().effective_conditions(state, "hero").conditions
         ()
         """
         return effective_conditions(
             state.conditions_for(creature_ref),
-            state.creatures[creature_ref].creature.statistics.condition_immunities,
+            self.condition_suppressions(state, creature_ref).values,
         )
+
+    def condition_immunities(
+        self,
+        state: EncounterState,
+        creature_ref: CreatureRef,
+    ) -> SetRuleResult[Condition]:
+        """Return intrinsic and effect-granted condition immunities."""
+
+        return condition_immunities(state, creature_ref)
+
+    def condition_suppressions(
+        self,
+        state: EncounterState,
+        creature_ref: CreatureRef,
+    ) -> SetRuleResult[Condition]:
+        """Return conditions explicitly suspended by ongoing effects."""
+
+        return condition_suppressions(state, creature_ref)
+
+    def damage_resistances(
+        self,
+        state: EncounterState,
+        creature_ref: CreatureRef,
+    ) -> SetRuleResult[str]:
+        """Return intrinsic and effect-granted damage resistances."""
+
+        return damage_resistances(state, creature_ref)
+
+    def sense_range(
+        self,
+        state: EncounterState,
+        creature_ref: CreatureRef,
+        sense: str,
+    ) -> SenseRuleResult:
+        """Return intrinsic and effect-granted range for one sense."""
+
+        return sense_range(state, creature_ref, sense)
+
+    def has_condition_save_advantage(
+        self,
+        state: EncounterState,
+        creature_ref: CreatureRef,
+        conditions: tuple[str, ...],
+    ) -> bool:
+        """Return whether an effect helps saves against listed conditions."""
+
+        return has_condition_save_advantage(state, creature_ref, conditions)
+
+    def effective_maximum_health(
+        self,
+        state: EncounterState,
+        creature_ref: CreatureRef,
+    ) -> NumericRuleResult:
+        """Return intrinsic maximum HP plus ongoing adjustments."""
+
+        return effective_maximum_health(state, creature_ref)
+
+    def apply_damage(
+        self,
+        state: EncounterState,
+        creature_ref: CreatureRef,
+        amount: int,
+        damage_type: str | None = None,
+    ) -> int:
+        """Apply encounter defenses and then mutate creature health."""
+
+        return apply_damage(state, creature_ref, amount, damage_type)
+
+    def apply_healing(
+        self,
+        state: EncounterState,
+        creature_ref: CreatureRef,
+        amount: int,
+    ) -> int:
+        """Heal without exceeding effect-adjusted maximum HP."""
+
+        return apply_healing(state, creature_ref, amount)
+
+    def reset_damage_reductions(
+        self,
+        state: EncounterState,
+        creature_ref: CreatureRef,
+    ) -> None:
+        """Restore once-per-turn defensive contributions."""
+
+        reset_damage_reductions(state, creature_ref)
 
     def action_eligibility(
         self,
@@ -73,7 +177,7 @@ class CombatRules:
         """Return every rule failure that prevents selecting an action.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.domain.encounters.models import EncounterAction
+        >>> from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
         >>> actor = Mock(is_alive=True, movement_remaining=0, actions_remaining=1,
         ...     bonus_action_available=True, bonus_action_used_this_turn=False,
         ...     action_used_this_turn=False)
@@ -95,7 +199,7 @@ class CombatRules:
         """Check actor identity, survival, permissions, and action economy.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.domain.encounters.models import EncounterAction
+        >>> from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
         >>> actor = Mock(is_alive=True, actions_remaining=1,
         ...     bonus_action_available=True, bonus_action_used_this_turn=False,
         ...     action_used_this_turn=False)
@@ -134,7 +238,7 @@ class CombatRules:
 
         >>> from unittest.mock import Mock
         >>> attributes = Mock(base_armor_class=15, dexterity=14)
-        >>> creature = Mock(attributes=attributes, armor_class_modifier_sources={})
+        >>> creature = Mock(attributes=attributes)
         >>> creature.get_modifier.return_value = 2
         >>> state = Mock(creatures={"hero": Mock(creature=creature)}, ongoing_effects=[])
         >>> CombatRules().effective_armor_class(state, "hero").value
@@ -151,7 +255,7 @@ class CombatRules:
 
         >>> from unittest.mock import Mock
         >>> movement = Mock(effective_speed_feet=30)
-        >>> creature = Mock(speed_modifier_sources={}, attributes=Mock(movement=movement))
+        >>> creature = Mock(attributes=Mock(movement=movement))
         >>> creature.condition_immunities.return_value = frozenset()
         >>> state = Mock(creatures={"hero": Mock(creature=creature)},
         ...     ongoing_effects=[], conditions=[])
@@ -170,7 +274,7 @@ class CombatRules:
         >>> from unittest.mock import Mock
         >>> from srd_arena.domain.geometry import Grid
         >>> movement = Mock(effective_speed_feet=30)
-        >>> creature = Mock(speed_modifier_sources={}, attributes=Mock(movement=movement))
+        >>> creature = Mock(attributes=Mock(movement=movement))
         >>> creature.condition_immunities.return_value = frozenset()
         >>> state = Mock(creatures={"hero": Mock(creature=creature)},
         ...     ongoing_effects=[], conditions=[], definition=Mock(grid=Grid(5, 5)))
@@ -206,8 +310,7 @@ class CombatRules:
         """Collect modifiers matching a particular roll context.
 
         >>> from unittest.mock import Mock
-        >>> creature = Mock(roll_modifier_sources={})
-        >>> state = Mock(creatures={"hero": Mock(creature=creature)}, ongoing_effects=[])
+        >>> state = Mock(ongoing_effects=[])
         >>> CombatRules().roll_modifiers(state, "hero", "saving_throw").mode
         'normal'
         """

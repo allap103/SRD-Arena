@@ -6,7 +6,10 @@ from typing import TYPE_CHECKING
 
 from ....creatures import AutomaticActionDefinition, SavingThrowActionDefinition
 from ....geometry import grid_distance_between
-from ...models import CreatureRef, EncounterAction
+from ...encounter_models.actions import (
+    CreatureRef,
+    EncounterAction,
+)
 from ..stat_block import (
     stat_block_action_resource_available,
     stat_block_action_runtime_issue,

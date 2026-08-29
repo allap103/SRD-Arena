@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from srd_arena.domain.encounters.models import EncounterAction
+from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
 from srd_arena.domain.spells.rules import (
     parse_spell_action_ability,
     parse_spell_action_condition,

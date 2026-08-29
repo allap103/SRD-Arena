@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...models import CreatureRef, EncounterAction
+from ...encounter_models.actions import (
+    CreatureRef,
+    EncounterAction,
+)
 from ..eligibility import action_eligibility
 from .attacks import attack_action_candidates
 from .movement_candidates import movement_action_candidates

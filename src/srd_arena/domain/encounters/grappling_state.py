@@ -17,7 +17,9 @@ from .condition_state import (
     apply_condition,
     condition_sources_for,
 )
-from .models import CreatureRef
+from .effect_lifecycle.concentration import end_concentration
+from .encounter_models.actions import CreatureRef
+from .state_runtime import creature_size
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -32,12 +34,11 @@ def apply_grapple(
     >>> from types import SimpleNamespace
     >>> from ..effects.conditions import build_applied_condition
     >>> creature = SimpleNamespace(
-    ...     condition_immunities=lambda: frozenset(),
     ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
-    ...     conditions=[], relationships=[],
+    ...     conditions=[], relationships=[], ongoing_effects=[],
     ... )
     >>> applied = build_applied_condition(
     ...     condition=Condition.GRAPPLED, source_ref="ogre",
@@ -99,17 +100,15 @@ def remove_relationships_for_creature(
     ... )
     >>> condition = SimpleNamespace(id="condition-1")
     >>> state = SimpleNamespace(
-    ...     relationships=[relationship], conditions=[condition]
+    ...     relationships=[relationship], conditions=[condition],
+    ...     ongoing_effects=[],
     ... )
     >>> remove_relationships_for_creature(state, "ogre")
     >>> (state.relationships, state.conditions)
     ([], [])
     """
 
-    from .ongoing_effects import end_concentration
-
-    if hasattr(state, "ongoing_effects"):
-        end_concentration(state, creature_ref)
+    end_concentration(state, creature_ref)
     grapple_condition_ids = {
         relationship.identity.parent_id
         for relationship in state.relationships
@@ -211,7 +210,10 @@ def movement_cost_for(
     ... )
     >>> state = SimpleNamespace(
     ...     conditions=[], relationships=[relationship],
-    ...     _creature_size=lambda ref: {"ogre": "L", "hero": "M"}[ref],
+    ...     creatures={
+    ...         "ogre": SimpleNamespace(creature=SimpleNamespace(size="L")),
+    ...         "hero": SimpleNamespace(creature=SimpleNamespace(size="M")),
+    ...     },
     ... )
     >>> movement_cost_for(state, "ogre")
     2
@@ -220,10 +222,10 @@ def movement_cost_for(
     if is_grappled(state, creature_ref):
         return None
     cost = 1
-    grappler_size = state._creature_size(creature_ref)
+    grappler_size = creature_size(state, creature_ref)
     for target_ref in grappling_targets_for(state, creature_ref):
         if not is_two_sizes_smaller(
-            state._creature_size(target_ref),
+            creature_size(state, target_ref),
             grappler_size,
         ):
             cost += 1

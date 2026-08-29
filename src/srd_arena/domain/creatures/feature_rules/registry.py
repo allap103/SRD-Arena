@@ -2,13 +2,28 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import Protocol
 
+from ...effects.results import ActionResolutionResult
+from ...rolls.dice import DieRoller
 from ..model import Creature
+from .contracts import HealingReceiver
 from .fighter import resolve_fighter_feature
-from .types import CapabilityActionResult, DiceRoller
 
-FeatureResolver = Callable[[Creature, str, DiceRoller], CapabilityActionResult | None]
+
+class FeatureResolver(Protocol):
+    """Resolve one class feature for an explicitly identified encounter actor."""
+
+    def __call__(
+        self,
+        creature: Creature,
+        feature_id: str,
+        roll_die: DieRoller,
+        heal: HealingReceiver,
+        *,
+        actor_ref: str,
+    ) -> ActionResolutionResult | None: ...
+
 
 CLASS_FEATURE_RESOLVERS: dict[str, FeatureResolver] = {
     "fighter": resolve_fighter_feature,
@@ -18,9 +33,12 @@ CLASS_FEATURE_RESOLVERS: dict[str, FeatureResolver] = {
 def resolve_feature_action(
     creature: Creature,
     feature_id: str,
-    roll_dice: DiceRoller,
-) -> CapabilityActionResult | None:
-    """Dispatch a feature identifier to the domain handler registered for it.
+    roll_die: DieRoller,
+    heal: HealingReceiver,
+    *,
+    actor_ref: str,
+) -> ActionResolutionResult | None:
+    """Dispatch a feature with the acting encounter participant's identity.
 
     >>> from ..attributes import Attributes
     >>> from ..classes import ClassRef
@@ -33,9 +51,10 @@ def resolve_feature_action(
     ...     feature_uses_remaining={"action_surge": 1},
     ... )
     >>> result = resolve_feature_action(
-    ...     fighter, "action_surge", lambda count, sides: count
+    ...     fighter, "action_surge", lambda sides: sides, fighter.heal,
+    ...     actor_ref="participant:fighter",
     ... )
-    >>> result.capability_name if result else None
+    >>> result.definition_name if result else None
     'Action Surge'
     """
 
@@ -45,4 +64,10 @@ def resolve_feature_action(
     class_resolver = CLASS_FEATURE_RESOLVERS.get(class_name)
     if class_resolver is None:
         return None
-    return class_resolver(creature, feature_id, roll_dice)
+    return class_resolver(
+        creature,
+        feature_id,
+        roll_die,
+        heal,
+        actor_ref=actor_ref,
+    )

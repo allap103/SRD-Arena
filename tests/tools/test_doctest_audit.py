@@ -21,6 +21,9 @@ def covered():
 def missing():
     """Lack an executable example."""
 
+def paint_scene(painter: QPainter):
+    """Require a live Qt painter."""
+
 class Port(Protocol):
     def read(self): ...
 
@@ -42,6 +45,7 @@ class Panel(QWidget):
     assert {entry.exclusion for entry in audit.entries} == {
         None,
         "protocol",
+        "qt_bound_callable",
         "qt_widget_method",
         "qt_override",
     }

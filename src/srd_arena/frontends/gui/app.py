@@ -13,9 +13,9 @@ from srd_arena.application.api import (
     ScenarioPresentation,
 )
 
-from ..shared.dice import build_roll_views, without_roll_details
-from ..shared.models import SessionPresentation
-from ..shared.session import build_session_presentation
+from .presentation.dice import build_roll_views, without_roll_details
+from .presentation.models import SessionPresentation
+from .presentation.session import build_session_presentation
 from .presenter import GamePresenter
 from .ui.encounter import (
     ActionMenuScope,

@@ -12,6 +12,8 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from ..rolls.dice import DieRoller
+    from .conditions import Condition
     from .modifiers import RollModifier
 
 
@@ -48,6 +50,104 @@ class SpeedMultiplier:
             raise ValueError("Speed multiplier numerator cannot be negative.")
         if self.denominator <= 0:
             raise ValueError("Speed multiplier denominator must be positive.")
+
+
+@dataclass(frozen=True)
+class MaximumHitPointAdjustment:
+    """Adjust maximum HP and record whether current HP changes with it."""
+
+    value: int
+    also_modify_current: bool = False
+
+
+@dataclass(frozen=True)
+class DamageResistance:
+    """Grant resistance to one or more normalized damage types."""
+
+    damage_types: frozenset[str]
+
+    def __post_init__(self) -> None:
+        normalized = frozenset(value.casefold() for value in self.damage_types)
+        if not normalized:
+            raise ValueError("Damage resistance requires at least one damage type.")
+        object.__setattr__(self, "damage_types", normalized)
+
+
+@dataclass
+class DamageReduction:
+    """Reduce matching damage once before being restored at turn start."""
+
+    damage_type: str
+    dice: str
+    available: bool = True
+
+    def __post_init__(self) -> None:
+        self.damage_type = self.damage_type.casefold()
+
+    def resolve(self, roller: DieRoller) -> int:
+        """Resolve and consume this reduction when it is available.
+
+        >>> reduction = DamageReduction("Fire", "1d4")
+        >>> (reduction.resolve(lambda _sides: 3), reduction.resolve(lambda _sides: 4))
+        (3, 0)
+        """
+
+        if not self.available:
+            return 0
+        count_text, sides_text = self.dice.casefold().split("d", 1)
+        self.available = False
+        return sum(roller(int(sides_text)) for _ in range(int(count_text)))
+
+
+@dataclass(frozen=True)
+class ConditionImmunity:
+    """Grant immunity to the listed conditions while its effect remains active."""
+
+    conditions: frozenset[Condition]
+
+    def __post_init__(self) -> None:
+        if not self.conditions:
+            raise ValueError("Condition immunity requires at least one condition.")
+
+
+@dataclass(frozen=True)
+class ConditionSuppression:
+    """Suspend existing instances of listed conditions without removing them."""
+
+    conditions: frozenset[Condition]
+
+    def __post_init__(self) -> None:
+        if not self.conditions:
+            raise ValueError("Condition suppression requires at least one condition.")
+
+
+@dataclass(frozen=True)
+class ConditionSaveAdvantage:
+    """Grant advantage on saves made to avoid or end listed conditions."""
+
+    conditions: frozenset[Condition]
+
+    def __post_init__(self) -> None:
+        if not self.conditions:
+            raise ValueError(
+                "Condition save advantage requires at least one condition."
+            )
+
+
+@dataclass(frozen=True)
+class GrantedSense:
+    """Grant a named sense out to a positive range in feet."""
+
+    sense: str
+    range_feet: int
+
+    def __post_init__(self) -> None:
+        normalized = self.sense.casefold()
+        if not normalized:
+            raise ValueError("Granted sense requires a name.")
+        if self.range_feet <= 0:
+            raise ValueError("Granted sense range must be positive.")
+        object.__setattr__(self, "sense", normalized)
 
 
 @dataclass(frozen=True)
@@ -118,6 +218,13 @@ type RuntimeRuleEffect = (
     ArmorClassAdjustment
     | SpeedAdjustment
     | SpeedMultiplier
+    | MaximumHitPointAdjustment
+    | DamageResistance
+    | DamageReduction
+    | ConditionImmunity
+    | ConditionSuppression
+    | ConditionSaveAdvantage
+    | GrantedSense
     | RollAdjustment
     | ReactionProhibition
     | ActionEconomyRestriction
@@ -144,6 +251,45 @@ def serialize_runtime_rule_effect(
             "type": "speed_multiplier",
             "numerator": effect.numerator,
             "denominator": effect.denominator,
+        }
+    if isinstance(effect, MaximumHitPointAdjustment):
+        return {
+            "type": "maximum_hit_point_adjustment",
+            "value": effect.value,
+            "also_modify_current": effect.also_modify_current,
+        }
+    if isinstance(effect, DamageResistance):
+        return {
+            "type": "damage_resistance",
+            "damage_types": sorted(effect.damage_types),
+        }
+    if isinstance(effect, DamageReduction):
+        return {
+            "type": "damage_reduction",
+            "damage_type": effect.damage_type,
+            "dice": effect.dice,
+            "available": effect.available,
+        }
+    if isinstance(effect, ConditionImmunity):
+        return {
+            "type": "condition_immunity",
+            "conditions": sorted(condition.value for condition in effect.conditions),
+        }
+    if isinstance(effect, ConditionSuppression):
+        return {
+            "type": "condition_suppression",
+            "conditions": sorted(condition.value for condition in effect.conditions),
+        }
+    if isinstance(effect, ConditionSaveAdvantage):
+        return {
+            "type": "condition_save_advantage",
+            "conditions": sorted(condition.value for condition in effect.conditions),
+        }
+    if isinstance(effect, GrantedSense):
+        return {
+            "type": "granted_sense",
+            "sense": effect.sense,
+            "range_feet": effect.range_feet,
         }
     if isinstance(effect, RollAdjustment):
         modifier = effect.modifier

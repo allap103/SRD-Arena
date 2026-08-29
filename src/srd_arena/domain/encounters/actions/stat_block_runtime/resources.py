@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ....capabilities import RechargePool
 from ....creatures import Creature
-from .rolls import roll_die
+from ....rolls.dice import DieRoller
 
 
 def stat_block_action_resource_available(
@@ -51,21 +51,19 @@ def consume_stat_block_action_resource(
         creature.stat_block_action_resources[action_name] -= 1
 
 
-def recharge_stat_block_actions(creature: Creature) -> None:
+def recharge_stat_block_actions(
+    creature: Creature,
+    roller: DieRoller,
+) -> None:
     """Roll recharge pools that are empty at the start of a turn.
 
     >>> from types import SimpleNamespace
-    >>> from unittest.mock import patch
     >>> definition = SimpleNamespace(resource_pool=RechargePool("breath", 6, 5))
     >>> creature = SimpleNamespace(
     ...     stat_block_actions={"Breath": definition},
     ...     stat_block_action_resources={"Breath": 0},
     ... )
-    >>> with patch(
-    ...     "srd_arena.domain.encounters.actions.stat_block_runtime.resources.roll_die",
-    ...     return_value=6,
-    ... ):
-    ...     recharge_stat_block_actions(creature)
+    >>> recharge_stat_block_actions(creature, lambda _sides: 6)
     >>> creature.stat_block_action_resources["Breath"]
     1
     """
@@ -75,5 +73,5 @@ def recharge_stat_block_actions(creature: Creature) -> None:
             continue
         if creature.stat_block_action_resources.get(name, 1) > 0:
             continue
-        if roll_die(resource_pool.die_sides) >= resource_pool.minimum:
+        if roller(resource_pool.die_sides) >= resource_pool.minimum:
             creature.stat_block_action_resources[name] = 1

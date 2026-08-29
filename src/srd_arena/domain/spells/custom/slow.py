@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from ...creatures.feature_rules.types import CapabilityActionResult
 from ...effects.modifiers import RollModifier
-from ...effects.results import EffectResult
+from ...effects.results import ActionResolutionResult, EffectResult
 from ...effects.rule_effects import (
     ActionEconomyKind,
     ActionEconomyRestriction,
@@ -17,6 +16,7 @@ from ...effects.rule_effects import (
     RollAdjustment,
     SpeedMultiplier,
 )
+from ...effects.runtime import OngoingEffectLifecycle, RepeatSaveLifecycle
 from ..properties import spell_duration_rounds
 from ..resolution_steps.context import SpellActionContext
 from .types import DeclarativeSpellResolver
@@ -25,13 +25,13 @@ from .types import DeclarativeSpellResolver
 def resolve_slow(
     context: SpellActionContext,
     resolve_declarative: DeclarativeSpellResolver,
-) -> CapabilityActionResult:
+) -> ActionResolutionResult:
     """Resolve common targeting/saves, then attach Slow's grouped rule state.
 
     A casting that affects no targets retains only its declarative result.
 
     >>> from types import SimpleNamespace
-    >>> result = CapabilityActionResult("slow", "Slow", [], [], details={})
+    >>> result = ActionResolutionResult("slow", "Slow", [], [], details={})
     >>> context = SimpleNamespace()
     >>> resolve_slow(context, lambda current: result) is result
     True
@@ -54,16 +54,16 @@ def resolve_slow(
             "definition_id": context.spell.id,
             "target_refs": list(affected_target_refs),
             "duration_rounds": spell_duration_rounds(context.spell),
-            "parameters": {
-                "effect_label": context.spell.name,
-                "started_round": context.current_round,
-                "repeat_save_trigger": "end_of_turn",
-                "save_ability": "wisdom",
-                "save_dc": context.creature.spellcasting.save_dc,
-                "repeat_failure_conditions": [],
-                "repeat_failure_damage": [],
-            },
         },
+        effect_label=context.spell.name,
+        lifecycle=OngoingEffectLifecycle(
+            started_round=context.current_round,
+            repeat_save=RepeatSaveLifecycle(
+                trigger="end_of_turn",
+                ability="wisdom",
+                dc=context.creature.spellcasting.save_dc,
+            ),
+        ),
         rule_effects=(
             SpeedMultiplier(1, 2),
             ArmorClassAdjustment(-2),
@@ -105,7 +105,7 @@ def resolve_slow(
 
 
 def _affected_target_refs(
-    result: CapabilityActionResult,
+    result: ActionResolutionResult,
 ) -> tuple[str, ...]:
     value = result.details.get("affected_target_refs")
     if not isinstance(value, list):

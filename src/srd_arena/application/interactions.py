@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from srd_arena.domain.encounters.models import CombatEvent
+from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
 from srd_arena.engine.api import GameEngine
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import ActionAim, ActionResourceAllocation

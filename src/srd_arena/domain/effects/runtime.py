@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
 from .rule_effects import RuntimeRuleEffect
+
+if TYPE_CHECKING:
+    from .conditions import Condition
 
 
 class EffectSourceKind(StrEnum):
@@ -126,6 +130,45 @@ class EffectTag(StrEnum):
 
 
 @dataclass(frozen=True)
+class RepeatedDamage:
+    """Describe damage dealt after a failed repeat save."""
+
+    dice: str
+    damage_type: str
+
+
+@dataclass(frozen=True)
+class RepeatSaveLifecycle:
+    """Describe a recurring save and the consequences of failure."""
+
+    trigger: str
+    ability: str
+    dc: int
+    failure_conditions: tuple[Condition, ...] = ()
+    failure_damage: tuple[RepeatedDamage, ...] = ()
+    damage_grants_advantage: bool = False
+    progressed_target_refs: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True)
+class EndEventRule:
+    """End an effect when a named event occurs within the configured scope."""
+
+    event: str
+    scope: str
+
+
+@dataclass(frozen=True)
+class OngoingEffectLifecycle:
+    """Hold typed turn, event, and duration-progress behavior for an effect."""
+
+    started_round: int | None = None
+    repeat_save: RepeatSaveLifecycle | None = None
+    end_events: tuple[EndEventRule, ...] = ()
+    turn_start_temporary_hit_points: int = 0
+
+
+@dataclass(frozen=True)
 class OngoingEffect:
     """Track sourced non-condition state that persists across rule events.
 
@@ -140,7 +183,8 @@ class OngoingEffect:
     duration: EffectDuration = field(default_factory=Indefinite)
     kind: OngoingEffectKind = OngoingEffectKind.GENERIC
     polarity: EffectPolarity = EffectPolarity.NEUTRAL
-    parameters: dict[str, object] = field(default_factory=dict)
+    label: str | None = None
+    lifecycle: OngoingEffectLifecycle = field(default_factory=OngoingEffectLifecycle)
     dispellable: bool = False
     tags: frozenset[EffectTag] = frozenset()
     rule_effects: tuple[RuntimeRuleEffect, ...] = ()

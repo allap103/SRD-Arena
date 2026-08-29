@@ -5,22 +5,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ....effects.runtime import OngoingEffectKind
-from ...ongoing_effects import end_concentration, resolve_spell_lifecycle_event
+from ...effect_lifecycle.concentration import end_concentration
+from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...rule_queries import InvocationStartContext, InvocationStartResult
-from .rolls import roll_die
+from ...state_runtime import create_event
+from ..option_discovery.spellcasting import spend_spell_resources
+from ..rejections import reject_action
 
 if TYPE_CHECKING:
     from ....creatures import Creature, Spellcasting
     from ....spells.definitions import Spell
     from ...encounter import EncounterState
-    from ...models import ActionCost, EncounterProgress
-
-
-_COMPONENT_NAMES = {
-    "v": "verbal",
-    "s": "somatic",
-    "m": "material",
-}
+    from ...encounter_models.actions import ActionCost
+    from ...encounter_models.resolution import EncounterProgress
 
 
 def begin_spell_invocation(
@@ -42,11 +39,12 @@ def begin_spell_invocation(
 
     >>> from types import SimpleNamespace
     >>> from unittest.mock import Mock, patch
-    >>> from srd_arena.domain.encounters.models import ActionCost, EncounterProgress
-    >>> from srd_arena.domain.spells import Spell
+    >>> from srd_arena.domain.encounters.encounter_models.actions import ActionCost
+    >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
+    >>> from srd_arena.domain.spells import Spell, SpellComponents
     >>> spell = Spell(
     ...     "misty-step", "Misty Step", None, 2,
-    ...     components={"v": True},
+    ...     components=SpellComponents(verbal=True),
     ... )
     >>> checks = SimpleNamespace(
     ...     invocation_start_checks=lambda state, context: context,
@@ -54,10 +52,13 @@ def begin_spell_invocation(
     ...         InvocationStartResult(context),
     ... )
     >>> state = SimpleNamespace(
-    ...     _spend_spell_resources=Mock(),
     ...     combat_rules=checks,
+    ...     dice=SimpleNamespace(roll_die=lambda _sides: 1),
     ... )
     >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.spell_runtime.invocation."
+    ...     "spend_spell_resources"
+    ... ) as spend, patch(
     ...     "srd_arena.domain.encounters.actions.spell_runtime.invocation."
     ...     "resolve_spell_lifecycle_event"
     ... ):
@@ -72,11 +73,11 @@ def begin_spell_invocation(
     ...         action_id="cast",
     ...         progress=EncounterProgress(),
     ...     )
-    >>> (allowed, state._spend_spell_resources.call_count)
+    >>> (allowed, spend.call_count)
     (True, 1)
     """
 
-    state._spend_spell_resources(spellcasting, spell, cost, cast_level)
+    spend_spell_resources(state, spellcasting, spell, cost, cast_level)
     if spell.concentration:
         _end_replaced_concentration(
             state,
@@ -90,7 +91,7 @@ def begin_spell_invocation(
         actor_ref=creature_ref,
         progress=progress,
     )
-    components = _spell_components(spell)
+    components = spell.components.required
     query = state.combat_rules.invocation_start_checks(
         state,
         InvocationStartContext(
@@ -99,10 +100,14 @@ def begin_spell_invocation(
             components=components,
         ),
     )
-    result = state.combat_rules.resolve_invocation_start(query, roll_die)
+    result = state.combat_rules.resolve_invocation_start(
+        query,
+        state.dice.roll_die,
+    )
     if result.rolls:
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "invocation_start_checked",
                 creature_ref=creature_ref,
                 action_id=action_id,
@@ -111,32 +116,24 @@ def begin_spell_invocation(
         )
     if result.allowed:
         return True
-    progress.messages.extend(("system", failure.message) for failure in result.failures)
-    progress.events.append(
-        state._event(
-            "action_resolved",
-            creature_ref=creature_ref,
-            action_id=action_id,
-            data={
-                "kind": "spell",
-                "spell_id": spell.id,
-                "success": False,
-                "failure_codes": [failure.code for failure in result.failures],
-                "provider_state_ids": [
-                    failure.provider_state_id for failure in result.failures
-                ],
-            },
-        )
+    first_failure = result.failures[0]
+    reject_action(
+        state,
+        progress,
+        actor_ref=creature_ref,
+        action_id=action_id,
+        action_kind="spell",
+        message=first_failure.message,
+        reason_code=first_failure.code,
+        details={
+            "spell_id": spell.id,
+            "failure_codes": [failure.code for failure in result.failures],
+            "provider_state_ids": [
+                failure.provider_state_id for failure in result.failures
+            ],
+        },
     )
     return False
-
-
-def _spell_components(spell: Spell) -> frozenset[str]:
-    return frozenset(
-        _COMPONENT_NAMES.get(key.casefold(), key.casefold())
-        for key, value in spell.components.items()
-        if value is not False and value is not None and value != ""
-    )
 
 
 def _invocation_event_data(
@@ -188,9 +185,10 @@ def _end_replaced_concentration(
     )
     if existing is None:
         return
-    effect_label = existing.parameters.get("effect_label")
-    if not isinstance(effect_label, str):
-        effect_label = existing.identity.source.definition_id.replace("_", " ").title()
+    effect_label = (
+        existing.label
+        or existing.identity.source.definition_id.replace("_", " ").title()
+    )
     progress.messages.append(
         (
             "system",

@@ -8,7 +8,7 @@ from ....effects.triggered import (
     matching_effects,
     reroll_eligible_indices,
 )
-from ...models import AttackOutcome
+from ...encounter_models.resolution import AttackOutcome
 
 
 def matching_damage_reroll_rule(

@@ -3,21 +3,26 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
+from functools import partial
 from typing import TYPE_CHECKING, cast
 
 from ....capabilities import CapabilityEffect, ConditionEffect, DamageEffect
 from ....creatures import Creature
 from ....creatures.stat_block_actions import SavingThrowActionDefinition
 from ....geometry import Vector2D, build_directional_area, vector_between_positions
+from ....rolls.dice import DieRoller, resolve_dice
 from ....rolls.saving_throws import (
     Ability,
-    SavingThrowCreature,
     resolve_saving_throw,
 )
-from ...models import EncounterAction, EncounterProgress
-from ...ongoing_effects import has_condition_save_advantage
+from ...attack_economy import consume_action
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.resolution import EncounterProgress
+from ...grappling_state import remove_relationships_for_creature
+from ...state_combat import automatic_save_failure_provider_ids_for
+from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
-from .rolls import roll_dice, roll_die
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -53,7 +58,7 @@ def resolve_saving_throw_stat_block_action(
     )
     if not target_refs:
         raise ValueError("The stat-block action has no valid targets.")
-    state._consume_action(allow_magic=False)
+    consume_action(state, allow_magic=False)
     consume_stat_block_action_resource(creature, definition.name)
     ability_names = {
         "str": "strength",
@@ -69,6 +74,7 @@ def resolve_saving_throw_stat_block_action(
         creature_ref,
         "damage_roll",
     )
+    roll_die = state.dice.roll_die
     for target_ref in target_refs:
         target = state.creatures[target_ref].creature
         ability = cast(Ability, ability_names[definition.ability])
@@ -85,12 +91,12 @@ def resolve_saving_throw_stat_block_action(
             if isinstance(effect, ConditionEffect)
         )
         saving_throw = resolve_saving_throw(
-            cast(SavingThrowCreature, target),
+            target,
             ability,
             definition.dc,
             mode=(
                 "advantage"
-                if has_condition_save_advantage(
+                if state.combat_rules.has_condition_save_advantage(
                     state,
                     target_ref,
                     inflicted_conditions,
@@ -101,7 +107,8 @@ def resolve_saving_throw_stat_block_action(
             sourced_mode_override=roll_rules.mode,
             roller=roll_die,
             automatic_failure_reasons=(
-                state._automatic_save_failure_provider_ids_for(
+                automatic_save_failure_provider_ids_for(
+                    state,
                     target_ref,
                     ability_names[definition.ability],
                 )
@@ -117,11 +124,17 @@ def resolve_saving_throw_stat_block_action(
             if saving_throw.check.success and definition.success_damage == "half"
             else effects
         )
-        damage = apply_damage_effects(
+        damage_resolution = apply_damage_effects(
             target,
             damage_effects,
             half=(saving_throw.check.success and definition.success_damage == "half"),
+            die_roller=roll_die,
             modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
+            damage_receiver=partial(
+                state.combat_rules.apply_damage,
+                state,
+                target_ref,
+            ),
         )
         non_damage_effects = (*effects, *definition.always)
         if any(not isinstance(effect, DamageEffect) for effect in non_damage_effects):
@@ -133,12 +146,19 @@ def resolve_saving_throw_stat_block_action(
             raise NotImplementedError(
                 f"Saving-throw effect '{type(unsupported).__name__}' is not executable."
             )
-        damage += apply_damage_effects(
+        always_damage_resolution = apply_damage_effects(
             target,
             definition.always,
             half=False,
+            die_roller=roll_die,
             modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
+            damage_receiver=partial(
+                state.combat_rules.apply_damage,
+                state,
+                target_ref,
+            ),
         )
+        damage = damage_resolution.total + always_damage_resolution.total
         outcomes.append(
             {
                 "target_ref": target_ref,
@@ -148,10 +168,14 @@ def resolve_saving_throw_stat_block_action(
                     saving_throw.automatic_failure_reasons
                 ),
                 "damage": damage,
+                "damage_details": [
+                    *damage_resolution.details,
+                    *always_damage_resolution.details,
+                ],
             }
         )
         if target.get_health() <= 0:
-            state._remove_relationships_for_creature(target_ref)
+            remove_relationships_for_creature(state, target_ref)
     progress.messages.append(
         (
             "system",
@@ -159,7 +183,8 @@ def resolve_saving_throw_stat_block_action(
         )
     )
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "stat_block_action_resolved",
             creature_ref=creature_ref,
             action_id=action_id,
@@ -249,42 +274,76 @@ def stat_block_target_refs(
     )
 
 
+@dataclass(frozen=True)
+class DamageEffectsResolution:
+    """Retain applied damage and individual roll details for effect groups."""
+
+    total: int
+    details: tuple[dict[str, object], ...]
+
+
 def apply_damage_effects(
     target: Creature,
     effects: tuple[CapabilityEffect, ...],
     *,
     half: bool,
+    die_roller: DieRoller,
     modifier_for_roll: Callable[[], int] | None = None,
-) -> int:
-    """Apply supported damage effects and return damage actually received.
+    damage_receiver: Callable[[int, str | None], int] | None = None,
+) -> DamageEffectsResolution:
+    """Apply supported damage effects and retain each resolved dice pool.
 
     Successful saves can request half damage after dice and modifiers have been
     combined. The returned value reflects the target's own mitigation.
 
     >>> from types import SimpleNamespace
-    >>> from unittest.mock import patch
     >>> effect = DamageEffect("2d6", 2, "fire")
-    >>> target = SimpleNamespace(take_damage=lambda amount, damage_type: amount - 1)
-    >>> with patch(
-    ...     "srd_arena.domain.encounters.actions.stat_block_runtime."
-    ...     "saving_throws.roll_dice",
-    ...     return_value=8,
-    ... ):
-    ...     apply_damage_effects(target, (effect,), half=True)
-    4
+    >>> target = SimpleNamespace(take_damage=lambda amount: amount - 1)
+    >>> resolved = apply_damage_effects(
+    ...     target, (effect,), half=True,
+    ...     die_roller=lambda sides: 4,
+    ... )
+    >>> (resolved.total, resolved.details[0]["dice_values"])
+    (4, [4, 4])
     """
     total = 0
+    details: list[dict[str, object]] = []
     for effect in effects:
         if not isinstance(effect, DamageEffect):
             continue
         count_text, sides_text = effect.dice.lower().split("d", 1)
+        roll = resolve_dice(
+            int(count_text),
+            int(sides_text),
+            modifier=effect.bonus,
+            roller=die_roller,
+        )
+        sourced_modifier = modifier_for_roll() if modifier_for_roll is not None else 0
+        resolved_total = roll.total + sourced_modifier
         amount = max(
             effect.minimum or 0,
-            roll_dice(int(count_text), int(sides_text))
-            + effect.bonus
-            + (modifier_for_roll() if modifier_for_roll is not None else 0),
+            resolved_total,
         )
         if half:
             amount //= 2
-        total += target.take_damage(amount, effect.damage_type)
-    return total
+        receiver = damage_receiver or (
+            lambda value, _damage_type: target.take_damage(value)
+        )
+        applied = receiver(amount, effect.damage_type)
+        total += applied
+        details.append(
+            {
+                "dice": effect.dice,
+                "dice_values": [die.result for die in roll.dice],
+                "die_rolls": [list(die.rolls) for die in roll.dice],
+                "dice_total": roll.subtotal,
+                "modifier": roll.modifier + sourced_modifier,
+                "sourced_modifier": sourced_modifier,
+                "total": resolved_total,
+                "halved": half,
+                "minimum_applied_total": amount,
+                "damage_type": effect.damage_type,
+                "applied_damage": applied,
+            }
+        )
+    return DamageEffectsResolution(total=total, details=tuple(details))

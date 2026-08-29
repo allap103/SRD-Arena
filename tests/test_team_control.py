@@ -7,10 +7,18 @@ from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import EncounterCreatureState
+from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
+from srd_arena.domain.encounters.grappling_state import apply_grapple
+from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.engine.session import Session
-from srd_arena.frontends.shared.session import build_session_presentation
+from srd_arena.frontends.gui.presentation.session import build_session_presentation
 from srd_arena.infrastructure.scenarios import load_scenario_directory
+from tests.encounter_runtime_support import (
+    choose_advertised_action as _choose_advertised_action,
+)
+from tests.encounter_runtime_support import (
+    use_deterministic_dice as _use_deterministic_dice,
+)
 
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
@@ -27,7 +35,7 @@ def _player_first_initiative(
         first_external_ref = next(
             creature_ref
             for creature_ref in self.creatures
-            if self._creature_controller(creature_ref) == "external"
+            if creature_controller(self, creature_ref) == "external"
         )
         self.initiative_order = [
             first_external_ref,
@@ -38,7 +46,7 @@ def _player_first_initiative(
             ),
         ]
 
-    monkeypatch.setattr(EncounterState, "_roll_initiative", _fixed_initiative)
+    monkeypatch.setattr(EncounterState, "roll_initiative", _fixed_initiative)
 
 
 def _all_external_session() -> Session:
@@ -142,9 +150,7 @@ def test_externally_controlled_goblin_can_move_then_end_turn() -> None:
     assert state.current_decision().creature_ref == "goblin_2"
 
 
-def test_externally_controlled_goblin_can_attack_opposing_player(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_externally_controlled_goblin_can_attack_opposing_player() -> None:
     session = _all_external_session()
     session.read()
     assert session.encounter_state is not None
@@ -153,11 +159,9 @@ def test_externally_controlled_goblin_can_attack_opposing_player(
     state.active_position.y = 2
     state.creatures["goblin_1"].position.x = 3
     state.creatures["goblin_1"].position.y = 2
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die", lambda _sides: 20
-    )
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_dice", lambda _count, _sides: 1
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 20 if sides == 20 else 1,
     )
     session.choose(_action_id_by_label(session, "Wait"))
 
@@ -190,9 +194,7 @@ def test_externally_controlled_goblin_can_attack_opposing_player(
     assert state.current_decision().creature_ref == "goblin_2"
 
 
-def test_secondary_champion_gets_extra_attack_before_turn_ends(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_secondary_champion_gets_extra_attack_before_turn_ends() -> None:
     session = load_scenario_directory(GOBLIN_SKIRMISH_DIR).create_session()
     session.read()
     assert session.encounter_state is not None
@@ -203,10 +205,7 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends(
     brynn.position.y = 2
     goblin.position.x = 3
     goblin.position.y = 2
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.choose(_action_id_by_label(session, "Wait"))
 
     first_attack = next(
@@ -214,7 +213,7 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends(
         for action in state.available_actions()
         if action.kind == "attack" and action.value == "red_blade"
     )
-    session.choose_encounter_action(first_attack)
+    _choose_advertised_action(session, first_attack)
 
     assert state.current_decision().creature_ref == "champion_2"
     assert brynn.attacks_remaining == 1
@@ -224,7 +223,7 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends(
         for action in state.available_actions()
         if action.kind == "attack" and action.value == "red_blade"
     )
-    session.choose_encounter_action(second_attack)
+    _choose_advertised_action(session, second_attack)
 
     assert state.current_decision().creature_ref == "champion_2"
     assert brynn.attacks_remaining == 0
@@ -260,10 +259,15 @@ def test_secondary_champion_can_use_class_feature() -> None:
         for action in session.encounter_state.available_actions()
         if action.kind == "feature" and action.value == "second_wind"
     )
-    session.choose_encounter_action(second_wind)
+    result = _choose_advertised_action(session, second_wind)
 
     assert brynn.get_health() > 10
     assert session.encounter_state.current_decision().creature_ref == "champion_2"
+    feature_event = next(
+        event for event in result.events if event.type == "feature_used"
+    )
+    assert feature_event.creature_ref == "champion_2"
+    assert feature_event.data["target_ref"] == "champion_2"
 
 
 def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
@@ -273,7 +277,7 @@ def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
     state = session.encounter_state
     brynn = state.creatures["champion_2"]
     goblin = state.creatures["red_blade"]
-    state.turn_index = 1
+    state.turn.index = 1
     brynn.position.x, brynn.position.y = 3, 3
     goblin.position.x, goblin.position.y = 3, 4
 
@@ -282,7 +286,7 @@ def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
 
     assert state.current_decision().creature_ref == "red_blade"
     assert state.current_decision().kind == "reaction"
@@ -291,7 +295,7 @@ def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    session.choose_encounter_action(opportunity_attack)
+    _choose_advertised_action(session, opportunity_attack)
 
     assert goblin.reaction_available is False
     assert state.current_decision().creature_ref == "champion_2"
@@ -313,7 +317,7 @@ def test_user_controlled_goblin_chooses_reaction_to_primary_movement() -> None:
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
 
     assert state.current_decision().creature_ref == "red_blade"
     opportunity_attack = next(
@@ -321,7 +325,7 @@ def test_user_controlled_goblin_chooses_reaction_to_primary_movement() -> None:
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    session.choose_encounter_action(opportunity_attack)
+    _choose_advertised_action(session, opportunity_attack)
 
     assert goblin.reaction_available is False
     assert state.current_decision().creature_ref == "player"
@@ -351,7 +355,7 @@ def test_effectively_incapacitated_creature_gets_no_reaction_prompt() -> None:
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
 
     assert state.current_decision().creature_ref == "player"
     assert state.current_decision().kind == "turn"
@@ -368,7 +372,8 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
     goblin = state.creatures["red_blade"]
     aldren.position.x, aldren.position.y = 3, 3
     goblin.position.x, goblin.position.y = 3, 4
-    state._apply_grapple(
+    apply_grapple(
+        state,
         condition_from_effect(
             EffectResult(
                 kind="apply_condition",
@@ -379,7 +384,7 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
                     "source_label": aldren.creature.name,
                 },
             )
-        )
+        ),
     )
 
     move = next(
@@ -387,7 +392,7 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
 
     assert state.current_decision().creature_ref == "player"
     assert goblin.reaction_available is True
@@ -395,9 +400,7 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
     assert (goblin.position.x, goblin.position.y) == (3, 3)
 
 
-def test_ai_controlled_creature_resolves_opportunity_attack_automatically(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_ai_controlled_creature_resolves_opportunity_attack_automatically() -> None:
     session = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
@@ -409,17 +412,14 @@ def test_ai_controlled_creature_resolves_opportunity_attack_automatically(
     reactor = state.creatures["goblin_1"]
     actor.position.x, actor.position.y = 3, 3
     reactor.position.x, reactor.position.y = 3, 4
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     move = next(
         action
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    result = session.choose_encounter_action(move)
+    result = _choose_advertised_action(session, move)
 
     assert reactor.reaction_available is False
     assert state.current_decision().creature_ref == "player"
@@ -431,29 +431,24 @@ def test_ai_controlled_creature_resolves_opportunity_attack_automatically(
     )
 
 
-def test_brynn_can_take_an_opportunity_attack(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_brynn_can_take_an_opportunity_attack() -> None:
     session = load_scenario_directory(GOBLIN_SKIRMISH_DIR).create_session()
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
     brynn = state.creatures["champion_2"]
     goblin = state.creatures["red_blade"]
-    state.turn_index = 2
+    state.turn.index = 2
     goblin.position.x, goblin.position.y = 3, 3
     brynn.position.x, brynn.position.y = 3, 4
-    monkeypatch.setattr(
-        "srd_arena.domain.encounters.encounter.roll_die",
-        lambda _sides: 1,
-    )
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     move = next(
         action
         for action in state.available_actions()
         if action.kind == "move" and action.value == "up"
     )
-    session.choose_encounter_action(move)
+    _choose_advertised_action(session, move)
 
     assert state.current_decision().creature_ref == "champion_2"
     opportunity_attack = next(
@@ -461,7 +456,7 @@ def test_brynn_can_take_an_opportunity_attack(
         for action in state.available_actions()
         if action.kind == "opportunity_attack"
     )
-    session.choose_encounter_action(opportunity_attack)
+    _choose_advertised_action(session, opportunity_attack)
 
     assert brynn.reaction_available is False
     assert state.current_decision().creature_ref == "red_blade"
@@ -498,7 +493,7 @@ def test_externally_controlled_teammate_can_target_opposing_team() -> None:
     goblins = next(team for team in state.definition.teams if team.id == "goblins")
     heroes.members.append("goblin_1")
     goblins.members.remove("goblin_1")
-    state.turn_index = 1
+    state.turn.index = 1
     state.creatures["goblin_1"].position.x = 3
     state.creatures["goblin_1"].position.y = 2
     state.creatures["goblin_2"].position.x = 4

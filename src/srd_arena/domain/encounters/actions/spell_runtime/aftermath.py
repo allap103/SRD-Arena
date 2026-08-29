@@ -4,14 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....creatures.feature_rules.types import CapabilityActionResult
 from ....effects import serialize_effects
+from ....effects.results import ActionResolutionResult
 from ....spells.resolution import SpellTargetContext
-from ...models import EncounterProgress
-from ...ongoing_effects import (
-    resolve_concentration_damage,
-    resolve_spell_lifecycle_event,
-)
+from ...effect_lifecycle.concentration import resolve_concentration_damage
+from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
+from ...encounter_models.resolution import EncounterProgress
+from ...state_runtime import apply_encounter_effects, create_event
 
 if TYPE_CHECKING:
     from ....creatures import Spellcasting
@@ -27,7 +26,7 @@ def apply_spell_result(
     cast_level: int | None,
     creature_ref: str,
     action_id: str,
-    result: CapabilityActionResult,
+    result: ActionResolutionResult,
     progress: EncounterProgress,
     target_ref: str | None,
     target: SpellTargetContext,
@@ -38,29 +37,30 @@ def apply_spell_result(
     capability result so frontends do not need to inspect domain objects.
 
     >>> from types import SimpleNamespace
-    >>> from unittest.mock import Mock
-    >>> from srd_arena.domain.creatures.feature_rules.types import CapabilityActionResult
-    >>> from srd_arena.domain.encounters.models import EncounterProgress
+    >>> from unittest.mock import patch
+    >>> from srd_arena.domain.effects.results import ActionResolutionResult
+    >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
     >>> from srd_arena.domain.spells import Spell
-    >>> state = SimpleNamespace(
-    ...     _apply_effects=Mock(return_value=[]),
-    ...     _event=lambda event_type, **values: (event_type, values["data"]),
-    ... )
-    >>> result = CapabilityActionResult("fire-bolt", "Fire Bolt", [], [])
+    >>> state = SimpleNamespace(event_sequence=1)
+    >>> result = ActionResolutionResult("fire-bolt", "Fire Bolt", [], [])
     >>> progress = EncounterProgress()
-    >>> apply_spell_result(
-    ...     state,
-    ...     spellcasting=SimpleNamespace(spell_slots_remaining={}),
-    ...     spell=Spell("fire-bolt", "Fire Bolt", None, 0),
-    ...     cast_level=None,
-    ...     creature_ref="mage",
-    ...     action_id="cast",
-    ...     result=result,
-    ...     progress=progress,
-    ...     target_ref="dummy",
-    ...     target=SimpleNamespace(target_label="Dummy"),
-    ... )
-    >>> (progress.events[0][0], progress.events[0][1]["spell_id"])
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.actions.spell_runtime.aftermath."
+    ...     "apply_encounter_effects", return_value=[]
+    ... ):
+    ...     apply_spell_result(
+    ...         state,
+    ...         spellcasting=SimpleNamespace(spell_slots_remaining={}),
+    ...         spell=Spell("fire-bolt", "Fire Bolt", None, 0),
+    ...         cast_level=None,
+    ...         creature_ref="mage",
+    ...         action_id="cast",
+    ...         result=result,
+    ...         progress=progress,
+    ...         target_ref="dummy",
+    ...         target=SimpleNamespace(target_label="Dummy"),
+    ...     )
+    >>> (progress.events[0].type, progress.events[0].data["spell_id"])
     ('spell_cast', 'fire-bolt')
     """
 
@@ -71,16 +71,19 @@ def apply_spell_result(
         creature_ref=creature_ref,
         progress=progress,
     )
-    progress.messages.extend(state._apply_effects(result.effects, origin_id=action_id))
+    progress.messages.extend(
+        apply_encounter_effects(state, result.effects, origin_id=action_id)
+    )
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "spell_cast",
             creature_ref=creature_ref,
             action_id=action_id,
             data={
                 "kind": "spell",
-                "spell_id": result.capability_id,
-                "spell_name": result.capability_name,
+                "spell_id": result.definition_id,
+                "spell_name": result.definition_name,
                 "spell_level": result.details.get("spell_level", spell.level),
                 "target_ref": result.details.get("target_ref", target_ref),
                 "target_label": result.details.get("target_label", target.target_label),
@@ -119,7 +122,7 @@ def apply_spell_result(
 
 def _apply_damage_lifecycle(
     state: EncounterState,
-    result: CapabilityActionResult,
+    result: ActionResolutionResult,
     *,
     creature_ref: str,
     progress: EncounterProgress,

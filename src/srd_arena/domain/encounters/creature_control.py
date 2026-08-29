@@ -1,8 +1,8 @@
 """Coordinate discovery and execution of creature-selected encounter actions.
 
 Detailed movement, spell-selection, and capability behavior lives in the
-focused :mod:`actions.creature_actions` package.  This module remains the
-stable surface bound onto :class:`EncounterState`.
+focused :mod:`actions.creature_actions` package. This module owns their
+high-level discovery and execution entry points.
 """
 
 from __future__ import annotations
@@ -27,7 +27,9 @@ from .actions.creature_actions.spell_selection import (
     execute_spell_selection_action,
 )
 from .actions.creature_actions.standard import execute_standard_action
-from .models import ActionExecutionResult, DecisionFrame, EncounterAction
+from .encounter_models.actions import EncounterAction
+from .encounter_models.decisions import DecisionFrame
+from .encounter_models.resolution import ActionExecutionResult
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -51,6 +53,7 @@ def execute_creature_action(
     ...     actor=SimpleNamespace(creature=object()),
     ...     progress=SimpleNamespace(),
     ...     action_id="action-1",
+    ...     rejection=None,
     ... )
     >>> marker = object()
     >>> with patch(
@@ -79,6 +82,9 @@ def execute_creature_action(
     actor = context.actor.creature
     progress = context.progress
     action_id = context.action_id
+
+    if context.rejection is not None:
+        return finish_action_execution(context, action_ends_turn=False)
 
     if action.kind == "move":
         movement_result = execute_movement(state, action, decision, context)

@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from ...effects.runtime import OngoingEffectKind
-from ...rolls.saving_throws import SavingThrowCreature, resolve_saving_throw
+from ...rolls.saving_throws import resolve_saving_throw
 from .removal import _remove_effect_tree
-from .rolls import roll_die
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
-    from ..models import EncounterProgress
+    from ..encounter_models.resolution import EncounterProgress
 
 
 def end_concentration(state: EncounterState, source_ref: str) -> None:
@@ -100,20 +99,19 @@ def resolve_concentration_damage(
         ability="constitution",
     )
     save = resolve_saving_throw(
-        cast(SavingThrowCreature, creature),
+        creature,
         "constitution",
         dc,
-        sourced_modifier_override=roll_rules.resolve_modifier(roll_die),
+        sourced_modifier_override=roll_rules.resolve_modifier(state.dice.roll_die),
         sourced_mode_override=roll_rules.mode,
-        roller=roll_die,
+        roller=state.dice.roll_die,
     )
     if progress is not None:
         outcome = "maintains" if save.check.success else "loses"
-        effect_label = concentrating.parameters.get("effect_label")
-        if not isinstance(effect_label, str):
-            effect_label = concentrating.identity.source.definition_id.replace(
-                "_", " "
-            ).title()
+        effect_label = (
+            concentrating.label
+            or concentrating.identity.source.definition_id.replace("_", " ").title()
+        )
         progress.messages.append(
             (
                 "system",

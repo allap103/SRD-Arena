@@ -6,14 +6,17 @@ from typing import TYPE_CHECKING
 
 from ....creatures import Creature
 from ....creatures.feature_actions import FeatureActionDefinition
-from ...models import ActionCost, EncounterAction
+from ...encounter_models.actions import (
+    ActionCost,
+    EncounterAction,
+)
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
 
 
 def available_feature_actions(
-    self: EncounterState,
+    state: EncounterState,
     creature: Creature,
 ) -> list[EncounterAction]:
     """Advertise supported non-reaction feature actions for the current actor.
@@ -36,7 +39,7 @@ def available_feature_actions(
     ('Second Wind', 'feature', 1)
     """
 
-    creature_ref = self.current_decision().creature_ref
+    creature_ref = state.current_decision().creature_ref
     actions: list[EncounterAction] = []
     for feature_id, definition in creature.combat_profile.feature_actions.items():
         if definition.economy == "reaction":
@@ -60,7 +63,7 @@ def available_feature_actions(
 
 
 def feature_action_available(
-    self: EncounterState,
+    state: EncounterState,
     actor: Creature,
     definition: FeatureActionDefinition,
 ) -> bool:
@@ -79,15 +82,15 @@ def feature_action_available(
     True
     """
 
-    if definition.economy == "bonus_action" and not self.active_bonus_action_available:
+    if definition.economy == "bonus_action" and not state.active_bonus_action_available:
         return False
-    if definition.economy == "action" and self.active_actions_remaining <= 0:
+    if definition.economy == "action" and state.active_actions_remaining <= 0:
         return False
     if (
         definition.economy == "reaction"
-        and not self.combat_rules.reaction_eligibility(
-            self,
-            self.current_decision().creature_ref,
+        and not state.combat_rules.reaction_eligibility(
+            state,
+            state.current_decision().creature_ref,
             "feature",
         ).allowed
     ):

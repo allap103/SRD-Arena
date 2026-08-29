@@ -41,6 +41,7 @@ class Attributes:
     movement: Movement = field(default_factory=Movement)
     proficiency_bonus: int = 0
     proficiencies: dict[str, object] = field(default_factory=dict)
+    saving_throw_proficiencies: frozenset[str] = frozenset()
 
     def __post_init__(self) -> None:
         if self.proficiency_bonus <= 0:

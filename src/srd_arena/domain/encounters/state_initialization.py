@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 
 from ..effects.conditions import CombatTrait
 from .action_selection import build_action_selector
-from .models import InitiativeEntry
+from .encounter_models.state import InitiativeEntry
+from .participants import creature_controller
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -18,11 +19,11 @@ def initialize_action_selectors(state: EncounterState) -> None:
 
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
-    >>> state = SimpleNamespace(
-    ...     creatures={"hero": object(), "goblin": object()},
-    ...     _creature_controller=lambda ref: "external" if ref == "hero" else "scripted",
-    ... )
+    >>> state = SimpleNamespace(creatures={"hero": object(), "goblin": object()})
     >>> with patch(
+    ...     "srd_arena.domain.encounters.state_initialization.creature_controller",
+    ...     side_effect=lambda state, ref: "external" if ref == "hero" else "scripted",
+    ... ), patch(
     ...     "srd_arena.domain.encounters.state_initialization.build_action_selector",
     ...     side_effect=lambda controller, participant: controller,
     ... ):
@@ -34,7 +35,7 @@ def initialize_action_selectors(state: EncounterState) -> None:
     state._action_selectors = {}
     for creature_ref, creature_state in state.creatures.items():
         state._action_selectors[creature_ref] = build_action_selector(
-            state._creature_controller(creature_ref),
+            creature_controller(state, creature_ref),
             creature_state,
         )
 

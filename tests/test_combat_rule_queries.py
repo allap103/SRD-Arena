@@ -1,4 +1,7 @@
+from copy import deepcopy
+
 from srd_arena.domain.creatures import Attributes, Creature, Equipment, Inventory
+from srd_arena.domain.effects.conditions import Condition, build_applied_condition
 from srd_arena.domain.effects.modifiers import RollModifier
 from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.effects.rule_effects import (
@@ -6,7 +9,13 @@ from srd_arena.domain.effects.rule_effects import (
     ActionEconomyRestriction,
     ArmorClassAdjustment,
     AttackLimit,
+    ConditionImmunity,
+    ConditionSuppression,
+    DamageReduction,
+    DamageResistance,
+    GrantedSense,
     InvocationFailureChance,
+    MaximumHitPointAdjustment,
     ReactionProhibition,
     RollAdjustment,
     RuntimeRuleEffect,
@@ -24,24 +33,37 @@ from srd_arena.domain.encounters.definitions import (
     EncounterBehavior,
     EncounterDefinition,
 )
+from srd_arena.domain.encounters.effect_lifecycle.application import (
+    start_ongoing_effect,
+)
+from srd_arena.domain.encounters.effect_lifecycle.removal import (
+    remove_ongoing_effects,
+)
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import (
+from srd_arena.domain.encounters.encounter_models.actions import (
     ActionCost,
     EncounterAction,
-    EncounterCreatureState,
 )
-from srd_arena.domain.encounters.ongoing_effects import remove_ongoing_effects
+from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
 from srd_arena.domain.encounters.rule_queries import (
     InvocationStartContext,
     action_compatibility,
+    apply_damage,
+    apply_healing,
     attack_limit,
+    condition_immunities,
+    condition_suppressions,
+    damage_resistances,
     effective_armor_class,
+    effective_maximum_health,
     effective_speed,
     invocation_start_checks,
     movement_budget,
     reaction_eligibility,
+    resolve_damage_reduction,
     resolve_invocation_start,
     roll_modifiers,
+    sense_range,
 )
 from srd_arena.domain.geometry import (
     Grid,
@@ -51,6 +73,7 @@ from srd_arena.domain.geometry import (
 )
 
 ACTOR_REF = "participant:target"
+OPPONENT_REF = "participant:opponent"
 
 
 def _encounter() -> EncounterState:
@@ -182,12 +205,192 @@ def test_same_definition_rule_effects_do_not_stack_but_remain_independent() -> N
     ) == (second.identity.id,)
 
 
+def test_effect_defenses_are_queried_without_copying_state_to_creature() -> None:
+    state = _encounter()
+    ward = _ongoing_effect(
+        "effect:ward",
+        DamageResistance(frozenset({"fire"})),
+        ConditionImmunity(frozenset({Condition.FRIGHTENED})),
+        GrantedSense("truesight", 120),
+        definition_id="ward",
+    )
+    state.ongoing_effects.append(ward)
+
+    assert damage_resistances(state, ACTOR_REF).values == frozenset({"fire"})
+    assert condition_immunities(state, ACTOR_REF).values == frozenset(
+        {Condition.FRIGHTENED}
+    )
+    assert sense_range(state, ACTOR_REF, "truesight").range_feet == 120
+    assert not hasattr(state.creatures[ACTOR_REF].creature, "damage_resistance_sources")
+
+
+def test_immunity_and_suppression_are_independent_rule_contributions() -> None:
+    state = _encounter()
+    state.ongoing_effects.extend(
+        (
+            _ongoing_effect(
+                "effect:immunity",
+                ConditionImmunity(frozenset({Condition.CHARMED})),
+                definition_id="immunity",
+            ),
+            _ongoing_effect(
+                "effect:suppression",
+                ConditionSuppression(frozenset({Condition.FRIGHTENED})),
+                definition_id="suppression",
+            ),
+        )
+    )
+
+    assert condition_immunities(state, ACTOR_REF).values == frozenset(
+        {Condition.CHARMED}
+    )
+    assert condition_suppressions(state, ACTOR_REF).values == frozenset(
+        {Condition.FRIGHTENED}
+    )
+
+
+def test_damage_reduction_is_consumed_before_resistance_and_resets() -> None:
+    state = _encounter()
+    state.dice = type(state.dice)(
+        die_roller=lambda _sides: 4,
+    )
+    state.ongoing_effects.extend(
+        (
+            _ongoing_effect(
+                "effect:reduction",
+                DamageReduction("fire", "1d4"),
+                definition_id="resistance",
+            ),
+            _ongoing_effect(
+                "effect:resistance",
+                DamageResistance(frozenset({"fire"})),
+                definition_id="protection",
+            ),
+        )
+    )
+
+    assert apply_damage(state, ACTOR_REF, 10, "fire") == 3
+    assert apply_damage(state, ACTOR_REF, 10, "fire") == 5
+
+    state.combat_rules.reset_damage_reductions(state, ACTOR_REF)
+    state.creatures[ACTOR_REF].creature.current_health = 10
+    assert apply_damage(state, ACTOR_REF, 10, "fire") == 3
+
+
+def test_maximum_health_uses_strongest_same_definition_instance() -> None:
+    state = _encounter()
+    state.ongoing_effects.extend(
+        (
+            _ongoing_effect(
+                "effect:aid:first",
+                MaximumHitPointAdjustment(5, also_modify_current=True),
+                definition_id="aid",
+            ),
+            _ongoing_effect(
+                "effect:aid:second",
+                MaximumHitPointAdjustment(10, also_modify_current=True),
+                definition_id="aid",
+            ),
+        )
+    )
+
+    result = effective_maximum_health(state, ACTOR_REF)
+
+    assert result.base == 10
+    assert result.value == 20
+    assert result.contributions[0].provider_state_id == "effect:aid:second"
+
+
+def test_healing_does_not_lower_health_above_effective_maximum() -> None:
+    state = _encounter()
+    creature = state.creatures[ACTOR_REF].creature
+    state.ongoing_effects.append(
+        _ongoing_effect(
+            "effect:maximum-reduction",
+            MaximumHitPointAdjustment(-5, also_modify_current=False),
+        )
+    )
+
+    assert effective_maximum_health(state, ACTOR_REF).value == 5
+    assert creature.get_health() == 10
+    assert apply_healing(state, ACTOR_REF, 5) == 0
+    assert creature.get_health() == 10
+
+
+def test_removing_effect_state_removes_every_typed_rule_contribution() -> None:
+    state = _encounter()
+    frightened = build_applied_condition(
+        condition=Condition.FRIGHTENED,
+        source_ref="participant:enemy",
+        source_label="Enemy",
+        target_ref=ACTOR_REF,
+    )
+    state.conditions.append(frightened)
+    effect = start_ongoing_effect(
+        state,
+        EffectResult(
+            kind="start_ongoing_effect",
+            target_ref=ACTOR_REF,
+            data={
+                "source_ref": "participant:caster",
+                "source_label": "Ward",
+                "definition_id": "typed_ward",
+                "effect_kind": "spell",
+            },
+            rule_effects=(
+                MaximumHitPointAdjustment(5, also_modify_current=True),
+                DamageResistance(frozenset({"fire"})),
+                DamageReduction("slashing", "1d4"),
+                ConditionImmunity(frozenset({Condition.CHARMED})),
+                ConditionSuppression(frozenset({Condition.FRIGHTENED})),
+                GrantedSense("truesight", 120),
+            ),
+        ),
+        "origin:typed-ward",
+    )
+
+    assert effective_maximum_health(state, ACTOR_REF).value == 15
+    assert state.creatures[ACTOR_REF].creature.get_health() == 15
+    assert damage_resistances(state, ACTOR_REF).values == frozenset({"fire"})
+    assert resolve_damage_reduction(state, ACTOR_REF, "slashing", lambda _: 3) == 3
+    assert condition_immunities(state, ACTOR_REF).values == frozenset(
+        {Condition.CHARMED}
+    )
+    assert (
+        state.combat_rules.effective_conditions(state, ACTOR_REF).has(
+            Condition.FRIGHTENED
+        )
+        is False
+    )
+    assert sense_range(state, ACTOR_REF, "truesight").range_feet == 120
+
+    remove_ongoing_effects(
+        state,
+        EffectResult(
+            kind="remove_ongoing_effect",
+            target_ref=ACTOR_REF,
+            data={"effect_id": effect.identity.id},
+        ),
+    )
+
+    assert effective_maximum_health(state, ACTOR_REF).value == 10
+    assert state.creatures[ACTOR_REF].creature.get_health() == 10
+    assert damage_resistances(state, ACTOR_REF).values == frozenset()
+    assert resolve_damage_reduction(state, ACTOR_REF, "slashing", lambda _: 3) == 0
+    assert condition_immunities(state, ACTOR_REF).values == frozenset()
+    assert state.combat_rules.effective_conditions(state, ACTOR_REF).has(
+        Condition.FRIGHTENED
+    )
+    assert sense_range(state, ACTOR_REF, "truesight").range_feet is None
+
+
 def test_effect_lifecycle_queries_speed_without_losing_movement_debt() -> None:
     state = _encounter()
     creature_state = state.creatures[ACTOR_REF]
     creature_state.movement_spent_this_turn = MovementCost(4)
     creature_state.movement_remaining = MovementBudget(2)
-    applied = state._start_ongoing_effect(
+    applied = start_ongoing_effect(
+        state,
         EffectResult(
             kind="start_ongoing_effect",
             target_ref=ACTOR_REF,
@@ -196,14 +399,13 @@ def test_effect_lifecycle_queries_speed_without_losing_movement_debt() -> None:
                 "source_label": "Slowing effect",
                 "definition_id": "slowing_effect",
                 "effect_kind": "spell",
-                "parameters": {"speed_modifier_feet": -20},
             },
+            rule_effects=(SpeedAdjustment(-20),),
         ),
         "origin:slowing-effect",
     )
 
     assert isinstance(applied.rule_effects[0], SpeedAdjustment)
-    assert creature_state.creature.speed_modifier_sources == {}
     assert effective_speed(state, ACTOR_REF).value == 10
     assert creature_state.movement_remaining == 0
 
@@ -382,6 +584,55 @@ def test_roll_query_composes_numeric_and_mode_adjustments() -> None:
     assert {
         contribution.provider_state_id for contribution in result.contributions
     } == {slow.identity.id}
+
+
+def test_roll_query_honors_an_opponent_sense_exception() -> None:
+    state = _encounter()
+    state.creatures[OPPONENT_REF] = deepcopy(state.creatures[ACTOR_REF])
+    blur = _ongoing_effect(
+        "effect:blur",
+        RollAdjustment(
+            RollModifier(
+                roll="attack_roll",
+                mode="disadvantage",
+                subject="attacks_against_target",
+                ignored_by_senses=("blindsight", "truesight"),
+            )
+        ),
+        definition_id="blur",
+    )
+    state.ongoing_effects.append(blur)
+
+    without_truesight = roll_modifiers(
+        state,
+        ACTOR_REF,
+        "attack_roll",
+        subject="attacks_against_target",
+        opposing_ref=OPPONENT_REF,
+    )
+    true_seeing = _ongoing_effect(
+        "effect:true-seeing",
+        GrantedSense("truesight", 120),
+        definition_id="true_seeing",
+    )
+    true_seeing = type(true_seeing)(
+        identity=true_seeing.identity,
+        target_refs=(OPPONENT_REF,),
+        kind=true_seeing.kind,
+        rule_effects=true_seeing.rule_effects,
+    )
+    state.ongoing_effects.append(true_seeing)
+    with_truesight = roll_modifiers(
+        state,
+        ACTOR_REF,
+        "attack_roll",
+        subject="attacks_against_target",
+        opposing_ref=OPPONENT_REF,
+    )
+
+    assert without_truesight.mode == "disadvantage"
+    assert with_truesight.mode == "normal"
+    assert with_truesight.contributions == ()
 
 
 def test_invocation_failure_is_component_gated_and_uses_injected_randomness() -> None:

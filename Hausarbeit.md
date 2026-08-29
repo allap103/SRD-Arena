@@ -105,7 +105,7 @@ Wesentlich ist eine stabile Encounter-Engine für vorhandene Spieldaten. Der MVP
 ##### Erfolg ist erkennbar, wenn…
 * Szenarien und Spieldaten über JSON geladen werden können.
 * Ungültige Eingaben durch Schema-Validierung erkannt werden.
-* Ein vollständiger Encounter sich zwischen zwei CYOA-Szenen ausführen lässt und anschließend das Text-Abenteuer fortgesetzt wird.
+* Sich ein vollständiger Encounter ausführen lässt und anschließend das Text-Abenteuer fortgesetzt wird.
 * Derselbe Seed denselben Encounter-Verlauf erzeugt.
 * Ein Baseline-Agent einen vollständigen Encounter mit ausschließlich legalen Aktionen spielen kann.
 * Aktionen, Würfe, Zustandsänderungen und Kampfende vollständig im Log enthalten sind.
@@ -151,7 +151,6 @@ Wesentlich ist eine stabile Encounter-Engine für vorhandene Spieldaten. Der MVP
 * Testabdeckung für alle MVP-Mechaniken
 * Baseline-Agent stabilisieren
 * GUI anbinden
-* CYOA-Integration
 * Optionale Erweiterungen
 
 ### 9. Erwartete Schwierigkeiten

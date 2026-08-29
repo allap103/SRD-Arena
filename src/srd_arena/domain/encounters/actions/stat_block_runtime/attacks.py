@@ -6,11 +6,14 @@ from typing import TYPE_CHECKING
 
 from ....creatures import Creature
 from ...attack_economy import spend_attack, spend_current_attack
-from ...models import EncounterAction, EncounterProgress
-from ...ongoing_effects import (
-    resolve_concentration_damage,
-    resolve_spell_lifecycle_event,
-)
+from ...effect_lifecycle.concentration import resolve_concentration_damage
+from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
+from ...encounter_models.actions import EncounterAction
+from ...encounter_models.resolution import EncounterProgress
+from ...grappling_state import remove_relationships_for_creature
+from ...participants import creatures_are_opponents
+from ...state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
+from ...state_runtime import create_event, creature_label
 from ..attack_resolution import (
     apply_attack_damage,
     resolve_attack,
@@ -18,7 +21,6 @@ from ..attack_resolution import (
 )
 from ..hit_effects import apply_attack_hit_effects
 from .resources import consume_stat_block_action_resource
-from .rolls import roll_dice, roll_die
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -73,15 +75,15 @@ def resolve_attack_action(
     if not isinstance(action.value, str):
         raise ValueError("Attack action requires a creature reference.")
     target_ref = action.value
-    if not state._creatures_are_opponents(creature_ref, target_ref):
+    if not creatures_are_opponents(state, creature_ref, target_ref):
         raise ValueError("Attack target must belong to an opposing team.")
     defender = state.creatures[target_ref].creature
-    target_label = state._creature_label(target_ref)
+    target_label = creature_label(state, target_ref)
     nearby_opponent_positions = tuple(
         candidate.position
         for opponent_ref, candidate in state.creatures.items()
         if candidate.is_alive
-        and state._creatures_are_opponents(creature_ref, opponent_ref)
+        and creatures_are_opponents(state, creature_ref, opponent_ref)
     )
     attack_roll_rules = state.combat_rules.roll_modifiers(
         state,
@@ -93,6 +95,7 @@ def resolve_attack_action(
         creature_ref,
         "damage_roll",
     )
+    roll_die = state.dice.roll_die
     outcome = resolve_attack(
         creature,
         defender,
@@ -103,7 +106,8 @@ def resolve_attack_action(
         nearby_opponent_positions=nearby_opponent_positions,
         preferred_attack_name=preferred_attack_name,
         preferred_attack_type=action.preferred_attack_type,
-        attack_roll_mode_override=state._attack_roll_mode_for(
+        attack_roll_mode_override=attack_roll_mode_for(
+            state,
             creature_ref,
             target_ref,
             selected_attack_type(
@@ -124,9 +128,10 @@ def resolve_attack_action(
             roll_die
         ),
         d20_roller=roll_die,
-        dice_roller=roll_dice,
+        die_roller=roll_die,
         automatic_critical_provider_ids=(
-            state._automatic_critical_provider_ids_for(
+            automatic_critical_provider_ids_for(
+                state,
                 creature_ref,
                 target_ref,
             )
@@ -139,6 +144,12 @@ def resolve_attack_action(
         defender,
         attacker_label=creature.name,
         target_label=target_label,
+        damage_receiver=lambda amount, damage_type: state.combat_rules.apply_damage(
+            state,
+            target_ref,
+            amount,
+            damage_type,
+        ),
     )
     resolve_spell_lifecycle_event(
         state,
@@ -174,7 +185,8 @@ def resolve_attack_action(
         )
     progress.messages.extend(outcome.messages)
     progress.events.append(
-        state._event(
+        create_event(
+            state,
             "attack_resolved",
             creature_ref=creature_ref,
             action_id=action_id,
@@ -194,9 +206,10 @@ def resolve_attack_action(
         )
     )
     if defender.get_health() <= 0:
-        state._remove_relationships_for_creature(target_ref)
+        remove_relationships_for_creature(state, target_ref)
         progress.events.append(
-            state._event(
+            create_event(
+                state,
                 "creature_defeated",
                 creature_ref=target_ref,
                 action_id=action_id,

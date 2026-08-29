@@ -166,8 +166,10 @@ def spell_removable_effect_kinds(raw: SpellSchema) -> tuple[str, ...]:
 def spell_geometry_mode(raw: SpellSchema) -> str:
     """Map authored area metadata to the domain's grid geometry mode.
 
-    >>> cone = SpellSchema.model_construct(
-    ...     capability=None, entries=[], range={"type": "cone"})
+    >>> cone = SpellSchema.model_validate({
+    ...     "name": "Cone", "source": "TEST", "level": 1, "school": "V",
+    ...     "range": {"type": "cone", "distance": {"type": "feet", "amount": 15}},
+    ... })
     >>> spell_geometry_mode(cone)
     'directional_area'
     """
@@ -178,9 +180,7 @@ def spell_geometry_mode(raw: SpellSchema) -> str:
             if raw.capability.target.origin == "self"
             else "point_area"
         )
-    range_type = (
-        raw.range.get("type") if isinstance(raw.range.get("type"), str) else None
-    )
+    range_type = raw.range.type if raw.range is not None else None
     if spell_removable_conditions(raw):
         return "point_target"
     if range_type in {"cone", "line", "cube"}:
@@ -195,9 +195,11 @@ def spell_geometry_mode(raw: SpellSchema) -> str:
 def spell_area_size_feet(raw: SpellSchema) -> int | None:
     """Return the authored linear size used to construct the spell's area.
 
-    >>> spell = SpellSchema.model_construct(
-    ...     capability=None, entries=["A 20-foot-radius sphere."],
-    ...     range={"type": "point"})
+    >>> spell = SpellSchema.model_validate({
+    ...     "name": "Sphere", "source": "TEST", "level": 1, "school": "V",
+    ...     "entries": ["A 20-foot-radius sphere."],
+    ...     "range": {"type": "point", "distance": {"type": "feet", "amount": 60}},
+    ... })
     >>> spell_area_size_feet(spell)
     20
     """

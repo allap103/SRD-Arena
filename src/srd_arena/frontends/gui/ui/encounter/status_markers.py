@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
-from ....shared.models import BattlefieldCreatureView
+from ...presentation.models import BattlefieldCreatureView
 
 MarkerCorner = Literal["top_left", "top_right", "bottom_left", "bottom_right"]
 
@@ -45,7 +45,7 @@ def build_status_marker_specs(
 ) -> tuple[StatusMarkerSpec, ...]:
     """Create only the concentration and status markers applicable to a token.
 
-    >>> from ....shared.models import GridPositionView
+    >>> from ...presentation.models import GridPositionView
     >>> creature = BattlefieldCreatureView(
     ...     "hero", "hero", "Hero", "H", None, "blue",
     ...     GridPositionView(1, 1), 10,

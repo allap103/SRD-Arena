@@ -29,11 +29,17 @@ area-preview rasterization. It must not import the engine or mutable encounter
 implementation packages. This exception keeps one definition of grid geometry
 without moving widget behavior into the application layer.
 
-## Shared presentation
+## GUI presentation
 
-`frontends.shared` turns application observations and events into display-ready
-models used by the GUI. It contains no PySide6 widgets and imports neither engine
-nor domain encounter implementation.
+`frontends.gui.presentation` turns application observations and events into
+display-ready models owned by the GUI adapter. It contains no PySide6 widgets
+and imports neither engine nor domain encounter implementation. Keeping these
+projections beside their sole consumer avoids suggesting that the headless
+adapter shares a GUI-shaped read model.
+
+Presentation models are frozen snapshots. Their sequences are detached into
+tuples and their lookups into read-only mappings when constructed, so transient
+widget changes cannot mutate the state currently being painted.
 
 | Module | Responsibility |
 | --- | --- |
@@ -49,13 +55,17 @@ nor domain encounter implementation.
 
 | Module | Responsibility |
 | --- | --- |
-| `battlefield` | Draw the combat grid and emit pointer-derived signals. |
+| `battlefield` | Own transient pointer state, construct render input, and emit pointer-derived signals. |
+| `battlefield_renderer` | Run the single ordered paint pipeline, cache content images, and return generated hit regions. |
+| `battlefield_board_painter` | Paint the board, grid, team outlines, movement preview, and area geometry. |
+| `battlefield_creature_painter` | Paint tokens, emphasis, names, allocation badges, and status markers while generating their hit regions. |
+| `battlefield_overlay_painter` | Paint area and targeting badges plus shared floating labels and tooltips. |
 | `action_menus` | Group advertised actions for menu presentation. |
 | `area_previews` | Re-aim serialized area templates for the hovered cell. |
 | `dice_log` | Render combat messages, dice results, and reroll controls. |
 | `initiative` | Own and render the battlefield's initiative rail. |
 | `status_markers` | Calculate markers, labels, tooltips, and badges. |
-| `movement` | Build immutable movement-preview ownership and shortest paths. |
+| `movement` | Build detached, read-only movement previews and shortest paths. |
 | `targeting` | Derive target-selection modes and battlefield click actions. |
 | `panel_renderer` | Render sidebar encounter controls through explicit bindings and callbacks. |
 | `layout` | Clear nested GUI layouts. |

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from srd_arena.domain.effects.runtime import OngoingEffect
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.models import (
+from srd_arena.domain.encounters.encounter_models.actions import (
     ActionCost,
     EncounterAction,
-    EncounterCreatureState,
 )
+from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
 from srd_arena.engine.api import GameEngine
 from srd_arena.engine.queries import SessionRead
 
@@ -99,7 +99,7 @@ def _observe_encounter(read: SessionRead) -> EncounterObservation:
     return EncounterObservation(
         encounter_id=state.encounter_id,
         grid=GridObservation(width=grid.width, height=grid.height),
-        round_number=state.round_number,
+        round_number=state.round.number,
         decision=DecisionObservation(
             id=decision.id,
             kind=decision.kind,
@@ -125,7 +125,7 @@ def _observe_encounter(read: SessionRead) -> EncounterObservation:
 
 
 def _observe_targeting(state: EncounterState) -> TargetingObservation | None:
-    pending = state.pending_spell_cast
+    pending = state.interrupts.pending_spell_cast
     if pending is None:
         return None
     actor = state.creatures[state.current_decision().creature_ref].creature
@@ -226,7 +226,10 @@ def _observe_creature(
             y=creature_state.position.y,
         ),
         health=creature.get_health(),
-        max_health=creature.get_max_health(),
+        max_health=state.combat_rules.effective_maximum_health(
+            state,
+            creature_ref,
+        ).value,
         is_alive=creature_state.is_alive,
         action_available=action_available,
         bonus_action_available=bonus_action_available,
@@ -285,12 +288,7 @@ def _observe_creature(
 def _observe_effect(effect: OngoingEffect) -> OngoingEffectObservation:
     source = effect.identity.source
     definition_id = source.definition_id
-    explicit_label = effect.parameters.get("effect_label")
-    label = (
-        explicit_label
-        if isinstance(explicit_label, str) and explicit_label.strip()
-        else definition_id.replace("_", " ").replace("-", " ").title()
-    )
+    label = effect.label or definition_id.replace("_", " ").replace("-", " ").title()
     return OngoingEffectObservation(
         kind=effect.kind.value,
         polarity=effect.polarity.value,

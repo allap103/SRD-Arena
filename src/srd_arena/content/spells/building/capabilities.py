@@ -538,4 +538,5 @@ def _build_target(
         origin=target.origin,
         occupants=target.occupants,
         excludes_source=target.excludes_source,
+        affected_entities=target.affects,
     )

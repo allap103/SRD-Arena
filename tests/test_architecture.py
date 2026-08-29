@@ -55,7 +55,7 @@ RULES = (
         ),
     ),
     DependencyRule(
-        package="srd_arena.frontends.shared",
+        package="srd_arena.frontends.gui.presentation",
         forbidden=(
             "srd_arena.content",
             "srd_arena.domain",
@@ -228,12 +228,76 @@ def test_content_is_grouped_by_game_concept() -> None:
     )
 
 
+def test_spell_building_does_not_import_its_package_facade() -> None:
+    """Keep spell construction below the public package entry point."""
+
+    violations: list[str] = []
+    building_dir = PACKAGE_ROOT / "content" / "spells" / "building"
+    for path in sorted(building_dir.rglob("*.py")):
+        module = _module_name(path)
+        for line, imported_module in _imports(path, module):
+            if imported_module == "srd_arena.content.spells":
+                violations.append(f"{path.name}:{line} imports the spell facade")
+
+    assert not violations, (
+        "Spell-building modules must import concrete sibling modules directly; "
+        "the package facade imports the builder and would create a cycle:\n"
+        + "\n".join(violations)
+    )
+
+
 def test_encounter_actions_have_no_legacy_peer_package() -> None:
     legacy_actions = PACKAGE_ROOT / "domain" / "actions"
 
     assert not list(legacy_actions.rglob("*.py")), (
         "Encounter-specific actions belong in srd_arena.domain.encounters.actions."
     )
+
+
+def test_encounter_effect_lifecycle_has_no_facade() -> None:
+    """Keep lifecycle ownership visible at each focused implementation module."""
+
+    facade = PACKAGE_ROOT / "domain" / "encounters" / "ongoing_effects.py"
+
+    assert not facade.exists()
+
+
+def test_encounter_runtime_import_graph_is_acyclic() -> None:
+    """Reject executable dependency cycles hidden by deferred local imports."""
+
+    encounter_dir = PACKAGE_ROOT / "domain" / "encounters"
+    modules = {_module_name(path): path for path in sorted(encounter_dir.rglob("*.py"))}
+    dependencies: dict[str, set[str]] = {module: set() for module in modules}
+    for module, path in modules.items():
+        for _line, imported_module in _runtime_imports(path, module):
+            candidates = (
+                candidate
+                for candidate in modules
+                if imported_module == candidate
+                or imported_module.startswith(f"{candidate}.")
+            )
+            dependency = max(candidates, key=len, default=None)
+            if dependency is not None and dependency != module:
+                dependencies[module].add(dependency)
+
+    cycle = _dependency_cycle(dependencies)
+
+    assert cycle is None, "Runtime import cycle: " + " -> ".join(cycle or ())
+
+
+def test_rule_queries_do_not_depend_on_the_encounter_aggregate() -> None:
+    """Keep reusable typed rule queries behind their focused data contexts."""
+
+    query_dir = PACKAGE_ROOT / "domain" / "encounters" / "rule_queries"
+    aggregate_module = "srd_arena.domain.encounters.encounter"
+    violations = [
+        f"{path.name}:{line} imports {aggregate_module}"
+        for path in sorted(query_dir.glob("*.py"))
+        for line, imported_module in _imports(path, _module_name(path))
+        if imported_module == aggregate_module
+    ]
+
+    assert not violations, "\n".join(violations)
 
 
 def test_gui_interaction_planning_stays_independent_of_pyside6() -> None:
@@ -261,6 +325,13 @@ def test_gui_presenter_stays_independent_of_pyside6() -> None:
         for _line, imported_module in _imports(path, module)
         if imported_module == "PySide6" or imported_module.startswith("PySide6.")
     ]
+
+
+def test_gui_presentation_has_one_owner() -> None:
+    """Keep GUI projections with the adapter that consumes them."""
+
+    assert not list((PACKAGE_ROOT / "frontends" / "shared").glob("*.py"))
+    assert (PACKAGE_ROOT / "frontends" / "gui" / "presentation").is_dir()
 
 
 def test_gui_window_delegates_application_commands_to_presenter() -> None:
@@ -355,6 +426,28 @@ def test_initiative_rendering_has_one_view_owner() -> None:
     )
 
 
+def test_battlefield_widget_delegates_painting_and_image_caching() -> None:
+    gui_root = PACKAGE_ROOT / "frontends" / "gui" / "ui" / "encounter"
+    widget_path = gui_root / "battlefield.py"
+    renderer_path = gui_root / "battlefield_renderer.py"
+    widget_source = widget_path.read_text(encoding="utf-8")
+    renderer_source = renderer_path.read_text(encoding="utf-8")
+    widget_tree = ast.parse(widget_source, filename=str(widget_path))
+    widget_class = next(
+        node
+        for node in widget_tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "BattlefieldWidget"
+    )
+
+    assert not any(
+        isinstance(node, ast.FunctionDef) and node.name.startswith("_paint_")
+        for node in widget_class.body
+    )
+    assert "_image_cache" not in widget_source
+    assert "class BattlefieldRenderer" in renderer_source
+    assert "_image_cache" in renderer_source
+
+
 def test_domain_root_is_namespace_only() -> None:
     violations: list[str] = []
     search_roots = (PACKAGE_ROOT, Path(__file__).parent)
@@ -414,6 +507,19 @@ def test_package_and_engine_roots_do_not_reexport_engine_types() -> None:
         ), f"{path.relative_to(PACKAGE_ROOT.parent)} must remain namespace-only."
 
 
+def test_domain_models_are_imported_from_their_owning_modules() -> None:
+    """Keep removed compatibility facades from obscuring model ownership."""
+
+    for path in (
+        PACKAGE_ROOT / "domain" / "capabilities" / "models.py",
+        PACKAGE_ROOT / "domain" / "encounters" / "models.py",
+    ):
+        assert not path.exists(), (
+            f"{path.relative_to(PACKAGE_ROOT.parent)} must not be restored; "
+            "import models from their focused owner modules."
+        )
+
+
 def test_application_boundary_does_not_import_concrete_session() -> None:
     boundary_modules = (
         "action_observations.py",
@@ -434,6 +540,23 @@ def test_application_boundary_does_not_import_concrete_session() -> None:
         "Application boundary modules must use the GameEngine protocol:\n"
         + "\n".join(violations)
     )
+
+
+def test_concrete_session_exposes_only_engine_operations() -> None:
+    """Keep test conveniences and mutable-domain bypasses off Session."""
+
+    from srd_arena.engine.api import GameEngine
+    from srd_arena.engine.session import Session
+
+    def public_operations(type_: type[object]) -> set[str]:
+        return {
+            name
+            for name, member in vars(type_).items()
+            if not name.startswith("_")
+            and (callable(member) or isinstance(member, property))
+        }
+
+    assert public_operations(Session) == public_operations(GameEngine)
 
 
 def test_engine_does_not_define_presentation_views() -> None:
@@ -481,6 +604,72 @@ def _imports(path: Path, module: str) -> list[tuple[int, str]]:
             if resolved:
                 imports.append((node.lineno, resolved))
     return imports
+
+
+class _RuntimeImportCollector(ast.NodeVisitor):
+    """Collect imports while omitting branches used only for static typing."""
+
+    def __init__(self, module: str, is_package: bool) -> None:
+        self.module = module
+        self.is_package = is_package
+        self.imports: list[tuple[int, str]] = []
+
+    def visit_If(self, node: ast.If) -> None:
+        if _is_type_checking_guard(node.test):
+            for statement in node.orelse:
+                self.visit(statement)
+            return
+        self.generic_visit(node)
+
+    def visit_Import(self, node: ast.Import) -> None:
+        self.imports.extend((node.lineno, alias.name) for alias in node.names)
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        resolved = _resolve_from_import(self.module, self.is_package, node)
+        if resolved:
+            self.imports.append((node.lineno, resolved))
+
+
+def _runtime_imports(path: Path, module: str) -> list[tuple[int, str]]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    collector = _RuntimeImportCollector(module, path.name == "__init__.py")
+    collector.visit(tree)
+    return collector.imports
+
+
+def _is_type_checking_guard(node: ast.expr) -> bool:
+    return (isinstance(node, ast.Name) and node.id == "TYPE_CHECKING") or (
+        isinstance(node, ast.Attribute) and node.attr == "TYPE_CHECKING"
+    )
+
+
+def _dependency_cycle(
+    dependencies: dict[str, set[str]],
+) -> tuple[str, ...] | None:
+    visited: set[str] = set()
+    active: list[str] = []
+    active_indices: dict[str, int] = {}
+
+    def visit(module: str) -> tuple[str, ...] | None:
+        if module in active_indices:
+            start = active_indices[module]
+            return (*active[start:], module)
+        if module in visited:
+            return None
+        active_indices[module] = len(active)
+        active.append(module)
+        for dependency in sorted(dependencies[module]):
+            if cycle := visit(dependency):
+                return cycle
+        active.pop()
+        active_indices.pop(module)
+        visited.add(module)
+        return None
+
+    for module in sorted(dependencies):
+        if cycle := visit(module):
+            return cycle
+    return None
 
 
 def _resolve_from_import(

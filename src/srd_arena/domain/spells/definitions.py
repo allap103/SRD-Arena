@@ -8,14 +8,7 @@ from ..capabilities import (
     CapabilityDefinition,
     CapabilityRequirement,
 )
-
-
-@dataclass(frozen=True)
-class SpellRef:
-    """Reference an authored spell by name and optional rules source."""
-
-    name: str
-    source: str | None = None
+from .metadata import SpellCastingTime, SpellComponents, SpellDuration, SpellRange
 
 
 @dataclass(frozen=True)
@@ -41,10 +34,10 @@ class Spell:
     source: str | None
     level: int
     school: str | None = None
-    casting_time: tuple[dict[str, object], ...] = ()
-    range_data: dict[str, object] = field(default_factory=dict)
-    duration_data: tuple[dict[str, object], ...] = ()
-    components: dict[str, object] = field(default_factory=dict)
+    casting_times: tuple[SpellCastingTime, ...] = ()
+    range: SpellRange | None = None
+    durations: tuple[SpellDuration, ...] = ()
+    components: SpellComponents = field(default_factory=SpellComponents)
     saving_throw_abilities: tuple[str, ...] = ()
     condition_inflict: tuple[str, ...] = ()
     removable_conditions: tuple[str, ...] = ()
@@ -55,10 +48,24 @@ class Spell:
     area_tags: tuple[str, ...] = ()
     geometry_mode: str = "point_target"
     area_size_feet: int | None = None
-    concentration: bool = False
     recast_ends_previous: bool = False
     self_removal_blocked_conditions: tuple[str, ...] = ()
     target_requirements: tuple[CapabilityRequirement, ...] = ()
     definition: CapabilityDefinition | None = None
     activation: CapabilityActivation | None = None
     resolver_id: Literal["slow"] | None = None
+
+    @property
+    def concentration(self) -> bool:
+        """Return whether any intrinsic duration requires concentration.
+
+        >>> from .metadata import SpellDuration
+        >>> Spell(
+        ...     "bless", "Bless", "XPHB", 1,
+        ...     durations=(SpellDuration(
+        ...         "timed", 1, "minute", concentration=True
+        ...     ),),
+        ... ).concentration
+        True
+        """
+        return any(duration.concentration for duration in self.durations)

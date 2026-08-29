@@ -60,6 +60,26 @@ definitions from authored content.
 packages. Content, infrastructure, and frontends are adapters around ports and
 contracts owned by the application/domain core.
 
+### Domain rule-query boundary
+
+`EncounterState` remains the mutable encounter aggregate, while `CombatRules`
+is its stable source-aware rules facade. The focused functions under
+`domain.encounters.rule_queries` do not depend on the aggregate class. They
+accept small structural contexts exposing only active effects and, where a
+specific query needs them, combatants, conditions, the grid definition, or
+dice. This keeps reusable calculations independent of initiative, decision
+stacks, action selectors, relationships, and encounter orchestration without
+copying state into a second model.
+
+### Spell-resolution boundary
+
+The source-neutral spell resolver receives a frozen `SpellActionContext` with
+read-only invocation and target facts. Operations that must remain live—dice,
+effect-aware roll modifiers, health changes, and spatial follow-up targeting—
+cross the narrow `SpellResolutionEnvironment` protocol. The encounter package
+owns its concrete adapter, so spell code neither imports `EncounterState` nor
+receives an unstructured collection of optional callbacks.
+
 ## GUI interaction split
 
 The GUI composition root wraps each `RunningGame` in a `GamePresenter` before
@@ -158,6 +178,13 @@ changes, numeric allocations, and confirmation/cancellation. Policy remains
 outside the application: the GUI waits for a user, while an ML policy chooses
 among the same advertised actions.
 
+The domain rechecks a selected action immediately before execution because its
+target, range, resources, or actor state may have changed since advertisement.
+A failed recheck is a normal action result rather than an exception: it emits a
+readable system message and an `action_resolved` event with `success=false`, a
+stable `reason_code`, and the relevant action or source identifiers. Feature,
+item, spell, grapple, and encounter-native action guards use the same contract.
+
 ## Read and write boundaries
 
 ```text
@@ -210,7 +237,7 @@ prevent engine access from returning.
   domain definitions.
 - Driving adapters import application contracts exclusively through
   `srd_arena.application.api`, not its implementation modules.
-- Shared presentation imports application contracts, not engine or encounter
+- GUI presentation imports application contracts, not engine or encounter
   implementation packages.
 - The GUI adapter imports application contracts and may reuse pure domain
   geometry for pointer-driven area rendering. It imports neither engine nor mutable

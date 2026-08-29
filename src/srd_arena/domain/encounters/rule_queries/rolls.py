@@ -2,20 +2,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ...effects.modifiers import ModifierSubject, RollKind, RollModifier
 from ...effects.rule_effects import RollAdjustment
-from ..models import CreatureRef
+from ..encounter_models.actions import CreatureRef
+from .context import CreatureEffectQueryContext
 from .models import RollRuleContribution, RollRuleResult
-from .providers import legacy_modifier_provider, ongoing_rule_effects
-
-if TYPE_CHECKING:
-    from ..encounter import EncounterState
+from .providers import ongoing_rule_effects
+from .senses import sense_range
 
 
 def roll_modifiers(
-    state: EncounterState,
+    state: CreatureEffectQueryContext,
     creature_ref: CreatureRef,
     roll: RollKind,
     ability: str | None = None,
@@ -25,41 +22,13 @@ def roll_modifiers(
     """Return modifiers matching one roll, subject, ability, and opponent.
 
     >>> from types import SimpleNamespace
-    >>> creature = SimpleNamespace(roll_modifier_sources={})
-    >>> state = SimpleNamespace(
-    ...     creatures={"hero": SimpleNamespace(creature=creature)},
-    ...     ongoing_effects=[],
-    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[])
     >>> result = roll_modifiers(state, "hero", "saving_throw", "wisdom")
     >>> (result.contributions, result.mode)
     ((), 'normal')
     """
 
-    creature = state.creatures[creature_ref].creature
-    contributions: list[RollRuleContribution] = []
-    for definition_id, sources in creature.roll_modifier_sources.items():
-        if not sources:
-            continue
-        origin_id, modifiers = next(iter(sources.items()))
-        provider_state_id, source = legacy_modifier_provider(
-            state,
-            creature_ref,
-            definition_id,
-            origin_id,
-        )
-        contributions.extend(
-            RollRuleContribution(provider_state_id, source, modifier)
-            for modifier in modifiers
-            if _modifier_applies(
-                state,
-                modifier,
-                roll=roll,
-                ability=ability,
-                subject=subject,
-                opposing_ref=opposing_ref,
-            )
-        )
-    contributions.extend(
+    contributions = tuple(
         RollRuleContribution(
             provider_state_id,
             source,
@@ -78,11 +47,11 @@ def roll_modifiers(
             opposing_ref=opposing_ref,
         )
     )
-    return RollRuleResult(tuple(contributions))
+    return RollRuleResult(contributions)
 
 
 def _modifier_applies(
-    state: EncounterState,
+    state: CreatureEffectQueryContext,
     modifier: RollModifier,
     *,
     roll: RollKind,
@@ -96,5 +65,7 @@ def _modifier_applies(
         return False
     if opposing_ref is None or not modifier.ignored_by_senses:
         return True
-    opposing = state.creatures[opposing_ref].creature
-    return not any(opposing.has_sense(sense) for sense in modifier.ignored_by_senses)
+    return not any(
+        sense_range(state, opposing_ref, sense).range_feet is not None
+        for sense in modifier.ignored_by_senses
+    )

@@ -7,12 +7,16 @@ from typing import TYPE_CHECKING, Protocol
 
 from ..geometry import Position
 from .behaviors import build_behavior
-from .models import (
-    BehaviorContext,
+from .encounter_models.actions import (
     CreatureRef,
     EncounterAction,
+)
+from .encounter_models.state import (
+    BehaviorContext,
     EncounterCreatureState,
 )
+from .participants import creatures_are_opponents
+from .state_runtime import creature_position, living_creature_refs
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -40,7 +44,7 @@ class ExternalActionSelector:
     ) -> None:
         """Decline automatic selection so an external controller can choose.
 
-        >>> from unittest.mock import Mock
+        >>> from unittest.mock import Mock, patch
         >>> ExternalActionSelector().select_action(Mock(), "hero", ()) is None
         True
         """
@@ -64,14 +68,22 @@ class ScriptedActionSelector:
 
         A scripted creature with no living opponent safely waits.
 
-        >>> from unittest.mock import Mock
+        >>> from unittest.mock import Mock, patch
         >>> participant = Mock()
         >>> participant.behavior.type = "wait"
         >>> selector = ScriptedActionSelector(participant)
         >>> state = Mock()
-        >>> state._creature_position.return_value = Position(0, 0)
-        >>> state._living_creature_refs.return_value = []
-        >>> selector.select_action(state, "guard", (EncounterAction("Wait", "wait"),)).kind
+        >>> with patch(
+        ...     "srd_arena.domain.encounters.action_selection.creature_position",
+        ...     return_value=Position(0, 0),
+        ... ), patch(
+        ...     "srd_arena.domain.encounters.action_selection.living_creature_refs",
+        ...     return_value=[],
+        ... ):
+        ...     result = selector.select_action(
+        ...         state, "guard", (EncounterAction("Wait", "wait"),)
+        ...     )
+        >>> result.kind
         'wait'
         """
         wait = next(action for action in actions if action.kind == "wait")
@@ -119,19 +131,19 @@ class ScriptedActionSelector:
         state: EncounterState,
         creature_ref: CreatureRef,
     ) -> CreatureRef | None:
-        actor_position = state._creature_position(creature_ref)
+        actor_position = creature_position(state, creature_ref)
         opponents = [
             target_ref
-            for target_ref in state._living_creature_refs()
-            if state._creatures_are_opponents(creature_ref, target_ref)
+            for target_ref in living_creature_refs(state)
+            if creatures_are_opponents(state, creature_ref, target_ref)
         ]
         if not opponents:
             return None
         return min(
             opponents,
             key=lambda target_ref: (
-                abs(state._creature_position(target_ref).x - actor_position.x)
-                + abs(state._creature_position(target_ref).y - actor_position.y)
+                abs(creature_position(state, target_ref).x - actor_position.x)
+                + abs(creature_position(state, target_ref).y - actor_position.y)
             ),
         )
 

@@ -165,9 +165,9 @@ class EffectiveConditionSet:
 
 def effective_conditions(
     applied_conditions: tuple[AppliedCondition, ...],
-    condition_immunities: frozenset[Condition] = frozenset(),
+    suppressed_conditions: frozenset[Condition] = frozenset(),
 ) -> EffectiveConditionSet:
-    """Expand applied conditions into effective conditions and traits.
+    """Expand applied conditions, omitting explicitly suppressed consequences.
 
     >>> from srd_arena.domain.effects.conditions import build_applied_condition
     >>> paralyzed = build_applied_condition(condition=Condition.PARALYZED,
@@ -190,7 +190,7 @@ def effective_conditions(
             if condition in expanded:
                 continue
             expanded.add(condition)
-            if condition in condition_immunities:
+            if condition in suppressed_conditions:
                 suppressed_providers.setdefault(condition, set()).add(applied.id)
                 continue
             condition_providers.setdefault(condition, set()).add(applied.id)
@@ -220,7 +220,7 @@ def effective_conditions(
             SuppressedCondition(
                 condition,
                 tuple(sorted(provider_ids)),
-                "immunity",
+                "suppression",
             )
             for condition, provider_ids in sorted(
                 suppressed_providers.items(),

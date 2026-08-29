@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ...effects.condition_rules import effective_conditions
 from ...effects.conditions import CombatTrait
 from ...effects.rule_effects import (
@@ -12,23 +10,27 @@ from ...effects.rule_effects import (
     ReactionProhibition,
 )
 from ..actions.eligibility_rules.models import ActionEligibility, EligibilityFailure
-from ..models import CreatureRef, EncounterAction
+from ..encounter_models.actions import (
+    CreatureRef,
+    EncounterAction,
+)
+from .context import ConditionRuleQueryContext
+from .defenses import condition_suppressions
 from .models import SourcedEligibilityFailure
 from .providers import ongoing_rule_effects
 
-if TYPE_CHECKING:
-    from ..encounter import EncounterState
-
 
 def reaction_eligibility(
-    state: EncounterState,
+    state: ConditionRuleQueryContext,
     creature_ref: CreatureRef,
     reaction_kind: str | None = None,
 ) -> ActionEligibility:
     """Return every reason a creature cannot take the requested reaction.
 
     >>> from types import SimpleNamespace
-    >>> creature = SimpleNamespace(condition_immunities=lambda: frozenset())
+    >>> creature = SimpleNamespace(
+    ...     statistics=SimpleNamespace(condition_immunities=frozenset())
+    ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(
     ...         is_alive=True, reaction_available=False, creature=creature
@@ -56,7 +58,7 @@ def reaction_eligibility(
             for condition in state.conditions
             if condition.target_ref == creature_ref
         ),
-        creature_state.creature.condition_immunities(),
+        condition_suppressions(state, creature_ref).values,
     )
     if conditions.has_trait(CombatTrait.CANNOT_TAKE_REACTIONS):
         failures.append(
@@ -89,15 +91,17 @@ def reaction_eligibility(
 
 
 def action_compatibility(
-    state: EncounterState,
+    state: ConditionRuleQueryContext,
     creature_ref: CreatureRef,
     action: EncounterAction,
 ) -> ActionEligibility:
     """Ask whether current permissions and turn economy permit an action.
 
     >>> from types import SimpleNamespace
-    >>> from ..models import ActionCost
-    >>> creature = SimpleNamespace(condition_immunities=lambda: frozenset())
+    >>> from ..encounter_models.actions import ActionCost
+    >>> creature = SimpleNamespace(
+    ...     statistics=SimpleNamespace(condition_immunities=frozenset())
+    ... )
     >>> creature_state = SimpleNamespace(
     ...     is_alive=True, creature=creature, actions_remaining=0,
     ...     bonus_action_available=True, reaction_available=True,
@@ -134,7 +138,7 @@ def action_compatibility(
             for condition in state.conditions
             if condition.target_ref == creature_ref
         ),
-        creature_state.creature.condition_immunities(),
+        condition_suppressions(state, creature_ref).values,
     )
     if action.kind != "wait" and conditions.has_trait(CombatTrait.CANNOT_TAKE_ACTIONS):
         failures.append(

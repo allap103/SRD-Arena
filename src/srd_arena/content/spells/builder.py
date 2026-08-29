@@ -5,7 +5,11 @@ from srd_arena.domain.spells import Spell
 
 from .building import (
     build_activation,
+    build_casting_times,
+    build_spell_components,
     build_spell_definition,
+    build_spell_durations,
+    build_spell_range,
     normalize_save_ability,
     target_requirements,
 )
@@ -38,10 +42,10 @@ def build_spell(spell_schema: SpellSchema) -> Spell:
         source=spell_schema.source,
         level=spell_schema.level,
         school=spell_schema.school,
-        casting_time=tuple(spell_schema.time),
-        range_data=dict(spell_schema.range),
-        duration_data=tuple(spell_schema.duration),
-        components=dict(spell_schema.components),
+        casting_times=build_casting_times(spell_schema.time),
+        range=build_spell_range(spell_schema.range),
+        durations=build_spell_durations(spell_schema.duration),
+        components=build_spell_components(spell_schema.components),
         saving_throw_abilities=tuple(
             normalize_save_ability(value) for value in spell_schema.saving_throw
         ),
@@ -54,11 +58,6 @@ def build_spell(spell_schema: SpellSchema) -> Spell:
         area_tags=tuple(spell_schema.area_tags),
         geometry_mode=spell_geometry_mode(spell_schema),
         area_size_feet=spell_area_size_feet(spell_schema),
-        concentration=any(
-            bool(duration.get("concentration"))
-            for duration in spell_schema.duration
-            if isinstance(duration, dict)
-        ),
         recast_ends_previous=(
             spell_schema.capability.recast_ends_previous
             if spell_schema.capability is not None
