@@ -15,6 +15,7 @@ from ..encounter_models.actions import (
 )
 from ..encounter_models.resolution import EncounterProgress
 from ..state_runtime import create_event
+from .rejections import reject_action
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -81,22 +82,41 @@ def resolve_escape_action(
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="hero"),
     ...     creatures={"hero": SimpleNamespace(actions_remaining=0)},
+    ...     event_sequence=1,
     ... )
+    >>> progress = EncounterProgress()
     >>> resolve_escape_action(
     ...     state, SimpleNamespace(), EncounterAction("Escape", "escape_grapple"),
-    ...     EncounterProgress(), "escape-1"
+    ...     progress, "escape-1"
     ... )
-    Traceback (most recent call last):
-    ...
-    RuntimeError: No Action remains to escape a grapple.
+    >>> (progress.messages[-1], progress.events[-1].data["reason_code"])
+    (('system', 'No Action remains to escape a grapple.'), 'action_spent')
     """
 
     creature_ref = state.current_decision().creature_ref
     creature_state = state.creatures[creature_ref]
     if creature_state.actions_remaining <= 0:
-        raise RuntimeError("No Action remains to escape a grapple.")
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="escape_grapple",
+            message="No Action remains to escape a grapple.",
+            reason_code="action_spent",
+        )
+        return
     if not isinstance(action.value, str):
-        raise ValueError("Escape grapple requires the grappler reference.")
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="escape_grapple",
+            message="Escape grapple requires the grappler reference.",
+            reason_code="source_required",
+        )
+        return
     grapple = next(
         (
             applied
@@ -108,7 +128,17 @@ def resolve_escape_action(
         None,
     )
     if grapple is None:
-        raise RuntimeError("That grapple is no longer active.")
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="escape_grapple",
+            message="That grapple is no longer active.",
+            reason_code="grapple_unavailable",
+            details={"source_ref": action.value},
+        )
+        return
     consume_action(state, allow_magic=False)
     escape_dc = grapple.metadata["escape_dc"]
     if not isinstance(escape_dc, int):

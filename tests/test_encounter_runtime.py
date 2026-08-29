@@ -113,8 +113,10 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance() -> None:
     session.encounter_state.active_position.y = 6
     session.encounter_state.turn.index = 1
 
-    _use_deterministic_dice(session, die_roller=lambda sides: 20)
-    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 4)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 20 if sides == 20 else 4,
+    )
 
     progress = _ORCHESTRATOR.advance(session.encounter_state)
 
@@ -184,8 +186,10 @@ def test_extra_attack_allows_second_attack_after_movement() -> None:
     session.encounter_state.creatures["goblin_1"].position.y = 2
     session.encounter_state.creatures["goblin_1"].creature.current_health = 20
 
-    _use_deterministic_dice(session, die_roller=lambda sides: 20)
-    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 1)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 20 if sides == 20 else 1,
+    )
 
     attack_index = _action_id(session, "attack", "goblin_1")
     first_result = session.choose(attack_index)
@@ -227,7 +231,7 @@ def test_second_wind_appears_and_consumes_bonus_action() -> None:
     session.current_scene_id = "goblin_encounter"
     _active_creature(session).current_health = 10
 
-    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 5)
+    _use_deterministic_dice(session, die_roller=lambda _sides: 5)
 
     second_wind_index = _action_id_by_label(session, "Second Wind")
     result = session.choose(second_wind_index)
@@ -251,6 +255,8 @@ def test_second_wind_appears_and_consumes_bonus_action() -> None:
     assert event.data["uses_remaining"] == 1
     healing_roll_detail = _mapping(event.data["healing_roll_detail"])
     assert healing_roll_detail["dice"] == "1d10"
+    assert healing_roll_detail["dice_values"] == [5]
+    assert healing_roll_detail["die_rolls"] == [[5]]
     assert healing_roll_detail["applied_healing"] == 7
 
 
@@ -259,7 +265,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable() -> None:
     session.current_scene_id = "goblin_encounter"
     _active_creature(session).current_health = 10
 
-    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 5)
+    _use_deterministic_dice(session, die_roller=lambda _sides: 5)
 
     second_wind_index = _action_id_by_label(session, "Second Wind")
     session.choose(second_wind_index)
@@ -292,7 +298,6 @@ def test_action_surge_grants_additional_action_for_same_turn() -> None:
         return 18 if sides == 20 else 6
 
     _use_deterministic_dice(session, die_roller=fixed_roll)
-    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 6)
 
     first_attack_index = _action_id(session, "attack", "goblin_1")
     session.choose(first_attack_index)
@@ -793,8 +798,10 @@ def test_goblin_encounter_attack_can_end_scene_with_victory() -> None:
     session.encounter_state.creatures["goblin_2"].creature.current_health = 0
     session.encounter_state.creatures["goblin_3"].creature.current_health = 0
 
-    _use_deterministic_dice(session, die_roller=lambda sides: 20)
-    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 4)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 20 if sides == 20 else 4,
+    )
 
     attack_index = _action_id(session, "attack", "goblin_1")
     result = session.choose(attack_index)

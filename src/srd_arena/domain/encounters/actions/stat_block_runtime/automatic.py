@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from ....capabilities import DamageEffect
 from ....creatures import Creature
 from ....creatures.stat_block_actions import AutomaticActionDefinition
+from ....rolls.dice import resolve_dice
 from ...attack_economy import consume_action
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
@@ -58,20 +59,24 @@ def resolve_automatic_stat_block_action(
         creature_ref,
         "damage_roll",
     )
-    roll_dice = state.dice.roll_dice
+    roll_die = state.dice.roll_die
     for effect in definition.effects:
         if not isinstance(effect, DamageEffect):
             raise NotImplementedError(
                 f"Automatic effect '{type(effect).__name__}' is not executable."
             )
         count_text, sides_text = effect.dice.lower().split("d", 1)
-        rolled = roll_dice(int(count_text), int(sides_text))
-        sourced_modifier = damage_roll_rules.resolve_modifier(
-            lambda sides: roll_dice(1, sides)
+        roll = resolve_dice(
+            int(count_text),
+            int(sides_text),
+            modifier=effect.bonus,
+            roller=roll_die,
         )
+        sourced_modifier = damage_roll_rules.resolve_modifier(roll_die)
+        resolved_total = roll.total + sourced_modifier
         amount = max(
             effect.minimum or 0,
-            rolled + effect.bonus + sourced_modifier,
+            resolved_total,
         )
         applied = state.combat_rules.apply_damage(
             state,
@@ -83,10 +88,15 @@ def resolve_automatic_stat_block_action(
         damage_details.append(
             {
                 "damage_type": effect.damage_type,
-                "rolled": rolled,
-                "bonus": effect.bonus,
+                "dice": effect.dice,
+                "dice_values": [die.result for die in roll.dice],
+                "die_rolls": [list(die.rolls) for die in roll.dice],
+                "dice_total": roll.subtotal,
+                "modifier": roll.modifier + sourced_modifier,
                 "sourced_modifier": sourced_modifier,
-                "applied": applied,
+                "total": resolved_total,
+                "minimum_applied_total": amount,
+                "applied_damage": applied,
             }
         )
     progress.messages.append(

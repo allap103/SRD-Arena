@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from ...effects.runtime import OngoingEffectKind
-from ...rolls.saving_throws import SavingThrowCreature, resolve_saving_throw
+from ...rolls.saving_throws import resolve_saving_throw
 from .removal import _remove_effect_tree
 
 if TYPE_CHECKING:
@@ -99,7 +99,7 @@ def resolve_concentration_damage(
         ability="constitution",
     )
     save = resolve_saving_throw(
-        cast(SavingThrowCreature, creature),
+        creature,
         "constitution",
         dc,
         sourced_modifier_override=roll_rules.resolve_modifier(state.dice.roll_die),

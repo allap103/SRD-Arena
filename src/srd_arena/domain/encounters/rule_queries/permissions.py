@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ...effects.condition_rules import effective_conditions
 from ...effects.conditions import CombatTrait
 from ...effects.rule_effects import (
@@ -16,16 +14,14 @@ from ..encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from .context import ConditionRuleQueryContext
 from .defenses import condition_suppressions
 from .models import SourcedEligibilityFailure
 from .providers import ongoing_rule_effects
 
-if TYPE_CHECKING:
-    from ..encounter import EncounterState
-
 
 def reaction_eligibility(
-    state: EncounterState,
+    state: ConditionRuleQueryContext,
     creature_ref: CreatureRef,
     reaction_kind: str | None = None,
 ) -> ActionEligibility:
@@ -95,7 +91,7 @@ def reaction_eligibility(
 
 
 def action_compatibility(
-    state: EncounterState,
+    state: ConditionRuleQueryContext,
     creature_ref: CreatureRef,
     action: EncounterAction,
 ) -> ActionEligibility:

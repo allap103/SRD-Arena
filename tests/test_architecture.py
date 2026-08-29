@@ -254,6 +254,21 @@ def test_encounter_actions_have_no_legacy_peer_package() -> None:
     )
 
 
+def test_rule_queries_do_not_depend_on_the_encounter_aggregate() -> None:
+    """Keep reusable typed rule queries behind their focused data contexts."""
+
+    query_dir = PACKAGE_ROOT / "domain" / "encounters" / "rule_queries"
+    aggregate_module = "srd_arena.domain.encounters.encounter"
+    violations = [
+        f"{path.name}:{line} imports {aggregate_module}"
+        for path in sorted(query_dir.glob("*.py"))
+        for line, imported_module in _imports(path, _module_name(path))
+        if imported_module == aggregate_module
+    ]
+
+    assert not violations, "\n".join(violations)
+
+
 def test_gui_interaction_planning_stays_independent_of_pyside6() -> None:
     encounter_ui = PACKAGE_ROOT / "frontends" / "gui" / "ui" / "encounter"
     violations: list[str] = []

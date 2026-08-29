@@ -1,3 +1,7 @@
+from dataclasses import replace
+
+import pytest
+
 from srd_arena.application.observations import ActionObservation
 from srd_arena.frontends.gui.presentation.models import (
     BattlefieldCreatureView,
@@ -50,6 +54,8 @@ def test_movement_plan_uses_active_creature_and_advertised_movement() -> None:
     assert plan.path_to((2, 0)) == ("down-right", "up-right")
     assert plan.path_to((1, 0)) is None
     assert movement_plan_is_current(plan, encounter.battlefield)
+    with pytest.raises(TypeError):
+        plan.paths[(3, 3)] = ("down-right",)  # type: ignore[index]
 
 
 def test_movement_plan_rejects_inactive_creature_and_expires_on_turn_change() -> None:
@@ -57,8 +63,15 @@ def test_movement_plan_rejects_inactive_creature_and_expires_on_turn_change() ->
     plan = build_movement_plan(encounter, "actor")
     assert plan is not None
 
-    encounter.battlefield.creatures[0].is_active = False
-    encounter.battlefield.creatures[1].is_active = True
+    actor, blocker = encounter.battlefield.creatures
+    changed_battlefield = replace(
+        encounter.battlefield,
+        creatures=(
+            replace(actor, is_active=False),
+            replace(blocker, is_active=True),
+        ),
+    )
+    encounter = replace(encounter, battlefield=changed_battlefield)
 
     assert build_movement_plan(encounter, "actor") is None
     assert not movement_plan_is_current(plan, encounter.battlefield)
@@ -124,7 +137,7 @@ def _encounter_view() -> EncounterView:
     battlefield = BattlefieldView(
         width=4,
         height=4,
-        creatures=[actor, blocker],
+        creatures=(actor, blocker),
         summary_text="",
     )
     resources = ResourceSummaryView(
@@ -154,8 +167,8 @@ def _encounter_view() -> EncounterView:
         battlefield=battlefield,
         resources=resources,
         movement_actions={"right": move},
-        non_movement_actions=[],
-        feature_actions=[],
+        non_movement_actions=(),
+        feature_actions=(),
         end_turn_action=None,
         action_pane_title="Actions",
     )

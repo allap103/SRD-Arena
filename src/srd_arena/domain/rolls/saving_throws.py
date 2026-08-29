@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol
+from typing import Literal, Protocol
 
 from .dice import (
     CheckResult,
@@ -26,12 +26,31 @@ Ability = Literal[
 
 
 class SavingThrowCreature(Protocol):
-    """Define the saving throw creature contract."""
-
-    attributes: Any
+    """Expose only intrinsic values required to resolve a saving throw."""
 
     def get_modifier(self, attribute_value: int) -> int:
         """Return the rules modifier associated with an ability score."""
+
+        ...
+
+    def saving_throw_ability_score(self, ability: Ability) -> int:
+        """Return the score associated with the selected saving-throw ability."""
+
+        ...
+
+    @property
+    def saving_throw_proficiency_bonus(self) -> int:
+        """Return the proficiency contribution available to proficient saves."""
+
+        ...
+
+    def is_saving_throw_proficient(self, ability: Ability) -> bool:
+        """Return whether the creature is proficient in the selected save."""
+
+        ...
+
+    def explicit_saving_throw_bonus(self, ability: Ability) -> int | None:
+        """Return an authored stat-block save total when present."""
 
         ...
 
@@ -81,10 +100,11 @@ def resolve_saving_throw(
 
     >>> from types import SimpleNamespace
     >>> creature = SimpleNamespace(
-    ...     attributes=SimpleNamespace(
-    ...         dexterity=14, proficiency_bonus=2, proficiencies={}
-    ...     ),
     ...     get_modifier=lambda score: (score - 10) // 2,
+    ...     saving_throw_ability_score=lambda ability: 14,
+    ...     saving_throw_proficiency_bonus=2,
+    ...     is_saving_throw_proficient=lambda ability: False,
+    ...     explicit_saving_throw_bonus=lambda ability: None,
     ... )
     >>> result = resolve_saving_throw(
     ...     creature, "dexterity", 13, roller=lambda sides: 12
@@ -92,14 +112,16 @@ def resolve_saving_throw(
     >>> (result.modifiers.total, result.check.total if hasattr(result.check, "total") else result.check.roll.total, result.check.success)
     (2, 14, True)
     """
-    ability_score = getattr(creature.attributes, ability)
+    ability_score = creature.saving_throw_ability_score(ability)
     ability_modifier = creature.get_modifier(ability_score)
-    explicit_bonus = _explicit_saving_throw_bonus(creature, ability)
-    proficient = explicit_bonus is not None or _is_save_proficient(creature, ability)
+    explicit_bonus = creature.explicit_saving_throw_bonus(ability)
+    proficient = explicit_bonus is not None or creature.is_saving_throw_proficient(
+        ability
+    )
     proficiency_modifier = (
         explicit_bonus - ability_modifier
         if explicit_bonus is not None
-        else int(creature.attributes.proficiency_bonus)
+        else creature.saving_throw_proficiency_bonus
         if proficient
         else 0
     )
@@ -141,10 +163,11 @@ def reroll_saving_throw(
 
     >>> from types import SimpleNamespace
     >>> creature = SimpleNamespace(
-    ...     attributes=SimpleNamespace(
-    ...         wisdom=10, proficiency_bonus=2, proficiencies={}
-    ...     ),
     ...     get_modifier=lambda score: (score - 10) // 2,
+    ...     saving_throw_ability_score=lambda ability: 10,
+    ...     saving_throw_proficiency_bonus=2,
+    ...     is_saving_throw_proficient=lambda ability: False,
+    ...     explicit_saving_throw_bonus=lambda ability: None,
     ... )
     >>> original = resolve_saving_throw(
     ...     creature, "wisdom", 15, roller=lambda sides: 5
@@ -164,34 +187,3 @@ def reroll_saving_throw(
         roller=roller,
         automatic_failure_reasons=original.automatic_failure_reasons,
     )
-
-
-def _is_save_proficient(creature: SavingThrowCreature, ability: Ability) -> bool:
-    proficiencies = getattr(creature.attributes, "proficiencies", {})
-    if not isinstance(proficiencies, dict):
-        return False
-    saving_throws = proficiencies.get("saving_throws", [])
-    if not isinstance(saving_throws, list):
-        return False
-    aliases = {
-        "strength": "str",
-        "dexterity": "dex",
-        "constitution": "con",
-        "intelligence": "int",
-        "wisdom": "wis",
-        "charisma": "cha",
-    }
-    normalized = {str(item).casefold() for item in saving_throws}
-    return ability in normalized or aliases[ability] in normalized
-
-
-def _explicit_saving_throw_bonus(
-    creature: SavingThrowCreature,
-    ability: Ability,
-) -> int | None:
-    statistics = getattr(creature, "statistics", None)
-    bonuses = getattr(statistics, "saving_throw_bonuses", {})
-    if not isinstance(bonuses, dict):
-        return None
-    value = bonuses.get(ability)
-    return value if isinstance(value, int) else None

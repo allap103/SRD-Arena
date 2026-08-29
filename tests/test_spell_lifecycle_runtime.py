@@ -465,17 +465,19 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets() -> None:
         action.kind == "toggle_spell_target" and action.value == "goblin_3"
         for action in state.available_actions()
     )
-    with pytest.raises(ValueError, match="creature types: humanoid"):
-        _ORCHESTRATOR.submit(
-            state,
-            EncounterAction(
-                "Add invalid target",
-                "toggle_spell_target",
-                "goblin_3",
-                id="crafted-invalid-spell-target",
-                creature_ref="player",
-            ),
-        )
+    rejected = _ORCHESTRATOR.submit(
+        state,
+        EncounterAction(
+            "Add invalid target",
+            "toggle_spell_target",
+            "goblin_3",
+            id="crafted-invalid-spell-target",
+            creature_ref="player",
+        ),
+    )
+    assert rejected.events[-1].data["success"] is False
+    assert rejected.events[-1].data["reason_code"] == ("target_creature_type_required")
+    assert "creature types: humanoid" in rejected.messages[-1][1]
     add_second = next(
         action
         for action in state.available_actions()

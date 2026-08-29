@@ -159,8 +159,10 @@ def test_externally_controlled_goblin_can_attack_opposing_player() -> None:
     state.active_position.y = 2
     state.creatures["goblin_1"].position.x = 3
     state.creatures["goblin_1"].position.y = 2
-    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
-    _use_deterministic_dice(session, pool_roller=lambda _count, _sides: 1)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 20 if sides == 20 else 1,
+    )
     session.choose(_action_id_by_label(session, "Wait"))
 
     attack = next(
@@ -257,10 +259,15 @@ def test_secondary_champion_can_use_class_feature() -> None:
         for action in session.encounter_state.available_actions()
         if action.kind == "feature" and action.value == "second_wind"
     )
-    _choose_advertised_action(session, second_wind)
+    result = _choose_advertised_action(session, second_wind)
 
     assert brynn.get_health() > 10
     assert session.encounter_state.current_decision().creature_ref == "champion_2"
+    feature_event = next(
+        event for event in result.events if event.type == "feature_used"
+    )
+    assert feature_event.creature_ref == "champion_2"
+    assert feature_event.data["target_ref"] == "champion_2"
 
 
 def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:

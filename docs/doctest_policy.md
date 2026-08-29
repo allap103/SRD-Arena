@@ -17,9 +17,10 @@ The following declarations are documented exceptions:
 
 - Protocol and abstract method declarations, because their concrete
   implementations own the behavior being demonstrated.
-- Methods on Qt-bound widget classes and framework event overrides such as
+- Methods on Qt-bound widget classes, functions whose annotated contract uses
+  Qt objects such as `QPainter`, and framework event overrides such as
   `paintEvent`, `resizeEvent`, and mouse events. Their behavior is covered by
-  GUI tests rather than examples requiring a live event loop.
+  GUI tests rather than examples requiring a live event loop or paint device.
 - Property setters when the corresponding property example already exercises
   both reading and writing the value.
 

@@ -9,6 +9,7 @@ from ...ongoing_effects import end_concentration, resolve_spell_lifecycle_event
 from ...rule_queries import InvocationStartContext, InvocationStartResult
 from ...state_runtime import create_event
 from ..option_discovery.spellcasting import spend_spell_resources
+from ..rejections import reject_action
 
 if TYPE_CHECKING:
     from ....creatures import Creature, Spellcasting
@@ -121,23 +122,22 @@ def begin_spell_invocation(
         )
     if result.allowed:
         return True
-    progress.messages.extend(("system", failure.message) for failure in result.failures)
-    progress.events.append(
-        create_event(
-            state,
-            "action_resolved",
-            creature_ref=creature_ref,
-            action_id=action_id,
-            data={
-                "kind": "spell",
-                "spell_id": spell.id,
-                "success": False,
-                "failure_codes": [failure.code for failure in result.failures],
-                "provider_state_ids": [
-                    failure.provider_state_id for failure in result.failures
-                ],
-            },
-        )
+    first_failure = result.failures[0]
+    reject_action(
+        state,
+        progress,
+        actor_ref=creature_ref,
+        action_id=action_id,
+        action_kind="spell",
+        message=first_failure.message,
+        reason_code=first_failure.code,
+        details={
+            "spell_id": spell.id,
+            "failure_codes": [failure.code for failure in result.failures],
+            "provider_state_ids": [
+                failure.provider_state_id for failure in result.failures
+            ],
+        },
     )
     return False
 

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ...effects.rule_effects import InvocationFailureChance
 from ...rolls.dice import DieRoller
+from .context import EffectQueryContext
 from .models import (
     InvocationFailureChanceContribution,
     InvocationStartContext,
@@ -15,12 +14,9 @@ from .models import (
 )
 from .providers import ongoing_rule_effects
 
-if TYPE_CHECKING:
-    from ..encounter import EncounterState
-
 
 def invocation_start_checks(
-    state: EncounterState,
+    state: EffectQueryContext,
     context: InvocationStartContext,
 ) -> InvocationStartQueryResult:
     """Collect sourced failure chances matching invocation kind and components.

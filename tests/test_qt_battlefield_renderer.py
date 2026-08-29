@@ -7,7 +7,6 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 pytest.importorskip("PySide6")
 
-from PySide6.QtCore import QRect
 from PySide6.QtGui import QImage, QPainter
 from PySide6.QtWidgets import QApplication
 
@@ -29,7 +28,7 @@ def test_renderer_returns_hit_regions_from_the_same_completed_paint() -> None:
     battlefield = BattlefieldView(
         width=2,
         height=2,
-        creatures=[
+        creatures=(
             BattlefieldCreatureView(
                 creature_ref="hero",
                 creature_id="hero",
@@ -40,12 +39,12 @@ def test_renderer_returns_hit_regions_from_the_same_completed_paint() -> None:
                 position=GridPositionView(0, 0),
                 health=10,
                 conditions=("Prone",),
-            )
-        ],
+            ),
+        ),
         summary_text="",
     )
     geometry = BattlefieldRenderGeometry(
-        viewport=QRect(0, 0, 200, 200),
+        viewport=(0, 0, 200, 200),
         origin_x=0,
         origin_y=0,
         cell_size=100,
@@ -88,10 +87,12 @@ def test_renderer_returns_hit_regions_from_the_same_completed_paint() -> None:
 
 
 def test_battlefield_render_input_rejects_transient_state_mutation() -> None:
+    cells = [{"x": 0, "y": 0}]
+    overlay: dict[str, object] = {"shape": "radius", "cells": cells}
     render_input = BattlefieldRenderInput(
-        battlefield=BattlefieldView(1, 1, [], ""),
-        geometry=BattlefieldRenderGeometry(QRect(0, 0, 10, 10), 0, 0, 10, 1, 1),
-        area_overlay=None,
+        battlefield=BattlefieldView(1, 1, (), ""),
+        geometry=BattlefieldRenderGeometry((0, 0, 10, 10), 0, 0, 10, 1, 1),
+        area_overlay=overlay,
         movement_plan=None,
         hover_cell=None,
         targetable_creature_refs=frozenset(),
@@ -109,12 +110,20 @@ def test_battlefield_render_input_rejects_transient_state_mutation() -> None:
     with pytest.raises(FrozenInstanceError):
         render_input.targeting_label = "Changed"  # type: ignore[misc]
 
+    overlay["shape"] = "line"
+    cells[0]["x"] = 9
+    assert render_input.area_overlay is not None
+    assert render_input.area_overlay["shape"] == "radius"
+    assert render_input.area_overlay["cells"] == ({"x": 0, "y": 0},)
+    with pytest.raises(TypeError):
+        render_input.area_overlay["shape"] = "cone"  # type: ignore[index]
+
 
 def test_widget_keeps_viewport_geometry_and_hit_testing_aligned() -> None:
     app = QApplication.instance() or QApplication([])
     widget = BattlefieldWidget()
     widget.resize(324, 324)
-    widget.set_battlefield(BattlefieldView(2, 2, [], ""))
+    widget.set_battlefield(BattlefieldView(2, 2, (), ""))
 
     geometry = widget._render_geometry()
 
@@ -135,7 +144,7 @@ def test_widget_clamps_zoomed_pan_without_exposing_empty_viewport() -> None:
     app = QApplication.instance() or QApplication([])
     widget = BattlefieldWidget()
     widget.resize(324, 324)
-    widget.set_battlefield(BattlefieldView(2, 2, [], ""))
+    widget.set_battlefield(BattlefieldView(2, 2, (), ""))
     widget._zoom = 2
     widget._pan_offset = (999, -999)
 

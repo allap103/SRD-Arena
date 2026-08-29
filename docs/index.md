@@ -16,7 +16,6 @@ doctests executed by the test suite.
 application_architecture
 frontend_architecture
 combat_action_architecture
-capability_effect_system
 glossary
 ```
 
@@ -40,6 +39,13 @@ spell_capability_schema
 spell_mechanics_coverage
 spell_implementation_batches
 content-schema-visualization
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Historical design records
+
+capability_effect_system
 ```
 
 ```{toctree}

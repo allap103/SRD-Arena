@@ -191,8 +191,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn() -> None:
 
 def test_lethal_reaction_closes_the_frame_without_resuming_movement() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
-    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
-    _use_deterministic_dice(session, pool_roller=lambda _count, sides: sides)
+    _use_deterministic_dice(session, die_roller=lambda sides: sides)
     session.read()
     state = session.encounter_state
     assert state is not None
@@ -225,8 +224,10 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement() -> None:
 
 def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes() -> None:
     session = load_scenario_directory(FULL_CONTROL_SCENARIO_DIR).create_session()
-    _use_deterministic_dice(session, die_roller=lambda _sides: 15)
-    _use_deterministic_dice(session, pool_roller=lambda _count, _sides: 1)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 15 if sides == 20 else 1,
+    )
     session.read()
     state = session.encounter_state
     assert state is not None

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ...effects.condition_rules import effective_conditions
 from ...effects.conditions import CombatTrait
 from ...effects.rule_effects import (
@@ -13,6 +11,12 @@ from ...effects.rule_effects import (
     SpeedMultiplier,
 )
 from ..encounter_models.actions import CreatureRef
+from .context import (
+    ConditionRuleQueryContext,
+    CreatureEffectQueryContext,
+    EffectQueryContext,
+    MovementRuleQueryContext,
+)
 from .defenses import condition_suppressions
 from .models import (
     MovementQueryResult,
@@ -22,12 +26,9 @@ from .models import (
 )
 from .providers import ongoing_rule_effects
 
-if TYPE_CHECKING:
-    from ..encounter import EncounterState
-
 
 def effective_armor_class(
-    state: EncounterState,
+    state: CreatureEffectQueryContext,
     creature_ref: CreatureRef,
 ) -> NumericRuleResult:
     """Return effective AC with every modifier's runtime provenance.
@@ -65,7 +66,7 @@ def effective_armor_class(
 
 
 def effective_speed(
-    state: EncounterState,
+    state: ConditionRuleQueryContext,
     creature_ref: CreatureRef,
 ) -> NumericRuleResult:
     """Return effective Speed after additions, multipliers, and caps.
@@ -140,7 +141,7 @@ def effective_speed(
 
 
 def movement_budget(
-    state: EncounterState,
+    state: MovementRuleQueryContext,
     creature_ref: CreatureRef,
 ) -> MovementQueryResult:
     """Translate effective Speed into the encounter grid's movement budget.
@@ -170,7 +171,7 @@ def movement_budget(
 
 
 def attack_limit(
-    state: EncounterState,
+    state: EffectQueryContext,
     creature_ref: CreatureRef,
     base: int,
 ) -> NumericRuleResult:

@@ -216,7 +216,12 @@ class BattlefieldWidget(QWidget):
             rows,
         )
         return BattlefieldRenderGeometry(
-            viewport=viewport,
+            viewport=(
+                viewport.x(),
+                viewport.y(),
+                viewport.width(),
+                viewport.height(),
+            ),
             origin_x=origin_x,
             origin_y=origin_y,
             cell_size=cell_size,

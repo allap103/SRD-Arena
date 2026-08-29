@@ -99,7 +99,8 @@ def remove_relationships_for_creature(
     ... )
     >>> condition = SimpleNamespace(id="condition-1")
     >>> state = SimpleNamespace(
-    ...     relationships=[relationship], conditions=[condition]
+    ...     relationships=[relationship], conditions=[condition],
+    ...     ongoing_effects=[],
     ... )
     >>> remove_relationships_for_creature(state, "ogre")
     >>> (state.relationships, state.conditions)
@@ -108,8 +109,7 @@ def remove_relationships_for_creature(
 
     from .ongoing_effects import end_concentration
 
-    if hasattr(state, "ongoing_effects"):
-        end_concentration(state, creature_ref)
+    end_concentration(state, creature_ref)
     grapple_condition_ids = {
         relationship.identity.parent_id
         for relationship in state.relationships

@@ -30,13 +30,13 @@ def build_session_presentation(
     ... )
     >>> presentation = build_session_presentation(observation)
     >>> (presentation.scene_id, presentation.story_text, presentation.system_actions)
-    ('intro', 'Welcome', [namespace(kind='system_exit')])
+    ('intro', 'Welcome', (namespace(kind='system_exit'),))
     """
 
     presentation_config = config or ScenarioPresentation()
     view = observation.scene
-    story_actions = list(view.action_details[:-SYSTEM_ACTION_COUNT])
-    system_actions = list(view.action_details[-SYSTEM_ACTION_COUNT:])
+    story_actions = tuple(view.action_details[:-SYSTEM_ACTION_COUNT])
+    system_actions = tuple(view.action_details[-SYSTEM_ACTION_COUNT:])
 
     if observation.encounter is None:
         return SessionPresentation(
@@ -53,11 +53,11 @@ def build_session_presentation(
         for action in story_actions
         if action.kind == "move" and action.movement_direction is not None
     }
-    non_movement_actions = [
+    non_movement_actions = tuple(
         action
         for action in story_actions
         if action.kind not in {"move", "wait", "pass"}
-    ]
+    )
     feature_actions = build_feature_actions(encounter, story_actions)
     end_turn_action = next(
         (action for action in story_actions if action.kind in {"wait", "pass"}),

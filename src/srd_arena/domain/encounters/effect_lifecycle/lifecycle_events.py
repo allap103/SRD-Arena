@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, cast
 
 from ...rolls.saving_throws import (
     Ability,
-    SavingThrowCreature,
     resolve_saving_throw,
 )
 from ..participants import creatures_are_opponents
@@ -78,7 +77,7 @@ def resolve_spell_lifecycle_event(
                     ability=ability,
                 )
                 save = resolve_saving_throw(
-                    cast(SavingThrowCreature, creature),
+                    creature,
                     cast(Ability, ability),
                     dc,
                     mode="advantage",

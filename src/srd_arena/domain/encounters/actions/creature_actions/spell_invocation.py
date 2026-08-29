@@ -4,30 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ....capabilities import HealingEffect, capability_effects
-from ....spells.rules import (
-    parse_spell_action_ability,
-    parse_spell_action_condition,
-    parse_spell_action_damage_type,
-    parse_spell_action_slot,
-    parse_spell_action_targets,
-    parse_spell_action_value,
-    spell_action_value,
-    spell_chooses_area_targets,
-    spell_max_targets,
-    spell_repeats_target_allocations,
-    spell_requires_full_target_count,
-)
 from ...encounter_models.actions import EncounterAction
-from ...encounter_models.decisions import (
-    DecisionFrame,
-    PendingSpellCast,
-)
+from ...encounter_models.decisions import DecisionFrame, PendingSpellCast
 from ...encounter_models.resolution import EncounterProgress
 from ...participants import creature_controller
-from ..option_discovery.spell_areas import spell_area_targets
-from ..option_discovery.spell_targets import spell_action_targets
 from ..spellcasting import resolve_spell_action
+from .spell_invocation_planning import (
+    SpellInvocationPlan,
+    automatic_spell_payload,
+    plan_spell_invocation,
+)
 
 if TYPE_CHECKING:
     from ....creatures import Creature
@@ -46,9 +32,9 @@ def execute_spell_invocation(
 
     >>> from types import SimpleNamespace
     >>> execute_spell_invocation(
-    ...     SimpleNamespace(), SimpleNamespace(), EncounterAction("Cast", "spell"),
-    ...     DecisionFrame("turn", "mage", "turn", "active"),
-    ...     EncounterProgress(), "cast-1"
+    ...     SimpleNamespace(), SimpleNamespace(), EncounterAction('Cast', 'spell'),
+    ...     DecisionFrame('turn', 'mage', 'turn', 'active'),
+    ...     EncounterProgress(), 'cast-1'
     ... )
     Traceback (most recent call last):
     ...
@@ -57,186 +43,71 @@ def execute_spell_invocation(
 
     if not isinstance(action.value, str):
         raise ValueError("Spell action requires a spell payload.")
-    spell_id, _target_ref, aim_point = parse_spell_action_value(action.value)
-    spell = (
-        next(
-            candidate
-            for candidate in actor.spellcasting.learned_spells
-            if candidate.id == spell_id
-        )
-        if actor.spellcasting is not None
-        else None
-    )
-    maximum_targets = (
-        spell_max_targets(
-            spell,
-            parse_spell_action_slot(action.value),
-            caster_level=actor.attributes.level,
-        )
-        if spell is not None
-        else 1
-    )
-    repeat_target_allocations = bool(
-        spell is not None and spell_repeats_target_allocations(spell)
-    )
-    require_full_target_count = bool(
-        spell is not None and spell_requires_full_target_count(spell)
-    )
-    resource_pool_total = next(
-        (
-            effect.pool
-            for effect in capability_effects(
-                spell.definition if spell is not None else None
-            )
-            if isinstance(effect, HealingEffect) and effect.pool is not None
-        ),
-        None,
-    )
-    selected_targets = list(parse_spell_action_targets(action.value))
-    resource_allocation_limits: dict[str, int] = {}
-    if resource_pool_total is not None and spell is not None:
-        resource_allocation_limits = {
-            target.target_ref: (
-                state.combat_rules.effective_maximum_health(
-                    state, target.target_ref
-                ).value
-                - target.creature.get_health()
-            )
-            for target in spell_action_targets(state, actor, spell)
-            if target.creature.get_health()
-            < state.combat_rules.effective_maximum_health(
-                state, target.target_ref
-            ).value
-        }
-        selected_targets = []
-        maximum_targets = len(resource_allocation_limits)
+    plan = plan_spell_invocation(state, actor, action.value)
     if (
-        spell is not None
-        and spell_chooses_area_targets(spell)
-        and aim_point is not None
-    ):
-        area_target_refs = [
-            target.target_ref
-            for target in spell_area_targets(
-                state,
-                actor,
-                spell,
-                aim_point=aim_point,
-            )
-        ]
-        selects_every_occupant = bool(
-            spell.definition is not None
-            and spell.definition.target.count.maximum == "all"
-        )
-        maximum_targets = (
-            len(area_target_refs)
-            if selects_every_occupant
-            else min(maximum_targets, len(area_target_refs))
-        )
-        selected_targets = area_target_refs[:maximum_targets]
-    staged_selection_needed = (
-        resource_pool_total is not None
-        or (maximum_targets > 1 and bool(selected_targets))
-        or (
-            spell is not None
-            and spell_chooses_area_targets(spell)
-            and len(selected_targets) > 1
-        )
-    )
-    automated_resolved = False
-    if (
-        staged_selection_needed
+        plan.staged_selection_needed
+        and plan.spell is not None
         and creature_controller(state, decision.creature_ref) != "external"
-        and spell is not None
     ):
-        if repeat_target_allocations:
-            target_ref = selected_targets[0]
-            selected_targets = [target_ref] * maximum_targets
-        elif resource_pool_total is not None:
-            healing_remaining = resource_pool_total
-            allocations: dict[str, int] = {}
-            for target_ref, candidate_limit in resource_allocation_limits.items():
-                amount = min(candidate_limit, healing_remaining)
-                if amount > 0:
-                    allocations[target_ref] = amount
-                    healing_remaining -= amount
-                if healing_remaining == 0:
-                    break
-            automated_payload = spell_action_value(
-                spell_id,
-                tuple(allocations),
-                aim_point=aim_point,
-                slot_level=parse_spell_action_slot(action.value),
-                healing_allocations=allocations,
-            )
-            resolve_spell_action(
-                state,
-                actor,
-                automated_payload,
-                progress,
-                action_id,
-            )
-            staged_selection_needed = False
-            automated_resolved = True
-        elif not spell_chooses_area_targets(spell):
-            selected_targets = [
-                target.target_ref
-                for target in spell_action_targets(
-                    state,
-                    actor,
-                    spell,
-                )[:maximum_targets]
-            ]
-        if not automated_resolved:
-            automated_payload = spell_action_value(
-                spell_id,
-                tuple(selected_targets),
-                aim_point=aim_point,
-                selected_condition=parse_spell_action_condition(action.value),
-                selected_damage_type=parse_spell_action_damage_type(action.value),
-                selected_ability=parse_spell_action_ability(action.value),
-                slot_level=parse_spell_action_slot(action.value),
-            )
-            resolve_spell_action(
-                state,
-                actor,
-                automated_payload,
-                progress,
-                action_id,
-            )
-            staged_selection_needed = False
-            automated_resolved = True
-    if staged_selection_needed:
-        state.interrupts.pending_spell_cast = PendingSpellCast(
-            action=action,
-            spell_id=spell_id,
-            selected_target_refs=selected_targets,
-            maximum_targets=maximum_targets,
-            repeat_target_allocations=repeat_target_allocations,
-            require_full_target_count=require_full_target_count,
-            resource_pool_total=resource_pool_total,
-            resource_allocation_limits=resource_allocation_limits,
-        )
-        state.interrupts.decision_stack.append(
-            DecisionFrame(
-                id=f"spell-targets-{action_id}",
-                creature_ref=decision.creature_ref,
-                kind="spell_targets",
-                reason=(
-                    f"Allocate {maximum_targets} spell effects."
-                    if require_full_target_count
-                    else f"Choose up to {maximum_targets} spell targets."
-                ),
-                parent_frame_id=decision.id,
-                parent_action_id=action_id,
-            )
-        )
-        progress.paused_for_decision = True
-    elif not automated_resolved:
         resolve_spell_action(
             state,
             actor,
-            action.value,
+            automatic_spell_payload(state, actor, action.value, plan),
             progress,
             action_id,
         )
+        return
+    if plan.staged_selection_needed:
+        _open_spell_target_selection(
+            state,
+            action,
+            decision,
+            progress,
+            action_id,
+            plan,
+        )
+        return
+    resolve_spell_action(
+        state,
+        actor,
+        action.value,
+        progress,
+        action_id,
+    )
+
+
+def _open_spell_target_selection(
+    state: EncounterState,
+    action: EncounterAction,
+    decision: DecisionFrame,
+    progress: EncounterProgress,
+    action_id: str,
+    plan: SpellInvocationPlan,
+) -> None:
+    """Suspend before invocation and expose the spell's remaining choices."""
+
+    state.interrupts.pending_spell_cast = PendingSpellCast(
+        action=action,
+        spell_id=plan.spell_id,
+        selected_target_refs=list(plan.selected_target_refs),
+        maximum_targets=plan.maximum_targets,
+        repeat_target_allocations=plan.repeat_target_allocations,
+        require_full_target_count=plan.require_full_target_count,
+        resource_pool_total=plan.resource_pool_total,
+        resource_allocation_limits=dict(plan.resource_allocation_limits),
+    )
+    state.interrupts.decision_stack.append(
+        DecisionFrame(
+            id=f"spell-targets-{action_id}",
+            creature_ref=decision.creature_ref,
+            kind="spell_targets",
+            reason=(
+                f"Allocate {plan.maximum_targets} spell effects."
+                if plan.require_full_target_count
+                else f"Choose up to {plan.maximum_targets} spell targets."
+            ),
+            parent_frame_id=decision.id,
+            parent_action_id=action_id,
+        )
+    )
+    progress.paused_for_decision = True

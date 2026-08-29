@@ -3,18 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
 
 from ...effects.rule_effects import RuntimeRuleEffect
 from ...effects.runtime import EffectSource
 from ..encounter_models.actions import CreatureRef
-
-if TYPE_CHECKING:
-    from ..encounter import EncounterState
+from .context import EffectQueryContext
 
 
 def ongoing_rule_effects(
-    state: EncounterState,
+    state: EffectQueryContext,
     creature_ref: CreatureRef,
 ) -> Iterator[tuple[str, EffectSource, RuntimeRuleEffect]]:
     """Yield active typed rule effects, once per authored definition.

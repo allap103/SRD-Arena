@@ -47,6 +47,7 @@ from srd_arena.domain.encounters.rule_queries import (
     InvocationStartContext,
     action_compatibility,
     apply_damage,
+    apply_healing,
     attack_limit,
     condition_immunities,
     condition_suppressions,
@@ -296,6 +297,22 @@ def test_maximum_health_uses_strongest_same_definition_instance() -> None:
     assert result.base == 10
     assert result.value == 20
     assert result.contributions[0].provider_state_id == "effect:aid:second"
+
+
+def test_healing_does_not_lower_health_above_effective_maximum() -> None:
+    state = _encounter()
+    creature = state.creatures[ACTOR_REF].creature
+    state.ongoing_effects.append(
+        _ongoing_effect(
+            "effect:maximum-reduction",
+            MaximumHitPointAdjustment(-5, also_modify_current=False),
+        )
+    )
+
+    assert effective_maximum_health(state, ACTOR_REF).value == 5
+    assert creature.get_health() == 10
+    assert apply_healing(state, ACTOR_REF, 5) == 0
+    assert creature.get_health() == 10
 
 
 def test_removing_effect_state_removes_every_typed_rule_contribution() -> None:

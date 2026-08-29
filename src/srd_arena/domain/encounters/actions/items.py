@@ -5,9 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...creatures import Creature
+from ...rolls.dice import resolve_dice
 from ..encounter_models.resolution import EncounterProgress
 from ..state_runtime import create_event
 from .consumables import healing_potion_dice
+from .rejections import reject_action
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -32,65 +34,59 @@ def resolve_utilize_action(
     ... )
     >>> progress = EncounterProgress()
     >>> resolve_utilize_action(state, actor, "potion", progress, "use-1")
-    >>> (progress.messages[-1], progress.events[-1].data["success"])
-    (('system', 'You do not have that item.'), False)
+    >>> (progress.messages[-1], progress.events[-1].data["reason_code"])
+    (('system', 'You do not have that item.'), 'item_unavailable')
     """
 
     creature_ref = state.current_decision().creature_ref
     item = state.item_templates.get(item_id)
     if item is None or not actor.inventory.has_item(item_id):
-        progress.messages.append(("system", "You do not have that item."))
-        progress.events.append(
-            create_event(
-                state,
-                "action_resolved",
-                creature_ref=creature_ref,
-                action_id=action_id,
-                data={"kind": "utilize", "item_id": item_id, "success": False},
-            )
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="utilize",
+            message="You do not have that item.",
+            reason_code="item_unavailable",
+            details={"item_id": item_id},
         )
         return
     if not state.active_bonus_action_available:
-        progress.messages.append(("system", "You have already used your Bonus Action."))
-        progress.events.append(
-            create_event(
-                state,
-                "action_resolved",
-                creature_ref=creature_ref,
-                action_id=action_id,
-                data={
-                    "kind": "utilize",
-                    "item_id": item.id,
-                    "item_name": item.name,
-                    "success": False,
-                },
-            )
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="utilize",
+            message="You have already used your Bonus Action.",
+            reason_code="bonus_action_spent",
+            details={"item_id": item.id, "item_name": item.name},
         )
         return
     healing_dice = healing_potion_dice(item)
     if healing_dice is None:
-        progress.messages.append(
-            ("system", f"{item.name} cannot be used that way yet.")
-        )
-        progress.events.append(
-            create_event(
-                state,
-                "action_resolved",
-                creature_ref=creature_ref,
-                action_id=action_id,
-                data={
-                    "kind": "utilize",
-                    "item_id": item.id,
-                    "item_name": item.name,
-                    "success": False,
-                },
-            )
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="utilize",
+            message=f"{item.name} cannot be used that way yet.",
+            reason_code="item_unimplemented",
+            details={"item_id": item.id, "item_name": item.name},
         )
         return
 
     dice_count, dice_sides, modifier = healing_dice
-    dice_total = state.dice.roll_dice(dice_count, dice_sides)
-    healing_total = dice_total + modifier
+    roll = resolve_dice(
+        dice_count,
+        dice_sides,
+        modifier=modifier,
+        roller=state.dice.roll_die,
+    )
+    dice_total = roll.subtotal
+    healing_total = roll.total
     applied_healing = state.combat_rules.apply_healing(
         state,
         creature_ref,
@@ -133,6 +129,8 @@ def resolve_utilize_action(
                 "healing": applied_healing,
                 "healing_roll_detail": {
                     "dice": f"{dice_count}d{dice_sides}",
+                    "dice_values": [die.result for die in roll.dice],
+                    "die_rolls": [list(die.rolls) for die in roll.dice],
                     "dice_total": dice_total,
                     "modifier": modifier,
                     "total": healing_total,

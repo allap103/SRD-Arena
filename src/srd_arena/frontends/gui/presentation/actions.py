@@ -1,5 +1,7 @@
 """Project observed encounter actions into display-ready GUI action views."""
 
+from collections.abc import Sequence
+
 from srd_arena.application.api import (
     ActionObservation,
     ActionReasonObservation,
@@ -10,8 +12,8 @@ from srd_arena.application.api import (
 
 def build_feature_actions(
     encounter: EncounterObservation,
-    story_actions: list[ActionObservation],
-) -> list[ActionObservation]:
+    story_actions: Sequence[ActionObservation],
+) -> tuple[ActionObservation, ...]:
     """Select and order feature actions for the frontend action pane.
 
     Authored features remain visible even when no currently selectable action
@@ -46,7 +48,7 @@ def build_feature_actions(
         feature_actions.append(
             _build_unavailable_feature_action(definition, creature_ref)
         )
-    return feature_actions
+    return tuple(feature_actions)
 
 
 def _build_unavailable_feature_action(

@@ -550,7 +550,6 @@ def test_blinded_enemy_attacks_with_disadvantage() -> None:
     state.creatures["goblin_3"].creature.current_health = 0
     rolls = iter([5, 17, 4, 1])
     _use_deterministic_dice(session, die_roller=lambda sides: next(rolls, 3))
-    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     result = session.choose(_action_id_by_label(session, "Wait"))
@@ -609,7 +608,6 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn() -> None:
     state.creatures["goblin_3"].creature.current_health = 0
     rolls = iter([5, 3, 3])
     _use_deterministic_dice(session, die_roller=lambda sides: next(rolls, 3))
-    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     session.choose(_action_id_by_label(session, "Wait"))
@@ -636,7 +634,6 @@ def test_reapplying_blinded_preserves_independent_durations() -> None:
     state.creatures["goblin_2"].creature.current_health = 0
     state.creatures["goblin_3"].creature.current_health = 0
     _use_deterministic_dice(session, die_roller=lambda sides: 5)
-    _use_deterministic_dice(session, pool_roller=lambda num_dice, sides: 1)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
     session.choose(_action_id_by_label(session, "Wait"))
@@ -1349,17 +1346,19 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
                 creature_ref="player",
             ),
         )
-    with pytest.raises(ValueError, match="remaining healing pool"):
-        _ORCHESTRATOR.submit(
-            state,
-            EncounterAction(
-                label="Over-allocate healing",
-                kind="set_spell_resource_allocation",
-                value="player~301",
-                id="player-spell-allocation-player",
-                creature_ref="player",
-            ),
-        )
+    rejected = _ORCHESTRATOR.submit(
+        state,
+        EncounterAction(
+            label="Over-allocate healing",
+            kind="set_spell_resource_allocation",
+            value="player~301",
+            id="player-spell-allocation-player",
+            creature_ref="player",
+        ),
+    )
+    assert rejected.events[-1].data["success"] is False
+    assert rejected.events[-1].data["reason_code"] == "resource_pool_exceeded"
+    assert "remaining healing pool" in rejected.messages[-1][1]
     confirm = next(
         action
         for action in state.available_actions()

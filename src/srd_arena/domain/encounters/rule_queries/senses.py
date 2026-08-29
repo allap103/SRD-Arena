@@ -2,22 +2,36 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ...effects.rule_effects import GrantedSense
+from .context import CreatureEffectQueryContext
 from .models import SenseRuleResult, SourcedRuleContribution
 from .providers import ongoing_rule_effects
 
-if TYPE_CHECKING:
-    from ..encounter import EncounterState
-
 
 def sense_range(
-    state: EncounterState,
+    state: CreatureEffectQueryContext,
     creature_ref: str,
     sense: str,
 ) -> SenseRuleResult:
-    """Return the longest intrinsic or effect-granted range for a sense."""
+    """Return the longest intrinsic or effect-granted range for a sense.
+
+    >>> from types import SimpleNamespace
+    >>> from ...effects.runtime import EffectSource, EffectSourceKind
+    >>> creature = SimpleNamespace(sense_range=lambda name: 30)
+    >>> source = EffectSource(EffectSourceKind.SPELL, "true_seeing")
+    >>> effect = SimpleNamespace(
+    ...     identity=SimpleNamespace(id="effect-1", source=source),
+    ...     target_refs=("hero",),
+    ...     rule_effects=(GrantedSense("truesight", 120),),
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace(creature=creature)},
+    ...     ongoing_effects=[effect],
+    ... )
+    >>> result = sense_range(state, "hero", "Truesight")
+    >>> (result.range_feet, result.contributions[0].source.definition_id)
+    (120, 'true_seeing')
+    """
 
     creature = state.creatures[creature_ref].creature
     normalized = sense.casefold()

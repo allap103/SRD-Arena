@@ -12,7 +12,7 @@ from ...encounter_models.resolution import (
     ActionExecutionResult,
 )
 from ...state_runtime import create_event, next_action_id
-from ..eligibility import require_action_eligible
+from ..rejections import reject_action
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -42,7 +42,11 @@ def begin_action_execution(
     ('action_1', 'action_declared')
     """
 
-    require_action_eligible(state, decision.creature_ref, action)
+    eligibility = state.combat_rules.action_eligibility(
+        state,
+        decision.creature_ref,
+        action,
+    )
     actor = state.creatures[decision.creature_ref]
     context = ActionExecutionContext(
         actor_ref=decision.creature_ref,
@@ -64,6 +68,27 @@ def begin_action_execution(
             },
         )
     )
+    if eligibility.failures:
+        failure = eligibility.failures[0]
+        context.rejection = reject_action(
+            state,
+            context.progress,
+            actor_ref=context.actor_ref,
+            action_id=context.action_id,
+            action_kind=action.kind,
+            message=failure.message,
+            reason_code=failure.code,
+            details={
+                "selected_action_id": action.id,
+                "action_value": action.value,
+                "failure_codes": [item.code for item in eligibility.failures],
+                "provider_state_ids": [
+                    state_id
+                    for item in eligibility.failures
+                    for state_id in item.state_ids
+                ],
+            },
+        )
     return context
 
 

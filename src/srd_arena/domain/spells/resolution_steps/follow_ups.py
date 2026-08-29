@@ -6,7 +6,6 @@ from ...capabilities import CapabilityStep, DamageEffect, SavingThrowResolution
 from ...rolls.dice import resolve_dice
 from ...rolls.saving_throws import (
     Ability,
-    SavingThrowCreature,
     resolve_saving_throw,
 )
 from ..definitions import SpellDamage
@@ -42,13 +41,11 @@ def resolve_follow_up(
         follow_up.target.kind != "area"
         or follow_up.target.origin != "target"
         or follow_up.target.size_feet is None
-        or context.area_targets_around is None
         or not isinstance(follow_up.resolution, SavingThrowResolution)
     ):
         return [], []
     assert context.creature.spellcasting is not None
-    assert context.roller is not None
-    targets = context.area_targets_around(
+    targets = context.environment.targets_in_radius(
         context.target.target_ref,
         follow_up.target.size_feet,
     )
@@ -89,12 +86,8 @@ def resolve_follow_up(
             damage,
             resolve_dice(
                 *parse_damage_dice(damage.dice),
-                modifier=(
-                    context.damage_roll_modifier_for()
-                    if context.damage_roll_modifier_for is not None
-                    else context.damage_roll_modifier
-                ),
-                roller=context.roller,
+                modifier=context.environment.damage_roll_modifier(),
+                roller=context.environment.roll_die,
             ),
         )
         for damage in damage_definitions
@@ -104,21 +97,19 @@ def resolve_follow_up(
     ability = follow_up.resolution.ability
     for target in targets:
         save = resolve_saving_throw(
-            cast(SavingThrowCreature, target.creature),
+            target.creature,
             cast(Ability, ability),
             context.creature.spellcasting.save_dc,
             mode=context.save_roll_modes.get(target.target_ref, "normal"),
-            sourced_modifier_override=(
-                context.save_roll_modifier_for(target.target_ref, ability)
-                if context.save_roll_modifier_for is not None
-                else context.save_roll_modifiers.get(target.target_ref)
+            sourced_modifier_override=context.environment.saving_throw_modifier(
+                target.target_ref,
+                ability,
             ),
-            sourced_mode_override=(
-                context.save_sourced_roll_mode_for(target.target_ref, ability)
-                if context.save_sourced_roll_mode_for is not None
-                else context.save_sourced_roll_modes.get(target.target_ref)
+            sourced_mode_override=context.environment.saving_throw_mode(
+                target.target_ref,
+                ability,
             ),
-            roller=context.roller,
+            roller=context.environment.roll_die,
             automatic_failure_reasons=target.automatic_failure_reasons(ability),
         )
         save_details.append(
@@ -143,7 +134,11 @@ def resolve_follow_up(
                 if save.check.success
                 else roll.total
             )
-            applied = target.take_damage(final_damage, damage.damage_type)
+            applied = context.environment.apply_damage(
+                target.target_ref,
+                final_damage,
+                damage.damage_type,
+            )
             damage_details.append(
                 {
                     "sequence_step": sequence_step,

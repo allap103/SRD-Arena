@@ -38,7 +38,7 @@ def display_area_overlay(
     ... }
     >>> display_area_overlay(area, None, None) is None
     True
-    >>> view = BattlefieldView(5, 5, [], "")
+    >>> view = BattlefieldView(5, 5, (), "")
     >>> overlay_origin(display_area_overlay(area, (3.0, 2.0), view))
     (3, 2)
     """
@@ -144,7 +144,7 @@ def preview_area_overlay(
     >>> authored = serialize_area(
     ...     build_radius_area(Position(1, 1), 1, Grid(5, 5))
     ... )
-    >>> view = BattlefieldView(5, 5, [], "")
+    >>> view = BattlefieldView(5, 5, (), "")
     >>> preview = preview_area_overlay(authored, (3.0, 2.0), view)
     >>> overlay_origin(preview)
     (3, 2)

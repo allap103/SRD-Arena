@@ -1,11 +1,11 @@
 """Build domain capability primitives from authored schemas."""
 
 from collections.abc import Iterable
-from typing import Literal, TypeGuard, cast
+from typing import Literal, TypeGuard, assert_never
 
 import srd_arena.domain.capabilities as domain
 
-from . import effects, requirements, targets
+from . import durations, effects, requirements, targets
 from .durations import EffectDurationSchema
 
 _SHARED_EFFECT_TYPES = (
@@ -41,27 +41,52 @@ def build_target(value: targets.ActionTargetSchema) -> domain.CapabilityTarget:
     ('self', 1, 'self')
     """
 
-    count = getattr(value, "count", 1)
-    affects = getattr(value, "affects", "creatures")
-    return domain.CapabilityTarget(
-        kind=value.type,
-        count=domain.TargetCount(maximum=count),
-        range_feet=getattr(value, "range_feet", None),
-        shape=getattr(value, "shape", None),
-        size_feet=getattr(value, "size_feet", None),
-        width_feet=getattr(value, "width_feet", None),
-        origin=getattr(value, "origin", "self"),
-        line_of_sight=getattr(value, "line_of_sight", False),
-        occupants=cast(
-            Literal["all", "allies", "enemies", "chosen"],
-            affects if affects in {"allies", "enemies"} else "all",
-        ),
-        excludes_source=getattr(value, "excludes_self", False),
-        requirements=tuple(
-            build_requirement(requirement)
-            for requirement in getattr(value, "requirements", ())
-        ),
-    )
+    if isinstance(value, targets.SelfTargetSchema):
+        return domain.CapabilityTarget(kind="self")
+    if isinstance(value, targets.CreatureTargetSchema):
+        return domain.CapabilityTarget(
+            kind="creature",
+            count=domain.TargetCount(maximum=value.count),
+            range_feet=value.range_feet,
+            line_of_sight=value.line_of_sight,
+            requirements=tuple(
+                build_requirement(requirement) for requirement in value.requirements
+            ),
+        )
+    if isinstance(value, targets.AreaTargetSchema):
+        occupants: Literal["all", "allies", "enemies", "chosen"]
+        if value.affects == "allies":
+            occupants = "allies"
+        elif value.affects == "enemies":
+            occupants = "enemies"
+        else:
+            occupants = "all"
+        affected_entities: Literal[
+            "creatures",
+            "objects",
+            "creatures_and_objects",
+        ]
+        if value.affects == "objects":
+            affected_entities = "objects"
+        elif value.affects == "all":
+            affected_entities = "creatures_and_objects"
+        else:
+            affected_entities = "creatures"
+        return domain.CapabilityTarget(
+            kind="area",
+            range_feet=value.range_feet,
+            shape=value.shape,
+            size_feet=value.size_feet,
+            width_feet=value.width_feet,
+            origin=value.origin,
+            occupants=occupants,
+            excludes_source=value.excludes_self,
+            affected_entities=affected_entities,
+            requirements=tuple(
+                build_requirement(requirement) for requirement in value.requirements
+            ),
+        )
+    assert_never(value)
 
 
 def build_requirement(
@@ -85,7 +110,9 @@ def build_requirement(
         )
     if isinstance(value, requirements.CreatureTypeRequirementSchema):
         return domain.CreatureTypeRequirement(tuple(value.creature_types))
-    return domain.NotAffectedRequirement(value.action)
+    if isinstance(value, requirements.NotAffectedRequirementSchema):
+        return domain.NotAffectedRequirement(value.action)
+    assert_never(value)
 
 
 def build_duration(
@@ -104,14 +131,33 @@ def build_duration(
 
     if value is None:
         return None
-    return domain.EffectDuration(
-        kind=value.type,
-        amount=getattr(value, "amount", None),
-        unit=getattr(value, "unit", None),
-        creature=getattr(value, "creature", None),
-        turn_offset=getattr(value, "turn_offset", 0),
-        events=tuple(getattr(value, "events", ())),
-    )
+    if isinstance(value, durations.EndOfTurnDurationSchema):
+        return domain.EffectDuration(
+            kind="end_of_turn",
+            creature=value.creature,
+            turn_offset=value.turn_offset,
+        )
+    if isinstance(value, durations.StartOfTurnDurationSchema):
+        return domain.EffectDuration(
+            kind="start_of_turn",
+            creature=value.creature,
+            turn_offset=value.turn_offset,
+        )
+    if isinstance(value, durations.TimedDurationSchema):
+        return domain.EffectDuration(
+            kind="timed",
+            amount=value.amount,
+            unit=value.unit,
+        )
+    if isinstance(value, durations.UntilEventDurationSchema):
+        return domain.EffectDuration(
+            kind="until_event",
+            events=tuple(value.events),
+            event_match=value.match,
+        )
+    if isinstance(value, durations.PermanentDurationSchema):
+        return domain.EffectDuration(kind="permanent")
+    assert_never(value)
 
 
 def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:

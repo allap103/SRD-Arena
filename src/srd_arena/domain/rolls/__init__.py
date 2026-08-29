@@ -16,11 +16,10 @@ from .dice import (
     resolve_dice,
     resolve_roll_attempts,
     roll_d20_pool,
-    roll_dice,
     roll_die,
     select_d20,
 )
-from .randomness import DicePoolRoller, DiceRoller
+from .randomness import DiceRoller
 from .saving_throws import (
     SavingThrowModifiers,
     SavingThrowResult,
@@ -33,7 +32,6 @@ __all__ = [
     "D20PoolResult",
     "D20RollResult",
     "DicePoolResult",
-    "DicePoolRoller",
     "DiceRoller",
     "DieReplacement",
     "DieRollResult",
@@ -50,7 +48,6 @@ __all__ = [
     "resolve_roll_attempts",
     "resolve_saving_throw",
     "roll_d20_pool",
-    "roll_dice",
     "roll_die",
     "select_d20",
 ]

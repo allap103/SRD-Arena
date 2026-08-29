@@ -53,6 +53,7 @@ def execute_creature_action(
     ...     actor=SimpleNamespace(creature=object()),
     ...     progress=SimpleNamespace(),
     ...     action_id="action-1",
+    ...     rejection=None,
     ... )
     >>> marker = object()
     >>> with patch(
@@ -81,6 +82,9 @@ def execute_creature_action(
     actor = context.actor.creature
     progress = context.progress
     action_id = context.action_id
+
+    if context.rejection is not None:
+        return finish_action_execution(context, action_ends_turn=False)
 
     if action.kind == "move":
         movement_result = execute_movement(state, action, decision, context)

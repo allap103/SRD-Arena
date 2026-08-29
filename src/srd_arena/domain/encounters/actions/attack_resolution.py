@@ -12,7 +12,7 @@ from collections.abc import Callable
 from ...creatures import Creature
 from ...equipment import Item
 from ...geometry import Position
-from ...rolls.dice import D20RollMode
+from ...rolls.dice import D20RollMode, DieRoller
 from ..encounter_models.resolution import AttackOutcome
 from .attack_runtime.damage import (
     apply_attack_damage,
@@ -64,8 +64,8 @@ def resolve_attack(
     defender: Creature,
     attacker_label: str,
     target_label: str,
-    d20_roller: Callable[[int], int],
-    dice_roller: Callable[[int, int], int],
+    d20_roller: DieRoller,
+    die_roller: DieRoller,
     action_label: str = "Attack",
     items_by_id: dict[str, Item] | None = None,
     attacker_position: Position | None = None,
@@ -98,7 +98,7 @@ def resolve_attack(
     ...     outcome = resolve_attack(
     ...         attacker, defender, "Wolf", "Hero",
     ...         d20_roller=lambda sides: 12,
-    ...         dice_roller=lambda count, sides: 4,
+    ...         die_roller=lambda sides: 4,
     ...     )
     >>> (outcome.hit, outcome.attack_roll, outcome.damage)
     (True, 17, 6)
@@ -153,7 +153,7 @@ def resolve_attack(
         attack_source,
         critical_hit=attack_roll.critical_hit,
         attack_roll_mode=attack_roll.result.mode,
-        roller=dice_roller,
+        roller=die_roller,
         sourced_modifier_for=damage_modifier_for,
     )
     messages = [("system", attack_detail_message)]

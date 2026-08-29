@@ -15,6 +15,7 @@ from ..encounter_models.resolution import EncounterProgress
 from ..grappling_state import apply_grapple
 from ..state_runtime import create_event, creature_label
 from .attack_resolution import has_free_hand
+from .rejections import reject_action
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -40,51 +41,84 @@ def resolve_grapple_action(
     ...     state, SimpleNamespace(), EncounterAction("Grapple", "grapple"),
     ...     progress, "grapple-1"
     ... )
-    >>> (progress.messages[-1], progress.events[-1].data["success"])
-    (('system', 'You have already used your Action.'), False)
+    >>> (progress.messages[-1], progress.events[-1].data["reason_code"])
+    (('system', 'You have already used your Action.'), 'action_spent')
     """
 
     creature_ref = state.current_decision().creature_ref
     creature_state = state.creatures[creature_ref]
     if creature_state.actions_remaining <= 0 and creature_state.attacks_remaining <= 0:
-        progress.messages.append(("system", "You have already used your Action."))
-        progress.events.append(
-            create_event(
-                state,
-                "action_resolved",
-                creature_ref=creature_ref,
-                action_id=action_id,
-                data={"kind": "grapple", "success": False},
-            )
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="grapple",
+            message="You have already used your Action.",
+            reason_code="action_spent",
         )
         return
     if not isinstance(action.value, str):
-        raise ValueError(
-            f"Encounter grapple action requires a creature reference, got {action.value!r}."
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="grapple",
+            message="A creature target is required.",
+            reason_code="target_required",
         )
+        return
 
     target_ref = action.value
-    target = state.creatures[target_ref]
-    if not target.is_alive:
-        progress.messages.append(("system", "The target is no longer available."))
+    target = state.creatures.get(target_ref)
+    if target is None or not target.is_alive:
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="grapple",
+            message="The target is no longer available.",
+            reason_code="target_unavailable",
+            details={"target_ref": target_ref},
+        )
         return
     if not _is_adjacent(creature_state.position, target.position):
-        progress.messages.append(("system", "The target is out of reach."))
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="grapple",
+            message="The target is out of reach.",
+            reason_code="target_out_of_range",
+            details={"target_ref": target_ref},
+        )
         return
     if not has_free_hand(actor):
-        progress.messages.append(("system", "You need a free hand to grapple."))
-        progress.events.append(
-            create_event(
-                state,
-                "action_resolved",
-                creature_ref=creature_ref,
-                action_id=action_id,
-                data={"kind": "grapple", "success": False},
-            )
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="grapple",
+            message="You need a free hand to grapple.",
+            reason_code="free_hand_required",
+            details={"target_ref": target_ref},
         )
         return
     if not can_grapple(target.creature.size, actor.size):
-        progress.messages.append(("system", "The target is too large to grapple."))
+        reject_action(
+            state,
+            progress,
+            actor_ref=creature_ref,
+            action_id=action_id,
+            action_kind="grapple",
+            message="The target is too large to grapple.",
+            reason_code="target_too_large",
+            details={"target_ref": target_ref},
+        )
         return
 
     spend_attack(
@@ -106,7 +140,7 @@ def resolve_grapple_action(
         ability="strength",
     )
     roll_die = state.dice.roll_die
-    player_roll = resolve_d20(
+    actor_roll = resolve_d20(
         modifier=(
             actor.get_modifier(actor.attributes.strength)
             + actor_roll_rules.resolve_modifier(roll_die)
@@ -122,7 +156,7 @@ def resolve_grapple_action(
         mode=target_roll_rules.mode,
         roller=roll_die,
     )
-    success = player_roll.total >= target_roll.total
+    success = actor_roll.total >= target_roll.total
     target_label = creature_label(state, target_ref)
 
     progress.events.append(
@@ -134,9 +168,9 @@ def resolve_grapple_action(
             data={
                 "target_ref": target_ref,
                 "target_label": target_label,
-                "player_roll": player_roll.total,
+                "actor_roll": actor_roll.total,
                 "target_roll": target_roll.total,
-                "player_die": player_roll.selected,
+                "actor_die": actor_roll.selected,
                 "target_die": target_roll.selected,
                 "success": success,
             },

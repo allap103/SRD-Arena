@@ -371,8 +371,7 @@ def test_slow_limits_attacks_made_through_multiattack() -> None:
     assert assassin.attacks_remaining == 1
 
     state.dice = DiceRoller(
-        die_roller=lambda _sides: 20,
-        pool_roller=lambda count, _sides: count,
+        die_roller=lambda sides: 20 if sides == 20 else 1,
     )
     light_crossbow = next(
         action
@@ -414,10 +413,9 @@ def test_ending_slow_mid_multiattack_restores_pending_attacks() -> None:
         ],
         origin_id="slow-breakable-multiattack",
     )
-    rolls = iter((20, 1))
+    d20_rolls = iter((20, 1))
     state.dice = DiceRoller(
-        die_roller=lambda _sides: next(rolls),
-        pool_roller=lambda count, _sides: count,
+        die_roller=lambda sides: next(d20_rolls) if sides == 20 else 1,
     )
 
     multiattack = next(
@@ -546,9 +544,11 @@ def test_ending_slow_mid_attack_restores_unused_extra_attack() -> None:
         ],
         origin_id="slow-breakable-concentration",
     )
-    rolls = iter((20, 1))
-    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
-    _use_deterministic_dice(session, pool_roller=lambda _count, _sides: 1)
+    d20_rolls = iter((20, 1))
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: next(d20_rolls) if sides == 20 else 1,
+    )
 
     attack = next(
         action

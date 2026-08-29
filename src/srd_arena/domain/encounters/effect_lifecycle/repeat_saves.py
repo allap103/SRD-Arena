@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, cast
 from ...effects.results import EffectResult
 from ...effects.runtime import OngoingEffect
 from ...rolls.dice import D20RollMode
-from ...rolls.saving_throws import Ability, SavingThrowCreature, resolve_saving_throw
+from ...rolls.saving_throws import Ability, resolve_saving_throw
 from ..state_combat import automatic_save_failure_provider_ids_for
 from ..state_runtime import apply_encounter_effects, create_event
 from .removal import _remove_effect_target
@@ -79,7 +79,7 @@ def _resolve_repeat_save(
         ability=repeat_save.ability,
     )
     save = resolve_saving_throw(
-        cast(SavingThrowCreature, target),
+        target,
         cast(Ability, repeat_save.ability),
         repeat_save.dc,
         mode=save_mode,

@@ -40,7 +40,7 @@ def build_battlefield_view(
         raise ValueError("Battlefield presentation supports at most five teams.")
     team_colors = dict(zip(team_ids, TEAM_COLORS[: len(team_ids)], strict=True))
     concentrating_refs, buffs_by_ref, debuffs_by_ref = _battlefield_statuses(encounter)
-    creatures = [
+    creatures = tuple(
         BattlefieldCreatureView(
             creature_ref=creature.creature_ref,
             creature_id=creature.creature_id,
@@ -61,7 +61,7 @@ def build_battlefield_view(
         )
         for creature in encounter.creatures
         if creature.is_alive
-    ]
+    )
     return BattlefieldView(
         width=encounter.grid.width,
         height=encounter.grid.height,

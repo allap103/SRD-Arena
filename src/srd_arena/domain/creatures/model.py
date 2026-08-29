@@ -2,9 +2,11 @@
 
 import re
 from dataclasses import dataclass, field
+from typing import assert_never
 
 from ..capabilities import LimitedUsePool
 from ..effects.triggered import TriggeredEffect
+from ..rolls.saving_throws import Ability
 from .attributes import Attributes
 from .class_features import ClassFeature
 from .classes import ClassRef, SubclassRef
@@ -145,6 +147,62 @@ class Creature:
         """
         return (attribute_value - 10) // 2
 
+    def saving_throw_ability_score(self, ability: Ability) -> int:
+        """Return the explicitly selected ability score for a saving throw.
+
+        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 8, 10, 10), Equipment())
+        >>> creature.saving_throw_ability_score("intelligence")
+        8
+        """
+
+        match ability:
+            case "strength":
+                return self.attributes.strength
+            case "dexterity":
+                return self.attributes.dexterity
+            case "constitution":
+                return self.attributes.constitution
+            case "intelligence":
+                return self.attributes.intelligence
+            case "wisdom":
+                return self.attributes.wisdom
+            case "charisma":
+                return self.attributes.charisma
+        assert_never(ability)
+
+    @property
+    def saving_throw_proficiency_bonus(self) -> int:
+        """Return the creature's proficiency bonus for proficient saves.
+
+        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 5, 10, 10, 10, 10, 10, 10, 10, proficiency_bonus=3), Equipment())
+        >>> creature.saving_throw_proficiency_bonus
+        3
+        """
+
+        return self.attributes.proficiency_bonus
+
+    def is_saving_throw_proficient(self, ability: Ability) -> bool:
+        """Return whether the creature is proficient in the selected save.
+
+        >>> attributes = Attributes(20, 1, 10, 10, 10, 10, 10, 10, 10, saving_throw_proficiencies=frozenset({"wisdom"}))
+        >>> creature = Creature("hero", "Hero", "", Inventory(), attributes, Equipment())
+        >>> creature.is_saving_throw_proficient("wisdom")
+        True
+        """
+
+        return ability in self.attributes.saving_throw_proficiencies
+
+    def explicit_saving_throw_bonus(self, ability: Ability) -> int | None:
+        """Return a stat-block save total when one was authored explicitly.
+
+        >>> statistics = CreatureStatistics(saving_throw_bonuses={"intelligence": 8})
+        >>> creature = Creature("sage", "Sage", "", Inventory(), Attributes(20, 1, 10, 10, 10, 10, 10, 10, 10), Equipment(), statistics=statistics)
+        >>> creature.explicit_saving_throw_bonus("intelligence")
+        8
+        """
+
+        return self.statistics.saving_throw_bonuses.get(ability)
+
     def get_max_health(self) -> int:
         """Return the creature's intrinsic maximum health.
 
@@ -234,7 +292,7 @@ class Creature:
         17
         """
         maximum = self.get_max_health() if maximum_health is None else maximum_health
-        missing_health = maximum - self.get_health()
+        missing_health = max(maximum - self.get_health(), 0)
         applied_healing = min(max(amount, 0), missing_health)
         self.current_health = self.get_health() + applied_healing
         return applied_healing

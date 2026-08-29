@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ...effects.rule_effects import MaximumHitPointAdjustment
 from ...effects.runtime import EffectSource
+from .context import CreatureEffectQueryContext
 from .models import NumericOperation, NumericRuleContribution, NumericRuleResult
-
-if TYPE_CHECKING:
-    from ..encounter import EncounterState
 
 
 def effective_maximum_health(
-    state: EncounterState,
+    state: CreatureEffectQueryContext,
     creature_ref: str,
 ) -> NumericRuleResult:
     """Return intrinsic maximum HP plus the strongest instance of each rule.
@@ -59,7 +55,11 @@ def effective_maximum_health(
     return NumericRuleResult(creature.get_max_health(), contributions, minimum=0)
 
 
-def apply_healing(state: EncounterState, creature_ref: str, amount: int) -> int:
+def apply_healing(
+    state: CreatureEffectQueryContext,
+    creature_ref: str,
+    amount: int,
+) -> int:
     """Heal a creature without exceeding its effect-adjusted maximum HP."""
 
     creature = state.creatures[creature_ref].creature

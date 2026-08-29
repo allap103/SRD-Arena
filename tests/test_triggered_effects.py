@@ -116,8 +116,10 @@ def test_tactical_fighter_loads_great_weapon_fighting_effect() -> None:
 def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon() -> None:
     session = _adjacent_tactical_encounter()
     _active_creature(session).equipment.equipped_items["right_hand"] = "longsword"
-    _use_deterministic_dice(session, die_roller=lambda _sides: 15)
-    _use_deterministic_dice(session, pool_roller=lambda _count, _sides: 1)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 15 if sides == 20 else 1,
+    )
     attack_id = next(
         action.id
         for action in session.read().action_options

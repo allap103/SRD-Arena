@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 
 from ...effects.results import EffectResult
 
-DiceRoller = Callable[[int, int], int]
 HealingReceiver = Callable[[int], int]
 
 

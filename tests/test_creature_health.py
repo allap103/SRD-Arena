@@ -23,6 +23,16 @@ def test_heal_restores_missing_health_only() -> None:
     assert creature.get_health() == creature.get_max_health() - 3
 
 
+def test_heal_does_not_reduce_health_above_supplied_maximum() -> None:
+    creature = make_creature()
+    original_health = creature.get_health()
+
+    restored = creature.heal(5, maximum_health=original_health - 5)
+
+    assert restored == 0
+    assert creature.get_health() == original_health
+
+
 def test_temporary_hit_points_absorb_damage_before_health() -> None:
     creature = make_creature()
     creature.grant_temporary_hit_points(5)
@@ -61,6 +71,7 @@ def test_healing_never_exceeds_max_health(damage: int, healing: int) -> None:
     creature = make_creature()
     creature.take_damage(damage)
 
-    creature.heal(healing)
+    restored = creature.heal(healing)
 
+    assert restored >= 0
     assert 0 <= creature.get_health() <= creature.get_max_health()

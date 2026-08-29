@@ -35,7 +35,12 @@ def restore_target(
     ...     creature=SimpleNamespace(
     ...         spellcasting=SimpleNamespace(ability_modifier=3)
     ...     ),
-    ...     roller=lambda sides: 4, healing_allocations={"hero": 6},
+    ...     environment=SimpleNamespace(
+    ...         roll_die=lambda sides: 4,
+    ...         apply_healing=lambda target_ref, amount: amount,
+    ...         grant_temporary_hit_points=lambda target_ref, amount: amount,
+    ...     ),
+    ...     healing_allocations={"hero": 6},
     ... )
     >>> prepared = SimpleNamespace(
     ...     shared_healing_rolls=(), healing_effects=(HealingEffect(pool=10),),
@@ -43,7 +48,6 @@ def restore_target(
     ... )
     >>> target = SimpleNamespace(
     ...     target_ref="hero", target_label="Hero",
-    ...     heal=lambda amount: amount,
     ... )
     >>> result = restore_target(context, prepared, target)
     >>> result.healing_details[0]["allocated"]
@@ -51,7 +55,6 @@ def restore_target(
     """
 
     assert context.creature.spellcasting is not None
-    assert context.roller is not None
 
     healing_details: list[dict[str, object]] = []
     temporary_hit_point_details: list[dict[str, object]] = []
@@ -73,7 +76,7 @@ def restore_target(
                 (healing_roll.subtotal if healing_roll is not None else 0) + modifier,
             )
         )
-        applied = target.heal(total)
+        applied = context.environment.apply_healing(target.target_ref, total)
         healing_details.append(
             restoration_detail(
                 target,
@@ -88,7 +91,7 @@ def restore_target(
         if healing.pool is None:
             continue
         allocated = context.healing_allocations.get(target.target_ref, 0)
-        applied = target.heal(allocated)
+        applied = context.environment.apply_healing(target.target_ref, allocated)
         detail = restoration_detail(
             target,
             dice=None,
@@ -102,7 +105,10 @@ def restore_target(
     for temporary in prepared.temporary_hit_point_effects:
         if temporary.trigger != "application":
             continue
-        temporary_roll = roll_optional_dice(temporary.dice, context.roller)
+        temporary_roll = roll_optional_dice(
+            temporary.dice,
+            context.environment.roll_die,
+        )
         modifier = temporary.value + (
             context.creature.spellcasting.ability_modifier
             if temporary.modifier == "ability_modifier"
@@ -119,7 +125,10 @@ def restore_target(
             0,
             (temporary_roll.subtotal if temporary_roll is not None else 0) + modifier,
         )
-        granted = target.creature.grant_temporary_hit_points(total)
+        granted = context.environment.grant_temporary_hit_points(
+            target.target_ref,
+            total,
+        )
         temporary_hit_point_details.append(
             restoration_detail(
                 target,

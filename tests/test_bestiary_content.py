@@ -234,7 +234,7 @@ def test_goblin_conditional_damage_requires_resolved_advantage() -> None:
         preferred_attack_name="Scimitar",
         attack_roll_mode_override="advantage",
         d20_roller=lambda _sides: next(advantage_rolls),
-        dice_roller=lambda _count, sides: sides,
+        die_roller=lambda sides: sides,
     )
     without_advantage = resolve_attack(
         goblin,
@@ -244,7 +244,7 @@ def test_goblin_conditional_damage_requires_resolved_advantage() -> None:
         preferred_attack_name="Scimitar",
         attack_roll_mode_override="normal",
         d20_roller=lambda _sides: 18,
-        dice_roller=lambda _count, sides: sides,
+        die_roller=lambda sides: sides,
     )
 
     assert with_advantage.damage == 12
@@ -268,6 +268,7 @@ def test_bestiary_core_statistics_build_a_domain_creature() -> None:
     assert creature.get_max_health() == 150
     assert creature.get_armor_class() == 17
     assert creature.attributes.proficiency_bonus == 4
+    assert "intelligence" in creature.attributes.saving_throw_proficiencies
     assert creature.attributes.movement.speed_feet == 10
     assert creature.attributes.movement.swim_feet == 40
     assert creature.statistics.creature_type == "aberration"
@@ -481,7 +482,7 @@ def test_xmm_multiattacks_through_azer_sentinel_are_enriched() -> None:
         target_label="Goblin",
         preferred_attack_name="Rend",
         d20_roller=lambda _sides: 19,
-        dice_roller=lambda count, _sides: count * 2,
+        die_roller=lambda _sides: 2,
     )
     assert outcome.damage == 12
     assert outcome.additional_damage == 2

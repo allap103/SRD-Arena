@@ -5,11 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...attack_economy import consume_action
+from ...behaviors import is_adjacent
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import EncounterProgress
 from ...ongoing_effects import resolve_spell_lifecycle_event
 from ...state_runtime import create_event
+from ..rejections import reject_action
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -43,7 +45,53 @@ def execute_standard_action(
     actor = state.creatures[decision.creature_ref]
     if action.kind == "wake_spell_target":
         if not isinstance(action.value, str):
-            raise ValueError("Wake action requires a creature reference.")
+            reject_action(
+                state,
+                progress,
+                actor_ref=decision.creature_ref,
+                action_id=action_id,
+                action_kind=action.kind,
+                message="Wake action requires a creature reference.",
+                reason_code="target_required",
+            )
+            return True
+        target = state.creatures.get(action.value)
+        if target is None or not target.is_alive:
+            reject_action(
+                state,
+                progress,
+                actor_ref=decision.creature_ref,
+                action_id=action_id,
+                action_kind=action.kind,
+                message="The target is no longer available.",
+                reason_code="target_unavailable",
+                details={"target_ref": action.value},
+            )
+            return True
+        if not is_adjacent(actor.position, target.position):
+            reject_action(
+                state,
+                progress,
+                actor_ref=decision.creature_ref,
+                action_id=action_id,
+                action_kind=action.kind,
+                message="The target is no longer within reach.",
+                reason_code="target_out_of_range",
+                details={"target_ref": action.value},
+            )
+            return True
+        if not _can_wake_spell_target(state, action.value):
+            reject_action(
+                state,
+                progress,
+                actor_ref=decision.creature_ref,
+                action_id=action_id,
+                action_kind=action.kind,
+                message="That magical sleep effect is no longer active.",
+                reason_code="wake_unavailable",
+                details={"target_ref": action.value},
+            )
+            return True
         consume_action(state, allow_magic=False)
         resolve_spell_lifecycle_event(
             state,
@@ -55,8 +103,7 @@ def execute_standard_action(
         progress.messages.append(
             (
                 "system",
-                f"{actor.creature.name} wakes "
-                f"{state.creatures[action.value].creature.name}.",
+                f"{actor.creature.name} wakes {target.creature.name}.",
             )
         )
         progress.events.append(
@@ -82,3 +129,16 @@ def execute_standard_action(
     else:
         return False
     return True
+
+
+def _can_wake_spell_target(state: EncounterState, target_ref: str) -> bool:
+    """Return whether an active effect lets an adjacent creature wake a target."""
+
+    return any(
+        target_ref in effect.target_refs
+        and any(
+            configured.event == "adjacent_creature_wakes_target"
+            for configured in effect.lifecycle.end_events
+        )
+        for effect in state.ongoing_effects
+    )

@@ -259,8 +259,10 @@ def test_line_stat_block_action_can_be_aimed_at_a_map_point() -> None:
         success_damage="half",
         always=(),
     )
-    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
-    _use_deterministic_dice(session, pool_roller=lambda count, sides: count * sides)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 1 if sides == 20 else sides,
+    )
     health_before = {
         target_ref: state.creatures[target_ref].creature.get_health()
         for target_ref in target_refs
@@ -311,7 +313,7 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved() -> None
         ),
     )
     actor.creature.stat_block_action_resources["Reaping Scythe"] = 1
-    _use_deterministic_dice(session, pool_roller=lambda count, sides: count * sides)
+    _use_deterministic_dice(session, die_roller=lambda sides: sides)
     action = next(
         action
         for action in available_creature_actions(state, actor_ref)
@@ -328,9 +330,16 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved() -> None
     assert target.creature.get_health() == max(0, health_before - 11)
     assert actor.actions_remaining == 0
     assert actor.creature.stat_block_action_resources["Reaping Scythe"] == 0
-    assert any(
-        event.type == "stat_block_action_resolved" for event in result.progress.events
+    event = next(
+        event
+        for event in result.progress.events
+        if event.type == "stat_block_action_resolved"
     )
+    [damage_detail_value] = _sequence(event.data["damage_details"])
+    damage_detail = _mapping(damage_detail_value)
+    assert damage_detail["dice_values"] == [8]
+    assert damage_detail["dice_total"] == 8
+    assert damage_detail["total"] == 11
     actor.actions_remaining = 1
     assert not any(
         action.preferred_attack_name == "Reaping Scythe"
@@ -368,8 +377,10 @@ def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save() -> No
         success_damage="half",
         always=(),
     )
-    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
-    _use_deterministic_dice(session, pool_roller=lambda count, sides: count * sides)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 1 if sides == 20 else sides,
+    )
     action = next(
         action
         for action in available_creature_actions(state, actor_ref)
@@ -393,6 +404,11 @@ def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save() -> No
     outcome = _mapping(outcome_value)
     assert outcome["success"] is False
     assert outcome["damage"] == min(12, health_before)
+    [damage_detail_value] = _sequence(outcome["damage_details"])
+    damage_detail = _mapping(damage_detail_value)
+    assert damage_detail["dice_values"] == [6, 6]
+    assert damage_detail["dice_total"] == 12
+    assert damage_detail["applied_damage"] == min(12, health_before)
 
 
 def test_unsupported_stat_block_effect_is_rejected_before_execution() -> None:
@@ -537,8 +553,10 @@ def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical() -
         target_ref=target_ref,
     )
     state.conditions.append(paralyzed)
-    _use_deterministic_dice(session, die_roller=lambda _sides: 10)
-    _use_deterministic_dice(session, pool_roller=lambda count, _sides: count)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 10 if sides == 20 else 1,
+    )
 
     attack = next(
         action
@@ -591,8 +609,10 @@ def test_attack_damage_uses_sourced_damage_roll_modifier() -> None:
         ),
     )
     state.ongoing_effects.append(weakening)
-    _use_deterministic_dice(session, die_roller=lambda _sides: 10)
-    _use_deterministic_dice(session, pool_roller=lambda count, _sides: 5 * count)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 10 if sides == 20 else 5,
+    )
     attack = next(
         action
         for action in state.available_actions()
@@ -862,8 +882,14 @@ def test_execution_rechecks_action_eligibility() -> None:
     blocker = state.creatures["goblin_1"]
     blocker.position = Position(actor.position.x + 1, actor.position.y)
 
-    with pytest.raises(ValueError, match="destination is not free"):
-        _ORCHESTRATOR.submit(state, move)
+    progress = _ORCHESTRATOR.submit(state, move)
+
+    assert progress.messages[-1] == ("system", "The destination is not free.")
+    rejection = progress.events[-1]
+    assert rejection.type == "action_resolved"
+    assert rejection.action_id == progress.events[0].action_id
+    assert rejection.data["success"] is False
+    assert rejection.data["reason_code"] == "destination_blocked"
 
 
 def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
@@ -1088,8 +1114,10 @@ def test_assassin_multiattack_applies_independent_poisoned_conditions() -> None:
     state.creatures["goblin_1"].position.x = 4
     state.creatures["goblin_1"].position.y = 3
     state.creatures["goblin_1"].creature.current_health = 100
-    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
-    _use_deterministic_dice(session, pool_roller=lambda count, _sides: count)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 20 if sides == 20 else 1,
+    )
 
     multiattack = next(
         action for action in state.available_actions() if action.kind == "multiattack"
@@ -1208,8 +1236,10 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape() -> None:
     state.creatures["air_elemental"].position.y = 4
     state.creatures["player"].position.x = 4
     state.creatures["player"].position.y = 4
-    _use_deterministic_dice(session, die_roller=lambda _sides: 20)
-    _use_deterministic_dice(session, pool_roller=lambda count, _sides: count)
+    _use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 20 if sides == 20 else 1,
+    )
 
     multiattack = next(
         action for action in state.available_actions() if action.kind == "multiattack"
@@ -1413,6 +1443,13 @@ def test_grapple_action_is_available_in_the_combat_menu() -> None:
     ) in result.messages
     assert session.encounter_state.has_condition("goblin_1", Condition.GRAPPLED) is True
     assert grappling_targets_for(session.encounter_state, "player") == ("goblin_1",)
+    grapple_event = next(
+        event for event in result.events if event.type == "grapple_resolved"
+    )
+    assert grapple_event.data["actor_roll"] == 24
+    assert grapple_event.data["actor_die"] == 20
+    assert "player_roll" not in grapple_event.data
+    assert "player_die" not in grapple_event.data
     assert any(
         action.kind == "grapple"
         and isinstance(action.details, DirectTargetOptionDetails)

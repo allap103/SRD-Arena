@@ -98,7 +98,6 @@ def resolve_attack_action(
         "damage_roll",
     )
     roll_die = state.dice.roll_die
-    roll_dice = state.dice.roll_dice
     outcome = resolve_attack(
         creature,
         defender,
@@ -131,7 +130,7 @@ def resolve_attack_action(
             roll_die
         ),
         d20_roller=roll_die,
-        dice_roller=roll_dice,
+        die_roller=roll_die,
         automatic_critical_provider_ids=(
             automatic_critical_provider_ids_for(
                 state,

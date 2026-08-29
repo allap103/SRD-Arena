@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ...effects.conditions import Condition
 from ...effects.rule_effects import (
     ConditionImmunity,
@@ -12,16 +10,18 @@ from ...effects.rule_effects import (
     DamageReduction,
     DamageResistance,
 )
+from ...rolls.dice import DieRoller
+from .context import (
+    CreatureEffectQueryContext,
+    DamageRuleQueryContext,
+    EffectQueryContext,
+)
 from .models import SetRuleResult, SourcedRuleContribution
 from .providers import ongoing_rule_effects
 
-if TYPE_CHECKING:
-    from ...rolls.dice import DieRoller
-    from ..encounter import EncounterState
-
 
 def condition_immunities(
-    state: EncounterState,
+    state: CreatureEffectQueryContext,
     creature_ref: str,
 ) -> SetRuleResult[Condition]:
     """Return intrinsic and effect-granted condition immunities."""
@@ -42,7 +42,7 @@ def condition_immunities(
 
 
 def damage_resistances(
-    state: EncounterState,
+    state: CreatureEffectQueryContext,
     creature_ref: str,
 ) -> SetRuleResult[str]:
     """Return intrinsic and effect-granted damage resistances."""
@@ -63,10 +63,28 @@ def damage_resistances(
 
 
 def condition_suppressions(
-    state: EncounterState,
+    state: EffectQueryContext,
     creature_ref: str,
 ) -> SetRuleResult[Condition]:
-    """Return conditions suspended by active effects without removing them."""
+    """Return conditions suspended by active effects without removing them.
+
+    The result preserves the runtime effect and authored source that supplied
+    each suppression, so callers can explain why a condition is inactive.
+
+    >>> from types import SimpleNamespace
+    >>> from ...effects.runtime import EffectSource, EffectSourceKind
+    >>> source = EffectSource(EffectSourceKind.SPELL, "calm_emotions")
+    >>> effect = SimpleNamespace(
+    ...     identity=SimpleNamespace(id="effect-1", source=source),
+    ...     target_refs=("hero",),
+    ...     rule_effects=(ConditionSuppression(frozenset({Condition.CHARMED})),),
+    ... )
+    >>> result = condition_suppressions(
+    ...     SimpleNamespace(ongoing_effects=[effect]), "hero"
+    ... )
+    >>> (Condition.CHARMED in result.values, result.contributions[0].provider_state_id)
+    (True, 'effect-1')
+    """
 
     contributions = tuple(
         SourcedRuleContribution(
@@ -83,7 +101,7 @@ def condition_suppressions(
 
 
 def has_condition_save_advantage(
-    state: EncounterState,
+    state: EffectQueryContext,
     creature_ref: str,
     conditions: tuple[str, ...],
 ) -> bool:
@@ -112,7 +130,7 @@ def has_condition_save_advantage(
 
 
 def resolve_damage_reduction(
-    state: EncounterState,
+    state: EffectQueryContext,
     creature_ref: str,
     damage_type: str,
     roller: DieRoller,
@@ -131,7 +149,7 @@ def resolve_damage_reduction(
 
 
 def apply_damage(
-    state: EncounterState,
+    state: DamageRuleQueryContext,
     creature_ref: str,
     amount: int,
     damage_type: str | None = None,
@@ -154,7 +172,10 @@ def apply_damage(
     return state.creatures[creature_ref].creature.take_damage(amount)
 
 
-def reset_damage_reductions(state: EncounterState, creature_ref: str) -> None:
+def reset_damage_reductions(
+    state: EffectQueryContext,
+    creature_ref: str,
+) -> None:
     """Restore every active once-per-turn reduction for one creature."""
 
     for _provider_state_id, _source, rule_effect in ongoing_rule_effects(

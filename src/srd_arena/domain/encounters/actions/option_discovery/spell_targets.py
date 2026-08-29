@@ -187,8 +187,6 @@ def spell_target_context(
     ...         condition_immunities=lambda state, ref: SimpleNamespace(
     ...             values=frozenset()
     ...         ),
-    ...         apply_damage=lambda state, ref, amount, kind: amount,
-    ...         apply_healing=lambda state, ref, amount: amount,
     ...     ),
     ... )
     >>> context = spell_target_context(
@@ -216,17 +214,6 @@ def spell_target_context(
             for condition in state.combat_rules.condition_immunities(
                 state, target_ref
             ).values
-        ),
-        damage_receiver=lambda amount, damage_type: state.combat_rules.apply_damage(
-            state,
-            target_ref,
-            amount,
-            damage_type,
-        ),
-        healing_receiver=lambda amount: state.combat_rules.apply_healing(
-            state,
-            target_ref,
-            amount,
         ),
         automatic_save_failures={
             "strength": effective.providers_for_trait(

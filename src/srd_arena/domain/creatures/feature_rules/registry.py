@@ -2,16 +2,27 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import Protocol
 
+from ...rolls.dice import DieRoller
 from ..model import Creature
 from .fighter import resolve_fighter_feature
-from .types import CapabilityActionResult, DiceRoller, HealingReceiver
+from .types import CapabilityActionResult, HealingReceiver
 
-FeatureResolver = Callable[
-    [Creature, str, DiceRoller, HealingReceiver],
-    CapabilityActionResult | None,
-]
+
+class FeatureResolver(Protocol):
+    """Resolve one class feature for an explicitly identified encounter actor."""
+
+    def __call__(
+        self,
+        creature: Creature,
+        feature_id: str,
+        roll_die: DieRoller,
+        heal: HealingReceiver,
+        *,
+        actor_ref: str,
+    ) -> CapabilityActionResult | None: ...
+
 
 CLASS_FEATURE_RESOLVERS: dict[str, FeatureResolver] = {
     "fighter": resolve_fighter_feature,
@@ -21,10 +32,12 @@ CLASS_FEATURE_RESOLVERS: dict[str, FeatureResolver] = {
 def resolve_feature_action(
     creature: Creature,
     feature_id: str,
-    roll_dice: DiceRoller,
+    roll_die: DieRoller,
     heal: HealingReceiver,
+    *,
+    actor_ref: str,
 ) -> CapabilityActionResult | None:
-    """Dispatch a feature identifier to the domain handler registered for it.
+    """Dispatch a feature with the acting encounter participant's identity.
 
     >>> from ..attributes import Attributes
     >>> from ..classes import ClassRef
@@ -37,7 +50,8 @@ def resolve_feature_action(
     ...     feature_uses_remaining={"action_surge": 1},
     ... )
     >>> result = resolve_feature_action(
-    ...     fighter, "action_surge", lambda count, sides: count, fighter.heal
+    ...     fighter, "action_surge", lambda sides: sides, fighter.heal,
+    ...     actor_ref="participant:fighter",
     ... )
     >>> result.capability_name if result else None
     'Action Surge'
@@ -49,4 +63,10 @@ def resolve_feature_action(
     class_resolver = CLASS_FEATURE_RESOLVERS.get(class_name)
     if class_resolver is None:
         return None
-    return class_resolver(creature, feature_id, roll_dice, heal)
+    return class_resolver(
+        creature,
+        feature_id,
+        roll_die,
+        heal,
+        actor_ref=actor_ref,
+    )

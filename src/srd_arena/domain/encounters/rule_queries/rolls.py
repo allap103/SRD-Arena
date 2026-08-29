@@ -2,21 +2,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ...effects.modifiers import ModifierSubject, RollKind, RollModifier
 from ...effects.rule_effects import RollAdjustment
 from ..encounter_models.actions import CreatureRef
+from .context import CreatureEffectQueryContext
 from .models import RollRuleContribution, RollRuleResult
 from .providers import ongoing_rule_effects
 from .senses import sense_range
 
-if TYPE_CHECKING:
-    from ..encounter import EncounterState
-
 
 def roll_modifiers(
-    state: EncounterState,
+    state: CreatureEffectQueryContext,
     creature_ref: CreatureRef,
     roll: RollKind,
     ability: str | None = None,
@@ -55,7 +51,7 @@ def roll_modifiers(
 
 
 def _modifier_applies(
-    state: EncounterState,
+    state: CreatureEffectQueryContext,
     modifier: RollModifier,
     *,
     roll: RollKind,

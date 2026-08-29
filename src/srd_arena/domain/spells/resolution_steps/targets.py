@@ -79,7 +79,7 @@ def resolve_spell_targets(
         if roll_outcome.attack_detail is not None:
             attack_details.append(roll_outcome.attack_detail)
 
-        damage = apply_target_damage(target, prepared, roll_outcome)
+        damage = apply_target_damage(context, target, prepared, roll_outcome)
         damage_details.extend(damage.details)
         affected = (
             isinstance(prepared.resolution, SavingThrowResolution)

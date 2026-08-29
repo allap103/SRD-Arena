@@ -250,7 +250,7 @@ def apply_damage_reroll_action(
         request.attack.damage_roll = reroll_dice(
             request.attack.damage_roll,
             [action.value],
-            roller=lambda sides: state.dice.roll_dice(1, sides),
+            roller=state.dice.roll_die,
         )
         replacement = request.attack.damage_roll.dice[action.value].result
         request.attack.damage_roll_detail = damage_roll_detail(request.attack)

@@ -114,8 +114,7 @@ def apply_condition(
     ):
         from .ongoing_effects import end_concentration
 
-        if hasattr(state, "ongoing_effects"):
-            end_concentration(state, applied.target_ref)
+        end_concentration(state, applied.target_ref)
     return ConditionApplicationResult(
         requested_condition=applied.condition,
         applied=tuple(consequences),

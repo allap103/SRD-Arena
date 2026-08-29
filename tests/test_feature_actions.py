@@ -19,8 +19,9 @@ def test_second_wind_returns_healing_effect_result() -> None:
     result = resolve_feature_action(
         creature,
         "second_wind",
-        lambda num_dice, sides: 5,
+        lambda _sides: 5,
         creature.heal,
+        actor_ref="participant:traveler",
     )
 
     assert isinstance(result, CapabilityActionResult)
@@ -30,11 +31,13 @@ def test_second_wind_returns_healing_effect_result() -> None:
     assert len(result.effects) == 1
     effect = result.effects[0]
     assert effect.kind == "healing"
-    assert effect.target_ref == "player"
+    assert effect.target_ref == "participant:traveler"
     assert effect.data["amount"] == 7
     assert effect.data["target_label"] == "Traveler"
     assert effect.data["roll"] == {
         "dice": "1d10",
+        "dice_values": [5],
+        "die_rolls": [[5]],
         "dice_total": 5,
         "modifier": 2,
         "total": 7,
@@ -51,8 +54,9 @@ def test_action_surge_returns_extra_action_result() -> None:
     result = resolve_feature_action(
         creature,
         "action_surge",
-        lambda num_dice, sides: 0,
+        lambda _sides: 1,
         creature.heal,
+        actor_ref="participant:traveler",
     )
 
     assert isinstance(result, CapabilityActionResult)

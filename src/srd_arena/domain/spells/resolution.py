@@ -8,8 +8,8 @@ from ..creatures.feature_rules.types import CapabilityActionResult
 from ..geometry import serialize_area
 from .custom import resolve_custom_spell
 from .resolution_steps.context import (
-    DieRoller,
     SpellActionContext,
+    SpellResolutionEnvironment,
     SpellTargetContext,
 )
 from .resolution_steps.follow_ups import resolve_follow_up as _resolve_follow_up
@@ -19,8 +19,8 @@ from .resolution_steps.removals import build_spell_removals
 from .resolution_steps.targets import resolve_spell_targets
 
 __all__ = [
-    "DieRoller",
     "SpellActionContext",
+    "SpellResolutionEnvironment",
     "SpellTargetContext",
     "resolve_spell_action",
 ]
@@ -53,7 +53,6 @@ def _resolve_declarative_spell(
 ) -> CapabilityActionResult:
     spell = context.spell
     assert context.creature.spellcasting is not None
-    assert context.roller is not None
 
     prepared = prepare_spell_resolution(context)
     resolved_targets = resolve_spell_targets(context, prepared)

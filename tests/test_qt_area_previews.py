@@ -70,7 +70,7 @@ def test_slow_pending_area_preview_is_an_eight_square_cube(
         BattlefieldView(
             width=22,
             height=14,
-            creatures=[],
+            creatures=(),
             summary_text="",
         ),
     )

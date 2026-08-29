@@ -72,7 +72,6 @@ def resolve_automatic_opportunity_attacks(
     >>> mover = SimpleNamespace()
     >>> dice = SimpleNamespace(
     ...     roll_die=lambda _sides: 1,
-    ...     roll_dice=lambda count, _sides: count,
     ... )
     >>> state = SimpleNamespace(creatures={"hero": mover}, dice=dice)
     >>> resolve_automatic_opportunity_attacks(
@@ -85,7 +84,6 @@ def resolve_automatic_opportunity_attacks(
 
     mover = state.creatures[mover_ref]
     roll_die = state.dice.roll_die
-    roll_dice = state.dice.roll_dice
     messages: list[tuple[str, str]] = []
     reactors = [
         (reactor_ref, reactor)
@@ -148,7 +146,7 @@ def resolve_automatic_opportunity_attacks(
                 roll_die,
             ),
             d20_roller=roll_die,
-            dice_roller=roll_dice,
+            die_roller=roll_die,
             automatic_critical_provider_ids=(
                 automatic_critical_provider_ids_for(
                     state,
@@ -246,7 +244,6 @@ def apply_reaction_action(
 
     if action.kind == "opportunity_attack":
         roll_die = state.dice.roll_die
-        roll_dice = state.dice.roll_dice
         request = opportunity_attack_request(decision)
         movement = request.movement
         eligibility = state.combat_rules.reaction_eligibility(
@@ -299,7 +296,7 @@ def apply_reaction_action(
                 roll_die
             ),
             d20_roller=roll_die,
-            dice_roller=roll_dice,
+            die_roller=roll_die,
             automatic_critical_provider_ids=(
                 automatic_critical_provider_ids_for(
                     state,

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 
 from srd_arena.application.api import ActionObservation
 
@@ -26,7 +28,7 @@ class InitiativeTrackEntryView:
     is_active: bool = False
 
 
-@dataclass
+@dataclass(frozen=True)
 class ResourceSummaryView:
     """Collect the active creature resources a frontend should summarize."""
 
@@ -43,6 +45,13 @@ class ResourceSummaryView:
     movement_remaining_feet: int
     movement_total_feet: int
     initiative: tuple[InitiativeTrackEntryView, ...] = ()
+
+    def __post_init__(self) -> None:
+        """Detach every sequence from mutable projection-builder storage."""
+
+        object.__setattr__(self, "conditions", tuple(self.conditions))
+        object.__setattr__(self, "spell_slots", tuple(self.spell_slots))
+        object.__setattr__(self, "initiative", tuple(self.initiative))
 
     def as_text(self) -> str:
         """Render the compact textual resource summary used by simple clients.
@@ -73,7 +82,7 @@ class ResourceSummaryView:
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class GridPositionView:
     """Expose a creature's grid coordinates without leaking domain geometry."""
 
@@ -81,7 +90,7 @@ class GridPositionView:
     y: int
 
 
-@dataclass
+@dataclass(frozen=True)
 class BattlefieldCreatureView:
     """Contain the read-only creature data needed to draw one battlefield token."""
 
@@ -99,42 +108,75 @@ class BattlefieldCreatureView:
     debuffs: tuple[str, ...] = ()
     is_active: bool = False
 
+    def __post_init__(self) -> None:
+        """Detach displayed status labels from mutable builder storage."""
 
-@dataclass
+        object.__setattr__(self, "conditions", tuple(self.conditions))
+        object.__setattr__(self, "buffs", tuple(self.buffs))
+        object.__setattr__(self, "debuffs", tuple(self.debuffs))
+
+
+@dataclass(frozen=True)
 class BattlefieldView:
     """Contain the complete GUI snapshot of the combat grid."""
 
     width: int
     height: int
-    creatures: list[BattlefieldCreatureView]
+    creatures: tuple[BattlefieldCreatureView, ...]
     summary_text: str
     background_image: str | None = None
     grid_color: str = "#d3d3d3"
     grid_opacity: float = 1.0
 
+    def __post_init__(self) -> None:
+        """Detach the token sequence from mutable projection-builder storage."""
 
-@dataclass
+        object.__setattr__(self, "creatures", tuple(self.creatures))
+
+
+@dataclass(frozen=True)
 class EncounterView:
     """Group battlefield state and advertised actions for an encounter screen."""
 
     narrative_text: str | None
     battlefield: BattlefieldView
     resources: ResourceSummaryView
-    movement_actions: dict[str, ActionObservation]
-    non_movement_actions: list[ActionObservation]
-    feature_actions: list[ActionObservation]
+    movement_actions: Mapping[str, ActionObservation]
+    non_movement_actions: tuple[ActionObservation, ...]
+    feature_actions: tuple[ActionObservation, ...]
     end_turn_action: ActionObservation | None
     action_pane_title: str
     transition_message: str | None = None
     transition_action: ActionObservation | None = None
 
+    def __post_init__(self) -> None:
+        """Detach advertised actions from mutable projection-builder storage."""
 
-@dataclass
+        object.__setattr__(
+            self,
+            "movement_actions",
+            MappingProxyType(dict(self.movement_actions)),
+        )
+        object.__setattr__(
+            self,
+            "non_movement_actions",
+            tuple(self.non_movement_actions),
+        )
+        object.__setattr__(self, "feature_actions", tuple(self.feature_actions))
+
+
+@dataclass(frozen=True)
 class SessionPresentation:
     """Describe the current scene in the form consumed by any frontend."""
 
     scene_id: str
     story_text: str | None
-    story_actions: list[ActionObservation]
-    system_actions: list[ActionObservation]
+    story_actions: tuple[ActionObservation, ...]
+    system_actions: tuple[ActionObservation, ...]
     encounter: EncounterView | None = None
+
+    def __post_init__(self) -> None:
+        """Detach scene action sequences from mutable projection-builder storage."""
+
+        object.__setattr__(self, "story_actions", tuple(self.story_actions))
+        object.__setattr__(self, "system_actions", tuple(self.system_actions))

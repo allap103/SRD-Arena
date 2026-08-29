@@ -6,13 +6,15 @@ from typing import TYPE_CHECKING
 
 from ....capabilities import (
     AttackResolution,
+    CapabilityDefinition,
+    CapabilityResolution,
     ConditionEffect,
     RelationshipRequirement,
     SavingThrowResolution,
     primary_effects,
 )
-from ....geometry import AreaOfEffect, build_radius_area
-from ....rolls.dice import combine_roll_modes
+from ....geometry import AreaOfEffect
+from ....rolls.dice import D20RollMode
 from ....spells.resolution import SpellActionContext, SpellTargetContext
 from ....spells.rules import (
     parse_spell_action_ability,
@@ -26,7 +28,7 @@ from ...state_combat import (
     automatic_critical_provider_ids_for,
 )
 from ...state_runtime import creature_position
-from ..option_discovery.spell_areas import targets_in_area
+from .environment import EncounterSpellResolutionEnvironment
 
 if TYPE_CHECKING:
     from ....creatures import Creature
@@ -66,58 +68,10 @@ def build_spell_action_context(
 
     definition = spell.definition
     assert definition is not None
-    attack_mode = (
-        definition.resolution.modes[0]
-        if isinstance(definition.resolution, AttackResolution)
-        else None
-    )
-    conditions = tuple(
-        effect.condition
-        for effect in primary_effects(definition)
-        if isinstance(effect, ConditionEffect)
-    )
-    save_advantage_against_opponents = isinstance(
-        definition.resolution, SavingThrowResolution
-    ) and any(
-        modifier.mode == "advantage"
-        and any(
-            isinstance(requirement, RelationshipRequirement)
-            and requirement.relationship == "fighting_source_team"
-            for requirement in modifier.requirements
-        )
-        for modifier in definition.resolution.save_modifiers
-    )
-    attack_roll_rules = (
-        {
-            candidate.target_ref: state.combat_rules.roll_modifiers(
-                state,
-                creature_ref,
-                "attack_roll",
-            )
-            for candidate in targets
-        }
-        if attack_mode is not None
-        else {}
-    )
-    save_ability = (
-        definition.resolution.ability
-        if isinstance(definition.resolution, SavingThrowResolution)
-        else None
-    )
-    save_roll_rules = (
-        {
-            candidate.target_ref: state.combat_rules.roll_modifiers(
-                state,
-                candidate.target_ref,
-                "saving_throw",
-                ability=save_ability,
-            )
-            for candidate in targets
-        }
-        if save_ability is not None
-        else {}
-    )
-    roll_die = state.dice.roll_die
+    attack_mode = _spell_attack_mode(definition.resolution)
+    conditions = _spell_conditions(definition)
+    save_advantage_against_opponents = _saves_favor_opponents(definition.resolution)
+    environment = EncounterSpellResolutionEnvironment(state, actor, creature_ref)
     return SpellActionContext(
         creature=actor,
         spell=spell,
@@ -126,40 +80,16 @@ def build_spell_action_context(
         targets=targets,
         area=area,
         source_ref=creature_ref,
-        roller=roll_die,
+        environment=environment,
         selected_condition=parse_spell_action_condition(spell_value),
         selected_damage_type=parse_spell_action_damage_type(spell_value),
         selected_ability=parse_spell_action_ability(spell_value),
-        attack_roll_modes=(
-            {
-                candidate.target_ref: combine_roll_modes(
-                    attack_roll_mode_for(
-                        state,
-                        creature_ref,
-                        candidate.target_ref,
-                        attack_mode,
-                        creature_position(state, creature_ref),
-                        tuple(
-                            creature_state.position
-                            for opponent_ref, creature_state in state.creatures.items()
-                            if creature_state.is_alive
-                            and creatures_are_opponents(
-                                state, creature_ref, opponent_ref
-                            )
-                        ),
-                    ),
-                    attack_roll_rules[candidate.target_ref].mode,
-                )
-                for candidate in targets
-            }
-            if attack_mode is not None
-            else {}
-        ),
-        attack_roll_modifier_for=lambda _target_ref: state.combat_rules.roll_modifiers(
+        attack_roll_modes=_attack_roll_modes(
             state,
             creature_ref,
-            "attack_roll",
-        ).resolve_modifier(roll_die),
+            targets,
+            attack_mode,
+        ),
         target_armor_classes={
             candidate.target_ref: state.combat_rules.effective_armor_class(
                 state,
@@ -167,11 +97,6 @@ def build_spell_action_context(
             ).value
             for candidate in targets
         },
-        damage_roll_modifier_for=lambda: state.combat_rules.roll_modifiers(
-            state,
-            creature_ref,
-            "damage_roll",
-        ).resolve_modifier(roll_die),
         automatic_critical_providers={
             candidate.target_ref: automatic_critical_provider_ids_for(
                 state, creature_ref, candidate.target_ref
@@ -179,61 +104,100 @@ def build_spell_action_context(
             for candidate in targets
         },
         cast_level=cast_level,
-        save_roll_modes=(
-            {
-                candidate.target_ref: "advantage"
-                for candidate in targets
-                if (
-                    state.combat_rules.has_condition_save_advantage(
-                        state,
-                        candidate.target_ref,
-                        conditions,
-                    )
-                )
-                or (
-                    save_advantage_against_opponents
-                    and creatures_are_opponents(
-                        state, creature_ref, candidate.target_ref
-                    )
-                )
-            }
-            if conditions or save_advantage_against_opponents
-            else {}
-        ),
-        save_roll_modifier_for=lambda target_ref, ability: (
-            state.combat_rules.roll_modifiers(
-                state,
-                target_ref,
-                "saving_throw",
-                ability=ability,
-            ).resolve_modifier(roll_die)
-        ),
-        save_sourced_roll_modes={
-            target_ref: rules.mode for target_ref, rules in save_roll_rules.items()
-        },
-        save_sourced_roll_mode_for=lambda target_ref, ability: (
-            state.combat_rules.roll_modifiers(
-                state,
-                target_ref,
-                "saving_throw",
-                ability=ability,
-            ).mode
-        ),
-        area_targets_around=lambda center_ref, radius_feet: tuple(
-            targets_in_area(
-                state,
-                actor,
-                build_radius_area(
-                    creature_position(state, center_ref),
-                    int(
-                        state.definition.grid.distance_from_feet(
-                            radius_feet,
-                            minimum=1,
-                        )
-                    ),
-                    state.definition.grid,
-                ),
-            )
+        save_roll_modes=_save_roll_modes(
+            state,
+            creature_ref,
+            targets,
+            conditions,
+            save_advantage_against_opponents,
         ),
         healing_allocations=parse_spell_healing_allocations(spell_value),
     )
+
+
+def _spell_attack_mode(resolution: CapabilityResolution) -> str | None:
+    """Return the authored attack mode when this spell makes an attack."""
+
+    if isinstance(resolution, AttackResolution):
+        return resolution.modes[0]
+    return None
+
+
+def _spell_conditions(definition: CapabilityDefinition) -> tuple[str, ...]:
+    """Return condition names imposed by the spell's primary effects."""
+
+    return tuple(
+        effect.condition
+        for effect in primary_effects(definition)
+        if isinstance(effect, ConditionEffect)
+    )
+
+
+def _saves_favor_opponents(resolution: CapabilityResolution) -> bool:
+    """Return whether targets gain save advantage against opposing casters."""
+
+    return isinstance(resolution, SavingThrowResolution) and any(
+        modifier.mode == "advantage"
+        and any(
+            isinstance(requirement, RelationshipRequirement)
+            and requirement.relationship == "fighting_source_team"
+            for requirement in modifier.requirements
+        )
+        for modifier in resolution.save_modifiers
+    )
+
+
+def _attack_roll_modes(
+    state: EncounterState,
+    creature_ref: str,
+    targets: tuple[SpellTargetContext, ...],
+    attack_mode: str | None,
+) -> dict[str, D20RollMode]:
+    """Snapshot spatial and target-derived attack modes for each target."""
+
+    if attack_mode is None:
+        return {}
+    opponent_positions = tuple(
+        creature_state.position
+        for opponent_ref, creature_state in state.creatures.items()
+        if creature_state.is_alive
+        and creatures_are_opponents(state, creature_ref, opponent_ref)
+    )
+    actor_position = creature_position(state, creature_ref)
+    return {
+        target.target_ref: attack_roll_mode_for(
+            state,
+            creature_ref,
+            target.target_ref,
+            attack_mode,
+            actor_position,
+            opponent_positions,
+        )
+        for target in targets
+    }
+
+
+def _save_roll_modes(
+    state: EncounterState,
+    creature_ref: str,
+    targets: tuple[SpellTargetContext, ...],
+    conditions: tuple[str, ...],
+    favor_opponents: bool,
+) -> dict[str, D20RollMode]:
+    """Snapshot spell-specific saving-throw modes for each target."""
+
+    if not conditions and not favor_opponents:
+        return {}
+    return {
+        target.target_ref: "advantage"
+        for target in targets
+        if state.combat_rules.has_condition_save_advantage(
+            state,
+            target.target_ref,
+            conditions,
+        )
+        or (
+            favor_opponents
+            and creatures_are_opponents(state, creature_ref, target.target_ref)
+        )
+    }
