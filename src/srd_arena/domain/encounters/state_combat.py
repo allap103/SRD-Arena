@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 from ..effects.conditions import CombatTrait, Condition
 from ..effects.triggered import TriggeredEffect, matching_effects
 from ..geometry import Position
-from ..rolls.dice import D20RollMode
+from ..rolls.dice import D20RollMode, combine_roll_modes
+from .attack_rules import proximity_attack_roll_mode
 from .behaviors import is_adjacent
 from .encounter_models.actions import CreatureRef
 from .state_runtime import creature_position
@@ -45,7 +46,7 @@ def attack_roll_mode_for(
     """
 
     modes: list[D20RollMode] = []
-    base_mode = attack_roll_mode(
+    base_mode = proximity_attack_roll_mode(
         attack_type,
         attacker_position,
         nearby_opponent_positions,
@@ -85,7 +86,7 @@ def attack_roll_mode_for(
             modes.append("advantage")
         elif effect.operation == "grant_disadvantage":
             modes.append("disadvantage")
-    return combine_roll_modes(modes)
+    return combine_roll_modes(*modes)
 
 
 def automatic_critical_provider_ids_for(
@@ -163,46 +164,3 @@ def active_status_effects(state: EncounterState) -> list[TriggeredEffect]:
     return [
         effect for status in state.conditions for effect in status.triggered_effects
     ]
-
-
-def attack_roll_mode(
-    attack_type: str,
-    attacker_position: Position | None,
-    nearby_opponent_positions: tuple[Position, ...],
-) -> D20RollMode:
-    """Apply the adjacent-opponent penalty to ranged attacks.
-
-    >>> attack_roll_mode("ranged", Position(0, 0), (Position(1, 1),))
-    'disadvantage'
-    >>> attack_roll_mode("melee", Position(0, 0), (Position(1, 1),))
-    'normal'
-    """
-
-    if attack_type != "ranged" or attacker_position is None:
-        return "normal"
-    if any(
-        is_adjacent(attacker_position, position)
-        for position in nearby_opponent_positions
-    ):
-        return "disadvantage"
-    return "normal"
-
-
-def combine_roll_modes(modes: list[D20RollMode]) -> D20RollMode:
-    """Collapse multiple advantage and disadvantage sources by cancellation.
-
-    >>> combine_roll_modes(["advantage", "advantage"])
-    'advantage'
-    >>> combine_roll_modes(["advantage", "disadvantage"])
-    'normal'
-    """
-
-    advantages = sum(1 for mode in modes if mode == "advantage")
-    disadvantages = sum(1 for mode in modes if mode == "disadvantage")
-    if advantages and disadvantages:
-        return "normal"
-    if advantages:
-        return "advantage"
-    if disadvantages:
-        return "disadvantage"
-    return "normal"

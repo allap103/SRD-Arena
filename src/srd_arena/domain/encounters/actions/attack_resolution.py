@@ -20,7 +20,7 @@ from .attack_runtime.damage import (
     parse_damage_dice,
     roll_attack_damage,
 )
-from .attack_runtime.rolls import attack_roll_mode, resolve_attack_roll
+from .attack_runtime.rolls import resolve_attack_roll
 from .attack_runtime.sources import (
     attack_range_squares,
     attack_sources,
@@ -40,7 +40,6 @@ from .attack_runtime.triggers import matching_damage_reroll_rule
 __all__ = [
     "apply_attack_damage",
     "attack_range_squares",
-    "attack_roll_mode",
     "attack_sources",
     "can_make_opportunity_attack",
     "damage_roll_detail",

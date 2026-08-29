@@ -15,7 +15,7 @@ from ....rolls.dice import (
     resolve_check,
     resolve_d20,
 )
-from ...behaviors import is_adjacent
+from ...attack_rules import proximity_attack_roll_mode
 from ...encounter_models.resolution import AttackSource
 
 
@@ -72,7 +72,7 @@ def resolve_attack_roll(
     attack_modifier = attack_source.attack_bonus + sourced_modifier
     roll_mode = combine_roll_modes(
         attack_roll_mode_override
-        or attack_roll_mode(
+        or proximity_attack_roll_mode(
             attack_type,
             attacker_position,
             nearby_opponent_positions,
@@ -125,25 +125,3 @@ def resolve_attack_roll(
         critical_hit=critical_hit,
         detail=detail,
     )
-
-
-def attack_roll_mode(
-    attack_type: str,
-    attacker_position: Position | None,
-    nearby_opponent_positions: tuple[Position, ...],
-) -> D20RollMode:
-    """Return disadvantage for a ranged attack made beside an opponent.
-
-    >>> attack_roll_mode("ranged", Position(0, 0), (Position(1, 0),))
-    'disadvantage'
-    >>> attack_roll_mode("melee", Position(0, 0), (Position(1, 0),))
-    'normal'
-    """
-    if attack_type != "ranged" or attacker_position is None:
-        return "normal"
-    if any(
-        is_adjacent(attacker_position, position)
-        for position in nearby_opponent_positions
-    ):
-        return "disadvantage"
-    return "normal"
