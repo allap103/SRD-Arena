@@ -36,13 +36,15 @@ from srd_arena.domain.encounters.definitions import (
 from srd_arena.domain.encounters.effect_lifecycle.application import (
     start_ongoing_effect,
 )
+from srd_arena.domain.encounters.effect_lifecycle.removal import (
+    remove_ongoing_effects,
+)
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import (
     ActionCost,
     EncounterAction,
 )
 from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
-from srd_arena.domain.encounters.ongoing_effects import remove_ongoing_effects
 from srd_arena.domain.encounters.rule_queries import (
     InvocationStartContext,
     action_compatibility,

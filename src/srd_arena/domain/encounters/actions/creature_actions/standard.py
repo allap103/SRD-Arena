@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 
 from ...attack_economy import consume_action
 from ...behaviors import is_adjacent
+from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import EncounterProgress
-from ...ongoing_effects import resolve_spell_lifecycle_event
 from ...state_runtime import create_event
 from ..rejections import reject_action
 

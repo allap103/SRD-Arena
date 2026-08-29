@@ -7,13 +7,11 @@ from typing import TYPE_CHECKING
 from ..effects.runtime import UntilTurnEnd, UntilTurnStart
 from ..geometry import MovementBudget, MovementCost
 from .attack_economy import clear_attack_action
+from .effect_lifecycle.repeat_saves import resolve_end_turn_effects
+from .effect_lifecycle.turn_start import expire_ongoing_effects_for_turn_start
 from .encounter_models.actions import CreatureRef
 from .encounter_models.resolution import EncounterProgress
 from .grappling_state import is_grappled
-from .ongoing_effects import (
-    expire_ongoing_effects_for_turn_start,
-    resolve_end_turn_effects,
-)
 from .participants import creature_team_id
 
 if TYPE_CHECKING:

@@ -93,11 +93,7 @@ def spell_action_targets(
         ]
     if spell_targets_self_only_for(state, spell):
         target = spell_target_context(state, actor, creature_ref)
-        if target is None:
-            return []
-        if _spell_removal_choices(state, creature_ref, spell):
-            return [target]
-        return []
+        return [target] if target is not None else []
 
     max_range = spell_range_squares_for(state, spell, actor)
     targets: list[SpellTargetContext] = []

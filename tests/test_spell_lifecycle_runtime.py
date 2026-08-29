@@ -33,17 +33,25 @@ from srd_arena.domain.encounters.creature_control import (
     creature_action_candidates,
     execute_creature_action,
 )
+from srd_arena.domain.encounters.effect_lifecycle.concentration import (
+    resolve_concentration_damage,
+)
+from srd_arena.domain.encounters.effect_lifecycle.lifecycle_events import (
+    resolve_spell_lifecycle_event,
+)
+from srd_arena.domain.encounters.effect_lifecycle.removal import (
+    remove_ongoing_effects,
+)
+from srd_arena.domain.encounters.effect_lifecycle.repeat_saves import (
+    resolve_end_turn_effects,
+)
+from srd_arena.domain.encounters.effect_lifecycle.turn_start import (
+    expire_ongoing_effects_for_turn_start,
+)
 from srd_arena.domain.encounters.encounter import (
     EncounterAction,
 )
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
-from srd_arena.domain.encounters.ongoing_effects import (
-    expire_ongoing_effects_for_turn_start,
-    remove_ongoing_effects,
-    resolve_concentration_damage,
-    resolve_end_turn_effects,
-    resolve_spell_lifecycle_event,
-)
 from srd_arena.domain.encounters.rule_queries import has_condition_save_advantage
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
 from srd_arena.domain.geometry import Position

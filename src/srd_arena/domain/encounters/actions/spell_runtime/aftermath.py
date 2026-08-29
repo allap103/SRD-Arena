@@ -7,11 +7,9 @@ from typing import TYPE_CHECKING
 from ....effects import serialize_effects
 from ....effects.results import ActionResolutionResult
 from ....spells.resolution import SpellTargetContext
+from ...effect_lifecycle.concentration import resolve_concentration_damage
+from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...encounter_models.resolution import EncounterProgress
-from ...ongoing_effects import (
-    resolve_concentration_damage,
-    resolve_spell_lifecycle_event,
-)
 from ...state_runtime import apply_encounter_effects, create_event
 
 if TYPE_CHECKING:

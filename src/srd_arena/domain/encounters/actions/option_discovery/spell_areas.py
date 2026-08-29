@@ -131,7 +131,7 @@ def spell_area(
         return None
     coverage_threshold = state.geometry_config.directional_area_cell_coverage_threshold
     return build_directional_area(
-        spell.range_data.get("type"),
+        spell.range.kind if spell.range is not None else None,
         actor_position,
         direction,
         length,

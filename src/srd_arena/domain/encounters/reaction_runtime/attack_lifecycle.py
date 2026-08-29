@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..ongoing_effects import (
-    resolve_concentration_damage,
-    resolve_spell_lifecycle_event,
-)
+from ..effect_lifecycle.concentration import resolve_concentration_damage
+from ..effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState

@@ -25,9 +25,10 @@ if TYPE_CHECKING:
 def spell_action_cost(state: EncounterState, spell: Spell) -> ActionCost:
     """Map a spell's activation time to the turn resource it consumes.
 
+    >>> from ....spells.metadata import SpellCastingTime
     >>> spell = Spell(
     ...     "healing_word", "Healing Word", "XPHB", 1,
-    ...     casting_time=({"unit": "bonus"},),
+    ...     casting_times=(SpellCastingTime(1, "bonus"),),
     ... )
     >>> spell_action_cost(None, spell).bonus_action
     1
@@ -118,9 +119,10 @@ def spell_range_squares_for(
 
     >>> from types import SimpleNamespace
     >>> from ....geometry import Grid
+    >>> from ....spells.metadata import SpellRange, SpellRangeDistance
     >>> spell = Spell(
     ...     "bolt", "Bolt", "TEST", 0,
-    ...     range_data={"distance": {"type": "feet", "amount": 60}},
+    ...     range=SpellRange("point", SpellRangeDistance("feet", 60)),
     ... )
     >>> state = SimpleNamespace(definition=SimpleNamespace(grid=Grid(10, 10)))
     >>> spell_range_squares_for(state, spell, None)

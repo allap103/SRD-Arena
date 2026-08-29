@@ -254,6 +254,37 @@ def test_encounter_actions_have_no_legacy_peer_package() -> None:
     )
 
 
+def test_encounter_effect_lifecycle_has_no_facade() -> None:
+    """Keep lifecycle ownership visible at each focused implementation module."""
+
+    facade = PACKAGE_ROOT / "domain" / "encounters" / "ongoing_effects.py"
+
+    assert not facade.exists()
+
+
+def test_encounter_runtime_import_graph_is_acyclic() -> None:
+    """Reject executable dependency cycles hidden by deferred local imports."""
+
+    encounter_dir = PACKAGE_ROOT / "domain" / "encounters"
+    modules = {_module_name(path): path for path in sorted(encounter_dir.rglob("*.py"))}
+    dependencies: dict[str, set[str]] = {module: set() for module in modules}
+    for module, path in modules.items():
+        for _line, imported_module in _runtime_imports(path, module):
+            candidates = (
+                candidate
+                for candidate in modules
+                if imported_module == candidate
+                or imported_module.startswith(f"{candidate}.")
+            )
+            dependency = max(candidates, key=len, default=None)
+            if dependency is not None and dependency != module:
+                dependencies[module].add(dependency)
+
+    cycle = _dependency_cycle(dependencies)
+
+    assert cycle is None, "Runtime import cycle: " + " -> ".join(cycle or ())
+
+
 def test_rule_queries_do_not_depend_on_the_encounter_aggregate() -> None:
     """Keep reusable typed rule queries behind their focused data contexts."""
 
@@ -573,6 +604,72 @@ def _imports(path: Path, module: str) -> list[tuple[int, str]]:
             if resolved:
                 imports.append((node.lineno, resolved))
     return imports
+
+
+class _RuntimeImportCollector(ast.NodeVisitor):
+    """Collect imports while omitting branches used only for static typing."""
+
+    def __init__(self, module: str, is_package: bool) -> None:
+        self.module = module
+        self.is_package = is_package
+        self.imports: list[tuple[int, str]] = []
+
+    def visit_If(self, node: ast.If) -> None:
+        if _is_type_checking_guard(node.test):
+            for statement in node.orelse:
+                self.visit(statement)
+            return
+        self.generic_visit(node)
+
+    def visit_Import(self, node: ast.Import) -> None:
+        self.imports.extend((node.lineno, alias.name) for alias in node.names)
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        resolved = _resolve_from_import(self.module, self.is_package, node)
+        if resolved:
+            self.imports.append((node.lineno, resolved))
+
+
+def _runtime_imports(path: Path, module: str) -> list[tuple[int, str]]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    collector = _RuntimeImportCollector(module, path.name == "__init__.py")
+    collector.visit(tree)
+    return collector.imports
+
+
+def _is_type_checking_guard(node: ast.expr) -> bool:
+    return (isinstance(node, ast.Name) and node.id == "TYPE_CHECKING") or (
+        isinstance(node, ast.Attribute) and node.attr == "TYPE_CHECKING"
+    )
+
+
+def _dependency_cycle(
+    dependencies: dict[str, set[str]],
+) -> tuple[str, ...] | None:
+    visited: set[str] = set()
+    active: list[str] = []
+    active_indices: dict[str, int] = {}
+
+    def visit(module: str) -> tuple[str, ...] | None:
+        if module in active_indices:
+            start = active_indices[module]
+            return (*active[start:], module)
+        if module in visited:
+            return None
+        active_indices[module] = len(active)
+        active.append(module)
+        for dependency in sorted(dependencies[module]):
+            if cycle := visit(dependency):
+                return cycle
+        active.pop()
+        active_indices.pop(module)
+        visited.add(module)
+        return None
+
+    for module in sorted(dependencies):
+        if cycle := visit(module):
+            return cycle
+    return None
 
 
 def _resolve_from_import(

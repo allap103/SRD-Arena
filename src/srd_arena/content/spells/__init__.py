@@ -5,12 +5,22 @@ from .capability import SpellCapabilitySchema
 from .catalog import SpellCatalog
 from .implementation import SpellImplementationSchema
 from .loader import load_spell_catalog
+from .metadata import (
+    SpellCastingTimeSchema,
+    SpellComponentsSchema,
+    SpellDurationSchema,
+    SpellRangeSchema,
+)
 from .schema import SpellSchema
 
 __all__ = [
     "SpellCapabilitySchema",
+    "SpellCastingTimeSchema",
     "SpellCatalog",
+    "SpellComponentsSchema",
+    "SpellDurationSchema",
     "SpellImplementationSchema",
+    "SpellRangeSchema",
     "SpellSchema",
     "build_spell",
     "load_spell_catalog",

@@ -11,6 +11,7 @@ from ..effects.conditions import (
     Condition,
     build_applied_condition,
 )
+from .effect_lifecycle.concentration import end_concentration
 from .encounter_models.actions import CreatureRef
 from .rule_queries.defenses import condition_immunities, condition_suppressions
 
@@ -112,8 +113,6 @@ def apply_condition(
     if effective_conditions(target_conditions, suppressions).has(
         Condition.INCAPACITATED
     ):
-        from .ongoing_effects import end_concentration
-
         end_concentration(state, applied.target_ref)
     return ConditionApplicationResult(
         requested_condition=applied.condition,

@@ -25,9 +25,11 @@ from srd_arena.domain.effects.rule_effects import (
 from srd_arena.domain.effects.runtime import EffectPolarity, OngoingEffectKind
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.creature_control import creature_action_candidates
+from srd_arena.domain.encounters.effect_lifecycle.repeat_saves import (
+    resolve_end_turn_effects,
+)
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
-from srd_arena.domain.encounters.ongoing_effects import resolve_end_turn_effects
 from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
 from srd_arena.domain.geometry import Position

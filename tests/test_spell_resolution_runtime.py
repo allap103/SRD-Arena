@@ -27,14 +27,16 @@ from srd_arena.domain.effects.rule_effects import (
 from srd_arena.domain.effects.runtime import (
     EffectPolarity,
 )
+from srd_arena.domain.encounters.effect_lifecycle.repeat_saves import (
+    resolve_end_turn_effects,
+)
+from srd_arena.domain.encounters.effect_lifecycle.turn_start import (
+    expire_ongoing_effects_for_turn_start,
+)
 from srd_arena.domain.encounters.encounter import (
     EncounterAction,
 )
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
-from srd_arena.domain.encounters.ongoing_effects import (
-    expire_ongoing_effects_for_turn_start,
-    resolve_end_turn_effects,
-)
 from srd_arena.domain.encounters.state_combat import attack_roll_mode_for
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
 from srd_arena.domain.geometry import Position

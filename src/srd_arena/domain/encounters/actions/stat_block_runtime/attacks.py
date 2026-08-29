@@ -6,13 +6,11 @@ from typing import TYPE_CHECKING
 
 from ....creatures import Creature
 from ...attack_economy import spend_attack, spend_current_attack
+from ...effect_lifecycle.concentration import resolve_concentration_damage
+from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
-from ...ongoing_effects import (
-    resolve_concentration_damage,
-    resolve_spell_lifecycle_event,
-)
 from ...participants import creatures_are_opponents
 from ...state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
 from ...state_runtime import create_event, creature_label

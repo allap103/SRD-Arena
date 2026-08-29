@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ....effects.runtime import OngoingEffectKind
-from ...ongoing_effects import end_concentration, resolve_spell_lifecycle_event
+from ...effect_lifecycle.concentration import end_concentration
+from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...rule_queries import InvocationStartContext, InvocationStartResult
 from ...state_runtime import create_event
 from ..option_discovery.spellcasting import spend_spell_resources
@@ -17,13 +18,6 @@ if TYPE_CHECKING:
     from ...encounter import EncounterState
     from ...encounter_models.actions import ActionCost
     from ...encounter_models.resolution import EncounterProgress
-
-
-_COMPONENT_NAMES = {
-    "v": "verbal",
-    "s": "somatic",
-    "m": "material",
-}
 
 
 def begin_spell_invocation(
@@ -47,10 +41,10 @@ def begin_spell_invocation(
     >>> from unittest.mock import Mock, patch
     >>> from srd_arena.domain.encounters.encounter_models.actions import ActionCost
     >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
-    >>> from srd_arena.domain.spells import Spell
+    >>> from srd_arena.domain.spells import Spell, SpellComponents
     >>> spell = Spell(
     ...     "misty-step", "Misty Step", None, 2,
-    ...     components={"v": True},
+    ...     components=SpellComponents(verbal=True),
     ... )
     >>> checks = SimpleNamespace(
     ...     invocation_start_checks=lambda state, context: context,
@@ -97,7 +91,7 @@ def begin_spell_invocation(
         actor_ref=creature_ref,
         progress=progress,
     )
-    components = _spell_components(spell)
+    components = spell.components.required
     query = state.combat_rules.invocation_start_checks(
         state,
         InvocationStartContext(
@@ -140,14 +134,6 @@ def begin_spell_invocation(
         },
     )
     return False
-
-
-def _spell_components(spell: Spell) -> frozenset[str]:
-    return frozenset(
-        _COMPONENT_NAMES.get(key.casefold(), key.casefold())
-        for key, value in spell.components.items()
-        if value is not False and value is not None and value != ""
-    )
 
 
 def _invocation_event_data(

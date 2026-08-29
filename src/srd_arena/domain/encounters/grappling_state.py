@@ -17,6 +17,7 @@ from .condition_state import (
     apply_condition,
     condition_sources_for,
 )
+from .effect_lifecycle.concentration import end_concentration
 from .encounter_models.actions import CreatureRef
 from .state_runtime import creature_size
 
@@ -106,8 +107,6 @@ def remove_relationships_for_creature(
     >>> (state.relationships, state.conditions)
     ([], [])
     """
-
-    from .ongoing_effects import end_concentration
 
     end_concentration(state, creature_ref)
     grapple_condition_ids = {

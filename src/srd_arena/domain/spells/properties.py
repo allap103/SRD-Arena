@@ -33,9 +33,10 @@ def spell_supports_higher_level(spell: Spell) -> bool:
 def spell_duration_rounds(spell: Spell) -> int | None:
     """Return the spell metadata duration converted to encounter rounds.
 
+    >>> from .metadata import SpellDuration
     >>> spell = Spell(
     ...     "bless", "Bless", "XPHB", 1,
-    ...     duration_data=({"duration": {"type": "minute", "amount": 1}},),
+    ...     durations=(SpellDuration("timed", 1, "minute"),),
     ... )
     >>> spell_duration_rounds(spell)
     10
@@ -46,14 +47,9 @@ def spell_duration_rounds(spell: Spell) -> int | None:
         "hour": 600,
         "day": 14_400,
     }
-    for entry in spell.duration_data:
-        duration = entry.get("duration")
-        if not isinstance(duration, dict):
-            continue
-        unit = duration.get("type")
-        amount = duration.get("amount")
-        if isinstance(unit, str) and isinstance(amount, int):
-            multiplier = rounds_per_unit.get(unit)
+    for duration in spell.durations:
+        if duration.unit is not None and duration.amount is not None:
+            multiplier = rounds_per_unit.get(duration.unit)
             if multiplier is not None:
-                return amount * multiplier
+                return duration.amount * multiplier
     return None

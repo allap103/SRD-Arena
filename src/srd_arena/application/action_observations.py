@@ -217,7 +217,7 @@ def _spell_area_preview(
         Mapping[str, ApplicationValue] | None,
         serialize_area(
             build_directional_area(
-                spell.range_data.get("type"),
+                spell.range.kind if spell.range is not None else None,
                 Position(creature_state.position.x, creature_state.position.y),
                 Vector2D(1.0, 0.0),
                 length,
