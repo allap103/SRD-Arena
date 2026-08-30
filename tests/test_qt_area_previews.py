@@ -2,8 +2,10 @@ from pathlib import Path
 
 import pytest
 
+from srd_arena.content.scenarios import load_scenario_directory
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.engine.observations import observe_session
+from srd_arena.engine.session import Session
 from srd_arena.frontends.gui.presentation.models import BattlefieldView
 from srd_arena.frontends.gui.ui.encounter.area_previews import (
     area_overlay_label,
@@ -15,7 +17,6 @@ from srd_arena.frontends.gui.ui.encounter.targeting import (
     mode_for_action,
     pending_area_overlay,
 )
-from srd_arena.infrastructure.scenarios import load_scenario_directory
 
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
 
@@ -49,7 +50,7 @@ def test_slow_pending_area_preview_is_an_eight_square_cube(
         ]
 
     monkeypatch.setattr(EncounterState, "roll_initiative", _tempo_archmage_first)
-    session = load_scenario_directory(SCENARIOS_ROOT / "slow_showcase").create_session()
+    session = Session(load_scenario_directory(SCENARIOS_ROOT / "slow_showcase"))
     session.read()
     observation = observe_session(session)
     slow_action = next(

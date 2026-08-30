@@ -11,10 +11,10 @@ release = "0.1.0"
 # models while autodoc traverses the reference page.
 for module_name in (
     "srd_arena.engine.api",
-    "srd_arena.scenarios.api",
     "srd_arena.content.capabilities",
     "srd_arena.content.creatures",
     "srd_arena.content.encounters",
+    "srd_arena.content.scenarios",
     "srd_arena.content.equipment",
     "srd_arena.content.spells",
     "srd_arena.domain.capabilities",
@@ -24,6 +24,7 @@ for module_name in (
     "srd_arena.domain.equipment",
     "srd_arena.domain.geometry",
     "srd_arena.domain.rolls",
+    "srd_arena.domain.scenarios",
     "srd_arena.domain.spells",
 ):
     import_module(module_name)

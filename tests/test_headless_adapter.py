@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from srd_arena.content.scenarios import ScenarioCatalog
 from srd_arena.engine.api import (
     ActionObservation,
     ActionReasonObservation,
@@ -9,16 +10,12 @@ from srd_arena.engine.api import (
     SceneObservation,
 )
 from srd_arena.frontends.headless import HeadlessGameAdapter
-from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
-from srd_arena.scenarios.api import ScenarioCatalog
 
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
 
 
 def _adapter() -> HeadlessGameAdapter:
-    return HeadlessGameAdapter(
-        ScenarioCatalog(FilesystemScenarioRepository(scenario_root=SCENARIOS_ROOT))
-    )
+    return HeadlessGameAdapter(ScenarioCatalog(scenario_root=SCENARIOS_ROOT))
 
 
 def test_headless_adapter_drives_game_by_stable_ids() -> None:
@@ -79,7 +76,9 @@ def test_headless_adapter_requires_a_started_game() -> None:
         adapter.start_scenario("missing")
 
 
-def test_headless_observation_preserves_unimplemented_action_reason() -> None:
+def test_headless_observation_preserves_unimplemented_action_reason(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from unittest.mock import Mock
 
     unsupported = ActionObservation(
@@ -104,8 +103,12 @@ def test_headless_observation_preserves_unimplemented_action_reason() -> None:
     )
     catalog, session = Mock(), Mock()
     catalog.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-    catalog.start_scenario.return_value = session
+    catalog.load_scenario.return_value = Mock()
     session.observe.return_value = observation
+    monkeypatch.setattr(
+        "srd_arena.frontends.headless.adapter.Session",
+        lambda _scenario: session,
+    )
     adapter = HeadlessGameAdapter(catalog)
 
     observed = adapter.start_scenario("demo")

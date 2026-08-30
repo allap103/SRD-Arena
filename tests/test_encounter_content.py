@@ -17,13 +17,11 @@ from srd_arena.content.creatures import (
     load_player_character_templates,
 )
 from srd_arena.content.encounters import EncounterDefinitionSchema
+from srd_arena.content.scenarios import ScenarioCatalog, load_scenario_directory
 from srd_arena.content.spells import load_spell_catalog
 from srd_arena.domain.creatures import AttackActionDefinition
 from srd_arena.domain.encounters.participants import creature_controller
-from srd_arena.infrastructure.scenarios import (
-    FilesystemScenarioRepository,
-    load_scenario_directory,
-)
+from srd_arena.engine.session import Session
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
@@ -101,7 +99,7 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
 
     scenario = load_scenario_directory(scenario_dir)
     participant = scenario.encounters["goblin_encounter"].participants[1]
-    session = scenario.create_session()
+    session = Session(scenario)
     session.read()
 
     assert participant.creature_id == "goblin_1"
@@ -112,7 +110,7 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
 def test_full_control_showcase_gives_external_control_to_every_creature() -> None:
     scenario = load_scenario_directory(GOBLIN_SKIRMISH_DIR)
     encounter = scenario.encounters["full_control_showcase"]
-    session = scenario.create_session()
+    session = Session(scenario)
     session.read()
 
     assert {creature.name for creature in scenario.creatures} == {
@@ -145,7 +143,7 @@ def test_encounter_can_be_fully_scripted() -> None:
     for team in encounter.teams:
         team.controller = "scripted"
 
-    session = scenario.create_session()
+    session = Session(scenario)
     session.read()
 
     assert session.encounter_state is not None
@@ -213,7 +211,7 @@ def test_game_uses_first_encounter_from_settings_when_not_overridden(
 
     scenario = load_scenario_directory(str(scenario_dir))
 
-    assert scenario.start_scene == "arena"
+    assert scenario.start_encounter_id == "arena"
     assert scenario.encounter_order == ("arena", "arena_two")
     first_victory = scenario.encounters["arena"].victory
     second_victory = scenario.encounters["arena_two"].victory
@@ -227,7 +225,7 @@ def test_game_loads_geometry_settings_from_config_json() -> None:
     scenario = load_scenario_directory(str(TACTICAL_SCENARIO_DIR))
     presentation = next(
         summary.presentation
-        for summary in FilesystemScenarioRepository(
+        for summary in ScenarioCatalog(
             scenario_root=TACTICAL_SCENARIO_DIR.parent
         ).available_scenarios()
         if summary.id == TACTICAL_SCENARIO_DIR.name
@@ -239,7 +237,7 @@ def test_game_loads_geometry_settings_from_config_json() -> None:
     assert presentation.grid_color == "#8fa3ad"
     assert presentation.grid_opacity == 0.65
 
-    session = scenario.create_session()
+    session = Session(scenario)
     session.read()
 
     assert not hasattr(session, "background_image")
@@ -250,7 +248,7 @@ def test_game_loads_geometry_settings_from_config_json() -> None:
 def test_game_uses_default_board_presentation_settings() -> None:
     presentation = next(
         summary.presentation
-        for summary in FilesystemScenarioRepository(
+        for summary in ScenarioCatalog(
             scenario_root=FIXTURE_ENCOUNTER_DIR.parent
         ).available_scenarios()
         if summary.id == FIXTURE_ENCOUNTER_DIR.name

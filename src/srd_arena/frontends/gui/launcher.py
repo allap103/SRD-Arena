@@ -15,7 +15,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from srd_arena.scenarios.api import ScenarioCatalog, ScenarioSummary
+from srd_arena.content.scenarios import ScenarioCatalog, ScenarioSummary
+from srd_arena.engine.api import Session
 
 from .app import GameWindow
 from .presenter import GamePresenter
@@ -79,7 +80,7 @@ class ScenarioPickerWindow(QMainWindow):
 
     def _open_scenario(self, scenario: ScenarioSummary) -> None:
         self._game_window = GameWindow(
-            GamePresenter(self._catalog.start_scenario(scenario.id)),
+            GamePresenter(Session(self._catalog.load_scenario(scenario.id))),
             image_root=self._image_root,
             presentation_config=scenario.presentation,
             pause_between_automatic_actions=self._pause_between_automatic_actions,

@@ -5,13 +5,6 @@ This reference documents SRD Arena's intentional Python boundaries. Package
 facades are shown instead of every implementation module so that re-exported
 types have one stable, discoverable home.
 
-Scenarios
----------
-
-.. automodule:: srd_arena.scenarios.api
-   :members:
-   :show-inheritance:
-
 Engine
 ------
 
@@ -31,6 +24,10 @@ Authored content
    :show-inheritance:
 
 .. automodule:: srd_arena.content.encounters
+   :members:
+   :show-inheritance:
+
+.. automodule:: srd_arena.content.scenarios
    :members:
    :show-inheritance:
 
@@ -70,6 +67,10 @@ Domain model
    :show-inheritance:
 
 .. automodule:: srd_arena.domain.rolls
+   :members:
+   :show-inheritance:
+
+.. automodule:: srd_arena.domain.scenarios
    :members:
    :show-inheritance:
 

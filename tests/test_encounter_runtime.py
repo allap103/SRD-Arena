@@ -8,6 +8,7 @@ import pytest
 from PySide6.QtWidgets import QPushButton
 
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
+from srd_arena.content.scenarios import load_scenario_directory
 from srd_arena.content.spells import (
     load_spell_catalog,
 )
@@ -22,6 +23,7 @@ from srd_arena.engine.observations import (
 from srd_arena.engine.queries import (
     SpellOptionDetails,
 )
+from srd_arena.engine.session import Session
 from srd_arena.frontends.gui.app import GameWindow
 from srd_arena.frontends.gui.presentation.session import build_session_presentation
 from srd_arena.frontends.gui.presenter import GamePresenter
@@ -40,7 +42,6 @@ from srd_arena.frontends.gui.ui.encounter.targeting import (
     mode_label,
     selection_modes,
 )
-from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import (
     FIXTURE_ENCOUNTER_DIR,
     STAT_BLOCK_ACTION_SCENARIO_DIR,
@@ -79,7 +80,7 @@ pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
 
 def test_orchestrator_runs_enemy_turns_until_player_turn() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
 
@@ -96,7 +97,7 @@ def test_orchestrator_runs_enemy_turns_until_player_turn() -> None:
 
 
 def test_archer_behavior_uses_ranged_weapon_without_closing_distance() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
 
@@ -132,7 +133,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance() -> None:
 
 
 def test_natural_one_is_an_automatic_miss_for_attack_rolls() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
 
@@ -173,7 +174,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls() -> None:
 
 
 def test_extra_attack_allows_second_attack_after_movement() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
 
@@ -226,7 +227,7 @@ def test_extra_attack_allows_second_attack_after_movement() -> None:
 
 
 def test_second_wind_appears_and_consumes_bonus_action() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     _active_creature(session).current_health = 10
 
@@ -260,7 +261,7 @@ def test_second_wind_appears_and_consumes_bonus_action() -> None:
 
 
 def test_second_wind_stays_visible_in_feature_column_when_unavailable() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     _active_creature(session).current_health = 10
 
@@ -283,7 +284,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable() -> None:
 
 
 def test_action_surge_grants_additional_action_for_same_turn() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -323,9 +324,11 @@ def test_action_surge_grants_additional_action_for_same_turn() -> None:
 
 
 def test_presentation_surfaces_conditions_in_encounter_views() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -660,9 +663,11 @@ def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
 def test_exact_spell_allocation_auto_confirms_after_final_click(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -719,10 +724,12 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
 
 
 def test_movement_does_not_consume_pending_multiattack_slots() -> None:
-    session = load_scenario_directory(
-        str(STAT_BLOCK_ACTION_SCENARIO_DIR),
-        start_scene="stat_block_action_showcase",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(STAT_BLOCK_ACTION_SCENARIO_DIR),
+            start_encounter_id="stat_block_action_showcase",
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -823,7 +830,7 @@ def test_spell_target_modes_preserve_selected_cast_level() -> None:
 
 
 def test_goblin_encounter_attack_can_end_scene_with_victory() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
 
@@ -855,7 +862,7 @@ def test_goblin_encounter_attack_can_end_scene_with_victory() -> None:
 
 
 def test_attack_consumes_action_until_next_turn() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
 
@@ -894,9 +901,11 @@ def test_attack_consumes_action_until_next_turn() -> None:
 
 
 def test_encounter_victory_waits_for_continue_before_restart() -> None:
-    session = load_scenario_directory(
-        str(FIXTURE_ENCOUNTER_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(FIXTURE_ENCOUNTER_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     for creature_ref, creature_state in session.encounter_state.creatures.items():

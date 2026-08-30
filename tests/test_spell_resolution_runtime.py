@@ -7,6 +7,7 @@ from typing import cast as type_cast
 import pytest
 
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
+from srd_arena.content.scenarios import load_scenario_directory
 from srd_arena.content.spells import (
     load_spell_catalog,
 )
@@ -41,6 +42,7 @@ from srd_arena.engine.observations import (
     ActionObservation,
     observe_session,
 )
+from srd_arena.engine.session import Session
 from srd_arena.frontends.gui.app import GameWindow
 from srd_arena.frontends.gui.presentation.models import (
     SessionPresentation,
@@ -50,7 +52,6 @@ from srd_arena.frontends.gui.presentation.session import build_session_presentat
 from srd_arena.frontends.gui.ui.encounter.action_menus import action_bucket
 from srd_arena.frontends.gui.ui.encounter.area_previews import preview_area_overlay
 from srd_arena.frontends.gui.ui.sidebar import GameSidebar
-from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import (
     ORCHESTRATOR as _ORCHESTRATOR,
 )
@@ -92,9 +93,11 @@ pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
 
 def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -109,9 +112,11 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
 
 
 def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -126,9 +131,11 @@ def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
 
 
 def test_presentation_derives_spell_slot_rows_from_player_spellcasting() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -150,9 +157,11 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting() -> None
 
 
 def test_lesser_restoration_appears_when_player_has_removable_condition() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -181,9 +190,11 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
 
 
 def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -217,9 +228,11 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save() -> None:
 
 
 def test_color_spray_cone_can_affect_multiple_enemies() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -255,9 +268,11 @@ def test_color_spray_cone_can_affect_multiple_enemies() -> None:
 
 
 def test_color_spray_cone_uses_continuous_aim_vector() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -287,9 +302,11 @@ def test_color_spray_cone_uses_continuous_aim_vector() -> None:
 
 
 def test_burning_hands_cone_damages_multiple_enemies() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -331,9 +348,11 @@ def test_burning_hands_cone_damages_multiple_enemies() -> None:
 
 
 def test_burning_hands_can_use_and_scale_a_higher_level_slot() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -355,9 +374,11 @@ def test_burning_hands_can_use_and_scale_a_higher_level_slot() -> None:
 
 
 def test_fireball_point_area_damages_multiple_enemies() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -410,9 +431,11 @@ def test_fireball_point_area_damages_multiple_enemies() -> None:
 
 
 def test_pyside6_window_extracts_spell_area_overlay() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -445,9 +468,11 @@ def test_pyside6_window_extracts_spell_area_overlay() -> None:
 def test_pyside6_window_does_not_keep_spell_overlay_after_cast(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -491,9 +516,11 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(
 
 
 def test_battlefield_widget_preview_overlay_reaims_directional_area() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -534,9 +561,11 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area() -> None:
 
 
 def test_blinded_enemy_attacks_with_disadvantage() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -566,9 +595,11 @@ def test_blinded_enemy_attacks_with_disadvantage() -> None:
 
 
 def test_attacks_against_blinded_target_gain_advantage() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -594,9 +625,11 @@ def test_attacks_against_blinded_target_gain_advantage() -> None:
 
 
 def test_blinded_from_color_spray_expires_at_end_of_players_next_turn() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -622,9 +655,11 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn() -> None:
 
 
 def test_reapplying_blinded_preserves_independent_durations() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -655,9 +690,11 @@ def test_reapplying_blinded_preserves_independent_durations() -> None:
 
 
 def test_remove_condition_effect_clears_blinded_rules_immediately() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -726,9 +763,11 @@ def test_remove_condition_effect_clears_blinded_rules_immediately() -> None:
 
 
 def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -772,9 +811,11 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
 
 
 def test_cure_wounds_heals_through_generic_spell_resolution() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     caster = _active_creature(session)
     assert caster.spellcasting is not None
@@ -798,9 +839,11 @@ def test_cure_wounds_heals_through_generic_spell_resolution() -> None:
 
 
 def test_false_life_grants_scaled_temporary_hit_points() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     caster = _active_creature(session)
     assert caster.spellcasting is not None
@@ -824,9 +867,11 @@ def test_false_life_grants_scaled_temporary_hit_points() -> None:
 
 
 def test_mass_healing_word_uses_one_roll_for_selected_targets() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -877,9 +922,11 @@ def test_mass_healing_word_uses_one_roll_for_selected_targets() -> None:
 
 
 def test_heal_upcasts_and_removes_every_listed_condition() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -933,9 +980,11 @@ def test_heal_upcasts_and_removes_every_listed_condition() -> None:
 
 
 def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -979,9 +1028,11 @@ def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
 
 
 def test_invisibility_is_classified_and_exported_as_beneficial() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1007,9 +1058,11 @@ def test_invisibility_is_classified_and_exported_as_beneficial() -> None:
 
 
 def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1072,9 +1125,11 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
 
 
 def test_faerie_fire_applies_attack_advantage_only_after_failed_save() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1118,9 +1173,11 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save() -> None:
 
 
 def test_phantasmal_killer_scales_and_repeats_typed_damage() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1193,9 +1250,11 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage() -> None:
 
 
 def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1231,9 +1290,11 @@ def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
 
 
 def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1305,9 +1366,11 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
 
 
 def test_mass_heal_uses_bounded_numeric_allocations() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1394,9 +1457,11 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
 
 
 def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1467,9 +1532,11 @@ def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
 
 
 def test_remove_curse_ends_every_curse_on_one_creature() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1511,9 +1578,11 @@ def test_remove_curse_ends_every_curse_on_one_creature() -> None:
 
 
 def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1586,10 +1655,12 @@ def test_lesser_restoration_uses_magic_menu_bucket() -> None:
 
 
 def test_lesser_restoration_explicitly_selects_the_condition_to_remove() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR),
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR),
+            start_encounter_id="goblin_encounter",
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None

@@ -1,7 +1,6 @@
-"""Compose the production adapters and launch the SRD Arena GUI."""
+"""Compose authored content with the selected SRD Arena frontend."""
 
-from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
-from srd_arena.scenarios.api import ScenarioCatalog
+from srd_arena.content.scenarios import ScenarioCatalog
 
 
 def main() -> None:
@@ -9,10 +8,10 @@ def main() -> None:
 
     from srd_arena.frontends.gui.launcher import run_gui
 
-    repository = FilesystemScenarioRepository()
+    catalog = ScenarioCatalog()
     run_gui(
-        ScenarioCatalog(repository),
-        image_root=repository.image_root,
+        catalog,
+        image_root=catalog.image_root,
     )
 
 

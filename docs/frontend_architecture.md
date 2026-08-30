@@ -1,6 +1,7 @@
 # Frontend architecture
 
-The frontends are driving adapters around the public engine and scenario APIs.
+The frontends are driving adapters around the public engine and scenario-content
+APIs.
 The broader layering, startup flow, and public game contract are documented in
 [Engine architecture](engine_architecture.md).
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from srd_arena.content.scenarios import ScenarioCatalog
 from srd_arena.engine.api import (
     ActionObservation,
     CommandResult,
@@ -13,7 +14,6 @@ from srd_arena.engine.api import (
     SelectAction,
     Session,
 )
-from srd_arena.scenarios.api import ScenarioCatalog
 
 
 @dataclass(frozen=True)
@@ -58,9 +58,13 @@ class HeadlessGameAdapter:
         >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
         >>> catalog, session = Mock(), Mock()
         >>> catalog.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> catalog.start_scenario.return_value = session
+        >>> catalog.load_scenario.return_value = Mock()
+        >>> session = Mock()
         >>> session.observe.return_value = observation
-        >>> HeadlessGameAdapter(catalog).start_scenario("demo").scene.scene_id
+        >>> from unittest.mock import patch
+        >>> with patch("srd_arena.frontends.headless.adapter.Session", return_value=session):
+        ...     result = HeadlessGameAdapter(catalog).start_scenario("demo")
+        >>> result.scene.scene_id
         'intro'
         """
 
@@ -74,7 +78,7 @@ class HeadlessGameAdapter:
         )
         if summary is None:
             raise KeyError(f"Unknown scenario '{scenario_id}'.")
-        session = self.catalog.start_scenario(summary.id)
+        session = Session(self.catalog.load_scenario(summary.id))
         observation = session.observe()
         self._session = session
         return observation
@@ -85,12 +89,10 @@ class HeadlessGameAdapter:
         >>> from unittest.mock import Mock
         >>> from srd_arena.engine.api import SceneObservation
         >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
-        >>> startup, game = Mock(), Mock()
-        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> startup.start_scenario.return_value = game
-        >>> game.observe.return_value = observation
-        >>> adapter = HeadlessGameAdapter(startup)
-        >>> _ = adapter.start_scenario("demo")
+        >>> session = Mock()
+        >>> session.observe.return_value = observation
+        >>> adapter = HeadlessGameAdapter(Mock())
+        >>> adapter._session = session
         >>> adapter.observe().scene.scene_id
         'intro'
         """
@@ -114,12 +116,10 @@ class HeadlessGameAdapter:
         >>> observation = GameObservation(
         ...     SceneObservation("fight", None, actions), None, None, False
         ... )
-        >>> startup, game = Mock(), Mock()
-        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> startup.start_scenario.return_value = game
-        >>> game.observe.return_value = observation
-        >>> adapter = HeadlessGameAdapter(startup)
-        >>> _ = adapter.start_scenario("demo")
+        >>> session = Mock()
+        >>> session.observe.return_value = observation
+        >>> adapter = HeadlessGameAdapter(Mock())
+        >>> adapter._session = session
         >>> tuple(action.id for action in adapter.available_actions())
         ('dodge',)
         """
@@ -137,12 +137,10 @@ class HeadlessGameAdapter:
         >>> from srd_arena.engine.api import SceneObservation
         >>> action = ActionObservation("dodge", "Dodge", "action", "hero")
         >>> observation = GameObservation(SceneObservation("fight", None, (action,)), None, None, False)
-        >>> startup, game = Mock(), Mock()
-        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> startup.start_scenario.return_value = game
-        >>> game.observe.return_value = observation
-        >>> adapter = HeadlessGameAdapter(startup)
-        >>> _ = adapter.start_scenario("demo")
+        >>> session = Mock()
+        >>> session.observe.return_value = observation
+        >>> adapter = HeadlessGameAdapter(Mock())
+        >>> adapter._session = session
         >>> adapter.available_action_ids()
         ('dodge',)
         """
@@ -158,16 +156,13 @@ class HeadlessGameAdapter:
         """Submit one advertised action against the observed decision.
 
         >>> from unittest.mock import Mock
-        >>> startup, game = Mock(), Mock()
-        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> startup.start_scenario.return_value = game
-        >>> game.observe.return_value = Mock()
-        >>> game.execute.return_value = CommandResult(update=Mock())
-        >>> adapter = HeadlessGameAdapter(startup)
-        >>> _ = adapter.start_scenario("demo")
+        >>> session = Mock()
+        >>> session.execute.return_value = CommandResult(update=Mock())
+        >>> adapter = HeadlessGameAdapter(Mock())
+        >>> adapter._session = session
         >>> adapter.select_action("dodge", expected_decision_id="turn:1").accepted
         True
-        >>> command = game.execute.call_args.args[0]
+        >>> command = session.execute.call_args.args[0]
         >>> (command.action_id, command.expected_decision_id)
         ('dodge', 'turn:1')
         """
@@ -183,14 +178,11 @@ class HeadlessGameAdapter:
         """Submit any engine command, including staged targeting.
 
         >>> from unittest.mock import Mock
-        >>> startup, game = Mock(), Mock()
-        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> startup.start_scenario.return_value = game
-        >>> game.observe.return_value = Mock()
+        >>> session = Mock()
         >>> expected = CommandResult()
-        >>> game.execute.return_value = expected
-        >>> adapter = HeadlessGameAdapter(startup)
-        >>> _ = adapter.start_scenario("demo")
+        >>> session.execute.return_value = expected
+        >>> adapter = HeadlessGameAdapter(Mock())
+        >>> adapter._session = session
         >>> adapter.submit(SelectAction("dodge", "turn:1")) is expected
         True
         """
@@ -201,14 +193,11 @@ class HeadlessGameAdapter:
         """Advance scripted controllers until external input is required.
 
         >>> from unittest.mock import Mock
-        >>> startup, game = Mock(), Mock()
-        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> startup.start_scenario.return_value = game
-        >>> game.observe.return_value = Mock()
+        >>> session = Mock()
         >>> update = Mock()
-        >>> game.advance_until_input_required.return_value = update
-        >>> adapter = HeadlessGameAdapter(startup)
-        >>> _ = adapter.start_scenario("demo")
+        >>> session.advance_until_input_required.return_value = update
+        >>> adapter = HeadlessGameAdapter(Mock())
+        >>> adapter._session = session
         >>> adapter.advance_until_input_required() is update
         True
         """
@@ -219,14 +208,11 @@ class HeadlessGameAdapter:
         """Resolve one scripted action for step-oriented clients.
 
         >>> from unittest.mock import Mock
-        >>> startup, game = Mock(), Mock()
-        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> startup.start_scenario.return_value = game
-        >>> game.observe.return_value = Mock()
+        >>> session = Mock()
         >>> update = Mock()
-        >>> game.advance_one_automatic_action.return_value = update
-        >>> adapter = HeadlessGameAdapter(startup)
-        >>> _ = adapter.start_scenario("demo")
+        >>> session.advance_one_automatic_action.return_value = update
+        >>> adapter = HeadlessGameAdapter(Mock())
+        >>> adapter._session = session
         >>> adapter.advance_one_automatic_action() is update
         True
         """
@@ -241,13 +227,10 @@ class HeadlessGameAdapter:
         >>> initial = GameObservation(
         ...     SceneObservation("intro", "Ready?", ()), None, None, False
         ... )
-        >>> startup, game = Mock(), Mock()
-        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> startup.start_scenario.return_value = game
-        >>> game.observe.return_value = Mock()
-        >>> game.reset.return_value = initial
-        >>> adapter = HeadlessGameAdapter(startup)
-        >>> _ = adapter.start_scenario("demo")
+        >>> session = Mock()
+        >>> session.reset.return_value = initial
+        >>> adapter = HeadlessGameAdapter(Mock())
+        >>> adapter._session = session
         >>> adapter.reset().scene.scene_text
         'Ready?'
         """

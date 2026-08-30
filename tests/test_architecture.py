@@ -47,32 +47,15 @@ RULES = (
         ),
     ),
     DependencyRule(
-        package="srd_arena.scenarios",
-        forbidden=(
-            "srd_arena.content",
-            "srd_arena.frontends",
-            "srd_arena.infrastructure",
-        ),
-    ),
-    DependencyRule(
         package="srd_arena.frontends.gui.presentation",
         forbidden=(
-            "srd_arena.content",
             "srd_arena.domain",
             "srd_arena.infrastructure",
         ),
     ),
     DependencyRule(
-        package="srd_arena.infrastructure",
-        forbidden=(
-            "srd_arena.frontends",
-            "srd_arena.engine",
-        ),
-    ),
-    DependencyRule(
         package="srd_arena.frontends.gui",
         forbidden=(
-            "srd_arena.content",
             "srd_arena.domain.encounters",
             "srd_arena.infrastructure",
         ),
@@ -80,7 +63,6 @@ RULES = (
     DependencyRule(
         package="srd_arena.frontends.headless",
         forbidden=(
-            "srd_arena.content",
             "srd_arena.domain",
             "srd_arena.frontends.gui",
             "srd_arena.infrastructure",
@@ -308,7 +290,7 @@ def test_gui_presenter_stays_independent_of_pyside6() -> None:
     ]
 
 
-def test_driving_adapters_use_only_public_engine_and_scenario_apis() -> None:
+def test_driving_adapters_use_only_public_engine_and_scenario_content_apis() -> None:
     violations: list[str] = []
 
     paths = [
@@ -322,18 +304,18 @@ def test_driving_adapters_use_only_public_engine_and_scenario_apis() -> None:
                 imported_module.startswith("srd_arena.engine.")
                 and imported_module != "srd_arena.engine.api"
             )
-            private_scenarios = (
-                imported_module.startswith("srd_arena.scenarios.")
-                and imported_module != "srd_arena.scenarios.api"
-            )
-            if private_engine or private_scenarios:
+            private_scenario_content = (
+                imported_module == "srd_arena.content"
+                or imported_module.startswith("srd_arena.content.")
+            ) and imported_module != "srd_arena.content.scenarios"
+            if private_engine or private_scenario_content:
                 violations.append(
                     f"{path.relative_to(PACKAGE_ROOT.parent)}:{line} imports "
                     f"{imported_module}"
                 )
 
     assert not violations, (
-        "Driving adapters must use the public engine/scenario APIs exclusively:\n"
+        "Driving adapters must use public engine and scenario-content APIs:\n"
         + "\n".join(violations)
     )
 
@@ -392,7 +374,6 @@ def test_package_roots_remain_descriptive_namespaces() -> None:
         PACKAGE_ROOT / "__init__.py",
         PACKAGE_ROOT / "domain" / "__init__.py",
         PACKAGE_ROOT / "engine" / "__init__.py",
-        PACKAGE_ROOT / "scenarios" / "__init__.py",
     ):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         assert (
@@ -401,6 +382,13 @@ def test_package_roots_remain_descriptive_namespaces() -> None:
             and isinstance(tree.body[0].value, ast.Constant)
             and isinstance(tree.body[0].value.value, str)
         ), f"{path.relative_to(PACKAGE_ROOT.parent)} must remain namespace-only."
+
+
+def test_obsolete_scenario_service_packages_stay_removed() -> None:
+    """Keep scenario definitions and loading beside related concepts."""
+
+    assert not list((PACKAGE_ROOT / "scenarios").glob("*.py"))
+    assert not list((PACKAGE_ROOT / "infrastructure").glob("*.py"))
 
 
 def test_removed_stateless_service_facades_stay_removed() -> None:
