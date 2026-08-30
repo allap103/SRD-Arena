@@ -1,7 +1,7 @@
 """Compose the production adapters and launch the SRD Arena GUI."""
 
-from srd_arena.application.api import GameStartup
 from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
+from srd_arena.scenarios.api import ScenarioCatalog
 
 
 def main() -> None:
@@ -11,7 +11,7 @@ def main() -> None:
 
     repository = FilesystemScenarioRepository()
     run_gui(
-        GameStartup(repository),
+        ScenarioCatalog(repository),
         image_root=repository.image_root,
     )
 

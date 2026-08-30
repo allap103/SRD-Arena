@@ -4,16 +4,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from srd_arena.application.api import (
+from srd_arena.engine.api import (
     ActionObservation,
     CommandResult,
     GameCommand,
     GameObservation,
-    GameStartup,
     GameUpdate,
-    RunningGame,
     SelectAction,
+    Session,
 )
+from srd_arena.scenarios.api import ScenarioCatalog
 
 
 @dataclass(frozen=True)
@@ -32,58 +32,58 @@ class HeadlessGameAdapter:
     choosing among them. A scripted controller or ML policy owns that choice.
     """
 
-    startup: GameStartup
-    _game: RunningGame | None = field(default=None, init=False, repr=False)
+    catalog: ScenarioCatalog
+    _session: Session | None = field(default=None, init=False, repr=False)
 
     def available_scenarios(self) -> tuple[ScenarioOption, ...]:
         """Return selectable scenarios without exposing filesystem paths.
 
         >>> from unittest.mock import Mock
-        >>> startup = Mock()
-        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> HeadlessGameAdapter(startup).available_scenarios()
+        >>> catalog = Mock()
+        >>> catalog.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> HeadlessGameAdapter(catalog).available_scenarios()
         (ScenarioOption(id='demo', label='Demo'),)
         """
 
         return tuple(
             ScenarioOption(id=scenario.id, label=scenario.label)
-            for scenario in self.startup.available_scenarios()
+            for scenario in self.catalog.available_scenarios()
         )
 
     def start_scenario(self, scenario_id: str) -> GameObservation:
         """Start a scenario selected by its advertised stable ID.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.application.api import SceneObservation
+        >>> from srd_arena.engine.api import SceneObservation
         >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
-        >>> startup, game = Mock(), Mock()
-        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> startup.start_scenario.return_value = game
-        >>> game.observe.return_value = observation
-        >>> HeadlessGameAdapter(startup).start_scenario("demo").scene.scene_id
+        >>> catalog, session = Mock(), Mock()
+        >>> catalog.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> catalog.start_scenario.return_value = session
+        >>> session.observe.return_value = observation
+        >>> HeadlessGameAdapter(catalog).start_scenario("demo").scene.scene_id
         'intro'
         """
 
         summary = next(
             (
                 scenario
-                for scenario in self.startup.available_scenarios()
+                for scenario in self.catalog.available_scenarios()
                 if scenario.id == scenario_id
             ),
             None,
         )
         if summary is None:
             raise KeyError(f"Unknown scenario '{scenario_id}'.")
-        game = self.startup.start_scenario(summary.id)
-        observation = game.observe()
-        self._game = game
+        session = self.catalog.start_scenario(summary.id)
+        observation = session.observe()
+        self._session = session
         return observation
 
     def observe(self) -> GameObservation:
         """Return the current structured game observation.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.application.api import SceneObservation
+        >>> from srd_arena.engine.api import SceneObservation
         >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
         >>> startup, game = Mock(), Mock()
         >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
@@ -95,13 +95,13 @@ class HeadlessGameAdapter:
         'intro'
         """
 
-        return self._require_game().observe()
+        return self._require_session().observe()
 
     def available_actions(self) -> tuple[ActionObservation, ...]:
         """Return implemented, eligible actions at the current decision point.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.application.api import SceneObservation
+        >>> from srd_arena.engine.api import SceneObservation
         >>> actions = (
         ...     ActionObservation("dodge", "Dodge", "action", "hero"),
         ...     ActionObservation(
@@ -134,7 +134,7 @@ class HeadlessGameAdapter:
         """Return stable IDs suitable for an action mask or model choice.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.application.api import SceneObservation
+        >>> from srd_arena.engine.api import SceneObservation
         >>> action = ActionObservation("dodge", "Dodge", "action", "hero")
         >>> observation = GameObservation(SceneObservation("fight", None, (action,)), None, None, False)
         >>> startup, game = Mock(), Mock()
@@ -180,7 +180,7 @@ class HeadlessGameAdapter:
         )
 
     def submit(self, command: GameCommand) -> CommandResult:
-        """Submit any application command, including staged targeting.
+        """Submit any engine command, including staged targeting.
 
         >>> from unittest.mock import Mock
         >>> startup, game = Mock(), Mock()
@@ -195,7 +195,7 @@ class HeadlessGameAdapter:
         True
         """
 
-        return self._require_game().execute(command)
+        return self._require_session().execute(command)
 
     def advance_until_input_required(self) -> GameUpdate:
         """Advance scripted controllers until external input is required.
@@ -213,7 +213,7 @@ class HeadlessGameAdapter:
         True
         """
 
-        return self._require_game().advance_until_input_required()
+        return self._require_session().advance_until_input_required()
 
     def advance_one_automatic_action(self) -> GameUpdate:
         """Resolve one scripted action for step-oriented clients.
@@ -231,13 +231,13 @@ class HeadlessGameAdapter:
         True
         """
 
-        return self._require_game().advance_one_automatic_action()
+        return self._require_session().advance_one_automatic_action()
 
     def reset(self) -> GameObservation:
         """Reset the active game to its initial observation.
 
         >>> from unittest.mock import Mock
-        >>> from srd_arena.application.api import SceneObservation
+        >>> from srd_arena.engine.api import SceneObservation
         >>> initial = GameObservation(
         ...     SceneObservation("intro", "Ready?", ()), None, None, False
         ... )
@@ -252,9 +252,9 @@ class HeadlessGameAdapter:
         'Ready?'
         """
 
-        return self._require_game().reset()
+        return self._require_session().reset()
 
-    def _require_game(self) -> RunningGame:
-        if self._game is None:
+    def _require_session(self) -> Session:
+        if self._session is None:
             raise RuntimeError("Start a scenario before interacting with the game.")
-        return self._game
+        return self._session

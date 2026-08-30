@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from srd_arena.application.api import ActionObservation, GameObservation
+from srd_arena.engine.api import ActionObservation, GameObservation
 
 from ...presentation.models import EncounterView, ResourceSummaryView
 from .action_menus import group_actions

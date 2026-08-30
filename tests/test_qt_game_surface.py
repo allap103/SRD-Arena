@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from srd_arena.application.observations import ActionObservation
+from srd_arena.engine.observations import ActionObservation
 from srd_arena.frontends.gui.presentation.models import InitiativeTrackEntryView
 from srd_arena.frontends.gui.ui.game_surface import (
     GameSurface,

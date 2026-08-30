@@ -6,7 +6,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-from srd_arena.application.api import GameEvent
+from srd_arena.engine.api import GameEvent
 
 
 @dataclass(frozen=True)

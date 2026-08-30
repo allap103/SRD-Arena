@@ -17,20 +17,20 @@ RULES = (
     DependencyRule(
         package="srd_arena.domain",
         forbidden=(
-            "srd_arena.application",
             "srd_arena.content",
             "srd_arena.frontends",
             "srd_arena.infrastructure",
             "srd_arena.engine",
+            "srd_arena.scenarios",
         ),
     ),
     DependencyRule(
         package="srd_arena.content",
         forbidden=(
-            "srd_arena.application",
             "srd_arena.frontends",
             "srd_arena.infrastructure",
             "srd_arena.engine",
+            "srd_arena.scenarios",
         ),
     ),
     DependencyRule(
@@ -40,14 +40,14 @@ RULES = (
     DependencyRule(
         package="srd_arena.engine",
         forbidden=(
-            "srd_arena.application",
             "srd_arena.content",
             "srd_arena.frontends",
             "srd_arena.infrastructure",
+            "srd_arena.scenarios",
         ),
     ),
     DependencyRule(
-        package="srd_arena.application",
+        package="srd_arena.scenarios",
         forbidden=(
             "srd_arena.content",
             "srd_arena.frontends",
@@ -60,7 +60,6 @@ RULES = (
             "srd_arena.content",
             "srd_arena.domain",
             "srd_arena.infrastructure",
-            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -76,7 +75,6 @@ RULES = (
             "srd_arena.content",
             "srd_arena.domain.encounters",
             "srd_arena.infrastructure",
-            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -86,7 +84,6 @@ RULES = (
             "srd_arena.domain",
             "srd_arena.frontends.gui",
             "srd_arena.infrastructure",
-            "srd_arena.engine",
         ),
     ),
     DependencyRule(
@@ -311,7 +308,7 @@ def test_gui_presenter_stays_independent_of_pyside6() -> None:
     ]
 
 
-def test_driving_adapters_use_only_the_public_application_api() -> None:
+def test_driving_adapters_use_only_public_engine_and_scenario_apis() -> None:
     violations: list[str] = []
 
     paths = [
@@ -321,28 +318,34 @@ def test_driving_adapters_use_only_the_public_application_api() -> None:
     for path in paths:
         module = _module_name(path)
         for line, imported_module in _imports(path, module):
-            if (
-                imported_module.startswith("srd_arena.application.")
-                and imported_module != "srd_arena.application.api"
-            ):
+            private_engine = (
+                imported_module.startswith("srd_arena.engine.")
+                and imported_module != "srd_arena.engine.api"
+            )
+            private_scenarios = (
+                imported_module.startswith("srd_arena.scenarios.")
+                and imported_module != "srd_arena.scenarios.api"
+            )
+            if private_engine or private_scenarios:
                 violations.append(
                     f"{path.relative_to(PACKAGE_ROOT.parent)}:{line} imports "
                     f"{imported_module}"
                 )
 
     assert not violations, (
-        "Driving adapters must use srd_arena.application.api exclusively:\n"
+        "Driving adapters must use the public engine/scenario APIs exclusively:\n"
         + "\n".join(violations)
     )
 
 
-def test_application_api_exports_only_application_owned_contracts() -> None:
-    from srd_arena.application import api
+def test_engine_api_exports_only_engine_owned_contracts() -> None:
+    from srd_arena.engine import api
 
     assert api.__all__
     assert len(api.__all__) == len(set(api.__all__))
     assert all(hasattr(api, name) for name in api.__all__)
-    assert not {"Session", "SessionRead", "EncounterState"} & set(api.__all__)
+    assert "Session" in api.__all__
+    assert not {"SessionRead", "EncounterState"} & set(api.__all__)
     assert all(
         exported.__doc__
         for name in api.__all__
@@ -389,6 +392,7 @@ def test_package_roots_remain_descriptive_namespaces() -> None:
         PACKAGE_ROOT / "__init__.py",
         PACKAGE_ROOT / "domain" / "__init__.py",
         PACKAGE_ROOT / "engine" / "__init__.py",
+        PACKAGE_ROOT / "scenarios" / "__init__.py",
     ):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         assert (
@@ -415,43 +419,37 @@ def test_removed_stateless_service_facades_stay_removed() -> None:
     assert not [path for path in removed_facades if path.exists()]
 
 
-def test_application_boundary_does_not_import_concrete_session() -> None:
+def test_engine_projection_helpers_do_not_import_concrete_session() -> None:
     boundary_modules = (
         "action_observations.py",
-        "game.py",
         "interactions.py",
         "observations.py",
     )
     violations: list[str] = []
 
     for name in boundary_modules:
-        path = PACKAGE_ROOT / "application" / name
+        path = PACKAGE_ROOT / "engine" / name
         module = _module_name(path)
         for line, imported_module in _imports(path, module):
             if imported_module == "srd_arena.engine.session":
                 violations.append(f"{name}:{line} imports concrete Session")
 
     assert not violations, (
-        "Application boundary modules must use the GameEngine protocol:\n"
+        "Engine projection helpers must use the GameEngine protocol:\n"
         + "\n".join(violations)
     )
 
 
-def test_concrete_session_exposes_only_engine_operations() -> None:
-    """Keep mutable-domain conveniences outside the engine's public protocol."""
+def test_public_engine_api_exposes_the_session_facade() -> None:
+    from srd_arena.engine import api
 
-    from srd_arena.engine.api import GameEngine
-    from srd_arena.engine.session import Session
-
-    def public_operations(type_: type[object]) -> set[str]:
-        return {
-            name
-            for name, member in vars(type_).items()
-            if not name.startswith("_")
-            and (callable(member) or isinstance(member, property))
-        }
-
-    assert public_operations(Session) == public_operations(GameEngine)
+    assert {
+        "observe",
+        "execute",
+        "advance_one_automatic_action",
+        "advance_until_input_required",
+        "reset",
+    } <= set(vars(api.Session))
 
 
 def test_engine_does_not_define_presentation_views() -> None:
@@ -464,9 +462,8 @@ def test_engine_does_not_define_presentation_views() -> None:
                 violations.append(f"{path.name}:{node.lineno}: {node.name}")
 
     assert not violations, (
-        "Application observations are the sole client read model; engine "
-        "must expose typed queries instead of presentation views:\n"
-        + "\n".join(violations)
+        "Engine observations are the client read model; GUI presentation "
+        "views must stay in the frontend:\n" + "\n".join(violations)
     )
 
 

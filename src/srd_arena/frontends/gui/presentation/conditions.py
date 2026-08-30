@@ -1,6 +1,6 @@
 """Extract GUI-ready condition names from observed creature state."""
 
-from srd_arena.application.api import CreatureObservation
+from srd_arena.engine.api import CreatureObservation
 
 
 def effective_condition_names(creature: CreatureObservation) -> tuple[str, ...]:

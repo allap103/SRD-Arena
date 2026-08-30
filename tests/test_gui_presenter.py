@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from srd_arena.application.commands import (
+from srd_arena.engine.commands import (
     AimAction,
     CancelTargeting,
     ChangeTarget,
@@ -14,8 +14,7 @@ from srd_arena.application.commands import (
     SelectAction,
     SetResourceAllocation,
 )
-from srd_arena.application.game import RunningGame
-from srd_arena.application.observations import (
+from srd_arena.engine.observations import (
     ActionObservation,
     DecisionObservation,
     EncounterObservation,
@@ -23,10 +22,11 @@ from srd_arena.application.observations import (
     GridObservation,
     SceneObservation,
 )
+from srd_arena.engine.session import Session
 from srd_arena.frontends.gui.presenter import GamePresenter
 
 
-class _RunningGameStub:
+class _SessionStub:
     def __init__(self, observation: GameObservation) -> None:
         self.current_observation = observation
         self.command_result = _accepted_update(observation)
@@ -52,9 +52,9 @@ class _RunningGameStub:
 def test_presenter_constructs_commands_with_the_current_decision() -> None:
     initial = _observation("decision-1")
     updated = _observation("decision-2")
-    stub = _RunningGameStub(initial)
+    stub = _SessionStub(initial)
     stub.command_result = _accepted_update(updated)
-    presenter = GamePresenter(cast(RunningGame, stub))
+    presenter = GamePresenter(cast(Session, stub))
 
     presenter.select_action("attack")
     presenter.aim_action("fireball", 3.5, 4.5)
@@ -81,8 +81,8 @@ def test_presenter_constructs_commands_with_the_current_decision() -> None:
 def test_presenter_refreshes_after_a_rejected_command() -> None:
     initial = _observation("decision-1")
     refreshed = _observation("decision-2")
-    stub = _RunningGameStub(initial)
-    presenter = GamePresenter(cast(RunningGame, stub))
+    stub = _SessionStub(initial)
+    presenter = GamePresenter(cast(Session, stub))
     stub.current_observation = refreshed
     stub.command_result = CommandResult(
         failure=CommandFailure("stale_decision", "The decision changed.")
@@ -98,9 +98,9 @@ def test_presenter_refreshes_after_a_rejected_command() -> None:
 def test_presenter_retains_single_automatic_action_observation() -> None:
     initial = _observation("decision-1")
     advanced = _observation("decision-2")
-    stub = _RunningGameStub(initial)
+    stub = _SessionStub(initial)
     stub.automatic_update = _update(advanced)
-    presenter = GamePresenter(cast(RunningGame, stub))
+    presenter = GamePresenter(cast(Session, stub))
 
     update = presenter.advance_one_automatic_action()
 
@@ -111,9 +111,9 @@ def test_presenter_retains_single_automatic_action_observation() -> None:
 def test_presenter_retains_full_automatic_advance_observation() -> None:
     initial = _observation("decision-1")
     advanced = _observation("decision-2")
-    stub = _RunningGameStub(initial)
+    stub = _SessionStub(initial)
     stub.automatic_update = _update(advanced)
-    presenter = GamePresenter(cast(RunningGame, stub))
+    presenter = GamePresenter(cast(Session, stub))
 
     update = presenter.advance_until_input_required()
 
@@ -131,8 +131,8 @@ def test_presenter_owns_staged_targeting_mode() -> None:
         target_ref="goblin",
     )
     initial = _observation("decision-1", actions=(target_action,))
-    stub = _RunningGameStub(initial)
-    presenter = GamePresenter(cast(RunningGame, stub))
+    stub = _SessionStub(initial)
+    presenter = GamePresenter(cast(Session, stub))
 
     selection = presenter.select_action(target_action.id)
 

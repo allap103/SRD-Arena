@@ -1,4 +1,4 @@
-"""Typed read boundary between session execution and application projection."""
+"""Typed internal queries used to construct public engine observations."""
 
 from __future__ import annotations
 
@@ -158,11 +158,11 @@ class ActionOption:
 
 @dataclass(frozen=True)
 class SessionRead:
-    """Deliberate typed inputs used to project one application observation.
+    """Deliberate typed inputs used to project one engine observation.
 
-    This is an internal application-core query, not a public client DTO. The
+    This is an internal engine query, not a public client DTO. The
     encounter state reference is borrowed for read-only projection and never
-    crosses the public application boundary.
+    crosses the public engine boundary.
     """
 
     scene_id: str

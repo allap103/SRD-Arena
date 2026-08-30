@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from srd_arena.application.api import ActionObservation
+from srd_arena.engine.api import ActionObservation
 
 from ..presentation.models import InitiativeTrackEntryView
 from .encounter import BattlefieldWidget, clear_layout

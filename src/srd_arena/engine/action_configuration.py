@@ -1,4 +1,4 @@
-"""Apply typed application configuration to advertised engine actions."""
+"""Apply typed client configuration to advertised engine actions."""
 
 from __future__ import annotations
 

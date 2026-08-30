@@ -5,9 +5,6 @@ from dataclasses import replace
 
 import pytest
 
-from srd_arena.application.observations import (
-    observe_session,
-)
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.creatures import (
     CreatureSchema,
@@ -84,6 +81,9 @@ from srd_arena.domain.encounters.turn_lifecycle import (
 )
 from srd_arena.domain.geometry import MovementCost, Position
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
+from srd_arena.engine.observations import (
+    observe_session,
+)
 from srd_arena.engine.queries import (
     DirectTargetOptionDetails,
 )

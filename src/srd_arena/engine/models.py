@@ -9,7 +9,7 @@ from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
 class EngineOutcome:
     """Facts emitted by one engine operation.
 
-    The application observes the session separately after the operation. This
+    The public engine API observes the session after the operation. This
     outcome therefore contains only execution facts, not another snapshot of
     the current game state.
     """

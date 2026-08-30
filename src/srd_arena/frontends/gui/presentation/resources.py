@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from srd_arena.application.api import CreatureObservation, EncounterObservation
+from srd_arena.engine.api import CreatureObservation, EncounterObservation
 
 from .conditions import effective_condition_names
 from .models import (

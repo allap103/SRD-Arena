@@ -1,4 +1,4 @@
-from srd_arena.application.commands import GameEvent
+from srd_arena.engine.commands import GameEvent
 from srd_arena.frontends.gui.presentation.dice import (
     build_roll_views,
     without_roll_details,

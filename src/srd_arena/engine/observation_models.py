@@ -1,4 +1,4 @@
-"""Public read models exposed to game clients."""
+"""Immutable engine read models exposed to game clients."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Literal
 
-from .values import ApplicationValue, freeze_mapping
+from .values import EngineValue, freeze_mapping
 
 
 @dataclass(frozen=True)
@@ -41,7 +41,7 @@ class ActionObservation:
     movement_direction: str | None = None
     target_ref: str | None = None
     aim_point: tuple[float, float] | None = None
-    area_preview: Mapping[str, ApplicationValue] | None = None
+    area_preview: Mapping[str, EngineValue] | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "cost", freeze_mapping(self.cost))

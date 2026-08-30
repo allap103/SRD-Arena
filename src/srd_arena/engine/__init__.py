@@ -1,1 +1,1 @@
-"""Mutable game engine internals used by the application layer."""
+"""Public game-session API backed by mutable domain state."""

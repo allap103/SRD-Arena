@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import cast
 
-from srd_arena.application.scenarios import (
+from srd_arena.scenarios.catalog import ScenarioCatalog
+from srd_arena.scenarios.models import (
     LoadedScenario,
     ScenarioRepository,
     ScenarioSummary,
 )
-from srd_arena.application.startup import GameStartup
 
 
 class ScenarioRepositoryStub:
@@ -34,19 +34,19 @@ class ScenarioRepositoryStub:
         return self.loaded
 
 
-def test_game_startup_lists_frontend_neutral_scenario_summaries() -> None:
+def test_scenario_catalog_lists_frontend_neutral_summaries() -> None:
     summary = ScenarioSummary(
         id="example",
         label="Example Encounter",
     )
     repository = ScenarioRepositoryStub(summaries=(summary,))
 
-    scenarios = GameStartup(repository).available_scenarios()
+    scenarios = ScenarioCatalog(repository).available_scenarios()
 
     assert scenarios == (summary,)
 
 
-def test_game_startup_creates_session_from_repository_result() -> None:
+def test_scenario_catalog_creates_session_from_repository_result() -> None:
     session = object()
     create_session_calls = 0
 
@@ -61,11 +61,10 @@ def test_game_startup_creates_session_from_repository_result() -> None:
         loaded=cast(LoadedScenario, LoadedScenarioStub())
     )
 
-    running_game = GameStartup(cast(ScenarioRepository, repository)).start_scenario(
-        "example"
-    )
+    created_session = ScenarioCatalog(
+        cast(ScenarioRepository, repository)
+    ).start_scenario("example")
 
     assert repository.loaded_ids == ["example"]
     assert create_session_calls == 1
-    assert not hasattr(running_game, "session")
-    assert not hasattr(running_game, "_session")
+    assert created_session is session

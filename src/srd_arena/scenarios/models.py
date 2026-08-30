@@ -1,4 +1,4 @@
-"""Application contracts for discovering and loading game scenarios."""
+"""Models and source contracts for discovering and loading scenarios."""
 
 from __future__ import annotations
 
