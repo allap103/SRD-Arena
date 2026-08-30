@@ -111,7 +111,7 @@ class EncounterOrchestrator:
         'victory-scene'
         """
         progress = EncounterProgress()
-        automatic_actions_resolved = 0
+        automatic_action_resolved = False
         while True:
             self._record_transition(state, progress)
             if progress.transition is not None:
@@ -125,10 +125,7 @@ class EncounterOrchestrator:
                 skip_defeated_turn(state, progress)
                 maybe_reset_reactions(state)
                 continue
-            if (
-                state.automatic_action_limit is not None
-                and automatic_actions_resolved >= state.automatic_action_limit
-            ):
+            if state.pace_automatic_actions and automatic_action_resolved:
                 progress.paused_for_pacing = True
                 break
             selected_action = state._action_selectors[creature_ref].select_action(
@@ -146,18 +143,13 @@ class EncounterOrchestrator:
                 progress.paused_for_decision = True
                 break
 
-            remaining_limit = (
-                None
-                if state.automatic_action_limit is None
-                else state.automatic_action_limit - automatic_actions_resolved
-            )
-            completed_turn, actor_progress, actions_resolved = self._run_creature_turn(
+            completed_turn, actor_progress = self._run_creature_turn(
                 state,
                 creature_ref,
                 initial_action=selected_action,
-                action_limit=remaining_limit,
+                pause_after_action=state.pace_automatic_actions,
             )
-            automatic_actions_resolved += actions_resolved
+            automatic_action_resolved = True
             merge_progress(state, progress, actor_progress)
             if progress.transition is not None or progress.paused_for_decision:
                 break
@@ -242,12 +234,12 @@ class EncounterOrchestrator:
         creature_ref: CreatureRef,
         *,
         initial_action: EncounterAction | None = None,
-        action_limit: int | None = None,
-    ) -> tuple[bool, EncounterProgress, int]:
+        pause_after_action: bool = False,
+    ) -> tuple[bool, EncounterProgress]:
         actor = state.creatures[creature_ref]
         progress = EncounterProgress()
         if not actor.is_alive:
-            return True, progress, 0
+            return True, progress
         if actor.movement_remaining is None:
             actor.movement_remaining = movement_budget_for_turn(state, creature_ref)
 
@@ -264,9 +256,8 @@ class EncounterOrchestrator:
             ),
         )
         if action is None:
-            return False, progress, 0
+            return False, progress
 
-        actions_resolved = 0
         while actor.is_alive:
             result = execute_creature_action(
                 state,
@@ -280,17 +271,16 @@ class EncounterOrchestrator:
             )
             self._record_transition(state, result.progress)
             merge_progress(state, progress, result.progress)
-            actions_resolved += 1
             if progress.transition is not None:
-                return True, progress, actions_resolved
+                return True, progress
             if result.outcome is ActionExecutionOutcome.PAUSE_FOR_DECISION:
-                return False, progress, actions_resolved
+                return False, progress
             if result.outcome is ActionExecutionOutcome.END_TURN or (
                 action.kind == "attack" and actor.attacks_remaining == 0
             ):
-                return True, progress, actions_resolved
-            if action_limit is not None and actions_resolved >= action_limit:
-                return False, progress, actions_resolved
+                return True, progress
+            if pause_after_action:
+                return False, progress
 
             action = selector.select_action(
                 state,
@@ -304,5 +294,5 @@ class EncounterOrchestrator:
                 ),
             )
             if action is None:
-                return False, progress, actions_resolved
-        return True, progress, actions_resolved
+                return False, progress
+        return True, progress

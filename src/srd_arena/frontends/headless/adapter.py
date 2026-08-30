@@ -54,7 +54,7 @@ class HeadlessGameAdapter:
         self,
         scenario_id: str,
         *,
-        automatic_action_limit: int | None = None,
+        pace_automatic_actions: bool = False,
     ) -> GameObservation:
         """Start a scenario selected by its advertised stable ID.
 
@@ -81,7 +81,7 @@ class HeadlessGameAdapter:
             raise KeyError(f"Unknown scenario '{scenario_id}'.")
         game = self.startup.start_scenario(
             summary.id,
-            automatic_action_limit=automatic_action_limit,
+            pace_automatic_actions=pace_automatic_actions,
         )
         observation = game.observe()
         self._game = game

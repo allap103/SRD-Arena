@@ -63,7 +63,7 @@ class LoadedScenario:
     def create_session(
         self,
         *,
-        automatic_action_limit: int | None = None,
+        pace_automatic_actions: bool = False,
     ) -> Session:
         """Create an isolated engine session from the loaded definitions.
 
@@ -79,7 +79,7 @@ class LoadedScenario:
             creature_templates={creature.id: creature for creature in self.creatures},
             item_templates={item.id: item for item in self.items},
             start_scene_id=self.start_scene,
-            automatic_action_limit=automatic_action_limit,
+            pace_automatic_actions=pace_automatic_actions,
             geometry_config=self.geometry_config,
         )
 
