@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 def read_session(session: Session) -> SessionRead:
-    """Return the intentional typed inputs for application observation.
+    """Return the intentional typed inputs for engine observation.
 
     A pending transition advertises only Continue and system-level choices.
 

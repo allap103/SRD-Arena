@@ -15,13 +15,16 @@ pytest.importorskip("PySide6")
 from PySide6.QtWidgets import QApplication, QPushButton
 
 import srd_arena.frontends.gui.launcher as launcher
-from srd_arena.application.game import RunningGame
-from srd_arena.application.scenarios import ScenarioPresentation, ScenarioSummary
-from srd_arena.application.startup import GameStartup
+from srd_arena.engine.session import Session
 from srd_arena.frontends.gui import app as game_app
+from srd_arena.scenarios.api import (
+    ScenarioCatalog,
+    ScenarioPresentation,
+    ScenarioSummary,
+)
 
 
-def test_scenario_picker_delegates_game_creation_to_application_startup(
+def test_scenario_picker_delegates_session_creation_to_catalog(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -31,23 +34,23 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
         label="Example Encounter",
         presentation=ScenarioPresentation(grid_color="#123456"),
     )
-    running_game = cast(RunningGame, object())
+    session = cast(Session, object())
 
-    class StartupStub:
+    class CatalogStub:
         def __init__(self) -> None:
             self.started: list[str] = []
 
         def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
             return (scenario,)
 
-        def start_scenario(self, scenario_id: str) -> RunningGame:
+        def start_scenario(self, scenario_id: str) -> Session:
             self.started.append(scenario_id)
-            return running_game
+            return session
 
     created_presenters: list[GamePresenterStub] = []
 
     class GamePresenterStub:
-        def __init__(self, received: RunningGame) -> None:
+        def __init__(self, received: Session) -> None:
             self.received = received
             created_presenters.append(self)
 
@@ -72,12 +75,12 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
         def show(self) -> None:
             self.was_shown = True
 
-    startup = StartupStub()
+    catalog = CatalogStub()
     monkeypatch.setattr(launcher, "GamePresenter", GamePresenterStub)
     monkeypatch.setattr(launcher, "GameWindow", GameWindowStub)
     image_root = tmp_path / "images"
     picker = launcher.ScenarioPickerWindow(
-        cast(GameStartup, startup),
+        cast(ScenarioCatalog, catalog),
         image_root=image_root,
         pause_between_automatic_actions=False,
     )
@@ -87,9 +90,9 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
 
     picker._open_scenario(scenario)
 
-    assert startup.started == ["example"]
+    assert catalog.started == ["example"]
     assert len(created_presenters) == 1
-    assert created_presenters[0].received is running_game
+    assert created_presenters[0].received is session
     assert len(created_windows) == 1
     assert created_windows[0].received is created_presenters[0]
     assert created_windows[0].image_root == image_root

@@ -1,11 +1,11 @@
-"""Derive frontend targeting modes from application observations."""
+"""Derive frontend targeting modes from engine observations."""
 
 from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Mapping, Sequence
 
-from srd_arena.application.api import (
+from srd_arena.engine.api import (
     ActionObservation,
     GameObservation,
 )

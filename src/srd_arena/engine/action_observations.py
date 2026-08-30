@@ -1,4 +1,4 @@
-"""Project engine action choices into application read models."""
+"""Project executable action choices into public engine read models."""
 
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ from .observation_models import (
     ActionReasonObservation,
     SceneObservation,
 )
-from .values import ApplicationValue
+from .values import EngineValue
 
 
 @dataclass(frozen=True)
@@ -52,7 +52,7 @@ class _ActionSemantics:
     movement_direction: str | None = None
     target_ref: str | None = None
     aim_point: tuple[float, float] | None = None
-    area_preview: Mapping[str, ApplicationValue] | None = None
+    area_preview: Mapping[str, EngineValue] | None = None
 
 
 def observe_scene(read: SessionRead) -> SceneObservation:
@@ -191,7 +191,7 @@ def _spell_area_preview(
     creature_state: EncounterCreatureState,
     spell: Spell | None,
     aim_point: tuple[float, float] | None,
-) -> Mapping[str, ApplicationValue] | None:
+) -> Mapping[str, EngineValue] | None:
     if spell is None or aim_point is not None:
         return None
     grid = state.definition.grid
@@ -205,7 +205,7 @@ def _spell_area_preview(
             else build_radius_area(Position(0, 0), size_squares, grid)
         )
         return cast(
-            Mapping[str, ApplicationValue] | None,
+            Mapping[str, EngineValue] | None,
             serialize_area(area),
         )
     if spell.geometry_mode != "directional_area":
@@ -214,7 +214,7 @@ def _spell_area_preview(
     if length is None:
         return None
     return cast(
-        Mapping[str, ApplicationValue] | None,
+        Mapping[str, EngineValue] | None,
         serialize_area(
             build_directional_area(
                 spell.range.kind if spell.range is not None else None,
@@ -234,7 +234,7 @@ def _stat_block_area_preview(
     state: EncounterState,
     creature_state: EncounterCreatureState,
     definition: StatBlockActionDefinition | None,
-) -> Mapping[str, ApplicationValue] | None:
+) -> Mapping[str, EngineValue] | None:
     target = getattr(definition, "target", None)
     shape = getattr(target, "shape", None)
     size_feet = getattr(target, "size_feet", None)
@@ -252,7 +252,7 @@ def _stat_block_area_preview(
         / grid.square_size_feet,
     )
     return cast(
-        Mapping[str, ApplicationValue] | None,
+        Mapping[str, EngineValue] | None,
         serialize_area(
             build_directional_area(
                 shape,

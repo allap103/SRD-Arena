@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from srd_arena.application.api import (
+from srd_arena.engine.api import (
     ActionObservation,
     AimAction,
     CancelTargeting,
@@ -13,8 +13,8 @@ from srd_arena.application.api import (
     GameCommand,
     GameObservation,
     GameUpdate,
-    RunningGame,
     SelectAction,
+    Session,
     SetResourceAllocation,
 )
 
@@ -34,16 +34,16 @@ class ActionSelection:
 
 
 class GamePresenter:
-    """Own application interaction state on behalf of the PySide6 view."""
+    """Own engine interaction state on behalf of the PySide6 view."""
 
-    def __init__(self, game: RunningGame) -> None:
-        self._game = game
-        self._observation = game.observe()
+    def __init__(self, session: Session) -> None:
+        self._session = session
+        self._observation = session.observe()
         self._pending_target_mode: TargetSelectionMode | None = None
 
     @property
     def observation(self) -> GameObservation:
-        """Return the latest immutable application observation.
+        """Return the latest immutable engine observation.
 
         >>> from unittest.mock import Mock
         >>> snapshot, game = Mock(), Mock()
@@ -55,7 +55,7 @@ class GamePresenter:
         return self._observation
 
     def refresh(self) -> GameObservation:
-        """Refresh and return the current application observation.
+        """Refresh and return the current engine observation.
 
         >>> from unittest.mock import Mock
         >>> first, second, game = Mock(), Mock(), Mock()
@@ -65,7 +65,7 @@ class GamePresenter:
         True
         """
 
-        self._observation = self._game.observe()
+        self._observation = self._session.observe()
         return self._observation
 
     def select_action(self, action_id: str) -> ActionSelection | None:
@@ -287,7 +287,7 @@ class GamePresenter:
         True
         """
 
-        update = self._game.advance_one_automatic_action()
+        update = self._session.advance_one_automatic_action()
         self._observation = update.observation
         return update
 
@@ -306,7 +306,7 @@ class GamePresenter:
         True
         """
 
-        update = self._game.advance_until_input_required()
+        update = self._session.advance_until_input_required()
         self._observation = update.observation
         return update
 
@@ -390,7 +390,7 @@ class GamePresenter:
         return decision_id
 
     def _execute(self, command: GameCommand) -> GameUpdate | None:
-        result = self._game.execute(command)
+        result = self._session.execute(command)
         if result.update is None:
             self.refresh()
             return None

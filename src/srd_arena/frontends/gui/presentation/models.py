@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 
-from srd_arena.application.api import ActionObservation
+from srd_arena.engine.api import ActionObservation
 
 
 @dataclass(frozen=True)

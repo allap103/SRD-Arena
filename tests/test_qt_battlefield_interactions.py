@@ -2,7 +2,7 @@ from dataclasses import replace
 
 import pytest
 
-from srd_arena.application.observations import ActionObservation
+from srd_arena.engine.observations import ActionObservation
 from srd_arena.frontends.gui.presentation.models import (
     BattlefieldCreatureView,
     BattlefieldView,

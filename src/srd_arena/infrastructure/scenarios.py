@@ -6,12 +6,6 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from srd_arena.application.scenarios import (
-    DEFAULT_GRID_COLOR,
-    LoadedScenario,
-    ScenarioPresentation,
-    ScenarioSummary,
-)
 from srd_arena.content.character_options.classes import (
     load_class_catalog,
     load_optional_feature_catalog,
@@ -31,6 +25,12 @@ from srd_arena.content.equipment import load_system_items
 from srd_arena.content.spells import load_spell_catalog
 from srd_arena.domain.encounters import EncounterDefinition
 from srd_arena.domain.geometry import GeometryConfig
+from srd_arena.scenarios.models import (
+    DEFAULT_GRID_COLOR,
+    LoadedScenario,
+    ScenarioPresentation,
+    ScenarioSummary,
+)
 
 
 @dataclass(frozen=True)
@@ -119,7 +119,7 @@ def load_scenario_directory(
     """Assemble a scenario directly from an explicit directory.
 
     This lower-level filesystem entry point supports fixtures and other callers
-    that already own a scenario path. Application clients should instead use a
+    that already own a scenario path. Driving clients should instead use a
     :class:`FilesystemScenarioRepository` and select scenarios by stable ID.
     """
 

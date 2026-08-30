@@ -1,7 +1,6 @@
 from types import SimpleNamespace
 from typing import cast
 
-from srd_arena.application.action_observations import observe_scene
 from srd_arena.domain.capabilities import (
     AutomaticResolution,
     CapabilityDefinition,
@@ -31,6 +30,7 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
 from srd_arena.domain.spells import Spell
 from srd_arena.domain.spells.rules import spell_action_payload
+from srd_arena.engine.action_observations import observe_scene
 from srd_arena.engine.queries import SessionRead
 from srd_arena.engine.session_queries import _action_option
 

@@ -39,7 +39,7 @@ the content package. Infrastructure connects that content to the application,
 while GUI and headless clients drive the same public application API.
 
 See the
-[application architecture](docs/application_architecture.md),
+[engine architecture](docs/engine_architecture.md),
 [combat action architecture](docs/combat_action_architecture.md), and
 [documentation index](docs/index.md) for the detailed design.
 

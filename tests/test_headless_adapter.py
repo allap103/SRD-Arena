@@ -2,22 +2,22 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.application.api import (
+from srd_arena.engine.api import (
     ActionObservation,
     ActionReasonObservation,
     GameObservation,
     SceneObservation,
 )
-from srd_arena.application.startup import GameStartup
 from srd_arena.frontends.headless import HeadlessGameAdapter
 from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
+from srd_arena.scenarios.api import ScenarioCatalog
 
 SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
 
 
 def _adapter() -> HeadlessGameAdapter:
     return HeadlessGameAdapter(
-        GameStartup(FilesystemScenarioRepository(scenario_root=SCENARIOS_ROOT))
+        ScenarioCatalog(FilesystemScenarioRepository(scenario_root=SCENARIOS_ROOT))
     )
 
 
@@ -102,11 +102,11 @@ def test_headless_observation_preserves_unimplemented_action_reason() -> None:
         None,
         False,
     )
-    startup, game = Mock(), Mock()
-    startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-    startup.start_scenario.return_value = game
-    game.observe.return_value = observation
-    adapter = HeadlessGameAdapter(startup)
+    catalog, session = Mock(), Mock()
+    catalog.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+    catalog.start_scenario.return_value = session
+    session.observe.return_value = observation
+    adapter = HeadlessGameAdapter(catalog)
 
     observed = adapter.start_scenario("demo")
 

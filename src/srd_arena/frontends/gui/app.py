@@ -1,4 +1,4 @@
-"""Coordinate the PySide window with frontend-neutral application updates."""
+"""Coordinate the PySide window with frontend-neutral engine updates."""
 
 from __future__ import annotations
 
@@ -7,11 +7,11 @@ from pathlib import Path
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 
-from srd_arena.application.api import (
+from srd_arena.engine.api import (
     EncounterObservation,
     GameUpdate,
-    ScenarioPresentation,
 )
+from srd_arena.scenarios.api import ScenarioPresentation
 
 from .presentation.dice import build_roll_views, without_roll_details
 from .presentation.models import SessionPresentation
@@ -52,7 +52,7 @@ class GameWindow(QMainWindow):
     """Render a running game and translate Qt interactions into app commands.
 
     The window owns widget state only. Combat decisions and validation pass
-    through the application boundary rather than being implemented here.
+    through the engine boundary rather than being implemented here.
     """
 
     def __init__(

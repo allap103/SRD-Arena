@@ -1,4 +1,4 @@
-from srd_arena.application.observations import (
+from srd_arena.engine.observations import (
     AttributeObservation,
     CreatureObservation,
     DecisionObservation,

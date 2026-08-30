@@ -5,10 +5,10 @@ This reference documents SRD Arena's intentional Python boundaries. Package
 facades are shown instead of every implementation module so that re-exported
 types have one stable, discoverable home.
 
-Application
------------
+Scenarios
+---------
 
-.. automodule:: srd_arena.application.api
+.. automodule:: srd_arena.scenarios.api
    :members:
    :show-inheritance:
 

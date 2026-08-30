@@ -4,7 +4,7 @@ from dataclasses import fields, is_dataclass
 
 import pytest
 
-from srd_arena.application.api import (
+from srd_arena.engine.api import (
     ActionObservation,
     AimAction,
     CancelTargeting,
@@ -108,7 +108,7 @@ def test_public_commands_and_observations_are_transport_shaped() -> None:
 
 
 def _to_json_value(value: object) -> object:
-    """Mechanically convert an application contract into JSON-shaped data."""
+    """Mechanically convert an engine contract into JSON-shaped data."""
 
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
@@ -122,6 +122,4 @@ def _to_json_value(value: object) -> object:
         return {key: _to_json_value(item) for key, item in value.items()}
     if isinstance(value, (tuple, list)):
         return [_to_json_value(item) for item in value]
-    raise AssertionError(
-        f"Application contract contains non-transport value {value!r}."
-    )
+    raise AssertionError(f"Engine contract contains non-transport value {value!r}.")

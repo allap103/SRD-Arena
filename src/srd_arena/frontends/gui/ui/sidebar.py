@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from srd_arena.application.api import CreatureObservation, GameObservation
+from srd_arena.engine.api import CreatureObservation, GameObservation
 
 from ..presentation.dice import RollView
 from .encounter import DiceRollPanel

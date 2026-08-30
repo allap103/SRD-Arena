@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from srd_arena.application.api import GameStartup, ScenarioSummary
+from srd_arena.scenarios.api import ScenarioCatalog, ScenarioSummary
 
 from .app import GameWindow
 from .presenter import GamePresenter
@@ -27,13 +27,13 @@ class ScenarioPickerWindow(QMainWindow):
 
     def __init__(
         self,
-        startup: GameStartup,
+        catalog: ScenarioCatalog,
         *,
         image_root: Path | None = None,
         pause_between_automatic_actions: bool = True,
     ) -> None:
         super().__init__()
-        self._startup = startup
+        self._catalog = catalog
         self._image_root = image_root
         self._pause_between_automatic_actions = pause_between_automatic_actions
         self._game_window: GameWindow | None = None
@@ -60,7 +60,7 @@ class ScenarioPickerWindow(QMainWindow):
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
 
-        scenarios = self._startup.available_scenarios()
+        scenarios = self._catalog.available_scenarios()
         if not scenarios:
             empty = QLabel("No valid scenarios were found in app/content/scenarios/.")
             empty.setWordWrap(True)
@@ -79,7 +79,7 @@ class ScenarioPickerWindow(QMainWindow):
 
     def _open_scenario(self, scenario: ScenarioSummary) -> None:
         self._game_window = GameWindow(
-            GamePresenter(self._startup.start_scenario(scenario.id)),
+            GamePresenter(self._catalog.start_scenario(scenario.id)),
             image_root=self._image_root,
             presentation_config=scenario.presentation,
             pause_between_automatic_actions=self._pause_between_automatic_actions,
@@ -89,7 +89,7 @@ class ScenarioPickerWindow(QMainWindow):
 
 
 def run_gui(
-    startup: GameStartup,
+    catalog: ScenarioCatalog,
     *,
     image_root: Path | None = None,
     pause_between_automatic_actions: bool = True,
@@ -105,7 +105,7 @@ def run_gui(
     app = instance if isinstance(instance, QApplication) else QApplication(sys.argv)
     apply_fantasy_theme(app)
     window = ScenarioPickerWindow(
-        startup,
+        catalog,
         image_root=image_root,
         pause_between_automatic_actions=pause_between_automatic_actions,
     )

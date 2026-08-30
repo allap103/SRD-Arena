@@ -1,10 +1,10 @@
-"""Validate application commands and translate them into engine actions."""
+"""Validate public commands and translate them into engine actions."""
 
 from __future__ import annotations
 
 from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
-from srd_arena.engine.api import GameEngine
 from srd_arena.engine.models import EngineOutcome
+from srd_arena.engine.protocols import GameEngine
 from srd_arena.engine.queries import ActionAim, ActionResourceAllocation
 
 from .commands import (
@@ -80,7 +80,7 @@ def execute_game_command(
 
 
 def game_update(session: GameEngine, result: EngineOutcome) -> GameUpdate:
-    """Translate an accepted engine result into an application update.
+    """Translate an accepted operation result into a public engine update.
 
     >>> from types import SimpleNamespace
     >>> from srd_arena.engine.queries import SessionRead
@@ -121,7 +121,7 @@ def _observe_event(event: CombatEvent) -> GameEvent:
 def decision_id(observation: GameObservation) -> str | None:
     """Return the decision token clients must echo with their next command.
 
-    >>> from srd_arena.application.observation_models import GameObservation, SceneObservation
+    >>> from srd_arena.engine.observation_models import GameObservation, SceneObservation
     >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
     >>> decision_id(observation) is None
     True

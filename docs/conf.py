@@ -10,8 +10,8 @@ release = "0.1.0"
 # models, and keeping their canonical module objects avoids reconstructing those
 # models while autodoc traverses the reference page.
 for module_name in (
-    "srd_arena.application.api",
     "srd_arena.engine.api",
+    "srd_arena.scenarios.api",
     "srd_arena.content.capabilities",
     "srd_arena.content.creatures",
     "srd_arena.content.encounters",
