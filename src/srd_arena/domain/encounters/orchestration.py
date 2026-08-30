@@ -94,7 +94,7 @@ class EncounterOrchestrator:
         return self._apply_selected_action(state, action, decision)
 
     def advance(self, state: EncounterState) -> EncounterProgress:
-        """Resolve scripted actions until input, pacing, or a transition stops us.
+        """Resolve scripted actions until input or a transition stops execution.
 
         An already completed encounter returns its transition without selecting
         another action.
@@ -110,6 +110,35 @@ class EncounterOrchestrator:
         >>> transition
         'victory-scene'
         """
+        return self._advance(state, stop_after_action=False)
+
+    def advance_one_action(self, state: EncounterState) -> EncounterProgress:
+        """Resolve at most one scripted action and return its events immediately.
+
+        No delay is introduced here; presentation clients decide when to call
+        this operation again.
+
+        >>> from unittest.mock import Mock
+        >>> state = Mock(interrupts=Mock(decision_stack=[]))
+        >>> from unittest.mock import patch
+        >>> with patch(
+        ...     "srd_arena.domain.encounters.orchestration.check_transition",
+        ...     return_value="victory-scene",
+        ... ):
+        ...     transition = EncounterOrchestrator().advance_one_action(state).transition
+        >>> transition
+        'victory-scene'
+        """
+        return self._advance(state, stop_after_action=True)
+
+    def _advance(
+        self,
+        state: EncounterState,
+        *,
+        stop_after_action: bool,
+    ) -> EncounterProgress:
+        """Resolve scripted actions with caller-selected execution granularity."""
+
         progress = EncounterProgress()
         automatic_action_resolved = False
         while True:
@@ -125,8 +154,7 @@ class EncounterOrchestrator:
                 skip_defeated_turn(state, progress)
                 maybe_reset_reactions(state)
                 continue
-            if state.pace_automatic_actions and automatic_action_resolved:
-                progress.paused_for_pacing = True
+            if stop_after_action and automatic_action_resolved:
                 break
             selected_action = state._action_selectors[creature_ref].select_action(
                 state,
@@ -147,7 +175,7 @@ class EncounterOrchestrator:
                 state,
                 creature_ref,
                 initial_action=selected_action,
-                pause_after_action=state.pace_automatic_actions,
+                stop_after_action=stop_after_action,
             )
             automatic_action_resolved = True
             merge_progress(state, progress, actor_progress)
@@ -158,20 +186,6 @@ class EncounterOrchestrator:
                 self._record_transition(state, progress)
                 if progress.transition is not None:
                     break
-        return progress
-
-    def _continue_after_interrupt(
-        self,
-        state: EncounterState,
-        progress: EncounterProgress,
-    ) -> EncounterProgress:
-        if (
-            progress.transition is not None
-            or progress.paused_for_decision
-            or state.interrupts.decision_stack
-        ):
-            return progress
-        merge_progress(state, progress, self.advance(state))
         return progress
 
     def _finish_decision_execution(
@@ -189,7 +203,7 @@ class EncounterOrchestrator:
                 progress=progress,
             )
         self._record_transition(state, progress)
-        return self._continue_after_interrupt(state, progress)
+        return progress
 
     def _record_transition(
         self,
@@ -225,7 +239,6 @@ class EncounterOrchestrator:
         if result.outcome is not ActionExecutionOutcome.END_TURN:
             return progress
         self._finish_turn(state, decision.creature_ref, progress)
-        merge_progress(state, progress, self.advance(state))
         return progress
 
     def _run_creature_turn(
@@ -234,7 +247,7 @@ class EncounterOrchestrator:
         creature_ref: CreatureRef,
         *,
         initial_action: EncounterAction | None = None,
-        pause_after_action: bool = False,
+        stop_after_action: bool = False,
     ) -> tuple[bool, EncounterProgress]:
         actor = state.creatures[creature_ref]
         progress = EncounterProgress()
@@ -279,7 +292,7 @@ class EncounterOrchestrator:
                 action.kind == "attack" and actor.attacks_remaining == 0
             ):
                 return True, progress
-            if pause_after_action:
+            if stop_after_action:
                 return False, progress
 
             action = selector.select_action(

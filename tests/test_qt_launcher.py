@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 from typing import cast
+from unittest.mock import Mock
 
 import pytest
 
@@ -39,14 +40,8 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
         def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
             return (scenario,)
 
-        def start_scenario(
-            self,
-            scenario_id: str,
-            *,
-            pace_automatic_actions: bool = False,
-        ) -> RunningGame:
+        def start_scenario(self, scenario_id: str) -> RunningGame:
             self.started.append(scenario_id)
-            assert pace_automatic_actions is False
             return running_game
 
     created_presenters: list[GamePresenterStub] = []
@@ -65,12 +60,12 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
             *,
             image_root: Path | None = None,
             presentation_config: ScenarioPresentation | None = None,
-            pace_automatic_actions: bool = True,
+            pause_between_automatic_actions: bool = True,
         ) -> None:
             self.received = received
             self.image_root = image_root
             self.presentation_config = presentation_config
-            self.pace_automatic_actions = pace_automatic_actions
+            self.pause_between_automatic_actions = pause_between_automatic_actions
             self.was_shown = False
             created_windows.append(self)
 
@@ -84,7 +79,7 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
     picker = launcher.ScenarioPickerWindow(
         cast(GameStartup, startup),
         image_root=image_root,
-        pace_automatic_actions=False,
+        pause_between_automatic_actions=False,
     )
 
     buttons = picker.findChildren(QPushButton)
@@ -99,19 +94,19 @@ def test_scenario_picker_delegates_game_creation_to_application_startup(
     assert created_windows[0].received is created_presenters[0]
     assert created_windows[0].image_root == image_root
     assert created_windows[0].presentation_config == scenario.presentation
-    assert created_windows[0].pace_automatic_actions is False
+    assert created_windows[0].pause_between_automatic_actions is False
     assert created_windows[0].was_shown is True
     picker.deleteLater()
     app.processEvents()
 
 
 @pytest.mark.parametrize(
-    ("pace_automatic_actions", "expected_delay_ms"),
+    ("pause_between_automatic_actions", "expected_delay_ms"),
     [(True, game_app.AUTOMATIC_ACTION_DELAY_MS), (False, 0)],
 )
 def test_automatic_action_pacing_selects_the_gui_timer_delay(
     monkeypatch: pytest.MonkeyPatch,
-    pace_automatic_actions: bool,
+    pause_between_automatic_actions: bool,
     expected_delay_ms: int,
 ) -> None:
     scheduled_delays: list[int] = []
@@ -124,7 +119,7 @@ def test_automatic_action_pacing_selects_the_gui_timer_delay(
         game_app.GameWindow,
         SimpleNamespace(
             _automatic_step_scheduled=False,
-            _pace_automatic_actions=pace_automatic_actions,
+            _pause_between_automatic_actions=pause_between_automatic_actions,
             _advance_automatic_step=lambda: None,
             presenter=SimpleNamespace(
                 observation=SimpleNamespace(
@@ -140,3 +135,39 @@ def test_automatic_action_pacing_selects_the_gui_timer_delay(
 
     assert scheduled_delays == [expected_delay_ms]
     assert window._automatic_step_scheduled is True
+
+
+@pytest.mark.parametrize("pause_between_automatic_actions", [True, False])
+def test_gui_selects_automatic_advance_granularity(
+    pause_between_automatic_actions: bool,
+) -> None:
+    observation = SimpleNamespace(
+        encounter=object(),
+        requires_automatic_advance=True,
+    )
+    update = Mock()
+    presenter = Mock(observation=observation)
+    presenter.refresh.return_value = observation
+    presenter.advance_one_automatic_action.return_value = update
+    presenter.advance_until_input_required.return_value = update
+    apply_turn_result = Mock()
+    window = cast(
+        game_app.GameWindow,
+        SimpleNamespace(
+            _automatic_step_scheduled=True,
+            _pause_between_automatic_actions=pause_between_automatic_actions,
+            presenter=presenter,
+            _apply_turn_result=apply_turn_result,
+        ),
+    )
+
+    game_app.GameWindow._advance_automatic_step(window)
+
+    assert window._automatic_step_scheduled is False
+    if pause_between_automatic_actions:
+        presenter.advance_one_automatic_action.assert_called_once_with()
+        presenter.advance_until_input_required.assert_not_called()
+    else:
+        presenter.advance_one_automatic_action.assert_not_called()
+        presenter.advance_until_input_required.assert_called_once_with()
+    apply_turn_result.assert_called_once_with(update)

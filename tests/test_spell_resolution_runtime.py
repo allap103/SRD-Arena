@@ -552,7 +552,8 @@ def test_blinded_enemy_attacks_with_disadvantage() -> None:
     _use_deterministic_dice(session, die_roller=lambda sides: next(rolls, 3))
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
-    result = session.choose(_action_id_by_label(session, "Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
+    result = session.advance_until_input_required()
 
     attack_event = next(
         event
@@ -611,6 +612,7 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn() -> None:
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
     session.choose(_action_id_by_label(session, "Wait"))
+    session.advance_until_input_required()
 
     assert state.has_condition("goblin_1", Condition.BLINDED) is True
 
@@ -637,15 +639,18 @@ def test_reapplying_blinded_preserves_independent_durations() -> None:
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
     session.choose(_action_id_by_label(session, "Wait"))
+    session.advance_until_input_required()
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
 
     assert state.has_condition("goblin_1", Condition.BLINDED) is True
     assert len(state.conditions_for("goblin_1")) == 2
 
     session.choose(_action_id_by_label(session, "Wait"))
+    session.advance_until_input_required()
     assert state.has_condition("goblin_1", Condition.BLINDED) is True
 
     session.choose(_action_id_by_label(session, "Wait"))
+    session.advance_until_input_required()
     assert state.has_condition("goblin_1", Condition.BLINDED) is False
 
 

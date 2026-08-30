@@ -30,12 +30,12 @@ class ScenarioPickerWindow(QMainWindow):
         startup: GameStartup,
         *,
         image_root: Path | None = None,
-        pace_automatic_actions: bool = True,
+        pause_between_automatic_actions: bool = True,
     ) -> None:
         super().__init__()
         self._startup = startup
         self._image_root = image_root
-        self._pace_automatic_actions = pace_automatic_actions
+        self._pause_between_automatic_actions = pause_between_automatic_actions
         self._game_window: GameWindow | None = None
         self.setWindowTitle("Choose Scenario")
         self.resize(520, 420)
@@ -79,15 +79,10 @@ class ScenarioPickerWindow(QMainWindow):
 
     def _open_scenario(self, scenario: ScenarioSummary) -> None:
         self._game_window = GameWindow(
-            GamePresenter(
-                self._startup.start_scenario(
-                    scenario.id,
-                    pace_automatic_actions=self._pace_automatic_actions,
-                )
-            ),
+            GamePresenter(self._startup.start_scenario(scenario.id)),
             image_root=self._image_root,
             presentation_config=scenario.presentation,
-            pace_automatic_actions=self._pace_automatic_actions,
+            pause_between_automatic_actions=self._pause_between_automatic_actions,
         )
         self._game_window.show()
         self.close()
@@ -97,9 +92,14 @@ def run_gui(
     startup: GameStartup,
     *,
     image_root: Path | None = None,
-    pace_automatic_actions: bool = True,
+    pause_between_automatic_actions: bool = True,
 ) -> None:
-    """Start Qt, present scenario discovery, and enter the desktop event loop."""
+    """Start Qt, present scenario discovery, and enter the desktop event loop.
+
+    Automatic actions are separated by a short presentation delay unless
+    ``pause_between_automatic_actions`` is disabled. The engine itself always
+    resolves actions immediately.
+    """
 
     instance = QApplication.instance()
     app = instance if isinstance(instance, QApplication) else QApplication(sys.argv)
@@ -107,7 +107,7 @@ def run_gui(
     window = ScenarioPickerWindow(
         startup,
         image_root=image_root,
-        pace_automatic_actions=pace_automatic_actions,
+        pause_between_automatic_actions=pause_between_automatic_actions,
     )
     window.show()
     app.exec()

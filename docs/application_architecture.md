@@ -100,11 +100,12 @@ Qt signal -> GameWindow -> GamePresenter -> RunningGame
 
 `GamePresenter` owns the latest immutable observation, application-command
 construction, stale decision identifiers, rejected-command refreshes, and
-automatic advancement. It also owns staged targeting modes and automatic
-confirmation once fixed target allocations are complete. It imports no PySide6
-modules and is tested without a widget tree. `GameWindow` owns rendering,
-timers, widget callbacks, action-menu visibility, movement-path visualization,
-and other transient GUI state.
+automatic-advancement requests. It also owns staged targeting modes and
+automatic confirmation once fixed target allocations are complete. It imports
+no PySide6 modules and is tested without a widget tree. `GameWindow` owns
+rendering, timers, and the choice between one-action and uninterrupted
+automatic advancement, as well as widget callbacks, action-menu visibility,
+movement-path visualization, and other transient GUI state.
 
 This is deliberately pragmatic MVP rather than framework-level MVP: the public
 model boundary is the application API, the presenter coordinates it for this
@@ -162,9 +163,11 @@ Application implementation modules are not frontend extension points.
 1. `observe()` returns an immutable, frontend-neutral `GameObservation`.
 2. `execute(command)` applies an explicit typed command and returns a
    `CommandResult` containing either a `GameUpdate` or a structured failure.
-3. `advance_automatic()` runs scripted controllers until external input is
-   required.
-4. `reset()` returns the game to its initial observation.
+3. `advance_one_automatic_action()` resolves one scripted action immediately,
+   allowing a presentation client to choose when to request the next step.
+4. `advance_until_input_required()` runs scripted controllers immediately
+   until an external decision is required.
+5. `reset()` returns the game to its initial observation.
 
 An observation contains stable scenario, decision, creature, action, and
 effect identifiers. Commands include the decision ID observed by the client.
@@ -176,7 +179,8 @@ normalized into typed engine option details before application projection.
 
 `RunningGame` depends on the structural `GameEngine` protocol rather than the
 concrete `Session`. The protocol deliberately contains only reading, selecting
-or configuring an advertised action, automatic advancement, and reset.
+or configuring an advertised action, single-step and uninterrupted automatic
+advancement, and reset.
 `LoadedScenario` is the one application composition point that constructs the
 concrete session.
 
