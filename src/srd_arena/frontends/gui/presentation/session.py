@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from srd_arena.content.scenarios import ScenarioPresentation
 from srd_arena.engine.api import GameObservation
-from srd_arena.scenarios.api import ScenarioPresentation
 
 from .actions import build_feature_actions
 from .battlefield import build_battlefield_view

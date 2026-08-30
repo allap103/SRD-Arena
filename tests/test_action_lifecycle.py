@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from srd_arena.content.scenarios import load_scenario_directory
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.creature_control import execute_creature_action
 from srd_arena.domain.encounters.encounter import EncounterState
@@ -7,14 +8,14 @@ from srd_arena.domain.encounters.encounter_models.resolution import (
     ActionExecutionOutcome,
 )
 from srd_arena.domain.encounters.participants import creature_controller
-from srd_arena.infrastructure.scenarios import load_scenario_directory
+from srd_arena.engine.session import Session
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 _ORCHESTRATOR = EncounterOrchestrator()
 
 
 def _encounter_state() -> EncounterState:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None

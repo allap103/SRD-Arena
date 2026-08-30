@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
+from srd_arena.content.scenarios import load_scenario_directory
 from srd_arena.content.spells import (
     SpellCatalog,
     load_spell_catalog,
@@ -38,7 +39,6 @@ from srd_arena.domain.spells import Spell
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import ActionAim
 from srd_arena.engine.session import Session
-from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import active_creature as _active_creature
 from tests.encounter_runtime_support import is_spell_action
 from tests.encounter_runtime_support import (
@@ -100,10 +100,12 @@ def _choose_directional_spell(
 
 
 def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR),
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR),
+            start_encounter_id="goblin_encounter",
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -270,10 +272,12 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
 
 
 def test_slow_chosen_area_never_exceeds_six_targets() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR),
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR),
+            start_encounter_id="goblin_encounter",
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -323,10 +327,12 @@ def test_slow_chosen_area_never_exceeds_six_targets() -> None:
 
 
 def _assassin_showcase_state() -> EncounterState:
-    session = load_scenario_directory(
-        str(STAT_BLOCK_ACTION_SCENARIO_DIR),
-        start_scene="stat_block_action_showcase",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(STAT_BLOCK_ACTION_SCENARIO_DIR),
+            start_encounter_id="stat_block_action_showcase",
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -447,10 +453,12 @@ def test_ending_slow_mid_multiattack_restores_pending_attacks() -> None:
 
 
 def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR),
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR),
+            start_encounter_id="goblin_encounter",
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -516,10 +524,12 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
 
 
 def test_ending_slow_mid_attack_restores_unused_extra_attack() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR),
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR),
+            start_encounter_id="goblin_encounter",
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None

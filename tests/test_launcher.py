@@ -10,10 +10,10 @@ from srd_arena import main as launcher
 def test_main_launches_gui_scenario_picker(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    catalog = object()
+    catalog = SimpleNamespace(image_root=Path("images"))
     launched: list[tuple[object, dict[str, object]]] = []
 
-    def _catalog(_repository: object) -> object:
+    def _catalog() -> object:
         return catalog
 
     def _run_gui(received: object, **kwargs: object) -> None:

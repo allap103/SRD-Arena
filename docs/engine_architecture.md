@@ -14,31 +14,29 @@ files, or presentation-specific view models.
 
 ```text
 main
-├── infrastructure ──> content ──> domain
-├── scenarios ──────> engine ────────> domain
+├── content ────────> domain
+├── engine ─────────> domain
 └── selected frontend
-    ├── GUI ────────> engine.api + scenarios.api
-    └── headless ───> engine.api + scenarios.api
+    ├── GUI ────────> engine.api + content.scenarios
+    └── headless ───> engine.api + content.scenarios
 ```
 
-The arrows show dependencies. `main` is the composition root. It connects the
-filesystem repository to `ScenarioCatalog` and passes that catalog to the
-selected frontend.
+The arrows show dependencies. `main` is the composition root. It creates the
+authored `ScenarioCatalog` and passes it to the selected frontend.
 
 | Package | Responsibility |
 | --- | --- |
-| `domain` | Rules, creatures, effects, geometry, capabilities, and encounter behavior. |
+| `domain` | Rules and definitions for scenarios, encounters, creatures, effects, geometry, and capabilities. |
 | `engine` | Mutable session execution plus the commands, validation, events, and immutable observations used to drive it. |
-| `scenarios` | Frontend-neutral scenario discovery, summaries, repository port, and session construction. |
-| `content` | Parse authored system and scenario data into domain definitions. |
-| `infrastructure` | Implement the scenario-repository port using filesystem content. |
+| `content` | Validate authored system and scenario files and build domain definitions. |
 | `frontends.gui` | Implement the graphical client with a Qt-independent presenter and PySide6 views. |
 | `frontends.headless` | Expose the engine API to in-process Python and ML clients without choosing actions for them. |
-| `main` | Wire `FilesystemScenarioRepository`, `ScenarioCatalog`, and the selected frontend. |
+| `main` | Create `ScenarioCatalog` and launch the selected frontend. |
 
-`scenarios` is a small composition boundary rather than a general application
-layer. It describes games that can be started; `engine` describes and controls
-the game after one has started.
+Scenarios follow the same split as encounters. `domain.scenarios` defines an
+ordered series of encounters and its referenced templates;
+`content.scenarios` discovers and validates authored files. `Session` accepts a
+domain `ScenarioDefinition` and owns only its mutable execution.
 
 ## Domain rule-query boundary
 
@@ -92,25 +90,25 @@ no mutable encounter state.
 
 ```text
 main
-  -> FilesystemScenarioRepository
   -> ScenarioCatalog
   -> driving adapter
        -> lists ScenarioSummary values
-       -> asks ScenarioCatalog to start the selected scenario
-  -> repository assembles LoadedScenario from authored content
-  -> LoadedScenario creates an engine Session
+       -> asks ScenarioCatalog to load the selected scenario
+  -> catalog assembles a domain ScenarioDefinition
+  -> adapter creates an engine Session from that definition
   -> adapter interacts with Session through engine.api
 ```
 
-Scenario paths are infrastructure details. GUI and headless clients select
-the stable IDs advertised by `ScenarioCatalog`; the filesystem repository
-resolves those IDs internally. Optional board presentation metadata is attached
+Scenario paths are content-loading details. GUI and headless clients select
+the stable IDs advertised by `ScenarioCatalog`; the catalog resolves those IDs
+internally. Optional board presentation metadata is attached
 to `ScenarioSummary` and never enters the engine session.
 
 ## Public game interaction
 
 `srd_arena.engine.api` is the supported in-process game interface for driving
-adapters. `srd_arena.scenarios.api` is the corresponding discovery interface.
+adapters. `srd_arena.content.scenarios` is the corresponding authored-scenario
+interface.
 Their implementation modules are not frontend extension points.
 
 `Session` exposes five categories of behavior:
@@ -132,8 +130,8 @@ actions.
 
 Command handling and observation projection depend internally on a narrow
 structural `GameEngine` protocol. The public `Session` implements that protocol
-and owns concrete domain state. `LoadedScenario` is the composition point that
-constructs it.
+and owns concrete domain state. Its constructor accepts a domain
+`ScenarioDefinition`; content never imports the engine.
 
 ## Read and write boundaries
 
@@ -165,18 +163,15 @@ by an operation, such as messages, events, and lifecycle flags.
 
 ## Enforced dependency rules
 
-- Domain imports no content, engine, scenarios, infrastructure, or frontend.
-- Engine imports domain but no content, scenarios, infrastructure, or frontend.
-- Scenarios import engine/domain contracts but no content, infrastructure, or
-  frontend.
-- The filesystem scenario adapter may import scenario ports, content, and
-  domain definitions.
+- Domain imports no content, engine, infrastructure, or frontend.
+- Content imports domain definitions but no engine or frontend.
+- Engine imports domain but no content, infrastructure, or frontend.
 - Driving adapters import game contracts through `srd_arena.engine.api` and
-  discovery contracts through `srd_arena.scenarios.api`.
+  authored scenario contracts through `srd_arena.content.scenarios`.
 - GUI presentation imports the public engine API, not engine implementation or
   encounter implementation packages.
 - The GUI may reuse pure domain geometry but no mutable domain state.
-- The headless adapter imports only the public engine and scenario APIs.
+- The headless adapter imports only the public engine and scenario-content APIs.
 - Top-level package roots do not re-export types and hide their ownership.
 - Imports crossing top-level `srd_arena` packages are absolute.
 

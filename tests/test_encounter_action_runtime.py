@@ -11,6 +11,7 @@ from srd_arena.content.creatures import (
     build_creature,
     load_bestiary_catalog,
 )
+from srd_arena.content.scenarios import load_scenario_directory
 from srd_arena.domain.capabilities import (
     CapabilityTarget,
     ConditionEffect,
@@ -87,11 +88,11 @@ from srd_arena.engine.observations import (
 from srd_arena.engine.queries import (
     DirectTargetOptionDetails,
 )
+from srd_arena.engine.session import Session
 from srd_arena.frontends.gui.presentation.session import build_session_presentation
 from srd_arena.frontends.gui.ui.encounter.battlefield_renderer import (
     fallback_token_colors,
 )
-from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import (
     CONDITIONS_SHOWCASE_SCENARIO_DIR,
     FIXTURE_ENCOUNTER_DIR,
@@ -134,7 +135,7 @@ pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
 
 def test_goblin_encounter_scene_generates_runtime_actions() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
 
     scene_view = session.read()
@@ -152,7 +153,7 @@ def test_goblin_encounter_scene_generates_runtime_actions() -> None:
 
 def test_stat_block_action_showcase_exposes_new_runtime_capabilities() -> None:
     scenario = load_scenario_directory(str(STAT_BLOCK_ACTION_SCENARIO_DIR))
-    session = scenario.create_session()
+    session = Session(scenario)
     session.current_scene_id = "stat_block_action_showcase"
     session.read()
     assert session.encounter_state is not None
@@ -186,7 +187,7 @@ def test_stat_block_action_showcase_exposes_new_runtime_capabilities() -> None:
 
 
 def test_unenriched_frostwing_breath_is_present_as_unimplemented() -> None:
-    session = load_scenario_directory(str(MULTIATTACK_SCENARIO_DIR)).create_session()
+    session = Session(load_scenario_directory(str(MULTIATTACK_SCENARIO_DIR)))
     session.current_scene_id = "multiattack_showcase"
     session.read()
     assert session.encounter_state is not None
@@ -208,9 +209,7 @@ def test_unenriched_frostwing_breath_is_present_as_unimplemented() -> None:
 
 
 def test_targeted_action_labels_only_name_the_action() -> None:
-    session = load_scenario_directory(
-        str(STAT_BLOCK_ACTION_SCENARIO_DIR)
-    ).create_session()
+    session = Session(load_scenario_directory(str(STAT_BLOCK_ACTION_SCENARIO_DIR)))
     session.current_scene_id = "stat_block_action_showcase"
     session.read()
     assert session.encounter_state is not None
@@ -228,10 +227,12 @@ def test_targeted_action_labels_only_name_the_action() -> None:
 
 
 def test_line_stat_block_action_can_be_aimed_at_a_map_point() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR),
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR),
+            start_encounter_id="goblin_encounter",
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -293,7 +294,7 @@ def test_line_stat_block_action_can_be_aimed_at_a_map_point() -> None:
 
 
 def test_automatic_stat_block_damage_action_is_discovered_and_resolved() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -354,7 +355,7 @@ def test_automatic_stat_block_damage_action_is_discovered_and_resolved() -> None
 
 
 def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -418,7 +419,7 @@ def test_saving_throw_stat_block_action_resolves_damage_and_half_on_save() -> No
 
 
 def test_unsupported_stat_block_effect_is_rejected_before_execution() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -453,7 +454,7 @@ def test_unsupported_stat_block_effect_is_rejected_before_execution() -> None:
 
 
 def test_recharge_stat_block_resource_becomes_available_on_required_roll() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -480,7 +481,7 @@ def test_recharge_stat_block_resource_becomes_available_on_required_roll() -> No
 
 
 def test_action_eligibility_exposes_structured_failures() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -513,7 +514,7 @@ def test_action_eligibility_exposes_structured_failures() -> None:
 
 
 def test_paralyzed_blocks_actions_through_effective_incapacitation() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -543,7 +544,7 @@ def test_paralyzed_blocks_actions_through_effective_incapacitation() -> None:
 
 
 def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -579,7 +580,7 @@ def test_close_attack_against_paralyzed_target_has_advantage_and_is_critical() -
 
 
 def test_attack_damage_uses_sourced_damage_roll_modifier() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -634,7 +635,7 @@ def test_attack_damage_uses_sourced_damage_roll_modifier() -> None:
 
 
 def test_paralyzed_target_automatically_fails_strength_and_dexterity_saves() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -678,7 +679,7 @@ def test_paralyzed_target_automatically_fails_strength_and_dexterity_saves() -> 
 
 
 def test_stunned_target_grants_advantage_without_automatic_critical_hits() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -726,7 +727,7 @@ def test_stunned_target_grants_advantage_without_automatic_critical_hits() -> No
 
 
 def test_stunned_creature_automatically_fails_dexterity_save() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -761,7 +762,7 @@ def test_stunned_creature_automatically_fails_dexterity_save() -> None:
 
 
 def test_action_target_requirement_uses_effective_conditions() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -817,9 +818,7 @@ def test_action_target_requirement_uses_effective_conditions() -> None:
 
 
 def test_conditions_showcase_is_externally_controlled_and_uses_immunities() -> None:
-    session = load_scenario_directory(
-        str(CONDITIONS_SHOWCASE_SCENARIO_DIR)
-    ).create_session()
+    session = Session(load_scenario_directory(str(CONDITIONS_SHOWCASE_SCENARIO_DIR)))
     session.read()
 
     assert session.encounter_state is not None
@@ -848,9 +847,7 @@ def test_conditions_showcase_is_externally_controlled_and_uses_immunities() -> N
 
 
 def test_creature_type_restricted_spell_targets_are_visible_but_unavailable() -> None:
-    session = load_scenario_directory(
-        str(CONDITIONS_SHOWCASE_SCENARIO_DIR)
-    ).create_session()
+    session = Session(load_scenario_directory(str(CONDITIONS_SHOWCASE_SCENARIO_DIR)))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -872,7 +869,7 @@ def test_creature_type_restricted_spell_targets_are_visible_but_unavailable() ->
 
 
 def test_execution_rechecks_action_eligibility() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
     session.read()
     assert session.encounter_state is not None
@@ -901,7 +898,7 @@ def test_initiative_is_rolled_for_all_combatants_at_encounter_start(
 ) -> None:
     monkeypatch.setattr(EncounterState, "roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
     session.current_scene_id = "goblin_encounter"
 
@@ -930,7 +927,7 @@ def test_presentation_exposes_initiative_tracker(
 ) -> None:
     monkeypatch.setattr(EncounterState, "roll_initiative", _ROLL_INITIATIVE)
     rolls = iter([12, 18, 7, 14])
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
     session.current_scene_id = "goblin_encounter"
 
@@ -966,7 +963,7 @@ def test_presentation_exposes_initiative_tracker(
 
 
 def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
 
     move_up_index = _action_id_by_label(session, "Move up")
@@ -988,7 +985,7 @@ def test_goblin_encounter_movement_consumes_movement_before_turn_advances() -> N
 
 
 def test_goblin_encounter_allows_diagonal_movement() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
 
     move_index = _action_id_by_label(session, "Move up-right")
@@ -1001,7 +998,7 @@ def test_goblin_encounter_allows_diagonal_movement() -> None:
 
 
 def test_action_must_belong_to_current_decision_actor() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
     assert session.encounter_state is not None
     action = next(
@@ -1019,10 +1016,12 @@ def test_action_must_belong_to_current_decision_actor() -> None:
 
 
 def test_enriched_multiattack_queues_named_attacks() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR),
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR),
+            start_encounter_id="goblin_encounter",
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1096,10 +1095,12 @@ def test_enriched_multiattack_queues_named_attacks() -> None:
 
 
 def test_assassin_multiattack_applies_independent_poisoned_conditions() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR),
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR),
+            start_encounter_id="goblin_encounter",
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1161,7 +1162,7 @@ def test_assassin_multiattack_applies_independent_poisoned_conditions() -> None:
 
 def test_multiattack_showcase_loads_enriched_creatures() -> None:
     scenario = load_scenario_directory(MULTIATTACK_SCENARIO_DIR)
-    session = scenario.create_session()
+    session = Session(scenario)
     session.read()
 
     assert scenario.display_name == "Multiattack Showcase"
@@ -1224,7 +1225,7 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
 
 
 def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape() -> None:
-    session = load_scenario_directory(MULTIATTACK_SCENARIO_DIR).create_session()
+    session = Session(load_scenario_directory(MULTIATTACK_SCENARIO_DIR))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1304,7 +1305,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape() -> None:
 
 
 def test_tentacle_grapple_enforces_capacity_without_counting_duplicates() -> None:
-    session = load_scenario_directory(MULTIATTACK_SCENARIO_DIR).create_session()
+    session = Session(load_scenario_directory(MULTIATTACK_SCENARIO_DIR))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -1355,9 +1356,11 @@ def test_fallback_tokens_use_team_colors() -> None:
 
 
 def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -1422,9 +1425,11 @@ def test_grappled_blocks_movement_and_disadvantages_attacks() -> None:
 
 
 def test_grapple_action_is_available_in_the_combat_menu() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -1463,10 +1468,12 @@ def test_grapple_action_is_available_in_the_combat_menu() -> None:
 
 
 def test_grapple_replaces_only_one_attack_in_multiattack() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR),
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR),
+            start_encounter_id="goblin_encounter",
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -1486,10 +1493,12 @@ def test_grapple_replaces_only_one_attack_in_multiattack() -> None:
 
 
 def test_grapple_can_replace_remaining_attack_after_weapon_attack() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR),
-        start_scene="goblin_encounter",
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR),
+            start_encounter_id="goblin_encounter",
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -1514,9 +1523,11 @@ def test_grapple_can_replace_remaining_attack_after_weapon_attack() -> None:
 
 
 def test_grappling_moves_target_and_costs_extra_movement() -> None:
-    session = load_scenario_directory(
-        str(TACTICAL_SCENARIO_DIR), start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None
@@ -1560,7 +1571,7 @@ def test_grappling_moves_target_and_costs_extra_movement() -> None:
 
 
 def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
 
     for _ in range(6):
@@ -1575,7 +1586,7 @@ def test_spending_last_movement_square_does_not_auto_end_turn() -> None:
 
 
 def test_goblin_encounter_wait_advances_enemy_turns() -> None:
-    session = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)).create_session()
+    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.current_scene_id = "goblin_encounter"
 
     move_up_index = _action_id_by_label(session, "Move up")

@@ -1,8 +1,9 @@
 from pathlib import Path
 
+from srd_arena.content.scenarios import load_scenario_directory
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.encounters.participants import creature_controller
-from srd_arena.infrastructure.scenarios import load_scenario_directory
+from srd_arena.engine.session import Session
 
 SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "spell_condition_showcase"
@@ -10,7 +11,7 @@ SCENARIO_DIR = (
 
 
 def test_spell_condition_showcase_loads_wave_1b_capability() -> None:
-    session = load_scenario_directory(str(SCENARIO_DIR)).create_session()
+    session = Session(load_scenario_directory(str(SCENARIO_DIR)))
     session.read()
 
     assert session.encounter_state is not None
