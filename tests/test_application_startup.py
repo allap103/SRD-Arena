@@ -48,15 +48,15 @@ def test_game_startup_lists_frontend_neutral_scenario_summaries() -> None:
 
 def test_game_startup_creates_session_from_repository_result() -> None:
     session = object()
-    received_limits: list[int | None] = []
+    received_pacing: list[bool] = []
 
     class LoadedScenarioStub:
         @staticmethod
         def create_session(
             *,
-            automatic_action_limit: int | None = None,
+            pace_automatic_actions: bool = False,
         ) -> object:
-            received_limits.append(automatic_action_limit)
+            received_pacing.append(pace_automatic_actions)
             return session
 
     repository = ScenarioRepositoryStub(
@@ -65,10 +65,10 @@ def test_game_startup_creates_session_from_repository_result() -> None:
 
     running_game = GameStartup(cast(ScenarioRepository, repository)).start_scenario(
         "example",
-        automatic_action_limit=1,
+        pace_automatic_actions=True,
     )
 
     assert repository.loaded_ids == ["example"]
-    assert received_limits == [1]
+    assert received_pacing == [True]
     assert not hasattr(running_game, "session")
     assert not hasattr(running_game, "_session")

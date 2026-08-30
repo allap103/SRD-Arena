@@ -25,10 +25,17 @@ from .theme import apply_fantasy_theme
 class ScenarioPickerWindow(QMainWindow):
     """Display loadable scenarios and launch the selected game configuration."""
 
-    def __init__(self, startup: GameStartup, *, image_root: Path | None = None) -> None:
+    def __init__(
+        self,
+        startup: GameStartup,
+        *,
+        image_root: Path | None = None,
+        pace_automatic_actions: bool = True,
+    ) -> None:
         super().__init__()
         self._startup = startup
         self._image_root = image_root
+        self._pace_automatic_actions = pace_automatic_actions
         self._game_window: GameWindow | None = None
         self.setWindowTitle("Choose Scenario")
         self.resize(520, 420)
@@ -75,11 +82,12 @@ class ScenarioPickerWindow(QMainWindow):
             GamePresenter(
                 self._startup.start_scenario(
                     scenario.id,
-                    automatic_action_limit=1,
+                    pace_automatic_actions=self._pace_automatic_actions,
                 )
             ),
             image_root=self._image_root,
             presentation_config=scenario.presentation,
+            pace_automatic_actions=self._pace_automatic_actions,
         )
         self._game_window.show()
         self.close()
@@ -89,12 +97,17 @@ def run_gui(
     startup: GameStartup,
     *,
     image_root: Path | None = None,
+    pace_automatic_actions: bool = True,
 ) -> None:
     """Start Qt, present scenario discovery, and enter the desktop event loop."""
 
     instance = QApplication.instance()
     app = instance if isinstance(instance, QApplication) else QApplication(sys.argv)
     apply_fantasy_theme(app)
-    window = ScenarioPickerWindow(startup, image_root=image_root)
+    window = ScenarioPickerWindow(
+        startup,
+        image_root=image_root,
+        pace_automatic_actions=pace_automatic_actions,
+    )
     window.show()
     app.exec()
