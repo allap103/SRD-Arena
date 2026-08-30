@@ -1,0 +1,521 @@
+\documentclass[
+  12pt,
+  a4paper,
+  oneside,
+  parskip=half,
+  headings=normal
+]{scrreprt}
+
+% -----------------------------------------------------------------------------
+% Sprache, Typografie und Seitenlayout
+% -----------------------------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage[hidelinks,hypertexnames=false]{hyperref}
+
+\geometry{
+  left=3cm,
+  right=2.5cm,
+  top=2.5cm,
+  bottom=2.5cm
+}
+\onehalfspacing
+\setlist{itemsep=0.25em, topsep=0.5em}
+
+% -----------------------------------------------------------------------------
+% Metadaten: vor der Abgabe ausfüllen
+% -----------------------------------------------------------------------------
+\newcommand{\titel}{SRD Arena}
+\newcommand{\untertitel}{Entwicklung einer Engine für taktische Kämpfe nach dem SRD~5.2.1}
+\newcommand{\autor}{Vorname Nachname}
+\newcommand{\matrikelnummer}{00000000}
+\newcommand{\studiengang}{Studiengang}
+\newcommand{\modul}{Modulname}
+\newcommand{\dozent}{Name der Lehrperson}
+\newcommand{\hochschule}{Name der Hochschule}
+\newcommand{\abgabedatum}{\today}
+
+% -----------------------------------------------------------------------------
+% Hilfsmittel für Entwurfsnotizen und Quelltext
+% -----------------------------------------------------------------------------
+\definecolor{hinweisfarbe}{RGB}{120,70,0}
+\definecolor{codehintergrund}{RGB}{247,247,247}
+
+\newcommand{\vorgabe}[1]{%
+  \begin{quote}
+    \small\color{hinweisfarbe}\textbf{Vorgabe:} #1
+  \end{quote}
+}
+
+\newcommand{\todo}[1]{%
+  \par\noindent\textcolor{red!70!black}{\textbf{TODO:} #1}\par
+}
+
+\lstdefinestyle{projektcode}{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codehintergrund},
+  frame=single,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false
+}
+\lstset{style=projektcode}
+
+\begin{document}
+
+% -----------------------------------------------------------------------------
+% Titelseite
+% -----------------------------------------------------------------------------
+\begin{titlepage}
+  \centering
+  {\Large \hochschule\par}
+  \vspace{1.5cm}
+  {\large \studiengang\par}
+  {\large \modul\par}
+  \vfill
+  {\Huge\bfseries \titel\par}
+  \vspace{0.5cm}
+  {\Large \untertitel\par}
+  \vfill
+  \begin{tabular}{ll}
+    Autor: & \autor \\
+    Matrikelnummer: & \matrikelnummer \\
+    Lehrperson: & \dozent \\
+    Abgabedatum: & \abgabedatum
+  \end{tabular}
+  \vfill
+\end{titlepage}
+
+\pagenumbering{Roman}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+% -----------------------------------------------------------------------------
+\chapter{Einleitung}
+% -----------------------------------------------------------------------------
+
+Dungeons \& Dragons (D\&D) ist ein beliebtes Pen-and-Paper-Rollenspiel, in
+dem taktische, rundenbasierte Kämpfe (Encounter) einen großen Teil des Spiels
+ausmachen. Üblicherweise kämpft ein Team von Spielern gegen ein Team von NPCs
+(Non-Player Characters), die vom Spielleiter gesteuert werden.
+
+Das System Reference Document (SRD) 5.2.1 ist eine unter der
+Creative-Commons-Lizenz CC BY 4.0 verfügbare Fassung der Spielregeln. Sie
+enthält den größten Teil der Grundmechaniken des Spiels, jedoch nicht sämtliche
+Inhalte der proprietären Regelwerke. So kann ein Spieler beispielsweise eine
+Klasse und Subklasse wählen; im SRD steht aber pro Klasse nur eine Subklasse
+zur Verfügung, während das proprietär lizenzierte Spielerhandbuch weitere
+Subklassen enthält.
+
+SRD Arena setzt zunächst einen Teil des Kampfsystems des SRD~5.2.1 als
+rundenbasiertes 2D-Spiel um. Mehrere vordefinierte Kampfszenarien demonstrieren
+die implementierten Funktionen. Mithilfe von Vorlagen können Nutzer weitere
+Szenarien in strukturierten Dateien definieren und anschließend spielen.
+
+\section{Motivation}
+
+Die meisten Spielleiter entwerfen Kampfszenarien bereits vor dem eigentlichen
+Spieltermin. Ihr Ziel ist es, den Spielern neben einem interessanten Narrativ
+auch eine taktische Herausforderung zu bieten, ohne den Kampf unangemessen
+schwer zu gestalten.
+
+Im Rahmen der umgesetzten Regeln können Spielleiter mit SRD Arena ihre
+Kampfszenarien vor dem Spiel ausprobieren. Viele Berechnungen und Würfelwürfe,
+die sonst manuell erfolgen müssten, werden dabei automatisiert. Mittelfristig,
+jedoch nach Abgabe des Projekts, soll der gesamte Umfang der SRD-Regeln
+abgedeckt werden.
+
+Langfristig könnte das Projekt um Bots erweitert werden, die die
+Kampfentscheidungen aller Teilnehmer automatisieren. Kämpfe könnten dann
+vielfach simuliert und die entstehenden Daten in robuste Kennzahlen zur
+Ausgewogenheit eines Szenarios überführt werden. Diese Funktionalität stellt
+die weiterführende Motivation des Projekts dar, kann aufgrund der begrenzten
+Bearbeitungszeit jedoch erst nach der Abgabe umgesetzt werden.
+
+\section{Zielsetzung}
+
+SRD Arena ist eine Engine für taktische Kämpfe auf einem 2D-Spielfeld nach dem
+SRD-5.2.1-Regelwerk. Charaktere werden wahlweise durch Nutzereingaben oder
+durch einfache Bots gesteuert. Szenarien werden in strukturierten Textdateien
+definiert; dafür stehen eine Vorlage und mehrere Demonstrationsszenarien zur
+Verfügung.
+
+\subsection{Verwendete Pakete}
+
+\paragraph{Kernabhängigkeiten}
+\begin{itemize}
+  \item \texttt{pydantic}: Validierung der JSON-Daten
+  \item \texttt{PySide6}: grafische Benutzeroberfläche
+  \item \texttt{scipy}: geometrische Berechnungen
+\end{itemize}
+
+\paragraph{Entwicklungsabhängigkeiten}
+\begin{itemize}
+  \item \texttt{hypothesis}: Property-Based Testing
+  \item \texttt{mypy}: statische Typprüfung
+  \item \texttt{pytest}: Unit-Tests
+  \item \texttt{pytest-cov}: Messung der Testabdeckung
+  \item \texttt{ruff}: Linter und Formatter
+\end{itemize}
+
+\subsection{Abgrenzung des MVP}
+
+Wesentlich ist eine stabile Encounter-Engine für vorhandene Spieldaten. Der
+MVP umfasst ein klar abgegrenztes Subset der SRD-Kampfmechaniken.
+
+\paragraph{Kampfablauf}
+\begin{itemize}
+  \item Initiative
+  \item Zugstruktur
+  \item Action, Bonus Action und Movement
+  \item Opportunity Attack als erste Reaktionsmechanik
+\end{itemize}
+
+\paragraph{Bewegung}
+\begin{itemize}
+  \item rasterbasierte Bewegung
+\end{itemize}
+
+\paragraph{Kampfmechaniken}
+\begin{itemize}
+  \item Nahkampf- und Fernkampfangriffe
+  \item Zauber, deren zugrunde liegende Mechaniken unterstützt werden
+  \item Attack Rolls und Saving Throws
+  \item Armor Class und Critical Hits
+  \item Waffen mit unterschiedlichen Schadenswürfeln
+\end{itemize}
+
+\paragraph{Effekte}
+\begin{itemize}
+  \item Radius- und Kegel-Flächeneffekte
+  \item Heilung
+  \item einfache Zustände, insbesondere \emph{Blinded} und \emph{Prone}
+\end{itemize}
+
+\paragraph{Nicht Teil des MVP}
+\begin{itemize}
+  \item vollständige SRD-Abdeckung
+  \item vollständige Zauberliste
+  \item vollständige Klassenprogression
+  \item vollständige Monster-KI
+\end{itemize}
+
+\paragraph{Erfolgskriterien}
+\begin{itemize}
+  \item Szenarien und Spieldaten können aus JSON geladen werden.
+  \item Ungültige Eingaben werden durch Schema-Validierung erkannt.
+  \item Ein vollständiger Encounter lässt sich ausführen; anschließend wird
+        das Textabenteuer fortgesetzt.
+  \item Derselbe Seed erzeugt denselben Encounter-Verlauf.
+  \item Ein Baseline-Agent spielt einen vollständigen Encounter mit
+        ausschließlich legalen Aktionen.
+  \item Aktionen, Würfe, Zustandsänderungen und Kampfende sind vollständig im
+        Log enthalten.
+  \item Alle unterstützten Mechaniken sind durch automatisierte Tests
+        abgedeckt.
+\end{itemize}
+
+\paragraph{Optionale Erweiterungen}
+\begin{itemize}
+  \item weitere AoE-Typen und Flächeneffekte über mehrere Runden
+  \item komplexere Zustände
+  \item Summons, die neue Akteure erzeugen und in die Initiative aufnehmen
+  \item weitere Reaktionsmechaniken
+  \item Konzentration, Grapple und Shove
+  \item Vision, Licht, Hindernisse und Line of Sight
+  \item bessere Gegner-Agenten
+  \item aufwendigere GUI-Animationen
+\end{itemize}
+
+\subsection{Nächste Entscheidungen zur Implementierungsstrategie}
+\begin{itemize}
+  \item Feature-Abhängigkeitsgraph und Abhängigkeiten zwischen Mechaniken
+        dokumentieren
+  \item spätere Erweiterungen priorisieren
+  \item JSON-Schemas finalisieren
+  \item Formate für Spieldaten, Szenarien und Traces festlegen
+  \item Validierungsregeln definieren
+  \item Schnittstelle zwischen Kernlogik und GUI festlegen
+  \item Regelentscheidungen und Zustandsverwaltung in der Kernlogik belassen
+  \item GUI auf Darstellung und Eingabemöglichkeiten begrenzen
+\end{itemize}
+
+\subsection{Meilensteine}
+\begin{itemize}
+  \item Kernlogik aufräumen
+  \item JSON-Schemas finalisieren
+  \item Schnittstelle für Aktionen und Zielauswahl fertigstellen
+  \item Determinismus sicherstellen
+  \item Testabdeckung für alle MVP-Mechaniken herstellen
+  \item Baseline-Agent stabilisieren
+  \item GUI anbinden
+  \item optionale Erweiterungen umsetzen
+\end{itemize}
+
+\subsection{Erwartete Schwierigkeiten}
+\begin{itemize}
+  \item Reaktionen verkomplizieren die Zugstruktur, da andere Teilnehmer
+        während eines fremden Zuges kurzfristig handeln können.
+  \item AoE-Effekte erzeugen zahlreiche Randfälle; im MVP werden nur
+        ausgewählte AoE-Typen unterstützt.
+  \item JSON-Daten können formal gültig sein, obwohl die benötigte Mechanik
+        noch nicht implementiert ist. Schema-Validierung und Laufzeitfehler
+        müssen deshalb getrennt behandelt werden.
+  \item Viele Mechaniken bauen aufeinander auf. Fehlende Grundmechaniken können
+        mehrere spätere Erweiterungen blockieren.
+  \item GUI und Gegner-Agenten müssen mit wachsendem Funktionsumfang angepasst
+        werden.
+\end{itemize}
+
+% -----------------------------------------------------------------------------
+\chapter{Theoretische Grundlagen und Werkzeuge}
+% -----------------------------------------------------------------------------
+
+\section{Technologien}
+\todo{Die eingesetzten Technologien einordnen und ihre Auswahl begründen.}
+
+\section{Bibliotheken und Pakete}
+
+\vorgabe{Beschreiben, welche Pakete und Bibliotheken zum Einsatz kamen.}
+
+\begin{itemize}
+  \item Typprüfung: \texttt{mypy}
+  \item Linting und Formatierung: \texttt{ruff}
+  \item Tests: \texttt{pytest}
+  \item Property-Tests: \texttt{hypothesis}
+  \item Testabdeckung: \texttt{pytest-cov}
+  \item Datenvalidierung: \texttt{pydantic}
+  \item Paketverwaltung: \texttt{uv}
+  \item Konfiguration: \texttt{pyproject.toml}
+  \item Debugging und Replay: Logging und JSON-Traces
+  \item Nicht-Python-Datenquelle: JSON-Daten der SRD-Regeln von 5e.tools als
+        Grundlage für den authored content
+\end{itemize}
+
+\section{Mensch und KI}
+
+\vorgabe{Die Rolle der KI-Unterstützung im Projekt erläutern.}
+
+In diesem Projekt wurde ein großer Teil der Programmlogik mit
+KI-Unterstützung generiert. Viele Strukturideen wurden mithilfe der KI auf
+Lücken geprüft und iterativ angepasst. Außerdem wurden Regelabschnitte, die in
+JSON-Dateien zunächst nur als Prosa vorlagen, mithilfe der KI in strukturierte
+JSON-Definitionen übertragen.
+
+% -----------------------------------------------------------------------------
+\chapter{Konzept und Implementierung}
+% -----------------------------------------------------------------------------
+
+\section{Programmstruktur}
+\todo{Die obersten Pakete und ihre Verantwortlichkeiten anhand einer Grafik
+oder eines kompakten Paketbaums erläutern.}
+
+\section{Kernlogik}
+\todo{Zustandsmodell, Zugablauf und Ausführung von Aktionen beschreiben.}
+
+\section{Datenverarbeitung}
+\todo{Laden, Validieren, Indizieren und Bauen der Inhaltsdaten beschreiben.}
+
+\section{Architektur- und Designentscheidungen}
+
+\vorgabe{Begründen, warum die Software auf diese Weise strukturiert wurde.
+Dazu gehören beispielsweise die Wahl bestimmter Entwurfsmuster,
+objektorientierter Strukturen oder funktionaler Ansätze sowie verworfene
+Alternativen und deren Gründe.}
+
+Wesentliche Entscheidungen sind:
+\begin{itemize}
+  \item authored content in JSON-Dateien
+  \item Trennung in Content-, Domain-, Runtime- und GUI-Schicht
+\end{itemize}
+
+\subsection{Content-Schicht}
+
+\begin{lstlisting}[caption={Vom Dateisystem zum Domain-Zauber}]
+Dateisystem
+    | load_spell_catalog()
+    v
+SpellCatalog mit validierten SpellSchema-Objekten
+    | find()
+    v
+SpellSchema
+    | build_spell()
+    v
+Domain-Objekt Spell
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Validierung und Indizierung}]
+JSON-Datei
+    | parsen und validieren
+    v
+SpellSchema
+    | speichern und indizieren
+    v
+SpellCatalog
+\end{lstlisting}
+
+\section{KI-Konsultation bei Designentscheidungen}
+
+\vorgabe{Darstellen, ob die KI bereits bei Planung und Architektur konsultiert
+wurde, welche Vorschläge übernommen wurden und wo bewusst von Empfehlungen
+abgewichen wurde.}
+
+Die KI unterstützte insbesondere beim Erlernen und Anwenden einer geschichteten
+Architektur, beim Schemaentwurf für Inhaltsdaten und bei der Recherche zu
+Regelgrenzfällen wie \emph{Calm Emotions} und Immunitäten. Die Vorschläge
+wurden nicht unverändert übernommen:
+
+\begin{enumerate}
+  \item Bei einer frühen Zauberimplementierung wurde gemeinsam mit der KI ein
+        Fahrplan erstellt. Der Code wurde jedoch schnell unübersichtlich. Eine
+        Empfehlung, zunächst weitere repräsentative Zauber zu implementieren,
+        wurde verworfen, um die problematische Struktur nicht weiter
+        auszubauen.
+  \item In der experimentellen Phase existierten nur ein Spieler und ein
+        Gegner. Daraus entstand die Annahme einer primären Kreatur und parallel
+        entwickelte Logik für Spieler, Verbündete und Gegner. Diese historisch
+        gewachsene Struktur musste später vereinheitlicht werden.
+  \item Bei Zuständen verhinderte Domänenwissen eine falsche Abstraktion:
+        \emph{Unconscious} impliziert \emph{Incapacitated} und verursacht
+        \emph{Prone}. Endet \emph{Unconscious}, endet das davon abhängige
+        \emph{Incapacitated}; \emph{Prone} kann dagegen unabhängig bestehen
+        bleiben.
+  \item Regelprosa wird nicht zur Laufzeit geparst. Stattdessen werden
+        ausführbare Mechaniken in JSON angereichert. Dadurch bleibt weniger
+        Parsing-Logik im Programmcode verborgen.
+  \item Bei generischen Kreaturentyp-Anforderungen und der Modellierung von
+        Immunität gegenüber der Unterdrückung eines Zustands wurden erste
+        KI-Vorschläge anhand des Regeltexts überprüft und korrigiert.
+\end{enumerate}
+
+\section{Code-Generierung}
+
+\vorgabe{Erläutern, welche Bestandteile wie programmiert wurden.}
+
+Für die Entwicklung wurde OpenAI Codex eingesetzt.
+
+\subsection{KI-generierte Bestandteile}
+
+\vorgabe{Aufführen, welche Module, Funktionen oder Tests maßgeblich mit
+KI-Unterstützung erstellt wurden, und begründen, weshalb sich der KI-Einsatz
+dafür eignete.}
+
+\begin{itemize}
+  \item Übertragung verbleibender Regelprosa in strukturierte JSON-Daten für
+        Zauber
+  \item schrittweise Implementierung von Regeln wie Trefferpunkten, Angriffen
+        und Zaubern
+\end{itemize}
+
+\todo{Konkrete Module, Funktionen und Tests mit Commit- oder Dateiverweisen
+ergänzen.}
+
+\subsection{Selbst programmierte Bestandteile}
+
+\vorgabe{Kernlogiken, komplexe Workarounds oder projektspezifische Funktionen
+beschreiben, die vollständig selbst programmiert wurden, und die Notwendigkeit
+der eigenen Programmierleistung begründen.}
+
+\begin{itemize}
+  \item eigenständige Bewertung und Korrektur der Repository-Struktur
+  \item fachliche Prüfung der von der KI vorgeschlagenen Regelmodelle
+\end{itemize}
+
+\todo{Konkrete selbst programmierte Bestandteile ergänzen.}
+
+\section{Prompt-Engineering und Iteration}
+
+\vorgabe{Die Zusammenarbeit mit der KI beschreiben. Insbesondere erläutern, ob
+generierter Code direkt übernommen oder in kritischen Iterationsschleifen
+geprüft und überarbeitet wurde. Dazu gehören manuelle Korrekturen von
+Halluzinationen und veralteter Syntax.}
+
+\todo{Ein bis zwei konkrete Prompt- und Überarbeitungszyklen dokumentieren.}
+
+% -----------------------------------------------------------------------------
+\chapter{Ergebnisse}
+% -----------------------------------------------------------------------------
+
+\section{Funktionsnachweis}
+\todo{Testergebnisse, unterstützte Mechaniken und reproduzierbare
+Qualitätsprüfungen dokumentieren.}
+
+\section{Beispieldurchlauf}
+\todo{Ein Szenario auswählen und den Ablauf anhand von Screenshots oder
+Logauszügen darstellen.}
+
+% -----------------------------------------------------------------------------
+\chapter{Diskussion und Fazit}
+% -----------------------------------------------------------------------------
+
+\section{Zielerreichung}
+\vorgabe{Bewerten, inwiefern das gesetzte Ziel erreicht wurde.}
+\todo{Erfolgskriterien aus Abschnitt 1.2 einzeln bewerten.}
+
+\section{Herausforderungen und kritische Reflexion}
+\todo{Technische und organisatorische Herausforderungen zusammenfassen.}
+
+\section{Abweichungen vom ursprünglichen Implementierungsplan}
+\todo{Abweichungen, Ursachen und Auswirkungen dokumentieren.}
+
+\section{Kritische Würdigung}
+
+\vorgabe{Reflektieren, was gut lief, welche unerwarteten technischen Probleme
+oder Schwierigkeiten bei der Zusammenarbeit mit der KI auftraten und was bei
+einem zukünftigen Projekt anders gemacht würde.}
+
+\todo{Stärken, Schwächen und konkrete Verbesserungen gegenüberstellen.}
+
+\section{Ausblick}
+\vorgabe{Der Ausblick darf auch eine subjektive Einschätzung enthalten.}
+\todo{Nächste technische Schritte und mögliche Weiterentwicklung erläutern.}
+
+% -----------------------------------------------------------------------------
+\chapter{Literatur- und Quellenverzeichnis}
+% -----------------------------------------------------------------------------
+
+\vorgabe{Dieser Abschnitt ist nur erforderlich, wenn zitierfähige Quellen
+verwendet wurden.}
+
+\begin{itemize}
+  \item \todo{System Reference Document 5.2.1 bibliografisch vollständig
+        angeben.}
+  \item \todo{Dokumentationen und weitere zitierte Quellen ergänzen.}
+\end{itemize}
+
+% -----------------------------------------------------------------------------
+\chapter{Anhang}
+% -----------------------------------------------------------------------------
+
+\vorgabe{In den Anhang gehören Inhalte, die für den Haupttext zu umfangreich
+sind.}
+
+\section{Bedienungsanleitung}
+\todo{Installation, Programmstart, Szenarioauswahl und Bedienung dokumentieren.}
+
+\section{Ausgewählte Code-Snippets}
+\vorgabe{Die ausgewählten Code-Snippets sollten jeweils nicht länger als eine
+Seite sein.}
+
+% Beispiel:
+% \lstinputlisting[
+%   language=Python,
+%   firstline=1,
+%   lastline=30,
+%   caption={Beispiel für eine zentrale Implementierung}
+% ]{src/srd_arena/example.py}
+
+\todo{Repräsentative Codeausschnitte auswählen und erläutern.}
+
+\end{document}
