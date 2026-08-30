@@ -29,7 +29,7 @@ class GameStartup:
         self,
         scenario_id: str,
         *,
-        automatic_action_limit: int | None = None,
+        pace_automatic_actions: bool = False,
     ) -> RunningGame:
         """Load a scenario and wrap its new engine session as a running game.
 
@@ -45,6 +45,6 @@ class GameStartup:
         scenario = self.scenarios.load_scenario(scenario_id)
         return RunningGame(
             scenario.create_session(
-                automatic_action_limit=automatic_action_limit,
+                pace_automatic_actions=pace_automatic_actions,
             )
         )

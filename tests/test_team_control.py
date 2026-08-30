@@ -514,7 +514,7 @@ def test_paced_ai_resolves_one_visible_action_per_step() -> None:
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     ).create_session()
-    session.automatic_action_limit = 1
+    session.pace_automatic_actions = True
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state

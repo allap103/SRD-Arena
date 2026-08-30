@@ -103,7 +103,7 @@ def test_pacing_pause_skips_defeated_initiative_slots_first() -> None:
     assert goblin.behavior is not None
     goblin.behavior.type = "wait"
     session = scenario.create_session()
-    session.automatic_action_limit = 1
+    session.pace_automatic_actions = True
     session.read()
     state = session.encounter_state
     assert state is not None

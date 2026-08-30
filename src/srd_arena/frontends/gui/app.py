@@ -45,6 +45,8 @@ from .ui.encounter.targeting import (
 from .ui.game_surface import GameSurface, GameSurfaceCallbacks
 from .ui.sidebar import GameSidebar, SidebarCallbacks
 
+AUTOMATIC_ACTION_DELAY_MS = 500
+
 
 class GameWindow(QMainWindow):
     """Render a running game and translate Qt interactions into app commands.
@@ -60,6 +62,7 @@ class GameWindow(QMainWindow):
         image_root: Path | None = None,
         presentation_config: ScenarioPresentation | None = None,
         show_encounter_json: bool = False,
+        pace_automatic_actions: bool = True,
     ):
         super().__init__()
         self.presenter = presenter
@@ -71,6 +74,7 @@ class GameWindow(QMainWindow):
         self._combat_log_scene_id: str | None = None
         self._logged_round_number: int | None = None
         self._automatic_step_scheduled = False
+        self._pace_automatic_actions = pace_automatic_actions
         self._show_team_outlines = True
         self._always_show_creature_names = False
         self._movement_plan: MovementPlan | None = None
@@ -508,7 +512,8 @@ class GameWindow(QMainWindow):
         ):
             return
         self._automatic_step_scheduled = True
-        QTimer.singleShot(500, self._advance_automatic_step)
+        delay_ms = AUTOMATIC_ACTION_DELAY_MS if self._pace_automatic_actions else 0
+        QTimer.singleShot(delay_ms, self._advance_automatic_step)
 
     def _advance_automatic_step(self) -> None:
         self._automatic_step_scheduled = False

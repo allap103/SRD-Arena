@@ -46,7 +46,7 @@ class Session:
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
         start_scene_id: str = "goblin_encounter",
-        automatic_action_limit: int | None = None,
+        pace_automatic_actions: bool = False,
         geometry_config: GeometryConfig | None = None,
         encounter_orchestrator: EncounterOrchestrator | None = None,
         dice: DiceRoller | None = None,
@@ -57,7 +57,7 @@ class Session:
         self.start_scene_id = start_scene_id
         self.current_scene_id = start_scene_id
         self._initial_creature_templates = deepcopy(creature_templates)
-        self.automatic_action_limit = automatic_action_limit
+        self.pace_automatic_actions = pace_automatic_actions
         self.geometry_config = geometry_config or GeometryConfig()
         self.encounter_orchestrator = encounter_orchestrator or EncounterOrchestrator()
         self._dice = dice or DiceRoller()
@@ -270,7 +270,7 @@ class Session:
             self.geometry_config,
             self._dice,
         )
-        self.encounter_state.automatic_action_limit = self.automatic_action_limit
+        self.encounter_state.pace_automatic_actions = self.pace_automatic_actions
         self._encounter_actions = []
 
     def _continue_scene_transition(self) -> EngineOutcome:
