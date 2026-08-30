@@ -47,12 +47,12 @@ def test_action_execution_reports_lifecycle_without_advancing_turn() -> None:
 def test_orchestrator_interprets_end_turn_outcome() -> None:
     state = _encounter_state()
     wait = next(action for action in state.available_actions() if action.kind == "wait")
-    starting_round = state.round.number
+    starting_turn = state.turn.index
 
     progress = _ORCHESTRATOR.submit(state, wait)
 
     assert progress.events[0].type == "action_declared"
-    assert state.round.number > starting_round
+    assert state.turn.index != starting_turn
 
 
 def test_non_terminal_action_reports_continue_turn() -> None:

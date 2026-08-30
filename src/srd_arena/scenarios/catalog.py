@@ -1,18 +1,19 @@
-"""Application use cases for discovering and starting games."""
+"""Discover available scenarios and construct their engine sessions."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from srd_arena.application.game import RunningGame
-from srd_arena.application.scenarios import ScenarioRepository, ScenarioSummary
+from srd_arena.engine.session import Session
+
+from .models import ScenarioRepository, ScenarioSummary
 
 
 @dataclass(frozen=True)
-class GameStartup:
+class ScenarioCatalog:
     """Discover scenarios and create sessions through an injected source."""
 
-    scenarios: ScenarioRepository
+    repository: ScenarioRepository
 
     def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
         """Return scenario summaries supplied by the configured repository.
@@ -20,22 +21,22 @@ class GameStartup:
         >>> from unittest.mock import Mock
         >>> repository = Mock()
         >>> repository.available_scenarios.return_value = (ScenarioSummary("demo", "Demo"),)
-        >>> GameStartup(repository).available_scenarios()[0].id
+        >>> ScenarioCatalog(repository).available_scenarios()[0].id
         'demo'
         """
-        return self.scenarios.available_scenarios()
+        return self.repository.available_scenarios()
 
-    def start_scenario(self, scenario_id: str) -> RunningGame:
-        """Load a scenario and wrap its new engine session as a running game.
+    def start_scenario(self, scenario_id: str) -> Session:
+        """Load a scenario and create its isolated engine session.
 
         >>> from unittest.mock import Mock
         >>> repository, scenario, engine = Mock(), Mock(), Mock()
         >>> repository.load_scenario.return_value = scenario
         >>> scenario.create_session.return_value = engine
-        >>> game = GameStartup(repository).start_scenario("demo")
-        >>> isinstance(game, RunningGame)
+        >>> session = ScenarioCatalog(repository).start_scenario("demo")
+        >>> session is engine
         True
         >>> repository.load_scenario.assert_called_once_with("demo")
         """
-        scenario = self.scenarios.load_scenario(scenario_id)
-        return RunningGame(scenario.create_session())
+        scenario = self.repository.load_scenario(scenario_id)
+        return scenario.create_session()

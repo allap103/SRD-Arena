@@ -12,7 +12,6 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QApplication, QFrame
 
-from srd_arena.application.game import RunningGame
 from srd_arena.frontends.gui.app import GameWindow
 from srd_arena.frontends.gui.presenter import GamePresenter
 from srd_arena.frontends.gui.ui.encounter.panel_renderer import (
@@ -28,7 +27,7 @@ def test_game_window_delegates_encounter_controls_to_panel_renderer() -> None:
     session = load_scenario_directory(SCENARIOS_ROOT / "slow_showcase").create_session()
 
     window = GameWindow(
-        GamePresenter(RunningGame(session)),
+        GamePresenter(session),
         show_encounter_json=True,
     )
 

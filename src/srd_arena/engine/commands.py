@@ -1,4 +1,4 @@
-"""Frontend-neutral commands and results for one running game."""
+"""Frontend-neutral commands and results for one engine session."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 
 from .observations import GameObservation
-from .values import ApplicationValue, freeze_mapping
+from .values import EngineValue, freeze_mapping
 
 
 @dataclass(frozen=True)
@@ -73,14 +73,14 @@ GameCommand = (
 
 @dataclass(frozen=True)
 class GameEvent:
-    """Application-owned record of an event emitted while resolving a command."""
+    """Engine-owned record of an event emitted while resolving a command."""
 
     seq: int
     type: str
     creature_ref: str | None = None
     frame_id: str | None = None
     action_id: str | None = None
-    data: Mapping[str, ApplicationValue] = field(
+    data: Mapping[str, EngineValue] = field(
         default_factory=lambda: MappingProxyType({})
     )
 
@@ -90,7 +90,7 @@ class GameEvent:
 
 @dataclass(frozen=True)
 class GameUpdate:
-    """Application-owned result of one accepted game command."""
+    """Engine-owned result of one accepted game command."""
 
     observation: GameObservation
     messages: tuple[tuple[str, str], ...]
@@ -103,7 +103,7 @@ class GameUpdate:
 
 @dataclass(frozen=True)
 class CommandFailure:
-    """Structured explanation for a command rejected by the application."""
+    """Structured explanation for a command rejected by the engine."""
 
     code: str
     message: str
@@ -118,7 +118,7 @@ class CommandResult:
 
     @property
     def accepted(self) -> bool:
-        """Return whether the command produced an application update.
+        """Return whether the command produced an engine update.
 
         >>> from unittest.mock import Mock
         >>> CommandResult(update=Mock()).accepted

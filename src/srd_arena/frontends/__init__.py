@@ -1,1 +1,1 @@
-"""Application frontends for CLI, API, and Qt."""
+"""Driving adapters for headless clients and Qt."""

@@ -1,8 +1,9 @@
-"""Compose GUI presentation state from an application observation."""
+"""Compose GUI presentation state from an engine observation."""
 
 from __future__ import annotations
 
-from srd_arena.application.api import GameObservation, ScenarioPresentation
+from srd_arena.engine.api import GameObservation
+from srd_arena.scenarios.api import ScenarioPresentation
 
 from .actions import build_feature_actions
 from .battlefield import build_battlefield_view
@@ -16,7 +17,7 @@ def build_session_presentation(
     observation: GameObservation,
     config: ScenarioPresentation | None = None,
 ) -> SessionPresentation:
-    """Convert one application observation into a complete frontend snapshot.
+    """Convert one engine observation into a complete frontend snapshot.
 
     Story scenes remain simple GUI projections when no encounter is active.
 

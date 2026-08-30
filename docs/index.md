@@ -2,7 +2,7 @@
 
 SRD Arena is a Python combat simulator for the 2024 rules represented by SRD
 5.2. The project provides an interactive graphical client and a frontend-neutral
-application boundary intended for simulations and future machine-learning
+engine API intended for simulations and future machine-learning
 integration.
 
 This site combines the project's authored design documents with an API reference
@@ -13,7 +13,7 @@ doctests executed by the test suite.
 :maxdepth: 2
 :caption: Architecture
 
-application_architecture
+engine_architecture
 frontend_architecture
 combat_action_architecture
 glossary

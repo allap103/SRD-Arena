@@ -6,11 +6,6 @@ from typing import cast as type_cast
 
 import pytest
 
-from srd_arena.application.interactions import game_update
-from srd_arena.application.observations import (
-    ActionObservation,
-    observe_session,
-)
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.spells import (
     load_spell_catalog,
@@ -41,6 +36,11 @@ from srd_arena.domain.encounters.encounter_models.resolution import EncounterPro
 from srd_arena.domain.encounters.state_combat import attack_roll_mode_for
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
 from srd_arena.domain.geometry import Position
+from srd_arena.engine.interactions import game_update
+from srd_arena.engine.observations import (
+    ActionObservation,
+    observe_session,
+)
 from srd_arena.frontends.gui.app import GameWindow
 from srd_arena.frontends.gui.presentation.models import (
     SessionPresentation,
@@ -562,7 +562,7 @@ def test_blinded_enemy_attacks_with_disadvantage() -> None:
     )
     attack_roll_detail = _mapping(attack_event.data["attack_roll_detail"])
     assert attack_roll_detail["mode"] == "disadvantage"
-    assert attack_roll_detail["dice"] == [17, 4]
+    assert attack_roll_detail["dice"] == (17, 4)
 
 
 def test_attacks_against_blinded_target_gain_advantage() -> None:

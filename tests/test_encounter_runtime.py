@@ -7,18 +7,17 @@ from typing import cast as type_cast
 import pytest
 from PySide6.QtWidgets import QPushButton
 
-from srd_arena.application.game import RunningGame
-from srd_arena.application.observations import (
-    ActionObservation,
-    ActionReasonObservation,
-    observe_session,
-)
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.spells import (
     load_spell_catalog,
 )
 from srd_arena.domain.encounters.state_initialization import (
     initialize_action_selectors,
+)
+from srd_arena.engine.observations import (
+    ActionObservation,
+    ActionReasonObservation,
+    observe_session,
 )
 from srd_arena.engine.queries import (
     SpellOptionDetails,
@@ -696,7 +695,7 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
     )
 
     window = GameWindow.__new__(GameWindow)
-    window.presenter = GamePresenter(RunningGame(session))
+    window.presenter = GamePresenter(session)
     window._presentation = build_session_presentation(window.presenter.observation)
     window.presenter.set_target_mode(
         TargetSelectionMode(

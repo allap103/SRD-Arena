@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 
-from srd_arena.application.api import (
+from srd_arena.engine.api import (
     ActionObservation,
     ActionReasonObservation,
     EncounterObservation,

@@ -1,20 +1,19 @@
 # Frontend architecture
 
-The frontends are driving adapters around the application API. The broader
-layering, startup flow, and public game contract are documented in
-[Application architecture](application_architecture.md).
+The frontends are driving adapters around the public engine and scenario APIs.
+The broader layering, startup flow, and public game contract are documented in
+[Engine architecture](engine_architecture.md).
 
 ## GUI adapter
 
 `frontends.gui` owns widgets, painting, pointer interaction, action menus, and
 GUI-specific presentation configuration. PySide6 is its current implementation
 toolkit rather than part of the adapter's public identity. `GameWindow`
-receives a `RunningGame`
-plus presentation metadata from the launcher and interacts through application
-observations and commands. It does not receive a scenario directory, parse
-scenario JSON, or inspect the engine session.
+receives a `GamePresenter` around an engine `Session`, plus presentation
+metadata from the launcher. It does not receive a scenario directory, parse
+scenario JSON, or inspect mutable domain state.
 
-`GameWindow` is the GUI composition and orchestration shell. It wires application
+`GameWindow` is the GUI composition and orchestration shell. It wires engine
 commands to three view components and owns only transient interaction state such
 as the selected targeting mode and movement preview:
 
@@ -27,11 +26,11 @@ as the selected targeting mode and movement preview:
 The GUI may reuse the pure `domain.geometry` package for pointer-driven
 area-preview rasterization. It must not import the engine or mutable encounter
 implementation packages. This exception keeps one definition of grid geometry
-without moving widget behavior into the application layer.
+without moving widget behavior into the engine.
 
 ## GUI presentation
 
-`frontends.gui.presentation` turns application observations and events into
+`frontends.gui.presentation` turns engine observations and events into
 display-ready models owned by the GUI adapter. It contains no PySide6 widgets
 and imports neither engine nor domain encounter implementation. Keeping these
 projections beside their sole consumer avoids suggesting that the headless
@@ -49,7 +48,7 @@ widget changes cannot mutate the state currently being painted.
 | `battlefield` | Project combatants, status markers, and grid summaries. |
 | `conditions` | Format effective conditions. |
 | `resources` | Project turn resources, initiative, and spell slots. |
-| `dice` | Turn application `GameEvent` records into roll-log views. |
+| `dice` | Turn engine `GameEvent` records into roll-log views. |
 
 ## Encounter UI
 
@@ -79,7 +78,7 @@ adapter. It:
 - lists scenarios without exposing filesystem paths;
 - starts a scenario by stable ID;
 - returns typed observations and legal action IDs;
-- submits direct choices or any typed application command;
+- submits direct choices or any typed engine command;
 - preserves stale-decision validation;
 - advances scripted controllers without owning action-selection policy.
 

@@ -1,4 +1,4 @@
-"""Compose read-only application observations for game clients."""
+"""Compose immutable engine observations for game clients."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from srd_arena.domain.encounters.encounter_models.actions import (
     EncounterAction,
 )
 from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
-from srd_arena.engine.api import GameEngine
+from srd_arena.engine.protocols import GameEngine
 from srd_arena.engine.queries import SessionRead
 
 from .action_observations import observe_scene
